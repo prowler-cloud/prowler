@@ -41,7 +41,7 @@ aws configure
 ./prowler.sh
 ```
 
-2 - For custom AWS-CLI profile and region use
+2 - For custom AWS-CLI profile and region use:
 
 ```
 ./prowler.sh -p custom-profile -r us-east-1
@@ -62,3 +62,5 @@ USAGE:
 ```
 
  4 - Check your report and fix the issues following all specific guidelines per check in https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
+
+ <img width="1123" alt="screenshot 2016-09-13 09 31 07" src="https://cloud.githubusercontent.com/assets/3985464/18475609/1b919eae-7995-11e6-93d3-5460bfd5262e.png">
