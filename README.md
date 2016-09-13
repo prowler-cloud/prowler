@@ -62,7 +62,7 @@ or for custom profile and region
 ```
 ./prowler.sh -p custom-profile -r us-east-1 -c check11
 ```
-Valid check numbers are like in the AWS CIS Benchmark guide, while 1.1 is check11 or 3.10 is check310 
+Valid check numbers are like in the AWS CIS Benchmark guide, while 1.1 is check11 or 3.10 is check310
 
 4 - For help use:
 
@@ -78,7 +78,18 @@ USAGE:
       -h            this help
 
 ```
+## How to fix all warnings:
+ Check your report and fix the issues following all specific guidelines per check in https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
 
- 4 - Check your report and fix the issues following all specific guidelines per check in https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
+## Screenshot
 
- <img width="1123" alt="screenshot 2016-09-13 09 31 07" src="https://cloud.githubusercontent.com/assets/3985464/18475609/1b919eae-7995-11e6-93d3-5460bfd5262e.png">
+ <img width="1125" alt="screenshot 2016-09-13 16 05 42" src="https://cloud.githubusercontent.com/assets/3985464/18489640/50fe6824-79cc-11e6-8a9c-e788b88a8a6b.png">
+
+## Troubleshooting
+
+ If you are using STS token for AWS-CLI and your session is expired you probably get this error:
+
+```
+ A client error (ExpiredToken) occurred when calling the GenerateCredentialReport operation: The security token included in the request is expired
+ ```
+ To fix it, please renew your token by authenticating again to the AWS API.
