@@ -41,13 +41,13 @@ arn:aws:iam::aws:policy/SecurityAudit
 
 ## How to create a report
 
-1 - Run the prowler.sh command without options:
+1 - Run the prowler.sh command without options (it will use your default credentials and run checks over all regions when needed):
 
 ```
 ./prowler
 ```
 
-2 - For custom AWS-CLI profile and region use:
+2 - For custom AWS-CLI profile and region use (it will use your custom profile and run checks over all regions when needed):
 
 ```
 ./prowler -p custom-profile -r us-east-1
