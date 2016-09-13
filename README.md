@@ -64,7 +64,12 @@ or for custom profile and region
 ```
 Valid check numbers are like in the AWS CIS Benchmark guide, while 1.1 is check11 or 3.10 is check310
 
-4 - For help use:
+4 - If you want to save your report for late analysis:
+```
+./prowler > prowler-report.txt
+```
+
+5 - For help use:
 
 ```
 ./prowler -h
