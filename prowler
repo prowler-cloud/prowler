@@ -260,7 +260,6 @@ check13(){
     done)
   # list of users that have used password
   USERS_PASSWORD_USED=$($AWSCLI iam list-users --query "Users[?PasswordLastUsed].UserName" --output text --profile $PROFILE --region $REGION)
-
   echo -e "\n$TITLE13 "
     # look for users with a password last used more or equal to 90 days
     echo -e "     User list: "
@@ -270,7 +269,7 @@ check13(){
       if [ $HOWOLDER -gt "90" ];then
         echo "     $RED $i $NORMAL"
       else
-        echo "     $OK OK $NORMAL"
+        echo "     $OK OK, no users found with unused credentials for 90 days or greater $NORMAL"
       fi
     done
 }

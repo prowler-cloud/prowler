@@ -44,33 +44,33 @@ arn:aws:iam::aws:policy/SecurityAudit
 1 - Run the prowler.sh command without options:
 
 ```
-./prowler.sh
+./prowler
 ```
 
 2 - For custom AWS-CLI profile and region use:
 
 ```
-./prowler.sh -p custom-profile -r us-east-1
+./prowler -p custom-profile -r us-east-1
 ```
 
 3 - For a single check use option -c:
 
 ```
-./prowler.sh -c check310
+./prowler -c check310
 ```
 or for custom profile and region
 ```
-./prowler.sh -p custom-profile -r us-east-1 -c check11
+./prowler -p custom-profile -r us-east-1 -c check11
 ```
 Valid check numbers are like in the AWS CIS Benchmark guide, while 1.1 is check11 or 3.10 is check310
 
 4 - For help use:
 
 ```
-./prowler.sh -h
+./prowler -h
 
 USAGE:
-      prowler.sh -p <profile> -r <region> [ -v ] [ -h ]
+      prowler -p <profile> -r <region> [ -v ] [ -h ]
   Options:
       -p <profile>  specify your AWS profile to use (i.e.: default)
       -r <region>   specify a desired AWS region to use (i.e.: us-east-1)
