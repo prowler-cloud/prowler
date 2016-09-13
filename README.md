@@ -28,9 +28,15 @@ git clone https://github.com/Alfresco/aws-cis-security-benchmark
 cd aws-cis-security-benchmark
 ```
 
-- Make sure you have properly configure your AWS-CLI with a valid Access Key and Region.
+- Make sure you have properly configure your AWS-CLI with a valid Access Key and Region:
 ```
 aws configure
+```
+
+- Make sure your Secret and Access Keys are associated to a user with proper permissions to do all checks. To make sure add SecurityAuditor default policy to your user. Policy ARN is
+
+```
+arn:aws:iam::aws:policy/SecurityAudit
 ```
 
 ## How to create a report
@@ -47,7 +53,18 @@ aws configure
 ./prowler.sh -p custom-profile -r us-east-1
 ```
 
-3 - For help use:
+3 - For a single check use option -c:
+
+```
+./prowler.sh -c check310
+```
+or for custom profile and region
+```
+./prowler.sh -p custom-profile -r us-east-1 -c check11
+```
+Valid check numbers are like in the AWS CIS Benchmark guide, while 1.1 is check11 or 3.10 is check310 
+
+4 - For help use:
 
 ```
 ./prowler.sh -h
@@ -57,6 +74,7 @@ USAGE:
   Options:
       -p <profile>  specify your AWS profile to use (i.e.: default)
       -r <region>   specify a desired AWS region to use (i.e.: us-east-1)
+      -c <checknum> specify a check number from the AWS CIS benchmark (i.e.: check11 for check 1.1)
       -h            this help
 
 ```
