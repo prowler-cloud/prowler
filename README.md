@@ -16,6 +16,12 @@ For a comprehesive list and resolution look at the guide on the link above.
 ## Requirements
 This script has been written in bash using AWS-CLI and is works in Linux and OSX.
 
+- Make sure your AWS-CLI is installed on your workstation, with Python pip already installed:
+```
+pip install awscli
+```
+Or install it using "brew", "apt", "yum" or manually from https://aws.amazon.com/cli/ 
+
 - Previous steps, from your workstation:
 ```
 git clone https://github.com/Alfresco/aws-cis-security-benchmark
@@ -23,6 +29,9 @@ cd aws-cis-security-benchmark
 ```
 
 - Make sure you have properly configure your AWS-CLI with a valid Access Key and Region.
+```
+aws configure
+```
 
 ## How to create a report
 
