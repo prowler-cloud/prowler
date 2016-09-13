@@ -1,10 +1,10 @@
-# Prowler / AWS CIS Benchmark Tool
+# Prowler: AWS CIS Benchmark Tool
 
 ## Description
 
 Tool based on AWS-CLI commands for AWS account hardening, following guidelines of the CIS Amazon Web Services Foundations Benchmark (https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf)
 
-It covers hardening and security best practices for:
+It covers hardening and security best practices for all regions related to:
 
 - Identity and Access Management (15 checks)
 - Logging (8 checks)
@@ -44,7 +44,7 @@ aws configure
 2 - For custom AWS-CLI profile and region use
 
 ```
-./prowler.sh -p profile -r
+./prowler.sh -p custom-profile -r us-east-1
 ```
 
 3 - For help use:
@@ -62,5 +62,3 @@ USAGE:
 ```
 
  4 - Check your report and fix the issues following all specific guidelines per check in https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
-
- 
