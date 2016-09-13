@@ -20,7 +20,7 @@ This script has been written in bash using AWS-CLI and is works in Linux and OSX
 ```
 pip install awscli
 ```
-Or install it using "brew", "apt", "yum" or manually from https://aws.amazon.com/cli/ 
+Or install it using "brew", "apt", "yum" or manually from https://aws.amazon.com/cli/
 
 - Previous steps, from your workstation:
 ```
@@ -47,16 +47,20 @@ aws configure
 ./prowler.sh -p profile -r
 ```
 
-> NOTE: use --profile named-profile or the profile you are using for
-> Okta CLI configuration, named-profile is an example value.
-
- 2 - Perform template validation:
+3 - For help use:
 
 ```
-aws cloudformation validate-template \
---template-url https://s3.amazonaws.com/cf-templates-1mp42he0jarfb-us-east-1/Redding-architecture-v1.template \
---profile named-profile \
---region us-east-1
+./prowler.sh -h
+
+USAGE:
+      prowler.sh -p <profile> -r <region> [ -v ] [ -h ]
+  Options:
+      -p <profile>  specify your AWS profile to use (i.e.: default)
+      -r <region>   specify a desired AWS region to use (i.e.: us-east-1)
+      -h            this help
+
 ```
 
-3 - Edit and review the input parameters Json file for the template, file Redding-architecture-parameters-v1.json. At least you have to change next parameter values:
+ 4 - Check your report and fix the issues following all specific guidelines per check in https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
+
+ 

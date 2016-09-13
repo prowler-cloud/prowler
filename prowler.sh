@@ -57,7 +57,6 @@ usage(){
   Options:
       -p <profile>  specify your AWS profile to use (i.e.: default)
       -r <region>   specify a desired AWS region to use (i.e.: us-east-1)
-      -v            enable vervose mode
       -h            this help
   "
   exit
