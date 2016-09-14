@@ -83,10 +83,18 @@ USAGE:
       -h            this help
 
 ```
-## How to fix all warnings:
+## How to fix all WARNINGS:
  Check your report and fix the issues following all specific guidelines per check in https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
 
-## Screenshot
+## Troubleshooting
+If you are using an STS token for AWS-CLI and your session is expired you probably get this error:
+
+```
+A client error (ExpiredToken) occurred when calling the GenerateCredentialReport operation: The security token included in the request is expired
+```
+To fix it, please renew your token by authenticating again to the AWS API.
+
+## Screenshots
 
 - Sample screenshot of report first lines:
  <img width="1125" alt="screenshot 2016-09-13 16 05 42" src="https://cloud.githubusercontent.com/assets/3985464/18489640/50fe6824-79cc-11e6-8a9c-e788b88a8a6b.png">
@@ -350,12 +358,3 @@ Generating AWS IAM Credential Report....COMPLETE
  - For more information and reference:
    https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
 ```
-
-## Troubleshooting
-
- If you are using an STS token for AWS-CLI and your session is expired you probably get this error:
-
-```
- A client error (ExpiredToken) occurred when calling the GenerateCredentialReport operation: The security token included in the request is expired
- ```
- To fix it, please renew your token by authenticating again to the AWS API.
