@@ -2,19 +2,19 @@
 
 ## Description
 
-Tool based on AWS-CLI commands for AWS account hardening, following guidelines of the CIS Amazon Web Services Foundations Benchmark (https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf)
+Tool based on AWS-CLI commands for AWS account hardening, following guidelines of the [CIS Amazon Web Services Foundations Benchmark](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf)
 
 It covers hardening and security best practices for all regions related to:
 
 - Identity and Access Management (15 checks)
 - Logging (8 checks)
 - Monitoring (16 checks)
-- Neteworking (4 checks)
+- Networking (4 checks)
 
 For a comprehesive list and resolution look at the guide on the link above.
 
 ## Requirements
-This script has been written in bash using AWS-CLI and is works in Linux and OSX.
+This script has been written in bash using AWS-CLI and it works in Linux and OSX.
 
 - Make sure your AWS-CLI is installed on your workstation, with Python pip already installed:
 ```
@@ -28,7 +28,7 @@ git clone https://github.com/Alfresco/aws-cis-security-benchmark
 cd aws-cis-security-benchmark
 ```
 
-- Make sure you have properly configure your AWS-CLI with a valid Access Key and Region:
+- Make sure you have properly configured your AWS-CLI with a valid Access Key and Region:
 ```
 aws configure
 ```
@@ -47,7 +47,7 @@ arn:aws:iam::aws:policy/SecurityAudit
 ./prowler
 ```
 
-2 - For custom AWS-CLI profile and region use (it will use your custom profile and run checks over all regions when needed):
+2 - For custom AWS-CLI profile and region, use the following: (it will use your custom profile and run checks over all regions when needed):
 
 ```
 ./prowler -p custom-profile -r us-east-1
@@ -62,9 +62,9 @@ or for custom profile and region
 ```
 ./prowler -p custom-profile -r us-east-1 -c check11
 ```
-Valid check numbers are like in the AWS CIS Benchmark guide, while 1.1 is check11 or 3.10 is check310
+Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 and 3.10 is check310
 
-4 - If you want to save your report for late analysis:
+4 - If you want to save your report for later analysis:
 ```
 ./prowler > prowler-report.txt
 ```
@@ -92,7 +92,7 @@ USAGE:
 
 ## Troubleshooting
 
- If you are using STS token for AWS-CLI and your session is expired you probably get this error:
+ If you are using an STS token for AWS-CLI and your session is expired you probably get this error:
 
 ```
  A client error (ExpiredToken) occurred when calling the GenerateCredentialReport operation: The security token included in the request is expired
