@@ -304,7 +304,7 @@ check15(){
   TITLE15="$BLUE 1.5$NORMAL Ensure IAM password policy requires at least one uppercase letter (Scored)"
   COMMAND15=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireUppercaseCharacters') # must be true
   echo -e "\n$TITLE15 "
-  if [ $COMMAND15 == "True" ];then
+  if [ $COMMAND15 == "true" ];then
     echo -e "     $OK OK $NORMAL"
   else
     echo -e "     $RED FALSE $NORMAL"
@@ -315,7 +315,7 @@ check16(){
   TITLE16="$BLUE 1.6$NORMAL Ensure IAM password policy require at least one lowercase letter (Scored)"
   COMMAND16=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireLowercaseCharacters') # must be true
   echo -e "\n$TITLE16 "
-  if [ $COMMAND16 == "True" ];then
+  if [ $COMMAND16 == "true" ];then
     echo -e "     $OK OK $NORMAL"
   else
     echo -e "     $RED FALSE $NORMAL"
@@ -326,7 +326,7 @@ check17(){
   TITLE17="$BLUE 1.7$NORMAL Ensure IAM password policy require at least one symbol (Scored)"
   COMMAND17=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireSymbols') # must be true
   echo -e "\n$TITLE17 "
-  if [ $COMMAND17 == "True" ];then
+  if [ $COMMAND17 == "true" ];then
     echo -e "     $OK OK $NORMAL"
   else
     echo -e "     $RED FALSE $NORMAL"
@@ -337,7 +337,7 @@ check18(){
   TITLE18="$BLUE 1.8$NORMAL Ensure IAM password policy require at least one number (Scored)"
   COMMAND18=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireNumbers') # must be true
   echo -e "\n$TITLE18 "
-  if [ $COMMAND18 == "True" ];then
+  if [ $COMMAND18 == "true" ];then
     echo -e "     $OK OK $NORMAL"
   else
     echo -e "     $RED FALSE $NORMAL"
