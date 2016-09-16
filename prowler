@@ -439,6 +439,8 @@ check21(){
   if [[ $COMMAND21 ]];then
     if [ $COMMAND21 == "True" ];then
       echo -e "     $OK OK $NORMAL"
+    else
+      echo -e "     $RED FALSE $NORMAL"
     fi
   else
     echo -e "     $RED FALSE $NORMAL"
@@ -452,6 +454,8 @@ check22(){
   if [[ $COMMAND22 ]];then
     if [ $COMMAND22 == "True" ];then
       echo -e "     $OK OK $NORMAL"
+    else
+      echo -e "     $RED FALSE $NORMAL"
     fi
   else
     echo -e "     $RED FALSE $NORMAL"
@@ -481,13 +485,17 @@ check24(){
   LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
   if [[ $LIST_OF_TRAILS ]];then
     for trail in $LIST_OF_TRAILS;do
-      LATESTDELIVERY_TIMESTAMP=$($AWSCLI cloudtrail get-trail-status --name $trail --profile $PROFILE --region $REGION --query 'LatestCloudWatchLogsDeliveryTime')
-      LATESTDELIVERY_DATE=$(timestamp_to_date $LATESTDELIVERY_TIMESTAMP)
-      HOWOLDER=$(how_older_from_today $LATESTDELIVERY_DATE)
-      if [ $HOWOLDER -gt "1" ];then
-        echo -e "     $RED $trail is not logging in the last 24h $NORMAL"
+      LATESTDELIVERY_TIMESTAMP=$($AWSCLI cloudtrail get-trail-status --name $trail --profile $PROFILE --region $REGION --query 'LatestCloudWatchLogsDeliveryTime' --output text|grep -v None)
+      if [[ ! $LATESTDELIVERY_TIMESTAMP ]];then
+        echo -e "     $RED $trail trail is not logging in the last 24h or not configured$NORMAL"
       else
-        echo -e "     $OK $trail has been logging during the last 24h $NORMAL"
+        LATESTDELIVERY_DATE=$(timestamp_to_date $LATESTDELIVERY_TIMESTAMP)
+        HOWOLDER=$(how_older_from_today $LATESTDELIVERY_DATE)
+        if [ $HOWOLDER -gt "1" ];then
+          echo -e "     $RED $trail trail is not logging in the last 24h or not configured$NORMAL"
+        else
+          echo -e "     $OK $trail trail has been logging during the last 24h $NORMAL"
+        fi
       fi
     done
   else
