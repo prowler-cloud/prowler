@@ -414,8 +414,8 @@ check113(){
   TITLE113="$BLUE 1.13$NORMAL Ensure hardware MFA is enabled for the root account (Scored)"
   COMMAND113=$($AWSCLI iam list-virtual-mfa-devices --profile $PROFILE --region $REGION --query 'VirtualMFADevices[*].User.Arn' --output text | awk -F":" '{ print $6 }'|tr '\n' ' ')
   echo -e "\n$TITLE113"
-  if [ $COMMAND113 ]; then
-    echo "     $OK OK $NORMAL"
+  if [[ $COMMAND113 ]]; then
+    echo "     $OK OK $NORMAL *Virtual MFA is enabled. "
   else
     echo "     $RED WARNING! MFA is not ENABLED for root account $NORMAL"
   fi
