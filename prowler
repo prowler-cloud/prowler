@@ -111,6 +111,10 @@ if [[ "$OSTYPE" == "linux-gnu" ]]; then
       OUTPUT_DATE=$(date -d @$TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
       echo $OUTPUT_DATE
     }
+  decode_report()
+    {
+      base64 -d
+    }
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # BSD/OSX coommands compatibility
   how_older_from_today()
@@ -128,7 +132,10 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
       OUTPUT_DATE=$(date -r $TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
       echo $OUTPUT_DATE
     }
-
+  decode_report()
+    {
+      base64 -D
+    }
 elif [[ "$OSTYPE" == "cygwin" ]]; then
   # POSIX compatibility layer and Linux environment emulation for Windows
   how_older_from_today()
@@ -145,6 +152,10 @@ elif [[ "$OSTYPE" == "cygwin" ]]; then
       TIMESTAMP_TO_CONVERT=$(echo $1 | cut -f1 -d".")
       OUTPUT_DATE=$(date -d @$TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
       echo $OUTPUT_DATE
+    }
+  decode_report()
+    {
+      base64 -d
     }
 else
       echo "Unknown Operating System"
@@ -208,10 +219,10 @@ genCredReport() {
   done
 }
 
-# Save report to a file, deletion at finish, acb stands for AWS CIS Benchmark
+# Save report to a file, decode it, deletion at finish, acb stands for AWS CIS Benchmark
 saveReport(){
   TEMP_REPORT_FILE=/tmp/.acb
-  $AWSCLI iam get-credential-report --query 'Content' --output text --profile $PROFILE --region $REGION | base64 -D > $TEMP_REPORT_FILE
+  $AWSCLI iam get-credential-report --query 'Content' --output text --profile $PROFILE --region $REGION | decode_report > $TEMP_REPORT_FILE
 }
 
 # Get a list of all available AWS Regions
