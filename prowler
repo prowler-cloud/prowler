@@ -875,7 +875,7 @@ check44(){
     if [[ $CHECK_SGDEFAULT ]];then
       echo -e "     $RED WARNING! Default Security Groups found that allow 0.0.0.0 IN or OUT traffic in Region $regx $NORMAL "
     else
-      echo -e "     $RED OK, no Default Security Groups open to 0.0.0.0 found in Region $regx $NORMAL "
+      echo -e "     $OK OK, no Default Security Groups open to 0.0.0.0 found in Region $regx $NORMAL "
     fi
   done
 }
