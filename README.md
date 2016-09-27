@@ -38,6 +38,7 @@ aws configure
 ```
 arn:aws:iam::aws:policy/SecurityAudit
 ```
+> In some cases you may need more list or get permissions in some services, look at the Troubleshooting section for a more comprehensive policy if you find issues with the default SecurityAudit policy.
 
 ## How to create a report
 
@@ -85,14 +86,6 @@ USAGE:
 ```
 ## How to fix all WARNINGS:
  Check your report and fix the issues following all specific guidelines per check in https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
-
-## Troubleshooting
-If you are using an STS token for AWS-CLI and your session is expired you probably get this error:
-
-```
-A client error (ExpiredToken) occurred when calling the GenerateCredentialReport operation: The security token included in the request is expired
-```
-To fix it, please renew your token by authenticating again to the AWS API.
 
 ## Screenshots
 
@@ -357,4 +350,130 @@ Generating AWS IAM Credential Report....COMPLETE
 
  - For more information and reference:
    https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
+```
+
+## Troubleshooting
+
+### STS expired token
+If you are using an STS token for AWS-CLI and your session is expired you probably get this error:
+
+```
+A client error (ExpiredToken) occurred when calling the GenerateCredentialReport operation: The security token included in the request is expired
+```
+To fix it, please renew your token by authenticating again to the AWS API.
+
+### Custom IAM Policy 
+Instead of using default policy SecurityAudit for the account you use for checks you may need to create a custom policy with a few more permissions (get and list, not change!) here you go a good example for a "ProwlerPolicyReadOnly":
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [{
+        "Action": [
+            "acm:describecertificate",
+            "acm:listcertificates",
+            "autoscaling:describe*",
+            "cloudformation:describestack*",
+            "cloudformation:getstackpolicy",
+            "cloudformation:gettemplate",
+            "cloudformation:liststack*",
+            "cloudfront:get*",
+            "cloudfront:list*",
+            "cloudtrail:describetrails",
+            "cloudtrail:gettrailstatus",
+            "cloudtrail:listtags",
+            "cloudwatch:describe*",
+            "cloudwatchlogs:describeloggroups",
+            "cloudwatchlogs:describemetricfilters",
+            "codecommit:batchgetrepositories",
+            "codecommit:getbranch",
+            "codecommit:getobjectidentifier",
+            "codecommit:getrepository",
+            "codecommit:list*",
+            "codedeploy:batch*",
+            "codedeploy:get*",
+            "codedeploy:list*",
+            "config:deliver*",
+            "config:describe*",
+            "config:get*",
+            "datapipeline:describeobjects",
+            "datapipeline:describepipelines",
+            "datapipeline:evaluateexpression",
+            "datapipeline:getpipelinedefinition",
+            "datapipeline:listpipelines",
+            "datapipeline:queryobjects",
+            "datapipeline:validatepipelinedefinition",
+            "directconnect:describe*",
+            "dynamodb:listtables",
+            "ec2:describe*",
+            "ecs:describe*",
+            "ecs:list*",
+            "elasticache:describe*",
+            "elasticbeanstalk:describe*",
+            "elasticloadbalancing:describe*",
+            "elasticmapreduce:describejobflows",
+            "elasticmapreduce:listclusters",
+            "es:describeelasticsearchdomainconfig",
+            "es:listdomainnames",
+            "firehose:describe*",
+            "firehose:list*",
+            "glacier:listvaults",
+            "iam:generatecredentialreport",
+            "iam:get*",
+            "iam:list*",
+            "kms:describe*",
+            "kms:get*",
+            "kms:list*",
+            "lambda:getpolicy",
+            "lambda:listfunctions",
+            "rds:describe*",
+            "rds:downloaddblogfileportion",
+            "rds:listtagsforresource",
+            "redshift:describe*",
+            "route53:getchange",
+            "route53:getcheckeripranges",
+            "route53:getgeolocations",
+            "route53:gethealthcheck",
+            "route53:gethealthcheckcount",
+            "route53:gethealthchecklastfailurereason",
+            "route53:gethostedzone",
+            "route53:gethostedzonecount",
+            "route53:getreusabledelegationset",
+            "route53:listgeolocations",
+            "route53:listhealthchecks",
+            "route53:listhostedzones",
+            "route53:listhostedzonesbyname",
+            "route53:listresourcerecordsets",
+            "route53:listreusabledelegationsets",
+            "route53:listtagsforresource",
+            "route53:listtagsforresources",
+            "route53domains:getdomaindetail",
+            "route53domains:getoperationdetail",
+            "route53domains:listdomains",
+            "route53domains:listoperations",
+            "route53domains:listtagsfordomain",
+            "s3:getbucket*",
+            "s3:getlifecycleconfiguration",
+            "s3:getobjectacl",
+            "s3:getobjectversionacl",
+            "s3:listallmybuckets",
+            "sdb:domainmetadata",
+            "sdb:listdomains",
+            "ses:getidentitydkimattributes",
+            "ses:getidentityverificationattributes",
+            "ses:listidentities",
+            "ses:listverifiedemailaddresses",
+            "ses:sendemail",
+            "sns:gettopicattributes",
+            "sns:listsubscriptionsbytopic",
+            "sns:listtopics",
+            "sqs:getqueueattributes",
+            "sqs:listqueues",
+            "tag:getresources",
+            "tag:gettagkeys"
+        ],
+        "Effect": "Allow",
+        "Resource": "*"
+    }]
+}
 ```
