@@ -368,14 +368,16 @@ check19(){
 
 check110(){
   TITLE110="$BLUE 1.10$NORMAL Ensure IAM password policy prevents password reuse (Scored)"
-  COMMAND110=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.PasswordReusePrevention' | grep PasswordReusePrevention | awk -F: '{ print $2 }'|sed 's/\ //g'|sed 's/,/ /g')
+  COMMAND110=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.PasswordReusePrevention' --output text)
   echo -e "\n$TITLE110 "
   if [[ $COMMAND110 ]];then
     if [[ $COMMAND110 -gt "23" ]];then
       echo -e "     $OK OK $NORMAL"
+    else
+      echo -e "     $RED WARNING! It is not set or it is set lower than 24 $NORMAL"
     fi
   else
-    echo -e "     $RED FALSE $NORMAL"
+    echo -e "     $RED WARNING! It is not set $NORMAL"
   fi
 }
 
