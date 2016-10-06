@@ -446,30 +446,36 @@ check115(){
 check21(){
   TITLE21="$BLUE 2.1$NORMAL Ensure CloudTrail is enabled in all regions (Scored)"
   echo -e "\n$TITLE21"
-  COMMAND21=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].IsMultiRegionTrail' --output text)
-  if [[ $COMMAND21 ]];then
-    if [ $COMMAND21 == "True" ];then
-      echo -e "     $OK OK $NORMAL"
-    else
-      echo -e "     $RED FALSE $NORMAL"
-    fi
+  LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
+  if [[ $LIST_OF_TRAILS ]];then
+    for trail in $LIST_OF_TRAILS;do
+      MULTIREGION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].IsMultiRegionTrail' --output text --trail-name-list $trail)
+      if [[ $MULTIREGION_TRAIL_STATUS == 'False' ]];then
+        echo -e "     $RED WARNING! $trail trail in $REGION is not enabled in multi region mode$NORMAL"
+      else
+        echo -e "     $OK OK! $trail trail in $REGION is enabled for all regions$NORMAL"
+      fi
+    done
   else
-    echo -e "     $RED FALSE $NORMAL"
+    echo -e "     $RED WARNING! No CloudTrail trails found!$NORMAL"
   fi
 }
 
 check22(){
   TITLE22="$BLUE 2.2$NORMAL Ensure CloudTrail log file validation is enabled (Scored)"
   echo -e "\n$TITLE22"
-  COMMAND22=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].LogFileValidationEnabled' --output text)
-  if [[ $COMMAND22 ]];then
-    if [ $COMMAND22 == "True" ];then
-      echo -e "     $OK OK $NORMAL"
-    else
-      echo -e "     $RED FALSE $NORMAL"
-    fi
+  LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
+  if [[ $LIST_OF_TRAILS ]];then
+    for trail in $LIST_OF_TRAILS;do
+      LOGFILEVALIDATION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].LogFileValidationEnabled' --output text --trail-name-list $trail)
+      if [[ $LOGFILEVALIDATION_TRAIL_STATUS == 'False' ]];then
+        echo -e "     $RED WARNING! $trail trail in $REGION has not log file validation enabled$NORMAL"
+      else
+        echo -e "     $OK OK! $trail trail in $REGION has log file validation enabled$NORMAL"
+      fi
+    done
   else
-    echo -e "     $RED FALSE $NORMAL"
+    echo -e "     $RED WARNING! No CloudTrail trails found!$NORMAL"
   fi
 }
 
@@ -584,7 +590,7 @@ check31(){
   echo -e "\n$TITLE31 "
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name CloudTrail/CloudWatchGroup --profile $PROFILE --region $REGION --query 'trailList' | grep AccessDenied)
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'trailList' | grep AccessDenied)
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK, CloudWatch group found, and metric filters for Access Denied enabled$NORMAL"
     else
@@ -598,8 +604,9 @@ check31(){
 check32(){
   TITLE32="$BLUE 3.2$NORMAL Ensure a log metric filter and alarm exist for Management Console sign-in without MFA (Scored)"
   echo -e "\n$TITLE32 "
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name CloudTrail/CloudWatchGroup --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'userIdentity.sessionContext.attributes.mfaAuthenticated.*true')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'userIdentity.sessionContext.attributes.mfaAuthenticated.*true')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK, CloudWatch group found, and metric filters for sign-in Console without MFA enabled$NORMAL"
     else
@@ -613,8 +620,9 @@ check32(){
 check33(){
   TITLE33="$BLUE 3.3$NORMAL Ensure a log metric filter and alarm exist for usage of root account (Scored)"
   echo -e "\n$TITLE33 "
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name CloudTrail/CloudWatchGroup --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'Root.*AwsServiceEvent')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION | awk '$1 == "METRICFILTERS" && /Root.+AwsServiceEvent/')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK, CloudWatch group found, and metric filters for usage of root account enabled$NORMAL"
     else
@@ -628,8 +636,9 @@ check33(){
 check34(){
   TITLE34="$BLUE 3.4$NORMAL Ensure a log metric filter and alarm exist for IAM policy changes (Scored)"
   echo -e "\n$TITLE34 "
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name CloudTrail/CloudWatchGroup --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'DeleteGroupPolicy.*DeleteRolePolicy.*DeleteUserPolicy.*PutGroupPolicy.*PutRolePolicy.*PutUserPolicy.*CreatePolicy.*DeletePolicy.*CreatePolicyVersion.*DeletePolicyVersion.*AttachRolePolicy.*DetachRolePolicy.*AttachUserPolicy.*DetachUserPolicy.*AttachGroupPolicy.*DetachGroupPolicy')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'DeleteGroupPolicy.*DeleteRolePolicy.*DeleteUserPolicy.*PutGroupPolicy.*PutRolePolicy.*PutUserPolicy.*CreatePolicy.*DeletePolicy.*CreatePolicyVersion.*DeletePolicyVersion.*AttachRolePolicy.*DetachRolePolicy.*AttachUserPolicy.*DetachUserPolicy.*AttachGroupPolicy.*DetachGroupPolicy')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK, CloudWatch group found, and metric filters for IAM policy changes enabled$NORMAL"
     else
@@ -643,8 +652,9 @@ check34(){
 check35(){
   TITLE35="$BLUE 3.5$NORMAL Ensure a log metric filter and alarm exist for CloudTrail configuration changes (Scored)"
   echo -e "\n$TITLE35 "
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name CloudTrail/CloudWatchGroup --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'CreateTrail.*UpdateTrail.*DeleteTrail.*StartLogging.*StopLogging')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'CreateTrail.*UpdateTrail.*DeleteTrail.*StartLogging.*StopLogging')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK, CloudWatch group found, and metric filters for CloudTrail configuration changes enabled$NORMAL"
     else
@@ -658,8 +668,9 @@ check35(){
 check36(){
   TITLE36="$BLUE 3.6$NORMAL Ensure a log metric filter and alarm exist for AWS Management Console authentication failures (Scored)"
   echo -e "\n$TITLE36 "
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name CloudTrail/CloudWatchGroup --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'ConsoleLogin.*Failed')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'ConsoleLogin.*Failed')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK, CloudWatch group found, and metric filters for usage of root account enabled$NORMAL"
     else
@@ -673,8 +684,9 @@ check36(){
 check37(){
   TITLE37="$BLUE 3.7$NORMAL Ensure a log metric filter and alarm exist for disabling or scheduled deletion of customer created CMKs (Scored)"
   echo -e "\n$TITLE37 "
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name CloudTrail/CloudWatchGroup --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'kms.amazonaws.com.*DisableKey.*ScheduleKeyDeletion')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'kms.amazonaws.com.*DisableKey.*ScheduleKeyDeletion')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
     else
@@ -688,8 +700,9 @@ check37(){
 check38(){
   TITLE38="$BLUE 3.8$NORMAL Ensure a log metric filter and alarm exist for S3 bucket policy changes (Scored)"
   echo -e "\n$TITLE38 "
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name CloudTrail/CloudWatchGroup --profile $PROFILE --region $REGION --query 'trailList' | grep -E 's3.amazonaws.com.*PutBucketAcl.*PutBucketPolicy.*PutBucketCors.*PutBucketLifecycle.*PutBucketReplication.*DeleteBucketPolicy.*DeleteBucketCors.*DeleteBucketLifecycle.*DeleteBucketReplication')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'trailList' | grep -E 's3.amazonaws.com.*PutBucketAcl.*PutBucketPolicy.*PutBucketCors.*PutBucketLifecycle.*PutBucketReplication.*DeleteBucketPolicy.*DeleteBucketCors.*DeleteBucketLifecycle.*DeleteBucketReplication')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
     else
@@ -703,8 +716,9 @@ check38(){
 check39(){
   TITLE39="$BLUE 3.9$NORMAL Ensure a log metric filter and alarm exist for AWS Config configuration changes (Scored)"
   echo -e "\n$TITLE39 "
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name CloudTrail/CloudWatchGroup --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'config.amazonaws.com.*StopConfigurationRecorder.*DeleteDeliveryChannel.*PutDeliveryChannel.*PutConfigurationRecorder')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'config.amazonaws.com.*StopConfigurationRecorder.*DeleteDeliveryChannel.*PutDeliveryChannel.*PutConfigurationRecorder')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
     else
@@ -718,8 +732,9 @@ check39(){
 check310(){
   TITLE310="$BLUE 3.10$NORMAL Ensure a log metric filter and alarm exist for security group changes (Scored)"
   echo -e "\n$TITLE310 "
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name CloudTrail/CloudWatchGroup --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'AuthorizeSecurityGroupIngress.*AuthorizeSecurityGroupEgress.*RevokeSecurityGroupIngress.*RevokeSecurityGroupEgress.*CreateSecurityGroup.*DeleteSecurityGroup')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'AuthorizeSecurityGroupIngress.*AuthorizeSecurityGroupEgress.*RevokeSecurityGroupIngress.*RevokeSecurityGroupEgress.*CreateSecurityGroup.*DeleteSecurityGroup')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
     else
@@ -733,8 +748,9 @@ check310(){
 check311(){
   TITLE311="$BLUE 3.11$NORMAL Ensure a log metric filter and alarm exist for changes to Network Access Control Lists (NACL) (Scored)"
   echo -e "\n$TITLE311 "
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name CloudTrail/CloudWatchGroup --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'CreateNetworkAcl.*CreateNetworkAclEntry.*DeleteNetworkAcl.*DeleteNetworkAclEntry.*ReplaceNetworkAclEntry.*ReplaceNetworkAclAssociation')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'CreateNetworkAcl.*CreateNetworkAclEntry.*DeleteNetworkAcl.*DeleteNetworkAclEntry.*ReplaceNetworkAclEntry.*ReplaceNetworkAclAssociation')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
     else
@@ -748,8 +764,9 @@ check311(){
 check312(){
   TITLE312="$BLUE 3.12$NORMAL Ensure a log metric filter and alarm exist for changes to network gateways (Scored)"
   echo -e "\n$TITLE312 "
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name CloudTrail/CloudWatchGroup --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'CreateCustomerGateway.*DeleteCustomerGateway.*AttachInternetGateway.*CreateInternetGateway.*DeleteInternetGateway.*DetachInternetGateway')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'CreateCustomerGateway.*DeleteCustomerGateway.*AttachInternetGateway.*CreateInternetGateway.*DeleteInternetGateway.*DetachInternetGateway')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
     else
@@ -763,8 +780,9 @@ check312(){
 check313(){
   TITLE313="$BLUE 3.13$NORMAL Ensure a log metric filter and alarm exist for route table changes (Scored)"
   echo -e "\n$TITLE313 "
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name CloudTrail/CloudWatchGroup --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'CreateRoute.*CreateRouteTable.*ReplaceRoute.*ReplaceRouteTableAssociation.*DeleteRouteTable.*DeleteRoute.*DisassociateRouteTable')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'CreateRoute.*CreateRouteTable.*ReplaceRoute.*ReplaceRouteTableAssociation.*DeleteRouteTable.*DeleteRoute.*DisassociateRouteTable')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
     else
@@ -778,8 +796,9 @@ check313(){
 check314(){
   TITLE314="$BLUE 3.14$NORMAL Ensure a log metric filter and alarm exist for VPC changes (Scored)"
   echo -e "\n$TITLE314 "
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name CloudTrail/CloudWatchGroup --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'CreateVpc.*DeleteVpc.*ModifyVpcAttribute.*AcceptVpcPeeringConnection.*CreateVpcPeeringConnection.*DeleteVpcPeeringConnection.*RejectVpcPeeringConnection.*AttachClassicLinkVpc.*DetachClassicLinkVpc.*DisableVpcClassicLink.*EnableVpcClassicLink')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'trailList' | grep -E 'CreateVpc.*DeleteVpc.*ModifyVpcAttribute.*AcceptVpcPeeringConnection.*CreateVpcPeeringConnection.*DeleteVpcPeeringConnection.*RejectVpcPeeringConnection.*AttachClassicLinkVpc.*DetachClassicLinkVpc.*DisableVpcClassicLink.*EnableVpcClassicLink')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
     else
