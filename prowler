@@ -446,30 +446,36 @@ check115(){
 check21(){
   TITLE21="$BLUE 2.1$NORMAL Ensure CloudTrail is enabled in all regions (Scored)"
   echo -e "\n$TITLE21"
-  COMMAND21=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].IsMultiRegionTrail' --output text)
-  if [[ $COMMAND21 ]];then
-    if [ $COMMAND21 == "True" ];then
-      echo -e "     $OK OK $NORMAL"
-    else
-      echo -e "     $RED FALSE $NORMAL"
-    fi
+  LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
+  if [[ $LIST_OF_TRAILS ]];then
+    for trail in $LIST_OF_TRAILS;do
+      MULTIREGION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].IsMultiRegionTrail' --output text --trail-name-list $trail)
+      if [[ $MULTIREGION_TRAIL_STATUS == 'False' ]];then
+        echo -e "     $RED WARNING! $trail trail in $REGION is not enabled in multi region mode$NORMAL"
+      else
+        echo -e "     $OK OK! $trail trail in $REGION is enabled for all regions$NORMAL"
+      fi
+    done
   else
-    echo -e "     $RED FALSE $NORMAL"
+    echo -e "     $RED WARNING! No CloudTrail trails found!$NORMAL"
   fi
 }
 
 check22(){
   TITLE22="$BLUE 2.2$NORMAL Ensure CloudTrail log file validation is enabled (Scored)"
   echo -e "\n$TITLE22"
-  COMMAND22=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].LogFileValidationEnabled' --output text)
-  if [[ $COMMAND22 ]];then
-    if [ $COMMAND22 == "True" ];then
-      echo -e "     $OK OK $NORMAL"
-    else
-      echo -e "     $RED FALSE $NORMAL"
-    fi
+  LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
+  if [[ $LIST_OF_TRAILS ]];then
+    for trail in $LIST_OF_TRAILS;do
+      LOGFILEVALIDATION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].LogFileValidationEnabled' --output text --trail-name-list $trail)
+      if [[ $LOGFILEVALIDATION_TRAIL_STATUS == 'False' ]];then
+        echo -e "     $RED WARNING! $trail trail in $REGION has not log file validation enabled$NORMAL"
+      else
+        echo -e "     $OK OK! $trail trail in $REGION has log file validation enabled$NORMAL"
+      fi
+    done
   else
-    echo -e "     $RED FALSE $NORMAL"
+    echo -e "     $RED WARNING! No CloudTrail trails found!$NORMAL"
   fi
 }
 
