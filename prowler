@@ -486,15 +486,16 @@ check23(){
   echo -e "\n$TITLE23"
   CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text --profile $PROFILE --region $REGION)
   if [[ $CLOUDTRAILBUCKET ]];then
-    CLOUDTRAILBUCKET_HASALLPERMISIONS=$($AWSCLI s3api get-bucket-acl --bucket $CLOUDTRAILBUCKET --query 'Grants[?Grantee.URI==`http://acs.amazonaws.com/groups/global/AllUsers`]' --profile $PROFILE --region $REGION --output text)
-    # aws s3api get-bucket-policy --bucket $CLOUDTRAILBUCKET --profile $PROFILE --region $REGION --output text
-    if [[ $CLOUDTRAILBUCKET_HASALLPERMISIONS ]];then
-      echo -e "     $RED WARNING! check your CloudTrail bucket ACL and Policy!$NORMAL"
-    else
-      echo -e "     $OK OK $NORMAL"
-    fi
+    for bucket in $CLOUDTRAILBUCKET;do
+      CLOUDTRAILBUCKET_HASALLPERMISIONS=$($AWSCLI s3api get-bucket-acl --bucket $bucket --query 'Grants[?Grantee.URI==`http://acs.amazonaws.com/groups/global/AllUsers`]' --profile $PROFILE --region $REGION --output text)
+      if [[ $CLOUDTRAILBUCKET_HASALLPERMISIONS ]];then
+        echo -e "     $RED WARNING! check your $bucket CloudTrail bucket ACL and Policy!$NORMAL"
+      else
+        echo -e "     $OK OK, Bucket $bucket is set correctly $NORMAL"
+      fi
+    done
   else
-    echo -e "     $RED WARNING! CloudTrail bucket doesn't exist!$NORMAL"
+    echo -e "     $RED WARNING! No CloudTrail bucket found!$NORMAL"
   fi
 }
 
@@ -504,16 +505,17 @@ check24(){
   LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
   if [[ $LIST_OF_TRAILS ]];then
     for trail in $LIST_OF_TRAILS;do
-      LATESTDELIVERY_TIMESTAMP=$($AWSCLI cloudtrail get-trail-status --name $trail --profile $PROFILE --region $REGION --query 'LatestCloudWatchLogsDeliveryTime' --output text|grep -v None)
+      TRAIL_REGION=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*]' --output text | grep $trail | awk '{ print $1}')
+      LATESTDELIVERY_TIMESTAMP=$($AWSCLI cloudtrail get-trail-status --name $trail --profile $PROFILE --region $TRAIL_REGION --query 'LatestCloudWatchLogsDeliveryTime' --output text|grep -v None)
       if [[ ! $LATESTDELIVERY_TIMESTAMP ]];then
-        echo -e "     $RED $trail trail is not logging in the last 24h or not configured$NORMAL"
+        echo -e "     $RED $trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)$NORMAL"
       else
         LATESTDELIVERY_DATE=$(timestamp_to_date $LATESTDELIVERY_TIMESTAMP)
         HOWOLDER=$(how_older_from_today $LATESTDELIVERY_DATE)
         if [ $HOWOLDER -gt "1" ];then
-          echo -e "     $RED $trail trail is not logging in the last 24h or not configured$NORMAL"
+          echo -e "     $RED $trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)$NORMAL"
         else
-          echo -e "     $OK $trail trail has been logging during the last 24h $NORMAL"
+          echo -e "     $OK $trail trail has been logging during the last 24h (it is in $TRAIL_REGION)$NORMAL"
         fi
       fi
     done
@@ -540,14 +542,16 @@ check26(){
   echo -e "\n$TITLE26"
   CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text --profile $PROFILE --region $REGION)
     if [[ $CLOUDTRAILBUCKET ]];then
-      CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $CLOUDTRAILBUCKET --profile $PROFILE --region $REGION --query 'LoggingEnabled.TargetBucket' --output text|grep -v None)
-      if [[ $CLOUDTRAILBUCKET_LOGENABLED ]];then
-        echo -e "     $OK OK $NORMAL"
-      else
-        echo -e "     $RED WARNING! access logging is not enabled in your CloudTrail S3 bucket!$NORMAL"
-      fi
+      for bucket in $CLOUDTRAILBUCKET;do
+        CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket --profile $PROFILE --region $REGION --query 'LoggingEnabled.TargetBucket' --output text|grep -v None)
+        if [[ $CLOUDTRAILBUCKET_LOGENABLED ]];then
+          echo -e "     $OK OK, it is enabled in $bucket $NORMAL"
+        else
+          echo -e "     $RED WARNING! access logging is not enabled in $bucket CloudTrail S3 bucket!$NORMAL"
+        fi
+      done
     else
-      echo -e "     $RED WARNING! CloudTrail bucket doesn't exist!$NORMAL"
+      echo -e "     $RED WARNING! CloudTrail bucket not found!$NORMAL"
     fi
 }
 
@@ -556,12 +560,14 @@ check27(){
   echo -e "\n$TITLE27"
   CLOUDTRAILNAME=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].Name' --output text --profile $PROFILE --region $REGION)
     if [[ $CLOUDTRAILNAME ]];then
-      CLOUDTRAILENC_ENABLED=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --trail $CLOUDTRAILNAME --query 'trailList[*].KmsKeyId' --output text)
-      if [[ $CLOUDTRAILENC_ENABLED ]];then
-        echo -e "     $OK OK $NORMAL"
-      else
-        echo -e "     $RED WARNING! encryption is not enabled in your CloudTrail trail, KMS key not found!$NORMAL"
-      fi
+      for trail in $CLOUDTRAILNAME;do
+        CLOUDTRAILENC_ENABLED=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --trail $trail --query 'trailList[*].KmsKeyId' --output text)
+        if [[ $CLOUDTRAILENC_ENABLED ]];then
+          echo -e "     $OK OK, KMS key found for $trail $NORMAL"
+        else
+          echo -e "     $RED WARNING! encryption is not enabled in your CloudTrail trail $trail, KMS key not found!$NORMAL"
+        fi
+      done
     else
       echo -e "     $RED WARNING! CloudTrail bucket doesn't exist!$NORMAL"
     fi
@@ -575,7 +581,7 @@ check28(){
     if [[ $CHECK_KMS_KEYLIST ]];then
         for key in $CHECK_KMS_KEYLIST; do
           CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key --profile $PROFILE --region $regx --output text)
-          if [ $CHECK_KMS_KEY_ROTATION == "True" ];then
+          if [[ $CHECK_KMS_KEY_ROTATION == "True" ]];then
             echo -e "     $OK OK $NORMAL, Key $key in Region $regx is set correctly"
           else
             echo -e "     $RED WARNING! Key $key in Region $regx is not set to rotate!$NORMAL"
