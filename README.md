@@ -42,7 +42,7 @@ arn:aws:iam::aws:policy/SecurityAudit
 
 ## How to create a report
 
-1 - Run the prowler.sh command without options (it will use your default credentials and run checks over all regions when needed):
+1 - Run the prowler.sh command without options (it will use your default credentials and run checks over all regions when needed, default region is us-east-1):
 
 ```
 ./prowler
@@ -362,7 +362,7 @@ A client error (ExpiredToken) occurred when calling the GenerateCredentialReport
 ```
 To fix it, please renew your token by authenticating again to the AWS API.
 
-### Custom IAM Policy 
+### Custom IAM Policy
 Instead of using default policy SecurityAudit for the account you use for checks you may need to create a custom policy with a few more permissions (get and list, not change!) here you go a good example for a "ProwlerPolicyReadOnly":
 
 ```
