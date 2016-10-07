@@ -584,7 +584,7 @@ check28(){
           if [[ $CHECK_KMS_KEY_ROTATION == "True" ]];then
             echo -e "     $OK OK $NORMAL, Key $key in Region $regx is set correctly"
           else
-            echo -e "     $RED WARNING! Key $key in Region $regx is not set to rotate!$NORMAL"
+            echo -e "     $RED WARNING! Key $key in Region $regx is not set to rotate or Default KMS Key In Use!!$NORMAL"
           fi
         done
     else
