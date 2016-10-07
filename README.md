@@ -69,6 +69,11 @@ Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 
 ```
 ./prowler > prowler-report.txt
 ```
+or if you want a colored HTML report do:
+```
+pip install ansi2html
+./prowler | ansi2html -la > report.html
+```
 
 5 - For help use:
 
