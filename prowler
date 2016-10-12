@@ -219,10 +219,15 @@ genCredReport() {
   done
 }
 
-# Save report to a file, decode it, deletion at finish, acb stands for AWS CIS Benchmark
+# Save report to a file, decode it, deletion at finish and after every single check, acb stands for AWS CIS Benchmark
 saveReport(){
   TEMP_REPORT_FILE=/tmp/.acb
   $AWSCLI iam get-credential-report --query 'Content' --output text --profile $PROFILE --region $REGION | decode_report > $TEMP_REPORT_FILE
+}
+
+# Delete temporary report file
+cleanTemp(){
+  rm -fr $TEMP_REPORT_FILE
 }
 
 # Get a list of all available AWS Regions
@@ -505,7 +510,7 @@ check24(){
   LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
   if [[ $LIST_OF_TRAILS ]];then
     for trail in $LIST_OF_TRAILS;do
-      TRAIL_REGION=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*]' --output text | grep $trail | awk '{ print $1}')
+      TRAIL_REGION=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*]' --output text | grep $trail | awk '{ print $3}')
       LATESTDELIVERY_TIMESTAMP=$($AWSCLI cloudtrail get-trail-status --name $trail --profile $PROFILE --region $TRAIL_REGION --query 'LatestCloudWatchLogsDeliveryTime' --output text|grep -v None)
       if [[ ! $LATESTDELIVERY_TIMESTAMP ]];then
         echo -e "     $RED $trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)$NORMAL"
@@ -528,9 +533,9 @@ check25(){
   TITLE25="$BLUE 2.5$NORMAL Ensure AWS Config is enabled in all regions (Scored)"
   echo -e "\n$TITLE25"
   for regx in $REGIONS; do
-    CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice get-status --profile $PROFILE --region $regx | grep recorder)
+    CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice get-status --profile $PROFILE --region $regx | grep "recorder: ON")
     if [[ $CHECK_AWSCONFIG_STATUS ]];then
-      echo -e "     $OK Region $regx has AWS Config $CHECK_AWSCONFIG_STATUS $NORMAL"
+      echo -e "     $OK Region $regx has AWS Config recorder: ON $NORMAL"
     else
       echo -e "     $RED WARNING! Region $regx has AWS Config disabled or not configured$NORMAL"
     fi
@@ -910,49 +915,49 @@ check44(){
 singleCheck(){
   if [[ $CHECKNUMBER ]];then
     case "$CHECKNUMBER" in
-      check11) check11;exit;;
-      check12) check12;exit;;
-      check13) check13;exit;;
-      check14) check14;exit;;
-      check15) check15;exit;;
-      check16) check16;exit;;
-      check17) check17;exit;;
-      check18) check18;exit;;
-      check19) check19;exit;;
-      check110) check110;exit;;
-      check111) check111;exit;;
-      check112) check112;exit;;
-      check113) check113;exit;;
-      check114) check114;exit;;
-      check115) check115;exit;;
-      check21) check21;exit;;
-      check22) check22;exit;;
-      check23) check23;exit;;
-      check24) check24;exit;;
-      check25) check25;exit;;
-      check26) check26;exit;;
-      check27) check27;exit;;
-      check28) check28;exit;;
-      check31) check31;exit;;
-      check32) check32;exit;;
-      check33) check33;exit;;
-      check34) check34;exit;;
-      check35) check35;exit;;
-      check36) check36;exit;;
-      check37) check37;exit;;
-      check38) check38;exit;;
-      check39) check39;exit;;
-      check310) check310;exit;;
-      check311) check311;exit;;
-      check312) check312;exit;;
-      check313) check313;exit;;
-      check314) check314;exit;;
-      check315) check315;exit;;
-      check316) check316;exit;;
-      check41) check41;exit;;
-      check42) check42;exit;;
-      check43) check43;exit;;
-      check44) check44;exit;;
+      check11) check11;cleanTemp;exit;;
+      check12) check12;cleanTemp;exit;;
+      check13) check13;cleanTemp;exit;;
+      check14) check14;cleanTemp;exit;;
+      check15) check15;cleanTemp;exit;;
+      check16) check16;cleanTemp;exit;;
+      check17) check17;cleanTemp;exit;;
+      check18) check18;cleanTemp;exit;;
+      check19) check19;cleanTemp;exit;;
+      check110) check110;cleanTemp;exit;;
+      check111) check111;cleanTemp;exit;;
+      check112) check112;cleanTemp;exit;;
+      check113) check113;cleanTemp;exit;;
+      check114) check114;cleanTemp;exit;;
+      check115) check115;cleanTemp;exit;;
+      check21) check21;cleanTemp;exit;;
+      check22) check22;cleanTemp;exit;;
+      check23) check23;cleanTemp;exit;;
+      check24) check24;cleanTemp;exit;;
+      check25) check25;cleanTemp;exit;;
+      check26) check26;cleanTemp;exit;;
+      check27) check27;cleanTemp;exit;;
+      check28) check28;cleanTemp;exit;;
+      check31) check31;cleanTemp;exit;;
+      check32) check32;cleanTemp;exit;;
+      check33) check33;cleanTemp;exit;;
+      check34) check34;cleanTemp;exit;;
+      check35) check35;cleanTemp;exit;;
+      check36) check36;cleanTemp;exit;;
+      check37) check37;cleanTemp;exit;;
+      check38) check38;cleanTemp;exit;;
+      check39) check39;cleanTemp;exit;;
+      check310) check310;cleanTemp;exit;;
+      check311) check311;cleanTemp;exit;;
+      check312) check312;cleanTemp;exit;;
+      check313) check313;cleanTemp;exit;;
+      check314) check314;cleanTemp;exit;;
+      check315) check315;cleanTemp;exit;;
+      check316) check316;cleanTemp;exit;;
+      check41) check41;cleanTemp;exit;;
+      check42) check42;cleanTemp;exit;;
+      check43) check43;cleanTemp;exit;;
+      check44) check44;cleanTemp;exit;;
       * ) echo -e "\n$RED ERROR! Use a valid check name (i.e. check41) $NORMAL\n";exit;;
     esac
   fi
@@ -1020,5 +1025,4 @@ check44
 echo -e "\n$BLUE - For more information and reference:$NORMAL"
 echo -e "  $NOTICE https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf$NORMAL"
 
-# Delete temp file
-rm -fr $TEMP_REPORT_FILE
+cleanTemp
