@@ -533,9 +533,9 @@ check25(){
   TITLE25="$BLUE 2.5$NORMAL Ensure AWS Config is enabled in all regions (Scored)"
   echo -e "\n$TITLE25"
   for regx in $REGIONS; do
-    CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice get-status --profile $PROFILE --region $regx | grep recorder)
+    CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice get-status --profile $PROFILE --region $regx | grep "recorder: ON")
     if [[ $CHECK_AWSCONFIG_STATUS ]];then
-      echo -e "     $OK Region $regx has AWS Config $CHECK_AWSCONFIG_STATUS $NORMAL"
+      echo -e "     $OK Region $regx has AWS Config recorder: ON $NORMAL"
     else
       echo -e "     $RED WARNING! Region $regx has AWS Config disabled or not configured$NORMAL"
     fi
