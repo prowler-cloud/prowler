@@ -587,7 +587,7 @@ check28(){
         for key in $CHECK_KMS_KEYLIST; do
           CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key --profile $PROFILE --region $regx --output text)
           if [[ $CHECK_KMS_KEY_ROTATION == "True" ]];then
-            echo -e "     $OK OK $NORMAL, Key $key in Region $regx is set correctly"
+            echo -e "     $OK OK, Key $key in Region $regx is set correctly$NORMAL"
           else
             echo -e "     $RED WARNING! Key $key in Region $regx is not set to rotate or Default KMS Key In Use!!$NORMAL"
           fi
