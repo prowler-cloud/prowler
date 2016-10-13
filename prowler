@@ -320,7 +320,7 @@ check15(){
   TITLE15="$BLUE 1.5$NORMAL Ensure IAM password policy requires at least one uppercase letter (Scored)"
   COMMAND15=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireUppercaseCharacters') # must be true
   echo -e "\n$TITLE15 "
-  if [ $COMMAND15 == "true" ];then
+  if [[ $COMMAND15 == "true" ]];then
     echo -e "     $OK OK $NORMAL"
   else
     echo -e "     $RED FALSE $NORMAL"
@@ -331,7 +331,7 @@ check16(){
   TITLE16="$BLUE 1.6$NORMAL Ensure IAM password policy require at least one lowercase letter (Scored)"
   COMMAND16=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireLowercaseCharacters') # must be true
   echo -e "\n$TITLE16 "
-  if [ $COMMAND16 == "true" ];then
+  if [[ $COMMAND16 == "true" ]];then
     echo -e "     $OK OK $NORMAL"
   else
     echo -e "     $RED FALSE $NORMAL"
@@ -342,7 +342,7 @@ check17(){
   TITLE17="$BLUE 1.7$NORMAL Ensure IAM password policy require at least one symbol (Scored)"
   COMMAND17=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireSymbols') # must be true
   echo -e "\n$TITLE17 "
-  if [ $COMMAND17 == "true" ];then
+  if [[ $COMMAND17 == "true" ]];then
     echo -e "     $OK OK $NORMAL"
   else
     echo -e "     $RED FALSE $NORMAL"
@@ -353,7 +353,7 @@ check18(){
   TITLE18="$BLUE 1.8$NORMAL Ensure IAM password policy require at least one number (Scored)"
   COMMAND18=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireNumbers') # must be true
   echo -e "\n$TITLE18 "
-  if [ $COMMAND18 == "true" ];then
+  if [[ $COMMAND18 == "true" ]];then
     echo -e "     $OK OK $NORMAL"
   else
     echo -e "     $RED FALSE $NORMAL"
@@ -364,7 +364,7 @@ check19(){
   TITLE19="$BLUE 1.9$NORMAL Ensure IAM password policy requires minimum length of 14 or greater (Scored)"
   COMMAND19=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.MinimumPasswordLength')
   echo -e "\n$TITLE19 "
-  if [ $COMMAND19 -gt "13" ];then
+  if [[ $COMMAND19 -gt "13" ]];then
     echo -e "     $OK OK $NORMAL"
   else
     echo -e "     $RED FALSE $NORMAL"
@@ -402,8 +402,8 @@ check111(){
 check112(){
   TITLE112="$BLUE 1.12$NORMAL Ensure no root account access key exists (Scored)"
   # ensure the access_key_1_active and access_key_2_active fields are set to FALSE.
-  ROOTKEY1=$(cat $TEMP_REPORT_FILE |grep root_account|awk -F, '{ print $9 }')
-  ROOTKEY2=$(cat $TEMP_REPORT_FILE |grep root_account|awk -F, '{ print $14 }')
+  ROOTKEY1=$(cat $TEMP_REPORT_FILE |grep root_account|awk -F',' '{ print $9 }')
+  ROOTKEY2=$(cat $TEMP_REPORT_FILE |grep root_account|awk -F',' '{ print $14 }')
   echo -e "\n$TITLE112 "
   if [ $ROOTKEY1 == "false" ];then
     echo -e "     $OK OK $NORMAL No access key 1 found "
@@ -587,7 +587,7 @@ check28(){
         for key in $CHECK_KMS_KEYLIST; do
           CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key --profile $PROFILE --region $regx --output text)
           if [[ $CHECK_KMS_KEY_ROTATION == "True" ]];then
-            echo -e "     $OK OK $NORMAL, Key $key in Region $regx is set correctly"
+            echo -e "     $OK OK, Key $key in Region $regx is set correctly$NORMAL"
           else
             echo -e "     $RED WARNING! Key $key in Region $regx is not set to rotate or Default KMS Key In Use!!$NORMAL"
           fi
