@@ -63,6 +63,11 @@ or for custom profile and region
 ```
 ./prowler -p custom-profile -r us-east-1 -c check11
 ```
+or for a group of checks use group name:
+```
+./prowler -c check3
+```
+
 Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 and 3.10 is check310
 
 4 - If you want to save your report for later analysis:
