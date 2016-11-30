@@ -236,7 +236,11 @@ REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
 
 infoReferenceLong(){
   # Report review note:
-  echo -e "  $NOTICE https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf$NORMAL"
+  echo -e "  $BLUE     \n*********************************$NORMAL"
+  echo -e "  $NOTICE  For more information: $NORMAL"
+  echo -e "  $NOTICE  https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf$NORMAL"
+  echo -e "  $NOTICE  For bugs or feedback: $NORMAL"
+  echo -e "  $NOTICE  https://github.com/Alfresco/aws-cis-security-benchmark/issues$NORMAL"
 }
 
 infoReferenceShort(){
@@ -983,8 +987,8 @@ check314(){
 }
 
 check315(){
-  TITLE315="$BLUE 3.16$NORMAL Ensure appropriate subscribers to each SNS topic (Not Scored)"
-  echo -e "\n$TITLE316 "
+  TITLE315="$BLUE 3.15$NORMAL Ensure appropriate subscribers to each SNS topic (Not Scored)"
+  echo -e "\n$TITLE315 "
   for regx in $REGIONS; do
     TOPICS_LIST=$($AWSCLI sns list-topics --profile $PROFILE --region $regx --output text --query 'Topics[*].TopicArn')
     if [[ $TOPICS_LIST ]];then

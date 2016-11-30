@@ -2,14 +2,14 @@
 
 ## Description
 
-Tool based on AWS-CLI commands for AWS account hardening, following guidelines of the [CIS Amazon Web Services Foundations Benchmark](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf)
+Tool based on AWS-CLI commands for AWS account hardening, following guidelines of the [CIS Amazon Web Services Foundations Benchmark 1.1 ](https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf)
 
 It covers hardening and security best practices for all regions related to:
 
-- Identity and Access Management (15 checks)
+- Identity and Access Management (24 checks)
 - Logging (8 checks)
-- Monitoring (16 checks)
-- Networking (4 checks)
+- Monitoring (15 checks)
+- Networking (5 checks)
 
 For a comprehesive list and resolution look at the guide on the link above.
 
@@ -95,7 +95,7 @@ USAGE:
 
 ```
 ## How to fix all WARNINGS:
- Check your report and fix the issues following all specific guidelines per check in https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
+ Check your report and fix the issues following all specific guidelines per check in https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf
 
 ## Screenshots
 
