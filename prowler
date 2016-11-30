@@ -19,14 +19,12 @@
 # All there legs and lashes
 # I've just got to find my way...
 
-# Safety feature: exit script if error is returned, or if variables not set.
 # Exit if a pipeline results in an error.
 # set -ue
 # set -o pipefail
 # set -vx
-
 # Exits if any error is found
-#set -e
+# set -e
 
 # Colors
 NORMAL="[0;39m"
@@ -207,7 +205,7 @@ printCurrentDate(){
 }
 
 printColorsCode(){
-  echo -e "\nColors Code for results: $NOTICE INFORMATIVE$NORMAL,$OK OK (RECOMMENDED VALUE)$NORMAL, $BAD CRITICAL (FIX REQUIRED)$NORMAL  \n"
+  echo -e "\nColors Code for results: $NOTICE INFORMATIVE$NORMAL,$OK OK (RECOMMENDED VALUE)$NORMAL, $BAD WARNING (FIX REQUIRED)$NORMAL  \n"
 }
 
 # Generate Credential Report
@@ -235,6 +233,20 @@ REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
   --output text \
   --profile $PROFILE \
   --region $REGION)
+
+infoReferenceLong(){
+  # Report review note:
+  echo -e "  $BLUE     \n*********************************$NORMAL"
+  echo -e "  $NOTICE  For more information: $NORMAL"
+  echo -e "  $NOTICE  https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf$NORMAL"
+  echo -e "  $NOTICE  For bugs or feedback: $NORMAL"
+  echo -e "  $NOTICE  https://github.com/Alfresco/aws-cis-security-benchmark/issues$NORMAL"
+}
+
+infoReferenceShort(){
+  # Report review note:
+  echo -e "     $NOTICE http://bit.ly/2g3PEf7$NORMAL"
+}
 
 prowlerBanner
 printCurrentDate
@@ -264,30 +276,37 @@ check12(){
       echo -e "     List of users with Password enabled but MFA disabled:"
       echo -e "     $RED $COMMAND12 $NORMAL"
     else
-      echo -e "     $OK CORRECT! No users found with Password enabled and MFA disabled $NORMAL"
+      echo -e "     $OK OK! No users found with Password enabled and MFA disabled $NORMAL"
     fi
 }
 
 check13(){
   TITLE13="$BLUE 1.3$NORMAL Ensure credentials unused for 90 days or greater are disabled (Scored)"
-  COMMAND13=$(
-    for i in $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED; do
-      cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$5 }' |grep $i| grep false | awk '{ print $1 }'|tr '\n' ' ';
-    done)
-  # list of users that have used password
-  USERS_PASSWORD_USED=$($AWSCLI iam list-users --query "Users[?PasswordLastUsed].UserName" --output text --profile $PROFILE --region $REGION)
   echo -e "\n$TITLE13 "
-    # look for users with a password last used more or equal to 90 days
-    echo -e "     User list: "
-    for i in $USERS_PASSWORD_USED; do
-      DATEUSED=$($AWSCLI iam list-users --query "Users[?UserName=='$i'].PasswordLastUsed" --output text --profile $PROFILE --region $REGION | cut -d'T' -f1)
-      HOWOLDER=$(how_older_from_today $DATEUSED)
-      if [ $HOWOLDER -gt "90" ];then
-        echo "     $RED $i $NORMAL"
-      else
-        echo "     $OK OK, no users found with unused credentials for 90 days or greater $NORMAL"
-      fi
-    done
+  COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$4 }' |grep true | awk '{ print $1 }')
+  if [ $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED ]; then
+    COMMAND13=$(
+    for i in $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED; do
+      cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$5 }' |grep $i| awk '{ print $1 }'|tr '\n' ' ';
+    done)
+    # list of users that have used password
+    USERS_PASSWORD_USED=$($AWSCLI iam list-users --query "Users[?PasswordLastUsed].UserName" --output text --profile $PROFILE --region $REGION)
+    if [ $USERS_PASSWORD_USED ]; then
+      # look for users with a password last used more or equal to 90 days
+      for i in $USERS_PASSWORD_USED; do
+        DATEUSED=$($AWSCLI iam list-users --query "Users[?UserName=='$i'].PasswordLastUsed" --output text --profile $PROFILE --region $REGION | cut -d'T' -f1)
+        HOWOLDER=$(how_older_from_today $DATEUSED)
+        if [ $HOWOLDER -gt "90" ];then
+          echo "     $RED $i $NORMAL"
+        else
+          echo "     $OK OK! User \"$i\" found with unused credentials for 90 days or greater $NORMAL"
+        fi
+      done
+    fi
+  else
+      echo "     $OK OK! No users found with password enabled $NORMAL"
+  fi
+
 }
 
 check14(){
@@ -321,9 +340,9 @@ check15(){
   COMMAND15=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireUppercaseCharacters') # must be true
   echo -e "\n$TITLE15 "
   if [[ $COMMAND15 == "true" ]];then
-    echo -e "     $OK OK $NORMAL"
+    echo -e "     $OK OK! $NORMAL"
   else
-    echo -e "     $RED FALSE $NORMAL"
+    echo -e "     $RED WARNING! $NORMAL"
   fi
 }
 
@@ -332,9 +351,9 @@ check16(){
   COMMAND16=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireLowercaseCharacters') # must be true
   echo -e "\n$TITLE16 "
   if [[ $COMMAND16 == "true" ]];then
-    echo -e "     $OK OK $NORMAL"
+    echo -e "     $OK OK! $NORMAL"
   else
-    echo -e "     $RED FALSE $NORMAL"
+    echo -e "     $RED WARNING! $NORMAL"
   fi
 }
 
@@ -343,9 +362,9 @@ check17(){
   COMMAND17=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireSymbols') # must be true
   echo -e "\n$TITLE17 "
   if [[ $COMMAND17 == "true" ]];then
-    echo -e "     $OK OK $NORMAL"
+    echo -e "     $OK OK! $NORMAL"
   else
-    echo -e "     $RED FALSE $NORMAL"
+    echo -e "     $RED WARNING! $NORMAL"
   fi
 }
 
@@ -354,9 +373,9 @@ check18(){
   COMMAND18=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireNumbers') # must be true
   echo -e "\n$TITLE18 "
   if [[ $COMMAND18 == "true" ]];then
-    echo -e "     $OK OK $NORMAL"
+    echo -e "     $OK OK! $NORMAL"
   else
-    echo -e "     $RED FALSE $NORMAL"
+    echo -e "     $RED WARNING! $NORMAL"
   fi
 }
 
@@ -365,9 +384,9 @@ check19(){
   COMMAND19=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.MinimumPasswordLength')
   echo -e "\n$TITLE19 "
   if [[ $COMMAND19 -gt "13" ]];then
-    echo -e "     $OK OK $NORMAL"
+    echo -e "     $OK OK! $NORMAL"
   else
-    echo -e "     $RED FALSE $NORMAL"
+    echo -e "     $RED WARNING! $NORMAL"
   fi
 }
 
@@ -377,7 +396,7 @@ check110(){
   echo -e "\n$TITLE110 "
   if [[ $COMMAND110 ]];then
     if [[ $COMMAND110 -gt "23" ]];then
-      echo -e "     $OK OK $NORMAL"
+      echo -e "     $OK OK! $NORMAL"
     else
       echo -e "     $RED WARNING! It is not set or it is set lower than 24 $NORMAL"
     fi
@@ -392,10 +411,10 @@ check111(){
   echo -e "\n$TITLE111 "
   if [[ $COMMAND111 ]];then
     if [ $COMMAND111 == "90" ];then
-      echo -e "     $OK OK $NORMAL"
+      echo -e "     $OK OK! $NORMAL"
     fi
   else
-    echo -e "     $RED FALSE $NORMAL"
+    echo -e "     $RED WARNING! $NORMAL"
   fi
 }
 
@@ -406,40 +425,56 @@ check112(){
   ROOTKEY2=$(cat $TEMP_REPORT_FILE |grep root_account|awk -F',' '{ print $14 }')
   echo -e "\n$TITLE112 "
   if [ $ROOTKEY1 == "false" ];then
-    echo -e "     $OK OK $NORMAL No access key 1 found "
+    echo -e "     $OK OK! $NORMAL No access key 1 found "
   else
     echo -e "     $RED Found access key 1 $NORMAL"
   fi
   if [ $ROOTKEY2 == "false" ];then
-    echo -e "     $OK OK $NORMAL No access key 2 found "
+    echo -e "     $OK OK! $NORMAL No access key 2 found "
   else
     echo -e "     $RED Found access key 2 $NORMAL"
   fi
 }
 
 check113(){
-  TITLE113="$BLUE 1.13$NORMAL Ensure hardware MFA is enabled for the root account (Scored)"
-  COMMAND113=$($AWSCLI iam get-account-summary --profile $PROFILE --region $REGION |grep AccountMFAEnabled | awk -F":\ " '{ print $2 }'|sed 's/,//')
+  TITLE113="$BLUE 1.13$NORMAL Ensure MFA is enabled for the root account (Scored)"
+  COMMAND113=$($AWSCLI iam get-account-summary --profile $PROFILE --region $REGION |grep AccountMFAEnabled | awk -F': ' '{ print $2 }'|sed 's/,//')
   echo -e "\n$TITLE113"
   if [ $COMMAND113 == "1" ]; then
-    echo "     $OK OK $NORMAL *Virtual or HW MFA is enabled. "
+    echo "     $OK OK! $NORMAL Virtual MFA is enabled. "
   else
     echo "     $RED WARNING! MFA is not ENABLED for root account $NORMAL"
   fi
 }
 
 check114(){
-  TITLE114="$BLUE 1.14$NORMAL Ensure security questions are registered in the AWS account (Not Scored)"
-  # No command available
+  TITLE114="$BLUE 1.14$NORMAL Ensure hardware MFA is enabled for the root account (Scored)"
+  COMMAND113=$($AWSCLI iam get-account-summary --profile $PROFILE --region $REGION |grep AccountMFAEnabled | awk -F': ' '{ print $2 }'|sed 's/,//')
   echo -e "\n$TITLE114"
+  if [ $COMMAND113 == "1" ]; then
+    COMMAND114=$($AWSCLI iam list-virtual-mfa-devices --profile $PROFILE --region $REGION --query 'VirtualMFADevices' --output text|grep :root |wc -l)
+    if [ $COMMAND114 == "1" ]; then
+      echo "     $OK OK! $NORMAL Virtual MFA is enabled. "
+    else
+      echo "     $OK OK! $NORMAL Hardware MFA is enabled. "
+    fi
+  else
+    echo "     $RED WARNING! MFA is not ENABLED for root account $NORMAL"
+  fi
+}
+
+check115(){
+  TITLE115="$BLUE 1.15$NORMAL Ensure security questions are registered in the AWS account (Not Scored)"
+  # No command available
+  echo -e "\n$TITLE115"
   echo -e "     $NOTICE No command available for check 1.14"
   echo -e "      Login to the AWS Console as root, click on the Account "
   echo -e "      Name -> My Account -> Configure Security Challenge Questions $NORMAL"
 }
 
-check115(){
-  TITLE115="$BLUE 1.15$NORMAL Ensure IAM policies are attached only to groups or roles (Scored)"
-  echo -e "\n$TITLE115"
+check116(){
+  TITLE115="$BLUE 1.16$NORMAL Ensure IAM policies are attached only to groups or roles (Scored)"
+  echo -e "\n$TITLE116"
   LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text --profile $PROFILE --region $REGION)
   echo -e "      Users with policy attached to them instead to groups: (it may take few seconds...) "
   for user in $LIST_USERS;do
@@ -448,6 +483,135 @@ check115(){
       echo -e "     $RED $user $NORMAL"
     fi
   done
+}
+
+check117(){
+  TITLE117="$BLUE 1.17$NORMAL Enable detailed billing (Scored)"
+  # No command available
+  echo -e "\n$TITLE117 "
+  echo -e "     $NOTICE No command available for check 1.17"
+  echo -e "      See section 1.17 on the CIS Benchmark guide for details $NORMAL"
+  infoReferenceShort
+}
+
+check118(){
+  TITLE118="$BLUE 1.18$NORMAL Ensure IAM Master and IAM Manager roles are active (Scored)"
+  echo -e "\n$TITLE118 "
+  FINDMASTERANDMANAGER=$($AWSCLI iam list-roles --profile $PROFILE --region $REGION --query "Roles[*].{RoleName:RoleName}" --output text | grep -E 'Master|Manager'| tr '\n' ' ')
+  if [[ $FINDMASTERANDMANAGER ]];then
+    echo -e "     $NOTICE Found next roles as possible IAM Master and IAM Manager candidates: $NORMAL"
+    echo -e "     $NOTICE $FINDMASTERANDMANAGER $NORMAL"
+    echo -e "\n     $NOTICE INFO: run the commands below to check their policies with section 1.18 in the guide... $NORMAL"
+    for role in $FINDMASTERANDMANAGER;do
+      # find inline policies in found roles
+      INLINEPOLICIES=$($AWSCLI iam list-role-policies --role-name $role --profile $PROFILE --region $REGION --query "PolicyNames[*]" --output text)
+      for policy in $INLINEPOLICIES;do
+        echo "     $NOTICE $AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION$NORMAL"
+      done
+      # find attached policies in found roles
+      ATTACHEDPOLICIES=$($AWSCLI iam list-attached-role-policies --role-name $role --profile $PROFILE --region $REGION --query "AttachedPolicies[*]" --output text)
+      for policy in $ATTACHEDPOLICIES;do
+        echo "     $NOTICE $AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION$NORMAL"
+      done
+    done
+  else
+    echo -e "     $RED WARNING! IAM Master and IAM Manager roles not found$NORMAL"
+  fi
+}
+
+check119(){
+  TITLE119="$BLUE 1.19$NORMAL Maintain current contact details (Scored)"
+  # No command available
+  echo -e "\n$TITLE119 "
+  echo -e "     $NOTICE No command available for check 1.19"
+  echo -e "      See section 1.19 on the CIS Benchmark guide for details $NORMAL"
+  infoReferenceShort
+}
+
+check120(){
+  TITLE120="$BLUE 1.20$NORMAL Ensure security contact information is registered (Scored)"
+  # No command available
+  echo -e "\n$TITLE120 "
+  echo -e "     $NOTICE No command available for check 1.20"
+  echo -e "      See section 1.20 on the CIS Benchmark guide for details $NORMAL"
+  infoReferenceShort
+}
+
+check121(){
+  TITLE121="$BLUE 1.21$NORMAL Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
+  echo -e "\n$TITLE121 "
+  echo -e "     $NOTICE No command available for check 1.21"
+  echo -e "      See section 1.21 on the CIS Benchmark guide for details $NORMAL"
+  infoReferenceShort
+}
+
+check122(){
+  TITLE122="$BLUE 1.22$NORMAL Ensure a support role has been created to manage incidents with AWS Support (Scored)"
+  echo -e "\n$TITLE122 "
+  SUPPORTPOLICYARN=$($AWSCLI iam list-policies --query "Policies[?PolicyName == 'AWSSupportAccess'].Arn" --profile $PROFILE --region $REGION --output text)
+  if [[ $SUPPORTPOLICYARN ]];then
+    for policyarn in $SUPPORTPOLICYARN;do
+      POLICYTOSHOW=$($AWSCLI iam list-entities-for-policy --policy-arn $SUPPORTPOLICYARN --profile $PROFILE --region $REGION --output text)
+      if [[ $POLICYTOSHOW ]];then
+        echo -e "     $OK $POLICYTOSHOW $NORMAL"
+        echo -e "     $NOTICE Make sure your team can create a Support case with AWS $NORMAL"
+      else
+        echo -e "     $RED Support Policy not applied to any Group, User or Role $NORMAL"
+      fi
+    done
+  else
+    echo -e "     $RED WARNING! No Support Policy found$NORMAL"
+  fi
+}
+
+check123(){
+  TITLE123="$BLUE 1.23$NORMAL Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)"
+  echo -e "\n$TITLE123 "
+  LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text --profile $PROFILE --region $REGION)
+  # List of USERS with KEY1 last_used_date as N/A
+  LIST_USERS_KEY1_NA=$(for user in $LIST_USERS; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$11 }'|grep N/A |awk '{ print $1 }'; done)
+  LIST_USERS_KEY1_ACTIVE=$(for user in $LIST_USERS_KEY1_NA; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$9 }'|grep "true$"|awk '{ print $1 }'|sed 's/[:blank:]+/,/g' ; done)
+  if [[ $LIST_USERS_KEY1_ACTIVE ]]; then
+    echo -e "     $NOTICE List of users with Access Key 1 never used:$NORMAL"
+    echo -e "     $RED $LIST_USERS_KEY1_ACTIVE $NORMAL"
+  else
+    echo -e "     $OK No users found with Access Key 1 never used $NORMAL"
+  fi
+  # List of USERS with KEY2 last_used_date as N/A
+  LIST_USERS_KEY2_NA=$(for user in $LIST_USERS; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$16 }'|grep N/A |awk '{ print $1 }' ; done)
+  LIST_USERS_KEY2_ACTIVE=$(for user in $LIST_USERS_KEY2_NA; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$14 }'|grep "true$" |awk '{ print $1 }' ; done)
+  if [[ $LIST_USERS_KEY2_ACTIVE ]]; then
+    echo -e "     $NOTICE List of users with Access Key 2 never used:$NORMAL"
+    echo -e "     $RED $LIST_USERS_KEY2_ACTIVE $NORMAL"
+  else
+    echo -e "     $OK No users found with Access Key 2 never used $NORMAL"
+  fi
+}
+
+check124(){
+  TITLE124="$BLUE 1.24$NORMAL Ensure IAM policies that allow full \"*:*\" administrative privileges are not created (Scored)"
+  echo -e "\n$TITLE124"
+  LIST_CUSTOM_POLICIES=$($AWSCLI iam list-policies --output text --profile $PROFILE --region $REGION|grep 'arn:aws:iam::[0-9]\{12\}:'|awk '{ print $2 }')
+  if [[ $LIST_CUSTOM_POLICIES ]]; then
+    echo -e "     $NOTICE Looking for custom policies: (skipping default policies, it may take few seconds...)$NORMAL"
+    for policy in $LIST_CUSTOM_POLICIES; do
+      POLICY_VERSION=$($AWSCLI iam list-policies --profile $PROFILE --region $REGION --query 'Policies[*].[Arn,DefaultVersionId]' --output text|grep -w $policy |awk '{ print $2}')
+      POLICY_WITH_FULL=$($AWSCLI iam get-policy-version --output text --policy-arn $policy --version-id $POLICY_VERSION --query "PolicyVersion.Document.Statement[?Effect == 'Allow' && contains(Resource, '*') && contains (Action, '*')]" --profile $PROFILE --region $REGION)
+      if [[ $POLICY_WITH_FULL ]]; then
+        POLICIES_ALLOW_LIST="$POLICIES_ALLOW_LIST $policy"
+      fi
+    done
+    if [[ $POLICIES_ALLOW_LIST ]]; then
+      echo -e "     $NOTICE List of custom policies: $NORMAL"
+      for policy in $POLICIES_ALLOW_LIST; do
+        echo "     $RED $policy $NORMAL"
+      done
+    else
+        echo "     $OK No custom policy found that allow full \"*:*\" administrative privileges $NORMAL"
+    fi
+  else
+    echo "     $OK No custom policies found $NORMAL"
+  fi
 }
 
 check21(){
@@ -496,7 +660,7 @@ check23(){
       if [[ $CLOUDTRAILBUCKET_HASALLPERMISIONS ]];then
         echo -e "     $RED WARNING! check your $bucket CloudTrail bucket ACL and Policy!$NORMAL"
       else
-        echo -e "     $OK OK, Bucket $bucket is set correctly $NORMAL"
+        echo -e "     $OK OK! Bucket $bucket is set correctly $NORMAL"
       fi
     done
   else
@@ -550,7 +714,7 @@ check26(){
       for bucket in $CLOUDTRAILBUCKET;do
         CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket --profile $PROFILE --region $REGION --query 'LoggingEnabled.TargetBucket' --output text|grep -v None)
         if [[ $CLOUDTRAILBUCKET_LOGENABLED ]];then
-          echo -e "     $OK OK, it is enabled in $bucket $NORMAL"
+          echo -e "     $OK OK! It is enabled in $bucket $NORMAL"
         else
           echo -e "     $RED WARNING! access logging is not enabled in $bucket CloudTrail S3 bucket!$NORMAL"
         fi
@@ -568,7 +732,7 @@ check27(){
       for trail in $CLOUDTRAILNAME;do
         CLOUDTRAILENC_ENABLED=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --trail $trail --query 'trailList[*].KmsKeyId' --output text)
         if [[ $CLOUDTRAILENC_ENABLED ]];then
-          echo -e "     $OK OK, KMS key found for $trail $NORMAL"
+          echo -e "     $OK OK! KMS key found for $trail $NORMAL"
         else
           echo -e "     $RED WARNING! encryption is not enabled in your CloudTrail trail $trail, KMS key not found!$NORMAL"
         fi
@@ -587,7 +751,7 @@ check28(){
         for key in $CHECK_KMS_KEYLIST; do
           CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key --profile $PROFILE --region $regx --output text)
           if [[ $CHECK_KMS_KEY_ROTATION == "True" ]];then
-            echo -e "     $OK OK, Key $key in Region $regx is set correctly$NORMAL"
+            echo -e "     $OK OK! Key $key in Region $regx is set correctly$NORMAL"
           else
             echo -e "     $RED WARNING! Key $key in Region $regx is not set to rotate or Default KMS Key In Use!!$NORMAL"
           fi
@@ -605,7 +769,7 @@ check31(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep AccessDenied)
     if [[ $METRICFILTER_SET ]];then
-      echo -e "     $OK OK, CloudWatch group found, and metric filters for Access Denied enabled$NORMAL"
+      echo -e "     $OK OK! CloudWatch group found, and metric filters for Access Denied enabled$NORMAL"
     else
       echo -e "     $RED WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
     fi
@@ -621,7 +785,7 @@ check32(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'userIdentity.sessionContext.attributes.mfaAuthenticated.*true')
     if [[ $METRICFILTER_SET ]];then
-      echo -e "     $OK OK, CloudWatch group found, and metric filters for sign-in Console without MFA enabled$NORMAL"
+      echo -e "     $OK OK! CloudWatch group found, and metric filters for sign-in Console without MFA enabled$NORMAL"
     else
       echo -e "     $RED WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
     fi
@@ -637,7 +801,7 @@ check33(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION |grep -E 'userIdentity.*Root.*AwsServiceEvent')
     if [[ $METRICFILTER_SET ]];then
-      echo -e "     $OK OK, CloudWatch group found, and metric filters for usage of root account enabled$NORMAL"
+      echo -e "     $OK OK! CloudWatch group found, and metric filters for usage of root account enabled$NORMAL"
     else
       echo -e "     $RED WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
     fi
@@ -653,7 +817,7 @@ check34(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'DeleteGroupPolicy.*DeleteRolePolicy.*DeleteUserPolicy.*PutGroupPolicy.*PutRolePolicy.*PutUserPolicy.*CreatePolicy.*DeletePolicy.*CreatePolicyVersion.*DeletePolicyVersion.*AttachRolePolicy.*DetachRolePolicy.*AttachUserPolicy.*DetachUserPolicy.*AttachGroupPolicy.*DetachGroupPolicy')
     if [[ $METRICFILTER_SET ]];then
-      echo -e "     $OK OK, CloudWatch group found, and metric filters for IAM policy changes enabled$NORMAL"
+      echo -e "     $OK OK! CloudWatch group found, and metric filters for IAM policy changes enabled$NORMAL"
     else
       echo -e "     $RED WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
     fi
@@ -669,7 +833,7 @@ check35(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateTrail.*UpdateTrail.*DeleteTrail.*StartLogging.*StopLogging')
     if [[ $METRICFILTER_SET ]];then
-      echo -e "     $OK OK, CloudWatch group found, and metric filters for CloudTrail configuration changes enabled$NORMAL"
+      echo -e "     $OK OK! CloudWatch group found, and metric filters for CloudTrail configuration changes enabled$NORMAL"
     else
       echo -e "     $RED WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
     fi
@@ -685,7 +849,7 @@ check36(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'ConsoleLogin.*Failed')
     if [[ $METRICFILTER_SET ]];then
-      echo -e "     $OK OK, CloudWatch group found, and metric filters for usage of root account enabled$NORMAL"
+      echo -e "     $OK OK! CloudWatch group found, and metric filters for usage of root account enabled$NORMAL"
     else
       echo -e "     $RED WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
     fi
@@ -701,7 +865,7 @@ check37(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'kms.amazonaws.com.*DisableKey.*ScheduleKeyDeletion')
     if [[ $METRICFILTER_SET ]];then
-      echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
+      echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
       echo -e "     $RED WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
     fi
@@ -717,7 +881,7 @@ check38(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 's3.amazonaws.com.*PutBucketAcl.*PutBucketPolicy.*PutBucketCors.*PutBucketLifecycle.*PutBucketReplication.*DeleteBucketPolicy.*DeleteBucketCors.*DeleteBucketLifecycle.*DeleteBucketReplication')
     if [[ $METRICFILTER_SET ]];then
-      echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
+      echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
       echo -e "     $RED WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
     fi
@@ -733,7 +897,7 @@ check39(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'config.amazonaws.com.*StopConfigurationRecorder.*DeleteDeliveryChannel.*PutDeliveryChannel.*PutConfigurationRecorder')
     if [[ $METRICFILTER_SET ]];then
-      echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
+      echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
       echo -e "     $RED WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
     fi
@@ -749,7 +913,7 @@ check310(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'AuthorizeSecurityGroupIngress.*AuthorizeSecurityGroupEgress.*RevokeSecurityGroupIngress.*RevokeSecurityGroupEgress.*CreateSecurityGroup.*DeleteSecurityGroup')
     if [[ $METRICFILTER_SET ]];then
-      echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
+      echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
       echo -e "     $RED WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
     fi
@@ -765,7 +929,7 @@ check311(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateNetworkAcl.*CreateNetworkAclEntry.*DeleteNetworkAcl.*DeleteNetworkAclEntry.*ReplaceNetworkAclEntry.*ReplaceNetworkAclAssociation')
     if [[ $METRICFILTER_SET ]];then
-      echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
+      echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
       echo -e "     $RED WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
     fi
@@ -781,7 +945,7 @@ check312(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateCustomerGateway.*DeleteCustomerGateway.*AttachInternetGateway.*CreateInternetGateway.*DeleteInternetGateway.*DetachInternetGateway')
     if [[ $METRICFILTER_SET ]];then
-      echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
+      echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
       echo -e "     $RED WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
     fi
@@ -797,7 +961,7 @@ check313(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateRoute.*CreateRouteTable.*ReplaceRoute.*ReplaceRouteTableAssociation.*DeleteRouteTable.*DeleteRoute.*DisassociateRouteTable')
     if [[ $METRICFILTER_SET ]];then
-      echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
+      echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
       echo -e "     $RED WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
     fi
@@ -813,7 +977,7 @@ check314(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateVpc.*DeleteVpc.*ModifyVpcAttribute.*AcceptVpcPeeringConnection.*CreateVpcPeeringConnection.*DeleteVpcPeeringConnection.*RejectVpcPeeringConnection.*AttachClassicLinkVpc.*DetachClassicLinkVpc.*DisableVpcClassicLink.*EnableVpcClassicLink')
     if [[ $METRICFILTER_SET ]];then
-      echo -e "     $OK OK, CloudWatch group found, and metric filters enabled$NORMAL"
+      echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
       echo -e "     $RED WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
     fi
@@ -823,17 +987,8 @@ check314(){
 }
 
 check315(){
-  TITLE315="$BLUE 3.15$NORMAL Ensure security contact information is registered (Scored)"
-  # No command available
+  TITLE315="$BLUE 3.15$NORMAL Ensure appropriate subscribers to each SNS topic (Not Scored)"
   echo -e "\n$TITLE315 "
-  echo -e "     $NOTICE No command available for check 3.15"
-  echo -e "      Login to the AWS Console, click on My Account "
-  echo -e "      Go to Alternate Contacts -> make sure Security section is filled $NORMAL"
-}
-
-check316(){
-  TITLE316="$BLUE 3.16$NORMAL Ensure appropriate subscribers to each SNS topic (Not Scored)"
-  echo -e "\n$TITLE316 "
   for regx in $REGIONS; do
     TOPICS_LIST=$($AWSCLI sns list-topics --profile $PROFILE --region $regx --output text --query 'Topics[*].TopicArn')
     if [[ $TOPICS_LIST ]];then
@@ -864,7 +1019,7 @@ check41(){
         echo -e "     $RED Found Security Group: $SG open to 0.0.0.0/0 in Region $regx $NORMAL "
       done
     else
-      echo -e "     $OK OK, No Security Groups found in $regx with port 22 TCP open to 0.0.0.0/0 $NORMAL "
+      echo -e "     $OK OK! No Security Groups found in $regx with port 22 TCP open to 0.0.0.0/0 $NORMAL "
     fi
   done
 }
@@ -879,35 +1034,56 @@ check42(){
         echo -e "     $RED Found Security Group: $SG open to 0.0.0.0/0 in Region $regx $NORMAL "
       done
     else
-      echo -e "     $OK OK, No Security Groups found in $regx with port 3389 TCP open to 0.0.0.0/0 $NORMAL "
+      echo -e "     $OK OK! No Security Groups found in $regx with port 3389 TCP open to 0.0.0.0/0 $NORMAL "
     fi
   done
 }
 
 check43(){
-  TITLE43="$BLUE 4.3$NORMAL Ensure VPC Flow Logging is Enabled in all Applicable Regions (Scored)"
+  TITLE43="$BLUE 4.3$NORMAL Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
   echo -e "\n$TITLE43 "
   for regx in $REGIONS; do
     CHECK_FL=$($AWSCLI ec2 describe-flow-logs --profile $PROFILE --region $regx --query 'FlowLogs[?FlowLogStatus==`ACTIVE`].LogGroupName' --output text)
     if [[ $CHECK_FL ]];then
       for FL in $CHECK_FL;do
-        echo -e "     $OK OK, VPCFlowLog is enabled for LogGroupName: $FL in Region $regx $NORMAL "
+        echo -e "     $OK OK! VPCFlowLog is enabled for LogGroupName: $FL in Region $regx $NORMAL "
       done
     else
-      echo -e "     $RED WARNING! no VPCFlowLog has been found in Region $regx $NORMAL "
+      echo -e "     $RED WARNING! No VPCFlowLog has been found in Region $regx $NORMAL "
     fi
   done
 }
 
 check44(){
-  TITLE44="$BLUE 4.4$NORMAL Ensure the default security group restricts all traffic (Scored)"
+  TITLE44="$BLUE 4.4$NORMAL Ensure the default security group of every VPC restricts all traffic (Scored)"
   echo -e "\n$TITLE44 "
   for regx in $REGIONS; do
     CHECK_SGDEFAULT=$($AWSCLI ec2 describe-security-groups --profile $PROFILE --region $regx --filters Name=group-name,Values='default' --query 'SecurityGroups[*].{IpPermissions:IpPermissions,IpPermissionsEgress:IpPermissionsEgress,GroupId:GroupId}' --output text |grep 0.0.0.0)
     if [[ $CHECK_SGDEFAULT ]];then
       echo -e "     $RED WARNING! Default Security Groups found that allow 0.0.0.0 IN or OUT traffic in Region $regx $NORMAL "
     else
-      echo -e "     $OK OK, no Default Security Groups open to 0.0.0.0 found in Region $regx $NORMAL "
+      echo -e "     $OK OK! No Default Security Groups open to 0.0.0.0 found in Region $regx $NORMAL "
+    fi
+  done
+}
+
+check45(){
+  #set -xe
+  TITLE45="$BLUE 4.5$NORMAL Ensure routing tables for VPC peering are \"least access\" (Not Scored)"
+  echo -e "\n$TITLE45 "
+  echo -e "     $NOTICE Looking for VPC peering in all regions... $NORMAL "
+  for regx in $REGIONS; do
+    LIST_OF_VPCS_PEERING_CONNECTIONS=$($AWSCLI ec2 describe-vpc-peering-connections --output text --profile $PROFILE --region $regx --query 'VpcPeeringConnections[*].VpcPeeringConnectionId')
+    if [[ $LIST_OF_VPCS_PEERING_CONNECTIONS ]];then
+      echo -e "     $NOTICE $regx: $LIST_OF_VPCS_PEERING_CONNECTIONS, review its routing tables $NORMAL "
+      #LIST_OF_VPCS=$($AWSCLI ec2 describe-vpcs --profile $PROFILE --region $regx --query 'Vpcs[*].VpcId' --output text)
+      #aws ec2 describe-route-tables --filter "Name=vpc-id,Values=vpc-0213e864" --query "RouteTables[*].{RouteTableId:RouteTableId, VpcId:VpcId, Routes:Routes, AssociatedSubnets:Associations[*].SubnetId}" --profile $PROFILE --region $regx
+      # for vpc in $LIST_OF_VPCS; do
+      #   VPCS_WITH_PEERING=$($AWSCLI ec2 describe-route-tables --filter "Name=vpc-id,Values=$vpc" --profile $PROFILE --region $regx --query "RouteTables[*].{RouteTableId:RouteTableId, VpcId:VpcId, Routes:Routes, AssociatedSubnets:Associations[*].SubnetId}" |grep GatewayId|grep pcx-)
+      # done
+      #echo $VPCS_WITH_PEERING
+    else
+      echo -e "     $OK $regx: No VPC peering found $NORMAL "
     fi
   done
 }
@@ -930,6 +1106,15 @@ callCheck(){
       check113) check113;cleanTemp;exit;;
       check114) check114;cleanTemp;exit;;
       check115) check115;cleanTemp;exit;;
+      check116) check116;cleanTemp;exit;;
+      check117) check117;cleanTemp;exit;;
+      check118) check118;cleanTemp;exit;;
+      check119) check119;cleanTemp;exit;;
+      check120) check120;cleanTemp;exit;;
+      check121) check121;cleanTemp;exit;;
+      check122) check122;cleanTemp;exit;;
+      check123) check123;cleanTemp;exit;;
+      check124) check124;cleanTemp;exit;;
       check21) check21;cleanTemp;exit;;
       check22) check22;cleanTemp;exit;;
       check23) check23;cleanTemp;exit;;
@@ -953,15 +1138,15 @@ callCheck(){
       check313) check313;cleanTemp;exit;;
       check314) check314;cleanTemp;exit;;
       check315) check315;cleanTemp;exit;;
-      check316) check316;cleanTemp;exit;;
       check41) check41;cleanTemp;exit;;
       check42) check42;cleanTemp;exit;;
       check43) check43;cleanTemp;exit;;
       check44) check44;cleanTemp;exit;;
-      check1) check11;check12;check13;check14;check15;check16;check17;check18;check19;check110;check111;check12;check13;check14;check15;cleanTemp;exit;;
+      check45) check45;cleanTemp;exit;;
+      check1) check11;check12;check13;check14;check15;check16;check17;check18;check19;check110;check111;check112;check113;check114;check115;check116;check117;check118;check119;check120;check121;check122;check123;check124;cleanTemp;exit;;
       check2) check21;check22;check23;check24;check25;check26;check27;check28;cleanTemp;exit;;
-      check3) check31;check32;check33;check34;check35;check36;check37;check38;check39;check310;check311;check312;check313;check314;check315;check316;cleanTemp;exit;;
-      check4) check41;check42;check43;check44;cleanTemp;exit;;
+      check3) check31;check32;check33;check34;check35;check36;check37;check38;check39;check310;check311;check312;check313;check314;check315;cleanTemp;exit;;
+      check4) check41;check42;check43;check44;check45;cleanTemp;exit;;
       * ) echo -e "\n$RED ERROR! Use a valid check name (i.e. check41) $NORMAL\n";exit;;
     esac
   fi
@@ -986,6 +1171,12 @@ check112
 check113
 check114
 check115
+check119
+check120
+check121
+check122
+check123
+check124
 
 TITLE2="$BLUE 2 Logging ********************************************************$NORMAL"
 echo -e "\n\n$TITLE2 "
@@ -1016,7 +1207,6 @@ check312
 check313
 check314
 check315
-check316
 
 TITLE4="$BLUE 4 Networking **************************************************$NORMAL"
 echo -e "\n\n$TITLE4 "
@@ -1024,9 +1214,7 @@ check41
 check42
 check43
 check44
+check45
 
-# Report review note:
-echo -e "\n$BLUE - For more information and reference:$NORMAL"
-echo -e "  $NOTICE https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf$NORMAL"
-
+infoReferenceLong
 cleanTemp
