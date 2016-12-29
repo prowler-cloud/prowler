@@ -674,7 +674,7 @@ check24(){
   LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
   if [[ $LIST_OF_TRAILS ]];then
     for trail in $LIST_OF_TRAILS;do
-      TRAIL_REGION=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*]' --output text | grep $trail | awk '{ print $3}')
+      TRAIL_REGION=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*]' --output text | grep $trail | awk '{ print $4}')
       LATESTDELIVERY_TIMESTAMP=$($AWSCLI cloudtrail get-trail-status --name $trail --profile $PROFILE --region $TRAIL_REGION --query 'LatestCloudWatchLogsDeliveryTime' --output text|grep -v None)
       if [[ ! $LATESTDELIVERY_TIMESTAMP ]];then
         echo -e "     $RED $trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)$NORMAL"
