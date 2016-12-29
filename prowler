@@ -673,7 +673,7 @@ check24(){
   echo -e "\n$TITLE24"
   LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
   if [[ $LIST_OF_TRAILS ]];then
-    for trail in $LIST_OF_TRAILS
+    for trail in $LIST_OF_TRAILS;do
       TRAIL_REGION=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --trail-name-list "$trail" --query 'trailList[*].HomeRegion' --output text)
       LATESTDELIVERY_TIMESTAMP=$($AWSCLI cloudtrail get-trail-status --name $trail --profile $PROFILE --region $TRAIL_REGION --query 'LatestCloudWatchLogsDeliveryTime' --output text|grep -v None)
       if [[ ! $LATESTDELIVERY_TIMESTAMP ]];then
