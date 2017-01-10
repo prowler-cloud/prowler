@@ -746,20 +746,29 @@ check28(){
   TITLE28="$BLUE 2.8$NORMAL Ensure rotation for customer created CMKs is enabled (Scored)"
   echo -e "\n$TITLE28"
   for regx in $REGIONS; do
-    CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys --profile $PROFILE --region $regx --output text --query 'Keys[*].KeyId')
+  CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys --profile $PROFILE --region $regx --output text --query 'Keys[*].KeyId')
     if [[ $CHECK_KMS_KEYLIST ]];then
-        for key in $CHECK_KMS_KEYLIST; do
-          CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key --profile $PROFILE --region $regx --output text)
-          if [[ $CHECK_KMS_KEY_ROTATION == "True" ]];then
-            echo -e "     $OK OK! Key $key in Region $regx is set correctly$NORMAL"
+      for key in $CHECK_KMS_KEYLIST; do
+        CHECK_KMS_KEY_TYPE=$($AWSCLI kms describe-key --key-id $key --profile $PROFILE --region $regx --query 'KeyMetadata.Origin' | sed 's/["]//g')
+          if [[ $CHECK_KMS_KEY_TYPE == "EXTERNAL" ]];then
+            echo -e "     $BLUE Key $key in Region $regx Customer Uploaded Key Material.$NORMAL"
           else
-            echo -e "     $RED WARNING! Key $key in Region $regx is not set to rotate or Default KMS Key In Use!!$NORMAL"
+            CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key --profile $PROFILE --region $regx --output text)
+            CHECK_KMS_DEFAULT_KEY=$($AWSCLI kms describe-key --key-id $key --profile $PROFILE --region $regx --query 'KeyMetadata.Description' | sed -n '/Default master key that protects my /p')
+              if [[ $CHECK_KMS_KEY_ROTATION == "True" ]];then
+                    echo -e "     $OK OK! Key $key in Region $regx is set correctly$NORMAL"                     
+                  elif [[ $CHECK_KMS_KEY_ROTATION == "False" && $CHECK_KMS_DEFAULT_KEY ]];then
+                echo -e "     $NOTICE Region $regx key $key is an AWS default master key and cannot be deleted nor modified.$NORMAL"
+              else
+                echo -e "     $RED WARNING! Key $key in Region $regx is not set to rotate!!!$NORMAL"
+              fi
           fi
-        done
-    else
+      done
+
+  else
       echo -e "     $NOTICE Region $regx doesn't have encryption keys $NORMAL"
-    fi
-  done
+  fi
+  done 
 }
 
 check31(){
