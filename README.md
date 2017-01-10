@@ -436,6 +436,7 @@ Instead of using default policy SecurityAudit for the account you use for checks
             "kms:list*",
             "lambda:getpolicy",
             "lambda:listfunctions",
+            "logs:DescribeMetricFilters",
             "rds:describe*",
             "rds:downloaddblogfileportion",
             "rds:listtagsforresource",
