@@ -229,10 +229,7 @@ cleanTemp(){
 }
 
 # Get a list of all available AWS Regions
-REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
-  --output text \
-  --profile $PROFILE \
-  --region $REGION)
+REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' --output text)
 
 infoReferenceLong(){
   # Report review note:
@@ -675,7 +672,7 @@ check24(){
   if [[ $LIST_OF_TRAILS ]];then
     for trail in $LIST_OF_TRAILS;do
       TRAIL_REGION=$($AWSCLI cloudtrail describe-trails --trail-name-list "$trail" --query 'trailList[*].HomeRegion' --output text)
-      LATESTDELIVERY_TIMESTAMP=$($AWSCLI cloudtrail get-trail-status --name $trail --profile $PROFILE --region $TRAIL_REGION --query 'LatestCloudWatchLogsDeliveryTime' --output text|grep -v None)
+      LATESTDELIVERY_TIMESTAMP=$($AWSCLI cloudtrail get-trail-status --name $trail --region $TRAIL_REGION --query 'LatestCloudWatchLogsDeliveryTime' --output text|grep -v None)
       if [[ ! $LATESTDELIVERY_TIMESTAMP ]];then
         echo -e "     $RED $trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)$NORMAL"
       else
@@ -697,7 +694,7 @@ check25(){
   TITLE25="$BLUE 2.5$NORMAL Ensure AWS Config is enabled in all regions (Scored)"
   echo -e "\n$TITLE25"
   for regx in $REGIONS; do
-    CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice get-status --profile $PROFILE --region $regx | grep "recorder: ON")
+    CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice get-status --region $regx | grep "recorder: ON")
     if [[ $CHECK_AWSCONFIG_STATUS ]];then
       echo -e "     $OK Region $regx has AWS Config recorder: ON $NORMAL"
     else
@@ -746,15 +743,15 @@ check28(){
   TITLE28="$BLUE 2.8$NORMAL Ensure rotation for customer created CMKs is enabled (Scored)"
   echo -e "\n$TITLE28"
   for regx in $REGIONS; do
-  CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys --profile $PROFILE --region $regx --output text --query 'Keys[*].KeyId')
+  CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys --region $regx --output text --query 'Keys[*].KeyId')
     if [[ $CHECK_KMS_KEYLIST ]];then
       for key in $CHECK_KMS_KEYLIST; do
-        CHECK_KMS_KEY_TYPE=$($AWSCLI kms describe-key --key-id $key --profile $PROFILE --region $regx --query 'KeyMetadata.Origin' | sed 's/["]//g')
+        CHECK_KMS_KEY_TYPE=$($AWSCLI kms describe-key --key-id $key --region $regx --query 'KeyMetadata.Origin' | sed 's/["]//g')
           if [[ $CHECK_KMS_KEY_TYPE == "EXTERNAL" ]];then
             echo -e "     $BLUE Key $key in Region $regx Customer Uploaded Key Material.$NORMAL"
           else
-            CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key --profile $PROFILE --region $regx --output text)
-            CHECK_KMS_DEFAULT_KEY=$($AWSCLI kms describe-key --key-id $key --profile $PROFILE --region $regx --query 'KeyMetadata.Description' | sed -n '/Default master key that protects my /p')
+            CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key --region $regx --output text)
+            CHECK_KMS_DEFAULT_KEY=$($AWSCLI kms describe-key --key-id $key --region $regx --query 'KeyMetadata.Description' | sed -n '/Default master key that protects my /p')
               if [[ $CHECK_KMS_KEY_ROTATION == "True" ]];then
                     echo -e "     $OK OK! Key $key in Region $regx is set correctly$NORMAL"                     
                   elif [[ $CHECK_KMS_KEY_ROTATION == "False" && $CHECK_KMS_DEFAULT_KEY ]];then
@@ -999,10 +996,10 @@ check315(){
   TITLE315="$BLUE 3.15$NORMAL Ensure appropriate subscribers to each SNS topic (Not Scored)"
   echo -e "\n$TITLE315 "
   for regx in $REGIONS; do
-    TOPICS_LIST=$($AWSCLI sns list-topics --profile $PROFILE --region $regx --output text --query 'Topics[*].TopicArn')
+    TOPICS_LIST=$($AWSCLI sns list-topics --region $regx --output text --query 'Topics[*].TopicArn')
     if [[ $TOPICS_LIST ]];then
         for topic in $TOPICS_LIST; do
-          CHECK_TOPIC_LIST=$($AWSCLI sns list-subscriptions-by-topic --topic-arn $topic --profile $PROFILE --region $regx --query 'Subscriptions[*].{Endpoint:Endpoint,Protocol:Protocol}' --output text)
+          CHECK_TOPIC_LIST=$($AWSCLI sns list-subscriptions-by-topic --topic-arn $topic --region $regx --query 'Subscriptions[*].{Endpoint:Endpoint,Protocol:Protocol}' --output text)
           if [[ $CHECK_TOPIC_LIST ]]; then
             TOPIC_SHORT=$(echo $topic | awk -F: '{ print $7 }')
             echo -e "     $NOTICE Region $regx with Topic $TOPIC_SHORT: $NORMAL "
@@ -1022,7 +1019,7 @@ check41(){
   TITLE41="$BLUE 4.1$NORMAL Ensure no security groups allow ingress from 0.0.0.0/0 to port 22 (Scored)"
   echo -e "\n$TITLE41 "
   for regx in $REGIONS; do
-    SG_LIST=$($AWSCLI ec2 describe-security-groups --filters "Name=ip-permission.to-port,Values=22" --query 'SecurityGroups[?length(IpPermissions[?ToPort==`22` && contains(IpRanges[].CidrIp, `0.0.0.0/0`)]) > `0`].{GroupName: GroupName}' --profile $PROFILE --region $regx --output text)
+    SG_LIST=$($AWSCLI ec2 describe-security-groups --filters "Name=ip-permission.to-port,Values=22" --query 'SecurityGroups[?length(IpPermissions[?ToPort==`22` && contains(IpRanges[].CidrIp, `0.0.0.0/0`)]) > `0`].{GroupName: GroupName}' --region $regx --output text)
     if [[ $SG_LIST ]];then
       for SG in $SG_LIST;do
         echo -e "     $RED Found Security Group: $SG open to 0.0.0.0/0 in Region $regx $NORMAL "
@@ -1037,7 +1034,7 @@ check42(){
   TITLE42="$BLUE 4.2$NORMAL Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389 (Scored)"
   echo -e "\n$TITLE42 "
   for regx in $REGIONS; do
-    SG_LIST=$($AWSCLI ec2 describe-security-groups --filters "Name=ip-permission.to-port,Values=3389" --query 'SecurityGroups[?length(IpPermissions[?ToPort==`3389` && contains(IpRanges[].CidrIp, `0.0.0.0/0`)]) > `0`].{GroupName: GroupName}' --profile $PROFILE --region $regx --output text)
+    SG_LIST=$($AWSCLI ec2 describe-security-groups --filters "Name=ip-permission.to-port,Values=3389" --query 'SecurityGroups[?length(IpPermissions[?ToPort==`3389` && contains(IpRanges[].CidrIp, `0.0.0.0/0`)]) > `0`].{GroupName: GroupName}' --region $regx --output text)
     if [[ $SG_LIST ]];then
       for SG in $SG_LIST;do
         echo -e "     $RED Found Security Group: $SG open to 0.0.0.0/0 in Region $regx $NORMAL "
@@ -1052,7 +1049,7 @@ check43(){
   TITLE43="$BLUE 4.3$NORMAL Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
   echo -e "\n$TITLE43 "
   for regx in $REGIONS; do
-    CHECK_FL=$($AWSCLI ec2 describe-flow-logs --profile $PROFILE --region $regx --query 'FlowLogs[?FlowLogStatus==`ACTIVE`].LogGroupName' --output text)
+    CHECK_FL=$($AWSCLI ec2 describe-flow-logs --region $regx --query 'FlowLogs[?FlowLogStatus==`ACTIVE`].LogGroupName' --output text)
     if [[ $CHECK_FL ]];then
       for FL in $CHECK_FL;do
         echo -e "     $OK OK! VPCFlowLog is enabled for LogGroupName: $FL in Region $regx $NORMAL "
@@ -1067,7 +1064,7 @@ check44(){
   TITLE44="$BLUE 4.4$NORMAL Ensure the default security group of every VPC restricts all traffic (Scored)"
   echo -e "\n$TITLE44 "
   for regx in $REGIONS; do
-    CHECK_SGDEFAULT=$($AWSCLI ec2 describe-security-groups --profile $PROFILE --region $regx --filters Name=group-name,Values='default' --query 'SecurityGroups[*].{IpPermissions:IpPermissions,IpPermissionsEgress:IpPermissionsEgress,GroupId:GroupId}' --output text |grep 0.0.0.0)
+    CHECK_SGDEFAULT=$($AWSCLI ec2 describe-security-groups --region $regx --filters Name=group-name,Values='default' --query 'SecurityGroups[*].{IpPermissions:IpPermissions,IpPermissionsEgress:IpPermissionsEgress,GroupId:GroupId}' --output text |grep 0.0.0.0)
     if [[ $CHECK_SGDEFAULT ]];then
       echo -e "     $RED WARNING! Default Security Groups found that allow 0.0.0.0 IN or OUT traffic in Region $regx $NORMAL "
     else
@@ -1082,13 +1079,13 @@ check45(){
   echo -e "\n$TITLE45 "
   echo -e "     $NOTICE Looking for VPC peering in all regions... $NORMAL "
   for regx in $REGIONS; do
-    LIST_OF_VPCS_PEERING_CONNECTIONS=$($AWSCLI ec2 describe-vpc-peering-connections --output text --profile $PROFILE --region $regx --query 'VpcPeeringConnections[*].VpcPeeringConnectionId')
+    LIST_OF_VPCS_PEERING_CONNECTIONS=$($AWSCLI ec2 describe-vpc-peering-connections --output text --region $regx --query 'VpcPeeringConnections[*].VpcPeeringConnectionId')
     if [[ $LIST_OF_VPCS_PEERING_CONNECTIONS ]];then
       echo -e "     $NOTICE $regx: $LIST_OF_VPCS_PEERING_CONNECTIONS, review its routing tables $NORMAL "
-      #LIST_OF_VPCS=$($AWSCLI ec2 describe-vpcs --profile $PROFILE --region $regx --query 'Vpcs[*].VpcId' --output text)
-      #aws ec2 describe-route-tables --filter "Name=vpc-id,Values=vpc-0213e864" --query "RouteTables[*].{RouteTableId:RouteTableId, VpcId:VpcId, Routes:Routes, AssociatedSubnets:Associations[*].SubnetId}" --profile $PROFILE --region $regx
+      #LIST_OF_VPCS=$($AWSCLI ec2 describe-vpcs --region $regx --query 'Vpcs[*].VpcId' --output text)
+      #aws ec2 describe-route-tables --filter "Name=vpc-id,Values=vpc-0213e864" --query "RouteTables[*].{RouteTableId:RouteTableId, VpcId:VpcId, Routes:Routes, AssociatedSubnets:Associations[*].SubnetId}" --region $regx
       # for vpc in $LIST_OF_VPCS; do
-      #   VPCS_WITH_PEERING=$($AWSCLI ec2 describe-route-tables --filter "Name=vpc-id,Values=$vpc" --profile $PROFILE --region $regx --query "RouteTables[*].{RouteTableId:RouteTableId, VpcId:VpcId, Routes:Routes, AssociatedSubnets:Associations[*].SubnetId}" |grep GatewayId|grep pcx-)
+      #   VPCS_WITH_PEERING=$($AWSCLI ec2 describe-route-tables --filter "Name=vpc-id,Values=$vpc" --region $regx --query "RouteTables[*].{RouteTableId:RouteTableId, VpcId:VpcId, Routes:Routes, AssociatedSubnets:Associations[*].SubnetId}" |grep GatewayId|grep pcx-)
       # done
       #echo $VPCS_WITH_PEERING
     else
