@@ -160,15 +160,15 @@ else
       exit
 fi
 
-if [[ "$#" -le 2 ]]; then
-  PROFILE=$DEFULT_AWS_PROFILE
-  REGION=$DEFAULT_AWS_REGION
-fi
+# if [[ "$#" -le 2 ]]; then
+#   PROFILE=$DEFULT_AWS_PROFILE
+#   REGION=$DEFAULT_AWS_REGION
+# fi
 
-if [[ ! -f ~/.aws/credentials ]]; then
-  echo -e "\n$RED ERROR!$NORMAL AWS credentials file not found (~/.aws/credentials). Run 'aws configure' first. \n"
-  return 1
-fi
+# if [[ ! -f ~/.aws/credentials ]]; then
+#   echo -e "\n$RED ERROR!$NORMAL AWS credentials file not found (~/.aws/credentials). Run 'aws configure' first. \n"
+#   return 1
+# fi
 
 # AWS-CLI variables
 AWSCLI=$(which aws)
@@ -196,7 +196,7 @@ echo -e " |_|$NORMAL$BLUE CIS based AWS Account Hardening Tool$NORMAL\n"
 # Get whoami in AWS, who is the user running this shell script
 getWhoami() {
   echo -e "\nThis report is being generated using credentials below:\n"
-  echo -e "AWS-CLI Profile: $NOTICE[$PROFILE]$NORMAL AWS Region: $NOTICE[$REGION]$NORMAL\n"
+  # echo -e "AWS-CLI Profile: $NOTICE[$PROFILE]$NORMAL AWS Region: $NOTICE[$REGION]$NORMAL\n"
   $AWSCLI sts get-caller-identity --output table
 }
 
