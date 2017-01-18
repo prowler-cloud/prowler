@@ -45,8 +45,8 @@ RED="[1;31m"
 YELLOW="[1;33m"
 WHITE="[1;37m"
 
-DEFULT_AWS_PROFILE="default"
-DEFAULT_AWS_REGION="us-east-1"
+# DEFULT_AWS_PROFILE="default"
+# DEFAULT_AWS_REGION="us-east-1"
 
 # Command usage menu
 usage(){
@@ -197,7 +197,7 @@ echo -e " |_|$NORMAL$BLUE CIS based AWS Account Hardening Tool$NORMAL\n"
 getWhoami() {
   echo -e "\nThis report is being generated using credentials below:\n"
   echo -e "AWS-CLI Profile: $NOTICE[$PROFILE]$NORMAL AWS Region: $NOTICE[$REGION]$NORMAL\n"
-  $AWSCLI sts get-caller-identity --output table --profile $PROFILE --region $REGION
+  $AWSCLI sts get-caller-identity --output table
 }
 
 printCurrentDate(){
@@ -211,7 +211,7 @@ printColorsCode(){
 # Generate Credential Report
 genCredReport() {
   echo -en '\nGenerating AWS IAM Credential Report...'
-  until $AWSCLI iam generate-credential-report --output text --query 'State' --profile $PROFILE --region $REGION |grep -m 1 "COMPLETE"; do
+  until $AWSCLI iam generate-credential-report --output text --query 'State' |grep -m 1 "COMPLETE"; do
     sleep 1
     echo -n "."
   done
@@ -220,7 +220,7 @@ genCredReport() {
 # Save report to a file, decode it, deletion at finish and after every single check, acb stands for AWS CIS Benchmark
 saveReport(){
   TEMP_REPORT_FILE=/tmp/.acb
-  $AWSCLI iam get-credential-report --query 'Content' --output text --profile $PROFILE --region $REGION | decode_report > $TEMP_REPORT_FILE
+  $AWSCLI iam get-credential-report --query 'Content' --output text | decode_report > $TEMP_REPORT_FILE
 }
 
 # Delete temporary report file
@@ -290,11 +290,11 @@ check13(){
       cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$5 }' |grep $i| awk '{ print $1 }'|tr '\n' ' ';
     done)
     # list of users that have used password
-    USERS_PASSWORD_USED=$($AWSCLI iam list-users --query "Users[?PasswordLastUsed].UserName" --output text --profile $PROFILE --region $REGION)
+    USERS_PASSWORD_USED=$($AWSCLI iam list-users --query "Users[?PasswordLastUsed].UserName" --output text)
     if [[ $USERS_PASSWORD_USED ]]; then
       # look for users with a password last used more or equal to 90 days
       for i in $USERS_PASSWORD_USED; do
-        DATEUSED=$($AWSCLI iam list-users --query "Users[?UserName=='$i'].PasswordLastUsed" --output text --profile $PROFILE --region $REGION | cut -d'T' -f1)
+        DATEUSED=$($AWSCLI iam list-users --query "Users[?UserName=='$i'].PasswordLastUsed" --output text | cut -d'T' -f1)
         HOWOLDER=$(how_older_from_today $DATEUSED)
         if [ $HOWOLDER -gt "90" ];then
           echo "     $RED $i $NORMAL"
@@ -337,7 +337,7 @@ check14(){
 
 check15(){
   TITLE15="$BLUE 1.5$NORMAL Ensure IAM password policy requires at least one uppercase letter (Scored)"
-  COMMAND15=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireUppercaseCharacters') # must be true
+  COMMAND15=$($AWSCLI iam get-account-password-policy --query 'PasswordPolicy.RequireUppercaseCharacters') # must be true
   echo -e "\n$TITLE15 "
   if [[ $COMMAND15 == "true" ]];then
     echo -e "     $OK OK! $NORMAL"
@@ -348,7 +348,7 @@ check15(){
 
 check16(){
   TITLE16="$BLUE 1.6$NORMAL Ensure IAM password policy require at least one lowercase letter (Scored)"
-  COMMAND16=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireLowercaseCharacters') # must be true
+  COMMAND16=$($AWSCLI iam get-account-password-policy --query 'PasswordPolicy.RequireLowercaseCharacters') # must be true
   echo -e "\n$TITLE16 "
   if [[ $COMMAND16 == "true" ]];then
     echo -e "     $OK OK! $NORMAL"
@@ -359,7 +359,7 @@ check16(){
 
 check17(){
   TITLE17="$BLUE 1.7$NORMAL Ensure IAM password policy require at least one symbol (Scored)"
-  COMMAND17=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireSymbols') # must be true
+  COMMAND17=$($AWSCLI iam get-account-password-policy --query 'PasswordPolicy.RequireSymbols') # must be true
   echo -e "\n$TITLE17 "
   if [[ $COMMAND17 == "true" ]];then
     echo -e "     $OK OK! $NORMAL"
@@ -370,7 +370,7 @@ check17(){
 
 check18(){
   TITLE18="$BLUE 1.8$NORMAL Ensure IAM password policy require at least one number (Scored)"
-  COMMAND18=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireNumbers') # must be true
+  COMMAND18=$($AWSCLI iam get-account-password-policy --query 'PasswordPolicy.RequireNumbers') # must be true
   echo -e "\n$TITLE18 "
   if [[ $COMMAND18 == "true" ]];then
     echo -e "     $OK OK! $NORMAL"
@@ -381,7 +381,7 @@ check18(){
 
 check19(){
   TITLE19="$BLUE 1.9$NORMAL Ensure IAM password policy requires minimum length of 14 or greater (Scored)"
-  COMMAND19=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.MinimumPasswordLength')
+  COMMAND19=$($AWSCLI iam get-account-password-policy --query 'PasswordPolicy.MinimumPasswordLength')
   echo -e "\n$TITLE19 "
   if [[ $COMMAND19 -gt "13" ]];then
     echo -e "     $OK OK! $NORMAL"
@@ -392,7 +392,7 @@ check19(){
 
 check110(){
   TITLE110="$BLUE 1.10$NORMAL Ensure IAM password policy prevents password reuse (Scored)"
-  COMMAND110=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.PasswordReusePrevention' --output text)
+  COMMAND110=$($AWSCLI iam get-account-password-policy --query 'PasswordPolicy.PasswordReusePrevention' --output text)
   echo -e "\n$TITLE110 "
   if [[ $COMMAND110 ]];then
     if [[ $COMMAND110 -gt "23" ]];then
@@ -407,7 +407,7 @@ check110(){
 
 check111(){
   TITLE111="$BLUE 1.11$NORMAL Ensure IAM password policy expires passwords within 90 days or less (Scored)"
-  COMMAND111=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION | grep MaxPasswordAge | awk -F: '{ print $2 }'|sed 's/\ //g'|sed 's/,/ /g')
+  COMMAND111=$($AWSCLI iam get-account-password-policy | grep MaxPasswordAge | awk -F: '{ print $2 }'|sed 's/\ //g'|sed 's/,/ /g')
   echo -e "\n$TITLE111 "
   if [[ $COMMAND111 ]];then
     if [ $COMMAND111 == "90" ];then
@@ -438,7 +438,7 @@ check112(){
 
 check113(){
   TITLE113="$BLUE 1.13$NORMAL Ensure MFA is enabled for the root account (Scored)"
-  COMMAND113=$($AWSCLI iam get-account-summary --profile $PROFILE --region $REGION |grep AccountMFAEnabled | awk -F': ' '{ print $2 }'|sed 's/,//')
+  COMMAND113=$($AWSCLI iam get-account-summary |grep AccountMFAEnabled | awk -F': ' '{ print $2 }'|sed 's/,//')
   echo -e "\n$TITLE113"
   if [ $COMMAND113 == "1" ]; then
     echo "     $OK OK! $NORMAL Virtual MFA is enabled. "
@@ -449,10 +449,10 @@ check113(){
 
 check114(){
   TITLE114="$BLUE 1.14$NORMAL Ensure hardware MFA is enabled for the root account (Scored)"
-  COMMAND113=$($AWSCLI iam get-account-summary --profile $PROFILE --region $REGION |grep AccountMFAEnabled | awk -F': ' '{ print $2 }'|sed 's/,//')
+  COMMAND113=$($AWSCLI iam get-account-summary |grep AccountMFAEnabled | awk -F': ' '{ print $2 }'|sed 's/,//')
   echo -e "\n$TITLE114"
   if [ $COMMAND113 == "1" ]; then
-    COMMAND114=$($AWSCLI iam list-virtual-mfa-devices --profile $PROFILE --region $REGION --query 'VirtualMFADevices' --output text|grep :root |wc -l)
+    COMMAND114=$($AWSCLI iam list-virtual-mfa-devices --query 'VirtualMFADevices' --output text|grep :root |wc -l)
     if [ $COMMAND114 == "1" ]; then
       echo "     $OK OK! $NORMAL Virtual MFA is enabled. "
     else
@@ -475,10 +475,10 @@ check115(){
 check116(){
   TITLE115="$BLUE 1.16$NORMAL Ensure IAM policies are attached only to groups or roles (Scored)"
   echo -e "\n$TITLE116"
-  LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text --profile $PROFILE --region $REGION)
+  LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text)
   echo -e "      Users with policy attached to them instead to groups: (it may take few seconds...) "
   for user in $LIST_USERS;do
-    USER_POLICY=$($AWSCLI iam list-attached-user-policies --output text --profile $PROFILE --region $REGION --user-name $user)
+    USER_POLICY=$($AWSCLI iam list-attached-user-policies --output text --user-name $user)
     if [[ $USER_POLICY ]]; then
       echo -e "     $RED $user $NORMAL"
     fi
@@ -497,21 +497,21 @@ check117(){
 check118(){
   TITLE118="$BLUE 1.18$NORMAL Ensure IAM Master and IAM Manager roles are active (Scored)"
   echo -e "\n$TITLE118 "
-  FINDMASTERANDMANAGER=$($AWSCLI iam list-roles --profile $PROFILE --region $REGION --query "Roles[*].{RoleName:RoleName}" --output text | grep -E 'Master|Manager'| tr '\n' ' ')
+  FINDMASTERANDMANAGER=$($AWSCLI iam list-roles --query "Roles[*].{RoleName:RoleName}" --output text | grep -E 'Master|Manager'| tr '\n' ' ')
   if [[ $FINDMASTERANDMANAGER ]];then
     echo -e "     $NOTICE Found next roles as possible IAM Master and IAM Manager candidates: $NORMAL"
     echo -e "     $NOTICE $FINDMASTERANDMANAGER $NORMAL"
     echo -e "\n     $NOTICE INFO: run the commands below to check their policies with section 1.18 in the guide... $NORMAL"
     for role in $FINDMASTERANDMANAGER;do
       # find inline policies in found roles
-      INLINEPOLICIES=$($AWSCLI iam list-role-policies --role-name $role --profile $PROFILE --region $REGION --query "PolicyNames[*]" --output text)
+      INLINEPOLICIES=$($AWSCLI iam list-role-policies --role-name $role --query "PolicyNames[*]" --output text)
       for policy in $INLINEPOLICIES;do
-        echo "     $NOTICE $AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION$NORMAL"
+        echo "     $NOTICE $AWSCLI iam get-role-policy --role-name $role --policy-name $policy$NORMAL"
       done
       # find attached policies in found roles
-      ATTACHEDPOLICIES=$($AWSCLI iam list-attached-role-policies --role-name $role --profile $PROFILE --region $REGION --query "AttachedPolicies[*]" --output text)
+      ATTACHEDPOLICIES=$($AWSCLI iam list-attached-role-policies --role-name $role --query "AttachedPolicies[*]" --output text)
       for policy in $ATTACHEDPOLICIES;do
-        echo "     $NOTICE $AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION$NORMAL"
+        echo "     $NOTICE $AWSCLI iam get-role-policy --role-name $role --policy-name $policy$NORMAL"
       done
     done
   else
@@ -548,10 +548,10 @@ check121(){
 check122(){
   TITLE122="$BLUE 1.22$NORMAL Ensure a support role has been created to manage incidents with AWS Support (Scored)"
   echo -e "\n$TITLE122 "
-  SUPPORTPOLICYARN=$($AWSCLI iam list-policies --query "Policies[?PolicyName == 'AWSSupportAccess'].Arn" --profile $PROFILE --region $REGION --output text)
+  SUPPORTPOLICYARN=$($AWSCLI iam list-policies --query "Policies[?PolicyName == 'AWSSupportAccess'].Arn" --output text)
   if [[ $SUPPORTPOLICYARN ]];then
     for policyarn in $SUPPORTPOLICYARN;do
-      POLICYTOSHOW=$($AWSCLI iam list-entities-for-policy --policy-arn $SUPPORTPOLICYARN --profile $PROFILE --region $REGION --output text)
+      POLICYTOSHOW=$($AWSCLI iam list-entities-for-policy --policy-arn $SUPPORTPOLICYARN --output text)
       if [[ $POLICYTOSHOW ]];then
         echo -e "     $OK $POLICYTOSHOW $NORMAL"
         echo -e "     $NOTICE Make sure your team can create a Support case with AWS $NORMAL"
@@ -567,7 +567,7 @@ check122(){
 check123(){
   TITLE123="$BLUE 1.23$NORMAL Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)"
   echo -e "\n$TITLE123 "
-  LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text --profile $PROFILE --region $REGION)
+  LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text)
   # List of USERS with KEY1 last_used_date as N/A
   LIST_USERS_KEY1_NA=$(for user in $LIST_USERS; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$11 }'|grep N/A |awk '{ print $1 }'; done)
   LIST_USERS_KEY1_ACTIVE=$(for user in $LIST_USERS_KEY1_NA; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$9 }'|grep "true$"|awk '{ print $1 }'|sed 's/[:blank:]+/,/g' ; done)
@@ -591,12 +591,12 @@ check123(){
 check124(){
   TITLE124="$BLUE 1.24$NORMAL Ensure IAM policies that allow full \"*:*\" administrative privileges are not created (Scored)"
   echo -e "\n$TITLE124"
-  LIST_CUSTOM_POLICIES=$($AWSCLI iam list-policies --output text --profile $PROFILE --region $REGION|grep 'arn:aws:iam::[0-9]\{12\}:'|awk '{ print $2 }')
+  LIST_CUSTOM_POLICIES=$($AWSCLI iam list-policies --output text|grep 'arn:aws:iam::[0-9]\{12\}:'|awk '{ print $2 }')
   if [[ $LIST_CUSTOM_POLICIES ]]; then
     echo -e "     $NOTICE Looking for custom policies: (skipping default policies, it may take few seconds...)$NORMAL"
     for policy in $LIST_CUSTOM_POLICIES; do
-      POLICY_VERSION=$($AWSCLI iam list-policies --profile $PROFILE --region $REGION --query 'Policies[*].[Arn,DefaultVersionId]' --output text|grep -w $policy |awk '{ print $2}')
-      POLICY_WITH_FULL=$($AWSCLI iam get-policy-version --output text --policy-arn $policy --version-id $POLICY_VERSION --query "PolicyVersion.Document.Statement[?Effect == 'Allow' && contains(Resource, '*') && contains (Action, '*')]" --profile $PROFILE --region $REGION)
+      POLICY_VERSION=$($AWSCLI iam list-policies --query 'Policies[*].[Arn,DefaultVersionId]' --output text|grep -w $policy |awk '{ print $2}')
+      POLICY_WITH_FULL=$($AWSCLI iam get-policy-version --output text --policy-arn $policy --version-id $POLICY_VERSION --query "PolicyVersion.Document.Statement[?Effect == 'Allow' && contains(Resource, '*') && contains (Action, '*')]")
       if [[ $POLICY_WITH_FULL ]]; then
         POLICIES_ALLOW_LIST="$POLICIES_ALLOW_LIST $policy"
       fi
@@ -617,10 +617,10 @@ check124(){
 check21(){
   TITLE21="$BLUE 2.1$NORMAL Ensure CloudTrail is enabled in all regions (Scored)"
   echo -e "\n$TITLE21"
-  LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
+  LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].Name' --output text)
   if [[ $LIST_OF_TRAILS ]];then
     for trail in $LIST_OF_TRAILS;do
-      MULTIREGION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].IsMultiRegionTrail' --output text --trail-name-list $trail)
+      MULTIREGION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].IsMultiRegionTrail' --output text --trail-name-list $trail)
       if [[ $MULTIREGION_TRAIL_STATUS == 'False' ]];then
         echo -e "     $RED WARNING! $trail trail in $REGION is not enabled in multi region mode$NORMAL"
       else
@@ -635,10 +635,10 @@ check21(){
 check22(){
   TITLE22="$BLUE 2.2$NORMAL Ensure CloudTrail log file validation is enabled (Scored)"
   echo -e "\n$TITLE22"
-  LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
+  LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].Name' --output text)
   if [[ $LIST_OF_TRAILS ]];then
     for trail in $LIST_OF_TRAILS;do
-      LOGFILEVALIDATION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].LogFileValidationEnabled' --output text --trail-name-list $trail)
+      LOGFILEVALIDATION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].LogFileValidationEnabled' --output text --trail-name-list $trail)
       if [[ $LOGFILEVALIDATION_TRAIL_STATUS == 'False' ]];then
         echo -e "     $RED WARNING! $trail trail in $REGION has not log file validation enabled$NORMAL"
       else
@@ -653,10 +653,10 @@ check22(){
 check23(){
   TITLE23="$BLUE 2.3$NORMAL Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)"
   echo -e "\n$TITLE23"
-  CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text --profile $PROFILE --region $REGION)
+  CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text)
   if [[ $CLOUDTRAILBUCKET ]];then
     for bucket in $CLOUDTRAILBUCKET;do
-      CLOUDTRAILBUCKET_HASALLPERMISIONS=$($AWSCLI s3api get-bucket-acl --bucket $bucket --query 'Grants[?Grantee.URI==`http://acs.amazonaws.com/groups/global/AllUsers`]' --profile $PROFILE --region $REGION --output text)
+      CLOUDTRAILBUCKET_HASALLPERMISIONS=$($AWSCLI s3api get-bucket-acl --bucket $bucket --query 'Grants[?Grantee.URI==`http://acs.amazonaws.com/groups/global/AllUsers`]' --output text)
       if [[ $CLOUDTRAILBUCKET_HASALLPERMISIONS ]];then
         echo -e "     $RED WARNING! check your $bucket CloudTrail bucket ACL and Policy!$NORMAL"
       else
@@ -671,10 +671,10 @@ check23(){
 check24(){
   TITLE24="$BLUE 2.4$NORMAL Ensure CloudTrail trails are integrated with CloudWatch Logs (Scored)"
   echo -e "\n$TITLE24"
-  LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
+  LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].Name' --output text)
   if [[ $LIST_OF_TRAILS ]];then
     for trail in $LIST_OF_TRAILS;do
-      TRAIL_REGION=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --trail-name-list "$trail" --query 'trailList[*].HomeRegion' --output text)
+      TRAIL_REGION=$($AWSCLI cloudtrail describe-trails --trail-name-list "$trail" --query 'trailList[*].HomeRegion' --output text)
       LATESTDELIVERY_TIMESTAMP=$($AWSCLI cloudtrail get-trail-status --name $trail --profile $PROFILE --region $TRAIL_REGION --query 'LatestCloudWatchLogsDeliveryTime' --output text|grep -v None)
       if [[ ! $LATESTDELIVERY_TIMESTAMP ]];then
         echo -e "     $RED $trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)$NORMAL"
@@ -709,10 +709,10 @@ check25(){
 check26(){
   TITLE26="$BLUE 2.6$NORMAL Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)"
   echo -e "\n$TITLE26"
-  CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text --profile $PROFILE --region $REGION)
+  CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text)
     if [[ $CLOUDTRAILBUCKET ]];then
       for bucket in $CLOUDTRAILBUCKET;do
-        CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket --profile $PROFILE --region $REGION --query 'LoggingEnabled.TargetBucket' --output text|grep -v None)
+        CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket --query 'LoggingEnabled.TargetBucket' --output text|grep -v None)
         if [[ $CLOUDTRAILBUCKET_LOGENABLED ]];then
           echo -e "     $OK OK! It is enabled in $bucket $NORMAL"
         else
@@ -727,10 +727,10 @@ check26(){
 check27(){
   TITLE27="$BLUE 2.7$NORMAL Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)"
   echo -e "\n$TITLE27"
-  CLOUDTRAILNAME=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].Name' --output text --profile $PROFILE --region $REGION)
+  CLOUDTRAILNAME=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].Name' --output text)
     if [[ $CLOUDTRAILNAME ]];then
       for trail in $CLOUDTRAILNAME;do
-        CLOUDTRAILENC_ENABLED=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --trail $trail --query 'trailList[*].KmsKeyId' --output text)
+        CLOUDTRAILENC_ENABLED=$($AWSCLI cloudtrail describe-trails --trail $trail --query 'trailList[*].KmsKeyId' --output text)
         if [[ $CLOUDTRAILENC_ENABLED ]];then
           echo -e "     $OK OK! KMS key found for $trail $NORMAL"
         else
@@ -774,9 +774,9 @@ check28(){
 check31(){
   TITLE31="$BLUE 3.1$NORMAL Ensure a log metric filter and alarm exist for unauthorized API calls (Scored)"
   echo -e "\n$TITLE31 "
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep AccessDenied)
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --query 'metricFilters' | grep AccessDenied)
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK! CloudWatch group found, and metric filters for Access Denied enabled$NORMAL"
     else
@@ -790,9 +790,9 @@ check31(){
 check32(){
   TITLE32="$BLUE 3.2$NORMAL Ensure a log metric filter and alarm exist for Management Console sign-in without MFA (Scored)"
   echo -e "\n$TITLE32 "
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'userIdentity.sessionContext.attributes.mfaAuthenticated.*true')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --query 'metricFilters' | grep -E 'userIdentity.sessionContext.attributes.mfaAuthenticated.*true')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK! CloudWatch group found, and metric filters for sign-in Console without MFA enabled$NORMAL"
     else
@@ -806,9 +806,9 @@ check32(){
 check33(){
   TITLE33="$BLUE 3.3$NORMAL Ensure a log metric filter and alarm exist for usage of root account (Scored)"
   echo -e "\n$TITLE33 "
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION |grep -E 'userIdentity.*Root.*AwsServiceEvent')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP |grep -E 'userIdentity.*Root.*AwsServiceEvent')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK! CloudWatch group found, and metric filters for usage of root account enabled$NORMAL"
     else
@@ -822,9 +822,9 @@ check33(){
 check34(){
   TITLE34="$BLUE 3.4$NORMAL Ensure a log metric filter and alarm exist for IAM policy changes (Scored)"
   echo -e "\n$TITLE34 "
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'DeleteGroupPolicy.*DeleteRolePolicy.*DeleteUserPolicy.*PutGroupPolicy.*PutRolePolicy.*PutUserPolicy.*CreatePolicy.*DeletePolicy.*CreatePolicyVersion.*DeletePolicyVersion.*AttachRolePolicy.*DetachRolePolicy.*AttachUserPolicy.*DetachUserPolicy.*AttachGroupPolicy.*DetachGroupPolicy')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --query 'metricFilters' | grep -E 'DeleteGroupPolicy.*DeleteRolePolicy.*DeleteUserPolicy.*PutGroupPolicy.*PutRolePolicy.*PutUserPolicy.*CreatePolicy.*DeletePolicy.*CreatePolicyVersion.*DeletePolicyVersion.*AttachRolePolicy.*DetachRolePolicy.*AttachUserPolicy.*DetachUserPolicy.*AttachGroupPolicy.*DetachGroupPolicy')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK! CloudWatch group found, and metric filters for IAM policy changes enabled$NORMAL"
     else
@@ -838,9 +838,9 @@ check34(){
 check35(){
   TITLE35="$BLUE 3.5$NORMAL Ensure a log metric filter and alarm exist for CloudTrail configuration changes (Scored)"
   echo -e "\n$TITLE35 "
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateTrail.*UpdateTrail.*DeleteTrail.*StartLogging.*StopLogging')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --query 'metricFilters' | grep -E 'CreateTrail.*UpdateTrail.*DeleteTrail.*StartLogging.*StopLogging')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK! CloudWatch group found, and metric filters for CloudTrail configuration changes enabled$NORMAL"
     else
@@ -854,9 +854,9 @@ check35(){
 check36(){
   TITLE36="$BLUE 3.6$NORMAL Ensure a log metric filter and alarm exist for AWS Management Console authentication failures (Scored)"
   echo -e "\n$TITLE36 "
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'ConsoleLogin.*Failed')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --query 'metricFilters' | grep -E 'ConsoleLogin.*Failed')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK! CloudWatch group found, and metric filters for usage of root account enabled$NORMAL"
     else
@@ -870,9 +870,9 @@ check36(){
 check37(){
   TITLE37="$BLUE 3.7$NORMAL Ensure a log metric filter and alarm exist for disabling or scheduled deletion of customer created CMKs (Scored)"
   echo -e "\n$TITLE37 "
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'kms.amazonaws.com.*DisableKey.*ScheduleKeyDeletion')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --query 'metricFilters' | grep -E 'kms.amazonaws.com.*DisableKey.*ScheduleKeyDeletion')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
@@ -886,9 +886,9 @@ check37(){
 check38(){
   TITLE38="$BLUE 3.8$NORMAL Ensure a log metric filter and alarm exist for S3 bucket policy changes (Scored)"
   echo -e "\n$TITLE38 "
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 's3.amazonaws.com.*PutBucketAcl.*PutBucketPolicy.*PutBucketCors.*PutBucketLifecycle.*PutBucketReplication.*DeleteBucketPolicy.*DeleteBucketCors.*DeleteBucketLifecycle.*DeleteBucketReplication')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --query 'metricFilters' | grep -E 's3.amazonaws.com.*PutBucketAcl.*PutBucketPolicy.*PutBucketCors.*PutBucketLifecycle.*PutBucketReplication.*DeleteBucketPolicy.*DeleteBucketCors.*DeleteBucketLifecycle.*DeleteBucketReplication')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
@@ -902,9 +902,9 @@ check38(){
 check39(){
   TITLE39="$BLUE 3.9$NORMAL Ensure a log metric filter and alarm exist for AWS Config configuration changes (Scored)"
   echo -e "\n$TITLE39 "
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'config.amazonaws.com.*StopConfigurationRecorder.*DeleteDeliveryChannel.*PutDeliveryChannel.*PutConfigurationRecorder')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --query 'metricFilters' | grep -E 'config.amazonaws.com.*StopConfigurationRecorder.*DeleteDeliveryChannel.*PutDeliveryChannel.*PutConfigurationRecorder')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
@@ -918,9 +918,9 @@ check39(){
 check310(){
   TITLE310="$BLUE 3.10$NORMAL Ensure a log metric filter and alarm exist for security group changes (Scored)"
   echo -e "\n$TITLE310 "
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'AuthorizeSecurityGroupIngress.*AuthorizeSecurityGroupEgress.*RevokeSecurityGroupIngress.*RevokeSecurityGroupEgress.*CreateSecurityGroup.*DeleteSecurityGroup')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --query 'metricFilters' | grep -E 'AuthorizeSecurityGroupIngress.*AuthorizeSecurityGroupEgress.*RevokeSecurityGroupIngress.*RevokeSecurityGroupEgress.*CreateSecurityGroup.*DeleteSecurityGroup')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
@@ -934,9 +934,9 @@ check310(){
 check311(){
   TITLE311="$BLUE 3.11$NORMAL Ensure a log metric filter and alarm exist for changes to Network Access Control Lists (NACL) (Scored)"
   echo -e "\n$TITLE311 "
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateNetworkAcl.*CreateNetworkAclEntry.*DeleteNetworkAcl.*DeleteNetworkAclEntry.*ReplaceNetworkAclEntry.*ReplaceNetworkAclAssociation')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --query 'metricFilters' | grep -E 'CreateNetworkAcl.*CreateNetworkAclEntry.*DeleteNetworkAcl.*DeleteNetworkAclEntry.*ReplaceNetworkAclEntry.*ReplaceNetworkAclAssociation')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
@@ -950,9 +950,9 @@ check311(){
 check312(){
   TITLE312="$BLUE 3.12$NORMAL Ensure a log metric filter and alarm exist for changes to network gateways (Scored)"
   echo -e "\n$TITLE312 "
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateCustomerGateway.*DeleteCustomerGateway.*AttachInternetGateway.*CreateInternetGateway.*DeleteInternetGateway.*DetachInternetGateway')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --query 'metricFilters' | grep -E 'CreateCustomerGateway.*DeleteCustomerGateway.*AttachInternetGateway.*CreateInternetGateway.*DeleteInternetGateway.*DetachInternetGateway')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
@@ -966,9 +966,9 @@ check312(){
 check313(){
   TITLE313="$BLUE 3.13$NORMAL Ensure a log metric filter and alarm exist for route table changes (Scored)"
   echo -e "\n$TITLE313 "
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateRoute.*CreateRouteTable.*ReplaceRoute.*ReplaceRouteTableAssociation.*DeleteRouteTable.*DeleteRoute.*DisassociateRouteTable')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --query 'metricFilters' | grep -E 'CreateRoute.*CreateRouteTable.*ReplaceRoute.*ReplaceRouteTableAssociation.*DeleteRouteTable.*DeleteRoute.*DisassociateRouteTable')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
@@ -982,9 +982,9 @@ check313(){
 check314(){
   TITLE314="$BLUE 3.14$NORMAL Ensure a log metric filter and alarm exist for VPC changes (Scored)"
   echo -e "\n$TITLE314 "
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateVpc.*DeleteVpc.*ModifyVpcAttribute.*AcceptVpcPeeringConnection.*CreateVpcPeeringConnection.*DeleteVpcPeeringConnection.*RejectVpcPeeringConnection.*AttachClassicLinkVpc.*DetachClassicLinkVpc.*DisableVpcClassicLink.*EnableVpcClassicLink')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --query 'metricFilters' | grep -E 'CreateVpc.*DeleteVpc.*ModifyVpcAttribute.*AcceptVpcPeeringConnection.*CreateVpcPeeringConnection.*DeleteVpcPeeringConnection.*RejectVpcPeeringConnection.*AttachClassicLinkVpc.*DetachClassicLinkVpc.*DisableVpcClassicLink.*EnableVpcClassicLink')
     if [[ $METRICFILTER_SET ]];then
       echo -e "     $OK OK! CloudWatch group found, and metric filters enabled$NORMAL"
     else
