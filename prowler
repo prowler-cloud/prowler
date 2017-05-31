@@ -49,6 +49,7 @@ WHITE="[1;37m"
 PROFILE="default"
 REGION="us-east-1"
 FILTERREGION=""
+MAXITEMS=100
 
 # Command usage menu
 usage(){
@@ -59,12 +60,13 @@ usage(){
       -r <region>         specify an AWS region to direct API requests to (i.e.: us-east-1)
       -c <checknum>       specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1 or check3 for entire section 3)
       -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
+      -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
       -h                  this help
   "
   exit
 }
 
-while getopts "hp:r:c:f:" OPTION; do
+while getopts "hp:r:c:f:m:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -81,6 +83,9 @@ while getopts "hp:r:c:f:" OPTION; do
         ;;
      f )
         FILTERREGION=$OPTARG
+        ;;
+     m )
+        MAXITEMS=$OPTARG
         ;;
      : )
         echo -e "\n$RED ERROR!$NORMAL  -$OPTARG requires an argument\n"
@@ -1004,7 +1009,7 @@ check315(){
     TOPICS_LIST=$($AWSCLI sns list-topics --profile $PROFILE --region $regx --output text --query 'Topics[*].TopicArn')
     if [[ $TOPICS_LIST ]];then
         for topic in $TOPICS_LIST; do
-          CHECK_TOPIC_LIST=$($AWSCLI sns list-subscriptions-by-topic --topic-arn $topic --profile $PROFILE --region $regx --query 'Subscriptions[*].{Endpoint:Endpoint,Protocol:Protocol}' --output text)
+          CHECK_TOPIC_LIST=$($AWSCLI sns list-subscriptions-by-topic --topic-arn $topic --profile $PROFILE --region $regx --query 'Subscriptions[*].{Endpoint:Endpoint,Protocol:Protocol}' --output text --max-items $MAXITEMS | grep -v "None")
           if [[ $CHECK_TOPIC_LIST ]]; then
             TOPIC_SHORT=$(echo $topic | awk -F: '{ print $7 }')
             echo -e "     $NOTICE Region $regx with Topic $TOPIC_SHORT: $NORMAL "
