@@ -269,7 +269,7 @@ check12(){
   COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$4 }' |grep true | awk '{ print $1 }')
   COMMAND12=$(
     for i in $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED; do
-      cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$8 }' |grep $i| grep false | awk '{ print $1 }'|tr '\n' ' ';
+      cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$8 }' |grep -w $i| grep false | awk '{ print $1 }'|tr '\n' ' ';
     done)
   echo -e "\n$TITLE12"
     if [[ $COMMAND12 ]]; then
