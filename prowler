@@ -45,8 +45,9 @@ RED="[1;31m"
 YELLOW="[1;33m"
 WHITE="[1;37m"
 
-DEFULT_AWS_PROFILE="default"
-DEFAULT_AWS_REGION="us-east-1"
+# Set the defaults for these getopts variables
+PROFILE="default"
+REGION="us-east-1"
 
 # Command usage menu
 usage(){
@@ -158,11 +159,6 @@ elif [[ "$OSTYPE" == "cygwin" ]]; then
 else
       echo "Unknown Operating System"
       exit
-fi
-
-if [[ "$#" -le 2 ]]; then
-  PROFILE=$DEFULT_AWS_PROFILE
-  REGION=$DEFAULT_AWS_REGION
 fi
 
 if [[ ! -f ~/.aws/credentials ]]; then
