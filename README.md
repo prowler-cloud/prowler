@@ -86,12 +86,14 @@ pip install ansi2html
 ./prowler -h
 
 USAGE:
-      prowler -p <profile> -r <region> [ -v ] [ -h ]
+      prowler -p <profile> -r <region> [ -h ]
   Options:
-      -p <profile>  specify your AWS profile to use (i.e.: default)
-      -r <region>   specify a desired AWS region to use (i.e.: us-east-1)
-      -c <checknum> specify a check number from the AWS CIS benchmark (i.e.: check11 for check 1.1)
-      -h            this help
+      -p <profile>        specify your AWS profile to use (i.e.: default)
+      -r <region>         specify an AWS region to direct API requests to (i.e.: us-east-1)
+      -c <checknum>       specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1 or check3 for entire section 3)
+      -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
+      -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
+      -h                  this help
 
 ```
 ## How to fix all WARNINGS:
