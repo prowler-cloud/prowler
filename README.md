@@ -24,8 +24,8 @@ Or install it using "brew", "apt", "yum" or manually from https://aws.amazon.com
 
 - Previous steps, from your workstation:
 ```
-git clone https://github.com/Alfresco/aws-cis-security-benchmark
-cd aws-cis-security-benchmark
+git clone https://github.com/Alfresco/prowler
+cd prowler
 ```
 
 - Make sure you have properly configured your AWS-CLI with a valid Access Key and Region:
@@ -436,6 +436,7 @@ Instead of using default policy SecurityAudit for the account you use for checks
             "kms:list*",
             "lambda:getpolicy",
             "lambda:listfunctions",
+            "logs:DescribeMetricFilters",
             "rds:describe*",
             "rds:downloaddblogfileportion",
             "rds:listtagsforresource",

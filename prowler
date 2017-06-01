@@ -45,23 +45,28 @@ RED="[1;31m"
 YELLOW="[1;33m"
 WHITE="[1;37m"
 
-DEFULT_AWS_PROFILE="default"
-DEFAULT_AWS_REGION="us-east-1"
+# Set the defaults for these getopts variables
+PROFILE="default"
+REGION="us-east-1"
+FILTERREGION=""
+MAXITEMS=100
 
 # Command usage menu
 usage(){
   echo -e "\nUSAGE:
       `basename $0` -p <profile> -r <region> [ -h ]
   Options:
-      -p <profile>  specify your AWS profile to use (i.e.: default)
-      -r <region>   specify a desired AWS region to use (i.e.: us-east-1)
-      -c <checknum> specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1 or check3 for entire section 3)
-      -h            this help
+      -p <profile>        specify your AWS profile to use (i.e.: default)
+      -r <region>         specify an AWS region to direct API requests to (i.e.: us-east-1)
+      -c <checknum>       specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1 or check3 for entire section 3)
+      -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
+      -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
+      -h                  this help
   "
   exit
 }
 
-while getopts "hp:r:c:" OPTION; do
+while getopts "hp:r:c:f:m:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -75,6 +80,12 @@ while getopts "hp:r:c:" OPTION; do
         ;;
      c )
         CHECKNUMBER=$OPTARG
+        ;;
+     f )
+        FILTERREGION=$OPTARG
+        ;;
+     m )
+        MAXITEMS=$OPTARG
         ;;
      : )
         echo -e "\n$RED ERROR!$NORMAL  -$OPTARG requires an argument\n"
@@ -160,11 +171,6 @@ else
       exit
 fi
 
-if [[ "$#" -le 2 ]]; then
-  PROFILE=$DEFULT_AWS_PROFILE
-  REGION=$DEFAULT_AWS_REGION
-fi
-
 if [[ ! -f ~/.aws/credentials ]]; then
   echo -e "\n$RED ERROR!$NORMAL AWS credentials file not found (~/.aws/credentials). Run 'aws configure' first. \n"
   return 1
@@ -196,7 +202,7 @@ echo -e " |_|$NORMAL$BLUE CIS based AWS Account Hardening Tool$NORMAL\n"
 # Get whoami in AWS, who is the user running this shell script
 getWhoami() {
   echo -e "\nThis report is being generated using credentials below:\n"
-  echo -e "AWS-CLI Profile: $NOTICE[$PROFILE]$NORMAL AWS Region: $NOTICE[$REGION]$NORMAL\n"
+  echo -e "AWS-CLI Profile: $NOTICE[$PROFILE]$NORMAL AWS API Region: $NOTICE[$REGION]$NORMAL AWS Filter Region: $NOTICE[${FILTERREGION:-all}]\n"
   $AWSCLI sts get-caller-identity --output table --profile $PROFILE --region $REGION
 }
 
@@ -232,7 +238,8 @@ cleanTemp(){
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
   --output text \
   --profile $PROFILE \
-  --region $REGION)
+  --region $REGION \
+  --region-names $FILTERREGION)
 
 infoReferenceLong(){
   # Report review note:
@@ -269,7 +276,7 @@ check12(){
   COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$4 }' |grep true | awk '{ print $1 }')
   COMMAND12=$(
     for i in $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED; do
-      cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$8 }' |grep $i| grep false | awk '{ print $1 }'|tr '\n' ' ';
+      cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$8 }' |grep -w $i| grep false | awk '{ print $1 }'|tr '\n' ' ';
     done)
   echo -e "\n$TITLE12"
     if [[ $COMMAND12 ]]; then
@@ -284,14 +291,14 @@ check13(){
   TITLE13="$BLUE 1.3$NORMAL Ensure credentials unused for 90 days or greater are disabled (Scored)"
   echo -e "\n$TITLE13 "
   COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$4 }' |grep true | awk '{ print $1 }')
-  if [ $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED ]; then
+  if [[ $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED ]]; then
     COMMAND13=$(
     for i in $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED; do
       cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$5 }' |grep $i| awk '{ print $1 }'|tr '\n' ' ';
     done)
     # list of users that have used password
     USERS_PASSWORD_USED=$($AWSCLI iam list-users --query "Users[?PasswordLastUsed].UserName" --output text --profile $PROFILE --region $REGION)
-    if [ $USERS_PASSWORD_USED ]; then
+    if [[ $USERS_PASSWORD_USED ]]; then
       # look for users with a password last used more or equal to 90 days
       for i in $USERS_PASSWORD_USED; do
         DATEUSED=$($AWSCLI iam list-users --query "Users[?UserName=='$i'].PasswordLastUsed" --output text --profile $PROFILE --region $REGION | cut -d'T' -f1)
@@ -674,7 +681,7 @@ check24(){
   LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
   if [[ $LIST_OF_TRAILS ]];then
     for trail in $LIST_OF_TRAILS;do
-      TRAIL_REGION=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*]' --output text | grep $trail | awk '{ print $3}')
+      TRAIL_REGION=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --trail-name-list "$trail" --query 'trailList[*].HomeRegion' --output text)
       LATESTDELIVERY_TIMESTAMP=$($AWSCLI cloudtrail get-trail-status --name $trail --profile $PROFILE --region $TRAIL_REGION --query 'LatestCloudWatchLogsDeliveryTime' --output text|grep -v None)
       if [[ ! $LATESTDELIVERY_TIMESTAMP ]];then
         echo -e "     $RED $trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)$NORMAL"
@@ -746,20 +753,29 @@ check28(){
   TITLE28="$BLUE 2.8$NORMAL Ensure rotation for customer created CMKs is enabled (Scored)"
   echo -e "\n$TITLE28"
   for regx in $REGIONS; do
-    CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys --profile $PROFILE --region $regx --output text --query 'Keys[*].KeyId')
+  CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys --profile $PROFILE --region $regx --output text --query 'Keys[*].KeyId')
     if [[ $CHECK_KMS_KEYLIST ]];then
-        for key in $CHECK_KMS_KEYLIST; do
-          CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key --profile $PROFILE --region $regx --output text)
-          if [[ $CHECK_KMS_KEY_ROTATION == "True" ]];then
-            echo -e "     $OK OK! Key $key in Region $regx is set correctly$NORMAL"
+      for key in $CHECK_KMS_KEYLIST; do
+        CHECK_KMS_KEY_TYPE=$($AWSCLI kms describe-key --key-id $key --profile $PROFILE --region $regx --query 'KeyMetadata.Origin' | sed 's/["]//g')
+          if [[ $CHECK_KMS_KEY_TYPE == "EXTERNAL" ]];then
+            echo -e "     $BLUE Key $key in Region $regx Customer Uploaded Key Material.$NORMAL"
           else
-            echo -e "     $RED WARNING! Key $key in Region $regx is not set to rotate or Default KMS Key In Use!!$NORMAL"
+            CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key --profile $PROFILE --region $regx --output text)
+            CHECK_KMS_DEFAULT_KEY=$($AWSCLI kms describe-key --key-id $key --profile $PROFILE --region $regx --query 'KeyMetadata.Description' | sed -n '/Default master key that protects my /p')
+              if [[ $CHECK_KMS_KEY_ROTATION == "True" ]];then
+                    echo -e "     $OK OK! Key $key in Region $regx is set correctly$NORMAL"                     
+                  elif [[ $CHECK_KMS_KEY_ROTATION == "False" && $CHECK_KMS_DEFAULT_KEY ]];then
+                echo -e "     $NOTICE Region $regx key $key is an AWS default master key and cannot be deleted nor modified.$NORMAL"
+              else
+                echo -e "     $RED WARNING! Key $key in Region $regx is not set to rotate!!!$NORMAL"
+              fi
           fi
-        done
-    else
+      done
+
+  else
       echo -e "     $NOTICE Region $regx doesn't have encryption keys $NORMAL"
-    fi
-  done
+  fi
+  done 
 }
 
 check31(){
@@ -993,7 +1009,7 @@ check315(){
     TOPICS_LIST=$($AWSCLI sns list-topics --profile $PROFILE --region $regx --output text --query 'Topics[*].TopicArn')
     if [[ $TOPICS_LIST ]];then
         for topic in $TOPICS_LIST; do
-          CHECK_TOPIC_LIST=$($AWSCLI sns list-subscriptions-by-topic --topic-arn $topic --profile $PROFILE --region $regx --query 'Subscriptions[*].{Endpoint:Endpoint,Protocol:Protocol}' --output text)
+          CHECK_TOPIC_LIST=$($AWSCLI sns list-subscriptions-by-topic --topic-arn $topic --profile $PROFILE --region $regx --query 'Subscriptions[*].{Endpoint:Endpoint,Protocol:Protocol}' --output text --max-items $MAXITEMS | grep -v "None")
           if [[ $CHECK_TOPIC_LIST ]]; then
             TOPIC_SHORT=$(echo $topic | awk -F: '{ print $7 }')
             echo -e "     $NOTICE Region $regx with Topic $TOPIC_SHORT: $NORMAL "
