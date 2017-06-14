@@ -480,7 +480,7 @@ check115(){
 }
 
 check116(){
-  TITLE115="$BLUE 1.16$NORMAL Ensure IAM policies are attached only to groups or roles (Scored)"
+  TITLE116="$BLUE 1.16$NORMAL Ensure IAM policies are attached only to groups or roles (Scored)"
   echo -e "\n$TITLE116"
   LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text --profile $PROFILE --region $REGION)
   echo -e "      Users with policy attached to them instead to groups: (it may take few seconds...) "
@@ -763,7 +763,7 @@ check28(){
             CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key --profile $PROFILE --region $regx --output text)
             CHECK_KMS_DEFAULT_KEY=$($AWSCLI kms describe-key --key-id $key --profile $PROFILE --region $regx --query 'KeyMetadata.Description' | sed -n '/Default master key that protects my /p')
               if [[ $CHECK_KMS_KEY_ROTATION == "True" ]];then
-                    echo -e "     $OK OK! Key $key in Region $regx is set correctly$NORMAL"                     
+                    echo -e "     $OK OK! Key $key in Region $regx is set correctly$NORMAL"
                   elif [[ $CHECK_KMS_KEY_ROTATION == "False" && $CHECK_KMS_DEFAULT_KEY ]];then
                 echo -e "     $NOTICE Region $regx key $key is an AWS default master key and cannot be deleted nor modified.$NORMAL"
               else
@@ -775,7 +775,7 @@ check28(){
   else
       echo -e "     $NOTICE Region $regx doesn't have encryption keys $NORMAL"
   fi
-  done 
+  done
 }
 
 check31(){
