@@ -60,6 +60,7 @@ while getopts "hbp:r:c:f:m:" OPTION; do
         ;;
      b )
         MONOCHROME=1
+        ;;
      p )
         PROFILE=$OPTARG
         ;;
