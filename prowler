@@ -236,7 +236,8 @@ getWhoami() {
 }
 
 printCurrentDate(){
-  echo -e "\nDate: $NOTICE$(date)$NORMAL"
+  THEDATE=$(date)
+  echo -e "\nDate: ${NOTICE}${THEDATE}${NORMAL}"
 }
 
 printColorsCode(){
