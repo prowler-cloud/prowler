@@ -224,21 +224,12 @@ fi
 # AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_ID}
 
 prowlerBanner() {
-  if [[ $MONOCHROME -eq 1 ]]; then
-    echo "                          _"
-    echo "  _ __  _ __ _____      _| | ___ _ __"
-    echo " | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|"
-    echo " | |_) | | | (_) \ V  V /| |  __/ |"
-    echo " | .__/|_|  \___/ \_/\_/ |_|\___|_|"
-    echo " |_|   CIS based AWS Account Hardening Tool"
-  else
-    echo -e "$CYAN                          _"
-    echo -e "  _ __  _ __ _____      _| | ___ _ __"
-    echo -e " | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|"
-    echo -e " | |_) | | | (_) \ V  V /| |  __/ |"
-    echo -e " | .__/|_|  \___/ \_/\_/ |_|\___|_|"
-    echo -e " |_|$NORMAL$BLUE CIS based AWS Account Hardening Tool$NORMAL\n"
-  fi
+  echo -e "$CYAN                          _"
+  echo -e "  _ __  _ __ _____      _| | ___ _ __"
+  echo -e " | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|"
+  echo -e " | |_) | | | (_) \ V  V /| |  __/ |"
+  echo -e " | .__/|_|  \___/ \_/\_/ |_|\___|_|"
+  echo -e " |_|$NORMAL$BLUE CIS based AWS Account Hardening Tool$NORMAL\n"
 }
 
 # Get whoami in AWS, who is the user running this shell script
@@ -246,12 +237,14 @@ getWhoami(){
   echo ""
   echo "This report is being generated using credentials below:"
   echo ""
+  echo -e "AWS-CLI Profile: $NOTICE[$PROFILE]$NORMAL AWS API Region: $NOTICE[$REGION]$NORMAL AWS Filter Region: $NOTICE[${FILTERREGION:-all}]\n"
   if [[ $MONOCHROME -eq 1 ]]; then
-    echo  "AWS-CLI Profile: [$PROFILE] AWS API Region: [$REGION] AWS Filter Region: [${FILTERREGION:-all}]"
+    $AWSCLI sts get-caller-identity --output json --profile $PROFILE --region $REGION | grep ':'
   else
-    echo -e "AWS-CLI Profile: $NOTICE[$PROFILE]$NORMAL AWS API Region: $NOTICE[$REGION]$NORMAL AWS Filter Region: $NOTICE[${FILTERREGION:-all}]\n"
+    echo "Caller Identity:"
+    $AWSCLI sts get-caller-identity --output table --profile $PROFILE --region $REGION
+    echo ""
   fi
-  $AWSCLI sts get-caller-identity --output table --profile $PROFILE --region $REGION
 }
 
 printCurrentDate(){
