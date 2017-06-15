@@ -113,6 +113,7 @@ if [[ $MONOCHROME -eq 1 ]]; then
   WHITE=''
 else
   # Colors
+  # NOTE: Your editor may NOT show the 0x1b / escape character left of the '['
   NORMAL="[0;39m"
   WARNING="[1;33m"          # Bad (red)
   SECTION="[1;33m"          # Section (yellow)
@@ -296,11 +297,7 @@ infoReferenceLong(){
 
 infoReferenceShort(){
   # Report review note:
-  if [[ $MONOCHROME -eq 1 ]]; then
-    echo -n "      http://bit.ly/2g3PEf7"
-  else
-    echo -e "     $NOTICE http://bit.ly/2g3PEf7$NORMAL"
-  fi
+  echo -e "     $NOTICE http://bit.ly/2g3PEf7$NORMAL"
 }
 
 prowlerBanner
