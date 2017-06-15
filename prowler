@@ -119,7 +119,7 @@ else
   SECTION="[1;33m"          # Section (yellow)
   NOTICE="[1;33m"           # Notice (yellow)
   OK="[1;32m"               # Ok (green)
-  BAD="[1;35m"              # Bad (red)
+  BAD="[1;31m"              # Bad (red)
   CYAN="[0;36m"
   BLUE="[0;34m"
   BROWN="[0;33m"
@@ -254,7 +254,7 @@ printCurrentDate(){
 }
 
 printColorsCode(){
-  if [[ $MONOCHROME -ne 1 ]]; then
+  if [[ $MONOCHROME -eq 0 ]]; then
     echo -e "\nColors Code for results: $NOTICE INFORMATIVE$NORMAL,$OK OK (RECOMMENDED VALUE)$NORMAL, $BAD WARNING (FIX REQUIRED)$NORMAL  \n"
   fi
 }
