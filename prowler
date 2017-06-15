@@ -806,13 +806,14 @@ check28(){
   for regx in $REGIONS; do
   CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys --profile $PROFILE --region $regx --output text --query 'Keys[*].KeyId')
     if [[ $CHECK_KMS_KEYLIST ]];then
-      for key in $CHECK_KMS_KEYLIST; do
+      CHECK_KMS_KEYLIST_NO_DEFAULT=$(for key in $CHECK_KMS_KEYLIST ; do $AWSCLI kms describe-key --key-id $key --profile $PROFILE --region $regx --output text|grep -v 'Default master key that protects my ACM private keys when no other key is defined'|awk '{ print $3 }'|awk -F'/' '{ print $2 }'; done)
+      for key in $CHECK_KMS_KEYLIST_NO_DEFAULT; do
         CHECK_KMS_KEY_TYPE=$($AWSCLI kms describe-key --key-id $key --profile $PROFILE --region $regx --query 'KeyMetadata.Origin' | sed 's/["]//g')
           if [[ $CHECK_KMS_KEY_TYPE == "EXTERNAL" ]];then
             echo -e "     $OK OK! $NORMAL Key $key in Region $regx Customer Uploaded Key Material."
           else
             CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key --profile $PROFILE --region $regx --output text)
-            CHECK_KMS_DEFAULT_KEY=$($AWSCLI kms describe-key --key-id $key --profile $PROFILE --region $regx --query 'KeyMetadata.Description' | sed -n '/Default master key that protects my /p')
+            #CHECK_KMS_DEFAULT_KEY=$($AWSCLI kms describe-key --key-id $key --profile $PROFILE --region $regx --query 'KeyMetadata.Description' | sed -n '/Default master key that protects my ACM private keys when no other key is defined /p'|| echo "False")
               if [[ $CHECK_KMS_KEY_ROTATION == "True" ]];then
                     echo -e "     $OK OK! $NORMAL Key $key in Region $regx is set correctly"
                   elif [[ $CHECK_KMS_KEY_ROTATION == "False" && $CHECK_KMS_DEFAULT_KEY ]];then
