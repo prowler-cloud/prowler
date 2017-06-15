@@ -20,9 +20,9 @@
 # I've just got to find my way...
 
 # Exit if a pipeline results in an error.
-set -ue
-set -o pipefail
-set -vx
+# set -ue
+# set -o pipefail
+# set -vx
 # Exits if any error is found
 # set -e
 
@@ -738,13 +738,14 @@ check23(){
 check24(){
   TITLE24="$BLUE 2.4$NORMAL Ensure CloudTrail trails are integrated with CloudWatch Logs (Scored)"
   echo -e "\n$TITLE24"
-  LIST_OF_TRAILS=$(    $AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
-  if [[ $LIST_OF_TRAILS ]];then
-    for trail in $LIST_OF_TRAILS;do
-      TRAIL_REGION=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --trail-name-list "$trail" --query 'trailList[*].HomeRegion' --output text)
+  TRAILS_AND_REGIONS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].{Name:Name, HomeRegion:HomeRegion}' --output text | tr "\t" ',')
+  if [[ $TRAILS_AND_REGIONS ]];then
+    for reg_trail in $TRAILS_AND_REGIONS;do
+      trail=$(echo $reg_trail | cut -d',' -f2)
+      TRAIL_REGION=$(echo $reg_trail | cut -d',' -f1)
       LATESTDELIVERY_TIMESTAMP=$($AWSCLI cloudtrail get-trail-status --name $trail --profile $PROFILE --region $TRAIL_REGION --query 'LatestCloudWatchLogsDeliveryTime' --output text|grep -v None)
       if [[ ! $LATESTDELIVERY_TIMESTAMP ]];then
-        echo -e "     $BAD WARDING! $trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)$NORMAL"
+        echo -e "     $BAD WARNING! $trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)$NORMAL"
       else
         LATESTDELIVERY_DATE=$(timestamp_to_date $LATESTDELIVERY_TIMESTAMP)
         HOWOLDER=$(how_older_from_today $LATESTDELIVERY_DATE)
