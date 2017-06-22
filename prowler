@@ -35,6 +35,7 @@ REGION="us-east-1"
 FILTERREGION=""
 MAXITEMS=100
 MONOCHROME=0
+MODE="text"
 
 # Command usage menu
 usage(){
@@ -48,12 +49,13 @@ USAGE:
       -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
       -b                  do not use colors in the output
+      -M <mode>           output mode: text (defalut), mono, csv
       -h                  this help
   "
   exit
 }
 
-while getopts ":hbp:r:c:f:m:" OPTION; do
+while getopts ":hbp:r:c:f:m:M:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -77,6 +79,9 @@ while getopts ":hbp:r:c:f:m:" OPTION; do
      m )
         MAXITEMS=$OPTARG
         ;;
+     M )
+        MODE=$OPTARG
+        ;;
      : )
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL  -$OPTARG requires an argument"
@@ -91,6 +96,17 @@ while getopts ":hbp:r:c:f:m:" OPTION; do
         ;;
    esac
 done
+
+if [[ $MODE != "mono" && $MODE != "text" && $MODE != "csv" ]]; then
+  echo ""
+  echo "$OPTRED ERROR!$OPTNORMAL Invalid output mode.  Choose text, mono, or csv."
+  usage
+  exit 1
+fi
+
+if [[ $MODE == "mono" ]]; then
+  MONOCHROME=1
+fi
 
 if [[ $MONOCHROME -eq 1 ]]; then
   # Colors
@@ -299,13 +315,6 @@ infoReferenceShort(){
   # Report review note:
   echo -e "     $NOTICE http://bit.ly/2g3PEf7$NORMAL"
 }
-
-prowlerBanner
-printCurrentDate
-getWhoami
-printColorsCode
-genCredReport
-saveReport
 
 check11(){
   TITLE11="$BLUE 1.1$NORMAL Avoid the use of the root account (Scored). Last time root account was used
@@ -1159,66 +1168,92 @@ check45(){
 callCheck(){
   if [[ $CHECKNUMBER ]];then
     case "$CHECKNUMBER" in
-      check11) check11;cleanTemp;exit;;
-      check12) check12;cleanTemp;exit;;
-      check13) check13;cleanTemp;exit;;
-      check14) check14;cleanTemp;exit;;
-      check15) check15;cleanTemp;exit;;
-      check16) check16;cleanTemp;exit;;
-      check17) check17;cleanTemp;exit;;
-      check18) check18;cleanTemp;exit;;
-      check19) check19;cleanTemp;exit;;
-      check110) check110;cleanTemp;exit;;
-      check111) check111;cleanTemp;exit;;
-      check112) check112;cleanTemp;exit;;
-      check113) check113;cleanTemp;exit;;
-      check114) check114;cleanTemp;exit;;
-      check115) check115;cleanTemp;exit;;
-      check116) check116;cleanTemp;exit;;
-      check117) check117;cleanTemp;exit;;
-      check118) check118;cleanTemp;exit;;
-      check119) check119;cleanTemp;exit;;
-      check120) check120;cleanTemp;exit;;
-      check121) check121;cleanTemp;exit;;
-      check122) check122;cleanTemp;exit;;
-      check123) check123;cleanTemp;exit;;
-      check124) check124;cleanTemp;exit;;
-      check21) check21;cleanTemp;exit;;
-      check22) check22;cleanTemp;exit;;
-      check23) check23;cleanTemp;exit;;
-      check24) check24;cleanTemp;exit;;
-      check25) check25;cleanTemp;exit;;
-      check26) check26;cleanTemp;exit;;
-      check27) check27;cleanTemp;exit;;
-      check28) check28;cleanTemp;exit;;
-      check31) check31;cleanTemp;exit;;
-      check32) check32;cleanTemp;exit;;
-      check33) check33;cleanTemp;exit;;
-      check34) check34;cleanTemp;exit;;
-      check35) check35;cleanTemp;exit;;
-      check36) check36;cleanTemp;exit;;
-      check37) check37;cleanTemp;exit;;
-      check38) check38;cleanTemp;exit;;
-      check39) check39;cleanTemp;exit;;
-      check310) check310;cleanTemp;exit;;
-      check311) check311;cleanTemp;exit;;
-      check312) check312;cleanTemp;exit;;
-      check313) check313;cleanTemp;exit;;
-      check314) check314;cleanTemp;exit;;
-      check315) check315;cleanTemp;exit;;
-      check41) check41;cleanTemp;exit;;
-      check42) check42;cleanTemp;exit;;
-      check43) check43;cleanTemp;exit;;
-      check44) check44;cleanTemp;exit;;
-      check45) check45;cleanTemp;exit;;
-      check1) check11;check12;check13;check14;check15;check16;check17;check18;check19;check110;check111;check112;check113;check114;check115;check116;check117;check118;check119;check120;check121;check122;check123;check124;cleanTemp;exit;;
-      check2) check21;check22;check23;check24;check25;check26;check27;check28;cleanTemp;exit;;
-      check3) check31;check32;check33;check34;check35;check36;check37;check38;check39;check310;check311;check312;check313;check314;check315;cleanTemp;exit;;
-      check4) check41;check42;check43;check44;check45;cleanTemp;exit;;
-      * ) echo -e "\n$RED ERROR! Use a valid check name (i.e. check41) $NORMAL\n";exit;;
+      check11) check11;;
+      check12) check12;;
+      check13) check13;;
+      check14) check14;;
+      check15) check15;;
+      check16) check16;;
+      check17) check17;;
+      check18) check18;;
+      check19) check19;;
+      check110) check110;;
+      check111) check111;;
+      check112) check112;;
+      check113) check113;;
+      check114) check114;;
+      check115) check115;;
+      check116) check116;;
+      check117) check117;;
+      check118) check118;;
+      check119) check119;;
+      check120) check120;;
+      check121) check121;;
+      check122) check122;;
+      check123) check123;;
+      check124) check124;;
+      check21) check21;;
+      check22) check22;;
+      check23) check23;;
+      check24) check24;;
+      check25) check25;;
+      check26) check26;;
+      check27) check27;;
+      check28) check28;;
+      check31) check31;;
+      check32) check32;;
+      check33) check33;;
+      check34) check34;;
+      check35) check35;;
+      check36) check36;;
+      check37) check37;;
+      check38) check38;;
+      check39) check39;;
+      check310) check310;;
+      check311) check311;;
+      check312) check312;;
+      check313) check313;;
+      check314) check314;;
+      check315) check315;;
+      check41) check41;;
+      check42) check42;;
+      check43) check43;;
+      check44) check44;;
+      check45) check45;;
+      check1)
+        check11;check12;check13;check14;check15;check16;check17;check18;
+        check19;check110;check111;check112;check113;check114;check115;
+        check116;check117;check118;check119;check120;check121;check122;
+        check123;check124;
+        ;;
+      check2)
+        check21;check22;check23;check24;check25;check26;check27;check28
+        ;;
+      check3)
+        check31;check32;check33;check34;check35;check36;check37;check38;
+        check39;check310;check311;check312;check313;check314;check315
+        ;;
+      check4)
+        check41;check42;check43;check44;check45
+        ;;
+      * )
+        echo -e "\n$RED ERROR! Use a valid check name (i.e. check41) $NORMAL\n";
     esac
+    cleanTemp
+    exit
   fi
 }
+
+
+### All functions defined above ... run the workflow
+
+prowlerBanner
+printCurrentDate
+getWhoami
+printColorsCode
+genCredReport
+saveReport
+
 
 callCheck
 
