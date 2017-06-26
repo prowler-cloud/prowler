@@ -532,9 +532,9 @@ check115(){
   TITLE115="$BLUE 1.15$NORMAL Ensure security questions are registered in the AWS account (Not Scored)"
   # No command available
   echo -e "\n$TITLE115"
-  echo -e "     $NOTICE No command available for check 1.14"
-  echo -e "      Login to the AWS Console as root, click on the Account "
-  echo -e "      Name -> My Account -> Configure Security Challenge Questions $NORMAL"
+  echo -e "     $NOTICE No command available for check 1.15 $NORMAL"
+  echo -e "     $NOTICE Login to the AWS Console as root, click on the Account $NORMAL"
+  echo -e "     $NOTICE Name -> My Account -> Configure Security Challenge Questions $NORMAL"
 }
 
 check116(){
@@ -559,8 +559,8 @@ check117(){
   TITLE117="$BLUE 1.17$NORMAL Enable detailed billing (Scored)"
   # No command available
   echo -e "\n$TITLE117 "
-  echo -e "     $NOTICE No command available for check 1.17"
-  echo -e "      See section 1.17 on the CIS Benchmark guide for details $NORMAL"
+  echo -e "     $NOTICE No command available for check 1.17 $NORMAL"
+  echo -e "     $NOTICE See section 1.17 on the CIS Benchmark guide for details $NORMAL"
   infoReferenceShort
 }
 
@@ -593,8 +593,8 @@ check119(){
   TITLE119="$BLUE 1.19$NORMAL Maintain current contact details (Scored)"
   # No command available
   echo -e "\n$TITLE119 "
-  echo -e "     $NOTICE No command available for check 1.19"
-  echo -e "      See section 1.19 on the CIS Benchmark guide for details $NORMAL"
+  echo -e "     $NOTICE No command available for check 1.19 $NORMAL"
+  echo -e "     $NOTICE See section 1.19 on the CIS Benchmark guide for details $NORMAL"
   infoReferenceShort
 }
 
@@ -602,16 +602,16 @@ check120(){
   TITLE120="$BLUE 1.20$NORMAL Ensure security contact information is registered (Scored)"
   # No command available
   echo -e "\n$TITLE120 "
-  echo -e "     $NOTICE No command available for check 1.20"
-  echo -e "      See section 1.20 on the CIS Benchmark guide for details $NORMAL"
+  echo -e "     $NOTICE No command available for check 1.20 $NORMAL"
+  echo -e "     $NOTICE See section 1.20 on the CIS Benchmark guide for details $NORMAL"
   infoReferenceShort
 }
 
 check121(){
   TITLE121="$BLUE 1.21$NORMAL Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
   echo -e "\n$TITLE121 "
-  echo -e "     $NOTICE No command available for check 1.21"
-  echo -e "      See section 1.21 on the CIS Benchmark guide for details $NORMAL"
+  echo -e "     $NOTICE No command available for check 1.21 $NORMAL"
+  echo -e "     $NOTICE See section 1.21 on the CIS Benchmark guide for details $NORMAL"
   infoReferenceShort
 }
 
