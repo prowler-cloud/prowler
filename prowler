@@ -250,7 +250,7 @@ text_notice(){
 }
 
 text_warn(){
-  echo "     $WARNING WARNING! $@ $NORMAL"
+  echo "     $BAD WARNING! $@ $NORMAL"
 }
 
 
@@ -268,7 +268,7 @@ getWhoami(){
   echo ""
   echo "This report is being generated using credentials below:"
   echo ""
-  echo -e "AWS-CLI Profile: $NOTICE[$PROFILE]$NORMAL AWS API Region: $NOTICE[$REGION]$NORMAL AWS Filter Region: $NOTICE[${FILTERREGION:-all}]\n"
+  echo -e "AWS-CLI Profile: $NOTICE[$PROFILE]$NORMAL AWS API Region: $NOTICE[$REGION]$NORMAL AWS Filter Region: $NOTICE[${FILTERREGION:-all}]$NORMAL\n"
   if [[ $MONOCHROME -eq 1 ]]; then
     $AWSCLI sts get-caller-identity --output json --profile $PROFILE --region $REGION | grep ':'
   else
@@ -334,7 +334,7 @@ check11(){
      (password last used, access_key_1_last_used, access_key_2_last_used): "
   COMMAND11=$(cat $TEMP_REPORT_FILE| grep '<root_account>' | cut -d, -f5,11,16 | sed 's/,/,\ /g')
   echo -e "\n$TITLE11"
-  text_notice "$COMMAND11 $NORMAL"
+  text_notice "$COMMAND11"
 }
 
 check12(){
@@ -348,7 +348,7 @@ check12(){
   echo -e "\n$TITLE12"
     if [[ $COMMAND12 ]]; then
       echo -e "     List of users with Password enabled but MFA disabled:"
-      echo -e "     $BAD WARNING! $COMMAND12 $NORMAL"
+      text_warn "$COMMAND12 "
     else
       text_ok "No users found with Password enabled and MFA disabled"
     fi
@@ -371,9 +371,9 @@ check13(){
         DATEUSED=$($AWSCLI iam list-users --query "Users[?UserName=='$i'].PasswordLastUsed" --output text --profile $PROFILE --region $REGION | cut -d'T' -f1)
         HOWOLDER=$(how_older_from_today $DATEUSED)
         if [ $HOWOLDER -gt "90" ];then
-          echo "     $BAD WARNING! User \"$i\" has not logged in during the last 90 days $NORMAL"
+          text_warn "User \"$i\" has not logged in during the last 90 days "
         else
-          echo text_ok "User \"$i\" found with credentials used in the last 90 days"
+          text_ok "User \"$i\" found with credentials used in the last 90 days"
         fi
       done
     fi
@@ -395,7 +395,7 @@ check14(){
       HOWOLDER=$(how_older_from_today $DATEROTATED1)
 
       if [ $HOWOLDER -gt "90" ];then
-        echo -e "     $BAD WARNING! $user has not rotated access key1. $NORMAL"
+        text_warn " $user has not rotated access key1. "
       fi
     done
     echo -e "     Users with access key 2 older than 90 days: "
@@ -404,7 +404,7 @@ check14(){
       DATEROTATED2=$(cat $TEMP_REPORT_FILE | grep $user| awk -F, '{ print $10 }' | grep -v "N/A" | awk -F"T" '{ print $1 }')
       HOWOLDER=$(how_older_from_today $DATEROTATED2)
       if [ $HOWOLDER -gt "90" ];then
-        echo -e "     $BAD WARNING! $user has not rotated access key2. $NORMAL"
+        text_warn " $user has not rotated access key2. "
       fi
     done
 }
@@ -416,7 +416,7 @@ check15(){
   if [[ $COMMAND15 == "true" ]];then
     text_ok "Password Policy requires upper case"
   else
-    echo -e "     $BAD WARNING! $NORMAL"
+    text_warn "Password Policy missing upper-case requirement"
   fi
 }
 
@@ -427,7 +427,7 @@ check16(){
   if [[ $COMMAND16 == "true" ]];then
     text_ok "Password Policy requires lower case"
   else
-    echo -e "     $BAD WARNING! $NORMAL"
+    text_warn "Password Policy missing lower-case requirement"
   fi
 }
 
@@ -438,7 +438,7 @@ check17(){
   if [[ $COMMAND17 == "true" ]];then
     text_ok "Password Policy requires symbol"
   else
-    echo -e "     $BAD WARNING! $NORMAL"
+    text_warn "Password Policy missing symbol requirement"
   fi
 }
 
@@ -449,7 +449,7 @@ check18(){
   if [[ $COMMAND18 == "true" ]];then
     text_ok "Password Policy requires number"
   else
-    echo -e "     $BAD WARNING! $NORMAL"
+    text_warn "Password Policy missing number requirement"
   fi
 }
 
@@ -460,7 +460,7 @@ check19(){
   if [[ $COMMAND19 -gt "13" ]];then
     text_ok "Password Policy requires more than 13 characters"
   else
-    echo -e "     $BAD WARNING! $NORMAL"
+    text_warn "Password Policy missing or weak length requirement"
   fi
 }
 
@@ -472,10 +472,10 @@ check110(){
     if [[ $COMMAND110 -gt "23" ]];then
       text_ok "Password Policy limits reuse"
     else
-      echo -e "     $BAD WARNING! It is not set or it is set lower than 24 $NORMAL"
+      text_warn "Password Policy has weak reuse requirment (lower than 24)"
     fi
   else
-    echo -e "     $BAD WARNING! It is not set $NORMAL"
+    text_warn "Password Policy missing reuse requirement"
   fi
 }
 
@@ -488,7 +488,7 @@ check111(){
       text_ok "Password Policy includes expiration"
     fi
   else
-    echo -e "     $BAD WARNING! Passowrd expiration not set or set greater than 90 days $NORMAL"
+    text_warn "Passowrd expiration not set or set greater than 90 days "
   fi
 }
 
@@ -501,12 +501,12 @@ check112(){
   if [ $ROOTKEY1 == "false" ];then
     text_ok "No access key 1 found for root"
   else
-    echo -e "     $BAD WARNING! Found access key 1 for root $NORMAL"
+    text_warn "Found access key 1 for root "
   fi
   if [ $ROOTKEY2 == "false" ];then
     text_ok "No access key 2 found for root"
   else
-    echo -e "     $BAD WARNING! Found access key 2 for root $NORMAL"
+    text_warn "Found access key 2 for root "
   fi
 }
 
@@ -517,7 +517,7 @@ check113(){
   if [ $COMMAND113 == "1" ]; then
     text_ok "Virtual MFA is enabled for root"
   else
-    echo "     $BAD WARNING! MFA is not ENABLED for root account $NORMAL"
+    text_warn "MFA is not ENABLED for root account "
   fi
 }
 
@@ -533,7 +533,7 @@ check114(){
       text_ok "Hardware MFA is enabled for root "
     fi
   else
-    echo "     $BAD WARNING! MFA is not ENABLED for root account $NORMAL"
+    text_warn "MFA is not ENABLED for root account "
   fi
 }
 
@@ -555,7 +555,7 @@ check116(){
   for user in $LIST_USERS;do
     USER_POLICY=$($AWSCLI iam list-attached-user-policies --output text --profile $PROFILE --region $REGION --user-name $user)
     if [[ $USER_POLICY ]]; then
-      echo -e "     $BAD WARNING! $user has policy directly attached $NORMAL"
+      text_warn "$user has policy directly attached "
       C116_NUM_USERS=$(expr $C116_NUM_USERS + 1)
     fi
   done
@@ -594,7 +594,7 @@ check118(){
       done
     done
   else
-    echo -e "     $BAD WARNING! IAM Master and IAM Manager roles not found$NORMAL"
+    text_warn "IAM Master and IAM Manager roles not found"
   fi
 }
 
@@ -635,11 +635,11 @@ check122(){
         text_ok "Support Policy attached to $POLICYTOSHOW"
         text_notice "Make sure your team can create a Support case with AWS "
       else
-        echo -e "     $BAD WARNING! Support Policy not applied to any Group, User or Role $NORMAL"
+        text_warn "Support Policy not applied to any Group, User or Role "
       fi
     done
   else
-    echo -e "     $BAD WARNING! No Support Policy found$NORMAL"
+    text_warn "No Support Policy found"
   fi
 }
 
@@ -701,13 +701,13 @@ check21(){
     for trail in $LIST_OF_TRAILS;do
       MULTIREGION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].IsMultiRegionTrail' --output text --trail-name-list $trail)
       if [[ $MULTIREGION_TRAIL_STATUS == 'False' ]];then
-        echo -e "     $BAD WARNING! $trail trail in $REGION is not enabled in multi region mode$NORMAL"
+        text_warn "$trail trail in $REGION is not enabled in multi region mode"
       else
         text_ok "$trail trail in $REGION is enabled for all regions"
       fi
     done
   else
-    echo -e "     $BAD WARNING! No CloudTrail trails found!$NORMAL"
+    text_warn "No CloudTrail trails found!"
   fi
 }
 
@@ -719,13 +719,13 @@ check22(){
     for trail in $LIST_OF_TRAILS;do
       LOGFILEVALIDATION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].LogFileValidationEnabled' --output text --trail-name-list $trail)
       if [[ $LOGFILEVALIDATION_TRAIL_STATUS == 'False' ]];then
-        echo -e "     $BAD WARNING! $trail trail in $REGION has not log file validation enabled$NORMAL"
+        text_warn "$trail trail in $REGION has not log file validation enabled"
       else
         text_ok "$trail trail in $REGION has log file validation enabled"
       fi
     done
   else
-    echo -e "     $BAD WARNING! No CloudTrail trails found!$NORMAL"
+    text_warn "No CloudTrail trails found!"
   fi
 }
 
@@ -737,13 +737,13 @@ check23(){
     for bucket in $CLOUDTRAILBUCKET;do
       CLOUDTRAILBUCKET_HASALLPERMISIONS=$($AWSCLI s3api get-bucket-acl --bucket $bucket --query 'Grants[?Grantee.URI==`http://acs.amazonaws.com/groups/global/AllUsers`]' --profile $PROFILE --region $REGION --output text)
       if [[ $CLOUDTRAILBUCKET_HASALLPERMISIONS ]];then
-        echo -e "     $BAD WARNING! check your $bucket CloudTrail bucket ACL and Policy!$NORMAL"
+        text_warn "check your $bucket CloudTrail bucket ACL and Policy!"
       else
         text_ok "Bucket $bucket is set correctly"
       fi
     done
   else
-    echo -e "     $BAD WARNING! No CloudTrail bucket found!$NORMAL"
+    text_warn "No CloudTrail bucket found!"
   fi
 }
 
@@ -757,19 +757,19 @@ check24(){
       TRAIL_REGION=$(echo $reg_trail | cut -d',' -f1)
       LATESTDELIVERY_TIMESTAMP=$($AWSCLI cloudtrail get-trail-status --name $trail --profile $PROFILE --region $TRAIL_REGION --query 'LatestCloudWatchLogsDeliveryTime' --output text|grep -v None)
       if [[ ! $LATESTDELIVERY_TIMESTAMP ]];then
-        echo -e "     $BAD WARNING! $trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)$NORMAL"
+        text_warn "$trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)"
       else
         LATESTDELIVERY_DATE=$(timestamp_to_date $LATESTDELIVERY_TIMESTAMP)
         HOWOLDER=$(how_older_from_today $LATESTDELIVERY_DATE)
         if [ $HOWOLDER -gt "1" ];then
-          echo -e "     $BAD WARNING! $trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)$NORMAL"
+          text_warn "$trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)"
         else
           text_ok "$trail trail has been logging during the last 24h (it is in $TRAIL_REGION)"
         fi
       fi
     done
   else
-    echo -e "     $BAD WARNING! No CloudTrail trails found!$NORMAL"
+    text_warn "No CloudTrail trails found!"
   fi
 }
 
@@ -781,7 +781,7 @@ check25(){
     if [[ $CHECK_AWSCONFIG_STATUS ]];then
       text_ok "Region $regx has AWS Config recorder: ON "
     else
-      echo -e "     $BAD WARNING! Region $regx has AWS Config disabled or not configured$NORMAL"
+      text_warn "Region $regx has AWS Config disabled or not configured"
     fi
   done
 }
@@ -796,11 +796,11 @@ check26(){
         if [[ $CLOUDTRAILBUCKET_LOGENABLED ]];then
           text_ok "Bucket access logging enabled in $bucket"
         else
-          echo -e "     $BAD WARNING! access logging is not enabled in $bucket CloudTrail S3 bucket!$NORMAL"
+          text_warn "access logging is not enabled in $bucket CloudTrail S3 bucket!"
         fi
       done
     else
-      echo -e "     $BAD WARNING! CloudTrail bucket not found!$NORMAL"
+      text_warn "CloudTrail bucket not found!"
     fi
 }
 
@@ -814,11 +814,11 @@ check27(){
         if [[ $CLOUDTRAILENC_ENABLED ]];then
           text_ok "KMS key found for $trail"
         else
-          echo -e "     $BAD WARNING! encryption is not enabled in your CloudTrail trail $trail, KMS key not found!$NORMAL"
+          text_warn "encryption is not enabled in your CloudTrail trail $trail, KMS key not found!"
         fi
       done
     else
-      echo -e "     $BAD WARNING! CloudTrail bucket doesn't exist!$NORMAL"
+      text_warn "CloudTrail bucket doesn't exist!"
     fi
 }
 
@@ -841,7 +841,7 @@ check28(){
                   elif [[ $CHECK_KMS_KEY_ROTATION == "False" && $CHECK_KMS_DEFAULT_KEY ]];then
                 text_notice "Region $regx key $key is an AWS default master key and cannot be deleted nor modified."
               else
-                echo -e "     $BAD WARNING! Key $key in Region $regx is not set to rotate!!!$NORMAL"
+                text_warn "Key $key in Region $regx is not set to rotate!!!"
               fi
           fi
       done
@@ -861,10 +861,10 @@ check31(){
     if [[ $METRICFILTER_SET ]];then
       text_ok "CloudWatch group found, and metric filters for Access Denied enabled"
     else
-      echo -e "     $BAD WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
+      text_warn "CloudWatch group found, but no metric filters or alarms associated"
     fi
   else
-    echo -e "     $BAD WARNING! No CloudWatch group found, no metric filters or alarms associated$NORMAL"
+    text_warn "No CloudWatch group found, no metric filters or alarms associated"
   fi
 }
 
@@ -877,10 +877,10 @@ check32(){
     if [[ $METRICFILTER_SET ]];then
       text_ok "CloudWatch group found, and metric filters for sign-in Console without MFA enabled"
     else
-      echo -e "     $BAD WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
+      text_warn "CloudWatch group found, but no metric filters or alarms associated"
     fi
   else
-    echo -e "     $BAD WARNING! No CloudWatch group found, no metric filters or alarms associated$NORMAL"
+    text_warn "No CloudWatch group found, no metric filters or alarms associated"
   fi
 }
 
@@ -893,10 +893,10 @@ check33(){
     if [[ $METRICFILTER_SET ]];then
       text_ok "CloudWatch group found, and metric filters for usage of root account enabled"
     else
-      echo -e "     $BAD WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
+      text_warn "CloudWatch group found, but no metric filters or alarms associated"
     fi
   else
-    echo -e "     $BAD WARNING! No CloudWatch group found, no metric filters or alarms associated$NORMAL"
+    text_warn "No CloudWatch group found, no metric filters or alarms associated"
   fi
 }
 
@@ -909,10 +909,10 @@ check34(){
     if [[ $METRICFILTER_SET ]];then
       text_ok "CloudWatch group found, and metric filters for IAM policy changes enabled"
     else
-      echo -e "     $BAD WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
+      text_warn "CloudWatch group found, but no metric filters or alarms associated"
     fi
   else
-    echo -e "     $BAD WARNING! No CloudWatch group found, no metric filters or alarms associated$NORMAL"
+    text_warn "No CloudWatch group found, no metric filters or alarms associated"
   fi
 }
 
@@ -925,10 +925,10 @@ check35(){
     if [[ $METRICFILTER_SET ]];then
       text_ok "CloudWatch group found, and metric filters for CloudTrail configuration changes enabled"
     else
-      echo -e "     $BAD WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
+      text_warn "CloudWatch group found, but no metric filters or alarms associated"
     fi
   else
-    echo -e "     $BAD WARNING! No CloudWatch group found, no metric filters or alarms associated$NORMAL"
+    text_warn "No CloudWatch group found, no metric filters or alarms associated"
   fi
 }
 
@@ -941,10 +941,10 @@ check36(){
     if [[ $METRICFILTER_SET ]];then
       text_ok "CloudWatch group found, and metric filters for usage of root account enabled"
     else
-      echo -e "     $BAD WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
+      text_warn "CloudWatch group found, but no metric filters or alarms associated"
     fi
   else
-    echo -e "     $BAD WARNING! No CloudWatch group found, no metric filters or alarms associated$NORMAL"
+    text_warn "No CloudWatch group found, no metric filters or alarms associated"
   fi
 }
 
@@ -957,10 +957,10 @@ check37(){
     if [[ $METRICFILTER_SET ]];then
       text_ok "CloudWatch group found, and metric filters enabled"
     else
-      echo -e "     $BAD WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
+      text_warn "CloudWatch group found, but no metric filters or alarms associated"
     fi
   else
-    echo -e "     $BAD WARNING! No CloudWatch group found, no metric filters or alarms associated$NORMAL"
+    text_warn "No CloudWatch group found, no metric filters or alarms associated"
   fi
 }
 
@@ -973,10 +973,10 @@ check38(){
     if [[ $METRICFILTER_SET ]];then
       text_ok "CloudWatch group found, and metric filters enabled"
     else
-      echo -e "     $BAD WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
+      text_warn "CloudWatch group found, but no metric filters or alarms associated"
     fi
   else
-    echo -e "     $BAD WARNING! No CloudWatch group found, no metric filters or alarms associated$NORMAL"
+    text_warn "No CloudWatch group found, no metric filters or alarms associated"
   fi
 }
 
@@ -989,10 +989,10 @@ check39(){
     if [[ $METRICFILTER_SET ]];then
       text_ok "CloudWatch group found, and metric filters enabled"
     else
-      echo -e "     $BAD WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
+      text_warn "CloudWatch group found, but no metric filters or alarms associated"
     fi
   else
-    echo -e "     $BAD WARNING! No CloudWatch group found, no metric filters or alarms associated$NORMAL"
+    text_warn "No CloudWatch group found, no metric filters or alarms associated"
   fi
 }
 
@@ -1005,10 +1005,10 @@ check310(){
     if [[ $METRICFILTER_SET ]];then
       text_ok "CloudWatch group found, and metric filters enabled"
     else
-      echo -e "     $BAD WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
+      text_warn "CloudWatch group found, but no metric filters or alarms associated"
     fi
   else
-    echo -e "     $BAD WARNING! No CloudWatch group found, no metric filters or alarms associated$NORMAL"
+    text_warn "No CloudWatch group found, no metric filters or alarms associated"
   fi
 }
 
@@ -1021,10 +1021,10 @@ check311(){
     if [[ $METRICFILTER_SET ]];then
       text_ok "CloudWatch group found, and metric filters enabled"
     else
-      echo -e "     $BAD WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
+      text_warn "CloudWatch group found, but no metric filters or alarms associated"
     fi
   else
-    echo -e "     $BAD WARNING! No CloudWatch group found, no metric filters or alarms associated$NORMAL"
+    text_warn "No CloudWatch group found, no metric filters or alarms associated"
   fi
 }
 
@@ -1037,10 +1037,10 @@ check312(){
     if [[ $METRICFILTER_SET ]];then
       text_ok "CloudWatch group found, and metric filters enabled"
     else
-      echo -e "     $BAD WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
+      text_warn "CloudWatch group found, but no metric filters or alarms associated"
     fi
   else
-    echo -e "     $BAD WARNING! No CloudWatch group found, no metric filters or alarms associated$NORMAL"
+    text_warn "No CloudWatch group found, no metric filters or alarms associated"
   fi
 }
 
@@ -1053,10 +1053,10 @@ check313(){
     if [[ $METRICFILTER_SET ]];then
       text_ok "CloudWatch group found, and metric filters enabled"
     else
-      echo -e "     $BAD WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
+      text_warn "CloudWatch group found, but no metric filters or alarms associated"
     fi
   else
-    echo -e "     $BAD WARNING! No CloudWatch group found, no metric filters or alarms associated$NORMAL"
+    text_warn "No CloudWatch group found, no metric filters or alarms associated"
   fi
 }
 
@@ -1069,10 +1069,10 @@ check314(){
     if [[ $METRICFILTER_SET ]];then
       text_ok "CloudWatch group found, and metric filters enabled"
     else
-      echo -e "     $BAD WARNING! CloudWatch group found, but no metric filters or alarms associated$NORMAL"
+      text_warn "CloudWatch group found, but no metric filters or alarms associated"
     fi
   else
-    echo -e "     $BAD WARNING! No CloudWatch group found, no metric filters or alarms associated$NORMAL"
+    text_warn "No CloudWatch group found, no metric filters or alarms associated"
   fi
 }
 
@@ -1089,8 +1089,8 @@ check315(){
             text_notice "Region $regx with Topic $TOPIC_SHORT:  "
             text_notice "- Suscription: $CHECK_TOPIC_LIST "
           else
-            echo -e "     $BAD WARNING! No suscription found in: Region $regx and Topic $topic $NORMAL"
-            echo -e "     $BAD - Region $regx and Topic $topic $NORMAL"
+            text_warn "No suscription found in: Region $regx and Topic $topic "
+            text_warn " - Region $regx and Topic $topic "
           fi
         done
     else
@@ -1106,7 +1106,7 @@ check41(){
     SG_LIST=$($AWSCLI ec2 describe-security-groups --filters "Name=ip-permission.to-port,Values=22" --query 'SecurityGroups[?length(IpPermissions[?ToPort==`22` && contains(IpRanges[].CidrIp, `0.0.0.0/0`)]) > `0`].{GroupName: GroupName}' --profile $PROFILE --region $regx --output text)
     if [[ $SG_LIST ]];then
       for SG in $SG_LIST;do
-        echo -e "     $BAD WARNING! Found Security Group: $SG open to 0.0.0.0/0 in Region $regx $NORMAL "
+        text_warn "Found Security Group: $SG open to 0.0.0.0/0 in Region $regx  "
       done
     else
       text_ok "No Security Groups found in $regx with port 22 TCP open to 0.0.0.0/0 "
@@ -1121,7 +1121,7 @@ check42(){
     SG_LIST=$($AWSCLI ec2 describe-security-groups --filters "Name=ip-permission.to-port,Values=3389" --query 'SecurityGroups[?length(IpPermissions[?ToPort==`3389` && contains(IpRanges[].CidrIp, `0.0.0.0/0`)]) > `0`].{GroupName: GroupName}' --profile $PROFILE --region $regx --output text)
     if [[ $SG_LIST ]];then
       for SG in $SG_LIST;do
-        echo -e "     $BAD WARNING! Found Security Group: $SG open to 0.0.0.0/0 in Region $regx $NORMAL "
+        text_warn "Found Security Group: $SG open to 0.0.0.0/0 in Region $regx  "
       done
     else
       text_ok "No Security Groups found in $regx with port 3389 TCP open to 0.0.0.0/0 "
@@ -1139,7 +1139,7 @@ check43(){
         text_ok "VPCFlowLog is enabled for LogGroupName: $FL in Region $regx "
       done
     else
-      echo -e "     $BAD WARNING! No VPCFlowLog has been found in Region $regx $NORMAL "
+      text_warn "No VPCFlowLog has been found in Region $regx  "
     fi
   done
 }
@@ -1150,7 +1150,7 @@ check44(){
   for regx in $REGIONS; do
     CHECK_SGDEFAULT=$($AWSCLI ec2 describe-security-groups --profile $PROFILE --region $regx --filters Name=group-name,Values='default' --query 'SecurityGroups[*].{IpPermissions:IpPermissions,IpPermissionsEgress:IpPermissionsEgress,GroupId:GroupId}' --output text |grep 0.0.0.0)
     if [[ $CHECK_SGDEFAULT ]];then
-      echo -e "     $BAD WARNING! Default Security Groups found that allow 0.0.0.0 IN or OUT traffic in Region $regx $NORMAL "
+      text_warn "Default Security Groups found that allow 0.0.0.0 IN or OUT traffic in Region $regx"
     else
       text_ok "No Default Security Groups open to 0.0.0.0 found in Region $regx "
     fi
