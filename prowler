@@ -347,8 +347,7 @@ check12(){
     done)
   echo -e "\n$TITLE12"
     if [[ $COMMAND12 ]]; then
-      echo -e "     List of users with Password enabled but MFA disabled:"
-      text_warn "$COMMAND12 "
+      text_warn "Users with Password enabled by MFA disabled: $COMMAND12"
     else
       text_ok "No users found with Password enabled and MFA disabled"
     fi
@@ -388,25 +387,45 @@ check14(){
   LIST_OF_USERS_WITH_ACCESS_KEY1=$(cat $TEMP_REPORT_FILE| awk -F, '{ print $1, $9 }' |grep "\ true" | awk '{ print $1 }')
   LIST_OF_USERS_WITH_ACCESS_KEY2=$(cat $TEMP_REPORT_FILE| awk -F, '{ print $1, $14 }' |grep "\ true" | awk '{ print $1 }')
   echo -e "\n$TITLE14 "
-    echo -e "     Users with access key 1 older than 90 days: "
-    for user in $LIST_OF_USERS_WITH_ACCESS_KEY1; do
-      # check access key 1
-      DATEROTATED1=$(cat $TEMP_REPORT_FILE | grep $user| awk -F, '{ print $10 }' | grep -v "N/A" | awk -F"T" '{ print $1 }')
-      HOWOLDER=$(how_older_from_today $DATEROTATED1)
+  C14_NUM_USERS1=0
+  C14_NUM_USERS2=0
+  # $(expr $C116_NUM_USERS + 1)
+    if [[ $LIST_OF_USERS_WITH_ACCESS_KEY1 ]]; then
+      # text_warn "Users with access key 1 older than 90 days:"
+      for user in $LIST_OF_USERS_WITH_ACCESS_KEY1; do
+        # check access key 1
+        DATEROTATED1=$(cat $TEMP_REPORT_FILE | grep $user| awk -F, '{ print $10 }' | grep -v "N/A" | awk -F"T" '{ print $1 }')
+        HOWOLDER=$(how_older_from_today $DATEROTATED1)
 
-      if [ $HOWOLDER -gt "90" ];then
-        text_warn " $user has not rotated access key1. "
+        if [ $HOWOLDER -gt "90" ];then
+          text_warn " $user has not rotated access key1 in over 90 days "
+          C14_NUM_USERS1 = $(expr $C14_NUM_USERS1 + 1)
+        fi
+      done
+      if [[ $C14_NUM_USERS1 -eq 0 ]]; then
+        text_ok "No users with access key 1 older than 90 days."
       fi
-    done
-    echo -e "     Users with access key 2 older than 90 days: "
-    for user in $LIST_OF_USERS_WITH_ACCESS_KEY2; do
-      # check access key 2
-      DATEROTATED2=$(cat $TEMP_REPORT_FILE | grep $user| awk -F, '{ print $10 }' | grep -v "N/A" | awk -F"T" '{ print $1 }')
-      HOWOLDER=$(how_older_from_today $DATEROTATED2)
-      if [ $HOWOLDER -gt "90" ];then
-        text_warn " $user has not rotated access key2. "
+    else
+      text_ok "No users with access key 1."
+    fi
+
+    if [[ $LIST_OF_USERS_WITH_ACCESS_KEY2 ]]; then
+      # text_warn "Users with access key 2 older than 90 days:"
+      for user in $LIST_OF_USERS_WITH_ACCESS_KEY2; do
+        # check access key 2
+        DATEROTATED2=$(cat $TEMP_REPORT_FILE | grep $user| awk -F, '{ print $10 }' | grep -v "N/A" | awk -F"T" '{ print $1 }')
+        HOWOLDER=$(how_older_from_today $DATEROTATED2)
+        if [ $HOWOLDER -gt "90" ];then
+          text_warn " $user has not rotated access key2. "
+          C14_NUM_USERS2 = $(expr $C14_NUM_USERS2 + 1)
+        fi
+      done
+      if [[ $C14_NUM_USERS2 -eq 0 ]]; then
+        text_ok "No users with access key 2 older than 90 days."
       fi
-    done
+    else
+      text_ok "No users with access key 2."
+    fi
 }
 
 check15(){
@@ -550,7 +569,6 @@ check116(){
   TITLE116="$BLUE 1.16$NORMAL Ensure IAM policies are attached only to groups or roles (Scored)"
   echo -e "\n$TITLE116"
   LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text --profile $PROFILE --region $REGION)
-  echo -e "      Users with policy attached to them instead to groups: (it may take few seconds...) "
   C116_NUM_USERS=0
   for user in $LIST_USERS;do
     USER_POLICY=$($AWSCLI iam list-attached-user-policies --output text --profile $PROFILE --region $REGION --user-name $user)
