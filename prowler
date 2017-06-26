@@ -305,7 +305,8 @@ textTitle(){
 
 printCsvHeader() {
   >&2 echo "Generateing pipe delimited report on stdout;  Diagnostics on stderr."
-  >&2 echo " "
+  >&2 echo "  Using Profile $PROFILE"
+  >&2 echo ""
       echo "PROFILE|REGION|TITLE_ID|RESULT|SCORED|TITLE_TEXT|NOTES"
 }
 
@@ -351,7 +352,7 @@ printColorsCode(){
 
 # Generate Credential Report
 genCredReport() {
-  textTitle "0.0" "Generating AWS IAM Credential Report..."
+  textTitle "0.1" "Generating AWS IAM Credential Report..."
   until $( $AWSCLI iam generate-credential-report --output text --query 'State' --profile $PROFILE --region $REGION |grep -q -m 1 "COMPLETE") ; do
     sleep 1
   done
