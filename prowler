@@ -311,13 +311,23 @@ infoReferenceLong(){
   echo -e "  $NOTICE  https://github.com/Alfresco/aws-cis-security-benchmark/issues$NORMAL"
 }
 
-infoReferenceShort(){
-  # Report review note:
-  echo -e "     $NOTICE http://bit.ly/2g3PEf7$NORMAL"
-}
+
 
 text_ok(){
   echo "     $OK OK! $NORMAL $@"
+}
+
+text_notice(){
+  echo "     $NOTICE NOTICE! $@ $NORMAL"
+}
+
+text_warn(){
+  echo "     $WARNING WARNING! $@ $NORMAL"
+}
+
+infoReferenceShort(){
+  # Report review note:
+  text_notice "http://bit.ly/2g3PEf7"
 }
 
 check11(){
@@ -325,7 +335,7 @@ check11(){
      (password last used, access_key_1_last_used, access_key_2_last_used): "
   COMMAND11=$(cat $TEMP_REPORT_FILE| grep '<root_account>' | cut -d, -f5,11,16 | sed 's/,/,\ /g')
   echo -e "\n$TITLE11"
-  echo -e "     $NOTICE $COMMAND11 $NORMAL"
+  text_notice "$COMMAND11 $NORMAL"
 }
 
 check12(){
@@ -532,9 +542,9 @@ check115(){
   TITLE115="$BLUE 1.15$NORMAL Ensure security questions are registered in the AWS account (Not Scored)"
   # No command available
   echo -e "\n$TITLE115"
-  echo -e "     $NOTICE No command available for check 1.15 $NORMAL"
-  echo -e "     $NOTICE Login to the AWS Console as root, click on the Account $NORMAL"
-  echo -e "     $NOTICE Name -> My Account -> Configure Security Challenge Questions $NORMAL"
+  text_notice "No command available for check 1.15 "
+  text_notice "Login to the AWS Console as root, click on the Account "
+  text_notice "Name -> My Account -> Configure Security Challenge Questions "
 }
 
 check116(){
@@ -559,8 +569,8 @@ check117(){
   TITLE117="$BLUE 1.17$NORMAL Enable detailed billing (Scored)"
   # No command available
   echo -e "\n$TITLE117 "
-  echo -e "     $NOTICE No command available for check 1.17 $NORMAL"
-  echo -e "     $NOTICE See section 1.17 on the CIS Benchmark guide for details $NORMAL"
+  text_notice "No command available for check 1.17 "
+  text_notice "See section 1.17 on the CIS Benchmark guide for details "
   infoReferenceShort
 }
 
@@ -569,19 +579,19 @@ check118(){
   echo -e "\n$TITLE118 "
   FINDMASTERANDMANAGER=$($AWSCLI iam list-roles --profile $PROFILE --region $REGION --query "Roles[*].{RoleName:RoleName}" --output text | grep -E 'Master|Manager'| tr '\n' ' ')
   if [[ $FINDMASTERANDMANAGER ]];then
-    echo -e "     $NOTICE Found next roles as possible IAM Master and IAM Manager candidates: $NORMAL"
-    echo -e "     $NOTICE $FINDMASTERANDMANAGER $NORMAL"
-    echo -e "\n     $NOTICE INFO: run the commands below to check their policies with section 1.18 in the guide... $NORMAL"
+    text_notice "Found next roles as possible IAM Master and IAM Manager candidates: "
+    text_notice "$FINDMASTERANDMANAGER "
+    text_notice "run the commands below to check their policies with section 1.18 in the guide..."
     for role in $FINDMASTERANDMANAGER;do
       # find inline policies in found roles
       INLINEPOLICIES=$($AWSCLI iam list-role-policies --role-name $role --profile $PROFILE --region $REGION --query "PolicyNames[*]" --output text)
       for policy in $INLINEPOLICIES;do
-        echo "     $NOTICE $AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION$NORMAL"
+        text_notice "$AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION"
       done
       # find attached policies in found roles
       ATTACHEDPOLICIES=$($AWSCLI iam list-attached-role-policies --role-name $role --profile $PROFILE --region $REGION --query "AttachedPolicies[*]" --output text)
       for policy in $ATTACHEDPOLICIES;do
-        echo "     $NOTICE $AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION$NORMAL"
+        text-notice "$AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION"
       done
     done
   else
@@ -593,8 +603,8 @@ check119(){
   TITLE119="$BLUE 1.19$NORMAL Maintain current contact details (Scored)"
   # No command available
   echo -e "\n$TITLE119 "
-  echo -e "     $NOTICE No command available for check 1.19 $NORMAL"
-  echo -e "     $NOTICE See section 1.19 on the CIS Benchmark guide for details $NORMAL"
+  text_notice "No command available for check 1.19 "
+  text_notice "See section 1.19 on the CIS Benchmark guide for details "
   infoReferenceShort
 }
 
@@ -602,16 +612,16 @@ check120(){
   TITLE120="$BLUE 1.20$NORMAL Ensure security contact information is registered (Scored)"
   # No command available
   echo -e "\n$TITLE120 "
-  echo -e "     $NOTICE No command available for check 1.20 $NORMAL"
-  echo -e "     $NOTICE See section 1.20 on the CIS Benchmark guide for details $NORMAL"
+  text_notice "No command available for check 1.20 "
+  text_notice "See section 1.20 on the CIS Benchmark guide for details "
   infoReferenceShort
 }
 
 check121(){
   TITLE121="$BLUE 1.21$NORMAL Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
   echo -e "\n$TITLE121 "
-  echo -e "     $NOTICE No command available for check 1.21 $NORMAL"
-  echo -e "     $NOTICE See section 1.21 on the CIS Benchmark guide for details $NORMAL"
+  text_notice "No command available for check 1.21 "
+  text_notice "See section 1.21 on the CIS Benchmark guide for details "
   infoReferenceShort
 }
 
@@ -624,7 +634,7 @@ check122(){
       POLICYTOSHOW=$($AWSCLI iam list-entities-for-policy --policy-arn $SUPPORTPOLICYARN --profile $PROFILE --region $REGION --output text)
       if [[ $POLICYTOSHOW ]];then
         text_ok "Support Policy attached to $POLICYTOSHOW"
-        echo -e "     $NOTICE Make sure your team can create a Support case with AWS $NORMAL"
+        text_notice "Make sure your team can create a Support case with AWS "
       else
         echo -e "     $BAD WARNING! Support Policy not applied to any Group, User or Role $NORMAL"
       fi
@@ -642,8 +652,8 @@ check123(){
   LIST_USERS_KEY1_NA=$(for user in $LIST_USERS; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$11 }'|grep N/A |awk '{ print $1 }'; done)
   LIST_USERS_KEY1_ACTIVE=$(for user in $LIST_USERS_KEY1_NA; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$9 }'|grep "true$"|awk '{ print $1 }'|sed 's/[:blank:]+/,/g' ; done)
   if [[ $LIST_USERS_KEY1_ACTIVE ]]; then
-    echo -e "     $NOTICE List of users with Access Key 1 never used:$NORMAL"
-    echo -e "     $NOTICE $LIST_USERS_KEY1_ACTIVE $NORMAL have never used Access Key 1"
+    text_notice "List of users with Access Key 1 never used:"
+    text_notice "$LIST_USERS_KEY1_ACTIVE  have never used Access Key 1"
   else
     text_ok "No users found with Access Key 1 never used"
   fi
@@ -651,8 +661,8 @@ check123(){
   LIST_USERS_KEY2_NA=$(for user in $LIST_USERS; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$16 }'|grep N/A |awk '{ print $1 }' ; done)
   LIST_USERS_KEY2_ACTIVE=$(for user in $LIST_USERS_KEY2_NA; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$14 }'|grep "true$" |awk '{ print $1 }' ; done)
   if [[ $LIST_USERS_KEY2_ACTIVE ]]; then
-    echo -e "     $NOTICE List of users with Access Key 2 never used:$NORMAL"
-    echo -e "     $NOTICE $LIST_USERS_KEY2_ACTIVE $NORMAL have never used Access Key 2"
+    text_notice "List of users with Access Key 2 never used:"
+    text_notice "$LIST_USERS_KEY2_ACTIVE  have never used Access Key 2"
   else
     text_ok "No users found with Access Key 2 never used"
   fi
@@ -663,7 +673,7 @@ check124(){
   echo -e "\n$TITLE124"
   LIST_CUSTOM_POLICIES=$($AWSCLI iam list-policies --output text --profile $PROFILE --region $REGION|grep 'arn:aws:iam::[0-9]\{12\}:'|awk '{ print $2 }')
   if [[ $LIST_CUSTOM_POLICIES ]]; then
-    echo -e "     $NOTICE Looking for custom policies: (skipping default policies, it may take few seconds...)$NORMAL"
+    text_notice "Looking for custom policies: (skipping default policies, it may take few seconds...)"
     for policy in $LIST_CUSTOM_POLICIES; do
       POLICY_VERSION=$($AWSCLI iam list-policies --profile $PROFILE --region $REGION --query 'Policies[*].[Arn,DefaultVersionId]' --output text|grep -w $policy |awk '{ print $2}')
       POLICY_WITH_FULL=$($AWSCLI iam get-policy-version --output text --policy-arn $policy --version-id $POLICY_VERSION --query "PolicyVersion.Document.Statement[?Effect == 'Allow' && contains(Resource, '*') && contains (Action, '*')]" --profile $PROFILE --region $REGION)
@@ -672,9 +682,9 @@ check124(){
       fi
     done
     if [[ $POLICIES_ALLOW_LIST ]]; then
-      echo -e "     $NOTICE List of custom policies: $NORMAL"
+      text_notice "List of custom policies: "
       for policy in $POLICIES_ALLOW_LIST; do
-        echo "     $NOTICE Policy $policy allows \"*:*\" $NORMAL"
+        text_notice "Policy $policy allows \"*:*\""
       done
     else
         text_ok "No custom policy found that allow full \"*:*\" administrative privileges"
@@ -830,7 +840,7 @@ check28(){
               if [[ $CHECK_KMS_KEY_ROTATION == "True" ]];then
                     text_ok "Key $key in Region $regx is set correctly"
                   elif [[ $CHECK_KMS_KEY_ROTATION == "False" && $CHECK_KMS_DEFAULT_KEY ]];then
-                echo -e "     $NOTICE Region $regx key $key is an AWS default master key and cannot be deleted nor modified.$NORMAL"
+                text_notice "Region $regx key $key is an AWS default master key and cannot be deleted nor modified."
               else
                 echo -e "     $BAD WARNING! Key $key in Region $regx is not set to rotate!!!$NORMAL"
               fi
@@ -838,7 +848,7 @@ check28(){
       done
 
   else
-      echo -e "     $NOTICE Region $regx doesn't have encryption keys $NORMAL"
+      text_notice "Region $regx doesn't have encryption keys "
   fi
   done
 }
@@ -1077,15 +1087,15 @@ check315(){
           CHECK_TOPIC_LIST=$($AWSCLI sns list-subscriptions-by-topic --topic-arn $topic --profile $PROFILE --region $regx --query 'Subscriptions[*].{Endpoint:Endpoint,Protocol:Protocol}' --output text --max-items $MAXITEMS | grep -v "None")
           if [[ $CHECK_TOPIC_LIST ]]; then
             TOPIC_SHORT=$(echo $topic | awk -F: '{ print $7 }')
-            echo -e "     $NOTICE Region $regx with Topic $TOPIC_SHORT: $NORMAL "
-            echo -e "     $NOTICE - Suscription: $CHECK_TOPIC_LIST $NORMAL"
+            text_notice "Region $regx with Topic $TOPIC_SHORT:  "
+            text_notice "- Suscription: $CHECK_TOPIC_LIST "
           else
             echo -e "     $BAD WARNING! No suscription found in: Region $regx and Topic $topic $NORMAL"
             echo -e "     $BAD - Region $regx and Topic $topic $NORMAL"
           fi
         done
     else
-      echo -e "     $NOTICE Region $regx doesn't have topics $NORMAL"
+      text_notice "Region $regx doesn't have topics "
     fi
   done
 }
@@ -1152,11 +1162,11 @@ check45(){
   #set -xe
   TITLE45="$BLUE 4.5$NORMAL Ensure routing tables for VPC peering are \"least access\" (Not Scored)"
   echo -e "\n$TITLE45 "
-  echo -e "     $NOTICE Looking for VPC peering in all regions... $NORMAL "
+  text_notice "Looking for VPC peering in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_VPCS_PEERING_CONNECTIONS=$($AWSCLI ec2 describe-vpc-peering-connections --output text --profile $PROFILE --region $regx --query 'VpcPeeringConnections[*].VpcPeeringConnectionId')
     if [[ $LIST_OF_VPCS_PEERING_CONNECTIONS ]];then
-      echo -e "     $NOTICE $regx: $LIST_OF_VPCS_PEERING_CONNECTIONS, review its routing tables $NORMAL "
+      text_notice "$regx: $LIST_OF_VPCS_PEERING_CONNECTIONS, review its routing tables  "
       #LIST_OF_VPCS=$($AWSCLI ec2 describe-vpcs --profile $PROFILE --region $regx --query 'Vpcs[*].VpcId' --output text)
       #aws ec2 describe-route-tables --filter "Name=vpc-id,Values=vpc-0213e864" --query "RouteTables[*].{RouteTableId:RouteTableId, VpcId:VpcId, Routes:Routes, AssociatedSubnets:Associations[*].SubnetId}" --profile $PROFILE --region $regx
       # for vpc in $LIST_OF_VPCS; do
