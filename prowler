@@ -36,6 +36,8 @@ FILTERREGION=""
 MAXITEMS=100
 MONOCHROME=0
 MODE="text"
+SEP=','
+
 
 # Command usage menu
 usage(){
@@ -48,7 +50,7 @@ USAGE:
       -c <checknum>       specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1 or check3 for entire section 3)
       -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-      -M <mode>           output mode: text (defalut), mono, csv (separator is \"|\"; data is on stdout; progress on stderr)
+      -M <mode>           output mode: text (defalut), mono, csv (separator is \"${SEP}\"; data is on stdout; progress on stderr)
       -h                  this help
   "
   exit
@@ -246,7 +248,7 @@ textOK(){
     else
       REPREGION=$REGION
     fi
-    echo "$PROFILE|$REPREGION|$TITLE_ID|PASS|$ITEM_SCORED|$TITLE_TEXT|$1"
+    echo "$PROFILE${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$TITLE_TEXT${SEP}$1"
   else
     echo "      $OK OK! $NORMAL $1"
   fi
@@ -259,7 +261,7 @@ textNotice(){
     else
       REPREGION=$REGION
     fi
-    echo "$PROFILE|$REPREGION|$TITLE_ID|INFO|$ITEM_SCORED|$TITLE_TEXT|$1"
+    echo "$PROFILE${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$TITLE_TEXT${SEP}$1"
   else
     echo "      $NOTICE INFO! $1 $NORMAL"
   fi
@@ -272,7 +274,7 @@ textWarn(){
     else
       REPREGION=$REGION
     fi
-    echo "$PROFILE|$REPREGION|$TITLE_ID|WARNING|$ITEM_SCORED|$TITLE_TEXT|$1"
+    echo "$PROFILE${SEP}$REPREGION${SEP}$TITLE_ID${SEP}WARNING${SEP}$ITEM_SCORED${SEP}$TITLE_TEXT${SEP}$1"
   else
     echo "      $BAD WARNING! $1 $NORMAL"
   fi
@@ -302,10 +304,10 @@ textTitle(){
 printCsvHeader() {
   >&2 echo ""
   >&2 echo ""
-  >&2 echo "Generateing pipe delimited report on stdout;  Diagnostics on stderr."
+  >&2 echo "Generateing \"${SEP}\" delimited report on stdout;  Diagnostics on stderr."
   >&2 echo "  Using Profile $PROFILE"
   >&2 echo ""
-      echo "PROFILE|REGION|TITLE_ID|RESULT|SCORED|TITLE_TEXT|NOTES"
+      echo "PROFILE${SEP}REGION${SEP}TITLE_ID${SEP}RESULT${SEP}SCORED${SEP}TITLE_TEXT${SEP}NOTES"
 }
 
 prowlerBanner() {
