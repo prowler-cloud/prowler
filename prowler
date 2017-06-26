@@ -455,7 +455,6 @@ check14(){
   textTitle "$ID14" "$TITLE14"
   C14_NUM_USERS1=0
   C14_NUM_USERS2=0
-  # $(expr $C116_NUM_USERS + 1)
     if [[ $LIST_OF_USERS_WITH_ACCESS_KEY1 ]]; then
       # textWarn "Users with access key 1 older than 90 days:"
       for user in $LIST_OF_USERS_WITH_ACCESS_KEY1; do
@@ -465,7 +464,7 @@ check14(){
 
         if [ $HOWOLDER -gt "90" ];then
           textWarn " $user has not rotated access key1 in over 90 days "
-          C14_NUM_USERS1 = $(expr $C14_NUM_USERS1 + 1)
+          C14_NUM_USERS1=$(expr $C14_NUM_USERS1 + 1)
         fi
       done
       if [[ $C14_NUM_USERS1 -eq 0 ]]; then
@@ -483,7 +482,7 @@ check14(){
         HOWOLDER=$(how_older_from_today $DATEROTATED2)
         if [ $HOWOLDER -gt "90" ];then
           textWarn " $user has not rotated access key2. "
-          C14_NUM_USERS2 = $(expr $C14_NUM_USERS2 + 1)
+          C14_NUM_USERS2=$(expr $C14_NUM_USERS2 + 1)
         fi
       done
       if [[ $C14_NUM_USERS2 -eq 0 ]]; then
