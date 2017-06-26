@@ -79,6 +79,10 @@ or if you want a colored HTML report do:
 pip install ansi2html
 ./prowler | ansi2html -la > report.html
 ```
+or if you want a pipe-delimited report file, do:
+```
+./prowler -M csv > output.psv
+```
 
 5 - For help use:
 
@@ -94,6 +98,7 @@ USAGE:
       -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
       -b                  do not use colors in the output
+      -M <mode>           output mode: text (defalut), mono, csv (separator is "|"; data is on stdout; progress on stderr)
       -h                  this help
 
 ```
