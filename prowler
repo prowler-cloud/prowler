@@ -49,7 +49,7 @@ USAGE:
       -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
       -b                  do not use colors in the output
-      -M <mode>           output mode: text (defalut), mono, csv
+      -M <mode>           output mode: text (defalut), mono, csv (separator is \"|\"; data is on stdout; progress on stderr)
       -h                  this help
   "
   exit
@@ -252,7 +252,7 @@ textOK(){
     fi
     echo "$PROFILE|$REPREGION|$TITLE_ID|PASS|$ITEM_SCORED|$TITLE_TEXT|$1"
   else
-    echo " $TITLE_ID     $OK OK! $NORMAL $1"
+    echo "      $OK OK! $NORMAL $1"
   fi
 }
 
@@ -265,7 +265,7 @@ textNotice(){
     fi
     echo "$PROFILE|$REPREGION|$TITLE_ID|INFO|$ITEM_SCORED|$TITLE_TEXT|$1"
   else
-    echo " $TITLE_ID     $NOTICE INFO! $1 $NORMAL"
+    echo "      $NOTICE INFO! $1 $NORMAL"
   fi
 }
 
@@ -278,7 +278,7 @@ textWarn(){
     fi
     echo "$PROFILE|$REPREGION|$TITLE_ID|WARNING|$ITEM_SCORED|$TITLE_TEXT|$1"
   else
-    echo " $TITLE_ID     $BAD WARNING! $1 $NORMAL"
+    echo "      $BAD WARNING! $1 $NORMAL"
   fi
 }
 
