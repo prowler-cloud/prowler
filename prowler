@@ -240,6 +240,20 @@ fi
 # AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 # AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_ID}
 
+## Output formatting functions
+text_ok(){
+  echo "     $OK OK! $NORMAL $@"
+}
+
+text_notice(){
+  echo "     $NOTICE NOTICE! $@ $NORMAL"
+}
+
+text_warn(){
+  echo "     $WARNING WARNING! $@ $NORMAL"
+}
+
+
 prowlerBanner() {
   echo -e "$CYAN                          _"
   echo -e "  _ __  _ __ _____      _| | ___ _ __"
@@ -265,8 +279,7 @@ getWhoami(){
 }
 
 printCurrentDate(){
-  echo ""
-  echo "Date: ${NOTICE}$(date)${NORMAL}"
+  text_notice "Date: $(date)"
 }
 
 printColorsCode(){
@@ -304,26 +317,12 @@ REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
 
 infoReferenceLong(){
   # Report review note:
-  echo -e "  $BLUE     \n*********************************$NORMAL"
-  echo -e "  $NOTICE  For more information: $NORMAL"
-  echo -e "  $NOTICE  https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf$NORMAL"
-  echo -e "  $NOTICE  For bugs or feedback: $NORMAL"
-  echo -e "  $NOTICE  https://github.com/Alfresco/aws-cis-security-benchmark/issues$NORMAL"
+  text_notice "For more information:"
+  text_notice "https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf"
+  text_notice "For bugs or feedback:"
+  text_notice "https://github.com/Alfresco/aws-cis-security-benchmark/issues"
 }
 
-
-
-text_ok(){
-  echo "     $OK OK! $NORMAL $@"
-}
-
-text_notice(){
-  echo "     $NOTICE NOTICE! $@ $NORMAL"
-}
-
-text_warn(){
-  echo "     $WARNING WARNING! $@ $NORMAL"
-}
 
 infoReferenceShort(){
   # Report review note:
@@ -351,7 +350,7 @@ check12(){
       echo -e "     List of users with Password enabled but MFA disabled:"
       echo -e "     $BAD WARNING! $COMMAND12 $NORMAL"
     else
-      text_ok " No users found with Password enabled and MFA disabled"
+      text_ok "No users found with Password enabled and MFA disabled"
     fi
 }
 
