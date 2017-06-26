@@ -391,9 +391,9 @@ infoReferenceShort(){
 check11(){
   ID11="1.1"
   TITLE11="Avoid the use of the root account (Scored)."
-  COMMAND11=$(cat $TEMP_REPORT_FILE| grep '<root_account>' | cut -d, -f5,11,16 | sed 's/,/,\ /g')
+  COMMAND11=$(cat $TEMP_REPORT_FILE| grep '<root_account>' | cut -d, -f5,11,16 | sed 's/,/\ /g')
   textTitle "$ID11" "$TITLE11"
-  textNotice "Root account last accessed (password, key_1, key_2): $COMMAND11"
+  textNotice "Root account last accessed (password key_1 key_2): $COMMAND11"
 }
 
 check12(){
@@ -636,7 +636,7 @@ check115(){
   # No command available
   textTitle "$ID115" "$TITLE115" "0"
   textNotice "No command available for check 1.15 "
-  textNotice "Login to the AWS Console as root, click on the Account "
+  textNotice "Login to the AWS Console as root & click on the Account "
   textNotice "Name -> My Account -> Configure Security Challenge Questions "
 }
 
@@ -735,7 +735,7 @@ check122(){
         textOK "Support Policy attached to $POLICYTOSHOW"
         textNotice "Make sure your team can create a Support case with AWS "
       else
-        textWarn "Support Policy not applied to any Group, User or Role "
+        textWarn "Support Policy not applied to any Group / User / Role "
       fi
     done
   else
@@ -774,7 +774,7 @@ check124(){
   textTitle "$ID124" "$TITLE124"
   LIST_CUSTOM_POLICIES=$($AWSCLI iam list-policies --output text --profile $PROFILE --region $REGION|grep 'arn:aws:iam::[0-9]\{12\}:'|awk '{ print $2 }')
   if [[ $LIST_CUSTOM_POLICIES ]]; then
-    textNotice "Looking for custom policies: (skipping default policies, it may take few seconds...)"
+    textNotice "Looking for custom policies: (skipping default policies - it may take few seconds...)"
     for policy in $LIST_CUSTOM_POLICIES; do
       POLICY_VERSION=$($AWSCLI iam list-policies --profile $PROFILE --region $REGION --query 'Policies[*].[Arn,DefaultVersionId]' --output text|grep -w $policy |awk '{ print $2}')
       POLICY_WITH_FULL=$($AWSCLI iam get-policy-version --output text --policy-arn $policy --version-id $POLICY_VERSION --query "PolicyVersion.Document.Statement[?Effect == 'Allow' && contains(Resource, '*') && contains (Action, '*')]" --profile $PROFILE --region $REGION)
@@ -923,7 +923,7 @@ check27(){
         if [[ $CLOUDTRAILENC_ENABLED ]];then
           textOK "KMS key found for $trail"
         else
-          textWarn "encryption is not enabled in your CloudTrail trail $trail, KMS key not found!"
+          textWarn "encryption is not enabled in your CloudTrail trail $trail but KMS key not found!"
         fi
       done
     else
@@ -970,12 +970,12 @@ check31(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep AccessDenied)
     if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found, and metric filters for Access Denied enabled"
+      textOK "CloudWatch group found with metric filters for Access Denied enabled"
     else
-      textWarn "CloudWatch group found, but no metric filters or alarms associated"
+      textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found, no metric filters or alarms associated"
+    textWarn "No CloudWatch group found but no metric filters or alarms associated"
   fi
 }
 
@@ -987,12 +987,12 @@ check32(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'userIdentity.sessionContext.attributes.mfaAuthenticated.*true')
     if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found, and metric filters for sign-in Console without MFA enabled"
+      textOK "CloudWatch group found with metric filters for sign-in Console without MFA enabled"
     else
-      textWarn "CloudWatch group found, but no metric filters or alarms associated"
+      textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found, no metric filters or alarms associated"
+    textWarn "No CloudWatch group found but no metric filters or alarms associated"
   fi
 }
 
@@ -1004,12 +1004,12 @@ check33(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION |grep -E 'userIdentity.*Root.*AwsServiceEvent')
     if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found, and metric filters for usage of root account enabled"
+      textOK "CloudWatch group found with metric filters for usage of root account enabled"
     else
-      textWarn "CloudWatch group found, but no metric filters or alarms associated"
+      textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found, no metric filters or alarms associated"
+    textWarn "No CloudWatch group found but no metric filters or alarms associated"
   fi
 }
 
@@ -1021,12 +1021,12 @@ check34(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'DeleteGroupPolicy.*DeleteRolePolicy.*DeleteUserPolicy.*PutGroupPolicy.*PutRolePolicy.*PutUserPolicy.*CreatePolicy.*DeletePolicy.*CreatePolicyVersion.*DeletePolicyVersion.*AttachRolePolicy.*DetachRolePolicy.*AttachUserPolicy.*DetachUserPolicy.*AttachGroupPolicy.*DetachGroupPolicy')
     if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found, and metric filters for IAM policy changes enabled"
+      textOK "CloudWatch group found with metric filters for IAM policy changes enabled"
     else
-      textWarn "CloudWatch group found, but no metric filters or alarms associated"
+      textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found, no metric filters or alarms associated"
+    textWarn "No CloudWatch group found but no metric filters or alarms associated"
   fi
 }
 
@@ -1038,12 +1038,12 @@ check35(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateTrail.*UpdateTrail.*DeleteTrail.*StartLogging.*StopLogging')
     if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found, and metric filters for CloudTrail configuration changes enabled"
+      textOK "CloudWatch group found with metric filters for CloudTrail configuration changes enabled"
     else
-      textWarn "CloudWatch group found, but no metric filters or alarms associated"
+      textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found, no metric filters or alarms associated"
+    textWarn "No CloudWatch group found but no metric filters or alarms associated"
   fi
 }
 
@@ -1055,12 +1055,12 @@ check36(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'ConsoleLogin.*Failed')
     if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found, and metric filters for usage of root account enabled"
+      textOK "CloudWatch group found with metric filters for usage of root account enabled"
     else
-      textWarn "CloudWatch group found, but no metric filters or alarms associated"
+      textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found, no metric filters or alarms associated"
+    textWarn "No CloudWatch group found but no metric filters or alarms associated"
   fi
 }
 
@@ -1072,12 +1072,12 @@ check37(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'kms.amazonaws.com.*DisableKey.*ScheduleKeyDeletion')
     if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found, and metric filters enabled"
+      textOK "CloudWatch group found with metric filters enabled"
     else
-      textWarn "CloudWatch group found, but no metric filters or alarms associated"
+      textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found, no metric filters or alarms associated"
+    textWarn "No CloudWatch group found but no metric filters or alarms associated"
   fi
 }
 
@@ -1089,12 +1089,12 @@ check38(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 's3.amazonaws.com.*PutBucketAcl.*PutBucketPolicy.*PutBucketCors.*PutBucketLifecycle.*PutBucketReplication.*DeleteBucketPolicy.*DeleteBucketCors.*DeleteBucketLifecycle.*DeleteBucketReplication')
     if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found, and metric filters enabled"
+      textOK "CloudWatch group found with metric filters enabled"
     else
-      textWarn "CloudWatch group found, but no metric filters or alarms associated"
+      textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found, no metric filters or alarms associated"
+    textWarn "No CloudWatch group found but no metric filters or alarms associated"
   fi
 }
 
@@ -1106,12 +1106,12 @@ check39(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'config.amazonaws.com.*StopConfigurationRecorder.*DeleteDeliveryChannel.*PutDeliveryChannel.*PutConfigurationRecorder')
     if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found, and metric filters enabled"
+      textOK "CloudWatch group found with metric filters enabled"
     else
-      textWarn "CloudWatch group found, but no metric filters or alarms associated"
+      textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found, no metric filters or alarms associated"
+    textWarn "No CloudWatch group found but no metric filters or alarms associated"
   fi
 }
 
@@ -1123,12 +1123,12 @@ check310(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'AuthorizeSecurityGroupIngress.*AuthorizeSecurityGroupEgress.*RevokeSecurityGroupIngress.*RevokeSecurityGroupEgress.*CreateSecurityGroup.*DeleteSecurityGroup')
     if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found, and metric filters enabled"
+      textOK "CloudWatch group found with metric filters enabled"
     else
-      textWarn "CloudWatch group found, but no metric filters or alarms associated"
+      textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found, no metric filters or alarms associated"
+    textWarn "No CloudWatch group found but no metric filters or alarms associated"
   fi
 }
 
@@ -1140,12 +1140,12 @@ check311(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateNetworkAcl.*CreateNetworkAclEntry.*DeleteNetworkAcl.*DeleteNetworkAclEntry.*ReplaceNetworkAclEntry.*ReplaceNetworkAclAssociation')
     if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found, and metric filters enabled"
+      textOK "CloudWatch group found with metric filters enabled"
     else
-      textWarn "CloudWatch group found, but no metric filters or alarms associated"
+      textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found, no metric filters or alarms associated"
+    textWarn "No CloudWatch group found but no metric filters or alarms associated"
   fi
 }
 
@@ -1157,12 +1157,12 @@ check312(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateCustomerGateway.*DeleteCustomerGateway.*AttachInternetGateway.*CreateInternetGateway.*DeleteInternetGateway.*DetachInternetGateway')
     if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found, and metric filters enabled"
+      textOK "CloudWatch group found with metric filters enabled"
     else
-      textWarn "CloudWatch group found, but no metric filters or alarms associated"
+      textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found, no metric filters or alarms associated"
+    textWarn "No CloudWatch group found but no metric filters or alarms associated"
   fi
 }
 
@@ -1174,12 +1174,12 @@ check313(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateRoute.*CreateRouteTable.*ReplaceRoute.*ReplaceRouteTableAssociation.*DeleteRouteTable.*DeleteRoute.*DisassociateRouteTable')
     if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found, and metric filters enabled"
+      textOK "CloudWatch group found with metric filters enabled"
     else
-      textWarn "CloudWatch group found, but no metric filters or alarms associated"
+      textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found, no metric filters or alarms associated"
+    textWarn "No CloudWatch group found but no metric filters or alarms associated"
   fi
 }
 
@@ -1191,12 +1191,12 @@ check314(){
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateVpc.*DeleteVpc.*ModifyVpcAttribute.*AcceptVpcPeeringConnection.*CreateVpcPeeringConnection.*DeleteVpcPeeringConnection.*RejectVpcPeeringConnection.*AttachClassicLinkVpc.*DetachClassicLinkVpc.*DisableVpcClassicLink.*EnableVpcClassicLink')
     if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found, and metric filters enabled"
+      textOK "CloudWatch group found with metric filters enabled"
     else
-      textWarn "CloudWatch group found, but no metric filters or alarms associated"
+      textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found, no metric filters or alarms associated"
+    textWarn "No CloudWatch group found but no metric filters or alarms associated"
   fi
 }
 
@@ -1295,7 +1295,7 @@ check45(){
   for regx in $REGIONS; do
     LIST_OF_VPCS_PEERING_CONNECTIONS=$($AWSCLI ec2 describe-vpc-peering-connections --output text --profile $PROFILE --region $regx --query 'VpcPeeringConnections[*].VpcPeeringConnectionId')
     if [[ $LIST_OF_VPCS_PEERING_CONNECTIONS ]];then
-      textNotice "$regx: $LIST_OF_VPCS_PEERING_CONNECTIONS, review its routing tables" "$regx"
+      textNotice "$regx: $LIST_OF_VPCS_PEERING_CONNECTIONS - review routing tables" "$regx"
       #LIST_OF_VPCS=$($AWSCLI ec2 describe-vpcs --profile $PROFILE --region $regx --query 'Vpcs[*].VpcId' --output text)
       #aws ec2 describe-route-tables --filter "Name=vpc-id,Values=vpc-0213e864" --query "RouteTables[*].{RouteTableId:RouteTableId, VpcId:VpcId, Routes:Routes, AssociatedSubnets:Associations[*].SubnetId}" --profile $PROFILE --region $regx
       # for vpc in $LIST_OF_VPCS; do
