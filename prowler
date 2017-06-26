@@ -245,7 +245,7 @@ TITLE_TEXT="CALLER ERROR - UNSET TITLE"
 ## Output formatting functions
 textOK(){
   if [[ $MODE == "csv" ]]; then
-    echo "$PROFILE|$REGION|$TITLE_ID|PASS|$TITLE_TEXT|$1"
+    echo "$PROFILE|$REGION|$TITLE_ID|PASS|$ITEM_SCORED|$TITLE_TEXT|$1"
   else
     echo " $TITLE_ID     $OK OK! $NORMAL $@"
   fi
@@ -253,7 +253,7 @@ textOK(){
 
 textNotice(){
   if [[ $MODE == "csv" ]]; then
-    echo "$PROFILE|$REGION|$TITLE_ID|INFO|$TITLE_TEXT|$1"
+    echo "$PROFILE|$REGION|$TITLE_ID|INFO|$ITEM_SCORED|$TITLE_TEXT|$1"
   else
     echo " $TITLE_ID     $NOTICE INFO! $@ $NORMAL"
   fi
@@ -261,7 +261,7 @@ textNotice(){
 
 textWarn(){
   if [[ $MODE == "csv" ]]; then
-    echo "$PROFILE|$REGION|$TITLE_ID|WARNING|$TITLE_TEXT|$1"
+    echo "$PROFILE|$REGION|$TITLE_ID|WARNING|$ITEM_SCORED|$TITLE_TEXT|$1"
   else
     echo " $TITLE_ID     $BAD WARNING! $@ $NORMAL"
   fi
@@ -290,7 +290,7 @@ textTitle(){
 
 printCsvHeader() {
   >&2 echo "Pipe Delimited report on stdout;  Diagnostics on stderr."
-      echo "PROFILE|REGION|TITLE_ID|RESULT|TITLE_TEXT|NOTES"
+      echo "PROFILE|REGION|TITLE_ID|RESULT|SCORED|TITLE_TEXT|NOTES"
 }
 
 prowlerBanner() {
@@ -1388,8 +1388,8 @@ saveReport
 
 callCheck
 
-TITLE1="$BLUE 1 Identity and Access Management *********************************$NORMAL"
-echo -e "\n\n$TITLE1"
+TITLE1="Identity and Access Management ****************************************"
+textTitle "1" "$TITLE1"
 check11
 check12
 check13
@@ -1415,8 +1415,8 @@ check122
 check123
 check124
 
-TITLE2="$BLUE 2 Logging ********************************************************$NORMAL"
-echo -e "\n\n$TITLE2"
+TITLE2="Logging ***************************************************************"
+textTitle "2" "$TITLE2"
 check21
 check22
 check23
@@ -1426,8 +1426,8 @@ check26
 check27
 check28
 
-TITLE3="$BLUE 3 Monitoring *****************************************************"
-echo -e "\n\n$TITLE3"
+TITLE3="Monitoring ************************************************************"
+textTitle "3" "$TITLE3"
 # 3 Monitoring check commands / Mostly covered by SecurityMonkey
 check31
 check32
@@ -1445,8 +1445,8 @@ check313
 check314
 check315
 
-TITLE4="$BLUE 4 Networking **************************************************$NORMAL"
-echo -e "\n\n$TITLE4"
+TITLE4="Networking ************************************************************"
+textTitle "4" "$TITLE4"
 check41
 check42
 check43
