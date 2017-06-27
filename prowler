@@ -147,6 +147,8 @@ else
   WHITE="[1;37m"
 fi
 
+SCRIPT_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
+
 # Functions to manage dates depending on OS
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
   # function to compare in days, usage how_older_from_today date
@@ -324,7 +326,7 @@ getWhoami(){
   if [[ $MODE == "csv" ]]; then
     CALLER_ARN=$($AWSCLI sts get-caller-identity --output json --profile $PROFILE --region $REGION --query "Arn" | tr -d '"')
     textTitle "0.0" "Show report generation info"
-    textNotice "ARN: $CALLER_ARN  TIMESTAMP: $(date -Is)"
+    textNotice "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
   else
     echo ""
     echo "This report is being generated using credentials below:"
