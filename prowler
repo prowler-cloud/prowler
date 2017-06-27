@@ -306,7 +306,7 @@ textTitle(){
 printCsvHeader() {
   >&2 echo ""
   >&2 echo ""
-  >&2 echo "Generateing \"${SEP}\" delimited report on stdout;  Diagnostics on stderr."
+  >&2 echo "Generating \"${SEP}\" delimited report on stdout;  Diagnostics on stderr."
   >&2 echo "  Using Profile $PROFILE"
   >&2 echo ""
       echo "PROFILE${SEP}REGION${SEP}TITLE_ID${SEP}RESULT${SEP}SCORED${SEP}TITLE_TEXT${SEP}NOTES"
