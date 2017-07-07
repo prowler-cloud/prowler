@@ -250,7 +250,7 @@ textOK(){
     else
       REPREGION=$REGION
     fi
-    echo "$PROFILE${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$TITLE_TEXT${SEP}$1"
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$TITLE_TEXT${SEP}$1"
   else
     echo "      $OK OK! $NORMAL $1"
   fi
@@ -263,7 +263,7 @@ textNotice(){
     else
       REPREGION=$REGION
     fi
-    echo "$PROFILE${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$TITLE_TEXT${SEP}$1"
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$TITLE_TEXT${SEP}$1"
   else
     echo "      $NOTICE INFO! $1 $NORMAL"
   fi
@@ -276,7 +276,7 @@ textWarn(){
     else
       REPREGION=$REGION
     fi
-    echo "$PROFILE${SEP}$REPREGION${SEP}$TITLE_ID${SEP}WARNING${SEP}$ITEM_SCORED${SEP}$TITLE_TEXT${SEP}$1"
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}WARNING${SEP}$ITEM_SCORED${SEP}$TITLE_TEXT${SEP}$1"
   else
     echo "      $BAD WARNING! $1 $NORMAL"
   fi
@@ -307,9 +307,9 @@ printCsvHeader() {
   >&2 echo ""
   >&2 echo ""
   >&2 echo "Generating \"${SEP}\" delimited report on stdout;  Diagnostics on stderr."
-  >&2 echo "  Using Profile $PROFILE"
+  >&2 echo "  Using Profile $PROFILE,  Account $ACCOUNT_NUM"
   >&2 echo ""
-      echo "PROFILE${SEP}REGION${SEP}TITLE_ID${SEP}RESULT${SEP}SCORED${SEP}TITLE_TEXT${SEP}NOTES"
+      echo "PROFILE${SEP}ACCOUNT_NUM${SEP}REGION${SEP}TITLE_ID${SEP}RESULT${SEP}SCORED${SEP}TITLE_TEXT${SEP}NOTES"
 }
 
 prowlerBanner() {
@@ -323,6 +323,7 @@ prowlerBanner() {
 
 # Get whoami in AWS, who is the user running this shell script
 getWhoami(){
+  ACCOUNT_NUM=$($AWSCLI sts get-caller-identity --output json --profile $PROFILE --region $REGION --query "Account" | tr -d '"')
   if [[ $MODE == "csv" ]]; then
     CALLER_ARN=$($AWSCLI sts get-caller-identity --output json --profile $PROFILE --region $REGION --query "Arn" | tr -d '"')
     textTitle "0.0" "Show report generation info"
