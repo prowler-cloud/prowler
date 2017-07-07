@@ -362,7 +362,7 @@ genCredReport() {
 
 # Save report to a file, decode it, deletion at finish and after every single check, acb stands for AWS CIS Benchmark
 saveReport(){
-  TEMP_REPORT_FILE=/tmp/.acb
+  TEMP_REPORT_FILE=$(mktemp -t prowler-XXXXX.cred_report )
   $AWSCLI iam get-credential-report --query 'Content' --output text --profile $PROFILE --region $REGION | decode_report > $TEMP_REPORT_FILE
 }
 
@@ -370,6 +370,9 @@ saveReport(){
 cleanTemp(){
   rm -fr $TEMP_REPORT_FILE
 }
+
+# Delete the temporary report file if we get interrupted/terminated
+trap cleanTemp SIGHUP SIGINT SIGTERM
 
 # Get a list of all available AWS Regions
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
