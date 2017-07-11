@@ -465,7 +465,7 @@ Instead of using default policy SecurityAudit for the account you use for checks
             "redshift:describe*",
             "route53:getchange",
             "route53:getcheckeripranges",
-            "route53:getgeolocations",
+            "route53:getgeolocation",
             "route53:gethealthcheck",
             "route53:gethealthcheckcount",
             "route53:gethealthchecklastfailurereason",
