@@ -714,7 +714,7 @@ check118(){
       # find attached policies in found roles
       ATTACHEDPOLICIES=$($AWSCLI iam list-attached-role-policies --role-name $role --profile $PROFILE --region $REGION --query "AttachedPolicies[*]" --output text)
       for policy in $ATTACHEDPOLICIES;do
-        text-notice "$AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION"
+        textNotice "$AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION"
       done
     done
   else
