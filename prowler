@@ -1237,12 +1237,19 @@ check315(){
   ID315="3.15"
   TITLE315="Ensure appropriate subscribers to each SNS topic (Not Scored)"
   textTitle "$ID315" "$TITLE315" "0"
+  CAN_SNS_LIST_SUBS=1
   for regx in $REGIONS; do
     TOPICS_LIST=$($AWSCLI sns list-topics --profile $PROFILE --region $regx --output text --query 'Topics[*].TopicArn')
-    if [[ $TOPICS_LIST ]];then
+    if [[ $TOPICS_LIST && $CAN_SNS_LIST_SUBS -eq 1 ]];then
         for topic in $TOPICS_LIST; do
-          CHECK_TOPIC_LIST=$($AWSCLI sns list-subscriptions-by-topic --topic-arn $topic --profile $PROFILE --region $regx --query 'Subscriptions[*].{Endpoint:Endpoint,Protocol:Protocol}' --output text --max-items $MAXITEMS | grep -v "None")
-          if [[ $CHECK_TOPIC_LIST ]]; then
+          CHECK_TOPIC_LIST=$($AWSCLI sns list-subscriptions-by-topic --topic-arn $topic --profile $PROFILE --region $regx --query 'Subscriptions[*].{Endpoint:Endpoint,Protocol:Protocol}' --output text --max-items $MAXITEMS)
+          if [[ $? -eq 255 ]]; then
+            # Permission error
+            export CAN_SNS_LIST_SUBS=0
+            textNotice "No permission to list topics"
+            break;
+          fi
+          if [[ $(grep -v 'None' $CHECK_TOPIC_LIST) ]]; then
             TOPIC_SHORT=$(echo $topic | awk -F: '{ print $7 }')
             textNotice "Region $regx with Topic $TOPIC_SHORT:" "$regx"
             textNotice "- Suscription: $CHECK_TOPIC_LIST" "$regx"
@@ -1251,6 +1258,8 @@ check315(){
             textWarn " - Region $regx and Topic $topic" "$regx"
           fi
         done
+    elif [[ $CAN_SNS_LIST_SUBS -eq 0 ]]; then
+      break
     else
       textNotice "Region $regx doesn't have topics" "$regx"
     fi
