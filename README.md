@@ -525,7 +525,7 @@ Alternatively, here is a policy which defines the permissions which are NOT pres
         "cloudwatchlogs:DescribeMetricFilters",
         "es:DescribeElasticsearchDomainConfig",
         "ses:GetIdentityVerificationAttributes",
-        "sns:ListSubscriptionsByTopic",
+        "sns:ListSubscriptionsByTopic"
       ],
       "Effect": "Allow",
       "Resource": "*"
