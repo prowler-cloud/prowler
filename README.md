@@ -2,9 +2,11 @@
 
 ## Description
 
-Tool based on AWS-CLI commands for AWS account hardening, following guidelines of the [CIS Amazon Web Services Foundations Benchmark 1.1 ](https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf)
+Tool based on AWS-CLI commands for AWS account security assessment and hardening, following guidelines of the [CIS Amazon Web Services Foundations Benchmark 1.1 ](https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf)
 
-It covers hardening and security best practices for all regions related to:
+## Features
+
+It covers hardening and security best practices for all AWS regions related to:
 
 - Identity and Access Management (24 checks)
 - Logging (8 checks)
@@ -12,6 +14,12 @@ It covers hardening and security best practices for all regions related to:
 - Networking (5 checks)
 
 For a comprehesive list and resolution look at the guide on the link above.
+
+With Prowler you can:
+- get a colourish or monochrome report
+- a CSV format report for diff
+- run specific checks without having to run the entire report
+- check multiple AWS accounts in parallel 
 
 ## Requirements
 This script has been written in bash using AWS-CLI and it works in Linux and OSX.
@@ -84,7 +92,14 @@ or if you want a pipe-delimited report file, do:
 ./prowler -M csv > output.psv
 ```
 
-5 - For help use:
+5 - If you want to run Prowler to check multiple AWS accounts in parallel (runs up to 4 simultaneously `-P 4`):
+
+```
+grep -E '^\[([0-9A-Aa-z_-]+)\]'  ~/.aws/credentials | tr -d '][' | shuf |  \
+xargs -n 1 -L 1 -I @ -r -P 4 ./prowler -p @ -M csv  2> /dev/null  >> all-accounts.csv
+```
+
+6 - For help use:
 
 ```
 ./prowler -h
