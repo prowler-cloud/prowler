@@ -394,7 +394,7 @@ cleanTemp(){
 }
 
 # Delete the temporary report file if we get interrupted/terminated
-trap cleanTemp SIGHUP SIGINT SIGTERM
+trap cleanTemp EXIT
 
 # Get a list of all available AWS Regions
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
