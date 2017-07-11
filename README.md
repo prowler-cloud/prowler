@@ -510,3 +510,41 @@ Instead of using default policy SecurityAudit for the account you use for checks
     }]
 }
 ```
+
+Alternatively, here is a policy which defines the permissions which are NOT present in the AWS Managed SecurityAudit policy. Attach both this policy and the AWS Managed SecurityAudit policy to the group and you're good to go.  
+
+```
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "acm:DescribeCertificate",
+        "acm:ListCertificates",
+        "cloudwatchlogs:describeLogGroups",
+        "cloudwatchlogs:DescribeMetricFilters",
+        "es:DescribeElasticsearchDomainConfig",
+        "ses:GetIdentityVerificationAttributes",
+        "sns:ListSubscriptionsByTopic",
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+Quick bash script to set up a "prowler" IAM user and "SecurityAudit" group with the required permissions. To run the script below, you need user with administrative permissions; set the AWS_DEFAULT_PROFILE to use that account.
+
+```
+export AWS_DEFAULT_PROFILE=default
+export ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' | tr -d '"')
+aws iam create-group --group-name SecurityAudit
+aws iam create-policy --policy-name ProwlerAuditAdditions --policy-document file://$(pwd)/prowler-policy-additions.json
+aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::aws:policy/SecurityAudit
+aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ProwlerAuditAdditions
+aws iam create-user --user-name prowler
+aws iam add-user-to-group --user-name prowler --group-name SecurityAudit
+aws iam create-access-key --user-name prowler
+unset ACCOUNT_ID AWS_DEFAULT_PROFILE
+```
