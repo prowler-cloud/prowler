@@ -324,7 +324,14 @@ prowlerBanner() {
 # Get whoami in AWS, who is the user running this shell script
 getWhoami(){
   if [[ $MODE == "csv" ]]; then
-    CALLER_ARN=$($AWSCLI sts get-caller-identity --output json --profile $PROFILE --region $REGION --query "Arn" | tr -d '"')
+    CALLER_ARN_RAW=$($AWSCLI sts get-caller-identity --output json --profile $PROFILE --region $REGION --query "Arn")
+    if [[ 255 -eq $? ]]; then
+      # Failed to get own identity ... exit
+      echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+      >&2 echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+      exit 2
+    fi
+    CALLER_ARN=$(echo $CALLER_ARN_RAW | tr -d '"')
     textTitle "0.0" "Show report generation info"
     textNotice "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
   else
@@ -333,10 +340,24 @@ getWhoami(){
     echo ""
     echo -e "AWS-CLI Profile: $NOTICE[$PROFILE]$NORMAL AWS API Region: $NOTICE[$REGION]$NORMAL AWS Filter Region: $NOTICE[${FILTERREGION:-all}]$NORMAL\n"
     if [[ $MONOCHROME -eq 1 ]]; then
-      $AWSCLI sts get-caller-identity --output json --profile $PROFILE --region $REGION | grep ':'
+      echo "Caller Identity:"
+      $AWSCLI sts get-caller-identity --output text --profile $PROFILE --region $REGION --query "Arn"
+      if [[ 255 -eq $? ]]; then
+        # Failed to get own identity ... exit
+        echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+        >&2 echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+        exit 2
+      fi
+      echo ""
     else
       echo "Caller Identity:"
       $AWSCLI sts get-caller-identity --output table --profile $PROFILE --region $REGION
+      if [[ 255 -eq $? ]]; then
+        # Failed to get own identity ... exit
+        echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+        >&2 echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+        exit 2
+      fi
       echo ""
     fi
   fi
