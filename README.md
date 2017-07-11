@@ -511,6 +511,8 @@ Instead of using default policy SecurityAudit for the account you use for checks
 }
 ```
 
+### Incremental IAM Policy
+
 Alternatively, here is a policy which defines the permissions which are NOT present in the AWS Managed SecurityAudit policy. Attach both this policy and the AWS Managed SecurityAudit policy to the group and you're good to go.  
 
 ```
@@ -533,6 +535,8 @@ Alternatively, here is a policy which defines the permissions which are NOT pres
   ]
 }
 ```
+
+### Bootstrap Script
 
 Quick bash script to set up a "prowler" IAM user and "SecurityAudit" group with the required permissions. To run the script below, you need user with administrative permissions; set the AWS_DEFAULT_PROFILE to use that account.
 
