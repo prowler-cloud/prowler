@@ -1239,7 +1239,9 @@ check315(){
           if [[ $? -eq 255 ]]; then
             # Permission error
             export CAN_SNS_LIST_SUBS=0
-            textNotice "No permission to list topics"
+            textNotice "No permission to list subscribers in topics"
+            ntopics=$(echo $TOPICS_LIST | wc -w )
+            textNotice "Region $regx has $ntopics topics" "$regx"
             break;
           fi
           if [[ $(grep -v 'None' $CHECK_TOPIC_LIST) ]]; then
@@ -1252,7 +1254,9 @@ check315(){
           fi
         done
     elif [[ $CAN_SNS_LIST_SUBS -eq 0 ]]; then
-      break
+      ntopics=$(echo $TOPICS_LIST | wc -w )
+      textNotice "Region $regx has $ntopics topics" "$regx"
+      # break
     else
       textNotice "Region $regx doesn't have topics" "$regx"
     fi
