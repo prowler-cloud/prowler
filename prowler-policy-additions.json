@@ -1,0 +1,18 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "acm:describecertificate",
+        "acm:listcertificates",
+        "cloudwatchlogs:describeloggroups",
+        "cloudwatchlogs:describemetricfilters",
+        "es:describeelasticsearchdomainconfig",
+        "ses:getidentityverificationattributes",
+        "sns:listsubscriptionsbytopic"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}

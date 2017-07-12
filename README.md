@@ -465,7 +465,7 @@ Instead of using default policy SecurityAudit for the account you use for checks
             "redshift:describe*",
             "route53:getchange",
             "route53:getcheckeripranges",
-            "route53:getgeolocations",
+            "route53:getgeolocation",
             "route53:gethealthcheck",
             "route53:gethealthcheckcount",
             "route53:gethealthchecklastfailurereason",
@@ -510,3 +510,47 @@ Instead of using default policy SecurityAudit for the account you use for checks
     }]
 }
 ```
+
+### Incremental IAM Policy
+
+Alternatively, here is a policy which defines the permissions which are NOT present in the AWS Managed SecurityAudit policy. Attach both this policy and the AWS Managed SecurityAudit policy to the group and you're good to go.  
+
+```
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "acm:DescribeCertificate",
+        "acm:ListCertificates",
+        "cloudwatchlogs:describeLogGroups",
+        "cloudwatchlogs:DescribeMetricFilters",
+        "es:DescribeElasticsearchDomainConfig",
+        "ses:GetIdentityVerificationAttributes",
+        "sns:ListSubscriptionsByTopic"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+### Bootstrap Script
+
+Quick bash script to set up a "prowler" IAM user and "SecurityAudit" group with the required permissions. To run the script below, you need user with administrative permissions; set the AWS_DEFAULT_PROFILE to use that account.
+
+```
+export AWS_DEFAULT_PROFILE=default
+export ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' | tr -d '"')
+aws iam create-group --group-name SecurityAudit
+aws iam create-policy --policy-name ProwlerAuditAdditions --policy-document file://$(pwd)/prowler-policy-additions.json
+aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::aws:policy/SecurityAudit
+aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ProwlerAuditAdditions
+aws iam create-user --user-name prowler
+aws iam add-user-to-group --user-name prowler --group-name SecurityAudit
+aws iam create-access-key --user-name prowler
+unset ACCOUNT_ID AWS_DEFAULT_PROFILE
+```
+
+The `aws iam create-access-key` command will output the secret access key and the key id; keep these somewhere safe, and add them to ~/.aws/credentials with an appropriate profile name to use them with prowler. This is the only time they secret key will be shown.  If you loose it, you will need to generate a replacement.
