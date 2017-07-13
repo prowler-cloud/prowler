@@ -37,6 +37,7 @@ MAXITEMS=100
 MONOCHROME=0
 MODE="text"
 SEP=','
+KEEPCREDREPORT=0
 
 
 # Command usage menu
@@ -51,16 +52,20 @@ USAGE:
       -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
       -M <mode>           output mode: text (defalut), mono, csv (separator is \"${SEP}\"; data is on stdout; progress on stderr)
+      -k                  keep the credential report
       -h                  this help
   "
   exit
 }
 
-while getopts ":hp:r:c:f:m:M:" OPTION; do
+while getopts ":hkp:r:c:f:m:M:" OPTION; do
    case $OPTION in
      h )
         usage
         exit 1
+        ;;
+     k )
+        KEEPCREDREPORT=1
         ;;
      p )
         PROFILE=$OPTARG
@@ -325,7 +330,14 @@ prowlerBanner() {
 getWhoami(){
   ACCOUNT_NUM=$($AWSCLI sts get-caller-identity --output json --profile $PROFILE --region $REGION --query "Account" | tr -d '"')
   if [[ $MODE == "csv" ]]; then
-    CALLER_ARN=$($AWSCLI sts get-caller-identity --output json --profile $PROFILE --region $REGION --query "Arn" | tr -d '"')
+    CALLER_ARN_RAW=$($AWSCLI sts get-caller-identity --output json --profile $PROFILE --region $REGION --query "Arn")
+    if [[ 255 -eq $? ]]; then
+      # Failed to get own identity ... exit
+      echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+      >&2 echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+      exit 2
+    fi
+    CALLER_ARN=$(echo $CALLER_ARN_RAW | tr -d '"')
     textTitle "0.0" "Show report generation info"
     textNotice "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
   else
@@ -334,10 +346,24 @@ getWhoami(){
     echo ""
     echo -e "AWS-CLI Profile: $NOTICE[$PROFILE]$NORMAL AWS API Region: $NOTICE[$REGION]$NORMAL AWS Filter Region: $NOTICE[${FILTERREGION:-all}]$NORMAL\n"
     if [[ $MONOCHROME -eq 1 ]]; then
-      $AWSCLI sts get-caller-identity --output json --profile $PROFILE --region $REGION | grep ':'
+      echo "Caller Identity:"
+      $AWSCLI sts get-caller-identity --output text --profile $PROFILE --region $REGION --query "Arn"
+      if [[ 255 -eq $? ]]; then
+        # Failed to get own identity ... exit
+        echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+        >&2 echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+        exit 2
+      fi
+      echo ""
     else
       echo "Caller Identity:"
       $AWSCLI sts get-caller-identity --output table --profile $PROFILE --region $REGION
+      if [[ 255 -eq $? ]]; then
+        # Failed to get own identity ... exit
+        echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+        >&2 echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+        exit 2
+      fi
       echo ""
     fi
   fi
@@ -363,17 +389,23 @@ genCredReport() {
 
 # Save report to a file, decode it, deletion at finish and after every single check, acb stands for AWS CIS Benchmark
 saveReport(){
-  TEMP_REPORT_FILE=$(mktemp -t prowler-XXXXX.cred_report )
+  TEMP_REPORT_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-XXXXX.cred_report )
   $AWSCLI iam get-credential-report --query 'Content' --output text --profile $PROFILE --region $REGION | decode_report > $TEMP_REPORT_FILE
+  if [[ $KEEPCREDREPORT -eq 1 ]]; then
+    textTitle "0.2" "Saving IAM Credential Report ..."
+    textNotice "IAM Credential Report saved in $TEMP_REPORT_FILE"
+  fi
 }
 
 # Delete temporary report file
 cleanTemp(){
-  rm -fr $TEMP_REPORT_FILE
+  if [[ $KEEPCREDREPORT -ne 1 ]]; then
+    rm -fr $TEMP_REPORT_FILE
+  fi
 }
 
 # Delete the temporary report file if we get interrupted/terminated
-trap cleanTemp SIGHUP SIGINT SIGTERM
+trap cleanTemp EXIT
 
 # Get a list of all available AWS Regions
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
@@ -693,7 +725,7 @@ check118(){
       # find attached policies in found roles
       ATTACHEDPOLICIES=$($AWSCLI iam list-attached-role-policies --role-name $role --profile $PROFILE --region $REGION --query "AttachedPolicies[*]" --output text)
       for policy in $ATTACHEDPOLICIES;do
-        text-notice "$AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION"
+        textNotice "$AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION"
       done
     done
   else
@@ -1216,12 +1248,21 @@ check315(){
   ID315="3.15"
   TITLE315="Ensure appropriate subscribers to each SNS topic (Not Scored)"
   textTitle "$ID315" "$TITLE315" "0"
+  CAN_SNS_LIST_SUBS=1
   for regx in $REGIONS; do
     TOPICS_LIST=$($AWSCLI sns list-topics --profile $PROFILE --region $regx --output text --query 'Topics[*].TopicArn')
-    if [[ $TOPICS_LIST ]];then
+    if [[ $TOPICS_LIST && $CAN_SNS_LIST_SUBS -eq 1 ]];then
         for topic in $TOPICS_LIST; do
-          CHECK_TOPIC_LIST=$($AWSCLI sns list-subscriptions-by-topic --topic-arn $topic --profile $PROFILE --region $regx --query 'Subscriptions[*].{Endpoint:Endpoint,Protocol:Protocol}' --output text --max-items $MAXITEMS | grep -v "None")
-          if [[ $CHECK_TOPIC_LIST ]]; then
+          CHECK_TOPIC_LIST=$($AWSCLI sns list-subscriptions-by-topic --topic-arn $topic --profile $PROFILE --region $regx --query 'Subscriptions[*].{Endpoint:Endpoint,Protocol:Protocol}' --output text --max-items $MAXITEMS 2> /dev/null)
+          if [[ $? -eq 255 ]]; then
+            # Permission error
+            export CAN_SNS_LIST_SUBS=0
+            textNotice "No permission to list subscribers in topics"
+            ntopics=$(echo $TOPICS_LIST | wc -w )
+            textNotice "Region $regx has $ntopics topics" "$regx"
+            break;
+          fi
+          if [[ $(grep -v 'None' $CHECK_TOPIC_LIST) ]]; then
             TOPIC_SHORT=$(echo $topic | awk -F: '{ print $7 }')
             textNotice "Region $regx with Topic $TOPIC_SHORT:" "$regx"
             textNotice "- Suscription: $CHECK_TOPIC_LIST" "$regx"
@@ -1230,6 +1271,10 @@ check315(){
             textWarn " - Region $regx and Topic $topic" "$regx"
           fi
         done
+    elif [[ $CAN_SNS_LIST_SUBS -eq 0 ]]; then
+      ntopics=$(echo $TOPICS_LIST | wc -w )
+      textNotice "Region $regx has $ntopics topics" "$regx"
+      # break
     else
       textNotice "Region $regx doesn't have topics" "$regx"
     fi
