@@ -48,7 +48,7 @@ USAGE:
   Options:
       -p <profile>        specify your AWS profile to use (i.e.: default)
       -r <region>         specify an AWS region to direct API requests to (i.e.: us-east-1)
-      -c <checknum>       specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1 or check3 for entire section 3)
+      -c <checknum>       specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1, check3 for entire section 3 or level1 for CIS Level 1 Profile Definitions)
       -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
       -M <mode>           output mode: text (defalut), mono, csv (separator is \"${SEP}\"; data is on stdout; progress on stderr)
@@ -673,7 +673,7 @@ check115(){
   ID115="1.15"
   TITLE115="Ensure security questions are registered in the AWS account (Not Scored)"
   # No command available
-  textTitle "$ID115" "$TITLE115" "0"
+  textTitle "$ID115" "$TITLE115"
   textNotice "No command available for check 1.15 "
   textNotice "Login to the AWS Console as root & click on the Account "
   textNotice "Name -> My Account -> Configure Security Challenge Questions "
@@ -756,7 +756,7 @@ check120(){
 check121(){
   ID121="1.21"
   TITLE121="Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
-  textTitle "$ID121" "$TITLE121" "0"
+  textTitle "$ID121" "$TITLE121"
   textNotice "No command available for check 1.21 "
   textNotice "See section 1.21 on the CIS Benchmark guide for details "
   infoReferenceShort
@@ -788,7 +788,7 @@ check122(){
 check123(){
   ID123="1.23"
   TITLE123="Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)"
-  textTitle "$ID123" "$TITLE123" "0"
+  textTitle "$ID123" "$TITLE123"
   LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text --profile $PROFILE --region $REGION)
   # List of USERS with KEY1 last_used_date as N/A
   LIST_USERS_KEY1_NA=$(for user in $LIST_USERS; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$11 }'|grep N/A |awk '{ print $1 }'; done)
@@ -1247,7 +1247,7 @@ check314(){
 check315(){
   ID315="3.15"
   TITLE315="Ensure appropriate subscribers to each SNS topic (Not Scored)"
-  textTitle "$ID315" "$TITLE315" "0"
+  textTitle "$ID315" "$TITLE315"
   CAN_SNS_LIST_SUBS=1
   for regx in $REGIONS; do
     TOPICS_LIST=$($AWSCLI sns list-topics --profile $PROFILE --region $regx --output text --query 'Topics[*].TopicArn')
@@ -1347,7 +1347,7 @@ check45(){
   #set -xe
   ID45="4.5"
   TITLE45="Ensure routing tables for VPC peering are \"least access\" (Not Scored)"
-  textTitle "$ID45" "$TITLE45" "0"
+  textTitle "$ID45" "$TITLE45"
   textNotice "Looking for VPC peering in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_VPCS_PEERING_CONNECTIONS=$($AWSCLI ec2 describe-vpc-peering-connections --output text --profile $PROFILE --region $regx --query 'VpcPeeringConnections[*].VpcPeeringConnectionId')
@@ -1435,6 +1435,22 @@ callCheck(){
         ;;
       check4 )
         check41;check42;check43;check44;check45
+        ;;
+      level1 )
+        check11;check12;check13;check14;check15;check16;check17;check18;
+        check19;check110;check111;check112;check113;check115;check116;check117;
+        check118;check119;check120;check122;check123;check124;check21;check23;
+        check24;check25;check26;check31;check32;check33;check34;check35;
+        check38;check312;check313;check314;check315;check41;check42
+        ;;
+      level2 )
+        check11;check12;check13;check14;check15;check16;check17;check18;
+        check19;check110;check111;check112;check113;check114;check115;check116;
+        check117;check118;check119;check120;check121;check122;check123;check124;
+        check21;check22;check23;check24;check25;check26;check27;check28;check31;
+        check32;check33;check34;check35;check36;check37;check38;check39;
+        check310;check311;check312;check313;check314;check315;check41;check42;
+        check43;check44;check45
         ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41)\n";
