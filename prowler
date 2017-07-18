@@ -1417,18 +1417,26 @@ extra72(){
 }
 
 extra73(){
-#   # set -x
-   ID73="7.3"
-   TITLE73="Ensure there are no S3 buckets open to the AllUsers (Not Scored) (Not part of CIS benchmark)"
-   textTitle "$ID73" "$TITLE73" "0"
-#
-#   for regx in $REGIONS; do
-#
-#   done
-#   # set +x
+  #set -x
+  ID73="7.3"
+  TITLE73="Ensure there are no S3 buckets open to AllUsers (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID73" "$TITLE73" "0"
+  textNotice "Looking for S3 Buckets in all regions...  "
+  ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' --profile $PROFILE --region $REGION --output text)
+  for bucket in $ALL_BUCKETS_LIST; do
+    BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket --profile $PROFILE --region $REGION --output text)
+    if [[ "None" == $BUCKET_LOCATION ]]; then
+      BUCKET_LOCATION="us-east-1"
+    fi
+    CHECK_BUCKET_PERMISSIONS=$($AWSCLI s3api get-bucket-acl --profile $PROFILE --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AllUsers']" --output text |grep -v GRANTEE)
+    CHECK_BUCKET_PERMISSIONS_SINGLE_LINE=$(echo -ne $CHECK_BUCKET_PERMISSIONS)
+    if [[ $CHECK_BUCKET_PERMISSIONS ]];then
+      textWarn "$BUCKET_LOCATION: $bucket bucket is open to the Internet with permissions: $CHECK_BUCKET_PERMISSIONS_SINGLE_LINE" "$regx"
+    else
+      textOK "$BUCKET_LOCATION: $bucket bucket is not open" "$regx"
+    fi
+  done
 }
-
-
 
 
 callCheck(){
@@ -1526,7 +1534,7 @@ callCheck(){
         extra71;extra72;extra73
         ;;
       * )
-        textWarn "ERROR! Use a valid check name (i.e. check41)\n";
+        textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
     esac
     cleanTemp
     exit
@@ -1615,6 +1623,12 @@ check42
 check43
 check44
 check45
+
+TITLE7="Extras ************************************************************"
+textTitle "7" "$TITLE7"
+extra71
+extra72
+extra73
 
 if [[ $MODE != "csv" ]]; then
   infoReferenceLong
