@@ -25,8 +25,6 @@
 # set -vx
 # Exits if any error is found
 # set -e
-# Enable set -x to see commands and debug 
-# set -x
 
 OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
@@ -312,10 +310,7 @@ textTitle(){
 
 printCsvHeader() {
   >&2 echo ""
-  >&2 echo ""
-  >&2 echo "Generating \"${SEP}\" delimited report on stdout;  Diagnostics on stderr."
-  >&2 echo "  Using Profile $PROFILE,  Account $ACCOUNT_NUM"
-  >&2 echo ""
+  >&2 echo "Generating \"${SEP}\" delimited report on stdout for profile $PROFILE, account $ACCOUNT_NUM"
       echo "PROFILE${SEP}ACCOUNT_NUM${SEP}REGION${SEP}TITLE_ID${SEP}RESULT${SEP}SCORED${SEP}TITLE_TEXT${SEP}NOTES"
 }
 
@@ -1367,6 +1362,41 @@ check45(){
   done
 }
 
+extra71(){
+  # set -x
+  ID71="7.1"
+  TITLE71="Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID71" "$TITLE71" "0"
+
+  ADMIN_GROUPS=''
+  AWS_GROUPS=$($AWSCLI --profile $PROFILE iam list-groups --output text --query 'Groups[].GroupName')
+  for grp in $AWS_GROUPS; do
+    # aws --profile onlinetraining iam list-attached-group-policies --group-name Administrators --query 'AttachedPolicies[].PolicyArn' | grep 'arn:aws:iam::aws:policy/AdministratorAccess'
+    # list-attached-group-policies
+    CHECK_ADMIN_GROUP=$($AWSCLI --profile $PROFILE iam list-attached-group-policies --group-name $grp --output json --query 'AttachedPolicies[].PolicyArn' | grep  'arn:aws:iam::aws:policy/AdministratorAccess')
+    if [[ $CHECK_ADMIN_GROUP ]]; then
+      ADMIN_GROUPS="$ADMIN_GROUPS $grp"
+      textNotice "$grp group provides administrative access"
+      ADMIN_USERS=$($AWSCLI --profile $PROFILE iam get-group --group-name $grp --output json --query 'Users[].UserName' | grep '"' | cut -d'"' -f2 )
+      for auser in $ADMIN_USERS; do
+        # users in group are Administrators
+        # users
+          # check for user MFA device in credential report
+        USER_MFA_ENABLED=$( cat $TEMP_REPORT_FILE | grep "^$auser," | cut -d',' -f8)
+        if [[ "true" == $USER_MFA_ENABLED ]]; then
+          textOK "$auser / MFA Enabled / admin via group $grp"
+        else
+          textWarn "$auser / MFA DISABLED / admin via group $grp"
+        fi
+      done
+    else
+      textNotice "$grp group provides non-administrative access"
+    fi
+  done
+  # set +x
+}
+
+
 callCheck(){
   if [[ $CHECKNUMBER ]];then
     case "$CHECKNUMBER" in
@@ -1422,6 +1452,8 @@ callCheck(){
       check43 ) check43;;
       check44 ) check44;;
       check45 ) check45;;
+      extra71 ) extra71;;
+      ## Groups of Checks
       check1 )
         check11;check12;check13;check14;check15;check16;check17;check18;
         check19;check110;check111;check112;check113;check114;check115;
@@ -1454,6 +1486,9 @@ callCheck(){
         check310;check311;check312;check313;check314;check315;check41;check42;
         check43;check44;check45
         ;;
+      extras )
+        extra71;
+        ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41)\n";
     esac
@@ -1469,10 +1504,11 @@ if [[ $MODE != "csv" ]]; then
   prowlerBanner
   printCurrentDate
   printColorsCode
+  getWhoami
 else
+  getWhoami
   printCsvHeader
 fi
-getWhoami
 genCredReport
 saveReport
 
