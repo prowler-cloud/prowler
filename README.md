@@ -1,5 +1,15 @@
 # Prowler: AWS CIS Benchmark Tool
 
+## Table of Contents  
+- [Description](#description)
+- [Features](#features)  
+- [Requirements](#requirements)  
+- [Usage](#usage)
+- [Fix](#fix)
+- [Screenshots](#screenshots)
+- [Troubleshooting](#troubleshooting)
+- [Extras](#extras)
+
 ## Description
 
 Tool based on AWS-CLI commands for AWS account security assessment and hardening, following guidelines of the [CIS Amazon Web Services Foundations Benchmark 1.1 ](https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf)
@@ -48,7 +58,7 @@ arn:aws:iam::aws:policy/SecurityAudit
 ```
 > In some cases you may need more list or get permissions in some services, look at the Troubleshooting section for a more comprehensive policy if you find issues with the default SecurityAudit policy.
 
-## How to create a report
+## Usage
 
 1 - Run the prowler.sh command without options (it will use your default credentials and run checks over all regions when needed, default region is us-east-1):
 
@@ -122,7 +132,7 @@ USAGE:
       -h                  this help
 
 ```
-## How to fix all WARNINGS:
+## Fix:
  Check your report and fix the issues following all specific guidelines per check in https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf
 
 ## Screenshots
@@ -560,3 +570,20 @@ unset ACCOUNT_ID AWS_DEFAULT_PROFILE
 ```
 
 The `aws iam create-access-key` command will output the secret access key and the key id; keep these somewhere safe, and add them to ~/.aws/credentials with an appropriate profile name to use them with prowler. This is the only time they secret key will be shown.  If you loose it, you will need to generate a replacement.
+
+## Extras
+We are adding additional checks to improve the information gather from each account, these checks are out of the scope of the CIS benchmark for AWS but we consider them very helpful to get to know each AWS account set up and find issues on it.
+At this momment we have 3 extra checks:
+
+- 7.1  Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)
+- 7.2  Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)
+- 7.3  Ensure there are no S3 buckets open to AllUsers (Not Scored) (Not part of CIS benchmark)
+
+To run all extras in one command:
+```
+./prowler -c extras
+```
+or to run just one of the checks:
+```
+./prowler -c extra71
+```
