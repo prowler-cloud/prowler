@@ -22,6 +22,7 @@ It covers hardening and security best practices for all AWS regions related to:
 - Logging (8 checks)
 - Monitoring (15 checks)
 - Networking (5 checks)
+- Extra checks (3 checks) *see Extras section
 
 For a comprehesive list and resolution look at the guide on the link above.
 
