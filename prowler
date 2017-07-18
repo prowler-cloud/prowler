@@ -25,6 +25,8 @@
 # set -vx
 # Exits if any error is found
 # set -e
+# Enable set -x to see commands and debug 
+# set -x
 
 OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
@@ -1253,7 +1255,8 @@ check315(){
     TOPICS_LIST=$($AWSCLI sns list-topics --profile $PROFILE --region $regx --output text --query 'Topics[*].TopicArn')
     if [[ $TOPICS_LIST && $CAN_SNS_LIST_SUBS -eq 1 ]];then
         for topic in $TOPICS_LIST; do
-          CHECK_TOPIC_LIST=$($AWSCLI sns list-subscriptions-by-topic --topic-arn $topic --profile $PROFILE --region $regx --query 'Subscriptions[*].{Endpoint:Endpoint,Protocol:Protocol}' --output text --max-items $MAXITEMS 2> /dev/null)
+          CHECK_TOPIC_LIST=$($AWSCLI sns list-subscriptions-by-topic --topic-arn $topic --profile $PROFILE --region $regx --query 'Subscriptions[*].{Endpoint:Endpoint,SubscriptionArn:SubscriptionArn}' --output text --max-items $MAXITEMS 2> /dev/null)
+          TOPIC_SHORT=$(echo $topic | awk -F: '{ print $6 }')
           if [[ $? -eq 255 ]]; then
             # Permission error
             export CAN_SNS_LIST_SUBS=0
@@ -1262,13 +1265,11 @@ check315(){
             textNotice "Region $regx has $ntopics topics" "$regx"
             break;
           fi
-          if [[ $(grep -v 'None' $CHECK_TOPIC_LIST) ]]; then
-            TOPIC_SHORT=$(echo $topic | awk -F: '{ print $7 }')
-            textNotice "Region $regx with Topic $TOPIC_SHORT:" "$regx"
-            textNotice "- Suscription: $CHECK_TOPIC_LIST" "$regx"
+          if [[ $(echo $CHECK_TOPIC_LIST| grep -v 'PendingConfirmation') ]]; then
+            CHECK_TOPIC_LIST_SHORT=$(echo $CHECK_TOPIC_LIST| awk '{ print $1 }')
+            textOK "Region $regx with Topic $TOPIC_SHORT has a Suscription to $CHECK_TOPIC_LIST_SHORT" "$regx"
           else
-            textWarn "No suscription found in: Region $regx and Topic $topic" "$regx"
-            textWarn " - Region $regx and Topic $topic" "$regx"
+            textWarn "No suscription found in: Region $regx and Topic $TOPIC_SHORT" "$regx"
           fi
         done
     elif [[ $CAN_SNS_LIST_SUBS -eq 0 ]]; then
