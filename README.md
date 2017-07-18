@@ -92,14 +92,19 @@ or if you want a pipe-delimited report file, do:
 ./prowler -M csv > output.psv
 ```
 
-5 - If you want to run Prowler to check multiple AWS accounts in parallel (runs up to 4 simultaneously `-P 4`):
+5 - To perform an assessment based on CIS Profile Definitions you can use level1 or level2 with `-c` flag, more information about this [here, page 8](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf):
+```
+./prowler -c level1
+```
+
+6 - If you want to run Prowler to check multiple AWS accounts in parallel (runs up to 4 simultaneously `-P 4`):
 
 ```
 grep -E '^\[([0-9A-Aa-z_-]+)\]'  ~/.aws/credentials | tr -d '][' | shuf |  \
 xargs -n 1 -L 1 -I @ -r -P 4 ./prowler -p @ -M csv  2> /dev/null  >> all-accounts.csv
 ```
 
-6 - For help use:
+7 - For help use:
 
 ```
 ./prowler -h
@@ -109,10 +114,10 @@ USAGE:
   Options:
       -p <profile>        specify your AWS profile to use (i.e.: default)
       -r <region>         specify an AWS region to direct API requests to (i.e.: us-east-1)
-      -c <checknum>       specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1 or check3 for entire section 3)
+      -c <checknum>       specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1, check3 for entire section 3 or level1 for CIS Level 1 Profile Definitions)
       -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-      -M <mode>           output mode: text (defalut), mono, csv (separator is "|"; data is on stdout; progress on stderr)
+      -M <mode>           output mode: text (defalut), mono, csv (separator is ","; data is on stdout; progress on stderr)
       -k                  keep the credential report
       -h                  this help
 
