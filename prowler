@@ -1419,7 +1419,7 @@ extra72(){
 extra73(){
   #set -x
   ID73="7.3"
-  TITLE73="Ensure there are no S3 buckets open to the AllUsers (Not Scored) (Not part of CIS benchmark)"
+  TITLE73="Ensure there are no S3 buckets open to AllUsers (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID73" "$TITLE73" "0"
   textNotice "Looking for S3 Buckets in all regions...  "
   ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' --profile $PROFILE --region $REGION --output text)
