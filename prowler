@@ -1396,6 +1396,40 @@ extra71(){
   # set +x
 }
 
+extra72(){
+  #set -x
+  ID72="7.2"
+  TITLE72="Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID72" "$TITLE72" "0"
+  textNotice "Looking for EBS Snapshots in all regions...  "
+  for regx in $REGIONS; do
+    LIST_OF_EBS_SNAPSHOTS=$($AWSCLI ec2 describe-snapshots --profile $PROFILE --region $regx --owner-ids $ACCOUNT_NUM --output text --query 'Snapshots[*].{ID:SnapshotId}')
+    for snapshot in $LIST_OF_EBS_SNAPSHOTS; do
+      SNAPSHOT_IS_PUBLIC=$($AWSCLI ec2 describe-snapshot-attribute --profile $PROFILE --region $regx --output text --snapshot-id $snapshot --attribute createVolumePermission --query "CreateVolumePermissions[?Group=='all']")
+      if [[ $SNAPSHOT_IS_PUBLIC ]];then
+        textWarn "$regx: $snapshot is currently Public!" "$regx"
+      else
+        textOK "$regx: $snapshot is not Public" "$regx"
+      fi
+    done
+  done
+
+}
+
+extra73(){
+#   # set -x
+   ID73="7.3"
+   TITLE73="Ensure there are no S3 buckets open to the AllUsers (Not Scored) (Not part of CIS benchmark)"
+   textTitle "$ID73" "$TITLE73" "0"
+#
+#   for regx in $REGIONS; do
+#
+#   done
+#   # set +x
+}
+
+
+
 
 callCheck(){
   if [[ $CHECKNUMBER ]];then
@@ -1453,6 +1487,8 @@ callCheck(){
       check44 ) check44;;
       check45 ) check45;;
       extra71 ) extra71;;
+      extra72 ) extra72;;
+      extra73 ) extra73;;
       ## Groups of Checks
       check1 )
         check11;check12;check13;check14;check15;check16;check17;check18;
@@ -1487,7 +1523,7 @@ callCheck(){
         check43;check44;check45
         ;;
       extras )
-        extra71;
+        extra71;extra72;extra73
         ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41)\n";
