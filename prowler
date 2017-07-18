@@ -534,7 +534,7 @@ check14(){
 check15(){
   ID15="1.5"
   TITLE15="Ensure IAM password policy requires at least one uppercase letter (Scored)"
-  COMMAND15=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireUppercaseCharacters') # must be true
+  COMMAND15=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireUppercaseCharacters') # must be true
   textTitle "$ID15" "$TITLE15"
   if [[ $COMMAND15 == "true" ]];then
     textOK "Password Policy requires upper case"
@@ -546,7 +546,7 @@ check15(){
 check16(){
   ID16="1.6"
   TITLE16="Ensure IAM password policy require at least one lowercase letter (Scored)"
-  COMMAND16=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireLowercaseCharacters') # must be true
+  COMMAND16=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireLowercaseCharacters') # must be true
   textTitle "$ID16" "$TITLE16"
   if [[ $COMMAND16 == "true" ]];then
     textOK "Password Policy requires lower case"
@@ -558,7 +558,7 @@ check16(){
 check17(){
   ID17="1.7"
   TITLE17="Ensure IAM password policy require at least one symbol (Scored)"
-  COMMAND17=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireSymbols') # must be true
+  COMMAND17=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireSymbols') # must be true
   textTitle "$ID17" "$TITLE17"
   if [[ $COMMAND17 == "true" ]];then
     textOK "Password Policy requires symbol"
@@ -570,7 +570,7 @@ check17(){
 check18(){
   ID18="1.8"
   TITLE18="Ensure IAM password policy require at least one number (Scored)"
-  COMMAND18=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.RequireNumbers') # must be true
+  COMMAND18=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireNumbers') # must be true
   textTitle "$ID18" "$TITLE18"
   if [[ $COMMAND18 == "true" ]];then
     textOK "Password Policy requires number"
@@ -582,7 +582,7 @@ check18(){
 check19(){
   ID19="1.9"
   TITLE19="Ensure IAM password policy requires minimum length of 14 or greater (Scored)"
-  COMMAND19=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.MinimumPasswordLength')
+  COMMAND19=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.MinimumPasswordLength')
   textTitle "$ID19" "$TITLE19"
   if [[ $COMMAND19 -gt "13" ]];then
     textOK "Password Policy requires more than 13 characters"
@@ -610,7 +610,7 @@ check110(){
 check111(){
   ID111="1.11"
   TITLE111="Ensure IAM password policy expires passwords within 90 days or less (Scored)"
-  COMMAND111=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION | grep MaxPasswordAge | awk -F: '{ print $2 }'|sed 's/\ //g'|sed 's/,/ /g')
+  COMMAND111=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json | grep MaxPasswordAge | awk -F: '{ print $2 }'|sed 's/\ //g'|sed 's/,/ /g')
   textTitle "$ID111" "$TITLE111"
   if [[ $COMMAND111 ]];then
     if [ $COMMAND111 == "90" ];then
@@ -643,7 +643,7 @@ check112(){
 check113(){
   ID113="1.13"
   TITLE113="Ensure MFA is enabled for the root account (Scored)"
-  COMMAND113=$($AWSCLI iam get-account-summary --profile $PROFILE --region $REGION |grep AccountMFAEnabled | awk -F': ' '{ print $2 }'|sed 's/,//')
+  COMMAND113=$($AWSCLI iam get-account-summary --profile $PROFILE --region $REGION --output json|grep AccountMFAEnabled | awk -F': ' '{ print $2 }'|sed 's/,//')
   textTitle "$ID113" "$TITLE113"
   if [ $COMMAND113 == "1" ]; then
     textOK "Virtual MFA is enabled for root"
@@ -655,7 +655,7 @@ check113(){
 check114(){
   ID114="1.14"
   TITLE114="Ensure hardware MFA is enabled for the root account (Scored)"
-  COMMAND113=$($AWSCLI iam get-account-summary --profile $PROFILE --region $REGION |grep AccountMFAEnabled | awk -F': ' '{ print $2 }'|sed 's/,//')
+  COMMAND113=$($AWSCLI iam get-account-summary --profile $PROFILE --region $REGION --output json|grep AccountMFAEnabled | awk -F': ' '{ print $2 }'|sed 's/,//')
   textTitle "$ID114" "$TITLE114"
   if [ $COMMAND113 == "1" ]; then
     COMMAND114=$($AWSCLI iam list-virtual-mfa-devices --profile $PROFILE --region $REGION --query 'VirtualMFADevices' --output text|grep :root |wc -l)
@@ -720,12 +720,12 @@ check118(){
       # find inline policies in found roles
       INLINEPOLICIES=$($AWSCLI iam list-role-policies --role-name $role --profile $PROFILE --region $REGION --query "PolicyNames[*]" --output text)
       for policy in $INLINEPOLICIES;do
-        textNotice "$AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION"
+        textNotice "$AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION --output json"
       done
       # find attached policies in found roles
       ATTACHEDPOLICIES=$($AWSCLI iam list-attached-role-policies --role-name $role --profile $PROFILE --region $REGION --query "AttachedPolicies[*]" --output text)
       for policy in $ATTACHEDPOLICIES;do
-        textNotice "$AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION"
+        textNotice "$AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION --output json"
       done
     done
   else
@@ -928,7 +928,7 @@ check25(){
   TITLE25="Ensure AWS Config is enabled in all regions (Scored)"
   textTitle "$ID25" "$TITLE25"
   for regx in $REGIONS; do
-    CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice get-status --profile $PROFILE --region $regx | grep "recorder: ON")
+    CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice get-status --profile $PROFILE --region $regx --output json| grep "recorder: ON")
     if [[ $CHECK_AWSCONFIG_STATUS ]];then
       textOK "Region $regx has AWS Config recorder: ON" "$regx"
     else
