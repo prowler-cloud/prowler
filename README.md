@@ -578,13 +578,13 @@ At this momment we have 3 extra checks:
 
 - 7.1  Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)
 - 7.2  Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)
-- 7.3  Ensure there are no S3 buckets open to AllUsers (Not Scored) (Not part of CIS benchmark)
+- 7.3  Ensure there are no S3 buckets open to the Everyone or Any AWS user (Not Scored) (Not part of CIS benchmark)
 
 To run all extras in one command:
 ```
 ./prowler -c extras
 ```
-or to run just one of the checks:
+or to run just one of the checks, to see if you have S3 buckets open:
 ```
-./prowler -c extra71
+./prowler -c extra73
 ```
