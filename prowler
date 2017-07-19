@@ -1419,7 +1419,7 @@ extra72(){
 extra73(){
   #set -x
   ID73="7.3"
-  TITLE73="Ensure there are no S3 buckets open to AllUsers (Not Scored) (Not part of CIS benchmark)"
+  TITLE73="Ensure there are no S3 buckets open to the Everyone or Any AWS user (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID73" "$TITLE73" "0"
   textNotice "Looking for S3 Buckets in all regions...  "
   ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' --profile $PROFILE --region $REGION --output text)
@@ -1428,11 +1428,16 @@ extra73(){
     if [[ "None" == $BUCKET_LOCATION ]]; then
       BUCKET_LOCATION="us-east-1"
     fi
-    CHECK_BUCKET_PERMISSIONS=$($AWSCLI s3api get-bucket-acl --profile $PROFILE --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AllUsers']" --output text |grep -v GRANTEE)
-    CHECK_BUCKET_PERMISSIONS_SINGLE_LINE=$(echo -ne $CHECK_BUCKET_PERMISSIONS)
-    if [[ $CHECK_BUCKET_PERMISSIONS ]];then
-      textWarn "$BUCKET_LOCATION: $bucket bucket is open to the Internet with permissions: $CHECK_BUCKET_PERMISSIONS_SINGLE_LINE" "$regx"
+    CHECK_BUCKET_ALLUSERS_PERMISSIONS=$($AWSCLI s3api get-bucket-acl --profile $PROFILE --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AllUsers']" --output text |grep -v GRANTEE)
+    CHECK_BUCKET_ALLUSERS_PERMISSIONS_SINGLE_LINE=$(echo -ne $CHECK_BUCKET_ALLUSERS_PERMISSIONS)
+    CHECK_BUCKET_AUTHUSERS_PERMISSIONS=$($AWSCLI s3api get-bucket-acl --profile $PROFILE --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers']" --output text |grep -v GRANTEE)
+    CHECK_BUCKET_AUTHUSERS_PERMISSIONS_SINGLE_LINE=$(echo -ne $CHECK_BUCKET_AUTHUSERS_PERMISSIONS)
+    if [[ $CHECK_BUCKET_ALLUSERS_PERMISSIONS ]];then
+      textWarn "$BUCKET_LOCATION: $bucket bucket is open to the Internet (Everyone) with permissions: $CHECK_BUCKET_ALLUSERS_PERMISSIONS_SINGLE_LINE" "$regx"
     else
+      if [[ $CHECK_BUCKET_AUTHUSERS_PERMISSIONS ]];then
+        textWarn "$BUCKET_LOCATION: $bucket bucket is open to Authenticated users (Any AWS user) with permissions: $CHECK_BUCKET_AUTHUSERS_PERMISSIONS_SINGLE_LINE" "$regx"
+      fi
       textOK "$BUCKET_LOCATION: $bucket bucket is not open" "$regx"
     fi
   done
