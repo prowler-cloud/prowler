@@ -1428,6 +1428,9 @@ extra73(){
     if [[ "None" == $BUCKET_LOCATION ]]; then
       BUCKET_LOCATION="us-east-1"
     fi
+    if [[ "EU" == $BUCKET_LOCATION ]]; then
+      BUCKET_LOCATION="eu-west-1"
+    fi
     CHECK_BUCKET_ALLUSERS_PERMISSIONS=$($AWSCLI s3api get-bucket-acl --profile $PROFILE --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AllUsers']" --output text |grep -v GRANTEE)
     CHECK_BUCKET_ALLUSERS_PERMISSIONS_SINGLE_LINE=$(echo -ne $CHECK_BUCKET_ALLUSERS_PERMISSIONS)
     CHECK_BUCKET_AUTHUSERS_PERMISSIONS=$($AWSCLI s3api get-bucket-acl --profile $PROFILE --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers']" --output text |grep -v GRANTEE)
