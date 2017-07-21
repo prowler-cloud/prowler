@@ -531,7 +531,7 @@ check14(){
 check15(){
   ID15="1.5"
   TITLE15="Ensure IAM password policy requires at least one uppercase letter (Scored)"
-  COMMAND15=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireUppercaseCharacters') # must be true
+  COMMAND15=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireUppercaseCharacters' 2> /dev/null) # must be true
   textTitle "$ID15" "$TITLE15"
   if [[ $COMMAND15 == "true" ]];then
     textOK "Password Policy requires upper case"
@@ -543,7 +543,7 @@ check15(){
 check16(){
   ID16="1.6"
   TITLE16="Ensure IAM password policy require at least one lowercase letter (Scored)"
-  COMMAND16=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireLowercaseCharacters') # must be true
+  COMMAND16=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireLowercaseCharacters' 2> /dev/null) # must be true
   textTitle "$ID16" "$TITLE16"
   if [[ $COMMAND16 == "true" ]];then
     textOK "Password Policy requires lower case"
@@ -555,7 +555,7 @@ check16(){
 check17(){
   ID17="1.7"
   TITLE17="Ensure IAM password policy require at least one symbol (Scored)"
-  COMMAND17=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireSymbols') # must be true
+  COMMAND17=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireSymbols' 2> /dev/null) # must be true
   textTitle "$ID17" "$TITLE17"
   if [[ $COMMAND17 == "true" ]];then
     textOK "Password Policy requires symbol"
@@ -567,7 +567,7 @@ check17(){
 check18(){
   ID18="1.8"
   TITLE18="Ensure IAM password policy require at least one number (Scored)"
-  COMMAND18=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireNumbers') # must be true
+  COMMAND18=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireNumbers' 2> /dev/null) # must be true
   textTitle "$ID18" "$TITLE18"
   if [[ $COMMAND18 == "true" ]];then
     textOK "Password Policy requires number"
@@ -579,7 +579,7 @@ check18(){
 check19(){
   ID19="1.9"
   TITLE19="Ensure IAM password policy requires minimum length of 14 or greater (Scored)"
-  COMMAND19=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.MinimumPasswordLength')
+  COMMAND19=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.MinimumPasswordLength' 2> /dev/null)
   textTitle "$ID19" "$TITLE19"
   if [[ $COMMAND19 -gt "13" ]];then
     textOK "Password Policy requires more than 13 characters"
@@ -590,8 +590,8 @@ check19(){
 
 check110(){
   ID110="1.10"
-  TITLE110="Ensure IAM password policy prevents password reuse (Scored)"
-  COMMAND110=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.PasswordReusePrevention' --output text)
+  TITLE110="Ensure IAM password policy prevents password reuse, 24 or greater (Scored)"
+  COMMAND110=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.PasswordReusePrevention' --output text 2> /dev/null)
   textTitle "$ID110" "$TITLE110"
   if [[ $COMMAND110 ]];then
     if [[ $COMMAND110 -gt "23" ]];then
@@ -607,7 +607,7 @@ check110(){
 check111(){
   ID111="1.11"
   TITLE111="Ensure IAM password policy expires passwords within 90 days or less (Scored)"
-  COMMAND111=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json | grep MaxPasswordAge | awk -F: '{ print $2 }'|sed 's/\ //g'|sed 's/,/ /g')
+  COMMAND111=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json | grep MaxPasswordAge | awk -F: '{ print $2 }'|sed 's/\ //g'|sed 's/,/ /g' 2> /dev/null)
   textTitle "$ID111" "$TITLE111"
   if [[ $COMMAND111 ]];then
     if [ $COMMAND111 == "90" ];then
@@ -1283,7 +1283,7 @@ check41(){
   TITLE41="Ensure no security groups allow ingress from 0.0.0.0/0 to port 22 (Scored)"
   textTitle "$ID41" "$TITLE41"
   for regx in $REGIONS; do
-    SG_LIST=$($AWSCLI ec2 describe-security-groups --filters "Name=ip-permission.to-port,Values=22" --query 'SecurityGroups[?length(IpPermissions[?ToPort==`22` && contains(IpRanges[].CidrIp, `0.0.0.0/0`)]) > `0`].{GroupName: GroupName}' --profile $PROFILE --region $regx --output text)
+    SG_LIST=$($AWSCLI ec2 describe-security-groups --filters "Name=ip-permission.to-port,Values=22" --query 'SecurityGroups[?length(IpPermissions[?ToPort==`22` && contains(IpRanges[].CidrIp, `0.0.0.0/0`)]) > `0`].{GroupId:GroupId}' --profile $PROFILE --region $regx --output text)
     if [[ $SG_LIST ]];then
       for SG in $SG_LIST;do
         textWarn "Found Security Group: $SG open to 0.0.0.0/0 in Region $regx" "$regx"
