@@ -1438,7 +1438,7 @@ extra73(){
     CHECK_BUCKET_AUTHUSERS_ACL=$($AWSCLI s3api get-bucket-acl --profile $PROFILE --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers']" --output text |grep -v GRANTEE)
     CHECK_BUCKET_AUTHUSERS_ACL_SINGLE_LINE=$(echo -ne $CHECK_BUCKET_AUTHUSERS_ACL)
     # to prevent error NoSuchBucketPolicy first clean the output controlling stderr
-    TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy)
+    TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
     $AWSCLI s3api get-bucket-policy --profile $PROFILE --region $BUCKET_LOCATION --bucket $bucket --output text --query Policy > $TEMP_POLICY_FILE 2> /dev/null
     # check if the S3 policy has Principal as *
     CHECK_BUCKET_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | sed -e 's/[{}]/''/g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}'|awk '/Principal/ && !skip { print } { skip = /Deny/} '|grep ^\"Principal|grep \*)
