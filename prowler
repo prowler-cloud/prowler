@@ -614,7 +614,7 @@ check111(){
       textOK "Password Policy includes expiration"
     fi
   else
-    textWarn "Passowrd expiration not set or set greater than 90 days "
+    textWarn "Password expiration not set or set greater than 90 days "
   fi
 }
 
@@ -789,7 +789,7 @@ check123(){
   LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text --profile $PROFILE --region $REGION)
   # List of USERS with KEY1 last_used_date as N/A
   LIST_USERS_KEY1_NA=$(for user in $LIST_USERS; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$11 }'|grep N/A |awk '{ print $1 }'; done)
-  LIST_USERS_KEY1_ACTIVE=$(for user in $LIST_USERS_KEY1_NA; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$9 }'|grep "true$"|awk '{ print $1 }'|sed 's/[:blank:]+/,/g' ; done)
+  LIST_USERS_KEY1_ACTIVE=$(for user in $LIST_USERS_KEY1_NA; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$9 }'|grep "true$"|awk '{ print $1 }'|sed 's/[[:blank:]]+/,/g' ; done)
   if [[ $LIST_USERS_KEY1_ACTIVE ]]; then
     for user in $LIST_USERS_KEY1_ACTIVE; do
       textNotice "$user has never used Access Key 1"
