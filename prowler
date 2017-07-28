@@ -51,7 +51,7 @@ USAGE:
       -c <checknum>       specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1, check3 for entire section 3 or level1 for CIS Level 1 Profile Definitions)
       -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-      -M <mode>           output mode: text (defalut), mono, csv (separator is \"${SEP}\"; data is on stdout; progress on stderr)
+      -M <mode>           output mode: text (default), mono, csv (separator is \"${SEP}\"; data is on stdout; progress on stderr)
       -k                  keep the credential report
       -h                  this help
   "
@@ -180,7 +180,7 @@ if [[ "$OSTYPE" == "linux-gnu" ]]; then
       base64 -d
     }
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-  # BSD/OSX coommands compatibility
+  # BSD/OSX commands compatibility
   how_older_from_today()
       {
         DATE_TO_COMPARE=$1
@@ -597,7 +597,7 @@ check110(){
     if [[ $COMMAND110 -gt "23" ]];then
       textOK "Password Policy limits reuse"
     else
-      textWarn "Password Policy has weak reuse requirment (lower than 24)"
+      textWarn "Password Policy has weak reuse requirement (lower than 24)"
     fi
   else
     textWarn "Password Policy missing reuse requirement"
@@ -614,7 +614,7 @@ check111(){
       textOK "Password Policy includes expiration"
     fi
   else
-    textWarn "Passowrd expiration not set or set greater than 90 days "
+    textWarn "Password expiration not set or set greater than 90 days "
   fi
 }
 
@@ -789,7 +789,7 @@ check123(){
   LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text --profile $PROFILE --region $REGION)
   # List of USERS with KEY1 last_used_date as N/A
   LIST_USERS_KEY1_NA=$(for user in $LIST_USERS; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$11 }'|grep N/A |awk '{ print $1 }'; done)
-  LIST_USERS_KEY1_ACTIVE=$(for user in $LIST_USERS_KEY1_NA; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$9 }'|grep "true$"|awk '{ print $1 }'|sed 's/[:blank:]+/,/g' ; done)
+  LIST_USERS_KEY1_ACTIVE=$(for user in $LIST_USERS_KEY1_NA; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$9 }'|grep "true$"|awk '{ print $1 }'|sed 's/[[:blank:]]+/,/g' ; done)
   if [[ $LIST_USERS_KEY1_ACTIVE ]]; then
     for user in $LIST_USERS_KEY1_ACTIVE; do
       textNotice "$user has never used Access Key 1"
@@ -1263,10 +1263,10 @@ check315(){
         fi
         if [[ "Z" != "Z${CHECK_TOPIC_LIST}" ]]; then
           printf '%s\n' "$CHECK_TOPIC_LIST" | while IFS= read -r dest ; do
-            textNotice "Region $regx / Topic $TOPIC_SHORT / Suscription $dest" "$regx"
+            textNotice "Region $regx / Topic $TOPIC_SHORT / Subscription $dest" "$regx"
           done
         else
-          textWarn "Region $regx / Topic $TOPIC_SHORT / Suscription NONE NONE" "$regx"
+          textWarn "Region $regx / Topic $TOPIC_SHORT / Subscription NONE NONE" "$regx"
         fi
       done
     elif [[ $CAN_SNS_LIST_SUBS -eq 0 ]]; then
