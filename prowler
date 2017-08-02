@@ -335,7 +335,7 @@ getWhoami(){
       exit 2
     fi
     CALLER_ARN=$(echo $CALLER_ARN_RAW | tr -d '"')
-    textTitle "0.0" "Show report generation info"
+    textTitle "0.0" "Show report generation info" "0"
     textNotice "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
   else
     echo ""
@@ -378,7 +378,7 @@ printColorsCode(){
 
 # Generate Credential Report
 genCredReport() {
-  textTitle "0.1" "Generating AWS IAM Credential Report..."
+  textTitle "0.1" "Generating AWS IAM Credential Report..." "0"
   until $( $AWSCLI iam generate-credential-report --output text --query 'State' --profile $PROFILE --region $REGION |grep -q -m 1 "COMPLETE") ; do
     sleep 1
   done
@@ -389,7 +389,7 @@ saveReport(){
   TEMP_REPORT_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-XXXXX.cred_report )
   $AWSCLI iam get-credential-report --query 'Content' --output text --profile $PROFILE --region $REGION | decode_report > $TEMP_REPORT_FILE
   if [[ $KEEPCREDREPORT -eq 1 ]]; then
-    textTitle "0.2" "Saving IAM Credential Report ..."
+    textTitle "0.2" "Saving IAM Credential Report ..." "0"
     textNotice "IAM Credential Report saved in $TEMP_REPORT_FILE"
   fi
 }
@@ -669,8 +669,7 @@ check114(){
 check115(){
   ID115="1.15"
   TITLE115="Ensure security questions are registered in the AWS account (Not Scored)"
-  # No command available
-  textTitle "$ID115" "$TITLE115"
+  textTitle "$ID115" "$TITLE115" "0"
   textNotice "No command available for check 1.15 "
   textNotice "Login to the AWS Console as root & click on the Account "
   textNotice "Name -> My Account -> Configure Security Challenge Questions "
@@ -753,7 +752,7 @@ check120(){
 check121(){
   ID121="1.21"
   TITLE121="Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
-  textTitle "$ID121" "$TITLE121"
+  textTitle "$ID121" "$TITLE121" "0"
   textNotice "No command available for check 1.21 "
   textNotice "See section 1.21 on the CIS Benchmark guide for details "
   infoReferenceShort
@@ -785,7 +784,7 @@ check122(){
 check123(){
   ID123="1.23"
   TITLE123="Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)"
-  textTitle "$ID123" "$TITLE123"
+  textTitle "$ID123" "$TITLE123" "0"
   LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text --profile $PROFILE --region $REGION)
   # List of USERS with KEY1 last_used_date as N/A
   LIST_USERS_KEY1_NA=$(for user in $LIST_USERS; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$11 }'|grep N/A |awk '{ print $1 }'; done)
@@ -1244,7 +1243,7 @@ check314(){
 check315(){
   ID315="3.15"
   TITLE315="Ensure appropriate subscribers to each SNS topic (Not Scored)"
-  textTitle "$ID315" "$TITLE315"
+  textTitle "$ID315" "$TITLE315" "0"
   CAN_SNS_LIST_SUBS=1
   for regx in $REGIONS; do
     TOPICS_LIST=$($AWSCLI sns list-topics --profile $PROFILE --region $regx --output text --query 'Topics[*].TopicArn')
@@ -1344,7 +1343,7 @@ check45(){
   #set -xe
   ID45="4.5"
   TITLE45="Ensure routing tables for VPC peering are \"least access\" (Not Scored)"
-  textTitle "$ID45" "$TITLE45"
+  textTitle "$ID45" "$TITLE45" "0"
   textNotice "Looking for VPC peering in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_VPCS_PEERING_CONNECTIONS=$($AWSCLI ec2 describe-vpc-peering-connections --output text --profile $PROFILE --region $regx --query 'VpcPeeringConnections[*].VpcPeeringConnectionId')
