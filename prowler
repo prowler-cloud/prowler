@@ -291,16 +291,30 @@ textTitle(){
   TITLE_ID=$1
   TITLE_TEXT=$2
 
-  if [[ $3 ]]; then
-    ITEM_SCORED=$3
-  else
-    ITEM_SCORED="1"
-  fi
+  case "$3" in
+    0|No|NOT_SCORED)
+      ITEM_SCORED="Not Scored"
+      ;;
+    1|Yes|SCORED)
+      ITEM_SCORED="Scored"
+      ;;
+    *)
+      ITEM_SCORED="Unspecified"
+      ;;
+  esac
+
+  case "$4" in
+    LEVEL1)  ITEM_LEVEL="Level 1";;
+    LEVEL2)  ITEM_LEVEL="Level 2";;
+    EXTRA)   ITEM_LEVEL="Extra";;
+    SUPPORT) ITEM_LEVEL="Support";;
+    *)       ITEM_LEVEL="Unspecified or Invalid";;
+  esac
 
   if [[ $MODE == "csv" ]]; then
       >&2 echo "$TITLE_ID $TITLE_TEXT"
   else
-    if [[ $ITEM_SCORED == "1" ]]; then
+    if [[ $ITEM_SCORED == "Scored" ]]; then
       echo -e "\n$BLUE $TITLE_ID $NORMAL $TITLE_TEXT"
     else
       echo -e "\n$PURPLE $TITLE_ID  $TITLE_TEXT $NORMAL"
@@ -335,7 +349,7 @@ getWhoami(){
       exit 2
     fi
     CALLER_ARN=$(echo $CALLER_ARN_RAW | tr -d '"')
-    textTitle "0.0" "Show report generation info" "0"
+    textTitle "0.0" "Show report generation info" "NOT_SCORED" "SUPPORT"
     textNotice "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
   else
     echo ""
@@ -378,7 +392,7 @@ printColorsCode(){
 
 # Generate Credential Report
 genCredReport() {
-  textTitle "0.1" "Generating AWS IAM Credential Report..." "0"
+  textTitle "0.1" "Generating AWS IAM Credential Report..." "NOT_SCORED" "SUPPORT"
   until $( $AWSCLI iam generate-credential-report --output text --query 'State' --profile $PROFILE --region $REGION |grep -q -m 1 "COMPLETE") ; do
     sleep 1
   done
@@ -389,7 +403,7 @@ saveReport(){
   TEMP_REPORT_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-XXXXX.cred_report )
   $AWSCLI iam get-credential-report --query 'Content' --output text --profile $PROFILE --region $REGION | decode_report > $TEMP_REPORT_FILE
   if [[ $KEEPCREDREPORT -eq 1 ]]; then
-    textTitle "0.2" "Saving IAM Credential Report ..." "0"
+    textTitle "0.2" "Saving IAM Credential Report ..." "No" "SUPPORT"
     textNotice "IAM Credential Report saved in $TEMP_REPORT_FILE"
   fi
 }
@@ -429,7 +443,7 @@ check11(){
   ID11="1.1"
   TITLE11="Avoid the use of the root account (Scored)."
   COMMAND11=$(cat $TEMP_REPORT_FILE| grep '<root_account>' | cut -d, -f5,11,16 | sed 's/,/\ /g')
-  textTitle "$ID11" "$TITLE11"
+  textTitle "$ID11" "$TITLE11" "SCORED" "LEVEL1"
   textNotice "Root account last accessed (password key_1 key_2): $COMMAND11"
 }
 
@@ -442,7 +456,7 @@ check12(){
     for i in $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED; do
       cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$8 }' |grep -w $i| grep false | awk '{ print $1 }'
     done)
-  textTitle "$ID12" "$TITLE12"
+  textTitle "$ID12" "$TITLE12" "SCORED" "LEVEL1"
     if [[ $COMMAND12 ]]; then
       for u in $COMMAND12; do
         textWarn "User $u has Password enabled but MFA disabled"
@@ -455,7 +469,7 @@ check12(){
 check13(){
   ID13="1.3"
   TITLE13="Ensure credentials unused for 90 days or greater are disabled (Scored)"
-  textTitle "$ID13" "$TITLE13"
+  textTitle "$ID13" "$TITLE13" "SCORED" "LEVEL1"
   COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$4 }' |grep true | awk '{ print $1 }')
   if [[ $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED ]]; then
     COMMAND13=$(
@@ -487,7 +501,7 @@ check14(){
   TITLE14="Ensure access keys are rotated every 90 days or less (Scored)" # also checked by Security Monkey
   LIST_OF_USERS_WITH_ACCESS_KEY1=$(cat $TEMP_REPORT_FILE| awk -F, '{ print $1, $9 }' |grep "\ true" | awk '{ print $1 }')
   LIST_OF_USERS_WITH_ACCESS_KEY2=$(cat $TEMP_REPORT_FILE| awk -F, '{ print $1, $14 }' |grep "\ true" | awk '{ print $1 }')
-  textTitle "$ID14" "$TITLE14"
+  textTitle "$ID14" "$TITLE14" "SCORED" "LEVEL1"
   C14_NUM_USERS1=0
   C14_NUM_USERS2=0
     if [[ $LIST_OF_USERS_WITH_ACCESS_KEY1 ]]; then
@@ -532,7 +546,7 @@ check15(){
   ID15="1.5"
   TITLE15="Ensure IAM password policy requires at least one uppercase letter (Scored)"
   COMMAND15=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireUppercaseCharacters' 2> /dev/null) # must be true
-  textTitle "$ID15" "$TITLE15"
+  textTitle "$ID15" "$TITLE15" "SCORED" "LEVEL1"
   if [[ $COMMAND15 == "true" ]];then
     textOK "Password Policy requires upper case"
   else
@@ -544,7 +558,7 @@ check16(){
   ID16="1.6"
   TITLE16="Ensure IAM password policy require at least one lowercase letter (Scored)"
   COMMAND16=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireLowercaseCharacters' 2> /dev/null) # must be true
-  textTitle "$ID16" "$TITLE16"
+  textTitle "$ID16" "$TITLE16" "SCORED" "LEVEL1"
   if [[ $COMMAND16 == "true" ]];then
     textOK "Password Policy requires lower case"
   else
@@ -556,7 +570,7 @@ check17(){
   ID17="1.7"
   TITLE17="Ensure IAM password policy require at least one symbol (Scored)"
   COMMAND17=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireSymbols' 2> /dev/null) # must be true
-  textTitle "$ID17" "$TITLE17"
+  textTitle "$ID17" "$TITLE17" "SCORED" "LEVEL1"
   if [[ $COMMAND17 == "true" ]];then
     textOK "Password Policy requires symbol"
   else
@@ -568,7 +582,7 @@ check18(){
   ID18="1.8"
   TITLE18="Ensure IAM password policy require at least one number (Scored)"
   COMMAND18=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireNumbers' 2> /dev/null) # must be true
-  textTitle "$ID18" "$TITLE18"
+  textTitle "$ID18" "$TITLE18" "SCORED" "LEVEL1"
   if [[ $COMMAND18 == "true" ]];then
     textOK "Password Policy requires number"
   else
@@ -580,7 +594,7 @@ check19(){
   ID19="1.9"
   TITLE19="Ensure IAM password policy requires minimum length of 14 or greater (Scored)"
   COMMAND19=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.MinimumPasswordLength' 2> /dev/null)
-  textTitle "$ID19" "$TITLE19"
+  textTitle "$ID19" "$TITLE19" "SCORED" "LEVEL1"
   if [[ $COMMAND19 -gt "13" ]];then
     textOK "Password Policy requires more than 13 characters"
   else
@@ -592,7 +606,7 @@ check110(){
   ID110="1.10"
   TITLE110="Ensure IAM password policy prevents password reuse, 24 or greater (Scored)"
   COMMAND110=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --query 'PasswordPolicy.PasswordReusePrevention' --output text 2> /dev/null)
-  textTitle "$ID110" "$TITLE110"
+  textTitle "$ID110" "$TITLE110" "SCORED" "LEVEL1"
   if [[ $COMMAND110 ]];then
     if [[ $COMMAND110 -gt "23" ]];then
       textOK "Password Policy limits reuse"
@@ -608,7 +622,7 @@ check111(){
   ID111="1.11"
   TITLE111="Ensure IAM password policy expires passwords within 90 days or less (Scored)"
   COMMAND111=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json | grep MaxPasswordAge | awk -F: '{ print $2 }'|sed 's/\ //g'|sed 's/,/ /g' 2> /dev/null)
-  textTitle "$ID111" "$TITLE111"
+  textTitle "$ID111" "$TITLE111" "SCORED" "LEVEL1"
   if [[ $COMMAND111 ]];then
     if [ $COMMAND111 == "90" ];then
       textOK "Password Policy includes expiration"
@@ -624,7 +638,7 @@ check112(){
   # ensure the access_key_1_active and access_key_2_active fields are set to FALSE.
   ROOTKEY1=$(cat $TEMP_REPORT_FILE |grep root_account|awk -F',' '{ print $9 }')
   ROOTKEY2=$(cat $TEMP_REPORT_FILE |grep root_account|awk -F',' '{ print $14 }')
-  textTitle "$ID112" "$TITLE112"
+  textTitle "$ID112" "$TITLE112" "SCORED" "LEVEL1"
   if [ $ROOTKEY1 == "false" ];then
     textOK "No access key 1 found for root"
   else
@@ -641,7 +655,7 @@ check113(){
   ID113="1.13"
   TITLE113="Ensure MFA is enabled for the root account (Scored)"
   COMMAND113=$($AWSCLI iam get-account-summary --profile $PROFILE --region $REGION --output json|grep AccountMFAEnabled | awk -F': ' '{ print $2 }'|sed 's/,//')
-  textTitle "$ID113" "$TITLE113"
+  textTitle "$ID113" "$TITLE113" "SCORED" "LEVEL1"
   if [ $COMMAND113 == "1" ]; then
     textOK "Virtual MFA is enabled for root"
   else
@@ -653,7 +667,7 @@ check114(){
   ID114="1.14"
   TITLE114="Ensure hardware MFA is enabled for the root account (Scored)"
   COMMAND113=$($AWSCLI iam get-account-summary --profile $PROFILE --region $REGION --output json|grep AccountMFAEnabled | awk -F': ' '{ print $2 }'|sed 's/,//')
-  textTitle "$ID114" "$TITLE114"
+  textTitle "$ID114" "$TITLE114" "SCORED" "LEVEL1"
   if [ $COMMAND113 == "1" ]; then
     COMMAND114=$($AWSCLI iam list-virtual-mfa-devices --profile $PROFILE --region $REGION --query 'VirtualMFADevices' --output text|grep :root |wc -l)
     if [ $COMMAND114 == "1" ]; then
@@ -678,7 +692,7 @@ check115(){
 check116(){
   ID116="1.16"
   TITLE116="Ensure IAM policies are attached only to groups or roles (Scored)"
-  textTitle "$ID116" "$TITLE116"
+  textTitle "$ID116" "$TITLE116" "SCORED" "LEVEL1"
   LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text --profile $PROFILE --region $REGION)
   C116_NUM_USERS=0
   for user in $LIST_USERS;do
@@ -697,7 +711,7 @@ check117(){
   ID117="1.17"
   TITLE117="Enable detailed billing (Scored)"
   # No command available
-  textTitle "$ID117" "$TITLE117"
+  textTitle "$ID117" "$TITLE117" "SCORED" "LEVEL1"
   textNotice "No command available for check 1.17 "
   textNotice "See section 1.17 on the CIS Benchmark guide for details "
   infoReferenceShort
@@ -706,7 +720,7 @@ check117(){
 check118(){
   ID118="1.18"
   TITLE118="Ensure IAM Master and IAM Manager roles are active (Scored)"
-  textTitle "$ID118" "$TITLE118"
+  textTitle "$ID118" "$TITLE118" "SCORED" "LEVEL1"
   FINDMASTERANDMANAGER=$($AWSCLI iam list-roles --profile $PROFILE --region $REGION --query "Roles[*].{RoleName:RoleName}" --output text | grep -E 'Master|Manager'| tr '\n' ' ')
   if [[ $FINDMASTERANDMANAGER ]];then
     textNotice "Found next roles as possible IAM Master and IAM Manager candidates: "
@@ -716,12 +730,12 @@ check118(){
       # find inline policies in found roles
       INLINEPOLICIES=$($AWSCLI iam list-role-policies --role-name $role --profile $PROFILE --region $REGION --query "PolicyNames[*]" --output text)
       for policy in $INLINEPOLICIES;do
-        textNotice "$AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION --output json"
+        textNotice "INLINE: $AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION --output json"
       done
       # find attached policies in found roles
       ATTACHEDPOLICIES=$($AWSCLI iam list-attached-role-policies --role-name $role --profile $PROFILE --region $REGION --query "AttachedPolicies[*]" --output text)
       for policy in $ATTACHEDPOLICIES;do
-        textNotice "$AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION --output json"
+        textNotice "ATTACHED: $AWSCLI iam get-role-policy --role-name $role --policy-name $policy --profile $PROFILE --region $REGION --output json"
       done
     done
   else
@@ -733,7 +747,7 @@ check119(){
   ID119="1.19"
   TITLE119="Maintain current contact details (Scored)"
   # No command available
-  textTitle "$ID119" "$TITLE119"
+  textTitle "$ID119" "$TITLE119" "SCORED" "LEVEL1"
   textNotice "No command available for check 1.19 "
   textNotice "See section 1.19 on the CIS Benchmark guide for details "
   infoReferenceShort
@@ -743,7 +757,7 @@ check120(){
   ID120="1.20"
   TITLE120="Ensure security contact information is registered (Scored)"
   # No command available
-  textTitle "$ID120" "$TITLE120"
+  textTitle "$ID120" "$TITLE120" "SCORED" "LEVEL1"
   textNotice "No command available for check 1.20 "
   textNotice "See section 1.20 on the CIS Benchmark guide for details "
   infoReferenceShort
@@ -761,7 +775,7 @@ check121(){
 check122(){
   ID122="1.22"
   TITLE122="Ensure a support role has been created to manage incidents with AWS Support (Scored)"
-  textTitle "$ID122" "$TITLE122"
+  textTitle "$ID122" "$TITLE122" "SCORED" "LEVEL1"
   SUPPORTPOLICYARN=$($AWSCLI iam list-policies --query "Policies[?PolicyName == 'AWSSupportAccess'].Arn" --profile $PROFILE --region $REGION --output text)
   if [[ $SUPPORTPOLICYARN ]];then
     for policyarn in $SUPPORTPOLICYARN;do
@@ -784,7 +798,7 @@ check122(){
 check123(){
   ID123="1.23"
   TITLE123="Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)"
-  textTitle "$ID123" "$TITLE123" "0"
+  textTitle "$ID123" "$TITLE123" "NOT_SCORED" "LEVEL1"
   LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text --profile $PROFILE --region $REGION)
   # List of USERS with KEY1 last_used_date as N/A
   LIST_USERS_KEY1_NA=$(for user in $LIST_USERS; do grep $user $TEMP_REPORT_FILE|awk -F, '{ print $1,$11 }'|grep N/A |awk '{ print $1 }'; done)
@@ -811,7 +825,7 @@ check123(){
 check124(){
   ID124="1.24"
   TITLE124="Ensure IAM policies that allow full \"*:*\" administrative privileges are not created (Scored)"
-  textTitle "$ID124" "$TITLE124"
+  textTitle "$ID124" "$TITLE124" "SCORED" "LEVEL1"
   LIST_CUSTOM_POLICIES=$($AWSCLI iam list-policies --output text --profile $PROFILE --region $REGION|grep 'arn:aws:iam::[0-9]\{12\}:'|awk '{ print $2 }')
   if [[ $LIST_CUSTOM_POLICIES ]]; then
     textNotice "Looking for custom policies: (skipping default policies - it may take few seconds...)"
@@ -838,7 +852,7 @@ check124(){
 check21(){
   ID21="2.1"
   TITLE21="Ensure CloudTrail is enabled in all regions (Scored)"
-  textTitle "$ID21" "$TITLE21"
+  textTitle "$ID21" "$TITLE21" "SCORED" "LEVEL1"
   LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
   if [[ $LIST_OF_TRAILS ]];then
     for trail in $LIST_OF_TRAILS;do
@@ -876,7 +890,7 @@ check22(){
 check23(){
   ID23="2.3"
   TITLE23="Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)"
-  textTitle "$ID23" "$TITLE23"
+  textTitle "$ID23" "$TITLE23" "SCORED" "LEVEL1"
   CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text --profile $PROFILE --region $REGION)
   if [[ $CLOUDTRAILBUCKET ]];then
     for bucket in $CLOUDTRAILBUCKET;do
@@ -895,7 +909,7 @@ check23(){
 check24(){
   ID24="2.4"
   TITLE24="Ensure CloudTrail trails are integrated with CloudWatch Logs (Scored)"
-  textTitle "$ID24" "$TITLE24"
+  textTitle "$ID24" "$TITLE24" "SCORED" "LEVEL1"
   TRAILS_AND_REGIONS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].{Name:Name, HomeRegion:HomeRegion}' --output text | tr "\t" ',')
   if [[ $TRAILS_AND_REGIONS ]];then
     for reg_trail in $TRAILS_AND_REGIONS;do
@@ -922,7 +936,7 @@ check24(){
 check25(){
   ID25="2.5"
   TITLE25="Ensure AWS Config is enabled in all regions (Scored)"
-  textTitle "$ID25" "$TITLE25"
+  textTitle "$ID25" "$TITLE25" "SCORED" "LEVEL1"
   for regx in $REGIONS; do
     CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice get-status --profile $PROFILE --region $regx --output json| grep "recorder: ON")
     if [[ $CHECK_AWSCONFIG_STATUS ]];then
@@ -936,7 +950,7 @@ check25(){
 check26(){
   ID26="2.6"
   TITLE26="Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)"
-  textTitle "$ID26" "$TITLE26"
+  textTitle "$ID26" "$TITLE26" "SCORED" "LEVEL1"
   CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text --profile $PROFILE --region $REGION)
     if [[ $CLOUDTRAILBUCKET ]];then
       for bucket in $CLOUDTRAILBUCKET;do
@@ -1005,7 +1019,7 @@ check28(){
 check31(){
   ID31="3.1"
   TITLE31="Ensure a log metric filter and alarm exist for unauthorized API calls (Scored)"
-  textTitle "$ID31" "$TITLE31"
+  textTitle "$ID31" "$TITLE31" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep AccessDenied)
@@ -1022,7 +1036,7 @@ check31(){
 check32(){
   ID32="3.2"
   TITLE32="Ensure a log metric filter and alarm exist for Management Console sign-in without MFA (Scored)"
-  textTitle "$ID32" "$TITLE32"
+  textTitle "$ID32" "$TITLE32" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'userIdentity.sessionContext.attributes.mfaAuthenticated.*true')
@@ -1039,7 +1053,7 @@ check32(){
 check33(){
   ID33="3.3"
   TITLE33="Ensure a log metric filter and alarm exist for usage of root account (Scored)"
-  textTitle "$ID33" "$TITLE33"
+  textTitle "$ID33" "$TITLE33" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION |grep -E 'userIdentity.*Root.*AwsServiceEvent')
@@ -1056,7 +1070,7 @@ check33(){
 check34(){
   ID34="3.4"
   TITLE34="Ensure a log metric filter and alarm exist for IAM policy changes (Scored)"
-  textTitle "$ID34" "$TITLE34"
+  textTitle "$ID34" "$TITLE34" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'DeleteGroupPolicy.*DeleteRolePolicy.*DeleteUserPolicy.*PutGroupPolicy.*PutRolePolicy.*PutUserPolicy.*CreatePolicy.*DeletePolicy.*CreatePolicyVersion.*DeletePolicyVersion.*AttachRolePolicy.*DetachRolePolicy.*AttachUserPolicy.*DetachUserPolicy.*AttachGroupPolicy.*DetachGroupPolicy')
@@ -1073,7 +1087,7 @@ check34(){
 check35(){
   ID35="3.5"
   TITLE35="Ensure a log metric filter and alarm exist for CloudTrail configuration changes (Scored)"
-  textTitle "$ID35" "$TITLE35"
+  textTitle "$ID35" "$TITLE35" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateTrail.*UpdateTrail.*DeleteTrail.*StartLogging.*StopLogging')
@@ -1124,7 +1138,7 @@ check37(){
 check38(){
   ID38="3.8"
   TITLE38="Ensure a log metric filter and alarm exist for S3 bucket policy changes (Scored)"
-  textTitle "$ID38" "$TITLE38"
+  textTitle "$ID38" "$TITLE38" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 's3.amazonaws.com.*PutBucketAcl.*PutBucketPolicy.*PutBucketCors.*PutBucketLifecycle.*PutBucketReplication.*DeleteBucketPolicy.*DeleteBucketCors.*DeleteBucketLifecycle.*DeleteBucketReplication')
@@ -1192,7 +1206,7 @@ check311(){
 check312(){
   ID312="3.12"
   TITLE312="Ensure a log metric filter and alarm exist for changes to network gateways (Scored)"
-  textTitle "$ID312" "$TITLE312"
+  textTitle "$ID312" "$TITLE312" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateCustomerGateway.*DeleteCustomerGateway.*AttachInternetGateway.*CreateInternetGateway.*DeleteInternetGateway.*DetachInternetGateway')
@@ -1209,7 +1223,7 @@ check312(){
 check313(){
   ID313="3.13"
   TITLE313="Ensure a log metric filter and alarm exist for route table changes (Scored)"
-  textTitle "$ID313" "$TITLE313"
+  textTitle "$ID313" "$TITLE313" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateRoute.*CreateRouteTable.*ReplaceRoute.*ReplaceRouteTableAssociation.*DeleteRouteTable.*DeleteRoute.*DisassociateRouteTable')
@@ -1226,7 +1240,7 @@ check313(){
 check314(){
   ID314="3.14"
   TITLE314="Ensure a log metric filter and alarm exist for VPC changes (Scored)"
-  textTitle "$ID314" "$TITLE314"
+  textTitle "$ID314" "$TITLE314" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateVpc.*DeleteVpc.*ModifyVpcAttribute.*AcceptVpcPeeringConnection.*CreateVpcPeeringConnection.*DeleteVpcPeeringConnection.*RejectVpcPeeringConnection.*AttachClassicLinkVpc.*DetachClassicLinkVpc.*DisableVpcClassicLink.*EnableVpcClassicLink')
@@ -1243,7 +1257,7 @@ check314(){
 check315(){
   ID315="3.15"
   TITLE315="Ensure appropriate subscribers to each SNS topic (Not Scored)"
-  textTitle "$ID315" "$TITLE315" "0"
+  textTitle "$ID315" "$TITLE315" "NOT_SCORED" "LEVEL1"
   CAN_SNS_LIST_SUBS=1
   for regx in $REGIONS; do
     TOPICS_LIST=$($AWSCLI sns list-topics --profile $PROFILE --region $regx --output text --query 'Topics[*].TopicArn')
@@ -1280,7 +1294,7 @@ check315(){
 check41(){
   ID41="4.1"
   TITLE41="Ensure no security groups allow ingress from 0.0.0.0/0 to port 22 (Scored)"
-  textTitle "$ID41" "$TITLE41"
+  textTitle "$ID41" "$TITLE41" "SCORED" "LEVEL1"
   for regx in $REGIONS; do
     SG_LIST=$($AWSCLI ec2 describe-security-groups --filters "Name=ip-permission.to-port,Values=22" --query 'SecurityGroups[?length(IpPermissions[?ToPort==`22` && contains(IpRanges[].CidrIp, `0.0.0.0/0`)]) > `0`].{GroupId:GroupId}' --profile $PROFILE --region $regx --output text)
     if [[ $SG_LIST ]];then
@@ -1296,7 +1310,7 @@ check41(){
 check42(){
   ID42="4.2"
   TITLE42="Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389 (Scored)"
-  textTitle "$ID42" "$TITLE42"
+  textTitle "$ID42" "$TITLE42" "SCORED" "LEVEL1"
   for regx in $REGIONS; do
     SG_LIST=$($AWSCLI ec2 describe-security-groups --filters "Name=ip-permission.to-port,Values=3389" --query 'SecurityGroups[?length(IpPermissions[?ToPort==`3389` && contains(IpRanges[].CidrIp, `0.0.0.0/0`)]) > `0`].{GroupName: GroupName}' --profile $PROFILE --region $regx --output text)
     if [[ $SG_LIST ]];then
@@ -1365,7 +1379,7 @@ extra71(){
   # set -x
   ID71="7.1"
   TITLE71="Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID71" "$TITLE71" "0"
+  textTitle "$ID71" "$TITLE71" "NOT_SCORED" "EXTRA"
 
   ADMIN_GROUPS=''
   AWS_GROUPS=$($AWSCLI --profile $PROFILE iam list-groups --output text --query 'Groups[].GroupName')
@@ -1399,7 +1413,7 @@ extra72(){
   #set -x
   ID72="7.2"
   TITLE72="Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID72" "$TITLE72" "0"
+  textTitle "$ID72" "$TITLE72" "NOT_SCORED" "EXTRA"
   textNotice "Looking for EBS Snapshots in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_EBS_SNAPSHOTS=$($AWSCLI ec2 describe-snapshots --profile $PROFILE --region $regx --owner-ids $ACCOUNT_NUM --output text --query 'Snapshots[*].{ID:SnapshotId}')
@@ -1419,7 +1433,7 @@ extra73(){
   #set -x
   ID73="7.3"
   TITLE73="Ensure there are no S3 buckets open to the Everyone or Any AWS user (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID73" "$TITLE73" "0"
+  textTitle "$ID73" "$TITLE73" "NOT_SCORED" "EXTRA"
   textNotice "Looking for open S3 Buckets (ACLs and Policies) in all regions...  "
   ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' --profile $PROFILE --region $REGION --output text)
   for bucket in $ALL_BUCKETS_LIST; do
