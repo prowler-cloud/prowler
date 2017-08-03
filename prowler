@@ -349,6 +349,7 @@ getWhoami(){
       exit 2
     fi
     CALLER_ARN=$(echo $CALLER_ARN_RAW | tr -d '"')
+    printCsvHeader
     textTitle "0.0" "Show report generation info" "NOT_SCORED" "SUPPORT"
     textNotice "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
   else
@@ -1582,11 +1583,8 @@ if [[ $MODE != "csv" ]]; then
   prowlerBanner
   printCurrentDate
   printColorsCode
-  getWhoami
-else
-  getWhoami
-  printCsvHeader
 fi
+getWhoami
 genCredReport
 saveReport
 
