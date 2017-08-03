@@ -403,7 +403,7 @@ saveReport(){
   TEMP_REPORT_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-XXXXX.cred_report )
   $AWSCLI iam get-credential-report --query 'Content' --output text --profile $PROFILE --region $REGION | decode_report > $TEMP_REPORT_FILE
   if [[ $KEEPCREDREPORT -eq 1 ]]; then
-    textTitle "0.2" "Saving IAM Credential Report ..." "No" "SUPPORT"
+    textTitle "0.2" "Saving IAM Credential Report ..." "NOT_SCORED" "SUPPORT"
     textNotice "IAM Credential Report saved in $TEMP_REPORT_FILE"
   fi
 }
@@ -683,7 +683,7 @@ check114(){
 check115(){
   ID115="1.15"
   TITLE115="Ensure security questions are registered in the AWS account (Not Scored)"
-  textTitle "$ID115" "$TITLE115" "0"
+  textTitle "$ID115" "$TITLE115" "NOT_SCORED" "LEVEL2"
   textNotice "No command available for check 1.15 "
   textNotice "Login to the AWS Console as root & click on the Account "
   textNotice "Name -> My Account -> Configure Security Challenge Questions "
@@ -766,7 +766,7 @@ check120(){
 check121(){
   ID121="1.21"
   TITLE121="Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
-  textTitle "$ID121" "$TITLE121" "0"
+  textTitle "$ID121" "$TITLE121" "NOT_SCORED" "LEVEL2"
   textNotice "No command available for check 1.21 "
   textNotice "See section 1.21 on the CIS Benchmark guide for details "
   infoReferenceShort
@@ -871,7 +871,7 @@ check21(){
 check22(){
   ID22="2.2"
   TITLE22="Ensure CloudTrail log file validation is enabled (Scored)"
-  textTitle "$ID22" "$TITLE22"
+  textTitle "$ID22" "$TITLE22" "SCORED" "LEVEL2"
   LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
   if [[ $LIST_OF_TRAILS ]];then
     for trail in $LIST_OF_TRAILS;do
@@ -969,7 +969,7 @@ check26(){
 check27(){
   ID27="2.7"
   TITLE27="Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)"
-  textTitle "$ID27" "$TITLE27"
+  textTitle "$ID27" "$TITLE27" "SCORED" "LEVEL2"
   CLOUDTRAILNAME=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].Name' --output text --profile $PROFILE --region $REGION)
     if [[ $CLOUDTRAILNAME ]];then
       for trail in $CLOUDTRAILNAME;do
@@ -988,7 +988,7 @@ check27(){
 check28(){
   ID28="2.8"
   TITLE28="Ensure rotation for customer created CMKs is enabled (Scored)"
-  textTitle "$ID28" "$TITLE28"
+  textTitle "$ID28" "$TITLE28" "SCORED" "LEVEL2"
   for regx in $REGIONS; do
   CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys --profile $PROFILE --region $regx --output text --query 'Keys[*].KeyId')
     if [[ $CHECK_KMS_KEYLIST ]];then
@@ -1104,7 +1104,7 @@ check35(){
 check36(){
   ID36="3.6"
   TITLE36="Ensure a log metric filter and alarm exist for AWS Management Console authentication failures (Scored)"
-  textTitle "$ID36" "$TITLE36"
+  textTitle "$ID36" "$TITLE36" "SCORED" "LEVEL2"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'ConsoleLogin.*Failed')
@@ -1121,7 +1121,7 @@ check36(){
 check37(){
   ID37="3.7"
   TITLE37="Ensure a log metric filter and alarm exist for disabling or scheduled deletion of customer created CMKs (Scored)"
-  textTitle "$ID37" "$TITLE37"
+  textTitle "$ID37" "$TITLE37" "SCORED" "LEVEL2"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'kms.amazonaws.com.*DisableKey.*ScheduleKeyDeletion')
@@ -1155,7 +1155,7 @@ check38(){
 check39(){
   ID39="3.9"
   TITLE39="Ensure a log metric filter and alarm exist for AWS Config configuration changes (Scored)"
-  textTitle "$ID39" "$TITLE39"
+  textTitle "$ID39" "$TITLE39" "SCORED" "LEVEL2"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'config.amazonaws.com.*StopConfigurationRecorder.*DeleteDeliveryChannel.*PutDeliveryChannel.*PutConfigurationRecorder')
@@ -1172,7 +1172,7 @@ check39(){
 check310(){
   ID310="3.10"
   TITLE310="Ensure a log metric filter and alarm exist for security group changes (Scored)"
-  textTitle "$ID310" "$TITLE310"
+  textTitle "$ID310" "$TITLE310" "SCORED" "LEVEL2"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'AuthorizeSecurityGroupIngress.*AuthorizeSecurityGroupEgress.*RevokeSecurityGroupIngress.*RevokeSecurityGroupEgress.*CreateSecurityGroup.*DeleteSecurityGroup')
@@ -1189,7 +1189,7 @@ check310(){
 check311(){
   ID311="3.11"
   TITLE311="Ensure a log metric filter and alarm exist for changes to Network Access Control Lists (NACL) (Scored)"
-  textTitle "$ID311" "$TITLE311"
+  textTitle "$ID311" "$TITLE311" "SCORED" "LEVEL2"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP --profile $PROFILE --region $REGION --query 'metricFilters' | grep -E 'CreateNetworkAcl.*CreateNetworkAclEntry.*DeleteNetworkAcl.*DeleteNetworkAclEntry.*ReplaceNetworkAclEntry.*ReplaceNetworkAclAssociation')
@@ -1326,7 +1326,7 @@ check42(){
 check43(){
   ID43="4.3"
   TITLE43="Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
-  textTitle "$ID43" "$TITLE43"
+  textTitle "$ID43" "$TITLE43" "SCORED" "LEVEL2"
   for regx in $REGIONS; do
     CHECK_FL=$($AWSCLI ec2 describe-flow-logs --profile $PROFILE --region $regx --query 'FlowLogs[?FlowLogStatus==`ACTIVE`].LogGroupName' --output text)
     if [[ $CHECK_FL ]];then
@@ -1342,7 +1342,7 @@ check43(){
 check44(){
   ID44="4.4"
   TITLE44="Ensure the default security group of every VPC restricts all traffic (Scored)"
-  textTitle "$ID44" "$TITLE44"
+  textTitle "$ID44" "$TITLE44" "SCORED" "LEVEL2"
   for regx in $REGIONS; do
     CHECK_SGDEFAULT=$($AWSCLI ec2 describe-security-groups --profile $PROFILE --region $regx --filters Name=group-name,Values='default' --query 'SecurityGroups[*].{IpPermissions:IpPermissions,IpPermissionsEgress:IpPermissionsEgress,GroupId:GroupId}' --output text |grep 0.0.0.0)
     if [[ $CHECK_SGDEFAULT ]];then
@@ -1357,7 +1357,7 @@ check45(){
   #set -xe
   ID45="4.5"
   TITLE45="Ensure routing tables for VPC peering are \"least access\" (Not Scored)"
-  textTitle "$ID45" "$TITLE45" "0"
+  textTitle "$ID45" "$TITLE45" "NOT_SCORED" "LEVEL2"
   textNotice "Looking for VPC peering in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_VPCS_PEERING_CONNECTIONS=$($AWSCLI ec2 describe-vpc-peering-connections --output text --profile $PROFILE --region $regx --query 'VpcPeeringConnections[*].VpcPeeringConnectionId')
@@ -1594,7 +1594,7 @@ saveReport
 callCheck
 
 TITLE1="Identity and Access Management ****************************************"
-textTitle "1" "$TITLE1"
+textTitle "1" "$TITLE1" "NOT_SCORED" "SUPPORT"
 check11
 check12
 check13
@@ -1621,7 +1621,7 @@ check123
 check124
 
 TITLE2="Logging ***************************************************************"
-textTitle "2" "$TITLE2"
+textTitle "2" "$TITLE2" "NOT_SCORED" "SUPPORT"
 check21
 check22
 check23
@@ -1632,7 +1632,7 @@ check27
 check28
 
 TITLE3="Monitoring ************************************************************"
-textTitle "3" "$TITLE3"
+textTitle "3" "$TITLE3" "NOT_SCORED" "SUPPORT"
 # 3 Monitoring check commands / Mostly covered by SecurityMonkey
 check31
 check32
@@ -1651,7 +1651,7 @@ check314
 check315
 
 TITLE4="Networking ************************************************************"
-textTitle "4" "$TITLE4"
+textTitle "4" "$TITLE4" "NOT_SCORED" "SUPPORT"
 check41
 check42
 check43
@@ -1659,7 +1659,7 @@ check44
 check45
 
 TITLE7="Extras ************************************************************"
-textTitle "7" "$TITLE7"
+textTitle "7" "$TITLE7" "NOT_SCORED" "SUPPORT"
 extra71
 extra72
 extra73
