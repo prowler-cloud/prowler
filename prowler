@@ -434,12 +434,6 @@ infoReferenceLong(){
   textNotice "https://github.com/Alfresco/aws-cis-security-benchmark/issues"
 }
 
-
-infoReferenceShort(){
-  # Report review note:
-  textNotice "http://bit.ly/2g3PEf7"
-}
-
 check11(){
   ID11="1.1"
   TITLE11="Avoid the use of the root account (Scored)."
@@ -715,7 +709,6 @@ check117(){
   textTitle "$ID117" "$TITLE117" "SCORED" "LEVEL1"
   textNotice "No command available for check 1.17 "
   textNotice "See section 1.17 on the CIS Benchmark guide for details "
-  infoReferenceShort
 }
 
 check118(){
@@ -751,7 +744,6 @@ check119(){
   textTitle "$ID119" "$TITLE119" "SCORED" "LEVEL1"
   textNotice "No command available for check 1.19 "
   textNotice "See section 1.19 on the CIS Benchmark guide for details "
-  infoReferenceShort
 }
 
 check120(){
@@ -761,7 +753,6 @@ check120(){
   textTitle "$ID120" "$TITLE120" "SCORED" "LEVEL1"
   textNotice "No command available for check 1.20 "
   textNotice "See section 1.20 on the CIS Benchmark guide for details "
-  infoReferenceShort
 }
 
 check121(){
@@ -769,8 +760,7 @@ check121(){
   TITLE121="Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
   textTitle "$ID121" "$TITLE121" "NOT_SCORED" "LEVEL2"
   textNotice "No command available for check 1.21 "
-  textNotice "See section 1.21 on the CIS Benchmark guide for details "
-  infoReferenceShort
+  textNotice "See section 1.21 on the CIS Benchmark guide for details "  
 }
 
 check122(){
