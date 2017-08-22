@@ -1570,8 +1570,7 @@ callCheck(){
 ### All functions defined above ... run the workflow
 
 if [[ $MODE != "csv" ]]; then
-  prowlerBanner
-  printCurrentDate 
+  prowlerBanner 
   printColorsCode
 fi
 getWhoami
