@@ -425,10 +425,13 @@ REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
 
 infoReferenceLong(){
   # Report review note:
-  textNotice "For more information:"
-  textNotice "https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf"
-  textNotice "For bugs or feedback:"
-  textNotice "https://github.com/Alfresco/aws-cis-security-benchmark/issues"
+  echo -e ""
+  echo -e "For more information on the Prowler, feedback and issue reporting:"
+  echo -e "https://github.com/Alfresco/prowler"
+  echo -e ""
+  echo -e "For more information on the CIS benchmark:"
+  echo -e "https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf"
+
 }
 
 check11(){
@@ -1567,7 +1570,8 @@ callCheck(){
 ### All functions defined above ... run the workflow
 
 if [[ $MODE != "csv" ]]; then
-  prowlerBanner  
+  prowlerBanner
+  printCurrentDate 
   printColorsCode
 fi
 getWhoami
@@ -1648,7 +1652,4 @@ extra71
 extra72
 extra73
 
-if [[ $MODE != "csv" ]]; then
-  infoReferenceLong
-fi
 cleanTemp
