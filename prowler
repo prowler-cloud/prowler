@@ -48,17 +48,18 @@ USAGE:
   Options:
       -p <profile>        specify your AWS profile to use (i.e.: default)
       -r <region>         specify an AWS region to direct API requests to (i.e.: us-east-1)
-      -c <checknum>       specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1, check3 for entire section 3 or level1 for CIS Level 1 Profile Definitions)
+      -c <checknum>       specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1, extra71, check3 for entire section 3 or level1 for CIS Level 1 Profile Definitions)
       -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
       -M <mode>           output mode: text (default), mono, csv (separator is \"${SEP}\"; data is on stdout; progress on stderr)
       -k                  keep the credential report
+      -n                  show check numbers to sort easier (i.e.: 1.01 instead of 1.1)
       -h                  this help
   "
   exit
 }
 
-while getopts ":hkp:r:c:f:m:M:" OPTION; do
+while getopts ":hkp:r:c:f:m:M:n" OPTION; do
    case $OPTION in
      h )
         usage
@@ -84,6 +85,9 @@ while getopts ":hkp:r:c:f:m:M:" OPTION; do
         ;;
      M )
         MODE=$OPTARG
+        ;;
+     n )
+        NUMERAL=1
         ;;
      : )
         echo ""
@@ -289,6 +293,12 @@ textWarn(){
 
 textTitle(){
   TITLE_ID=$1
+  if [[ $NUMERAL ]]; then
+    TITLE_ID=$(echo $TITLE_ID | cut -d, -f2)
+  else
+    TITLE_ID=$(echo $TITLE_ID | cut -d, -f1)
+  fi
+
   TITLE_TEXT=$2
 
   case "$3" in
@@ -435,7 +445,7 @@ infoReferenceLong(){
 }
 
 check11(){
-  ID11="1.1"
+  ID11="1.1,1.01"
   TITLE11="Avoid the use of the root account (Scored)."
   COMMAND11=$(cat $TEMP_REPORT_FILE| grep '<root_account>' | cut -d, -f5,11,16 | sed 's/,/\ /g')
   textTitle "$ID11" "$TITLE11" "SCORED" "LEVEL1"
@@ -443,7 +453,7 @@ check11(){
 }
 
 check12(){
-  ID12="1.2"
+  ID12="1.2,1.02"
   TITLE12="Ensure multi-factor authentication (MFA) is enabled for all IAM users that have a console password (Scored)"
   # List users with password enabled
   COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$4 }' |grep true | awk '{ print $1 }')
@@ -462,7 +472,7 @@ check12(){
 }
 
 check13(){
-  ID13="1.3"
+  ID13="1.3,1.03"
   TITLE13="Ensure credentials unused for 90 days or greater are disabled (Scored)"
   textTitle "$ID13" "$TITLE13" "SCORED" "LEVEL1"
   COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$4 }' |grep true | awk '{ print $1 }')
@@ -492,7 +502,7 @@ check13(){
 }
 
 check14(){
-  ID14="1.4"
+  ID14="1.4,1.04"
   TITLE14="Ensure access keys are rotated every 90 days or less (Scored)" # also checked by Security Monkey
   LIST_OF_USERS_WITH_ACCESS_KEY1=$(cat $TEMP_REPORT_FILE| awk -F, '{ print $1, $9 }' |grep "\ true" | awk '{ print $1 }')
   LIST_OF_USERS_WITH_ACCESS_KEY2=$(cat $TEMP_REPORT_FILE| awk -F, '{ print $1, $14 }' |grep "\ true" | awk '{ print $1 }')
@@ -538,7 +548,7 @@ check14(){
 }
 
 check15(){
-  ID15="1.5"
+  ID15="1.5,1.05"
   TITLE15="Ensure IAM password policy requires at least one uppercase letter (Scored)"
   COMMAND15=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireUppercaseCharacters' 2> /dev/null) # must be true
   textTitle "$ID15" "$TITLE15" "SCORED" "LEVEL1"
@@ -550,7 +560,7 @@ check15(){
 }
 
 check16(){
-  ID16="1.6"
+  ID16="1.6,1.06"
   TITLE16="Ensure IAM password policy require at least one lowercase letter (Scored)"
   COMMAND16=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireLowercaseCharacters' 2> /dev/null) # must be true
   textTitle "$ID16" "$TITLE16" "SCORED" "LEVEL1"
@@ -562,7 +572,7 @@ check16(){
 }
 
 check17(){
-  ID17="1.7"
+  ID17="1.7,1.07"
   TITLE17="Ensure IAM password policy require at least one symbol (Scored)"
   COMMAND17=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireSymbols' 2> /dev/null) # must be true
   textTitle "$ID17" "$TITLE17" "SCORED" "LEVEL1"
@@ -574,7 +584,7 @@ check17(){
 }
 
 check18(){
-  ID18="1.8"
+  ID18="1.8,1.08"
   TITLE18="Ensure IAM password policy require at least one number (Scored)"
   COMMAND18=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.RequireNumbers' 2> /dev/null) # must be true
   textTitle "$ID18" "$TITLE18" "SCORED" "LEVEL1"
@@ -586,7 +596,7 @@ check18(){
 }
 
 check19(){
-  ID19="1.9"
+  ID19="1.9,1.09"
   TITLE19="Ensure IAM password policy requires minimum length of 14 or greater (Scored)"
   COMMAND19=$($AWSCLI iam get-account-password-policy --profile $PROFILE --region $REGION --output json --query 'PasswordPolicy.MinimumPasswordLength' 2> /dev/null)
   textTitle "$ID19" "$TITLE19" "SCORED" "LEVEL1"
@@ -760,7 +770,7 @@ check121(){
   TITLE121="Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
   textTitle "$ID121" "$TITLE121" "NOT_SCORED" "LEVEL2"
   textNotice "No command available for check 1.21 "
-  textNotice "See section 1.21 on the CIS Benchmark guide for details "  
+  textNotice "See section 1.21 on the CIS Benchmark guide for details "
 }
 
 check122(){
@@ -841,7 +851,7 @@ check124(){
 }
 
 check21(){
-  ID21="2.1"
+  ID21="2.1,2.01"
   TITLE21="Ensure CloudTrail is enabled in all regions (Scored)"
   textTitle "$ID21" "$TITLE21" "SCORED" "LEVEL1"
   LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
@@ -860,7 +870,7 @@ check21(){
 }
 
 check22(){
-  ID22="2.2"
+  ID22="2.2,2.02"
   TITLE22="Ensure CloudTrail log file validation is enabled (Scored)"
   textTitle "$ID22" "$TITLE22" "SCORED" "LEVEL2"
   LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].Name' --output text)
@@ -879,7 +889,7 @@ check22(){
 }
 
 check23(){
-  ID23="2.3"
+  ID23="2.3,2.03"
   TITLE23="Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)"
   textTitle "$ID23" "$TITLE23" "SCORED" "LEVEL1"
   CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text --profile $PROFILE --region $REGION)
@@ -898,7 +908,7 @@ check23(){
 }
 
 check24(){
-  ID24="2.4"
+  ID24="2.4,2.04"
   TITLE24="Ensure CloudTrail trails are integrated with CloudWatch Logs (Scored)"
   textTitle "$ID24" "$TITLE24" "SCORED" "LEVEL1"
   TRAILS_AND_REGIONS=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].{Name:Name, HomeRegion:HomeRegion}' --output text | tr "\t" ',')
@@ -925,7 +935,7 @@ check24(){
 }
 
 check25(){
-  ID25="2.5"
+  ID25="2.5,2.05"
   TITLE25="Ensure AWS Config is enabled in all regions (Scored)"
   textTitle "$ID25" "$TITLE25" "SCORED" "LEVEL1"
   for regx in $REGIONS; do
@@ -939,7 +949,7 @@ check25(){
 }
 
 check26(){
-  ID26="2.6"
+  ID26="2.6,2.06"
   TITLE26="Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)"
   textTitle "$ID26" "$TITLE26" "SCORED" "LEVEL1"
   CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text --profile $PROFILE --region $REGION)
@@ -958,7 +968,7 @@ check26(){
 }
 
 check27(){
-  ID27="2.7"
+  ID27="2.7,2.07"
   TITLE27="Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)"
   textTitle "$ID27" "$TITLE27" "SCORED" "LEVEL2"
   CLOUDTRAILNAME=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].Name' --output text --profile $PROFILE --region $REGION)
@@ -977,7 +987,7 @@ check27(){
 }
 
 check28(){
-  ID28="2.8"
+  ID28="2.8,2.08"
   TITLE28="Ensure rotation for customer created CMKs is enabled (Scored)"
   textTitle "$ID28" "$TITLE28" "SCORED" "LEVEL2"
   for regx in $REGIONS; do
@@ -1008,7 +1018,7 @@ check28(){
 }
 
 check31(){
-  ID31="3.1"
+  ID31="3.1,3.01"
   TITLE31="Ensure a log metric filter and alarm exist for unauthorized API calls (Scored)"
   textTitle "$ID31" "$TITLE31" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
@@ -1025,7 +1035,7 @@ check31(){
 }
 
 check32(){
-  ID32="3.2"
+  ID32="3.2,3.02"
   TITLE32="Ensure a log metric filter and alarm exist for Management Console sign-in without MFA (Scored)"
   textTitle "$ID32" "$TITLE32" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
@@ -1042,7 +1052,7 @@ check32(){
 }
 
 check33(){
-  ID33="3.3"
+  ID33="3.3,3.03"
   TITLE33="Ensure a log metric filter and alarm exist for usage of root account (Scored)"
   textTitle "$ID33" "$TITLE33" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
@@ -1059,7 +1069,7 @@ check33(){
 }
 
 check34(){
-  ID34="3.4"
+  ID34="3.4,3.04"
   TITLE34="Ensure a log metric filter and alarm exist for IAM policy changes (Scored)"
   textTitle "$ID34" "$TITLE34" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
@@ -1076,7 +1086,7 @@ check34(){
 }
 
 check35(){
-  ID35="3.5"
+  ID35="3.5,3.05"
   TITLE35="Ensure a log metric filter and alarm exist for CloudTrail configuration changes (Scored)"
   textTitle "$ID35" "$TITLE35" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
@@ -1093,7 +1103,7 @@ check35(){
 }
 
 check36(){
-  ID36="3.6"
+  ID36="3.6,3.06"
   TITLE36="Ensure a log metric filter and alarm exist for AWS Management Console authentication failures (Scored)"
   textTitle "$ID36" "$TITLE36" "SCORED" "LEVEL2"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
@@ -1110,7 +1120,7 @@ check36(){
 }
 
 check37(){
-  ID37="3.7"
+  ID37="3.7,3.07"
   TITLE37="Ensure a log metric filter and alarm exist for disabling or scheduled deletion of customer created CMKs (Scored)"
   textTitle "$ID37" "$TITLE37" "SCORED" "LEVEL2"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
@@ -1127,7 +1137,7 @@ check37(){
 }
 
 check38(){
-  ID38="3.8"
+  ID38="3.8,3.08"
   TITLE38="Ensure a log metric filter and alarm exist for S3 bucket policy changes (Scored)"
   textTitle "$ID38" "$TITLE38" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
@@ -1144,7 +1154,7 @@ check38(){
 }
 
 check39(){
-  ID39="3.9"
+  ID39="3.9,3.09"
   TITLE39="Ensure a log metric filter and alarm exist for AWS Config configuration changes (Scored)"
   textTitle "$ID39" "$TITLE39" "SCORED" "LEVEL2"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails --profile $PROFILE --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
@@ -1283,7 +1293,7 @@ check315(){
 }
 
 check41(){
-  ID41="4.1"
+  ID41="4.1,4.01"
   TITLE41="Ensure no security groups allow ingress from 0.0.0.0/0 to port 22 (Scored)"
   textTitle "$ID41" "$TITLE41" "SCORED" "LEVEL1"
   for regx in $REGIONS; do
@@ -1299,7 +1309,7 @@ check41(){
 }
 
 check42(){
-  ID42="4.2"
+  ID42="4.2,4.02"
   TITLE42="Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389 (Scored)"
   textTitle "$ID42" "$TITLE42" "SCORED" "LEVEL1"
   for regx in $REGIONS; do
@@ -1315,7 +1325,7 @@ check42(){
 }
 
 check43(){
-  ID43="4.3"
+  ID43="4.3,4.03"
   TITLE43="Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
   textTitle "$ID43" "$TITLE43" "SCORED" "LEVEL2"
   for regx in $REGIONS; do
@@ -1331,7 +1341,7 @@ check43(){
 }
 
 check44(){
-  ID44="4.4"
+  ID44="4.4,4.04"
   TITLE44="Ensure the default security group of every VPC restricts all traffic (Scored)"
   textTitle "$ID44" "$TITLE44" "SCORED" "LEVEL2"
   for regx in $REGIONS; do
@@ -1346,7 +1356,7 @@ check44(){
 
 check45(){
   #set -xe
-  ID45="4.5"
+  ID45="4.5,4.05"
   TITLE45="Ensure routing tables for VPC peering are \"least access\" (Not Scored)"
   textTitle "$ID45" "$TITLE45" "NOT_SCORED" "LEVEL2"
   textNotice "Looking for VPC peering in all regions...  "
@@ -1368,7 +1378,7 @@ check45(){
 
 extra71(){
   # set -x
-  ID71="7.1"
+  ID71="7.1,7.01"
   TITLE71="Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID71" "$TITLE71" "NOT_SCORED" "EXTRA"
 
@@ -1385,7 +1395,7 @@ extra71(){
       for auser in $ADMIN_USERS; do
         # users in group are Administrators
         # users
-          # check for user MFA device in credential report
+        # check for user MFA device in credential report
         USER_MFA_ENABLED=$( cat $TEMP_REPORT_FILE | grep "^$auser," | cut -d',' -f8)
         if [[ "true" == $USER_MFA_ENABLED ]]; then
           textOK "$auser / MFA Enabled / admin via group $grp"
@@ -1402,7 +1412,7 @@ extra71(){
 
 extra72(){
   #set -x
-  ID72="7.2"
+  ID72="7.2,7.02"
   TITLE72="Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID72" "$TITLE72" "NOT_SCORED" "EXTRA"
   textNotice "Looking for EBS Snapshots in all regions...  "
@@ -1422,7 +1432,7 @@ extra72(){
 
 extra73(){
   #set -x
-  ID73="7.3"
+  ID73="7.3,7.03"
   TITLE73="Ensure there are no S3 buckets open to the Everyone or Any AWS user (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID73" "$TITLE73" "NOT_SCORED" "EXTRA"
   textNotice "Looking for open S3 Buckets (ACLs and Policies) in all regions...  "
@@ -1467,15 +1477,15 @@ extra73(){
 callCheck(){
   if [[ $CHECKNUMBER ]];then
     case "$CHECKNUMBER" in
-      check11 ) check11;;
-      check12 ) check12;;
-      check13 ) check13;;
-      check14 ) check14;;
-      check15 ) check15;;
-      check16 ) check16;;
-      check17 ) check17;;
-      check18 ) check18;;
-      check19 ) check19;;
+      check11|check101 ) check11;;
+      check12|check102 ) check12;;
+      check13|check103 ) check13;;
+      check14|check104 ) check14;;
+      check15|check105 ) check15;;
+      check16|check106 ) check16;;
+      check17|check107 ) check17;;
+      check18|check108 ) check18;;
+      check19|check109 ) check19;;
       check110 ) check110;;
       check111 ) check111;;
       check112 ) check112;;
@@ -1491,37 +1501,37 @@ callCheck(){
       check122 ) check122;;
       check123 ) check123;;
       check124 ) check124;;
-      check21 ) check21;;
-      check22 ) check22;;
-      check23 ) check23;;
-      check24 ) check24;;
-      check25 ) check25;;
-      check26 ) check26;;
-      check27 ) check27;;
-      check28 ) check28;;
-      check31 ) check31;;
-      check32 ) check32;;
-      check33 ) check33;;
-      check34 ) check34;;
-      check35 ) check35;;
-      check36 ) check36;;
-      check37 ) check37;;
-      check38 ) check38;;
-      check39 ) check39;;
+      check21|check201 ) check21;;
+      check22|check202 ) check22;;
+      check23|check203 ) check23;;
+      check24|check204 ) check24;;
+      check25|check205 ) check25;;
+      check26|check206 ) check26;;
+      check27|check207 ) check27;;
+      check28|check208 ) check28;;
+      check31|check301 ) check31;;
+      check32|check302 ) check32;;
+      check33|check303 ) check33;;
+      check34|check304 ) check34;;
+      check35|check305 ) check35;;
+      check36|check306 ) check36;;
+      check37|check307 ) check37;;
+      check38|check308 ) check38;;
+      check39|check309 ) check39;;
       check310 ) check310;;
       check311 ) check311;;
       check312 ) check312;;
       check313 ) check313;;
       check314 ) check314;;
       check315 ) check315;;
-      check41 ) check41;;
-      check42 ) check42;;
-      check43 ) check43;;
-      check44 ) check44;;
-      check45 ) check45;;
-      extra71 ) extra71;;
-      extra72 ) extra72;;
-      extra73 ) extra73;;
+      check41|check401 ) check41;;
+      check42|check402 ) check42;;
+      check43|check403 ) check43;;
+      check44|check404 ) check44;;
+      check45|check405 ) check45;;
+      extra71|extra701 ) extra71;;
+      extra72|extra702 ) extra72;;
+      extra73|extra703 ) extra73;;
       ## Groups of Checks
       check1 )
         check11;check12;check13;check14;check15;check16;check17;check18;
@@ -1570,7 +1580,7 @@ callCheck(){
 ### All functions defined above ... run the workflow
 
 if [[ $MODE != "csv" ]]; then
-  prowlerBanner 
+  prowlerBanner
   printColorsCode
 fi
 getWhoami
