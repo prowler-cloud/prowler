@@ -30,7 +30,7 @@ With Prowler you can:
 - get a colourish or monochrome report
 - a CSV format report for diff
 - run specific checks without having to run the entire report
-- check multiple AWS accounts in parallel 
+- check multiple AWS accounts in parallel
 
 ## Requirements
 This script has been written in bash using AWS-CLI and it works in Linux and OSX.
@@ -130,6 +130,7 @@ USAGE:
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
       -M <mode>           output mode: text (defalut), mono, csv (separator is ","; data is on stdout; progress on stderr)
       -k                  keep the credential report
+      -n                  show check numbers to sort easier (i.e.: 1.01 instead of 1.1)
       -h                  this help
 
 ```
