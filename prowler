@@ -978,7 +978,7 @@ check27(){
         if [[ $CLOUDTRAILENC_ENABLED ]];then
           textOK "KMS key found for $trail"
         else
-          textWarn "encryption is not enabled in your CloudTrail trail $trail but KMS key not found!"
+          textWarn "encryption is not enabled in your CloudTrail trail $trail (KMS key not found)!"
         fi
       done
     else
