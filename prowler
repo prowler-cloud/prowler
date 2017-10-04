@@ -978,7 +978,7 @@ check27(){
         if [[ $CLOUDTRAILENC_ENABLED ]];then
           textOK "KMS key found for $trail"
         else
-          textWarn "encryption is not enabled in your CloudTrail trail $trail but KMS key not found!"
+          textWarn "encryption is not enabled in your CloudTrail trail $trail (KMS key not found)!"
         fi
       done
     else
@@ -1030,7 +1030,7 @@ check31(){
       textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found but no metric filters or alarms associated"
+    textWarn "No CloudWatch group found for CloudTrail events"
   fi
 }
 
@@ -1047,7 +1047,7 @@ check32(){
       textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found but no metric filters or alarms associated"
+    textWarn "No CloudWatch group found for CloudTrail events"
   fi
 }
 
@@ -1064,7 +1064,7 @@ check33(){
       textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found but no metric filters or alarms associated"
+    textWarn "No CloudWatch group found for CloudTrail events"
   fi
 }
 
@@ -1081,7 +1081,7 @@ check34(){
       textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found but no metric filters or alarms associated"
+    textWarn "No CloudWatch group found for CloudTrail events"
   fi
 }
 
@@ -1098,7 +1098,7 @@ check35(){
       textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found but no metric filters or alarms associated"
+    textWarn "No CloudWatch group found for CloudTrail events"
   fi
 }
 
@@ -1115,7 +1115,7 @@ check36(){
       textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found but no metric filters or alarms associated"
+    textWarn "No CloudWatch group found for CloudTrail events"
   fi
 }
 
@@ -1132,7 +1132,7 @@ check37(){
       textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found but no metric filters or alarms associated"
+    textWarn "No CloudWatch group found for CloudTrail events"
   fi
 }
 
@@ -1149,7 +1149,7 @@ check38(){
       textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found but no metric filters or alarms associated"
+    textWarn "No CloudWatch group found for CloudTrail events"
   fi
 }
 
@@ -1166,7 +1166,7 @@ check39(){
       textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found but no metric filters or alarms associated"
+    textWarn "No CloudWatch group found for CloudTrail events"
   fi
 }
 
@@ -1183,7 +1183,7 @@ check310(){
       textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found but no metric filters or alarms associated"
+    textWarn "No CloudWatch group found for CloudTrail events"
   fi
 }
 
@@ -1200,7 +1200,7 @@ check311(){
       textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found but no metric filters or alarms associated"
+    textWarn "No CloudWatch group found for CloudTrail events"
   fi
 }
 
@@ -1217,7 +1217,7 @@ check312(){
       textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found but no metric filters or alarms associated"
+    textWarn "No CloudWatch group found for CloudTrail events"
   fi
 }
 
@@ -1234,7 +1234,7 @@ check313(){
       textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found but no metric filters or alarms associated"
+    textWarn "No CloudWatch group found for CloudTrail events"
   fi
 }
 
@@ -1251,7 +1251,7 @@ check314(){
       textWarn "CloudWatch group found but no metric filters or alarms associated"
     fi
   else
-    textWarn "No CloudWatch group found but no metric filters or alarms associated"
+    textWarn "No CloudWatch group found for CloudTrail events"
   fi
 }
 
