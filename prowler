@@ -247,7 +247,7 @@ if [[ $PROFILE ]]; then
     fi
   fi
 else
-  if [[ $AWS_ACESS_KEY && $AWS_SECRET_ACCESS_KEY || $AWS_SESSION_TOKEN ]];then
+  if [[ $AWS_ACCESS_KEY_ID && $AWS_SECRET_ACCESS_KEY || $AWS_SESSION_TOKEN ]];then
     PROFILE="ENV"
     PROFILE_OPT=""
   else
