@@ -1055,7 +1055,7 @@ check32(){
   textTitle "$ID32" "$TITLE32" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION --query 'metricFilters' | grep -E 'userIdentity.sessionContext.attributes.mfaAuthenticated.*true')
+    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION --query 'metricFilters' |grep filterPattern|awk '/.userIdentity.type/&&/IAMUser/||/root/&&/.responseElements.ConsoleLogin/&&/.additionalEventData.MFAUsed/&&/Yes/')
     if [[ $METRICFILTER_SET ]];then
       textOK "CloudWatch group found with metric filters for sign-in Console without MFA enabled"
     else
