@@ -61,7 +61,7 @@ arn:aws:iam::aws:policy/SecurityAudit
 
 ## Usage
 
-1 - Run the prowler.sh command without options (it will use your default credentials and run checks over all regions when needed, default region is us-east-1):
+1 - Run the prowler.sh command without options (it will use your environment variable credentials if exist or default in ~/.aws/credentials file and run checks over all regions when needed, default region is us-east-1):
 
 ```
 ./prowler
