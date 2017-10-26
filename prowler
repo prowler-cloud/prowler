@@ -624,7 +624,7 @@ check19(){
 
 check110(){
   ID110="1.10"
-  TITLE110="Ensure IAM password policy prevents password reuse, 24 or greater (Scored)"
+  TITLE110="Ensure IAM password policy prevents password reuse: 24 or greater (Scored)"
   COMMAND110=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --query 'PasswordPolicy.PasswordReusePrevention' --output text 2> /dev/null)
   textTitle "$ID110" "$TITLE110" "SCORED" "LEVEL1"
   if [[ $COMMAND110 ]];then
