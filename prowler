@@ -1488,6 +1488,45 @@ extra73(){
   done
 }
 
+extra74(){
+  #set -x
+  ID74="7.4,7.04"
+  TITLE74="Ensure there are no Security Groups without ingress filtering being used (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID74" "$TITLE74" "NOT_SCORED" "EXTRA"
+  textNotice "Looking for Security Groups in all regions...  "
+  for regx in $REGIONS; do
+    LIST_OF_SECURITYGROUPS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --filters "Name=ip-permission.cidr,Values=0.0.0.0/0" --query "SecurityGroups[].[GroupId]" --output text --max-items $MAXITEMS)
+    for SG_ID in $LIST_OF_SECURITYGROUPS; do
+      SG_NO_INGRESS_FILTER=$($AWSCLI ec2 describe-network-interfaces $PROFILE_OPT --region $regx --filters "Name=group-id,Values=$SG_ID" --query "length(NetworkInterfaces)" --output text)
+      if [[ $SG_NO_INGRESS_FILTER -ne 0 ]];then
+        textWarn "$regx: $SG_ID has not ingress filtering and it is being used!" "$regx"
+      else
+        textNotice "$regx: $SG_ID has not ingress filtering but it is no being used" "$regx"
+      fi
+    done
+  done
+
+}
+
+extra75(){
+  #set -x
+  ID75="7.5,7.05"
+  TITLE75="Ensure there are no Security Groups not being used (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID75" "$TITLE75" "NOT_SCORED" "EXTRA"
+  textNotice "Looking for Security Groups in all regions...  "
+  for regx in $REGIONS; do
+    LIST_OF_SECURITYGROUPS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --query "SecurityGroups[].[GroupId]" --output text --max-items $MAXITEMS)
+    for SG_ID in $LIST_OF_SECURITYGROUPS; do
+      SG_NOT_USED=$($AWSCLI ec2 describe-network-interfaces $PROFILE_OPT --region $regx --filters "Name=group-id,Values=$SG_ID" --query "length(NetworkInterfaces)" --output text)
+      if [[ $SG_NOT_USED -eq 0 ]];then
+        textWarn "$regx: $SG_ID is not being used!" "$regx"
+      else
+        textOK "$regx: $SG_ID is being used" "$regx"
+      fi
+    done
+  done
+
+}
 
 callCheck(){
   if [[ $CHECKNUMBER ]];then
@@ -1547,6 +1586,9 @@ callCheck(){
       extra71|extra701 ) extra71;;
       extra72|extra702 ) extra72;;
       extra73|extra703 ) extra73;;
+      extra74|extra704 ) extra74;;
+      extra75|extra705 ) extra75;;
+
       ## Groups of Checks
       check1 )
         check11;check12;check13;check14;check15;check16;check17;check18;
@@ -1581,7 +1623,7 @@ callCheck(){
         check43;check44;check45
         ;;
       extras )
-        extra71;extra72;extra73
+        extra71;extra72;extra73;extra74;extra75
         ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
@@ -1675,5 +1717,7 @@ textTitle "7" "$TITLE7" "NOT_SCORED" "SUPPORT"
 extra71
 extra72
 extra73
+extra74
+extra75
 
 cleanTemp

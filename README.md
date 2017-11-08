@@ -22,7 +22,7 @@ It covers hardening and security best practices for all AWS regions related to:
 - Logging (8 checks)
 - Monitoring (15 checks)
 - Networking (5 checks)
-- Extra checks (3 checks) *see Extras section
+- Extra checks (5 checks) *see Extras section
 
 For a comprehesive list and resolution look at the guide on the link above.
 
@@ -575,17 +575,18 @@ The `aws iam create-access-key` command will output the secret access key and th
 
 ## Extras
 We are adding additional checks to improve the information gather from each account, these checks are out of the scope of the CIS benchmark for AWS but we consider them very helpful to get to know each AWS account set up and find issues on it.
-At this momment we have 3 extra checks:
+At this momment we have 5 extra checks:
 
-- 7.1  Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)
-- 7.2  Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)
-- 7.3  Ensure there are no S3 buckets open to the Everyone or Any AWS user (Not Scored) (Not part of CIS benchmark)
+- 7.1 (`extra71`) Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)
+- 7.2 (`extra72`) Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)
+- 7.3 (`extra73`) Ensure there are no S3 buckets open to the Everyone or Any AWS user (Not Scored) (Not part of CIS benchmark)
+- 7.4 (`extra74`) Ensure there are no Security Groups without ingress filtering being used (Not Scored) (Not part of CIS benchmark)
+- 7.5 (`extra75`) Ensure there are no Security Groups not being used (Not Scored) (Not part of CIS benchmark)
 
-To run all extras in one command:
 ```
 ./prowler -c extras
 ```
 or to run just one of the checks, to see if you have S3 buckets open:
 ```
-./prowler -c extra73
+./prowler -c extraNUMBER
 ```
