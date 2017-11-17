@@ -1,0 +1,26 @@
+{
+    "trailList": [
+        {
+            "IncludeGlobalServiceEvents": true,
+            "Name": "AWSMacieTrail-DO-NOT-EDIT",
+            "TrailARN": "arn:aws:cloudtrail:us-east-1:623229943871:trail/AWSMacieTrail-DO-NOT-EDIT",
+            "LogFileValidationEnabled": false,
+            "IsMultiRegionTrail": false,
+            "HasCustomEventSelectors": true,
+            "S3BucketName": "623229943871-awsmacietrail-dataevent",
+            "HomeRegion": "us-east-1"
+        },
+        {
+            "IncludeGlobalServiceEvents": true,
+            "Name": "Default",
+            "TrailARN": "arn:aws:cloudtrail:us-east-1:623229943871:trail/Default",
+            "LogFileValidationEnabled": true,
+            "IsMultiRegionTrail": true,
+            "HasCustomEventSelectors": false,
+            "S3BucketName": "sec623229943871",
+            "CloudWatchLogsRoleArn": "arn:aws:iam::623229943871:role/CloudTrail_CloudWatchLogs_Role",
+            "CloudWatchLogsLogGroupArn": "arn:aws:logs:us-east-1:623229943871:log-group:CloudTrail/DefaultLogGroup:*",
+            "HomeRegion": "us-east-1"
+        }
+    ]
+}

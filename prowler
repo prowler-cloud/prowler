@@ -1038,12 +1038,20 @@ check31(){
   textTitle "$ID31" "$TITLE31" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION --query 'metricFilters' | grep AccessDenied)
-    if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found with metric filters for Access Denied enabled"
-    else
-      textWarn "CloudWatch group found but no metric filters or alarms associated"
-    fi
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | awk '/UnauthorizedOperation/ || /AccessDenied/ {print $1" "$2}')
+      if [[ $METRICFILTER_SET ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /UnauthorizedOperation/ || /AccessDenied/;')
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textOK "CloudWatch group $group found with metric filters and alarms set for Unauthorized Operation and Access Denied"
+        else
+          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+        fi
+      else
+        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
   else
     textWarn "No CloudWatch group found for CloudTrail events"
   fi
@@ -1055,12 +1063,20 @@ check32(){
   textTitle "$ID32" "$TITLE32" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION --query 'metricFilters' |grep filterPattern|grep MFAUsed| awk '/ConsoleLogin/ && (/additionalEventData.MFAUsed.*\!=.*\"Yes/) {print $1}')
-    if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found with metric filters for sign-in Console without MFA enabled"
-    else
-      textWarn "CloudWatch group found but no metric filters or alarms associated"
-    fi
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' |grep filterPattern|grep MFAUsed| awk '/ConsoleLogin/ && (/additionalEventData.MFAUsed.*\!=.*\"Yes/) {print $1}')
+      if [[ $METRICFILTER_SET ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /ConsoleLogin/ || /MFAUsed/;')
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textOK "CloudWatch group $group found with metric filters and alarms set for sign-in Console without MFA enabled"
+        else
+          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+        fi
+      else
+        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
   else
     textWarn "No CloudWatch group found for CloudTrail events"
   fi
@@ -1072,12 +1088,20 @@ check33(){
   textTitle "$ID33" "$TITLE33" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION |grep -E 'userIdentity.*Root.*AwsServiceEvent')
-    if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found with metric filters for usage of root account enabled"
-    else
-      textWarn "CloudWatch group found but no metric filters or alarms associated"
-    fi
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION |grep -E 'userIdentity.*Root.*AwsServiceEvent')
+      if [[ $METRICFILTER_SET ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /userIdentity/ || /Root/ || /AwsServiceEvent/;')
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textOK "CloudWatch group $group found with metric filters and alarms set for usage of root account"
+        else
+          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+        fi
+      else
+        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
   else
     textWarn "No CloudWatch group found for CloudTrail events"
   fi
@@ -1089,12 +1113,20 @@ check34(){
   textTitle "$ID34" "$TITLE34" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION --query 'metricFilters' | grep -E 'DeleteGroupPolicy.*DeleteRolePolicy.*DeleteUserPolicy.*PutGroupPolicy.*PutRolePolicy.*PutUserPolicy.*CreatePolicy.*DeletePolicy.*CreatePolicyVersion.*DeletePolicyVersion.*AttachRolePolicy.*DetachRolePolicy.*AttachUserPolicy.*DetachUserPolicy.*AttachGroupPolicy.*DetachGroupPolicy')
-    if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found with metric filters for IAM policy changes enabled"
-    else
-      textWarn "CloudWatch group found but no metric filters or alarms associated"
-    fi
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | grep -E 'DeleteGroupPolicy.*DeleteRolePolicy.*DeleteUserPolicy.*PutGroupPolicy.*PutRolePolicy.*PutUserPolicy.*CreatePolicy.*DeletePolicy.*CreatePolicyVersion.*DeletePolicyVersion.*AttachRolePolicy.*DetachRolePolicy.*AttachUserPolicy.*DetachUserPolicy.*AttachGroupPolicy.*DetachGroupPolicy')
+      if [[ $METRICFILTER_SET ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /DeletePolicy/ || /DeletePolicies/ || /Policies/ || /Policy/;')
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textOK "CloudWatch group $group found with metric filters and alarms for IAM policy changes"
+        else
+          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+        fi
+      else
+        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
   else
     textWarn "No CloudWatch group found for CloudTrail events"
   fi
@@ -1106,12 +1138,20 @@ check35(){
   textTitle "$ID35" "$TITLE35" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION --query 'metricFilters' | grep -E 'CreateTrail.*UpdateTrail.*DeleteTrail.*StartLogging.*StopLogging')
-    if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found with metric filters for CloudTrail configuration changes enabled"
-    else
-      textWarn "CloudWatch group found but no metric filters or alarms associated"
-    fi
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | grep -E 'CreateTrail.*UpdateTrail.*DeleteTrail.*StartLogging.*StopLogging')
+      if [[ $METRICFILTER_SET ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /TrailChange/ || /Trails/ || /CreateTrail/ || /UpdateTrail/ || /DeleteTrail/ || /StartLogging/ || /StopLogging/;')
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textOK "CloudWatch group $group found with metric filters and alarms for CloudTrail configuration changes"
+        else
+          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+        fi
+      else
+        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
   else
     textWarn "No CloudWatch group found for CloudTrail events"
   fi
@@ -1123,12 +1163,20 @@ check36(){
   textTitle "$ID36" "$TITLE36" "SCORED" "LEVEL2"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION --query 'metricFilters' | grep -E 'ConsoleLogin.*Failed')
-    if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found with metric filters for usage of root account enabled"
-    else
-      textWarn "CloudWatch group found but no metric filters or alarms associated"
-    fi
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | grep -E 'ConsoleLogin.*Failed')
+      if [[ $METRICFILTER_SET ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /FailedLogin/ || /ConsoleLogin/ || /Failed/;')
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textOK "CloudWatch group $group found with metric filters and alarms for usage of root account"
+        else
+          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+        fi
+      else
+        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
   else
     textWarn "No CloudWatch group found for CloudTrail events"
   fi
@@ -1140,12 +1188,20 @@ check37(){
   textTitle "$ID37" "$TITLE37" "SCORED" "LEVEL2"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION --query 'metricFilters' | grep -E 'kms.amazonaws.com.*DisableKey.*ScheduleKeyDeletion')
-    if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found with metric filters enabled"
-    else
-      textWarn "CloudWatch group found but no metric filters or alarms associated"
-    fi
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | grep -E 'kms.amazonaws.com.*DisableKey.*ScheduleKeyDeletion')
+      if [[ $METRICFILTER_SET ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /DisableKey/ || /ScheduleKeyDeletion/ || /kms/;')
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textOK "CloudWatch group $group found with metric filters and alarms for changes of customer created CMKs"
+        else
+          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+        fi
+      else
+        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
   else
     textWarn "No CloudWatch group found for CloudTrail events"
   fi
@@ -1157,12 +1213,20 @@ check38(){
   textTitle "$ID38" "$TITLE38" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION --query 'metricFilters' | grep -E 's3.amazonaws.com.*PutBucketAcl.*PutBucketPolicy.*PutBucketCors.*PutBucketLifecycle.*PutBucketReplication.*DeleteBucketPolicy.*DeleteBucketCors.*DeleteBucketLifecycle.*DeleteBucketReplication')
-    if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found with metric filters enabled"
-    else
-      textWarn "CloudWatch group found but no metric filters or alarms associated"
-    fi
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | grep -E 's3.amazonaws.com.*PutBucketAcl.*PutBucketPolicy.*PutBucketCors.*PutBucketLifecycle.*PutBucketReplication.*DeleteBucketPolicy.*DeleteBucketCors.*DeleteBucketLifecycle.*DeleteBucketReplication')
+      if [[ $METRICFILTER_SET ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /S3/ || /BucketPolicy/ || /BucketPolicies/;')
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textOK "CloudWatch group $group found with metric filters and alarms for S3 bucket policy changes"
+        else
+          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+        fi
+      else
+        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
   else
     textWarn "No CloudWatch group found for CloudTrail events"
   fi
@@ -1174,12 +1238,20 @@ check39(){
   textTitle "$ID39" "$TITLE39" "SCORED" "LEVEL2"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION --query 'metricFilters' | grep -E 'config.amazonaws.com.*StopConfigurationRecorder.*DeleteDeliveryChannel.*PutDeliveryChannel.*PutConfigurationRecorder')
-    if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found with metric filters enabled"
-    else
-      textWarn "CloudWatch group found but no metric filters or alarms associated"
-    fi
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | grep -E 'config.amazonaws.com.*StopConfigurationRecorder.*DeleteDeliveryChannel.*PutDeliveryChannel.*PutConfigurationRecorder')
+      if [[ $METRICFILTER_SET ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /config/ || /ConfigurationRecorder/ || /DeliveryChannel/;')
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textOK "CloudWatch group $group found with metric filters and alarms for AWS Config configuration changes"
+        else
+          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+        fi
+      else
+        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
   else
     textWarn "No CloudWatch group found for CloudTrail events"
   fi
@@ -1191,12 +1263,20 @@ check310(){
   textTitle "$ID310" "$TITLE310" "SCORED" "LEVEL2"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION --query 'metricFilters' | grep -E 'AuthorizeSecurityGroupIngress.*AuthorizeSecurityGroupEgress.*RevokeSecurityGroupIngress.*RevokeSecurityGroupEgress.*CreateSecurityGroup.*DeleteSecurityGroup')
-    if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found with metric filters enabled"
-    else
-      textWarn "CloudWatch group found but no metric filters or alarms associated"
-    fi
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | grep -E 'AuthorizeSecurityGroupIngress.*AuthorizeSecurityGroupEgress.*RevokeSecurityGroupIngress.*RevokeSecurityGroupEgress.*CreateSecurityGroup.*DeleteSecurityGroup')
+      if [[ $METRICFILTER_SET ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /SecurityGroup/;')
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textOK "CloudWatch group $group found with metric filters and alarms for security group changes"
+        else
+          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+        fi
+      else
+        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
   else
     textWarn "No CloudWatch group found for CloudTrail events"
   fi
@@ -1208,12 +1288,20 @@ check311(){
   textTitle "$ID311" "$TITLE311" "SCORED" "LEVEL2"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION --query 'metricFilters' | grep -E 'CreateNetworkAcl.*CreateNetworkAclEntry.*DeleteNetworkAcl.*DeleteNetworkAclEntry.*ReplaceNetworkAclEntry.*ReplaceNetworkAclAssociation')
-    if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found with metric filters enabled"
-    else
-      textWarn "CloudWatch group found but no metric filters or alarms associated"
-    fi
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | grep -E 'CreateNetworkAcl.*CreateNetworkAclEntry.*DeleteNetworkAcl.*DeleteNetworkAclEntry.*ReplaceNetworkAclEntry.*ReplaceNetworkAclAssociation')
+      if [[ $METRICFILTER_SET ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /NetworkAcl/;')
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textOK "CloudWatch group $group found with metric filters and alarms for changes to NACLs"
+        else
+          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+        fi
+      else
+        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
   else
     textWarn "No CloudWatch group found for CloudTrail events"
   fi
@@ -1225,12 +1313,20 @@ check312(){
   textTitle "$ID312" "$TITLE312" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION --query 'metricFilters' | grep -E 'CreateCustomerGateway.*DeleteCustomerGateway.*AttachInternetGateway.*CreateInternetGateway.*DeleteInternetGateway.*DetachInternetGateway')
-    if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found with metric filters enabled"
-    else
-      textWarn "CloudWatch group found but no metric filters or alarms associated"
-    fi
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | grep -E 'CreateCustomerGateway.*DeleteCustomerGateway.*AttachInternetGateway.*CreateInternetGateway.*DeleteInternetGateway.*DetachInternetGateway')
+      if [[ $METRICFILTER_SET ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /NetworkAcl/;')
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textOK "CloudWatch group $group found with metric filters and alarms for changes to network gateways"
+        else
+          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+        fi
+      else
+        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
   else
     textWarn "No CloudWatch group found for CloudTrail events"
   fi
@@ -1242,12 +1338,20 @@ check313(){
   textTitle "$ID313" "$TITLE313" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION --query 'metricFilters' | grep -E 'CreateRoute.*CreateRouteTable.*ReplaceRoute.*ReplaceRouteTableAssociation.*DeleteRouteTable.*DeleteRoute.*DisassociateRouteTable')
-    if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found with metric filters enabled"
-    else
-      textWarn "CloudWatch group found but no metric filters or alarms associated"
-    fi
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | grep -E 'CreateRoute.*CreateRouteTable.*ReplaceRoute.*ReplaceRouteTableAssociation.*DeleteRouteTable.*DeleteRoute.*DisassociateRouteTable')
+      if [[ $METRICFILTER_SET ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /Route/;')
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textOK "CloudWatch group $group found with metric filters and alarms for route table changes"
+        else
+          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+        fi
+      else
+        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
   else
     textWarn "No CloudWatch group found for CloudTrail events"
   fi
@@ -1259,12 +1363,20 @@ check314(){
   textTitle "$ID314" "$TITLE314" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
-    METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $CLOUDWATCH_GROUP $PROFILE_OPT --region $REGION --query 'metricFilters' | grep -E 'CreateVpc.*DeleteVpc.*ModifyVpcAttribute.*AcceptVpcPeeringConnection.*CreateVpcPeeringConnection.*DeleteVpcPeeringConnection.*RejectVpcPeeringConnection.*AttachClassicLinkVpc.*DetachClassicLinkVpc.*DisableVpcClassicLink.*EnableVpcClassicLink')
-    if [[ $METRICFILTER_SET ]];then
-      textOK "CloudWatch group found with metric filters enabled"
-    else
-      textWarn "CloudWatch group found but no metric filters or alarms associated"
-    fi
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | grep -E 'CreateVpc.*DeleteVpc.*ModifyVpcAttribute.*AcceptVpcPeeringConnection.*CreateVpcPeeringConnection.*DeleteVpcPeeringConnection.*RejectVpcPeeringConnection.*AttachClassicLinkVpc.*DetachClassicLinkVpc.*DisableVpcClassicLink.*EnableVpcClassicLink')
+      if [[ $METRICFILTER_SET ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /VPC/;')
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textOK "CloudWatch group $group found with metric filters and alarms for VPC changes"
+        else
+          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+        fi
+      else
+        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
   else
     textWarn "No CloudWatch group found for CloudTrail events"
   fi
@@ -1295,7 +1407,7 @@ check315(){
             textNotice "Region $regx / Topic $TOPIC_SHORT / Subscription $dest" "$regx"
           done
         else
-          textWarn "Region $regx / Topic $TOPIC_SHORT / Subscription NONE NONE" "$regx"
+          textWarn "Region $regx / Topic $TOPIC_SHORT / Subscription NONE" "$regx"
         fi
       done
     elif [[ $CAN_SNS_LIST_SUBS -eq 0 ]]; then
