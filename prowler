@@ -37,6 +37,7 @@ MONOCHROME=0
 MODE="text"
 SEP=','
 KEEPCREDREPORT=0
+EXITCODE=0
 
 
 # Command usage menu
@@ -62,7 +63,8 @@ while getopts ":hkp:r:c:f:m:M:n" OPTION; do
    case $OPTION in
      h )
         usage
-        exit 1
+        EXITCODE=1
+        exit $EXITCODE
         ;;
      k )
         KEEPCREDREPORT=1
@@ -92,13 +94,15 @@ while getopts ":hkp:r:c:f:m:M:n" OPTION; do
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL  -$OPTARG requires an argument"
         usage
-        exit 1
+        EXITCODE=1
+        exit $EXITCODE
         ;;
      ? )
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL Invalid option"
         usage
-        exit 1
+        EXITCODE=1
+        exit $EXITCODE
         ;;
    esac
 done
@@ -107,7 +111,8 @@ if [[ $MODE != "mono" && $MODE != "text" && $MODE != "csv" ]]; then
   echo ""
   echo "$OPTRED ERROR!$OPTNORMAL Invalid output mode.  Choose text, mono, or csv."
   usage
-  exit 1
+  EXITCODE=1
+  exit $EXITCODE
 fi
 
 if [[ $MODE == "mono" || $MODE == "csv" ]]; then
@@ -226,7 +231,8 @@ elif [[ "$OSTYPE" == "cygwin" ]]; then
     }
 else
       echo "Unknown Operating System"
-      exit
+      EXITCODE=1
+      exit $EXITCODE
 fi
 
 # Check environment if profile provided reads it from creds file, then instance profile
@@ -260,7 +266,8 @@ fi
 AWSCLI=$(which aws)
 if [ -z "${AWSCLI}" ]; then
   echo -e "\n$RED ERROR!$NORMAL AWS-CLI (aws command) not found. Make sure it is installed correctly and in your \$PATH\n"
-  exit
+  EXITCODE=1
+  exit $EXITCODE
 fi
 
 TITLE_ID=""
@@ -293,6 +300,7 @@ textNotice(){
 }
 
 textWarn(){
+  EXITCODE=3
   if [[ $MODE == "csv" ]]; then
     if [[ $2 ]]; then
       REPREGION=$2
@@ -371,7 +379,8 @@ getWhoami(){
       # Failed to get own identity ... exit
       echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
       >&2 echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
-      exit 2
+      EXITCODE=2
+      exit $EXITCODE
     fi
     CALLER_ARN=$(echo $CALLER_ARN_RAW | tr -d '"')
     printCsvHeader
@@ -397,10 +406,11 @@ getWhoami(){
       $AWSCLI sts get-caller-identity --output table $PROFILE_OPT --region $REGION
       if [[ 255 -eq $? ]]; then
         # Failed to get own identity ... exit
-        echo variableeeee $PROFILE_OPT
-        echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!x"
+        echo variable $PROFILE_OPT
+        echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
         >&2 echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
-        exit 2
+        EXITCODE=2
+        exit $EXITCODE
       fi
       echo ""
     fi
@@ -1741,7 +1751,7 @@ callCheck(){
         textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
     esac
     cleanTemp
-    exit
+    exit $EXITCODE
   fi
 }
 
@@ -1833,3 +1843,4 @@ extra74
 extra75
 
 cleanTemp
+exit $EXITCODE
