@@ -1046,7 +1046,7 @@ check31(){
   ID31="3.1,3.01"
   TITLE31="Ensure a log metric filter and alarm exist for unauthorized API calls (Scored)"
   textTitle "$ID31" "$TITLE31" "SCORED" "LEVEL1"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text| tr '\011' '\012' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
       CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
@@ -1071,7 +1071,7 @@ check32(){
   ID32="3.2,3.02"
   TITLE32="Ensure a log metric filter and alarm exist for Management Console sign-in without MFA (Scored)"
   textTitle "$ID32" "$TITLE32" "SCORED" "LEVEL1"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
       CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
@@ -1096,7 +1096,7 @@ check33(){
   ID33="3.3,3.03"
   TITLE33="Ensure a log metric filter and alarm exist for usage of root account (Scored)"
   textTitle "$ID33" "$TITLE33" "SCORED" "LEVEL1"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
       CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
@@ -1121,7 +1121,7 @@ check34(){
   ID34="3.4,3.04"
   TITLE34="Ensure a log metric filter and alarm exist for IAM policy changes (Scored)"
   textTitle "$ID34" "$TITLE34" "SCORED" "LEVEL1"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
       CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
@@ -1146,7 +1146,7 @@ check35(){
   ID35="3.5,3.05"
   TITLE35="Ensure a log metric filter and alarm exist for CloudTrail configuration changes (Scored)"
   textTitle "$ID35" "$TITLE35" "SCORED" "LEVEL1"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
       CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
@@ -1171,7 +1171,7 @@ check36(){
   ID36="3.6,3.06"
   TITLE36="Ensure a log metric filter and alarm exist for AWS Management Console authentication failures (Scored)"
   textTitle "$ID36" "$TITLE36" "SCORED" "LEVEL2"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
       CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
@@ -1196,7 +1196,7 @@ check37(){
   ID37="3.7,3.07"
   TITLE37="Ensure a log metric filter and alarm exist for disabling or scheduled deletion of customer created CMKs (Scored)"
   textTitle "$ID37" "$TITLE37" "SCORED" "LEVEL2"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
       CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
@@ -1221,7 +1221,7 @@ check38(){
   ID38="3.8,3.08"
   TITLE38="Ensure a log metric filter and alarm exist for S3 bucket policy changes (Scored)"
   textTitle "$ID38" "$TITLE38" "SCORED" "LEVEL1"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
       CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
@@ -1246,7 +1246,7 @@ check39(){
   ID39="3.9,3.09"
   TITLE39="Ensure a log metric filter and alarm exist for AWS Config configuration changes (Scored)"
   textTitle "$ID39" "$TITLE39" "SCORED" "LEVEL2"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
       CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
@@ -1271,7 +1271,7 @@ check310(){
   ID310="3.10"
   TITLE310="Ensure a log metric filter and alarm exist for security group changes (Scored)"
   textTitle "$ID310" "$TITLE310" "SCORED" "LEVEL2"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
       CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
@@ -1296,7 +1296,7 @@ check311(){
   ID311="3.11"
   TITLE311="Ensure a log metric filter and alarm exist for changes to Network Access Control Lists (NACL) (Scored)"
   textTitle "$ID311" "$TITLE311" "SCORED" "LEVEL2"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
       CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
@@ -1321,7 +1321,7 @@ check312(){
   ID312="3.12"
   TITLE312="Ensure a log metric filter and alarm exist for changes to network gateways (Scored)"
   textTitle "$ID312" "$TITLE312" "SCORED" "LEVEL1"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
       CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
@@ -1346,7 +1346,7 @@ check313(){
   ID313="3.13"
   TITLE313="Ensure a log metric filter and alarm exist for route table changes (Scored)"
   textTitle "$ID313" "$TITLE313" "SCORED" "LEVEL1"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
       CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
@@ -1371,7 +1371,7 @@ check314(){
   ID314="3.14"
   TITLE314="Ensure a log metric filter and alarm exist for VPC changes (Scored)"
   textTitle "$ID314" "$TITLE314" "SCORED" "LEVEL1"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $7 }')
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
       CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
