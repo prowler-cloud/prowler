@@ -856,7 +856,7 @@ check124(){
   if [[ $LIST_CUSTOM_POLICIES ]]; then
     textNotice "Looking for custom policies: (skipping default policies - it may take few seconds...)"
     for policy in $LIST_CUSTOM_POLICIES; do
-      POLICY_VERSION=$($AWSCLI iam list-policies $PROFILE_OPT --region $REGION --query 'Policies[*].[Arn,DefaultVersionId]' --output text|grep -w $policy |awk '{ print $2}')
+      POLICY_VERSION=$($AWSCLI iam list-policies $PROFILE_OPT --region $REGION --query 'Policies[*].[Arn,DefaultVersionId]' --output text |awk "\$1 == \"$policy\" { print \$2 }")
       POLICY_WITH_FULL=$($AWSCLI iam get-policy-version --output text --policy-arn $policy --version-id $POLICY_VERSION --query "PolicyVersion.Document.Statement[?Effect == 'Allow' && contains(Resource, '*') && contains (Action, '*')]" $PROFILE_OPT --region $REGION)
       if [[ $POLICY_WITH_FULL ]]; then
         POLICIES_ALLOW_LIST="$POLICIES_ALLOW_LIST $policy"
