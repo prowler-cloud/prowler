@@ -115,7 +115,7 @@ if [[ $MODE != "mono" && $MODE != "text" && $MODE != "csv" ]]; then
   exit $EXITCODE
 fi
 
-if [[ $MODE == "mono" || $MODE == "csv" ]]; then
+if [[ "$MODE" == "mono" || "$MODE" == "csv" ]]; then
   MONOCHROME=1
 fi
 
@@ -274,7 +274,7 @@ TITLE_ID=""
 TITLE_TEXT="CALLER ERROR - UNSET TITLE"
 ## Output formatting functions
 textOK(){
-  if [[ $MODE == "csv" ]]; then
+  if [[ "$MODE" == "csv" ]]; then
     if [[ $2 ]]; then
       REPREGION=$2
     else
@@ -287,7 +287,7 @@ textOK(){
 }
 
 textNotice(){
-  if [[ $MODE == "csv" ]]; then
+  if [[ "$MODE" == "csv" ]]; then
     if [[ $2 ]]; then
       REPREGION=$2
     else
@@ -301,7 +301,7 @@ textNotice(){
 
 textWarn(){
   EXITCODE=3
-  if [[ $MODE == "csv" ]]; then
+  if [[ "$MODE" == "csv" ]]; then
     if [[ $2 ]]; then
       REPREGION=$2
     else
@@ -343,10 +343,10 @@ textTitle(){
     *)       ITEM_LEVEL="Unspecified or Invalid";;
   esac
 
-  if [[ $MODE == "csv" ]]; then
+  if [[ "$MODE" == "csv" ]]; then
       >&2 echo "$TITLE_ID $TITLE_TEXT"
   else
-    if [[ $ITEM_SCORED == "Scored" ]]; then
+    if [[ "$ITEM_SCORED" == "Scored" ]]; then
       echo -e "\n$BLUE $TITLE_ID $NORMAL $TITLE_TEXT"
     else
       echo -e "\n$PURPLE $TITLE_ID  $TITLE_TEXT $NORMAL"
@@ -373,7 +373,7 @@ prowlerBanner() {
 # Get whoami in AWS, who is the user running this shell script
 getWhoami(){
   ACCOUNT_NUM=$($AWSCLI sts get-caller-identity --output json $PROFILE_OPT --region $REGION --query "Account" | tr -d '"')
-  if [[ $MODE == "csv" ]]; then
+  if [[ "$MODE" == "csv" ]]; then
     CALLER_ARN_RAW=$($AWSCLI sts get-caller-identity --output json $PROFILE_OPT --region $REGION --query "Arn")
     if [[ 255 -eq $? ]]; then
       # Failed to get own identity ... exit
@@ -577,7 +577,7 @@ check15(){
   TITLE15="Ensure IAM password policy requires at least one uppercase letter (Scored)"
   COMMAND15=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json --query 'PasswordPolicy.RequireUppercaseCharacters' 2> /dev/null) # must be true
   textTitle "$ID15" "$TITLE15" "SCORED" "LEVEL1"
-  if [[ $COMMAND15 == "true" ]];then
+  if [[ "$COMMAND15" == "true" ]];then
     textOK "Password Policy requires upper case"
   else
     textWarn "Password Policy missing upper-case requirement"
@@ -589,7 +589,7 @@ check16(){
   TITLE16="Ensure IAM password policy require at least one lowercase letter (Scored)"
   COMMAND16=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json --query 'PasswordPolicy.RequireLowercaseCharacters' 2> /dev/null) # must be true
   textTitle "$ID16" "$TITLE16" "SCORED" "LEVEL1"
-  if [[ $COMMAND16 == "true" ]];then
+  if [[ "$COMMAND16" == "true" ]];then
     textOK "Password Policy requires lower case"
   else
     textWarn "Password Policy missing lower-case requirement"
@@ -601,7 +601,7 @@ check17(){
   TITLE17="Ensure IAM password policy require at least one symbol (Scored)"
   COMMAND17=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json --query 'PasswordPolicy.RequireSymbols' 2> /dev/null) # must be true
   textTitle "$ID17" "$TITLE17" "SCORED" "LEVEL1"
-  if [[ $COMMAND17 == "true" ]];then
+  if [[ "$COMMAND17" == "true" ]];then
     textOK "Password Policy requires symbol"
   else
     textWarn "Password Policy missing symbol requirement"
@@ -613,7 +613,7 @@ check18(){
   TITLE18="Ensure IAM password policy require at least one number (Scored)"
   COMMAND18=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json --query 'PasswordPolicy.RequireNumbers' 2> /dev/null) # must be true
   textTitle "$ID18" "$TITLE18" "SCORED" "LEVEL1"
-  if [[ $COMMAND18 == "true" ]];then
+  if [[ "$COMMAND18" == "true" ]];then
     textOK "Password Policy requires number"
   else
     textWarn "Password Policy missing number requirement"
@@ -654,7 +654,7 @@ check111(){
   COMMAND111=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json | grep MaxPasswordAge | awk -F: '{ print $2 }'|sed 's/\ //g'|sed 's/,/ /g' 2> /dev/null)
   textTitle "$ID111" "$TITLE111" "SCORED" "LEVEL1"
   if [[ $COMMAND111 ]];then
-    if [ $COMMAND111 == "90" ];then
+    if [ "$COMMAND111" == "90" ];then
       textOK "Password Policy includes expiration"
     fi
   else
@@ -669,12 +669,12 @@ check112(){
   ROOTKEY1=$(cat $TEMP_REPORT_FILE |grep root_account|awk -F',' '{ print $9 }')
   ROOTKEY2=$(cat $TEMP_REPORT_FILE |grep root_account|awk -F',' '{ print $14 }')
   textTitle "$ID112" "$TITLE112" "SCORED" "LEVEL1"
-  if [ $ROOTKEY1 == "false" ];then
+  if [ "$ROOTKEY1" == "false" ];then
     textOK "No access key 1 found for root"
   else
     textWarn "Found access key 1 for root "
   fi
-  if [ $ROOTKEY2 == "false" ];then
+  if [ "$ROOTKEY2" == "false" ];then
     textOK "No access key 2 found for root"
   else
     textWarn "Found access key 2 for root "
@@ -686,7 +686,7 @@ check113(){
   TITLE113="Ensure MFA is enabled for the root account (Scored)"
   COMMAND113=$($AWSCLI iam get-account-summary $PROFILE_OPT --region $REGION --output json|grep AccountMFAEnabled | awk -F': ' '{ print $2 }'|sed 's/,//')
   textTitle "$ID113" "$TITLE113" "SCORED" "LEVEL1"
-  if [ $COMMAND113 == "1" ]; then
+  if [ "$COMMAND113" == "1" ]; then
     textOK "Virtual MFA is enabled for root"
   else
     textWarn "MFA is not ENABLED for root account "
@@ -698,9 +698,9 @@ check114(){
   TITLE114="Ensure hardware MFA is enabled for the root account (Scored)"
   COMMAND113=$($AWSCLI iam get-account-summary $PROFILE_OPT --region $REGION --output json|grep AccountMFAEnabled | awk -F': ' '{ print $2 }'|sed 's/,//')
   textTitle "$ID114" "$TITLE114" "SCORED" "LEVEL1"
-  if [ $COMMAND113 == "1" ]; then
+  if [ "$COMMAND113" == "1" ]; then
     COMMAND114=$($AWSCLI iam list-virtual-mfa-devices $PROFILE_OPT --region $REGION --query 'VirtualMFADevices' --output text|grep :root |wc -l)
-    if [ $COMMAND114 == "1" ]; then
+    if [ "$COMMAND114" == "1" ]; then
       textOK "Virtual MFA is enabled for root"
     else
       textOK "Hardware MFA is enabled for root "
@@ -883,7 +883,7 @@ check21(){
   if [[ $LIST_OF_TRAILS ]];then
     for trail in $LIST_OF_TRAILS;do
       MULTIREGION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].IsMultiRegionTrail' --output text --trail-name-list $trail)
-      if [[ $MULTIREGION_TRAIL_STATUS == 'False' ]];then
+      if [[ "$MULTIREGION_TRAIL_STATUS" == 'False' ]];then
         textWarn "$trail trail in $REGION is not enabled in multi region mode"
       else
         textOK "$trail trail in $REGION is enabled for all regions"
@@ -902,7 +902,7 @@ check22(){
   if [[ $LIST_OF_TRAILS ]];then
     for trail in $LIST_OF_TRAILS;do
       LOGFILEVALIDATION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].LogFileValidationEnabled' --output text --trail-name-list $trail)
-      if [[ $LOGFILEVALIDATION_TRAIL_STATUS == 'False' ]];then
+      if [[ "$LOGFILEVALIDATION_TRAIL_STATUS" == 'False' ]];then
         textWarn "$trail trail in $REGION has not log file validation enabled"
       else
         textOK "$trail trail in $REGION has log file validation enabled"
@@ -1021,14 +1021,14 @@ check28(){
       CHECK_KMS_KEYLIST_NO_DEFAULT=$(for key in $CHECK_KMS_KEYLIST ; do $AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --output text|grep -v 'Default master key that protects my ACM private keys when no other key is defined'|awk '{ print $3 }'|awk -F'/' '{ print $2 }'; done)
       for key in $CHECK_KMS_KEYLIST_NO_DEFAULT; do
         CHECK_KMS_KEY_TYPE=$($AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.Origin' | sed 's/["]//g')
-          if [[ $CHECK_KMS_KEY_TYPE == "EXTERNAL" ]];then
+          if [[ "$CHECK_KMS_KEY_TYPE" == "EXTERNAL" ]];then
             textOK "Key $key in Region $regx Customer Uploaded Key Material." "$regx"
           else
             CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key $PROFILE_OPT --region $regx --output text)
             #CHECK_KMS_DEFAULT_KEY=$($AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.Description' | sed -n '/Default master key that protects my ACM private keys when no other key is defined /p'|| echo "False")
-              if [[ $CHECK_KMS_KEY_ROTATION == "True" ]];then
+              if [[ "$CHECK_KMS_KEY_ROTATION" == "True" ]];then
                     textOK "Key $key in Region $regx is set correctly"
-                  elif [[ $CHECK_KMS_KEY_ROTATION == "False" && $CHECK_KMS_DEFAULT_KEY ]];then
+                  elif [[ "$CHECK_KMS_KEY_ROTATION" == "False" && $CHECK_KMS_DEFAULT_KEY ]];then
                 textNotice "Region $regx key $key is an AWS default master key and cannot be deleted nor modified." "$regx"
               else
                 textWarn "Key $key in Region $regx is not set to rotate!!!" "$regx"
@@ -1844,3 +1844,4 @@ extra75
 
 cleanTemp
 exit $EXITCODE
+
