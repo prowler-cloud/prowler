@@ -696,7 +696,7 @@ check113(){
 check114(){
   ID114="1.14"
   TITLE114="Ensure hardware MFA is enabled for the root account (Scored)"
-  COMMAND113=$($AWSCLI iam get-account-summary $PROFILE_OPT --region $REGION --output json|grep AccountMFAEnabled | awk -F': ' '{ print $2 }'|sed 's/,//')
+  COMMAND113=$($AWSCLI iam get-account-summary $PROFILE_OPT --region $REGION --output json --query 'SummaryMap.AccountMFAEnabled')
   textTitle "$ID114" "$TITLE114" "SCORED" "LEVEL1"
   if [ "$COMMAND113" == "1" ]; then
     COMMAND114=$($AWSCLI iam list-virtual-mfa-devices $PROFILE_OPT --region $REGION --query 'VirtualMFADevices' --output text|grep :root |wc -l)
