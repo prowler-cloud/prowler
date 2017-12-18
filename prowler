@@ -1179,7 +1179,7 @@ check36(){
       if [[ $METRICFILTER_SET ]];then
         HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /FailedLogin/ || /ConsoleLogin/ || /Failed/;')
         if [[ $HAS_ALARM_ASSOCIATED ]];then
-          textOK "CloudWatch group $group found with metric filters and alarms for usage of root account"
+          textOK "CloudWatch group $group found with metric filters and alarms for AWS Management Console authentication failures"
         else
           textWarn "CloudWatch group $group found with metric filters but no alarms associated"
         fi
