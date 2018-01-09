@@ -480,6 +480,8 @@ ID75="7.5,7.05"
 TITLE75="Ensure there are no Security Groups not being used (Not Scored) (Not part of CIS benchmark)"
 ID76="7.6,7.06"
 TITLE76="Ensure there are no EC2 AMIs set as Public (Not Scored) (Not part of CIS benchmark)"
+ID77="7.7,7.07"
+TITLE77="Ensure there are no ECR repositories set as Public (Not Scored) (Not part of CIS benchmark)"
 
 printCsvHeader() {
   >&2 echo ""
@@ -1729,6 +1731,28 @@ extra76(){
   done
 }
 
+extra77(){
+  # "Ensure there are no ECR repositories set as Public (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID77" "$TITLE77" "NOT_SCORED" "EXTRA"
+  textNotice "Looking for ECR repos in all regions...  "
+  for regx in $REGIONS; do
+    LIST_OF_ECR_REPOS=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $regx --query 'repositories[*].{Name:repositoryName}' --output text)
+    for ecr_repo in $LIST_OF_ECR_REPOS; do
+      TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-ecr-repo.policy.XXXXXXXXXX)
+      $AWSCLI ecr get-repository-policy --repository-name $ecr_repo $PROFILE_OPT --region $regx --output text > $TEMP_POLICY_FILE 2> /dev/null
+      # check if the policy has Principal as *
+      CHECK_ECR_REPO_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | awk '/Principal/ && !skip { print } { skip = /Deny/} '|grep \"Principal|grep \*)
+      if [[ $CHECK_ECR_REPO_ALLUSERS_POLICY ]];then
+        textWarn "$regx: $ecr_repo policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx"
+      else
+        textOK "$regx: $ecr_repo is not open" "$regx"
+      fi
+    done
+    rm -fr $TEMP_POLICY_FILE
+  done
+
+}
+
 callCheck(){
   if [[ $CHECKNUMBER ]];then
     case "$CHECKNUMBER" in
@@ -1790,6 +1814,7 @@ callCheck(){
       extra74|extra704 ) extra74;;
       extra75|extra705 ) extra75;;
       extra76|extra706 ) extra76;;
+      extra77|extra707 ) extra77;;
 
       ## Groups of Checks
       check1 )
@@ -1825,7 +1850,7 @@ callCheck(){
         check43;check44;check45
         ;;
       extras )
-        extra71;extra72;extra73;extra74;extra75;extra76
+        extra71;extra72;extra73;extra74;extra75;extra76;extra77
         ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
@@ -1902,6 +1927,7 @@ if [[ $PRINTCHECKSONLY == "1" ]]; then
   textTitle "$ID74" "$TITLE74" "NOT_SCORED" "EXTRA"
   textTitle "$ID75" "$TITLE75" "NOT_SCORED" "EXTRA"
   textTitle "$ID76" "$TITLE76" "NOT_SCORED" "EXTRA"
+  textTitle "$ID77" "$TITLE77" "NOT_SCORED" "EXTRA"
   exit $EXITCODE
 fi
 
@@ -1984,6 +2010,7 @@ extra73
 extra74
 extra75
 extra76
+extra77
 
 cleanTemp
 exit $EXITCODE
