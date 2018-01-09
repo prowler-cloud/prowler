@@ -9,6 +9,8 @@
 - [Screenshots](#screenshots)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
+- [Add Custom Checks](#add-custom-checks)
+- [Third Party Integrations](#third-party-integrations)
 
 ## Description
 
@@ -124,13 +126,14 @@ USAGE:
       prowler -p <profile> -r <region> [ -h ]
   Options:
       -p <profile>        specify your AWS profile to use (i.e.: default)
-      -r <region>         specify an AWS region to direct API requests to (i.e.: us-east-1)
+      -r <region>         specify an AWS region to direct API requests to (i.e.: us-east-1), all regions are checked anyway
       -c <checknum>       specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1, check3 for entire section 3 or level1 for CIS Level 1 Profile Definitions)
       -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
       -M <mode>           output mode: text (defalut), mono, csv (separator is ","; data is on stdout; progress on stderr)
       -k                  keep the credential report
       -n                  show check numbers to sort easier (i.e.: 1.01 instead of 1.1)
+      -l                  list all available checks only (does not perform any check)
       -h                  this help
 
 ```
@@ -582,6 +585,8 @@ At this momment we have 5 extra checks:
 - 7.3 (`extra73`) Ensure there are no S3 buckets open to the Everyone or Any AWS user (Not Scored) (Not part of CIS benchmark)
 - 7.4 (`extra74`) Ensure there are no Security Groups without ingress filtering being used (Not Scored) (Not part of CIS benchmark)
 - 7.5 (`extra75`) Ensure there are no Security Groups not being used (Not Scored) (Not part of CIS benchmark)
+- 7.6 (`extra76`) Ensure there are no EC2 AMIs set as Public (Not Scored) (Not part of CIS benchmark)
+- 7.7 (`extra77`) Ensure there are no ECR repositories set as Public (Not Scored) (Not part of CIS benchmark)
 
 ```
 ./prowler -c extras
@@ -590,3 +595,21 @@ or to run just one of the checks, to see if you have S3 buckets open:
 ```
 ./prowler -c extraNUMBER
 ```
+
+## Add Custom Checks
+
+In order to add any new check feel free to create a new extra check in the extras section. To do so, you will need to follow these steps:
+
+1. use any existing extra check as reference
+2. add `ID7N` and `TITLE7N`, where N is a new check number part of the extras section (7) around line 361 `# List of checks IDs and Titles`
+3. add your new extra check function name at `callCheck` function (around line 1817) and below in that case inside extras option (around line 1853)
+4. finally add it in `# List only check tittles` around line 1930
+5. save changes and run it as ./prowler -c extraNN
+6. send me a pull request! :)
+
+## Third Party Integrations
+
+### Telegram
+Javier Pecete has done an awesome job integrating Prowler with Telegram, you have more details here https://github.com/i4specete/ServerTelegramBot
+### Cloud Security Suite
+The guys of SecurityFTW have added Prowler in their Cloud Security Suite along with other cool security tools https://github.com/SecurityFTW/cs-suite 
