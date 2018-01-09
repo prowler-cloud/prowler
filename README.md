@@ -124,7 +124,7 @@ USAGE:
       prowler -p <profile> -r <region> [ -h ]
   Options:
       -p <profile>        specify your AWS profile to use (i.e.: default)
-      -r <region>         specify an AWS region to direct API requests to (i.e.: us-east-1)
+      -r <region>         specify an AWS region to direct API requests to (i.e.: us-east-1), all regions are checked anyway
       -c <checknum>       specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1, check3 for entire section 3 or level1 for CIS Level 1 Profile Definitions)
       -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
