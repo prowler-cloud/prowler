@@ -9,7 +9,7 @@
 - [Screenshots](#screenshots)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
-- [Add custom checks](#custom checks)
+- [Add Custom Checks](#add-custom-checks)
 
 ## Description
 
