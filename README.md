@@ -131,6 +131,7 @@ USAGE:
       -M <mode>           output mode: text (defalut), mono, csv (separator is ","; data is on stdout; progress on stderr)
       -k                  keep the credential report
       -n                  show check numbers to sort easier (i.e.: 1.01 instead of 1.1)
+      -l                  list all available checks only (does not perform any check)
       -h                  this help
 
 ```
