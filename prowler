@@ -1647,7 +1647,24 @@ extra75(){
       fi
     done
   done
+}
 
+extra76(){
+  #set -x
+  ID76="7.6,7.06"
+  TITLE76="Ensure there are no EC2 AMIs set as Public (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID76" "$TITLE76" "NOT_SCORED" "EXTRA"
+  textNotice "Looking for AMIs in all regions...  "
+  for regx in $REGIONS; do
+    LIST_OF_PUBLIC_AMIS=$($AWSCLI ec2 describe-images --owners self $PROFILE_OPT --region $regx --filters "Name=is-public,Values=true" --query 'Images[*].{ID:ImageId}' --output text)
+    if [[ $LIST_OF_PUBLIC_AMIS ]];then
+      for ami in $LIST_OF_PUBLIC_AMIS; do
+        textWarn "$regx: $ami is currently Public!" "$regx"
+      done
+    else
+      textOK "$regx: No Public AMIs found" "$regx"
+    fi
+  done
 }
 
 callCheck(){
@@ -1710,6 +1727,7 @@ callCheck(){
       extra73|extra703 ) extra73;;
       extra74|extra704 ) extra74;;
       extra75|extra705 ) extra75;;
+      extra76|extra706 ) extra76;;
 
       ## Groups of Checks
       check1 )
@@ -1745,7 +1763,7 @@ callCheck(){
         check43;check44;check45
         ;;
       extras )
-        extra71;extra72;extra73;extra74;extra75
+        extra71;extra72;extra73;extra74;extra75;extra76
         ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
@@ -1841,6 +1859,7 @@ extra72
 extra73
 extra74
 extra75
+extra76
 
 cleanTemp
 exit $EXITCODE
