@@ -595,10 +595,10 @@ or to run just one of the checks, to see if you have S3 buckets open:
 ./prowler -c extraNUMBER
 ```
 
-## Custom Checks
+## Add Custom Checks
 
-In order to add any new check feel free to create a new extra check in the extras section.
-To do so, you will need to follow this steps:
+In order to add any new check feel free to create a new extra check in the extras section. To do so, you will need to follow these steps:
+
 - 1 - use any existing extra check as reference
 - 2 - add `ID7N` and `TITLE7N`, where N is a new check number part of the extras section (7) around line 361 `# List of checks IDs and Titles`
 - 3 - add your new extra check function name at `callCheck` function (around line 1817) and below in that case inside extras option (around line 1853)
