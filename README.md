@@ -10,6 +10,7 @@
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
 - [Add Custom Checks](#add-custom-checks)
+- [Third Party Integrations](#third-party-integrations)
 
 ## Description
 
@@ -605,3 +606,10 @@ In order to add any new check feel free to create a new extra check in the extra
 4. finally add it in `# List only check tittles` around line 1930
 5. save changes and run it as ./prowler -c extraNN
 6. send me a pull request! :)
+
+## Third Party Integrations
+
+### Telegram
+Javier Pecete has done an awesome job integrating Prowler with Telegram, you have more details here https://github.com/i4specete/ServerTelegramBot
+### Cloud Security Suite
+The guys of SecurityFTW have added Prowler in their Cloud Security Suite along with other cool security tools https://github.com/SecurityFTW/cs-suite 
