@@ -24,7 +24,7 @@ It covers hardening and security best practices for all AWS regions related to:
 - Logging (8 checks)
 - Monitoring (15 checks)
 - Networking (5 checks)
-- Extra checks (5 checks) *see Extras section
+- Extras (8 checks) *see Extras section
 
 For a comprehesive list and resolution look at the guide on the link above.
 
@@ -587,6 +587,7 @@ At this momment we have 5 extra checks:
 - 7.5 (`extra75`) Ensure there are no Security Groups not being used (Not Scored) (Not part of CIS benchmark)
 - 7.6 (`extra76`) Ensure there are no EC2 AMIs set as Public (Not Scored) (Not part of CIS benchmark)
 - 7.7 (`extra77`) Ensure there are no ECR repositories set as Public (Not Scored) (Not part of CIS benchmark)
+- 7.8 (`extra78`) Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)
 
 ```
 ./prowler -c extras
@@ -612,4 +613,4 @@ In order to add any new check feel free to create a new extra check in the extra
 ### Telegram
 Javier Pecete has done an awesome job integrating Prowler with Telegram, you have more details here https://github.com/i4specete/ServerTelegramBot
 ### Cloud Security Suite
-The guys of SecurityFTW have added Prowler in their Cloud Security Suite along with other cool security tools https://github.com/SecurityFTW/cs-suite 
+The guys of SecurityFTW have added Prowler in their Cloud Security Suite along with other cool security tools https://github.com/SecurityFTW/cs-suite

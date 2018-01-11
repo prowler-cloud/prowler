@@ -482,6 +482,9 @@ ID76="7.6,7.06"
 TITLE76="Ensure there are no EC2 AMIs set as Public (Not Scored) (Not part of CIS benchmark)"
 ID77="7.7,7.07"
 TITLE77="Ensure there are no ECR repositories set as Public (Not Scored) (Not part of CIS benchmark)"
+ID78="7.8,7.08"
+TITLE78="Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)"
+
 
 printCsvHeader() {
   >&2 echo ""
@@ -1750,7 +1753,22 @@ extra77(){
     done
     rm -fr $TEMP_POLICY_FILE
   done
+}
 
+extra78(){
+  # "Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID78" "$TITLE78" "NOT_SCORED" "EXTRA"
+  textNotice "Looking for RDS instances in all regions...  "
+  for regx in $REGIONS; do
+    LIST_OF_RDS_PUBLIC_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[?PubliclyAccessible==`true`].{id:DBInstanceIdentifier}' --output text)
+    if [[ $LIST_OF_RDS_PUBLIC_INSTANCES ]];then
+      for rds_instance in $(echo $LIST_OF_RDS_PUBLIC_INSTANCES);do
+        textWarn "$regx: RDS instance $rds_instance is set as Publicly Accessible!" "$regx"
+      done
+      else
+        textOK "$regx: no Publicly Accessible RDS instances found" "$regx"
+    fi
+  done
 }
 
 callCheck(){
@@ -1815,6 +1833,7 @@ callCheck(){
       extra75|extra705 ) extra75;;
       extra76|extra706 ) extra76;;
       extra77|extra707 ) extra77;;
+      extra78|extra708 ) extra78;;
 
       ## Groups of Checks
       check1 )
@@ -1850,7 +1869,7 @@ callCheck(){
         check43;check44;check45
         ;;
       extras )
-        extra71;extra72;extra73;extra74;extra75;extra76;extra77
+        extra71;extra72;extra73;extra74;extra75;extra76;extra77;extra78
         ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
@@ -1928,6 +1947,7 @@ if [[ $PRINTCHECKSONLY == "1" ]]; then
   textTitle "$ID75" "$TITLE75" "NOT_SCORED" "EXTRA"
   textTitle "$ID76" "$TITLE76" "NOT_SCORED" "EXTRA"
   textTitle "$ID77" "$TITLE77" "NOT_SCORED" "EXTRA"
+  textTitle "$ID78" "$TITLE78" "NOT_SCORED" "EXTRA"
   exit $EXITCODE
 fi
 
@@ -2011,6 +2031,7 @@ extra74
 extra75
 extra76
 extra77
+extra78
 
 cleanTemp
 exit $EXITCODE
