@@ -578,7 +578,7 @@ The `aws iam create-access-key` command will output the secret access key and th
 
 ## Extras
 We are adding additional checks to improve the information gather from each account, these checks are out of the scope of the CIS benchmark for AWS but we consider them very helpful to get to know each AWS account set up and find issues on it.
-At this momment we have 5 extra checks:
+At this moment we have 8 extra checks:
 
 - 7.1 (`extra71`) Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)
 - 7.2 (`extra72`) Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)
@@ -589,10 +589,11 @@ At this momment we have 5 extra checks:
 - 7.7 (`extra77`) Ensure there are no ECR repositories set as Public (Not Scored) (Not part of CIS benchmark)
 - 7.8 (`extra78`) Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)
 
+To check all extras in one command:
 ```
 ./prowler -c extras
 ```
-or to run just one of the checks, to see if you have S3 buckets open:
+or to run just one of the checks:
 ```
 ./prowler -c extraNUMBER
 ```
