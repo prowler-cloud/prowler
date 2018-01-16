@@ -1692,9 +1692,9 @@ extra74(){
     for SG_ID in $LIST_OF_SECURITYGROUPS; do
       SG_NO_INGRESS_FILTER=$($AWSCLI ec2 describe-network-interfaces $PROFILE_OPT --region $regx --filters "Name=group-id,Values=$SG_ID" --query "length(NetworkInterfaces)" --output text)
       if [[ $SG_NO_INGRESS_FILTER -ne 0 ]];then
-        textWarn "$regx: $SG_ID has not ingress filtering and it is being used!" "$regx"
+        textWarn "$regx: $SG_ID has no ingress filtering and it is being used!" "$regx"
       else
-        textNotice "$regx: $SG_ID has not ingress filtering but it is no being used" "$regx"
+        textNotice "$regx: $SG_ID has no ingress filtering but it is not being used" "$regx"
       fi
     done
   done
