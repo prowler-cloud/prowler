@@ -482,6 +482,8 @@ ID78="7.8,7.08"
 TITLE78="Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)"
 ID79="7.9,7.09"
 TITLE79="Check for internet facing Elastic Load Balancers (Not Scored) (Not part of CIS benchmark)"
+ID710="7.10,7.10"
+TITLE710="Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)"
 
 
 printCsvHeader() {
@@ -1785,6 +1787,22 @@ extra79(){
   done
 }
 
+extra710(){
+  # "Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID710" "$TITLE710" "NOT_SCORED" "EXTRA"
+  textNotice "Looking for instances in all regions...  "
+  for regx in $REGIONS; do
+    LIST_OF_PUBLIC_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query 'Reservations[*].Instances[?PublicIpAddress].[InstanceId]' --output text)
+    if [[ $LIST_OF_PUBLIC_INSTANCES ]];then
+      for instance in $(echo $LIST_OF_PUBLIC_INSTANCES);do
+        textWarn "$regx: Instance: $instance is internet-facing!" "$regx"
+      done
+      else
+        textOK "$regx: no Internet Facing EC2 Instances found" "$regx"
+    fi
+  done
+}
+
 callCheck(){
   if [[ $CHECKNUMBER ]];then
     case "$CHECKNUMBER" in
@@ -1849,6 +1867,7 @@ callCheck(){
       extra77|extra707 ) extra77;;
       extra78|extra708 ) extra78;;
       extra79|extra709 ) extra79;;
+      extra710|extra710 ) extra710;;
 
       ## Groups of Checks
       check1 )
@@ -1884,7 +1903,8 @@ callCheck(){
         check43;check44;check45
         ;;
       extras )
-        extra71;extra72;extra73;extra74;extra75;extra76;extra77;extra78;extra79
+        extra71;extra72;extra73;extra74;extra75;extra76;extra77;extra78;
+        extra79;extra710
         ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
@@ -1964,6 +1984,7 @@ if [[ $PRINTCHECKSONLY == "1" ]]; then
   textTitle "$ID77" "$TITLE77" "NOT_SCORED" "EXTRA"
   textTitle "$ID78" "$TITLE78" "NOT_SCORED" "EXTRA"
   textTitle "$ID79" "$TITLE79" "NOT_SCORED" "EXTRA"
+  textTitle "$ID710" "$TITLE710" "NOT_SCORED" "EXTRA"
   exit $EXITCODE
 fi
 
@@ -2049,6 +2070,7 @@ extra76
 extra77
 extra78
 extra79
+extra710
 
 cleanTemp
 exit $EXITCODE
