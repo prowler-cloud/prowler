@@ -24,7 +24,7 @@ It covers hardening and security best practices for all AWS regions related to:
 - Logging (8 checks)
 - Monitoring (15 checks)
 - Networking (5 checks)
-- Extras (8 checks) *see Extras section
+- Extras (9 checks) *see Extras section
 
 For a comprehesive list and resolution look at the guide on the link above.
 
@@ -578,7 +578,7 @@ The `aws iam create-access-key` command will output the secret access key and th
 
 ## Extras
 We are adding additional checks to improve the information gather from each account, these checks are out of the scope of the CIS benchmark for AWS but we consider them very helpful to get to know each AWS account set up and find issues on it.
-At this moment we have 8 extra checks:
+At this moment we have 9 extra checks:
 
 - 7.1 (`extra71`) Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)
 - 7.2 (`extra72`) Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)
@@ -588,6 +588,7 @@ At this moment we have 8 extra checks:
 - 7.6 (`extra76`) Ensure there are no EC2 AMIs set as Public (Not Scored) (Not part of CIS benchmark)
 - 7.7 (`extra77`) Ensure there are no ECR repositories set as Public (Not Scored) (Not part of CIS benchmark)
 - 7.8 (`extra78`) Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)
+- 7.9 (`extra79`) Check for internet accessible Elastic Load Blancers (Not Scored) (Not part of CIS benchmark)
 
 To check all extras in one command:
 ```
