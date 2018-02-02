@@ -1760,11 +1760,13 @@ extra78(){
   textTitle "$ID78" "$TITLE78" "NOT_SCORED" "EXTRA"
   textNotice "Looking for RDS instances in all regions...  "
   for regx in $REGIONS; do
-    LIST_OF_RDS_PUBLIC_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[?PubliclyAccessible==`true`].{id:DBInstanceIdentifier}' --output text)
+    LIST_OF_RDS_PUBLIC_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[?PubliclyAccessible==`true`].[DBInstanceIdentifier,Endpoint.Address]' --output text)
     if [[ $LIST_OF_RDS_PUBLIC_INSTANCES ]];then
-      for rds_instance in $(echo $LIST_OF_RDS_PUBLIC_INSTANCES);do
-        textWarn "$regx: RDS instance $rds_instance is set as Publicly Accessible!" "$regx"
-      done
+      while read -r rds_instance;do
+        RDS_NAME=$(echo $rds_instance | awk '{ print $1; }')
+        RDS_DNSNAME=$(echo $rds_instance | awk '{ print $2; }')
+        textWarn "$regx: RDS instance: $RDS_NAME at $RDS_DNSNAME is set as Publicly Accessible!" "$regx"
+      done <<< "$LIST_OF_RDS_PUBLIC_INSTANCES"
       else
         textOK "$regx: no Publicly Accessible RDS instances found" "$regx"
     fi
@@ -1776,11 +1778,13 @@ extra79(){
   textTitle "$ID79" "$TITLE79" "NOT_SCORED" "EXTRA"
   textNotice "Looking for Elastic Load Balancers in all regions...  "
   for regx in $REGIONS; do
-    LIST_OF_PUBLIC_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[?Scheme == `internet-facing`].LoadBalancerName' --output text)
+    LIST_OF_PUBLIC_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[?Scheme == `internet-facing`].[LoadBalancerName,DNSName]' --output text)
     if [[ $LIST_OF_PUBLIC_ELBS ]];then
-      for elb in $(echo $LIST_OF_PUBLIC_ELBS);do
-        textWarn "$regx: ELB: $elb is internet-facing!" "$regx"
-      done
+      while read -r elb;do
+        ELB_NAME=$(echo $elb | awk '{ print $1; }')
+        ELB_DNSNAME=$(echo $elb | awk '{ print $2; }')
+        textWarn "$regx: ELB: $ELB_NAME at DNS: $ELB_DNSNAME is internet-facing!" "$regx"
+      done <<< "$LIST_OF_PUBLIC_ELBS"
       else
         textOK "$regx: no Internet Facing ELBs found" "$regx"
     fi
@@ -1792,11 +1796,13 @@ extra710(){
   textTitle "$ID710" "$TITLE710" "NOT_SCORED" "EXTRA"
   textNotice "Looking for instances in all regions...  "
   for regx in $REGIONS; do
-    LIST_OF_PUBLIC_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query 'Reservations[*].Instances[?PublicIpAddress].[InstanceId]' --output text)
+    LIST_OF_PUBLIC_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query 'Reservations[*].Instances[?PublicIpAddress].[InstanceId,PublicIpAddress]' --output text)
     if [[ $LIST_OF_PUBLIC_INSTANCES ]];then
-      for instance in $(echo $LIST_OF_PUBLIC_INSTANCES);do
-        textWarn "$regx: Instance: $instance is internet-facing!" "$regx"
-      done
+      while read -r instance;do
+        INSTANCE_ID=$(echo $instance | awk '{ print $1; }')
+        PUBLIC_IP=$(echo $instance | awk '{ print $2; }')
+        textWarn "$regx: Instance: $INSTANCE_ID at IP: $PUBLIC_IP is internet-facing!" "$regx"
+      done <<< "$LIST_OF_PUBLIC_INSTANCES"
       else
         textOK "$regx: no Internet Facing EC2 Instances found" "$regx"
     fi
