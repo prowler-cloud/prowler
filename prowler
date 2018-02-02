@@ -241,7 +241,7 @@ fi
 
 # It checks -p optoin first and use it as profile, if not -p provided then
 # check environment variables and if not, it checks and loads credentials from
-# instance profile (metadata server) if runs in an EC2 instance 
+# instance profile (metadata server) if runs in an EC2 instance
 
 if [[ $PROFILE ]]; then
   PROFILE_OPT="--profile $PROFILE"
@@ -484,6 +484,8 @@ ID79="7.9,7.09"
 TITLE79="Check for internet facing Elastic Load Balancers (Not Scored) (Not part of CIS benchmark)"
 ID710="7.10,7.10"
 TITLE710="Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)"
+ID711="7.11,7.11"
+TITLE711="Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)"
 
 
 printCsvHeader() {
@@ -1809,6 +1811,24 @@ extra710(){
   done
 }
 
+extra711(){
+  # "Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID711" "$TITLE711" "NOT_SCORED" "EXTRA"
+  textNotice "Looking for Reshift clusters in all regions...  "
+  for regx in $REGIONS; do
+    LIST_OF_PUBLIC_REDSHIFT_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --region $regx --query 'Clusters[?PubliclyAccessible == `true`].[ClusterIdentifier,Endpoint.Address]' --output text)
+    if [[ $LIST_OF_PUBLIC_REDSHIFT_CLUSTERS ]];then
+      while read -r cluster;do
+        CLUSTER_ID=$(echo $cluster | awk '{ print $1; }')
+        CLUSTER_ENDPOINT=$(echo $cluster | awk '{ print $2; }')
+        textWarn "$regx: Cluster: $CLUSTER_ID at Endpoint: $CLUSTER_ENDPOINT is publicly accessible!" "$regx"
+      done <<< "$LIST_OF_PUBLIC_REDSHIFT_CLUSTERS"
+      else
+        textOK "$regx: no Publicly Accessible Redshift Clusters found" "$regx"
+    fi
+  done
+}
+
 callCheck(){
   if [[ $CHECKNUMBER ]];then
     case "$CHECKNUMBER" in
@@ -1874,6 +1894,7 @@ callCheck(){
       extra78|extra708 ) extra78;;
       extra79|extra709 ) extra79;;
       extra710|extra710 ) extra710;;
+      extra711|extra711 ) extra711;;
 
       ## Groups of Checks
       check1 )
@@ -1910,7 +1931,7 @@ callCheck(){
         ;;
       extras )
         extra71;extra72;extra73;extra74;extra75;extra76;extra77;extra78;
-        extra79;extra710
+        extra79;extra710;extra711
         ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
@@ -1991,6 +2012,7 @@ if [[ $PRINTCHECKSONLY == "1" ]]; then
   textTitle "$ID78" "$TITLE78" "NOT_SCORED" "EXTRA"
   textTitle "$ID79" "$TITLE79" "NOT_SCORED" "EXTRA"
   textTitle "$ID710" "$TITLE710" "NOT_SCORED" "EXTRA"
+  textTitle "$ID711" "$TITLE711" "NOT_SCORED" "EXTRA"
   exit $EXITCODE
 fi
 
@@ -2077,6 +2099,7 @@ extra77
 extra78
 extra79
 extra710
+extra711
 
 cleanTemp
 exit $EXITCODE
