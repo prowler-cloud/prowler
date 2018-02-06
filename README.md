@@ -24,7 +24,7 @@ It covers hardening and security best practices for all AWS regions related to:
 - Logging (8 checks)
 - Monitoring (15 checks)
 - Networking (5 checks)
-- Extras (10 checks) *see Extras section
+- Extras (11 checks) *see Extras section
 
 For a comprehesive list and resolution look at the guide on the link above.
 
@@ -577,8 +577,11 @@ unset ACCOUNT_ID AWS_DEFAULT_PROFILE
 The `aws iam create-access-key` command will output the secret access key and the key id; keep these somewhere safe, and add them to ~/.aws/credentials with an appropriate profile name to use them with prowler. This is the only time they secret key will be shown.  If you loose it, you will need to generate a replacement.
 
 ## Extras
-We are adding additional checks to improve the information gather from each account, these checks are out of the scope of the CIS benchmark for AWS but we consider them very helpful to get to know each AWS account set up and find issues on it.
-At this moment we have 10 extra checks:
+We are adding additional checks to improve the information gather from each account, these checks are out of the scope of the CIS benchmark for AWS but we consider them very helpful to get to know each AWS account set up and find issues on it. 
+
+Note: Some of these checks for publicly facing resources may not actually be fully public due to other layered controls like S3 Bucket Policies, Security Groups or Network ACLs.
+
+At this moment we have 11 extra checks:
 
 - 7.1 (`extra71`) Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)
 - 7.2 (`extra72`) Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)
@@ -590,6 +593,7 @@ At this moment we have 10 extra checks:
 - 7.8 (`extra78`) Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)
 - 7.9 (`extra79`) Check for internet facing Elastic Load Blancers (Not Scored) (Not part of CIS benchmark)
 - 7.10 (`extra710`) Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)
+- 7.11 (`extra711`) Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)
 
 To check all extras in one command:
 ```
