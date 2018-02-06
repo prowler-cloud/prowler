@@ -577,7 +577,7 @@ unset ACCOUNT_ID AWS_DEFAULT_PROFILE
 The `aws iam create-access-key` command will output the secret access key and the key id; keep these somewhere safe, and add them to ~/.aws/credentials with an appropriate profile name to use them with prowler. This is the only time they secret key will be shown.  If you loose it, you will need to generate a replacement.
 
 ## Extras
-We are adding additional checks to improve the information gather from each account, these checks are out of the scope of the CIS benchmark for AWS but we consider them very helpful to get to know each AWS account set up and find issues on it. 
+We are adding additional checks to improve the information gather from each account, these checks are out of the scope of the CIS benchmark for AWS but we consider them very helpful to get to know each AWS account set up and find issues on it.
 
 Note: Some of these checks for publicly facing resources may not actually be fully public due to other layered controls like S3 Bucket Policies, Security Groups or Network ACLs.
 
@@ -591,7 +591,7 @@ At this moment we have 11 extra checks:
 - 7.6 (`extra76`) Ensure there are no EC2 AMIs set as Public (Not Scored) (Not part of CIS benchmark)
 - 7.7 (`extra77`) Ensure there are no ECR repositories set as Public (Not Scored) (Not part of CIS benchmark)
 - 7.8 (`extra78`) Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)
-- 7.9 (`extra79`) Check for internet facing Elastic Load Blancers (Not Scored) (Not part of CIS benchmark)
+- 7.9 (`extra79`) Check for internet facing Elastic Load Balancers (Not Scored) (Not part of CIS benchmark)
 - 7.10 (`extra710`) Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)
 - 7.11 (`extra711`) Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)
 
