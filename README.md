@@ -9,6 +9,7 @@
 - [Screenshots](#screenshots)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
+- [Forensics ready checks](#forensics-ready-checks)
 - [Add Custom Checks](#add-custom-checks)
 - [Third Party Integrations](#third-party-integrations)
 
@@ -24,7 +25,7 @@ It covers hardening and security best practices for all AWS regions related to:
 - Logging (8 checks)
 - Monitoring (15 checks)
 - Networking (5 checks)
-- Extras (11 checks) *see Extras section
+- Extras (12 checks) *see Extras section
 
 For a comprehesive list and resolution look at the guide on the link above.
 
@@ -594,6 +595,8 @@ At this moment we have 11 extra checks:
 - 7.9 (`extra79`) Check for internet facing Elastic Load Balancers (Not Scored) (Not part of CIS benchmark)
 - 7.10 (`extra710`) Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)
 - 7.11 (`extra711`) Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)
+- 7.12 (`extra712`) Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)
+
 
 To check all extras in one command:
 ```
@@ -602,6 +605,13 @@ To check all extras in one command:
 or to run just one of the checks:
 ```
 ./prowler -c extraNUMBER
+```
+
+## Forensics Ready Checks
+
+With this group of checks, Prowler looks if each service with logging or audit capabilities has them enabled to ensure all needed evidences are recorded for an eventual digital forensic investigation in case of incident. The `forensics-ready` group of checks uses existing and extra checks. To get a forensics readiness report, run this command:
+```
+./prowler -c forensics-ready
 ```
 
 ## Add Custom Checks

@@ -486,7 +486,8 @@ ID710="7.10,7.10"
 TITLE710="Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)"
 ID711="7.11,7.11"
 TITLE711="Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)"
-
+ID712="7.12,7.12"
+TITLE712="Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)"
 
 printCsvHeader() {
   >&2 echo ""
@@ -1851,6 +1852,19 @@ extra711(){
   done
 }
 
+extra712(){
+  # "Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID712" "$TITLE712" "NOT_SCORED" "EXTRA"
+  textNotice "No API commands available to check if Macie is enabled,"
+  textNotice "just looking if IAM Macie related permissions exist.  "
+  MACIE_IAM_ROLES_CREATED=$($AWSCLI iam list-roles $PROFILE_OPT --query 'Roles[*].Arn'|grep AWSMacieServiceCustomer|wc -l)
+  if [[ $MACIE_IAM_ROLES_CREATED -eq 2 ]];then
+    textOK "Macie related IAM roles exist, so it might be enabled. Check it out manually."
+  else
+    textWarn "No Macie related IAM roles found. It is most likely not be enabled"
+  fi
+}
+
 callCheck(){
   if [[ $CHECKNUMBER ]];then
     case "$CHECKNUMBER" in
@@ -1917,6 +1931,7 @@ callCheck(){
       extra79|extra709 ) extra79;;
       extra710|extra710 ) extra710;;
       extra711|extra711 ) extra711;;
+      extra712|extra712 ) extra712;;
 
       ## Groups of Checks
       check1 )
@@ -1953,7 +1968,12 @@ callCheck(){
         ;;
       extras )
         extra71;extra72;extra73;extra74;extra75;extra76;extra77;extra78;
-        extra79;extra710;extra711
+        extra79;extra710;extra711;extra712
+        ;;
+      forensics-ready )
+        check21;check22;check23;check24;check25;check26;check27;
+        check43;
+        extra712;
         ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
