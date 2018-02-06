@@ -619,6 +619,7 @@ With this group of checks, Prowler looks if each service with logging or audit c
 - 2.7  Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)
 - 4.3  Ensure VPC Flow Logging is Enabled in all VPCs (Scored)
 - 7.12  Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)
+- 7.13  Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)
 
 The `forensics-ready` group of checks uses existing and extra checks. To get a forensics readiness report, run this command:
 ```

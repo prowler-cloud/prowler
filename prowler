@@ -488,6 +488,8 @@ ID711="7.11,7.11"
 TITLE711="Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)"
 ID712="7.12,7.12"
 TITLE712="Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)"
+ID713="7.13,7.13"
+TITLE713="Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)"
 
 printCsvHeader() {
   >&2 echo ""
@@ -1865,6 +1867,26 @@ extra712(){
   fi
 }
 
+extra713(){
+  # "Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID713" "$TITLE713" "NOT_SCORED" "EXTRA"
+  for regx in $REGIONS; do
+    LIST_OF_GUARDDUTY_DETECTORS=$($AWSCLI guardduty list-detectors $PROFILE_OPT --region $regx --output text 2>/dev/null |cut -f2)
+    if [[ $LIST_OF_GUARDDUTY_DETECTORS ]];then
+      while read -r detector;do
+        DETECTOR_ENABLED=$($AWSCLI guardduty get-detector --detector-id $detector $PROFILE_OPT --region $regx --output text| cut -f3|grep ENABLED)
+        if [[ $DETECTOR_ENABLED ]]; then
+          textOK "$regx: GuardDuty detector $detector enabled" "$regx"
+        else
+          textWarn "$regx: GuardDuty detector $detector configured but suspended" "$regx"
+        fi
+      done <<< "$LIST_OF_GUARDDUTY_DETECTORS"
+      else
+        textWarn "$regx: GuardDuty detector $detector not configured" "$regx"
+    fi
+  done
+}
+
 callCheck(){
   if [[ $CHECKNUMBER ]];then
     case "$CHECKNUMBER" in
@@ -1932,6 +1954,7 @@ callCheck(){
       extra710|extra710 ) extra710;;
       extra711|extra711 ) extra711;;
       extra712|extra712 ) extra712;;
+      extra713|extra713 ) extra713;;
 
       ## Groups of Checks
       check1 )
@@ -1968,12 +1991,12 @@ callCheck(){
         ;;
       extras )
         extra71;extra72;extra73;extra74;extra75;extra76;extra77;extra78;
-        extra79;extra710;extra711;extra712
+        extra79;extra710;extra711;extra712;extra713
         ;;
       forensics-ready )
         check21;check22;check23;check24;check25;check26;check27;
         check43;
-        extra712;
+        extra712;extra713
         ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
@@ -2055,6 +2078,8 @@ if [[ $PRINTCHECKSONLY == "1" ]]; then
   textTitle "$ID79" "$TITLE79" "NOT_SCORED" "EXTRA"
   textTitle "$ID710" "$TITLE710" "NOT_SCORED" "EXTRA"
   textTitle "$ID711" "$TITLE711" "NOT_SCORED" "EXTRA"
+  textTitle "$ID712" "$TITLE712" "NOT_SCORED" "EXTRA"
+  textTitle "$ID713" "$TITLE713" "NOT_SCORED" "EXTRA"
   exit $EXITCODE
 fi
 
@@ -2142,6 +2167,8 @@ extra78
 extra79
 extra710
 extra711
+extra712
+extra713
 
 cleanTemp
 exit $EXITCODE
