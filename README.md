@@ -609,7 +609,18 @@ or to run just one of the checks:
 
 ## Forensics Ready Checks
 
-With this group of checks, Prowler looks if each service with logging or audit capabilities has them enabled to ensure all needed evidences are recorded for an eventual digital forensic investigation in case of incident. The `forensics-ready` group of checks uses existing and extra checks. To get a forensics readiness report, run this command:
+With this group of checks, Prowler looks if each service with logging or audit capabilities has them enabled to ensure all needed evidences are recorded and collected for an eventual digital forensic investigation in case of incident. List of checks part of this group:
+- 2.1  Ensure CloudTrail is enabled in all regions (Scored)
+- 2.2  Ensure CloudTrail log file validation is enabled (Scored)
+- 2.3  Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)
+- 2.4  Ensure CloudTrail trails are integrated with CloudWatch Logs (Scored)
+- 2.5  Ensure AWS Config is enabled in all regions (Scored)
+- 2.6  Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)
+- 2.7  Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)
+- 4.3  Ensure VPC Flow Logging is Enabled in all VPCs (Scored)
+- 7.12  Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)
+
+The `forensics-ready` group of checks uses existing and extra checks. To get a forensics readiness report, run this command:
 ```
 ./prowler -c forensics-ready
 ```
