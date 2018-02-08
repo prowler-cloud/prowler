@@ -496,6 +496,11 @@ ID713="7.13,7.13"
 TITLE713="Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)"
 ID714="7.14,7.14"
 TITLE714="Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)"
+ID715="7.15,7.15"
+TITLE715="Check if Elasticsearch Service domains have logging enabled (Not Scored) (Not part of CIS benchmark)"
+ID716="7.16,7.16"
+TITLE716="Check if Elasticsearch Service domains allow open access (Not Scored) (Not part of CIS benchmark)"
+
 
 printCsvHeader() {
   >&2 echo ""
@@ -1912,6 +1917,55 @@ extra714(){
   done
 }
 
+extra715(){
+  # "Check if Elasticsearch Service domains have logging enabled (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID715" "$TITLE715" "NOT_SCORED" "EXTRA"
+  for regx in $REGIONS; do
+    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text)
+    if [[ $LIST_OF_DOMAINS ]]; then
+      for domain in $LIST_OF_DOMAINS;do
+        SEARCH_SLOWLOG_ENABLED=$($AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.LogPublishingOptions.Options.SEARCH_SLOW_LOGS.Enabled --output text |grep -v ^None|grep -v ^False)
+        if [[ $SEARCH_SLOWLOG_ENABLED ]];then
+          textOK "$regx: ElasticSearch Service domain $domain SEARCH_SLOW_LOGS enabled" "$regx"
+        else
+          textWarn "$regx: ElasticSearch Service domain $domain SEARCH_SLOW_LOGS disabled!" "$regx"
+        fi
+        INDEX_SLOWLOG_ENABLED=$($AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.LogPublishingOptions.Options.INDEX_SLOW_LOGS.Enabled --output text |grep -v ^None|grep -v ^False)
+        if [[ $INDEX_SLOWLOG_ENABLED ]];then
+          textOK "$regx: ElasticSearch Service domain $domain INDEX_SLOW_LOGS enabled" "$regx"
+        else
+          textWarn "$regx: ElasticSearch Service domain $domain INDEX_SLOW_LOGS disabled!" "$regx"
+        fi
+      done
+    else
+      textOK "$regx: No Elasticsearch Service domain found" "$regx"
+    fi
+  done
+}
+
+extra716(){
+  # "Check if Elasticsearch Service domains allow open access (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID716" "$TITLE716" "NOT_SCORED" "EXTRA"
+  for regx in $REGIONS; do
+    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text)
+    if [[ $LIST_OF_DOMAINS ]]; then
+      for domain in $LIST_OF_DOMAINS;do
+        TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-es-domain.policy.XXXXXXXXXX)
+        $AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.AccessPolicies.Options --output text > $TEMP_POLICY_FILE 2> /dev/null
+        # check if the policy has Principal as *
+        CHECK_ES_DOMAIN_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | awk '/Principal/ && !skip { print } { skip = /Deny/} '|grep \"Principal|grep \*)
+        if [[ $CHECK_ES_DOMAIN_ALLUSERS_POLICY ]];then
+          textWarn "$regx: $domain policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx"
+        else
+          textOK "$regx: $domain is not open" "$regx"
+        fi
+      done
+    fi
+    textOK "$regx: No Elasticsearch Service domain found" "$regx"
+    rm -fr $TEMP_POLICY_FILE
+  done
+}
+
 callCheck(){
   if [[ $CHECKNUMBER ]];then
     case "$CHECKNUMBER" in
@@ -1981,6 +2035,8 @@ callCheck(){
       extra712|extra712 ) extra712;;
       extra713|extra713 ) extra713;;
       extra714|extra714 ) extra714;;
+      extra715|extra715 ) extra715;;
+      extra716|extra716 ) extra716;;
 
       ## Groups of Checks
       check1 )
@@ -2017,12 +2073,12 @@ callCheck(){
         ;;
       extras )
         extra71;extra72;extra73;extra74;extra75;extra76;extra77;extra78;
-        extra79;extra710;extra711;extra712;extra713;extra714
+        extra79;extra710;extra711;extra712;extra713;extra714;extra715;extra716
         ;;
       forensics-ready )
         check21;check22;check23;check24;check25;check26;check27;
         check43;
-        extra712;extra713;extra714
+        extra712;extra713;extra714;extra715
         ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
@@ -2106,7 +2162,9 @@ if [[ $PRINTCHECKSONLY == "1" ]]; then
   textTitle "$ID711" "$TITLE711" "NOT_SCORED" "EXTRA"
   textTitle "$ID712" "$TITLE712" "NOT_SCORED" "EXTRA"
   textTitle "$ID713" "$TITLE713" "NOT_SCORED" "EXTRA"
-  textTitle "$ID714" "$TITLE713" "NOT_SCORED" "EXTRA"
+  textTitle "$ID714" "$TITLE714" "NOT_SCORED" "EXTRA"
+  textTitle "$ID715" "$TITLE715" "NOT_SCORED" "EXTRA"
+  textTitle "$ID716" "$TITLE716" "NOT_SCORED" "EXTRA"
   exit $EXITCODE
 fi
 
@@ -2197,6 +2255,8 @@ extra711
 extra712
 extra713
 extra714
+extra715
+extra716
 
 cleanTemp
 exit $EXITCODE
