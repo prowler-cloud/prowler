@@ -1950,14 +1950,19 @@ extra716(){
     LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text)
     if [[ $LIST_OF_DOMAINS ]]; then
       for domain in $LIST_OF_DOMAINS;do
-        TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-es-domain.policy.XXXXXXXXXX)
-        $AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.AccessPolicies.Options --output text > $TEMP_POLICY_FILE 2> /dev/null
-        # check if the policy has Principal as *
-        CHECK_ES_DOMAIN_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | awk '/Principal/ && !skip { print } { skip = /Deny/} '|grep \"Principal|grep \*)
-        if [[ $CHECK_ES_DOMAIN_ALLUSERS_POLICY ]];then
-          textWarn "$regx: $domain policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx"
+        CHECK_IF_MEMBER_OF_VPC=$($AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.VPCOptions.Options.VPCId --output text|grep -v ^None)
+        if [[ ! $CHECK_IF_MEMBER_OF_VPC ]];then
+          TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-es-domain.policy.XXXXXXXXXX)
+          $AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.AccessPolicies.Options --output text > $TEMP_POLICY_FILE 2> /dev/null
+          # check if the policy has Principal as *
+          CHECK_ES_DOMAIN_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | awk '/Principal/ && !skip { print } { skip = /Deny/} '|grep \"Principal|grep \*)
+          if [[ $CHECK_ES_DOMAIN_ALLUSERS_POLICY ]];then
+            textWarn "$regx: $domain policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx"
+          else
+            textOK "$regx: $domain is not open" "$regx"
+          fi
         else
-          textOK "$regx: $domain is not open" "$regx"
+          textOK "$regx: $domain is in a VPC" "$regx"
         fi
       done
     fi
