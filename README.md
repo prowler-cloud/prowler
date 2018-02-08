@@ -583,7 +583,7 @@ We are adding additional checks to improve the information gather from each acco
 
 Note: Some of these checks for publicly facing resources may not actually be fully public due to other layered controls like S3 Bucket Policies, Security Groups or Network ACLs.
 
-At this moment we have 14 extra checks:
+At this moment we have 15 extra checks:
 
 - 7.1 (`extra71`) Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)
 - 7.2 (`extra72`) Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)
@@ -599,6 +599,8 @@ At this moment we have 14 extra checks:
 - 7.12 (`extra712`) Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)
 - 7.13 (`extra713`) Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)
 - 7.14 (`extra714`) Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)
+- 7.15 (`extra715`) Check if Elasticsearch Service domains have logging enabled (Not Scored) (Not part of CIS benchmark)
+
 
 To check all extras in one command:
 ```
@@ -623,6 +625,7 @@ With this group of checks, Prowler looks if each service with logging or audit c
 - 7.12  Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)
 - 7.13  Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)
 - 7.14  Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)
+- 7.15  Check if Elasticsearch Service domains have logging enabled (Not Scored) (Not part of CIS benchmark)
 
 The `forensics-ready` group of checks uses existing and extra checks. To get a forensics readiness report, run this command:
 ```
