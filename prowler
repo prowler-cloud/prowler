@@ -216,6 +216,7 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     }
 elif [[ "$OSTYPE" == "cygwin" ]]; then
   # POSIX compatibility layer and Linux environment emulation for Windows
+  TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
   how_older_from_today()
       {
         DATE_TO_COMPARE=$1
@@ -236,7 +237,8 @@ elif [[ "$OSTYPE" == "cygwin" ]]; then
       base64 -d
     }
 else
-      echo "Unknown Operating System"
+      echo "Unknown Operating System! Valid \$OSTYPE: linux-gnu, linux-musl, darwin* or cygwin"
+      echo "Found: $OSTYPE"
       EXITCODE=1
       exit $EXITCODE
 fi
