@@ -582,7 +582,6 @@ saveReport(){
 # Delete temporary report file
 cleanTemp(){
   if [[ $KEEPCREDREPORT -ne 1 ]]; then
-    cd /tmp
     rm -fr $TEMP_REPORT_FILE
   fi
 }
