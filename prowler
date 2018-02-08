@@ -494,6 +494,8 @@ ID712="7.12,7.12"
 TITLE712="Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)"
 ID713="7.13,7.13"
 TITLE713="Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)"
+ID714="7.14,7.14"
+TITLE714="Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)"
 
 printCsvHeader() {
   >&2 echo ""
@@ -1890,6 +1892,26 @@ extra713(){
   done
 }
 
+extra714(){
+  # "Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID714" "$TITLE714" "NOT_SCORED" "EXTRA"
+  for regx in $REGIONS; do
+    LIST_OF_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions $PROFILE_OPT --region $regx --query 'DistributionList.Items[].Id' --output text |grep -v "^None")
+    if [[ $LIST_OF_DISTRIBUTIONS ]]; then
+      for cdn in $LIST_OF_DISTRIBUTIONS;do
+        CDN_LOG_ENABLED=$($AWSCLI cloudfront get-distribution $PROFILE_OPT --region $regx --id "$cdn" --query 'Distribution.DistributionConfig.Logging.Enabled' | grep true)
+        if [[ $CDN_LOG_ENABLED ]];then
+          textOK "$regx: CDN $cdn logging enabled" "$regx"
+        else
+          textWarn "$regx: CDN $cdn logging disabled!" "$regx"
+        fi
+      done
+    else
+      textOK "$regx: CDN not configured" "$regx"
+    fi
+  done
+}
+
 callCheck(){
   if [[ $CHECKNUMBER ]];then
     case "$CHECKNUMBER" in
@@ -1958,6 +1980,7 @@ callCheck(){
       extra711|extra711 ) extra711;;
       extra712|extra712 ) extra712;;
       extra713|extra713 ) extra713;;
+      extra714|extra714 ) extra714;;
 
       ## Groups of Checks
       check1 )
@@ -1994,12 +2017,12 @@ callCheck(){
         ;;
       extras )
         extra71;extra72;extra73;extra74;extra75;extra76;extra77;extra78;
-        extra79;extra710;extra711;extra712;extra713
+        extra79;extra710;extra711;extra712;extra713;extra714
         ;;
       forensics-ready )
         check21;check22;check23;check24;check25;check26;check27;
         check43;
-        extra712;extra713
+        extra712;extra713;extra714
         ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
@@ -2083,6 +2106,7 @@ if [[ $PRINTCHECKSONLY == "1" ]]; then
   textTitle "$ID711" "$TITLE711" "NOT_SCORED" "EXTRA"
   textTitle "$ID712" "$TITLE712" "NOT_SCORED" "EXTRA"
   textTitle "$ID713" "$TITLE713" "NOT_SCORED" "EXTRA"
+  textTitle "$ID714" "$TITLE713" "NOT_SCORED" "EXTRA"
   exit $EXITCODE
 fi
 
@@ -2172,6 +2196,7 @@ extra710
 extra711
 extra712
 extra713
+extra714
 
 cleanTemp
 exit $EXITCODE
