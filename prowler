@@ -167,7 +167,7 @@ fi
 SCRIPT_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
 
 # Functions to manage dates depending on OS
-if [[ "$OSTYPE" == "linux-gnu" ]]; then
+if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
   # function to compare in days, usage how_older_from_today date
   # date format %Y-%m-%d
   how_older_from_today()
@@ -570,7 +570,7 @@ genCredReport() {
 
 # Save report to a file, decode it, deletion at finish and after every single check
 saveReport(){
-  TEMP_REPORT_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-XXXXX.cred_report )
+  TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler-${ACCOUNT_NUM}.cred_report-XXXXXX)
   $AWSCLI iam get-credential-report --query 'Content' --output text $PROFILE_OPT --region $REGION | decode_report > $TEMP_REPORT_FILE
   if [[ $KEEPCREDREPORT -eq 1 ]]; then
     textTitle "0.2" "Saving IAM Credential Report ..." "NOT_SCORED" "SUPPORT"

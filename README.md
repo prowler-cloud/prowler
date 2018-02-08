@@ -9,7 +9,7 @@
 - [Screenshots](#screenshots)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
-- [Forensics ready checks](#forensics-ready-checks)
+- [Forensics Ready Checks](#forensics-ready-checks)
 - [Add Custom Checks](#add-custom-checks)
 - [Third Party Integrations](#third-party-integrations)
 
@@ -26,6 +26,7 @@ It covers hardening and security best practices for all AWS regions related to:
 - Monitoring (15 checks)
 - Networking (5 checks)
 - Extras (12 checks) *see Extras section
+- Forensics related checks  
 
 For a comprehesive list and resolution look at the guide on the link above.
 
