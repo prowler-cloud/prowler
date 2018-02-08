@@ -168,6 +168,7 @@ SCRIPT_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
 
 # Functions to manage dates depending on OS
 if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
+  TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
   # function to compare in days, usage how_older_from_today date
   # date format %Y-%m-%d
   how_older_from_today()
@@ -193,6 +194,7 @@ if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
     }
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # BSD/OSX commands compatibility
+  TEMP_REPORT_FILE=$(mktemp -t prowler.cred_report-XXXXXX)
   how_older_from_today()
       {
         DATE_TO_COMPARE=$1
@@ -214,6 +216,7 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     }
 elif [[ "$OSTYPE" == "cygwin" ]]; then
   # POSIX compatibility layer and Linux environment emulation for Windows
+  TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
   how_older_from_today()
       {
         DATE_TO_COMPARE=$1
@@ -234,7 +237,8 @@ elif [[ "$OSTYPE" == "cygwin" ]]; then
       base64 -d
     }
 else
-      echo "Unknown Operating System"
+      echo "Unknown Operating System! Valid \$OSTYPE: linux-gnu, linux-musl, darwin* or cygwin"
+      echo "Found: $OSTYPE"
       EXITCODE=1
       exit $EXITCODE
 fi
@@ -570,7 +574,6 @@ genCredReport() {
 
 # Save report to a file, decode it, deletion at finish and after every single check
 saveReport(){
-  TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler-${ACCOUNT_NUM}.cred_report-XXXXXX)
   $AWSCLI iam get-credential-report --query 'Content' --output text $PROFILE_OPT --region $REGION | decode_report > $TEMP_REPORT_FILE
   if [[ $KEEPCREDREPORT -eq 1 ]]; then
     textTitle "0.2" "Saving IAM Credential Report ..." "NOT_SCORED" "SUPPORT"
