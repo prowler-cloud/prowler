@@ -9,6 +9,7 @@
 - [Screenshots](#screenshots)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
+- [Forensics Ready Checks](#forensics-ready-checks)
 - [Add Custom Checks](#add-custom-checks)
 - [Third Party Integrations](#third-party-integrations)
 
@@ -24,7 +25,8 @@ It covers hardening and security best practices for all AWS regions related to:
 - Logging (8 checks)
 - Monitoring (15 checks)
 - Networking (5 checks)
-- Extras (11 checks) *see Extras section
+- Extras (12 checks) *see Extras section
+- Forensics related checks  
 
 For a comprehesive list and resolution look at the guide on the link above.
 
@@ -577,7 +579,7 @@ unset ACCOUNT_ID AWS_DEFAULT_PROFILE
 The `aws iam create-access-key` command will output the secret access key and the key id; keep these somewhere safe, and add them to ~/.aws/credentials with an appropriate profile name to use them with prowler. This is the only time they secret key will be shown.  If you loose it, you will need to generate a replacement.
 
 ## Extras
-We are adding additional checks to improve the information gather from each account, these checks are out of the scope of the CIS benchmark for AWS but we consider them very helpful to get to know each AWS account set up and find issues on it. 
+We are adding additional checks to improve the information gather from each account, these checks are out of the scope of the CIS benchmark for AWS but we consider them very helpful to get to know each AWS account set up and find issues on it.
 
 Note: Some of these checks for publicly facing resources may not actually be fully public due to other layered controls like S3 Bucket Policies, Security Groups or Network ACLs.
 
@@ -591,9 +593,11 @@ At this moment we have 11 extra checks:
 - 7.6 (`extra76`) Ensure there are no EC2 AMIs set as Public (Not Scored) (Not part of CIS benchmark)
 - 7.7 (`extra77`) Ensure there are no ECR repositories set as Public (Not Scored) (Not part of CIS benchmark)
 - 7.8 (`extra78`) Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)
-- 7.9 (`extra79`) Check for internet facing Elastic Load Blancers (Not Scored) (Not part of CIS benchmark)
+- 7.9 (`extra79`) Check for internet facing Elastic Load Balancers (Not Scored) (Not part of CIS benchmark)
 - 7.10 (`extra710`) Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)
 - 7.11 (`extra711`) Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)
+- 7.12 (`extra712`) Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)
+
 
 To check all extras in one command:
 ```
@@ -602,6 +606,25 @@ To check all extras in one command:
 or to run just one of the checks:
 ```
 ./prowler -c extraNUMBER
+```
+
+## Forensics Ready Checks
+
+With this group of checks, Prowler looks if each service with logging or audit capabilities has them enabled to ensure all needed evidences are recorded and collected for an eventual digital forensic investigation in case of incident. List of checks part of this group:
+- 2.1  Ensure CloudTrail is enabled in all regions (Scored)
+- 2.2  Ensure CloudTrail log file validation is enabled (Scored)
+- 2.3  Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)
+- 2.4  Ensure CloudTrail trails are integrated with CloudWatch Logs (Scored)
+- 2.5  Ensure AWS Config is enabled in all regions (Scored)
+- 2.6  Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)
+- 2.7  Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)
+- 4.3  Ensure VPC Flow Logging is Enabled in all VPCs (Scored)
+- 7.12  Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)
+- 7.13  Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)
+
+The `forensics-ready` group of checks uses existing and extra checks. To get a forensics readiness report, run this command:
+```
+./prowler -c forensics-ready
 ```
 
 ## Add Custom Checks
