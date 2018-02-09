@@ -25,7 +25,7 @@ It covers hardening and security best practices for all AWS regions related to:
 - Logging (8 checks)
 - Monitoring (15 checks)
 - Networking (5 checks)
-- Extras (12 checks) *see Extras section
+- Extras (17 checks) *see Extras section
 - Forensics related checks  
 
 For a comprehesive list and resolution look at the guide on the link above.
@@ -601,6 +601,7 @@ At this moment we have 16 extra checks:
 - 7.14 (`extra714`) Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)
 - 7.15 (`extra715`) Check if Elasticsearch Service domains have logging enabled (Not Scored) (Not part of CIS benchmark)
 - 7.16 (`extra716`) Check if Elasticsearch Service domains allow open access (Not Scored) (Not part of CIS benchmark)
+- 7.17 (`extra717`) Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)
 
 
 To check all extras in one command:
@@ -627,6 +628,7 @@ With this group of checks, Prowler looks if each service with logging or audit c
 - 7.13  Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)
 - 7.14  Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)
 - 7.15  Check if Elasticsearch Service domains have logging enabled (Not Scored) (Not part of CIS benchmark)
+- 7.17  Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)
 
 The `forensics-ready` group of checks uses existing and extra checks. To get a forensics readiness report, run this command:
 ```
