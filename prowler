@@ -500,7 +500,8 @@ ID715="7.15,7.15"
 TITLE715="Check if Elasticsearch Service domains have logging enabled (Not Scored) (Not part of CIS benchmark)"
 ID716="7.16,7.16"
 TITLE716="Check if Elasticsearch Service domains allow open access (Not Scored) (Not part of CIS benchmark)"
-
+ID717="7.17,7.17"
+TITLE717="Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)"
 
 printCsvHeader() {
   >&2 echo ""
@@ -1816,12 +1817,15 @@ extra79(){
   textNotice "Looking for Elastic Load Balancers in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_PUBLIC_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[?Scheme == `internet-facing`].[LoadBalancerName,DNSName]' --output text)
-    if [[ $LIST_OF_PUBLIC_ELBS ]];then
+    LIST_OF_PUBLIC_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Scheme == `internet-facing`].[LoadBalancerName,DNSName]' --output text)
+    LIST_OF_ALL_ELBS=$( echo $LIST_OF_PUBLIC_ELBS; echo $LIST_OF_PUBLIC_ELBSV2)
+    LIST_OF_ALL_ELBS_PER_LINE=$( echo $LIST_OF_ALL_ELBS| xargs -n2 )
+    if [[ $LIST_OF_ALL_ELBS ]];then
       while read -r elb;do
         ELB_NAME=$(echo $elb | awk '{ print $1; }')
         ELB_DNSNAME=$(echo $elb | awk '{ print $2; }')
         textWarn "$regx: ELB: $ELB_NAME at DNS: $ELB_DNSNAME is internet-facing!" "$regx"
-      done <<< "$LIST_OF_PUBLIC_ELBS"
+      done <<< "$LIST_OF_ALL_ELBS_PER_LINE"
       else
         textOK "$regx: no Internet Facing ELBs found" "$regx"
     fi
@@ -1873,7 +1877,7 @@ extra712(){
   if [[ $MACIE_IAM_ROLES_CREATED -eq 2 ]];then
     textOK "Macie related IAM roles exist, so it might be enabled. Check it out manually."
   else
-    textWarn "No Macie related IAM roles found. It is most likely not be enabled"
+    textWarn "No Macie related IAM roles found. It is most likely not to be enabled"
   fi
 }
 
@@ -1912,7 +1916,7 @@ extra714(){
         fi
       done
     else
-      textOK "$regx: CDN not configured" "$regx"
+      textNotice "$regx: No CDN configured" "$regx"
     fi
   done
 }
@@ -1938,7 +1942,7 @@ extra715(){
         fi
       done
     else
-      textOK "$regx: No Elasticsearch Service domain found" "$regx"
+      textNotice "$regx: No Elasticsearch Service domain found" "$regx"
     fi
   done
 }
@@ -1966,8 +1970,42 @@ extra716(){
         fi
       done
     fi
-    textOK "$regx: No Elasticsearch Service domain found" "$regx"
+    textNotice "$regx: No Elasticsearch Service domain found" "$regx"
     rm -fr $TEMP_POLICY_FILE
+  done
+}
+
+extra717(){
+  # "Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID717" "$TITLE717" "NOT_SCORED" "EXTRA"
+  for regx in $REGIONS; do
+    LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].LoadBalancerName' --output text|xargs -n1)
+    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].LoadBalancerArn' --output text|xargs -n1)
+    if [[ $LIST_OF_ELBS || $LIST_OF_ELBSV2 ]]; then
+      if [[ $LIST_OF_ELBS ]]; then
+        for elb in $LIST_OF_ELBS; do
+          CHECK_ELBS_LOG_ENABLED=$($AWSCLI elb describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-name $elb --query 'LoadBalancerAttributes.AccessLog.Enabled'|grep "^true")
+          if [[ $CHECK_ELBS_LOG_ENABLED ]]; then
+            textOK "$regx: $elb has access logs to S3 configured" "$regx"
+          else
+            textWarn "$regx: $elb has not access logs configured" "$regx"
+          fi
+        done
+      fi
+      if [[ $LIST_OF_ELBSV2 ]]; then
+        for elbarn in $LIST_OF_ELBSV2; do
+          CHECK_ELBSV2_LOG_ENABLED=$($AWSCLI elbv2 describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-arn $elbarn --query Attributes[*] --output text|grep "^access_logs.s3.enabled"|cut -f2|grep true)
+          ELBV2_NAME=$(echo $elbarn|cut -d\/ -f3)
+          if [[ $CHECK_ELBSV2_LOG_ENABLED ]]; then
+            textOK "$regx: $ELBV2_NAME has access logs to S3 configured" "$regx"
+          else
+            textWarn "$regx: $ELBV2_NAME has not access logs configured" "$regx"
+          fi
+        done
+      fi
+    else
+      textNotice "$regx: No ELBs found" "$regx"
+    fi
   done
 }
 
@@ -2042,6 +2080,7 @@ callCheck(){
       extra714|extra714 ) extra714;;
       extra715|extra715 ) extra715;;
       extra716|extra716 ) extra716;;
+      extra717|extra717 ) extra717;;
 
       ## Groups of Checks
       check1 )
@@ -2078,12 +2117,13 @@ callCheck(){
         ;;
       extras )
         extra71;extra72;extra73;extra74;extra75;extra76;extra77;extra78;
-        extra79;extra710;extra711;extra712;extra713;extra714;extra715;extra716
+        extra79;extra710;extra711;extra712;extra713;extra714;extra715;extra716;
+        extra717
         ;;
       forensics-ready )
         check21;check22;check23;check24;check25;check26;check27;
         check43;
-        extra712;extra713;extra714;extra715
+        extra712;extra713;extra714;extra715;extra717
         ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
@@ -2170,6 +2210,7 @@ if [[ $PRINTCHECKSONLY == "1" ]]; then
   textTitle "$ID714" "$TITLE714" "NOT_SCORED" "EXTRA"
   textTitle "$ID715" "$TITLE715" "NOT_SCORED" "EXTRA"
   textTitle "$ID716" "$TITLE716" "NOT_SCORED" "EXTRA"
+  textTitle "$ID717" "$TITLE717" "NOT_SCORED" "EXTRA"
   exit $EXITCODE
 fi
 
@@ -2262,6 +2303,7 @@ extra713
 extra714
 extra715
 extra716
+extra717
 
 cleanTemp
 exit $EXITCODE
