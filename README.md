@@ -150,10 +150,6 @@ USAGE:
 - Sample screnshot of single check for check 3.3:
 <img width="1006" alt="screenshot 2016-09-14 13 20 46" src="https://cloud.githubusercontent.com/assets/3985464/18522590/a04ca9a6-7a7e-11e6-8730-b545c9204990.png">
 
- - For more information and reference:
-   https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
-```
-
 ## Troubleshooting
 
 ### STS expired token
