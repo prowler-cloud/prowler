@@ -504,6 +504,8 @@ ID717="7.17,7.17"
 TITLE717="Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)"
 ID718="7.18,7.18"
 TITLE718="Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)"
+ID719="7.19,7.19"
+TITLE719="Check if Route53 hosted zones are logging queries to CloudWatch Logs (Not Scored) (Not part of CIS benchmark)"
 
 printCsvHeader() {
   >&2 echo ""
@@ -2029,6 +2031,24 @@ extra718(){
   fi
 }
 
+extra719(){
+  # "Check if Route53 hosted zones are logging queries to CloudWatch Logs (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID719" "$TITLE719" "NOT_SCORED" "EXTRA"
+  LIST_OF_HOSTED_ZONES=$($AWSCLI route53 list-hosted-zones $PROFILE_OPT --query HostedZones[*].Id --output text|xargs -n1)
+  if [[ $LIST_OF_HOSTED_ZONES ]]; then
+    for hostedzoneid in $LIST_OF_HOSTED_ZONES;do
+      HOSTED_ZONE_QUERY_LOG_ENABLED=$($AWSCLI route53 list-query-logging-configs --hosted-zone-id $hostedzoneid $PROFILE_OPT --query QueryLoggingConfigs[*].CloudWatchLogsLogGroupArn --output text|cut -d: -f7)
+      if [[ $HOSTED_ZONE_QUERY_LOG_ENABLED ]];then
+        textOK "Route53 hosted zone Id $hostedzoneid has query logging enabled in Log Group $HOSTED_ZONE_QUERY_LOG_ENABLED"
+      else
+        textWarn "Route53 hosted zone Id $hostedzoneid has query logging disabled!"
+      fi
+    done
+  else
+    textNotice "No Route53 hosted zones found"
+  fi
+}
+
 callCheck(){
   if [[ $CHECKNUMBER ]];then
     case "$CHECKNUMBER" in
@@ -2102,6 +2122,7 @@ callCheck(){
       extra716|extra716 ) extra716;;
       extra717|extra717 ) extra717;;
       extra718|extra718 ) extra718;;
+      extra719|extra719 ) extra719;;
 
       ## Groups of Checks
       check1 )
@@ -2139,12 +2160,12 @@ callCheck(){
       extras )
         extra71;extra72;extra73;extra74;extra75;extra76;extra77;extra78;
         extra79;extra710;extra711;extra712;extra713;extra714;extra715;extra716;
-        extra717;extra718
+        extra717;extra718;extra719
         ;;
       forensics-ready )
         check21;check22;check23;check24;check25;check26;check27;
         check43;
-        extra712;extra713;extra714;extra715;extra717;extra718
+        extra712;extra713;extra714;extra715;extra717;extra718;extra719
         ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
@@ -2233,6 +2254,7 @@ if [[ $PRINTCHECKSONLY == "1" ]]; then
   textTitle "$ID716" "$TITLE716" "NOT_SCORED" "EXTRA"
   textTitle "$ID717" "$TITLE717" "NOT_SCORED" "EXTRA"
   textTitle "$ID718" "$TITLE718" "NOT_SCORED" "EXTRA"
+  textTitle "$ID719" "$TITLE719" "NOT_SCORED" "EXTRA"
   exit $EXITCODE
 fi
 
@@ -2327,6 +2349,7 @@ extra715
 extra716
 extra717
 extra718
+extra719
 
 cleanTemp
 exit $EXITCODE
