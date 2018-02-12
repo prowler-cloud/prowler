@@ -1168,7 +1168,7 @@ check31(){
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text| tr '\011' '\012' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
-      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | grep $group | awk -F: '{ print $4 }')
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | grep $group | awk -F: '{ print $4 }')
       #METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | awk '/UnauthorizedOperation/ || /AccessDenied/ {print $3}')
       METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --output text | grep METRICFILTERS | awk 'BEGIN {IGNORECASE=1}; /UnauthorizedOperation/ || /AccessDenied/ {print $3};')
       if [[ $METRICFILTER_SET ]];then
