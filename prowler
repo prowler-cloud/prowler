@@ -1192,7 +1192,8 @@ check31(){
         group=${group%:*}
         textOK "CloudWatch group $group found with metric filter $metric and alarms set for Unauthorized Operation and Access Denied"
       done
-    else
+    fi
+    if [[ $CHECK31WARN ]]; then
       for group in $CHECK31WARN; do
         case $group in
            *:*) metric=${group#*:}
