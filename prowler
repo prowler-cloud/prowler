@@ -45,22 +45,28 @@ usage(){
   echo "
 USAGE:
       `basename $0` -p <profile> -r <region> [ -h ]
+
   Options:
       -p <profile>        specify your AWS profile to use (i.e.: default)
-      -r <region>         specify an AWS region to direct API requests to (i.e.: us-east-1), all regions are checked anyway
-      -c <checknum>       specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1, extra71, check3 for entire section 3 or level1 for CIS Level 1 Profile Definitions)
-      -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
+      -r <region>         specify an AWS region to direct API requests to
+                            (i.e.: us-east-1), all regions are checked anyway
+      -c <check_id>       specify a check number or group from the AWS CIS benchmark
+                            (i.e.: "check11" for check 1.1, "check3" for entire section 3, "level1" for CIS Level 1 Profile Definitions or "forensics-ready")
+      -f <filterregion>   specify an AWS region to run checks against
+                            (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-      -M <mode>           output mode: text (default), mono, csv (separator is \"${SEP}\"; data is on stdout; progress on stderr)
+      -M <mode>           output mode: text (defalut), mono, csv (separator is ","; data is on stdout; progress on stderr)
       -k                  keep the credential report
-      -n                  show check numbers to sort easier (i.e.: 1.01 instead of 1.1)
+      -n                  show check numbers to sort easier
+                            (i.e.: 1.01 instead of 1.1)
       -l                  list all available checks only (does not perform any check)
+      -e                  exclude extras
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlkp:r:c:f:m:M:n" OPTION; do
+while getopts ":hlkp:r:c:f:m:M:en" OPTION; do
    case $OPTION in
      h )
         usage
@@ -93,6 +99,9 @@ while getopts ":hlkp:r:c:f:m:M:n" OPTION; do
         ;;
      n )
         NUMERAL=1
+        ;;
+     e )
+        EXTRAS=1
         ;;
      : )
         echo ""
@@ -506,6 +515,12 @@ ID718="7.18,7.18"
 TITLE718="Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)"
 ID719="7.19,7.19"
 TITLE719="Check if Route53 hosted zones are logging queries to CloudWatch Logs (Not Scored) (Not part of CIS benchmark)"
+ID720="7.20,7.20"
+TITLE720="Check if Lambda functions invoke API operations are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)"
+ID721="7.21,7.21"
+TITLE721="Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)"
+ID722="7.22,7.22"
+TITLE722="Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)"
 
 printCsvHeader() {
   >&2 echo ""
@@ -1890,7 +1905,7 @@ extra713(){
   # "Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID713" "$TITLE713" "NOT_SCORED" "EXTRA"
   for regx in $REGIONS; do
-    LIST_OF_GUARDDUTY_DETECTORS=$($AWSCLI guardduty list-detectors $PROFILE_OPT --region $regx --output text 2>/dev/null |cut -f2)
+    LIST_OF_GUARDDUTY_DETECTORS=$($AWSCLI guardduty list-detectors $PROFILE_OPT --region $regx --output text |cut -f2)
     if [[ $LIST_OF_GUARDDUTY_DETECTORS ]];then
       while read -r detector;do
         DETECTOR_ENABLED=$($AWSCLI guardduty get-detector --detector-id $detector $PROFILE_OPT --region $regx --output text| cut -f3|grep ENABLED)
@@ -1901,7 +1916,7 @@ extra713(){
         fi
       done <<< "$LIST_OF_GUARDDUTY_DETECTORS"
       else
-        textWarn "$regx: GuardDuty detector $detector not configured" "$regx"
+        textWarn "$regx: GuardDuty detector not configured!" "$regx"
     fi
   done
 }
@@ -2050,6 +2065,96 @@ extra719(){
   fi
 }
 
+extra720(){
+  # "Check if Lambda functions invoke API operations are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID720" "$TITLE720" "NOT_SCORED" "EXTRA"
+  for regx in $REGIONS; do
+    LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --query Functions[*].FunctionName --output text)
+    if [[ $LIST_OF_FUNCTIONS ]]; then
+      for lambdafunction in $LIST_OF_FUNCTIONS;do
+        LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query trailList[?HomeRegion==\`$regx\`].Name --output text)
+        if [[ $LIST_OF_TRAILS ]]; then
+          for trail in $LIST_OF_TRAILS; do
+            FUNCTION_ENABLED_IN_TRAIL=$($AWSCLI cloudtrail get-event-selectors $PROFILE_OPT --trail-name $trail --region $regx --query "EventSelectors[*].DataResources[?Type == \`AWS::Lambda::Function\`].Values" --output text |xargs -n1| grep -E "^arn:aws:lambda.*function:$lambdafunction$")
+            if [[ $FUNCTION_ENABLED_IN_TRAIL ]]; then
+              textOK "$regx: Lambda function $lambdafunction enabled in trail $trail" "$regx"
+            else
+              textWarn "$regx: Lambda function $lambdafunction NOT enabled in trail $trail" "$regx"
+            fi
+          done
+          # LIST_OF_MULTIREGION_TRAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query "trailList[?IsMultiRegionTrail == \`true\`].Name" --output text)
+          # if [[ $LIST_OF_MULTIREGION_TRAILS ]]; then
+          #   for trail in $LIST_OF_MULTIREGION_TRAILS; do
+          #     REGION_OF_TRAIL=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query "trailList[?IsMultiRegionTrail == \`true\` && Name == \`$trail\` ].HomeRegion" --output text)
+          #     FUNCTION_ENABLED_IN_THIS_REGION=$($AWSCLI cloudtrail get-event-selectors $PROFILE_OPT --trail-name $trail --region $REGION_OF_TRAIL --query "EventSelectors[*].DataResources[?Type == \`AWS::Lambda::Function\`].Values" --output text |xargs -n1| grep -E "^arn:aws:lambda.*function:$lambdafunction$")
+          #     if [[ $FUNCTION_ENABLED_IN_THIS_REGION ]]; then
+          #       textOK "$regx: Lambda function $lambdafunction enabled in trail $trail" "$regx"
+          #     else
+          #       textWarn "$regx: Lambda function $lambdafunction NOT enabled in trail $trail" "$regx"
+          #     fi
+          #   done
+          # else
+          #   textWarn "$regx: Lambda function $lambdafunction is not being recorded!" "$regx"
+          # fi
+        else
+          textWarn "$regx: Lambda function $lambdafunction is not being recorded no CloudTrail found!" "$regx"
+        fi
+      done
+    else
+      textNotice "$regx: No Lambda functions found" "$regx"
+    fi
+  done
+}
+
+extra721(){
+  # "Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID721" "$TITLE721" "NOT_SCORED" "EXTRA"
+  for regx in $REGIONS; do
+    LIST_OF_REDSHIFT_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --region $regx --query 'Clusters[*].ClusterIdentifier' --output text)
+    if [[ $LIST_OF_REDSHIFT_CLUSTERS ]]; then
+      for redshiftcluster in $LIST_OF_REDSHIFT_CLUSTERS;do
+        REDSHIFT_LOG_ENABLED=$($AWSCLI redshift describe-logging-status $PROFILE_OPT --region $regx --cluster-identifier $redshiftcluster --query LoggingEnabled --output text | grep True)
+        if [[ $REDSHIFT_LOG_ENABLED ]];then
+          REDSHIFT_LOG_ENABLED_BUCKET=$($AWSCLI redshift describe-logging-status $PROFILE_OPT --region $regx --cluster-identifier $redshiftcluster --query BucketName --output text)
+          textOK "$regx: Redshift cluster $redshiftcluster has audit logging enabled to bucket $REDSHIFT_LOG_ENABLED_BUCKET" "$regx"
+        else
+          textWarn "$regx: Redshift cluster $redshiftcluster logging disabled!" "$regx"
+        fi
+      done
+    else
+      textNotice "$regx: No Redshift cluster configured" "$regx"
+    fi
+  done
+}
+
+extra722(){
+  # "Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID722" "$TITLE722" "NOT_SCORED" "EXTRA"
+  for regx in $REGIONS; do
+    LIST_OF_API_GW=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query items[*].id --output text)
+    if [[ $LIST_OF_API_GW ]];then
+      for apigwid in $LIST_OF_API_GW;do
+        API_GW_NAME=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query "items[?id==\`$apigwid\`].name" --output text)
+        CHECK_STAGES_NAME=$($AWSCLI apigateway get-stages $PROFILE_OPT --region $regx --rest-api-id $apigwid --query "item[*].stageName" --output text)
+        if [[ $CHECK_STAGES_NAME ]];then
+          for stagname in $CHECK_STAGES_NAME;do
+            CHECK_STAGE_METHOD_LOGGING=$($AWSCLI apigateway get-stages $PROFILE_OPT --region $regx --rest-api-id $apigwid --query "item[?stageName == \`$stagname\` ].methodSettings" --output text|awk '{ print $1" log level "$6}')
+            if [[ $CHECK_STAGE_METHOD_LOGGING ]];then
+              textOK "$regx: API Gateway $API_GW_NAME has stage logging enabled for $CHECK_STAGE_METHOD_LOGGING" "$regx"
+            else
+              textWarn "$regx: API Gateway $API_GW_NAME logging disabled for stage $stagname!" "$regx"
+            fi
+          done
+        else
+           textWarn "$regx: No Stage name found for $API_GW_NAME" "$regx"
+        fi
+      done
+    else
+       textNotice "$regx: No API Gateway found" "$regx"
+    fi
+  done
+}
+
 callCheck(){
   if [[ $CHECKNUMBER ]];then
     case "$CHECKNUMBER" in
@@ -2114,16 +2219,20 @@ callCheck(){
       extra77|extra707 ) extra77;;
       extra78|extra708 ) extra78;;
       extra79|extra709 ) extra79;;
-      extra710|extra710 ) extra710;;
-      extra711|extra711 ) extra711;;
-      extra712|extra712 ) extra712;;
-      extra713|extra713 ) extra713;;
-      extra714|extra714 ) extra714;;
-      extra715|extra715 ) extra715;;
-      extra716|extra716 ) extra716;;
-      extra717|extra717 ) extra717;;
-      extra718|extra718 ) extra718;;
-      extra719|extra719 ) extra719;;
+      extra710 ) extra710;;
+      extra711 ) extra711;;
+      extra712 ) extra712;;
+      extra713 ) extra713;;
+      extra714 ) extra714;;
+      extra715 ) extra715;;
+      extra716 ) extra716;;
+      extra717 ) extra717;;
+      extra718 ) extra718;;
+      extra719 ) extra719;;
+      extra720 ) extra720;;
+      extra721 ) extra721;;
+      extra722 ) extra722;;
+
 
       ## Groups of Checks
       check1 )
@@ -2161,12 +2270,13 @@ callCheck(){
       extras )
         extra71;extra72;extra73;extra74;extra75;extra76;extra77;extra78;
         extra79;extra710;extra711;extra712;extra713;extra714;extra715;extra716;
-        extra717;extra718;extra719
+        extra717;extra718;extra719;extra720;extra721;extra722
         ;;
       forensics-ready )
         check21;check22;check23;check24;check25;check26;check27;
         check43;
-        extra712;extra713;extra714;extra715;extra717;extra718;extra719
+        extra712;extra713;extra714;extra715;extra717;extra718;extra719;
+        extra720;extra721;extra722
         ;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
@@ -2256,6 +2366,9 @@ if [[ $PRINTCHECKSONLY == "1" ]]; then
   textTitle "$ID717" "$TITLE717" "NOT_SCORED" "EXTRA"
   textTitle "$ID718" "$TITLE718" "NOT_SCORED" "EXTRA"
   textTitle "$ID719" "$TITLE719" "NOT_SCORED" "EXTRA"
+  textTitle "$ID720" "$TITLE720" "NOT_SCORED" "EXTRA"
+  textTitle "$ID721" "$TITLE721" "NOT_SCORED" "EXTRA"
+  textTitle "$ID722" "$TITLE722" "NOT_SCORED" "EXTRA"
   exit $EXITCODE
 fi
 
@@ -2331,26 +2444,31 @@ check43
 check44
 check45
 
-textTitle "7" "$TITLE7" "NOT_SCORED" "SUPPORT"
-extra71
-extra72
-extra73
-extra74
-extra75
-extra76
-extra77
-extra78
-extra79
-extra710
-extra711
-extra712
-extra713
-extra714
-extra715
-extra716
-extra717
-extra718
-extra719
+if [[ ! $EXTRAS ]]; then
+  textTitle "7" "$TITLE7" "NOT_SCORED" "SUPPORT"
+  extra71
+  extra72
+  extra73
+  extra74
+  extra75
+  extra76
+  extra77
+  extra78
+  extra79
+  extra710
+  extra711
+  extra712
+  extra713
+  extra714
+  extra715
+  extra716
+  extra717
+  extra718
+  extra719
+  extra720
+  extra721
+  extra722
+fi
 
 cleanTemp
 exit $EXITCODE

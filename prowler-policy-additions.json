@@ -9,7 +9,8 @@
         "cloudwatchlogs:describemetricfilters",
         "es:describeelasticsearchdomainconfig",
         "ses:getidentityverificationattributes",
-        "sns:listsubscriptionsbytopic"
+        "sns:listsubscriptionsbytopic",
+        "guardduty:ListDetectors"
       ],
       "Effect": "Allow",
       "Resource": "*"

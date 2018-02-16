@@ -25,8 +25,8 @@ It covers hardening and security best practices for all AWS regions related to:
 - Logging (8 checks)
 - Monitoring (15 checks)
 - Networking (5 checks)
-- Extras (19 checks) *see Extras section
-- Forensics related checks  
+- Extras (22 checks) *see Extras section*
+- Forensics related group of checks
 
 For a comprehesive list and resolution look at the guide on the link above.
 
@@ -128,14 +128,19 @@ USAGE:
       prowler -p <profile> -r <region> [ -h ]
   Options:
       -p <profile>        specify your AWS profile to use (i.e.: default)
-      -r <region>         specify an AWS region to direct API requests to (i.e.: us-east-1), all regions are checked anyway
-      -c <checknum>       specify a check number or group from the AWS CIS benchmark (i.e.: check11 for check 1.1, check3 for entire section 3 or level1 for CIS Level 1 Profile Definitions)
-      -f <filterregion>   specify an AWS region to run checks against (i.e.: us-west-1)
+      -r <region>         specify an AWS region to direct API requests to
+                            (i.e.: us-east-1), all regions are checked anyway
+      -c <check_id>       specify a check number or group from the AWS CIS benchmark
+                            (i.e.: "check11" for check 1.1, "check3" for entire section 3, "level1" for CIS Level 1 Profile Definitions or "forensics-ready")
+      -f <filterregion>   specify an AWS region to run checks against
+                            (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
       -M <mode>           output mode: text (defalut), mono, csv (separator is ","; data is on stdout; progress on stderr)
       -k                  keep the credential report
-      -n                  show check numbers to sort easier (i.e.: 1.01 instead of 1.1)
+      -n                  show check numbers to sort easier
+                            (i.e.: 1.01 instead of 1.1)
       -l                  list all available checks only (does not perform any check)
+      -e                  exclude extras
       -h                  this help
 
 ```
@@ -326,7 +331,7 @@ We are adding additional checks to improve the information gather from each acco
 
 Note: Some of these checks for publicly facing resources may not actually be fully public due to other layered controls like S3 Bucket Policies, Security Groups or Network ACLs.
 
-At this moment we have 16 extra checks:
+At this moment we have 22 extra checks:
 
 - 7.1 (`extra71`) Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)
 - 7.2 (`extra72`) Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)
@@ -347,6 +352,9 @@ At this moment we have 16 extra checks:
 - 7.17 (`extra717`) Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)
 - 7.18 (`extra718`) Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)
 - 7.19 (`extra719`) Check if Route53 hosted zones are logging queries to CloudWatch Logs (Not Scored) (Not part of CIS benchmark)
+- 7.20 (`extra720`) Check if Lambda functions are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)
+- 7.21 (`extra721`) Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)
+- 7.22 (`extra722`) Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)
 
 
 To check all extras in one command:
@@ -376,6 +384,9 @@ With this group of checks, Prowler looks if each service with logging or audit c
 - 7.17  Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)
 - 7.18  Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)
 - 7.19  Check if Route53 hosted zones are logging queries to CloudWatch Logs (Not Scored) (Not part of CIS benchmark)
+- 7.20  Check if Lambda functions are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)
+- 7.21  Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)
+- 7.22  Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)
 
 The `forensics-ready` group of checks uses existing and extra checks. To get a forensics readiness report, run this command:
 ```
