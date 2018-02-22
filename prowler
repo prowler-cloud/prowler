@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Prowler is a tool that provides automate auditing and hardening guidance of an AWS account.
 # It is based on AWS-CLI commands. It follows guidelines present in the CIS Amazon
