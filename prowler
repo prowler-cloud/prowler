@@ -2005,7 +2005,7 @@ extra717(){
           if [[ $CHECK_ELBS_LOG_ENABLED ]]; then
             textOK "$regx: $elb has access logs to S3 configured" "$regx"
           else
-            textWarn "$regx: $elb has not access logs configured" "$regx"
+            textWarn "$regx: $elb has not configured access logs" "$regx"
           fi
         done
       fi
@@ -2016,7 +2016,7 @@ extra717(){
           if [[ $CHECK_ELBSV2_LOG_ENABLED ]]; then
             textOK "$regx: $ELBV2_NAME has access logs to S3 configured" "$regx"
           else
-            textWarn "$regx: $ELBV2_NAME has not access logs configured" "$regx"
+            textWarn "$regx: $ELBV2_NAME has not configured access logs" "$regx"
           fi
         done
       fi
