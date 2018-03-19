@@ -25,7 +25,7 @@ It covers hardening and security best practices for all AWS regions related to:
 - Logging (8 checks)
 - Monitoring (15 checks)
 - Networking (5 checks)
-- Extras (22 checks) *see Extras section*
+- Extras (23 checks) *see Extras section*
 - Forensics related group of checks
 
 For a comprehesive list and resolution look at the guide on the link above.
@@ -354,7 +354,7 @@ At this moment we have 22 extra checks:
 - 7.20 (`extra720`) Check if Lambda functions are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)
 - 7.21 (`extra721`) Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)
 - 7.22 (`extra722`) Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)
-
+- 7.23 (`extra723`) Check if RDS Snapshots are public (Not Scored) (Not part of CIS benchmark)
 
 To check all extras in one command:
 ```
