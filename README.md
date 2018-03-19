@@ -314,7 +314,7 @@ Quick bash script to set up a "prowler" IAM user and "SecurityAudit" group with 
 export AWS_DEFAULT_PROFILE=default
 export ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' | tr -d '"')
 aws iam create-group --group-name SecurityAudit
-aws iam create-policy --policy-name ProwlerAuditAdditions --policy-document file://$(pwd)/prowler-policy-additions.json
+aws iam create-policy --policy-name ProwlerAuditAdditions --policy-document file://$(pwd)/iam/prowler-policy-additions.json
 aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::aws:policy/SecurityAudit
 aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ProwlerAuditAdditions
 aws iam create-user --user-name prowler
