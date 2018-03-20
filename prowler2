@@ -112,58 +112,7 @@ while getopts ":hlkp:r:c:f:m:M:en" OPTION; do
    esac
 done
 
-if [[ $MODE != "mono" && $MODE != "text" && $MODE != "csv" ]]; then
-  echo ""
-  echo "$OPTRED ERROR!$OPTNORMAL Invalid output mode.  Choose text, mono, or csv."
-  usage
-  EXITCODE=1
-  exit $EXITCODE
-fi
-
-if [[ "$MODE" == "mono" || "$MODE" == "csv" ]]; then
-  MONOCHROME=1
-fi
-
-if [[ $MONOCHROME -eq 1 ]]; then
-  # Colors
-  NORMAL=''
-  WARNING=''          # Bad (red)
-  SECTION=''          # Section (yellow)
-  NOTICE=''           # Notice (yellow)
-  OK=''               # Ok (green)
-  BAD=''              # Bad (red)
-  CYAN=''
-  BLUE=''
-  BROWN=''
-  DARKGRAY=''
-  GRAY=''
-  GREEN=''
-  MAGENTA=''
-  PURPLE=''
-  RED=''
-  YELLOW=''
-  WHITE=''
-else
-  # Colors
-  # NOTE: Your editor may NOT show the 0x1b / escape character left of the '['
-  NORMAL="[0;39m"
-  WARNING="[1;33m"          # Bad (red)
-  SECTION="[1;33m"          # Section (yellow)
-  NOTICE="[1;33m"           # Notice (yellow)
-  OK="[1;32m"               # Ok (green)
-  BAD="[1;31m"              # Bad (red)
-  CYAN="[0;36m"
-  BLUE="[0;34m"
-  BROWN="[0;33m"
-  DARKGRAY="[0;30m"
-  GRAY="[0;37m"
-  GREEN="[1;32m"
-  MAGENTA="[1;35m"
-  PURPLE="[0;35m"
-  RED="[1;31m"
-  YELLOW="[1;33m"
-  WHITE="[1;37m"
-fi
+. include/colors
 
 SCRIPT_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
 
@@ -494,61 +443,29 @@ if [[ $PRINTCHECKSONLY == "1" ]]; then
   exit $EXITCODE
 fi
 
-# Data Structures
-#
-# Groups
-# ------
-# GROUP_NAME[X] = "groupname"
-# GROUP_TITLE[X] = "Logging *****"
-# GROUP_RUN_BY_DEFAULT[X] = "Y"		// Whether this group is run by default
-# GROUP_CHECKS[X] = "check11,check12"	// etc. etc.
-#
-# Checks & Extras
-# ---------------
-# CHECK_TITLE[checkname] = "Title checkname"
-# CHECK_ID[checkname] = '1.1,1.01'
-# CHECK_SCORED[checkname] = 'SCORED' or 'NOT_SCORED'
-# checkname() {
-#	// code of the function. The function should be named checkname
-# }
-#
-# Check alternate names
-# CHECK_ALTERNATE[alternatename] = "checkname"
-# CHECK_ALTERNATE["check101"] = "check11"
-
-# # For group of checks arrays
-# declare -a GROUP_NAME
-# declare -a GROUP_TITLE
-# declare -a GROUP_RUN_BY_DEFAULT
-# declare -a GROUP_CHECKS
-#
-# # For checks
-# declare -a CHECK_TITLE
-# declare -a CHECK_ID
-# declare -a CHECK_SCORED
-# declare -a CHECK_ALTERNATE
-
 # Include all of the groups of checks inside include folder
-for group in $(ls include/group*); do
+for group in $(ls groups/group*); do
 	. "$group"
 done
 
 # Include all of the checks inside include folder
 # this includes also extra check since they are "check_extraNN"
-for checks in $(ls include/check*); do
+for checks in $(ls checks/check*); do
 	. "$checks"
 done
 
 # Function to show the title of the check
 show_check_title() {
 	# This would just call textTitle
-  textTitle "${CHECK_ID[$1]} ${CHECK_TITLE[$1]} ${CHECK_SCORED[$1]}"
+  textTitle "${CHECK_ID[$1]}" "${CHECK_TITLE[$1]}" "${CHECK_SCORED[$1]}" "${CHECK_TYPE[$1]}"
 }
 
 # Function to show the title of a group, by numeric id
 show_group_title() {
 	# This would also just call textTitle in the real prowler
-	textTitle ${GROUP_NUMBER[$1]} - ${GROUP_TITLE[$1]}
+  if [[ "$MODE" != "csv" ]]; then
+      textTitle "${GROUP_NUMBER[$1]}" "${GROUP_TITLE[$1]}" "NOT_SCORED" "SUPPORT"
+  fi
 }
 
 # Function to execute the check
@@ -586,7 +503,9 @@ execute_group_by_name() {
 # Function to execute all checks in all groups
 execute_all() {
 	for i in ${#GROUP_TITLE[@]}; do
-		execute_group $i
+    if [ "${GROUP_RUN_BY_DEFAULT[$i]}" == "Y" ]; then
+		  execute_group $i
+    fi
 	done
 }
 
@@ -613,13 +532,13 @@ genCredReport
 saveReport
 callCheck
 
-execute_all
+show_all_titles
 
 
-if [[ ! $EXTRAS ]]; then
-  textTitle "7" "$TITLE7" "NOT_SCORED" "SUPPORT"
-  execute_group 7
-fi
+# if [[ ! $EXTRAS ]]; then
+#   textTitle "7" "$TITLE7" "NOT_SCORED" "SUPPORT"
+#   execute_group 7
+# fi
 
 cleanTemp
 exit $EXITCODE

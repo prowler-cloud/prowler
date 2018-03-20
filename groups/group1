@@ -3,6 +3,5 @@
 GROUP_ID[1]="group1"
 GROUP_NUMBER[1]="1.0"
 GROUP_TITLE[1]="Identity and Access Management"
-GROUP_RUN_BY_DEFAULT[1]="Y"
+GROUP_RUN_BY_DEFAULT[1]="Y" # run it when execute_all is called 
 GROUP_CHECKS[1]="check11"
-textTitle "$GROUP_NUMBER" "$GROUP_TITLE"
