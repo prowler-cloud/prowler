@@ -1249,7 +1249,7 @@ check33(){
       CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
       METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION |grep -E 'userIdentity.*Root.*AwsServiceEvent')
       if [[ $METRICFILTER_SET ]];then
-        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | tr '[:upper:]' '[:lower:]'| grep -Ei 'userIdentity|Root|AwsServiceEvent')
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | tr '[:upper:]' '[:lower:]'| grep -Ei 'userIdentity|Root|AwsServiceEvent')
         if [[ $HAS_ALARM_ASSOCIATED ]];then
           textOK "CloudWatch group $group found with metric filters and alarms set for usage of root account"
         else
