@@ -140,6 +140,7 @@ callCheck(){
   if [[ $CHECKNUMBER ]];then
     case "$CHECKNUMBER" in
       check11|check101 ) execute_check check11;;
+      check12|check102 ) execute_check check12;;
       * )
         textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
     esac
@@ -242,7 +243,8 @@ fi
 getWhoami
 genCredReport
 saveReport
-callCheck
+
+#callCheck
 
 execute_all
 
