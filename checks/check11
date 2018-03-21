@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 CHECK_ID[check11]="1.1,1.01"
-CHECK_TITLE[check11]="Avoid the use of the root account (Scored)."
+CHECK_TITLE[check11]="Avoid the use of the root account (Scored)"
 CHECK_SCORED[check11]="SCORED"
 CHECK_TYPE[check11]="LEVEL1"
 CHECK_ALTERNATE[check101]="check11"

@@ -1,0 +1,7 @@
+# AWS-CLI detector variable
+AWSCLI=$(which aws)
+if [ -z "${AWSCLI}" ]; then
+  echo -e "\n$RED ERROR!$NORMAL AWS-CLI (aws command) not found. Make sure it is installed correctly and in your \$PATH\n"
+  EXITCODE=1
+  exit $EXITCODE
+fi

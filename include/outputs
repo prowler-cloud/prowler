@@ -1,0 +1,81 @@
+## Output formatting functions
+textOK(){
+  if [[ "$MODE" == "csv" ]]; then
+    if [[ $2 ]]; then
+      REPREGION=$2
+    else
+      REPREGION=$REGION
+    fi
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
+  else
+    echo "      $OK OK! $NORMAL $1"
+  fi
+}
+
+textNotice(){
+  if [[ "$MODE" == "csv" ]]; then
+    if [[ $2 ]]; then
+      REPREGION=$2
+    else
+      REPREGION=$REGION
+    fi
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
+  else
+    echo "      $NOTICE INFO! $1 $NORMAL"
+  fi
+}
+
+textWarn(){
+  EXITCODE=3
+  if [[ "$MODE" == "csv" ]]; then
+    if [[ $2 ]]; then
+      REPREGION=$2
+    else
+      REPREGION=$REGION
+    fi
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}WARNING${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
+  else
+    echo "      $BAD WARNING! $1 $NORMAL"
+  fi
+}
+
+textTitle(){
+  TITLE_ID=$1
+  if [[ $NUMERAL ]]; then
+    TITLE_ID=$(echo $TITLE_ID | cut -d, -f2)
+  else
+    TITLE_ID=$(echo $TITLE_ID | cut -d, -f1)
+  fi
+
+  TITLE_TEXT=$2
+
+  case "$3" in
+    0|No|NOT_SCORED)
+      ITEM_SCORED="Not Scored"
+      ;;
+    1|Yes|SCORED)
+      ITEM_SCORED="Scored"
+      ;;
+    *)
+      ITEM_SCORED="Unspecified"
+      ;;
+  esac
+
+  case "$4" in
+    LEVEL1)  ITEM_LEVEL="Level 1";;
+    LEVEL2)  ITEM_LEVEL="Level 2";;
+    EXTRA)   ITEM_LEVEL="Extra";;
+    SUPPORT) ITEM_LEVEL="Support";;
+    *)       ITEM_LEVEL="Unspecified or Invalid";;
+  esac
+
+  if [[ "$MODE" == "csv" ]]; then
+      >&2 echo "$TITLE_ID $TITLE_TEXT"
+  else
+    if [[ "$ITEM_SCORED" == "Scored" ]]; then
+      echo -e "\n$BLUE $TITLE_ID $NORMAL $TITLE_TEXT"
+    else
+      echo -e "\n$PURPLE $TITLE_ID  $TITLE_TEXT $NORMAL"
+    fi
+  fi
+}
