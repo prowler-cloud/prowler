@@ -1,0 +1,13 @@
+CHECK_ID_check119="" 
+CHECK_TITLE_check119="" 
+CHECK_SCORED_check119="" 
+CHECK_TYPE_check119="" 
+CHECK_ALTERNATE_check119="check119" 
+ 
+check119(){
+  # "Maintain current contact details (Scored)"
+  # No command available
+  textTitle "$ID119" "$TITLE119" "SCORED" "LEVEL1"
+  textNotice "No command available for check 1.19 "
+  textNotice "See section 1.19 on the CIS Benchmark guide for details "
+}

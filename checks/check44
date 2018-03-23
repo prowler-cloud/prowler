@@ -1,0 +1,18 @@
+CHECK_ID_check44="" 
+CHECK_TITLE_check44="" 
+CHECK_SCORED_check44="" 
+CHECK_TYPE_check44="" 
+CHECK_ALTERNATE_check44="check44" 
+ 
+check44(){
+  # "Ensure the default security group of every VPC restricts all traffic (Scored)"
+  textTitle "$ID44" "$TITLE44" "SCORED" "LEVEL2"
+  for regx in $REGIONS; do
+    CHECK_SGDEFAULT=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --filters Name=group-name,Values='default' --query 'SecurityGroups[*].{IpPermissions:IpPermissions,IpPermissionsEgress:IpPermissionsEgress,GroupId:GroupId}' --output text |grep 0.0.0.0)
+    if [[ $CHECK_SGDEFAULT ]];then
+      textWarn "Default Security Groups found that allow 0.0.0.0 IN or OUT traffic in Region $regx" "$regx"
+    else
+      textOK "No Default Security Groups open to 0.0.0.0 found in Region $regx" "$regx"
+    fi
+  done
+}

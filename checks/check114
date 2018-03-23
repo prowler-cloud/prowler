@@ -1,0 +1,21 @@
+CHECK_ID_check114="" 
+CHECK_TITLE_check114="" 
+CHECK_SCORED_check114="" 
+CHECK_TYPE_check114="" 
+CHECK_ALTERNATE_check114="check114" 
+ 
+check114(){
+  # "Ensure hardware MFA is enabled for the root account (Scored)"
+  COMMAND113=$($AWSCLI iam get-account-summary $PROFILE_OPT --region $REGION --output json --query 'SummaryMap.AccountMFAEnabled')
+  textTitle "$ID114" "$TITLE114" "SCORED" "LEVEL1"
+  if [ "$COMMAND113" == "1" ]; then
+    COMMAND114=$($AWSCLI iam list-virtual-mfa-devices $PROFILE_OPT --region $REGION --output text --assignment-status Assigned --query 'VirtualMFADevices[*].[SerialNumber]' | grep '^arn:aws:iam::[0-9]\{12\}:mfa/root-account-mfa-device$')
+    if [[ "$COMMAND114" ]]; then
+      textWarn "Only Virtual MFA is enabled for root"
+    else
+      textOK "Hardware MFA is enabled for root "
+    fi
+  else
+    textWarn "MFA is not ENABLED for root account "
+  fi
+}

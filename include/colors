@@ -53,6 +53,6 @@ fi
 
 printColorsCode(){
   if [[ $MONOCHROME -eq 0 ]]; then
-    echo -e "\n$NORMAL Colors Code for results: $NOTICE INFORMATIVE$NORMAL,$OK OK (RECOMMENDED VALUE)$NORMAL, $BAD WARNING (FIX REQUIRED)$NORMAL"
+    echo -e "\n$NORMAL Colors code for results: $NOTICE INFORMATIVE$NORMAL,$OK OK (RECOMMENDED VALUE)$NORMAL, $BAD WARNING (FIX REQUIRED)$NORMAL"
   fi
 }

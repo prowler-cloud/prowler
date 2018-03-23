@@ -1,0 +1,30 @@
+CHECK_ID_check37="" 
+CHECK_TITLE_check37="" 
+CHECK_SCORED_check37="" 
+CHECK_TYPE_check37="" 
+CHECK_ALTERNATE_check37="check37" 
+ 
+check37(){
+  # "Ensure a log metric filter and alarm exist for disabling or scheduled deletion of customer created CMKs (Scored)"
+  textTitle "$ID37" "$TITLE37" "SCORED" "LEVEL2"
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '	' '
+' | awk -F: '{ print $7 }')
+  if [[ $CLOUDWATCH_GROUP ]];then
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }')
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | grep -E 'kms.amazonaws.com.*DisableKey.*ScheduleKeyDeletion')
+      if [[ $METRICFILTER_SET ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /DisableKey/ || /ScheduleKeyDeletion/ || /kms/;')
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textOK "CloudWatch group $group found with metric filters and alarms for changes of customer created CMKs"
+        else
+          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+        fi
+      else
+        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
+  else
+    textWarn "No CloudWatch group found for CloudTrail events"
+  fi
+}

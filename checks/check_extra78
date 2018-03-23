@@ -1,0 +1,23 @@
+CHECK_ID_check_extra78="" 
+CHECK_TITLE_check_extra78="" 
+CHECK_SCORED_check_extra78="" 
+CHECK_TYPE_check_extra78="" 
+CHECK_ALTERNATE_check_extra78="check_extra78" 
+ 
+extra78(){
+  # "Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID78" "$TITLE78" "NOT_SCORED" "EXTRA"
+  textNotice "Looking for RDS instances in all regions...  "
+  for regx in $REGIONS; do
+    LIST_OF_RDS_PUBLIC_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[?PubliclyAccessible==`true`].[DBInstanceIdentifier,Endpoint.Address]' --output text)
+    if [[ $LIST_OF_RDS_PUBLIC_INSTANCES ]];then
+      while read -r rds_instance;do
+        RDS_NAME=$(echo $rds_instance | awk '{ print $1; }')
+        RDS_DNSNAME=$(echo $rds_instance | awk '{ print $2; }')
+        textWarn "$regx: RDS instance: $RDS_NAME at $RDS_DNSNAME is set as Publicly Accessible!" "$regx"
+      done <<< "$LIST_OF_RDS_PUBLIC_INSTANCES"
+      else
+        textOK "$regx: no Publicly Accessible RDS instances found" "$regx"
+    fi
+  done
+}

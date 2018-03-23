@@ -1,0 +1,20 @@
+CHECK_ID_check43="" 
+CHECK_TITLE_check43="" 
+CHECK_SCORED_check43="" 
+CHECK_TYPE_check43="" 
+CHECK_ALTERNATE_check43="check43" 
+ 
+check43(){
+  # "Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
+  textTitle "$ID43" "$TITLE43" "SCORED" "LEVEL2"
+  for regx in $REGIONS; do
+    CHECK_FL=$($AWSCLI ec2 describe-flow-logs $PROFILE_OPT --region $regx --query 'FlowLogs[?FlowLogStatus==`ACTIVE`].LogGroupName' --output text)
+    if [[ $CHECK_FL ]];then
+      for FL in $CHECK_FL;do
+        textOK "VPCFlowLog is enabled for LogGroupName: $FL in Region $regx" "$regx"
+      done
+    else
+      textWarn "No VPCFlowLog has been found in Region $regx" "$regx"
+    fi
+  done
+}

@@ -1,0 +1,25 @@
+CHECK_ID_check_extra714="" 
+CHECK_TITLE_check_extra714="" 
+CHECK_SCORED_check_extra714="" 
+CHECK_TYPE_check_extra714="" 
+CHECK_ALTERNATE_check_extra714="check_extra714" 
+ 
+extra714(){
+  # "Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID714" "$TITLE714" "NOT_SCORED" "EXTRA"
+  for regx in $REGIONS; do
+    LIST_OF_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions $PROFILE_OPT --region $regx --query 'DistributionList.Items[].Id' --output text |grep -v "^None")
+    if [[ $LIST_OF_DISTRIBUTIONS ]]; then
+      for cdn in $LIST_OF_DISTRIBUTIONS;do
+        CDN_LOG_ENABLED=$($AWSCLI cloudfront get-distribution $PROFILE_OPT --region $regx --id "$cdn" --query 'Distribution.DistributionConfig.Logging.Enabled' | grep true)
+        if [[ $CDN_LOG_ENABLED ]];then
+          textOK "$regx: CDN $cdn logging enabled" "$regx"
+        else
+          textWarn "$regx: CDN $cdn logging disabled!" "$regx"
+        fi
+      done
+    else
+      textNotice "$regx: No CDN configured" "$regx"
+    fi
+  done
+}

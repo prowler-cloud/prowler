@@ -3,8 +3,8 @@ prowlerBanner() {
   echo -e "  _ __  _ __ _____      _| | ___ _ __"
   echo -e " | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|"
   echo -e " | |_) | | | (_) \ V  V /| |  __/ |"
-  echo -e " | .__/|_|  \___/ \_/\_/ |_|\___|_|"
-  echo -e " |_|$NORMAL$BLUE CIS based AWS Account Hardening Tool$NORMAL\n"
+  echo -e " | .__/|_|  \___/ \_/\_/ |_|\___|_|v2.0"
+  echo -e " |_|$NORMAL$BLUE the handy cloud security tool$NORMAL\n"
   echo -e "$YELLOW Date: $(date)"
 }
 

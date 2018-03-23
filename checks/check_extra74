@@ -1,0 +1,22 @@
+CHECK_ID_check_extra74="" 
+CHECK_TITLE_check_extra74="" 
+CHECK_SCORED_check_extra74="" 
+CHECK_TYPE_check_extra74="" 
+CHECK_ALTERNATE_check_extra74="check_extra74" 
+ 
+extra74(){
+  # "Ensure there are no Security Groups without ingress filtering being used (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID74" "$TITLE74" "NOT_SCORED" "EXTRA"
+  textNotice "Looking for Security Groups in all regions...  "
+  for regx in $REGIONS; do
+    LIST_OF_SECURITYGROUPS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --filters "Name=ip-permission.cidr,Values=0.0.0.0/0" --query "SecurityGroups[].[GroupId]" --output text --max-items $MAXITEMS)
+    for SG_ID in $LIST_OF_SECURITYGROUPS; do
+      SG_NO_INGRESS_FILTER=$($AWSCLI ec2 describe-network-interfaces $PROFILE_OPT --region $regx --filters "Name=group-id,Values=$SG_ID" --query "length(NetworkInterfaces)" --output text)
+      if [[ $SG_NO_INGRESS_FILTER -ne 0 ]];then
+        textWarn "$regx: $SG_ID has not ingress filtering and it is being used!" "$regx"
+      else
+        textNotice "$regx: $SG_ID has not ingress filtering but it is no being used" "$regx"
+      fi
+    done
+  done
+}

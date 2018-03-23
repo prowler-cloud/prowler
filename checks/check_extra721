@@ -1,0 +1,26 @@
+CHECK_ID_check_extra721="" 
+CHECK_TITLE_check_extra721="" 
+CHECK_SCORED_check_extra721="" 
+CHECK_TYPE_check_extra721="" 
+CHECK_ALTERNATE_check_extra721="check_extra721" 
+ 
+extra721(){
+  # "Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID721" "$TITLE721" "NOT_SCORED" "EXTRA"
+  for regx in $REGIONS; do
+    LIST_OF_REDSHIFT_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --region $regx --query 'Clusters[*].ClusterIdentifier' --output text)
+    if [[ $LIST_OF_REDSHIFT_CLUSTERS ]]; then
+      for redshiftcluster in $LIST_OF_REDSHIFT_CLUSTERS;do
+        REDSHIFT_LOG_ENABLED=$($AWSCLI redshift describe-logging-status $PROFILE_OPT --region $regx --cluster-identifier $redshiftcluster --query LoggingEnabled --output text | grep True)
+        if [[ $REDSHIFT_LOG_ENABLED ]];then
+          REDSHIFT_LOG_ENABLED_BUCKET=$($AWSCLI redshift describe-logging-status $PROFILE_OPT --region $regx --cluster-identifier $redshiftcluster --query BucketName --output text)
+          textOK "$regx: Redshift cluster $redshiftcluster has audit logging enabled to bucket $REDSHIFT_LOG_ENABLED_BUCKET" "$regx"
+        else
+          textWarn "$regx: Redshift cluster $redshiftcluster logging disabled!" "$regx"
+        fi
+      done
+    else
+      textNotice "$regx: No Redshift cluster configured" "$regx"
+    fi
+  done
+}

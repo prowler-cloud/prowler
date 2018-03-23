@@ -1,0 +1,26 @@
+CHECK_ID_check_extra79="" 
+CHECK_TITLE_check_extra79="" 
+CHECK_SCORED_check_extra79="" 
+CHECK_TYPE_check_extra79="" 
+CHECK_ALTERNATE_check_extra79="check_extra79" 
+ 
+extra79(){
+  # "Check for internet facing Elastic Load Balancers (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID79" "$TITLE79" "NOT_SCORED" "EXTRA"
+  textNotice "Looking for Elastic Load Balancers in all regions...  "
+  for regx in $REGIONS; do
+    LIST_OF_PUBLIC_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[?Scheme == `internet-facing`].[LoadBalancerName,DNSName]' --output text)
+    LIST_OF_PUBLIC_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Scheme == `internet-facing`].[LoadBalancerName,DNSName]' --output text)
+    LIST_OF_ALL_ELBS=$( echo $LIST_OF_PUBLIC_ELBS; echo $LIST_OF_PUBLIC_ELBSV2)
+    LIST_OF_ALL_ELBS_PER_LINE=$( echo $LIST_OF_ALL_ELBS| xargs -n2 )
+    if [[ $LIST_OF_ALL_ELBS ]];then
+      while read -r elb;do
+        ELB_NAME=$(echo $elb | awk '{ print $1; }')
+        ELB_DNSNAME=$(echo $elb | awk '{ print $2; }')
+        textWarn "$regx: ELB: $ELB_NAME at DNS: $ELB_DNSNAME is internet-facing!" "$regx"
+      done <<< "$LIST_OF_ALL_ELBS_PER_LINE"
+      else
+        textOK "$regx: no Internet Facing ELBs found" "$regx"
+    fi
+  done
+}

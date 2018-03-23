@@ -1,0 +1,23 @@
+CHECK_ID_check_extra711="" 
+CHECK_TITLE_check_extra711="" 
+CHECK_SCORED_check_extra711="" 
+CHECK_TYPE_check_extra711="" 
+CHECK_ALTERNATE_check_extra711="check_extra711" 
+ 
+extra711(){
+  # "Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID711" "$TITLE711" "NOT_SCORED" "EXTRA"
+  textNotice "Looking for Reshift clusters in all regions...  "
+  for regx in $REGIONS; do
+    LIST_OF_PUBLIC_REDSHIFT_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --region $regx --query 'Clusters[?PubliclyAccessible == `true`].[ClusterIdentifier,Endpoint.Address]' --output text)
+    if [[ $LIST_OF_PUBLIC_REDSHIFT_CLUSTERS ]];then
+      while read -r cluster;do
+        CLUSTER_ID=$(echo $cluster | awk '{ print $1; }')
+        CLUSTER_ENDPOINT=$(echo $cluster | awk '{ print $2; }')
+        textWarn "$regx: Cluster: $CLUSTER_ID at Endpoint: $CLUSTER_ENDPOINT is publicly accessible!" "$regx"
+      done <<< "$LIST_OF_PUBLIC_REDSHIFT_CLUSTERS"
+      else
+        textOK "$regx: no Publicly Accessible Redshift Clusters found" "$regx"
+    fi
+  done
+}

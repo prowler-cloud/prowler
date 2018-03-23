@@ -1,0 +1,39 @@
+CHECK_ID_check_extra717="" 
+CHECK_TITLE_check_extra717="" 
+CHECK_SCORED_check_extra717="" 
+CHECK_TYPE_check_extra717="" 
+CHECK_ALTERNATE_check_extra717="check_extra717" 
+ 
+extra717(){
+  # "Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID717" "$TITLE717" "NOT_SCORED" "EXTRA"
+  for regx in $REGIONS; do
+    LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].LoadBalancerName' --output text|xargs -n1)
+    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].LoadBalancerArn' --output text|xargs -n1)
+    if [[ $LIST_OF_ELBS || $LIST_OF_ELBSV2 ]]; then
+      if [[ $LIST_OF_ELBS ]]; then
+        for elb in $LIST_OF_ELBS; do
+          CHECK_ELBS_LOG_ENABLED=$($AWSCLI elb describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-name $elb --query 'LoadBalancerAttributes.AccessLog.Enabled'|grep "^true")
+          if [[ $CHECK_ELBS_LOG_ENABLED ]]; then
+            textOK "$regx: $elb has access logs to S3 configured" "$regx"
+          else
+            textWarn "$regx: $elb has not configured access logs" "$regx"
+          fi
+        done
+      fi
+      if [[ $LIST_OF_ELBSV2 ]]; then
+        for elbarn in $LIST_OF_ELBSV2; do
+          CHECK_ELBSV2_LOG_ENABLED=$($AWSCLI elbv2 describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-arn $elbarn --query Attributes[*] --output text|grep "^access_logs.s3.enabled"|cut -f2|grep true)
+          ELBV2_NAME=$(echo $elbarn|cut -d\/ -f3)
+          if [[ $CHECK_ELBSV2_LOG_ENABLED ]]; then
+            textOK "$regx: $ELBV2_NAME has access logs to S3 configured" "$regx"
+          else
+            textWarn "$regx: $ELBV2_NAME has not configured access logs" "$regx"
+          fi
+        done
+      fi
+    else
+      textNotice "$regx: No ELBs found" "$regx"
+    fi
+  done
+}

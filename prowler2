@@ -97,7 +97,7 @@ while getopts ":hlkp:r:c:f:m:M:enb" OPTION; do
         NUMERAL=1
         ;;
      b )
-        NOBANNER="true"
+        BANNER=1
         ;;
      e )
         EXTRAS=1
@@ -136,18 +136,19 @@ REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
   --region $REGION \
   --region-names $FILTERREGION)
 
-callCheck(){
-  if [[ $CHECKNUMBER ]];then
-    case "$CHECKNUMBER" in
-      check11|check101 ) execute_check check11;;
-      check12|check102 ) execute_check check12;;
-      * )
-        textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
-    esac
-    cleanTemp
-    exit $EXITCODE
-  fi
-}
+  callCheck(){
+    if [[ $CHECKNUMBER ]];then
+        execute_check $CHECKNUMBER
+  #    case "$CHECKNUMBER" in
+  #      check11|check101 ) execute_check check11;;
+  #      check12|check102 ) execute_check check12;;
+  #      * )
+  #        textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
+  #    esac
+      cleanTemp
+      exit $EXITCODE
+    fi
+  }
 
 # List only check tittles
 if [[ $PRINTCHECKSONLY == "1" ]]; then
@@ -168,9 +169,14 @@ for checks in $(ls checks/check*); do
 done
 
 # Function to show the title of the check
+# using this way instead of arrays to keep bash3 (osx) and bash4(linux) compatibility
 show_check_title() {
 	# This would just call textTitle
-  textTitle "${CHECK_ID[$1]}" "${CHECK_TITLE[$1]}" "${CHECK_SCORED[$1]}" "${CHECK_TYPE[$1]}"
+  local check_id=CHECK_ID_$1
+  local check_title=CHECK_TITLE_$1
+  local check_scored=CHECK_SCORED_$1
+  local check_type=CHECK_TYPE_$1
+  textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_type}"
 }
 
 # Function to show the title of a group, by numeric id
@@ -185,12 +191,22 @@ show_group_title() {
 execute_check() {
 	# See if this is an alternate name for a check
 	# for example, we might have been passed 1.01 which is another name for 1.1
-	if [ ${CHECK_ALTERNATE[$1]} ];then
-		show_check_title ${CHECK_ALTERNATE[$1]}
-		${CHECK_ALTERNATE[$1]}
+  local alternate_name_var=CHECK_ALTERNATE_$1
+  local alternate_name=${!alternate_name_var}
+
+	if [ ${alternate_name} ];then
+		show_check_title ${alternate_name}
+		${alternate_name}
 	else
-		show_check_title $1
-		$1
+    # Check to see if this is a real check
+    local check_id_var=CHECK_ID_$1
+    local check_id=${!check_id_var}
+    if [ ${check_id} ]; then
+		  show_check_title $1
+		  $1
+    else
+      textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
+    fi
 	fi
 }
 
@@ -199,8 +215,8 @@ execute_group() {
 	show_group_title $1
 	# run the checks in the group
 	IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$1]}
-	for i in "${CHECKS[@]}"; do
-		execute_check $i
+	for i in ${CHECKS[@]}; do
+    execute_check $i
 	done
 }
 
@@ -235,8 +251,7 @@ show_all_titles() {
 }
 
 ### All functions defined above ... run the workflow
-
-if [[ $MODE != "csv" || $NOBANNER != "true" ]]; then
+if [[ $MODE != "csv" ]]; then
   prowlerBanner
   printColorsCode
 fi

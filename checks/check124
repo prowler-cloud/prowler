@@ -1,0 +1,31 @@
+CHECK_ID_check124="" 
+CHECK_TITLE_check124="" 
+CHECK_SCORED_check124="" 
+CHECK_TYPE_check124="" 
+CHECK_ALTERNATE_check124="check124" 
+ 
+check124(){
+  # "Ensure IAM policies that allow full \"*:*\" administrative privileges are not created (Scored)"
+  textTitle "$ID124" "$TITLE124" "SCORED" "LEVEL1"
+  LIST_CUSTOM_POLICIES=$($AWSCLI iam list-policies --output text $PROFILE_OPT --region $REGION|grep 'arn:aws:iam::[0-9]\{12\}:'|awk '{ print $2 }')
+  if [[ $LIST_CUSTOM_POLICIES ]]; then
+    textNotice "Looking for custom policies: (skipping default policies - it may take few seconds...)"
+    for policy in $LIST_CUSTOM_POLICIES; do
+      POLICY_VERSION=$($AWSCLI iam list-policies $PROFILE_OPT --region $REGION --query 'Policies[*].[Arn,DefaultVersionId]' --output text |awk "\$1 == \"$policy\" { print \$2 }")
+      POLICY_WITH_FULL=$($AWSCLI iam get-policy-version --output text --policy-arn $policy --version-id $POLICY_VERSION --query "PolicyVersion.Document.Statement[?Effect == 'Allow' && contains(Resource, '*') && contains (Action, '*')]" $PROFILE_OPT --region $REGION)
+      if [[ $POLICY_WITH_FULL ]]; then
+        POLICIES_ALLOW_LIST="$POLICIES_ALLOW_LIST $policy"
+      fi
+    done
+    if [[ $POLICIES_ALLOW_LIST ]]; then
+      textNotice "List of custom policies: "
+      for policy in $POLICIES_ALLOW_LIST; do
+        textNotice "Policy $policy allows \"*:*\""
+      done
+    else
+        textOK "No custom policy found that allow full \"*:*\" administrative privileges"
+    fi
+  else
+    textOK "No custom policies found"
+  fi
+}

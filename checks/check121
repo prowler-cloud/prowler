@@ -1,0 +1,12 @@
+CHECK_ID_check121="" 
+CHECK_TITLE_check121="" 
+CHECK_SCORED_check121="" 
+CHECK_TYPE_check121="" 
+CHECK_ALTERNATE_check121="check121" 
+ 
+check121(){
+  # "Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
+  textTitle "$ID121" "$TITLE121" "NOT_SCORED" "LEVEL2"
+  textNotice "No command available for check 1.21 "
+  textNotice "See section 1.21 on the CIS Benchmark guide for details "
+}

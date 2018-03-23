@@ -1,0 +1,27 @@
+CHECK_ID_check122="" 
+CHECK_TITLE_check122="" 
+CHECK_SCORED_check122="" 
+CHECK_TYPE_check122="" 
+CHECK_ALTERNATE_check122="check122" 
+ 
+check122(){
+  # "Ensure a support role has been created to manage incidents with AWS Support (Scored)"
+  textTitle "$ID122" "$TITLE122" "SCORED" "LEVEL1"
+  SUPPORTPOLICYARN=$($AWSCLI iam list-policies --query "Policies[?PolicyName == 'AWSSupportAccess'].Arn" $PROFILE_OPT --region $REGION --output text)
+  if [[ $SUPPORTPOLICYARN ]];then
+    for policyarn in $SUPPORTPOLICYARN;do
+      POLICYUSERS=$($AWSCLI iam list-entities-for-policy --policy-arn $SUPPORTPOLICYARN $PROFILE_OPT --region $REGION --output json)
+      if [[ $POLICYUSERS ]];then
+        textOK "Support Policy attached to $policyarn"
+        for user in $(echo "$POLICYUSERS" | grep UserName | cut -d'"' -f4) ; do
+          textNotice "User $user has support access via $policyarn"
+        done
+        # textNotice "Make sure your team can create a Support case with AWS "
+      else
+        textWarn "Support Policy not applied to any Group / User / Role "
+      fi
+    done
+  else
+    textWarn "No Support Policy found"
+  fi
+}

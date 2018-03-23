@@ -1,0 +1,23 @@
+CHECK_ID_check_extra718="" 
+CHECK_TITLE_check_extra718="" 
+CHECK_SCORED_check_extra718="" 
+CHECK_TYPE_check_extra718="" 
+CHECK_ALTERNATE_check_extra718="check_extra718" 
+ 
+extra718(){
+  # "Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID718" "$TITLE718" "NOT_SCORED" "EXTRA"
+  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text|xargs -n1)
+  if [[ $LIST_OF_BUCKETS ]]; then
+    for bucket in $LIST_OF_BUCKETS;do
+      BUCKET_SERVER_LOG_ENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --query [LoggingEnabled] --output text|grep -v "^None$")
+      if [[ $BUCKET_SERVER_LOG_ENABLED ]];then
+        textOK "Bucket $bucket has server access logging enabled"
+      else
+        textWarn "Bucket $bucket has server access logging disabled!"
+      fi
+    done
+  else
+    textNotice "No S3 Buckets found"
+  fi
+}

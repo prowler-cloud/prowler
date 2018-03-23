@@ -1,0 +1,23 @@
+CHECK_ID_check26="" 
+CHECK_TITLE_check26="" 
+CHECK_SCORED_check26="" 
+CHECK_TYPE_check26="" 
+CHECK_ALTERNATE_check26="check26" 
+ 
+check26(){
+  # "Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)"
+  textTitle "$ID26" "$TITLE26" "SCORED" "LEVEL1"
+  CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text $PROFILE_OPT --region $REGION)
+    if [[ $CLOUDTRAILBUCKET ]];then
+      for bucket in $CLOUDTRAILBUCKET;do
+        CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --region $REGION --query 'LoggingEnabled.TargetBucket' --output text|grep -v None)
+        if [[ $CLOUDTRAILBUCKET_LOGENABLED ]];then
+          textOK "Bucket access logging enabled in $bucket"
+        else
+          textWarn "access logging is not enabled in $bucket CloudTrail S3 bucket!"
+        fi
+      done
+    else
+      textWarn "CloudTrail bucket not found!"
+    fi
+}

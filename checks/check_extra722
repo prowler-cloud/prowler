@@ -1,0 +1,33 @@
+CHECK_ID_check_extra722="" 
+CHECK_TITLE_check_extra722="" 
+CHECK_SCORED_check_extra722="" 
+CHECK_TYPE_check_extra722="" 
+CHECK_ALTERNATE_check_extra722="check_extra722" 
+ 
+extra722(){
+  # "Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)"
+  textTitle "$ID722" "$TITLE722" "NOT_SCORED" "EXTRA"
+  for regx in $REGIONS; do
+    LIST_OF_API_GW=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query items[*].id --output text)
+    if [[ $LIST_OF_API_GW ]];then
+      for apigwid in $LIST_OF_API_GW;do
+        API_GW_NAME=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query "items[?id==\`$apigwid\`].name" --output text)
+        CHECK_STAGES_NAME=$($AWSCLI apigateway get-stages $PROFILE_OPT --region $regx --rest-api-id $apigwid --query "item[*].stageName" --output text)
+        if [[ $CHECK_STAGES_NAME ]];then
+          for stagname in $CHECK_STAGES_NAME;do
+            CHECK_STAGE_METHOD_LOGGING=$($AWSCLI apigateway get-stages $PROFILE_OPT --region $regx --rest-api-id $apigwid --query "item[?stageName == \`$stagname\` ].methodSettings" --output text|awk '{ print $1" log level "$6}')
+            if [[ $CHECK_STAGE_METHOD_LOGGING ]];then
+              textOK "$regx: API Gateway $API_GW_NAME has stage logging enabled for $CHECK_STAGE_METHOD_LOGGING" "$regx"
+            else
+              textWarn "$regx: API Gateway $API_GW_NAME logging disabled for stage $stagname!" "$regx"
+            fi
+          done
+        else
+           textWarn "$regx: No Stage name found for $API_GW_NAME" "$regx"
+        fi
+      done
+    else
+       textNotice "$regx: No API Gateway found" "$regx"
+    fi
+  done
+}
