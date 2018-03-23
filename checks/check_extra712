@@ -1,9 +1,9 @@
-CHECK_ID_check_extra712="" 
-CHECK_TITLE_check_extra712="" 
-CHECK_SCORED_check_extra712="" 
-CHECK_TYPE_check_extra712="" 
-CHECK_ALTERNATE_check_extra712="check_extra712" 
- 
+CHECK_ID_extra712="7.12"
+CHECK_TITLE_extra712="Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra712="NOT_SCORED"
+CHECK_ALTERNATE_extra712="extra712"
+CHECK_ALTERNATE_check712="extra712"
+
 extra712(){
   # "Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID712" "$TITLE712" "NOT_SCORED" "EXTRA"

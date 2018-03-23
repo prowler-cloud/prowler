@@ -1,9 +1,9 @@
-CHECK_ID_check_extra710="" 
-CHECK_TITLE_check_extra710="" 
-CHECK_SCORED_check_extra710="" 
-CHECK_TYPE_check_extra710="" 
-CHECK_ALTERNATE_check_extra710="check_extra710" 
- 
+CHECK_ID_extra710="7.10"
+CHECK_TITLE_extra710="Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra710="NOT_SCORED"
+CHECK_ALTERNATE_extra710="extra710"
+CHECK_ALTERNATE_check710="extra710"
+
 extra710(){
   # "Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID710" "$TITLE710" "NOT_SCORED" "EXTRA"

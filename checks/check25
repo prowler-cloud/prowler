@@ -1,9 +1,8 @@
-CHECK_ID_check25="" 
-CHECK_TITLE_check25="" 
-CHECK_SCORED_check25="" 
-CHECK_TYPE_check25="" 
-CHECK_ALTERNATE_check25="check25" 
- 
+CHECK_ID_check25="2.5,2.05"
+CHECK_TITLE_check25="Ensure AWS Config is enabled in all regions (Scored)"
+CHECK_SCORED_check25="SCORED"
+CHECK_ALTERNATE_check205="check25" 
+
 check25(){
   # "Ensure AWS Config is enabled in all regions (Scored)"
   textTitle "$ID25" "$TITLE25" "SCORED" "LEVEL1"

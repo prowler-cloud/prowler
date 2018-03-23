@@ -1,9 +1,10 @@
-CHECK_ID_check_extra78="" 
-CHECK_TITLE_check_extra78="" 
-CHECK_SCORED_check_extra78="" 
-CHECK_TYPE_check_extra78="" 
-CHECK_ALTERNATE_check_extra78="check_extra78" 
- 
+CHECK_ID_extra78="7.8,7.08"
+CHECK_TITLE_extra78="Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra78="NOT_SCORED"
+CHECK_ALTERNATE_extra708="extra78"
+CHECK_ALTERNATE_check78="extra78"
+CHECK_ALTERNATE_check708="extra78"
+
 extra78(){
   # "Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID78" "$TITLE78" "NOT_SCORED" "EXTRA"

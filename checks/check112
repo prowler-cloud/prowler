@@ -1,9 +1,8 @@
-CHECK_ID_check112="" 
-CHECK_TITLE_check112="" 
-CHECK_SCORED_check112="" 
-CHECK_TYPE_check112="" 
-CHECK_ALTERNATE_check112="check112" 
- 
+CHECK_ID_check112="1.12"
+CHECK_TITLE_check112="Ensure no root account access key exists (Scored)"
+CHECK_SCORED_check112="SCORED" 
+CHECK_ALTERNATE_check112="check112"
+
 check112(){
   # "Ensure no root account access key exists (Scored)"
   # ensure the access_key_1_active and access_key_2_active fields are set to FALSE.

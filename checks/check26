@@ -1,9 +1,8 @@
-CHECK_ID_check26="" 
-CHECK_TITLE_check26="" 
-CHECK_SCORED_check26="" 
-CHECK_TYPE_check26="" 
-CHECK_ALTERNATE_check26="check26" 
- 
+CHECK_ID_check26="2.6,2.06"
+CHECK_TITLE_check26="Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)"
+CHECK_SCORED_check26="SCORED"
+CHECK_ALTERNATE_check206="check26" 
+
 check26(){
   # "Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)"
   textTitle "$ID26" "$TITLE26" "SCORED" "LEVEL1"

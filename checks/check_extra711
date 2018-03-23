@@ -1,9 +1,9 @@
-CHECK_ID_check_extra711="" 
-CHECK_TITLE_check_extra711="" 
-CHECK_SCORED_check_extra711="" 
-CHECK_TYPE_check_extra711="" 
-CHECK_ALTERNATE_check_extra711="check_extra711" 
- 
+CHECK_ID_extra711="7.11"
+CHECK_TITLE_extra711="Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra711="NOT_SCORED"
+CHECK_ALTERNATE_extra711="extra711"
+CHECK_ALTERNATE_check711="extra711"
+
 extra711(){
   # "Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID711" "$TITLE711" "NOT_SCORED" "EXTRA"

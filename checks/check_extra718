@@ -1,9 +1,9 @@
-CHECK_ID_check_extra718="" 
-CHECK_TITLE_check_extra718="" 
-CHECK_SCORED_check_extra718="" 
-CHECK_TYPE_check_extra718="" 
-CHECK_ALTERNATE_check_extra718="check_extra718" 
- 
+CHECK_ID_extra718="7.18"
+CHECK_TITLE_extra718="Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra718="NOT_SCORED"
+CHECK_ALTERNATE_extra718="extra718"
+CHECK_ALTERNATE_check718="extra718"
+
 extra718(){
   # "Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID718" "$TITLE718" "NOT_SCORED" "EXTRA"

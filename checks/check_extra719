@@ -1,9 +1,9 @@
-CHECK_ID_check_extra719="" 
-CHECK_TITLE_check_extra719="" 
-CHECK_SCORED_check_extra719="" 
-CHECK_TYPE_check_extra719="" 
-CHECK_ALTERNATE_check_extra719="check_extra719" 
- 
+CHECK_ID_extra719="7.19"
+CHECK_TITLE_extra719="Check if Route53 hosted zones are logging queries to CloudWatch Logs (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra719="NOT_SCORED"
+CHECK_ALTERNATE_extra719="extra719"
+CHECK_ALTERNATE_check719="extra719"
+
 extra719(){
   # "Check if Route53 hosted zones are logging queries to CloudWatch Logs (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID719" "$TITLE719" "NOT_SCORED" "EXTRA"

@@ -136,42 +136,20 @@ REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
   --region $REGION \
   --region-names $FILTERREGION)
 
-  callCheck(){
-    if [[ $CHECKNUMBER ]];then
-        execute_check $CHECKNUMBER
-  #    case "$CHECKNUMBER" in
-  #      check11|check101 ) execute_check check11;;
-  #      check12|check102 ) execute_check check12;;
-  #      * )
-  #        textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
-  #    esac
-      cleanTemp
-      exit $EXITCODE
-    fi
-  }
-
-# List only check tittles
-if [[ $PRINTCHECKSONLY == "1" ]]; then
-  prowlerBanner
-  show_all_titles
-  exit $EXITCODE
-fi
-
-# Load all of the groups of checks inside groups folder named as "group*"
-for group in $(ls groups/group*); do
+# Load all of the groups of checks inside groups folder named as "groupNumber*"
+for group in $(ls groups/group[0-9]*|grep -v groupN_sample); do
 	. "$group"
 done
 
 # Load all of the checks inside checks folder named as "check*"
 # this includes also extra checks since they are "check_extraNN"
-for checks in $(ls checks/check*); do
+for checks in $(ls checks/check*|grep -v check_sample); do
 	. "$checks"
 done
 
 # Function to show the title of the check
 # using this way instead of arrays to keep bash3 (osx) and bash4(linux) compatibility
 show_check_title() {
-	# This would just call textTitle
   local check_id=CHECK_ID_$1
   local check_title=CHECK_TITLE_$1
   local check_scored=CHECK_SCORED_$1
@@ -205,7 +183,7 @@ execute_check() {
 		  show_check_title $1
 		  $1
     else
-      textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
+      textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)";
     fi
 	fi
 }
@@ -231,7 +209,7 @@ execute_group_by_name() {
 
 # Function to execute all checks in all groups
 execute_all() {
-	for i in ${#GROUP_TITLE[@]}; do
+	for i in "${!GROUP_TITLE[@]}"; do
     if [ "${GROUP_RUN_BY_DEFAULT[$i]}" == "Y" ]; then
 		  execute_group $i
     fi
@@ -240,15 +218,29 @@ execute_all() {
 
 # Function to show the titles of everything
 show_all_titles() {
-	for i in ${#GROUP_TITLE[@]}; do
+	for i in "${!GROUP_TITLE[@]}"; do
 		show_group_title $i
 		# Display the title of the checks
 		IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$i]}
-		for j in "${CHECKS[@]}"; do
+		for j in "${GROUP_CHECKS[@]}"; do
 			show_check_title $j
 		done
 	done
 }
+
+# Execute single check if called with -c
+if [[ $CHECKNUMBER ]];then
+  execute_check $CHECKNUMBER
+  cleanTemp
+  exit $EXITCODE
+fi
+
+# List only check tittles
+if [[ $PRINTCHECKSONLY == "1" ]]; then
+  prowlerBanner
+  show_all_titles
+  exit $EXITCODE
+fi
 
 ### All functions defined above ... run the workflow
 if [[ $MODE != "csv" ]]; then
@@ -262,12 +254,6 @@ saveReport
 #callCheck
 
 execute_all
-
-
-# if [[ ! $EXTRAS ]]; then
-#   textTitle "7" "$TITLE7" "NOT_SCORED" "SUPPORT"
-#   execute_group 7
-# fi
 
 cleanTemp
 exit $EXITCODE

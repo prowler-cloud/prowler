@@ -1,9 +1,8 @@
-CHECK_ID_check121="" 
-CHECK_TITLE_check121="" 
-CHECK_SCORED_check121="" 
-CHECK_TYPE_check121="" 
+CHECK_ID_check121="1.21"
+CHECK_TITLE_check121="Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
+CHECK_SCORED_check121="NOT_SCORED"
 CHECK_ALTERNATE_check121="check121" 
- 
+
 check121(){
   # "Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
   textTitle "$ID121" "$TITLE121" "NOT_SCORED" "LEVEL2"

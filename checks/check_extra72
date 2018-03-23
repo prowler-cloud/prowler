@@ -1,9 +1,10 @@
-CHECK_ID_check_extra72="" 
-CHECK_TITLE_check_extra72="" 
-CHECK_SCORED_check_extra72="" 
-CHECK_TYPE_check_extra72="" 
-CHECK_ALTERNATE_check_extra72="check_extra72" 
- 
+CHECK_ID_extra72="7.2,7.02"
+CHECK_TITLE_extra72="Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra72="NOT_SCORED"
+CHECK_ALTERNATE_extra702="extra72"
+CHECK_ALTERNATE_check72="extra72"
+CHECK_ALTERNATE_check702="extra72"
+
 extra72(){
   # "Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID72" "$TITLE72" "NOT_SCORED" "EXTRA"

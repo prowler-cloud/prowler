@@ -1,9 +1,8 @@
-CHECK_ID_check18="" 
-CHECK_TITLE_check18="" 
-CHECK_SCORED_check18="" 
-CHECK_TYPE_check18="" 
-CHECK_ALTERNATE_check18="check18" 
- 
+CHECK_ID_check18="1.8,1.08"
+CHECK_TITLE_check18="Ensure IAM password policy require at least one number (Scored)"
+CHECK_SCORED_check18="SCORED"
+CHECK_ALTERNATE_check18="check18"
+
 check18(){
   # "Ensure IAM password policy require at least one number (Scored)"
   COMMAND18=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json --query 'PasswordPolicy.RequireNumbers' 2> /dev/null) # must be true

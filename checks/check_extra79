@@ -1,9 +1,10 @@
-CHECK_ID_check_extra79="" 
-CHECK_TITLE_check_extra79="" 
-CHECK_SCORED_check_extra79="" 
-CHECK_TYPE_check_extra79="" 
-CHECK_ALTERNATE_check_extra79="check_extra79" 
- 
+CHECK_ID_extra79="7.9,7.09"
+CHECK_TITLE_extra79="Check for internet facing Elastic Load Balancers (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra79="NOT_SCORED"
+CHECK_ALTERNATE_extra709="extra79"
+CHECK_ALTERNATE_check79="extra79"
+CHECK_ALTERNATE_check709="extra79"
+
 extra79(){
   # "Check for internet facing Elastic Load Balancers (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID79" "$TITLE79" "NOT_SCORED" "EXTRA"

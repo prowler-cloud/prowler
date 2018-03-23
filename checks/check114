@@ -1,9 +1,8 @@
-CHECK_ID_check114="" 
-CHECK_TITLE_check114="" 
-CHECK_SCORED_check114="" 
-CHECK_TYPE_check114="" 
+CHECK_ID_check114="1.14"
+CHECK_TITLE_check114="Ensure hardware MFA is enabled for the root account (Scored)"
+CHECK_SCORED_check114="SCORED"
 CHECK_ALTERNATE_check114="check114" 
- 
+
 check114(){
   # "Ensure hardware MFA is enabled for the root account (Scored)"
   COMMAND113=$($AWSCLI iam get-account-summary $PROFILE_OPT --region $REGION --output json --query 'SummaryMap.AccountMFAEnabled')

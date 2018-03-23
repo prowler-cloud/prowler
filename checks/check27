@@ -1,9 +1,8 @@
-CHECK_ID_check27="" 
-CHECK_TITLE_check27="" 
-CHECK_SCORED_check27="" 
-CHECK_TYPE_check27="" 
-CHECK_ALTERNATE_check27="check27" 
- 
+CHECK_ID_check27="2.7,2.07"
+CHECK_TITLE_check27="Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)"
+CHECK_SCORED_check27="SCORED"
+CHECK_ALTERNATE_check207="check27" 
+
 check27(){
   # "Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)"
   textTitle "$ID27" "$TITLE27" "SCORED" "LEVEL2"

@@ -1,9 +1,8 @@
-CHECK_ID_check14="" 
-CHECK_TITLE_check14="" 
-CHECK_SCORED_check14="" 
-CHECK_TYPE_check14="" 
-CHECK_ALTERNATE_check14="check14" 
- 
+CHECK_ID_check14="1.4,1.04"
+CHECK_TITLE_check14="Ensure access keys are rotated every 90 days or less (Scored)"
+CHECK_SCORED_check14="SCORED"
+CHECK_ALTERNATE_check104="check14"
+
 check14(){
   # "Ensure access keys are rotated every 90 days or less (Scored)" # also checked by Security Monkey
   LIST_OF_USERS_WITH_ACCESS_KEY1=$(cat $TEMP_REPORT_FILE| awk -F, '{ print $1, $9 }' |grep "\ true" | awk '{ print $1 }')

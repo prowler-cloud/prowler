@@ -1,9 +1,8 @@
-CHECK_ID_check312="" 
-CHECK_TITLE_check312="" 
-CHECK_SCORED_check312="" 
-CHECK_TYPE_check312="" 
-CHECK_ALTERNATE_check312="check312" 
- 
+CHECK_ID_check312="3.12"
+CHECK_TITLE_check312="Ensure a log metric filter and alarm exist for changes to network gateways (Scored)"
+CHECK_SCORED_check312="SCORED" 
+CHECK_ALTERNATE_check312="check312"
+
 check312(){
   # "Ensure a log metric filter and alarm exist for changes to network gateways (Scored)"
   textTitle "$ID312" "$TITLE312" "SCORED" "LEVEL1"

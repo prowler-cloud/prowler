@@ -1,9 +1,8 @@
-CHECK_ID_check23="" 
-CHECK_TITLE_check23="" 
-CHECK_SCORED_check23="" 
-CHECK_TYPE_check23="" 
-CHECK_ALTERNATE_check23="check23" 
- 
+CHECK_ID_check23="2.3,2.03"
+CHECK_TITLE_check23="Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)"
+CHECK_SCORED_check23="SCORED"
+CHECK_ALTERNATE_check203="check23" 
+
 check23(){
   # "Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)"
   textTitle "$ID23" "$TITLE23" "SCORED" "LEVEL1"

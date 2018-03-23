@@ -1,9 +1,9 @@
-CHECK_ID_check_extra722="" 
-CHECK_TITLE_check_extra722="" 
-CHECK_SCORED_check_extra722="" 
-CHECK_TYPE_check_extra722="" 
-CHECK_ALTERNATE_check_extra722="check_extra722" 
- 
+CHECK_ID_extra722="7.22"
+CHECK_TITLE_extra722="Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra722="NOT_SCORED"
+CHECK_ALTERNATE_check722="extra722"
+CHECK_ALTERNATE_extra722="extra722"
+
 extra722(){
   # "Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID722" "$TITLE722" "NOT_SCORED" "EXTRA"

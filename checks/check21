@@ -1,9 +1,8 @@
-CHECK_ID_check21="" 
-CHECK_TITLE_check21="" 
-CHECK_SCORED_check21="" 
-CHECK_TYPE_check21="" 
-CHECK_ALTERNATE_check21="check21" 
- 
+CHECK_ID_check21="2.1,2.01"
+CHECK_TITLE_check21="Ensure CloudTrail is enabled in all regions (Scored)"
+CHECK_SCORED_check21="SCORED"
+CHECK_ALTERNATE_check201="check21" 
+
 check21(){
   # "Ensure CloudTrail is enabled in all regions (Scored)"
   textTitle "$ID21" "$TITLE21" "SCORED" "LEVEL1"

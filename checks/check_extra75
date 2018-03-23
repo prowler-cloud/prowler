@@ -1,9 +1,10 @@
-CHECK_ID_check_extra75="" 
-CHECK_TITLE_check_extra75="" 
-CHECK_SCORED_check_extra75="" 
-CHECK_TYPE_check_extra75="" 
-CHECK_ALTERNATE_check_extra75="check_extra75" 
- 
+CHECK_ID_extra75="7.5,7.05"
+CHECK_TITLE_extra75="Ensure there are no Security Groups not being used (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra75="NOT_SCORED"
+CHECK_ALTERNATE_extra705="extra75"
+CHECK_ALTERNATE_check75="extra75"
+CHECK_ALTERNATE_check705="extra75"
+
 extra75(){
   # "Ensure there are no Security Groups not being used (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID75" "$TITLE75" "NOT_SCORED" "EXTRA"

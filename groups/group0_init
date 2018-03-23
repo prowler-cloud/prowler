@@ -1,0 +1,6 @@
+GROUP_ID[0]='init' # this group make easier to understand the array of groups
+GROUP_NUMBER[0]='0.0'
+GROUP_TITLE[0]='Init ****************************************************************'
+GROUP_RUN_BY_DEFAULT[0]='N' # run it when execute_all is called
+GROUP_CHECKS[0]=''
+

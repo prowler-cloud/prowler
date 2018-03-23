@@ -1,9 +1,9 @@
-CHECK_ID_check_extra720="" 
-CHECK_TITLE_check_extra720="" 
-CHECK_SCORED_check_extra720="" 
-CHECK_TYPE_check_extra720="" 
-CHECK_ALTERNATE_check_extra720="check_extra720" 
- 
+CHECK_ID_extra720="7.20"
+CHECK_TITLE_extra720="Check if Lambda functions invoke API operations are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra720="NOT_SCORED"
+CHECK_ALTERNATE_extra720="extra720"
+CHECK_ALTERNATE_check720="extra720"
+
 extra720(){
   # "Check if Lambda functions invoke API operations are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)"
   textTitle "$ID720" "$TITLE720" "NOT_SCORED" "EXTRA"
