@@ -8,7 +8,7 @@ textOK(){
     fi
     echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
   else
-    echo "      $OK OK! $NORMAL $1"
+    echo "      $OK PASS! $NORMAL $1"
   fi
 }
 
@@ -35,7 +35,7 @@ textWarn(){
     fi
     echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}WARNING${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
   else
-    echo "      $BAD WARNING! $1 $NORMAL"
+    echo "      $BAD FAIL! $1 $NORMAL"
   fi
 }
 

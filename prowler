@@ -222,7 +222,7 @@ show_all_titles() {
 		show_group_title $i
 		# Display the title of the checks
 		IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$i]}
-		for j in "${GROUP_CHECKS[@]}"; do
+		for j in $CHECKS; do
 			show_check_title $j
 		done
 	done
