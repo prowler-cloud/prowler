@@ -11,7 +11,7 @@
 #
 # Author: Toni de la Fuente - @ToniBlyx - https://blyx.com/contact
 
-# http://prowler.cloud 
+# http://prowler.cloud
 
 # Prowler - Iron Maiden
 #
@@ -199,7 +199,7 @@ execute_check() {
 # Function to execute all checks in a group
 execute_group() {
 	show_group_title $1
-	# run the checks in the group
+  # run the checks in the group
 	IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$1]}
 	for i in ${CHECKS[@]}; do
     execute_check $i
@@ -208,12 +208,14 @@ execute_group() {
 
 # Function to execute group by name
 execute_group_by_id() {
+  if [ "${GROUP_ID[$1]}" == "group1" ]; then
+    genCredReport
+    saveReport
+  fi
+  prowlerBanner
 	for i in "${!GROUP_ID[@]}"; do
 		if [ "${GROUP_ID[$i]}" == "$1" ]; then
 			execute_group $i
-    else
-      textWarn "ERROR! Use a valid group check name (i.e. group1 or extras or forensics-ready)";
-      exit $EXITCODE
 		fi
 	done
 }
@@ -264,12 +266,10 @@ fi
 if [[ $MODE != "csv" ]]; then
   prowlerBanner
 fi
-getWhoami
+
 genCredReport
 saveReport
-
-#callCheck
-
+getWhoami
 execute_all
 
 cleanTemp

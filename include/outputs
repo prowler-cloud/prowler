@@ -75,7 +75,7 @@ textTitle(){
     if [[ "$ITEM_SCORED" == "Scored" ]]; then
       echo -e "\n$BLUE $TITLE_ID $NORMAL $TITLE_TEXT"
     else
-      echo -e "\n$PURPLE $TITLE_ID  $TITLE_TEXT $NORMAL"
+      echo -e "\n$PURPLE $TITLE_ID $TITLE_TEXT $NORMAL"
     fi
   fi
 }

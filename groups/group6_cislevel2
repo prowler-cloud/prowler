@@ -1,4 +1,4 @@
-GROUP_ID[6]='level2'
+GROUP_ID[6]='cislevel2'
 GROUP_NUMBER[6]='6.0'
 GROUP_TITLE[6]='CIS Level 2 **********************************************************'
 GROUP_RUN_BY_DEFAULT[6]='N' # run it when execute_all is called
