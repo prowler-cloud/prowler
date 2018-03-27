@@ -1,7 +1,6 @@
 CHECK_ID_extra716="7.16"
 CHECK_TITLE_extra716="Check if Elasticsearch Service domains allow open access (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra716="NOT_SCORED"
-CHECK_ALTERNATE_extra716="extra716"
 CHECK_ALTERNATE_check716="extra716"
 
 extra716(){

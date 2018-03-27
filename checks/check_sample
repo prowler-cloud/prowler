@@ -1,0 +1,21 @@
+# CHECK_ID_checkN="N.N"
+# CHECK_TITLE_checkN="Description (Not Scored) (Not part of CIS benchmark)"
+# CHECK_SCORED_checkN="NOT_SCORED"
+# CHECK_ALTERNATE_checkN="extraN"
+#
+# extraN(){
+#   # "Description (Not Scored) (Not part of CIS benchmark)"
+#   textNotice "Looking for instances in all regions...  "
+#   for regx in $REGIONS; do
+#     LIST_OF_PUBLIC_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query 'Reservations[*].Instances[?PublicIpAddress].[InstanceId,PublicIpAddress]' --output text)
+#     if [[ $LIST_OF_PUBLIC_INSTANCES ]];then
+#       while read -r instance;do
+#         INSTANCE_ID=$(echo $instance | awk '{ print $1; }')
+#         PUBLIC_IP=$(echo $instance | awk '{ print $2; }')
+#         textWarn "$regx: Instance: $INSTANCE_ID at IP: $PUBLIC_IP is internet-facing!" "$regx"
+#       done <<< "$LIST_OF_PUBLIC_INSTANCES"
+#       else
+#         textOK "$regx: no Internet Facing EC2 Instances found" "$regx"
+#     fi
+#   done
+# }

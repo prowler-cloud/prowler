@@ -1,7 +1,6 @@
 CHECK_ID_extra715="7.15"
 CHECK_TITLE_extra715="Check if Elasticsearch Service domains have logging enabled (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra715="NOT_SCORED"
-CHECK_ALTERNATE_extra715="extra715"
 CHECK_ALTERNATE_check715="extra715"
 
 extra715(){
