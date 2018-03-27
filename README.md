@@ -71,6 +71,8 @@ arn:aws:iam::aws:policy/SecurityAudit
 ./prowler
 ```
 
+Use `-l` to list all available checks and group of checks (sections)
+
 2 - For custom AWS-CLI profile and region, use the following: (it will use your custom profile and run checks over all regions when needed):
 
 ```
@@ -88,7 +90,7 @@ or for custom profile and region
 ```
 or for a group of checks use group name:
 ```
-./prowler -c check3
+./prowler -g group1 # for iam related checks
 ```
 
 Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 and 3.10 is check310
@@ -148,7 +150,7 @@ USAGE:
       -h                  this help
 
 ```
-## Fix:
+## Fix every FAIL:
  Check your report and fix the issues following all specific guidelines per check in https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf
 
 ## Screenshots
