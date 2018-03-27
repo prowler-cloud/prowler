@@ -6,7 +6,6 @@ CHECK_ALTERNATE_check719="extra719"
 
 extra719(){
   # "Check if Route53 hosted zones are logging queries to CloudWatch Logs (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID719" "$TITLE719" "NOT_SCORED" "EXTRA"
   LIST_OF_HOSTED_ZONES=$($AWSCLI route53 list-hosted-zones $PROFILE_OPT --query HostedZones[*].Id --output text|xargs -n1)
   if [[ $LIST_OF_HOSTED_ZONES ]]; then
     for hostedzoneid in $LIST_OF_HOSTED_ZONES;do

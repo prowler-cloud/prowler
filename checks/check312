@@ -5,7 +5,6 @@ CHECK_ALTERNATE_check312="check312"
 
 check312(){
   # "Ensure a log metric filter and alarm exist for changes to network gateways (Scored)"
-  textTitle "$ID312" "$TITLE312" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '	' '
 ' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then

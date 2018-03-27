@@ -6,7 +6,6 @@ CHECK_ALTERNATE_extra722="extra722"
 
 extra722(){
   # "Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID722" "$TITLE722" "NOT_SCORED" "EXTRA"
   for regx in $REGIONS; do
     LIST_OF_API_GW=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query items[*].id --output text)
     if [[ $LIST_OF_API_GW ]];then

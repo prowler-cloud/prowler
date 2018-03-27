@@ -5,7 +5,6 @@ CHECK_ALTERNATE_check202="check22"
 
 check22(){
   # "Ensure CloudTrail log file validation is enabled (Scored)"
-  textTitle "$ID22" "$TITLE22" "SCORED" "LEVEL2"
   LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].Name' --output text)
   if [[ $LIST_OF_TRAILS ]];then
     for trail in $LIST_OF_TRAILS;do

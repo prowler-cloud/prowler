@@ -7,7 +7,6 @@ CHECK_ALTERNATE_check705="extra75"
 
 extra75(){
   # "Ensure there are no Security Groups not being used (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID75" "$TITLE75" "NOT_SCORED" "EXTRA"
   textNotice "Looking for Security Groups in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_SECURITYGROUPS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --query "SecurityGroups[].[GroupId]" --output text --max-items $MAXITEMS)

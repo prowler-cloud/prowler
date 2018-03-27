@@ -6,7 +6,6 @@ CHECK_ALTERNATE_extra723="extra723"
 
 extra723(){
   # "Check if RDS Snapshots are public (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID723" "$TITLE723" "NOT_SCORED" "EXTRA"
   for regx in $REGIONS; do
     # RDS snapshots
     LIST_OF_RDS_SNAPSHOTS=$($AWSCLI rds describe-db-snapshots $PROFILE_OPT --region $regx --query DBSnapshots[*].DBSnapshotIdentifier --output text)

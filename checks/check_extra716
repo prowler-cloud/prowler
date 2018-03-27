@@ -6,7 +6,6 @@ CHECK_ALTERNATE_check716="extra716"
 
 extra716(){
   # "Check if Elasticsearch Service domains allow open access (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID716" "$TITLE716" "NOT_SCORED" "EXTRA"
   for regx in $REGIONS; do
     LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text)
     if [[ $LIST_OF_DOMAINS ]]; then

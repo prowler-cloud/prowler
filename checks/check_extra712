@@ -6,7 +6,6 @@ CHECK_ALTERNATE_check712="extra712"
 
 extra712(){
   # "Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID712" "$TITLE712" "NOT_SCORED" "EXTRA"
   textNotice "No API commands available to check if Macie is enabled,"
   textNotice "just looking if IAM Macie related permissions exist.  "
   MACIE_IAM_ROLES_CREATED=$($AWSCLI iam list-roles $PROFILE_OPT --query 'Roles[*].Arn'|grep AWSMacieServiceCustomer|wc -l)

@@ -5,7 +5,6 @@ CHECK_ALTERNATE_check304="check34"
 
 check34(){
   # "Ensure a log metric filter and alarm exist for IAM policy changes (Scored)"
-  textTitle "$ID34" "$TITLE34" "SCORED" "LEVEL1"
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '	' '
 ' | awk -F: '{ print $7 }')
   if [[ $CLOUDWATCH_GROUP ]];then

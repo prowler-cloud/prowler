@@ -6,7 +6,6 @@ CHECK_ALTERNATE_check109="check19"
 check19(){
   # "Ensure IAM password policy requires minimum length of 14 or greater (Scored)"
   COMMAND19=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json --query 'PasswordPolicy.MinimumPasswordLength' 2> /dev/null)
-  textTitle "$ID19" "$TITLE19" "SCORED" "LEVEL1"
   if [[ $COMMAND19 -gt "13" ]];then
     textOK "Password Policy requires more than 13 characters"
   else

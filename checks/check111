@@ -6,7 +6,6 @@ CHECK_ALTERNATE_check111="check111"
 check111(){
   # "Ensure IAM password policy expires passwords within 90 days or less (Scored)"
   COMMAND111=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json | grep MaxPasswordAge | awk -F: '{ print $2 }'|sed 's/\ //g'|sed 's/,/ /g' 2> /dev/null)
-  textTitle "$ID111" "$TITLE111" "SCORED" "LEVEL1"
   if [[ $COMMAND111 ]];then
     if [ "$COMMAND111" == "90" ];then
       textOK "Password Policy includes expiration"

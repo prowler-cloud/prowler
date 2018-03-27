@@ -6,7 +6,6 @@ CHECK_ALTERNATE_check710="extra710"
 
 extra710(){
   # "Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID710" "$TITLE710" "NOT_SCORED" "EXTRA"
   textNotice "Looking for instances in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_PUBLIC_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query 'Reservations[*].Instances[?PublicIpAddress].[InstanceId,PublicIpAddress]' --output text)

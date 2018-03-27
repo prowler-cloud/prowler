@@ -6,7 +6,6 @@ CHECK_ALTERNATE_check110="check110"
 check110(){
   # "Ensure IAM password policy prevents password reuse: 24 or greater (Scored)"
   COMMAND110=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --query 'PasswordPolicy.PasswordReusePrevention' --output text 2> /dev/null)
-  textTitle "$ID110" "$TITLE110" "SCORED" "LEVEL1"
   if [[ $COMMAND110 ]];then
     if [[ $COMMAND110 -gt "23" ]];then
       textOK "Password Policy limits reuse"

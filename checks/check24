@@ -5,7 +5,6 @@ CHECK_ALTERNATE_check204="check24"
 
 check24(){
   # "Ensure CloudTrail trails are integrated with CloudWatch Logs (Scored)"
-  textTitle "$ID24" "$TITLE24" "SCORED" "LEVEL1"
   TRAILS_AND_REGIONS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].{Name:Name, HomeRegion:HomeRegion}' --output text | tr "	" ',')
   if [[ $TRAILS_AND_REGIONS ]];then
     for reg_trail in $TRAILS_AND_REGIONS;do

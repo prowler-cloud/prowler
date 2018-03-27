@@ -7,7 +7,6 @@ CHECK_ALTERNATE_check704="extra74"
 
 extra74(){
   # "Ensure there are no Security Groups without ingress filtering being used (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID74" "$TITLE74" "NOT_SCORED" "EXTRA"
   textNotice "Looking for Security Groups in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_SECURITYGROUPS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --filters "Name=ip-permission.cidr,Values=0.0.0.0/0" --query "SecurityGroups[].[GroupId]" --output text --max-items $MAXITEMS)

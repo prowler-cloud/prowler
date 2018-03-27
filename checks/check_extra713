@@ -6,7 +6,6 @@ CHECK_ALTERNATE_check713="extra713"
 
 extra713(){
   # "Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID713" "$TITLE713" "NOT_SCORED" "EXTRA"
   for regx in $REGIONS; do
     LIST_OF_GUARDDUTY_DETECTORS=$($AWSCLI guardduty list-detectors $PROFILE_OPT --region $regx --output text |cut -f2)
     if [[ $LIST_OF_GUARDDUTY_DETECTORS ]];then

@@ -5,7 +5,6 @@ CHECK_ALTERNATE_check206="check26"
 
 check26(){
   # "Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)"
-  textTitle "$ID26" "$TITLE26" "SCORED" "LEVEL1"
   CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text $PROFILE_OPT --region $REGION)
     if [[ $CLOUDTRAILBUCKET ]];then
       for bucket in $CLOUDTRAILBUCKET;do

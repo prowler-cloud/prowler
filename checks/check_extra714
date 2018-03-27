@@ -6,7 +6,6 @@ CHECK_ALTERNATE_check714="extra714"
 
 extra714(){
   # "Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID714" "$TITLE714" "NOT_SCORED" "EXTRA"
   for regx in $REGIONS; do
     LIST_OF_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions $PROFILE_OPT --region $regx --query 'DistributionList.Items[].Id' --output text |grep -v "^None")
     if [[ $LIST_OF_DISTRIBUTIONS ]]; then

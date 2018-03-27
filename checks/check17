@@ -6,7 +6,6 @@ CHECK_ALTERNATE_check107="check17"
 check17(){
   # "Ensure IAM password policy require at least one symbol (Scored)"
   COMMAND17=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json --query 'PasswordPolicy.RequireSymbols' 2> /dev/null) # must be true
-  textTitle "$ID17" "$TITLE17" "SCORED" "LEVEL1"
   if [[ "$COMMAND17" == "true" ]];then
     textOK "Password Policy requires symbol"
   else

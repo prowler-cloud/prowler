@@ -5,7 +5,6 @@ CHECK_ALTERNATE_check103="check13"
 
 check13(){
   # "Ensure credentials unused for 90 days or greater are disabled (Scored)"
-  textTitle "$ID13" "$TITLE13" "SCORED" "LEVEL1"
   COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$4 }' |grep true | awk '{ print $1 }')
   if [[ $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED ]]; then
     COMMAND13=$(

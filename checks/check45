@@ -5,7 +5,6 @@ CHECK_ALTERNATE_check405="check45"
 
 check45(){
   # "Ensure routing tables for VPC peering are \"least access\" (Not Scored)"
-  textTitle "$ID45" "$TITLE45" "NOT_SCORED" "LEVEL2"
   textNotice "Looking for VPC peering in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_VPCS_PEERING_CONNECTIONS=$($AWSCLI ec2 describe-vpc-peering-connections --output text $PROFILE_OPT --region $regx --query 'VpcPeeringConnections[*].VpcPeeringConnectionId')

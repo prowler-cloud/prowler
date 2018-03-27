@@ -7,7 +7,6 @@ CHECK_ALTERNATE_check709="extra79"
 
 extra79(){
   # "Check for internet facing Elastic Load Balancers (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID79" "$TITLE79" "NOT_SCORED" "EXTRA"
   textNotice "Looking for Elastic Load Balancers in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_PUBLIC_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[?Scheme == `internet-facing`].[LoadBalancerName,DNSName]' --output text)

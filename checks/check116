@@ -5,7 +5,6 @@ CHECK_ALTERNATE_check116="check116"
 
 check116(){
   # "Ensure IAM policies are attached only to groups or roles (Scored)"
-  textTitle "$ID116" "$TITLE116" "SCORED" "LEVEL1"
   LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text $PROFILE_OPT --region $REGION)
   C116_NUM_USERS=0
   for user in $LIST_USERS;do

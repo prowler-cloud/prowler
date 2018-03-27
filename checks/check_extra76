@@ -7,7 +7,6 @@ CHECK_ALTERNATE_check706="extra76"
 
 extra76(){
   # "Ensure there are no EC2 AMIs set as Public (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID76" "$TITLE76" "NOT_SCORED" "EXTRA"
   textNotice "Looking for AMIs in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_PUBLIC_AMIS=$($AWSCLI ec2 describe-images --owners self $PROFILE_OPT --region $regx --filters "Name=is-public,Values=true" --query 'Images[*].{ID:ImageId}' --output text)

@@ -7,7 +7,6 @@ CHECK_ALTERNATE_check708="extra78"
 
 extra78(){
   # "Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID78" "$TITLE78" "NOT_SCORED" "EXTRA"
   textNotice "Looking for RDS instances in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_RDS_PUBLIC_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[?PubliclyAccessible==`true`].[DBInstanceIdentifier,Endpoint.Address]' --output text)

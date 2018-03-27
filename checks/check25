@@ -5,7 +5,6 @@ CHECK_ALTERNATE_check205="check25"
 
 check25(){
   # "Ensure AWS Config is enabled in all regions (Scored)"
-  textTitle "$ID25" "$TITLE25" "SCORED" "LEVEL1"
   for regx in $REGIONS; do
     CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice get-status $PROFILE_OPT --region $regx --output json| grep "recorder: ON")
     if [[ $CHECK_AWSCONFIG_STATUS ]];then

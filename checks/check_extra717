@@ -6,7 +6,6 @@ CHECK_ALTERNATE_check717="extra717"
 
 extra717(){
   # "Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID717" "$TITLE717" "NOT_SCORED" "EXTRA"
   for regx in $REGIONS; do
     LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].LoadBalancerName' --output text|xargs -n1)
     LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].LoadBalancerArn' --output text|xargs -n1)

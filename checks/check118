@@ -5,7 +5,6 @@ CHECK_ALTERNATE_check118="check118"
 
 check118(){
   # "Ensure IAM Master and IAM Manager roles are active (Scored)"
-  textTitle "$ID118" "$TITLE118" "SCORED" "LEVEL1"
   FINDMASTERANDMANAGER=$($AWSCLI iam list-roles $PROFILE_OPT --region $REGION --query "Roles[*].{RoleName:RoleName}" --output text | grep -E 'Master|Manager'| tr '
 ' ' ')
   if [[ $FINDMASTERANDMANAGER ]];then

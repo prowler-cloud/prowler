@@ -1,11 +1,14 @@
 prowlerBanner() {
-  echo -e "$CYAN                          _"
-  echo -e "  _ __  _ __ _____      _| | ___ _ __"
-  echo -e " | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|"
-  echo -e " | |_) | | | (_) \ V  V /| |  __/ |"
-  echo -e " | .__/|_|  \___/ \_/\_/ |_|\___|_|v2.0"
-  echo -e " |_|$NORMAL$BLUE the handy cloud security tool$NORMAL\n"
-  echo -e "$YELLOW Date: $(date)"
+  if [[ $BANNER != "0" ]]; then
+    echo -e "$CYAN                          _"
+    echo -e "  _ __  _ __ _____      _| | ___ _ __"
+    echo -e " | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|"
+    echo -e " | |_) | | | (_) \ V  V /| |  __/ |"
+    echo -e " | .__/|_|  \___/ \_/\_/ |_|\___|_|v2.0"
+    echo -e " |_|$NORMAL$BLUE the handy cloud security tool$NORMAL\n"
+    echo -e "$YELLOW Date: $(date)"
+    printColorsCode
+  fi
 }
 
 infoReferenceLong(){

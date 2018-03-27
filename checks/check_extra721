@@ -6,7 +6,6 @@ CHECK_ALTERNATE_check721="extra721"
 
 extra721(){
   # "Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)"
-  textTitle "$ID721" "$TITLE721" "NOT_SCORED" "EXTRA"
   for regx in $REGIONS; do
     LIST_OF_REDSHIFT_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --region $regx --query 'Clusters[*].ClusterIdentifier' --output text)
     if [[ $LIST_OF_REDSHIFT_CLUSTERS ]]; then

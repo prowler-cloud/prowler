@@ -5,7 +5,6 @@ CHECK_ALTERNATE_check203="check23"
 
 check23(){
   # "Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)"
-  textTitle "$ID23" "$TITLE23" "SCORED" "LEVEL1"
   CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text $PROFILE_OPT --region $REGION)
   if [[ $CLOUDTRAILBUCKET ]];then
     for bucket in $CLOUDTRAILBUCKET;do

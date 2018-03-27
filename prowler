@@ -11,6 +11,8 @@
 #
 # Author: Toni de la Fuente - @ToniBlyx - https://blyx.com/contact
 
+# http://prowler.cloud 
+
 # Prowler - Iron Maiden
 #
 # Walking through the city, looking oh so pretty
@@ -44,9 +46,11 @@ USAGE:
   Options:
       -p <profile>        specify your AWS profile to use (i.e.: default)
       -r <region>         specify an AWS region to direct API requests to
-                            (i.e.: us-east-1), all regions are checked anyway
-      -c <check_id>       specify a check number or group from the AWS CIS benchmark
-                            (i.e.: "check11" for check 1.1, "check3" for entire section 3, "level1" for CIS Level 1 Profile Definitions or "forensics-ready")
+                            (i.e.: us-east-1), all regions are checked anyway if the check requires it
+      -c <check_id>       specify a check id, to see all available checks use "-l" option
+                            (i.e.: "check11" for check 1.1 or "extra71" for extra check 71)
+      -g <group_id>       specify a group of checks by id, to see all available group of checks use "-l"
+                            (i.e.: "check3" for entire section 3, "level1" for CIS Level 1 Profile Definitions or "forensics-ready")
       -f <filterregion>   specify an AWS region to run checks against
                             (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
@@ -62,7 +66,7 @@ USAGE:
   exit
 }
 
-while getopts ":hlkp:r:c:f:m:M:enb" OPTION; do
+while getopts ":hlkp:r:c:g:f:m:M:enb" OPTION; do
    case $OPTION in
      h )
         usage
@@ -82,7 +86,10 @@ while getopts ":hlkp:r:c:f:m:M:enb" OPTION; do
         REGION=$OPTARG
         ;;
      c )
-        CHECKNUMBER=$OPTARG
+        CHECK_ID=$OPTARG
+        ;;
+     g )
+        GROUP_ID=$OPTARG
         ;;
      f )
         FILTERREGION=$OPTARG
@@ -97,7 +104,7 @@ while getopts ":hlkp:r:c:f:m:M:enb" OPTION; do
         NUMERAL=1
         ;;
      b )
-        BANNER=1
+        BANNER=0
         ;;
      e )
         EXTRAS=1
@@ -184,6 +191,7 @@ execute_check() {
 		  $1
     else
       textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)";
+      exit $EXITCODE
     fi
 	fi
 }
@@ -199,10 +207,13 @@ execute_group() {
 }
 
 # Function to execute group by name
-execute_group_by_name() {
-	for i in ${#GROUP_NAME[@]}; do
-		if [ "${GROUP_NAME[$i]}" == "$1" ]; then
+execute_group_by_id() {
+	for i in "${!GROUP_ID[@]}"; do
+		if [ "${GROUP_ID[$i]}" == "$1" ]; then
 			execute_group $i
+    else
+      textWarn "ERROR! Use a valid group check name (i.e. group1 or extras or forensics-ready)";
+      exit $EXITCODE
 		fi
 	done
 }
@@ -229,8 +240,15 @@ show_all_titles() {
 }
 
 # Execute single check if called with -c
-if [[ $CHECKNUMBER ]];then
-  execute_check $CHECKNUMBER
+if [[ $CHECK_ID ]];then
+  execute_check $CHECK_ID
+  cleanTemp
+  exit $EXITCODE
+fi
+
+# Execute group of checks if called with -g
+if [[ $GROUP_ID ]];then
+  execute_group_by_id $GROUP_ID
   cleanTemp
   exit $EXITCODE
 fi
@@ -245,7 +263,6 @@ fi
 ### All functions defined above ... run the workflow
 if [[ $MODE != "csv" ]]; then
   prowlerBanner
-  printColorsCode
 fi
 getWhoami
 genCredReport
