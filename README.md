@@ -12,7 +12,7 @@
 - [Forensics Ready Checks](#forensics-ready-checks)
 - [Add Custom Checks](#add-custom-checks)
 - [Third Party Integrations](#third-party-integrations)
-- [Full list of checks and groups] (LIST_OF_CHECKS_AND_GROUPS.md)
+- [Full list of checks and groups] (/LIST_OF_CHECKS_AND_GROUPS.md)
 
 ## Description
 
