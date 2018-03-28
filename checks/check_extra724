@@ -1,0 +1,24 @@
+CHECK_ID_extra724="7.24"
+CHECK_TITLE_extra724="Check if ACM certificates have Certificate Transparence enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra724="NOT_SCORED"
+CHECK_ALTERNATE_check724="extra724"
+
+extra724(){
+  # "Check if ACM certificates have Certificate Transparence enabled (Not Scored) (Not part of CIS benchmark)"
+  for regx in $REGIONS; do
+    LIST_OF_CERTS=$($AWSCLI acm list-certificates $PROFILE_OPT  --region $regx --query CertificateSummaryList[].CertificateArn --output text)
+    if [[ $LIST_OF_CERTS ]];then
+      for cert_arn in $LIST_OF_CERTS;do
+        CT_ENABLED=$($AWSCLI acm describe-certificate $PROFILE_OPT --region $regx --certificate-arn $cert_arn --query Certificate.Options.CertificateTransparencyLoggingPreference --output text)
+        if [[ $CT_ENABLED == "ENABLED" ]];then
+          CERT_DOMAIN_NAME=$(aws acm describe-certificate $PROFILE_OPT --region $regx --certificate-arn $cert_arn --query Certificate.DomainName --output text)
+          textWarn "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging enabled!" "$regx"
+        else
+          textOK "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging disabled!" "$regx"
+        fi
+      done
+    else
+       textNotice "$regx: No ACM Certificates found" "$regx"
+    fi
+  done
+}

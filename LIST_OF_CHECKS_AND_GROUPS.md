@@ -392,4 +392,8 @@ Colors code for results:  INFO (Information), PASS (Recommended value),  FAIL (F
 7.21 Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)
 
 7.22 Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)
+
+7.23 Check if RDS Snapshots are public (Not Scored) (Not part of CIS benchmark)
+
+7.24 Check if ACM certificates have Certificate Transparence enabled (Not Scored) (Not part of CIS benchmark)
 ```
