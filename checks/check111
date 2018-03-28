@@ -8,9 +8,9 @@ check111(){
   COMMAND111=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json | grep MaxPasswordAge | awk -F: '{ print $2 }'|sed 's/\ //g'|sed 's/,/ /g' 2> /dev/null)
   if [[ $COMMAND111 ]];then
     if [ "$COMMAND111" == "90" ];then
-      textOK "Password Policy includes expiration"
+      textPass "Password Policy includes expiration"
     fi
   else
-    textWarn "Password expiration not set or set greater than 90 days "
+    textFail "Password expiration not set or set greater than 90 days "
   fi
 }

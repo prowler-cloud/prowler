@@ -1,5 +1,5 @@
 ## Output formatting functions
-textOK(){
+textPass(){
   if [[ "$MODE" == "csv" ]]; then
     if [[ $2 ]]; then
       REPREGION=$2
@@ -12,7 +12,7 @@ textOK(){
   fi
 }
 
-textNotice(){
+textInfo(){
   if [[ "$MODE" == "csv" ]]; then
     if [[ $2 ]]; then
       REPREGION=$2
@@ -25,7 +25,7 @@ textNotice(){
   fi
 }
 
-textWarn(){
+textFail(){
   EXITCODE=3
   if [[ "$MODE" == "csv" ]]; then
     if [[ $2 ]]; then

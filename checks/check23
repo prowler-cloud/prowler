@@ -10,12 +10,12 @@ check23(){
     for bucket in $CLOUDTRAILBUCKET;do
       CLOUDTRAILBUCKET_HASALLPERMISIONS=$($AWSCLI s3api get-bucket-acl --bucket $bucket --query 'Grants[?Grantee.URI==`http://acs.amazonaws.com/groups/global/AllUsers`]' $PROFILE_OPT --region $REGION --output text)
       if [[ $CLOUDTRAILBUCKET_HASALLPERMISIONS ]];then
-        textWarn "check your $bucket CloudTrail bucket ACL and Policy!"
+        textFail "check your $bucket CloudTrail bucket ACL and Policy!"
       else
-        textOK "Bucket $bucket is set correctly"
+        textPass "Bucket $bucket is set correctly"
       fi
     done
   else
-    textWarn "No CloudTrail bucket found!"
+    textFail "No CloudTrail bucket found!"
   fi
 }

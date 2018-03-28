@@ -5,6 +5,6 @@ CHECK_ALTERNATE_check121="check121"
 
 check121(){
   # "Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
-  textNotice "No command available for check 1.21 "
-  textNotice "See section 1.21 on the CIS Benchmark guide for details "
+  textInfo "No command available for check 1.21 "
+  textInfo "See section 1.21 on the CIS Benchmark guide for details "
 }

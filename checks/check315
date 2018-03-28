@@ -10,7 +10,7 @@ check315(){
     TOPICS_LIST=$($AWSCLI sns list-topics $PROFILE_OPT --region $regx --output text --query 'Topics[*].TopicArn')
     ntopics=$(echo $TOPICS_LIST | wc -w )
     if [[ $TOPICS_LIST && $CAN_SNS_LIST_SUBS -eq 1 ]];then
-      textNotice "Region $regx has $ntopics topics" "$regx"
+      textInfo "Region $regx has $ntopics topics" "$regx"
       for topic in $TOPICS_LIST; do
         TOPIC_SHORT=$(echo $topic | awk -F: '{ print $6 }')
         CHECK_TOPIC_LIST=$($AWSCLI sns list-subscriptions-by-topic --topic-arn $topic $PROFILE_OPT --region $regx --query 'Subscriptions[*].{Endpoint:Endpoint,Protocol:Protocol}' --output text --max-items $MAXITEMS 2> /dev/null)
@@ -18,23 +18,23 @@ check315(){
           # Permission error
           export CAN_SNS_LIST_SUBS=0
           ntopics=$(echo $TOPICS_LIST | wc -w )
-          textNotice "Region $regx / $ntopics Topics / Subscriptions NO_PERMISSION" "$regx"
+          textInfo "Region $regx / $ntopics Topics / Subscriptions NO_PERMISSION" "$regx"
           break;
         fi
         if [[ "Z" != "Z${CHECK_TOPIC_LIST}" ]]; then
           printf '%s
 ' "$CHECK_TOPIC_LIST" | while IFS= read -r dest ; do
-            textNotice "Region $regx / Topic $TOPIC_SHORT / Subscription $dest" "$regx"
+            textInfo "Region $regx / Topic $TOPIC_SHORT / Subscription $dest" "$regx"
           done
         else
-          textWarn "Region $regx / Topic $TOPIC_SHORT / Subscription NONE" "$regx"
+          textFail "Region $regx / Topic $TOPIC_SHORT / Subscription NONE" "$regx"
         fi
       done
     elif [[ $CAN_SNS_LIST_SUBS -eq 0 ]]; then
-      textNotice "Region $regx has $ntopics topics - unable to list subscribers" "$regx"
+      textInfo "Region $regx has $ntopics topics - unable to list subscribers" "$regx"
       # break
     else
-      textOK "Region $regx has 0 topics" "$regx"
+      textPass "Region $regx has 0 topics" "$regx"
     fi
   done
 }

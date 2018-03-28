@@ -8,22 +8,22 @@ check118(){
   FINDMASTERANDMANAGER=$($AWSCLI iam list-roles $PROFILE_OPT --region $REGION --query "Roles[*].{RoleName:RoleName}" --output text | grep -E 'Master|Manager'| tr '
 ' ' ')
   if [[ $FINDMASTERANDMANAGER ]];then
-    textNotice "Found next roles as possible IAM Master and IAM Manager candidates: "
-    textNotice "$FINDMASTERANDMANAGER "
-    textNotice "run the commands below to check their policies with section 1.18 in the guide..."
+    textInfo "Found next roles as possible IAM Master and IAM Manager candidates: "
+    textInfo "$FINDMASTERANDMANAGER "
+    textInfo "run the commands below to check their policies with section 1.18 in the guide..."
     for role in $FINDMASTERANDMANAGER;do
       # find inline policies in found roles
       INLINEPOLICIES=$($AWSCLI iam list-role-policies --role-name $role $PROFILE_OPT --region $REGION --query "PolicyNames[*]" --output text)
       for policy in $INLINEPOLICIES;do
-        textNotice "INLINE: $AWSCLI iam get-role-policy --role-name $role --policy-name $policy $PROFILE_OPT --region $REGION --output json"
+        textInfo "INLINE: $AWSCLI iam get-role-policy --role-name $role --policy-name $policy $PROFILE_OPT --region $REGION --output json"
       done
       # find attached policies in found roles
       ATTACHEDPOLICIES=$($AWSCLI iam list-attached-role-policies --role-name $role $PROFILE_OPT --region $REGION --query "AttachedPolicies[*]" --output text)
       for policy in $ATTACHEDPOLICIES;do
-        textNotice "ATTACHED: $AWSCLI iam get-role-policy --role-name $role --policy-name $policy $PROFILE_OPT --region $REGION --output json"
+        textInfo "ATTACHED: $AWSCLI iam get-role-policy --role-name $role --policy-name $policy $PROFILE_OPT --region $REGION --output json"
       done
     done
   else
-    textWarn "IAM Master and IAM Manager roles not found"
+    textFail "IAM Master and IAM Manager roles not found"
   fi
 }

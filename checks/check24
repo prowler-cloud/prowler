@@ -12,18 +12,18 @@ check24(){
       TRAIL_REGION=$(echo $reg_trail | cut -d',' -f1)
       LATESTDELIVERY_TIMESTAMP=$($AWSCLI cloudtrail get-trail-status --name $trail $PROFILE_OPT --region $TRAIL_REGION --query 'LatestCloudWatchLogsDeliveryTime' --output text|grep -v None)
       if [[ ! $LATESTDELIVERY_TIMESTAMP ]];then
-        textWarn "$trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)"
+        textFail "$trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)"
       else
         LATESTDELIVERY_DATE=$(timestamp_to_date $LATESTDELIVERY_TIMESTAMP)
         HOWOLDER=$(how_older_from_today $LATESTDELIVERY_DATE)
         if [ $HOWOLDER -gt "1" ];then
-          textWarn "$trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)"
+          textFail "$trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)"
         else
-          textOK "$trail trail has been logging during the last 24h (it is in $TRAIL_REGION)"
+          textPass "$trail trail has been logging during the last 24h (it is in $TRAIL_REGION)"
         fi
       fi
     done
   else
-    textWarn "No CloudTrail trails found!"
+    textFail "No CloudTrail trails found!"
   fi
 }

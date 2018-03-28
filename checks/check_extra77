@@ -7,7 +7,7 @@ CHECK_ALTERNATE_check707="extra77"
 
 extra77(){
   # "Ensure there are no ECR repositories set as Public (Not Scored) (Not part of CIS benchmark)"
-  textNotice "Looking for ECR repos in all regions...  "
+  textInfo "Looking for ECR repos in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_ECR_REPOS=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $regx --query 'repositories[*].{Name:repositoryName}' --output text)
     for ecr_repo in $LIST_OF_ECR_REPOS; do
@@ -16,9 +16,9 @@ extra77(){
       # check if the policy has Principal as *
       CHECK_ECR_REPO_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | awk '/Principal/ && !skip { print } { skip = /Deny/} '|grep \"Principal|grep \*)
       if [[ $CHECK_ECR_REPO_ALLUSERS_POLICY ]];then
-        textWarn "$regx: $ecr_repo policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx"
+        textFail "$regx: $ecr_repo policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx"
       else
-        textOK "$regx: $ecr_repo is not open" "$regx"
+        textPass "$regx: $ecr_repo is not open" "$regx"
       fi
     done
     rm -fr $TEMP_POLICY_FILE

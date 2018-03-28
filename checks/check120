@@ -6,6 +6,6 @@ CHECK_ALTERNATE_check120="check120"
 check120(){
   # "Ensure security contact information is registered (Scored)"
   # No command available
-  textNotice "No command available for check 1.20 "
-  textNotice "See section 1.20 on the CIS Benchmark guide for details "
+  textInfo "No command available for check 1.20 "
+  textInfo "See section 1.20 on the CIS Benchmark guide for details "
 }

@@ -8,9 +8,9 @@ check25(){
   for regx in $REGIONS; do
     CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice get-status $PROFILE_OPT --region $regx --output json| grep "recorder: ON")
     if [[ $CHECK_AWSCONFIG_STATUS ]];then
-      textOK "Region $regx has AWS Config recorder: ON" "$regx"
+      textPass "Region $regx has AWS Config recorder: ON" "$regx"
     else
-      textWarn "Region $regx has AWS Config disabled or not configured" "$regx"
+      textFail "Region $regx has AWS Config disabled or not configured" "$regx"
     fi
   done
 }

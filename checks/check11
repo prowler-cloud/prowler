@@ -6,5 +6,5 @@ CHECK_ALTERNATE_check101="check11"
 check11(){
   # "Avoid the use of the root account (Scored)."
   COMMAND11=$(cat $TEMP_REPORT_FILE| grep '<root_account>' | cut -d, -f5,11,16 | sed 's/,/\ /g')
-  textNotice "Root account last accessed (password key_1 key_2): $COMMAND11"
+  textInfo "Root account last accessed (password key_1 key_2): $COMMAND11"
 }

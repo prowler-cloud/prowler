@@ -8,11 +8,11 @@ check110(){
   COMMAND110=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --query 'PasswordPolicy.PasswordReusePrevention' --output text 2> /dev/null)
   if [[ $COMMAND110 ]];then
     if [[ $COMMAND110 -gt "23" ]];then
-      textOK "Password Policy limits reuse"
+      textPass "Password Policy limits reuse"
     else
-      textWarn "Password Policy has weak reuse requirement (lower than 24)"
+      textFail "Password Policy has weak reuse requirement (lower than 24)"
     fi
   else
-    textWarn "Password Policy missing reuse requirement"
+    textFail "Password Policy missing reuse requirement"
   fi
 }

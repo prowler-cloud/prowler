@@ -13,7 +13,7 @@ getWhoami(){
     CALLER_ARN=$(echo $CALLER_ARN_RAW | tr -d '"')
     printCsvHeader
     textTitle "0.0" "Show report generation info" "NOT_SCORED" "SUPPORT"
-    textNotice "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
+    textInfo "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
   else
     echo ""
     echo -e " This report is being generated using credentials below:\n"

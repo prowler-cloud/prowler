@@ -7,8 +7,8 @@ check113(){
   # "Ensure MFA is enabled for the root account (Scored)"
   COMMAND113=$($AWSCLI iam get-account-summary $PROFILE_OPT --region $REGION --output json --query 'SummaryMap.AccountMFAEnabled')
   if [ "$COMMAND113" == "1" ]; then
-    textOK "Virtual MFA is enabled for root"
+    textPass "Virtual MFA is enabled for root"
   else
-    textWarn "MFA is not ENABLED for root account "
+    textFail "MFA is not ENABLED for root account "
   fi
 }

@@ -10,12 +10,12 @@ check26(){
       for bucket in $CLOUDTRAILBUCKET;do
         CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --region $REGION --query 'LoggingEnabled.TargetBucket' --output text|grep -v None)
         if [[ $CLOUDTRAILBUCKET_LOGENABLED ]];then
-          textOK "Bucket access logging enabled in $bucket"
+          textPass "Bucket access logging enabled in $bucket"
         else
-          textWarn "access logging is not enabled in $bucket CloudTrail S3 bucket!"
+          textFail "access logging is not enabled in $bucket CloudTrail S3 bucket!"
         fi
       done
     else
-      textWarn "CloudTrail bucket not found!"
+      textFail "CloudTrail bucket not found!"
     fi
 }

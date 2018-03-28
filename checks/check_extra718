@@ -10,12 +10,12 @@ extra718(){
     for bucket in $LIST_OF_BUCKETS;do
       BUCKET_SERVER_LOG_ENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --query [LoggingEnabled] --output text|grep -v "^None$")
       if [[ $BUCKET_SERVER_LOG_ENABLED ]];then
-        textOK "Bucket $bucket has server access logging enabled"
+        textPass "Bucket $bucket has server access logging enabled"
       else
-        textWarn "Bucket $bucket has server access logging disabled!"
+        textFail "Bucket $bucket has server access logging disabled!"
       fi
     done
   else
-    textNotice "No S3 Buckets found"
+    textInfo "No S3 Buckets found"
   fi
 }

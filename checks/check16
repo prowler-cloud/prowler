@@ -7,8 +7,8 @@ check16(){
   # "Ensure IAM password policy require at least one lowercase letter (Scored)"
   COMMAND16=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json --query 'PasswordPolicy.RequireLowercaseCharacters' 2> /dev/null) # must be true
   if [[ "$COMMAND16" == "true" ]];then
-    textOK "Password Policy requires lower case"
+    textPass "Password Policy requires lower case"
   else
-    textWarn "Password Policy missing lower-case requirement"
+    textFail "Password Policy missing lower-case requirement"
   fi
 }

@@ -7,8 +7,8 @@ check17(){
   # "Ensure IAM password policy require at least one symbol (Scored)"
   COMMAND17=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json --query 'PasswordPolicy.RequireSymbols' 2> /dev/null) # must be true
   if [[ "$COMMAND17" == "true" ]];then
-    textOK "Password Policy requires symbol"
+    textPass "Password Policy requires symbol"
   else
-    textWarn "Password Policy missing symbol requirement"
+    textFail "Password Policy missing symbol requirement"
   fi
 }

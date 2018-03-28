@@ -19,13 +19,13 @@ check13(){
         DATEUSED=$($AWSCLI iam list-users --query "Users[?UserName=='$i'].PasswordLastUsed" --output text $PROFILE_OPT --region $REGION | cut -d'T' -f1)
         HOWOLDER=$(how_older_from_today $DATEUSED)
         if [ $HOWOLDER -gt "90" ];then
-          textWarn "User \"$i\" has not logged in during the last 90 days "
+          textFail "User \"$i\" has not logged in during the last 90 days "
         else
-          textOK "User \"$i\" found with credentials used in the last 90 days"
+          textPass "User \"$i\" found with credentials used in the last 90 days"
         fi
       done
     fi
   else
-      textOK "No users found with password enabled"
+      textPass "No users found with password enabled"
   fi
 }

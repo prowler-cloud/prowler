@@ -32,7 +32,7 @@ check31(){
       for group in $CHECK31OK; do
         metric=${group#*:}
         group=${group%:*}
-        textOK "CloudWatch group $group found with metric filter $metric and alarms set for Unauthorized Operation and Access Denied"
+        textPass "CloudWatch group $group found with metric filter $metric and alarms set for Unauthorized Operation and Access Denied"
       done
     fi
     if [[ $CHECK31WARN ]]; then
@@ -40,13 +40,13 @@ check31(){
         case $group in
            *:*) metric=${group#*:}
                 group=${group%:*}
-                textWarn "CloudWatch group $group found with metric filter $metric but no alarms associated"
+                textFail "CloudWatch group $group found with metric filter $metric but no alarms associated"
                 ;;
-             *) textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+             *) textFail "CloudWatch group $group found but no metric filters or alarms associated"
         esac
       done
     fi
   else
-    textWarn "No CloudWatch group found for CloudTrail events"
+    textFail "No CloudWatch group found for CloudTrail events"
   fi
 }

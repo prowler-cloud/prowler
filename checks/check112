@@ -9,13 +9,13 @@ check112(){
   ROOTKEY1=$(cat $TEMP_REPORT_FILE |grep root_account|awk -F',' '{ print $9 }')
   ROOTKEY2=$(cat $TEMP_REPORT_FILE |grep root_account|awk -F',' '{ print $14 }')
   if [ "$ROOTKEY1" == "false" ];then
-    textOK "No access key 1 found for root"
+    textPass "No access key 1 found for root"
   else
-    textWarn "Found access key 1 for root "
+    textFail "Found access key 1 for root "
   fi
   if [ "$ROOTKEY2" == "false" ];then
-    textOK "No access key 2 found for root"
+    textPass "No access key 2 found for root"
   else
-    textWarn "Found access key 2 for root "
+    textFail "Found access key 2 for root "
   fi
 }

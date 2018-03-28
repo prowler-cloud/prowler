@@ -15,7 +15,7 @@ extra71(){
     CHECK_ADMIN_GROUP=$($AWSCLI $PROFILE_OPT iam list-attached-group-policies --group-name $grp --output json --query 'AttachedPolicies[].PolicyArn' | grep  'arn:aws:iam::aws:policy/AdministratorAccess')
     if [[ $CHECK_ADMIN_GROUP ]]; then
       ADMIN_GROUPS="$ADMIN_GROUPS $grp"
-      textNotice "$grp group provides administrative access"
+      textInfo "$grp group provides administrative access"
       ADMIN_USERS=$($AWSCLI $PROFILE_OPT iam get-group --group-name $grp --output json --query 'Users[].UserName' | grep '"' | cut -d'"' -f2 )
       for auser in $ADMIN_USERS; do
         # users in group are Administrators
@@ -23,13 +23,13 @@ extra71(){
         # check for user MFA device in credential report
         USER_MFA_ENABLED=$( cat $TEMP_REPORT_FILE | grep "^$auser," | cut -d',' -f8)
         if [[ "true" == $USER_MFA_ENABLED ]]; then
-          textOK "$auser / MFA Enabled / admin via group $grp"
+          textPass "$auser / MFA Enabled / admin via group $grp"
         else
-          textWarn "$auser / MFA DISABLED / admin via group $grp"
+          textFail "$auser / MFA DISABLED / admin via group $grp"
         fi
       done
     else
-      textNotice "$grp group provides non-administrative access"
+      textInfo "$grp group provides non-administrative access"
     fi
   done
 }

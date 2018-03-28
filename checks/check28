@@ -12,19 +12,19 @@ check28(){
       for key in $CHECK_KMS_KEYLIST_NO_DEFAULT; do
         CHECK_KMS_KEY_TYPE=$($AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.Origin' | sed 's/["]//g')
           if [[ "$CHECK_KMS_KEY_TYPE" == "EXTERNAL" ]];then
-            textOK "Key $key in Region $regx Customer Uploaded Key Material." "$regx"
+            textPass "Key $key in Region $regx Customer Uploaded Key Material." "$regx"
           else
             CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key $PROFILE_OPT --region $regx --output text)
             if [[ "$CHECK_KMS_KEY_ROTATION" == "True" ]];then
-              textOK "Key $key in Region $regx is set correctly"
+              textPass "Key $key in Region $regx is set correctly"
             else
-              textWarn "Key $key in Region $regx is not set to rotate!!!" "$regx"
+              textFail "Key $key in Region $regx is not set to rotate!!!" "$regx"
             fi
           fi
       done
 
   else
-    textNotice "Region $regx doesn't have encryption keys" "$regx"
+    textInfo "Region $regx doesn't have encryption keys" "$regx"
   fi
   done
 }

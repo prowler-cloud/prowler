@@ -12,13 +12,13 @@ extra723(){
       for rdssnapshot in $LIST_OF_RDS_SNAPSHOTS;do
         SNAPSHOT_IS_PUBLIC=$($AWSCLI rds describe-db-snapshot-attributes $PROFILE_OPT --region $regx --db-snapshot-identifier $rdssnapshot --query DBSnapshotAttributesResult.DBSnapshotAttributes[*] --output text|grep ^ATTRIBUTEVALUES|cut -f2|grep all)
         if [[ $SNAPSHOT_IS_PUBLIC ]];then
-          textWarn "$regx: RDS Snapshot $rdssnapshot is public!" "$regx"
+          textFail "$regx: RDS Snapshot $rdssnapshot is public!" "$regx"
         else
-          textOK "$regx: RDS Snapshot $rdssnapshot is not shared" "$regx"
+          textPass "$regx: RDS Snapshot $rdssnapshot is not shared" "$regx"
         fi
       done
     else
-      textNotice "$regx: No RDS Snapshots found" "$regx"
+      textInfo "$regx: No RDS Snapshots found" "$regx"
     fi
     # RDS cluster snapshots
     LIST_OF_RDS_CLUSTER_SNAPSHOTS=$($AWSCLI rds describe-db-cluster-snapshots $PROFILE_OPT --region $regx --query DBClusterSnapshots[*].DBClusterSnapshotIdentifier --output text)
@@ -26,13 +26,13 @@ extra723(){
       for rdsclustersnapshot in $LIST_OF_RDS_CLUSTER_SNAPSHOTS;do
         CLUSTER_SNAPSHOT_IS_PUBLIC=$($AWSCLI rds describe-db-cluster-snapshot-attributes $PROFILE_OPT --region $regx --db-cluster-snapshot-identifier $rdsclustersnapshot --query DBClusterSnapshotAttributesResult.DBClusterSnapshotAttributes[*] --output text|grep ^ATTRIBUTEVALUES|cut -f2|grep all)
         if [[ $CLUSTER_SNAPSHOT_IS_PUBLIC ]];then
-          textWarn "$regx: RDS Cluster Snapshot $rdsclustersnapshot is public!" "$regx"
+          textFail "$regx: RDS Cluster Snapshot $rdsclustersnapshot is public!" "$regx"
         else
-          textOK "$regx: RDS Cluster Snapshot $rdsclustersnapshot is not shared" "$regx"
+          textPass "$regx: RDS Cluster Snapshot $rdsclustersnapshot is not shared" "$regx"
         fi
       done
     else
-      textNotice "$regx: No RDS Cluster Snapshots found" "$regx"
+      textInfo "$regx: No RDS Cluster Snapshots found" "$regx"
     fi
   done
 }

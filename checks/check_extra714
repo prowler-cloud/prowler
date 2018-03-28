@@ -11,13 +11,13 @@ extra714(){
       for cdn in $LIST_OF_DISTRIBUTIONS;do
         CDN_LOG_ENABLED=$($AWSCLI cloudfront get-distribution $PROFILE_OPT --region $regx --id "$cdn" --query 'Distribution.DistributionConfig.Logging.Enabled' | grep true)
         if [[ $CDN_LOG_ENABLED ]];then
-          textOK "$regx: CDN $cdn logging enabled" "$regx"
+          textPass "$regx: CDN $cdn logging enabled" "$regx"
         else
-          textWarn "$regx: CDN $cdn logging disabled!" "$regx"
+          textFail "$regx: CDN $cdn logging disabled!" "$regx"
         fi
       done
     else
-      textNotice "$regx: No CDN configured" "$regx"
+      textInfo "$regx: No CDN configured" "$regx"
     fi
   done
 }

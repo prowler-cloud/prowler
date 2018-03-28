@@ -6,7 +6,7 @@ CHECK_ALTERNATE_check73="extra73"
 CHECK_ALTERNATE_check703="extra73"
 
 extra73(){
-  textNotice "Looking for open S3 Buckets (ACLs and Policies) in all regions...  "
+  textInfo "Looking for open S3 Buckets (ACLs and Policies) in all regions...  "
   ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' --profile $PROFILE --region $REGION --output text)
   for bucket in $ALL_BUCKETS_LIST; do
     extra73Thread $bucket &
@@ -35,16 +35,16 @@ extra73Thread(){
   CHECK_BUCKET_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | sed -e 's/[{}]/''/g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}'|awk '/Principal/ && !skip { print } { skip = /Deny/} '|grep ^\"Principal|grep \*)
   if [[ $CHECK_BUCKET_ALLUSERS_ACL || $CHECK_BUCKET_AUTHUSERS_ACL || $CHECK_BUCKET_ALLUSERS_POLICY ]];then
     if [[ $CHECK_BUCKET_ALLUSERS_ACL ]];then
-      textWarn "$BUCKET_LOCATION: $bucket bucket is open to the Internet (Everyone) with permissions: $CHECK_BUCKET_ALLUSERS_ACL_SINGLE_LINE" "$regx"
+      textFail "$BUCKET_LOCATION: $bucket bucket is open to the Internet (Everyone) with permissions: $CHECK_BUCKET_ALLUSERS_ACL_SINGLE_LINE" "$regx"
     fi
     if [[ $CHECK_BUCKET_AUTHUSERS_ACL ]];then
-      textWarn "$BUCKET_LOCATION: $bucket bucket is open to Authenticated users (Any AWS user) with permissions: $CHECK_BUCKET_AUTHUSERS_ACL_SINGLE_LINE" "$regx"
+      textFail "$BUCKET_LOCATION: $bucket bucket is open to Authenticated users (Any AWS user) with permissions: $CHECK_BUCKET_AUTHUSERS_ACL_SINGLE_LINE" "$regx"
     fi
     if [[ $CHECK_BUCKET_ALLUSERS_POLICY ]];then
-      textWarn "$BUCKET_LOCATION: $bucket bucket policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx"
+      textFail "$BUCKET_LOCATION: $bucket bucket policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx"
     fi
   else
-    textOK "$BUCKET_LOCATION: $bucket bucket is not open" "$regx"
+    textPass "$BUCKET_LOCATION: $bucket bucket is not open" "$regx"
   fi
   rm -fr $TEMP_POLICY_FILE
 }

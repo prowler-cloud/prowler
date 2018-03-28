@@ -14,15 +14,15 @@ check33(){
       if [[ $METRICFILTER_SET ]];then
         HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | tr '[:upper:]' '[:lower:]'| grep -Ei 'userIdentity|Root|AwsServiceEvent')
         if [[ $HAS_ALARM_ASSOCIATED ]];then
-          textOK "CloudWatch group $group found with metric filters and alarms set for usage of root account"
+          textPass "CloudWatch group $group found with metric filters and alarms set for usage of root account"
         else
-          textWarn "CloudWatch group $group found with metric filters but no alarms associated"
+          textFail "CloudWatch group $group found with metric filters but no alarms associated"
         fi
       else
-        textWarn "CloudWatch group $group found but no metric filters or alarms associated"
+        textFail "CloudWatch group $group found but no metric filters or alarms associated"
       fi
     done
   else
-    textWarn "No CloudWatch group found for CloudTrail events"
+    textFail "No CloudWatch group found for CloudTrail events"
   fi
 }

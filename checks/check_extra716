@@ -16,16 +16,16 @@ extra716(){
           # check if the policy has Principal as *
           CHECK_ES_DOMAIN_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | awk '/Principal/ && !skip { print } { skip = /Deny/} '|grep \"Principal|grep \*)
           if [[ $CHECK_ES_DOMAIN_ALLUSERS_POLICY ]];then
-            textWarn "$regx: $domain policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx"
+            textFail "$regx: $domain policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx"
           else
-            textOK "$regx: $domain is not open" "$regx"
+            textPass "$regx: $domain is not open" "$regx"
           fi
         else
-          textOK "$regx: $domain is in a VPC" "$regx"
+          textPass "$regx: $domain is in a VPC" "$regx"
         fi
       done
     fi
-    textNotice "$regx: No Elasticsearch Service domain found" "$regx"
+    textInfo "$regx: No Elasticsearch Service domain found" "$regx"
     rm -fr $TEMP_POLICY_FILE
   done
 }

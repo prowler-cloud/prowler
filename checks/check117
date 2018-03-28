@@ -6,6 +6,6 @@ CHECK_ALTERNATE_check117="check117"
 check117(){
   # "Enable detailed billing (Scored)"
   # No command available
-  textNotice "No command available for check 1.17 "
-  textNotice "See section 1.17 on the CIS Benchmark guide for details "
+  textInfo "No command available for check 1.17 "
+  textInfo "See section 1.17 on the CIS Benchmark guide for details "
 }

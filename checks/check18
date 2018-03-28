@@ -7,8 +7,8 @@ check18(){
   # "Ensure IAM password policy require at least one number (Scored)"
   COMMAND18=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json --query 'PasswordPolicy.RequireNumbers' 2> /dev/null) # must be true
   if [[ "$COMMAND18" == "true" ]];then
-    textOK "Password Policy requires number"
+    textPass "Password Policy requires number"
   else
-    textWarn "Password Policy missing number requirement"
+    textFail "Password Policy missing number requirement"
   fi
 }

@@ -190,7 +190,7 @@ execute_check() {
 		  show_check_title $1
 		  $1
     else
-      textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)";
+      textFail "ERROR! Use a valid check name (i.e. check41 or extra71)";
       exit $EXITCODE
     fi
 	fi

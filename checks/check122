@@ -10,16 +10,16 @@ check122(){
     for policyarn in $SUPPORTPOLICYARN;do
       POLICYUSERS=$($AWSCLI iam list-entities-for-policy --policy-arn $SUPPORTPOLICYARN $PROFILE_OPT --region $REGION --output json)
       if [[ $POLICYUSERS ]];then
-        textOK "Support Policy attached to $policyarn"
+        textPass "Support Policy attached to $policyarn"
         for user in $(echo "$POLICYUSERS" | grep UserName | cut -d'"' -f4) ; do
-          textNotice "User $user has support access via $policyarn"
+          textInfo "User $user has support access via $policyarn"
         done
-        # textNotice "Make sure your team can create a Support case with AWS "
+        # textInfo "Make sure your team can create a Support case with AWS "
       else
-        textWarn "Support Policy not applied to any Group / User / Role "
+        textFail "Support Policy not applied to any Group / User / Role "
       fi
     done
   else
-    textWarn "No Support Policy found"
+    textFail "No Support Policy found"
   fi
 }

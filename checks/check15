@@ -7,8 +7,8 @@ check15(){
   # "Ensure IAM password policy requires at least one uppercase letter (Scored)"
   COMMAND15=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json --query 'PasswordPolicy.RequireUppercaseCharacters' 2> /dev/null) # must be true
   if [[ "$COMMAND15" == "true" ]];then
-    textOK "Password Policy requires upper case"
+    textPass "Password Policy requires upper case"
   else
-    textWarn "Password Policy missing upper-case requirement"
+    textFail "Password Policy missing upper-case requirement"
   fi
 }

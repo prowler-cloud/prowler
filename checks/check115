@@ -5,7 +5,7 @@ CHECK_ALTERNATE_check115="check115"
 
 check115(){
   # "Ensure security questions are registered in the AWS account (Not Scored)"
-  textNotice "No command available for check 1.15 "
-  textNotice "Login to the AWS Console as root & click on the Account "
-  textNotice "Name -> My Account -> Configure Security Challenge Questions "
+  textInfo "No command available for check 1.15 "
+  textInfo "Login to the AWS Console as root & click on the Account "
+  textInfo "Name -> My Account -> Configure Security Challenge Questions "
 }
