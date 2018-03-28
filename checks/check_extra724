@@ -14,7 +14,7 @@ extra724(){
         if [[ $CT_ENABLED == "ENABLED" ]];then
           textPass "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging enabled!" "$regx"
         else
-          textWarn "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging disabled!" "$regx"
+          textFail "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging disabled!" "$regx"
         fi
       done
     else
