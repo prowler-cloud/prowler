@@ -109,6 +109,10 @@ or if you want a pipe-delimited report file, do:
 ```
 ./prowler -M csv > output.psv
 ```
+or save your report in a S3 bucket:
+```
+./prowler -M mono  | aws s3 cp - s3://bucket-name/prowler-report.txt
+```
 
 5 - To perform an assessment based on CIS Profile Definitions you can use level1 or level2 with `-c` flag, more information about this [here, page 8](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf):
 ```
