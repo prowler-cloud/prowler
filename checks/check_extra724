@@ -12,7 +12,7 @@ extra724(){
         CT_ENABLED=$($AWSCLI acm describe-certificate $PROFILE_OPT --region $regx --certificate-arn $cert_arn --query Certificate.Options.CertificateTransparencyLoggingPreference --output text)
         CERT_DOMAIN_NAME=$(aws acm describe-certificate $PROFILE_OPT --region $regx --certificate-arn $cert_arn --query Certificate.DomainName --output text)
         if [[ $CT_ENABLED == "ENABLED" ]];then
-          textFail "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging enabled!" "$regx"
+          textInfo "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging enabled!" "$regx"
         else
           textPass "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging disabled!" "$regx"
         fi
