@@ -250,6 +250,9 @@ fi
 
 # Execute group of checks if called with -g
 if [[ $GROUP_ID ]];then
+  if [[ $MODE == "csv" ]]; then
+    BANNER=0
+  fi
   execute_group_by_id $GROUP_ID
   cleanTemp
   exit $EXITCODE

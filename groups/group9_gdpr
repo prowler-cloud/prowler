@@ -1,0 +1,5 @@
+GROUP_ID[9]='gdpr'
+GROUP_NUMBER[9]='8.0'
+GROUP_TITLE[9]='GDPR Readiness ***************************************************'
+GROUP_RUN_BY_DEFAULT[9]='N' # run it when execute_all is called
+GROUP_CHECKS[9]=''
