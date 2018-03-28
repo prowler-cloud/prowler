@@ -395,5 +395,5 @@ Colors code for results:  INFO (Information), PASS (Recommended value),  FAIL (F
 
 7.23 Check if RDS Snapshots are public (Not Scored) (Not part of CIS benchmark)
 
-7.24 Check if ACM certificates have Certificate Transparence enabled (Not Scored) (Not part of CIS benchmark)
+7.24 Check if ACM certificates have Certificate Transparency logging enabled (Not Scored) (Not part of CIS benchmark)
 ```
