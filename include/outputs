@@ -8,7 +8,7 @@ textPass(){
     fi
     echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
   else
-    echo "      $OK PASS! $NORMAL $1"
+    echo "      $OK PASS!$NORMAL $1"
   fi
 }
 
