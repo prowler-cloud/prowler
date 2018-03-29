@@ -1,5 +1,5 @@
 CHECK_ID_check43="4.3,4.03"
-CHECK_TITLE_check43="Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
+CHECK_TITLE_check43="[check43] Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
 CHECK_SCORED_check43="SCORED"
 CHECK_ALTERNATE_check403="check43" 
 

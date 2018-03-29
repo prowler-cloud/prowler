@@ -1,5 +1,5 @@
 CHECK_ID_check22="2.2,2.02"
-CHECK_TITLE_check22="Ensure CloudTrail log file validation is enabled (Scored)"
+CHECK_TITLE_check22="[check22] Ensure CloudTrail log file validation is enabled (Scored)"
 CHECK_SCORED_check22="SCORED"
 CHECK_ALTERNATE_check202="check22" 
 

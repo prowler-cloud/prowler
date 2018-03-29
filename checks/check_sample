@@ -1,5 +1,5 @@
 # CHECK_ID_checkN="N.N"
-# CHECK_TITLE_checkN="Description (Not Scored) (Not part of CIS benchmark)"
+# CHECK_TITLE_checkN="[checkN] Description (Not Scored) (Not part of CIS benchmark)"
 # CHECK_SCORED_checkN="NOT_SCORED"
 # CHECK_ALTERNATE_checkN="extraN"
 #

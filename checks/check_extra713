@@ -1,5 +1,5 @@
 CHECK_ID_extra713="7.13"
-CHECK_TITLE_extra713="Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra713="[extra713] Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra713="NOT_SCORED"
 CHECK_ALTERNATE_check713="extra713"
 

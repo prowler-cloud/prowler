@@ -1,5 +1,5 @@
 CHECK_ID_check11="1.1,1.01"
-CHECK_TITLE_check11="Avoid the use of the root account (Scored)"
+CHECK_TITLE_check11="[check11] Avoid the use of the root account (Scored)"
 CHECK_SCORED_check11="SCORED"
 CHECK_ALTERNATE_check101="check11"
 

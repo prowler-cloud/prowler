@@ -1,5 +1,5 @@
 CHECK_ID_extra714="7.14"
-CHECK_TITLE_extra714="Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra714="[extra714] Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra714="NOT_SCORED"
 CHECK_ALTERNATE_check714="extra714"
 

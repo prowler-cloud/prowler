@@ -1,0 +1,48 @@
+# CHECK_ID_extra726="7.26"
+# CHECK_TITLE_extra726="[extra726] Check Trusted Advisor for errors and warnings (Not Scored) (Not part of CIS benchmark)"
+# CHECK_SCORED_extra726="NOT_SCORED"
+# CHECK_ALTERNATE_check726="extra726"
+#
+# tachecks=$(aws support describe-trusted-advisor-checks --language en --profile security --region us-east-1 --query checks[*].id --output text)
+#
+# for i in $tachecks; do aws support describe-trusted-advisor-check-result --check-id $i --language en --profile security --region us-east-1 --query result.status --output text; done
+#
+# extra726(){
+#   # "Check if Lambda functions invoke API operations are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)"
+#   for regx in $REGIONS; do
+#     LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --query Functions[*].FunctionName --output text)
+#     if [[ $LIST_OF_FUNCTIONS ]]; then
+#       for lambdafunction in $LIST_OF_FUNCTIONS;do
+#         LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query trailList[?HomeRegion==\`$regx\`].Name --output text)
+#         if [[ $LIST_OF_TRAILS ]]; then
+#           for trail in $LIST_OF_TRAILS; do
+#             FUNCTION_ENABLED_IN_TRAIL=$($AWSCLI cloudtrail get-event-selectors $PROFILE_OPT --trail-name $trail --region $regx --query "EventSelectors[*].DataResources[?Type == \`AWS::Lambda::Function\`].Values" --output text |xargs -n1| grep -E "^arn:aws:lambda.*function:$lambdafunction$")
+#             if [[ $FUNCTION_ENABLED_IN_TRAIL ]]; then
+#               textPass "$regx: Lambda function $lambdafunction enabled in trail $trail" "$regx"
+#             else
+#               textFail "$regx: Lambda function $lambdafunction NOT enabled in trail $trail" "$regx"
+#             fi
+#           done
+#           # LIST_OF_MULTIREGION_TRAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query "trailList[?IsMultiRegionTrail == \`true\`].Name" --output text)
+#           # if [[ $LIST_OF_MULTIREGION_TRAILS ]]; then
+#           #   for trail in $LIST_OF_MULTIREGION_TRAILS; do
+#           #     REGION_OF_TRAIL=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query "trailList[?IsMultiRegionTrail == \`true\` && Name == \`$trail\` ].HomeRegion" --output text)
+#           #     FUNCTION_ENABLED_IN_THIS_REGION=$($AWSCLI cloudtrail get-event-selectors $PROFILE_OPT --trail-name $trail --region $REGION_OF_TRAIL --query "EventSelectors[*].DataResources[?Type == \`AWS::Lambda::Function\`].Values" --output text |xargs -n1| grep -E "^arn:aws:lambda.*function:$lambdafunction$")
+#           #     if [[ $FUNCTION_ENABLED_IN_THIS_REGION ]]; then
+#           #       textPass "$regx: Lambda function $lambdafunction enabled in trail $trail" "$regx"
+#           #     else
+#           #       textFail "$regx: Lambda function $lambdafunction NOT enabled in trail $trail" "$regx"
+#           #     fi
+#           #   done
+#           # else
+#           #   textFail "$regx: Lambda function $lambdafunction is not being recorded!" "$regx"
+#           # fi
+#         else
+#           textFail "$regx: Lambda function $lambdafunction is not being recorded no CloudTrail found!" "$regx"
+#         fi
+#       done
+#     else
+#       textInfo "$regx: No Lambda functions found" "$regx"
+#     fi
+#   done
+# }

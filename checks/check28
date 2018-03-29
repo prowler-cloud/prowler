@@ -1,5 +1,5 @@
 CHECK_ID_check28="2.8,2.08"
-CHECK_TITLE_check28="Ensure rotation for customer created CMKs is enabled (Scored)"
+CHECK_TITLE_check28="[check28] Ensure rotation for customer created CMKs is enabled (Scored)"
 CHECK_SCORED_check28="SCORED"
 CHECK_ALTERNATE_check208="check28" 
 

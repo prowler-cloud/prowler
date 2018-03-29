@@ -1,5 +1,5 @@
 CHECK_ID_check112="1.12"
-CHECK_TITLE_check112="Ensure no root account access key exists (Scored)"
+CHECK_TITLE_check112="[check112] Ensure no root account access key exists (Scored)"
 CHECK_SCORED_check112="SCORED" 
 CHECK_ALTERNATE_check112="check112"
 

@@ -1,5 +1,5 @@
 CHECK_ID_check16="1.6,1.06"
-CHECK_TITLE_check16="Ensure IAM password policy require at least one lowercase letter (Scored)"
+CHECK_TITLE_check16="[check16] Ensure IAM password policy require at least one lowercase letter (Scored)"
 CHECK_SCORED_check16="SCORED"
 CHECK_ALTERNATE_check106="check16"
  

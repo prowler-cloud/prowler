@@ -1,5 +1,5 @@
 CHECK_ID_check45="4.5,4.05"
-CHECK_TITLE_check45="Ensure routing tables for VPC peering are \"least access\" (Not Scored)"
+CHECK_TITLE_check45="[check45] Ensure routing tables for VPC peering are \"least access\" (Not Scored)"
 CHECK_SCORED_check45="NOT_SCORED"
 CHECK_ALTERNATE_check405="check45" 
 

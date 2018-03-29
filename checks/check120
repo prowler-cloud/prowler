@@ -1,5 +1,5 @@
 CHECK_ID_check120="1.20"
-CHECK_TITLE_check120="Ensure security contact information is registered (Scored)"
+CHECK_TITLE_check120="[check120] Ensure security contact information is registered (Scored)"
 CHECK_SCORED_check120="SCORED"
 CHECK_ALTERNATE_check120="check120" 
 

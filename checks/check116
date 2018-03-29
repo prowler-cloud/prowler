@@ -1,5 +1,5 @@
 CHECK_ID_check116="1.16"
-CHECK_TITLE_check116="Ensure IAM policies are attached only to groups or roles (Scored)"
+CHECK_TITLE_check116="[check116] Ensure IAM policies are attached only to groups or roles (Scored)"
 CHECK_SCORED_check116="SCORED"
 CHECK_ALTERNATE_check116="check116" 
 

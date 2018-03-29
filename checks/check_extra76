@@ -1,5 +1,5 @@
 CHECK_ID_extra76="7.6,7.06"
-CHECK_TITLE_extra76="Ensure there are no EC2 AMIs set as Public (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra76="[extra75] Ensure there are no EC2 AMIs set as Public (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra76="NOT_SCORED"
 CHECK_ALTERNATE_extra706="extra76"
 CHECK_ALTERNATE_check76="extra76"
