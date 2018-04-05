@@ -16,7 +16,7 @@
 
 ## Description
 
-Tool based on AWS-CLI commands for AWS account security assessment and hardening, following guidelines of the [CIS Amazon Web Services Foundations Benchmark 1.1 ](https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf)
+Tool based on AWS-CLI commands for AWS account security assessment and hardening, following guidelines of the [CIS Amazon Web Services Foundations Benchmark 1.1 ](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf)
 
 ## Features
 
@@ -156,7 +156,7 @@ USAGE:
 
 ```
 ## Fix every FAIL:
- Check your report and fix the issues following all specific guidelines per check in https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf
+ Check your report and fix the issues following all specific guidelines per check in https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
 
 ## Screenshots
 
