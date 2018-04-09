@@ -1,8 +1,18 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
 CHECK_ID_check16="1.6,1.06"
 CHECK_TITLE_check16="[check16] Ensure IAM password policy require at least one lowercase letter (Scored)"
 CHECK_SCORED_check16="SCORED"
 CHECK_ALTERNATE_check106="check16"
- 
+
 check16(){
   # "Ensure IAM password policy require at least one lowercase letter (Scored)"
   COMMAND16=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json --query 'PasswordPolicy.RequireLowercaseCharacters' 2> /dev/null) # must be true

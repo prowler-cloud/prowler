@@ -1,3 +1,13 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
 CHECK_ID_check19="1.9,1.09"
 CHECK_TITLE_check19="[check19] Ensure IAM password policy requires minimum length of 14 or greater (Scored)"
 CHECK_SCORED_check19="SCORED"

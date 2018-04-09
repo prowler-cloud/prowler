@@ -13,6 +13,7 @@
 - [Add Custom Checks](#add-custom-checks)
 - [Third Party Integrations](#third-party-integrations)
 - [Full list of checks and groups](/LIST_OF_CHECKS_AND_GROUPS.md)
+- [License](#license)
 
 ## Description
 
@@ -428,3 +429,10 @@ In order to add any new check feel free to create a new extra check in the extra
 Javier Pecete has done an awesome job integrating Prowler with Telegram, you have more details here https://github.com/i4specete/ServerTelegramBot
 ### Cloud Security Suite
 The guys of SecurityFTW have added Prowler in their Cloud Security Suite along with other cool security tools https://github.com/SecurityFTW/cs-suite
+
+## License
+All CIS based checks in the checks folder are licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License.
+The link to the license terms can be found at
+https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+Any other piece of code is licensed as Apache License 2.0 as specified in each file. You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0

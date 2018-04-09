@@ -1,17 +1,24 @@
 #!/usr/bin/env bash
 
-# Prowler is a tool that provides automate auditing and hardening guidance of an AWS account.
-# It is based on AWS-CLI commands. It follows guidelines present in the CIS Amazon
-# Web Services Foundations Benchmark at:
+# Copyright 2018 Toni de la Fuente
+
+# Prowler is a tool that provides automate auditing and hardening guidance of an
+# AWS account. It is based on AWS-CLI commands. It follows some guidelines
+# present in the CIS Amazon Web Services Foundations Benchmark at:
 # https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
 
-# This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0
-# International Public License. The link to the license terms can be found at
+# Contact the author at https://blyx.com/contact
+# and open issues or ask questions at https://github.com/toniblyx/prowler
+
+
+# All CIS based checks in checks folder are licensed under a Creative Commons
+# Attribution-NonCommercial-ShareAlike 4.0 International Public License.
+# The link to the license terms can be found at
 # https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 #
-# Author: Toni de la Fuente - @ToniBlyx - https://blyx.com/contact
-
-# http://prowler.cloud
+# Any other piece of code is licensed as Apache License 2.0 as specified in
+# each file. You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
 
 # Prowler - Iron Maiden
 #
@@ -42,7 +49,6 @@ usage(){
   echo "
 USAGE:
       `basename $0` [ -p <profile> -r <region>  -h ]
-
   Options:
       -p <profile>        specify your AWS profile to use (i.e.: default)
       -r <region>         specify an AWS region to direct API requests to
