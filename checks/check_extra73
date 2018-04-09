@@ -18,7 +18,6 @@ CHECK_ALTERNATE_check73="extra73"
 CHECK_ALTERNATE_check703="extra73"
 
 extra73(){
-  bucket=$1
   textInfo "Looking for open S3 Buckets (ACLs and Policies) in all regions...  "
   ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' --profile $PROFILE --region $REGION --output text)
   for bucket in $ALL_BUCKETS_LIST; do
