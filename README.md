@@ -1,9 +1,9 @@
 # Prowler: AWS CIS Benchmark Tool
 
-## Table of Contents  
+## Table of Contents
 - [Description](#description)
-- [Features](#features)  
-- [Requirements](#requirements)  
+- [Features](#features)
+- [Requirements](#requirements)
 - [Usage](#usage)
 - [Fix](#fix)
 - [Screenshots](#screenshots)
@@ -132,6 +132,7 @@ USAGE:
                             (i.e.: us-east-1), all regions are checked anyway
       -c <check_id>       specify a check number or group from the AWS CIS benchmark
                             (i.e.: "check11" for check 1.1, "check3" for entire section 3, "level1" for CIS Level 1 Profile Definitions or "forensics-ready")
+                            (may be specified multiple times "-c check11 -c check3")
       -f <filterregion>   specify an AWS region to run checks against
                             (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
@@ -228,7 +229,7 @@ Instead of using default policy SecurityAudit for the account you use for checks
             "lambda:getpolicy",
             "lambda:listfunctions",
             "logs:DescribeLogGroups",
-            "logs:DescribeMetricFilters",  
+            "logs:DescribeMetricFilters",
             "rds:describe*",
             "rds:downloaddblogfileportion",
             "rds:listtagsforresource",
@@ -283,7 +284,7 @@ Instead of using default policy SecurityAudit for the account you use for checks
 
 ### Incremental IAM Policy
 
-Alternatively, here is a policy which defines the permissions which are NOT present in the AWS Managed SecurityAudit policy. Attach both this policy and the AWS Managed SecurityAudit policy to the group and you're good to go.  
+Alternatively, here is a policy which defines the permissions which are NOT present in the AWS Managed SecurityAudit policy. Attach both this policy and the AWS Managed SecurityAudit policy to the group and you're good to go.
 
 ```
 {
@@ -295,7 +296,7 @@ Alternatively, here is a policy which defines the permissions which are NOT pres
         "acm:ListCertificates",
         "es:DescribeElasticsearchDomainConfig",
         "logs:DescribeLogGroups",
-        "logs:DescribeMetricFilters",        
+        "logs:DescribeMetricFilters",
         "ses:GetIdentityVerificationAttributes",
         "sns:ListSubscriptionsByTopic"
       ],

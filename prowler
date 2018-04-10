@@ -45,6 +45,7 @@ USAGE:
                             (i.e.: us-east-1), all regions are checked anyway
       -c <check_id>       specify a check number or group from the AWS CIS benchmark
                             (i.e.: "check11" for check 1.1, "check3" for entire section 3, "level1" for CIS Level 1 Profile Definitions or "forensics-ready")
+                            (may be specified multiple times "-c check11 -c check3")
       -f <filterregion>   specify an AWS region to run checks against
                             (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
@@ -79,7 +80,7 @@ while getopts ":hlkp:r:c:f:m:M:en" OPTION; do
         REGION=$OPTARG
         ;;
      c )
-        CHECKNUMBER=$OPTARG
+        CHECKNUMBER+=("$OPTARG")
         ;;
      f )
         FILTERREGION=$OPTARG
@@ -1699,7 +1700,7 @@ extra73(){
   for bucket in $ALL_BUCKETS_LIST; do
     extra73Thread $bucket &
   done
-  wait 
+  wait
 }
 
 extra73Thread(){
@@ -2188,131 +2189,134 @@ extra723(){
 }
 
 callCheck(){
-  if [[ $CHECKNUMBER ]];then
-    case "$CHECKNUMBER" in
-      check11|check101 ) check11;;
-      check12|check102 ) check12;;
-      check13|check103 ) check13;;
-      check14|check104 ) check14;;
-      check15|check105 ) check15;;
-      check16|check106 ) check16;;
-      check17|check107 ) check17;;
-      check18|check108 ) check18;;
-      check19|check109 ) check19;;
-      check110 ) check110;;
-      check111 ) check111;;
-      check112 ) check112;;
-      check113 ) check113;;
-      check114 ) check114;;
-      check115 ) check115;;
-      check116 ) check116;;
-      check117 ) check117;;
-      check118 ) check118;;
-      check119 ) check119;;
-      check120 ) check120;;
-      check121 ) check121;;
-      check122 ) check122;;
-      check123 ) check123;;
-      check124 ) check124;;
-      check21|check201 ) check21;;
-      check22|check202 ) check22;;
-      check23|check203 ) check23;;
-      check24|check204 ) check24;;
-      check25|check205 ) check25;;
-      check26|check206 ) check26;;
-      check27|check207 ) check27;;
-      check28|check208 ) check28;;
-      check31|check301 ) check31;;
-      check32|check302 ) check32;;
-      check33|check303 ) check33;;
-      check34|check304 ) check34;;
-      check35|check305 ) check35;;
-      check36|check306 ) check36;;
-      check37|check307 ) check37;;
-      check38|check308 ) check38;;
-      check39|check309 ) check39;;
-      check310 ) check310;;
-      check311 ) check311;;
-      check312 ) check312;;
-      check313 ) check313;;
-      check314 ) check314;;
-      check315 ) check315;;
-      check41|check401 ) check41;;
-      check42|check402 ) check42;;
-      check43|check403 ) check43;;
-      check44|check404 ) check44;;
-      check45|check405 ) check45;;
-      extra71|extra701 ) extra71;;
-      extra72|extra702 ) extra72;;
-      extra73|extra703 ) extra73;;
-      extra74|extra704 ) extra74;;
-      extra75|extra705 ) extra75;;
-      extra76|extra706 ) extra76;;
-      extra77|extra707 ) extra77;;
-      extra78|extra708 ) extra78;;
-      extra79|extra709 ) extra79;;
-      extra710 ) extra710;;
-      extra711 ) extra711;;
-      extra712 ) extra712;;
-      extra713 ) extra713;;
-      extra714 ) extra714;;
-      extra715 ) extra715;;
-      extra716 ) extra716;;
-      extra717 ) extra717;;
-      extra718 ) extra718;;
-      extra719 ) extra719;;
-      extra720 ) extra720;;
-      extra721 ) extra721;;
-      extra722 ) extra722;;
-      extra723 ) extra723;;
+  if [[ ${#CHECKNUMBER[@]} -gt 0 ]];then
+    for check in "${CHECKNUMBER[@]}";
+    do
+      case "$check" in
+        check11|check101 ) check11;;
+        check12|check102 ) check12;;
+        check13|check103 ) check13;;
+        check14|check104 ) check14;;
+        check15|check105 ) check15;;
+        check16|check106 ) check16;;
+        check17|check107 ) check17;;
+        check18|check108 ) check18;;
+        check19|check109 ) check19;;
+        check110 ) check110;;
+        check111 ) check111;;
+        check112 ) check112;;
+        check113 ) check113;;
+        check114 ) check114;;
+        check115 ) check115;;
+        check116 ) check116;;
+        check117 ) check117;;
+        check118 ) check118;;
+        check119 ) check119;;
+        check120 ) check120;;
+        check121 ) check121;;
+        check122 ) check122;;
+        check123 ) check123;;
+        check124 ) check124;;
+        check21|check201 ) check21;;
+        check22|check202 ) check22;;
+        check23|check203 ) check23;;
+        check24|check204 ) check24;;
+        check25|check205 ) check25;;
+        check26|check206 ) check26;;
+        check27|check207 ) check27;;
+        check28|check208 ) check28;;
+        check31|check301 ) check31;;
+        check32|check302 ) check32;;
+        check33|check303 ) check33;;
+        check34|check304 ) check34;;
+        check35|check305 ) check35;;
+        check36|check306 ) check36;;
+        check37|check307 ) check37;;
+        check38|check308 ) check38;;
+        check39|check309 ) check39;;
+        check310 ) check310;;
+        check311 ) check311;;
+        check312 ) check312;;
+        check313 ) check313;;
+        check314 ) check314;;
+        check315 ) check315;;
+        check41|check401 ) check41;;
+        check42|check402 ) check42;;
+        check43|check403 ) check43;;
+        check44|check404 ) check44;;
+        check45|check405 ) check45;;
+        extra71|extra701 ) extra71;;
+        extra72|extra702 ) extra72;;
+        extra73|extra703 ) extra73;;
+        extra74|extra704 ) extra74;;
+        extra75|extra705 ) extra75;;
+        extra76|extra706 ) extra76;;
+        extra77|extra707 ) extra77;;
+        extra78|extra708 ) extra78;;
+        extra79|extra709 ) extra79;;
+        extra710 ) extra710;;
+        extra711 ) extra711;;
+        extra712 ) extra712;;
+        extra713 ) extra713;;
+        extra714 ) extra714;;
+        extra715 ) extra715;;
+        extra716 ) extra716;;
+        extra717 ) extra717;;
+        extra718 ) extra718;;
+        extra719 ) extra719;;
+        extra720 ) extra720;;
+        extra721 ) extra721;;
+        extra722 ) extra722;;
+        extra723 ) extra723;;
 
-      ## Groups of Checks
-      check1 )
-        check11;check12;check13;check14;check15;check16;check17;check18;
-        check19;check110;check111;check112;check113;check114;check115;
-        check116;check117;check118;check119;check120;check121;check122;
-        check123;check124;
-        ;;
-      check2 )
-        check21;check22;check23;check24;check25;check26;check27;check28
-        ;;
-      check3 )
-        check31;check32;check33;check34;check35;check36;check37;check38;
-        check39;check310;check311;check312;check313;check314;check315
-        ;;
-      check4 )
-        check41;check42;check43;check44;check45
-        ;;
-      level1 )
-        check11;check12;check13;check14;check15;check16;check17;check18;
-        check19;check110;check111;check112;check113;check115;check116;check117;
-        check118;check119;check120;check122;check123;check124;check21;check23;
-        check24;check25;check26;check31;check32;check33;check34;check35;
-        check38;check312;check313;check314;check315;check41;check42
-        ;;
-      level2 )
-        check11;check12;check13;check14;check15;check16;check17;check18;
-        check19;check110;check111;check112;check113;check114;check115;check116;
-        check117;check118;check119;check120;check121;check122;check123;check124;
-        check21;check22;check23;check24;check25;check26;check27;check28;check31;
-        check32;check33;check34;check35;check36;check37;check38;check39;
-        check310;check311;check312;check313;check314;check315;check41;check42;
-        check43;check44;check45
-        ;;
-      extras )
-        extra71;extra72;extra73;extra74;extra75;extra76;extra77;extra78;
-        extra79;extra710;extra711;extra712;extra713;extra714;extra715;extra716;
-        extra717;extra718;extra719;extra720;extra721;extra722;extra723
-        ;;
-      forensics-ready )
-        check21;check22;check23;check24;check25;check26;check27;
-        check43;
-        extra712;extra713;extra714;extra715;extra717;extra718;extra719;
-        extra720;extra721;extra722
-        ;;
-      * )
-        textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
-    esac
+        ## Groups of Checks
+        check1 )
+          check11;check12;check13;check14;check15;check16;check17;check18;
+          check19;check110;check111;check112;check113;check114;check115;
+          check116;check117;check118;check119;check120;check121;check122;
+          check123;check124;
+          ;;
+        check2 )
+          check21;check22;check23;check24;check25;check26;check27;check28
+          ;;
+        check3 )
+          check31;check32;check33;check34;check35;check36;check37;check38;
+          check39;check310;check311;check312;check313;check314;check315
+          ;;
+        check4 )
+          check41;check42;check43;check44;check45
+          ;;
+        level1 )
+          check11;check12;check13;check14;check15;check16;check17;check18;
+          check19;check110;check111;check112;check113;check115;check116;check117;
+          check118;check119;check120;check122;check123;check124;check21;check23;
+          check24;check25;check26;check31;check32;check33;check34;check35;
+          check38;check312;check313;check314;check315;check41;check42
+          ;;
+        level2 )
+          check11;check12;check13;check14;check15;check16;check17;check18;
+          check19;check110;check111;check112;check113;check114;check115;check116;
+          check117;check118;check119;check120;check121;check122;check123;check124;
+          check21;check22;check23;check24;check25;check26;check27;check28;check31;
+          check32;check33;check34;check35;check36;check37;check38;check39;
+          check310;check311;check312;check313;check314;check315;check41;check42;
+          check43;check44;check45
+          ;;
+        extras )
+          extra71;extra72;extra73;extra74;extra75;extra76;extra77;extra78;
+          extra79;extra710;extra711;extra712;extra713;extra714;extra715;extra716;
+          extra717;extra718;extra719;extra720;extra721;extra722;extra723
+          ;;
+        forensics-ready )
+          check21;check22;check23;check24;check25;check26;check27;
+          check43;
+          extra712;extra713;extra714;extra715;extra717;extra718;extra719;
+          extra720;extra721;extra722
+          ;;
+        * )
+          textWarn "ERROR! Use a valid check name (i.e. check41 or extra71)\n";
+      esac
+    done
     cleanTemp
     exit $EXITCODE
   fi
