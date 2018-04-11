@@ -32,6 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults for these getopts variables
+PROWLER_VERSION=2.0-beta1
 REGION="us-east-1"
 FILTERREGION=""
 MAXITEMS=100
