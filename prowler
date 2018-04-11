@@ -31,8 +31,10 @@
 OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
-# Set the defaults for these getopts variables
+# Set the defaults variables
 PROWLER_VERSION=2.0-beta1
+PROWLER_DIR=$(dirname "$0")
+
 REGION="us-east-1"
 FILTERREGION=""
 MAXITEMS=100
@@ -133,15 +135,15 @@ while getopts ":hlkp:r:c:g:f:m:M:enb" OPTION; do
    esac
 done
 
-. include/colors
-. include/os_detector
-. include/aws_profile_loader
-. include/awscli_detector
-. include/outputs
-. include/csv_header
-. include/banner
-. include/whoami
-. include/credentials_report
+. $PROWLER_DIR/include/colors
+. $PROWLER_DIR/include/os_detector
+. $PROWLER_DIR/include/aws_profile_loader
+. $PROWLER_DIR/include/awscli_detector
+. $PROWLER_DIR/include/outputs
+. $PROWLER_DIR/include/csv_header
+. $PROWLER_DIR/include/banner
+. $PROWLER_DIR/include/whoami
+. $PROWLER_DIR/include/credentials_report
 
 # Get a list of all available AWS Regions
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
@@ -151,13 +153,13 @@ REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
   --region-names $FILTERREGION)
 
 # Load all of the groups of checks inside groups folder named as "groupNumber*"
-for group in $(ls groups/group[0-9]*|grep -v groupN_sample); do
+for group in $(ls $PROWLER_DIR/groups/group[0-9]*|grep -v groupN_sample); do
 	. "$group"
 done
 
 # Load all of the checks inside checks folder named as "check*"
 # this includes also extra checks since they are "check_extraNN"
-for checks in $(ls checks/check*|grep -v check_sample); do
+for checks in $(ls $PROWLER_DIR/checks/check*|grep -v check_sample); do
 	. "$checks"
 done
 
