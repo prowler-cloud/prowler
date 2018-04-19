@@ -23,7 +23,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults for these getopts variables
-REGION="us-east-1"
+REGION=""
 FILTERREGION=""
 MAXITEMS=100
 MONOCHROME=0
@@ -76,7 +76,7 @@ while getopts ":hlkp:r:c:f:m:M:en" OPTION; do
         PROFILE=$OPTARG
         ;;
      r )
-        REGION=$OPTARG
+        REGION_OPT=$OPTARG
         ;;
      c )
         CHECKNUMBER=$OPTARG
@@ -250,6 +250,9 @@ fi
 # instance profile (metadata server) if runs in an EC2 instance
 
 INSTANCE_PROFILE=$(curl -s -m 1 http://169.254.169.254/latest/meta-data/iam/security-credentials/)
+if echo "$INSTANCE_PROFILE" | grep -q '404 - Not Found'; then
+    INSTANCE_PROFILE=
+fi
 
 if [[ $PROFILE ]]; then
   PROFILE_OPT="--profile $PROFILE"
@@ -272,6 +275,16 @@ if [ -z "${AWSCLI}" ]; then
   echo -e "\n$RED ERROR!$NORMAL AWS-CLI (aws command) not found. Make sure it is installed correctly and in your \$PATH\n"
   EXITCODE=1
   exit $EXITCODE
+fi
+
+# Set default region by aws config, fall back to us-east-1
+REGION_CONFIG=$(aws configure get region)
+if [[ $REGION_OPT ]]; then
+    REGION="$REGION_OPT"
+elif [[ $REGION_CONFIG ]]; then
+    REGION="$REGION_CONFIG"
+else
+    REGION="us-east-1"
 fi
 
 TITLE_ID=""
@@ -1697,7 +1710,7 @@ extra73(){
   for bucket in $ALL_BUCKETS_LIST; do
     extra73Thread $bucket &
   done
-  wait 
+  wait
 }
 
 extra73Thread(){
