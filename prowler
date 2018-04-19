@@ -35,7 +35,7 @@ OPTNORMAL="[0;39m"
 PROWLER_VERSION=2.0-beta2
 PROWLER_DIR=$(dirname "$0")
 
-REGION="us-east-1"
+REGION=""
 FILTERREGION=""
 MAXITEMS=100
 MONOCHROME=0
@@ -92,7 +92,7 @@ while getopts ":hlkp:r:c:g:f:m:M:enb" OPTION; do
         PROFILE=$OPTARG
         ;;
      r )
-        REGION=$OPTARG
+        REGION_OPT=$OPTARG
         ;;
      c )
         CHECK_ID=$OPTARG
