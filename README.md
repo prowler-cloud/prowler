@@ -367,11 +367,13 @@ At this moment we have 23 extra checks:
 - 7.21 (`extra721`) Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)
 - 7.22 (`extra722`) Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)
 - 7.23 (`extra723`) Check if RDS Snapshots are public (Not Scored) (Not part of CIS benchmark)
+- 7.24 (`extra724`) Check if ACM certificates have Certificate Transparency logging enabled (Not Scored) (Not part of CIS benchmark)
+- 7.25 (`extra725`) Check if S3 buckets have Object-level logging enabled in CloudTrail (Not Scored) (Not part of CIS benchmark)
 
 
 To check all extras in one command:
 ```
-./prowler -c extras
+./prowler -g extras
 ```
 or to run just one of the checks:
 ```
@@ -380,7 +382,7 @@ or to run just one of the checks:
 
 ## Forensics Ready Checks
 
-With this group of checks, Prowler looks if each service with logging or audit capabilities has them enabled to ensure all needed evidences are recorded and collected for an eventual digital forensic investigation in case of incident. List of checks part of this group:
+With this group of checks, Prowler looks if each service with logging or audit capabilities has them enabled to ensure all needed evidences are recorded and collected for an eventual digital forensic investigation in case of incident. List of checks part of this group (you can also see all groups with `./prowler -l`):
 - 2.1  Ensure CloudTrail is enabled in all regions (Scored)
 - 2.2  Ensure CloudTrail log file validation is enabled (Scored)
 - 2.3  Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)
@@ -402,7 +404,7 @@ With this group of checks, Prowler looks if each service with logging or audit c
 
 The `forensics-ready` group of checks uses existing and extra checks. To get a forensics readiness report, run this command:
 ```
-./prowler -c forensics-ready
+./prowler -g forensics-ready
 ```
 
 ## Add Custom Checks
