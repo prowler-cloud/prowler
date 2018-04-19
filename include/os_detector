@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+
+# Functions to manage dates depending on OS
+if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
+  TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
+  # function to compare in days, usage how_older_from_today date
+  # date format %Y-%m-%d
+  how_older_from_today()
+    {
+      DATE_TO_COMPARE=$1
+      TODAY_IN_DAYS=$(date -d "$(date +%Y-%m-%d)" +%s)
+      DATE_FROM_IN_DAYS=$(date -d $DATE_TO_COMPARE +%s)
+      DAYS_SINCE=$((($TODAY_IN_DAYS - $DATE_FROM_IN_DAYS )/60/60/24))
+      echo $DAYS_SINCE
+    }
+  # function to convert from timestamp to date, usage timestamp_to_date timestamp
+  # output date format %Y-%m-%d
+  timestamp_to_date()
+    {
+      # remove fractions of a second
+      TIMESTAMP_TO_CONVERT=$(echo $1 | cut -f1 -d".")
+      OUTPUT_DATE=$(date -d @$TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
+      echo $OUTPUT_DATE
+    }
+  decode_report()
+    {
+      base64 -d
+    }
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+  # BSD/OSX commands compatibility
+  TEMP_REPORT_FILE=$(mktemp -t prowler.cred_report-XXXXXX)
+  how_older_from_today()
+      {
+        DATE_TO_COMPARE=$1
+        TODAY_IN_DAYS=$(date +%s)
+        DATE_FROM_IN_DAYS=$(date -jf %Y-%m-%d $DATE_TO_COMPARE +%s)
+        DAYS_SINCE=$((($TODAY_IN_DAYS - $DATE_FROM_IN_DAYS )/60/60/24))
+        echo $DAYS_SINCE
+      }
+  timestamp_to_date()
+    {
+      # remove fractions of a second
+      TIMESTAMP_TO_CONVERT=$(echo $1 | cut -f1 -d".")
+      OUTPUT_DATE=$(date -r $TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
+      echo $OUTPUT_DATE
+    }
+  decode_report()
+    {
+      base64 -D
+    }
+elif [[ "$OSTYPE" == "cygwin" ]]; then
+  # POSIX compatibility layer and Linux environment emulation for Windows
+  TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
+  how_older_from_today()
+      {
+        DATE_TO_COMPARE=$1
+        TODAY_IN_DAYS=$(date -d "$(date +%Y-%m-%d)" +%s)
+        DATE_FROM_IN_DAYS=$(date -d $DATE_TO_COMPARE +%s)
+        DAYS_SINCE=$((($TODAY_IN_DAYS - $DATE_FROM_IN_DAYS )/60/60/24))
+        echo $DAYS_SINCE
+      }
+  timestamp_to_date()
+    {
+      # remove fractions of a second
+      TIMESTAMP_TO_CONVERT=$(echo $1 | cut -f1 -d".")
+      OUTPUT_DATE=$(date -d @$TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
+      echo $OUTPUT_DATE
+    }
+  decode_report()
+    {
+      base64 -d
+    }
+else
+      echo "Unknown Operating System! Valid \$OSTYPE: linux-gnu, linux-musl, darwin* or cygwin"
+      echo "Found: $OSTYPE"
+      EXITCODE=1
+      exit $EXITCODE
+fi

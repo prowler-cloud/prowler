@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+CHECK_ID_check315="3.15"
+CHECK_TITLE_check315="[check315] Ensure appropriate subscribers to each SNS topic (Not Scored)"
+CHECK_SCORED_check315="SCORED"
+CHECK_ALTERNATE_check315="check315"
+
+check315(){
+  # "Ensure appropriate subscribers to each SNS topic (Not Scored)"
+  CAN_SNS_LIST_SUBS=1
+  for regx in $REGIONS; do
+    TOPICS_LIST=$($AWSCLI sns list-topics $PROFILE_OPT --region $regx --output text --query 'Topics[*].TopicArn')
+    ntopics=$(echo $TOPICS_LIST | wc -w )
+    if [[ $TOPICS_LIST && $CAN_SNS_LIST_SUBS -eq 1 ]];then
+      textInfo "Region $regx has $ntopics topics" "$regx"
+      for topic in $TOPICS_LIST; do
+        TOPIC_SHORT=$(echo $topic | awk -F: '{ print $6 }')
+        CHECK_TOPIC_LIST=$($AWSCLI sns list-subscriptions-by-topic --topic-arn $topic $PROFILE_OPT --region $regx --query 'Subscriptions[*].{Endpoint:Endpoint,Protocol:Protocol}' --output text --max-items $MAXITEMS 2> /dev/null)
+        if [[ $? -eq 255 ]]; then
+          # Permission error
+          export CAN_SNS_LIST_SUBS=0
+          ntopics=$(echo $TOPICS_LIST | wc -w )
+          textInfo "Region $regx / $ntopics Topics / Subscriptions NO_PERMISSION" "$regx"
+          break;
+        fi
+        if [[ "Z" != "Z${CHECK_TOPIC_LIST}" ]]; then
+          printf '%s
+' "$CHECK_TOPIC_LIST" | while IFS= read -r dest ; do
+            textInfo "Region $regx / Topic $TOPIC_SHORT / Subscription $dest" "$regx"
+          done
+        else
+          textFail "Region $regx / Topic $TOPIC_SHORT / Subscription NONE" "$regx"
+        fi
+      done
+    elif [[ $CAN_SNS_LIST_SUBS -eq 0 ]]; then
+      textInfo "Region $regx has $ntopics topics - unable to list subscribers" "$regx"
+      # break
+    else
+      textPass "Region $regx has 0 topics" "$regx"
+    fi
+  done
+}

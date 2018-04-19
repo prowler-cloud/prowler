@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+CHECK_ID_check25="2.5,2.05"
+CHECK_TITLE_check25="[check25] Ensure AWS Config is enabled in all regions (Scored)"
+CHECK_SCORED_check25="SCORED"
+CHECK_ALTERNATE_check205="check25" 
+
+check25(){
+  # "Ensure AWS Config is enabled in all regions (Scored)"
+  for regx in $REGIONS; do
+    CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice get-status $PROFILE_OPT --region $regx --output json| grep "recorder: ON")
+    if [[ $CHECK_AWSCONFIG_STATUS ]];then
+      textPass "Region $regx has AWS Config recorder: ON" "$regx"
+    else
+      textFail "Region $regx has AWS Config disabled or not configured" "$regx"
+    fi
+  done
+}

@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra710="7.10"
+CHECK_TITLE_extra710="[extra710] Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra710="NOT_SCORED"
+CHECK_ALTERNATE_check710="extra710"
+
+extra710(){
+  # "Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)"
+  textInfo "Looking for instances in all regions...  "
+  for regx in $REGIONS; do
+    LIST_OF_PUBLIC_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query 'Reservations[*].Instances[?PublicIpAddress].[InstanceId,PublicIpAddress]' --output text)
+    if [[ $LIST_OF_PUBLIC_INSTANCES ]];then
+      while read -r instance;do
+        INSTANCE_ID=$(echo $instance | awk '{ print $1; }')
+        PUBLIC_IP=$(echo $instance | awk '{ print $2; }')
+        textFail "$regx: Instance: $INSTANCE_ID at IP: $PUBLIC_IP is internet-facing!" "$regx"
+      done <<< "$LIST_OF_PUBLIC_INSTANCES"
+      else
+        textPass "$regx: no Internet Facing EC2 Instances found" "$regx"
+    fi
+  done
+}

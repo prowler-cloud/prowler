@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+CHECK_ID_check120="1.20"
+CHECK_TITLE_check120="[check120] Ensure security contact information is registered (Scored)"
+CHECK_SCORED_check120="SCORED"
+CHECK_ALTERNATE_check120="check120" 
+
+check120(){
+  # "Ensure security contact information is registered (Scored)"
+  # No command available
+  textInfo "No command available for check 1.20 "
+  textInfo "See section 1.20 on the CIS Benchmark guide for details "
+}

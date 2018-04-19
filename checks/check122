@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+CHECK_ID_check122="1.22"
+CHECK_TITLE_check122="[check122] Ensure a support role has been created to manage incidents with AWS Support (Scored)"
+CHECK_SCORED_check122="SCORED"
+CHECK_ALTERNATE_check122="check122" 
+
+check122(){
+  # "Ensure a support role has been created to manage incidents with AWS Support (Scored)"
+  SUPPORTPOLICYARN=$($AWSCLI iam list-policies --query "Policies[?PolicyName == 'AWSSupportAccess'].Arn" $PROFILE_OPT --region $REGION --output text)
+  if [[ $SUPPORTPOLICYARN ]];then
+    for policyarn in $SUPPORTPOLICYARN;do
+      POLICYUSERS=$($AWSCLI iam list-entities-for-policy --policy-arn $SUPPORTPOLICYARN $PROFILE_OPT --region $REGION --output json)
+      if [[ $POLICYUSERS ]];then
+        textPass "Support Policy attached to $policyarn"
+        for user in $(echo "$POLICYUSERS" | grep UserName | cut -d'"' -f4) ; do
+          textInfo "User $user has support access via $policyarn"
+        done
+        # textInfo "Make sure your team can create a Support case with AWS "
+      else
+        textFail "Support Policy not applied to any Group / User / Role "
+      fi
+    done
+  else
+    textFail "No Support Policy found"
+  fi
+}

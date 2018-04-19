@@ -12,10 +12,12 @@
 - [Forensics Ready Checks](#forensics-ready-checks)
 - [Add Custom Checks](#add-custom-checks)
 - [Third Party Integrations](#third-party-integrations)
+- [Full list of checks and groups](/LIST_OF_CHECKS_AND_GROUPS.md)
+- [License](#license)
 
 ## Description
 
-Tool based on AWS-CLI commands for AWS account security assessment and hardening, following guidelines of the [CIS Amazon Web Services Foundations Benchmark 1.1 ](https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf)
+Tool based on AWS-CLI commands for AWS account security assessment and hardening, following guidelines of the [CIS Amazon Web Services Foundations Benchmark 1.1 ](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf)
 
 ## Features
 
@@ -71,6 +73,8 @@ arn:aws:iam::aws:policy/SecurityAudit
 ./prowler
 ```
 
+Use `-l` to list all available checks and group of checks (sections)
+
 2 - For custom AWS-CLI profile and region, use the following: (it will use your custom profile and run checks over all regions when needed):
 
 ```
@@ -88,7 +92,7 @@ or for custom profile and region
 ```
 or for a group of checks use group name:
 ```
-./prowler -c check3
+./prowler -g group1 # for iam related checks
 ```
 
 Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 and 3.10 is check310
@@ -105,6 +109,10 @@ pip install ansi2html
 or if you want a pipe-delimited report file, do:
 ```
 ./prowler -M csv > output.psv
+```
+or save your report in a S3 bucket:
+```
+./prowler -M mono  | aws s3 cp - s3://bucket-name/prowler-report.txt
 ```
 
 5 - To perform an assessment based on CIS Profile Definitions you can use level1 or level2 with `-c` flag, more information about this [here, page 8](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf):
@@ -125,27 +133,31 @@ xargs -n 1 -L 1 -I @ -r -P 4 ./prowler -p @ -M csv  2> /dev/null  >> all-account
 ./prowler -h
 
 USAGE:
-      prowler -p <profile> -r <region> [ -h ]
+      prowler [ -p <profile> -r <region>  -h ]
+
   Options:
       -p <profile>        specify your AWS profile to use (i.e.: default)
       -r <region>         specify an AWS region to direct API requests to
-                            (i.e.: us-east-1), all regions are checked anyway
-      -c <check_id>       specify a check number or group from the AWS CIS benchmark
-                            (i.e.: "check11" for check 1.1, "check3" for entire section 3, "level1" for CIS Level 1 Profile Definitions or "forensics-ready")
+                            (i.e.: us-east-1), all regions are checked anyway if the check requires it
+      -c <check_id>       specify a check id, to see all available checks use -l option
+                            (i.e.: check11 for check 1.1 or extra71 for extra check 71)
+      -g <group_id>       specify a group of checks by id, to see all available group of checks use -l
+                            (i.e.: check3 for entire section 3, level1 for CIS Level 1 Profile Definitions or forensics-ready)
       -f <filterregion>   specify an AWS region to run checks against
                             (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-      -M <mode>           output mode: text (defalut), mono, csv (separator is ","; data is on stdout; progress on stderr)
+      -M <mode>           output mode: text (default), mono, csv (separator is ,; data is on stdout; progress on stderr)
       -k                  keep the credential report
       -n                  show check numbers to sort easier
                             (i.e.: 1.01 instead of 1.1)
       -l                  list all available checks only (does not perform any check)
-      -e                  exclude extras
+      -e                  exclude group extras
+      -b                  do not print Prowler banner
       -h                  this help
 
 ```
-## Fix:
- Check your report and fix the issues following all specific guidelines per check in https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf
+## Fix every FAIL:
+ Check your report and fix the issues following all specific guidelines per check in https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
 
 ## Screenshots
 
@@ -330,7 +342,7 @@ We are adding additional checks to improve the information gather from each acco
 
 Note: Some of these checks for publicly facing resources may not actually be fully public due to other layered controls like S3 Bucket Policies, Security Groups or Network ACLs.
 
-At this moment we have 22 extra checks:
+At this moment we have 23 extra checks:
 
 - 7.1 (`extra71`) Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)
 - 7.2 (`extra72`) Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)
@@ -355,10 +367,12 @@ At this moment we have 22 extra checks:
 - 7.21 (`extra721`) Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)
 - 7.22 (`extra722`) Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)
 - 7.23 (`extra723`) Check if RDS Snapshots are public (Not Scored) (Not part of CIS benchmark)
+- 7.24 (`extra724`) Check if ACM certificates have Certificate Transparency logging enabled (Not Scored) (Not part of CIS benchmark)
+- 7.25 (`extra725`) Check if S3 buckets have Object-level logging enabled in CloudTrail (Not Scored) (Not part of CIS benchmark)
 
 To check all extras in one command:
 ```
-./prowler -c extras
+./prowler -g extras
 ```
 or to run just one of the checks:
 ```
@@ -367,7 +381,7 @@ or to run just one of the checks:
 
 ## Forensics Ready Checks
 
-With this group of checks, Prowler looks if each service with logging or audit capabilities has them enabled to ensure all needed evidences are recorded and collected for an eventual digital forensic investigation in case of incident. List of checks part of this group:
+With this group of checks, Prowler looks if each service with logging or audit capabilities has them enabled to ensure all needed evidences are recorded and collected for an eventual digital forensic investigation in case of incident. List of checks part of this group (you can also see all groups with `./prowler -l`):
 - 2.1  Ensure CloudTrail is enabled in all regions (Scored)
 - 2.2  Ensure CloudTrail log file validation is enabled (Scored)
 - 2.3  Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)
@@ -389,19 +403,26 @@ With this group of checks, Prowler looks if each service with logging or audit c
 
 The `forensics-ready` group of checks uses existing and extra checks. To get a forensics readiness report, run this command:
 ```
-./prowler -c forensics-ready
+./prowler -g forensics-ready
 ```
 
 ## Add Custom Checks
 
-In order to add any new check feel free to create a new extra check in the extras section. To do so, you will need to follow these steps:
+In order to add any new check feel free to create a new extra check in the extras group or other group. To do so, you will need to follow these steps:
 
-1. use any existing extra check as reference
-2. add `ID7N` and `TITLE7N`, where N is a new check number part of the extras section (7) around line 361 `# List of checks IDs and Titles`
-3. add your new extra check function name at `callCheck` function (around line 1817) and below in that case inside extras option (around line 1853)
-4. finally add it in `# List only check tittles` around line 1930
-5. save changes and run it as ./prowler -c extraNN
-6. send me a pull request! :)
+1. Follow structure in file `checks/check_sample`
+2. Name your check with a number part of an existing group or a new one
+3. Save changes and run it as ./prowler -c extraNN`
+4. Send me a pull request! :)
+
+## Add Custom Groups
+
+1. Follow structure in file `groups/groupN_sample`
+2. Name your group with a non existing number
+3. Save changes and run it as `./prowler -g extraNN`
+4. Send me a pull request! :)
+
+* You can also create a group with only the checks that you want to perform in your company, for instance a group named `group9_mycompany` with only the list of checks that you care or your particular compliance applies.
 
 ## Third Party Integrations
 
@@ -409,3 +430,10 @@ In order to add any new check feel free to create a new extra check in the extra
 Javier Pecete has done an awesome job integrating Prowler with Telegram, you have more details here https://github.com/i4specete/ServerTelegramBot
 ### Cloud Security Suite
 The guys of SecurityFTW have added Prowler in their Cloud Security Suite along with other cool security tools https://github.com/SecurityFTW/cs-suite
+
+## License
+All CIS based checks in the checks folder are licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License.
+The link to the license terms can be found at
+https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+Any other piece of code is licensed as Apache License 2.0 as specified in each file. You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0

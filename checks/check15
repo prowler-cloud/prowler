@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+CHECK_ID_check15="1.5,1.05"
+CHECK_TITLE_check15="[check15] Ensure IAM password policy requires at least one uppercase letter (Scored)"
+CHECK_SCORED_check15="SCORED"
+CHECK_ALTERNATE_check105="check15" 
+
+check15(){
+  # "Ensure IAM password policy requires at least one uppercase letter (Scored)"
+  COMMAND15=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json --query 'PasswordPolicy.RequireUppercaseCharacters' 2> /dev/null) # must be true
+  if [[ "$COMMAND15" == "true" ]];then
+    textPass "Password Policy requires upper case"
+  else
+    textFail "Password Policy missing upper-case requirement"
+  fi
+}

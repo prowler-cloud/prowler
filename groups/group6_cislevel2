@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+GROUP_ID[6]='cislevel2'
+GROUP_NUMBER[6]='6.0'
+GROUP_TITLE[6]='CIS Level 2 - [cislevel2] **************************************'
+GROUP_RUN_BY_DEFAULT[6]='N' # run it when execute_all is called
+GROUP_CHECKS[6]='check11,check12,check13,check14,check15,check16,check17,check18,check19,check110,check111,check112,check113,check114,check115,check116,check117,check118,check119,check120,check121,check122,check123,check124,check21,check22,check23,check24,check25,check26,check27,check28,check31,check32,check33,check34,check35,check36,check37,check38,check39,check310,check311,check312,check313,check314,check315,check41,check42,check43,check44,check45'

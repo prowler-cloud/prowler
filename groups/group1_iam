@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+GROUP_ID[1]='group1'
+GROUP_NUMBER[1]='1.0'
+GROUP_TITLE[1]='Identity and Access Management - [group1] **********************'
+GROUP_RUN_BY_DEFAULT[1]='Y' # run it when execute_all is called
+GROUP_CHECKS[1]='check11,check12,check13,check14,check15,check16,check17,check18,check19,check110,check111,check112,check113,check114,check115,check116,check117,check118,check119,check120,check121,check122,check123,check124'

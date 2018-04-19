@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+GROUP_ID[2]='group2'
+GROUP_NUMBER[2]='2.0'
+GROUP_TITLE[2]='Logging - [group2] *********************************************'
+GROUP_RUN_BY_DEFAULT[2]='Y' # run it when execute_all is called
+GROUP_CHECKS[2]='check21,check22,check23,check24,check25,check26,check27,check28'

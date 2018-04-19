@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra722="7.22"
+CHECK_TITLE_extra722="[extra722] Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra722="NOT_SCORED"
+CHECK_ALTERNATE_check722="extra722"
+
+extra722(){
+  # "Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)"
+  for regx in $REGIONS; do
+    LIST_OF_API_GW=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query items[*].id --output text)
+    if [[ $LIST_OF_API_GW ]];then
+      for apigwid in $LIST_OF_API_GW;do
+        API_GW_NAME=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query "items[?id==\`$apigwid\`].name" --output text)
+        CHECK_STAGES_NAME=$($AWSCLI apigateway get-stages $PROFILE_OPT --region $regx --rest-api-id $apigwid --query "item[*].stageName" --output text)
+        if [[ $CHECK_STAGES_NAME ]];then
+          for stagname in $CHECK_STAGES_NAME;do
+            CHECK_STAGE_METHOD_LOGGING=$($AWSCLI apigateway get-stages $PROFILE_OPT --region $regx --rest-api-id $apigwid --query "item[?stageName == \`$stagname\` ].methodSettings" --output text|awk '{ print $1" log level "$6}')
+            if [[ $CHECK_STAGE_METHOD_LOGGING ]];then
+              textPass "$regx: API Gateway $API_GW_NAME has stage logging enabled for $CHECK_STAGE_METHOD_LOGGING" "$regx"
+            else
+              textFail "$regx: API Gateway $API_GW_NAME logging disabled for stage $stagname!" "$regx"
+            fi
+          done
+        else
+           textFail "$regx: No Stage name found for $API_GW_NAME" "$regx"
+        fi
+      done
+    else
+       textInfo "$regx: No API Gateway found" "$regx"
+    fi
+  done
+}

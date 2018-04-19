@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+CHECK_ID_check43="4.3,4.03"
+CHECK_TITLE_check43="[check43] Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
+CHECK_SCORED_check43="SCORED"
+CHECK_ALTERNATE_check403="check43" 
+
+check43(){
+  # "Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
+  for regx in $REGIONS; do
+    CHECK_FL=$($AWSCLI ec2 describe-flow-logs $PROFILE_OPT --region $regx --query 'FlowLogs[?FlowLogStatus==`ACTIVE`].LogGroupName' --output text)
+    if [[ $CHECK_FL ]];then
+      for FL in $CHECK_FL;do
+        textPass "VPCFlowLog is enabled for LogGroupName: $FL in Region $regx" "$regx"
+      done
+    else
+      textFail "No VPCFlowLog has been found in Region $regx" "$regx"
+    fi
+  done
+}

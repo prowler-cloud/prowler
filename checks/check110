@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+CHECK_ID_check110="1.10"
+CHECK_TITLE_check110="[check110] Ensure IAM password policy prevents password reuse: 24 or greater (Scored)"
+CHECK_SCORED_check110="SCORED"
+CHECK_ALTERNATE_check110="check110" 
+
+check110(){
+  # "Ensure IAM password policy prevents password reuse: 24 or greater (Scored)"
+  COMMAND110=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --query 'PasswordPolicy.PasswordReusePrevention' --output text 2> /dev/null)
+  if [[ $COMMAND110 ]];then
+    if [[ $COMMAND110 -gt "23" ]];then
+      textPass "Password Policy limits reuse"
+    else
+      textFail "Password Policy has weak reuse requirement (lower than 24)"
+    fi
+  else
+    textFail "Password Policy missing reuse requirement"
+  fi
+}

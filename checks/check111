@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+CHECK_ID_check111="1.11"
+CHECK_TITLE_check111="[check111] Ensure IAM password policy expires passwords within 90 days or less (Scored)"
+CHECK_SCORED_check111="SCORED"
+CHECK_ALTERNATE_check111="check111"
+
+check111(){
+  # "Ensure IAM password policy expires passwords within 90 days or less (Scored)"
+  COMMAND111=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --query PasswordPolicy.MaxPasswordAge --output text 2> /dev/null)
+  if [[ $COMMAND111 ]];then
+    if [ "$COMMAND111" == "90" ];then
+      textPass "Password Policy includes expiration"
+    else
+      textFail "Password expiration is set greater than 90 days"
+    fi
+  else
+    textFail "Password expiration is not set"
+  fi
+}

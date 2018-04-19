@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+
+# It checks -p optoin first and use it as profile, if not -p provided then
+# check environment variables and if not, it checks and loads credentials from
+# instance profile (metadata server) if runs in an EC2 instance
+
+INSTANCE_PROFILE=$(curl -s -m 1 http://169.254.169.254/latest/meta-data/iam/security-credentials/)
+if echo "$INSTANCE_PROFILE" | grep -q '404 - Not Found'; then
+    INSTANCE_PROFILE=
+fi
+
+if [[ $PROFILE ]]; then
+  PROFILE_OPT="--profile $PROFILE"
+elif [[ $AWS_ACCESS_KEY_ID && $AWS_SECRET_ACCESS_KEY || $AWS_SESSION_TOKEN ]];then
+    PROFILE="ENV"
+    PROFILE_OPT=""
+elif [[ $INSTANCE_PROFILE ]];then
+    PROFILE="INSTANCE-PROFILE"
+    AWS_ACCESS_KEY_ID=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${INSTANCE_PROFILE} | grep AccessKeyId | cut -d':' -f2 | sed 's/[^0-9A-Z]*//g')
+    AWS_SECRET_ACCESS_KEY_ID=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${INSTANCE_PROFILE} | grep SecretAccessKey | cut -d':' -f2 | sed 's/[^0-9A-Za-z/+=]*//g')
+    AWS_SESSION_TOKEN=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${INSTANCE_PROFILE}  grep Token| cut -d':' -f2 | sed 's/[^0-9A-Za-z/+=]*//g')
+else
+    PROFILE="default"
+    PROFILE_OPT="--profile $PROFILE"
+fi
+
+# Set default region by aws config, fall back to us-east-1
+REGION_CONFIG=$(aws configure get region)
+if [[ $REGION_OPT ]]; then
+    REGION="$REGION_OPT"
+elif [[ $REGION_CONFIG ]]; then
+    REGION="$REGION_CONFIG"
+else
+    REGION="us-east-1"
+fi

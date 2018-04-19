@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+
+# Get whoami in AWS, who is the user running this shell script
+getWhoami(){
+  ACCOUNT_NUM=$($AWSCLI sts get-caller-identity --output json $PROFILE_OPT --region $REGION --query "Account" | tr -d '"')
+  if [[ "$MODE" == "csv" ]]; then
+    CALLER_ARN_RAW=$($AWSCLI sts get-caller-identity --output json $PROFILE_OPT --region $REGION --query "Arn")
+    if [[ 255 -eq $? ]]; then
+      # Failed to get own identity ... exit
+      echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+      >&2 echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+      EXITCODE=2
+      exit $EXITCODE
+    fi
+    CALLER_ARN=$(echo $CALLER_ARN_RAW | tr -d '"')
+    printCsvHeader
+    textTitle "0.0" "Show report generation info" "NOT_SCORED" "SUPPORT"
+    textInfo "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
+  else
+    echo ""
+    echo -e " This report is being generated using credentials below:\n"
+    echo -e " AWS-CLI Profile: $NOTICE[$PROFILE]$NORMAL AWS API Region: $NOTICE[$REGION]$NORMAL AWS Filter Region: $NOTICE[${FILTERREGION:-all}]$NORMAL\n"
+    if [[ $MONOCHROME -eq 1 ]]; then
+      echo -e " Caller Identity:"
+      $AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "Arn"
+      if [[ 255 -eq $? ]]; then
+        # Failed to get own identity ... exit
+        echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+        >&2 echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+        exit 2
+      fi
+    else
+      echo -e " Caller Identity:"
+      $AWSCLI sts get-caller-identity --output table $PROFILE_OPT --region $REGION
+      if [[ 255 -eq $? ]]; then
+        # Failed to get own identity ... exit
+        echo variable $PROFILE_OPT
+        echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+        >&2 echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
+        EXITCODE=2
+        exit $EXITCODE
+      fi
+      echo ""
+    fi
+  fi
+}

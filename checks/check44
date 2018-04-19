@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+CHECK_ID_check44="4.4,4.04"
+CHECK_TITLE_check44="[check44] Ensure the default security group of every VPC restricts all traffic (Scored)"
+CHECK_SCORED_check44="SCORED"
+CHECK_ALTERNATE_check404="check44" 
+
+check44(){
+  # "Ensure the default security group of every VPC restricts all traffic (Scored)"
+  for regx in $REGIONS; do
+    CHECK_SGDEFAULT=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --filters Name=group-name,Values='default' --query 'SecurityGroups[*].{IpPermissions:IpPermissions,IpPermissionsEgress:IpPermissionsEgress,GroupId:GroupId}' --output text |grep 0.0.0.0)
+    if [[ $CHECK_SGDEFAULT ]];then
+      textFail "Default Security Groups found that allow 0.0.0.0 IN or OUT traffic in Region $regx" "$regx"
+    else
+      textPass "No Default Security Groups open to 0.0.0.0 found in Region $regx" "$regx"
+    fi
+  done
+}

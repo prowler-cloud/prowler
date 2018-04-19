@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+if [[ $MODE != "mono" && $MODE != "text" && $MODE != "csv" ]]; then
+  echo ""
+  echo "$OPTRED ERROR!$OPTNORMAL Invalid output mode.  Choose text, mono, or csv."
+  usage
+  EXITCODE=1
+  exit $EXITCODE
+fi
+
+if [[ "$MODE" == "mono" || "$MODE" == "csv" ]]; then
+  MONOCHROME=1
+fi
+
+if [[ $MONOCHROME -eq 1 ]]; then
+  # Colors
+  NORMAL=''
+  WARNING=''          # Bad (red)
+  SECTION=''          # Section (yellow)
+  NOTICE=''           # Notice (yellow)
+  OK=''               # Ok (green)
+  BAD=''              # Bad (red)
+  CYAN=''
+  BLUE=''
+  BROWN=''
+  DARKGRAY=''
+  GRAY=''
+  GREEN=''
+  MAGENTA=''
+  PURPLE=''
+  RED=''
+  YELLOW=''
+  WHITE=''
+else
+  # Colors
+  # NOTE: Your editor may NOT show the 0x1b / escape character left of the '['
+  NORMAL="[0;39m"
+  WARNING="[1;33m"          # Bad (red)
+  SECTION="[1;33m"          # Section (yellow)
+  NOTICE="[1;33m"           # Notice (yellow)
+  OK="[1;32m"               # Ok (green)
+  BAD="[1;31m"              # Bad (red)
+  CYAN="[0;36m"
+  BLUE="[0;34m"
+  BROWN="[0;33m"
+  DARKGRAY="[0;30m"
+  GRAY="[0;37m"
+  GREEN="[1;32m"
+  MAGENTA="[1;35m"
+  PURPLE="[0;35m"
+  RED="[1;31m"
+  YELLOW="[1;33m"
+  WHITE="[1;37m"
+fi
+
+printColorsCode(){
+  if [[ $MONOCHROME -eq 0 ]]; then
+    echo -e "\n$NORMAL Colors code for results: $NOTICE INFO (Information)$NORMAL,$OK PASS (Recommended value)$NORMAL, $BAD FAIL (Fix required)$NORMAL"
+  fi
+}

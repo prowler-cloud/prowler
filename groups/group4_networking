@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+GROUP_ID[4]="group4"
+GROUP_NUMBER[4]="4.0"
+GROUP_TITLE[4]="Networking - [group4] ******************************************"
+GROUP_RUN_BY_DEFAULT[4]="Y" # run it when execute_all is called
+GROUP_CHECKS[4]="check41,check42,check43,check44,check45"

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+CHECK_ID_check26="2.6,2.06"
+CHECK_TITLE_check26="[check26] Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)"
+CHECK_SCORED_check26="SCORED"
+CHECK_ALTERNATE_check206="check26" 
+
+check26(){
+  # "Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)"
+  CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text $PROFILE_OPT --region $REGION)
+    if [[ $CLOUDTRAILBUCKET ]];then
+      for bucket in $CLOUDTRAILBUCKET;do
+        CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --region $REGION --query 'LoggingEnabled.TargetBucket' --output text|grep -v None)
+        if [[ $CLOUDTRAILBUCKET_LOGENABLED ]];then
+          textPass "Bucket access logging enabled in $bucket"
+        else
+          textFail "access logging is not enabled in $bucket CloudTrail S3 bucket!"
+        fi
+      done
+    else
+      textFail "CloudTrail bucket not found!"
+    fi
+}
