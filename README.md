@@ -326,7 +326,7 @@ Quick bash script to set up a "prowler" IAM user and "SecurityAudit" group with 
 export AWS_DEFAULT_PROFILE=default
 export ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' | tr -d '"')
 aws iam create-group --group-name SecurityAudit
-aws iam create-policy --policy-name ProwlerAuditAdditions --policy-document file://$(pwd)/prowler-policy-additions.json
+aws iam create-policy --policy-name ProwlerAuditAdditions --policy-document file://$(pwd)/iam/prowler-policy-additions.json
 aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::aws:policy/SecurityAudit
 aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ProwlerAuditAdditions
 aws iam create-user --user-name prowler
@@ -369,7 +369,6 @@ At this moment we have 23 extra checks:
 - 7.23 (`extra723`) Check if RDS Snapshots are public (Not Scored) (Not part of CIS benchmark)
 - 7.24 (`extra724`) Check if ACM certificates have Certificate Transparency logging enabled (Not Scored) (Not part of CIS benchmark)
 - 7.25 (`extra725`) Check if S3 buckets have Object-level logging enabled in CloudTrail (Not Scored) (Not part of CIS benchmark)
-
 
 To check all extras in one command:
 ```
