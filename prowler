@@ -256,6 +256,9 @@ show_all_titles() {
 	done
 }
 
+# Gather account data / test aws cli connectivity
+getWhoami
+
 # Execute single check if called with -c
 if [[ $CHECK_ID ]];then
   execute_check $CHECK_ID
@@ -285,7 +288,6 @@ if [[ $MODE != "csv" ]]; then
   prowlerBanner
 fi
 
-getWhoami
 genCredReport
 saveReport
 execute_all
