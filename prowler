@@ -227,7 +227,6 @@ execute_group_by_id() {
     genCredReport
     saveReport
   fi
-  prowlerBanner
 	for i in "${!GROUP_ID[@]}"; do
 		if [ "${GROUP_ID[$i]}" == "$1" ]; then
 			execute_group $i
@@ -256,6 +255,11 @@ show_all_titles() {
 	done
 }
 
+### All functions defined above ... run the workflow
+if [[ $MODE != "csv" ]]; then
+  prowlerBanner
+fi
+
 # Gather account data / test aws cli connectivity
 getWhoami
 
@@ -281,11 +285,6 @@ if [[ $PRINTCHECKSONLY == "1" ]]; then
   prowlerBanner
   show_all_titles
   exit $EXITCODE
-fi
-
-### All functions defined above ... run the workflow
-if [[ $MODE != "csv" ]]; then
-  prowlerBanner
 fi
 
 genCredReport
