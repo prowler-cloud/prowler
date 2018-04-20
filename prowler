@@ -279,9 +279,9 @@ if [[ $MODE != "csv" ]]; then
   prowlerBanner
 fi
 
+getWhoami
 genCredReport
 saveReport
-getWhoami
 execute_all
 
 cleanTemp

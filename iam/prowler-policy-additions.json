@@ -10,7 +10,9 @@
         "logs:DescribeMetricFilters",
         "ses:getidentityverificationattributes",
         "sns:listsubscriptionsbytopic",
-        "guardduty:ListDetectors"
+        "guardduty:ListDetectors",
+        "trustedadvisor:Describe*",
+        "support:*"
       ],
       "Effect": "Allow",
       "Resource": "*"

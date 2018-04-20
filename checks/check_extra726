@@ -10,14 +10,26 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-# CHECK_ID_extra726="7.26"
-# CHECK_TITLE_extra726="[extra726] Check Trusted Advisor for errors and warnings (Not Scored) (Not part of CIS benchmark)"
-# CHECK_SCORED_extra726="NOT_SCORED"
-# CHECK_ALTERNATE_check726="extra726"
-#
-# tachecks=$(aws support describe-trusted-advisor-checks --language en --profile security --region us-east-1 --query checks[*].id --output text)
-#
-# for i in $tachecks; do aws support describe-trusted-advisor-check-result --check-id $i --language en --profile security --region us-east-1 --query result.status --output text; done
+
+CHECK_ID_extra726="7.26"
+CHECK_TITLE_extra726="[extra726] Check Trusted Advisor for errors and warnings (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra726="NOT_SCORED"
+CHECK_ALTERNATE_check726="extra726"
+
+extra726(){
+  trap "exit" INT
+  # forcing us-east-1 region only since support only works in that region
+  TA_CHECKS_ID=$($AWSCLI support describe-trusted-advisor-checks --language en $PROFILE_OPT --region us-east-1 --query checks[*].id  --output text)
+  for checkid in $TA_CHECKS_ID; do
+    QUERY_RESULT_NO_OK=$($AWSCLI support describe-trusted-advisor-check-result --check-id $checkid --language en $PROFILE_OPT --region us-east-1 --query 'result.status' --output text | grep -v "ok" )
+    if [[ $QUERY_RESULT_NO_OK ]]; then
+      TA_CHECKS_NAME=$($AWSCLI support describe-trusted-advisor-checks --language en $PROFILE_OPT --region us-east-1 --query "checks[?id==\`$checkid\`].{name:name}[*]"  --output text)
+      textFail "Trusted Advisor check $TA_CHECKS_NAME is in state $QUERY_RESULT_NO_OK"
+    fi 
+  done
+}
+
+
 #
 # extra726(){
 #   # "Check if Lambda functions invoke API operations are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)"
