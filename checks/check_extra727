@@ -29,6 +29,8 @@ extra727(){
           textInfo "$regx: SQS queue $queue seems correct" "$regx"
         fi
       done
+    else
+      textInfo "$regx: No SQS queues found" "$regx"
     fi
   done
 }
