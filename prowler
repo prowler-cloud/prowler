@@ -70,12 +70,13 @@ USAGE:
       -l                  list all available checks only (does not perform any check)
       -e                  exclude group extras
       -b                  do not print Prowler banner
+      -V                  show version number & exit
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlkp:r:c:g:f:m:M:enb" OPTION; do
+while getopts ":hlkp:r:c:g:f:m:M:enbV" OPTION; do
    case $OPTION in
      h )
         usage
@@ -117,6 +118,11 @@ while getopts ":hlkp:r:c:g:f:m:M:enb" OPTION; do
         ;;
      e )
         EXTRAS=1
+        ;;
+     V )
+        echo "Prowler $PROWLER_VERSION"
+        EXITCODE=0
+        exit $EXITCODE
         ;;
      : )
         echo ""
