@@ -437,3 +437,9 @@ The link to the license terms can be found at
 https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 Any other piece of code is licensed as Apache License 2.0 as specified in each file. You may obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
+
+NOTE: If you are interested in using Prowler for commercial purposes remember that due to the CC4.0 license “The distributors or partners that are interested and using Prowler would need to enroll as CIS SecureSuite Members to incorporate this product, which includes references to CIS resources, in their offering.". Information about CIS pricing for vendors here: https://www.cisecurity.org/cis-securesuite/pricing-and-categories/product-vendor/
+
+#### I'm not related anyhow with CIS organization, I just write and maintain Prowler to help companies over the world to make their cloud infrastructure more secure.
+
+If you want to contact me visit https://blyx.com/contact
