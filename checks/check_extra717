@@ -13,6 +13,7 @@
 CHECK_ID_extra717="7.17"
 CHECK_TITLE_extra717="[extra717] Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra717="NOT_SCORED"
+CHECK_TYPE_extra717="EXTRA"
 CHECK_ALTERNATE_check717="extra717"
 
 extra717(){

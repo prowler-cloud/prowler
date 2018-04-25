@@ -13,6 +13,7 @@
 CHECK_ID_extra720="7.20"
 CHECK_TITLE_extra720="[extra720] Check if Lambda functions invoke API operations are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra720="NOT_SCORED"
+CHECK_TYPE_extra720="EXTRA"
 CHECK_ALTERNATE_check720="extra720"
 
 extra720(){
