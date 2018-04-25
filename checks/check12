@@ -11,6 +11,7 @@
 CHECK_ID_check12="1.2,1.02"
 CHECK_TITLE_check12="[check12] Ensure multi-factor authentication (MFA) is enabled for all IAM users that have a console password (Scored)"
 CHECK_SCORED_check12="SCORED"
+CHECK_TYPE_check12="LEVEL1"
 CHECK_ALTERNATE_check102="check12"
 
 check12(){

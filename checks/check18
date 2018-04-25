@@ -11,6 +11,7 @@
 CHECK_ID_check18="1.8,1.08"
 CHECK_TITLE_check18="[check18] Ensure IAM password policy require at least one number (Scored)"
 CHECK_SCORED_check18="SCORED"
+CHECK_TYPE_check19="LEVEL1"
 CHECK_ALTERNATE_check18="check18"
 
 check18(){

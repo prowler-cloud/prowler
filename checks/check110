@@ -11,7 +11,8 @@
 CHECK_ID_check110="1.10"
 CHECK_TITLE_check110="[check110] Ensure IAM password policy prevents password reuse: 24 or greater (Scored)"
 CHECK_SCORED_check110="SCORED"
-CHECK_ALTERNATE_check110="check110" 
+CHECK_TYPE_check110="LEVEL1"
+CHECK_ALTERNATE_check110="check110"
 
 check110(){
   # "Ensure IAM password policy prevents password reuse: 24 or greater (Scored)"
