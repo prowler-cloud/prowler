@@ -11,7 +11,8 @@
 CHECK_ID_check117="1.17"
 CHECK_TITLE_check117="[check117] Enable detailed billing (Scored)"
 CHECK_SCORED_check117="SCORED"
-CHECK_ALTERNATE_check117="check117" 
+CHECK_TYPE_check117="LEVEL1"
+CHECK_ALTERNATE_check117="check117"
 
 check117(){
   # "Enable detailed billing (Scored)"

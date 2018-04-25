@@ -11,6 +11,7 @@
 CHECK_ID_check14="1.4,1.04"
 CHECK_TITLE_check14="[check14] Ensure access keys are rotated every 90 days or less (Scored)"
 CHECK_SCORED_check14="SCORED"
+CHECK_TYPE_check14="LEVEL1"
 CHECK_ALTERNATE_check104="check14"
 
 check14(){

@@ -10,7 +10,8 @@
 
 CHECK_ID_check123="1.23"
 CHECK_TITLE_check123="[check123] Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)"
-CHECK_SCORED_check123="NOT_SCORED" 
+CHECK_SCORED_check123="NOT_SCORED"
+CHECK_TYPE_check123="LEVEL1"
 CHECK_ALTERNATE_check123="check123"
 
 check123(){

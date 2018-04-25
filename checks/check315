@@ -11,6 +11,7 @@
 CHECK_ID_check315="3.15"
 CHECK_TITLE_check315="[check315] Ensure appropriate subscribers to each SNS topic (Not Scored)"
 CHECK_SCORED_check315="SCORED"
+CHECK_TYPE_check315="LEVEL1"
 CHECK_ALTERNATE_check315="check315"
 
 check315(){

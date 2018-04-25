@@ -11,7 +11,8 @@
 CHECK_ID_check24="2.4,2.04"
 CHECK_TITLE_check24="[check24] Ensure CloudTrail trails are integrated with CloudWatch Logs (Scored)"
 CHECK_SCORED_check24="SCORED"
-CHECK_ALTERNATE_check204="check24" 
+CHECK_TYPE_check24="LEVEL1"
+CHECK_ALTERNATE_check204="check24"
 
 check24(){
   # "Ensure CloudTrail trails are integrated with CloudWatch Logs (Scored)"
