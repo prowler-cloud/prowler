@@ -11,7 +11,8 @@
 CHECK_ID_check44="4.4,4.04"
 CHECK_TITLE_check44="[check44] Ensure the default security group of every VPC restricts all traffic (Scored)"
 CHECK_SCORED_check44="SCORED"
-CHECK_ALTERNATE_check404="check44" 
+CHECK_TYPE_check44="LEVEL2"
+CHECK_ALTERNATE_check404="check44"
 
 check44(){
   # "Ensure the default security group of every VPC restricts all traffic (Scored)"
