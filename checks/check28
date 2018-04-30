@@ -11,30 +11,36 @@
 CHECK_ID_check28="2.8,2.08"
 CHECK_TITLE_check28="[check28] Ensure rotation for customer created CMKs is enabled (Scored)"
 CHECK_SCORED_check28="SCORED"
-CHECK_ALTERNATE_check208="check28" 
+CHECK_ALTERNATE_check208="check28"
 
 check28(){
   # "Ensure rotation for customer created CMKs is enabled (Scored)"
   for regx in $REGIONS; do
   CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys $PROFILE_OPT --region $regx --output text --query 'Keys[*].KeyId')
     if [[ $CHECK_KMS_KEYLIST ]];then
-      CHECK_KMS_KEYLIST_NO_DEFAULT=$(for key in $CHECK_KMS_KEYLIST ; do $AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --output text --query 'KeyMetadata.[KeyId, KeyManager]'|grep -v 'AWS'|awk '{ print $1 }'; done)
-      for key in $CHECK_KMS_KEYLIST_NO_DEFAULT; do
-        CHECK_KMS_KEY_TYPE=$($AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.Origin' | sed 's/["]//g')
-          if [[ "$CHECK_KMS_KEY_TYPE" == "EXTERNAL" ]];then
-            textPass "Key $key in Region $regx Customer Uploaded Key Material." "$regx"
-          else
-            CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key $PROFILE_OPT --region $regx --output text)
-            if [[ "$CHECK_KMS_KEY_ROTATION" == "True" ]];then
-              textPass "Key $key in Region $regx is set correctly"
+      CHECK_KMS_KEYLIST_NO_DEFAULT=$(
+        for key in $CHECK_KMS_KEYLIST; do
+          $AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.{key:KeyId,state:KeyState,man:KeyManager}' --output text|grep Enabled$|grep -v AWS| awk '{ print $1 }'
+        done )
+      if [[ $CHECK_KMS_KEYLIST_NO_DEFAULT ]]; then
+        for key in $CHECK_KMS_KEYLIST_NO_DEFAULT; do
+          CHECK_KMS_KEY_TYPE=$($AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.Origin' | sed 's/["]//g')
+            if [[ "$CHECK_KMS_KEY_TYPE" == "EXTERNAL" ]];then
+              textPass "$regx: Key $key in Region $regx Customer Uploaded Key Material." "$regx"
             else
-              textFail "Key $key in Region $regx is not set to rotate!!!" "$regx"
+              CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key $PROFILE_OPT --region $regx --output text)
+              if [[ "$CHECK_KMS_KEY_ROTATION" == "True" ]];then
+                textPass "$regx: Key $key is set correctly" "$regx"
+              else
+                textFail "$regx: Key $key is not set to rotate!" "$regx"
+              fi
             fi
-          fi
-      done
-
-  else
-    textInfo "Region $regx doesn't have encryption keys" "$regx"
-  fi
+        done
+      else
+        textInfo "$regx: This region doesn't have CUSTOM encryption keys" "$regx"
+      fi
+    else
+      textInfo "$regx: This region doesn't have ANY encryption keys" "$regx"
+    fi
   done
 }
