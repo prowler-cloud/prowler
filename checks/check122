@@ -11,7 +11,8 @@
 CHECK_ID_check122="1.22"
 CHECK_TITLE_check122="[check122] Ensure a support role has been created to manage incidents with AWS Support (Scored)"
 CHECK_SCORED_check122="SCORED"
-CHECK_ALTERNATE_check122="check122" 
+CHECK_TYPE_check122="LEVEL1"
+CHECK_ALTERNATE_check122="check122"
 
 check122(){
   # "Ensure a support role has been created to manage incidents with AWS Support (Scored)"

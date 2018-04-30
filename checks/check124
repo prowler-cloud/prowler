@@ -11,7 +11,8 @@
 CHECK_ID_check124="1.24"
 CHECK_TITLE_check124="[check124] Ensure IAM policies that allow full \"*:*\" administrative privileges are not created (Scored)"
 CHECK_SCORED_check124="SCORED"
-CHECK_ALTERNATE_check124="check124" 
+CHECK_TYPE_check124="LEVEL1"
+CHECK_ALTERNATE_check124="check124"
 
 check124(){
   # "Ensure IAM policies that allow full \"*:*\" administrative privileges are not created (Scored)"

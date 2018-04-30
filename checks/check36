@@ -11,7 +11,8 @@
 CHECK_ID_check36="3.6,3.06"
 CHECK_TITLE_check36="[check36] Ensure a log metric filter and alarm exist for AWS Management Console authentication failures (Scored)"
 CHECK_SCORED_check36="SCORED"
-CHECK_ALTERNATE_check306="check36" 
+CHECK_TYPE_check36="LEVEL2"
+CHECK_ALTERNATE_check306="check36"
 
 check36(){
   # "Ensure a log metric filter and alarm exist for AWS Management Console authentication failures (Scored)"

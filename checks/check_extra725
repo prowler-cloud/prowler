@@ -14,6 +14,7 @@
 CHECK_ID_extra725="7.25"
 CHECK_TITLE_extra725="[extra725] Check if S3 buckets have Object-level logging enabled in CloudTrail (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra725="NOT_SCORED"
+CHECK_TYPE_extra725="EXTRA"
 CHECK_ALTERNATE_check725="extra725"
 
 # per Object-level logging is not configured at Bucket level but at CloudTrail trail level
@@ -54,7 +55,7 @@ extra725(){
       textFail "$regx: S3 bucket $bucket has Object-level logging disabled" "$regx"
    done
   fi
-  # delete all temp files 
+  # delete all temp files
   rm -fr $TEMP_BUCKET_LIST_FILE $TEMP_TRAILS_LIST_FILE $TEMP_BUCKETS_LOGGING_LIST_FILE
 
 }

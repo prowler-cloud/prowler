@@ -11,7 +11,8 @@
 CHECK_ID_check42="4.2,4.02"
 CHECK_TITLE_check42="[check42] Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389 (Scored)"
 CHECK_SCORED_check42="SCORED"
-CHECK_ALTERNATE_check402="check42" 
+CHECK_TYPE_check42="LEVEL2"
+CHECK_ALTERNATE_check402="check42"
 
 check42(){
   # "Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389 (Scored)"

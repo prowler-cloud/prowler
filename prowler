@@ -263,6 +263,11 @@ fi
 # Gather account data / test aws cli connectivity
 getWhoami
 
+# Generate the credential report, regardless of which checks we run
+# so that the checks can safely assume it's available
+genCredReport
+saveReport
+
 # Execute single check if called with -c
 if [[ $CHECK_ID ]];then
   execute_check $CHECK_ID
@@ -287,8 +292,6 @@ if [[ $PRINTCHECKSONLY == "1" ]]; then
   exit $EXITCODE
 fi
 
-genCredReport
-saveReport
 execute_all
 
 cleanTemp
