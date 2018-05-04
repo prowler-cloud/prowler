@@ -3,7 +3,7 @@
 ## Table of Contents  
 - [Description](#description)
 - [Features](#features)  
-- [Requirements](#requirements)  
+- [Requirements and Installation](#requirements-and-installation)  
 - [Usage](#usage)
 - [Fix](#fix)
 - [Screenshots](#screenshots)
@@ -38,7 +38,7 @@ With Prowler you can:
 - run specific checks without having to run the entire report
 - check multiple AWS accounts in parallel
 
-## Requirements
+## Requirements and Installation 
 This script has been written in bash using AWS-CLI and it works in Linux and OSX.
 
 - Make sure your AWS-CLI is installed on your workstation, with Python pip already installed:
