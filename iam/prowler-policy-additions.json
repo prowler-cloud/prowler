@@ -12,6 +12,8 @@
         "sns:listsubscriptionsbytopic",
         "guardduty:ListDetectors",
         "trustedadvisor:Describe*",
+        "cloudtrail:GetEventSelectors",
+        "apigateway:GET",
         "support:*"
       ],
       "Effect": "Allow",
