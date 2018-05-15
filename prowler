@@ -224,7 +224,7 @@ execute_group() {
 # Function to execute group by name
 execute_group_by_id() {
   if [ "${GROUP_ID[$1]}" == "group1" ]; then
-    genCredReport
+    # genCredReport
     saveReport
   fi
 	for i in "${!GROUP_ID[@]}"; do
@@ -265,7 +265,7 @@ getWhoami
 
 # Generate the credential report, regardless of which checks we run
 # so that the checks can safely assume it's available
-genCredReport
+# genCredReport
 saveReport
 
 # Execute single check if called with -c
