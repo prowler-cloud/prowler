@@ -22,7 +22,12 @@ extra73(){
   textInfo "Looking for open S3 Buckets (ACLs and Policies) in all regions...  "
   ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' --profile $PROFILE --region $REGION --output text)
   for bucket in $ALL_BUCKETS_LIST; do
-    BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket --profile $PROFILE --region $REGION --output text)
+    BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket --profile $PROFILE --region $REGION --output text 2>/dev/null)
+    exit_status=$?
+    if [[ $exit_status != 0 ]]; then
+      textFail "$bucket bucket is unreadable due to permissions" "$regx"
+      continue $exit_status;
+    fi
     if [[ "None" == $BUCKET_LOCATION ]]; then
       BUCKET_LOCATION="us-east-1"
     fi
