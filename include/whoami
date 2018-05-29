@@ -28,6 +28,8 @@ getWhoami(){
     printCsvHeader
     textTitle "0.0" "Show report generation info" "NOT_SCORED" "SUPPORT"
     textInfo "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
+  elif [[ "$MODE" == "json" ]]; then
+    :
   else
     echo ""
     echo -e " This report is being generated using credentials below:\n"
