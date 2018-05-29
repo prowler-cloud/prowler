@@ -20,6 +20,34 @@ textPass(){
       REPREGION=$REGION
     fi
     echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
+  elif [[ "$MODE" == "json" ]]; then
+    if [[ $2 ]]; then
+      REPREGION=$2
+    else
+      REPREGION=$REGION
+    fi
+    jq -c \
+    --arg PROFILE "$PROFILE" \
+    --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
+    --arg TITLE_TEXT "$TITLE_TEXT" \
+    --arg MESSAGE "$(echo -e "${1}" | sed -e 's/^[[:space:]]*//')" \
+    --arg SCORED "$ITEM_SCORED" \
+    --arg ITEM_LEVEL "$ITEM_LEVEL" \
+    --arg TITLE_ID "$TITLE_ID" \
+    --arg REPREGION "$REPREGION" \
+    --arg TIMESTAMP $(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+    -n '{
+      "Profile": $PROFILE,
+      "Account Number": $ACCOUNT_NUM,
+      "Control": $TITLE_TEXT,
+      "Message": $MESSAGE,
+      "Status": "Pass",
+      "Scored": $SCORED,
+      "Level": $ITEM_LEVEL,
+      "Control ID": $TITLE_ID,
+      "Region": $REPREGION,
+      "Timestamp": $TIMESTAMP,
+    }'
   else
     echo "      $OK PASS!$NORMAL $1"
   fi
@@ -33,6 +61,34 @@ textInfo(){
       REPREGION=$REGION
     fi
     echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
+  elif [[ "$MODE" == "json" ]]; then
+    if [[ $2 ]]; then
+      REPREGION=$2
+    else
+      REPREGION=$REGION
+    fi
+    jq -c \
+    --arg PROFILE "$PROFILE" \
+    --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
+    --arg TITLE_TEXT "$TITLE_TEXT" \
+    --arg MESSAGE "$(echo -e "${1}" | sed -e 's/^[[:space:]]*//')" \
+    --arg SCORED "$ITEM_SCORED" \
+    --arg ITEM_LEVEL "$ITEM_LEVEL" \
+    --arg TITLE_ID "$TITLE_ID" \
+    --arg REPREGION "$REPREGION" \
+    --arg TIMESTAMP $(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+    -n '{
+      "Profile": $PROFILE,
+      "Account Number": $ACCOUNT_NUM,
+      "Control": $TITLE_TEXT,
+      "Message": $MESSAGE,
+      "Status": "Info",
+      "Scored": $SCORED,
+      "Level": $ITEM_LEVEL,
+      "Control ID": $TITLE_ID,
+      "Region": $REPREGION,
+      "Timestamp": $TIMESTAMP,
+    }'
   else
     echo "      $NOTICE INFO! $1 $NORMAL"
   fi
@@ -47,6 +103,34 @@ textFail(){
       REPREGION=$REGION
     fi
     echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}FAIL${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
+  elif [[ "$MODE" == "json" ]]; then
+    if [[ $2 ]]; then
+      REPREGION=$2
+    else
+      REPREGION=$REGION
+    fi
+    jq -c \
+    --arg PROFILE "$PROFILE" \
+    --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
+    --arg TITLE_TEXT "$TITLE_TEXT" \
+    --arg MESSAGE "$(echo -e "${1}" | sed -e 's/^[[:space:]]*//')" \
+    --arg SCORED "$ITEM_SCORED" \
+    --arg ITEM_LEVEL "$ITEM_LEVEL" \
+    --arg TITLE_ID "$TITLE_ID" \
+    --arg REPREGION "$REPREGION" \
+    --arg TIMESTAMP $(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+    -n '{
+      "Profile": $PROFILE,
+      "Account Number": $ACCOUNT_NUM,
+      "Control": $TITLE_TEXT,
+      "Message": $MESSAGE,
+      "Status": "Fail",
+      "Scored": $SCORED,
+      "Level": $ITEM_LEVEL,
+      "Control ID": $TITLE_ID,
+      "Region": $REPREGION,
+      "Timestamp": $TIMESTAMP,
+    }'
   else
     echo "      $BAD FAIL! $1 $NORMAL"
   fi
@@ -84,6 +168,8 @@ textTitle(){
 
   if [[ "$MODE" == "csv" ]]; then
       >&2 echo "$TITLE_ID $TITLE_TEXT"
+  elif [[ "$MODE" == "json" ]]; then
+    :
   else
     if [[ "$ITEM_SCORED" == "Scored" ]]; then
       echo -e "\n$BLUE $TITLE_ID $NORMAL $TITLE_TEXT"

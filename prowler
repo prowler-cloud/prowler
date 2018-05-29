@@ -260,6 +260,11 @@ if [[ $MODE != "csv" ]]; then
   prowlerBanner
 fi
 
+# Check that jq is installed for JSON output
+if [[ $MODE == "json" ]]; then
+  . $PROWLER_DIR/include/jq_detector
+fi
+
 # Gather account data / test aws cli connectivity
 getWhoami
 

@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-if [[ $MODE != "mono" && $MODE != "text" && $MODE != "csv" ]]; then
+if [[ $MODE != "mono" && $MODE != "text" && $MODE != "csv" && $MODE != "json" ]]; then
   echo ""
   echo "$OPTRED ERROR!$OPTNORMAL Invalid output mode.  Choose text, mono, or csv."
   usage
@@ -19,7 +19,7 @@ if [[ $MODE != "mono" && $MODE != "text" && $MODE != "csv" ]]; then
   exit $EXITCODE
 fi
 
-if [[ "$MODE" == "mono" || "$MODE" == "csv" ]]; then
+if [[ "$MODE" == "mono" || "$MODE" == "csv" || "$MODE" == "json" ]]; then
   MONOCHROME=1
 fi
 
