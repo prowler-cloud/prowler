@@ -112,7 +112,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 1. If you want to save your report for later analysis:
 
     ```sh
-    ./prowler > prowler-report.txt
+    ./prowler -M mono > prowler-report.txt
     ```
 
     or if you want a coloured HTML report do:
@@ -126,6 +126,11 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
     ```sh
     ./prowler -M csv > output.psv
+    ```
+    or json formatted output using jq, do:
+
+    ```sh
+    ./prowler -M json > prowler-output.json
     ```
 
     or save your report in a S3 bucket:
@@ -166,7 +171,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
         -f <filterregion>   specify an AWS region to run checks against
                                 (i.e.: us-west-1)
         -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-        -M <mode>           output mode: text (default), mono, csv (separator is ,; data is on stdout; progress on stderr)
+        -M <mode>           output mode: text (default), mono, json, csv (separator is ,; data is on stdout; progress on stderr)
         -k                  keep the credential report
         -n                  show check numbers to sort easier
                                 (i.e.: 1.01 instead of 1.1)
@@ -176,7 +181,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
         -h                  this help
     ```
 
-## Fix every FAIL
+## How to fix every FAIL
 
 Check your report and fix the issues following all specific guidelines per check in <https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf>
 

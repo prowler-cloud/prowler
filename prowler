@@ -63,7 +63,7 @@ USAGE:
       -f <filterregion>   specify an AWS region to run checks against
                             (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-      -M <mode>           output mode: text (default), mono, csv (separator is ","; data is on stdout; progress on stderr)
+      -M <mode>           output mode: text (default), mono, json, csv (separator is ","; data is on stdout; progress on stderr)
       -k                  keep the credential report
       -n                  show check numbers to sort easier
                             (i.e.: 1.01 instead of 1.1)
