@@ -20,9 +20,9 @@ CHECK_ALTERNATE_check703="extra73"
 
 extra73(){
   textInfo "Looking for open S3 Buckets (ACLs and Policies) in all regions...  "
-  ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' $PROFILE_OPT --region $REGION --output text)
+  ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' --profile $PROFILE --region $REGION --output text)
   for bucket in $ALL_BUCKETS_LIST; do
-    BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket $PROFILE_OPT --region $REGION --output text)
+    BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket --profile $PROFILE --region $REGION --output text)
     if [[ "None" == $BUCKET_LOCATION ]]; then
       BUCKET_LOCATION="us-east-1"
     fi
@@ -30,14 +30,14 @@ extra73(){
       BUCKET_LOCATION="eu-west-1"
     fi
     # check if AllUsers is in the ACL as Grantee
-    CHECK_BUCKET_ALLUSERS_ACL=$($AWSCLI s3api get-bucket-acl $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AllUsers']" --output text |grep -v GRANTEE)
+    CHECK_BUCKET_ALLUSERS_ACL=$($AWSCLI s3api get-bucket-acl --profile $PROFILE --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AllUsers']" --output text |grep -v GRANTEE)
     CHECK_BUCKET_ALLUSERS_ACL_SINGLE_LINE=$(echo -ne $CHECK_BUCKET_ALLUSERS_ACL)
     # check if AuthenticatedUsers is in the ACL as Grantee, they will have access with sigened URL only
-    CHECK_BUCKET_AUTHUSERS_ACL=$($AWSCLI s3api get-bucket-acl $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers']" --output text |grep -v GRANTEE)
+    CHECK_BUCKET_AUTHUSERS_ACL=$($AWSCLI s3api get-bucket-acl --profile $PROFILE --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers']" --output text |grep -v GRANTEE)
     CHECK_BUCKET_AUTHUSERS_ACL_SINGLE_LINE=$(echo -ne $CHECK_BUCKET_AUTHUSERS_ACL)
     # to prevent error NoSuchBucketPolicy first clean the output controlling stderr
     TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
-    $AWSCLI s3api get-bucket-policy $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --output text --query Policy > $TEMP_POLICY_FILE 2> /dev/null
+    $AWSCLI s3api get-bucket-policy --profile $PROFILE --region $BUCKET_LOCATION --bucket $bucket --output text --query Policy > $TEMP_POLICY_FILE 2> /dev/null
     # check if the S3 policy has Principal as *
     CHECK_BUCKET_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | sed -e 's/[{}]/''/g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}'|awk '/Principal/ && !skip { print } { skip = /Deny/} '|grep ^\"Principal|grep \*)
     if [[ $CHECK_BUCKET_ALLUSERS_ACL || $CHECK_BUCKET_AUTHUSERS_ACL || $CHECK_BUCKET_ALLUSERS_POLICY ]];then
