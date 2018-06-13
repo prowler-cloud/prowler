@@ -26,7 +26,7 @@ check13(){
     USERS_PASSWORD_USED=$($AWSCLI iam list-users --query "Users[?PasswordLastUsed].UserName" --output text $PROFILE_OPT --region $REGION)
     if [[ $USERS_PASSWORD_USED ]]; then
       # look for users with a password last used more or equal to 90 days
-      for i in $USERS_PASSWORD_USED; do
+      for i in $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED; do
         DATEUSED=$($AWSCLI iam list-users --query "Users[?UserName=='$i'].PasswordLastUsed" --output text $PROFILE_OPT --region $REGION | cut -d'T' -f1)
         HOWOLDER=$(how_older_from_today $DATEUSED)
         if [ $HOWOLDER -gt "90" ];then
