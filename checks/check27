@@ -13,13 +13,20 @@ CHECK_TITLE_check27="[check27] Ensure CloudTrail logs are encrypted at rest usin
 CHECK_SCORED_check27="SCORED"
 CHECK_TYPE_check27="LEVEL2"
 CHECK_ALTERNATE_check207="check27"
+CHECK_BASE_CMD="$AWSCLI cloudtrail describe-trails --output text $PROFILE_OPT"
 
 check27(){
   # "Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)"
-  CLOUDTRAILNAME=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].Name' --output text $PROFILE_OPT --region $REGION)
+  
+  # Added support to check if REGION is provided or not. Will work without region.
+  if [[ $REGION ]]; then
+    CHECK_BASE_CMD="$CHECK_BASE_CMD --region $REGION"
+  fi
+ 
+  CLOUDTRAILNAME=$($CHECK_BASE_CMD --query 'trailList[*].Name')
     if [[ $CLOUDTRAILNAME ]];then
       for trail in $CLOUDTRAILNAME;do
-        CLOUDTRAILENC_ENABLED=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --trail $trail --query 'trailList[*].KmsKeyId' --output text)
+        CLOUDTRAILENC_ENABLED=$($CHECK_BASE_CMD --trail $trail --query 'trailList[*].KmsKeyId')
         if [[ $CLOUDTRAILENC_ENABLED ]];then
           textPass "KMS key found for $trail"
         else
