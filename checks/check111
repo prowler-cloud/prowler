@@ -18,8 +18,8 @@ check111(){
   # "Ensure IAM password policy expires passwords within 90 days or less (Scored)"
   COMMAND111=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --query PasswordPolicy.MaxPasswordAge --output text 2> /dev/null)
   if [[ $COMMAND111 ]];then
-    if [ "$COMMAND111" == "90" ];then
-      textPass "Password Policy includes expiration"
+    if [ "$COMMAND111" -le "90" ];then
+      textPass "Password Policy includes expiration (Value: $COMMAND111)"
     else
       textFail "Password expiration is set greater than 90 days"
     fi
