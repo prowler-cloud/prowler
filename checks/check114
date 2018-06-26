@@ -20,7 +20,7 @@ check114(){
   if [ "$COMMAND113" == "1" ]; then
     COMMAND114=$($AWSCLI iam list-virtual-mfa-devices $PROFILE_OPT --region $REGION --output text --assignment-status Assigned --query 'VirtualMFADevices[*].[SerialNumber]' | grep '^arn:aws:iam::[0-9]\{12\}:mfa/root-account-mfa-device$')
     if [[ "$COMMAND114" ]]; then
-      textFail "Only Virtual MFA is enabled for root"
+      textInfo "Only Virtual MFA is enabled for root"
     else
       textPass "Hardware MFA is enabled for root "
     fi
