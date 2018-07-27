@@ -99,7 +99,7 @@ while getopts ":hlkp:r:c:g:f:m:M:enbV" OPTION; do
         CHECK_ID=$OPTARG
         ;;
      g )
-        GROUP_ID=$OPTARG
+        GROUP_ID_READ=$OPTARG
         ;;
      f )
         FILTERREGION=$OPTARG
@@ -255,6 +255,12 @@ show_all_titles() {
 	done
 }
 
+show_all_group_titles() {
+	for i in "${!GROUP_TITLE[@]}"; do
+		show_group_title $i
+	done
+}
+
 ### All functions defined above ... run the workflow
 if [[ $MODE != "csv" ]]; then
   prowlerBanner
@@ -281,13 +287,19 @@ if [[ $CHECK_ID ]];then
 fi
 
 # Execute group of checks if called with -g
-if [[ $GROUP_ID ]];then
-  if [[ $MODE == "csv" ]]; then
-    BANNER=0
+if [[ $GROUP_ID_READ ]];then
+  if [[ " ${GROUP_ID[@]} " =~ " ${GROUP_ID_READ} " ]]; then
+    if [[ $MODE == "csv" ]]; then
+      BANNER=0
+    fi
+    execute_group_by_id $GROUP_ID_READ
+    cleanTemp
+    exit $EXITCODE
+  else
+    textFail "Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
+    show_all_group_titles
+    exit $EXITCODE
   fi
-  execute_group_by_id $GROUP_ID
-  cleanTemp
-  exit $EXITCODE
 fi
 
 # List only check tittles
