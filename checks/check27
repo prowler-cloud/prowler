@@ -16,17 +16,15 @@ CHECK_ALTERNATE_check207="check27"
 
 check27(){
   # "Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)"
-  CLOUDTRAILNAME=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].Name' --output text $PROFILE_OPT --region $REGION)
-    if [[ $CLOUDTRAILNAME ]];then
-      for trail in $CLOUDTRAILNAME;do
-        CLOUDTRAILENC_ENABLED=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --trail $trail --query 'trailList[*].KmsKeyId' --output text)
-        if [[ $CLOUDTRAILENC_ENABLED ]];then
-          textPass "KMS key found for $trail"
+  $AWSCLI cloudtrail describe-trails --query 'trailList[].[Name,KmsKeyId]' --output text $PROFILE_OPT --region $REGION | while read trail key; do
+    if [[ "$trail" ]] ; then
+        if [[ "$key" != "None" ]] ; then
+            textPass "KMS key found for $trail"
         else
-          textFail "encryption is not enabled in your CloudTrail trail $trail (KMS key not found)!"
+            textFail "Encryption is not enabled in your CloudTrail trail $trail (KMS key not found)!"
         fi
-      done
     else
-      textFail "CloudTrail bucket doesn't exist!"
+        textFail "CloudTrail bucket doesn't exist!"
     fi
+  done
 }
