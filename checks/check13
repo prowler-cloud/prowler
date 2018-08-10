@@ -17,25 +17,17 @@ CHECK_ALTERNATE_check103="check13"
 check13(){
   # "Ensure credentials unused for 90 days or greater are disabled (Scored)"
   COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$4 }' |grep true | awk '{ print $1 }')
+  # Only check Password last used for users with password enabled 
   if [[ $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED ]]; then
-    COMMAND13=$(
     for i in $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED; do
-      cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$5 }' |grep $i| awk '{ print $1 }'|tr '\n' ' ';
-    done)
-    # list of users that have used password
-    USERS_PASSWORD_USED=$($AWSCLI iam list-users --query "Users[?PasswordLastUsed].UserName" --output text $PROFILE_OPT --region $REGION)
-    if [[ $USERS_PASSWORD_USED ]]; then
-      # look for users with a password last used more or equal to 90 days
-      for i in $USERS_PASSWORD_USED; do
-        DATEUSED=$($AWSCLI iam list-users --query "Users[?UserName=='$i'].PasswordLastUsed" --output text $PROFILE_OPT --region $REGION | cut -d'T' -f1)
-        HOWOLDER=$(how_older_from_today $DATEUSED)
-        if [ $HOWOLDER -gt "90" ];then
-          textFail "User \"$i\" has not logged in during the last 90 days "
-        else
-          textPass "User \"$i\" found with credentials used in the last 90 days"
-        fi
-      done
-    fi
+      DATEUSED=$($AWSCLI iam list-users --query "Users[?UserName=='$i'].PasswordLastUsed" --output text $PROFILE_OPT --region $REGION | cut -d'T' -f1)
+      HOWOLDER=$(how_older_from_today $DATEUSED)
+      if [ $HOWOLDER -gt "90" ];then
+        textFail "User \"$i\" has not logged in during the last 90 days "
+      else
+        textPass "User \"$i\" found with credentials used in the last 90 days"
+      fi
+    done
   else
       textPass "No users found with password enabled"
   fi
