@@ -21,7 +21,10 @@ if echo "$INSTANCE_PROFILE" | grep -q '404 - Not Found'; then
     INSTANCE_PROFILE=
 fi
 
-if [[ $PROFILE ]]; then
+if [[ $PROFILE == "NOPROFILE" ]]; then
+    PROFILE=""
+    PROFILE_OPT=""
+elif [[ $PROFILE ]]; then
   PROFILE_OPT="--profile $PROFILE"
 elif [[ $AWS_ACCESS_KEY_ID && $AWS_SECRET_ACCESS_KEY || $AWS_SESSION_TOKEN ]];then
     PROFILE="ENV"
@@ -32,8 +35,8 @@ elif [[ $INSTANCE_PROFILE ]];then
     AWS_SECRET_ACCESS_KEY_ID=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${INSTANCE_PROFILE} | grep SecretAccessKey | cut -d':' -f2 | sed 's/[^0-9A-Za-z/+=]*//g')
     AWS_SESSION_TOKEN=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${INSTANCE_PROFILE}  grep Token| cut -d':' -f2 | sed 's/[^0-9A-Za-z/+=]*//g')
 else
-    PROFILE=""
-    PROFILE_OPT=""
+    PROFILE="default"
+    PROFILE_OPT="--profile $PROFILE"
 fi
 
 # Set default region by aws config, fall back to us-east-1
