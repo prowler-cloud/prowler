@@ -21,7 +21,7 @@ if echo "$INSTANCE_PROFILE" | grep -q '404 - Not Found'; then
     INSTANCE_PROFILE=
 fi
 
-if [[ $PROFILE == "NOPROFILE" ]]; then
+if [[ $NOPROFILE ]]; then
     PROFILE=""
     PROFILE_OPT=""
 elif [[ $PROFILE ]]; then
