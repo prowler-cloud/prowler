@@ -21,7 +21,10 @@ if echo "$INSTANCE_PROFILE" | grep -q '404 - Not Found'; then
     INSTANCE_PROFILE=
 fi
 
-if [[ $PROFILE ]]; then
+if [[ $NOPROFILE ]]; then
+    PROFILE=""
+    PROFILE_OPT=""
+elif [[ $PROFILE ]]; then
   PROFILE_OPT="--profile $PROFILE"
 elif [[ $AWS_ACCESS_KEY_ID && $AWS_SECRET_ACCESS_KEY || $AWS_SESSION_TOKEN ]];then
     PROFILE="ENV"

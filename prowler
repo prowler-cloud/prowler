@@ -72,6 +72,7 @@ USAGE:
       -b                  do not print Prowler banner
       -V                  show version number & exit
       -h                  this help
+      -P                  use an emtpy profile (i.e use the resource profile associated with the service running the script)
   "
   exit
 }
@@ -123,6 +124,9 @@ while getopts ":hlkp:r:c:g:f:m:M:enbV" OPTION; do
         echo "Prowler $PROWLER_VERSION"
         EXITCODE=0
         exit $EXITCODE
+        ;;
+     P )
+        NOPROFILE="true"
         ;;
      : )
         echo ""
