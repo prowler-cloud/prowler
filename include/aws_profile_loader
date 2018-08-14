@@ -32,8 +32,8 @@ elif [[ $INSTANCE_PROFILE ]];then
     AWS_SECRET_ACCESS_KEY_ID=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${INSTANCE_PROFILE} | grep SecretAccessKey | cut -d':' -f2 | sed 's/[^0-9A-Za-z/+=]*//g')
     AWS_SESSION_TOKEN=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${INSTANCE_PROFILE}  grep Token| cut -d':' -f2 | sed 's/[^0-9A-Za-z/+=]*//g')
 else
-    PROFILE="default"
-    PROFILE_OPT="--profile $PROFILE"
+    PROFILE=""
+    PROFILE_OPT=""
 fi
 
 # Set default region by aws config, fall back to us-east-1
