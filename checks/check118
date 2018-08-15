@@ -10,7 +10,7 @@
 
 CHECK_ID_check118="1.18"
 CHECK_TITLE_check118="[check118] Ensure security contact information is registered (Scored)"
-CHECK_SCORED_check118="NOT_SCORED"
+CHECK_SCORED_check118="SCORED"
 CHECK_TYPE_check118="LEVEL1"
 CHECK_ALTERNATE_check118="check118"
 
