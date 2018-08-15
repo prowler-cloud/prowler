@@ -9,21 +9,19 @@
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
 CHECK_ID_check43="4.3,4.03"
-CHECK_TITLE_check43="[check43] Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
+CHECK_TITLE_check43="[check43] Ensure the default security group of every VPC restricts all traffic (Scored)"
 CHECK_SCORED_check43="SCORED"
 CHECK_TYPE_check43="LEVEL2"
 CHECK_ALTERNATE_check403="check43"
 
 check43(){
-  # "Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
+  # "Ensure the default security group of every VPC restricts all traffic (Scored)"
   for regx in $REGIONS; do
-    CHECK_FL=$($AWSCLI ec2 describe-flow-logs $PROFILE_OPT --region $regx --query 'FlowLogs[?FlowLogStatus==`ACTIVE`].LogGroupName' --output text)
-    if [[ $CHECK_FL ]];then
-      for FL in $CHECK_FL;do
-        textPass "VPCFlowLog is enabled for LogGroupName: $FL in Region $regx" "$regx"
-      done
+    CHECK_SGDEFAULT=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --filters Name=group-name,Values='default' --query 'SecurityGroups[*].{IpPermissions:IpPermissions,IpPermissionsEgress:IpPermissionsEgress,GroupId:GroupId}' --output text |grep 0.0.0.0)
+    if [[ $CHECK_SGDEFAULT ]];then
+      textFail "Default Security Groups found that allow 0.0.0.0 IN or OUT traffic in Region $regx" "$regx"
     else
-      textFail "No VPCFlowLog has been found in Region $regx" "$regx"
+      textPass "No Default Security Groups open to 0.0.0.0 found in Region $regx" "$regx"
     fi
   done
 }

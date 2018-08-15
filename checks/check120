@@ -9,14 +9,28 @@
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
 CHECK_ID_check120="1.20"
-CHECK_TITLE_check120="[check120] Ensure security contact information is registered (Scored)"
+CHECK_TITLE_check120="[check120] Ensure a support role has been created to manage incidents with AWS Support (Scored)"
 CHECK_SCORED_check120="SCORED"
 CHECK_TYPE_check120="LEVEL1"
 CHECK_ALTERNATE_check120="check120"
 
 check120(){
-  # "Ensure security contact information is registered (Scored)"
-  # No command available
-  textInfo "No command available for check 1.20 "
-  textInfo "See section 1.20 on the CIS Benchmark guide for details "
+  # "Ensure a support role has been created to manage incidents with AWS Support (Scored)"
+  SUPPORTPOLICYARN=$($AWSCLI iam list-policies --query "Policies[?PolicyName == 'AWSSupportAccess'].Arn" $PROFILE_OPT --region $REGION --output text)
+  if [[ $SUPPORTPOLICYARN ]];then
+    for policyarn in $SUPPORTPOLICYARN;do
+      POLICYUSERS=$($AWSCLI iam list-entities-for-policy --policy-arn $SUPPORTPOLICYARN $PROFILE_OPT --region $REGION --output json)
+      if [[ $POLICYUSERS ]];then
+        textPass "Support Policy attached to $policyarn"
+        for user in $(echo "$POLICYUSERS" | grep UserName | cut -d'"' -f4) ; do
+          textInfo "User $user has support access via $policyarn"
+        done
+        # textInfo "Make sure your team can create a Support case with AWS "
+      else
+        textFail "Support Policy not applied to any Group / User / Role "
+      fi
+    done
+  else
+    textFail "No Support Policy found"
+  fi
 }

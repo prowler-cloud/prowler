@@ -44,21 +44,17 @@ Colors code for results:  INFO (Information), PASS (Recommended value),  FAIL (F
 
 1.16  [check116] Ensure IAM policies are attached only to groups or roles (Scored)
 
-1.17  [check117] Enable detailed billing (Scored)
+1.17  [check117] Maintain current contact details (Scored)
 
-1.18  [check118] Ensure IAM Master and IAM Manager roles are active (Scored)
+1.18  [check118] Ensure security contact information is registered (Scored)
 
-1.19  [check119] Maintain current contact details (Scored)
+1.19  [check119] Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)
 
-1.20  [check120] Ensure security contact information is registered (Scored)
+1.20  [check120] Ensure a support role has been created to manage incidents with AWS Support (Scored)
 
-1.21 [check121] Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)
+1.21 [check121] Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)
 
-1.22  [check122] Ensure a support role has been created to manage incidents with AWS Support (Scored)
-
-1.23 [check123] Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)
-
-1.24  [check124] Ensure IAM policies that allow full "*:*" administrative privileges are not created (Scored)
+1.22  [check122] Ensure IAM policies that allow full "*:*" administrative privileges are not created (Scored)
 
 2.0 Logging - [group2] *********************************************
 
@@ -77,6 +73,8 @@ Colors code for results:  INFO (Information), PASS (Recommended value),  FAIL (F
 2.7  [check27] Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)
 
 2.8  [check28] Ensure rotation for customer created CMKs is enabled (Scored)
+
+2.9  [check29] Ensure VPC Flow Logging is Enabled in all VPCs (Scored)
 
 3.0 Monitoring - [group3] ******************************************
 
@@ -108,19 +106,15 @@ Colors code for results:  INFO (Information), PASS (Recommended value),  FAIL (F
 
 3.14  [check314] Ensure a log metric filter and alarm exist for VPC changes (Scored)
 
-3.15  [check315] Ensure appropriate subscribers to each SNS topic (Not Scored)
-
 4.0 Networking - [group4] ******************************************
 
 4.1  [check41] Ensure no security groups allow ingress from 0.0.0.0/0 to port 22 (Scored)
 
 4.2  [check42] Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389 (Scored)
 
-4.3  [check43] Ensure VPC Flow Logging is Enabled in all VPCs (Scored)
+4.3  [check43] Ensure the default security group of every VPC restricts all traffic (Scored)
 
-4.4  [check44] Ensure the default security group of every VPC restricts all traffic (Scored)
-
-4.5 [check45] Ensure routing tables for VPC peering are "least access" (Not Scored)
+4.4  [check44] Ensure routing tables for VPC peering are "least access" (Not Scored)
 
 5.0 CIS Level 1 - [cislevel1] **************************************
 
@@ -154,19 +148,17 @@ Colors code for results:  INFO (Information), PASS (Recommended value),  FAIL (F
 
 1.16  [check116] Ensure IAM policies are attached only to groups or roles (Scored)
 
-1.17  [check117] Enable detailed billing (Scored)
+1.17  [check117] Maintain current contact details (Scored)
 
-1.18  [check118] Ensure IAM Master and IAM Manager roles are active (Scored)
+1.18  [check118] Ensure security contact information is registered (Scored)
 
-1.19  [check119] Maintain current contact details (Scored)
+1.19  [check119] Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)
 
-1.20  [check120] Ensure security contact information is registered (Scored)
+1.20  [check120] Ensure a support role has been created to manage incidents with AWS Support (Scored)
 
-1.22  [check122] Ensure a support role has been created to manage incidents with AWS Support (Scored)
+1.21 [check121] Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)
 
-1.23 [check123] Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)
-
-1.24  [check124] Ensure IAM policies that allow full "*:*" administrative privileges are not created (Scored)
+1.22  [check122] Ensure IAM policies that allow full "*:*" administrative privileges are not created (Scored)
 
 2.1  [check21] Ensure CloudTrail is enabled in all regions (Scored)
 
@@ -195,8 +187,6 @@ Colors code for results:  INFO (Information), PASS (Recommended value),  FAIL (F
 3.13  [check313] Ensure a log metric filter and alarm exist for route table changes (Scored)
 
 3.14  [check314] Ensure a log metric filter and alarm exist for VPC changes (Scored)
-
-3.15  [check315] Ensure appropriate subscribers to each SNS topic (Not Scored)
 
 4.1  [check41] Ensure no security groups allow ingress from 0.0.0.0/0 to port 22 (Scored)
 
@@ -236,21 +226,17 @@ Colors code for results:  INFO (Information), PASS (Recommended value),  FAIL (F
 
 1.16  [check116] Ensure IAM policies are attached only to groups or roles (Scored)
 
-1.17  [check117] Enable detailed billing (Scored)
+1.17  [check117] Maintain current contact details (Scored)
 
-1.18  [check118] Ensure IAM Master and IAM Manager roles are active (Scored)
+1.18  [check118] Ensure security contact information is registered (Scored)
 
-1.19  [check119] Maintain current contact details (Scored)
+1.19  [check119] Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)
 
-1.20  [check120] Ensure security contact information is registered (Scored)
+1.20  [check120] Ensure a support role has been created to manage incidents with AWS Support (Scored)
 
-1.21 [check121] Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)
+1.21 [check121] Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)
 
-1.22  [check122] Ensure a support role has been created to manage incidents with AWS Support (Scored)
-
-1.23 [check123] Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)
-
-1.24  [check124] Ensure IAM policies that allow full "*:*" administrative privileges are not created (Scored)
+1.22  [check122] Ensure IAM policies that allow full "*:*" administrative privileges are not created (Scored)
 
 2.1  [check21] Ensure CloudTrail is enabled in all regions (Scored)
 
@@ -267,6 +253,8 @@ Colors code for results:  INFO (Information), PASS (Recommended value),  FAIL (F
 2.7  [check27] Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)
 
 2.8  [check28] Ensure rotation for customer created CMKs is enabled (Scored)
+
+2.9  [check29] Ensure VPC Flow Logging is Enabled in all VPCs (Scored)
 
 3.1  [check31] Ensure a log metric filter and alarm exist for unauthorized API calls (Scored)
 
@@ -296,17 +284,13 @@ Colors code for results:  INFO (Information), PASS (Recommended value),  FAIL (F
 
 3.14  [check314] Ensure a log metric filter and alarm exist for VPC changes (Scored)
 
-3.15  [check315] Ensure appropriate subscribers to each SNS topic (Not Scored)
-
 4.1  [check41] Ensure no security groups allow ingress from 0.0.0.0/0 to port 22 (Scored)
 
 4.2  [check42] Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389 (Scored)
 
-4.3  [check43] Ensure VPC Flow Logging is Enabled in all VPCs (Scored)
+4.3  [check43] Ensure the default security group of every VPC restricts all traffic (Scored)
 
-4.4  [check44] Ensure the default security group of every VPC restricts all traffic (Scored)
-
-4.5 [check45] Ensure routing tables for VPC peering are "least access" (Not Scored)
+4.4  [check44] Ensure routing tables for VPC peering are "least access" (Not Scored)
 
 7.0 Extras - [extras] **********************************************
 
@@ -376,7 +360,7 @@ Colors code for results:  INFO (Information), PASS (Recommended value),  FAIL (F
 
 2.7  [check27] Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)
 
-4.3  [check43] Ensure VPC Flow Logging is Enabled in all VPCs (Scored)
+2.9  [check29] Ensure VPC Flow Logging is Enabled in all VPCs (Scored)
 
 7.12 [extra712] Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)
 

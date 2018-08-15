@@ -9,13 +9,13 @@
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
 CHECK_ID_check117="1.17"
-CHECK_TITLE_check117="[check117] Enable detailed billing (Scored)"
-CHECK_SCORED_check117="SCORED"
+CHECK_TITLE_check117="[check117] Maintain current contact details (Scored)"
+CHECK_SCORED_check117="NOT_SCORED"
 CHECK_TYPE_check117="LEVEL1"
 CHECK_ALTERNATE_check117="check117"
 
 check117(){
-  # "Enable detailed billing (Scored)"
+  # "Maintain current contact details (Scored)"
   # No command available
   textInfo "No command available for check 1.17 "
   textInfo "See section 1.17 on the CIS Benchmark guide for details "
