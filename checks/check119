@@ -9,14 +9,13 @@
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
 CHECK_ID_check119="1.19"
-CHECK_TITLE_check119="[check119] Maintain current contact details (Scored)"
-CHECK_SCORED_check119="SCORED"
-CHECK_TYPE_check119="LEVEL1"
+CHECK_TITLE_check119="[check119] Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
+CHECK_SCORED_check119="NOT_SCORED"
+CHECK_TYPE_check119="LEVEL2"
 CHECK_ALTERNATE_check119="check119"
 
 check119(){
-  # "Maintain current contact details (Scored)"
-  # No command available
+  # "Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
   textInfo "No command available for check 1.19 "
   textInfo "See section 1.19 on the CIS Benchmark guide for details "
 }
