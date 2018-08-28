@@ -25,29 +25,31 @@ extra725(){
   # create a file with a list of all buckets
   TEMP_BUCKET_LIST_FILE=$(mktemp -t prowler.bucket-list-XXXXXX)
   $AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' $PROFILE_OPT --region $REGION --output text > $TEMP_BUCKET_LIST_FILE
+  if [ ! -s $TEMP_BUCKET_LIST_FILE ]; then
+    textInfo "$regx: No S3 buckets found" "$regx"
+    exit
+  fi
 
   # now create a list with all trails available and their region
   TEMP_TRAILS_LIST_FILE=$(mktemp -t prowler.trails-list-XXXXXX)
   for regx in $REGIONS; do
     $AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query trailList[?HomeRegion==\`$regx\`].[Name,HomeRegion] --output text >> $TEMP_TRAILS_LIST_FILE
   done
-  if [ ! -s $TEMP_TRAILS_LIST_FILE ]; then
-    textInfo "$regx: No S3 buckets found" "$regx"
-    exit
-  fi
 
   # look for buckets being logged per trail and create a list with them
   TEMP_BUCKETS_LOGGING_LIST_FILE=$(mktemp -t prowler.buckets-logging-list-XXXXXX)
-  for trail in $(cat $TEMP_TRAILS_LIST_FILE | awk '{ print $1 }'); do
-    TRAIL_REGION=$(grep ^$trail $TEMP_TRAILS_LIST_FILE | awk '{ print $2 }')
-    BUCKETS_OBJECT_LOGGING_ENABLED=$($AWSCLI cloudtrail get-event-selectors --trail-name $trail $PROFILE_OPT --region $TRAIL_REGION --query "EventSelectors[*].DataResources[?Type == \`AWS::S3::Object\`].Values" --output text |xargs -n1 |cut -d: -f 6|sed 's/\///g')
+  while IFS='' read -r LINE || [[ -n "${LINE}" ]]; do
+    TRAIL_REGION=$(echo "${LINE}" | awk '{ print $2 }')
+    TRAIL_NAME=$(echo "${LINE}" | awk '{ print $1 }')
+    BUCKETS_OBJECT_LOGGING_ENABLED=$($AWSCLI cloudtrail get-event-selectors --trail-name "${TRAIL_NAME}" $PROFILE_OPT --region $TRAIL_REGION --query "EventSelectors[*].DataResources[?Type == \`AWS::S3::Object\`].Values" --output text |xargs -n1 |cut -d: -f 6|sed 's/\///g')
     echo $BUCKETS_OBJECT_LOGGING_ENABLED |tr " " "\n"|sort >> $TEMP_BUCKETS_LOGGING_LIST_FILE
     if [[ $BUCKETS_OBJECT_LOGGING_ENABLED ]]; then
       for bucket in $BUCKETS_OBJECT_LOGGING_ENABLED; do
         textPass "$regx: S3 bucket $bucket has Object-level logging enabled in trail $trail" "$regx"
-     done
+      done
     fi
-  done
+  done < $TEMP_TRAILS_LIST_FILE
+
   # diff to get the ones that are not in any trail then they are not logging
   BUCKETS_NOT_LOGGING=$(diff $TEMP_BUCKETS_LOGGING_LIST_FILE $TEMP_BUCKET_LIST_FILE | sed -n 's/^> //p')
   if [[ $BUCKETS_NOT_LOGGING ]]; then
