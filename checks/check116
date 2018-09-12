@@ -21,7 +21,7 @@ check116(){
   for user in $LIST_USERS;do
     USER_POLICY=$($AWSCLI iam list-attached-user-policies --output text $PROFILE_OPT --region $REGION --user-name $user)
     if [[ $USER_POLICY ]]; then
-      textFail "$user has policy directly attached "
+      textFail "$user has managed policy directly attached "
       C116_NUM_USERS=$(expr $C116_NUM_USERS + 1)
     fi
     USER_POLICY=$($AWSCLI iam list-user-policies --output text $PROFILE_OPT --region $REGION --user-name $user)
