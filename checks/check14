@@ -28,7 +28,7 @@ check14(){
         HOWOLDER=$(how_older_from_today $DATEROTATED1)
 
         if [ $HOWOLDER -gt "90" ];then
-          textFail " $user has not rotated access key1 in over 90 days "
+          textFail " $user has not rotated access key1 in over 90 days."
           C14_NUM_USERS1=$(expr $C14_NUM_USERS1 + 1)
         fi
       done
@@ -43,10 +43,10 @@ check14(){
       # textFail "Users with access key 2 older than 90 days:"
       for user in $LIST_OF_USERS_WITH_ACCESS_KEY2; do
         # check access key 2
-        DATEROTATED2=$(cat $TEMP_REPORT_FILE | grep -v user_creation_time | grep "^${user},"| awk -F, '{ print $10 }' | grep -v "N/A" | awk -F"T" '{ print $1 }')
+        DATEROTATED2=$(cat $TEMP_REPORT_FILE | grep -v user_creation_time | grep "^${user},"| awk -F, '{ print $15 }' | grep -v "N/A" | awk -F"T" '{ print $1 }')
         HOWOLDER=$(how_older_from_today $DATEROTATED2)
         if [ $HOWOLDER -gt "90" ];then
-          textFail " $user has not rotated access key2. "
+          textFail " $user has not rotated access key2 in over 90 days. "
           C14_NUM_USERS2=$(expr $C14_NUM_USERS2 + 1)
         fi
       done
