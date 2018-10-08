@@ -75,7 +75,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
 ## Usage
 
-1. Run the `prowler.sh` command without options (it will use your environment variable credentials if exist or default in `~/.aws/credentials` file and run checks over all regions when needed, default region is us-east-1):
+1. Run the `prowler` command without options (it will use your environment variable credentials if they exist or will default to using the `~/.aws/credentials` file and run checks over all regions when needed. The default region is us-east-1):
 
     ```sh
     ./prowler
