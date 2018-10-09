@@ -320,6 +320,7 @@ Instead of using default policy SecurityAudit for the account you use for checks
             "sns:listtopics",
             "sqs:getqueueattributes",
             "sqs:listqueues",
+            "support:describetrustedadvisorchecks",
             "tag:getresources",
             "tag:gettagkeys"
         ],
