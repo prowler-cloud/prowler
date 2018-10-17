@@ -21,11 +21,16 @@ check13(){
   if [[ $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED ]]; then
     for i in $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED; do
       DATEUSED=$($AWSCLI iam list-users --query "Users[?UserName=='$i'].PasswordLastUsed" --output text $PROFILE_OPT --region $REGION | cut -d'T' -f1)
-      HOWOLDER=$(how_older_from_today $DATEUSED)
-      if [ $HOWOLDER -gt "90" ];then
+      if [ "$DATEUSED" == "" ]
+      then
         textFail "User \"$i\" has not logged in during the last 90 days "
       else
-        textPass "User \"$i\" found with credentials used in the last 90 days"
+        HOWOLDER=$(how_older_from_today $DATEUSED)
+        if [ $HOWOLDER -gt "90" ];then
+          textFail "User \"$i\" has not logged in during the last 90 days "
+        else
+          textPass "User \"$i\" found with credentials used in the last 90 days"
+        fi
       fi
     done
   else
