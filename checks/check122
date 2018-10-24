@@ -16,14 +16,15 @@ CHECK_ALTERNATE_check122="check122"
 
 check122(){
   # "Ensure IAM policies that allow full \"*:*\" administrative privileges are not created (Scored)"
-  LIST_CUSTOM_POLICIES=$($AWSCLI iam list-policies --output text $PROFILE_OPT --region $REGION|grep 'arn:aws:iam::[0-9]\{12\}:'|awk '{ print $2 }')
+  LIST_CUSTOM_POLICIES=$($AWSCLI iam list-policies --output text $PROFILE_OPT --region $REGION --scope Local --query 'Policies[*].[Arn,DefaultVersionId]' | grep -v -e '^None$' | awk -F '\t' '{print $1","$2"\n"}')
   if [[ $LIST_CUSTOM_POLICIES ]]; then
     textInfo "Looking for custom policies: (skipping default policies - it may take few seconds...)"
     for policy in $LIST_CUSTOM_POLICIES; do
-      POLICY_VERSION=$($AWSCLI iam list-policies $PROFILE_OPT --region $REGION --query 'Policies[*].[Arn,DefaultVersionId]' --output text |awk "\$1 == \"$policy\" { print \$2 }")
-      POLICY_WITH_FULL=$($AWSCLI iam get-policy-version --output text --policy-arn $policy --version-id $POLICY_VERSION --query "PolicyVersion.Document.Statement[?Action!=null]|[?Effect == 'Allow' && contains(Resource, '*') && contains (Action, '*')]" $PROFILE_OPT --region $REGION)
+      POLICY_ARN=$(echo $policy | awk -F ',' '{print $1}')
+      POLICY_VERSION=$(echo $policy | awk -F ',' '{print $2}')
+      POLICY_WITH_FULL=$($AWSCLI iam get-policy-version --output text --policy-arn $POLICY_ARN --version-id $POLICY_VERSION --query "PolicyVersion.Document.Statement[?Action!=null]|[?Effect == 'Allow' && contains(Resource, '*') && contains (Action, '*')]" $PROFILE_OPT --region $REGION)
       if [[ $POLICY_WITH_FULL ]]; then
-        POLICIES_ALLOW_LIST="$POLICIES_ALLOW_LIST $policy"
+        POLICIES_ALLOW_LIST="$POLICIES_ALLOW_LIST $POLICY_ARN"
       fi
     done
     if [[ $POLICIES_ALLOW_LIST ]]; then
