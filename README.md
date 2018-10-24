@@ -332,7 +332,7 @@ Instead of using default policy SecurityAudit for the account you use for checks
 
 ### Incremental IAM Policy
 
-Alternatively, here is a policy which defines the permissions which are NOT present in the AWS Managed SecurityAudit policy. Attach both this policy and the AWS Managed SecurityAudit policy to the group and you're good to go.
+Alternatively, here is a policy which defines the permissions which are NOT present in the AWS Managed SecurityAudit policy. Attach both this policy and the [AWS Managed SecurityAudit policy](https://console.aws.amazon.com/iam/home#/policies/arn:aws:iam::aws:policy/SecurityAudit$jsonEditor) to the group and you're good to go.
 
 ```sh
 {
@@ -340,13 +340,7 @@ Alternatively, here is a policy which defines the permissions which are NOT pres
   "Statement": [
     {
       "Action": [
-        "acm:DescribeCertificate",
-        "acm:ListCertificates",
-        "es:DescribeElasticsearchDomainConfig",
-        "logs:DescribeLogGroups",
-        "logs:DescribeMetricFilters",
-        "ses:GetIdentityVerificationAttributes",
-        "sns:ListSubscriptionsByTopic"
+        "support:DescribeTrustedAdvisorChecks"
       ],
       "Effect": "Allow",
       "Resource": "*"
@@ -454,9 +448,9 @@ The `forensics-ready` group of checks uses existing and extra checks. To get a f
 In order to add any new check feel free to create a new extra check in the extras group or other group. To do so, you will need to follow these steps:
 
 1. Follow structure in file `checks/check_sample`
-1. Name your check with a number part of an existing group or a new one
-1. Save changes and run it as `./prowler -c extraNN`
-1. Send me a pull request! :)
+2. Name your check with a number part of an existing group or a new one
+3. Save changes and run it as `./prowler -c extraNN`
+4. Send me a pull request! :)
 
 ## Add Custom Groups
 
