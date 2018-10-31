@@ -249,7 +249,7 @@ show_all_titles() {
 		show_group_title $i
 		# Display the title of the checks
 		IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$i]}
-		for j in $CHECKS; do
+		for j in ${CHECKS[@]}; do
 			show_check_title $j
 		done
 	done
@@ -264,6 +264,12 @@ show_all_group_titles() {
 ### All functions defined above ... run the workflow
 if [[ $MODE != "csv" ]]; then
   prowlerBanner
+fi
+
+# List only check tittles
+if [[ $PRINTCHECKSONLY == "1" ]]; then
+  show_all_titles
+  exit $EXITCODE
 fi
 
 # Check that jq is installed for JSON output
@@ -300,13 +306,6 @@ if [[ $GROUP_ID_READ ]];then
     show_all_group_titles
     exit $EXITCODE
   fi
-fi
-
-# List only check tittles
-if [[ $PRINTCHECKSONLY == "1" ]]; then
-  prowlerBanner
-  show_all_titles
-  exit $EXITCODE
 fi
 
 execute_all
