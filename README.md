@@ -22,20 +22,24 @@ Tool based on AWS-CLI commands for AWS account security assessment and hardening
 
 ## Features
 
-It covers hardening and security best practices for all AWS regions related to:
+It covers hardening and security best practices for all AWS regions related to the next groups:
 
-- Identity and Access Management (24 checks)
-- Logging (8 checks)
-- Monitoring (15 checks)
-- Networking (5 checks)
-- Extras (23 checks) *see Extras section*
-- Forensics related group of checks
+- Identity and Access Management (22 checks) [group1]
+- Logging (9 checks) [group2]
+- Monitoring (14 checks) [group3]
+- Networking (4 checks) [group4]
+- CIS Level 1 [cislevel1]
+- CIS Level 2 [cislevel2]
+- Extras (30 checks) *see Extras section* [extras]
+- Forensics related group of checks [forensics-ready]
+- GDPR [gdpr]
+- HIPPA [hippa]
 
 For a comprehensive list and resolution look at the guide on the link above.
 
 With Prowler you can:
 
-- get a colourful or monochrome report
+- get a colorful or monochrome report
 - a CSV format report for diff
 - run specific checks without having to run the entire report
 - check multiple AWS accounts in parallel
