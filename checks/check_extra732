@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra731="7.31"
+CHECK_TITLE_extra731="[extra731] Check if SNS topics have policy set as Public (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra731="NOT_SCORED"
+CHECK_TYPE_extra731="EXTRA"
+CHECK_ALTERNATE_check731="extra731"
+
+extra731(){
+  for regx in $REGIONS; do
+    LIST_SNS=$($AWSCLI sns list-topics $PROFILE_OPT --region $regx --query Topics --output text |grep -v ^None)
+    if [[ $LIST_SNS ]]; then
+      for topic in $LIST_SNS; do
+        # check if the policy has Principal as *
+        SNS_TO_CHECK=$($AWSCLI sns get-topic-attributes --topic-arn $topic $PROFILE_OPT --region $regx --query Attributes.Policy --output text | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | awk '/Principal/ || /Condition/ && !skip { print } { skip = /Deny/}')
+        PUBLIC_SNS_WCONDITION=$(echo $SNS_TO_CHECK|grep Condition)
+        SHORT_TOPIC=$(echo $topic| cut -d: -f6)
+        if [[ $PUBLIC_SNS_WCONDITION ]]; then
+          textInfo "$regx: SNS topic $SHORT_TOPIC has a Condition" "$regx"
+        else
+          PUBLIC_SNS=$(echo $SNS_TO_CHECK|grep \"Principal|grep \*)
+          if [[ $PUBLIC_SNS ]]; then
+            textFail "$regx: SNS topic $SHORT_TOPIC seems to be public (Principal: \"*\")" "$regx"
+          else
+            textInfo "$regx: SNS topic $SHORT_TOPIC seems correct" "$regx"
+          fi
+        fi
+      done
+    else
+      textInfo "$regx: No SNS topics found" "$regx"
+    fi
+  done
+}
