@@ -30,7 +30,7 @@ It covers hardening and security best practices for all AWS regions related to t
 - Networking (4 checks) [group4]
 - CIS Level 1 [cislevel1]
 - CIS Level 2 [cislevel2]
-- Extras (31 checks) *see Extras section* [extras]
+- Extras (33 checks) *see Extras section* [extras]
 - Forensics related group of checks [forensics-ready]
 - GDPR [gdpr]
 - HIPPA [hippa]
