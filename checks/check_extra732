@@ -25,10 +25,10 @@ extra732(){
       if [[ $GEO_ENABLED == "none" ]]; then
         textFail "CloudFront distribution $dist has not Geo restrictions"
       else
-        textPass "CloudFront distribution $dist has Geo restrictions enabled" 
+        textPass "CloudFront distribution $dist has Geo restrictions enabled"
       fi
     done
   else
-    textInfo "$regx: No CloudFront distributions found" "$regx"
+    textInfo "No CloudFront distributions found"
   fi
 }
