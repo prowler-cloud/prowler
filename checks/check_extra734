@@ -30,7 +30,7 @@ extra734(){
      echo "$RESULT" | while read RBUCKET SSEALG; do
         if [[ $SSEALG ]]; then
           if [[ $CHECK_BUCKET_SSE_POLICY ]]; then
-            textPass "Bucket $RBUCKET has SSE enabled with algorithm $SSEALG and S3 policy enforce it"
+            textPass "Bucket $RBUCKET has SSE enabled with algorithm $SSEALG and S3 policy to enforce it"
           else
             # I'll leave it as Pass but to prevent uploads of unencrypted
             # objects to Amazon S3 a policy to enforce it is required
