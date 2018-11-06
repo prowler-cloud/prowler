@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra734="7.34"
-CHECK_TITLE_extra734="[extra734] Check if S3 buckets have default encryption (SSE) enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra734="[extra734] Check if S3 buckets have default encryption (SSE) enabled and policy to enforce it (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra734="NOT_SCORED"
 CHECK_TYPE_extra734="EXTRA"
 CHECK_ALTERNATE_check734="extra734"
@@ -20,14 +20,27 @@ extra734(){
   LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text|xargs -n1)
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
+     # query to get if has encryption enabled or not
      RESULT=$(echo $bucket $($AWSCLI s3api get-bucket-encryption $PROFILE_OPT --bucket $bucket --query ServerSideEncryptionConfiguration.Rules[].ApplyServerSideEncryptionByDefault[].SSEAlgorithm --output text 2>&1 | grep -v ServerSideEncryptionConfigurationNotFoundError))
+     TEMP_SSE_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
+     # get bucket policy
+     $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy > $TEMP_SSE_POLICY_FILE 2> /dev/null
+     # check if the S3 policy forces SSE s3:x-amz-server-side-encryption:true
+     CHECK_BUCKET_SSE_POLICY=$(cat $TEMP_SSE_POLICY_FILE | sed -e 's/[{}]/''/g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}'| awk '/Condition/ && !skip { print } { skip = /x-amz-server-side-encryption/} '|grep \"true\")
      echo "$RESULT" | while read RBUCKET SSEALG; do
         if [[ $SSEALG ]]; then
-          textPass "Bucket $RBUCKET has SSE enabled with algorithm $SSEALG"
+          if [[ $CHECK_BUCKET_SSE_POLICY ]]; then
+            textPass "Bucket $RBUCKET has SSE enabled with algorithm $SSEALG and S3 policy enforce it"
+          else
+            # I'll leave it as Pass but to prevent uploads of unencrypted
+            # objects to Amazon S3 a policy to enforce it is required
+            textPass "Bucket $RBUCKET has SSE enabled with algorithm $SSEALG but no S3 enforcing policy found!"
+          fi
         else
           textFail "Bucket $RBUCKET has Server Side Encryption disabled!"
         fi
      done
+     rm -fr $TEMP_SSE_POLICY_FILE
    done
   else
     textInfo "No S3 Buckets found"
