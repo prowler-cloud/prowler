@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra736="7.36"
+CHECK_TITLE_extra736="[extra736] Check exposed KMS keys (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra736="NOT_SCORED"
+CHECK_TYPE_extra736="EXTRA"
+CHECK_ALTERNATE_check736="extra736"
+
+extra736(){
+  textInfo "Looking for KMS keys in all regions...  "
+  for regx in $REGIONS; do
+    LIST_OF_CUSTOMER_KMS_KEYS=$($AWSCLI kms list-aliases $PROFILE_OPT --region $regx --output text |grep -v :alias/aws/ |awk '{ print $4 }')
+    if [[ $LIST_OF_CUSTOMER_KMS_KEYS ]];then
+      for key in $LIST_OF_CUSTOMER_KMS_KEYS; do
+        CHECK_POLICY=$($AWSCLI kms get-key-policy --key-id $key --policy-name default $PROFILE_OPT --region $regx  --output text|awk '/Principal/{n=NR+1} n>=NR' |grep AWS\"\ :\ \"\\*\"$)
+        if [[ $CHECK_POLICY ]]; then
+          textFail "$regx: KMS key $key may be publicly accessible!" "$regx"
+        else
+          textPass "$regx: KMS key $key is not exposed to Public" "$regx"
+        fi
+      done
+    else
+      textInfo "$regx: No KMS keys found" "$regx"
+    fi
+  done
+}

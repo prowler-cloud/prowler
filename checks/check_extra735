@@ -14,7 +14,7 @@ CHECK_ID_extra735="7.35"
 CHECK_TITLE_extra735="[extra735] Check if RDS instances storage is encrypted (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra735="NOT_SCORED"
 CHECK_TYPE_extra735="EXTRA"
-CHECK_ALTERNATE_check734="extra735"
+CHECK_ALTERNATE_check735="extra735"
 
 extra735(){
   textInfo "Looking for RDS Volumes in all regions...  "
