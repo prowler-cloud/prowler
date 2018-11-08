@@ -30,7 +30,7 @@ It covers hardening and security best practices for all AWS regions related to t
 - Networking (4 checks) [group4]
 - CIS Level 1 [cislevel1]
 - CIS Level 2 [cislevel2]
-- Extras (33 checks) *see Extras section* [extras]
+- Extras (35 checks) *see Extras section* [extras]
 - Forensics related group of checks [forensics-ready]
 - GDPR [gdpr] Read more [here](https://github.com/toniblyx/prowler/issues/189)
 - HIPPA [hippa]
@@ -440,6 +440,19 @@ With this group of checks, Prowler looks if each service with logging or audit c
 - 7.20  Check if Lambda functions are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)
 - 7.21  Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)
 - 7.22  Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)
+- 7.23 [extra723] Check if RDS Snapshots are public (Not Scored) (Not part of CIS benchmark)
+- 7.24 [extra724] Check if ACM certificates have Certificate Transparency logging enabled (Not Scored) (Not part of CIS benchmark)
+- 7.25 [extra725] Check if S3 buckets have Object-level logging enabled in CloudTrail (Not Scored) (Not part of CIS benchmark)
+- 7.26 [extra726] Check Trusted Advisor for errors and warnings (Not Scored) (Not part of CIS benchmark)
+- 7.27 [extra727] Check if SQS queues have policy set as Public (Not Scored) (Not part of CIS benchmark)
+- 7.28 [extra728] Check if SQS queues have Server Side Encryption enabled (Not Scored) (Not part of CIS benchmark)
+- 7.29 [extra729] Ensure there are no EBS Volumes unencrypted (Not Scored) (Not part of CIS benchmark)
+- 7.30 [extra730] Check if ACM Certificates are about to expire in 7 days or less (Not Scored) (Not part of CIS benchmark)
+- 7.31 [extra731] Check if SNS topics have policy set as Public (Not Scored) (Not part of CIS benchmark)
+- 7.32 [extra732] Check if Geo restrictions are enabled in CloudFront distributions (Not Scored) (Not part of CIS benchmark)
+- 7.33 [extra733] Check if there are SAML Providers then STS can be used (Not Scored) (Not part of CIS benchmark)
+- 7.34 [extra734] Check if S3 buckets have default encryption (SSE) enabled and policy to enforce it (Not Scored) (Not part of CIS benchmark)
+- 7.35 [extra735] Check if RDS instances storage is encrypted (Not Scored) (Not part of CIS benchmark)
 
 The `forensics-ready` group of checks uses existing and extra checks. To get a forensics readiness report, run this command:
 
