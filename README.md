@@ -417,6 +417,7 @@ At this moment we have 37 extra checks:
 - 7.35 (`extra735`) Check if RDS instances storage is encrypted (Not Scored) (Not part of CIS benchmark)
 - 7.36 (`extra736`) Check exposed KMS keys (Not Scored) (Not part of CIS benchmark)
 - 7.37 (`extra737`) Check KMS keys with key rotation disabled (Not Scored) (Not part of CIS benchmark)
+- 7.38 (`extra738`) Check if CloudFront distributions are set to HTTPS (Not Scored) (Not part of CIS benchmark)
 
 To check all extras in one command:
 
