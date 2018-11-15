@@ -170,7 +170,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
                                 (i.e.: us-east-1), all regions are checked anyway if the check requires it
         -c <check_id>       specify a check id, to see all available checks use -l option
                                 (i.e.: check11 for check 1.1 or extra71 for extra check 71)
-        -g <group_id>       specify a group of checks by id, to see all available group of checks use -l
+        -g <group_id>       specify a group of checks by id, to see all available group of checks use -L
                                 (i.e.: check3 for entire section 3, level1 for CIS Level 1 Profile Definitions or forensics-ready)
         -f <filterregion>   specify an AWS region to run checks against
                                 (i.e.: us-west-1)
@@ -180,6 +180,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
         -n                  show check numbers to sort easier
                                 (i.e.: 1.01 instead of 1.1)
         -l                  list all available checks only (does not perform any check)
+        -L                  list all groups (does not perform any check)
         -e                  exclude group extras
         -b                  do not print Prowler banner
         -h                  this help

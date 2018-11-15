@@ -58,7 +58,7 @@ USAGE:
                             (i.e.: us-east-1), all regions are checked anyway if the check requires it
       -c <check_id>       specify a check id, to see all available checks use "-l" option
                             (i.e.: "check11" for check 1.1 or "extra71" for extra check 71)
-      -g <group_id>       specify a group of checks by id, to see all available group of checks use "-l"
+      -g <group_id>       specify a group of checks by id, to see all available group of checks use "-L"
                             (i.e.: "check3" for entire section 3, "level1" for CIS Level 1 Profile Definitions or "forensics-ready")
       -f <filterregion>   specify an AWS region to run checks against
                             (i.e.: us-west-1)
@@ -68,6 +68,7 @@ USAGE:
       -n                  show check numbers to sort easier
                             (i.e.: 1.01 instead of 1.1)
       -l                  list all available checks only (does not perform any check)
+      -L                  list all groups (does not perform any check)
       -e                  exclude group extras
       -b                  do not print Prowler banner
       -V                  show version number & exit
@@ -76,7 +77,7 @@ USAGE:
   exit
 }
 
-while getopts ":hlkp:r:c:g:f:m:M:enbV" OPTION; do
+while getopts ":hlLkp:r:c:g:f:m:M:enbV" OPTION; do
    case $OPTION in
      h )
         usage
@@ -85,6 +86,9 @@ while getopts ":hlkp:r:c:g:f:m:M:enbV" OPTION; do
         ;;
      l )
         PRINTCHECKSONLY=1
+        ;;
+     L )
+        PRINTGROUPSONLY=1
         ;;
      k )
         KEEPCREDREPORT=1
@@ -269,6 +273,12 @@ fi
 # List only check tittles
 if [[ $PRINTCHECKSONLY == "1" ]]; then
   show_all_titles
+  exit $EXITCODE
+fi
+
+# List only group tittles
+if [[ $PRINTGROUPSONLY == "1" ]]; then
+  show_all_group_titles
   exit $EXITCODE
 fi
 
