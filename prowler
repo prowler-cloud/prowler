@@ -197,8 +197,15 @@ execute_check() {
 	# for example, we might have been passed 1.01 which is another name for 1.1
   local alternate_name_var=CHECK_ALTERNATE_$1
   local alternate_name=${!alternate_name_var}
-
+  # Generate the credential report, only if it is group1 related which checks we
+  # run so that the checks can safely assume it's available
 	if [ ${alternate_name} ];then
+    if [[ ${alternate_name} == check1* ]];then
+      if [ ! -s $TEMP_REPORT_FILE ];then
+        genCredReport
+        saveReport
+      fi
+    fi
 		show_check_title ${alternate_name}
 		${alternate_name}
 	else
@@ -206,6 +213,12 @@ execute_check() {
     local check_id_var=CHECK_ID_$1
     local check_id=${!check_id_var}
     if [ ${check_id} ]; then
+      if [[ ${check_id} == 1* ]];then
+        if [ ! -s $TEMP_REPORT_FILE ];then
+          genCredReport
+          saveReport
+        fi
+      fi
 		  show_check_title $1
 		  $1
     else
@@ -290,11 +303,6 @@ fi
 # Gather account data / test aws cli connectivity
 getWhoami
 
-# Generate the credential report, regardless of which checks we run
-# so that the checks can safely assume it's available
-genCredReport
-saveReport
-
 # Execute single check if called with -c
 if [[ $CHECK_ID ]];then
   execute_check $CHECK_ID
@@ -319,6 +327,5 @@ if [[ $GROUP_ID_READ ]];then
 fi
 
 execute_all
-
 cleanTemp
 exit $EXITCODE
