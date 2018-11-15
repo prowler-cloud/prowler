@@ -33,7 +33,7 @@ It covers hardening and security best practices for all AWS regions related to t
 - Extras (37 checks) *see Extras section* [extras]
 - Forensics related group of checks [forensics-ready]
 - GDPR [gdpr] Read more [here](https://github.com/toniblyx/prowler/issues/189)
-- HIPPA [hippa]
+- HIPAA [hipaa]
 
 For a comprehensive list and resolution look at the guide on the link above.
 
