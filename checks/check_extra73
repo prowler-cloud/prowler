@@ -18,6 +18,30 @@ CHECK_ALTERNATE_extra703="extra73"
 CHECK_ALTERNATE_check73="extra73"
 CHECK_ALTERNATE_check703="extra73"
 
+# Improved and simplified check on Nov 18th 2018 due to a new bucket attribute
+# called PolicyStatus, not available in all regions yet.
+
+# extra73(){
+#   ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' $PROFILE_OPT --region $REGION --output text)
+#   for bucket in $ALL_BUCKETS_LIST; do
+#     BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket $PROFILE_OPT --region $REGION --output text)
+#     if [[ "None" == $BUCKET_LOCATION ]]; then
+#       BUCKET_LOCATION="us-east-1"
+#     fi
+#     if [[ "EU" == $BUCKET_LOCATION ]]; then
+#       BUCKET_LOCATION="eu-west-1"
+#     fi
+#
+#     BUCKET_POLICY_STATUS=$($AWSCLI s3api get-bucket-policy-status --bucket $bucket --query PolicyStatus.IsPublic --output text | grep False)
+#     if [[ $BUCKET_POLICY_STATUS ]];then
+#       textFail "$BUCKET_LOCATION: $bucket bucket is Public!" "$regx"
+#     else
+#       textPass "$BUCKET_LOCATION: $bucket bucket is not Public" "$regx"
+#     fi
+#   done
+# }
+
+
 extra73(){
   textInfo "Looking for open S3 Buckets (ACLs and Policies) in all regions...  "
   ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' $PROFILE_OPT --region $REGION --output text)

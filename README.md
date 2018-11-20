@@ -30,10 +30,10 @@ It covers hardening and security best practices for all AWS regions related to t
 - Networking (4 checks) [group4]
 - CIS Level 1 [cislevel1]
 - CIS Level 2 [cislevel2]
-- Extras (37 checks) *see Extras section* [extras]
+- Extras (39 checks) *see Extras section* [extras]
 - Forensics related group of checks [forensics-ready]
 - GDPR [gdpr] Read more [here](https://github.com/toniblyx/prowler/issues/189)
-- HIPPA [hippa]
+- HIPPA [hippa] Read more [here](https://github.com/toniblyx/prowler/issues/227)
 
 For a comprehensive list and resolution look at the guide on the link above.
 
@@ -419,6 +419,7 @@ At this moment we have 37 extra checks:
 - 7.36 (`extra736`) Check exposed KMS keys (Not Scored) (Not part of CIS benchmark)
 - 7.37 (`extra737`) Check KMS keys with key rotation disabled (Not Scored) (Not part of CIS benchmark)
 - 7.38 (`extra738`) Check if CloudFront distributions are set to HTTPS (Not Scored) (Not part of CIS benchmark)
+- 7.38 (`extra739`) Check if ELBs have logging enabled (Not Scored) (Not part of CIS benchmark)
 
 To check all extras in one command:
 
@@ -454,9 +455,10 @@ With this group of checks, Prowler looks if each service with logging or audit c
 - 7.20  Check if Lambda functions are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)
 - 7.21  Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)
 - 7.22  Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.23 [extra723] Check if RDS Snapshots are public (Not Scored) (Not part of CIS benchmark)
-- 7.24 [extra724] Check if ACM certificates have Certificate Transparency logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.25 [extra725] Check if S3 buckets have Object-level logging enabled in CloudTrail (Not Scored) (Not part of CIS benchmark)
+- 7.23  Check if RDS Snapshots are public (Not Scored) (Not part of CIS benchmark)
+- 7.24  Check if ACM certificates have Certificate Transparency logging enabled (Not Scored) (Not part of CIS benchmark)
+- 7.25  Check if S3 buckets have Object-level logging enabled in CloudTrail (Not Scored) (Not part of CIS benchmark)
+- 7.38  Check if ELBs have logging enabled (Not Scored) (Not part of CIS benchmark)
 
 
 The `forensics-ready` group of checks uses existing and extra checks. To get a forensics readiness report, run this command:
@@ -501,8 +503,8 @@ The link to the license terms can be found at
 Any other piece of code is licensed as Apache License 2.0 as specified in each file. You may obtain a copy of the License at
 <http://www.apache.org/licenses/LICENSE-2.0>
 
-NOTE: If you are interested in using Prowler for commercial purposes remember that due to the CC4.0 license “The distributors or partners that are interested and using Prowler would need to enrol as CIS SecureSuite Members to incorporate this product, which includes references to CIS resources, in their offering.". Information about CIS pricing for vendors here: <https://www.cisecurity.org/cis-securesuite/pricing-and-categories/product-vendor/>
+NOTE: If you are interested in using Prowler for commercial purposes remember that due to the CC4.0 license “The distributors or partners that are interested and using Prowler would need to enroll as CIS SecureSuite Members to incorporate this product, which includes references to CIS resources, in their offering.". Information about CIS pricing for vendors here: <https://www.cisecurity.org/cis-securesuite/pricing-and-categories/product-vendor/>
 
-**I'm not related anyhow with CIS organisation, I just write and maintain Prowler to help companies over the world to make their cloud infrastructure more secure.**
+**I'm not related anyhow with CIS organization, I just write and maintain Prowler to help companies over the world to make their cloud infrastructure more secure.**
 
 If you want to contact me visit <https://blyx.com/contact>
