@@ -41,6 +41,7 @@ It covers hardening and security best practices for all AWS regions related to t
 - GDPR [gdpr] Read more [here](#gdpr-checks)
 - HIPPA [hippa] Read more [here](#hipaa-checks)
 
+
 For a comprehensive list and resolution look at the guide on the link above.
 
 With Prowler you can:
