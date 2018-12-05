@@ -25,7 +25,7 @@ extra730(){
     LIST_OF_ACM_CERTS=$($AWSCLI acm list-certificates $PROFILE_OPT --region $regx --query 'CertificateSummaryList[].CertificateArn' --output text)
     if [[ $LIST_OF_ACM_CERTS ]];then
       for cert in $LIST_OF_ACM_CERTS; do
-        CERT_DATA=$($AWSCLI acm describe-certificate --certificate-arn $cert --query 'Certificate.[DomainName,NotAfter]' --output text)
+        CERT_DATA=$($AWSCLI acm describe-certificate $PROFILE_OPT --region $regx --certificate-arn $cert --query 'Certificate.[DomainName,NotAfter]' --output text)
         echo "$CERT_DATA" | while read FQDN NOTAFTER; do
           EXPIRES_DATE=$(timestamp_to_date $NOTAFTER)
           COUNTER_DAYS=$(how_many_days_from_today $EXPIRES_DATE)
