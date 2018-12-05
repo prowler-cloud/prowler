@@ -7,11 +7,11 @@
 
 ## Description
 
-Prowler
+Prowler integration with WAZUH.
 
 ## Features
 
-It
+Wazuh, using a wodle, runs Prowler every certain time and stores alerts (failed checks) using JSON output in Elastic Search to be queried from Kibana.
 
 ## Requirements
 
@@ -96,7 +96,7 @@ To check if there is any error you can enable the debug mode of `modulesd` setti
 
 To Jeremy Phillips <jeremy@uranusbytes.com>, who wrote the initial rules file and wrapper and helped me to understand how it works and debug it.
 
-To Marta Gomez and the Wazuh team for their support to debug this integration and make it work properly. Their job on Wazuh and willingness to help is invaluable. 
+To Marta Gomez and the Wazuh team for their support to debug this integration and make it work properly. Their job on Wazuh and willingness to help is invaluable.
 
 ## License
 
