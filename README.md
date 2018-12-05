@@ -41,6 +41,7 @@ It covers hardening and security best practices for all AWS regions related to t
 - GDPR [gdpr] Read more [here](#gdpr-checks)
 - HIPPA [hippa] Read more [here](#hipaa-checks)
 
+
 For a comprehensive list and resolution look at the guide on the link above.
 
 With Prowler you can:
@@ -512,6 +513,7 @@ With this group of checks, Prowler shows result of checks related to GDPR, more 
 - 7.35 [extra735] Check if RDS instances storage is encrypted (Not Scored) (Not part of CIS benchmark)
 - 7.36 [extra736] Check exposed KMS keys (Not Scored) (Not part of CIS benchmark)
 - 7.38 [extra738] Check if CloudFront distributions are set to HTTPS (Not Scored) (Not part of CIS benchmark)
+- 7.40 [extra740] Check if EBS snapshots are encrypted (Not Scored) (Not part of CIS benchmark)
 
 The `gdpr` group of checks uses existing and extra checks. To get a GDPR report, run this command:
 
