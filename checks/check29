@@ -15,15 +15,18 @@ CHECK_TYPE_check29="LEVEL2"
 CHECK_ALTERNATE_check209="check29"
 
 check29(){
-  # "Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
+  # "Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"  
   for regx in $REGIONS; do
-    CHECK_FL=$($AWSCLI ec2 describe-flow-logs $PROFILE_OPT --region $regx --query 'FlowLogs[?FlowLogStatus==`ACTIVE`].FlowLogId' --output text)
-    if [[ $CHECK_FL ]];then
-      for FL in $CHECK_FL;do
-        textPass "VPCFlowLog is enabled for LogGroupName: $FL in Region $regx" "$regx"
-      done
-    else
-      textFail "No VPCFlowLog has been found in Region $regx" "$regx"
-    fi
+    AVAILABLE_VPC=$($AWSCLI ec2 describe-vpcs $PROFILE_OPT --region $regx --query 'Vpcs[?State==`available`].VpcId' --output text)
+    for vpcx in $AVAILABLE_VPC; do
+      CHECK_FL=$($AWSCLI ec2 describe-flow-logs $PROFILE_OPT --region $regx --query 'FlowLogs[?FlowLogStatus==`ACTIVE`||ResourceId==`${vpcx}`].FlowLogId' --output text)
+      if [[ $CHECK_FL ]];then
+        for FL in $CHECK_FL;do
+          textPass "VPCFlowLog is enabled for LogGroupName: $FL in Region $regx" "$regx"
+        done
+      else
+        textFail "No VPCFlowLog has been found in Region $regx" "$regx"
+      fi      
+    done
   done
 }
