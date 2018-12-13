@@ -12,7 +12,7 @@
 
 ## Description
 
-Prowler integration with WAZUH using a python wrapper. Due to the wrapper limitations, this integration can be considered as a proof of concept at this time. 
+Prowler integration with WAZUH using a python wrapper. Due to the wrapper limitations, this integration can be considered as a proof of concept at this time.
 
 ## Features
 
@@ -55,7 +55,7 @@ cp /var/ossec/integrations/prowler/integrations/prowler_rules.xml /var/ossec/etc
 ```
 
 Edit `/var/ossec/etc/ossec.conf` and add the following wodle configuration. Remember that here `timeout 21600 seconds` is 6 hours, just to allow Prowler runs completely in case of a large account. The interval recommended is 1d:
-```
+```xml 
   <wodle name="command">
     <disabled>no</disabled>
     <tag>aws-prowler: account1</tag>
@@ -87,7 +87,7 @@ Adjust the level range to what alerts you want to include, as alerts, Elastic Se
 
 To make sure rules are working fine, run `/var/ossec/bin/ossec-logtest` and copy/paste this sample JSON:
 
-```
+```json
 {"prowler":{"Timestamp":"2018-11-29T03:15:50Z","Region":"us-east-1","Profile":"default","Account Number”:”1234567890”,”Control":"[check34] Ensure a log metric filter and alarm exist for IAM policy changes (Scored)","Message":"No CloudWatch group found for CloudTrail events","Status":"Fail","Scored":"Scored","Level":"Level 1","Control ID":"3.4"}, "integration": "prowler"}
 ```
 You must see 3 phases goin on.
