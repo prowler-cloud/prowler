@@ -33,7 +33,7 @@ import re
 # Constants
 ################################################################################
 WAZUH_PATH = open('/etc/ossec-init.conf').readline().split('"')[1]
-DEBUG_LEVEL = 1  # Enable/disable debug mode
+DEBUG_LEVEL = 0  # Enable/disable debug mode
 PATH_TO_PROWLER = '{0}/integrations/prowler'.format(WAZUH_PATH)  # No trailing slash
 TEMPLATE_CHECK = '''
 {{

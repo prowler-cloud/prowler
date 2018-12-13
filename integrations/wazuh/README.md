@@ -4,24 +4,28 @@
 
 - [Description](#description)
 - [Features](#features)
+- [Requirements](#requirements)
+- [Integration steps](#integration-steps)
+- [Troubleshooting](#troubleshooting)
+- [Thanks](#thanks)
+- [License](#license)
 
 ## Description
 
-Prowler integration with WAZUH.
+Prowler integration with WAZUH using a python wrapper. Due to the wrapper limitations, this integration can be considered as a proof of concept at this time. 
 
 ## Features
 
-Wazuh, using a wodle, runs Prowler every certain time and stores alerts (failed checks) using JSON output in Elastic Search to be queried from Kibana.
+Wazuh, using a wodle, runs Prowler every certain time and stores alerts (failed checks) using JSON output which Wazuh processes and sends to Elastic Search to be queried from Kibana.
 
 ## Requirements
 
-Latest AWS-CLI client (`pip install awscli`). If you have it already installed, upgrade it: `pip install awscli --upgrade`.
+1. Latest AWS-CLI client (`pip install awscli`). If you have it already installed, make sure you are using the latest version, upgrade it: `pip install awscli --upgrade`.
+2. Also `jq` is needed (`pip install jq`).
 
-Remember, you must have awscli already configured in that server (run `aws configure` if needed). In this DRAFT I'm using `/root/.aws/credentials` file with [default] profile and access keys.
+Remember, you must have AWS-CLI credentials already configured in the same instance running Wazuh (run `aws configure` if needed). In this DRAFT I'm using `/root/.aws/credentials` file with [default] as AWS-CLI profile and access keys but you can use assume role configuration as well. For the moment instance profile is not supported in this wrapper.
 
-For the moment instance profile is not supported in this wrapper. To make Prowler run successfully make sure it runs properly. The wrapper just runs it and outputs JSON results to Wazuh's Elastic Search.
-
-It may work in previous versions of Wazuh, but this document and integration was tested on Wazuh 3.7. So to have a Wazuh running installation is obviously required.
+It may work in previous versions of Wazuh, but this document and integration was tested on Wazuh 3.7.1. So to have a Wazuh running installation is obviously required.
 
 ## Integration steps
 
@@ -39,10 +43,7 @@ Then make sure it is executable:
 ```
 chmod +x /var/ossec/integrations/prowler-wrapper.py
 ```
-
-If you want to disable logging for the wrapper execution, edit prowler-wrapper.py and set `DEBUG_LEVEL = 0` at line 36.
-
-Run Prowler wrapper manually to make sure it works fine (`--debug 1` or `--debug 2`):
+Run Prowler wrapper manually to make sure it works fine, use `--debug 1` or `--debug 2`):
 ```
 /var/ossec/integrations/prowler-wrapper.py --aws_profile default --aws_account_alias default --debug 2
 ```
@@ -50,10 +51,10 @@ Run Prowler wrapper manually to make sure it works fine (`--debug 1` or `--debug
 Copy rules file to its location:
 
 ```
-cp /var/ossec/integrations/prowler/integrations/0570-prowler_rules.xml /var/ossec/ruleset/rules/0570-prowler_rules.xml
+cp /var/ossec/integrations/prowler/integrations/prowler_rules.xml /var/ossec/etc/rules/prowler_rules.xml
 ```
 
-Edit `/var/ossec/etc/ossec.conf` and add the following wodle configuration. Remember that here `timeout 21600s` is 6 hours, just to allow Prowler runs completely in case of a large account. The interval recommended is 1d.
+Edit `/var/ossec/etc/ossec.conf` and add the following wodle configuration. Remember that here `timeout 21600 seconds` is 6 hours, just to allow Prowler runs completely in case of a large account. The interval recommended is 1d:
 ```
   <wodle name="command">
     <disabled>no</disabled>
@@ -65,6 +66,7 @@ Edit `/var/ossec/etc/ossec.conf` and add the following wodle configuration. Reme
     <timeout>21600</timeout>
   </wodle>
 ```
+To check multiple AWS accounts, add a wodle per account.
 
 Now restart `wazuh-manager` and look at `/var/ossec/logs/alerts/alerts.json`, eventually you should see FAIL checks detected by Prowler, then you will find them using Kibana. Some Kibana search examples are:
 ```
@@ -73,7 +75,7 @@ data.integration:"prowler" AND rule.level >= 5
 data.integration:"prowler" AND rule.level : 7 or 9
 ```
 
-Adjust the level range to what alerts you want to include, as alerts, Elastic Search only gets fail messages.
+Adjust the level range to what alerts you want to include, as alerts, Elastic Search only gets fail messages (7 and 9).
 
 1 - pass
 3 - info
@@ -90,13 +92,13 @@ To make sure rules are working fine, run `/var/ossec/bin/ossec-logtest` and copy
 ```
 You must see 3 phases goin on.
 
-To check if there is any error you can enable the debug mode of `modulesd` setting the `wazuh_modules.debug=0` variable to 2 in `internal_options.conf` file. Restart wazun-manager and errors should appear in the `ossec.log` file.
+To check if there is any error you can enable the debug mode of `modulesd` setting the `wazuh_modules.debug=0` variable to 2 in `/var/ossec/etc/internal_options.conf` file. Restart wazun-manager and errors should appear in the `/var/ossec/logs/ossec.log` file.
 
 ## Thanks
 
 To Jeremy Phillips <jeremy@uranusbytes.com>, who wrote the initial rules file and wrapper and helped me to understand how it works and debug it.
 
-To Marta Gomez and the Wazuh team for their support to debug this integration and make it work properly. Their job on Wazuh and willingness to help is invaluable.
+To [Marta Gomez](https://github.com/mgmacias95) and the [Wazuh](https://www.wazuh.com) team for their support to debug this integration and make it work properly. Their job on Wazuh and willingness to help is invaluable.
 
 ## License
 
