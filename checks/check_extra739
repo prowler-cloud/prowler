@@ -23,9 +23,9 @@ extra739(){
       for elb_id in $LIST_OF_ELB; do
         CHECK_LOG_STATUS=$($AWSCLI elb describe-load-balancer-attributes --region $regx $PROFILE_OPT --load-balancer-name $elb_id --query LoadBalancerAttributes.AccessLog.Enabled --output text|grep False)
         if [[ $CHECK_LOG_STATUS ]]; then
-          textFail "$regx: ELB $elb_id has login disabled!" "$regx"
+          textFail "$regx: ELB $elb_id has logging disabled!" "$regx"
         else
-          textPass "$regx: ELB $elb_id has login enabled" "$regx"
+          textPass "$regx: ELB $elb_id has logging enabled" "$regx"
         fi
       done
     else
