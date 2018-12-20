@@ -56,8 +56,8 @@ USAGE:
       -p <profile>        specify your AWS profile to use (i.e.: default)
       -r <region>         specify an AWS region to direct API requests to
                             (i.e.: us-east-1), all regions are checked anyway if the check requires it
-      -c <check_id>       specify a check id, to see all available checks use "-l" option
-                            (i.e.: "check11" for check 1.1 or "extra71" for extra check 71)
+      -c <check_id>       specify one or multiple check ids separated by commas, to see all available checks use "-l" option
+                            (i.e.: "check11" for check 1.1 or "extra71,extra72" for extra check 71 and extra check 72)
       -g <group_id>       specify a group of checks by id, to see all available group of checks use "-L"
                             (i.e.: "check3" for entire section 3, "level1" for CIS Level 1 Profile Definitions or "forensics-ready")
       -f <filterregion>   specify an AWS region to run checks against
@@ -305,7 +305,10 @@ getWhoami
 
 # Execute single check if called with -c
 if [[ $CHECK_ID ]];then
-  execute_check $CHECK_ID
+  IFS=',' read -ra CHECKS <<< "$CHECK_ID"
+  for CHECK in "${CHECKS[@]}"; do
+    execute_check $CHECK
+  done
   cleanTemp
   exit $EXITCODE
 fi
