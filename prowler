@@ -70,6 +70,7 @@ USAGE:
       -l                  list all available checks only (does not perform any check)
       -L                  list all groups (does not perform any check)
       -e                  exclude group extras
+      -E                  execute all tests except a list of specified checks separated by comma (i.e. check21,check31)
       -b                  do not print Prowler banner
       -V                  show version number & exit
       -h                  this help
@@ -77,7 +78,7 @@ USAGE:
   exit
 }
 
-while getopts ":hlLkp:r:c:g:f:m:M:enbV" OPTION; do
+while getopts ":hlLkp:r:c:g:f:m:M:E:enbV" OPTION; do
    case $OPTION in
      h )
         usage
@@ -122,6 +123,9 @@ while getopts ":hlLkp:r:c:g:f:m:M:enbV" OPTION; do
         ;;
      e )
         EXTRAS=1
+        ;;
+     E )
+        EXCLUDE_CHECK_ID=$OPTARG
         ;;
      V )
         echo "Prowler $PROWLER_VERSION"
@@ -278,6 +282,40 @@ show_all_group_titles() {
 	done
 }
 
+
+# Function to execute all checks but exclude some of them
+get_all_checks_without_exclusion() {
+        CHECKS_EXCLUDED=()
+        local CHECKS_TO_EXCLUDE=()
+        local TOTAL_CHECKS=()
+        #Get a list of checks to exclude
+        IFS=',' read -ra E_CHECKS <<< "$1"
+        for E_CHECK in "${E_CHECKS[@]}"; do
+            CHECKS_TO_EXCLUDE+=($E_CHECK)
+        done
+        #Get a list of total checks available by ID
+	for i in "${!GROUP_TITLE[@]}"; do
+		#show_group_title $i
+		IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$i]}
+		for j in ${CHECKS[@]}; do
+                    TOTAL_CHECKS+=($CHECK_ID_$j)
+		done
+	done
+        TOTAL_CHECKS=($(echo "${TOTAL_CHECKS[*]}" | tr ' ' '\n' | sort -u)) #removes duplicate and store the result as an array
+        #Create a list that contains all checks but excluded ones
+        for i in "${TOTAL_CHECKS[@]}"; do
+            local COINCIDENCE=false
+            for x in "${CHECKS_TO_EXCLUDE[@]}"; do
+                if [[ "$i" == "$x" ]]; then
+                    COINCIDENCE=true
+                fi
+            done
+            if [[ "$COINCIDENCE" = false ]]; then
+                CHECKS_EXCLUDED+=($i)
+            fi
+        done
+}
+
 ### All functions defined above ... run the workflow
 if [[ $MODE != "csv" ]]; then
   prowlerBanner
@@ -302,6 +340,16 @@ fi
 
 # Gather account data / test aws cli connectivity
 getWhoami
+
+# Get a list of total checks excluding a list provided by the user and overwrite CHECK_ID with the result
+# if the list provided by the user contains an invalid check, this will be discarded.
+# if the list provided by the user contains  just one argument and is invalid, then it will be discarded and all tests will be executed
+if [[ $EXCLUDE_CHECK_ID ]];then
+  get_all_checks_without_exclusion $EXCLUDE_CHECK_ID
+  function join { local IFS="$1"; shift; echo "$*"; }
+  CHECKS_EXCLUDED=$(join , "${CHECKS_EXCLUDED[@]}")
+  CHECK_ID=$CHECKS_EXCLUDED
+fi
 
 # Execute single check if called with -c
 if [[ $CHECK_ID ]];then
