@@ -105,6 +105,14 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ```sh
     ./prowler -c check310
     ```
+    or multiple checks separated by comma:
+    ```sh
+    ./prowler -c check310,check722
+    ```
+    or all checks but some of them:
+    ```sh
+    ./prowler -E check42,check43
+    ```
 
     or for custom profile and region:
 
@@ -189,6 +197,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
         -l                  list all available checks only (does not perform any check)
         -L                  list all groups (does not perform any check)
         -e                  exclude group extras
+        -E                  execute all tests except a list of specified checks separated by comma (i.e. check21,check31)
         -b                  do not print Prowler banner
         -h                  this help
     ```
