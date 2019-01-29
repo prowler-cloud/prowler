@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra741="7.41"
+CHECK_TITLE_extra741="[extra741] Find keys in EC2 UserData (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra741="NOT_SCORED"
+CHECK_TYPE_extra741="EXTRA"
+CHECK_ALTERNATE_check741="extra741"
+
+extra741(){
+  textInfo "Looking for keys in EC2 User Data all regions... (max 100 instances per region, use -m to increase it)  "
+  for regx in $REGIONS; do
+    LIST_OF_EC2_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query Reservations[*].Instances[*].InstanceId --output text --max-items $MAXITEMS | grep -v None)
+    if [[ $LIST_OF_EC2_INSTANCES ]];then
+      for instance in $LIST_OF_EC2_INSTANCES; do
+        USERDATA_FILE=$instance-userdata.decoded
+        USERDATA=$($AWSCLI ec2 describe-instance-attribute --attribute userData --query UserData.Value $PROFILE_OPT --region $regx --instance-id $instance --output text | decode_report > $USERDATA_FILE)
+        if [ -s $USERDATA_FILE ];then
+          FILE_FORMAT_ASCII=$(file -b $USERDATA_FILE|grep ASCII)
+          if [[ $FILE_FORMAT_ASCII ]]; then
+            FINDINGS=$(grep '[A-Za-z0-9]\{20,40\}' $USERDATA_FILE|wc -l)
+            if [[ $FINDINGS -eq 0 ]]; then
+              textPass "$regx: $instance nothing found" "$regx"
+            else
+              textFail "$regx: $instance FOUND! $FINDINGS" "$regx"
+            fi
+          else
+            mv $USERDATA_FILE $USERDATA_FILE.gz ; gunzip $USERDATA_FILE.gz
+            FINDINGS=$(grep '[A-Za-z0-9]\{20,40\}' $USERDATA_FILE|wc -l)
+            if [[ $FINDINGS -eq 0 ]]; then
+              textPass "$regx: $instance nothing found" "$regx"
+            else
+              textFail "$regx: $instance FOUND! $FINDINGS" "$regx"
+            fi
+          fi
+        else
+          textPass "$regx: $instance nothing found" "$regx"
+        fi
+      done
+    else
+      textInfo "$regx: No EC2 instances found" "$regx"
+    fi
+  done
+}
