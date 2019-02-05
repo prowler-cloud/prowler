@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+CHECK_ID_check1101="11.1,11.01"
+CHECK_TITLE_check1101="[check1101] Ensure no security groups allow ingress from 0.0.0.0/0 to port 6379 (Scored)"
+CHECK_SCORED_check1101="SCORED"
+CHECK_TYPE_check1101="LEVEL2"
+CHECK_ALTERNATE_check1101="check1101"
+
+check1101(){
+  # "Ensure no security groups allow ingress from 0.0.0.0/0 to port 6379 (Scored)"
+  for regx in $REGIONS; do
+    SG_LIST=$($AWSCLI ec2 describe-security-groups --query 'SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort<=`6379` && ToPort>=`6379`)) && contains(IpRanges[].CidrIp, `0.0.0.0/0`)]) > `0`].{GroupId:GroupId}' $PROFILE_OPT --region $regx --output text)
+    if [[ $SG_LIST ]];then
+      for SG in $SG_LIST;do
+        textFail "Found Security Group: $SG open to 0.0.0.0/0 in Region $regx" "$regx"
+      done
+    else
+      textPass "No Security Groups found in $regx with port 6379 TCP open to 0.0.0.0/0" "$regx"
+    fi
+  done
+}
