@@ -16,48 +16,6 @@ CHECK_ALTERNATE_check301="check31"
 
 check31(){
   # "Ensure a log metric filter and alarm exist for unauthorized API calls (Scored)"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text| tr '	' '
-' | awk -F: '{ print $7 }')
-  if [[ $CLOUDWATCH_GROUP ]];then
-    for group in $CLOUDWATCH_GROUP; do
-      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '	' '
-' | grep $group | awk -F: '{ print $4 }'  | head -n 1)
-      #METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | awk '/UnauthorizedOperation/ || /AccessDenied/ {print $3}')
-      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --output text | grep METRICFILTERS | awk 'BEGIN {IGNORECASE=1}; /UnauthorizedOperation/ || /AccessDenied/ {print $3};')
-      if [[ $METRICFILTER_SET ]];then
-        for metric in $METRICFILTER_SET; do
-          metric_name=$($AWSCLI logs describe-metric-filters $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --log-group-name $group --filter-name-prefix $metric --output text --query 'metricFilters[0].metricTransformations[0].metricName')
-          HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[?MetricName==`'$metric_name'`]' --output text)
-          if [[ $HAS_ALARM_ASSOCIATED ]];then
-            CHECK31OK="$CHECK31OK $group:$metric"
-          else
-            CHECK31WARN="$CHECK31WARN $group:$metric"
-          fi
-        done
-      else
-        CHECK31WARN="$CHECK31WARN $group"
-      fi
-    done
-
-    if [[ $CHECK31OK ]]; then
-      for group in $CHECK31OK; do
-        metric=${group#*:}
-        group=${group%:*}
-        textPass "CloudWatch group $group found with metric filter $metric and alarms set for Unauthorized Operation and Access Denied"
-      done
-    fi
-    if [[ $CHECK31WARN ]]; then
-      for group in $CHECK31WARN; do
-        case $group in
-           *:*) metric=${group#*:}
-                group=${group%:*}
-                textFail "CloudWatch group $group found with metric filter $metric but no alarms associated"
-                ;;
-             *) textFail "CloudWatch group $group found but no metric filters or alarms associated"
-        esac
-      done
-    fi
-  else
-    textFail "No CloudWatch group found for CloudTrail events"
-  fi
+  METRIC_GREP="UnauthorizedOperation.*AccessDenied"
+  cw_metric_check $METRIC_GREP "Unauthorized Operation and Access Denied"
 }

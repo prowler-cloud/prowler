@@ -158,6 +158,7 @@ done
 . $PROWLER_DIR/include/banner
 . $PROWLER_DIR/include/whoami
 . $PROWLER_DIR/include/credentials_report
+. $PROWLER_DIR/include/check_helper
 
 # Get a list of all available AWS Regions
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
