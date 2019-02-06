@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Helper for running CloudWatch Metric & Alarm checks
+# param: METRIC_GREP
+# param: SUCESS_MSG
+
+cw_metric_check(){
+  METRIC_GREP=$1
+  SUCCESS_MSG=$2
+
+  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '	' '
+' | awk -F: '{ print $7 }')
+  if [[ $CLOUDWATCH_GROUP ]];then
+    for group in $CLOUDWATCH_GROUP; do
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }' | head -n 1)
+      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters[*].[filterName, metricTransformations[0].metricName, filterPattern]' --output text | grep -i -E $METRIC_GREP)
+      METRICS_NAME=$(echo $METRICFILTER_SET | awk '{print $2}')
+      if [[ $METRICFILTER_SET && $METRICS_NAME ]];then
+        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | grep $METRICS_NAME)
+        if [[ $HAS_ALARM_ASSOCIATED ]];then
+          textPass "CloudWatch group $group found with metric filters and alarms for $SUCCESS_MSG"
+        else
+          textFail "CloudWatch group $group found with metric filters $METRIC_NAME but no alarms associated"
+        fi
+      else
+        textFail "CloudWatch group $group found but no metric filters or alarms associated"
+      fi
+    done
+  else
+    textFail "No CloudWatch group found for CloudTrail events"
+  fi
+}
