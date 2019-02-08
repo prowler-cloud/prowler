@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Scoring POC
+scoring(){
+  if [[ $SCORING == "1" ]]; then
+    if [[ ! $PASS_COUNTER ]]; then
+      PASS_COUNTER=0
+    fi
+    if [[ ! $FAIL_COUNTER ]]; then
+      FAIL_COUNTER=0
+    fi
+
+    # TOTAL_RESOURCES=$(awk "BEGIN {print $FAIL_COUNTER+$PASS_COUNTER; exit}")
+    TOTAL_RESOURCES=$(($FAIL_COUNTER + $PASS_COUNTER))
+    # Score is % of passed compared to failures. The higher score, the better
+    PROWLER_SCORE=$(( $PASS_COUNTER * 100 / $TOTAL_RESOURCES ))
+
+    echo -e "$BLUE------------------------------------------------------------------ $NORMAL"
+    echo -e "$CYAN                          _"
+    echo -e "  _ __  _ __ _____      _| | ___ _ __"
+    echo -e " | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|"
+    echo -e " | |_) | | | (_) \ V  V /| |  __/ |"
+    echo -e " | .__/|_|  \___/ \_/\_/ |_|\___|_|v$PROWLER_VERSION"
+    echo -e " |_|$NORMAL$BLUE the handy cloud security tool$NORMAL\n"
+    echo -e "$YELLOW Date: $(date)"
+    echo -e "\n$BLUE------------------------------------------------------------------ $NORMAL"
+    echo -e " Security Assessment Summary Report for AWS Account: $ACCOUNT_NUM $NORMAL"
+    echo -e "$BLUE------------------------------------------------------------------ $NORMAL"
+    echo -e " Your Prowler Score* is = $PROWLER_SCORE $NORMAL "
+    echo -e "$BLUE------------------------------------------------------------------ $NORMAL"
+    echo -e "$BAD FAIL$NORMAL =$BAD $FAIL_COUNTER $NORMAL"
+    echo -e "$BLUE------------------------------------------------------------------ $NORMAL"
+    echo -e "$OK PASS$NORMAL =$OK $PASS_COUNTER $NORMAL"
+    echo -e "$BLUE------------------------------------------------------------------ $NORMAL"
+    echo -e " Total Resources Reviewed =$NOTICE $TOTAL_RESOURCES $NORMAL"
+    echo -e "$BLUE------------------------------------------------------------------ $NORMAL"
+    echo -e " Checks Performed =$NOTICE $CHECKS_COUNTER $NORMAL"
+    echo -e "$BLUE------------------------------------------------------------------ $NORMAL"
+    echo -e " * the highest the better (0 to 100)$NORMAL"
+    echo -e " Prowler scoring uses any check, including CIS not scored checks$NORMAL"
+  fi
+}
