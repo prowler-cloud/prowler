@@ -26,20 +26,22 @@ extra741(){
         USERDATA=$($AWSCLI ec2 describe-instance-attribute --attribute userData --query UserData.Value $PROFILE_OPT --region $regx --instance-id $instance --output text | decode_report > $USERDATA_FILE)
         if [ -s $USERDATA_FILE ];then
           FILE_FORMAT_ASCII=$(file -b $USERDATA_FILE|grep ASCII)
+          FINDINGS=$(grep '[A-Za-z0-9]\{20,40\}' $USERDATA_FILE|wc -l|tr -d '\ ')
           if [[ $FILE_FORMAT_ASCII ]]; then
-            FINDINGS=$(grep '[A-Za-z0-9]\{20,40\}' $USERDATA_FILE|wc -l)
             if [[ $FINDINGS -eq 0 ]]; then
-              textPass "$regx: $instance nothing found" "$regx"
+              textPass "$regx: Nothing found in $instance" "$regx"
+              # delete file if nothing interesting is there
+              rm -f $USERDATA_FILE
             else
-              textFail "$regx: $instance FOUND! $FINDINGS" "$regx"
+              textFail "$regx: Found $FINDINGS keys in $instance! Check file $USERDATA_FILE" "$regx"
             fi
           else
             mv $USERDATA_FILE $USERDATA_FILE.gz ; gunzip $USERDATA_FILE.gz
-            FINDINGS=$(grep '[A-Za-z0-9]\{20,40\}' $USERDATA_FILE|wc -l)
             if [[ $FINDINGS -eq 0 ]]; then
-              textPass "$regx: $instance nothing found" "$regx"
+              textPass "$regx: Nothing found in $instance" "$regx"
+              rm -f $USERDATA_FILE.gz
             else
-              textFail "$regx: $instance FOUND! $FINDINGS" "$regx"
+              textFail "$regx: Found $FINDINGS keys in $instance! Check file $USERDATA_FILE" "$regx"
             fi
           fi
         else
