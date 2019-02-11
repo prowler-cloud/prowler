@@ -39,7 +39,7 @@ It covers hardening and security best practices for all AWS regions related to t
 - Extras (39 checks) *see Extras section* [extras]
 - Forensics related group of checks [forensics-ready]
 - GDPR [gdpr] Read more [here](#gdpr-checks)
-- HIPPA [hippa] Read more [here](#hipaa-checks)
+- HIPAA [hipaa] Read more [here](#hipaa-checks)
 
 
 For a comprehensive list and resolution look at the guide on the link above.
