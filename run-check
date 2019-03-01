@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# runs a check file and function via the shell, this is used by prowler.py to source
+# and run the check consistently
+# usage: run-check <check function name> <path to check file>
+
+if [ $# -lt 2 ]; then
+  echo "usage: run-check <check function name> <path to check file>"
+  exit 2
+fi
+
+checkName="$1"
+checkPath="$2"
+
+if [ ! -f "$checkPath" ]; then
+  echo "${checkPath}: file not found"
+  exit 2
+fi
+
+PROWLER_DIR=`dirname $0`
+. $PROWLER_DIR/include/colors
+. $PROWLER_DIR/include/os_detector
+. $PROWLER_DIR/include/aws_profile_loader
+. $PROWLER_DIR/include/awscli_detector
+. $PROWLER_DIR/include/outputs
+. $PROWLER_DIR/include/csv_header
+. $PROWLER_DIR/include/banner
+. $PROWLER_DIR/include/whoami
+. $PROWLER_DIR/include/credentials_report
+
+. "$checkPath"
+"$checkName"

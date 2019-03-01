@@ -29,9 +29,15 @@
 # I've just got to find my way...
 import os
 import re
+import simplejson
+import subprocess
 
 VERSION = '3.0'
 __dirname__ = os.path.dirname(os.path.abspath(__file__))
+
+GROUP_MATCHER = re.compile(r'^GROUP_(\w+)\[\d+\]=["\'](.*)[\'"]')
+CHECK_MATCHER = re.compile(r'CHECK_(\w+)_(\w+)="?(.*)"?\b')
+
 
 def read_group_file(group_file):
     """
@@ -52,8 +58,9 @@ def read_group_file(group_file):
         result = {}
 
         for line in group_lines:
-            match = re.compile(r'^GROUP_(\w+)\[\d+\]=["\'](.*)[\'"]').match(line)
-            if not match: continue
+            match = GROUP_MATCHER.match(line)
+            if not match:
+                continue
 
             group_var_name = match.group(1)
             group_var_value = match.group(2)
@@ -68,7 +75,9 @@ def read_group_file(group_file):
 
             result[group_var_name.lower()] = group_var_value
 
+        result['path'] = group_file
         return result
+
 
 def read_check_file(check_file):
     """
@@ -91,8 +100,9 @@ def read_check_file(check_file):
         result = {}
 
         for line in check_lines:
-            match = re.compile(r'CHECK_(\w+)_(\w+)="?(.*)"?\b').match(line)
-            if not match: continue
+            match = CHECK_MATCHER.match(line)
+            if not match:
+                continue
 
             check_var_name = match.group(1)
             check_var_name2 = match.group(2)
@@ -110,31 +120,96 @@ def read_check_file(check_file):
 
                 # verify that the name is the same; otherwise fail
                 if check_var_name2 != name:
-                    raise ValueError('name '+check_var_name2+' for '+check_file+' line "'+line+'" does not match previous name "'+name+'"')
+                    raise ValueError('name ' + check_var_name2 + ' for '
+                            + check_file + ' line "' + line +
+                            '" does not match previous name "' + name + '"')
 
             result[check_var_name.lower()] = check_var_value
 
         result['name'] = name
+        result['path'] = check_file
         return result
+
+
+def find_awscli():
+    return subprocess.run(
+        ['which', 'aws'],
+        text=True,
+        check=True,
+        capture_output=True,
+    ).stdout.strip()
+
+
+def execute_check(check_name):
+    # look for the check_name in the checks dict
+    if not checks.get(check_name):
+        raise ValueError('could not find check "'+check_name+'"')
+
+    check = checks[check_name]
+
+    result = subprocess.run(
+        [os.path.join(__dirname__, 'run-check'), check_name, check['path']],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    output = []
+    for line in result.stdout.split('\n'):
+        if not line.strip():
+            continue # skip blank lines
+
+        line_output = simplejson.loads(line)
+
+        if result.stderr:
+            line_output['Message'] = '\n'.join([line_output['Message'], result.stderr.strip()])
+
+        output.append(line_output)
+
+    return output
+
+
+def read_check_files():
+    checks_dir = os.path.join(__dirname__, 'checks')
+    check_filenames = filter(
+        lambda x: x.startswith('check') and 'sample' not in x,
+        os.listdir(checks_dir)
+    )
+    check_paths = map(lambda x: os.path.join(checks_dir, x), check_filenames)
+
+    checks = {}
+    for c in check_paths:
+        check = read_check_file(c)
+        checks[check['name']] = check
+
+    return checks
+
+
+def read_group_files():
+    groups_dir = os.path.join(__dirname__, 'groups')
+    group_filenames = filter(
+        lambda x: x.startswith('group') and 'sample' not in x,
+        os.listdir(groups_dir)
+    )
+    group_paths = map(lambda x: os.path.join(groups_dir, x), group_filenames)
+
+    groups = {}
+    for g in group_paths:
+        group = read_group_file(g)
+        groups[group['name']] = group
+
+    return groups
+
 
 # todo: parse argumnets
 
-checks_dir = os.path.join(__dirname__, 'checks')
-check_filenames =  filter(
-    lambda x: x.startswith('check') and 'sample' not in x,
-    os.listdir(checks_dir)
-)
-checks = map(lambda x: os.path.join(checks_dir, x), check_filenames)
+# prepare environment that we'll run checks in
+# set MODE to "json" regardless of how we were called, so we can
+# reliably parse the result
+env = dict(os.environ)
+env['MODE'] = 'json'
+env['AWSCLI'] = find_awscli()
 
-groups_dir = os.path.join(__dirname__, 'groups')
-group_filenames =  filter(
-    lambda x: x.startswith('group') and 'sample' not in x,
-    os.listdir(groups_dir)
-)
-groups = map(lambda x: os.path.join(groups_dir, x), group_filenames)
+checks = read_check_files()
 
-for c in checks:
-    print(read_check_file(c))
-
-for g in groups:
-    print(read_group_file(g))
+print(simplejson.dumps(execute_check('check112')))
