@@ -228,7 +228,25 @@ If you are using an STS token for AWS-CLI and your session is expired you probab
 A client error (ExpiredToken) occurred when calling the GenerateCredentialReport operation: The security token included in the request is expired
 ```
 
-To fix it, please renew your token by authenticating again to the AWS API.
+To fix it, please renew your token by authenticating again to the AWS API, see next section below if you use MFA.
+
+### Run Prowler with MFA protected credentials
+
+To run Prowler using a profile that requires MFA you just need to get the session token before hand. Just make sure you use this command:
+
+```
+aws --profile <YOUR_AWS_PROFILE> sts get-session-token --duration 129600 --serial-number <ARN_OF_MFA> --token-code <MFA_TOKEN_CODE> --output text
+ ```
+Once you get your token you can export it as environment variable:
+```
+export AWS_PROFILE=YOUR_AWS_PROFILE 
+export AWS_SESSION_TOKEN=YOUR_NEW_TOKEN
+AWS_SECRET_ACCESS_KEY=YOUR_SECRET
+export AWS_ACCESS_KEY_ID=YOUR_KEY
+```  
+or set manually up your `~/.aws/credentials` file properly.
+
+There are some helpfull tools to save time in this process like [aws-mfa-script](https://github.com/asagage/aws-mfa-script) or [aws-cli-mfa](https://github.com/sweharris/aws-cli-mfa).
 
 ### Custom IAM Policy
 
