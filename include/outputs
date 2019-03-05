@@ -13,6 +13,7 @@
 
 # Output formatting functions
 textPass(){
+  PASS_COUNTER=$((PASS_COUNTER+1))
   if [[ "$MODE" == "csv" ]]; then
     if [[ $2 ]]; then
       REPREGION=$2
@@ -95,6 +96,7 @@ textInfo(){
 }
 
 textFail(){
+  FAIL_COUNTER=$((FAIL_COUNTER+1))
   EXITCODE=3
   if [[ "$MODE" == "csv" ]]; then
     if [[ $2 ]]; then
@@ -137,6 +139,7 @@ textFail(){
 }
 
 textTitle(){
+  CHECKS_COUNTER=$((CHECKS_COUNTER+1))
   TITLE_ID=$1
   if [[ $NUMERAL ]]; then
     TITLE_ID=$(echo $TITLE_ID | cut -d, -f2)

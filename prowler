@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.0
+PROWLER_VERSION=2.0.1-devel
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -73,12 +73,13 @@ USAGE:
       -E                  execute all tests except a list of specified checks separated by comma (i.e. check21,check31)
       -b                  do not print Prowler banner
       -V                  show version number & exit
+      -s                  show scoring report
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkp:r:c:g:f:m:M:E:enbV" OPTION; do
+while getopts ":hlLkp:r:c:g:f:m:M:E:enbVs" OPTION; do
    case $OPTION in
      h )
         usage
@@ -132,6 +133,9 @@ while getopts ":hlLkp:r:c:g:f:m:M:E:enbV" OPTION; do
         EXITCODE=0
         exit $EXITCODE
         ;;
+     s )
+        SCORING=1
+        ;;
      : )
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL  -$OPTARG requires an argument"
@@ -158,6 +162,7 @@ done
 . $PROWLER_DIR/include/banner
 . $PROWLER_DIR/include/whoami
 . $PROWLER_DIR/include/credentials_report
+. $PROWLER_DIR/include/scoring
 
 # Get a list of all available AWS Regions
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
@@ -369,6 +374,7 @@ if [[ $GROUP_ID_READ ]];then
     fi
     execute_group_by_id $GROUP_ID_READ
     cleanTemp
+    scoring
     exit $EXITCODE
   else
     textFail "Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
@@ -378,5 +384,6 @@ if [[ $GROUP_ID_READ ]];then
 fi
 
 execute_all
+scoring
 cleanTemp
 exit $EXITCODE

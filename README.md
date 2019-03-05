@@ -199,6 +199,8 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
         -e                  exclude group extras
         -E                  execute all tests except a list of specified checks separated by comma (i.e. check21,check31)
         -b                  do not print Prowler banner
+        -V                  show version number & exit
+        -s                  show scoring report
         -h                  this help
     ```
 
