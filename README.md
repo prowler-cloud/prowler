@@ -161,7 +161,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 1. To perform an assessment based on CIS Profile Definitions you can use level1 or level2 with `-c` flag, more information about this [here, page 8](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf):
 
     ```sh
-    ./prowler -c level1
+    ./prowler -g level1
     ```
 
 1. If you want to run Prowler to check multiple AWS accounts in parallel (runs up to 4 simultaneously `-P 4`):
