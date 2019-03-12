@@ -158,10 +158,10 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler -M mono | aws s3 cp - s3://bucket-name/prowler-report.txt
     ```
 
-1. To perform an assessment based on CIS Profile Definitions you can use level1 or level2 with `-c` flag, more information about this [here, page 8](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf):
+1. To perform an assessment based on CIS Profile Definitions you can use cislevel1 or cislevel2 with `-c` flag, more information about this [here, page 8](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf):
 
     ```sh
-    ./prowler -c level1
+    ./prowler -g cislevel1
     ```
 
 1. If you want to run Prowler to check multiple AWS accounts in parallel (runs up to 4 simultaneously `-P 4`):
@@ -186,7 +186,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
         -c <check_id>       specify a check id, to see all available checks use -l option
                                 (i.e.: check11 for check 1.1 or extra71 for extra check 71)
         -g <group_id>       specify a group of checks by id, to see all available group of checks use -L
-                                (i.e.: check3 for entire section 3, level1 for CIS Level 1 Profile Definitions or forensics-ready)
+                                (i.e.: check3 for entire section 3, cislevel1 for CIS Level 1 Profile Definitions or forensics-ready)
         -f <filterregion>   specify an AWS region to run checks against
                                 (i.e.: us-west-1)
         -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
