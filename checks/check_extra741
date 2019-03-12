@@ -27,10 +27,12 @@ extra741(){
         if [ -s $USERDATA_FILE ];then
           FILE_FORMAT_ASCII=$(file -b $USERDATA_FILE|grep ASCII)
           #FINDINGS=$(grep '[A-Za-z0-9]\{20,40\}' $USERDATA_FILE | grep -i -e key -e secret -e token -e pass - |wc -l|tr -d '\ ')
-          FINDINGS=$(grep -i -e key -e secret -e token -e pass $USERDATA_FILE |wc -l|tr -d '\ ')
+          #FINDINGS=$(grep -i -e key -e secret -e token -e pass $USERDATA_FILE |wc -l|tr -d '\ ')
+          # This finds ftp or http URLs with credentials and common keywords
+          FINDINGS=$(egrep -i '[[:alpha:]]*://[[:alnum:]]*:[[:alnum:]]*@.*/|key|secret|token|pass' $USERDATA_FILE |wc -l|tr -d '\ ')
           if [[ $FILE_FORMAT_ASCII ]]; then
             if [[ $FINDINGS -eq 0 ]]; then
-              textPass "$regx: Nothing found in $instance" "$regx"
+              textPass "$regx: No keys found in $instance" "$regx"
               # delete file if nothing interesting is there
               rm -f $USERDATA_FILE
             else
@@ -39,7 +41,7 @@ extra741(){
           else
             mv $USERDATA_FILE $USERDATA_FILE.gz ; gunzip $USERDATA_FILE.gz
             if [[ $FINDINGS -eq 0 ]]; then
-              textPass "$regx: Nothing found in $instance" "$regx"
+              textPass "$regx: No keys found in $instance" "$regx"
               rm -f $USERDATA_FILE.gz
             else
               textFail "$regx: Found $FINDINGS keys in $instance! Check file $USERDATA_FILE" "$regx"
