@@ -19,7 +19,7 @@ CHECK_ALTERNATE_check71="extra71"
 CHECK_ALTERNATE_check701="extra71"
 
 extra71(){
-  # "Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)"
+  # "Ensure users of groups with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)"
   ADMIN_GROUPS=''
   AWS_GROUPS=$($AWSCLI $PROFILE_OPT iam list-groups --output text --query 'Groups[].GroupName')
   for grp in $AWS_GROUPS; do
