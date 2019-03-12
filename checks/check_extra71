@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra71="7.1,7.01"
-CHECK_TITLE_extra71="[extra71] Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra71="[extra71] Ensure users of groups with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra71="NOT_SCORED"
 CHECK_TYPE_extra71="EXTRA"
 CHECK_ALTERNATE_extra701="extra71"
