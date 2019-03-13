@@ -29,7 +29,7 @@ extra742(){
           #FINDINGS=$(grep -i -e key -e secret -e token -e pass $USERDATA_FILE |wc -l|tr -d '\ ')
           # This finds ftp or http URLs with credentials and common keywords
           FINDINGS=$(egrep -i '[[:alpha:]]*://[[:alnum:]]*:[[:alnum:]]*@.*/|key|secret|token|pass' $OUTPUTS_FILE |wc -l|tr -d '\ ')
-          if [[ $FINDINGS -eq 0 ]]; then
+          if [[ $FINDINGS -eq "0" ]]; then
             textPass "$regx: No keys found in Stack $stack" "$regx"
             # delete file if nothing interesting is there
             rm -f $OUTPUTS_FILE
