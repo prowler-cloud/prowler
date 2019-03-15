@@ -231,12 +231,9 @@ def execute_check(check_name):
         check = checks[check_name]
 
     if check['name'].startswith('check1'):
-        print(check['name'], ': generate_cred_report_arg', file=sys.stderr)
         if not credential_report_generated:
             generate_credential_report()
             credential_report_generated = True
-    else:
-        print(check['name'], ': NO generate_cred_report_arg', file=sys.stderr)
 
     result = subprocess.run(
         [os.path.join(__dirname__, 'run-check'), check_name, check['path']],
@@ -390,7 +387,6 @@ elif args.list_groups:
 elif args.check:
     result = []
     for check in args.check.split(','):
-        print('running check', check, file=sys.stderr)
         result.extend(execute_check(check))
 
     print(simplejson.dumps(result))
