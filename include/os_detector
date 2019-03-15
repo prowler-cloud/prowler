@@ -14,7 +14,7 @@
 
 # Functions to manage dates depending on OS
 if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
-  TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
+  #TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
   # function to compare in days, usage how_older_from_today date
   # date format %Y-%m-%d
   how_older_from_today()
@@ -48,7 +48,7 @@ if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
       }
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # BSD/OSX commands compatibility
-  TEMP_REPORT_FILE=$(mktemp -t prowler.cred_report-XXXXXX)
+  #TEMP_REPORT_FILE=$(mktemp -t prowler.cred_report-XXXXXX)
   how_older_from_today()
       {
         DATE_TO_COMPARE=$1
@@ -78,7 +78,7 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
       }
 elif [[ "$OSTYPE" == "cygwin" ]]; then
   # POSIX compatibility layer and Linux environment emulation for Windows
-  TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
+  #TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
   how_older_from_today()
       {
         DATE_TO_COMPARE=$1

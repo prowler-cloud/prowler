@@ -4,18 +4,13 @@
 # and run the check consistently
 # usage: run-check <check function name> <path to check file>
 
-if [ $# -lt 2 ]; then
-  echo "usage: run-check <check function name> <path to check file>"
+if [ $# -lt 1 ]; then
+  echo "usage: run-check <check function name> <path to check file>" >&2
   exit 2
 fi
 
 checkName="$1"
-checkPath="$2"
-
-if [ ! -f "$checkPath" ]; then
-  echo "${checkPath}: file not found"
-  exit 2
-fi
+checkPath="${2:-}"
 
 PROWLER_DIR=`dirname $0`
 . $PROWLER_DIR/include/colors
@@ -26,7 +21,13 @@ PROWLER_DIR=`dirname $0`
 . $PROWLER_DIR/include/csv_header
 . $PROWLER_DIR/include/banner
 . $PROWLER_DIR/include/whoami
-. $PROWLER_DIR/include/credentials_report
+
+# . $PROWLER_DIR/include/credentials_report # handled by prowler.py
+
+if [ ! -f "$checkPath" ]; then
+  echo "${checkPath}: file not found" >&2
+  exit 2
+fi
 
 . "$checkPath"
 "$checkName"
