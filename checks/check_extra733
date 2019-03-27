@@ -25,6 +25,6 @@ extra733(){
       textInfo "SAML Provider $PROVIDER_NAME has been found"
     done
   else
-    textFail "No SAML Provider found, add one and use STS"
+    textInfo "No SAML Provider found, add one and use STS"
   fi
 }
