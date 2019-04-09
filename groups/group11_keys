@@ -13,7 +13,7 @@
 
 GROUP_ID[11]='keys'
 GROUP_NUMBER[11]='11.0'
-GROUP_TITLE[11]='Look for keys secrets or passwords around resources - [keys] ****************'
+GROUP_TITLE[11]='Look for keys secrets or passwords around resources - [keys] **'
 GROUP_RUN_BY_DEFAULT[11]='N' # run it when execute_all is called
 GROUP_CHECKS[11]='extra741,extra742'
 
