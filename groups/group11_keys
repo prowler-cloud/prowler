@@ -11,8 +11,12 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-GROUP_ID[8]='forensics-ready'
-GROUP_NUMBER[8]='8.0'
-GROUP_TITLE[8]='Forensics Readiness - [forensics-ready] ************************'
-GROUP_RUN_BY_DEFAULT[8]='N' # run it when execute_all is called
-GROUP_CHECKS[8]='check21,check22,check23,check24,check25,check26,check27,check29,extra712,extra713,extra714,extra715,extra717,extra718,extra719,extra720,extra721,extra722,extra725'
+GROUP_ID[11]='keys'
+GROUP_NUMBER[11]='11.0'
+GROUP_TITLE[11]='Look for keys secrets or passwords around resources - [keys] ****************'
+GROUP_RUN_BY_DEFAULT[11]='N' # run it when execute_all is called
+GROUP_CHECKS[11]='extra741,extra742'
+
+# Initially:
+# - EC2 UserData
+# - CloudFormation Outputs

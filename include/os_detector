@@ -13,7 +13,7 @@
 
 
 # Functions to manage dates depending on OS
-if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
+if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ] || ["$OSTYPE" == "freebsd" ]; then
   TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
   # function to compare in days, usage how_older_from_today date
   # date format %Y-%m-%d
