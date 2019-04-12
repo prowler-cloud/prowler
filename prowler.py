@@ -50,7 +50,7 @@ credential_report_generated = False
 credential_report_temp_file = tempfile.mkstemp()[1]
 
 
-def run(cmd, text=True):
+def run(cmd, text=True, check=True):
     """
     Run a command, printing stderr (useful if it fails).
     """
@@ -64,7 +64,8 @@ def run(cmd, text=True):
     if result.stderr:
         print(result.stderr)
 
-    result.check_returncode()
+    if check:
+        result.check_returncode()
     
     return result.stdout.rstrip() # strip trailing newline in particular
 
@@ -167,9 +168,9 @@ def read_check_file(check_file):
         return result
 
 
-def aws(*args):
+def aws(*args, check=True):
     #print('aws, about to run', [ find_awscli() ] + list(args))
-    r = run([ find_awscli() ] + list(args))
+    r = run([ find_awscli() ] + list(args), check=check)
     #print(' -> ', r)
     return r
 
@@ -327,7 +328,7 @@ parser.add_argument('-c', '--check', help='specify one or multiple check ids sep
 parser.add_argument('-g', '--group', help='specify a group of checks by id, to see all available group of checks use "-L" (i.e.: "check3" for entire section 3, "level1" for CIS Level 1 Profile Definitions or "forensics-ready")')
 parser.add_argument('-f', '--filter-region', help='specify an AWS region to run checks against (i.e.: us-west-1)')
 parser.add_argument('-m', '--maxitems', help='specify the maximum number of items to return for long-running requests (default: 100)')
-parser.add_argument('-M', '--mode', help='output mode: text (default), mono, json, csv (separator is ","; data is on stdout; progress on stderr)')
+parser.add_argument('-M', '--mode', default='text', help='output mode: text (default), mono, json, csv (separator is ","; data is on stdout; progress on stderr)')
 parser.add_argument('-k', '--keep-credential-report', action='store_true', help='keep the credential report')
 parser.add_argument('-n', '--numbers', action='store_true', help='show check numbers to sort easier (i.e.: 1.01 instead of 1.1)')
 parser.add_argument('-l', '--list', action='store_true', help='list all available checks only (does not perform any check)')
@@ -389,7 +390,39 @@ elif args.check:
     for check in args.check.split(','):
         result.extend(execute_check(check))
 
-    print(simplejson.dumps(result))
+    if args.mode == 'json':
+        print(simplejson.dumps(result))
+
+    elif args.mode == 'csv':
+        for r in result:
+            print("%s,%s,%s,%s,%s,%s,%s,%s,%s" % (
+                r['Profile'],
+                r['Account Number'],
+                r['Region'],
+                r['Control ID'],
+                r['Status'].upper(),
+                r['Scored'],
+                r['Level'],
+                r['Control'],
+                r['Message'],
+            ))
+
+    elif args.mode == 'text':
+        for r in result:
+            status_text = ''
+
+            if r['Status'].upper() == 'FAIL':
+                status_text = "      " + Fore.RED + " FAIL! " + r['Control'] + Style.RESET_ALL
+            elif r['Status'].upper() == 'PASS':
+                status_text = "      " + Fore.GREEN + " PASS! " + r['Control'] + Style.RESET_ALL
+
+            if r['Scored'] in [ 'Yes', '1', 'SCORED' ]:
+                print(Fore.BLUE + ' ' + r['Control ID'] + Style.RESET_ALL + ' ' + r['Control'], file=sys.stderr)
+            else:
+                print(Fore.MAGENTA + ' ' + r['Control ID'] + Style.RESET_ALL + ' ' + r['Control'], file=sys.stderr)
+    
+    else:
+        raise ValueError('unknown mode ' + args.mode)
 
 if not args.keep_credential_report:
     os.unlink(credential_report_temp_file)
