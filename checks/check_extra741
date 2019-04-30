@@ -17,7 +17,7 @@ CHECK_TYPE_extra741="EXTRA"
 CHECK_ALTERNATE_check741="extra741"
 
 extra741(){
-  textInfo "Looking for keys in EC2 User Data in instances across all regions... (max 100 instances per region, use -m to increase it)  "
+  textInfo "Looking for keys in EC2 User Data in instances across all regions... (max 100 instances per region use -m to increase it)  "
   for regx in $REGIONS; do
     LIST_OF_EC2_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query Reservations[*].Instances[*].InstanceId --output text --max-items $MAXITEMS | grep -v None)
     if [[ $LIST_OF_EC2_INSTANCES ]];then
