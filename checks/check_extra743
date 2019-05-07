@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra743="7.43"
+CHECK_TITLE_extra743="[extra743] Check if API Gateway has client certificate enabled to access your backend endpoint (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra743="NOT_SCORED"
+CHECK_TYPE_extra743="EXTRA"
+CHECK_ALTERNATE_check743="extra743"
+
+extra743(){
+  for regx in $REGIONS; do
+    LIST_OF_REST_APIS=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-rest-apis --query 'items[*].id' --output text)
+    if [[ $LIST_OF_REST_APIS ]];then
+      for api in $LIST_OF_REST_APIS; do
+        LIST_OF_STAGES=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-stages --rest-api-id $api --query 'item[*].stageName' --output text)
+        if [[ $LIST_OF_STAGES ]]; then 
+          for stage in $LIST_OF_STAGES; do
+            CHECK_CERTIFICATE=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-stages --rest-api-id $api --query 'item[?stageName==`$stage`].clientCertificateId' --output text)
+            if [[ $CHECK_CERTIFICATE ]]; then
+                textPass "$regx: API ID $api in $stage has client certificate enabled" "$regx"
+              else 
+                textFail "$regx: API ID $api in $stage has not client certificate enabled" "$regx"
+            fi 
+          done 
+        fi
+      done
+    else
+      textInfo "$regx: No API Gateways found" "$regx"
+    fi
+  done
+}
