@@ -24,7 +24,7 @@ extra743(){
         LIST_OF_STAGES=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-stages --rest-api-id $api --query 'item[*].stageName' --output text)
         if [[ $LIST_OF_STAGES ]]; then 
           for stage in $LIST_OF_STAGES; do
-            CHECK_CERTIFICATE=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-stages --rest-api-id $api --query 'item[?stageName==`$stage`].clientCertificateId' --output text)
+            CHECK_CERTIFICATE=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-stages --rest-api-id $api --query "item[?stageName==\`$stage\`].clientCertificateId" --output text)
             if [[ $CHECK_CERTIFICATE ]]; then
                 textPass "$regx: API ID $api in $stage has client certificate enabled" "$regx"
               else 
