@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra746="7.46"
+CHECK_TITLE_extra746="[extra746] Check if API Gateway has configured authorizers (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra746="NOT_SCORED"
+CHECK_TYPE_extra746="EXTRA"
+CHECK_ALTERNATE_check743="extra746"
+
+extra746(){
+  for regx in $REGIONS; do
+    LIST_OF_REST_APIS=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-rest-apis --query 'items[*].id' --output text)
+    if [[ $LIST_OF_REST_APIS ]];then
+      for api in $LIST_OF_REST_APIS; do
+        AUTHORIZER_CONFIGURED=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-authorizers --rest-api-id $api --query items[*].type --output text)
+        if [[ $AUTHORIZER_CONFIGURED ]]; then 
+           textPass "$regx: API ID $api has authorizer configured" "$regx"
+        else
+           textFail "$regx: API ID $api has not authorizer configured" "$regx"
+        fi
+      done
+    else
+      textInfo "$regx: No API Gateways found" "$regx"
+    fi
+  done
+}
