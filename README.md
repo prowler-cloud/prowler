@@ -66,7 +66,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 - Previous steps, from your workstation:
 
     ```sh
-    git clone https://github.com/Alfresco/prowler
+    git clone https://github.com/toniblyx/prowler
     cd prowler
     ```
 
