@@ -21,14 +21,15 @@ extra744(){
     LIST_OF_REST_APIS=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-rest-apis --query 'items[*].id' --output text)
     if [[ $LIST_OF_REST_APIS ]];then
       for api in $LIST_OF_REST_APIS; do
+        API_GW_NAME=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query "items[?id==\`$api\`].name" --output text)
         LIST_OF_STAGES=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-stages --rest-api-id $api --query 'item[*].stageName' --output text)
         if [[ $LIST_OF_STAGES ]]; then 
           for stage in $LIST_OF_STAGES; do
             CHECK_WAFACL=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-stages --rest-api-id $api --query "item[?stageName==\`$stage\`].webAclArn" --output text)
             if [[ $CHECK_WAFACL ]]; then
-                textPass "$regx: API Gateway ID $api in $stage has $CHECK_WAFACL WAF ACL attached" "$regx"
+                textPass "$regx: API Gateway $API_GW_NAME ID $api in $stage has $CHECK_WAFACL WAF ACL attached" "$regx"
               else 
-                textFail "$regx: API Gateway ID $api in $stage has not WAF ACL attached" "$regx"
+                textFail "$regx: API Gateway $API_GW_NAME ID $api in $stage has not WAF ACL attached" "$regx"
             fi 
           done 
         fi

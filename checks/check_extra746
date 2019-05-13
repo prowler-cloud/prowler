@@ -21,11 +21,12 @@ extra746(){
     LIST_OF_REST_APIS=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-rest-apis --query 'items[*].id' --output text)
     if [[ $LIST_OF_REST_APIS ]];then
       for api in $LIST_OF_REST_APIS; do
+        API_GW_NAME=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query "items[?id==\`$api\`].name" --output text)
         AUTHORIZER_CONFIGURED=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-authorizers --rest-api-id $api --query items[*].type --output text)
         if [[ $AUTHORIZER_CONFIGURED ]]; then 
-           textPass "$regx: API ID $api has authorizer configured" "$regx"
+           textPass "$regx: API Gateway $API_GW_NAME ID $api has authorizer configured" "$regx"
         else
-           textFail "$regx: API ID $api has not authorizer configured" "$regx"
+           textFail "$regx: API Gateway $API_GW_NAME ID $api has not authorizer configured" "$regx"
         fi
       done
     else
