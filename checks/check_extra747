@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra747="7.47"
+CHECK_TITLE_extra747="[extra747] Check if RDS instances is integrated with CloudWatch Logs  (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra747="NOT_SCORED"
+CHECK_TYPE_extra747="EXTRA"
+CHECK_ALTERNATE_check747="extra747"
+
+extra747(){
+  for regx in $REGIONS; do
+    LIST_OF_RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[*].DBInstanceIdentifier' --output text)
+    if [[ $LIST_OF_RDS_INSTANCES ]];then
+      for rdsinstance in $LIST_OF_RDS_INSTANCES; do
+        # if retention is 0 then is disabled 
+        ENABLED_CLOUDWATCHLOGS_EXPORTS=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --db-instance-identifier $rdsinstance --query 'DBInstances[*].EnabledCloudwatchLogsExports' --output text)
+        if [[ $ENABLED_CLOUDWATCHLOGS_EXPORTS ]]; then
+          textPass "$regx: RDS instance $rdsinstance is shipping $ENABLED_CLOUDWATCHLOGS_EXPORTS to CloudWatch Logs" "$regx"
+        else
+          textFail "$regx: RDS instance $rdsinstance has not CloudWatch Logs enabled!" "$regx"
+        fi
+      done
+    else
+      textInfo "$regx: No RDS instances found" "$regx"
+    fi
+  done
+}
