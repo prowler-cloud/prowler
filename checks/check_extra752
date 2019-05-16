@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra752="7.52"
+CHECK_TITLE_extra752="[extra752] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Redis port 6379 (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra752="NOT_SCORED"
+CHECK_TYPE_extra752="EXTRA"
+CHECK_ALTERNATE_check752="extra752"
+
+extra752(){
+  for regx in $REGIONS; do
+    SG_LIST=$($AWSCLI ec2 describe-security-groups --query 'SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort<=`6379` && ToPort>=`6379`)) && (contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}' $PROFILE_OPT --region $regx --output text)
+    if [[ $SG_LIST ]];then
+      for SG in $SG_LIST;do
+        textFail "$regx: Found Security Group: $SG open to 0.0.0.0/0 for Redis port" "$regx"
+      done
+    else
+      textPass "$regx: No Security Groups found open to 0.0.0.0/0 for Redis port" "$regx"
+    fi
+  done
+}
