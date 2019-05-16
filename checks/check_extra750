@@ -24,7 +24,7 @@ extra750(){
         textFail "$regx: Found Security Group: $SG open to 0.0.0.0/0 for MySQL port" "$regx"
       done
     else
-      textPass "$regx: No Security Groups found with any port open to 0.0.0.0/0 for MySQL port" "$regx"
+      textPass "$regx: No Security Groups found open to 0.0.0.0/0 for MySQL port" "$regx"
     fi
   done
 }
