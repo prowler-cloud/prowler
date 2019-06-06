@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra757="7.57"
+CHECK_TITLE_extra757="[extra757] Check EC2 Instances older than 6 months (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra757="NOT_SCORED"
+CHECK_TYPE_extra757="EXTRA"
+CHECK_ALTERNATE_check757="extra757"
+
+extra757(){
+  OLDAGE="$(date -v -6m '+%Y-%m-%d')"
+  textInfo "Looking for EC2 instances in all regions..."
+  for regx in $REGIONS; do
+    textInfo "Looking for EC2 instances in region $regx"
+    INSTACES_OLD_THAN_AGE=$($AWSCLI --region $regx ec2 describe-instances --query "Reservations[].Instances[?LaunchTime<='$OLDAGE'][].{id: InstanceId, launched: LaunchTime}" --output text)
+    EC2_RUNNING="$($AWSCLI ec2 describe-instances --region $regx --query "Reservations[*].Instances[*].[InstanceId]" --output text)"
+    if [[ $EC2_RUNNING ]]; then
+      if [[ $INSTACES_OLD_THAN_AGE ]]; then
+        while IFS= read -r ec2_instace
+        do
+          EC2_ID=$(echo "$ec2_instace" | awk '{print $1}')
+          LAUNCH_DATE=$(echo "$ec2_instace" | awk '{print $2}')
+          textFail "$regx: EC2 Instance $EC2_ID running before than $OLDAGE"
+        done <<< "$INSTACES_OLD_THAN_AGE"
+      else
+        textPass "All Instances newer than 6 months"
+      fi
+    else
+      textInfo "No EC2 Instances Found"
+    fi
+  done
+}
