@@ -27,13 +27,13 @@ extra731(){
         PUBLIC_SNS_WCONDITION=$(echo $SNS_TO_CHECK|grep Condition)
         SHORT_TOPIC=$(echo $topic| cut -d: -f6)
         if [[ $PUBLIC_SNS_WCONDITION ]]; then
-          textInfo "$regx: SNS topic $SHORT_TOPIC has a Condition" "$regx"
+          textPass "$regx: SNS topic $SHORT_TOPIC has a Condition" "$regx"
         else
           PUBLIC_SNS=$(echo $SNS_TO_CHECK|grep \"Principal|grep \*)
           if [[ $PUBLIC_SNS ]]; then
             textFail "$regx: SNS topic $SHORT_TOPIC seems to be public (Principal: \"*\")" "$regx"
           else
-            textInfo "$regx: SNS topic $SHORT_TOPIC seems correct" "$regx"
+            textPass "$regx: SNS topic $SHORT_TOPIC seems correct" "$regx"
           fi
         fi
       done
