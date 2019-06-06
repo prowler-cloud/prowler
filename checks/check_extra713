@@ -17,8 +17,17 @@ CHECK_TYPE_extra713="EXTRA"
 CHECK_ALTERNATE_check713="extra713"
 
 extra713(){
+
+  # Guardduty Regions are not the same as REGIONS
+  PYTHON=$(which python)
+  if [ ! -z "${PYTHON}" ]; then
+    GD_REGIONS=$($PYTHON -c "import boto3 ; session = boto3.session.Session() ; print (session.get_available_regions('guardduty'))")
+  else
+    GD_REGIONS=$REGIONS
+  fi
+
   # "Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)"
-  for regx in $REGIONS; do
+  for regx in $GD_REGIONS; do
     LIST_OF_GUARDDUTY_DETECTORS=$($AWSCLI guardduty list-detectors $PROFILE_OPT --region $regx --output text 2> /dev/null | cut -f2)
     if [[ $LIST_OF_GUARDDUTY_DETECTORS ]];then
       while read -r detector;do
