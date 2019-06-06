@@ -17,13 +17,13 @@ CHECK_TYPE_extra757="EXTRA"
 CHECK_ALTERNATE_check757="extra757"
 
 extra757(){
-  OLDAGE="$(date -v -6m '+%Y-%m-%d')"
+  OLDAGE="$(get_date_previous_than_months 6)"
   textInfo "Looking for EC2 instances in all regions..."
   for regx in $REGIONS; do
     textInfo "Looking for EC2 instances in region $regx"
-    INSTACES_OLD_THAN_AGE=$($AWSCLI --region $regx ec2 describe-instances --query "Reservations[].Instances[?LaunchTime<='$OLDAGE'][].{id: InstanceId, launched: LaunchTime}" --output text)
     EC2_RUNNING="$($AWSCLI ec2 describe-instances --region $regx --query "Reservations[*].Instances[*].[InstanceId]" --output text)"
     if [[ $EC2_RUNNING ]]; then
+      INSTACES_OLD_THAN_AGE=$($AWSCLI --region $regx ec2 describe-instances --query "Reservations[].Instances[?LaunchTime<='$OLDAGE'][].{id: InstanceId, launched: LaunchTime}" --output text)
       if [[ $INSTACES_OLD_THAN_AGE ]]; then
         while IFS= read -r ec2_instace
         do

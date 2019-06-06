@@ -76,6 +76,12 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
         DAYS_TO=$((( $DATE_IN_DAYS - $TODAY_IN_DAYS )/60/60/24))
         echo $DAYS_TO
       }
+  get_date_previous_than_months()
+      {
+        MONTHS_TO_COMPARE=$1
+        DATE_BEFORE_MONTHS_TO_COMPARE=$(date -v -$(echo $MONTHS_TO_COMPARE)m '+%Y-%m-%d')
+        echo $DATE_BEFORE_MONTHS_TO_COMPARE
+      }
 elif [[ "$OSTYPE" == "cygwin" ]]; then
   # POSIX compatibility layer and Linux environment emulation for Windows
   TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
