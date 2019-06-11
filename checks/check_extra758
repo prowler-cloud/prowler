@@ -20,9 +20,9 @@ extra758(){
   OLDAGE="$(get_date_previous_than_months 12)"
   textInfo "Looking for EC2 instances in all regions..."
   for regx in $REGIONS; do
-    EC2_RUNNING="$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query "Reservations[*].Instances[*].[InstanceId]" --output text)"
+    EC2_RUNNING="$($AWSCLI ec2 describe-instances --query "Reservations[*].Instances[*].[InstanceId]" $PROFILE_OPT --region $regx --output text)"
     if [[ $EC2_RUNNING ]]; then
-      INSTACES_OLD_THAN_AGE=$($AWSCLI $PROFILE_OPT --region $regx ec2 describe-instances --query "Reservations[].Instances[?LaunchTime<='$OLDAGE'][].{id: InstanceId, launched: LaunchTime}" --output text)
+      INSTACES_OLD_THAN_AGE=$($AWSCLI ec2 describe-instances --query "Reservations[].Instances[?LaunchTime<='$OLDAGE'][].{id: InstanceId, launched: LaunchTime}" $PROFILE_OPT --region $regx --output text)
       if [[ $INSTACES_OLD_THAN_AGE ]]; then
         while IFS= read -r ec2_instace
         do
