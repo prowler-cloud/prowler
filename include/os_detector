@@ -49,7 +49,10 @@ if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
   get_date_previous_than_months()
     {
       MONTHS_TO_COMPARE=$1
-      DATE_BEFORE_MONTHS_TO_COMPARE=$(date --date="$(echo $MONTHS_TO_COMPARE) months ago" '+%Y-%m-%d')
+      MONTHS_TO_COMPARE_IN_SECONDS=$(( 60 * 60 * 24 * 31 * $MONTHS_TO_COMPARE ))
+      CURRENTSECS=`date +%s`
+      STARTDATEINSECS=$(( $CURRENTSECS - $MONTHS_TO_COMPARE_IN_SECONDS ))
+      DATE_BEFORE_MONTHS_TO_COMPARE=$(date -d @$STARTDATEINSECS '+%Y-%m-%d')
       echo $DATE_BEFORE_MONTHS_TO_COMPARE
     }
 elif [[ "$OSTYPE" == "darwin"* ]]; then
@@ -121,7 +124,10 @@ elif [[ "$OSTYPE" == "cygwin" ]]; then
   get_date_previous_than_months()
     {
       MONTHS_TO_COMPARE=$1
-      DATE_BEFORE_MONTHS_TO_COMPARE=$(date --date="$(echo $MONTHS_TO_COMPARE) months ago" '+%Y-%m-%d')
+      MONTHS_TO_COMPARE_IN_SECONDS=$(( 60 * 60 * 24 * 31 * $MONTHS_TO_COMPARE ))
+      CURRENTSECS=`date +%s`
+      STARTDATEINSECS=$(( $CURRENTSECS - $MONTHS_TO_COMPARE_IN_SECONDS ))
+      DATE_BEFORE_MONTHS_TO_COMPARE=$(date -d @$STARTDATEINSECS '+%Y-%m-%d')
       echo $DATE_BEFORE_MONTHS_TO_COMPARE
     }
 else
