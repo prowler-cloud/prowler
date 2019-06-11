@@ -271,7 +271,8 @@ execute_all() {
 
 # Function to show the titles of everything
 show_all_titles() {
-	for i in "${!GROUP_TITLE[@]}"; do
+  MAIN_GROUPS=(1 2 3 4 7)
+  for i in "${MAIN_GROUPS[@]}"; do
 		show_group_title $i
 		# Display the title of the checks
 		IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$i]}
