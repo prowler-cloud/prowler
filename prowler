@@ -274,7 +274,8 @@ show_all_titles() {
   MAIN_GROUPS=(1 2 3 4 7)
   for i in "${MAIN_GROUPS[@]}"; do
 		show_group_title $i
-		# Display the title of the checks
+		# Display the title of the checks in groups 1,2,3,4 and 7 
+    # Any other group has checks in these groups
 		IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$i]}
 		for j in ${CHECKS[@]}; do
 			show_check_title $j
