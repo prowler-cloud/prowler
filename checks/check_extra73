@@ -34,9 +34,9 @@ CHECK_ALTERNATE_check703="extra73"
 #
 #     BUCKET_POLICY_STATUS=$($AWSCLI s3api get-bucket-policy-status --bucket $bucket --query PolicyStatus.IsPublic --output text | grep False)
 #     if [[ $BUCKET_POLICY_STATUS ]];then
-#       textFail "$BUCKET_LOCATION: $bucket bucket is Public!" "$regx"
+#       textFail "$BUCKET_LOCATION: $bucket bucket is Public!" "$BUCKET_LOCATION"
 #     else
-#       textPass "$BUCKET_LOCATION: $bucket bucket is not Public" "$regx"
+#       textPass "$BUCKET_LOCATION: $bucket bucket is not Public" "$BUCKET_LOCATION"
 #     fi
 #   done
 # }
@@ -57,7 +57,7 @@ extra73(){
     CHEK_FOR_EXPLICIT_DENY=$($AWSCLI s3api get-bucket-acl $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket 2> /dev/null)
     CHEK_FOR_EXPLICIT_DENY="$?"
     if [[ $CHEK_FOR_EXPLICIT_DENY -eq 255 ]]; then
-      textPass "$BUCKET_LOCATION: bucket have an explicit Deny. Not possible to get ACL." "$regx"
+      textPass "$BUCKET_LOCATION: bucket have an explicit Deny. Not possible to get ACL." "$BUCKET_LOCATION"
     else
       # check if AllUsers is in the ACL as Grantee
       CHECK_BUCKET_ALLUSERS_ACL=$($AWSCLI s3api get-bucket-acl $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AllUsers']" --output text |grep -v GRANTEE)
@@ -72,16 +72,16 @@ extra73(){
       CHECK_BUCKET_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | sed -e 's/[{}]/''/g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}'|awk '/Principal/ && !skip { print } { skip = /Deny/} '|grep ^\"Principal|grep \*)
       if [[ $CHECK_BUCKET_ALLUSERS_ACL || $CHECK_BUCKET_AUTHUSERS_ACL || $CHECK_BUCKET_ALLUSERS_POLICY ]];then
         if [[ $CHECK_BUCKET_ALLUSERS_ACL ]];then
-          textFail "$BUCKET_LOCATION: $bucket bucket is open to the Internet (Everyone) with permissions: $CHECK_BUCKET_ALLUSERS_ACL_SINGLE_LINE" "$regx"
+          textFail "$BUCKET_LOCATION: $bucket bucket is open to the Internet (Everyone) with permissions: $CHECK_BUCKET_ALLUSERS_ACL_SINGLE_LINE" "$BUCKET_LOCATION"
         fi
         if [[ $CHECK_BUCKET_AUTHUSERS_ACL ]];then
-          textFail "$BUCKET_LOCATION: $bucket bucket is open to Authenticated users (Any AWS user) with permissions: $CHECK_BUCKET_AUTHUSERS_ACL_SINGLE_LINE" "$regx"
+          textFail "$BUCKET_LOCATION: $bucket bucket is open to Authenticated users (Any AWS user) with permissions: $CHECK_BUCKET_AUTHUSERS_ACL_SINGLE_LINE" "$BUCKET_LOCATION"
         fi
         if [[ $CHECK_BUCKET_ALLUSERS_POLICY ]];then
-          textFail "$BUCKET_LOCATION: $bucket bucket policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx"
+          textFail "$BUCKET_LOCATION: $bucket bucket policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$BUCKET_LOCATION"
         fi
       else
-        textPass "$BUCKET_LOCATION: $bucket bucket is not open" "$regx"
+        textPass "$BUCKET_LOCATION: $bucket bucket is not open" "$BUCKET_LOCATION"
       fi
       rm -fr $TEMP_POLICY_FILE
     fi
@@ -122,16 +122,16 @@ extra73(){
 #   CHECK_BUCKET_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | sed -e 's/[{}]/''/g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}'|awk '/Principal/ && !skip { print } { skip = /Deny/} '|grep ^\"Principal|grep \*)
 #   if [[ $CHECK_BUCKET_ALLUSERS_ACL || $CHECK_BUCKET_AUTHUSERS_ACL || $CHECK_BUCKET_ALLUSERS_POLICY ]];then
 #     if [[ $CHECK_BUCKET_ALLUSERS_ACL ]];then
-#       textWarn "$BUCKET_LOCATION: $bucket bucket is open to the Internet (Everyone) with permissions: $CHECK_BUCKET_ALLUSERS_ACL_SINGLE_LINE" "$regx"
+#       textWarn "$BUCKET_LOCATION: $bucket bucket is open to the Internet (Everyone) with permissions: $CHECK_BUCKET_ALLUSERS_ACL_SINGLE_LINE" "$BUCKET_LOCATION"
 #     fi
 #     if [[ $CHECK_BUCKET_AUTHUSERS_ACL ]];then
-#       textWarn "$BUCKET_LOCATION: $bucket bucket is open to Authenticated users (Any AWS user) with permissions: $CHECK_BUCKET_AUTHUSERS_ACL_SINGLE_LINE" "$regx"
+#       textWarn "$BUCKET_LOCATION: $bucket bucket is open to Authenticated users (Any AWS user) with permissions: $CHECK_BUCKET_AUTHUSERS_ACL_SINGLE_LINE" "$BUCKET_LOCATION"
 #     fi
 #     if [[ $CHECK_BUCKET_ALLUSERS_POLICY ]];then
-#       textWarn "$BUCKET_LOCATION: $bucket bucket policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx"
+#       textWarn "$BUCKET_LOCATION: $bucket bucket policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$BUCKET_LOCATION"
 #     fi
 #   else
-#     textOK "$BUCKET_LOCATION: $bucket bucket is not open" "$regx"
+#     textOK "$BUCKET_LOCATION: $bucket bucket is not open" "$BUCKET_LOCATION"
 #   fi
 #   rm -fr $TEMP_POLICY_FILE
 # }
