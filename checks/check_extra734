@@ -20,35 +20,41 @@ extra734(){
   LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text|xargs -n1)
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
-      # query to get if has encryption enabled or not
-      RESULT=$(echo $bucket $($AWSCLI s3api get-bucket-encryption $PROFILE_OPT --bucket $bucket --query ServerSideEncryptionConfiguration.Rules[].ApplyServerSideEncryptionByDefault[].SSEAlgorithm --output text 2>&1 | grep -v ServerSideEncryptionConfigurationNotFoundError))
-      TEMP_SSE_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
-      # get bucket policy
-      $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy > $TEMP_SSE_POLICY_FILE 2> /dev/null
-      # check if the S3 policy forces SSE s3:x-amz-server-side-encryption:true
-      CHECK_BUCKET_SSE_POLICY_PRESENT=$(cat $TEMP_SSE_POLICY_FILE | sed -e 's/[{}]/''/g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}'| awk '/Condition/ && !skip { print } { skip = /x-amz-server-side-encryption/} '|grep \"true\")
-      CHECK_BUCKET_SSE_POLICY_VALUE=$(cat $TEMP_SSE_POLICY_FILE | sed -e 's/[{}]/''/g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}'| awk '/Condition/ && !skip { print } { skip = /x-amz-server-side-encryption/} '|grep -Eo "AES256|aws:kms")
-      ENCRYPTION=false
+      # Check Explicit Deny and Avoid Error
+      CHEK_FOR_EXPLICIT_DENY=$($AWSCLI s3api get-bucket-encryption $PROFILE_OPT --bucket $bucket 2> /dev/null)
+      CHEK_FOR_EXPLICIT_DENY="$?"
+      if [[ $CHEK_FOR_EXPLICIT_DENY -eq 255 ]]; then
+        textFail "Bucket have an explicit Deny. Not possible to get Encryption. Manually Verify"
+      else
+        # query to get if has encryption enabled or not
+        RESULT=$(echo $bucket $($AWSCLI s3api get-bucket-encryption $PROFILE_OPT --bucket $bucket --query ServerSideEncryptionConfiguration.Rules[].ApplyServerSideEncryptionByDefault[].SSEAlgorithm --output text 2>&1 | grep -v ServerSideEncryptionConfigurationNotFoundError))
+        TEMP_SSE_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
+        # get bucket policy
+        $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy > $TEMP_SSE_POLICY_FILE 2> /dev/null
+        # check if the S3 policy forces SSE s3:x-amz-server-side-encryption:true
+        CHECK_BUCKET_SSE_POLICY_PRESENT=$(cat $TEMP_SSE_POLICY_FILE | sed -e 's/[{}]/''/g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}'| awk '/Condition/ && !skip { print } { skip = /x-amz-server-side-encryption/} '|grep \"true\")
+        CHECK_BUCKET_SSE_POLICY_VALUE=$(cat $TEMP_SSE_POLICY_FILE | sed -e 's/[{}]/''/g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}'| awk '/Condition/ && !skip { print } { skip = /x-amz-server-side-encryption/} '|grep -Eo "AES256|aws:kms")
+        ENCRYPTION=false
 
-      echo "$RESULT" | while read RBUCKET SSEALG; do
-        if [[ $SSEALG ]]; then
-          textPass "Bucket $RBUCKET has default encryption enabled with algorithm $SSEALG"
+        echo "$RESULT" | while read RBUCKET SSEALG; do
+          if [[ $SSEALG ]]; then
+            textPass "Bucket $RBUCKET has default encryption enabled with algorithm $SSEALG"
+            ENCRYPTION=true
+          fi
+        done
+        if [[ $CHECK_BUCKET_SSE_POLICY_PRESENT && $CHECK_BUCKET_SSE_POLICY_VALUE ]]; then
+          textPass "Bucket $bucket has S3 bucket policy to enforce encryption with $CHECK_BUCKET_SSE_POLICY_VALUE"
           ENCRYPTION=true
         fi
-      done
-      if [[ $CHECK_BUCKET_SSE_POLICY_PRESENT && $CHECK_BUCKET_SSE_POLICY_VALUE ]]; then
-        textPass "Bucket $bucket has S3 bucket policy to enforce encryption with $CHECK_BUCKET_SSE_POLICY_VALUE"
-        ENCRYPTION=true
-      fi
-      
-      if [ "$ENCRYPTION" == false ]; then
-        textFail "Bucket $bucket does not enforce encryption!"
-      fi
 
+        if [ "$ENCRYPTION" == false ]; then
+          textFail "Bucket $bucket does not enforce encryption!"
+        fi
+        
+      fi
     done
     rm -fr $TEMP_SSE_POLICY_FILE
   else
     textInfo "No S3 Buckets found"
   fi
 }
-
