@@ -54,9 +54,8 @@ extra73(){
       BUCKET_LOCATION="eu-west-1"
     fi
     # Check Explicit Deny and Avoid Error
-    CHEK_FOR_EXPLICIT_DENY=$($AWSCLI s3api get-bucket-acl $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket 2> /dev/null)
-    CHEK_FOR_EXPLICIT_DENY="$?"
-    if [[ $CHEK_FOR_EXPLICIT_DENY -eq 255 ]]; then
+    CHEK_FOR_EXPLICIT_DENY=$($AWSCLI s3api get-bucket-acl $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --output text 2>&1)
+    if [[ $(echo "$CHEK_FOR_EXPLICIT_DENY" | grep AccessDenied) ]] ; then
       textPass "$BUCKET_LOCATION: bucket have an explicit Deny. Not possible to get ACL." "$BUCKET_LOCATION"
     else
       # check if AllUsers is in the ACL as Grantee
