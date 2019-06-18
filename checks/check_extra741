@@ -23,8 +23,9 @@ extra741(){
     if [[ $LIST_OF_EC2_INSTANCES ]];then
       for instance in $LIST_OF_EC2_INSTANCES; do
         USERDATA_FILE=$instance-userdata.decoded
-        USERDATA=$($AWSCLI ec2 describe-instance-attribute --attribute userData --query UserData.Value $PROFILE_OPT --region $regx --instance-id $instance --output text | decode_report > $USERDATA_FILE)
-        if [ -s $USERDATA_FILE ];then
+        USERDATA=$($AWSCLI ec2 describe-instance-attribute --attribute userData --query UserData.Value $PROFILE_OPT --region $regx --instance-id $instance --output text | grep -v None)
+        if [[ $USERDATA ]];then
+          echo "$USERDATA" | decode_report > $USERDATA_FILE
           FILE_FORMAT_ASCII=$(file -b $USERDATA_FILE|grep ASCII)
           #FINDINGS=$(grep '[A-Za-z0-9]\{20,40\}' $USERDATA_FILE | grep -i -e key -e secret -e token -e pass - |wc -l|tr -d '\ ')
           #FINDINGS=$(grep -i -e key -e secret -e token -e pass $USERDATA_FILE |wc -l|tr -d '\ ')
