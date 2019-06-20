@@ -44,9 +44,9 @@ CHECK_ALTERNATE_check703="extra73"
 
 extra73(){
   textInfo "Looking for open S3 Buckets (ACLs and Policies) in all regions...  "
-  ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' $PROFILE_OPT --region $REGION --output text)
+  ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' $PROFILE_OPT --output text)
   for bucket in $ALL_BUCKETS_LIST; do
-    BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket $PROFILE_OPT --region $REGION --output text)
+    BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket $PROFILE_OPT --output text)
     if [[ "None" == $BUCKET_LOCATION ]]; then
       BUCKET_LOCATION="us-east-1"
     fi
