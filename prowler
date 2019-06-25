@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.0.2
+PROWLER_VERSION=2.1.0
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -163,6 +163,8 @@ done
 . $PROWLER_DIR/include/whoami
 . $PROWLER_DIR/include/credentials_report
 . $PROWLER_DIR/include/scoring
+. $PROWLER_DIR/include/python_detector
+. $PROWLER_DIR/include/secrets_detector
 
 # Get a list of all available AWS Regions
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \

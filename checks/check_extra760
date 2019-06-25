@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra760="7.60"
+CHECK_TITLE_extra760="[extra760] Find secrets in Lambda functions code (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra760="NOT_SCORED"
+CHECK_TYPE_extra760="EXTRA"
+CHECK_ALTERNATE_check760="extra760"
+
+extra760(){
+  SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"
+  if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then 
+    # this folder is deleted once this check is finished
+    mkdir $SECRETS_TEMP_FOLDER
+  fi
+
+  textInfo "Looking for secrets in Lambda functions code across all regions... "
+  textInfo "This check may take a while depending on your functions size! "
+  for regx in $REGIONS; do
+    LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --query Functions[*].FunctionName --output text)
+    if [[ $LIST_OF_FUNCTIONS ]]; then
+      for lambdafunction in $LIST_OF_FUNCTIONS;do
+        LAMBDA_FUNCTION_FOLDER="$SECRETS_TEMP_FOLDER/extra760-$lambdafunction-$regx"
+        LAMBDA_FUNCTION_FILE="$lambdafunction-code.zip"
+        LAMBDA_CODE_LOCATION=$($AWSCLI lambda get-function $PROFILE_OPT --region $regx --function-name $lambdafunction --query Code.Location --output text)
+        mkdir $LAMBDA_FUNCTION_FOLDER
+        # DOWNLOAD the code in a zip file
+        curl -s $LAMBDA_CODE_LOCATION -o $LAMBDA_FUNCTION_FOLDER/$LAMBDA_FUNCTION_FILE
+        unzip -qq $LAMBDA_FUNCTION_FOLDER/$LAMBDA_FUNCTION_FILE -d $LAMBDA_FUNCTION_FOLDER
+        FINDINGS=$(secretsDetector folder $LAMBDA_FUNCTION_FOLDER)
+          if [[ $FINDINGS -eq 0 ]]; then
+            textPass "$regx: No secrets found in Lambda function $lambdafunction code" "$regx"
+            # delete files if nothing interesting is there
+            rm -fr $LAMBDA_FUNCTION_FOLDER
+          else
+            textFail "$regx: Potential secret found in Lambda function $lambdafunction code" "$regx"
+            # delete files to not leave trace, user must look at the function
+            rm -fr $LAMBDA_FUNCTION_FOLDER
+          fi
+      done
+    else
+      textInfo "$regx: No Lambda functions found" "$regx"
+    fi
+  done
+  rm -fr $SECRETS_TEMP_FOLDER
+}
