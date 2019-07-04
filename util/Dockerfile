@@ -8,7 +8,7 @@ RUN addgroup -g ${USERID} ${USERNAME} && \
     apk --update --no-cache add python3 bash curl git jq file && \
     pip3 install --upgrade pip && \
     pip install awscli ansi2html boto3 detect-secrets &&\
-    git clone https://github.com/toniblyx/prowler/
+    git clone https://github.com/toniblyx/prowler/ &&\
     chown -R prowler /prowler/
 
 USER ${USERNAME}
