@@ -243,13 +243,13 @@ execute_check() {
 execute_group() {
     show_group_title $1
     # run the checks in the group
-	IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$1]}
+    IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$1]}
 
-	# Exclude any checks specified
-	if [[ -n ${2} ]]; then
+    # Exclude any checks specified
+    if [[ -n ${2} ]]; then
         EXCLUDED_CHECKS=()
         NEW_CHECKS=()
-	    IFS=',' read -ra EXCLUDED_CHECKS <<< "${2},"
+        IFS=',' read -ra EXCLUDED_CHECKS <<< "${2},"
         for exc in ${EXCLUDED_CHECKS[@]} ; do
             for i in ${CHECKS[@]} ; do
                 [[ ${i} != ${exc} ]] && NEW_CHECKS+=(${i})
@@ -258,10 +258,10 @@ execute_group() {
         CHECKS=("${NEW_CHECKS[@]}")
         unset NEW_CHECKS
         unset EXCLUDED_CHECKS
-	fi
-	for i in ${CHECKS[@]}; do
+    fi
+    for i in ${CHECKS[@]}; do
         execute_check ${i}
-	done
+    done
 }
 
 # Function to execute group by name
