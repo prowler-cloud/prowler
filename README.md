@@ -125,6 +125,10 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ```sh
     ./prowler -g group1 # for iam related checks
     ```
+    or exclude some checks in the group:
+    ```sh
+    ./prowler -g group4 -E check42,check43
+    ```
 
     Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 and 3.10 is check310
 
