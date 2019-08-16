@@ -15,25 +15,5 @@ CHECK_TYPE_check39="LEVEL2"
 CHECK_ALTERNATE_check309="check39"
 
 check39(){
-  # "Ensure a log metric filter and alarm exist for AWS Config configuration changes (Scored)"
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '	' '
-' | awk -F: '{ print $7 }')
-  if [[ $CLOUDWATCH_GROUP ]];then
-    for group in $CLOUDWATCH_GROUP; do
-      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | awk -F: '{ print $4 }' | head -n 1)
-      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name $group $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'metricFilters' | grep -E 'config.amazonaws.com.*StopConfigurationRecorder.*DeleteDeliveryChannel.*PutDeliveryChannel.*PutConfigurationRecorder')
-      if [[ $METRICFILTER_SET ]];then
-        HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region $CLOUDWATCH_LOGGROUP_REGION --query 'MetricAlarms[].MetricName' --output text | awk 'BEGIN {IGNORECASE=1}; /config/ || /ConfigurationRecorder/ || /DeliveryChannel/;')
-        if [[ $HAS_ALARM_ASSOCIATED ]];then
-          textPass "CloudWatch group $group found with metric filters and alarms for AWS Config configuration changes"
-        else
-          textFail "CloudWatch group $group found with metric filters but no alarms associated"
-        fi
-      else
-        textFail "CloudWatch group $group found but no metric filters or alarms associated"
-      fi
-    done
-  else
-    textFail "No CloudWatch group found for CloudTrail events"
-  fi
+  check3x '\$\.eventSource\s*=\s*config.amazonaws.com.+\$\.eventName\s*=\s*StopConfigurationRecorder.+\$\.eventName\s*=\s*PutDeliveryChannel.+\$\.eventName\s*=\s*PutConfigurationRecorder'
 }
