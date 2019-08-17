@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# detector of python and boto3
+pythonDetector(){
+    PYTHON_BIN=$(which python)
+    PYTHON_PIP_BOTO3=$(pip list|grep boto3)
+    if [ -z "${PYTHON_BIN}" ]; then
+        echo -e "\n$RED ERROR!$NORMAL python not found. Make sure it is installed correctly and in your \$PATH\n"
+        EXITCODE=1
+        exit $EXITCODE
+    else
+        PYTHON_INSTALLED=1
+        if [ -z "${PYTHON_PIP_BOTO3}" ]; then
+            echo -e "\n$RED ERROR!$NORMAL python library boto3 not found. Make sure it is installed correctly\n"
+            EXITCODE=1
+            exit $EXITCODE
+        else
+            PYTHON_PIP_BOTO3_INSTALLED=1
+        fi
+    fi  
+}

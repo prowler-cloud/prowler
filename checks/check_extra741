@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy
@@ -11,13 +11,19 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra741="7.41"
-CHECK_TITLE_extra741="[extra741] Find keys in EC2 UserData (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra741="[extra741] Find secrets in EC2 User Data (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra741="NOT_SCORED"
 CHECK_TYPE_extra741="EXTRA"
 CHECK_ALTERNATE_check741="extra741"
 
 extra741(){
-  textInfo "Looking for keys in EC2 User Data in instances across all regions... (max 100 instances per region use -m to increase it)  "
+  SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"
+  if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then 
+    # this folder is deleted once this check is finished
+    mkdir $SECRETS_TEMP_FOLDER
+  fi 
+
+  textInfo "Looking for secrets in EC2 User Data in instances across all regions... (max 100 instances per region use -m to increase it)  "
   for regx in $REGIONS; do
     LIST_OF_EC2_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query Reservations[*].Instances[*].InstanceId --output text --max-items $MAXITEMS | grep -v None)
     if [[ $LIST_OF_EC2_INSTANCES ]];then
@@ -60,4 +66,5 @@ extra741(){
       textInfo "$regx: No EC2 instances found" "$regx"
     fi
   done
+  rm -rf $SECRETS_TEMP_FOLDER
 }

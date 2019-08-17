@@ -28,7 +28,7 @@ extra74(){
       if [[ $SG_NO_INGRESS_FILTER -ne 0 ]];then
         textFail "$regx: $SG_ID has no ingress filtering and it is being used!" "$regx"
       else
-        textInfo "$regx: $SG_ID has no ingress filtering but it is no being used" "$regx"
+        textInfo "$regx: $SG_ID has no ingress filtering but it is not being used" "$regx"
       fi
     done
   done

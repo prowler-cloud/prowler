@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.0.2
+PROWLER_VERSION=2.1.0
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -163,6 +163,8 @@ done
 . $PROWLER_DIR/include/whoami
 . $PROWLER_DIR/include/credentials_report
 . $PROWLER_DIR/include/scoring
+. $PROWLER_DIR/include/python_detector
+. $PROWLER_DIR/include/secrets_detector
 
 # Get a list of all available AWS Regions
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
@@ -271,9 +273,11 @@ execute_all() {
 
 # Function to show the titles of everything
 show_all_titles() {
-	for i in "${!GROUP_TITLE[@]}"; do
+  MAIN_GROUPS=(1 2 3 4 7)
+  for i in "${MAIN_GROUPS[@]}"; do
 		show_group_title $i
-		# Display the title of the checks
+		# Display the title of the checks in groups 1,2,3,4 and 7 
+    # Any other group has checks in these groups
 		IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$i]}
 		for j in ${CHECKS[@]}; do
 			show_check_title $j

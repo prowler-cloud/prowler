@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy
@@ -11,37 +11,46 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra742="7.42"
-CHECK_TITLE_extra742="[extra742] Find keys in CloudFormation outputs (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra742="[extra742] Find secrets in CloudFormation outputs (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra742="NOT_SCORED"
 CHECK_TYPE_extra742="EXTRA"
 CHECK_ALTERNATE_check742="extra742"
 
 extra742(){
-  textInfo "Looking for keys in CloudFormation output across all regions... "
+  SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"
+  if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then 
+    # this folder is deleted once this check is finished
+    mkdir $SECRETS_TEMP_FOLDER
+  fi
+
+  textInfo "Looking for secrets in CloudFormation output across all regions... "
   for regx in $REGIONS; do
     LIST_OF_CFN_STACKS=$($AWSCLI cloudformation describe-stacks $PROFILE_OPT --region $regx --query Stacks[*].[StackName] --output text)
     if [[ $LIST_OF_CFN_STACKS ]];then
       for stack in $LIST_OF_CFN_STACKS; do
-        OUTPUTS_FILE=$stack-$regx-output.txt
-        OUTPUTS=$($AWSCLI $PROFILE_OPT --region $regx cloudformation describe-stacks --query "Stacks[?StackName==\`$stack\`].Outputs[*].[OutputKey,OutputValue]" --output text > $OUTPUTS_FILE)
-        if [ -s $OUTPUTS ];then
-          #FINDINGS=$(grep '[A-Za-z0-9]\{20,40\}' $USERDATA_FILE | grep -i -e key -e secret -e token -e pass - |wc -l|tr -d '\ ')
-          #FINDINGS=$(grep -i -e key -e secret -e token -e pass $USERDATA_FILE |wc -l|tr -d '\ ')
+        CFN_OUTPUTS_FILE="$SECRETS_TEMP_FOLDER/extra742-$stack-$regx-outputs.txt"
+        CFN_OUTPUTS=$($AWSCLI $PROFILE_OPT --region $regx cloudformation describe-stacks --query "Stacks[?StackName==\`$stack\`].Outputs[*].[OutputKey,OutputValue]" --output text > $CFN_OUTPUTS_FILE)
+        if [ -s $CFN_OUTPUTS_FILE ];then
           # This finds ftp or http URLs with credentials and common keywords
-          FINDINGS=$(egrep -i '[[:alpha:]]*://[[:alnum:]]*:[[:alnum:]]*@.*/|key|secret|token|pass' $OUTPUTS_FILE |wc -l|tr -d '\ ')
-          if [[ $FINDINGS -eq "0" ]]; then
-            textPass "$regx: No keys found in Stack $stack" "$regx"
-            # delete file if nothing interesting is there
-            rm -f $OUTPUTS_FILE
-          else
-            textFail "$regx: Found $FINDINGS keys in $stack! Check file $OUTPUTS_FILE" "$regx"
-          fi
+          # FINDINGS=$(egrep -i '[[:alpha:]]*://[[:alnum:]]*:[[:alnum:]]*@.*/|key|secret|token|pass' $CFN_OUTPUTS_FILE |wc -l|tr -d '\ ')
+          # New implementation using https://github.com/Yelp/detect-secrets
+          FINDINGS=$(secretsDetector file $CFN_OUTPUTS_FILE)
+            if [[ $FINDINGS -eq 0 ]]; then
+              textPass "$regx: No secrets found in stack $stack Outputs" "$regx"
+              # delete file if nothing interesting is there
+              rm -f $CFN_OUTPUTS_FILE
+            else
+              textFail "$regx: Potential secret found in stack $stack Outputs" "$regx"
+              # delete file to not leave trace, user must look at the CFN Stack
+              rm -f $CFN_OUTPUTS_FILE
+            fi
         else
-          textPass "$regx: Stack $stack has not Outputs" "$regx"
+          textInfo "$regx: CloudFormation stack $stack has not Outputs" "$regx"
         fi
       done
     else
       textInfo "$regx: No CloudFormation stacks found" "$regx"
     fi
   done
+  rm -rf $SECRETS_TEMP_FOLDER
 }
