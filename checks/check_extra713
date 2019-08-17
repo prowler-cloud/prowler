@@ -17,31 +17,26 @@ CHECK_TYPE_extra713="EXTRA"
 CHECK_ALTERNATE_check713="extra713"
 
 extra713(){
-
-  # Guardduty Regions are not the same as REGIONS
-  PYTHON=$(which python)
-  if [ ! -z "${PYTHON}" ]; then
-    textInfo "Using python and boto3 for getting Guardduty Available Regions"
-    GD_REGIONS=($($PYTHON -c "import boto3 ; session = boto3.session.Session() ; print (session.get_available_regions('guardduty'))"))
-    for GD_REGION in "${GD_REGIONS[@]}"; do GD_REGIONS_PARSED+="$(echo "$GD_REGION" | cut -d \' -f 2 | cut -d \' -f 1 && echo " ")"; done
-  else
-    GD_REGIONS_PARSED=$REGIONS
-  fi
-
   # "Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)"
-  for regx in $GD_REGIONS_PARSED; do
-    LIST_OF_GUARDDUTY_DETECTORS=$($AWSCLI guardduty list-detectors $PROFILE_OPT --region $regx --output text 2> /dev/null | cut -f2)
-    if [[ $LIST_OF_GUARDDUTY_DETECTORS ]];then
-      while read -r detector;do
-        DETECTOR_ENABLED=$($AWSCLI guardduty get-detector --detector-id $detector $PROFILE_OPT --region $regx --query "Status" --output text|grep ENABLED)
-        if [[ $DETECTOR_ENABLED ]]; then
-          textPass "$regx: GuardDuty detector $detector enabled" "$regx"
+  for regx in $REGIONS; do
+    LIST_OF_GUARDDUTY_DETECTORS=$($AWSCLI guardduty list-detectors $PROFILE_OPT --region $regx --output text --query DetectorIds[*] 2> /dev/null)
+    RESULT=$?
+    if [ $RESULT -eq 0 ];then
+      if [[ $LIST_OF_GUARDDUTY_DETECTORS ]];then
+        while read -r detector;do
+          DETECTOR_ENABLED=$($AWSCLI guardduty get-detector --detector-id $detector $PROFILE_OPT --region $regx --query "Status" --output text|grep ENABLED)
+          if [[ $DETECTOR_ENABLED ]]; then
+            textPass "$regx: GuardDuty detector $detector enabled" "$regx"
+          else
+            textFail "$regx: GuardDuty detector $detector configured but suspended" "$regx"
+          fi
+        done <<< "$LIST_OF_GUARDDUTY_DETECTORS"
         else
-          textFail "$regx: GuardDuty detector $detector configured but suspended" "$regx"
-        fi
-      done <<< "$LIST_OF_GUARDDUTY_DETECTORS"
-      else
-        textFail "$regx: GuardDuty detector not configured!" "$regx"
-    fi
+          textFail "$regx: GuardDuty detector not configured!" "$regx"
+      fi
+      else 
+      # if list-detectors return any error 
+      textInfo "$regx: GuardDuty not checked" "$regx"
+    fi 
   done
 }
