@@ -277,9 +277,12 @@ execute_group_by_id() {
 	done
 }
 
-# Function to execute all checks in all groups
+# Function to execute all checks in all groups except extras if -e is invoked 
 execute_all() {
 	for i in "${!GROUP_TITLE[@]}"; do
+    if [[ $EXTRAS ]]; then
+      GROUP_RUN_BY_DEFAULT[7]='N'
+    fi
     if [ "${GROUP_RUN_BY_DEFAULT[$i]}" == "Y" ]; then
 		  execute_group $i
     fi
