@@ -28,38 +28,36 @@ extra741(){
     LIST_OF_EC2_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query Reservations[*].Instances[*].InstanceId --output text --max-items $MAXITEMS | grep -v None)
     if [[ $LIST_OF_EC2_INSTANCES ]];then
       for instance in $LIST_OF_EC2_INSTANCES; do
-        USERDATA=$($AWSCLI ec2 describe-instance-attribute --attribute userData --query UserData.Value $PROFILE_OPT --region $regx --instance-id $instance --output text)
-        if [[ "$USERDATA" != "None" ]]; then
-          USERDATA_FILE=$instance-userdata.decoded
-          echo "$USERDATA" | decode_report > $USERDATA_FILE
-          FILE_FORMAT=$(file -b $USERDATA_FILE)
-          if [[ $(echo "$FILE_FORMAT" | grep -i gzip) ]]; then
-            mv $USERDATA_FILE $USERDATA_FILE.gz ; gunzip $USERDATA_FILE.gz
-            #FINDINGS=$(grep '[A-Za-z0-9]\{20,40\}' $USERDATA_FILE | grep -i -e key -e secret -e token -e pass - |wc -l|tr -d '\ ')
-            #FINDINGS=$(grep -i -e key -e secret -e token -e pass $USERDATA_FILE |wc -l|tr -d '\ ')
-            # This finds ftp or http URLs with credentials and common keywords
-            FINDINGS=$(egrep -i '[[:alpha:]]*://[[:alnum:]]*:[[:alnum:]]*@.*/|secret|token|pass' $USERDATA_FILE |wc -l|tr -d '\ ')
+        EC2_USERDATA_FILE="$SECRETS_TEMP_FOLDER/extra741-$instance-userData.decoded"
+        EC2_USERDATA=$($AWSCLI ec2 describe-instance-attribute --attribute userData $PROFILE_OPT --region $regx --instance-id $instance --query UserData.Value --output text| grep -v ^None | decode_report > $EC2_USERDATA_FILE)
+        if [ -s $EC2_USERDATA_FILE ];then
+          FILE_FORMAT_ASCII=$(file -b $EC2_USERDATA_FILE|grep ASCII)
+          # This finds ftp or http URLs with credentials and common keywords
+          # FINDINGS=$(egrep -i '[[:alpha:]]*://[[:alnum:]]*:[[:alnum:]]*@.*/|key|secret|token|pass' $EC2_USERDATA_FILE |wc -l|tr -d '\ ')
+          # New implementation using https://github.com/Yelp/detect-secrets
+          if [[ $FILE_FORMAT_ASCII ]]; then
+          FINDINGS=$(secretsDetector file $EC2_USERDATA_FILE)
             if [[ $FINDINGS -eq 0 ]]; then
-              textPass "$regx: No keys found" "$instance" "$regx"
-              rm -f $USERDATA_FILE.gz
+              textPass "$regx: No secrets found in $instance" "$regx"
+              # delete file if nothing interesting is there
+              rm -f $EC2_USERDATA_FILE
             else
-                textFail "$regx: Found $FINDINGS keys! Check file $USERDATA_FILE" "$instance" "$regx"
+              textFail "$regx: Potential secret found in $instance" "$regx"
+              # delete file to not leave trace, user must look at the instance User Data
+              rm -f $EC2_USERDATA_FILE
             fi
           else
-            #FINDINGS=$(grep '[A-Za-z0-9]\{20,40\}' $USERDATA_FILE | grep -i -e key -e secret -e token -e pass - |wc -l|tr -d '\ ')
-            #FINDINGS=$(grep -i -e key -e secret -e token -e pass $USERDATA_FILE |wc -l|tr -d '\ ')
-            # This finds ftp or http URLs with credentials and common keywords
-            FINDINGS=$(egrep -i '[[:alpha:]]*://[[:alnum:]]*:[[:alnum:]]*@.*/|secret|token|pass' $USERDATA_FILE |wc -l|tr -d '\ ')
-            if [[ $FINDINGS -eq "0" ]]; then
-              textPass "$regx: No keys found" "$instance" "$regx"
-              # delete file if nothing interesting is there
-              rm -f $USERDATA_FILE
+            mv $EC2_USERDATA_FILE $EC2_USERDATA_FILE.gz ; gunzip $EC2_USERDATA_FILE.gz
+            FINDINGS=$(secretsDetector file $EC2_USERDATA_FILE)
+            if [[ $FINDINGS -eq 0 ]]; then
+              textPass "$regx: No secrets found in $instance User Data" "$regx"
+              rm -f $EC2_USERDATA_FILE
             else
-              textFail "$regx: Found $FINDINGS keys! Check file $USERDATA_FILE" "$instance" "$regx"
+              textFail "$regx: Potential secret found in $instance" "$regx"
             fi
           fi
-        else
-          textPass "$regx: Instance nothing found" "$instance" "$regx"
+        else 
+          textPass "$regx: No secrets found in $instance User Data or it is empty" "$regx"
         fi
       done
     else
