@@ -23,9 +23,9 @@ extra734(){
       # query to get if has encryption enabled or not
       RESULT=$($AWSCLI s3api get-bucket-encryption $PROFILE_OPT --bucket $bucket --query ServerSideEncryptionConfiguration.Rules[].ApplyServerSideEncryptionByDefault[].SSEAlgorithm --output text 2>&1)
       if [[ $(echo "$RESULT" | grep ServerSideEncryptionConfigurationNotFoundError) ]] ; then
-          textFail "Bucket does not enforce encryption!" "$bucket"
+          textFail "Bucket $bucket does not enforce encryption!"
       elif [[ $(echo "$RESULT" | grep AccessDenied) ]] ; then
-        textFail "Access Denied Trying to Get Encryption!" "$bucket"
+        textFail "Access Denied Trying to Get Encryption for $bucket"
       else
         TEMP_SSE_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
         # get bucket policy
