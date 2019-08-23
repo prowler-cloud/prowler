@@ -18,19 +18,17 @@ CHECK_ALTERNATE_check714="extra714"
 
 extra714(){
   # "Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)"
-  for regx in $REGIONS; do
-    LIST_OF_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions $PROFILE_OPT --region $regx --query 'DistributionList.Items[].Id' --output text |grep -v "^None")
-    if [[ $LIST_OF_DISTRIBUTIONS ]]; then
-      for cdn in $LIST_OF_DISTRIBUTIONS;do
-        CDN_LOG_ENABLED=$($AWSCLI cloudfront get-distribution $PROFILE_OPT --region $regx --id "$cdn" --query 'Distribution.DistributionConfig.Logging.Enabled' | grep true)
-        if [[ $CDN_LOG_ENABLED ]];then
-          textPass "$regx: CDN $cdn logging enabled" "$regx"
-        else
-          textFail "$regx: CDN $cdn logging disabled!" "$regx"
-        fi
-      done
-    else
-      textInfo "$regx: No CDN configured" "$regx"
-    fi
-  done
+  LIST_OF_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions $PROFILE_OPT --query 'DistributionList.Items[].Id' --output text | grep -v "^None")
+  if [[ $LIST_OF_DISTRIBUTIONS ]]; then
+    for dist in $LIST_OF_DISTRIBUTIONS; do
+      LOG_ENABLED=$($AWSCLI cloudfront get-distribution $PROFILE_OPT --id "$dist" --query 'Distribution.DistributionConfig.Logging.Enabled' | grep true)
+      if [[ $LOG_ENABLED ]]; then
+        textPass "CloudFront distribution $dist has logging enabled"
+      else
+        textFail "CloudFront distribution $dist has logging disabled"
+      fi
+    done
+  else
+    textInfo "No CloudFront distributions found"
+  fi
 }
