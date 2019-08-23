@@ -25,14 +25,14 @@ extra727(){
         # check if the policy has Principal as *
         SQS_TO_CHECK=$($AWSCLI sqs get-queue-attributes --queue-url $queue $PROFILE_OPT --region $regx --attribute-names All --query Attributes.Policy --output text | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | awk '/Principal/ || /Condition/ && !skip { print } { skip = /Deny/} ')
         PUBLIC_SQS_WCONDITION=$(echo $SQS_TO_CHECK|grep Condition)
-        if [[ $PUBLIC_SQS_WCONDITION ]]; then 
-          textInfo "$regx: SQS queue $queue has a Condition" "$regx"
+        if [[ $PUBLIC_SQS_WCONDITION ]]; then
+          textPass "$regx: SQS queue $queue has a Condition" "$regx"
         else
           PUBLIC_SQS=$(echo $SQS_TO_CHECK|grep \"Principal|grep \*)
           if [[ $PUBLIC_SQS ]]; then
             textFail "$regx: SQS queue $queue seems to be public (Principal: \"*\")" "$regx"
           else
-            textInfo "$regx: SQS queue $queue seems correct" "$regx"
+            textPass "$regx: SQS queue $queue seems correct" "$regx"
           fi
         fi
       done
