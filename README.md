@@ -55,13 +55,13 @@ With Prowler you can:
 
 This script has been written in bash using AWS-CLI and it works in Linux and OSX.
 
-- Make sure your AWS-CLI is installed on your workstation, with Python pip already installed:
+- Make sure your AWS-CLI is installed on your workstation, and other components needed, with Python pip already installed:
 
     ```sh
-    pip install awscli
+    pip install awscli ansi2html detect-secrets
     ```
 
-    Or install it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>
+    AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `ansi2html` and `detect-secrets` has to be installed using `pip`
 
 - Previous steps, from your workstation:
 
