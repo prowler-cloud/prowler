@@ -16,17 +16,38 @@ CHECK_ALTERNATE_check206="check26"
 
 check26(){
   # "Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)"
-  CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text $PROFILE_OPT --region $REGION)
-    if [[ $CLOUDTRAILBUCKET ]];then
-      for bucket in $CLOUDTRAILBUCKET;do
-        CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --region $REGION --query 'LoggingEnabled.TargetBucket' --output text|grep -v None)
+  local CHECK_OK
+  local CHECK_WARN
+  local CHECK_CROSS_ACCOUNT_WARN
+
+  CLOUDTRAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].Name' --output text| tr '\011' '\012' | awk -F: '{print $1}')
+  CURRENT_ACCOUNT_ID=$($AWSCLI sts $PROFILE_OPT get-caller-identity --region "$REGION" --query Account --output text)
+
+  if [[ $CLOUDTRAILS ]];then
+    for trail in $CLOUDTRAILS; do
+      CLOUDTRAIL_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].TrailARN' --output text | tr '\011' '\012' | grep "$trail" | awk -F: '{ print $4 }'  | head -n 1)
+      CLOUDTRAIL_ACCOUNT_ID=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].TrailARN' --output text | tr '\011' '\012' | grep "$trail" | awk -F: '{ print $5 }'  | head -n 1)
+      CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].[Name, S3BucketName]' --output text  | tr '\011' ':' |  grep "$trail" | awk -F: '{ print $2 }' )
+
+      if [[ $CLOUDTRAILBUCKET ]];then
+        bucket=$CLOUDTRAILBUCKET
+        if [ "$CLOUDTRAIL_ACCOUNT_ID" == "$CURRENT_ACCOUNT_ID" ];then
+          CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --region $REGION --query 'LoggingEnabled.TargetBucket' --output text|grep -v None)
+        fi 
         if [[ $CLOUDTRAILBUCKET_LOGENABLED ]];then
-          textPass "Bucket access logging enabled in $bucket"
-        else
-          textFail "access logging is not enabled in $bucket CloudTrail S3 bucket!"
+          textPass "Bucket access logging enabled in bucket $bucket for cloudtrail $trail"
+        elif [ "$CLOUDTRAIL_ACCOUNT_ID" == "$CURRENT_ACCOUNT_ID" ];then
+          textFail "access logging is not enabled in bucket $bucket CloudTrail S3 bucket! for cloudtrail trail $trail"
+        else 
+          textInfo "CloudTrail S3 bucket $bucket for for cloudtrail $trail is not in current account"
         fi
-      done
-    else
-      textFail "CloudTrail bucket not found!"
-    fi
+        
+      else
+        textFail "CloudTrail bucket not found!"
+      fi
+    done
+
+  else
+    echo "No CloudWatch group found for CloudTrail events"
+  fi
 }
