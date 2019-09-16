@@ -16,9 +16,6 @@ CHECK_ALTERNATE_check206="check26"
 
 check26(){
   # "Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)"
-  local CHECK_OK
-  local CHECK_WARN
-  local CHECK_CROSS_ACCOUNT_WARN
 
   CLOUDTRAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].Name' --output text| tr '\011' '\012' | awk -F: '{print $1}')
   CURRENT_ACCOUNT_ID=$($AWSCLI sts $PROFILE_OPT get-caller-identity --region "$REGION" --query Account --output text)
@@ -48,6 +45,6 @@ check26(){
     done
 
   else
-    echo "No CloudWatch group found for CloudTrail events"
+    textFail "No CloudWatch group found for CloudTrail events"
   fi
 }
