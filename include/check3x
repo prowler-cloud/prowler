@@ -12,13 +12,18 @@ check3x(){
   grep_filter=$1
   local CHECK_OK
   local CHECK_WARN
+  local CHECK_CROSS_ACCOUNT_WARN
 
   CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text| tr '\011' '\012' | awk -F: '{print $7}')
+  CURRENT_ACCOUNT_ID=$($AWSCLI sts $PROFILE_OPT get-caller-identity --region "$REGION" --query Account --output text)
+
   if [[ $CLOUDWATCH_GROUP ]];then
     for group in $CLOUDWATCH_GROUP; do
-      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '       ' '
-' | grep "$group" | awk -F: '{ print $4 }'  | head -n 1)
-      METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name "$group" $PROFILE_OPT --region "$CLOUDWATCH_LOGGROUP_REGION" --output text | grep METRICFILTERS | grep -E "$grep_filter" | awk '{ print $3 }')
+      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | grep "$group" | awk -F: '{ print $4 }'  | head -n 1)
+      CLOUDWATCH_ACCOUNT_ID=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | grep "$group" | awk -F: '{ print $5 }'  | head -n 1)
+      if [ "$CLOUDWATCH_ACCOUNT_ID" == "$CURRENT_ACCOUNT_ID" ];then
+        METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name "$group" $PROFILE_OPT --region "$CLOUDWATCH_LOGGROUP_REGION" --output text | grep METRICFILTERS | grep -E "$grep_filter" | awk '{ print $3 }')
+      fi
       if [[ $METRICFILTER_SET ]];then
         for metric in $METRICFILTER_SET; do
           metric_name=$($AWSCLI logs describe-metric-filters $PROFILE_OPT --region "$CLOUDWATCH_LOGGROUP_REGION" --log-group-name "$group" --filter-name-prefix "$metric" --output text --query 'metricFilters[0].metricTransformations[0].metricName')
@@ -29,8 +34,10 @@ check3x(){
             CHECK_WARN="$CHECK_WARN $group:$metric"
           fi
         done
-      else
+      elif [ "$CLOUDWATCH_ACCOUNT_ID" == "$CURRENT_ACCOUNT_ID" ];then
         CHECK_WARN="$CHECK_WARN $group"
+      else
+        CHECK_CROSS_ACCOUNT_WARN="$CHECK_CROSS_ACCOUNT_WARN $group"
       fi
     done
 
@@ -50,6 +57,11 @@ check3x(){
                 ;;
              *) textFail "CloudWatch group $group found but no metric filters or alarms associated"
         esac
+      done
+    fi
+    if [[ $CHECK_CROSS_ACCOUNT_WARN ]]; then
+      for group in $CHECK_CROSS_ACCOUNT_WARN; do
+        textInfo "CloudWatch group $group is not in this account"
       done
     fi
   else
