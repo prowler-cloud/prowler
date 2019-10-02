@@ -243,11 +243,11 @@ aws --profile <YOUR_AWS_PROFILE> sts get-session-token --duration 129600 --seria
  ```
 Once you get your token you can export it as environment variable:
 ```
-export AWS_PROFILE=YOUR_AWS_PROFILE 
+export AWS_PROFILE=YOUR_AWS_PROFILE
 export AWS_SESSION_TOKEN=YOUR_NEW_TOKEN
 AWS_SECRET_ACCESS_KEY=YOUR_SECRET
 export AWS_ACCESS_KEY_ID=YOUR_KEY
-```  
+```
 or set manually up your `~/.aws/credentials` file properly.
 
 There are some helpfull tools to save time in this process like [aws-mfa-script](https://github.com/asagage/aws-mfa-script) or [aws-cli-mfa](https://github.com/sweharris/aws-cli-mfa).
@@ -310,6 +310,7 @@ Instead of using default policy SecurityAudit for the account you use for checks
             "firehose:describe*",
             "firehose:list*",
             "glacier:listvaults",
+            "guardduty:GetDetector",
             "guardduty:listdetectors",
             "iam:generatecredentialreport",
             "iam:get*",
