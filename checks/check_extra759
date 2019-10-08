@@ -39,16 +39,15 @@ extra759(){
             rm -f $LAMBDA_FUNCTION_VARIABLES_FILE
           else
             textFail "$regx: Potential secret found in Lambda function $lambdafunction variables" "$regx"
-            # delete file to not leave trace, user must look at the function
-            rm -f $LAMBDA_FUNCTION_VARIABLES_FILE
           fi
         else
           textInfo "$regx: Lambda function $stalambdafunction has not variables" "$regx"
+          rm -f $LAMBDA_FUNCTION_VARIABLES_FILE
         fi
       done
     else
       textInfo "$regx: No Lambda functions found" "$regx"
     fi
   done
-  rm -rf $SECRETS_TEMP_FOLDER
+#  rm -rf $SECRETS_TEMP_FOLDER
 }
