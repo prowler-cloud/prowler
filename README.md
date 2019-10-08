@@ -55,13 +55,13 @@ With Prowler you can:
 
 This script has been written in bash using AWS-CLI and it works in Linux and OSX.
 
-- Make sure your AWS-CLI is installed on your workstation, with Python pip already installed:
+- Make sure your AWS-CLI is installed on your workstation, and other components needed, with Python pip already installed:
 
     ```sh
-    pip install awscli
+    pip install awscli ansi2html detect-secrets
     ```
 
-    Or install it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>
+    AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `ansi2html` and `detect-secrets` has to be installed using `pip`
 
 - Previous steps, from your workstation:
 
@@ -124,6 +124,10 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
     ```sh
     ./prowler -g group1 # for iam related checks
+    ```
+    or exclude some checks in the group:
+    ```sh
+    ./prowler -g group4 -E check42,check43
     ```
 
     Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 and 3.10 is check310
@@ -239,11 +243,11 @@ aws --profile <YOUR_AWS_PROFILE> sts get-session-token --duration 129600 --seria
  ```
 Once you get your token you can export it as environment variable:
 ```
-export AWS_PROFILE=YOUR_AWS_PROFILE 
+export AWS_PROFILE=YOUR_AWS_PROFILE
 export AWS_SESSION_TOKEN=YOUR_NEW_TOKEN
 AWS_SECRET_ACCESS_KEY=YOUR_SECRET
 export AWS_ACCESS_KEY_ID=YOUR_KEY
-```  
+```
 or set manually up your `~/.aws/credentials` file properly.
 
 There are some helpfull tools to save time in this process like [aws-mfa-script](https://github.com/asagage/aws-mfa-script) or [aws-cli-mfa](https://github.com/sweharris/aws-cli-mfa).
@@ -306,6 +310,7 @@ Instead of using default policy SecurityAudit for the account you use for checks
             "firehose:describe*",
             "firehose:list*",
             "glacier:listvaults",
+            "guardduty:GetDetector",
             "guardduty:listdetectors",
             "iam:generatecredentialreport",
             "iam:get*",
@@ -407,7 +412,7 @@ aws iam create-access-key --user-name prowler
 unset ACCOUNT_ID AWS_DEFAULT_PROFILE
 ```
 
-The `aws iam create-access-key` command will output the secret access key and the key id; keep these somewhere safe, and add them to `~/.aws/credentials` with an appropriate profile name to use them with prowler. This is the only time they secret key will be shown.  If you loose it, you will need to generate a replacement.
+The `aws iam create-access-key` command will output the secret access key and the key id; keep these somewhere safe, and add them to `~/.aws/credentials` with an appropriate profile name to use them with prowler. This is the only time they secret key will be shown.  If you lose it, you will need to generate a replacement.
 
 ## Extras
 

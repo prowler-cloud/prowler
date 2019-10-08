@@ -19,10 +19,10 @@ check120(){
   SUPPORTPOLICYARN=$($AWSCLI iam list-policies --query "Policies[?PolicyName == 'AWSSupportAccess'].Arn" $PROFILE_OPT --region $REGION --output text)
   if [[ $SUPPORTPOLICYARN ]];then
     for policyarn in $SUPPORTPOLICYARN;do
-      POLICYROLES=$($AWSCLI iam list-entities-for-policy --policy-arn $SUPPORTPOLICYARN $PROFILE_OPT --region $REGION --query PolicyRoles[*] --output text)
+      POLICYROLES=$($AWSCLI iam list-entities-for-policy --policy-arn $SUPPORTPOLICYARN $PROFILE_OPT --region $REGION --output text | awk -F$'\t' '{ print $3 }')
       if [[ $POLICYROLES ]];then
-        for role in $POLICYROLES; do
-          textPass "Support Policy attached to $role role"
+        for name in $POLICYROLES; do
+          textPass "Support Policy attached to $name"
         done
         # for user in $(echo "$POLICYUSERS" | grep UserName | cut -d'"' -f4) ; do
         #   textInfo "User $user has support access via $policyarn"

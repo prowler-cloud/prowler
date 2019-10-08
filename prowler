@@ -165,6 +165,7 @@ done
 . $PROWLER_DIR/include/scoring
 . $PROWLER_DIR/include/python_detector
 . $PROWLER_DIR/include/secrets_detector
+. $PROWLER_DIR/include/check3x
 
 # Get a list of all available AWS Regions
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
@@ -241,12 +242,27 @@ execute_check() {
 
 # Function to execute all checks in a group
 execute_group() {
-	show_group_title $1
-  # run the checks in the group
-	IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$1]}
-	for i in ${CHECKS[@]}; do
-    execute_check $i
-	done
+    show_group_title $1
+    # run the checks in the group
+    IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$1]}
+
+    # Exclude any checks specified
+    if [[ -n ${2} ]]; then
+        EXCLUDED_CHECKS=()
+        NEW_CHECKS=()
+        IFS=',' read -ra EXCLUDED_CHECKS <<< "${2},"
+        for exc in ${EXCLUDED_CHECKS[@]} ; do
+            for i in ${CHECKS[@]} ; do
+                [[ ${i} != ${exc} ]] && NEW_CHECKS+=(${i})
+            done
+        done
+        CHECKS=("${NEW_CHECKS[@]}")
+        unset NEW_CHECKS
+        unset EXCLUDED_CHECKS
+    fi
+    for i in ${CHECKS[@]}; do
+        execute_check ${i}
+    done
 }
 
 # Function to execute group by name
@@ -257,14 +273,17 @@ execute_group_by_id() {
   fi
 	for i in "${!GROUP_ID[@]}"; do
 		if [ "${GROUP_ID[$i]}" == "$1" ]; then
-			execute_group $i
+			execute_group ${i} $2
 		fi
 	done
 }
 
-# Function to execute all checks in all groups
+# Function to execute all checks in all groups except extras if -e is invoked 
 execute_all() {
 	for i in "${!GROUP_TITLE[@]}"; do
+    if [[ $EXTRAS ]]; then
+      GROUP_RUN_BY_DEFAULT[7]='N'
+    fi
     if [ "${GROUP_RUN_BY_DEFAULT[$i]}" == "Y" ]; then
 		  execute_group $i
     fi
@@ -350,14 +369,31 @@ fi
 # Gather account data / test aws cli connectivity
 getWhoami
 
+# Execute group of checks if called with -g
+if [[ $GROUP_ID_READ ]];then
+  if [[ " ${GROUP_ID[@]} " =~ " ${GROUP_ID_READ} " ]]; then
+    if [[ $MODE == "csv" ]]; then
+      BANNER=0
+    fi
+    execute_group_by_id ${GROUP_ID_READ} ${EXCLUDE_CHECK_ID}
+    cleanTemp
+    scoring
+    exit $EXITCODE
+  else
+    textFail "Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
+    show_all_group_titles
+    exit $EXITCODE
+  fi
+fi
+
 # Get a list of total checks excluding a list provided by the user and overwrite CHECK_ID with the result
 # if the list provided by the user contains an invalid check, this will be discarded.
 # if the list provided by the user contains  just one argument and is invalid, then it will be discarded and all tests will be executed
-if [[ $EXCLUDE_CHECK_ID ]];then
-  get_all_checks_without_exclusion $EXCLUDE_CHECK_ID
+if [[ ${EXCLUDE_CHECK_ID} ]];then
+  get_all_checks_without_exclusion ${EXCLUDE_CHECK_ID}
   function join { local IFS="$1"; shift; echo "$*"; }
   CHECKS_EXCLUDED=$(join , "${CHECKS_EXCLUDED[@]}")
-  CHECK_ID=$CHECKS_EXCLUDED
+  CHECK_ID=${CHECKS_EXCLUDED}
 fi
 
 # Execute single check if called with -c
@@ -370,22 +406,6 @@ if [[ $CHECK_ID ]];then
   exit $EXITCODE
 fi
 
-# Execute group of checks if called with -g
-if [[ $GROUP_ID_READ ]];then
-  if [[ " ${GROUP_ID[@]} " =~ " ${GROUP_ID_READ} " ]]; then
-    if [[ $MODE == "csv" ]]; then
-      BANNER=0
-    fi
-    execute_group_by_id $GROUP_ID_READ
-    cleanTemp
-    scoring
-    exit $EXITCODE
-  else
-    textFail "Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
-    show_all_group_titles
-    exit $EXITCODE
-  fi
-fi
 
 execute_all
 scoring
