@@ -295,8 +295,9 @@ Resources:
                 - find /tmp/ -name prowler\* | xargs -I % cp % ${OUTDIAG} || true
           artifacts:
             files:
-              - out/**/*
+              - '**/*'
             discard-paths: no
+            base-directory: out
 
 
 
