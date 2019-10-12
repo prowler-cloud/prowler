@@ -95,6 +95,7 @@ else
   echo "Consider installing GNU Parallel to avoid punishing your system"
   PARALLEL_START=''
   PARALLEL_START_SUFFIX=' &'
+  # shellcheck disable=SC2089
   PARALLEL_END="echo 'WAITING BLINDLY FOR PROCESSES TO COMPLETE'; wait ; sleep 30 ; wait"
 fi
 
@@ -136,6 +137,7 @@ for org in $ORG_MASTERS ; do
 
   # Build the list of all accounts in the organizations
   aws --output json --profile "audit_${org}" organizations list-accounts > "${OUTLOGS}/${STAMP}-${org_id}-account-list.json"
+  # shellcheck disable=SC2002
   ORG_ACCOUNTS=$( cat "${OUTLOGS}/${STAMP}-${org_id}-account-list.json" | jq -r '.Accounts[].Id' | tr "\n" " ")
   ALL_ACCOUNTS="${ALL_ACCOUNTS} ${ORG_ACCOUNTS}"
 
@@ -184,10 +186,12 @@ for member in $(grep -E '^\[' "${AWS_TARGETS_CREDENTIALS_FILE}" | tr -d '][') ; 
   ORG_ID=$(echo "$member" | cut -d'_' -f1)
   ACCOUNT_NUM=$(echo "$member" | cut -d'_' -f2)
 
+  # shellcheck disable=SC2086
   ${PARALLEL_START} "${PROWLER} -p ${member} -n -M csv -g ${CHECKGROUP} 2> ${OUTLOGS}/${STAMP}-${ORG_ID}-${ACCOUNT_NUM}-prowler-${CHECKGROUP}.log  > ${OUTDATA}/${STAMP}-${ORG_ID}-${ACCOUNT_NUM}-prowler-${CHECKGROUP}.csv ; echo \"${ORG_ID}-${ACCOUNT_NUM}-prowler-${CHECKGROUP} finished\" " ${PARALLEL_START_SUFFIX}
 done
 
 echo -n "waiting for parallel threads to complete - " ; date
+# shellcheck disable=SC2090
 ${PARALLEL_END}
 
 echo "Completed ${CHECKGROUP} audit with stamp ${STAMP}"
