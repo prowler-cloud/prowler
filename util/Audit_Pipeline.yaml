@@ -226,8 +226,8 @@ Resources:
         PrivilegedMode: False
         Image: "aws/codebuild/standard:2.0-1.12.0"
         ImagePullCredentialsType: "CODEBUILD"
-      Artifacts:
-        Name: "ProwlerResults"
+      Artifacts: # s3://stack-prowlerresults-randomness/prowler/results/...
+        Name: "results"
         Type: "S3"
         Location: !Ref ProwlerResults
         Path: "prowler"
