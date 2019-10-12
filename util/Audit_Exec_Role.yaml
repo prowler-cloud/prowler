@@ -26,14 +26,19 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          -
-            Effect: "Allow"
+          - Effect: "Allow"
             Principal:
               AWS: # TODO: review permissions to see if this can be narrowed down - code build only perhaps
                 - !Sub "arn:aws:iam::${AuditorAccountId}:root"
-                - !Sub "arn:aws:iam::${AuditorAccountId}:role${AuditRolePathName}"
             Action:
               - "sts:AssumeRole"
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+            # TODO: restrict to only AuditorAccount only
       Policies:
         - PolicyName: "ProwlerPolicyAdditions"
           PolicyDocument:
