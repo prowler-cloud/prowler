@@ -54,6 +54,8 @@ Parameters:
     Default: 30
     Type: Number
     Description: Timeout for running prowler across the fleet
+    MinValue: 5
+    MaxValue: 480
   pAuditRolePathName:
     Default: '/audit/prowler/XA_AuditRole_Prowler'
     Type: String
@@ -120,7 +122,7 @@ Parameters:
 Resources:
 
   # S3 Bucket for Results, Config
-  ProwlerResultsBucket:
+  ProwlerResults:
     Type: "AWS::S3::Bucket"
     Properties:
       # BucketName: !Sub "audit-results-${AWS::AccountId}"
@@ -178,7 +180,7 @@ Resources:
                   - s3:GetObject
                   - s3:GetObjectVersion
                 Resource:
-                  - !Sub "${ProwlerResultsBucket.Arn}/*"
+                  - !Sub "${ProwlerResults.Arn}/*"
               - Effect: Allow
                 Action:
                   - s3:ListBucket
@@ -186,7 +188,7 @@ Resources:
                   - s3:GetBucketLocation
                   - s3:GetBucketAcl
                 Resource:
-                  - !Sub "${ProwlerResultsBucket.Arn}"
+                  - !Sub "${ProwlerResults.Arn}"
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
@@ -194,7 +196,7 @@ Resources:
                   - logs:PutLogEvents
                 Resource:
                   - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*"
-                  - !Sub "${ProwlerResultsBucket.Arn}"
+                  - !Sub "${ProwlerResults.Arn}"
               - Effect: Allow
                 Action:
                   - ssm:GetParameters
@@ -227,7 +229,7 @@ Resources:
       Artifacts:
         Name: "ProwlerResults"
         Type: "S3"
-        Location: !Ref ProwlerResultsBucket
+        Location: !Ref ProwlerResults
         Path: "prowler"
         NamespaceType: NONE
         Packaging: NONE
@@ -240,7 +242,7 @@ Resources:
           StreamName: "codebuild_runs"
         S3Logs:
           Status: DISABLED
-          # Location: !Sub "${ProwlerResultsBucket.Arn}/codebuild_run_logs"
+          # Location: !Sub "${ProwlerResults.Arn}/codebuild_run_logs"
           EncryptionDisabled: False
       BadgeEnabled: False
       Tags:
@@ -409,4 +411,4 @@ Resources:
 Outputs:
   ResultsBucket:
     Description: S3 Bucket with Prowler Results, Logs, Configs
-    Value: !Ref ProwlerResultsBucket
+    Value: !Ref ProwlerResults
