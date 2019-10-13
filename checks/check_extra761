@@ -19,7 +19,7 @@ CHECK_ALTERNATE_check761="extra761"
 extra761(){
   textInfo "Looking for EBS Default Encryption activation in all regions...  "
   for regx in $REGIONS; do
-    EBS_DEFAULT_ENCRYPTION=$($AWSCLI ec2 get-ebs-encryption-by-default --query 'EbsEncryptionByDefault')
+    EBS_DEFAULT_ENCRYPTION=$($AWSCLI ec2 get-ebs-encryption-by-default $PROFILE_OPT --region $regx --query 'EbsEncryptionByDefault')
     if [[ $EBS_DEFAULT_ENCRYPTION == "true" ]];then
       textPass "$regx: EBS Default Encryption is activated" "$regx"
     else
