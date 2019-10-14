@@ -287,8 +287,8 @@ Resources:
                 # - /bin/bash prowler/prowler -g cislevel1 -M csv -n -k > ${OUTBASE}/${STAMP}.${PROWLER_ACCOUNT_ID}.prowler.cislevel1.csv || /bin/true
                 # - /bin/bash prowler/prowler -g forensics-ready -M csv -n -k > ${OUTBASE}/${STAMP}.${PROWLER_ACCOUNT_ID}.prowler.forensics-ready.csv || /bin/true
                 #### Run Prowler targeting all accounts in the configured organizations
-                - test -f prowler/util/config
-                - /bin/bash prowler/util/megaprowler.sh out
+                - test -f prowler/util/multi-account/config
+                - /bin/bash prowler/util/multi-account/megaprowler.sh out
               finally:
                 - ps axuwww | grep -E 'parallel|sem|prowler'
             post_build:
