@@ -197,6 +197,6 @@ ${PARALLEL_END}
 echo "Completed ${CHECKGROUP} audit with stamp ${STAMP}"
 
 # mkdir -p ${OUTBASE}/logs/debug/${DAYPATH}
-# cp $AWS_MASTERS_CREDENTIALS_FILE ${OUTLOGS}/${STAMP}-master_creds.txt
-# cp $AWS_TARGETS_CREDENTIALS_FILE ${OUTLOGS}/${STAMP}-target_creds.txt
+# cp "$AWS_MASTERS_CREDENTIALS_FILE" "${OUTLOGS}/${STAMP}-master_creds.txt"
+# cp "$AWS_TARGETS_CREDENTIALS_FILE" "${OUTLOGS}/${STAMP}-target_creds.txt"
 rm "$AWS_MASTERS_CREDENTIALS_FILE" "$AWS_TARGETS_CREDENTIALS_FILE"
