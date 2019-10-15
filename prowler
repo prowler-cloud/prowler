@@ -252,12 +252,10 @@ execute_group() {
         NEW_CHECKS=()
         IFS=',' read -ra EXCLUDED_CHECKS <<< "${2},"
         for exc in ${EXCLUDED_CHECKS[@]} ; do
-            for i in ${CHECKS[@]} ; do
-                [[ ${i} != ${exc} ]] && NEW_CHECKS+=(${i})
+            for i in ${!CHECKS[@]} ; do
+                [[ ${CHECKS[i]} = ${exc} ]] && unset CHECKS[i]
             done
         done
-        CHECKS=("${NEW_CHECKS[@]}")
-        unset NEW_CHECKS
         unset EXCLUDED_CHECKS
     fi
     for i in ${CHECKS[@]}; do
