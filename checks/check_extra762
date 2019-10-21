@@ -25,7 +25,7 @@ extra762(){
   textInfo "Looking for deprecated runtimes used by Lambda functions across all regions... "
   textInfo "This check may take a while depending on the number of functions. "
   for regx in $REGIONS; do
-    LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions "$PROFILE_OPT" --region "$regx" --output text --query 'Functions[*].{R:Runtime,N:FunctionName}' | tr "\t" "%")
+    LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --output text --query 'Functions[*].{R:Runtime,N:FunctionName}' | tr "\t" "%")
     if [[ $LIST_OF_FUNCTIONS ]]; then
       for lambdafunction in $LIST_OF_FUNCTIONS;do
         fname=$(echo "$lambdafunction" | cut -d'%' -f1)
