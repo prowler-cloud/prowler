@@ -32,7 +32,7 @@ extra762(){
         runtime=$(echo "$lambdafunction" | cut -d'%' -f2)
         if echo "$lambdafunction" | grep -Eq $OBSOLETE  ; then
           # obselete runtime found
-          textFail "Obselete ${runtime} runtime found in Lambda funtion ${fname}" "$regx"
+          textFail "Obsolete ${runtime} runtime found in Lambda funtion ${fname}" "$regx"
         else
           textPass "Supported ${runtime} runtime found in Lambda function ${fname}" "$regx"
         fi
