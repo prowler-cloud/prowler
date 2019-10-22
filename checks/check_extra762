@@ -22,8 +22,6 @@ extra762(){
   # https://docs.aws.amazon.com/lambda/latest/dg/runtime-support-policy.html
   OBSOLETE='%(nodejs4.3|nodejs4.3-edge|nodejs6.10|nodejs8.10|dotnetcore1.0|dotnetcore2.0)'
 
-  textInfo "Looking for deprecated runtimes used by Lambda functions across all regions... "
-  textInfo "This check may take a while depending on the number of functions. "
   for regx in $REGIONS; do
     LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --output text --query 'Functions[*].{R:Runtime,N:FunctionName}' | tr "\t" "%")
     if [[ $LIST_OF_FUNCTIONS ]]; then
@@ -31,10 +29,9 @@ extra762(){
         fname=$(echo "$lambdafunction" | cut -d'%' -f1)
         runtime=$(echo "$lambdafunction" | cut -d'%' -f2)
         if echo "$lambdafunction" | grep -Eq $OBSOLETE  ; then
-          # obselete runtime found
-          textFail "$regx: Obsolete ${runtime} runtime found in Lambda funtion ${fname}" "$regx"
+          textFail "$regx: Obsolete runtime: ${runtime} used by: ${fname}" "$regx"
         else
-          textPass "$regx: Supported ${runtime} runtime found in Lambda function ${fname}" "$regx"
+          textPass "$regx: Supported runtime: ${runtime} used by: ${fname}" "$regx"
         fi
       done
     else
