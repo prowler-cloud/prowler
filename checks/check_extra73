@@ -95,7 +95,7 @@ extra73(){
             fi
           fi
           if [[ $BUCKET_PUBLIC_BLOCK_RESTRICPUBLICBUCKET != "True" ]] && [[ $BUCKET_POLICY_STATUS == "True" ]]; then
-            # Here comes the magic: Look Statement Allow, Principal * and No Condition
+            # Here comes the magic: Find Statement Allow, Principal * and No Condition
             BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION=$($AWSCLI s3api get-bucket-policy $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket \
               | jq '.Policy | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*") | select(has("Condition") | not)')
             if [[ $BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION ]]; then
