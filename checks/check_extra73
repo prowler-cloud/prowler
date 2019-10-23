@@ -88,10 +88,10 @@ extra73(){
         if [[ $CHECK_BUCKET_ALLUSERS_ACL || $CHECK_BUCKET_AUTHUSERS_ACL || $CHECK_BUCKET_ALLUSERS_POLICY == "True" ]]; then
           if [[ $CHECK_BUCKET_ALLUSERS_ACL || $CHECK_BUCKET_AUTHUSERS_ACL ]] && [[ $BUCKET_PUBLIC_BLOCK_IGNOREPUBLICACL != "True" ]];then
             if [[ $CHECK_BUCKET_ALLUSERS_ACL ]];then
-              S3_FINDING_ALLUSERS_ACL="$bucket bucket ACL is open to the Internet (Everyone) with permissions: $CHECK_BUCKET_ALLUSERS_ACL_SINGLE_LINE"
+              S3_FINDING_ALLUSERS_ACL="bucket ACL is open to the Internet (Everyone) with permissions: $CHECK_BUCKET_ALLUSERS_ACL_SINGLE_LINE"
             fi
             if [[ $CHECK_BUCKET_AUTHUSERS_ACL ]];then
-              S3_FINDING_AUTHUSERS_ACL="$bucket bucket ACL is open to Authenticated users (Any AWS user) with permissions: $CHECK_BUCKET_AUTHUSERS_ACL_SINGLE_LINE"
+              S3_FINDING_AUTHUSERS_ACL="bucket ACL is open to Authenticated users (Any AWS user) with permissions: $CHECK_BUCKET_AUTHUSERS_ACL_SINGLE_LINE"
             fi
           fi
           if [[ $BUCKET_PUBLIC_BLOCK_RESTRICPUBLICBUCKET != "True" ]] && [[ $BUCKET_POLICY_STATUS == "True" ]]; then
@@ -102,7 +102,7 @@ extra73(){
               # Let's do more magic and identify who can do what
               BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS=$($AWSCLI s3api get-bucket-policy $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket \
                 | jq '.Policy | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*") | select(has("Condition") | not)' | jq '"[Principal: " + (.Principal|tostring) + " Action: " + .Action + "]"' )
-              S3_FINDING_POLICY="$bucket bucket policy allow perform actions: $BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS"
+              S3_FINDING_POLICY="bucket policy allow perform actions: $BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS"
             else
               textPass "$BUCKET_LOCATION: $bucket bucket policy with conditions" "$BUCKET_LOCATION"
             fi
@@ -113,7 +113,7 @@ extra73(){
       fi
     fi
     if [[ $S3_FINDING_ALLUSERS_ACL != "Ok" ]] || [[ $S3_FINDING_AUTHUSERS_ACL != "Ok" ]] || [[ $S3_FINDING_POLICY != "Ok" ]] ; then
-        textFail "$BUCKET_LOCATION: ALLUSERS_ACL: $S3_FINDING_ALLUSERS_ACL | AUTHUSERS_ACL: $S3_FINDING_AUTHUSERS_ACL | BUCKET_POLICY: $S3_FINDING_POLICY" "$BUCKET_LOCATION"
+        textFail "$BUCKET_LOCATION: (bucket: $bucket) ALLUSERS_ACL: $S3_FINDING_ALLUSERS_ACL | AUTHUSERS_ACL: $S3_FINDING_AUTHUSERS_ACL | BUCKET_POLICY: $S3_FINDING_POLICY" "$BUCKET_LOCATION"
     fi
   done
 }
