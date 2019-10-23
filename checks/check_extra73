@@ -48,7 +48,7 @@ extra73(){
 
   for bucket in $ALL_BUCKETS_LIST; do
 
-    # 3 DIFFERENT POSSIBLE, Let's show only 1 finding all together
+    # 3 Different problems, let's show only 1 finding all together
     S3_FINDING_ALLUSERS_ACL="Ok"
     S3_FINDING_AUTHUSERS_ACL="Ok"
     S3_FINDING_POLICY="Ok"
