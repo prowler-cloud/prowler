@@ -104,7 +104,7 @@ extra73(){
                 | jq '.Policy | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*") | select(has("Condition") | not)' | jq '"[Principal: " + (.Principal|tostring) + " Action: " + .Action + "]"' )
               S3_FINDING_POLICY="$bucket bucket policy allow perform actions: $BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS"
             else
-              textPass "$BUCKET_LOCATION: $bucket bucket policy with conditions: $CHECK_BUCKET_ALLUSERS_POLICY_CONDITIONS" "$BUCKET_LOCATION"
+              textPass "$BUCKET_LOCATION: $bucket bucket policy with conditions" "$BUCKET_LOCATION"
             fi
           fi
         else
