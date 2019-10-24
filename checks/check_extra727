@@ -31,7 +31,7 @@ extra727(){
               | jq '.Policy | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*") | select(has("Condition") | not)')
             if [[ $SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION ]]; then
               SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS=$($AWSCLI sqs get-queue-attributes --queue-url $queue $PROFILE_OPT --region $regx --attribute-names All --query Attributes \
-                | jq '.Policy | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*") | select(has("Condition") | not)' | jq '"[Principal: " + (.Principal|tostring) + " Action: " + .Action + "]"' )
+                | jq '.Policy | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*") | select(has("Condition") | not)' | jq '"[Principal: " + (.Principal|tostring) + " Action: " + (.Action|tostring) + "]"' )
               textFail "$regx: SQS $queue queue policy with public access: $SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS" "$regx"
             else
               textInfo "$regx: SQS $queue queue policy with public access but has a Condition" "$regx"
