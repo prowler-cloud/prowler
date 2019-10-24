@@ -69,11 +69,12 @@ extra73(){
     else
       # PUBLIC BLOCK
       # https://docs.aws.amazon.com/cli/latest/reference/s3api/get-public-access-block.html
-      BUCKET_PUBLIC_BLOCK_IGNOREPUBLICACL=$($AWSCLI s3api get-public-access-block --bucket $bucket $PROFILE_OPT --region $BUCKET_LOCATION --output text --query PublicAccessBlockConfiguration.IgnorePublicAcls 2>/dev/null)
-      BUCKET_PUBLIC_BLOCK_BLOCKPUBLICPOLICY=$($AWSCLI s3api get-public-access-block --bucket $bucket $PROFILE_OPT --region $BUCKET_LOCATION --output text --query PublicAccessBlockConfiguration.BlockPublicPolicy 2>/dev/null)
-      BUCKET_PUBLIC_BLOCK_BLOCKPUBLICACLS=$($AWSCLI s3api get-public-access-block --bucket $bucket $PROFILE_OPT --region $BUCKET_LOCATION --output text --query PublicAccessBlockConfiguration.BlockPublicAcls 2>/dev/null)
-      BUCKET_PUBLIC_BLOCK_RESTRICPUBLICBUCKET=$($AWSCLI s3api get-public-access-block --bucket $bucket $PROFILE_OPT --region $BUCKET_LOCATION --output text --query PublicAccessBlockConfiguration.RestrictPublicBuckets 2>/dev/null)
-      if [[ $BUCKET_PUBLIC_BLOCK_IGNOREPUBLICACL == "True" ]] && [[ $BUCKET_PUBLIC_BLOCK_BLOCKPUBLICPOLICY == "True" ]] &&  [[ $BUCKET_PUBLIC_BLOCK_BLOCKPUBLICACLS == "True" ]] &&  [[ $BUCKET_PUBLIC_BLOCK_RESTRICPUBLICBUCKET == "True" ]]; then
+      BUCKET_PUBLIC_BLOCK=$($AWSCLI s3api get-public-access-block --bucket $bucket $PROFILE_OPT --region $BUCKET_LOCATION 2>/dev/null)
+      BUCKET_PUBLIC_BLOCK_IGNOREPUBLICACL=$(echo $BUCKET_PUBLIC_BLOCK | jq .PublicAccessBlockConfiguration.BlockPublicAcls 2>/dev/null)
+      BUCKET_PUBLIC_BLOCK_BLOCKPUBLICPOLICY=$(echo $BUCKET_PUBLIC_BLOCK | jq  .PublicAccessBlockConfiguration.BlockPublicPolicy 2>/dev/null)
+      BUCKET_PUBLIC_BLOCK_BLOCKPUBLICACLS=$(echo $BUCKET_PUBLIC_BLOCK | jq  .PublicAccessBlockConfiguration.BlockPublicAcls 2>/dev/null)
+      BUCKET_PUBLIC_BLOCK_RESTRICPUBLICBUCKET=$(echo $BUCKET_PUBLIC_BLOCK | jq  .PublicAccessBlockConfiguration.RestrictPublicBuckets 2>/dev/null)
+      if [[ $BUCKET_PUBLIC_BLOCK_IGNOREPUBLICACL == "true" ]] && [[ $BUCKET_PUBLIC_BLOCK_BLOCKPUBLICPOLICY == "true" ]] &&  [[ $BUCKET_PUBLIC_BLOCK_BLOCKPUBLICACLS == "true" ]] &&  [[ $BUCKET_PUBLIC_BLOCK_RESTRICPUBLICBUCKET == "true" ]]; then
         textPass "$BUCKET_LOCATION: $bucket bucket is public blocked (public-access-block)" "$BUCKET_LOCATION"
       else
         ## ACL
@@ -86,7 +87,7 @@ extra73(){
         ## POLICY
         BUCKET_POLICY_STATUS=$($AWSCLI s3api get-bucket-policy-status $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --query PolicyStatus.IsPublic --output text 2>/dev/null)
         if [[ $CHECK_BUCKET_ALLUSERS_ACL || $CHECK_BUCKET_AUTHUSERS_ACL || $CHECK_BUCKET_ALLUSERS_POLICY == "True" ]]; then
-          if [[ $CHECK_BUCKET_ALLUSERS_ACL || $CHECK_BUCKET_AUTHUSERS_ACL ]] && [[ $BUCKET_PUBLIC_BLOCK_IGNOREPUBLICACL != "True" ]];then
+          if [[ $CHECK_BUCKET_ALLUSERS_ACL || $CHECK_BUCKET_AUTHUSERS_ACL ]] && [[ $BUCKET_PUBLIC_BLOCK_IGNOREPUBLICACL != "true" ]];then
             if [[ $CHECK_BUCKET_ALLUSERS_ACL ]];then
               S3_FINDING_ALLUSERS_ACL="bucket ACL is open to the Internet (Everyone) with permissions: $CHECK_BUCKET_ALLUSERS_ACL_SINGLE_LINE"
             fi
@@ -94,14 +95,14 @@ extra73(){
               S3_FINDING_AUTHUSERS_ACL="bucket ACL is open to Authenticated users (Any AWS user) with permissions: $CHECK_BUCKET_AUTHUSERS_ACL_SINGLE_LINE"
             fi
           fi
-          if [[ $BUCKET_PUBLIC_BLOCK_RESTRICPUBLICBUCKET != "True" ]] && [[ $BUCKET_POLICY_STATUS == "True" ]]; then
+          if [[ $BUCKET_PUBLIC_BLOCK_RESTRICPUBLICBUCKET != "true" ]] && [[ $BUCKET_POLICY_STATUS == "True" ]]; then
             # Here comes the magic: Find Statement Allow, Principal * and No Condition
             BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION=$($AWSCLI s3api get-bucket-policy $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket \
               | jq '.Policy | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*") | select(has("Condition") | not)')
             if [[ $BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION ]]; then
               # Let's do more magic and identify who can do what
-              BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS=$($AWSCLI s3api get-bucket-policy $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket \
-                | jq '.Policy | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*") | select(has("Condition") | not)' | jq '"[Principal: " + (.Principal|tostring) + " Action: " + (.Action|tostring) + "]"' )
+              BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS=$(echo $BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION \
+                | jq '"[Principal: " + (.Principal|tostring) + " Action: " + (.Action|tostring) + "]"' )
               S3_FINDING_POLICY="bucket policy allow perform actions: $BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS"
             else
               textPass "$BUCKET_LOCATION: $bucket bucket policy with conditions" "$BUCKET_LOCATION"
