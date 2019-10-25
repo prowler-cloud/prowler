@@ -22,13 +22,13 @@ extra727(){
     LIST_SQS=$($AWSCLI sqs list-queues $PROFILE_OPT --region $regx --query QueueUrls --output text |grep -v ^None)
     if [[ $LIST_SQS ]]; then
       for queue in $LIST_SQS; do
-        SQS_POLICY=$($AWSCLI sqs get-queue-attributes --queue-url $queue $PROFILE_OPT --region $regx --attribute-names All --query Attributes.Policy --output text)
-        if [[ "$SQS_POLICY" != "None" ]]; then
-          SQS_POLICY_ALLOW_ALL=$($AWSCLI sqs get-queue-attributes --queue-url $queue $PROFILE_OPT --region $regx --attribute-names All --query Attributes \
-            | jq '.Policy | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*")')
+        SQS_POLICY=$($AWSCLI sqs get-queue-attributes --queue-url $queue $PROFILE_OPT --region $regx --attribute-names All --query Attributes.Policy)
+        if [[ "$SQS_POLICY" != "null" ]]; then
+          SQS_POLICY_ALLOW_ALL=$(echo $SQS_POLICY \
+            | jq '. | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*")')
           if [[ $SQS_POLICY_ALLOW_ALL ]]; then
-            SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION=$($AWSCLI sqs get-queue-attributes --queue-url $queue $PROFILE_OPT --region $regx --attribute-names All --query Attributes \
-              | jq '.Policy | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*") | select(has("Condition") | not)')
+            SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION=$(echo $SQS_POLICY \
+              | jq '. | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*") | select(has("Condition") | not)')
             if [[ $SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION ]]; then
               SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS=$(echo $SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION \
                 | jq '"[Principal: " + (.Principal|tostring) + " Action: " + (.Action|tostring) + "]"' )
