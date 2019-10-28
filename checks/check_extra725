@@ -41,11 +41,19 @@ extra725(){
   while IFS='' read -r LINE || [[ -n "${LINE}" ]]; do
     TRAIL_REGION=$(echo "${LINE}" | awk '{ print $2 }')
     TRAIL_NAME=$(echo "${LINE}" | awk '{ print $1 }')
-    BUCKETS_OBJECT_LOGGING_ENABLED=$($AWSCLI cloudtrail get-event-selectors --trail-name "${TRAIL_NAME}" $PROFILE_OPT --region $TRAIL_REGION --query "EventSelectors[*].DataResources[?Type == \`AWS::S3::Object\`].Values" --output text |xargs -n1 |cut -d: -f 6|sed 's/\///g')
+    CLOUDTRAIL_EVENT_SELECTOR=$($AWSCLI cloudtrail get-event-selectors --trail-name "${TRAIL_NAME}" $PROFILE_OPT --region $TRAIL_REGION --query "EventSelectors[*].DataResources[?Type == \`AWS::S3::Object\`].Values" --output text)
+
+    # check if object-level logging is enabled globally
+    if [[ $CLOUDTRAIL_EVENT_SELECTOR = "arn:aws:s3:::" ]]; then
+      textPass "$regx: S3 Object-level logging enabled globally in trail $TRAIL_NAME" "$regx"
+      exit
+    fi
+
+    BUCKETS_OBJECT_LOGGING_ENABLED=$(echo "${CLOUDTRAIL_EVENT_SELECTOR}" |xargs -n1 |cut -d: -f 6|sed 's/\///g')
     echo $BUCKETS_OBJECT_LOGGING_ENABLED |tr " " "\n"|sort >> $TEMP_BUCKETS_LOGGING_LIST_FILE
     if [[ $BUCKETS_OBJECT_LOGGING_ENABLED ]]; then
       for bucket in $BUCKETS_OBJECT_LOGGING_ENABLED; do
-        textPass "$regx: S3 bucket $bucket has Object-level logging enabled in trail $trail" "$regx"
+        textPass "$regx: S3 bucket $bucket has Object-level logging enabled in trail $TRAIL_NAME" "$regx"
       done
     fi
   done < $TEMP_TRAILS_LIST_FILE
