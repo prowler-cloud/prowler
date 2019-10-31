@@ -22,23 +22,26 @@ extra731(){
     LIST_SNS=$($AWSCLI sns list-topics $PROFILE_OPT --region $regx --query Topics --output text |grep -v ^None)
     if [[ $LIST_SNS ]]; then
       for topic in $LIST_SNS; do
-        # check if the policy has Principal as *
-        SNS_TO_CHECK=$($AWSCLI sns get-topic-attributes --topic-arn $topic $PROFILE_OPT --region $regx --query Attributes.Policy --output text | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | awk '/Principal/ || /Condition/ && !skip { print } { skip = /Deny/}')
-        PUBLIC_SNS_WCONDITION=$(echo $SNS_TO_CHECK|grep Condition)
         SHORT_TOPIC=$(echo $topic| cut -d: -f6)
-        if [[ $PUBLIC_SNS_WCONDITION ]]; then
-          textPass "$regx: SNS topic $SHORT_TOPIC has a Condition" "$regx"
-        else
-          PUBLIC_SNS=$(echo $SNS_TO_CHECK|grep \"Principal|grep \*)
-          if [[ $PUBLIC_SNS ]]; then
-            textFail "$regx: SNS topic $SHORT_TOPIC seems to be public (Principal: \"*\")" "$regx"
+        SNS_POLICY=$($AWSCLI sns get-topic-attributes --topic-arn $topic $PROFILE_OPT --region $regx --query Attributes.Policy 2>/dev/null)
+        SNS_POLICY_ALLOW_ALL=$(echo $SNS_POLICY \
+          | jq '. | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*")')
+        if [[ $SNS_POLICY_ALLOW_ALL ]]; then
+          SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION=$(echo $SNS_POLICY \
+            | jq '. | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*") | select(has("Condition") | not)')
+          if [[ $SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION ]]; then
+            SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS=$(echo $SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION \
+              | jq '"[Principal: " + (.Principal|tostring) + " Action: " + (.Action|tostring) + "]"' )
+            textFail "$regx: SNS topic policy with public access: $SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS" "$SHORT_TOPIC" "$regx"
           else
-            textPass "$regx: SNS topic $SHORT_TOPIC seems correct" "$regx"
+            textPass "$regx: SNS topic policy with public access but has a Condition" "$SHORT_TOPIC" "$regx"
           fi
+        else
+          textPass "$regx: SNS topic without public access" "$SHORT_TOPIC" "$regx"
         fi
       done
     else
-      textInfo "$regx: No SNS topics found" "$regx"
+      textInfo "$regx: No SNS topic found" "$SHORT_TOPIC" "$regx"
     fi
   done
 }
