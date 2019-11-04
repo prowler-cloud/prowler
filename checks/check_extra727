@@ -22,18 +22,25 @@ extra727(){
     LIST_SQS=$($AWSCLI sqs list-queues $PROFILE_OPT --region $regx --query QueueUrls --output text |grep -v ^None)
     if [[ $LIST_SQS ]]; then
       for queue in $LIST_SQS; do
-        # check if the policy has Principal as *
-        SQS_TO_CHECK=$($AWSCLI sqs get-queue-attributes --queue-url $queue $PROFILE_OPT --region $regx --attribute-names All --query Attributes.Policy --output text | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | awk '/Principal/ || /Condition/ && !skip { print } { skip = /Deny/} ')
-        PUBLIC_SQS_WCONDITION=$(echo $SQS_TO_CHECK|grep Condition)
-        if [[ $PUBLIC_SQS_WCONDITION ]]; then
-          textPass "$regx: SQS queue $queue has a Condition" "$regx"
-        else
-          PUBLIC_SQS=$(echo $SQS_TO_CHECK|grep \"Principal|grep \*)
-          if [[ $PUBLIC_SQS ]]; then
-            textFail "$regx: SQS queue $queue seems to be public (Principal: \"*\")" "$regx"
+        SQS_POLICY=$($AWSCLI sqs get-queue-attributes --queue-url $queue $PROFILE_OPT --region $regx --attribute-names All --query Attributes.Policy)
+        if [[ "$SQS_POLICY" != "null" ]]; then
+          SQS_POLICY_ALLOW_ALL=$(echo $SQS_POLICY \
+            | jq '. | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*")')
+          if [[ $SQS_POLICY_ALLOW_ALL ]]; then
+            SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION=$(echo $SQS_POLICY \
+              | jq '. | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*") | select(has("Condition") | not)')
+            if [[ $SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION ]]; then
+              SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS=$(echo $SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION \
+                | jq '"[Principal: " + (.Principal|tostring) + " Action: " + (.Action|tostring) + "]"' )
+              textFail "$regx: SQS $queue queue policy with public access: $SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS" "$regx"
+            else
+              textInfo "$regx: SQS $queue queue policy with public access but has a Condition" "$regx"
+            fi
           else
-            textPass "$regx: SQS queue $queue seems correct" "$regx"
+            textPass "$regx: SQS $queue queue without public access" "$regx"
           fi
+        else
+          textPass "$regx: SQS $queue queue without policy" "$regx"
         fi
       done
     else

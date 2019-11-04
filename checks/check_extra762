@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra762="7.62"
+CHECK_TITLE_extra762="[extra762] Find obsolete Lambda runtimes (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra762="NOT_SCORED"
+CHECK_TYPE_extra762="EXTRA"
+CHECK_ALTERNATE_check762="extra762"
+
+extra762(){
+
+  # regex to match OBSOLETE runtimes in string functionName%runtime
+  # https://docs.aws.amazon.com/lambda/latest/dg/runtime-support-policy.html
+  OBSOLETE='%(nodejs4.3|nodejs4.3-edge|nodejs6.10|nodejs8.10|dotnetcore1.0|dotnetcore2.0)'
+
+  for regx in $REGIONS; do
+    LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --output text --query 'Functions[*].{R:Runtime,N:FunctionName}' | tr "\t" "%")
+    if [[ $LIST_OF_FUNCTIONS ]]; then
+      for lambdafunction in $LIST_OF_FUNCTIONS;do
+        fname=$(echo "$lambdafunction" | cut -d'%' -f1)
+        runtime=$(echo "$lambdafunction" | cut -d'%' -f2)
+        if echo "$lambdafunction" | grep -Eq $OBSOLETE  ; then
+          textFail "$regx: Obsolete runtime: ${runtime} used by: ${fname}" "$regx"
+        else
+          textPass "$regx: Supported runtime: ${runtime} used by: ${fname}" "$regx"
+        fi
+      done
+    else
+      textInfo "$regx: No Lambda functions found" "$regx"
+    fi
+  done
+}

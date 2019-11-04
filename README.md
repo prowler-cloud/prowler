@@ -55,13 +55,13 @@ With Prowler you can:
 
 This script has been written in bash using AWS-CLI and it works in Linux and OSX.
 
-- Make sure your AWS-CLI is installed on your workstation, and other components needed, with Python pip already installed:
+- Make sure the latest version of AWS-CLI is installed on your workstation, and other components needed, with Python pip already installed:
 
     ```sh
     pip install awscli ansi2html detect-secrets
     ```
 
-    AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `ansi2html` and `detect-secrets` has to be installed using `pip`
+    AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `ansi2html` and `detect-secrets` has to be installed using `pip`. You will need to install `jq` to get more accuracy in some checks. 
 
 - Previous steps, from your workstation:
 
@@ -70,13 +70,19 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     cd prowler
     ```
 
-- Make sure you have properly configured your AWS-CLI with a valid Access Key and Region:
+- Make sure you have properly configured your AWS-CLI with a valid Access Key and Region or declare AWS variables properly:
 
     ```sh
     aws configure
     ```
+    or 
+    ```sh
+    export AWS_ACCESS_KEY_ID="ASXXXXXXX"
+    export AWS_SECRET_ACCESS_KEY="XXXXXXXXX"
+    export AWS_SESSION_TOKEN="XXXXXXXXX"
+    ```
 
-- Make sure your Secret and Access Keys are associated to a user with proper permissions to do all checks. To make sure add SecurityAuditor default policy to your user. Policy ARN is
+- Those credentials must be associated to a user or role with proper permissions to do all checks. To make sure add SecurityAuditor default policy to your user. Policy ARN is
 
     ```sh
     arn:aws:iam::aws:policy/SecurityAudit
@@ -94,6 +100,12 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
     Use `-l` to list all available checks and group of checks (sections)
 
+    If you want to avoid installing dependences run it using Docker:
+    
+    ```sh
+    docker run -ti --rm --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest
+    ```
+
 1. For custom AWS-CLI profile and region, use the following: (it will use your custom profile and run checks over all regions when needed):
 
     ```sh
@@ -105,6 +117,11 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ```sh
     ./prowler -c check310
     ```
+    With Docker:
+    ```sh
+    docker run -ti --rm --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest "-c check310"
+    ```
+    
     or multiple checks separated by comma:
     ```sh
     ./prowler -c check310,check722
