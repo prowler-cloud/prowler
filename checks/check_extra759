@@ -42,11 +42,12 @@ extra759(){
           fi
         else
           textInfo "$regx: Lambda function $stalambdafunction has not variables" "$regx"
+          rm -f $LAMBDA_FUNCTION_VARIABLES_FILE
         fi
       done
     else
       textInfo "$regx: No Lambda functions found" "$regx"
     fi
   done
-  rm -rf $SECRETS_TEMP_FOLDER
+#  rm -rf $SECRETS_TEMP_FOLDER
 }

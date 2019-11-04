@@ -56,11 +56,12 @@ extra741(){
           fi
         else 
           textPass "$regx: No secrets found in $instance User Data or it is empty" "$regx"
-        fi
+          rm -f $EC2_USERDATA_FILE
+      fi
       done
     else
       textInfo "$regx: No EC2 instances found" "$regx"
     fi
   done
-  rm -rf $SECRETS_TEMP_FOLDER
+#  rm -rf $SECRETS_TEMP_FOLDER
 }
