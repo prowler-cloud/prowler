@@ -24,7 +24,11 @@ CHECK_ALTERNATE_check703="extra73"
 # extra73(){
 #   ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' $PROFILE_OPT --region $REGION --output text)
 #   for bucket in $ALL_BUCKETS_LIST; do
-#     BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket $PROFILE_OPT --region $REGION --output text)
+#     BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket $PROFILE_OPT --region $REGION --output text 2>&1)
+#     if [[ $(echo "$BUCKET_LOCATION" | grep AccessDenied) ]]; then
+#       textFail "Access Denied Trying to Get Bucket Location for $bucket"
+#       continue
+#     fi
 #     if [[ "None" == $BUCKET_LOCATION ]]; then
 #       BUCKET_LOCATION="us-east-1"
 #     fi
@@ -54,7 +58,11 @@ extra73(){
     S3_FINDING_POLICY="Ok"
 
     # LOCATION
-    BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket $PROFILE_OPT --output text)
+    BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket $PROFILE_OPT --output text 2>&1)
+    if [[ $(echo "$BUCKET_LOCATION" | grep AccessDenied) ]]; then
+      textFail "Access Denied Trying to Get Bucket Location for $bucket"
+      continue
+    fi
     if [[ "None" == $BUCKET_LOCATION ]]; then
       BUCKET_LOCATION="us-east-1"
     fi
@@ -133,7 +141,11 @@ extra73(){
 # }
 # extra73Thread(){
 #   bucket=$1
-#   BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket --profile $PROFILE --region $REGION --output text)
+#   BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket --profile $PROFILE --region $REGION --output text 2>&1)
+#   if [[ $(echo "$BUCKET_LOCATION" | grep AccessDenied) ]]; then
+#     textFail "Access Denied Trying to Get Bucket Location for $bucket"
+#     return
+#   fi
 #   if [[ "None" == $BUCKET_LOCATION ]]; then
 #     BUCKET_LOCATION="us-east-1"
 #   fi

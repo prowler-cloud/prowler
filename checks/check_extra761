@@ -19,7 +19,15 @@ CHECK_ALTERNATE_check761="extra761"
 extra761(){
   textInfo "Looking for EBS Default Encryption activation in all regions...  "
   for regx in $REGIONS; do
-    EBS_DEFAULT_ENCRYPTION=$($AWSCLI ec2 get-ebs-encryption-by-default $PROFILE_OPT --region $regx --query 'EbsEncryptionByDefault')
+    EBS_DEFAULT_ENCRYPTION=$($AWSCLI ec2 get-ebs-encryption-by-default $PROFILE_OPT --region $regx --query 'EbsEncryptionByDefault' 2>&1)
+    if [[ $(echo "$EBS_DEFAULT_ENCRYPTION" | grep "argument operation: Invalid choice") ]]; then
+      textFail "Newer aws cli needed for get-ebs-encryption-by-default"
+      continue
+    fi
+    if [[ $(echo "$EBS_DEFAULT_ENCRYPTION" | grep UnauthorizedOperation) ]]; then
+      textFail "Prowler needs ec2:GetEbsEncryptionByDefault permission for this check"
+      continue
+    fi
     if [[ $EBS_DEFAULT_ENCRYPTION == "true" ]];then
       textPass "$regx: EBS Default Encryption is activated" "$regx"
     else

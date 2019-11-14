@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra764="7.64"
+CHECK_TITLE_extra764="[extra764] Check if S3 buckets have secure transport policy (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra764="NOT_SCORED"
+CHECK_TYPE_extra764="EXTRA"
+CHECK_ALTERNATE_check764="extra764"
+
+extra764(){
+  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text|xargs -n1)
+  if [[ $LIST_OF_BUCKETS ]]; then
+    for bucket in $LIST_OF_BUCKETS;do
+      TEMP_STP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
+
+      # get bucket policy
+      $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy > $TEMP_STP_POLICY_FILE 2>&1
+      if [[ $(grep AccessDenied $TEMP_STP_POLICY_FILE) ]]; then
+        textFail "Access Denied Trying to Get Bucket Policy for $bucket"
+        continue
+      fi
+      if [[ $(grep NoSuchBucketPolicy $TEMP_STP_POLICY_FILE) ]]; then
+        textFail "No bucket policy for $bucket"
+        continue
+      fi
+
+      # check if the S3 policy denies all actions by all principals when aws:SecureTransport:false
+      CHECK_BUCKET_STP_POLICY_PRESENT=$(cat $TEMP_STP_POLICY_FILE | jq --arg arn "arn:aws:s3:::${bucket}/*" '.Statement[]|select(.Effect=="Deny" and (.Principal|type == "object") and .Principal.AWS == "*" and .Action=="s3:*" and .Resource==$arn and .Condition.Bool."aws:SecureTransport" == "false")')
+      if [[ $CHECK_BUCKET_STP_POLICY_PRESENT ]]; then
+        textPass "Bucket $bucket has S3 bucket policy to deny requests over insecure transport"
+      else
+        textFail "Bucket $bucket allows requests over insecure transport"
+      fi
+
+      rm -fr $TEMP_STP_POLICY_FILE
+    done
+
+  else
+    textInfo "No S3 Buckets found"
+  fi
+}
