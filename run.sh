@@ -1,14 +1,8 @@
 #!/bin/bash
-AccountId=$1
-Alias=$2
 
-echo $AWS_ACCESS_KEY_ID
-python3 credentials.py $AccountId
+python3 credentials.py $ACCOUNT_ID
 
-echo $AWS_ACCESS_KEY_ID
-echo $AWS_ACCESS_KEY_ID2
-echo "Running prowler on $Alias"
+echo "Running prowler on $ALIAS"
 ./prowler -c extra741 -M json > output.json
 
-unset AWS_ACCESS_KEY_ID
-echo $AWS_ACCESS_KEY_ID
+aws s3api put-object --bucket $BUCKET --key prowler/$ACCOUNT_ID/results

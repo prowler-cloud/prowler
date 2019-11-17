@@ -1,8 +1,10 @@
 FROM python
 MAINTAINER Bridgecrew <www.bridgecrew.io>
 
-RUN apt-get update && apt-get upgrade -y && apt-get install jq -y && pip install awscli detect-secrets
+RUN apt-get update && apt-get upgrade -y && apt-get install jq -y && pip install awscli detect-secrets boto3
 
-RUN curl -sL https://github.com/bridgecrewio/prowler/archive/master.tar.gz | tar xz
+RUN curl -sL https://github.com/bridgecrewio/prowler/archive/feature/dockerized_prowler.tar.gz | tar xz
 
-RUN run.sh
+WORKDIR "./prowler-feature-dockerized_prowler"
+
+ENTRYPOINT ["./run.sh"]

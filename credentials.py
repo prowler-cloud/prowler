@@ -22,5 +22,5 @@ print('Got account details, assuming role')
 
 temporary_creds = sts.assume_role(RoleArn=account_details['cross_account_role_arn'], ExternalId=account_details['external_id'], RoleSessionName='prowler')['Credentials']
 
-os.environ['AWS_ACCESS_KEY_ID2'] = temporary_creds['AccessKeyId']
-os.environ['AWS_SECRET_ACCESS_KEY2'] = temporary_creds['SecretAccessKey']
+os.environ['AWS_ACCESS_KEY_ID'] = temporary_creds['AccessKeyId']
+os.environ['AWS_SECRET_ACCESS_KEY'] = temporary_creds['SecretAccessKey']
