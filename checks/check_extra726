@@ -22,10 +22,14 @@ extra726(){
   # forcing us-east-1 region only since support only works in that region
   TA_CHECKS_ID=$($AWSCLI support describe-trusted-advisor-checks --language en $PROFILE_OPT --region us-east-1 --query checks[*].id  --output text)
   for checkid in $TA_CHECKS_ID; do
-    QUERY_RESULT_NO_OK=$($AWSCLI support describe-trusted-advisor-check-result --check-id $checkid --language en $PROFILE_OPT --region us-east-1 --query 'result.status' --output text | grep -v "ok" )
-    if [[ $QUERY_RESULT_NO_OK ]]; then
-      TA_CHECKS_NAME=$($AWSCLI support describe-trusted-advisor-checks --language en $PROFILE_OPT --region us-east-1 --query "checks[?id==\`$checkid\`].{name:name}[*]"  --output text)
-      textFail "Trusted Advisor check $TA_CHECKS_NAME is in state $QUERY_RESULT_NO_OK"
+    TA_CHECKS_NAME=$($AWSCLI support describe-trusted-advisor-checks --language en $PROFILE_OPT --region us-east-1 --query "checks[?id==\`$checkid\`].{name:name}[*]" --output text)
+    QUERY_TA_CHECK_RESULT=$($AWSCLI support describe-trusted-advisor-check-result --check-id $checkid --language en $PROFILE_OPT --region us-east-1 --query 'result.status' --output text)
+    if [[ $(echo $QUERY_TA_CHECK_RESULT | grep ok) ]]; then
+      textPass "Trusted Advisor check $TA_CHECKS_NAME is in state $QUERY_TA_CHECK_RESULT"
+    elif [[ $(echo $QUERY_TA_CHECK_RESULT | grep warning) ]]; then
+      textInfo "Trusted Advisor check $TA_CHECKS_NAME is in state $QUERY_TA_CHECK_RESULT"
+    else
+      textFail "Trusted Advisor check $TA_CHECKS_NAME is in state $QUERY_TA_CHECK_RESULT"
     fi
   done
 }

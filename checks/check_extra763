@@ -10,26 +10,26 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-CHECK_ID_extra718="7.18"
-CHECK_TITLE_extra718="[extra718] Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)"
-CHECK_SCORED_extra718="NOT_SCORED"
-CHECK_TYPE_extra718="EXTRA"
-CHECK_ALTERNATE_check718="extra718"
+CHECK_ID_extra763="7.63"
+CHECK_TITLE_extra763="[extra763] Check if S3 buckets have object versioning enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra763="NOT_SCORED"
+CHECK_TYPE_extra763="EXTRA"
+CHECK_ALTERNATE_check763="extra763"
 
-extra718(){
-  # "Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)"
+extra763(){
+  # "Check if S3 buckets have object versioning enabled (Not Scored) (Not part of CIS benchmark)"
   LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text|xargs -n1)
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
-      BUCKET_SERVER_LOG_ENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --query [LoggingEnabled] --output text 2>&1)
-      if [[ $(echo "$BUCKET_SERVER_LOG_ENABLED" | grep AccessDenied) ]]; then
-        textFail "Access Denied Trying to Get Bucket Logging for $bucket"
+      BUCKET_VERSIONING_ENABLED=$($AWSCLI s3api get-bucket-versioning --bucket $bucket $PROFILE_OPT --query Status --output text 2>&1)
+      if [[ $(echo "$BUCKET_VERSIONING_ENABLED" | grep AccessDenied) ]]; then
+        textFail "Access Denied Trying to Get Bucket Versioning for $bucket"
         continue
       fi
-      if [[ $(echo "$BUCKET_SERVER_LOG_ENABLED" | grep "^None$") ]]; then
-        textFail "Bucket $bucket has server access logging disabled!"
-      else
-        textPass "Bucket $bucket has server access logging enabled"
+      if [[ $(echo "$BUCKET_VERSIONING_ENABLED" | grep "^Enabled$") ]]; then
+        textPass "Bucket $bucket has versioning enabled"
+      else 
+        textFail "Bucket $bucket has versioning disabled!"
       fi
     done
   else

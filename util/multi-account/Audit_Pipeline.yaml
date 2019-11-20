@@ -301,9 +301,6 @@ Resources:
             discard-paths: no
             base-directory: out
 
-
-
-
   ProwlerAuditTriggerRole:
     Type: AWS::IAM::Role
     Properties:
