@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Remediation:
+#
+#   https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html
+#
+#   aws ecr put-image-scanning-configuration \
+#     --region <value> \
+#     --repository-name <value> \
+#     --image-scanning-configuration scanOnPush=true
+  
+
+CHECK_ID_extra765="7.65"
+CHECK_TITLE_extra765="[extra765] Check if ECR image scan on push is enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra765="NOT_SCORED"
+CHECK_TYPE_extra765="EXTRA"
+CHECK_ALTERNATE_check765="extra765"
+
+extra765(){
+  for regx in $REGIONS; do
+    LIST_ECR_REPOS=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $regx --query "repositories[*].[repositoryName]" --output text 2>&1)
+    if [[ $LIST_ECR_REPOS ]]; then 
+      for repo in $LIST_ECR_REPOS; do
+        SCAN_ENABLED=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $regx --query "repositories[?repositoryName==\`$repo\`].[imageScanningConfiguration.scanOnPush]" --output text|grep True)
+        if [[ $SCAN_ENABLED ]];then
+          textPass "$regx: ECR repository $repo has scan on push enabled" "$regx"
+        else
+          textFail "$regx: ECR repository $repo has scan on push disabled!" "$regx"
+        fi
+      done 
+    else
+      textInfo "$regx: No ECR repositories found" "$regx"
+    fi 
+  done 
+}
