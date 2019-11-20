@@ -7,6 +7,31 @@
 #
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+#
+# Remediation:
+#
+#   https://d1.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
+#
+#   aws logs put-metric-filter \
+#     --region us-east-1 \
+#     --log-group-name CloudTrail/CloudWatchLogGroup \
+#     --filter-name ConsoleSignInWithoutMfaCount \
+#     --filter-pattern '{ $.eventName = "ConsoleLogin" && $.additionalEventData.MFAUsed != "Yes" }' \
+#     --metric-transformations metricName=ConsoleSignInWithoutMfaCount,metricNamespace=CloudTrailMetrics,metricValue=1
+#
+#   aws cloudwatch put-metric-alarm \
+#     --region us-east-1 \
+#     --alarm-name ConsoleSignInWithoutMfaAlarm \
+#     --alarm-description "Triggered by sign-in requests made without MFA." \
+#     --metric-name ConsoleSignInWithoutMfaCount \
+#     --namespace CloudTrailMetrics \
+#     --statistic Sum \
+#     --comparison-operator GreaterThanOrEqualToThreshold \
+#     --evaluation-periods 1 \
+#     --period 300 \
+#     --threshold 1 \
+#     --actions-enabled \
+#     --alarm-actions arn:aws:sns:us-east-1:123456789012:CloudWatchAlarmTopic
 
 CHECK_ID_check32="3.2,3.02"
 CHECK_TITLE_check32="[check32] Ensure a log metric filter and alarm exist for Management Console sign-in without MFA (Scored)"

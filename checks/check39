@@ -7,6 +7,31 @@
 #
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+#
+# Remediation:
+#
+#   https://d1.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
+#
+#   aws logs put-metric-filter \
+#     --region us-east-1 \
+#     --log-group-name CloudTrail/CloudWatchLogGroup \
+#     --filter-name AWSConfigChanges \
+#     --filter-pattern '{ ($.eventSource = config.amazonaws.com) && (($.eventName = StopConfigurationRecorder)||($.eventName = DeleteDeliveryChannel)||($.eventName = PutDeliveryChannel)||($.eventName = PutConfigurationRecorder)) }' \
+#     --metric-transformations metricName=ConfigEventCount,metricNamespace=CloudTrailMetrics,metricValue=1
+#
+#   aws cloudwatch put-metric-alarm \
+#     --region us-east-1 \
+#     --alarm-name AWSConfigChangesAlarm \
+#     --alarm-description "Triggered by AWS Config changes." \
+#     --metric-name ConfigEventCount \
+#     --namespace CloudTrailMetrics \
+#     --statistic Sum \
+#     --comparison-operator GreaterThanOrEqualToThreshold \
+#     --evaluation-periods 1 \
+#     --period 300 \
+#     --threshold 1 \
+#     --actions-enabled \
+#     --alarm-actions arn:aws:sns:us-east-1:123456789012:CloudWatchAlarmTopic
 
 CHECK_ID_check39="3.9,3.09"
 CHECK_TITLE_check39="[check39] Ensure a log metric filter and alarm exist for AWS Config configuration changes (Scored)"
@@ -15,5 +40,5 @@ CHECK_TYPE_check39="LEVEL2"
 CHECK_ALTERNATE_check309="check39"
 
 check39(){
-  check3x '\$\.eventSource\s*=\s*config.amazonaws.com.+\$\.eventName\s*=\s*StopConfigurationRecorder.+\$\.eventName\s*=\s*PutDeliveryChannel.+\$\.eventName\s*=\s*PutConfigurationRecorder'
+  check3x '\$\.eventSource\s*=\s*config.amazonaws.com.+\$\.eventName\s*=\s*StopConfigurationRecorder.+\$\.eventName\s*=\s*DeleteDeliveryChannel.+\$\.eventName\s*=\s*PutDeliveryChannel.+\$\.eventName\s*=\s*PutConfigurationRecorder'
 }
