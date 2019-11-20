@@ -16,8 +16,8 @@
         "s3:GetEncryptionConfiguration",
         "ses:getidentityverificationattributes",
         "sns:listsubscriptionsbytopic",
-        "support:*"
-        "trustedadvisor:Describe*",
+        "support:*",
+        "trustedadvisor:Describe*"
       ],
       "Effect": "Allow",
       "Resource": "*"
