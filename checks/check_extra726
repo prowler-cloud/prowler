@@ -20,7 +20,12 @@ CHECK_ALTERNATE_check726="extra726"
 extra726(){
   trap "exit" INT
   # forcing us-east-1 region only since support only works in that region
-  TA_CHECKS_ID=$($AWSCLI support describe-trusted-advisor-checks --language en $PROFILE_OPT --region us-east-1 --query checks[*].id  --output text)
+  TA_CHECKS_ID=$($AWSCLI support describe-trusted-advisor-checks --language en $PROFILE_OPT --region us-east-1 --query checks[*].id  --output text 2>&1)
+  if [[ $(echo "$TA_CHECKS_ID" | grep SubscriptionRequiredException) ]]; then
+    textInfo "Trusted Advisor requires AWS Premium Support Subscription"
+    return
+  fi
+
   for checkid in $TA_CHECKS_ID; do
     TA_CHECKS_NAME=$($AWSCLI support describe-trusted-advisor-checks --language en $PROFILE_OPT --region us-east-1 --query "checks[?id==\`$checkid\`].{name:name}[*]" --output text)
     QUERY_TA_CHECK_RESULT=$($AWSCLI support describe-trusted-advisor-check-result --check-id $checkid --language en $PROFILE_OPT --region us-east-1 --query 'result.status' --output text)
