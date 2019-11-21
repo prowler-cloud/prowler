@@ -11,21 +11,21 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra719="7.19"
-CHECK_TITLE_extra719="[extra719] Check if Route53 hosted zones are logging queries to CloudWatch Logs (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra719="[extra719] Check if Route53 public hosted zones are logging queries to CloudWatch Logs (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra719="NOT_SCORED"
 CHECK_TYPE_extra719="EXTRA"
 CHECK_ALTERNATE_check719="extra719"
 
 extra719(){
-  # "Check if Route53 hosted zones are logging queries to CloudWatch Logs (Not Scored) (Not part of CIS benchmark)"
-  LIST_OF_HOSTED_ZONES=$($AWSCLI route53 list-hosted-zones $PROFILE_OPT --query HostedZones[*].Id --output text|xargs -n1)
+  # You can't create a query logging config for a private hosted zone.
+  LIST_OF_HOSTED_ZONES=$($AWSCLI route53 list-hosted-zones $PROFILE_OPT | jq -r ".HostedZones[] | select(.Config.PrivateZone == false) | .Id")
   if [[ $LIST_OF_HOSTED_ZONES ]]; then
     for hostedzoneid in $LIST_OF_HOSTED_ZONES;do
       HOSTED_ZONE_QUERY_LOG_ENABLED=$($AWSCLI route53 list-query-logging-configs --hosted-zone-id $hostedzoneid $PROFILE_OPT --query QueryLoggingConfigs[*].CloudWatchLogsLogGroupArn --output text|cut -d: -f7)
       if [[ $HOSTED_ZONE_QUERY_LOG_ENABLED ]];then
-        textPass "Route53 hosted zone Id $hostedzoneid has query logging enabled in Log Group $HOSTED_ZONE_QUERY_LOG_ENABLED"
+        textPass "Route53 public hosted zone Id $hostedzoneid has query logging enabled in Log Group $HOSTED_ZONE_QUERY_LOG_ENABLED"
       else
-        textFail "Route53 hosted zone Id $hostedzoneid has query logging disabled!"
+        textFail "Route53 public hosted zone Id $hostedzoneid has query logging disabled!"
       fi
     done
   else
