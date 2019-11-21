@@ -21,14 +21,21 @@ extra734(){
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
 
+      # For this test to pass one of the following must be present:
+      # - Configure ServerSideEncryptionConfiguration rule for AES256 or aws:kms
+      #  OR
+      # - Have bucket policy denying s3:PutObject when s3:x-amz-server-side-encryption is absent
+
       # query to get if has encryption enabled or not
       RESULT=$($AWSCLI s3api get-bucket-encryption $PROFILE_OPT --bucket $bucket --query ServerSideEncryptionConfiguration.Rules[].ApplyServerSideEncryptionByDefault[].SSEAlgorithm --output text 2>&1)
       if [[ $(echo "$RESULT" | grep AccessDenied) ]]; then
         textFail "Access Denied Trying to Get Encryption for $bucket"
         continue
       fi
-      if [[ $(echo "$RESULT" | grep ServerSideEncryptionConfigurationNotFoundError) ]]; then
-        textFail "Bucket $bucket does not enforce encryption!"
+
+      if [[ $RESULT == "AES256" || $RESULT == "aws:kms" ]];
+      then
+        textPass "Bucket $bucket is enabled for default encryption with $RESULT"
         continue
       fi
 
@@ -48,7 +55,7 @@ extra734(){
       fi
 
       # check if the S3 policy forces SSE s3:x-amz-server-side-encryption:true
-      CHECK_BUCKET_SSE_POLICY_PRESENT=$(cat $TEMP_SSE_POLICY_FILE | jq --arg arn "arn:aws:s3:::${bucket}/*" '.Statement[]|select(.Effect=="Deny" and (.Principal|type == "object") and .Principal.AWS == "*" and .Action=="s3:PutObject" and .Resource==$arn and .Condition.StringNotEquals."s3:x-amz-server-side-encryption" != null)')
+      CHECK_BUCKET_SSE_POLICY_PRESENT=$(cat $TEMP_SSE_POLICY_FILE | jq --arg arn "arn:aws:s3:::${bucket}/*" '.Statement[]|select(.Effect=="Deny" and ((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*") and .Action=="s3:PutObject" and .Resource==$arn and .Condition.StringEquals."s3:x-amz-server-side-encryption" != null)')
       if [[ $CHECK_BUCKET_SSE_POLICY_PRESENT == "" ]]; then
         textFail "Bucket $bucket does not enforce encryption!"
         rm -fr $TEMP_SSE_POLICY_FILE
