@@ -576,7 +576,16 @@ The `gdpr` group of checks uses existing and extra checks. To get a GDPR report,
 
 ## HIPAA Checks
 
-With this group of checks, Prowler shows result of checks related to HIPAA, more information [here](https://github.com/toniblyx/prowler/issues/227). The list of checks showed by this group is as follows:
+With this group of checks, Prowler shows results of controls related to the "Security Rule" of the Health Insurance Portability and Accountability Act aka [HIPAA](https://www.hhs.gov/hipaa/for-professionals/security/index.html) as defined in [45 CFR Subpart C - Security Standards for the Protection of Electronic Protected Health Information](https://www.law.cornell.edu/cfr/text/45/part-164/subpart-C) within [PART 160 - GENERAL ADMINISTRATIVE REQUIREMENTS](https://www.law.cornell.edu/cfr/text/45/part-160) and [Subpart A](https://www.law.cornell.edu/cfr/text/45/part-164/subpart-A) and [Subpart C](https://www.law.cornell.edu/cfr/text/45/part-164/subpart-C) of PART 164 - SECURITY AND PRIVACY
+
+More information on the original PR is [here](https://github.com/toniblyx/prowler/issues/227).
+
+### Note on Business Addendum Agreements (BAA)
+Under the HIPAA regulations, cloud service providers (CSPs) such as AWS are considered business associates. The Business Associate Addendum (BAA) is an AWS contract that is required under HIPAA rules to ensure that AWS appropriately safeguards protected health information (PHI). The BAA also serves to clarify and limit, as appropriate, the permissible uses and disclosures of PHI by AWS, based on the relationship between AWS and our customers, and the activities or services being performed by AWS. Customers may use any AWS service in an account designated as a HIPAA account, but they should only process, store, and transmit protected health information (PHI) in the HIPAA-eligible services defined in the Business Associate Addendum (BAA). For the latest list of HIPAA-eligible AWS services, see [HIPAA Eligible Services Reference](https://aws.amazon.com/compliance/hipaa-eligible-services-reference/).
+
+More information on AWS & HIPAA can be found [here](https://aws.amazon.com/compliance/hipaa-compliance/)
+
+The list of checks showed by this group is as follows, they will be mostly relevant for [Subsections 164.306 Security standards: General rules](https://www.law.cornell.edu/cfr/text/45/164.306) and [164.312 Technical safeguards](https://www.law.cornell.edu/cfr/text/45/164.312). Prowler is only able to make checks in the spirit of the technical requirements outlined in these Subsections, and cannot cover all procedural controls required.
 
 - 1.13  [check113] Ensure MFA is enabled for the root account (Scored)
 - 2.3  [check23] Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)
