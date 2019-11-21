@@ -7,7 +7,7 @@ export AWS_SECRET_ACCESS_KEY=$(echo $creds | jq ".SecretAccessKey" | sed 's/\"//
 export AWS_SESSION_TOKEN=$(echo $creds | jq ".SessionToken" | sed 's/\"//g')
 
 echo "Running prowler on ${ACCOUNT_ID}"
-./prowler -c extra741,extra742,extra759 -M json > output.json
+./prowler ${CHECKS} -M json > output.json
 
 echo "Results:"
 cat output.json
