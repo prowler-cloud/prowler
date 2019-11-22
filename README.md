@@ -271,9 +271,9 @@ There are some helpfull tools to save time in this process like [aws-mfa-script]
 
 ### Custom IAM Policy
 
-Some new and specific checks require Prowler to inherit more permissions than SecurityAudit to work properly. Instead of using default policy SecurityAudit for the account you use for checks you may need to create a custom policy with a few more permissions (get and list and additional services mostly). Here you go a good example for a "ProwlerReadOnlyPolicy":
+Some new and specific checks require Prowler to inherit more permissions than SecurityAudit to work properly. In addition to the AWS managed policy "SecurityAudit" for the role you use for checks you may need to create a custom policy with a few more permissions (get and list and additional services mostly). Here you go a good example for a "ProwlerReadOnlyPolicy" (see below bootstrap script for set it up):
 
-[iam/prowler-policy.json](iam/prowler-policy.json)
+[iam/prowler-additions-policy.json](iam/prowler-additions-policy.json)
 
 > Note: Action `ec2:get*` is included in "ProwlerReadOnlyPolicy" policy above, that includes `get-password-data`, type `aws ec2 get-password-data help` to better understand its implications. 
 
@@ -285,7 +285,7 @@ Quick bash script to set up a "prowler" IAM user with "SecurityAudit" group with
 export AWS_DEFAULT_PROFILE=default
 export ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' | tr -d '"')
 aws iam create-group --group-name SecurityAudit
-aws iam create-policy --policy-name ProwlerReadOnlyPolicy --policy-document file://$(pwd)/iam/prowler-policy.json
+aws iam create-policy --policy-name ProwlerReadOnlyPolicy --policy-document file://$(pwd)/iam/prowler-additions-policy.json
 aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::aws:policy/SecurityAudit
 aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ProwlerReadOnlyPolicy
 aws iam create-user --user-name prowler
@@ -293,8 +293,6 @@ aws iam add-user-to-group --user-name prowler --group-name SecurityAudit
 aws iam create-access-key --user-name prowler
 unset ACCOUNT_ID AWS_DEFAULT_PROFILE
 ```
-
-> Note: most of the actions included in the managed policy "SecurityAudit" are already in "ProwlerReadOnlyPolicy", but adding both for compatibility with future services or additions to "SecurityAudit".
 
 The `aws iam create-access-key` command will output the secret access key and the key id; keep these somewhere safe, and add them to `~/.aws/credentials` with an appropriate profile name to use them with prowler. This is the only time they secret key will be shown.  If you lose it, you will need to generate a replacement.
 
