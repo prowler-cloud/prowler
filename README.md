@@ -275,24 +275,26 @@ Some new and specific checks require Prowler to inherit more permissions than Se
 
 [iam/prowler-policy.json](iam/prowler-policy.json)
 
-> Note: `ec2:get*` is included in ProwlerReadOnlyPolicy policy above, that includes `get-password-data`, type `aws ec2 get-password-data help` to better understand its implications. 
+> Note: Action `ec2:get*` is included in "ProwlerReadOnlyPolicy" policy above, that includes `get-password-data`, type `aws ec2 get-password-data help` to better understand its implications. 
 
 ### Bootstrap Script
 
-Quick bash script to set up a "prowler" IAM user and "SecurityAudit" group with the required permissions. To run the script below, you need user with administrative permissions; set the `AWS_DEFAULT_PROFILE` to use that account.
+Quick bash script to set up a "prowler" IAM user with "SecurityAudit" group with the required permissions (including "ProwlerReadOnlyPolicy"). To run the script below, you need user with administrative permissions; set the `AWS_DEFAULT_PROFILE` to use that account:
 
 ```sh
 export AWS_DEFAULT_PROFILE=default
 export ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' | tr -d '"')
 aws iam create-group --group-name SecurityAudit
-aws iam create-policy --policy-name ProwlerAuditAdditions --policy-document file://$(pwd)/iam/prowler-policy-additions.json
+aws iam create-policy --policy-name ProwlerReadOnlyPolicy --policy-document file://$(pwd)/iam/prowler-policy.json
 aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::aws:policy/SecurityAudit
-aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ProwlerAuditAdditions
+aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ProwlerReadOnlyPolicy
 aws iam create-user --user-name prowler
 aws iam add-user-to-group --user-name prowler --group-name SecurityAudit
 aws iam create-access-key --user-name prowler
 unset ACCOUNT_ID AWS_DEFAULT_PROFILE
 ```
+
+> Note: most of the actions included in the managed policy "SecurityAudit" are already in "ProwlerReadOnlyPolicy", but adding both for compatibility with future services or additions to "SecurityAudit".
 
 The `aws iam create-access-key` command will output the secret access key and the key id; keep these somewhere safe, and add them to `~/.aws/credentials` with an appropriate profile name to use them with prowler. This is the only time they secret key will be shown.  If you lose it, you will need to generate a replacement.
 
