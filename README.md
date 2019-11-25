@@ -271,160 +271,23 @@ There are some helpfull tools to save time in this process like [aws-mfa-script]
 
 ### Custom IAM Policy
 
-Instead of using default policy SecurityAudit for the account you use for checks you may need to create a custom policy with a few more permissions (get and list, not change!) here you go a good example for a "ProwlerPolicyReadOnly":
+Some new and specific checks require Prowler to inherit more permissions than SecurityAudit to work properly. In addition to the AWS managed policy "SecurityAudit" for the role you use for checks you may need to create a custom policy with a few more permissions (get and list and additional services mostly). Here you go a good example for a "ProwlerReadOnlyPolicy" (see below bootstrap script for set it up):
 
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [{
-        "Action": [
-            "acm:describecertificate",
-            "acm:listcertificates",
-            "apigateway:get",
-            "autoscaling:describe*",
-            "cloudformation:describestack*",
-            "cloudformation:getstackpolicy",
-            "cloudformation:gettemplate",
-            "cloudformation:liststack*",
-            "cloudfront:get*",
-            "cloudfront:list*",
-            "cloudtrail:describetrails",
-            "cloudtrail:geteventselectors",
-            "cloudtrail:gettrailstatus",
-            "cloudtrail:listtags",
-            "cloudwatch:describe*",
-            "codecommit:batchgetrepositories",
-            "codecommit:getbranch",
-            "codecommit:getobjectidentifier",
-            "codecommit:getrepository",
-            "codecommit:list*",
-            "codedeploy:batch*",
-            "codedeploy:get*",
-            "codedeploy:list*",
-            "config:deliver*",
-            "config:describe*",
-            "config:get*",
-            "datapipeline:describeobjects",
-            "datapipeline:describepipelines",
-            "datapipeline:evaluateexpression",
-            "datapipeline:getpipelinedefinition",
-            "datapipeline:listpipelines",
-            "datapipeline:queryobjects",
-            "datapipeline:validatepipelinedefinition",
-            "directconnect:describe*",
-            "dynamodb:listtables",
-            "ec2:describe*",
-            "ec2:GetEbsEncryptionByDefault",
-            "ecr:describe*",
-            "ecs:describe*",
-            "ecs:list*",
-            "elasticache:describe*",
-            "elasticbeanstalk:describe*",
-            "elasticloadbalancing:describe*",
-            "elasticmapreduce:describejobflows",
-            "elasticmapreduce:listclusters",
-            "es:describeelasticsearchdomainconfig",
-            "es:listdomainnames",
-            "firehose:describe*",
-            "firehose:list*",
-            "glacier:listvaults",
-            "guardduty:GetDetector",
-            "guardduty:listdetectors",
-            "iam:generatecredentialreport",
-            "iam:get*",
-            "iam:list*",
-            "kms:describe*",
-            "kms:get*",
-            "kms:list*",
-            "lambda:getpolicy",
-            "lambda:listfunctions",
-            "logs:DescribeLogGroups",
-            "logs:DescribeMetricFilters",
-            "rds:describe*",
-            "rds:downloaddblogfileportion",
-            "rds:listtagsforresource",
-            "redshift:describe*",
-            "route53domains:getdomaindetail",
-            "route53domains:getoperationdetail",
-            "route53domains:listdomains",
-            "route53domains:listoperations",
-            "route53domains:listtagsfordomain",
-            "route53:getchange",
-            "route53:getcheckeripranges",
-            "route53:getgeolocation",
-            "route53:gethealthcheck",
-            "route53:gethealthcheckcount",
-            "route53:gethealthchecklastfailurereason",
-            "route53:gethostedzone",
-            "route53:gethostedzonecount",
-            "route53:getreusabledelegationset",
-            "route53:listgeolocations",
-            "route53:listhealthchecks",
-            "route53:listhostedzones",
-            "route53:listhostedzonesbyname",
-            "route53:listqueryloggingconfigs",
-            "route53:listresourcerecordsets",
-            "route53:listreusabledelegationsets",
-            "route53:listtagsforresource",
-            "route53:listtagsforresources",
-            "s3:getbucket*",
-            "s3:GetEncryptionConfiguration",
-            "s3:getlifecycleconfiguration",
-            "s3:getobjectacl",
-            "s3:getobjectversionacl",
-            "s3:listallmybuckets",
-            "sdb:domainmetadata",
-            "sdb:listdomains",
-            "ses:getidentitydkimattributes",
-            "ses:getidentityverificationattributes",
-            "ses:listidentities",
-            "ses:listverifiedemailaddresses",
-            "ses:sendemail",
-            "sns:gettopicattributes",
-            "sns:listsubscriptionsbytopic",
-            "sns:listtopics",
-            "sqs:getqueueattributes",
-            "sqs:listqueues",
-            "support:describetrustedadvisorchecks",
-            "tag:getresources",
-            "tag:gettagkeys"
-        ],
-        "Effect": "Allow",
-        "Resource": "*"
-    }]
-}
-```
+[iam/prowler-additions-policy.json](iam/prowler-additions-policy.json)
 
-### Incremental IAM Policy
-
-Alternatively, here is a policy which defines the permissions which are NOT present in the AWS Managed SecurityAudit policy. Attach both this policy and the [AWS Managed SecurityAudit policy](https://console.aws.amazon.com/iam/home#/policies/arn:aws:iam::aws:policy/SecurityAudit$jsonEditor) to the group and you're good to go.
-
-```sh
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "support:DescribeTrustedAdvisorChecks"
-      ],
-      "Effect": "Allow",
-      "Resource": "*"
-    }
-  ]
-}
-```
+> Note: Action `ec2:get*` is included in "ProwlerReadOnlyPolicy" policy above, that includes `get-password-data`, type `aws ec2 get-password-data help` to better understand its implications. 
 
 ### Bootstrap Script
 
-Quick bash script to set up a "prowler" IAM user and "SecurityAudit" group with the required permissions. To run the script below, you need user with administrative permissions; set the `AWS_DEFAULT_PROFILE` to use that account.
+Quick bash script to set up a "prowler" IAM user with "SecurityAudit" group with the required permissions (including "ProwlerReadOnlyPolicy"). To run the script below, you need user with administrative permissions; set the `AWS_DEFAULT_PROFILE` to use that account:
 
 ```sh
 export AWS_DEFAULT_PROFILE=default
 export ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' | tr -d '"')
 aws iam create-group --group-name SecurityAudit
-aws iam create-policy --policy-name ProwlerAuditAdditions --policy-document file://$(pwd)/iam/prowler-policy-additions.json
+aws iam create-policy --policy-name ProwlerReadOnlyPolicy --policy-document file://$(pwd)/iam/prowler-additions-policy.json
 aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::aws:policy/SecurityAudit
-aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ProwlerAuditAdditions
+aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ProwlerReadOnlyPolicy
 aws iam create-user --user-name prowler
 aws iam add-user-to-group --user-name prowler --group-name SecurityAudit
 aws iam create-access-key --user-name prowler
@@ -437,50 +300,15 @@ The `aws iam create-access-key` command will output the secret access key and th
 
 We are adding additional checks to improve the information gather from each account, these checks are out of the scope of the CIS benchmark for AWS but we consider them very helpful to get to know each AWS account set up and find issues on it.
 
-Note: Some of these checks for publicly facing resources may not actually be fully public due to other layered controls like S3 Bucket Policies, Security Groups or Network ACLs.
+Some of these checks look for publicly facing resources may not actually be fully public due to other layered controls like S3 Bucket Policies, Security Groups or Network ACLs.
 
-At this moment we have 37 extra checks:
+To list all existing checks please run the command below:
 
-- 7.1 (`extra71`) Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)
-- 7.2 (`extra72`) Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)
-- 7.3 (`extra73`) Ensure there are no S3 buckets open to the Everyone or Any AWS user (Not Scored) (Not part of CIS benchmark)
-- 7.4 (`extra74`) Ensure there are no Security Groups without ingress filtering being used (Not Scored) (Not part of CIS benchmark)
-- 7.5 (`extra75`) Ensure there are no Security Groups not being used (Not Scored) (Not part of CIS benchmark)
-- 7.6 (`extra76`) Ensure there are no EC2 AMIs set as Public (Not Scored) (Not part of CIS benchmark)
-- 7.7 (`extra77`) Ensure there are no ECR repositories set as Public (Not Scored) (Not part of CIS benchmark)
-- 7.8 (`extra78`) Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)
-- 7.9 (`extra79`) Check for internet facing Elastic Load Balancers (Not Scored) (Not part of CIS benchmark)
-- 7.10 (`extra710`) Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)
-- 7.11 (`extra711`) Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)
-- 7.12 (`extra712`) Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)
-- 7.13 (`extra713`) Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)
-- 7.14 (`extra714`) Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.15 (`extra715`) Check if Elasticsearch Service domains have logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.16 (`extra716`) Check if Elasticsearch Service domains allow open access (Not Scored) (Not part of CIS benchmark)
-- 7.17 (`extra717`) Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.18 (`extra718`) Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.19 (`extra719`) Check if Route53 hosted zones are logging queries to CloudWatch Logs (Not Scored) (Not part of CIS benchmark)
-- 7.20 (`extra720`) Check if Lambda functions are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)
-- 7.21 (`extra721`) Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.22 (`extra722`) Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.23 (`extra723`) Check if RDS Snapshots are public (Not Scored) (Not part of CIS benchmark)
-- 7.24 (`extra724`) Check if ACM certificates have Certificate Transparency logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.25 (`extra725`) Check if S3 buckets have Object-level logging enabled in CloudTrail (Not Scored) (Not part of CIS benchmark)
-- 7.26 (`extra726`) Check Trusted Advisor for errors and warnings (Not Scored) (Not part of CIS benchmark)
-- 7.27 (`extra727`) Check if SQS queues have policy set as Public (Not Scored) (Not part of CIS benchmark)
-- 7.28 (`extra728`) Check if SQS queues have Server Side Encryption enabled (Not Scored) (Not part of CIS benchmark)
-- 7.29 (`extra729`) Ensure there are no EBS Volumes unencrypted (Not Scored) (Not part of CIS benchmark)
-- 7.30 (`extra730`) Check if ACM Certificates are about to expire in 7 days or less (Not Scored) (Not part of CIS benchmark)
-- 7.31 (`extra731`) Check if SNS topics have policy set as Public (Not Scored) (Not part of CIS benchmark)
-- 7.32 (`extra732`) Check if Geo restrictions are enabled in CloudFront distributions (Not Scored) (Not part of CIS benchmark)
-- 7.33 (`extra733`) Check if there are SAML Providers then STS can be used (Not Scored) (Not part of CIS benchmark)
-- 7.34 (`extra734`) Check if S3 buckets have default encryption (SSE) enabled and policy to enforce it (Not Scored) (Not part of CIS benchmark)
-- 7.35 (`extra735`) Check if RDS instances storage is encrypted (Not Scored) (Not part of CIS benchmark)
-- 7.36 (`extra736`) Check exposed KMS keys (Not Scored) (Not part of CIS benchmark)
-- 7.37 (`extra737`) Check KMS keys with key rotation disabled (Not Scored) (Not part of CIS benchmark)
-- 7.38 (`extra738`) Check if CloudFront distributions are set to HTTPS (Not Scored) (Not part of CIS benchmark)
-- 7.38 (`extra739`) Check if ELBs have logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.40 (`extra740`) Check if EBS snapshots are encrypted (Not Scored) (Not part of CIS benchmark)
+```
+./prowler -l
+```
+
+>There are some checks not included in that list, they are experimental or checks that takes long to run like `extra759` and `extra760` (search for secrets in Lambda function variables and code).
 
 To check all extras in one command:
 
@@ -496,30 +324,9 @@ or to run just one of the checks:
 
 ## Forensics Ready Checks
 
-With this group of checks, Prowler looks if each service with logging or audit capabilities has them enabled to ensure all needed evidences are recorded and collected for an eventual digital forensic investigation in case of incident. List of checks part of this group (you can also see all groups with `./prowler -l`):
+With this group of checks, Prowler looks if each service with logging or audit capabilities has them enabled to ensure all needed evidences are recorded and collected for an eventual digital forensic investigation in case of incident. List of checks part of this group (you can also see all groups with `./prowler -L`). The list of checks can be seen in the group file at:
 
-- 2.1  Ensure CloudTrail is enabled in all regions (Scored)
-- 2.2  Ensure CloudTrail log file validation is enabled (Scored)
-- 2.3  Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)
-- 2.4  Ensure CloudTrail trails are integrated with CloudWatch Logs (Scored)
-- 2.5  Ensure AWS Config is enabled in all regions (Scored)
-- 2.6  Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)
-- 2.7  Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)
-- 4.3  Ensure VPC Flow Logging is Enabled in all VPCs (Scored)
-- 7.12  Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)
-- 7.13  Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)
-- 7.14  Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.15  Check if Elasticsearch Service domains have logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.17  Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.18  Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.19  Check if Route53 hosted zones are logging queries to CloudWatch Logs (Not Scored) (Not part of CIS benchmark)
-- 7.20  Check if Lambda functions are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)
-- 7.21  Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.22  Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.23  Check if RDS Snapshots are public (Not Scored) (Not part of CIS benchmark)
-- 7.24  Check if ACM certificates have Certificate Transparency logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.25  Check if S3 buckets have Object-level logging enabled in CloudTrail (Not Scored) (Not part of CIS benchmark)
-- 7.38  Check if ELBs have logging enabled (Not Scored) (Not part of CIS benchmark)
+[groups/group8_forensics](groups/group8_forensics)
 
 The `forensics-ready` group of checks uses existing and extra checks. To get a forensics readiness report, run this command:
 
@@ -529,44 +336,9 @@ The `forensics-ready` group of checks uses existing and extra checks. To get a f
 
 ## GDPR Checks
 
-With this group of checks, Prowler shows result of checks related to GDPR, more information [here](https://github.com/toniblyx/prowler/issues/189). The list of checks showed by this group is as follows:
+With this group of checks, Prowler shows result of checks related to GDPR, more information [here](https://github.com/toniblyx/prowler/issues/189). The list of checks can be seen in the group file at:
 
-- 7.18 [extra718] Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.25 [extra725] Check if S3 buckets have Object-level logging enabled in CloudTrail (Not Scored) (Not part of CIS benchmark)
-- 7.27 [extra727] Check if SQS queues have policy set as Public (Not Scored) (Not part of CIS benchmark)
-- 1.2  [check12] Ensure multi-factor authentication (MFA) is enabled for all IAM users that have a console password (Scored)
-- 1.13  [check113] Ensure MFA is enabled for the root account (Scored)
-- 1.14  [check114] Ensure hardware MFA is enabled for the root account (Scored)
-- 7.1 [extra71] Ensure users with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)
-- 7.31 [extra731] Check if SNS topics have policy set as Public (Not Scored) (Not part of CIS benchmark)
-- 7.32 [extra732] Check if Geo restrictions are enabled in CloudFront distributions (Not Scored) (Not part of CIS benchmark)
-- 7.33 [extra733] Check if there are SAML Providers then STS can be used (Not Scored) (Not part of CIS benchmark)
-- 2.5  [check25] Ensure AWS Config is enabled in all regions (Scored)
-- 3.9  [check39] Ensure a log metric filter and alarm exist for AWS Config configuration changes (Scored)
-- 2.1  [check21] Ensure CloudTrail is enabled in all regions (Scored)
-- 2.2  [check22] Ensure CloudTrail log file validation is enabled (Scored)
-- 2.3  [check23] Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)
-- 2.4  [check24] Ensure CloudTrail trails are integrated with CloudWatch Logs (Scored)
-- 2.6  [check26] Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)
-- 2.7  [check27] Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)
-- 3.5  [check35] Ensure a log metric filter and alarm exist for CloudTrail configuration changes (Scored)
-- 7.26 [extra726] Check Trusted Advisor for errors and warnings (Not Scored) (Not part of CIS benchmark)
-- 7.14 [extra714] Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.15 [extra715] Check if Elasticsearch Service domains have logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.17 [extra717] Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.19 [extra719] Check if Route53 hosted zones are logging queries to CloudWatch Logs (Not Scored) (Not part of CIS benchmark)
-- 7.20 [extra720] Check if Lambda functions invoke API operations are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)
-- 7.21 [extra721] Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.22 [extra722] Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)
-- 4.3  [check43] Ensure the default security group of every VPC restricts all traffic (Scored)
-- 2.5  [check25] Ensure AWS Config is enabled in all regions (Scored)
-- 7.14 [extra714] Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.29 [extra729] Ensure there are no EBS Volumes unencrypted (Not Scored) (Not part of CIS benchmark)
-- 7.34 [extra734] Check if S3 buckets have default encryption (SSE) enabled and policy to enforce it (Not Scored) (Not part of CIS benchmark)
-- 7.35 [extra735] Check if RDS instances storage is encrypted (Not Scored) (Not part of CIS benchmark)
-- 7.36 [extra736] Check exposed KMS keys (Not Scored) (Not part of CIS benchmark)
-- 7.38 [extra738] Check if CloudFront distributions are set to HTTPS (Not Scored) (Not part of CIS benchmark)
-- 7.40 [extra740] Check if EBS snapshots are encrypted (Not Scored) (Not part of CIS benchmark)
+[groups/group9_gdpr](groups/group9_gdpr)
 
 The `gdpr` group of checks uses existing and extra checks. To get a GDPR report, run this command:
 
@@ -576,24 +348,18 @@ The `gdpr` group of checks uses existing and extra checks. To get a GDPR report,
 
 ## HIPAA Checks
 
-With this group of checks, Prowler shows result of checks related to HIPAA, more information [here](https://github.com/toniblyx/prowler/issues/227). The list of checks showed by this group is as follows:
+With this group of checks, Prowler shows results of controls related to the "Security Rule" of the Health Insurance Portability and Accountability Act aka [HIPAA](https://www.hhs.gov/hipaa/for-professionals/security/index.html) as defined in [45 CFR Subpart C - Security Standards for the Protection of Electronic Protected Health Information](https://www.law.cornell.edu/cfr/text/45/part-164/subpart-C) within [PART 160 - GENERAL ADMINISTRATIVE REQUIREMENTS](https://www.law.cornell.edu/cfr/text/45/part-160) and [Subpart A](https://www.law.cornell.edu/cfr/text/45/part-164/subpart-A) and [Subpart C](https://www.law.cornell.edu/cfr/text/45/part-164/subpart-C) of PART 164 - SECURITY AND PRIVACY
 
-- 1.13  [check113] Ensure MFA is enabled for the root account (Scored)
-- 2.3  [check23] Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)
-- 2.6  [check26] Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)
-- 2.7  [check27] Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)
-- 2.9  [check29] Ensure VPC Flow Logging is Enabled in all VPCs (Scored)
-- 7.18 [extra718] Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.25 [extra725] Check if S3 buckets have Object-level logging enabled in CloudTrail (Not Scored) (Not part of CIS benchmark)
-- 7.2 [extra72] Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)
-- 7.5 [extra75] Ensure there are no Security Groups not being used (Not Scored) (Not part of CIS benchmark)
-- 7.39 [extra739] Check if ELBs have logging enabled (Not Scored) (Not part of CIS benchmark)
-- 7.29 [extra729] Ensure there are no EBS Volumes unencrypted (Not Scored) (Not part of CIS benchmark)
-- 7.34 [extra734] Check if S3 buckets have default encryption (SSE) enabled and policy to enforce it (Not Scored) (Not part of CIS benchmark)
-- 3.8  [check38] Ensure a log metric filter and alarm exist for S3 bucket policy changes (Scored)
-- 7.3 [extra73] Ensure there are no S3 buckets open to the Everyone or Any AWS user (Not Scored) (Not part of CIS benchmark)
-- 7.40 [extra740] Check if EBS snapshots are encrypted (Not Scored) (Not part of CIS benchmark)
-- 7.35 [extra735] Check if RDS instances storage is encrypted (Not Scored) (Not part of CIS benchmark)
+More information on the original PR is [here](https://github.com/toniblyx/prowler/issues/227).
+
+### Note on Business Associate Addendum's (BAA)
+Under the HIPAA regulations, cloud service providers (CSPs) such as AWS are considered business associates. The Business Associate Addendum (BAA) is an AWS contract that is required under HIPAA rules to ensure that AWS appropriately safeguards protected health information (PHI). The BAA also serves to clarify and limit, as appropriate, the permissible uses and disclosures of PHI by AWS, based on the relationship between AWS and our customers, and the activities or services being performed by AWS. Customers may use any AWS service in an account designated as a HIPAA account, but they should only process, store, and transmit protected health information (PHI) in the HIPAA-eligible services defined in the Business Associate Addendum (BAA). For the latest list of HIPAA-eligible AWS services, see [HIPAA Eligible Services Reference](https://aws.amazon.com/compliance/hipaa-eligible-services-reference/).
+
+More information on AWS & HIPAA can be found [here](https://aws.amazon.com/compliance/hipaa-compliance/)
+
+The list of checks showed by this group is as follows, they will be mostly relevant for Subsections [164.306 Security standards: General rules](https://www.law.cornell.edu/cfr/text/45/164.306) and [164.312 Technical safeguards](https://www.law.cornell.edu/cfr/text/45/164.312). Prowler is only able to make checks in the spirit of the technical requirements outlined in these Subsections, and cannot cover all procedural controls required. They be found in the group file at:
+
+[groups/group10_hipaa](groups/group10_hipaa)
 
 The `hipaa` group of checks uses existing and extra checks. To get a HIPAA report, run this command:
 
