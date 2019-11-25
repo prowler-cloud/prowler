@@ -50,18 +50,20 @@ Resources:
                 Action:
                   - "acm:describecertificate"
                   - "acm:listcertificates"
+                  - "apigateway:GET"
+                  - "cloudtrail:GetEventSelectors"
+                  - "ec2:GetEbsEncryptionByDefault"
                   - "es:describeelasticsearchdomainconfig"
-                  - "logs:DescribeLogGroups"
-                  - "logs:DescribeMetricFilters"
-                  - "ses:getidentityverificationattributes"
-                  - "sns:listsubscriptionsbytopic"
                   - "guardduty:ListDetectors"
                   - "guardduty:GetDetector"
-                  - "S3:GetEncryptionConfiguration"
-                  - "trustedadvisor:Describe*"
-                  - "cloudtrail:GetEventSelectors"
-                  - "apigateway:GET"
+                  - "logs:DescribeLogGroups"
+                  - "logs:DescribeMetricFilters"
+                  - "s3:GetEncryptionConfiguration"
+                  - "ses:getidentityverificationattributes"
+                  - "sns:listsubscriptionsbytopic"
                   - "support:*"
+                  - "trustedadvisor:Describe*"
+
     Metadata:
       cfn_nag:
         rules_to_suppress:

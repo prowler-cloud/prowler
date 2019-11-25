@@ -21,12 +21,25 @@ CHECK_ALTERNATE_check705="extra75"
 extra75(){
   # "Ensure there are no Security Groups not being used (Not Scored) (Not part of CIS benchmark)"
   textInfo "Looking for Security Groups in all regions...  "
+
   for regx in $REGIONS; do
-    LIST_OF_SECURITYGROUPS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --query "SecurityGroups[].[GroupId]" --output text --max-items $MAXITEMS)
+    SECURITYGROUPS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --max-items $MAXITEMS | jq '.SecurityGroups|map({(.GroupId): (.GroupName)})|add')
+    if [[ $SECURITYGROUPS == "null" ]];
+    then
+      continue
+    fi
+    LIST_OF_SECURITYGROUPS=$(echo $SECURITYGROUPS|jq -r 'to_entries|sort_by(.key)|.[]|.key')
     for SG_ID in $LIST_OF_SECURITYGROUPS; do
       SG_NOT_USED=$($AWSCLI ec2 describe-network-interfaces $PROFILE_OPT --region $regx --filters "Name=group-id,Values=$SG_ID" --query "length(NetworkInterfaces)" --output text)
+      # Default security groups can not be deleted, so draw attention to them
       if [[ $SG_NOT_USED -eq 0 ]];then
-        textFail "$regx: $SG_ID is not being used!" "$regx"
+        GROUP_NAME=$(echo $SECURITYGROUPS | jq -r --arg id $SG_ID '.[$id]')
+        if [[ $GROUP_NAME != "default" ]];
+        then
+          textFail "$regx: $SG_ID is not being used!" "$regx"
+        else
+          textInfo "$regx: $SG_ID is not being used - default security group" "$regx"
+        fi
       else
         textPass "$regx: $SG_ID is being used" "$regx"
       fi

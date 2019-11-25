@@ -5,18 +5,19 @@
       "Action": [
         "acm:describecertificate",
         "acm:listcertificates",
+        "apigateway:GET",
+        "cloudtrail:GetEventSelectors",
+        "ec2:GetEbsEncryptionByDefault",
         "es:describeelasticsearchdomainconfig",
+        "guardduty:GetDetector",
+        "guardduty:ListDetectors",
         "logs:DescribeLogGroups",
         "logs:DescribeMetricFilters",
+        "s3:GetEncryptionConfiguration",
         "ses:getidentityverificationattributes",
         "sns:listsubscriptionsbytopic",
-        "guardduty:ListDetectors",
-        "guardduty:GetDetector",
-        "S3:GetEncryptionConfiguration",
-        "trustedadvisor:Describe*",
-        "cloudtrail:GetEventSelectors",
-        "apigateway:GET",
-        "support:*"
+        "support:*",
+        "trustedadvisor:Describe*"
       ],
       "Effect": "Allow",
       "Resource": "*"
