@@ -20,7 +20,7 @@ check3x(){
 
   if [[ $CLOUDWATCH_GROUPS != "" ]]; then
     for group_obj_enc in $CLOUDWATCH_GROUPS; do
-      group_obj_raw=$(echo $group_obj_enc | base64 --decode)
+      group_obj_raw=$(echo $group_obj_enc | decode_report)
       CLOUDWATCH_LOGGROUP_NAME=$(echo $group_obj_raw | jq -r '.CloudWatchLogsLogGroupArn|split(":")[6]')
       CLOUDWATCH_LOGGROUP_REGION=$(echo $group_obj_raw | jq -r '.CloudWatchLogsLogGroupArn|split(":")[3]')
       CLOUDWATCH_LOGGROUP_ACCOUNT=$(echo $group_obj_raw | jq -r '.CloudWatchLogsLogGroupArn|split(":")[4]')
