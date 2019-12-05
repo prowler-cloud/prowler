@@ -14,30 +14,36 @@ check3x(){
   local CHECK_WARN
   local CHECK_CROSS_ACCOUNT_WARN
 
-  CLOUDWATCH_GROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text| tr '\011' '\012' | awk -F: '{print $7}')
+  DESCRIBE_TRAILS_CACHE=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION")
+  TRAIL_LIST=$(echo $DESCRIBE_TRAILS_CACHE | jq -r '.trailList[]|@base64')
   CURRENT_ACCOUNT_ID=$($AWSCLI sts $PROFILE_OPT get-caller-identity --region "$REGION" --query Account --output text)
+  CLOUDWATCH_LOGGROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text| tr '\011' '\012' | awk -F: '{print $7}')
 
-  if [[ $CLOUDWATCH_GROUP ]];then
-    for group in $CLOUDWATCH_GROUP; do
-      CLOUDWATCH_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | grep "$group" | awk -F: '{ print $4 }'  | head -n 1)
-      CLOUDWATCH_ACCOUNT_ID=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text | tr '\011' '\012' | grep "$group" | awk -F: '{ print $5 }'  | head -n 1)
-      if [ "$CLOUDWATCH_ACCOUNT_ID" == "$CURRENT_ACCOUNT_ID" ];then
-        METRICFILTER_SET=$($AWSCLI logs describe-metric-filters --log-group-name "$group" $PROFILE_OPT --region "$CLOUDWATCH_LOGGROUP_REGION" --output text | grep METRICFILTERS | grep -E "$grep_filter" | awk '{ print $3 }')
+  if [[ $CLOUDWATCH_LOGGROUP != "" ]]; then
+    for group_obj_enc in $TRAIL_LIST; do
+      group_obj_raw=$(echo $group_obj_enc | decode_report)
+      CLOUDWATCH_LOGGROUP_NAME=$(echo $group_obj_raw | jq -r '.CloudWatchLogsLogGroupArn|split(":")[6]')
+      CLOUDWATCH_LOGGROUP_REGION=$(echo $group_obj_raw | jq -r '.CloudWatchLogsLogGroupArn|split(":")[3]')
+      CLOUDWATCH_LOGGROUP_ACCOUNT=$(echo $group_obj_raw | jq -r '.CloudWatchLogsLogGroupArn|split(":")[4]')
+      if [ "$CLOUDWATCH_LOGGROUP_ACCOUNT" == "$CURRENT_ACCOUNT_ID" ];then
+        # Filter control and whitespace from .metricFilters[*].filterPattern for easier matching later
+        METRICFILTER_CACHE=$($AWSCLI logs describe-metric-filters --log-group-name "$CLOUDWATCH_LOGGROUP_NAME" $PROFILE_OPT --region "$CLOUDWATCH_LOGGROUP_REGION"|jq '.metricFilters|=map(.filterPattern|=gsub("[[:space:]]+"; " "))')
+        METRICFILTER_SET=$(echo $METRICFILTER_CACHE | jq -r --arg re "$grep_filter" '.metricFilters[]|select(.filterPattern|test($re))|.filterName')
       fi
       if [[ $METRICFILTER_SET ]];then
         for metric in $METRICFILTER_SET; do
-          metric_name=$($AWSCLI logs describe-metric-filters $PROFILE_OPT --region "$CLOUDWATCH_LOGGROUP_REGION" --log-group-name "$group" --filter-name-prefix "$metric" --output text --query 'metricFilters[0].metricTransformations[0].metricName')
+          metric_name=$(echo $METRICFILTER_CACHE | jq -r --arg name $metric '.metricFilters[]|select(.filterName==$name)|.metricTransformations[0].metricName')
           HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region "$CLOUDWATCH_LOGGROUP_REGION" --query 'MetricAlarms[?MetricName==`'"$metric_name"'`]' --output text)
           if [[ $HAS_ALARM_ASSOCIATED ]];then
-            CHECK_OK="$CHECK_OK $group:$metric"
+            CHECK_OK="$CHECK_OK $CLOUDWATCH_LOGGROUP_NAME:$metric"
           else
-            CHECK_WARN="$CHECK_WARN $group:$metric"
+            CHECK_WARN="$CHECK_WARN $CLOUDWATCH_LOGGROUP_NAME:$metric"
           fi
         done
-      elif [ "$CLOUDWATCH_ACCOUNT_ID" == "$CURRENT_ACCOUNT_ID" ];then
-        CHECK_WARN="$CHECK_WARN $group"
+      elif [ "$CLOUDWATCH_LOGGROUP_ACCOUNT" == "$CURRENT_ACCOUNT_ID" ];then
+        CHECK_WARN="$CHECK_WARN $CLOUDWATCH_LOGGROUP_NAME"
       else
-        CHECK_CROSS_ACCOUNT_WARN="$CHECK_CROSS_ACCOUNT_WARN $group"
+        CHECK_CROSS_ACCOUNT_WARN="$CHECK_CROSS_ACCOUNT_WARN $CLOUDWATCH_LOGGROUP_NAME"
       fi
     done
 
