@@ -179,7 +179,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler -M mono | aws s3 cp - s3://bucket-name/prowler-report.txt
     ```
 
-1. To perform an assessment based on CIS Profile Definitions you can use cislevel1 or cislevel2 with `-c` flag, more information about this [here, page 8](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf):
+1. To perform an assessment based on CIS Profile Definitions you can use cislevel1 or cislevel2 with `-g` flag, more information about this [here, page 8](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf):
 
     ```sh
     ./prowler -g cislevel1
