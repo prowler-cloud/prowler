@@ -15,19 +15,25 @@ CHECK_TYPE_check21="LEVEL1"
 CHECK_ALTERNATE_check201="check21"
 
 check21(){
+  trail_count=0
   # "Ensure CloudTrail is enabled in all regions (Scored)"
 	for regx in $REGIONS; do
 		LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].Name' --output text --no-include-shadow-trails)
 		if [[ $LIST_OF_TRAILS ]];then
 				for trail in $LIST_OF_TRAILS;do
-				MULTIREGION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].IsMultiRegionTrail' --output text --trail-name-list $trail)
-				if [[ "$MULTIREGION_TRAIL_STATUS" == 'False' ]];then
-						textFail "$trail trail in $regx is not enabled in multi region mode"
-				else
-						textPass "$trail trail in $regx is enabled for all regions"
-				fi
+          trail_count=$((trail_count + 1))
+          MULTIREGION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].IsMultiRegionTrail' --output text --trail-name-list $trail)
+          if [[ "$MULTIREGION_TRAIL_STATUS" == 'False' ]];then
+              textFail "$trail trail in $regx is not enabled in multi region mode"
+          else
+              textPass "$trail trail in $regx is enabled for all regions"
+          fi
 				done
 		fi
 	done
+
+	if [[ $trail_count == 0 ]]; then
+    textFail "No CloudTrail trails were found in the account"
+  fi
 }
 
