@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra734="7.34"
+CHECK_TITLE_extra734="[extra734] Check if S3 buckets have default encryption (SSE) enabled or use a bucket policy to enforce it (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra734="NOT_SCORED"
+CHECK_TYPE_extra734="EXTRA"
+CHECK_ALTERNATE_check734="extra734"
+
+extra734(){
+  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text|xargs -n1)
+  if [[ $LIST_OF_BUCKETS ]]; then
+    for bucket in $LIST_OF_BUCKETS;do
+
+      # For this test to pass one of the following must be present:
+      # - Configure ServerSideEncryptionConfiguration rule for AES256 or aws:kms
+      #  OR
+      # - Have bucket policy denying s3:PutObject when s3:x-amz-server-side-encryption is absent
+
+      # query to get if has encryption enabled or not
+      RESULT=$($AWSCLI s3api get-bucket-encryption $PROFILE_OPT --bucket $bucket --query ServerSideEncryptionConfiguration.Rules[].ApplyServerSideEncryptionByDefault[].SSEAlgorithm --output text 2>&1)
+      if [[ $(echo "$RESULT" | grep AccessDenied) ]]; then
+        textFail "Access Denied Trying to Get Encryption for $bucket"
+        continue
+      fi
+
+      if [[ $RESULT == "AES256" || $RESULT == "aws:kms" ]];
+      then
+        textPass "Bucket $bucket is enabled for default encryption with $RESULT"
+        continue
+      fi
+
+      TEMP_SSE_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
+
+      # get bucket policy
+      $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy > $TEMP_SSE_POLICY_FILE 2> /dev/null
+      if [[ $(grep AccessDenied $TEMP_SSE_POLICY_FILE) ]]; then
+        textFail "Access Denied Trying to Get Bucket Policy for $bucket"
+        rm -fr $TEMP_SSE_POLICY_FILE
+        continue
+      fi
+      if [[ $(grep NoSuchBucketPolicy $TEMP_SSE_POLICY_FILE) ]]; then
+        textFail "No bucket policy for $bucket"
+        rm -fr $TEMP_SSE_POLICY_FILE
+        continue
+      fi
+
+      # check if the S3 policy forces SSE s3:x-amz-server-side-encryption:true
+      CHECK_BUCKET_SSE_POLICY_PRESENT=$(cat $TEMP_SSE_POLICY_FILE | jq --arg arn "arn:aws:s3:::${bucket}/*" '.Statement[]|select(.Effect=="Deny" and ((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*") and .Action=="s3:PutObject" and .Resource==$arn and .Condition.StringEquals."s3:x-amz-server-side-encryption" != null)')
+      if [[ $CHECK_BUCKET_SSE_POLICY_PRESENT == "" ]]; then
+        textFail "Bucket $bucket does not enforce encryption!"
+        rm -fr $TEMP_SSE_POLICY_FILE
+        continue
+      fi
+      CHECK_BUCKET_SSE_POLICY_VALUE=$(echo "$CHECK_BUCKET_SSE_POLICY_PRESENT" | jq -r '.Condition.StringNotEquals."s3:x-amz-server-side-encryption"')
+
+      textPass "Bucket $bucket has S3 bucket policy to enforce encryption with $CHECK_BUCKET_SSE_POLICY_VALUE"
+
+      rm -fr $TEMP_SSE_POLICY_FILE
+    done
+
+  else
+    textInfo "No S3 Buckets found"
+  fi
+}
