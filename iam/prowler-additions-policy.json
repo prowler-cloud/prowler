@@ -3,6 +3,7 @@
   "Statement": [
       {
           "Action": [
+              "access-analyzer:List*",
               "apigateway:get*",
               "apigatewayv2:get*",
               "aws-marketplace:viewsubscriptions",
