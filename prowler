@@ -74,12 +74,13 @@ USAGE:
       -b                  do not print Prowler banner
       -V                  show version number & exit
       -s                  show scoring report
+      -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by "check")
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkp:r:c:g:f:m:M:E:enbVs" OPTION; do
+while getopts ":hlLkp:r:c:g:f:m:M:E:enbVsx:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -136,6 +137,9 @@ while getopts ":hlLkp:r:c:g:f:m:M:E:enbVs" OPTION; do
      s )
         SCORING=1
         ;;
+     x )
+        EXTERNAL_CHECKS_PATH=$OPTARG
+        ;;
      : )
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL  -$OPTARG requires an argument"
@@ -184,6 +188,13 @@ done
 for checks in $(ls $PROWLER_DIR/checks/check*|grep -v check_sample); do
 	. "$checks"
 done
+
+# include checks if external folder is specified 
+if [[ $EXTERNAL_CHECKS_PATH ]]; then 
+  for checks in $(ls $EXTERNAL_CHECKS_PATH/check*); do
+	. "$checks"
+  done
+fi 
 
 # Function to show the title of the check
 # using this way instead of arrays to keep bash3 (osx) and bash4(linux) compatibility
