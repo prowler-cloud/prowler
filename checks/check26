@@ -27,7 +27,7 @@ check26(){
 
       if [[ $CLOUDTRAILBUCKET ]];then
         bucket=$CLOUDTRAILBUCKET
-        if [ "$CLOUDTRAIL_ACCOUNT_ID" == "$ACCOUNT_ID" ];then
+        if [ "$CLOUDTRAIL_ACCOUNT_ID" == "$ACCOUNT_NUM" ];then
           CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --region $REGION --query 'LoggingEnabled.TargetBucket' --output text|grep -v None)
           if [[ $CLOUDTRAILBUCKET_LOGENABLED ]];then
             textPass "Bucket access logging enabled in CloudTrail S3 bucket $bucket for $trail"
