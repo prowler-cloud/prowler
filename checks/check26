@@ -21,20 +21,19 @@ check26(){
 
   if [[ $CLOUDTRAILS ]];then
     for trail in $CLOUDTRAILS; do
-      CLOUDTRAIL_LOGGROUP_REGION=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].TrailARN' --output text | tr '\011' '\012' | grep "$trail" | awk -F: '{ print $4 }'  | head -n 1)
       CLOUDTRAIL_ACCOUNT_ID=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].TrailARN' --output text | tr '\011' '\012' | grep "$trail" | awk -F: '{ print $5 }'  | head -n 1)
       CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[*].[Name, S3BucketName]' --output text  | tr '\011' ':' |  grep "$trail" | awk -F: '{ print $2 }' )
 
       if [[ $CLOUDTRAILBUCKET ]];then
         bucket=$CLOUDTRAILBUCKET
-        if [ "$CLOUDTRAIL_ACCOUNT_ID" == "$ACCOUNT_ID" ];then
+        if [ "$CLOUDTRAIL_ACCOUNT_ID" == "$ACCOUNT_NUM" ];then
           CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --region $REGION --query 'LoggingEnabled.TargetBucket' --output text|grep -v None)
-        fi 
-        if [[ $CLOUDTRAILBUCKET_LOGENABLED ]];then
-          textPass "Bucket access logging enabled in CloudTrail S3 bucket $bucket for $trail"
-        elif [ "$CLOUDTRAIL_ACCOUNT_ID" == "$ACCOUNT_ID" ];then
-          textFail "Bucket access logging is not enabled in CloudTrail S3 bucket $bucket for $trail"
-        else 
+          if [[ $CLOUDTRAILBUCKET_LOGENABLED ]];then
+            textPass "Bucket access logging enabled in CloudTrail S3 bucket $bucket for $trail"
+          else
+            textFail "Bucket access logging is not enabled in CloudTrail S3 bucket $bucket for $trail"
+          fi
+        else
           textInfo "CloudTrail S3 bucket $bucket for trail $trail is not in current account"
         fi
         
