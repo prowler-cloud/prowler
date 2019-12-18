@@ -50,6 +50,7 @@
               "gamelift:list*",
               "glacier:list*",
               "importexport:listjobs",
+              "lambda:get*",
               "lex:getbotaliases",
               "lex:getbotchannelassociations",
               "lex:getbots",
