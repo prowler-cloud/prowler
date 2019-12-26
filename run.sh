@@ -2,7 +2,7 @@
 
 mkdir ~/.aws
 cat << AWS_CREDS > ~/.aws/credentials
-[default]
+[${ACCOUNT_ID}]
 credential_source = EcsContainer
 role_arn = ${ROLE_ARN}
 external_id = ${EXTERNAL_ID}
@@ -10,7 +10,7 @@ external_id = ${EXTERNAL_ID}
 AWS_CREDS
 
 echo "Running prowler on ${ACCOUNT_ID}"
-./prowler -p default "${CHECKS}" -M json > output.json
+./prowler -p "${ACCOUNT_ID}" "${CHECKS}" -M json > output.json
 
 echo "Results:"
 cat output.json
