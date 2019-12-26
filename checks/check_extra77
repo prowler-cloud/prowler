@@ -10,6 +10,7 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
+
 CHECK_ID_extra77="7.7,7.07"
 CHECK_TITLE_extra77="[extra77] Ensure there are no ECR repositories set as Public (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra77="NOT_SCORED"
@@ -20,20 +21,36 @@ CHECK_ALTERNATE_check707="extra77"
 
 extra77(){
   # "Ensure there are no ECR repositories set as Public (Not Scored) (Not part of CIS benchmark)"
-  textInfo "Looking for ECR repos in all regions...  "
-  for regx in $REGIONS; do
-    LIST_OF_ECR_REPOS=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $regx --query 'repositories[*].{Name:repositoryName}' --output text)
-    for ecr_repo in $LIST_OF_ECR_REPOS; do
+  for region in $REGIONS; do
+    LIST_ECR_REPOS=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $region --query "repositories[*].[repositoryName]" --output text 2>&1)
+    if [[ $(echo "$LIST_ECR_REPOS" | grep AccessDenied) ]]; then
+      textFail "Access Denied Trying to describe ECR repositories"
+      continue
+    fi
+    if [[ ! -z "$LIST_ECR_REPOS" ]]; then
       TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-ecr-repo.policy.XXXXXXXXXX)
-      $AWSCLI ecr get-repository-policy --repository-name $ecr_repo $PROFILE_OPT --region $regx --output text > $TEMP_POLICY_FILE 2> /dev/null
-      # check if the policy has Principal as *
-      CHECK_ECR_REPO_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | awk '/Principal/ && !skip { print } { skip = /Deny/} '|grep \"Principal|grep \*)
-      if [[ $CHECK_ECR_REPO_ALLUSERS_POLICY ]];then
-        textFail "$regx: $ecr_repo policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx"
-      else
-        textPass "$regx: $ecr_repo is not open" "$regx"
-      fi
-    done
-    rm -fr $TEMP_POLICY_FILE
+      for repo in $LIST_ECR_REPOS; do
+        $AWSCLI ecr get-repository-policy $PROFILE_OPT --region $region --repository-name $repo --query "policyText" --output text > $TEMP_POLICY_FILE 2>&1
+        if [[ $(grep AccessDenied $TEMP_POLICY_FILE) ]]; then
+          textFail "$region: $repo Access Denied for get-repository-policy"
+          continue
+        fi
+        # https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-policies.html - "By default, only the repository owner has access to a repository."
+        if [[ $(grep RepositoryPolicyNotFoundException $TEMP_POLICY_FILE) ]]; then
+          textPass "$region: $repo is not open" "$region"
+          continue
+        fi
+        # check if the policy has Principal as *
+        CHECK_ECR_REPO_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | jq '.Statement[]|select(.Effect=="Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")))')
+        if [[ $CHECK_ECR_REPO_ALLUSERS_POLICY ]]; then
+          textFail "$region: $repo policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$region"
+        else
+          textPass "$region: $repo is not open" "$region"
+        fi
+      done
+      rm -f $TEMP_POLICY_FILE
+    else
+      textInfo "$region: No ECR repositories found" "$region"
+    fi
   done
 }
