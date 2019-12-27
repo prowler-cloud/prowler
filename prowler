@@ -40,6 +40,7 @@ FILTERREGION=""
 MAXITEMS=100
 MONOCHROME=0
 MODE="text"
+QUIET=0
 SEP=','
 KEEPCREDREPORT=0
 EXITCODE=0
@@ -75,12 +76,13 @@ USAGE:
       -V                  show version number & exit
       -s                  show scoring report
       -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by "check")
+      -q                  suppress info messages and passing test output
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkp:r:c:g:f:m:M:E:enbVsx:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -139,6 +141,9 @@ while getopts ":hlLkp:r:c:g:f:m:M:E:enbVsx:" OPTION; do
         ;;
      x )
         EXTERNAL_CHECKS_PATH=$OPTARG
+        ;;
+     q )
+        QUIET=1
         ;;
      : )
         echo ""

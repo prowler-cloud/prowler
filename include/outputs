@@ -13,6 +13,10 @@
 
 # Output formatting functions
 textPass(){
+  if [[ "$QUIET" == 1 ]]; then
+    return
+  fi
+
   PASS_COUNTER=$((PASS_COUNTER+1))
   if [[ "$MODE" == "csv" ]]; then
     if [[ $2 ]]; then
@@ -55,6 +59,10 @@ textPass(){
 }
 
 textInfo(){
+  if [[ "$QUIET" == 1 ]]; then
+    return
+  fi
+
   if [[ "$MODE" == "csv" ]]; then
     if [[ $2 ]]; then
       REPREGION=$2

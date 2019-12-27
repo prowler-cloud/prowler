@@ -222,6 +222,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
         -b                  do not print Prowler banner
         -V                  show version number & exit
         -s                  show scoring report
+        -q                  suppress info messages and passing test output
         -h                  this help
     ```
 
