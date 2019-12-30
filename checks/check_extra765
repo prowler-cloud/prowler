@@ -19,7 +19,6 @@
 #     --region <value> \
 #     --repository-name <value> \
 #     --image-scanning-configuration scanOnPush=true
-  
 
 CHECK_ID_extra765="7.65"
 CHECK_TITLE_extra765="[extra765] Check if ECR image scan on push is enabled (Not Scored) (Not part of CIS benchmark)"
@@ -28,19 +27,32 @@ CHECK_TYPE_extra765="EXTRA"
 CHECK_ALTERNATE_check765="extra765"
 
 extra765(){
-  for regx in $REGIONS; do
-    LIST_ECR_REPOS=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $regx --query "repositories[*].[repositoryName]" --output text 2>&1)
-    if [[ $LIST_ECR_REPOS ]]; then 
+  for region in $REGIONS; do
+    LIST_ECR_REPOS=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $region --query "repositories[*].[repositoryName]" --output text 2>&1)
+    if [[ $(echo "$LIST_ECR_REPOS" | grep AccessDenied) ]]; then
+      textFail "Access Denied Trying to describe ECR repositories"
+      continue
+    fi
+    if [[ ! -z "$LIST_ECR_REPOS" ]]; then
       for repo in $LIST_ECR_REPOS; do
-        SCAN_ENABLED=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $regx --query "repositories[?repositoryName==\`$repo\`].[imageScanningConfiguration.scanOnPush]" --output text|grep True)
-        if [[ $SCAN_ENABLED ]];then
-          textPass "$regx: ECR repository $repo has scan on push enabled" "$regx"
-        else
-          textFail "$regx: ECR repository $repo has scan on push disabled!" "$regx"
-        fi
-      done 
+        SCAN_ENABLED=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $region --query "repositories[?repositoryName==\`$repo\`].[imageScanningConfiguration.scanOnPush]" --output text 2>&1)
+        case "$SCAN_ENABLED" in
+          "True")
+            textPass "$region: ECR repository $repo has scan on push enabled" "$region"
+            ;;
+          "False")
+            textFail "$region: ECR repository $repo has scan on push disabled!" "$region"
+            ;;
+          "None")
+            textInfo "$region: ECR repository $repo hs no scanOnPush status, newer awscli needed" "$region"
+            ;;
+          "*")
+            textInfo "$region: ECR repository $repo has unknown scanOnPush status \"$SCAN_ENABLED\"" "$region"
+            ;;
+        esac
+      done
     else
-      textInfo "$regx: No ECR repositories found" "$regx"
-    fi 
-  done 
+      textInfo "$region: No ECR repositories found" "$region"
+    fi
+  done
 }
