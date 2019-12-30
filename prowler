@@ -77,12 +77,18 @@ USAGE:
       -s                  show scoring report
       -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by "check")
       -q                  suppress info messages and passing test output
+      -A                  account id for the account where to assume a role, requires -R and -T 
+                            (i.e.: 123456789012)
+      -R                  role name to assume in the account, requires -A and -T 
+                            (i.e.: ProwlerRole)
+      -T                  session durantion given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
+                            (i.e.: 43200) 
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -145,6 +151,15 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:" OPTION; do
      q )
         QUIET=1
         ;;
+     A )
+        ACCOUNT_TO_ASSUME=$OPTARG
+        ;;
+     R )
+        ROLE_TO_ASSUME=$OPTARG
+        ;;
+     T )
+        SESSION_DURATION_TO_ASSUME=$OPTARG
+        ;;
      : )
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL  -$OPTARG requires an argument"
@@ -175,6 +190,7 @@ done
 . $PROWLER_DIR/include/python_detector
 . $PROWLER_DIR/include/secrets_detector
 . $PROWLER_DIR/include/check3x
+. $PROWLER_DIR/include/assume_role
 
 # Get a list of all available AWS Regions
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
