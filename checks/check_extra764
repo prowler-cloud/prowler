@@ -26,10 +26,12 @@ extra764(){
       $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy > $TEMP_STP_POLICY_FILE 2>&1
       if [[ $(grep AccessDenied $TEMP_STP_POLICY_FILE) ]]; then
         textFail "Access Denied Trying to Get Bucket Policy for $bucket"
+        rm -f $TEMP_STP_POLICY_FILE
         continue
       fi
       if [[ $(grep NoSuchBucketPolicy $TEMP_STP_POLICY_FILE) ]]; then
         textFail "No bucket policy for $bucket"
+        rm -f $TEMP_STP_POLICY_FILE
         continue
       fi
 

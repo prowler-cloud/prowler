@@ -36,10 +36,10 @@ extra716(){
         else
           textPass "$regx: $domain is in a VPC" "$regx"
         fi
+        rm -f $TEMP_POLICY_FILE
       done
     else
       textInfo "$regx: No Elasticsearch Service domain found" "$regx"
     fi
-    rm -fr $TEMP_POLICY_FILE
   done
 }
