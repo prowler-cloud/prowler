@@ -28,16 +28,18 @@ extra77(){
       continue
     fi
     if [[ ! -z "$LIST_ECR_REPOS" ]]; then
-      TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-ecr-repo.policy.XXXXXXXXXX)
       for repo in $LIST_ECR_REPOS; do
+        TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-ecr-repo.policy.XXXXXXXXXX)
         $AWSCLI ecr get-repository-policy $PROFILE_OPT --region $region --repository-name $repo --query "policyText" --output text > $TEMP_POLICY_FILE 2>&1
         if [[ $(grep AccessDenied $TEMP_POLICY_FILE) ]]; then
           textFail "$region: $repo Access Denied for get-repository-policy"
+          rm -f $TEMP_POLICY_FILE
           continue
         fi
         # https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-policies.html - "By default, only the repository owner has access to a repository."
         if [[ $(grep RepositoryPolicyNotFoundException $TEMP_POLICY_FILE) ]]; then
           textPass "$region: $repo is not open" "$region"
+          rm -f $TEMP_POLICY_FILE
           continue
         fi
         # check if the policy has Principal as *
@@ -47,8 +49,8 @@ extra77(){
         else
           textPass "$region: $repo is not open" "$region"
         fi
+        rm -f $TEMP_POLICY_FILE
       done
-      rm -f $TEMP_POLICY_FILE
     else
       textInfo "$region: No ECR repositories found" "$region"
     fi

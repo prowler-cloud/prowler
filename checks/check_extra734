@@ -42,15 +42,15 @@ extra734(){
       TEMP_SSE_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
 
       # get bucket policy
-      $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy > $TEMP_SSE_POLICY_FILE 2> /dev/null
+      $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy > $TEMP_SSE_POLICY_FILE 2>&1
       if [[ $(grep AccessDenied $TEMP_SSE_POLICY_FILE) ]]; then
         textFail "Access Denied Trying to Get Bucket Policy for $bucket"
-        rm -fr $TEMP_SSE_POLICY_FILE
+        rm -f $TEMP_SSE_POLICY_FILE
         continue
       fi
       if [[ $(grep NoSuchBucketPolicy $TEMP_SSE_POLICY_FILE) ]]; then
         textFail "No bucket policy for $bucket"
-        rm -fr $TEMP_SSE_POLICY_FILE
+        rm -f $TEMP_SSE_POLICY_FILE
         continue
       fi
 
@@ -58,14 +58,14 @@ extra734(){
       CHECK_BUCKET_SSE_POLICY_PRESENT=$(cat $TEMP_SSE_POLICY_FILE | jq --arg arn "arn:aws:s3:::${bucket}/*" '.Statement[]|select(.Effect=="Deny" and ((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*") and .Action=="s3:PutObject" and .Resource==$arn and .Condition.StringEquals."s3:x-amz-server-side-encryption" != null)')
       if [[ $CHECK_BUCKET_SSE_POLICY_PRESENT == "" ]]; then
         textFail "Bucket $bucket does not enforce encryption!"
-        rm -fr $TEMP_SSE_POLICY_FILE
+        rm -f $TEMP_SSE_POLICY_FILE
         continue
       fi
       CHECK_BUCKET_SSE_POLICY_VALUE=$(echo "$CHECK_BUCKET_SSE_POLICY_PRESENT" | jq -r '.Condition.StringNotEquals."s3:x-amz-server-side-encryption"')
 
       textPass "Bucket $bucket has S3 bucket policy to enforce encryption with $CHECK_BUCKET_SSE_POLICY_VALUE"
 
-      rm -fr $TEMP_SSE_POLICY_FILE
+      rm -f $TEMP_SSE_POLICY_FILE
     done
 
   else
