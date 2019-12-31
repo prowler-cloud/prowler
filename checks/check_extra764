@@ -34,7 +34,7 @@ extra764(){
       fi
 
       # https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-policy-for-config-rule/
-      CHECK_BUCKET_STP_POLICY_PRESENT=$(cat $TEMP_STP_POLICY_FILE | jq --arg arn "arn:aws:s3:::${bucket}/*" '.Statement[]|select((((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and .Action=="s3:*" and (.Resource|type == "array") and (.Resource|map({(.):0})[]|has($arn)) and (.Resource|map({(.):0})[]|has($arn+"/*")) and .Condition.Bool."aws:SecureTransport" == "false")')
+      CHECK_BUCKET_STP_POLICY_PRESENT=$(cat $TEMP_STP_POLICY_FILE | jq --arg arn "arn:aws:s3:::${bucket}" '.Statement[]|select(((.Principal|type == "string") and .Principal == "*") and .Action=="s3:*" and (.Resource|type == "array") and (.Resource|map({(.):0})[]|has($arn)) and (.Resource|map({(.):0})[]|has($arn+"/*")) and .Condition.Bool."aws:SecureTransport" == "false")')
       if [[ $CHECK_BUCKET_STP_POLICY_PRESENT ]]; then
         textPass "Bucket $bucket has S3 bucket policy to deny requests over insecure transport"
       else
