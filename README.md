@@ -64,6 +64,11 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
     AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `ansi2html` and `detect-secrets` has to be installed using `pip`. You will need to install `jq` to get more accuracy in some checks. 
 
+- Make sure jq is installed (example below with "apt" but use a valid package manager for your OS):
+    ```sh
+    sudo apt install jq
+    ```
+
 - Previous steps, from your workstation:
 
     ```sh
