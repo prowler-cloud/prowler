@@ -9,13 +9,27 @@
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
 CHECK_ID_check119="1.19"
-CHECK_TITLE_check119="[check119] Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
-CHECK_SCORED_check119="NOT_SCORED"
+CHECK_TITLE_check119="[check119] Ensure IAM instance roles are used for AWS resource access from instances (Scored)"
+CHECK_SCORED_check119="SCORED"
 CHECK_TYPE_check119="LEVEL2"
 CHECK_ALTERNATE_check119="check119"
 
 check119(){
-  # "Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
-  textInfo "No command available for check 1.19 "
-  textInfo "See section 1.19 on the CIS Benchmark guide for details "
+  for regx in $REGIONS; do
+    EC2_DATA=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query 'Reservations[].Instances[].[InstanceId, IamInstanceProfile.Arn]')
+    EC2_DATA=$(echo $EC2_DATA | jq '.[]|{InstanceId: .[0], ProfileArn: .[1]}')
+    INSTANCE_LIST=$(echo $EC2_DATA | jq -r '.InstanceId')
+    if [[ $INSTANCE_LIST ]]; then
+      for instance in $INSTANCE_LIST; do
+        PROFILEARN=$(echo $EC2_DATA | jq -r --arg i "$instance" 'select(.InstanceId==$i)|.ProfileArn')
+        if [[ $PROFILEARN == "null" ]]; then
+          textFail "$regx: Instance $instance not associated with an instance role." $regx
+        else
+          textPass "$regx: Instance $instance associated with role ${PROFILEARN##*/}." $regx
+        fi
+      done
+    else
+      textInfo "$regx: No EC2 instances found" $regx
+    fi
+  done
 }
