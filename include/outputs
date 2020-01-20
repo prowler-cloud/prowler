@@ -76,7 +76,7 @@ textInfo(){
     else
       REPREGION=$REGION
     fi
-    jq -c \
+    jq -M -c \
     --arg PROFILE "$PROFILE" \
     --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
     --arg TITLE_TEXT "$TITLE_TEXT" \
@@ -119,7 +119,7 @@ textFail(){
     else
       REPREGION=$REGION
     fi
-    jq -c \
+    jq -M -c \
     --arg PROFILE "$PROFILE" \
     --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
     --arg TITLE_TEXT "$TITLE_TEXT" \
