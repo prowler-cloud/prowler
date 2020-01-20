@@ -27,7 +27,7 @@ if [[ $ACCOUNT_TO_ASSUME ]]; then
     TEMP_STS_ASSUMED_FILE=$(mktemp -t prowler.sts_assumed-XXXXXX)
 
     # assume role command
-    $AWSCLI sts assume-role --role-arn arn:aws:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME \
+    $AWSCLI $PROFILE_OPT sts assume-role --role-arn arn:aws:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME \
         --role-session-name ProwlerAssessmentSession \
         --duration-seconds $SESSION_DURATION_TO_ASSUME > $TEMP_STS_ASSUMED_FILE 
 
@@ -41,9 +41,13 @@ if [[ $ACCOUNT_TO_ASSUME ]]; then
         exit 1
     fi
 
+    # The profile shouldn't be used for CLI
+    PROFILE=""
+    PROFILE_OPT=""
+
     # set env variables with assumed role credentials
-    AWS_ACCESS_KEY_ID=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.AccessKeyId')
-    AWS_SECRET_ACCESS_KEY=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SecretAccessKey')
-    AWS_SESSION_TOKEN=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SessionToken')
+    export AWS_ACCESS_KEY_ID=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.AccessKeyId')
+    export AWS_SECRET_ACCESS_KEY=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SecretAccessKey')
+    export AWS_SESSION_TOKEN=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SessionToken')
     rm -fr $TEMP_STS_ASSUMED_FILE
 fi
