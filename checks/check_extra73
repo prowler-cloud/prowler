@@ -19,46 +19,65 @@ CHECK_ALTERNATE_extra703="extra73"
 CHECK_ALTERNATE_check73="extra73"
 CHECK_ALTERNATE_check703="extra73"
 
-# Improved and simplified check on Nov 18th 2018 due to a new bucket attribute
-# called PolicyStatus, not available in all regions yet.
-
-# extra73(){
-#   ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' $PROFILE_OPT --region $REGION --output text)
-#   for bucket in $ALL_BUCKETS_LIST; do
-#     BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket $PROFILE_OPT --region $REGION --output text 2>&1)
-#     if [[ $(echo "$BUCKET_LOCATION" | grep AccessDenied) ]]; then
-#       textFail "Access Denied Trying to Get Bucket Location for $bucket"
-#       continue
-#     fi
-#     if [[ "None" == $BUCKET_LOCATION ]]; then
-#       BUCKET_LOCATION="us-east-1"
-#     fi
-#     if [[ "EU" == $BUCKET_LOCATION ]]; then
-#       BUCKET_LOCATION="eu-west-1"
-#     fi
+# Verified with AWS support that if get-bucket-acl doesn't return a grant
+# for All and get-bucket-policy-status returns IsPublic false or bad request
+# (no policy) then the bucket can be considered not public - though
+# individual objects may still be. If in addition put-public-access-block is
+# used to set IgnorePublicAcls and RestrictPublicBuckets to true then that
+# causes Amazon S3 to ignore all public ACLs on a bucket and any objects that
+# it contains.
 #
-#     BUCKET_POLICY_STATUS=$($AWSCLI s3api get-bucket-policy-status --bucket $bucket --query PolicyStatus.IsPublic --output text | grep False)
-#     if [[ $BUCKET_POLICY_STATUS ]];then
-#       textFail "$BUCKET_LOCATION: $bucket bucket is Public!" "$BUCKET_LOCATION"
-#     else
-#       textPass "$BUCKET_LOCATION: $bucket bucket is not Public" "$BUCKET_LOCATION"
-#     fi
-#   done
-# }
-
+# This check does not address legacy ACLs or policies that would give
+# public access if not blocked at account or bucket level, instead it tries
+# to reward the use of more broadly restrictive controls with quicker and less
+# computational intensive checks.
+#
+# If we are assembling an inventory then maybe that is not what we want but
+# for day to day usage that is probably desirable.
 
 extra73(){
   textInfo "Looking for open S3 Buckets (ACLs and Policies) in all regions...  "
-  ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' $PROFILE_OPT --output text)
+
+  #
+  # If public ACLs disabled at account level then look no further
+  #
+  ACCOUNT_PUBLIC_ACCESS_BLOCK=$($AWSCLI s3control get-public-access-block $PROFILE_OPT --region $REGION --account-id $ACCOUNT_NUM --output json 2>&1)
+  if [[ $(echo "$ACCOUNT_PUBLIC_ACCESS_BLOCK" | grep AccessDenied) ]]; then
+    textFail "Access Denied Trying to Get Public Access Block for $bucket"
+    return
+  fi
+  if [[ $(echo "$ACCOUNT_PUBLIC_ACCESS_BLOCK" | grep NoSuchPublicAccessBlockConfiguration) ]]; then
+    ACCOUNTIGNOREPUBLICACLS=""
+    ACCOUNTRESTRICTPUBLICBUCKETS=""
+  else
+    ACCOUNTIGNOREPUBLICACLS=$(echo "$ACCOUNT_PUBLIC_ACCESS_BLOCK" | jq -r '.PublicAccessBlockConfiguration.IgnorePublicAcls')
+    ACCOUNTRESTRICTPUBLICBUCKETS=$(echo "$ACCOUNT_PUBLIC_ACCESS_BLOCK" | jq -r '.PublicAccessBlockConfiguration.RestrictPublicBuckets')
+  fi
+  if [[ $ACCOUNTIGNOREPUBLICACLS == "true" && $ACCOUNTRESTRICTPUBLICBUCKETS == "true" ]]; then
+    textPass "All S3 public access blocked at account level"
+    return
+  fi
+
+  #
+  # Otherwise start to iterate bucket
+  #
+  ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' $PROFILE_OPT --output text 2>&1)
+  if [[ $(echo "$ALL_BUCKETS_LIST" | grep AccessDenied) ]]; then
+    textFail "Access Denied Trying to List Buckets"
+    return
+  fi
+  if [[ "$ALL_BUCKETS_LIST" == "" ]]; then
+    textInfo "No buckets found"
+    return
+  fi
 
   for bucket in $ALL_BUCKETS_LIST; do
 
-    # 3 Different problems, let's show only 1 finding all together
-    S3_FINDING_ALLUSERS_ACL="Ok"
-    S3_FINDING_AUTHUSERS_ACL="Ok"
-    S3_FINDING_POLICY="Ok"
-
-    # LOCATION
+    #
+    # LOCATION - requests referencing buckets created after March 20, 2019
+    # must be made to S3 endpoints in the same region as the bucket was
+    # created.
+    #
     BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket $PROFILE_OPT --output text 2>&1)
     if [[ $(echo "$BUCKET_LOCATION" | grep AccessDenied) ]]; then
       textFail "Access Denied Trying to Get Bucket Location for $bucket"
@@ -71,111 +90,65 @@ extra73(){
       BUCKET_LOCATION="eu-west-1"
     fi
 
-    # EXPLICIT DENY
-    CHEK_FOR_EXPLICIT_DENY=$($AWSCLI s3api get-bucket-acl $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --output text 2>&1)
-    if [[ $(echo "$CHEK_FOR_EXPLICIT_DENY" | grep AccessDenied) ]] ; then
-      textInfo "$BUCKET_LOCATION: $bucket have an explicit Deny. Not possible to get ACL." "$bucket" "$BUCKET_LOCATION"
+    #
+    # If public ACLs disabled at bucket level then look no further
+    #
+    BUCKET_PUBLIC_ACCESS_BLOCK=$($AWSCLI s3api get-public-access-block $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --output json 2>&1)
+    if [[ $(echo "$BUCKET_PUBLIC_ACCESS_BLOCK" | grep AccessDenied) ]]; then
+      textFail "Access Denied Trying to Get Public Access Block for $bucket"
+      continue
+    fi
+    if [[ $(echo "$BUCKET_PUBLIC_ACCESS_BLOCK" | grep NoSuchPublicAccessBlockConfiguration) ]]; then
+      BUCKETIGNOREPUBLICACLS=""
+      BUCKETRESTRICTPUBLICBUCKETS=""
     else
-      # PUBLIC BLOCK
-      # https://docs.aws.amazon.com/cli/latest/reference/s3api/get-public-access-block.html
-      BUCKET_PUBLIC_BLOCK=$($AWSCLI s3api get-public-access-block --bucket $bucket $PROFILE_OPT --region $BUCKET_LOCATION 2>/dev/null)
-      BUCKET_PUBLIC_BLOCK_IGNOREPUBLICACL=$(echo $BUCKET_PUBLIC_BLOCK | jq .PublicAccessBlockConfiguration.BlockPublicAcls 2>/dev/null)
-      BUCKET_PUBLIC_BLOCK_BLOCKPUBLICPOLICY=$(echo $BUCKET_PUBLIC_BLOCK | jq  .PublicAccessBlockConfiguration.BlockPublicPolicy 2>/dev/null)
-      BUCKET_PUBLIC_BLOCK_BLOCKPUBLICACLS=$(echo $BUCKET_PUBLIC_BLOCK | jq  .PublicAccessBlockConfiguration.BlockPublicAcls 2>/dev/null)
-      BUCKET_PUBLIC_BLOCK_RESTRICPUBLICBUCKET=$(echo $BUCKET_PUBLIC_BLOCK | jq  .PublicAccessBlockConfiguration.RestrictPublicBuckets 2>/dev/null)
-      if [[ $BUCKET_PUBLIC_BLOCK_IGNOREPUBLICACL == "true" ]] && [[ $BUCKET_PUBLIC_BLOCK_BLOCKPUBLICPOLICY == "true" ]] &&  [[ $BUCKET_PUBLIC_BLOCK_BLOCKPUBLICACLS == "true" ]] &&  [[ $BUCKET_PUBLIC_BLOCK_RESTRICPUBLICBUCKET == "true" ]]; then
-        textPass "$BUCKET_LOCATION: $bucket bucket is public blocked (public-access-block)" "$BUCKET_LOCATION"
-      else
-        ## ACL
-        # check if AllUsers is in the ACL as Grantee
-        CHECK_BUCKET_ALLUSERS_ACL=$($AWSCLI s3api get-bucket-acl $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AllUsers']" --output text |grep -v GRANTEE)
-        CHECK_BUCKET_ALLUSERS_ACL_SINGLE_LINE=$(echo -ne $CHECK_BUCKET_ALLUSERS_ACL)
-        # check if AuthenticatedUsers is in the ACL as Grantee, they will have access with sigened URL only
-        CHECK_BUCKET_AUTHUSERS_ACL=$($AWSCLI s3api get-bucket-acl $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers']" --output text |grep -v GRANTEE)
-        CHECK_BUCKET_AUTHUSERS_ACL_SINGLE_LINE=$(echo -ne $CHECK_BUCKET_AUTHUSERS_ACL)
-        ## POLICY
-        BUCKET_POLICY_STATUS=$($AWSCLI s3api get-bucket-policy-status $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --query PolicyStatus.IsPublic --output text 2>/dev/null)
-        if [[ $CHECK_BUCKET_ALLUSERS_ACL || $CHECK_BUCKET_AUTHUSERS_ACL || $CHECK_BUCKET_ALLUSERS_POLICY == "True" ]]; then
-          if [[ $CHECK_BUCKET_ALLUSERS_ACL || $CHECK_BUCKET_AUTHUSERS_ACL ]] && [[ $BUCKET_PUBLIC_BLOCK_IGNOREPUBLICACL != "true" ]];then
-            if [[ $CHECK_BUCKET_ALLUSERS_ACL ]];then
-              S3_FINDING_ALLUSERS_ACL="bucket ACL is open to the Internet (Everyone) with permissions: $CHECK_BUCKET_ALLUSERS_ACL_SINGLE_LINE"
-            fi
-            if [[ $CHECK_BUCKET_AUTHUSERS_ACL ]];then
-              S3_FINDING_AUTHUSERS_ACL="bucket ACL is open to Authenticated users (Any AWS user) with permissions: $CHECK_BUCKET_AUTHUSERS_ACL_SINGLE_LINE"
-            fi
-          fi
-          if [[ $BUCKET_PUBLIC_BLOCK_RESTRICPUBLICBUCKET != "true" ]] && [[ $BUCKET_POLICY_STATUS == "True" ]]; then
-            # Here comes the magic: Find Statement Allow, Principal * and No Condition
-            BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION=$($AWSCLI s3api get-bucket-policy $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket \
-              | jq '.Policy | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*") | select(has("Condition") | not)')
-            if [[ $BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION ]]; then
-              # Let's do more magic and identify who can do what
-              BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS=$(echo $BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION \
-                | jq '"[Principal: " + (.Principal|tostring) + " Action: " + (.Action|tostring) + "]"' )
-              S3_FINDING_POLICY="bucket policy allow perform actions: $BUCKET_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS"
-            else
-              textPass "$BUCKET_LOCATION: $bucket bucket policy with conditions" "$BUCKET_LOCATION"
-            fi
-          fi
-        else
-          textPass "$BUCKET_LOCATION: $bucket bucket is not open" "$bucket" "$BUCKET_LOCATION"
-        fi
-      fi
+      BUCKETIGNOREPUBLICACLS=$(echo "$BUCKET_PUBLIC_ACCESS_BLOCK" | jq -r '.PublicAccessBlockConfiguration.IgnorePublicAcls')
+      BUCKETRESTRICTPUBLICBUCKETS=$(echo "$BUCKET_PUBLIC_ACCESS_BLOCK" | jq -r '.PublicAccessBlockConfiguration.RestrictPublicBuckets')
     fi
-    if [[ $S3_FINDING_ALLUSERS_ACL != "Ok" ]] || [[ $S3_FINDING_AUTHUSERS_ACL != "Ok" ]] || [[ $S3_FINDING_POLICY != "Ok" ]] ; then
-        textFail "$BUCKET_LOCATION: (bucket: $bucket) ALLUSERS_ACL: $S3_FINDING_ALLUSERS_ACL | AUTHUSERS_ACL: $S3_FINDING_AUTHUSERS_ACL | BUCKET_POLICY: $S3_FINDING_POLICY" "$BUCKET_LOCATION"
+    if [[ $BUCKETIGNOREPUBLICACLS == "true" && $BUCKETRESTRICTPUBLICBUCKETS == "true" ]]; then
+      textPass "$BUCKET_LOCATION: $bucket bucket is not Public" "$BUCKET_LOCATION"
+      continue
     fi
+
+    #
+    # Check for public ACL grants
+    #
+    BUCKET_ACL=$($AWSCLI s3api get-bucket-acl $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --output json 2>&1)
+    if [[ $(echo "$BUCKET_ACL" | grep AccessDenied) ]]; then
+      textFail "Access Denied Trying to Get Bucket Acl for $bucket"
+      continue
+    fi
+
+    ALLUSERS_ACL=$(echo "$BUCKET_ACL" | jq '.Grants[]|select(.Grantee.URI != null)|select(.Grantee.URI | endswith("/AllUsers"))')
+    if [[ $ALLUSERS_ACL != "" ]]; then
+      textFail "$BUCKET_LOCATION: $bucket bucket is Public!" "$BUCKET_LOCATION"
+      continue
+    fi
+
+    AUTHENTICATEDUSERS_ACL=$(echo "$BUCKET_ACL" | jq '.Grants[]|select(.Grantee.URI != null)|select(.Grantee.URI | endswith("/AuthenticatedUsers"))')
+    if [[ $AUTHENTICATEDUSERS_ACL != "" ]]; then
+      textFail "$BUCKET_LOCATION: $bucket bucket is Public!" "$BUCKET_LOCATION"
+      continue
+    fi
+
+    #
+    # Check for public access in policy
+    #
+    BUCKET_POLICY_STATUS=$($AWSCLI s3api get-bucket-policy-status $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --query PolicyStatus.IsPublic --output text 2>&1)
+    if [[ $(echo "$BUCKET_POLICY_STATUS" | grep AccessDenied) ]]; then
+      textFail "Access Denied Trying to Get Bucket Policy Status for $bucket"
+      continue
+    fi
+    if [[ $(echo "$BUCKET_POLICY_STATUS" | grep NoSuchBucketPolicy) ]]; then
+      BUCKET_POLICY_STATUS="False"
+    fi
+
+    if [[ $BUCKET_POLICY_STATUS != "" && $BUCKET_POLICY_STATUS != "False" ]]; then
+      textFail "$BUCKET_LOCATION: $bucket bucket is Public!" "$BUCKET_LOCATION"
+      continue
+    fi
+
+    textPass "$BUCKET_LOCATION: $bucket bucket is not Public" "$BUCKET_LOCATION"
+
   done
 }
-
-# Then implementation below makes pararel checks but can reach AWS API limits
-# and eventually doesn't work as expected
-
-# extra73(){
-#   textTitle "$ID73" "$TITLE73" "NOT_SCORED" "EXTRA"
-#   textNotice "Looking for open S3 Buckets (ACLs and Policies) in all regions...  "
-#   ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' --profile $PROFILE --region $REGION --output text)
-#   for bucket in $ALL_BUCKETS_LIST; do
-#     extra73Thread $bucket &
-#   done
-#   wait
-# }
-# extra73Thread(){
-#   bucket=$1
-#   BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket --profile $PROFILE --region $REGION --output text 2>&1)
-#   if [[ $(echo "$BUCKET_LOCATION" | grep AccessDenied) ]]; then
-#     textFail "Access Denied Trying to Get Bucket Location for $bucket"
-#     return
-#   fi
-#   if [[ "None" == $BUCKET_LOCATION ]]; then
-#     BUCKET_LOCATION="us-east-1"
-#   fi
-#   if [[ "EU" == $BUCKET_LOCATION ]]; then
-#     BUCKET_LOCATION="eu-west-1"
-#   fi
-#   # check if AllUsers is in the ACL as Grantee
-#   CHECK_BUCKET_ALLUSERS_ACL=$($AWSCLI s3api get-bucket-acl --profile $PROFILE --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AllUsers']" --output text |grep -v GRANTEE)
-#   CHECK_BUCKET_ALLUSERS_ACL_SINGLE_LINE=$(echo -ne $CHECK_BUCKET_ALLUSERS_ACL)
-#   # check if AuthenticatedUsers is in the ACL as Grantee, they will have access with sigened URL only
-#   CHECK_BUCKET_AUTHUSERS_ACL=$($AWSCLI s3api get-bucket-acl --profile $PROFILE --region $BUCKET_LOCATION --bucket $bucket --query "Grants[?Grantee.URI == 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers']" --output text |grep -v GRANTEE)
-#   CHECK_BUCKET_AUTHUSERS_ACL_SINGLE_LINE=$(echo -ne $CHECK_BUCKET_AUTHUSERS_ACL)
-#   # to prevent error NoSuchBucketPolicy first clean the output controlling stderr
-#   TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
-#   $AWSCLI s3api get-bucket-policy --profile $PROFILE --region $BUCKET_LOCATION --bucket $bucket --output text --query Policy > $TEMP_POLICY_FILE 2> /dev/null
-#   # check if the S3 policy has Principal as *
-#   CHECK_BUCKET_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | sed -e 's/[{}]/''/g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}'|awk '/Principal/ && !skip { print } { skip = /Deny/} '|grep ^\"Principal|grep \*)
-#   if [[ $CHECK_BUCKET_ALLUSERS_ACL || $CHECK_BUCKET_AUTHUSERS_ACL || $CHECK_BUCKET_ALLUSERS_POLICY ]];then
-#     if [[ $CHECK_BUCKET_ALLUSERS_ACL ]];then
-#       textWarn "$BUCKET_LOCATION: $bucket bucket is open to the Internet (Everyone) with permissions: $CHECK_BUCKET_ALLUSERS_ACL_SINGLE_LINE" "$BUCKET_LOCATION"
-#     fi
-#     if [[ $CHECK_BUCKET_AUTHUSERS_ACL ]];then
-#       textWarn "$BUCKET_LOCATION: $bucket bucket is open to Authenticated users (Any AWS user) with permissions: $CHECK_BUCKET_AUTHUSERS_ACL_SINGLE_LINE" "$BUCKET_LOCATION"
-#     fi
-#     if [[ $CHECK_BUCKET_ALLUSERS_POLICY ]];then
-#       textWarn "$BUCKET_LOCATION: $bucket bucket policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$BUCKET_LOCATION"
-#     fi
-#   else
-#     textOK "$BUCKET_LOCATION: $bucket bucket is not open" "$BUCKET_LOCATION"
-#   fi
-#   rm -f $TEMP_POLICY_FILE
-# }
