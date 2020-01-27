@@ -439,6 +439,13 @@ if [[ $CHECK_ID ]];then
   exit $EXITCODE
 fi
 
+if [[ $ACCOUNT_TO_ASSUME ]]; then
+  # unset env variables with assumed role credentials
+  unset AWS_ACCESS_KEY_ID
+  unset AWS_SECRET_ACCESS_KEY
+  unset AWS_SESSION_TOKEN
+fi
+
 
 execute_all
 scoring
