@@ -26,16 +26,16 @@ extra764(){
       $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy > $TEMP_STP_POLICY_FILE 2>&1
       cat $TEMP_STP_POLICY_FILE
       cat $bucket
-#      if [[ $(grep AccessDenied $TEMP_STP_POLICY_FILE) ]]; then
-#        textFail "Access Denied Trying to Get Bucket Policy for $bucket"
-#        rm -f $TEMP_STP_POLICY_FILE
-#        continue
-#      fi
-#      if [[ $(grep NoSuchBucketPolicy $TEMP_STP_POLICY_FILE) ]]; then
-#        textFail "No bucket policy for $bucket"
-#        rm -f $TEMP_STP_POLICY_FILE
-#        continue
-#      fi
+      if [[ $(grep AccessDenied $TEMP_STP_POLICY_FILE) ]]; then
+        textFail "Access Denied Trying to Get Bucket Policy for $bucket"
+        rm -f $TEMP_STP_POLICY_FILE
+        continue
+      fi
+      if [[ $(grep NoSuchBucketPolicy $TEMP_STP_POLICY_FILE) ]]; then
+        textFail "No bucket policy for $bucket"
+        rm -f $TEMP_STP_POLICY_FILE
+        continue
+      fi
 
       # https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-policy-for-config-rule/
       # checking if $TEMP_STP_POLICY_FILE is a valid json before converting it to json with jq
