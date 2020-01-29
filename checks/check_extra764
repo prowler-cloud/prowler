@@ -24,8 +24,6 @@ extra764(){
 
       # get bucket policy
       $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy > $TEMP_STP_POLICY_FILE 2>&1
-      cat $TEMP_STP_POLICY_FILE
-      cat $bucket
       if [[ $(grep AccessDenied $TEMP_STP_POLICY_FILE) ]]; then
         textFail "Access Denied Trying to Get Bucket Policy for $bucket"
         rm -f $TEMP_STP_POLICY_FILE
@@ -47,6 +45,7 @@ extra764(){
           textFail "Bucket $bucket allows requests over insecure transport"
         fi
       fi
+
       rm -fr $TEMP_STP_POLICY_FILE
     done
 
