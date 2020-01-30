@@ -76,7 +76,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     cd prowler
     ```
 
-- Make sure you have properly configured your AWS-CLI with a valid Access Key and Region or declare AWS variables properly:
+- Make sure you have properly configured your AWS-CLI with a valid Access Key and Region or declare AWS variables properly (or intance profile):
 
     ```sh
     aws configure
@@ -94,7 +94,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     arn:aws:iam::aws:policy/SecurityAudit
     ```
 
-    > In some cases you may need more list or get permissions in some services, look at the Troubleshooting section for a more comprehensive policy if you find issues with the default SecurityAudit policy.
+    > Additional permissions needed: to make sure Prowler can scan all services included in the group *Extras*, make sure you attach also the custom policy [prowler-additions-policy.json](https://github.com/toniblyx/prowler/blob/master/iam/prowler-additions-policy.json) to the role you are using.
 
 ## Usage
 
