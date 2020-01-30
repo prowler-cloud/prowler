@@ -44,6 +44,8 @@ extra764(){
         else
           textFail "Bucket $bucket allows requests over insecure transport"
         fi
+      else
+          textInfo "Unknown Error occurred: $TEMP_STP_POLICY_FILE"
       fi
 
       rm -fr $TEMP_STP_POLICY_FILE
