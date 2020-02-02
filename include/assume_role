@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# both variables are mandatory to be set together 
+if [[ $ACCOUNT_TO_ASSUME ]]; then
+    if [[ -z $ROLE_TO_ASSUME ]]; then
+        echo "$OPTRED ERROR!$OPTNORMAL - Both Account ID (-A) and IAM Role to assume (-R) must be set"
+        exit 1
+    fi 
+    # if not session duration set with -T, then will be 1h. 
+    # In some cases you will need more than 1h.
+    if [[ -z $SESSION_DURATION_TO_ASSUME ]]; then
+        SESSION_DURATION_TO_ASSUME="3600"
+    fi
+
+    # temporary file where to store credentials
+    TEMP_STS_ASSUMED_FILE=$(mktemp -t prowler.sts_assumed-XXXXXX)
+
+    # assume role command
+    $AWSCLI $PROFILE_OPT sts assume-role --role-arn arn:aws:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME \
+        --role-session-name ProwlerAssessmentSession \
+        --duration-seconds $SESSION_DURATION_TO_ASSUME > $TEMP_STS_ASSUMED_FILE 
+
+    # if previous command fails exit with the given error from aws-cli
+    # this is likely to be due to session duration limit of 1h in case 
+    # of assume role chaining:
+    # "The requested DurationSeconds exceeds the 1 hour session limit 
+    # for roles assumed by role chaining."
+    # https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html
+    if [[ $? != 0 ]];then
+        exit 1
+    fi
+
+    # The profile shouldn't be used for CLI
+    PROFILE=""
+    PROFILE_OPT=""
+
+    # set env variables with assumed role credentials
+    export AWS_ACCESS_KEY_ID=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.AccessKeyId')
+    export AWS_SECRET_ACCESS_KEY=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SecretAccessKey')
+    export AWS_SESSION_TOKEN=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SessionToken')
+    rm -fr $TEMP_STS_ASSUMED_FILE
+fi

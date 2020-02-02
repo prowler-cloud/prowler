@@ -10,6 +10,7 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
+
 CHECK_ID_extra769="7.69"
 CHECK_TITLE_extra769="[extra769] Check if IAM Access Analyzer is enabled and its findings (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra769="NOT_SCORED"
@@ -18,10 +19,18 @@ CHECK_ALTERNATE_check769="extra769"
 
 extra769(){
   for regx in $REGIONS; do
-    LIST_OF_ACCESS_ANALYZERS=$($AWSCLI accessanalyzer list-analyzers $PROFILE_OPT --region $regx --query analyzers[*].arn --output text)
+    LIST_OF_ACCESS_ANALYZERS=$($AWSCLI accessanalyzer list-analyzers $PROFILE_OPT --region $regx --query analyzers[*].arn --output text 2>&1)
+    if [[ $(echo "$LIST_OF_ACCESS_ANALYZERS" | grep -i "argument command: Invalid choice") ]]; then
+      textInfo "$regx: list-analyzers not supported, newer awscli needed" "$regx"
+      continue
+    fi
+    if [[ $(echo "$LIST_OF_ACCESS_ANALYZERS" | grep -i "AccessDeniedException") ]]; then
+      textFail "$regx: Access Denied trying to list-analyzers" "$regx"
+      continue
+    fi
     if [[ $LIST_OF_ACCESS_ANALYZERS ]]; then
       for accessAnalyzerArn in $LIST_OF_ACCESS_ANALYZERS;do
-        ANALYZER_ACTIVE_FINDINGS_COUNT=$($AWSCLI  accessanalyzer list-findings $PROFILE_OPT --region $regx  --analyzer-arn $accessAnalyzerArn --query 'findings[?status == `ACTIVE`].[id,status]' --output text | wc -l | tr -d ' ')
+        ANALYZER_ACTIVE_FINDINGS_COUNT=$($AWSCLI accessanalyzer list-findings $PROFILE_OPT --region $regx --analyzer-arn $accessAnalyzerArn --query 'findings[?status == `ACTIVE`].[id,status]' --output text | wc -l | tr -d ' ')
         if [[ $ANALYZER_ACTIVE_FINDINGS_COUNT -eq 0 ]];then
             textPass "$regx: IAM Access Analyzer $accessAnalyzerArn has no active findings" "$regx"
         else

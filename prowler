@@ -40,6 +40,7 @@ FILTERREGION=""
 MAXITEMS=100
 MONOCHROME=0
 MODE="text"
+QUIET=0
 SEP=','
 KEEPCREDREPORT=0
 EXITCODE=0
@@ -75,12 +76,19 @@ USAGE:
       -V                  show version number & exit
       -s                  show scoring report
       -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by "check")
+      -q                  suppress info messages and passing test output
+      -A                  account id for the account where to assume a role, requires -R and -T 
+                            (i.e.: 123456789012)
+      -R                  role name to assume in the account, requires -A and -T 
+                            (i.e.: ProwlerRole)
+      -T                  session durantion given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
+                            (i.e.: 43200) 
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkp:r:c:g:f:m:M:E:enbVsx:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -140,6 +148,18 @@ while getopts ":hlLkp:r:c:g:f:m:M:E:enbVsx:" OPTION; do
      x )
         EXTERNAL_CHECKS_PATH=$OPTARG
         ;;
+     q )
+        QUIET=1
+        ;;
+     A )
+        ACCOUNT_TO_ASSUME=$OPTARG
+        ;;
+     R )
+        ROLE_TO_ASSUME=$OPTARG
+        ;;
+     T )
+        SESSION_DURATION_TO_ASSUME=$OPTARG
+        ;;
      : )
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL  -$OPTARG requires an argument"
@@ -157,6 +177,9 @@ while getopts ":hlLkp:r:c:g:f:m:M:E:enbVsx:" OPTION; do
    esac
 done
 
+# Clean up any temp files when prowler quits unexpectedly
+trap "{ rm -f /tmp/prowler*.policy.*; }" EXIT
+
 . $PROWLER_DIR/include/colors
 . $PROWLER_DIR/include/os_detector
 . $PROWLER_DIR/include/aws_profile_loader
@@ -170,6 +193,7 @@ done
 . $PROWLER_DIR/include/python_detector
 . $PROWLER_DIR/include/secrets_detector
 . $PROWLER_DIR/include/check3x
+. $PROWLER_DIR/include/assume_role
 
 # Get a list of all available AWS Regions
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
@@ -189,12 +213,12 @@ for checks in $(ls $PROWLER_DIR/checks/check*|grep -v check_sample); do
 	. "$checks"
 done
 
-# include checks if external folder is specified 
-if [[ $EXTERNAL_CHECKS_PATH ]]; then 
+# include checks if external folder is specified
+if [[ $EXTERNAL_CHECKS_PATH ]]; then
   for checks in $(ls $EXTERNAL_CHECKS_PATH/check*); do
 	. "$checks"
   done
-fi 
+fi
 
 # Function to show the title of the check
 # using this way instead of arrays to keep bash3 (osx) and bash4(linux) compatibility
@@ -287,7 +311,7 @@ execute_group_by_id() {
 	done
 }
 
-# Function to execute all checks in all groups except extras if -e is invoked 
+# Function to execute all checks in all groups except extras if -e is invoked
 execute_all() {
 	for i in "${!GROUP_TITLE[@]}"; do
     if [[ $EXTRAS ]]; then
@@ -304,7 +328,7 @@ show_all_titles() {
   MAIN_GROUPS=(1 2 3 4 7)
   for i in "${MAIN_GROUPS[@]}"; do
 		show_group_title $i
-		# Display the title of the checks in groups 1,2,3,4 and 7 
+		# Display the title of the checks in groups 1,2,3,4 and 7
     # Any other group has checks in these groups
 		IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$i]}
 		for j in ${CHECKS[@]}; do
@@ -413,6 +437,13 @@ if [[ $CHECK_ID ]];then
   done
   cleanTemp
   exit $EXITCODE
+fi
+
+if [[ $ACCOUNT_TO_ASSUME ]]; then
+  # unset env variables with assumed role credentials
+  unset AWS_ACCESS_KEY_ID
+  unset AWS_SECRET_ACCESS_KEY
+  unset AWS_SESSION_TOKEN
 fi
 
 

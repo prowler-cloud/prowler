@@ -6,6 +6,7 @@
 - [Features](#features)
 - [Requirements and Installation](#requirements-and-installation)
 - [Usage](#usage)
+- [Advanced Usage](#advanced-usage)
 - [Fix](#fix)
 - [Screenshots](#screenshots)
 - [Troubleshooting](#troubleshooting)
@@ -63,6 +64,11 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
     AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `ansi2html` and `detect-secrets` has to be installed using `pip`. You will need to install `jq` to get more accuracy in some checks. 
 
+- Make sure jq is installed (example below with "apt" but use a valid package manager for your OS):
+    ```sh
+    sudo apt install jq
+    ```
+
 - Previous steps, from your workstation:
 
     ```sh
@@ -70,7 +76,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     cd prowler
     ```
 
-- Make sure you have properly configured your AWS-CLI with a valid Access Key and Region or declare AWS variables properly:
+- Make sure you have properly configured your AWS-CLI with a valid Access Key and Region or declare AWS variables properly (or intance profile):
 
     ```sh
     aws configure
@@ -88,7 +94,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     arn:aws:iam::aws:policy/SecurityAudit
     ```
 
-    > In some cases you may need more list or get permissions in some services, look at the Troubleshooting section for a more comprehensive policy if you find issues with the default SecurityAudit policy.
+    > Additional permissions needed: to make sure Prowler can scan all services included in the group *Extras*, make sure you attach also the custom policy [prowler-additions-policy.json](https://github.com/toniblyx/prowler/blob/master/iam/prowler-additions-policy.json) to the role you are using.
 
 ## Usage
 
@@ -222,8 +228,49 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
         -b                  do not print Prowler banner
         -V                  show version number & exit
         -s                  show scoring report
+        -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by check)
+        -q                  suppress info messages and passing test output
+        -A                  account id for the account where to assume a role, requires -R and -T
+                              (i.e.: 123456789012)
+        -R                  role name to assume in the account, requires -A and -T
+                              (i.e.: ProwlerRole)
+        -T                  session durantion given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
+                              (i.e.: 43200)
         -h                  this help
     ```
+
+## Advanced Usage
+
+### Assume Role: 
+
+Prowler uses the AWS CLI underneath so it uses the same authentication methods. However, there are few ways to run Prowler against multiple accounts using IAM Assume Role feature depending on eachg use case. You can just set up your custom profile inside `~/.aws/config` with all needed information about the role to assume then call it with `./prowler -p your-custom-profile`. Additionally you can use `-A 123456789012` and `-R RemoteRoleToAssume` and Prowler will get those temporary credentials using `aws sts assume-role`, set them up as environment variables and run against that given account.
+
+```
+./prowler -A 123456789012 -R ProwlerRole 
+```
+
+> *NOTE 1 about Session Duration*: By default it gets credentials valid for 1 hour (3600 seconds). Depending on the mount of checks you run and the size of your infrastructure, Prowler may require more than 1 hour to finish. Use option `-T <seconds>`  to allow up to 12h (43200 seconds). To allow more than 1h you need to modify *"Maximum CLI/API session duration"* for that particular role, read more [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session).
+
+> *NOTE 2 about Session Duration*: Bear in mind that if you are using roles assumed by role chaining there is a hard limit of 1 hour so consider not using role chaining if possible, read more about that, in foot note 1 below the table [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html). 
+
+For example, if you want to get only the fails in CSV format from all checks regarding RDS without banner from the AWS Account 123456789012 assuming the role RemoteRoleToAssume and set a fixed session duration of 1h:
+
+```
+./prowler -A 123456789012 -R RemoteRoleToAssume -T 3600 -b -M cvs -q -g rds
+```
+
+### Custom folder for custom checks
+
+Flag `-x /my/own/checks` will include any check in that particular directory. To see how to write checks see [Add Custom Checks](#add-custom-checks) section.
+
+### Show or log only FAILs
+
+In order to remove noise and get only FAIL findings there is a `-q` flag that makes Prowler to show and log only FAILs. It can be combined with any other option.
+
+```
+./prowler -q -M csv -b
+```
+
 
 ## How to fix every FAIL
 

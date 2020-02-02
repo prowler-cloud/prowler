@@ -44,13 +44,12 @@ extra760(){
           else
             textFail "$regx: Potential secret found in Lambda function $lambdafunction code" "$regx"
             # delete files to not leave trace, user must look at the function
-#            rm -fr $LAMBDA_FUNCTION_FOLDER
+            rm -fr $LAMBDA_FUNCTION_FOLDER
           fi
       done
     else
       textInfo "$regx: No Lambda functions found" "$regx"
-      rm -fr $LAMBDA_FUNCTION_FOLDER
     fi
   done
-#  rm -fr $SECRETS_TEMP_FOLDER
+  rm -fr $SECRETS_TEMP_FOLDER
 }

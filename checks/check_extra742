@@ -45,12 +45,12 @@ extra742(){
               rm -f $CFN_OUTPUTS_FILE
             fi
         else
-          textInfo "$regx: CloudFormation stack $stack has not Outputs" "$regx"
+          textInfo "$regx: CloudFormation stack $stack has no Outputs" "$regx"
         fi
       done
     else
       textInfo "$regx: No CloudFormation stacks found" "$regx"
     fi
   done
-#  rm -rf $SECRETS_TEMP_FOLDER
+  rm -rf $SECRETS_TEMP_FOLDER
 }
