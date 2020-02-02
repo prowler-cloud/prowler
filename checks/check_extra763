@@ -28,7 +28,7 @@ extra763(){
       fi
       if [[ $(echo "$BUCKET_VERSIONING_ENABLED" | grep "^Enabled$") ]]; then
         textPass "Bucket $bucket has versioning enabled"
-      else 
+      else
         textFail "Bucket $bucket has versioning disabled!"
       fi
     done

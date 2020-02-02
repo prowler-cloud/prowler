@@ -16,3 +16,8 @@ Sessionx.vim
 tags
 # Persistent undo
 [._]*.un~
+
+# Development
+.idea
+secrets-*
+
