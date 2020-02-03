@@ -33,8 +33,8 @@ extra768(){
         TASK_DEFINITION_ENV_VARIABLES_FILE="$SECRETS_TEMP_FOLDER/extra768-$TASK_DEFINITION-$regx-variables.txt"
         TASK_DEFINITION_ENV_VARIABLES=$($AWSCLI ecs $PROFILE_OPT --region $regx describe-task-definition --task-definition $taskDefinition --query 'taskDefinition.containerDefinitions[*].environment' --output text > $TASK_DEFINITION_ENV_VARIABLES_FILE)
         if [ -s $TASK_DEFINITION_ENV_VARIABLES_FILE ];then
-          # Implementation using https://github.com/Yelp/detect-secrets
-          FINDINGS=$(secretsDetector file $TASK_DEFINITION_ENV_VARIABLES_FILE)
+        # Implementation using https://github.com/Yelp/detect-secrets
+        FINDINGS=$(secretsDetector file $TASK_DEFINITION_ENV_VARIABLES_FILE)
           if [[ $FINDINGS -eq 0 ]]; then
             textPass "$regx: No secrets found in ECS task definition $TASK_DEFINITION variables" "$regx"
             # delete file if nothing interesting is there
