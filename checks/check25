@@ -16,12 +16,21 @@ CHECK_ALTERNATE_check205="check25"
 
 check25(){
   # "Ensure AWS Config is enabled in all regions (Scored)"
+  result=false
   for regx in $REGIONS; do
-    CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice get-status $PROFILE_OPT --region $regx --output json| grep "recorder: ON")
-    if [[ $CHECK_AWSCONFIG_STATUS ]];then
-      textPass "Region $regx has AWS Config recorder: ON" "$regx"
-    else
-      textFail "Region $regx has AWS Config disabled or not configured" "$regx"
+    CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice describe-configuration-recorders $PROFILE_OPT --region $regx --output json)
+    
+    if [[ $CHECK_AWSCONFIG_STATUS == *'"allSupported": true'* ]] && [[ $CHECK_AWSCONFIG_STATUS == *'"includeGlobalResourceTypes": true'* ]]; then
+        CHECK_AWSCONFIG_STATUS2=$($AWSCLI configservice get-status $PROFILE_OPT --region $regx --output json| grep "recorder: ON")
+        if [[ $CHECK_AWSCONFIG_STATUS2 ]];then
+            textPass "AWS Config is enabled in all regions"
+            result=true
+            break
+        fi
+    fi
+    done
+    if [[ $result == false ]];then
+        textFail "AWS Config is not enabled in all regions"
     fi
   done
 }
