@@ -15,8 +15,9 @@ CHECK_TITLE_extra774="[extra774] Check if user have unused console login"
 CHECK_SCORED_extra774="NOT_SCORED"
 CHECK_TYPE_extra774="EXTRA"
 CHECK_ALTERNATE_check774="extra774"
-MAX_DAYS=-30
+
 extra774(){
+  MAX_DAYS=-30
   LIST_USERS_WITH_PASSWORD_ENABLED=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$4,$5 }' |grep true | awk '{ print $1 }')
 
   for i in $LIST_USERS_WITH_PASSWORD_ENABLED; do
