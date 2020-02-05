@@ -19,10 +19,11 @@ check11(){
   # "Avoid the use of the root account (Scored)."
   MAX_DAYS=-1
   last_login_date=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$5 }' |grep '<root_account>' | awk '{ print $2 }')
+  arn=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$2 }' |grep '<root_account>' | awk '{ print $2 }')
   days_not_in_use=$(how_many_days_from_today ${last_login_date%T*})
-    if [ "$days_not_in_use" -lt "$MAX_DAYS" ];then
-      textFail "User root_account has not used console login for more then ${MAX_DAYS#-} days"
-    else
-      textPass "User root_account has used console login in the past ${MAX_DAYS#-} days"
-    fi
+
+  textInfo "Root account last accessed (password key_1 key_2): $last_login_date"
+  if [ "$days_not_in_use" -gt "$MAX_DAYS" ];then
+      textFail "Root Account $arn last accessed was less then ${MAX_DAYS#-} days ago"
+  fi
 }
