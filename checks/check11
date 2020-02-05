@@ -22,8 +22,8 @@ check11(){
   days_not_in_use=$(how_many_days_from_today ${last_login_date%T*})
 
   if [ "$days_not_in_use" -gt "$MAX_DAYS" ];then
-      textFail "Root Account $arn last accessed was less then ${MAX_DAYS#-} days ago"
+      textFail "Root Account $arn last accessed was less then ${MAX_DAYS#-} day ago"
   else
-      textPass "Root Account $arn last accessed was more then ${MAX_DAYS#-} days ago"
+      textPass "Root Account $arn last accessed was more then ${MAX_DAYS#-} day ago"
   fi
 }
