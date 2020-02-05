@@ -14,7 +14,6 @@ CHECK_SCORED_check11="SCORED"
 CHECK_TYPE_check11="LEVEL1"
 CHECK_ALTERNATE_check101="check11"
 
-MAX_DAYS=-1
 check11(){
   # "Avoid the use of the root account (Scored)."
   MAX_DAYS=-1
