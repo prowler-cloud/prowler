@@ -14,8 +14,15 @@ CHECK_SCORED_check11="SCORED"
 CHECK_TYPE_check11="LEVEL1"
 CHECK_ALTERNATE_check101="check11"
 
+MAX_DAYS=-1
 check11(){
   # "Avoid the use of the root account (Scored)."
-  COMMAND11=$(cat $TEMP_REPORT_FILE| grep '<root_account>' | cut -d, -f5,11,16 | sed 's/,/\ /g')
-  textInfo "Root account last accessed (password key_1 key_2): $COMMAND11"
+  MAX_DAYS=-1
+  last_login_date=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$5 }' |grep '<root_account>' | awk '{ print $2 }')
+  days_not_in_use=$(how_many_days_from_today ${last_login_date%T*})
+    if [ "$days_not_in_use" -lt "$MAX_DAYS" ];then
+      textFail "User root_account has not used console login for more then ${MAX_DAYS#-} days"
+    else
+      textPass "User root_account has used console login in the past ${MAX_DAYS#-} days"
+    fi
 }
