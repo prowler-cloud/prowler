@@ -41,10 +41,11 @@ extra742(){
               rm -f $CFN_OUTPUTS_FILE
             else
               textFail "$regx: Potential secret found in stack $stack Outputs" "$regx"
+              # delete file to not leave trace, user must look at the CFN Stack
+              rm -f $CFN_OUTPUTS_FILE
             fi
         else
-          textInfo "$regx: CloudFormation stack $stack has not Outputs" "$regx"
-          rm -f $CFN_OUTPUTS_FILE
+          textInfo "$regx: CloudFormation stack $stack has no Outputs" "$regx"
         fi
       done
     else
