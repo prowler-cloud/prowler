@@ -92,7 +92,6 @@
               "secretsmanager:listsecretversionids",
               "servicecatalog:list*",
               "ses:list*",
-              "ses:sendemail",
               "sns:list*",
               "sqs:listqueuetags",
               "ssm:listassociations",
