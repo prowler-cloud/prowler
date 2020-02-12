@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@master
       - name: Get release version
         id: get_version
-        run: echo ::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF:9})
+        run: echo ::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF:10})
       - name: Publish Docker
         uses: elgohr/Publish-Docker-Github-Action@2.12
         with:
