@@ -16,4 +16,4 @@ jobs:
             username: ${{ secrets.DOCKER_USERNAME }}
             password: ${{ secrets.DOCKER_PASSWORD }}
             dockerfile: "./util/Dockerfile"
-            tags: ${ github.ref/refs\/tag\//}
+            tags: ${{ github.ref/refs\/tag\// }}
