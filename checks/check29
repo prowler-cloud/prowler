@@ -19,13 +19,13 @@ check29(){
   for regx in $REGIONS; do
     AVAILABLE_VPC=$($AWSCLI ec2 describe-vpcs $PROFILE_OPT --region $regx --query 'Vpcs[?State==`available`].VpcId' --output text)
     for vpcx in $AVAILABLE_VPC; do
-      CHECK_FL=$($AWSCLI ec2 describe-flow-logs $PROFILE_OPT --region $regx --query 'FlowLogs[?FlowLogStatus==`ACTIVE`||ResourceId==`${vpcx}`].FlowLogId' --output text)
+      CHECK_FL=$($AWSCLI ec2 describe-flow-logs $PROFILE_OPT --region $regx --filter Name="resource-id",Values="${vpcx}" --query 'FlowLogs[?FlowLogStatus==`ACTIVE`].FlowLogId' --output text)
       if [[ $CHECK_FL ]];then
         for FL in $CHECK_FL;do
-          textPass "VPCFlowLog is enabled for LogGroupName: $FL in Region $regx" "$regx"
+          textPass "VPC $vpcx: VPCFlowLog is enabled for LogGroupName: $FL in Region $regx" "$regx"
         done
       else
-        textFail "No VPCFlowLog has been found in Region $regx" "$regx"
+        textFail "VPC $vpcx: No VPCFlowLog has been found in Region $regx" "$regx"
       fi      
     done
   done
