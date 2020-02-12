@@ -1,4 +1,4 @@
-# This action builds an image and pushes it to Docker Hub when a new release is published
+# This action builds an image and pushes it to Docker Hub on each commit to master
 name: Push Releases to Docker Hub
 on:
   push:
