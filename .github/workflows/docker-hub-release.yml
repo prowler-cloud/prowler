@@ -1,9 +1,8 @@
-# This action builds an image and pushes it to Docker Hub on each commit to master
-name: Push Latest to Docker Hub
+# This action builds an image and pushes it to Docker Hub when a new release is published
+name: Push Releases to Docker Hub
 on:
-  push:
-    branches:
-      - master
+  release:
+    types: [published]
 
 jobs:
   build-and-push:
@@ -17,4 +16,4 @@ jobs:
             username: ${{ secrets.DOCKER_USERNAME }}
             password: ${{ secrets.DOCKER_PASSWORD }}
             dockerfile: "./util/Dockerfile"
-            tags: latest
+            tags: ${{ github.ref }}
