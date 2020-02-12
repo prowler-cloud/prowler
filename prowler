@@ -247,7 +247,7 @@ execute_check() {
   # Generate the credential report, only if it is group1 related which checks we
   # run so that the checks can safely assume it's available
 	if [ ${alternate_name} ];then
-    if [[ ${alternate_name} == check1* ]];then
+    if [[ ${alternate_name} == check1* || ${alternate_name} == extra71 ]];then
       if [ ! -s $TEMP_REPORT_FILE ];then
         genCredReport
         saveReport
@@ -260,7 +260,7 @@ execute_check() {
     local check_id_var=CHECK_ID_$1
     local check_id=${!check_id_var}
     if [ ${check_id} ]; then
-      if [[ ${check_id} == 1* ]];then
+      if [[ ${check_id} == 1* || ${check_id} == 7.1,7.01 ]];then
         if [ ! -s $TEMP_REPORT_FILE ];then
           genCredReport
           saveReport
