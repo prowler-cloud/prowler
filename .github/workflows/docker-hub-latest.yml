@@ -13,7 +13,7 @@ jobs:
       - name: Publish Docker
         uses: elgohr/Publish-Docker-Github-Action@2.12
         with:
-            name: myDocker/repository
+            name: st0nez/prowler
             username: ${{ secrets.DOCKER_USERNAME }}
             password: ${{ secrets.DOCKER_PASSWORD }}
             dockerfile: "./util/Dockerfile"
