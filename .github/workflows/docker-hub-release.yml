@@ -9,6 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
+      - name: Get release version
+        id: get_version
+        run: echo ::set-env name=RELEASE_VERSION::$(echo ${github.ref:9})
       - name: Publish Docker
         uses: elgohr/Publish-Docker-Github-Action@2.12
         with:
@@ -16,4 +19,4 @@ jobs:
             username: ${{ secrets.DOCKER_USERNAME }}
             password: ${{ secrets.DOCKER_PASSWORD }}
             dockerfile: "./util/Dockerfile"
-            tags: ${{ github.ref/refs\/tag\// }}
+            tags: ${{ env.RELEASE_VERSION }}
