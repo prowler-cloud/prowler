@@ -1,0 +1,20 @@
+# This action builds an image and pushes it to Docker Hub when a new release is published
+name: Push Releases to Docker Hub
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish Docker
+        uses: elgohr/Publish-Docker-Github-Action@2.12
+        with:
+            name: myDocker/repository
+            username: ${{ secrets.DOCKER_USERNAME }}
+            password: ${{ secrets.DOCKER_PASSWORD }}
+            dockerfile: "./util/Dockerfile"
+            tags: latest
