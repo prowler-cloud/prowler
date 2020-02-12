@@ -1,5 +1,5 @@
 # This action builds an image and pushes it to Docker Hub when a new release is published
-name: Push Releases to Docker Hub
+name: Push Release to Docker Hub
 on:
   release:
     types: [published]
