@@ -434,6 +434,10 @@ In order to add any new check feel free to create a new extra check in the extra
 
 ## Third Party Integrations
 
+### AWS Security Hub 
+
+There is a blog post about that integration in the AWS Security blog here <https://aws.amazon.com/blogs/security/use-aws-fargate-prowler-send-security-configuration-findings-about-aws-services-security-hub/>
+
 ### Telegram
 
 Javier Pecete has done an awesome job integrating Prowler with Telegram, you have more details here <https://github.com/i4specete/ServerTelegramBot>

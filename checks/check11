@@ -19,11 +19,17 @@ check11(){
   MAX_DAYS=-1
   last_login_date=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$5 }' |grep '<root_account>' | awk '{ print $2 }')
   arn=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$2 }' |grep '<root_account>' | awk '{ print $2 }')
-  days_not_in_use=$(how_many_days_from_today ${last_login_date%T*})
 
-  if [ "$days_not_in_use" -gt "$MAX_DAYS" ];then
-      textFail "Root Account $arn last accessed was less then ${MAX_DAYS#-} day ago"
+  #check if last_login_date date is a valid date, if not, its a pass.
+  if [[ ${last_login_date%T*} =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]];then
+    days_not_in_use=$(how_many_days_from_today ${last_login_date%T*})
+    if [ "$days_not_in_use" -gt "$MAX_DAYS" ];then
+        textFail "Root Account $arn last accessed was less then ${MAX_DAYS#-} day ago"
+    else
+        textPass "Root Account $arn last accessed was more then ${MAX_DAYS#-} day ago"
+    fi
   else
-      textPass "Root Account $arn last accessed was more then ${MAX_DAYS#-} day ago"
+    textPass "Root Account $arn last accessed was more then ${MAX_DAYS#-} day ago"
   fi
+
 }
