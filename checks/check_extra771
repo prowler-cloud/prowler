@@ -24,7 +24,7 @@ extra771(){
       if [[ $BUCKET_POLICY_STATEMENTS == *GetBucketPolicy* ]]; then
         textInfo "Bucket policy does not exist for bucket $bucket"
       else
-        BUCKET_POLICY_BAD_STATEMENTS=$(echo $BUCKET_POLICY_STATEMENTS | jq --arg arn "arn:aws:s3:::$bucket" 'fromjson | .Statement[]|select(.Effect=="Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and (.Action|startswith("s3:Put") or startswith("s3:*")))')
+        BUCKET_POLICY_BAD_STATEMENTS=$(echo $BUCKET_POLICY_STATEMENTS | jq --arg arn "arn:aws:s3:::$bucket" 'fromjson | .Statement[]|select(.Effect=="Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and (.Action|startswith("s3:Put") or startswith("s3:*")) and .Condition == null)')
         if [[ $BUCKET_POLICY_BAD_STATEMENTS != "" ]]; then
           textFail "Bucket $bucket allows public write: $BUCKET_POLICY_BAD_STATEMENTS"
         else
