@@ -22,7 +22,8 @@ extra78(){
   # "Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)"
   textInfo "Looking for RDS instances in all regions...  "
   for regx in $REGIONS; do
-    LIST_OF_RDS_PUBLIC_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[?PubliclyAccessible==`true`].[DBInstanceIdentifier,Endpoint.Address]' --output text)
+    LIST_OF_RDS_PUBLIC_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[?PubliclyAccessible==`true` && DBInstanceStatus=="available"].[DBInstanceIdentifier,Endpoint.Address]' --output text)
+    echo $LIST_OF_RDS_PUBLIC_INSTANCES
     if [[ $LIST_OF_RDS_PUBLIC_INSTANCES ]];then
       while read -r rds_instance;do
         RDS_NAME=$(echo $rds_instance | awk '{ print $1; }')
