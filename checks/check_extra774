@@ -21,8 +21,8 @@ extra774(){
   LIST_USERS_WITH_PASSWORD_ENABLED=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$4,$5 }' |grep true | awk '{ print $1 }')
 
   for i in $LIST_USERS_WITH_PASSWORD_ENABLED; do
-    user=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$3 }' |grep "^$i " |awk '{ print $1 }')
-    last_login_date=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$3 }' |grep "^$i " |awk '{ print $2 }')
+    user=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$5 }' |grep "^$i " |awk '{ print $1 }')
+    last_login_date=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$5 }' |grep "^$i " |awk '{ print $2 }')
 
     days_not_in_use=$(how_many_days_from_today ${last_login_date%T*})
     if [ "$days_not_in_use" -lt "$MAX_DAYS" ];then
