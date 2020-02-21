@@ -10,13 +10,13 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-CHECK_ID_extra999="0.00"
-CHECK_TITLE_extra999="[extra999] Find secrets in EC2 Auto Scaling Launch Configuration (Not Scored) (Not part of CIS benchmark)"
-CHECK_SCORED_extra999="NOT_SCORED"
-CHECK_TYPE_extra999="EXTRA"
-CHECK_ALTERNATE_check000="extra999"
+CHECK_ID_extra775="0.00"
+CHECK_TITLE_extra775="[extra775] Find secrets in EC2 Auto Scaling Launch Configuration (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra775="NOT_SCORED"
+CHECK_TYPE_extra775="EXTRA"
+CHECK_ALTERNATE_check000="extra775"
 
-extra999(){
+extra775(){
   SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"
   if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then 
     # this folder is deleted once this check is finished
@@ -28,7 +28,7 @@ extra999(){
     LIST_OF_EC2_AUTOSCALING=$($AWSCLI autoscaling describe-launch-configurations $PROFILE_OPT --region $regx --query LaunchConfigurations[*].LaunchConfigurationName --output text --max-items $MAXITEMS | grep -v None)
     if [[ $LIST_OF_EC2_AUTOSCALING ]];then
       for autoscaling_configuration in $LIST_OF_EC2_AUTOSCALING; do
-        EC2_AUTOSCALING_USERDATA_FILE="$SECRETS_TEMP_FOLDER/extra999-$autoscaling_configuration-userData.decoded"
+        EC2_AUTOSCALING_USERDATA_FILE="$SECRETS_TEMP_FOLDER/extra775-$autoscaling_configuration-userData.decoded"
         EC2_AUTOSCALING_USERDATA=$($AWSCLI autoscaling describe-launch-configurations $PROFILE_OPT --launch-configuration-names $autoscaling_configuration --region $regx --query LaunchConfigurations[*].UserData --output text| grep -v ^None | decode_report > $EC2_AUTOSCALING_USERDATA_FILE)
         if [ -s $EC2_AUTOSCALING_USERDATA_FILE ];then
           FILE_FORMAT_ASCII=$(file -b $EC2_AUTOSCALING_USERDATA_FILE | grep ASCII)
