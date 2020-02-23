@@ -10,11 +10,11 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-CHECK_ID_extra775="0.00"
+CHECK_ID_extra775="7.75"
 CHECK_TITLE_extra775="[extra775] Find secrets in EC2 Auto Scaling Launch Configuration (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra775="NOT_SCORED"
 CHECK_TYPE_extra775="EXTRA"
-CHECK_ALTERNATE_check000="extra775"
+CHECK_ALTERNATE_check775="extra775"
 
 extra775(){
   SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"
