@@ -10,7 +10,7 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-CHECK_ID_extra774="1.23"
+CHECK_ID_extra774="7.74"
 CHECK_TITLE_extra774="[extra774] Check if user have unused console login"
 CHECK_SCORED_extra774="NOT_SCORED"
 CHECK_TYPE_extra774="EXTRA"

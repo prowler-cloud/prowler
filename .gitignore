@@ -16,3 +16,6 @@ Sessionx.vim
 tags
 # Persistent undo
 [._]*.un~
+
+# MacOs DS_Store
+*.DS_Store
