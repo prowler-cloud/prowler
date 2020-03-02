@@ -11,9 +11,6 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-# UC1: many security groups rules (Ipv4 and IPv6)
-
-
 # Current VPC Limit is 120 rules (60 inbound and 60 outbound)
 # Reference: https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html 
 
@@ -52,5 +49,3 @@ extra776(){
         done
     done
 }
-
-# extra776
