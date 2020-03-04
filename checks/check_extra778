@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2020) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra778="7.78"
+CHECK_TITLE_extra778="[extra778] Find trust boundaries in VPC endpoint services whitelisted principles (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra778="NOT_SCORED"
+CHECK_TYPE_extra778="EXTRA"
+CHECK_ALTERNATE_extra778="extra778"
+
+extra778(){
+    ACCOUNT_ID_WHITELIST_PATH="checks_config/check_extra778_whitelist"
+    THIS_ACCOUNT_ID=$(${AWSCLI} sts get-caller-identity --query "Arn" --output text | cut -d":" -f5 | xargs)
+    sed -i'' -e "s/__THIS_ACCOUNT_ID__/$THIS_ACCOUNT_ID/" ${ACCOUNT_ID_WHITELIST_PATH}
+
+    containsElement () {
+        local element=$1
+        local string=$2
+        if [[ $string == *"${element}"* ]]; then
+            return 0 # match
+        else
+            return 1 # no-match
+        fi
+    }
+
+    dropElement () {
+        local element=$1
+        ENDPOINT_PERMISSIONS_LIST=("${ENDPOINT_PERMISSIONS_LIST[@]/$element}")
+        return 0 
+    }
+    
+    for regx in ${REGIONS}; do
+        ACCOUNT_ID_WHITELIST=$(cat ${ACCOUNT_ID_WHITELIST_PATH} | xargs)
+
+        ENDPOINT_SERVICES_IDS=$(${AWSCLI} ec2 describe-vpc-endpoint-services \
+                            --query "ServiceDetails[?Owner=='${THIS_ACCOUNT_ID}'].ServiceId" \
+                            --region ${regx} \
+                            --output text | xargs)
+
+        for ENDPOINT_SERVICE_ID in ${ENDPOINT_SERVICES_IDS}; do
+            ENDPOINT_PERMISSIONS_LIST=$(${AWSCLI} ec2 describe-vpc-endpoint-service-permissions \
+                                        --service-id ${ENDPOINT_SERVICE_ID} \
+                                        --query "AllowedPrincipals[*].Principal" \
+                                        --region ${regx} \
+                                        --output text | xargs)
+            
+            for ENDPOINT_PERMISSION in ${ENDPOINT_PERMISSIONS_LIST}; do
+                for ACCOUNT_ID in ${ACCOUNT_ID_WHITELIST}; do
+                    containsElement "${ACCOUNT_ID}" "${ENDPOINT_PERMISSION}"
+                    if [[ $? -eq 0 ]]; then
+                        textInfo "${regx}: Found trusted account in VPC endpoint service permission ${ENDPOINT_PERMISSION}" "${regx}"
+                        ENDPOINT_PERMISSIONS_LIST=("${ENDPOINT_PERMISSIONS_LIST[@]/$ENDPOINT_PERMISSION}") # remove hit from whitelist
+                        break
+                    fi
+                done
+            done
+
+            for UNTRUSTED_PERMISSION in ${ENDPOINT_PERMISSIONS_LIST}; do
+                textFail "${regx}: Found untrusted account in VPC endpoint service permission ${UNTRUSTED_PERMISSION}" "${regx}"
+            done
+        done  
+    done
+}
