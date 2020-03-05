@@ -25,11 +25,13 @@ extra742(){
 
   textInfo "Looking for secrets in CloudFormation output across all regions... "
   for regx in $REGIONS; do
-    LIST_OF_CFN_STACKS=$($AWSCLI cloudformation describe-stacks $PROFILE_OPT --region $regx --query Stacks[*].[StackName] --output text)
+    CFN_STACKS=$($AWSCLI cloudformation describe-stacks $PROFILE_OPT --region $regx)
+    LIST_OF_CFN_STACKS=$(echo $CFN_STACKS | jq -r '.Stacks[].StackName')
     if [[ $LIST_OF_CFN_STACKS ]];then
       for stack in $LIST_OF_CFN_STACKS; do
         CFN_OUTPUTS_FILE="$SECRETS_TEMP_FOLDER/extra742-$stack-$regx-outputs.txt"
-        CFN_OUTPUTS=$($AWSCLI $PROFILE_OPT --region $regx cloudformation describe-stacks --query "Stacks[?StackName==\`$stack\`].Outputs[*].[OutputKey,OutputValue]" --output text > $CFN_OUTPUTS_FILE)
+        echo $CFN_STACKS | jq --arg s "$stack" -r '.Stacks[] | select( .StackName == $s ) | .Outputs[]? | "\(.OutputKey) \(.OutputValue)"' > $CFN_OUTPUTS_FILE
+
         if [ -s $CFN_OUTPUTS_FILE ];then
           # This finds ftp or http URLs with credentials and common keywords
           # FINDINGS=$(egrep -i '[[:alpha:]]*://[[:alnum:]]*:[[:alnum:]]*@.*/|key|secret|token|pass' $CFN_OUTPUTS_FILE |wc -l|tr -d '\ ')
