@@ -26,10 +26,14 @@ extra718(){
         textFail "Access Denied Trying to Get Bucket Logging for $bucket"
         continue
       fi
-      if [[ $(echo "$BUCKET_SERVER_LOG_ENABLED" | grep "^None$") ]]; then
-        textFail "Bucket $bucket has server access logging disabled!"
+      if [[ $EXTRA718_EXCLUDED_BUCKETS && $(echo $bucket | grep $EXTRA718_EXCLUDED_BUCKETS) ]]; then
+        textInfo "Bucket $bucket excluded from check"
       else
-        textPass "Bucket $bucket has server access logging enabled"
+        if [[ $(echo "$BUCKET_SERVER_LOG_ENABLED" | grep "^None$") ]]; then
+          textFail "Bucket $bucket has server access logging disabled!"
+        else
+          textPass "Bucket $bucket has server access logging enabled"
+        fi
       fi
     done
   else

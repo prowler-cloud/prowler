@@ -83,12 +83,14 @@ USAGE:
                             (i.e.: ProwlerRole)
       -T                  session durantion given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
                             (i.e.: 43200) 
+      -B <buckets>        a regex for buckets to exclude from check extra718
+                            (i.e.: '^bucket-name-prefix.*\|other-prefix-for-a-bucket.*$')
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:B:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -105,7 +107,7 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:" OPTION; do
         KEEPCREDREPORT=1
         ;;
      p )
-        PROFILE=$OPTARG
+        PROFILE_OPT=$OPTARG
         ;;
      r )
         REGION_OPT=$OPTARG
@@ -159,6 +161,9 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:" OPTION; do
         ;;
      T )
         SESSION_DURATION_TO_ASSUME=$OPTARG
+        ;;
+     B )
+        EXTRA718_EXCLUDED_BUCKETS=$OPTARG
         ;;
      : )
         echo ""
@@ -267,7 +272,7 @@ execute_check() {
         fi
       fi
 		  show_check_title $1
-		  $1
+      $1
     else
       textFail "ERROR! Use a valid check name (i.e. check41 or extra71)";
       exit $EXITCODE
