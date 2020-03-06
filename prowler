@@ -271,7 +271,7 @@ execute_check() {
           saveReport
         fi
       fi
-		  show_check_title $1
+      show_check_title $1
       $1
     else
       textFail "ERROR! Use a valid check name (i.e. check41 or extra71)";
