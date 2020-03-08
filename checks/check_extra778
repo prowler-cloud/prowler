@@ -23,32 +23,31 @@ extra778(){
     textInfo "Looking for VPC security groups with wide-open (</${CIDR_THRESHOLD}) non-RFC1918 IPv4 address ranges in all regions...  "
 
     check_cidr() {
-        CIDR_IP_LIST=$1
-        DIRECTION=$2
-        regx=$3
+        local SECURITY_GROUP=$1
+        local DIRECTION=$2
+        local DIRECTION_FILTER=""
+        local REGION=$3
+        
         case ${DIRECTION} in
-            inbound)
+            "inbound")
                 DIRECTION_FILTER="IpPermissions"
-                DIRECTION_NAME="inbound"
                 ;;
-            outbound)
+            "outbound")
                 DIRECTION_FILTER="IpPermissionsEgress"
-                DIRECTION_NAME="outbound"
                 ;;
         esac
 
         CIDR_IP_LIST=$(aws ec2 describe-security-groups \
                         --filter "Name=group-id,Values=${SECURITY_GROUP}" \
-                        --query "SecurityGroups[*].IpPermissions[*].IpRanges[*].CidrIp" \
-                        --region ${regx} \
+                        --query "SecurityGroups[*].${DIRECTION_FILTER}[*].IpRanges[*].CidrIp" \
+                        --region ${REGION} \
                         --output text | xargs
                         )
         
         for CIDR_IP in ${CIDR_IP_LIST}; do
             if [[ ! ${CIDR_IP} =~ ${RFC1918_REGEX} ]]; then
                 CIDR=$(echo ${CIDR_IP} | cut -d"/" -f2 | xargs)
-                if [[ ${CIDR} < ${CIDR_THRESHOLD} ]]; then
-                    textFail "${regx}: ${SECURITY_GROUP} has potential wide-open non-RFC1918 address ${CIDR_IP} in ${DIRECTION_NAME} rule." "${regx}"
+                    textFail "${REGION}: ${SECURITY_GROUP} has potential wide-open non-RFC1918 address ${CIDR_IP} in ${DIRECTION} rule." "${REGION}"
                 fi
             fi
         done
@@ -57,8 +56,8 @@ extra778(){
     for regx in ${REGIONS}; do
         SECURITY_GROUP_IDS=$(${AWSCLI} ec2 describe-security-groups --region ${regx} --query 'SecurityGroups[*].GroupId' --output text | xargs)
         for SECURITY_GROUP in ${SECURITY_GROUP_IDS}; do
-            check_cidr "${SECURITY_GROUP_IDS}" "inbound" "${regx}"
-            check_cidr "${SECURITY_GROUP_IDS}" "outbound" "${regx}"
+            check_cidr "${SECURITY_GROUP}" "inbound" "${regx}"
+            check_cidr "${SECURITY_GROUP}" "outbound" "${regx}"
         done
     done
 }
