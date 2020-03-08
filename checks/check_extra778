@@ -11,13 +11,13 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-CHECK_ID_extra777="7.77"
-CHECK_TITLE_extra777="[extra777] Find VPC security groups with wide-open public IPv4 CIDR ranges (non-RFC1918) (Not Scored) (Not part of CIS benchmark)"
-CHECK_SCORED_extra777="NOT_SCORED"
-CHECK_TYPE_extra777="EXTRA"
-CHECK_ALTERNATE_check777="extra777"
+CHECK_ID_extra778="7.77"
+CHECK_TITLE_extra778="[extra778] Find VPC security groups with wide-open public IPv4 CIDR ranges (non-RFC1918) (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra778="NOT_SCORED"
+CHECK_TYPE_extra778="EXTRA"
+CHECK_ALTERNATE_check778="extra778"
 
-extra777(){
+extra778(){
     CIDR_THRESHOLD=24
     RFC1918_REGEX="(^127\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.)"
     textInfo "Looking for VPC security groups with wide-open (</${CIDR_THRESHOLD}) non-RFC1918 IPv4 address ranges in all regions...  "
