@@ -37,7 +37,8 @@ extra778(){
                 ;;
         esac
 
-        CIDR_IP_LIST=$(aws ec2 describe-security-groups \
+        CIDR_IP_LIST=$(${AWSCLI} ec2 describe-security-groups \
+                        ${PROFILE_OPT} \
                         --filter "Name=group-id,Values=${SECURITY_GROUP}" \
                         --query "SecurityGroups[*].${DIRECTION_FILTER}[*].IpRanges[*].CidrIp" \
                         --region ${REGION} \
@@ -57,7 +58,12 @@ extra778(){
     }
 
     for regx in ${REGIONS}; do
-        SECURITY_GROUP_IDS=$(${AWSCLI} ec2 describe-security-groups --region ${regx} --query 'SecurityGroups[*].GroupId' --output text | xargs)
+        SECURITY_GROUP_IDS=$(${AWSCLI} ec2 describe-security-groups \
+                              ${PROFILE_OPT} \
+                              --region ${regx} \
+                              --query 'SecurityGroups[*].GroupId' \
+                              --output text | xargs
+                              )
         for SECURITY_GROUP in ${SECURITY_GROUP_IDS}; do
             check_cidr "${SECURITY_GROUP}" "inbound" "${regx}"
             check_cidr "${SECURITY_GROUP}" "outbound" "${regx}"
