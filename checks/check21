@@ -9,7 +9,7 @@
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
 CHECK_ID_check21="2.1,2.01"
-CHECK_TITLE_check21="[check21] Ensure CloudTrail is enabled in all regions (Scored)"
+CHECK_TITLE_check21=" Ensure CloudTrail is enabled in all regions (Scored)"
 CHECK_SCORED_check21="SCORED"
 CHECK_TYPE_check21="LEVEL1"
 CHECK_ALTERNATE_check201="check21"
@@ -17,7 +17,7 @@ CHECK_ALTERNATE_check201="check21"
 check21(){
   trail_count=0
   # "Ensure CloudTrail is enabled in all regions (Scored)"
-    REGIONS=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].HomeRegion' --output text)
+    REGIONS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --query 'trailList[*].HomeRegion' --output text)
     result='False'
 	for regx in $REGIONS; do
 		LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].Name' --output text)
@@ -25,9 +25,9 @@ check21(){
 				for trail in $LIST_OF_TRAILS;do
                         trail_count=$((trail_count + 1))
                         MULTIREGION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].IsMultiRegionTrail' --output text --trail-name-list $trail)
-                        ISLOGGING_STATUS=$($AWSCLI cloudtrail get-trail-status --region $regx --name $trail --query ['IsLogging'] --output text)
-                        INCLUDEMANAGEMENTEVENTS_STATUS=$($AWSCLI cloudtrail  get-event-selectors --region $regx --trail-name $trail --query EventSelectors[*].IncludeManagementEvents --output text)
-                        READWRITETYPE_STATUS=$($AWSCLI cloudtrail  get-event-selectors --region $regx --trail-name $trail --query EventSelectors[*].ReadWriteType --output text)  
+                        ISLOGGING_STATUS=$($AWSCLI cloudtrail get-trail-status $PROFILE_OPT --region $regx --name $trail --query ['IsLogging'] --output text)
+                        INCLUDEMANAGEMENTEVENTS_STATUS=$($AWSCLI cloudtrail  get-event-selectors $PROFILE_OPT --region $regx --trail-name $trail --query EventSelectors[*].IncludeManagementEvents --output text)
+                        READWRITETYPE_STATUS=$($AWSCLI cloudtrail  get-event-selectors $PROFILE_OPT --region $regx --trail-name $trail --query EventSelectors[*].ReadWriteType --output text)  
                         
                         echo $MULTIREGION_TRAIL_STATUS $ISLOGGING_STATUS $INCLUDEMANAGEMENTEVENTS_STATUS $READWRITETYPE_STATUS [ "$INCLUDEMANAGEMENTEVENTS_STATUS" == *"True"* ]
                         if [[ "$MULTIREGION_TRAIL_STATUS" == "True" ]] && [[ "$ISLOGGING_STATUS" == "True" ]] && [[ "$INCLUDEMANAGEMENTEVENTS_STATUS" == *"True"* ]] && [[ "$READWRITETYPE_STATUS" == *"All"* ]];then
