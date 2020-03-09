@@ -9,7 +9,7 @@
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
 CHECK_ID_check21="2.1,2.01"
-CHECK_TITLE_check21=" Ensure CloudTrail is enabled in all regions (Scored)"
+CHECK_TITLE_check21="[check21] Ensure CloudTrail is enabled in all regions (Scored)"
 CHECK_SCORED_check21="SCORED"
 CHECK_TYPE_check21="LEVEL1"
 CHECK_ALTERNATE_check201="check21"
