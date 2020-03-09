@@ -39,7 +39,7 @@ check21(){
     if [[ $result == 'False' ]]; then
       textFail "trail exist but it is not enabled in multi region mode"
     fi
-	if [[ $trail_count == 0 ]]; then
+    if [[ $trail_count == 0 ]]; then
       textFail "No CloudTrail trails were found in the account"
     fi
 }
