@@ -21,3 +21,6 @@ tags
 .idea
 secrets-*
 
+
+# MacOs DS_Store
+*.DS_Store
