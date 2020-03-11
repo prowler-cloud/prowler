@@ -1,0 +1,4 @@
+# Each line is a (checkid:item) tuple
+
+# Example: Will not consider a myignoredbucket failures as full failure. (Still printed as a warning)
+check26:myignoredbucket

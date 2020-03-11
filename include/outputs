@@ -104,15 +104,29 @@ textInfo(){
 }
 
 textFail(){
-  FAIL_COUNTER=$((FAIL_COUNTER+1))
-  EXITCODE=3
+  ## ignore whitelists for current check
+  level="FAIL"
+  for i in $IGNORES; do
+    ignore_value="${i#*${CHECK_NAME}:}"
+    if [[ $1 =~ ${ignore_value} ]]; then
+      level="WARNING"
+      break
+    fi
+  done
+
+  # only set non-0 exit code on FAIL mode, WARN is ok
+  if [[ "$level" == "FAIL" ]]; then
+    FAIL_COUNTER=$((FAIL_COUNTER+1))
+    EXITCODE=3
+  fi
+
   if [[ "$MODE" == "csv" ]]; then
     if [[ $2 ]]; then
       REPREGION=$2
     else
       REPREGION=$REGION
     fi
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}FAIL${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}${level}${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
   elif [[ "$MODE" == "json" ]]; then
     if [[ $2 ]]; then
       REPREGION=$2
@@ -128,7 +142,7 @@ textFail(){
     --arg ITEM_LEVEL "$ITEM_LEVEL" \
     --arg TITLE_ID "$TITLE_ID" \
     --arg REPREGION "$REPREGION" \
-    --arg TIMESTAMP $(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+    --arg TIMESTAMP "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
     -n '{
       "Profile": $PROFILE,
       "Account Number": $ACCOUNT_NUM,
@@ -142,7 +156,11 @@ textFail(){
       "Timestamp": $TIMESTAMP,
     }'
   else
-    echo "      $BAD FAIL! $1 $NORMAL"
+    if [[ "${level}" == "FAIL" ]]; then
+      echo "      $BAD ${level}! $1 $NORMAL"
+    else
+      echo "      $WARNING ${level}! $1 $NORMAL"
+    fi
   fi
 }
 

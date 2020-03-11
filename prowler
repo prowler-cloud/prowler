@@ -47,6 +47,7 @@ EXITCODE=0
 SCRIPT_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
 TITLE_ID=""
 TITLE_TEXT="CALLER ERROR - UNSET TITLE"
+WHITELIST_FILE=""
 
 # Command usage menu
 usage(){
@@ -83,12 +84,19 @@ USAGE:
                             (i.e.: ProwlerRole)
       -T                  session durantion given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
                             (i.e.: 43200) 
+      -w                  whitelist file. (Lines starting with # are ignored as comments) Format:
+                            # ignore these due to some reason
+                            # check1 checks s3 buckets
+                            <checkid1>:<resource to ignore 1>
+                            <checkid1>:<resource to ignore 2>
+                            # checkid2
+                            <checkid2>:<resource to ignore 1>
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:w:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -160,6 +168,11 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:" OPTION; do
      T )
         SESSION_DURATION_TO_ASSUME=$OPTARG
         ;;
+     w )
+        WHITELIST_FILE=$OPTARG
+        echo ""
+        echo "$OPTNORMAL Using Whitelist file: $OPTARG"
+        ;;
      : )
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL  -$OPTARG requires an argument"
@@ -201,6 +214,12 @@ REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
   $PROFILE_OPT \
   --region $REGION \
   --region-names $FILTERREGION)
+
+# Pre-process whitelist file if supplied
+if [[ -n "$WHITELIST_FILE" ]]; then
+  # ignore lines starting with # (comments)
+  WHITELIST=$(awk   '!/^[[:space:]]*#/{print }' <(cat "$WHITELIST_FILE"))
+fi
 
 # Load all of the groups of checks inside groups folder named as "groupNumber*"
 for group in $(ls $PROWLER_DIR/groups/group[0-9]*|grep -v groupN_sample); do
@@ -266,8 +285,10 @@ execute_check() {
           saveReport
         fi
       fi
-		  show_check_title $1
-		  $1
+      show_check_title "$1"
+      ignores=$(awk '/${1}/{print}' <(echo "${WHITELIST}"))
+      # set the custom ignores list for this check
+      IGNORES="${ignores}" $1
     else
       textFail "ERROR! Use a valid check name (i.e. check41 or extra71)";
       exit $EXITCODE
