@@ -42,13 +42,14 @@ extra779(){
         ACCOUNT_ID_WHITELIST=$(cat ${ACCOUNT_ID_WHITELIST_PATH} | xargs)
         
         ENDPOINT_SERVICES_IDS=$(${AWSCLI} ec2 describe-vpc-endpoint-services \
-                            --query "ServiceDetails[?Owner=='${THIS_ACCOUNT_ID}'].ServiceId" \
+                                ${PROFILE_OPT} \
                             --region ${regx} \
                             --output text | xargs)
 
         for ENDPOINT_SERVICE_ID in ${ENDPOINT_SERVICES_IDS}; do
     
             ENDPOINT_CONNECTION_LIST=$(${AWSCLI} ec2 describe-vpc-endpoint-connections \
+                                        ${PROFILE_OPT} \
                                         --query "VpcEndpointConnections[?VpcEndpointState=='available'].VpcEndpointOwner" \
                                         --region ${regx} \
                                         --output text | xargs)
