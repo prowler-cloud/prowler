@@ -18,9 +18,7 @@ CHECK_TYPE_extra779="EXTRA"
 CHECK_ALTERNATE_extra779="extra779"
 
 extra779(){
-    ACCOUNT_ID_WHITELIST_PATH="checks_config/check_extra779_whitelist"
-    THIS_ACCOUNT_ID=$(${AWSCLI} sts get-caller-identity --query "Arn" --output text | cut -d":" -f5 | xargs)
-    sed -i'' -e "s/__THIS_ACCOUNT_ID__/$THIS_ACCOUNT_ID/" "${ACCOUNT_ID_WHITELIST_PATH}"
+    sed -i'' -e "s/__ACCOUNT_NUM__/${ACCOUNT_NUM}/" "${ACCOUNT_ID_WHITELIST_PATH}"
 
     containsElement () {
         element=$1
@@ -43,6 +41,7 @@ extra779(){
         
         ENDPOINT_SERVICES_IDS=$(${AWSCLI} ec2 describe-vpc-endpoint-services \
                                 ${PROFILE_OPT} \
+                                --query "ServiceDetails[?Owner=='${ACCOUNT_NUM}'].ServiceId" \
                             --region ${regx} \
                             --output text | xargs)
 
