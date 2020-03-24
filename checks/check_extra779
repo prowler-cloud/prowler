@@ -18,6 +18,7 @@ CHECK_TYPE_extra779="EXTRA"
 CHECK_ALTERNATE_extra779="extra779"
 
 extra779(){
+    ACCOUNT_ID_WHITELIST_PATH="checks_config/check_${CHECK_ALTERNATE_extra779}_whitelist"
     sed -i'' -e "s/__ACCOUNT_NUM__/${ACCOUNT_NUM}/" "${ACCOUNT_ID_WHITELIST_PATH}"
 
     containsElement () {
@@ -42,8 +43,9 @@ extra779(){
         ENDPOINT_SERVICES_IDS=$(${AWSCLI} ec2 describe-vpc-endpoint-services \
                                 ${PROFILE_OPT} \
                                 --query "ServiceDetails[?Owner=='${ACCOUNT_NUM}'].ServiceId" \
-                            --region ${regx} \
-                            --output text | xargs)
+                                --region ${regx} \
+                                --output text | xargs
+                                )
 
         for ENDPOINT_SERVICE_ID in ${ENDPOINT_SERVICES_IDS}; do
     
@@ -51,7 +53,8 @@ extra779(){
                                         ${PROFILE_OPT} \
                                         --query "VpcEndpointConnections[?VpcEndpointState=='available'].VpcEndpointOwner" \
                                         --region ${regx} \
-                                        --output text | xargs)
+                                        --output text | xargs
+                                        )
             
             for ENDPOINT_CONNECTION in ${ENDPOINT_CONNECTION_LIST}; do
                 for ACCOUNT_ID in ${ACCOUNT_ID_WHITELIST}; do
