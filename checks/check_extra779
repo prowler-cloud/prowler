@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra779="7.79"
+CHECK_TITLE_extra779="[extra779] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Elasticsearch/Kibana ports 9200/9300/5601  (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra779="NOT_SCORED"
+CHECK_TYPE_extra779="EXTRA"
+CHECK_ALTERNATE_check779="extra779"
+
+extra779(){
+  # if TEST_AUTHENTICATION has a value Prowler will try to access each ElasticSearch server to ports 9200/9300/5601
+  # from the host where Prowler is running and will try to read indices or get kibana status
+  TEST_ES_AUTHENTICATION=
+  for regx in $REGIONS; do
+    # crate a list of SG open to the world with port 9200 or 9300 or 5601
+    SG_LIST=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --output text \
+      --query 'SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort<=`9200` && ToPort>=`9200`) || (FromPort<=`9300` && ToPort>=`9300`)) || (FromPort<=`5601` && ToPort>=`5601 `) && (contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}')
+    # in case of open security groups goes through each one
+    if [[ $SG_LIST ]];then
+      for sg in $SG_LIST;do
+        # temp file store the list of instances IDs and public IP address if found
+        TEMP_EXTRA779_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-es-domain.EXTRA779.XXXXXXXXXX)
+        # finds instances with that open security group attached and get its public ip address (if it has one)
+        $AWSCLI $PROFILE_OPT --region $regx ec2 describe-instances --filters Name=instance.group-id,Values=$sg --query 'Reservations[*].Instances[*].[InstanceId,PublicIpAddress]' --output text > $TEMP_EXTRA779_FILE
+        # in case of exposed instances it does access checks
+        if [[ -s "$TEMP_EXTRA779_FILE" ]];then
+          while read instance eip ; do 
+            if [[ $TEST_ES_AUTHENTICATION ]];then
+              if [[ "$eip" != "None" ]];then 
+                CHECH_AUTH_9200=$(curl -m 2 -s -X GET "http://$eip:9200/_cat/indices" | grep -v "not authorized" >/dev/null 2>&1 && echo "open" || echo "closed")
+                # timeout 1 bash -c '(echo > /dev/tcp/'$eip'/9300) >/dev/null 2>&1 && echo "open" || echo "closed"'
+                CHECH_AUTH_5601=$(curl -m 2 -s "http://$eip:5601/api/status" | jq .version.number | grep -v null >/dev/null 2>&1 && echo "open" || echo "closed")
+                if [[ $CHECH_AUTH_9200 -eq "closed" ]];then 
+                  textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch $CHECH_AUTH_9200" "$regx"
+                else
+                  textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch $CHECH_AUTH_9200" "$regx"
+                fi 
+                if [[ $CHECH_AUTH_5601 -eq "closed" ]];then
+                  textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana $CHECH_AUTH_5601" "$regx"
+                else
+                  textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana $CHECH_AUTH_5601" "$regx"
+                fi  
+              fi 
+            else
+              if [[ "$eip" == "None" ]];then 
+                textInfo "$regx: Found instance $instance with private IP on Security Group: $sg" "$regx"
+              else 
+                textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg open to 0.0.0.0/0 on for Elasticsearch/Kibana ports" "$regx"
+              fi 
+            fi 
+            if [[ "$eip" == "None" ]];then 
+              textInfo "$regx: Found instance $instance with private IP on Security Group: $sg" "$regx"
+            fi
+          # done < <(cat $TEMP_EXTRA779_FILE | grep -v None$)
+          done < <(cat $TEMP_EXTRA779_FILE)
+          # while read instance eip ; do 
+          #   textInfo "$regx: Found instance $instance with private IP on Security Group: $sg" "$regx"
+          # done < <(cat $TEMP_EXTRA779_FILE | grep None$)
+        fi 
+        rm -rf $TEMP_EXTRA779_FILE 
+        #textFail "$regx: Found Security Group: $sg open to 0.0.0.0/0 on for Elasticsearch ports" "$regx"
+      done
+    else
+      textPass "$regx: No Security Groups found open to 0.0.0.0/0 for Elasticsearch/Kibana ports" "$regx"
+    fi
+  done
+}
