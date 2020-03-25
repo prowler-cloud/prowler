@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra779="7.79"
-CHECK_TITLE_extra779="[extra779] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Elasticsearch/Kibana ports 9200/9300/5601  (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra779="[extra779] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Elasticsearch/Kibana ports 9200/9300/5601"
 CHECK_SCORED_extra779="NOT_SCORED"
 CHECK_TYPE_extra779="EXTRA"
 CHECK_ALTERNATE_check779="extra779"

@@ -23,13 +23,13 @@ extra785(){
       for domain in $LIST_OF_DOMAINS;do
         CHECK_IF_UPDATE_AVAILABLE=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.ServiceSoftwareOptions.UpdateAvailable' --output text|grep -i true)
         if [[ $CHECK_IF_UPDATE_AVAILABLE ]];then
-          textInfo "$regx: Amazon Elasticsearch Service (ES) $domain has updates available" "$regx"
+          textInfo "$regx: Amazon ES domain $domain has updates available" "$regx"
         else 
-          textPass "$regx: Amazon Elasticsearch Service (ES) $domain does not have have updates available" "$regx"
+          textPass "$regx: Amazon ES domain $domain does not have have updates available" "$regx"
         fi
       done
     else
-      textInfo "$regx: No Amazon Elasticsearch Service (ES) domains found" "$regx"
+      textInfo "$regx: No Amazon ES domain found" "$regx"
     fi
   done
 }

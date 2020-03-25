@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra782="7.82"
-CHECK_TITLE_extra782="[extra782] Check if Amazon Elasticsearch Service (ES) domains has node-to-node encryption enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra782="[extra782] Check if Amazon Elasticsearch Service (ES) domains has node-to-node encryption enabled"
 CHECK_SCORED_extra782="NOT_SCORED"
 CHECK_TYPE_extra782="EXTRA"
 CHECK_ALTERNATE_check782="extra782"
@@ -23,13 +23,13 @@ extra782(){
       for domain in $LIST_OF_DOMAINS;do
         CHECK_IF_NODETOENCR_ENABLED=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.NodeToNodeEncryptionOptions.Enabled' --output text|grep -i true)
         if [[ $CHECK_IF_NODETOENCR_ENABLED ]];then
-          textPass "$regx: Amazon Elasticsearch Service (ES) $domain has node-to-node encryption enabled" "$regx"
+          textPass "$regx: Amazon ES domain $domain has node-to-node encryption enabled" "$regx"
         else 
-          textFail "$regx: Amazon Elasticsearch Service (ES) $domain does not have node-to-node encryption enabled" "$regx"
+          textFail "$regx: Amazon ES domain $domain does not have node-to-node encryption enabled" "$regx"
         fi
       done
     else
-      textInfo "$regx: No Amazon Elasticsearch Service (ES) domains found" "$regx"
+      textInfo "$regx: No Amazon ES domain found" "$regx"
     fi
   done
 }

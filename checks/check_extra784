@@ -23,13 +23,13 @@ extra784(){
       for domain in $LIST_OF_DOMAINS;do
         CHECK_IF_INTERNALDB_ENABLED=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.AdvancedSecurityOptions.InternalUserDatabaseEnabled' --output text|grep -i true)
         if [[ $CHECK_IF_INTERNALDB_ENABLED ]];then
-          textPass "$regx: Amazon Elasticsearch Service (ES) $domain has internal user database enabled" "$regx"
+          textPass "$regx: Amazon ES domain $domain has internal user database enabled" "$regx"
         else 
-          textFail "$regx: Amazon Elasticsearch Service (ES) $domain does not have internal user database enabled" "$regx"
+          textFail "$regx: Amazon ES domain $domain does not have internal user database enabled" "$regx"
         fi
       done
     else
-      textInfo "$regx: No Amazon Elasticsearch Service (ES) domains found" "$regx"
+      textInfo "$regx: No Amazon ES domain found" "$regx"
     fi
   done
 }

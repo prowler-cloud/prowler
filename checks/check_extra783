@@ -23,13 +23,13 @@ extra783(){
       for domain in $LIST_OF_DOMAINS;do
         CHECK_IF_ENFORCEHTTPS_ENABLED=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.DomainEndpointOptions.EnforceHTTPS' --output text|grep -i true)
         if [[ $CHECK_IF_ENFORCEHTTPS_ENABLED ]];then
-          textPass "$regx: Amazon Elasticsearch Service (ES) $domain has enforce HTTPS enabled" "$regx"
+          textPass "$regx: Amazon ES domain $domain has enforce HTTPS enabled" "$regx"
         else 
-          textFail "$regx: Amazon Elasticsearch Service (ES) $domain does not have enforce HTTPS enabled" "$regx"
+          textFail "$regx: Amazon ES domain $domain does not have enforce HTTPS enabled" "$regx"
         fi
       done
     else
-      textInfo "$regx: No Amazon Elasticsearch Service (ES) domains found" "$regx"
+      textInfo "$regx: No Amazon ES domain found" "$regx"
     fi
   done
 }
