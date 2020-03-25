@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra785="7.85"
-CHECK_TITLE_extra785="[extra785] Check if Elasticsearch Service domains have updates available (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra785="[extra785] Check if Amazon Elasticsearch Service (ES) domains have updates available"
 CHECK_SCORED_extra785="NOT_SCORED"
 CHECK_TYPE_extra785="EXTRA"
 CHECK_ALTERNATE_check785="extra785"
@@ -23,13 +23,13 @@ extra785(){
       for domain in $LIST_OF_DOMAINS;do
         CHECK_IF_UPDATE_AVAILABLE=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.ServiceSoftwareOptions.UpdateAvailable' --output text|grep -i true)
         if [[ $CHECK_IF_UPDATE_AVAILABLE ]];then
-          textInfo "$regx: $domain has updates available" "$regx"
+          textInfo "$regx: Amazon Elasticsearch Service (ES) $domain has updates available" "$regx"
         else 
-          textPass "$regx: $domain does not have have updates available" "$regx"
+          textPass "$regx: Amazon Elasticsearch Service (ES) $domain does not have have updates available" "$regx"
         fi
       done
     else
-      textInfo "$regx: No Elasticsearch Service domains found" "$regx"
+      textInfo "$regx: No Amazon Elasticsearch Service (ES) domains found" "$regx"
     fi
   done
 }

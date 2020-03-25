@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra784="7.84"
-CHECK_TITLE_extra784="[extra784] Check if Elasticsearch Service domains internal user database enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra784="[extra784] Check if Amazon Elasticsearch Service (ES) domains internal user database enabled"
 CHECK_SCORED_extra784="NOT_SCORED"
 CHECK_TYPE_extra784="EXTRA"
 CHECK_ALTERNATE_check784="extra784"
@@ -23,13 +23,13 @@ extra784(){
       for domain in $LIST_OF_DOMAINS;do
         CHECK_IF_INTERNALDB_ENABLED=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.AdvancedSecurityOptions.InternalUserDatabaseEnabled' --output text|grep -i true)
         if [[ $CHECK_IF_INTERNALDB_ENABLED ]];then
-          textPass "$regx: $domain has internal user database enabled" "$regx"
+          textPass "$regx: Amazon Elasticsearch Service (ES) $domain has internal user database enabled" "$regx"
         else 
-          textFail "$regx: $domain does not have internal user database enabled" "$regx"
+          textFail "$regx: Amazon Elasticsearch Service (ES) $domain does not have internal user database enabled" "$regx"
         fi
       done
     else
-      textInfo "$regx: No Elasticsearch Service domains found" "$regx"
+      textInfo "$regx: No Amazon Elasticsearch Service (ES) domains found" "$regx"
     fi
   done
 }

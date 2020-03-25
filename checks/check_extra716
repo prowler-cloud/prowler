@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra716="7.16"
-CHECK_TITLE_extra716="[extra716] Check if Elasticsearch Service domains are set as Public and have cross account access (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra716="[extra716] Check if Amazon Elasticsearch Service (ES) domains are set as Public and have cross account access"
 CHECK_SCORED_extra716="NOT_SCORED"
 CHECK_TYPE_extra716="EXTRA"
 CHECK_ALTERNATE_check716="extra716"
@@ -27,14 +27,14 @@ extra716(){
         # check if the policy has Principal as *
         CHECK_ES_DOMAIN_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | jq -r '. | .Statement[] | select(.Effect == "Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and .Condition == null)')
         if [[ $CHECK_ES_DOMAIN_ALLUSERS_POLICY ]];then
-          textFail "$regx: $domain policy allow Anonymous cross account access (Principal: \"*\")" "$regx"
+          textFail "$regx: Amazon Elasticsearch Service (ES) $domain policy allow Anonymous cross account access (Principal: \"*\")" "$regx"
         else
-          textPass "$regx: $domain does not allow Anonymous cross account access" "$regx"
+          textPass "$regx: Amazon Elasticsearch Service (ES) $domain does not allow Anonymous cross account access" "$regx"
         fi
         rm -f $TEMP_POLICY_FILE
       done
     else
-      textInfo "$regx: No Elasticsearch Service domain found" "$regx"
+      textInfo "$regx: No Amazon Elasticsearch Service (ES) domain found" "$regx"
     fi
   done
 }
