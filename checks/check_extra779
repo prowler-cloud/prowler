@@ -23,7 +23,7 @@ extra779(){
   for regx in $REGIONS; do
     # crate a list of SG open to the world with port 9200 or 9300 or 5601
     SG_LIST=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --output text \
-      --query 'SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort<=`9200` && ToPort>=`9200`) || (FromPort<=`9300` && ToPort>=`9300`)) || (FromPort<=`5601` && ToPort>=`5601 `) && (contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}')
+      --query 'SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort<=`9200` && ToPort>=`9200`) || (FromPort<=`9300` && ToPort>=`9300`) || (FromPort<=`5601` && ToPort>=`5601 `)) && (contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}')
     # in case of open security groups goes through each one
     if [[ $SG_LIST ]];then
       for sg in $SG_LIST;do
