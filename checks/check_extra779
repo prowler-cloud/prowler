@@ -20,6 +20,25 @@ extra779(){
   # if TEST_AUTHENTICATION has a value Prowler will try to access each ElasticSearch server to ports 9200/9300/5601
   # from the host where Prowler is running and will try to read indices or get kibana status
   TEST_ES_AUTHENTICATION=
+  httpStatus(){
+    case $1 in 
+      000) SERVER_RESPONSE="000 Not responding within 2 seconds" ;;
+      200) SERVER_RESPONSE="200 Successful" ;;
+      400) SERVER_RESPONSE="400 Error: Bad Request" ;;
+      401) SERVER_RESPONSE="401 Error: Unauthorized" ;;
+      403) SERVER_RESPONSE="403 Error: Forbidden" ;;
+      404) SERVER_RESPONSE="404 Error: Not Found" ;;
+      407) SERVER_RESPONSE="407 Error: Proxy Authentication Required" ;;
+      408) SERVER_RESPONSE="408 Error: Request Timeout within 2 seconds" ;;
+      500) SERVER_RESPONSE="500 Error: Internal Server Error" ;;
+      502) SERVER_RESPONSE="502 Error: Bad Gateway" ;;
+      503) SERVER_RESPONSE="503 Error: Service Unavailable" ;;
+      504) SERVER_RESPONSE="504 Error: Gateway Timeout within 2 seconds" ;;
+      505) SERVER_RESPONSE="505 Error: HTTP Version Not Supported" ;;
+      *)   SERVER_RESPONSE="HTTP: status not defined." ;;
+    esac
+  }
+
   for regx in $REGIONS; do
     # crate a list of SG open to the world with port 9200 or 9300 or 5601
     SG_LIST=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --output text \
@@ -36,19 +55,25 @@ extra779(){
           while read instance eip ; do 
             if [[ $TEST_ES_AUTHENTICATION ]];then
               if [[ "$eip" != "None" ]];then 
-                CHECH_AUTH_9200=$(curl -m 2 -s -X GET "http://$eip:9200/_cat/indices" | grep -v "not authorized" >/dev/null 2>&1 && echo "open" || echo "closed")
-                # timeout 1 bash -c '(echo > /dev/tcp/'$eip'/9300) >/dev/null 2>&1 && echo "open" || echo "closed"'
-                CHECH_AUTH_5601=$(curl -m 2 -s "http://$eip:5601/api/status" | jq .version.number | grep -v null >/dev/null 2>&1 && echo "open" || echo "closed")
-                if [[ $CHECH_AUTH_9200 -eq "closed" ]];then 
-                  textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch $CHECH_AUTH_9200" "$regx"
+                # check for Elasticsearch on port 9200
+                CHECH_HTTP_9200=$(curl -m 2 -s -w "%{http_code}" -o /dev/null -X GET "http://$eip:9200/_cat/indices")
+                httpStatus $CHECH_HTTP_9200
+                if [[ $CHECH_HTTP_9200 -eq "200" ]];then 
+                  textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch response $SERVER_RESPONSE" "$regx"
                 else
-                  textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch $CHECH_AUTH_9200" "$regx"
+                  textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch response $SERVER_RESPONSE" "$regx"
                 fi 
-                if [[ $CHECH_AUTH_5601 -eq "closed" ]];then
-                  textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana $CHECH_AUTH_5601" "$regx"
+
+                # check for Kibana on port 5601
+                CHECH_HTTP_5601=$(curl -m 2 -s -w "%{http_code}" -o /dev/null -X GET "http://$eip:5601/api/status")
+                httpStatus $CHECH_HTTP_5601
+                if [[ $CHECH_AUTH_5601 -eq "200" ]];then
+                  textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana response $SERVER_RESPONSE" "$regx"
                 else
-                  textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana $CHECH_AUTH_5601" "$regx"
+                  textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana response $SERVER_RESPONSE" "$regx"
                 fi  
+                # port 9300 not added yet, a command to check that could be:
+                # timeout 1 bash -c '(echo > /dev/tcp/'$eip'/9300) >/dev/null 2>&1 && echo "open" || echo "closed"'
               fi 
             else
               if [[ "$eip" == "None" ]];then 
