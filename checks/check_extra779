@@ -17,23 +17,24 @@ CHECK_TYPE_extra779="EXTRA"
 CHECK_ALTERNATE_check779="extra779"
 
 extra779(){
-  # if TEST_AUTHENTICATION has a value Prowler will try to access each ElasticSearch server to ports 9200/9300/5601
-  # from the host where Prowler is running and will try to read indices or get kibana status
-  TEST_ES_AUTHENTICATION=
+  # if TEST_AUTHENTICATION has a value Prowler will try to access each ElasticSearch server to port:
+  # 9200 API, 9300 Communcation and 5601 Kibana to figure out if authentication is enabled.
+  # That is from the host where Prowler is running and will try to read indices or get kibana status
+  TEST_ES_AUTHENTICATION=1
   httpStatus(){
     case $1 in 
-      000) SERVER_RESPONSE="000 Not responding within 2 seconds" ;;
+      000) SERVER_RESPONSE="000 Not responding" ;;
       200) SERVER_RESPONSE="200 Successful" ;;
       400) SERVER_RESPONSE="400 Error: Bad Request" ;;
       401) SERVER_RESPONSE="401 Error: Unauthorized" ;;
       403) SERVER_RESPONSE="403 Error: Forbidden" ;;
       404) SERVER_RESPONSE="404 Error: Not Found" ;;
       407) SERVER_RESPONSE="407 Error: Proxy Authentication Required" ;;
-      408) SERVER_RESPONSE="408 Error: Request Timeout within 2 seconds" ;;
+      408) SERVER_RESPONSE="408 Error: Request Timeout" ;;
       500) SERVER_RESPONSE="500 Error: Internal Server Error" ;;
       502) SERVER_RESPONSE="502 Error: Bad Gateway" ;;
       503) SERVER_RESPONSE="503 Error: Service Unavailable" ;;
-      504) SERVER_RESPONSE="504 Error: Gateway Timeout within 2 seconds" ;;
+      504) SERVER_RESPONSE="504 Error: Gateway Timeout" ;;
       505) SERVER_RESPONSE="505 Error: HTTP Version Not Supported" ;;
       *)   SERVER_RESPONSE="HTTP: status not defined." ;;
     esac
@@ -55,13 +56,26 @@ extra779(){
           while read instance eip ; do 
             if [[ $TEST_ES_AUTHENTICATION ]];then
               if [[ "$eip" != "None" ]];then 
-                # check for Elasticsearch on port 9200
+                # check for Elasticsearch on port 9200, rest API HTTP.
                 CHECH_HTTP_9200=$(curl -m 2 -s -w "%{http_code}" -o /dev/null -X GET "http://$eip:9200/_cat/indices")
                 httpStatus $CHECH_HTTP_9200
                 if [[ $CHECH_HTTP_9200 -eq "200" ]];then 
-                  textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch response $SERVER_RESPONSE" "$regx"
+                  textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port 9200 response $SERVER_RESPONSE" "$regx"
                 else
-                  textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch response $SERVER_RESPONSE" "$regx"
+                  textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port 9200 response $SERVER_RESPONSE" "$regx"
+                fi 
+
+                # check for port 9300 TCP, this is the communication port, not:
+                # test_tcp_connectivity is in include/os_detector 
+                # syntax is 'test_tcp_connectivity $HOST $PORT $TIMEOUT' (in seconds)
+                CHECK_TCP_9300=$(test_tcp_connectivity $eip 9300 2)
+                # Using HTTP error codes here as well to reuse httpStatus function  
+                # codes for better handling, so 200 is open and 000 is not responding
+                httpStatus $CHECK_TCP_9300
+                if [[ $CHECK_TCP_9300 -eq "200" ]];then
+                  textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port 9300 response $SERVER_RESPONSE" "$regx"
+                else
+                  textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port 9300 response $SERVER_RESPONSE" "$regx"
                 fi 
 
                 # check for Kibana on port 5601
@@ -72,8 +86,6 @@ extra779(){
                 else
                   textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana response $SERVER_RESPONSE" "$regx"
                 fi  
-                # port 9300 not added yet, a command to check that could be:
-                # timeout 1 bash -c '(echo > /dev/tcp/'$eip'/9300) >/dev/null 2>&1 && echo "open" || echo "closed"'
               fi 
             else
               if [[ "$eip" == "None" ]];then 
