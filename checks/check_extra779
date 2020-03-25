@@ -20,7 +20,7 @@ extra779(){
   # if TEST_AUTHENTICATION has a value Prowler will try to access each ElasticSearch server to port:
   # 9200 API, 9300 Communcation and 5601 Kibana to figure out if authentication is enabled.
   # That is from the host where Prowler is running and will try to read indices or get kibana status
-  TEST_ES_AUTHENTICATION=1
+  TEST_ES_AUTHENTICATION=
   httpStatus(){
     case $1 in 
       000) SERVER_RESPONSE="000 Not responding" ;;
