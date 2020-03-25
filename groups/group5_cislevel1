@@ -10,6 +10,6 @@
 
 GROUP_ID[5]='cislevel1'
 GROUP_NUMBER[5]='5.0'
-GROUP_TITLE[5]='CIS Level 1 - [cislevel1] **************************************'
+GROUP_TITLE[5]='CIS Level 1 - CIS only - [cislevel1] ***************************'
 GROUP_RUN_BY_DEFAULT[5]='N' # run it when execute_all is called
 GROUP_CHECKS[5]='check11,check12,check13,check14,check15,check16,check17,check18,check19,check110,check111,check112,check113,check115,check116,check117,check118,check119,check120,check122,check21,check23,check24,check25,check26,check31,check32,check33,check34,check35,check38,check312,check313,check314,check41,check42'
