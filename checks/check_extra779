@@ -31,12 +31,6 @@ extra779(){
         fi
     }
 
-    dropElement () {
-        local element=$1
-        ENDPOINT_CONNECTION_LIST=("${ENDPOINT_CONNECTION_LIST[@]/$element}")
-        return 0 
-    }
-
     for regx in ${REGIONS}; do
         ACCOUNT_ID_WHITELIST=$(cat ${ACCOUNT_ID_WHITELIST_PATH} | xargs)
         
