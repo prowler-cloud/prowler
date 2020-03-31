@@ -14,7 +14,7 @@
 - [Forensics Ready Checks](#forensics-ready-checks)
 - [GDPR Checks](#gdpr-checks)
 - [HIPAA Checks](#hipaa-checks)
-- [Trust Boundaries](#trustboundarie-checks)
+- [Trust Boundaries](#trustboundaries-checks)
 - [Add Custom Checks](#add-custom-checks)
 - [Third Party Integrations](#third-party-integrations)
 - [Full list of checks and groups](/LIST_OF_CHECKS_AND_GROUPS.md)
@@ -42,7 +42,7 @@ It covers hardening and security best practices for all AWS regions related to t
 - Forensics related group of checks [forensics-ready]
 - GDPR [gdpr] Read more [here](#gdpr-checks)
 - HIPAA [hipaa] Read more [here](#hipaa-checks)
-- Trust Boundarie [trustboundaries] Read more [here](#trustboundarie-checks)
+- Trust Boundaries [trustboundaries] Read more [here](#trustboundaries-checks)
 
 
 For a comprehensive list and resolution look at the guide on the link above.
