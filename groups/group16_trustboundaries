@@ -11,8 +11,13 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-GROUP_ID[14]='trustboundaries'
-GROUP_NUMBER[14]='14.0'
-GROUP_TITLE[14]='Find Cross-Account Trust Boundaries - [trustboundaries] ****************************'
-GROUP_RUN_BY_DEFAULT[14]='N' # run it when execute_all is called
-GROUP_CHECKS[14]='extra778,extra779'
+GROUP_ID[16]='trustboundaries'
+GROUP_NUMBER[16]='16.0'
+GROUP_TITLE[16]='Find cross-account trust boundaries - [trustboundaries] ****************************'
+GROUP_RUN_BY_DEFAULT[16]='N' # run it when execute_all is called
+GROUP_CHECKS[16]='extra786,extra787'
+
+# Single account environment: No action required. The AWS account number will be automatically added by the checks.
+# Multi account environment: Any additional trusted account number should be added as a space separated list, e.g.
+# GROUP_TRUSTBOUNDARIES_TRUSTED_ACCOUNT_IDS="1234567890 0987654321 6789012345"
+GROUP_TRUSTBOUNDARIES_TRUSTED_ACCOUNT_IDS=''
