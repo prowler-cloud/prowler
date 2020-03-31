@@ -10,6 +10,6 @@
 
 GROUP_ID[4]='group4'
 GROUP_NUMBER[4]='4.0'
-GROUP_TITLE[4]='Networking - [group4] ******************************************'
+GROUP_TITLE[4]='Networking - CIS only - [group4] *******************************'
 GROUP_RUN_BY_DEFAULT[4]='Y' # run it when execute_all is called
 GROUP_CHECKS[4]='check41,check42,check43,check44'

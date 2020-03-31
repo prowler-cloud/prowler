@@ -10,6 +10,6 @@
 
 GROUP_ID[3]='group3'
 GROUP_NUMBER[3]='3.0'
-GROUP_TITLE[3]='Monitoring - [group3] ******************************************'
+GROUP_TITLE[3]='Monitoring - CIS only - [group3] *******************************'
 GROUP_RUN_BY_DEFAULT[3]='Y' # run it when execute_all is called
 GROUP_CHECKS[3]='check31,check32,check33,check34,check35,check36,check37,check38,check39,check310,check311,check312,check313,check314'

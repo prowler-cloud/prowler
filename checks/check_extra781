@@ -10,22 +10,22 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-CHECK_ID_extra780="7.80"
-CHECK_TITLE_extra780="[extra780] Check if Amazon Elasticsearch Service (ES) domains has Amazon Cognito authentication for Kibana enabled"
-CHECK_SCORED_extra780="NOT_SCORED"
-CHECK_TYPE_extra780="EXTRA"
-CHECK_ALTERNATE_check780="extra780"
+CHECK_ID_extra781="7.81"
+CHECK_TITLE_extra781="[extra781] Check if Amazon Elasticsearch Service (ES) domains has encryption at-rest enabled"
+CHECK_SCORED_extra781="NOT_SCORED"
+CHECK_TYPE_extra781="EXTRA"
+CHECK_ALTERNATE_check781="extra781"
 
-extra780(){
+extra781(){
   for regx in $REGIONS; do
     LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text)
     if [[ $LIST_OF_DOMAINS ]]; then
       for domain in $LIST_OF_DOMAINS;do
-        CHECK_IF_COGNITO_ENABLED=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.CognitoOptions.Enabled' --output text|grep -i true)
-        if [[ $CHECK_IF_COGNITO_ENABLED ]];then
-          textPass "$regx: Amazon ES domain $domain has Amazon Cognito authentication for Kibana enabled" "$regx"
+        CHECK_IF_ENCREST_ENABLED=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.EncryptionAtRestOptions.Enabled' --output text|grep -i true)
+        if [[ $CHECK_IF_ENCREST_ENABLED ]];then
+          textPass "$regx: Amazon ES domain $domain has encryption at-rest enabled" "$regx"
         else 
-          textFail "$regx: Amazon ES domain $domain does not have Amazon Cognito authentication for Kibana enabled" "$regx"
+          textFail "$regx: Amazon ES domain $domain does not have encryption at-rest enabled" "$regx"
         fi
       done
     else

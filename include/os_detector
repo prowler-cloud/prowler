@@ -55,6 +55,15 @@ if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
       DATE_BEFORE_MONTHS_TO_COMPARE=$(date -d @$STARTDATEINSECS '+%Y-%m-%d')
       echo $DATE_BEFORE_MONTHS_TO_COMPARE
     }
+  test_tcp_connectivity()
+    {
+      HOST=$1
+      PORT=$2
+      TIMEOUT=$3
+      # This is initially for ES port 9300, not not HTTP but I add HTTP error 
+      # codes for better handling, so 200 is open and 000 is not responding
+      timeout $TIMEOUT bash -c '(echo > /dev/tcp/'$HOST'/'$PORT') >/dev/null 2>&1 && echo "200" || echo "000"'
+    }
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # BSD/OSX commands compatibility
   TEMP_REPORT_FILE=$(mktemp -t prowler.cred_report-XXXXXX)
@@ -90,6 +99,15 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
       MONTHS_TO_COMPARE=$1
       DATE_BEFORE_MONTHS_TO_COMPARE=$(date -v -$(echo $MONTHS_TO_COMPARE)m '+%Y-%m-%d')
       echo $DATE_BEFORE_MONTHS_TO_COMPARE
+    }
+  test_tcp_connectivity()
+    {
+      HOST=$1
+      PORT=$2
+      TIMEOUT=$3
+      # This is initially for ES port 9300, not not HTTP but I add HTTP error 
+      # codes for better handling, so 200 is open and 000 is not responding
+      nc -z -G $TIMEOUT $HOST $PORT >/dev/null 2>&1 && echo "200" || echo "000"
     }
 elif [[ "$OSTYPE" == "cygwin" ]]; then
   # POSIX compatibility layer and Linux environment emulation for Windows
