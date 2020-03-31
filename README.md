@@ -14,6 +14,7 @@
 - [Forensics Ready Checks](#forensics-ready-checks)
 - [GDPR Checks](#gdpr-checks)
 - [HIPAA Checks](#hipaa-checks)
+- [Trust Boundaries](#trustboundarie-checks)
 - [Add Custom Checks](#add-custom-checks)
 - [Third Party Integrations](#third-party-integrations)
 - [Full list of checks and groups](/LIST_OF_CHECKS_AND_GROUPS.md)
@@ -41,6 +42,7 @@ It covers hardening and security best practices for all AWS regions related to t
 - Forensics related group of checks [forensics-ready]
 - GDPR [gdpr] Read more [here](#gdpr-checks)
 - HIPAA [hipaa] Read more [here](#hipaa-checks)
+- Trust Boundarie [trustboundaries] Read more [here](#trustboundarie-checks)
 
 
 For a comprehensive list and resolution look at the guide on the link above.
@@ -420,6 +422,47 @@ The `hipaa` group of checks uses existing and extra checks. To get a HIPAA repor
 ```sh
 ./prowler -g hipaa
 ```
+
+## Trust Boundaries
+### Definition and Terms
+The term "trust boundary" is originating from the threat modelling process and the most popular contributor Adam Shostack and author of "Threat Modeling: Designing for Security" defines it as following ([reference](https://adam.shostack.org/uncover.html)):
+
+> Trust boundaries are perhaps the most subjective of all: these represent the border between trusted and untrusted elements. Trust is complex. You might trust your mechanic with your car, your dentist with your teeth, and your banker with your money, but you probably don't trust your dentist to change your spark plugs.
+
+AWS is made to be flexible for service links within and between different AWS accounts, we all know that.
+
+This group of checks helps to analyse a particular AWS account (subject) on existing links to other AWS accounts across various AWS services, in order to identify untrusted links.
+
+### Run 
+To give it a quick shot just call:
+```sh
+./prowler -g trustboundaries
+```
+### Scenarios
+Currently this check group supports two different scenarios:
+  1. Single account environment: no action required, the configuration is happening automatically for you.
+  2. Multi account environment: in case you environment has multiple trusted and known AWS accounts you maybe want to append them manually to [groups/group16_trustboundaries](groups/group16_trustboundaries) as a space separated list into `GROUP_TRUSTBOUNDARIES_TRUSTED_ACCOUNT_IDS` variable, then just run prowler.
+
+### Coverage
+Current coverage of Amazon Web Service (AWS) taken from [here](https://docs.aws.amazon.com/whitepapers/latest/aws-overview/introduction.html):
+| Topic                           | Service    | Trust Boundary                                                            |
+|---------------------------------|------------|---------------------------------------------------------------------------|
+| Networking and Content Delivery | Amazon VPC | VPC endpoints connections ([extra786](checks/check_extra786))             |
+|                                 |            | VPC endpoints whitelisted principals ([extra787](checks/check_extra787))  |
+
+All ideas or recommendations to extend this group are very welcome [here](https://github.com/toniblyx/prowler/issues/new/choose).
+
+### Detailed Explanation of the Concept
+The diagrams depict two common scenarios, single account and multi account environments.
+Every circle represents one AWS account.
+The dashed line represents the trust boundary, that separates trust and untrusted AWS accounts.
+The arrow simply describes the direction of the trust, however the data can potentially flow in both directions.
+
+Single Account environment assumes that only the AWS account subject to this analysis is trusted. However there is a chance that two VPCs are existing within that one AWS account which are still trusted as a self reference.
+![single-account-environment](/docs/images/prowler-single-account-environment.png)
+
+Multi Account environments assumes a minimum of two trusted or known accounts. For this particular example all trusted and known accounts will be tested. Therefore `GROUP_TRUSTBOUNDARIES_TRUSTED_ACCOUNT_IDS` variable in [groups/group16_trustboundaries](groups/group16_trustboundaries) should include all trusted accounts Account #A, Account #B, Account #C, and Account #D in order to finally raise Account #E and Account #F for being untrusted or unknown.
+![multi-account-environment](/docs/images/prowler-multi-account-environment.png)
 
 ## Add Custom Checks
 
