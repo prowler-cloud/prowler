@@ -369,6 +369,13 @@ or to run just one of the checks:
 ./prowler -c extraNUMBER
 ```
 
+or to run multiple extras in one go:
+
+```sh 
+./prowler -c extraNumber,extraNumber
+```
+
+
 ## Forensics Ready Checks
 
 With this group of checks, Prowler looks if each service with logging or audit capabilities has them enabled to ensure all needed evidences are recorded and collected for an eventual digital forensic investigation in case of incident. List of checks part of this group (you can also see all groups with `./prowler -L`). The list of checks can be seen in the group file at:
