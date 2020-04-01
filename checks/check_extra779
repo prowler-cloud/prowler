@@ -11,8 +11,8 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra779="7.79"
-CHECK_TITLE_extra779="[extra779] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Elasticsearch/Kibana ports 9200/9300/5601"
-CHECK_SCORED_extra779="NOT_SCORED"
+CHECK_TITLE_extra779="[extra779] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Elasticsearch/Kibana ports"
+CHECK_SCORED_extra779="NOT_SCORED" 
 CHECK_TYPE_extra779="EXTRA"
 CHECK_ALTERNATE_check779="extra779"
 
@@ -21,6 +21,10 @@ extra779(){
   # 9200 API, 9300 Communcation and 5601 Kibana to figure out if authentication is enabled.
   # That is from the host where Prowler is running and will try to read indices or get kibana status
   TEST_ES_AUTHENTICATION=
+  ES_API_PORT="9200"
+  ES_DATA_PORT="9300"
+  ES_KIBANA_PORT="5601"
+
   httpStatus(){
     case $1 in 
       000) SERVER_RESPONSE="000 Not responding" ;;
@@ -41,9 +45,9 @@ extra779(){
   }
 
   for regx in $REGIONS; do
-    # crate a list of SG open to the world with port 9200 or 9300 or 5601
+    # crate a list of SG open to the world with port $ES_API_PORT or $ES_DATA_PORT or $ES_KIBANA_PORT
     SG_LIST=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --output text \
-      --query 'SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort<=`9200` && ToPort>=`9200`) || (FromPort<=`9300` && ToPort>=`9300`) || (FromPort<=`5601` && ToPort>=`5601 `)) && (contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}')
+      --query "SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort<=\`$ES_API_PORT\` && ToPort>=\`$ES_API_PORT\`) || (FromPort<=\`$ES_DATA_PORT\` && ToPort>=\`$ES_DATA_PORT\`) || (FromPort<=\`$ES_KIBANA_PORT\` && ToPort>=\`$ES_KIBANA_PORT\`)) && (contains(IpRanges[].CidrIp, \`0.0.0.0/0\`) || contains(Ipv6Ranges[].CidrIpv6, \`::/0\`))]) > \`0\`].{GroupId:GroupId}")
     # in case of open security groups goes through each one
     if [[ $SG_LIST ]];then
       for sg in $SG_LIST;do
@@ -56,42 +60,42 @@ extra779(){
           while read instance eip ; do 
             if [[ $TEST_ES_AUTHENTICATION ]];then
               if [[ "$eip" != "None" ]];then 
-                # check for Elasticsearch on port 9200, rest API HTTP.
-                CHECH_HTTP_9200=$(curl -m 2 -s -w "%{http_code}" -o /dev/null -X GET "http://$eip:9200/_cat/indices")
-                httpStatus $CHECH_HTTP_9200
-                if [[ $CHECH_HTTP_9200 -eq "200" ]];then 
-                  textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port 9200 response $SERVER_RESPONSE" "$regx"
+                # check for Elasticsearch on port $ES_API_PORT, rest API HTTP.
+                CHECH_HTTP_ES_API=$(curl -m 2 -s -w "%{http_code}" -o /dev/null -X GET "http://$eip:$ES_API_PORT/_cat/indices")
+                httpStatus $CHECH_HTTP_ES_API
+                if [[ $CHECH_HTTP_ES_API -eq "200" ]];then 
+                  textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_API_PORT response $SERVER_RESPONSE" "$regx"
                 else
-                  textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port 9200 response $SERVER_RESPONSE" "$regx"
+                  textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_API_PORT response $SERVER_RESPONSE" "$regx"
                 fi 
 
-                # check for port 9300 TCP, this is the communication port, not:
+                # check for port $ES_DATA_PORT TCP, this is the communication port, not:
                 # test_tcp_connectivity is in include/os_detector 
                 # syntax is 'test_tcp_connectivity $HOST $PORT $TIMEOUT' (in seconds)
-                CHECK_TCP_9300=$(test_tcp_connectivity $eip 9300 2)
+                CHECH_HTTP_ES_DATA=$(test_tcp_connectivity $eip $ES_DATA_PORT 2)
                 # Using HTTP error codes here as well to reuse httpStatus function  
                 # codes for better handling, so 200 is open and 000 is not responding
-                httpStatus $CHECK_TCP_9300
-                if [[ $CHECK_TCP_9300 -eq "200" ]];then
-                  textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port 9300 response $SERVER_RESPONSE" "$regx"
+                httpStatus $CHECH_HTTP_ES_DATA
+                if [[ $CHECH_HTTP_ES_DATA -eq "200" ]];then
+                  textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_DATA_PORT response $SERVER_RESPONSE" "$regx"
                 else
-                  textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port 9300 response $SERVER_RESPONSE" "$regx"
+                  textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_DATA_PORT response $SERVER_RESPONSE" "$regx"
                 fi 
 
-                # check for Kibana on port 5601
-                CHECH_HTTP_5601=$(curl -m 2 -s -w "%{http_code}" -o /dev/null -X GET "http://$eip:5601/api/status")
-                httpStatus $CHECH_HTTP_5601
+                # check for Kibana on port $ES_KIBANA_PORT
+                CHECH_HTTP_ES_KIBANA=$(curl -m 2 -s -w "%{http_code}" -o /dev/null -X GET "http://$eip:$ES_KIBANA_PORT/api/status")
+                httpStatus $CHECH_HTTP_ES_KIBANA
                 if [[ $CHECH_AUTH_5601 -eq "200" ]];then
-                  textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana response $SERVER_RESPONSE" "$regx"
+                  textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana on port $ES_KIBANA_PORT response $SERVER_RESPONSE" "$regx"
                 else
-                  textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana response $SERVER_RESPONSE" "$regx"
+                  textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana on port $ES_KIBANA_PORT response $SERVER_RESPONSE" "$regx"
                 fi  
               fi 
             else
               if [[ "$eip" == "None" ]];then 
                 textInfo "$regx: Found instance $instance with private IP on Security Group: $sg" "$regx"
               else 
-                textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg open to 0.0.0.0/0 on for Elasticsearch/Kibana ports" "$regx"
+                textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg open to 0.0.0.0/0 on for Elasticsearch/Kibana ports $ES_API_PORT/$ES_DATA_PORT/$ES_KIBANA_PORT" "$regx"
               fi 
             fi 
             if [[ "$eip" == "None" ]];then 
