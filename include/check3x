@@ -15,8 +15,8 @@ check3x(){
   local CHECK_CROSS_ACCOUNT_WARN
 
   # In order to make all these checks work properly logs and alarms have to 
-  # be based only on CloudTrail tail set as "IsMultiRegionTrail" = True.
-  DESCRIBE_TRAILS_CACHE=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[?IsMultiRegionTrail == `true` ]')
+  # be based only on CloudTrail tail with CloudWatchLog configuration.
+  DESCRIBE_TRAILS_CACHE=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[?CloudWatchLogsLogGroupArn != `null`]')
   TRAIL_LIST=$(echo $DESCRIBE_TRAILS_CACHE | jq -r '. |@base64')
   CURRENT_ACCOUNT_ID=$($AWSCLI sts $PROFILE_OPT get-caller-identity --region "$REGION" --query Account --output text)
   CLOUDWATCH_LOGGROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text| tr '\011' '\012' | awk -F: '{print $7}')
