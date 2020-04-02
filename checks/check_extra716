@@ -20,24 +20,6 @@ extra716(){
   # if TEST_AUTHENTICATION has a value Prowler will try to access each ElasticSearch server to the public URI endpoint.
   # That is from the host where Prowler is running and will try to read indices or get kibana status
   TEST_ES_AUTHENTICATION=
-  httpStatus(){
-    case $1 in 
-      000) SERVER_RESPONSE="000 Not responding" ;;
-      200) SERVER_RESPONSE="200 Successful" ;;
-      400) SERVER_RESPONSE="400 Error: Bad Request" ;;
-      401) SERVER_RESPONSE="401 Error: Unauthorized" ;;
-      403) SERVER_RESPONSE="403 Error: Forbidden" ;;
-      404) SERVER_RESPONSE="404 Error: Not Found" ;;
-      407) SERVER_RESPONSE="407 Error: Proxy Authentication Required" ;;
-      408) SERVER_RESPONSE="408 Error: Request Timeout" ;;
-      500) SERVER_RESPONSE="500 Error: Internal Server Error" ;;
-      502) SERVER_RESPONSE="502 Error: Bad Gateway" ;;
-      503) SERVER_RESPONSE="503 Error: Service Unavailable" ;;
-      504) SERVER_RESPONSE="504 Error: Gateway Timeout" ;;
-      505) SERVER_RESPONSE="505 Error: HTTP Version Not Supported" ;;
-      *)   SERVER_RESPONSE="HTTP: status not defined." ;;
-    esac
-  }
 
   # "Check if Elasticsearch Service domains allow open access (Not Scored) (Not part of CIS benchmark)"
   for regx in $REGIONS; do
@@ -55,10 +37,12 @@ extra716(){
           $AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.AccessPolicies.Options --output text > $TEMP_POLICY_FILE 2> /dev/null
           CHECK_ES_DOMAIN_POLICY_OPEN=$(cat $TEMP_POLICY_FILE | jq -r '. | .Statement[] | select(.Effect == "Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and select(has("Condition") | not))')
           CHECK_ES_DOMAIN_POLICY_HAS_CONDITION=$(cat $TEMP_POLICY_FILE | jq -r '. | .Statement[] | select(.Effect == "Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and select(has("Condition")))' )
-          CHECK_ES_DOMAIN_POLICY_CONDITION_PRIVATE_IP=$(cat $TEMP_POLICY_FILE | jq 'select (.Statement[0] .Condition.IpAddress."aws:SourceIp" | select( test("^192.168.[0-9]|^10.0.[0-9]|^172.(1[6-9]|2[0-9]|3[01])|^127.0.0.1")))' )
-          CHECK_ES_DOMAIN_POLICY_CONDITION_ZERO=$(cat $TEMP_POLICY_FILE | jq 'select (.Statement[0] .Condition.IpAddress."aws:SourceIp" | select( test("^0.0.0.0/0|^0.0.0.0/8")))' )
-          CHECK_ES_DOMAIN_POLICY_CONDITION_STAR=$(cat $TEMP_POLICY_FILE | jq 'select (.Statement[0] .Condition.IpAddress."aws:SourceIp" == "*")')
-          CHECK_ES_DOMAIN_POLICY_CONDITION_PUBLIC_IP=$(cat $TEMP_POLICY_FILE | jq 'select (.Statement[0] .Condition.IpAddress."aws:SourceIp" | select( test("^192.168.[0-9]|^10.0.[0-9]|^172.(1[6-9]|2[0-9]|3[01])|^127.0.0.1")| not))' )
+          if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION ]]; then
+            CHECK_ES_DOMAIN_POLICY_CONDITION_PRIVATE_IP=$(cat $TEMP_POLICY_FILE | jq 'select (.Statement[0] .Condition.IpAddress."aws:SourceIp" | select( test("^192.168.[0-9]|^10.0.[0-9]|^172.(1[6-9]|2[0-9]|3[01])|^127.0.0.1")))' )
+            CHECK_ES_DOMAIN_POLICY_CONDITION_ZERO=$(cat $TEMP_POLICY_FILE | jq 'select (.Statement[0] .Condition.IpAddress."aws:SourceIp" | select( test("^0.0.0.0/0|^0.0.0.0/8")))' )
+            CHECK_ES_DOMAIN_POLICY_CONDITION_STAR=$(cat $TEMP_POLICY_FILE | jq 'select (.Statement[0] .Condition.IpAddress."aws:SourceIp" == "*")')
+            CHECK_ES_DOMAIN_POLICY_CONDITION_PUBLIC_IP=$(cat $TEMP_POLICY_FILE | jq 'select (.Statement[0] .Condition.IpAddress."aws:SourceIp" | select( test("^192.168.[0-9]|^10.0.[0-9]|^172.(1[6-9]|2[0-9]|3[01])|^127.0.0.1")| not))' )
+          fi 
           if [[ $CHECK_ES_DOMAIN_POLICY_OPEN || $CHECK_ES_DOMAIN_POLICY_CONDITION_ZERO || $CHECK_ES_DOMAIN_POLICY_CONDITION_STAR ]];then
             if [[ $TEST_ES_AUTHENTICATION ]];then
               # check for REST API on port 443

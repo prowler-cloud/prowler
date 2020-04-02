@@ -25,25 +25,6 @@ extra779(){
   ES_DATA_PORT="9300"
   ES_KIBANA_PORT="5601"
 
-  httpStatus(){
-    case $1 in 
-      000) SERVER_RESPONSE="000 Not responding" ;;
-      200) SERVER_RESPONSE="200 Successful" ;;
-      400) SERVER_RESPONSE="400 Error: Bad Request" ;;
-      401) SERVER_RESPONSE="401 Error: Unauthorized" ;;
-      403) SERVER_RESPONSE="403 Error: Forbidden" ;;
-      404) SERVER_RESPONSE="404 Error: Not Found" ;;
-      407) SERVER_RESPONSE="407 Error: Proxy Authentication Required" ;;
-      408) SERVER_RESPONSE="408 Error: Request Timeout" ;;
-      500) SERVER_RESPONSE="500 Error: Internal Server Error" ;;
-      502) SERVER_RESPONSE="502 Error: Bad Gateway" ;;
-      503) SERVER_RESPONSE="503 Error: Service Unavailable" ;;
-      504) SERVER_RESPONSE="504 Error: Gateway Timeout" ;;
-      505) SERVER_RESPONSE="505 Error: HTTP Version Not Supported" ;;
-      *)   SERVER_RESPONSE="HTTP: status not defined." ;;
-    esac
-  }
-
   for regx in $REGIONS; do
     # crate a list of SG open to the world with port $ES_API_PORT or $ES_DATA_PORT or $ES_KIBANA_PORT
     SG_LIST=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --output text \
