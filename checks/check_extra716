@@ -19,7 +19,7 @@ CHECK_ALTERNATE_check716="extra716"
 extra716(){
   # if TEST_AUTHENTICATION has a value Prowler will try to access each ElasticSearch server to the public URI endpoint.
   # That is from the host where Prowler is running and will try to read indices or get kibana status
-  TEST_ES_AUTHENTICATION=1
+  TEST_ES_AUTHENTICATION=
 
   # "Check if Elasticsearch Service domains allow open access (Not Scored) (Not part of CIS benchmark)"
   for regx in $REGIONS; do
