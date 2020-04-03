@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.2.1
+PROWLER_VERSION=2.2.2
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -83,12 +83,13 @@ USAGE:
                             (i.e.: ProwlerRole)
       -T                  session durantion given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
                             (i.e.: 43200) 
+      -I.                 External ID to be used when assuming roles (no mandatory)
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsxI:A:R:T:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -156,6 +157,9 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:" OPTION; do
         ;;
      R )
         ROLE_TO_ASSUME=$OPTARG
+        ;;
+     I )
+        ROLE_EXTERNAL_ID=$OPTARG
         ;;
      T )
         SESSION_DURATION_TO_ASSUME=$OPTARG
@@ -441,10 +445,13 @@ if [[ $CHECK_ID ]];then
 fi
 
 if [[ $ACCOUNT_TO_ASSUME ]]; then
-  # unset env variables with assumed role credentials
-  unset AWS_ACCESS_KEY_ID
-  unset AWS_SECRET_ACCESS_KEY
-  unset AWS_SESSION_TOKEN
+      #This would remove permissions if all checks were run using external ID
+      if [[ -z $ROLE_EXTERNAL_ID ]]; then
+        # unset env variables with assumed role credentials
+        unset AWS_ACCESS_KEY_ID
+        unset AWS_SECRET_ACCESS_KEY
+        unset AWS_SESSION_TOKEN
+      fi
 fi
 
 
