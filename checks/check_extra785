@@ -16,17 +16,24 @@ CHECK_SCORED_extra785="NOT_SCORED"
 CHECK_TYPE_extra785="EXTRA"
 CHECK_ALTERNATE_check785="extra785"
 
+# NOTE! 
+# API does not properly shows if an update is available while it is a new version available
+# that can be done using the Console but not the API, not sure if it is a bug
+# I have to investigate further 
+
 extra785(){
   for regx in $REGIONS; do
     LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text)
     if [[ $LIST_OF_DOMAINS ]]; then
       for domain in $LIST_OF_DOMAINS;do
-        CHECK_IF_UPDATE_AVAILABLE=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.ServiceSoftwareOptions.UpdateAvailable' --output text|grep -i true)
-        if [[ $CHECK_IF_UPDATE_AVAILABLE ]];then
-          textInfo "$regx: Amazon ES domain $domain has updates available" "$regx"
-        else 
-          textPass "$regx: Amazon ES domain $domain does not have have updates available" "$regx"
-        fi
+        CHECK_IF_UPDATE_AVAILABLE_AND_VERSION=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.[ServiceSoftwareOptions.UpdateAvailable,ElasticsearchVersion]' --output text)
+        while read update_status es_version;do
+          if [[ $update_status != "False" ]];then
+            textInfo "$regx: Amazon ES domain $domain v$es_version has updates available " "$regx"
+          else 
+            textPass "$regx: Amazon ES domain $domain v$es_version does not have have updates available" "$regx"
+          fi
+        done < <(echo $CHECK_IF_UPDATE_AVAILABLE_AND_VERSION)
       done
     else
       textInfo "$regx: No Amazon ES domain found" "$regx"

@@ -19,7 +19,7 @@ CHECK_ALTERNATE_check716="extra716"
 extra716(){
   # if TEST_AUTHENTICATION has a value Prowler will try to access each ElasticSearch server to the public URI endpoint.
   # That is from the host where Prowler is running and will try to read indices or get kibana status
-  TEST_ES_AUTHENTICATION=
+  TEST_ES_AUTHENTICATION=1
 
   # "Check if Elasticsearch Service domains allow open access (Not Scored) (Not part of CIS benchmark)"
   for regx in $REGIONS; do
@@ -38,12 +38,27 @@ extra716(){
           CHECK_ES_DOMAIN_POLICY_OPEN=$(cat $TEMP_POLICY_FILE | jq -r '. | .Statement[] | select(.Effect == "Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and select(has("Condition") | not))')
           CHECK_ES_DOMAIN_POLICY_HAS_CONDITION=$(cat $TEMP_POLICY_FILE | jq -r '. | .Statement[] | select(.Effect == "Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and select(has("Condition")))' )
           if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION ]]; then
-            CHECK_ES_DOMAIN_POLICY_CONDITION_PRIVATE_IP=$(cat $TEMP_POLICY_FILE | jq 'select (.Statement[0] .Condition.IpAddress."aws:SourceIp" | select( test("^192.168.[0-9]|^10.0.[0-9]|^172.(1[6-9]|2[0-9]|3[01])|^127.0.0.1")))' )
-            CHECK_ES_DOMAIN_POLICY_CONDITION_ZERO=$(cat $TEMP_POLICY_FILE | jq 'select (.Statement[0] .Condition.IpAddress."aws:SourceIp" | select( test("^0.0.0.0/0|^0.0.0.0/8")))' )
-            CHECK_ES_DOMAIN_POLICY_CONDITION_STAR=$(cat $TEMP_POLICY_FILE | jq 'select (.Statement[0] .Condition.IpAddress."aws:SourceIp" == "*")')
-            CHECK_ES_DOMAIN_POLICY_CONDITION_PUBLIC_IP=$(cat $TEMP_POLICY_FILE | jq 'select (.Statement[0] .Condition.IpAddress."aws:SourceIp" | select( test("^192.168.[0-9]|^10.0.[0-9]|^172.(1[6-9]|2[0-9]|3[01])|^127.0.0.1")| not))' )
+            # get content of IpAddress."aws:SourceIp" and get a clean list
+            LIST_CONDITION_IPS=$(cat $TEMP_POLICY_FILE | jq '.Statement[0] .Condition.IpAddress."aws:SourceIp"'| awk -F'"' '{print $2}' | tr -d '",^$' | sed '/^$/d')
+            for condition_ip in $LIST_CONDITION_IPS;do
+              CONDITION_HAS_PRIVATE_IP=$(echo $condition_ip | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')
+              if [[ $CONDITION_HAS_PRIVATE_IP ]];then
+                CONDITION_HAS_PRIVATE_IP_ARRAY+=($condition_ip)
+              fi 
+              CONDITION_HAS_PUBLIC_IP=$(echo $condition_ip | grep -vE '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.|0\.0\.0\.0|\*)')
+              if [[ $CONDITION_HAS_PUBLIC_IP ]];then
+                CONDITION_HAS_PUBLIC_IP_ARRAY+=($condition_ip)
+              fi
+              CONDITION_HAS_ZERO_NET=$(echo $condition_ip | grep -E '^(0\.0\.0\.0|\*)')
+              CONDITION_HAS_STAR=$(echo $condition_ip | grep -E '^\*')
+            done 
+            CHECK_ES_DOMAIN_POLICY_CONDITION_PRIVATE_IP=${CONDITION_HAS_PRIVATE_IP_ARRAY[@]}
+            CHECK_ES_DOMAIN_POLICY_CONDITION_PUBLIC_IP=${CONDITION_HAS_PUBLIC_IP_ARRAY[@]}
+            CHECK_ES_DOMAIN_POLICY_CONDITION_ZERO=$CONDITION_HAS_ZERO_NET
+            CHECK_ES_DOMAIN_POLICY_CONDITION_STAR=$CONDITION_HAS_STAR
           fi 
-          if [[ $CHECK_ES_DOMAIN_POLICY_OPEN || $CHECK_ES_DOMAIN_POLICY_CONDITION_ZERO || $CHECK_ES_DOMAIN_POLICY_CONDITION_STAR ]];then
+          if [[ $CHECK_ES_DOMAIN_POLICY_OPEN || $CHECK_ES_DOMAIN_POLICY_CONDITION_ZERO || $CHECK_ES_DOMAIN_POLICY_CONDITION_STAR || ${CHECK_ES_DOMAIN_POLICY_CONDITION_PUBLIC_IP[@]} ]];then
+            #Prowler will check to read indices or kibaba status if no conditions, condition IP is *, 0.0.0.0/0, 0.0.0.0/8 or any public IP.
             if [[ $TEST_ES_AUTHENTICATION ]];then
               # check for REST API on port 443
               CHECH_ES_HTTPS=$(curl -m 2 -s -w "%{http_code}" -o /dev/null -X GET "https://$ES_DOMAIN_ENDPOINT/_cat/indices")
@@ -65,25 +80,25 @@ extra716(){
               if [[ $CHECK_ES_DOMAIN_POLICY_OPEN ]];then 
                 textFail "$regx: Amazon ES domain $domain policy allows access (Principal: \"*\") AUTH NOT TESTED" "$regx"
               fi 
-              if [[ $CHECK_ES_DOMAIN_POLICY_CONDITION_ZERO ]];then 
+              if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION && $CHECK_ES_DOMAIN_POLICY_CONDITION_ZERO ]];then 
                 textFail "$regx: Amazon ES domain $domain policy allows access (Principal: \"*\" and network 0.0.0.0) AUTH NOT TESTED" "$regx"
               fi 
-              if [[ $CHECK_ES_DOMAIN_POLICY_CONDITION_STAR ]];then 
+              if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION && $CHECK_ES_DOMAIN_POLICY_CONDITION_STAR ]];then 
                 textFail "$regx: Amazon ES domain $domain policy allows access (Principal: \"*\" and network \"*\") AUTH NOT TESTED" "$regx"
               fi
-            fi 
-          elif [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION ]];then
-            if [[ $CHECK_ES_DOMAIN_POLICY_CONDITION_PRIVATE_IP ]];then
-              textInfo "$regx: Amazon ES domain $domain policy allows access from a RFC1918 PRIVATE IP or CIDR" "$regx"
-            fi  
-            if [[ $CHECK_ES_DOMAIN_POLICY_CONDITION_PUBLIC_IP ]];then
-              textInfo "$regx: Amazon ES domain $domain policy allows access from a PUBLIC IP or CIDR" "$regx"
+              if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION && ${CHECK_ES_DOMAIN_POLICY_CONDITION_PUBLIC_IP[@]} ]];then 
+                textFail "$regx: Amazon ES domain $domain policy allows access (Principal: \"*\" and Public IP or Network $(echo ${CONDITION_HAS_PUBLIC_IP_ARRAY[@]})) AUTH NOT TESTED" "$regx"
+              fi
             fi 
           else
-            textPass "$regx: Amazon ES domain $domain does not allow Anonymous cross account access" "$regx"
+            if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION && ${CHECK_ES_DOMAIN_POLICY_CONDITION_PRIVATE_IP[@]} ]];then
+              textInfo "$regx: Amazon ES domain $domain policy allows access from a Private IP or CIDR RFC1918 $(echo ${CONDITION_HAS_PRIVATE_IP_ARRAY[@]})" "$regx"
+            else  
+              textPass "$regx: Amazon ES domain $domain does not allow Anonymous cross account access" "$regx" 
+            fi 
           fi
+          rm -f $TEMP_POLICY_FILE
         fi
-        rm -f $TEMP_POLICY_FILE
       done
     else
       textInfo "$regx: No Amazon ES domain found" "$regx"
