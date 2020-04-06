@@ -466,3 +466,4 @@ NOTE: If you are interested in using Prowler for commercial purposes remember th
 **I'm not related anyhow with CIS organization, I just write and maintain Prowler to help companies over the world to make their cloud infrastructure more secure.**
 
 If you want to contact me visit <https://blyx.com/contact>
+
