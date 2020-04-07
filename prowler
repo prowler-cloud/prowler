@@ -64,7 +64,7 @@ USAGE:
       -f <filterregion>   specify an AWS region to run checks against
                             (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-      -M <mode>           output mode: text (default), mono, json, csv (separator is ","; data is on stdout; progress on stderr)
+      -M <mode>           output mode: text (default), mono, json, json-asff, securityhub, csv (separator is ","; data is on stdout; progress on stderr)
       -k                  keep the credential report
       -n                  show check numbers to sort easier
                             (i.e.: 1.01 instead of 1.1)
@@ -77,12 +77,12 @@ USAGE:
       -s                  show scoring report
       -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by "check")
       -q                  suppress info messages and passing test output
-      -A                  account id for the account where to assume a role, requires -R and -T 
+      -A                  account id for the account where to assume a role, requires -R and -T
                             (i.e.: 123456789012)
-      -R                  role name to assume in the account, requires -A and -T 
+      -R                  role name to assume in the account, requires -A and -T
                             (i.e.: ProwlerRole)
       -T                  session durantion given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
-                            (i.e.: 43200) 
+                            (i.e.: 43200)
       -h                  this help
   "
   exit
@@ -395,8 +395,8 @@ if [[ $PRINTGROUPSONLY == "1" ]]; then
   exit $EXITCODE
 fi
 
-# Check that jq is installed for JSON output
-if [[ $MODE == "json" ]]; then
+# Check that jq is installed for JSON outputs
+if [[ "$MODE" == "json" || "$MODE" == "json-asff" || "$MODE" == "securityhub" ]]; then
   . $PROWLER_DIR/include/jq_detector
 fi
 
