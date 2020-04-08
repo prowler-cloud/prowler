@@ -14,7 +14,7 @@
 - [Forensics Ready Checks](#forensics-ready-checks)
 - [GDPR Checks](#gdpr-checks)
 - [HIPAA Checks](#hipaa-checks)
-- [Trust Boundaries](#trustboundaries-checks)
+- [Trust Boundaries Checks](#trustboundaries-checks)
 - [Add Custom Checks](#add-custom-checks)
 - [Third Party Integrations](#third-party-integrations)
 - [Full list of checks and groups](/LIST_OF_CHECKS_AND_GROUPS.md)
@@ -423,7 +423,7 @@ The `hipaa` group of checks uses existing and extra checks. To get a HIPAA repor
 ./prowler -g hipaa
 ```
 
-## Trust Boundaries
+## Trust Boundaries Checks
 ### Definition and Terms
 The term "trust boundary" is originating from the threat modelling process and the most popular contributor Adam Shostack and author of "Threat Modeling: Designing for Security" defines it as following ([reference](https://adam.shostack.org/uncover.html)):
 
