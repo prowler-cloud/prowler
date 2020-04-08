@@ -11,13 +11,13 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-CHECK_ID_extra787="7.87"
-CHECK_TITLE_extra787="[extra787] Find trust boundaries in VPC endpoint services whitelisted principles (Not Scored) (Not part of CIS benchmark)"
-CHECK_SCORED_extra787="NOT_SCORED"
-CHECK_TYPE_extra787="EXTRA"
-CHECK_ALTERNATE_extra787="extra787"
+CHECK_ID_extra790="7.90"
+CHECK_TITLE_extra790="[extra790] Find trust boundaries in VPC endpoint services whitelisted principles"
+CHECK_SCORED_extra790="NOT_SCORED"
+CHECK_TYPE_extra790="EXTRA"
+CHECK_ALTERNATE_extra790="extra790"
 
-extra787(){
+extra790(){
     TRUSTED_ACCOUNT_IDS=$( echo "${ACCOUNT_NUM} ${GROUP_TRUSTBOUNDARIES_TRUSTED_ACCOUNT_IDS}" | xargs )
 
     for regx in ${REGIONS}; do
