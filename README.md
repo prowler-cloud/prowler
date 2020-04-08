@@ -14,7 +14,7 @@
 - [Forensics Ready Checks](#forensics-ready-checks)
 - [GDPR Checks](#gdpr-checks)
 - [HIPAA Checks](#hipaa-checks)
-- [Trust Boundaries Checks](#trustboundaries-checks)
+- [Trust Boundaries Checks](#trust-boundaries-checks)
 - [Add Custom Checks](#add-custom-checks)
 - [Third Party Integrations](#third-party-integrations)
 - [Full list of checks and groups](/LIST_OF_CHECKS_AND_GROUPS.md)
