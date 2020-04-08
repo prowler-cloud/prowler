@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra787="7.87"
-CHECK_TITLE_extra787="[extra787] Check connection and authentication for public exposed Elasticsearch/Kibana ports"
+CHECK_TITLE_extra787="[extra787] Check connection and authentication for Internet exposed Elasticsearch/Kibana ports"
 CHECK_SCORED_extra787="NOT_SCORED" 
 CHECK_TYPE_extra787="EXTRA"
 CHECK_ALTERNATE_check787="extra787"

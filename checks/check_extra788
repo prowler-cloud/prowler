@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra788="7.88"
-CHECK_TITLE_extra788="[extra788] Check connection and authentication for publicly exposed Amazon Elasticsearch Service (ES) domains"
+CHECK_TITLE_extra788="[extra788] Check connection and authentication for Internet exposed Amazon Elasticsearch Service (ES) domains"
 CHECK_SCORED_extra788="NOT_SCORED"
 CHECK_TYPE_extra788="EXTRA"
 CHECK_ALTERNATE_check788="extra788"
