@@ -33,7 +33,7 @@ extra725(){
   # now create a list with all trails available and their region
   TEMP_TRAILS_LIST_FILE=$(mktemp -t prowler.trails-list-XXXXXX)
   for regx in $REGIONS; do
-    $AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query trailList[?HomeRegion==\`$regx\`].[TrailARN,HomeRegion] --output text >> $TEMP_TRAILS_LIST_FILE
+    $AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query trailList[].[TrailARN,HomeRegion] --output text >> $TEMP_TRAILS_LIST_FILE
   done
 
   # look for buckets being logged per trail and create a list with them
