@@ -12,9 +12,10 @@
 # specific language governing permissions and limitations under the License.
 
 
-# Functions to connection responses initially used for Elasticsearch related checks
+# Function test_tcp_connectivity is in include/os_detector 
 
-httpStatus(){
+# Functions to connection responses initially used for Elasticsearch related checks
+httpStatus(){ 
     case $1 in 
       000) SERVER_RESPONSE="000 Not responding" ;;
       200) SERVER_RESPONSE="200 Successful" ;;
