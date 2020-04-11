@@ -14,6 +14,7 @@ CHECK_ID_extra755="7.55"
 CHECK_TITLE_extra755="[extra755] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Memcached port 11211 (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra755="NOT_SCORED"
 CHECK_TYPE_extra755="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra755="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check755="extra755"
 
 extra755(){

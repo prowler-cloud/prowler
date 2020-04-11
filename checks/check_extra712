@@ -22,7 +22,7 @@ extra712(){
   textInfo "just looking if IAM Macie related permissions exist.  "
   MACIE_IAM_ROLES_CREATED=$($AWSCLI iam list-roles $PROFILE_OPT --query 'Roles[*].Arn'|grep AWSMacieServiceCustomer|wc -l)
   if [[ $MACIE_IAM_ROLES_CREATED -eq 2 ]];then
-    textPass "Macie related IAM roles exist so it might be enabled. Check it out manually."
+    textPass "Macie related IAM roles exist so it might be enabled. Check it out manually"
   else
     textFail "No Macie related IAM roles found. It is most likely not to be enabled"
   fi

@@ -12,6 +12,8 @@ CHECK_ID_check21="2.1,2.01"
 CHECK_TITLE_check21="[check21] Ensure CloudTrail is enabled in all regions (Scored)"
 CHECK_SCORED_check21="SCORED"
 CHECK_TYPE_check21="LEVEL1"
+CHECK_ASFF_TYPE_check21="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_check21="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check201="check21"
 
 check21(){
@@ -27,7 +29,7 @@ check21(){
 				MULTIREGION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].IsMultiRegionTrail' --output text --trail-name-list $trail)
 				ISLOGGING_STATUS=$($AWSCLI cloudtrail get-trail-status $PROFILE_OPT --region $regx --name $trail --query ['IsLogging'] --output text)
 				INCLUDEMANAGEMENTEVENTS_STATUS=$($AWSCLI cloudtrail  get-event-selectors $PROFILE_OPT --region $regx --trail-name $trail --query EventSelectors[*].IncludeManagementEvents --output text)
-				READWRITETYPE_STATUS=$($AWSCLI cloudtrail  get-event-selectors $PROFILE_OPT --region $regx --trail-name $trail --query EventSelectors[*].ReadWriteType --output text)  
+				READWRITETYPE_STATUS=$($AWSCLI cloudtrail  get-event-selectors $PROFILE_OPT --region $regx --trail-name $trail --query EventSelectors[*].ReadWriteType --output text)
 				if [[ "$MULTIREGION_TRAIL_STATUS" == "True" ]] && [[ "$ISLOGGING_STATUS" == "True" ]] && [[ "$INCLUDEMANAGEMENTEVENTS_STATUS" == *"True"* ]] && [[ "$READWRITETYPE_STATUS" == *"All"* ]];then
 				    textPass "$trail trail in $regx is enabled for all regions"
 				    result='True'

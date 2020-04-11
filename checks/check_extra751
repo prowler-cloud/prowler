@@ -14,6 +14,7 @@ CHECK_ID_extra751="7.51"
 CHECK_TITLE_extra751="[extra751] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Postgres port 5432 (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra751="NOT_SCORED"
 CHECK_TYPE_extra751="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra751="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check751="extra751"
 
 extra751(){

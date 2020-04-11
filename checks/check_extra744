@@ -14,6 +14,7 @@ CHECK_ID_extra744="7.44"
 CHECK_TITLE_extra744="[extra744] Check if API Gateway has a WAF ACL attached (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra744="NOT_SCORED"
 CHECK_TYPE_extra744="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra744="AwsApiGatewayRestApi"
 CHECK_ALTERNATE_check744="extra744"
 
 extra744(){
@@ -23,15 +24,15 @@ extra744(){
       for api in $LIST_OF_REST_APIS; do
         API_GW_NAME=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query "items[?id==\`$api\`].name" --output text)
         LIST_OF_STAGES=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-stages --rest-api-id $api --query 'item[*].stageName' --output text)
-        if [[ $LIST_OF_STAGES ]]; then 
+        if [[ $LIST_OF_STAGES ]]; then
           for stage in $LIST_OF_STAGES; do
             CHECK_WAFACL=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-stages --rest-api-id $api --query "item[?stageName==\`$stage\`].webAclArn" --output text)
             if [[ $CHECK_WAFACL ]]; then
                 textPass "$regx: API Gateway $API_GW_NAME ID $api in $stage has $CHECK_WAFACL WAF ACL attached" "$regx"
-              else 
+              else
                 textFail "$regx: API Gateway $API_GW_NAME ID $api in $stage has not WAF ACL attached" "$regx"
-            fi 
-          done 
+            fi
+          done
         fi
       done
     else

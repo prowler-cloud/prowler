@@ -62,7 +62,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     pip install awscli ansi2html detect-secrets
     ```
 
-    AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `ansi2html` and `detect-secrets` has to be installed using `pip`. You will need to install `jq` to get more accuracy in some checks. 
+    AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `ansi2html` and `detect-secrets` has to be installed using `pip`. You will need to install `jq` to get more accuracy in some checks.
 
 - Make sure jq is installed (example below with "apt" but use a valid package manager for your OS):
     ```sh
@@ -81,7 +81,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ```sh
     aws configure
     ```
-    or 
+    or
     ```sh
     export AWS_ACCESS_KEY_ID="ASXXXXXXX"
     export AWS_SECRET_ACCESS_KEY="XXXXXXXXX"
@@ -94,7 +94,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     arn:aws:iam::aws:policy/SecurityAudit
     ```
 
-    > Additional permissions needed: to make sure Prowler can scan all services included in the group *Extras*, make sure you attach also the custom policy [prowler-additions-policy.json](https://github.com/toniblyx/prowler/blob/master/iam/prowler-additions-policy.json) to the role you are using.
+    > Additional permissions needed: to make sure Prowler can scan all services included in the group *Extras*, make sure you attach also the custom policy [prowler-additions-policy.json](https://github.com/toniblyx/prowler/blob/master/iam/prowler-additions-policy.json) to the role you are using. If you want Prowler to send findings to [AWS Security Hub](https://aws.amazon.com/security-hub), make sure you also attach the custom policy [prowler-security-hub.json](https://github.com/toniblyx/prowler/blob/master/iam/prowler-security-hub.json).
 
 ## Usage
 
@@ -107,7 +107,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     Use `-l` to list all available checks and group of checks (sections)
 
     If you want to avoid installing dependences run it using Docker:
-    
+
     ```sh
     docker run -ti --rm --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest
     ```
@@ -127,7 +127,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ```sh
     docker run -ti --rm --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest "-c check310"
     ```
-    
+
     or multiple checks separated by comma:
     ```sh
     ./prowler -c check310,check722
@@ -185,6 +185,14 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler -M mono | aws s3 cp - s3://bucket-name/prowler-report.txt
     ```
 
+1. If you want Prowler to submit findings to [AWS Security Hub](https://aws.amazon.com/security-hub):
+
+    ```sh
+    ./prowler -M json-asff -S
+    ```
+
+    > Note that Security Hub must be enabled for the active region. It can be enabled by calling `aws securityhub enable-security-hub`
+
 1. To perform an assessment based on CIS Profile Definitions you can use cislevel1 or cislevel2 with `-g` flag, more information about this [here, page 8](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf):
 
     ```sh
@@ -228,6 +236,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
         -b                  do not print Prowler banner
         -V                  show version number & exit
         -s                  show scoring report
+        -S                  send check output to AWS Security Hub - only valid when the output mode is json-asff (i.e. "-M json-asff -S")
         -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by check)
         -q                  suppress info messages and passing test output
         -A                  account id for the account where to assume a role, requires -R and -T
@@ -241,17 +250,17 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
 ## Advanced Usage
 
-### Assume Role: 
+### Assume Role:
 
 Prowler uses the AWS CLI underneath so it uses the same authentication methods. However, there are few ways to run Prowler against multiple accounts using IAM Assume Role feature depending on eachg use case. You can just set up your custom profile inside `~/.aws/config` with all needed information about the role to assume then call it with `./prowler -p your-custom-profile`. Additionally you can use `-A 123456789012` and `-R RemoteRoleToAssume` and Prowler will get those temporary credentials using `aws sts assume-role`, set them up as environment variables and run against that given account.
 
 ```
-./prowler -A 123456789012 -R ProwlerRole 
+./prowler -A 123456789012 -R ProwlerRole
 ```
 
 > *NOTE 1 about Session Duration*: By default it gets credentials valid for 1 hour (3600 seconds). Depending on the mount of checks you run and the size of your infrastructure, Prowler may require more than 1 hour to finish. Use option `-T <seconds>`  to allow up to 12h (43200 seconds). To allow more than 1h you need to modify *"Maximum CLI/API session duration"* for that particular role, read more [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session).
 
-> *NOTE 2 about Session Duration*: Bear in mind that if you are using roles assumed by role chaining there is a hard limit of 1 hour so consider not using role chaining if possible, read more about that, in foot note 1 below the table [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html). 
+> *NOTE 2 about Session Duration*: Bear in mind that if you are using roles assumed by role chaining there is a hard limit of 1 hour so consider not using role chaining if possible, read more about that, in foot note 1 below the table [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html).
 
 For example, if you want to get only the fails in CSV format from all checks regarding RDS without banner from the AWS Account 123456789012 assuming the role RemoteRoleToAssume and set a fixed session duration of 1h:
 
@@ -322,7 +331,7 @@ Some new and specific checks require Prowler to inherit more permissions than Se
 
 [iam/prowler-additions-policy.json](iam/prowler-additions-policy.json)
 
-> Note: Action `ec2:get*` is included in "ProwlerReadOnlyPolicy" policy above, that includes `get-password-data`, type `aws ec2 get-password-data help` to better understand its implications. 
+> Note: Action `ec2:get*` is included in "ProwlerReadOnlyPolicy" policy above, that includes `get-password-data`, type `aws ec2 get-password-data help` to better understand its implications.
 
 ### Bootstrap Script
 
@@ -371,7 +380,7 @@ or to run just one of the checks:
 
 or to run multiple extras in one go:
 
-```sh 
+```sh
 ./prowler -c extraNumber,extraNumber
 ```
 
@@ -441,7 +450,7 @@ In order to add any new check feel free to create a new extra check in the extra
 
 ## Third Party Integrations
 
-### AWS Security Hub 
+### AWS Security Hub
 
 There is a blog post about that integration in the AWS Security blog here <https://aws.amazon.com/blogs/security/use-aws-fargate-prowler-send-security-configuration-findings-about-aws-services-security-hub/>
 

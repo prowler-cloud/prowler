@@ -14,6 +14,7 @@ CHECK_ID_extra758="7.58"
 CHECK_TITLE_extra758="[extra758] Check EC2 Instances older than 12 months (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra758="NOT_SCORED"
 CHECK_TYPE_extra758="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra758="AwsEc2Instance"
 CHECK_ALTERNATE_check758="extra758"
 
 extra758(){

@@ -18,7 +18,7 @@ textPass(){
   fi
 
   PASS_COUNTER=$((PASS_COUNTER+1))
-  if [[ "$MODE" == "csv" || "$MODE" == "json" || "$MODE" == "json-asff" || "$MODE" == "securityhub" ]]; then
+  if [[ "$MODE" == "csv" || "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
     if [[ $2 ]]; then
       REPREGION=$2
     else
@@ -29,10 +29,11 @@ textPass(){
     elif [[ "$MODE" == "json" ]]; then
       generateJsonOutput "$1" "Pass"
     elif [[ "$MODE" == "json-asff" ]]; then
-      generateJsonAsffOutput "$1" "PASSED" "INFORMATIONAL"
-    elif [[ "$MODE" == "securityhub" ]]; then
-      printf "      $OK PASS!$NORMAL %s... "  "$1"
-      aws securityhub batch-import-findings --findings "$(generateJsonAsffOutput "$1" "PASSED" "INFORMATIONAL")" | jq -M -r 'if .SuccessCount == 1 then "Successfully submitted finding" else "Failed to upload finding" end'
+      JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "PASSED" "INFORMATIONAL")
+      echo "${JSON_ASFF_OUTPUT}"
+      if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
+        sendToSecurityHub "${JSON_ASFF_OUTPUT}"
+      fi
     fi
   else
     echo "      $OK PASS!$NORMAL $1"
@@ -54,11 +55,6 @@ textInfo(){
       echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
     elif [[ "$MODE" == "json" ]]; then
       generateJsonOutput "$1" "Info"
-    elif [[ "$MODE" == "json-asff" ]]; then
-      generateJsonAsffOutput "$1" "NOT_AVAILABLE" "LOW"
-    elif [[ "$MODE" == "securityhub" ]]; then
-      printf "      $NOTICE INFO! %s... $NORMAL"  "$1"
-      aws securityhub batch-import-findings --findings "$(generateJsonAsffOutput "$1" "NOT_AVAILABLE" "LOW")" | jq -M -r 'if .SuccessCount == 1 then "Successfully submitted finding" else "Failed to upload finding" end'
     fi
   else
     echo "      $NOTICE INFO! $1 $NORMAL"
@@ -68,7 +64,7 @@ textInfo(){
 textFail(){
   FAIL_COUNTER=$((FAIL_COUNTER+1))
   EXITCODE=3
-  if [[ "$MODE" == "csv" || "$MODE" == "json" || "$MODE" == "json-asff" || "$MODE" == "securityhub" ]]; then
+  if [[ "$MODE" == "csv" || "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
     if [[ $2 ]]; then
       REPREGION=$2
     else
@@ -79,10 +75,11 @@ textFail(){
     elif [[ "$MODE" == "json" ]]; then
       generateJsonOutput "$1" "Fail"
     elif [[ "$MODE" == "json-asff" ]]; then
-      generateJsonAsffOutput "$1" "FAILED" "HIGH"
-    elif [[ "$MODE" == "securityhub" ]]; then
-      printf "      $BAD FAIL! %s... $NORMAL"  "$1"
-      aws securityhub batch-import-findings --findings "$(generateJsonAsffOutput "$1" "FAILED" "HIGH")" | jq -M -r 'if .SuccessCount == 1 then "Successfully submitted finding" else "Failed to upload finding" end'
+      JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "FAILED" "HIGH")
+      echo "${JSON_ASFF_OUTPUT}"
+      if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
+        sendToSecurityHub "${JSON_ASFF_OUTPUT}"
+      fi
     fi
   else
     echo "      $BAD FAIL! $1 $NORMAL"
@@ -178,6 +175,8 @@ generateJsonAsffOutput(){
   --arg SCORED "$ITEM_SCORED" \
   --arg ITEM_LEVEL "$ITEM_LEVEL" \
   --arg TITLE_ID "$TITLE_ID" \
+  --arg TYPE "$ASFF_TYPE" \
+  --arg RESOURCE_TYPE "$ASFF_RESOURCE_TYPE" \
   --arg REPREGION "$REPREGION" \
   --arg TIMESTAMP $(date -u +"%Y-%m-%dT%H:%M:%SZ") \
   --arg PROWLER_VERSION "$PROWLER_VERSION" \
@@ -192,7 +191,7 @@ generateJsonAsffOutput(){
       "GeneratorId": "prowler-\($PROWLER_VERSION)",
       "AwsAccountId": $ACCOUNT_NUM,
       "Types": [
-          "Software and Configuration Checks"
+          $TYPE
       ],
       "FirstObservedAt": $TIMESTAMP,
       "UpdatedAt": $TIMESTAMP,
@@ -204,8 +203,8 @@ generateJsonAsffOutput(){
       "Description": $MESSAGE,
       "Resources": [
           {
-              "Type": "AwsAccount",
-              "Id": "AWS: : : :Account:\($ACCOUNT_NUM)",
+              "Type": $RESOURCE_TYPE,
+              "Id": "AWS::::Account:\($ACCOUNT_NUM)",
               "Partition": "aws",
               "Region": $REPREGION
           }

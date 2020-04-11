@@ -14,14 +14,15 @@ CHECK_ID_extra741="7.41"
 CHECK_TITLE_extra741="[extra741] Find secrets in EC2 User Data (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra741="NOT_SCORED"
 CHECK_TYPE_extra741="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra741="AwsEc2Instance"
 CHECK_ALTERNATE_check741="extra741"
 
 extra741(){
   SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"
-  if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then 
+  if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then
     # this folder is deleted once this check is finished
     mkdir $SECRETS_TEMP_FOLDER
-  fi 
+  fi
 
   textInfo "Looking for secrets in EC2 User Data in instances across all regions... (max 100 instances per region use -m to increase it)  "
   for regx in $REGIONS; do
@@ -56,7 +57,7 @@ extra741(){
               textFail "$regx: Potential secret found in $instance" "$regx"
             fi
           fi
-        else 
+        else
           textPass "$regx: No secrets found in $instance User Data or it is empty" "$regx"
         fi
       done

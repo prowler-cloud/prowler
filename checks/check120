@@ -12,6 +12,8 @@ CHECK_ID_check120="1.20"
 CHECK_TITLE_check120="[check120] Ensure a support role has been created to manage incidents with AWS Support (Scored)"
 CHECK_SCORED_check120="SCORED"
 CHECK_TYPE_check120="LEVEL1"
+CHECK_ASFF_TYPE_check120="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_check120="AwsIamRole"
 CHECK_ALTERNATE_check120="check120"
 
 check120(){
@@ -28,7 +30,7 @@ check120(){
         #   textInfo "User $user has support access via $policyarn"
         # done
       else
-        textFail "Support Policy not applied to any Role "
+        textFail "Support Policy not applied to any Role"
       fi
     done
   else

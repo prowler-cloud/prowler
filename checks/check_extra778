@@ -15,6 +15,7 @@ CHECK_ID_extra778="7.78"
 CHECK_TITLE_extra778="[extra778] Find VPC security groups with wide-open public IPv4 CIDR ranges (non-RFC1918) (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra778="NOT_SCORED"
 CHECK_TYPE_extra778="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra778="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check778="extra778"
 
 extra778(){
@@ -27,7 +28,7 @@ extra778(){
         local DIRECTION=$2
         local DIRECTION_FILTER=""
         local REGION=$3
-        
+
         case ${DIRECTION} in
             "inbound")
                 DIRECTION_FILTER="IpPermissions"
@@ -44,14 +45,14 @@ extra778(){
                         --region ${REGION} \
                         --output text | xargs
                         )
-        
+
         for CIDR_IP in ${CIDR_IP_LIST}; do
             if [[ ! ${CIDR_IP} =~ ${RFC1918_REGEX} ]]; then
                 CIDR=$(echo ${CIDR_IP} | cut -d"/" -f2 | xargs)
 
                 # Edge case "0.0.0.0/0" for RDP and SSH are checked already by check41 and check42
                 if [[ ${CIDR} < ${CIDR_THRESHOLD} && 0 < ${CIDR} ]]; then
-                    textFail "${REGION}: ${SECURITY_GROUP} has potential wide-open non-RFC1918 address ${CIDR_IP} in ${DIRECTION} rule." "${REGION}"
+                    textFail "${REGION}: ${SECURITY_GROUP} has potential wide-open non-RFC1918 address ${CIDR_IP} in ${DIRECTION} rule" "${REGION}"
                 fi
             fi
         done

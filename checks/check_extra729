@@ -15,6 +15,7 @@ CHECK_ID_extra729="7.29"
 CHECK_TITLE_extra729="[extra729] Ensure there are no EBS Volumes unencrypted (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra729="NOT_SCORED"
 CHECK_TYPE_extra729="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra729="AwsEc2Volume"
 CHECK_ALTERNATE_check729="extra729"
 
 extra729(){
