@@ -11,146 +11,178 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
+gnu_how_older_from_today() {
+  DATE_TO_COMPARE=$1
+  TODAY_IN_DAYS=$(date -d "$(date +%Y-%m-%d)" +%s)
+  DATE_FROM_IN_DAYS=$(date -d $DATE_TO_COMPARE +%s)
+  DAYS_SINCE=$((($TODAY_IN_DAYS - $DATE_FROM_IN_DAYS )/60/60/24))
+  echo $DAYS_SINCE
+}
+bsd_how_older_from_today() {
+  DATE_TO_COMPARE=$1
+  TODAY_IN_DAYS=$(date +%s)
+  DATE_FROM_IN_DAYS=$(date -jf %Y-%m-%d $DATE_TO_COMPARE +%s)
+  DAYS_SINCE=$((($TODAY_IN_DAYS - $DATE_FROM_IN_DAYS )/60/60/24))
+  echo $DAYS_SINCE
+}
+
+# function to convert from timestamp to date
+# output date format %Y-%m-%d
+gnu_timestamp_to_date() {
+  # remove fractions of a second
+  TIMESTAMP_TO_CONVERT=$(echo $1 | cut -f1 -d".")
+  OUTPUT_DATE=$(date -d @$TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
+  echo $OUTPUT_DATE
+}
+bsd_timestamp_to_date() {
+  # remove fractions of a second
+  TIMESTAMP_TO_CONVERT=$(echo $1 | cut -f1 -d".")
+  OUTPUT_DATE=$(date -r $TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
+  echo $OUTPUT_DATE
+}
+
+gnu_decode_report() {
+  base64 -d
+}
+bsd_decode_report() {
+  base64 -D
+}
+
+gnu_how_many_days_from_today() {
+  DATE_TO_COMPARE=$1
+  TODAY_IN_DAYS=$(date -d "$(date +%Y-%m-%d)" +%s)
+  DATE_IN_DAYS=$(date -d $DATE_TO_COMPARE +%s)
+  DAYS_TO=$((( $DATE_IN_DAYS - $TODAY_IN_DAYS )/60/60/24))
+  echo $DAYS_TO
+}
+bsd_how_many_days_from_today() {
+  DATE_TO_COMPARE=$1
+  TODAY_IN_DAYS=$(date +%s)
+  DATE_IN_DAYS=$(date -jf %Y-%m-%d $DATE_TO_COMPARE +%s)
+  DAYS_TO=$((( $DATE_IN_DAYS - $TODAY_IN_DAYS )/60/60/24))
+  echo $DAYS_TO
+}
+
+gnu_get_date_previous_than_months() {
+  MONTHS_TO_COMPARE=$1
+  MONTHS_TO_COMPARE_IN_SECONDS=$(( 60 * 60 * 24 * 31 * $MONTHS_TO_COMPARE ))
+  CURRENTSECS=$(date +%s)
+  STARTDATEINSECS=$(( $CURRENTSECS - $MONTHS_TO_COMPARE_IN_SECONDS ))
+  DATE_BEFORE_MONTHS_TO_COMPARE=$(date -d @$STARTDATEINSECS '+%Y-%m-%d')
+  echo $DATE_BEFORE_MONTHS_TO_COMPARE
+}
+bsd_get_date_previous_than_months() {
+  MONTHS_TO_COMPARE=$1
+  DATE_BEFORE_MONTHS_TO_COMPARE=$(date -v -$(echo $MONTHS_TO_COMPARE)m '+%Y-%m-%d')
+  echo $DATE_BEFORE_MONTHS_TO_COMPARE
+}
+
+gnu_test_tcp_connectivity() {
+  HOST=$1
+  PORT=$2
+  TIMEOUT=$3
+  # This is initially for ES port 9300, not not HTTP but I add HTTP error
+  # codes for better handling, so 200 is open and 000 is not responding
+  timeout $TIMEOUT bash -c '(echo > /dev/tcp/'$HOST'/'$PORT') >/dev/null 2>&1 && echo "200" || echo "000"'
+}
+bsd_test_tcp_connectivity() {
+  HOST=$1
+  PORT=$2
+  TIMEOUT=$3
+  # This is initially for ES port 9300, not not HTTP but I add HTTP error
+  # codes for better handling, so 200 is open and 000 is not responding
+  nc -z -G $TIMEOUT $HOST $PORT >/dev/null 2>&1 && echo "200" || echo "000"
+}
 
 # Functions to manage dates depending on OS
 if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
   TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
   # function to compare in days, usage how_older_from_today date
   # date format %Y-%m-%d
-  how_older_from_today()
-    {
-      DATE_TO_COMPARE=$1
-      TODAY_IN_DAYS=$(date -d "$(date +%Y-%m-%d)" +%s)
-      DATE_FROM_IN_DAYS=$(date -d $DATE_TO_COMPARE +%s)
-      DAYS_SINCE=$((($TODAY_IN_DAYS - $DATE_FROM_IN_DAYS )/60/60/24))
-      echo $DAYS_SINCE
-    }
-  # function to convert from timestamp to date, usage timestamp_to_date timestamp
-  # output date format %Y-%m-%d
-  timestamp_to_date()
-    {
-      # remove fractions of a second
-      TIMESTAMP_TO_CONVERT=$(echo $1 | cut -f1 -d".")
-      OUTPUT_DATE=$(date -d @$TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
-      echo $OUTPUT_DATE
-    }
-  decode_report()
-    {
-      base64 -d
-    }
-  how_many_days_from_today()
-    {
-      DATE_TO_COMPARE=$1
-      TODAY_IN_DAYS=$(date -d "$(date +%Y-%m-%d)" +%s)
-      DATE_IN_DAYS=$(date -d $DATE_TO_COMPARE +%s)
-      DAYS_TO=$((( $DATE_IN_DAYS - $TODAY_IN_DAYS )/60/60/24))
-      echo $DAYS_TO
-    }
-  get_date_previous_than_months()
-    {
-      MONTHS_TO_COMPARE=$1
-      MONTHS_TO_COMPARE_IN_SECONDS=$(( 60 * 60 * 24 * 31 * $MONTHS_TO_COMPARE ))
-      CURRENTSECS=`date +%s`
-      STARTDATEINSECS=$(( $CURRENTSECS - $MONTHS_TO_COMPARE_IN_SECONDS ))
-      DATE_BEFORE_MONTHS_TO_COMPARE=$(date -d @$STARTDATEINSECS '+%Y-%m-%d')
-      echo $DATE_BEFORE_MONTHS_TO_COMPARE
-    }
-  test_tcp_connectivity()
-    {
-      HOST=$1
-      PORT=$2
-      TIMEOUT=$3
-      # This is initially for ES port 9300, not not HTTP but I add HTTP error 
-      # codes for better handling, so 200 is open and 000 is not responding
-      timeout $TIMEOUT bash -c '(echo > /dev/tcp/'$HOST'/'$PORT') >/dev/null 2>&1 && echo "200" || echo "000"'
-    }
+  how_older_from_today() {
+    gnu_how_older_from_today "$1"
+  }
+  timestamp_to_date() {
+    gnu_timestamp_to_date "$1"
+  }
+  decode_report() {
+    gnu_decode_report
+  }
+  how_many_days_from_today() {
+    gnu_how_many_days_from_today "$1"
+  }
+  get_date_previous_than_months() {
+    gnu_get_date_previous_than_months "$1"
+  }
+  test_tcp_connectivity() {
+    gnu_test_tcp_connectivity "$1" "$2" "$3"
+  }
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # BSD/OSX commands compatibility
   TEMP_REPORT_FILE=$(mktemp -t prowler.cred_report-XXXXXX)
-  how_older_from_today()
-    {
-      DATE_TO_COMPARE=$1
-      TODAY_IN_DAYS=$(date +%s)
-      DATE_FROM_IN_DAYS=$(date -jf %Y-%m-%d $DATE_TO_COMPARE +%s)
-      DAYS_SINCE=$((($TODAY_IN_DAYS - $DATE_FROM_IN_DAYS )/60/60/24))
-      echo $DAYS_SINCE
+  # It is possible that the user has installed GNU coreutils, replacing the default Mac OS X BSD tools with
+  # GNU coreutils equivalents. Only GNU date allows --version as a valid argument, so use the validity of this argument
+  # as a means to detect that coreutils is installed and is overriding the default tools
+  if date --version >/dev/null 2>&1 ; then
+    how_older_from_today() {
+      gnu_how_older_from_today "$1"
     }
-  timestamp_to_date()
-    {
-      # remove fractions of a second
-      TIMESTAMP_TO_CONVERT=$(echo $1 | cut -f1 -d".")
-      OUTPUT_DATE=$(date -r $TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
-      echo $OUTPUT_DATE
+    timestamp_to_date() {
+      gnu_timestamp_to_date "$1"
     }
-  decode_report()
-    {
-      base64 -D
+    decode_report() {
+      gnu_decode_report
     }
-  how_many_days_from_today()
-    {
-      DATE_TO_COMPARE=$1
-      TODAY_IN_DAYS=$(date +%s)
-      DATE_IN_DAYS=$(date -jf %Y-%m-%d $DATE_TO_COMPARE +%s)
-      DAYS_TO=$((( $DATE_IN_DAYS - $TODAY_IN_DAYS )/60/60/24))
-      echo $DAYS_TO
+    how_many_days_from_today() {
+      gnu_how_many_days_from_today "$1"
     }
-  get_date_previous_than_months()
-    {
-      MONTHS_TO_COMPARE=$1
-      DATE_BEFORE_MONTHS_TO_COMPARE=$(date -v -$(echo $MONTHS_TO_COMPARE)m '+%Y-%m-%d')
-      echo $DATE_BEFORE_MONTHS_TO_COMPARE
+    get_date_previous_than_months() {
+      gnu_get_date_previous_than_months "$1"
     }
-  test_tcp_connectivity()
-    {
-      HOST=$1
-      PORT=$2
-      TIMEOUT=$3
-      # This is initially for ES port 9300, not not HTTP but I add HTTP error 
-      # codes for better handling, so 200 is open and 000 is not responding
-      nc -z -G $TIMEOUT $HOST $PORT >/dev/null 2>&1 && echo "200" || echo "000"
+  else
+    how_older_from_today() {
+      bsd_how_older_from_today "$1"
     }
+    timestamp_to_date() {
+      bsd_timestamp_to_date "$1"
+    }
+    decode_report() {
+      bsd_decode_report
+    }
+    how_many_days_from_today() {
+      bsd_how_many_days_from_today "$1"
+    }
+    get_date_previous_than_months() {
+      bsd_get_date_previous_than_months "$1"
+    }
+  fi
+  test_tcp_connectivity() {
+    bsd_test_tcp_connectivity "$1" "$2" "$3"
+  }
 elif [[ "$OSTYPE" == "cygwin" ]]; then
   # POSIX compatibility layer and Linux environment emulation for Windows
   TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
-  how_older_from_today()
-    {
-      DATE_TO_COMPARE=$1
-      TODAY_IN_DAYS=$(date -d "$(date +%Y-%m-%d)" +%s)
-      DATE_FROM_IN_DAYS=$(date -d $DATE_TO_COMPARE +%s)
-      DAYS_SINCE=$((($TODAY_IN_DAYS - $DATE_FROM_IN_DAYS )/60/60/24))
-      echo $DAYS_SINCE
-    }
-  timestamp_to_date()
-    {
-      # remove fractions of a second
-      TIMESTAMP_TO_CONVERT=$(echo $1 | cut -f1 -d".")
-      OUTPUT_DATE=$(date -d @$TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
-      echo $OUTPUT_DATE
-    }
-  decode_report()
-    {
-      base64 -d
-    }
-  how_many_days_from_today()
-    {
-      DATE_TO_COMPARE=$1
-      TODAY_IN_DAYS=$(date -d "$(date +%Y-%m-%d)" +%s)
-      DATE_IN_DAYS=$(date -d $DATE_TO_COMPARE +%s)
-      DAYS_TO=$((( $TODAY_IN_DAYS - $DATE_IN_DAYS )/60/60/24))
-      echo $DAYS_TO
-    }
-  get_date_previous_than_months()
-    {
-      MONTHS_TO_COMPARE=$1
-      MONTHS_TO_COMPARE_IN_SECONDS=$(( 60 * 60 * 24 * 31 * $MONTHS_TO_COMPARE ))
-      CURRENTSECS=`date +%s`
-      STARTDATEINSECS=$(( $CURRENTSECS - $MONTHS_TO_COMPARE_IN_SECONDS ))
-      DATE_BEFORE_MONTHS_TO_COMPARE=$(date -d @$STARTDATEINSECS '+%Y-%m-%d')
-      echo $DATE_BEFORE_MONTHS_TO_COMPARE
-    }
+  how_older_from_today() {
+    gnu_how_older_from_today "$1"
+  }
+  timestamp_to_date() {
+    gnu_timestamp_to_date "$1"
+  }
+  decode_report() {
+    gnu_decode_report
+  }
+  how_many_days_from_today() {
+    gnu_how_many_days_from_today "$1"
+  }
+  get_date_previous_than_months() {
+    gnu_get_date_previous_than_months "$1"
+  }
+  test_tcp_connectivity() {
+    gnu_test_tcp_connectivity "$1" "$2" "$3"
+  }
 else
-      echo "Unknown Operating System! Valid \$OSTYPE: linux-gnu, linux-musl, darwin* or cygwin"
-      echo "Found: $OSTYPE"
-      EXITCODE=1
-      exit $EXITCODE
+  echo "Unknown Operating System! Valid \$OSTYPE: linux-gnu, linux-musl, darwin* or cygwin"
+  echo "Found: $OSTYPE"
+  EXITCODE=1
+  exit $EXITCODE
 fi
