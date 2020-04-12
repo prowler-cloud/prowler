@@ -355,13 +355,13 @@ get_all_checks_without_exclusion() {
     CHECKS_TO_EXCLUDE+=($E_CHECK)
   done
   # Get a list of total checks available by ID
-	for i in "${!GROUP_TITLE[@]}"; do
-		# show_group_title $i
-		IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$i]}
-		for j in ${CHECKS[@]}; do
+  for i in "${!GROUP_TITLE[@]}"; do
+    # show_group_title $i
+    IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$i]}
+    for j in ${CHECKS[@]}; do
       TOTAL_CHECKS+=($CHECK_ID_$j)
-		done
-	done
+    done
+  done
   # Remove duplicates whilst preserving the order of checks, and store the result as an array
   TOTAL_CHECKS=($(echo "${TOTAL_CHECKS[*]}" | tr ' ' '\n' | awk '!seen[$0]++'))
   # Create a list that contains all checks but excluded ones
