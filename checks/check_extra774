@@ -30,9 +30,9 @@ extra774(){
       user_created_date=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$3 }' |grep "^$i " |awk '{ print $2 }')
       days_since_user_created=$(how_many_days_from_today ${user_created_date%T*})
       if [ "$days_since_user_created" -lt "$MAX_DAYS" ];then
-        textFail "User $user has never used console login since they were created ${days_since_user_created} days ago"
+        textFail "User $user has never used console login since they were created over ${MAX_DAYS#-} days ago"
       else
-        textInfo "User $user has not used console login since they were created ${days_since_user_created} days ago"
+        textInfo "User $user has not used console login since they were created"
       fi
     else
       days_not_in_use=$(how_many_days_from_today ${last_login_date%T*})
