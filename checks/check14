@@ -30,6 +30,8 @@ check14(){
         if [ $HOWOLDER -gt "90" ];then
           textFail " $user has not rotated access key1 in over 90 days."
           C14_NUM_USERS1=$(expr $C14_NUM_USERS1 + 1)
+        else
+          textPass " $user has rotated access key1 in over 90 days."
         fi
       done
       if [[ $C14_NUM_USERS1 -eq 0 ]]; then
