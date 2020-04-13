@@ -29,7 +29,7 @@ check26(){
       if [[ $CLOUDTRAILBUCKET ]]; then
         bucket=$CLOUDTRAILBUCKET
         if [ "$CLOUDTRAIL_ACCOUNT_ID" == "$ACCOUNT_NUM" ]; then
-          CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --region $REGION --query 'LoggingEnabled.TargetBucket' --output text 2>&1)
+          CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --region $REGION --query 'LoggingEnabled.TargetBucket' 2>&1)
           if [[ $(echo "$CLOUDTRAILBUCKET_LOGENABLED" | grep AccessDenied) ]]; then
             textInfo "Access Denied Trying to Get Bucket Logging for $bucket"
             continue
