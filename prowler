@@ -44,6 +44,7 @@ QUIET=0
 SEP=','
 KEEPCREDREPORT=0
 EXITCODE=0
+SEND_TO_SECURITY_HUB=0
 SCRIPT_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
 TITLE_ID=""
 TITLE_TEXT="CALLER ERROR - UNSET TITLE"
@@ -64,7 +65,7 @@ USAGE:
       -f <filterregion>   specify an AWS region to run checks against
                             (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-      -M <mode>           output mode: text (default), mono, json, csv (separator is ","; data is on stdout; progress on stderr)
+      -M <mode>           output mode: text (default), mono, json, json-asff, csv (separator is ","; data is on stdout; progress on stderr)
       -k                  keep the credential report
       -n                  show check numbers to sort easier
                             (i.e.: 1.01 instead of 1.1)
@@ -75,6 +76,7 @@ USAGE:
       -b                  do not print Prowler banner
       -V                  show version number & exit
       -s                  show scoring report
+      -S                  send check output to AWS Security Hub - only valid when the output mode is json-asff (i.e. "-M json-asff -S")
       -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by "check")
       -q                  suppress info messages and passing test output
       -A                  account id for the account where to assume a role, requires -R and -T
@@ -88,7 +90,7 @@ USAGE:
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSx:A:R:T:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -145,6 +147,9 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:" OPTION; do
      s )
         SCORING=1
         ;;
+     S )
+        SEND_TO_SECURITY_HUB=1
+        ;;
      x )
         EXTERNAL_CHECKS_PATH=$OPTARG
         ;;
@@ -195,6 +200,7 @@ trap "{ rm -f /tmp/prowler*.policy.*; }" EXIT
 . $PROWLER_DIR/include/check3x
 . $PROWLER_DIR/include/assume_role
 . $PROWLER_DIR/include/connection_tests
+. $PROWLER_DIR/include/securityhub_integration
 
 # Get a list of all available AWS Regions
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
@@ -245,6 +251,14 @@ execute_check() {
 	# for example, we might have been passed 1.01 which is another name for 1.1
   local alternate_name_var=CHECK_ALTERNATE_$1
   local alternate_name=${!alternate_name_var}
+  # See if this check defines an ASFF Type, if so, use this, falling back to a sane default
+  # For a list of Types, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#securityhub-findings-format-type-taxonomy
+  local asff_type_var=CHECK_ASFF_TYPE_$1
+  ASFF_TYPE="${!asff_type_var:-Software and Configuration Checks}"
+  # See if this check defines an ASFF Resource Type, if so, use this, falling back to a sane default
+  # For a list of Resource Types, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
+  local asff_resource_type_var=CHECK_ASFF_RESOURCE_TYPE_$1
+  ASFF_RESOURCE_TYPE="${!asff_resource_type_var:-AwsAccount}"
   # Generate the credential report, only if it is group1 related which checks we
   # run so that the checks can safely assume it's available
 	if [ ${alternate_name} ];then
@@ -395,9 +409,13 @@ if [[ $PRINTGROUPSONLY == "1" ]]; then
   exit $EXITCODE
 fi
 
-# Check that jq is installed for JSON output
-if [[ $MODE == "json" ]]; then
+# Check that jq is installed for JSON outputs
+if [[ "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
   . $PROWLER_DIR/include/jq_detector
+fi
+
+if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
+  checkSecurityHubCompatibility
 fi
 
 # Gather account data / test aws cli connectivity

@@ -12,8 +12,9 @@
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra787="7.87"
 CHECK_TITLE_extra787="[extra787] Check connection and authentication for Internet exposed Elasticsearch/Kibana ports"
-CHECK_SCORED_extra787="NOT_SCORED" 
+CHECK_SCORED_extra787="NOT_SCORED"
 CHECK_TYPE_extra787="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra787="AwsEc2Instance"
 CHECK_ALTERNATE_check787="extra787"
 
 extra787(){
@@ -25,7 +26,7 @@ extra787(){
   ES_KIBANA_PORT="5601"
 
   for regx in $REGIONS; do
-    # crate a list of SG open to the world with port $ES_API_PORT or $ES_DATA_PORT or $ES_KIBANA_PORT
+    # create a list of SG open to the world with port $ES_API_PORT or $ES_DATA_PORT or $ES_KIBANA_PORT
     SG_LIST=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --output text \
       --query "SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort<=\`$ES_API_PORT\` && ToPort>=\`$ES_API_PORT\`) || (FromPort<=\`$ES_DATA_PORT\` && ToPort>=\`$ES_DATA_PORT\`) || (FromPort<=\`$ES_KIBANA_PORT\` && ToPort>=\`$ES_KIBANA_PORT\`)) && (contains(IpRanges[].CidrIp, \`0.0.0.0/0\`) || contains(Ipv6Ranges[].CidrIpv6, \`::/0\`))]) > \`0\`].{GroupId:GroupId}")
     # in case of open security groups goes through each one
@@ -37,28 +38,28 @@ extra787(){
         $AWSCLI $PROFILE_OPT --region $regx ec2 describe-instances --filters Name=instance.group-id,Values=$sg --query 'Reservations[*].Instances[*].[InstanceId,PublicIpAddress]' --output text > $TEMP_EXTRA787_FILE
         # in case of exposed instances it does access checks
         if [[ -s "$TEMP_EXTRA787_FILE" ]];then
-          while read instance eip ; do 
-            if [[ "$eip" != "None" ]];then 
+          while read instance eip ; do
+            if [[ "$eip" != "None" ]];then
               # check for Elasticsearch on port $ES_API_PORT, rest API HTTP.
               CHECH_HTTP_ES_API=$(curl -m 2 -s -w "%{http_code}" -o /dev/null -X GET "http://$eip:$ES_API_PORT/_cat/indices")
               httpStatus $CHECH_HTTP_ES_API
-              if [[ $CHECH_HTTP_ES_API -eq "200" ]];then 
+              if [[ $CHECH_HTTP_ES_API -eq "200" ]];then
                 textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_API_PORT response $SERVER_RESPONSE" "$regx"
               else
                 textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_API_PORT response $SERVER_RESPONSE" "$regx"
               fi
               # check for port $ES_DATA_PORT TCP, this is the communication port, not:
-              # test_tcp_connectivity is in include/os_detector 
+              # test_tcp_connectivity is in include/os_detector
               # syntax is 'test_tcp_connectivity $HOST $PORT $TIMEOUT' (in seconds)
               CHECH_HTTP_ES_DATA=$(test_tcp_connectivity $eip $ES_DATA_PORT 2)
-              # Using HTTP error codes here as well to reuse httpStatus function  
+              # Using HTTP error codes here as well to reuse httpStatus function
               # codes for better handling, so 200 is open and 000 is not responding
               httpStatus $CHECH_HTTP_ES_DATA
               if [[ $CHECH_HTTP_ES_DATA -eq "200" ]];then
                 textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_DATA_PORT response $SERVER_RESPONSE" "$regx"
               else
                 textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_DATA_PORT response $SERVER_RESPONSE" "$regx"
-              fi 
+              fi
               # check for Kibana on port $ES_KIBANA_PORT
               CHECH_HTTP_ES_KIBANA=$(curl -m 2 -s -w "%{http_code}" -o /dev/null -X GET "http://$eip:$ES_KIBANA_PORT/api/status")
               httpStatus $CHECH_HTTP_ES_KIBANA
@@ -66,13 +67,13 @@ extra787(){
                 textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana on port $ES_KIBANA_PORT response $SERVER_RESPONSE" "$regx"
               else
                 textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana on port $ES_KIBANA_PORT response $SERVER_RESPONSE" "$regx"
-              fi 
-            else 
+              fi
+            else
               textInfo "$regx: Found instance $instance with private IP on Security Group: $sg" "$regx"
-            fi 
+            fi
           done < <(cat $TEMP_EXTRA787_FILE)
-        fi 
-        rm -rf $TEMP_EXTRA787_FILE 
+        fi
+        rm -rf $TEMP_EXTRA787_FILE
       done
     else
       textPass "$regx: No Security Groups found open to 0.0.0.0/0 for Elasticsearch/Kibana ports" "$regx"

@@ -12,8 +12,9 @@
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra779="7.79"
 CHECK_TITLE_extra779="[extra779] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Elasticsearch/Kibana ports"
-CHECK_SCORED_extra779="NOT_SCORED" 
+CHECK_SCORED_extra779="NOT_SCORED"
 CHECK_TYPE_extra779="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra779="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check779="extra779"
 
 extra779(){
@@ -34,15 +35,15 @@ extra779(){
         $AWSCLI $PROFILE_OPT --region $regx ec2 describe-instances --filters Name=instance.group-id,Values=$sg --query 'Reservations[*].Instances[*].[InstanceId,PublicIpAddress]' --output text > $TEMP_EXTRA779_FILE
         # in case of exposed instances it does access checks
         if [[ -s "$TEMP_EXTRA779_FILE" ]];then
-          while read instance eip ; do  
-            if [[ "$eip" == "None" ]];then 
+          while read instance eip ; do
+            if [[ "$eip" == "None" ]];then
               textInfo "$regx: Found instance $instance with private IP on Security Group: $sg" "$regx"
-            else 
+            else
               textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg open to 0.0.0.0/0 on for Elasticsearch/Kibana ports - use extra787 to test AUTH" "$regx"
             fi
           done < <(cat $TEMP_EXTRA779_FILE)
-        fi 
-        rm -rf $TEMP_EXTRA779_FILE 
+        fi
+        rm -rf $TEMP_EXTRA779_FILE
       done
     else
       textPass "$regx: No Security Groups found open to 0.0.0.0/0 for Elasticsearch/Kibana ports" "$regx"

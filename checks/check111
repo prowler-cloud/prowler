@@ -12,6 +12,7 @@ CHECK_ID_check111="1.11"
 CHECK_TITLE_check111="[check111] Ensure IAM password policy expires passwords within 90 days or less (Scored)"
 CHECK_SCORED_check111="SCORED"
 CHECK_TYPE_check111="LEVEL1"
+CHECK_ASFF_TYPE_check111="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check111="check111"
 
 check111(){

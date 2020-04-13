@@ -14,6 +14,7 @@ CHECK_ID_extra722="7.22"
 CHECK_TITLE_extra722="[extra722] Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra722="NOT_SCORED"
 CHECK_TYPE_extra722="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra722="AwsApiGatewayRestApi"
 CHECK_ALTERNATE_check722="extra722"
 
 extra722(){

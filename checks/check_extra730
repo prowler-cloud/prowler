@@ -17,6 +17,7 @@ CHECK_ID_extra730="7.30"
 CHECK_TITLE_extra730="[extra730] Check if ACM Certificates are about to expire in $DAYS_TO_EXPIRE_THRESHOLD days or less (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra730="NOT_SCORED"
 CHECK_TYPE_extra730="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra730="AwsCertificateManagerCertificate"
 CHECK_ALTERNATE_check730="extra730"
 
 extra730(){

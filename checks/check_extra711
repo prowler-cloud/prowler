@@ -14,6 +14,7 @@ CHECK_ID_extra711="7.11"
 CHECK_TITLE_extra711="[extra711] Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra711="NOT_SCORED"
 CHECK_TYPE_extra711="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra711="AwsRedshiftCluster"
 CHECK_ALTERNATE_check711="extra711"
 
 extra711(){

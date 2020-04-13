@@ -12,12 +12,13 @@
 # specific language governing permissions and limitations under the License.
 
 # Current VPC Limit is 120 rules (60 inbound and 60 outbound)
-# Reference: https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html 
+# Reference: https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html
 
 CHECK_ID_extra777="7.77"
 CHECK_TITLE_extra777="[extra777] Find VPC security groups with many ingress or egress rules (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra777="NOT_SCORED"
 CHECK_TYPE_extra777="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra777="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check777="extra777"
 
 extra777(){
@@ -31,7 +32,7 @@ extra777(){
                              --query 'SecurityGroups[*].GroupId' \
                              --output text | xargs
                              )
-        
+
         for SECURITY_GROUP in ${SECURITY_GROUP_IDS}; do
 
             INGRESS_TOTAL=$(${AWSCLI} ec2 describe-security-groups \
@@ -51,7 +52,7 @@ extra777(){
                             )
 
             if [[ (${INGRESS_TOTAL} -ge ${THRESHOLD}) || (${EGRESS_TOTAL} -ge ${THRESHOLD}) ]]; then
-                textFail "${regx}: ${SECURITY_GROUP} has ${INGRESS_TOTAL} inbound rules and ${EGRESS_TOTAL} outbound rules." "${regx}"
+                textFail "${regx}: ${SECURITY_GROUP} has ${INGRESS_TOTAL} inbound rules and ${EGRESS_TOTAL} outbound rules" "${regx}"
             fi
         done
     done

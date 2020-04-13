@@ -14,30 +14,31 @@ CHECK_ID_extra786="7.86"
 CHECK_TITLE_extra786="[extra786] Check if EC2 Instance Metadata Service Version 2 (IMDSv2) is Enabled and Required (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra786="NOT_SCORED"
 CHECK_TYPE_extra786="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra786="AwsEc2Instance"
 CHECK_ALTERNATE_check786="extra786"
 
 extra786(){
-  for regx in $REGIONS; do 
+  for regx in $REGIONS; do
     TEMP_EXTRA786_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-es-domain.EXTRA786.XXXXXXXXXX)
     $AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx \
       --query 'Reservations[*].Instances[*].{HttpTokens:MetadataOptions.HttpTokens,HttpEndpoint:MetadataOptions.HttpEndpoint,InstanceId:InstanceId}' \
       --output text --max-items $MAXITEMS > $TEMP_EXTRA786_FILE
-    # if the file contains data, there are instances in that region 
+    # if the file contains data, there are instances in that region
     if [[ -s "$TEMP_EXTRA786_FILE" ]];then
       # here we read content from the file fields instanceid httptokens_status httpendpoint
-      while read httpendpoint httptokens_status instanceid  ; do 
+      while read httpendpoint httptokens_status instanceid  ; do
         #echo i:$instanceid tok:$httptokens_status end:$httpendpoint
         if [[ "$httpendpoint" == "enabled" &&  "$httptokens_status" == "required" ]];then
           textPass "$regx: EC2 Instance $instanceid has IMDSv2 enabled and required" "$regx"
-        elif [[ "$httpendpoint" == "disabled" ]];then 
+        elif [[ "$httpendpoint" == "disabled" ]];then
           textInfo "$regx: EC2 Instance $instanceid has HTTP endpoint access to metadata service disabled" "$regx"
         else
           textFail "$regx: EC2 Instance $instanceid has IMDSv2 disabled or not required" "$regx"
-        fi 
+        fi
       done < <(cat $TEMP_EXTRA786_FILE)
-    else 
+    else
      textInfo "$regx: no EC2 Instances found" "$regx"
-    fi 
+    fi
     rm -fr $TEMP_EXTRA786_FILE
   done
 }

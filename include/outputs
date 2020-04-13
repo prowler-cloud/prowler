@@ -18,41 +18,23 @@ textPass(){
   fi
 
   PASS_COUNTER=$((PASS_COUNTER+1))
-  if [[ "$MODE" == "csv" ]]; then
+  if [[ "$MODE" == "csv" || "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
     if [[ $2 ]]; then
       REPREGION=$2
     else
       REPREGION=$REGION
     fi
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
-  elif [[ "$MODE" == "json" ]]; then
-    if [[ $2 ]]; then
-      REPREGION=$2
-    else
-      REPREGION=$REGION
+    if [[ "$MODE" == "csv" ]]; then
+      echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
+    elif [[ "$MODE" == "json" ]]; then
+      generateJsonOutput "$1" "Pass"
+    elif [[ "$MODE" == "json-asff" ]]; then
+      JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "PASSED" "INFORMATIONAL")
+      echo "${JSON_ASFF_OUTPUT}"
+      if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
+        sendToSecurityHub "${JSON_ASFF_OUTPUT}"
+      fi
     fi
-    jq -M -c \
-    --arg PROFILE "$PROFILE" \
-    --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
-    --arg TITLE_TEXT "$TITLE_TEXT" \
-    --arg MESSAGE "$(echo -e "${1}" | sed -e 's/^[[:space:]]*//')" \
-    --arg SCORED "$ITEM_SCORED" \
-    --arg ITEM_LEVEL "$ITEM_LEVEL" \
-    --arg TITLE_ID "$TITLE_ID" \
-    --arg REPREGION "$REPREGION" \
-    --arg TIMESTAMP $(date -u +"%Y-%m-%dT%H:%M:%SZ") \
-    -n '{
-      "Profile": $PROFILE,
-      "Account Number": $ACCOUNT_NUM,
-      "Control": $TITLE_TEXT,
-      "Message": $MESSAGE,
-      "Status": "Pass",
-      "Scored": $SCORED,
-      "Level": $ITEM_LEVEL,
-      "Control ID": $TITLE_ID,
-      "Region": $REPREGION,
-      "Timestamp": $TIMESTAMP,
-    }'
   else
     echo "      $OK PASS!$NORMAL $1"
   fi
@@ -63,41 +45,17 @@ textInfo(){
     return
   fi
 
-  if [[ "$MODE" == "csv" ]]; then
+  if [[ "$MODE" == "csv" || "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
     if [[ $2 ]]; then
       REPREGION=$2
     else
       REPREGION=$REGION
     fi
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
-  elif [[ "$MODE" == "json" ]]; then
-    if [[ $2 ]]; then
-      REPREGION=$2
-    else
-      REPREGION=$REGION
+    if [[ "$MODE" == "csv" ]]; then
+      echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
+    elif [[ "$MODE" == "json" ]]; then
+      generateJsonOutput "$1" "Info"
     fi
-    jq -M -c \
-    --arg PROFILE "$PROFILE" \
-    --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
-    --arg TITLE_TEXT "$TITLE_TEXT" \
-    --arg MESSAGE "$(echo -e "${1}" | sed -e 's/^[[:space:]]*//')" \
-    --arg SCORED "$ITEM_SCORED" \
-    --arg ITEM_LEVEL "$ITEM_LEVEL" \
-    --arg TITLE_ID "$TITLE_ID" \
-    --arg REPREGION "$REPREGION" \
-    --arg TIMESTAMP $(date -u +"%Y-%m-%dT%H:%M:%SZ") \
-    -n '{
-      "Profile": $PROFILE,
-      "Account Number": $ACCOUNT_NUM,
-      "Control": $TITLE_TEXT,
-      "Message": $MESSAGE,
-      "Status": "Info",
-      "Scored": $SCORED,
-      "Level": $ITEM_LEVEL,
-      "Control ID": $TITLE_ID,
-      "Region": $REPREGION,
-      "Timestamp": $TIMESTAMP,
-    }'
   else
     echo "      $NOTICE INFO! $1 $NORMAL"
   fi
@@ -106,41 +64,23 @@ textInfo(){
 textFail(){
   FAIL_COUNTER=$((FAIL_COUNTER+1))
   EXITCODE=3
-  if [[ "$MODE" == "csv" ]]; then
+  if [[ "$MODE" == "csv" || "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
     if [[ $2 ]]; then
       REPREGION=$2
     else
       REPREGION=$REGION
     fi
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}FAIL${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
-  elif [[ "$MODE" == "json" ]]; then
-    if [[ $2 ]]; then
-      REPREGION=$2
-    else
-      REPREGION=$REGION
+    if [[ "$MODE" == "csv" ]]; then
+      echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}FAIL${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
+    elif [[ "$MODE" == "json" ]]; then
+      generateJsonOutput "$1" "Fail"
+    elif [[ "$MODE" == "json-asff" ]]; then
+      JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "FAILED" "HIGH")
+      echo "${JSON_ASFF_OUTPUT}"
+      if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
+        sendToSecurityHub "${JSON_ASFF_OUTPUT}"
+      fi
     fi
-    jq -M -c \
-    --arg PROFILE "$PROFILE" \
-    --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
-    --arg TITLE_TEXT "$TITLE_TEXT" \
-    --arg MESSAGE "$(echo -e "${1}" | sed -e 's/^[[:space:]]*//')" \
-    --arg SCORED "$ITEM_SCORED" \
-    --arg ITEM_LEVEL "$ITEM_LEVEL" \
-    --arg TITLE_ID "$TITLE_ID" \
-    --arg REPREGION "$REPREGION" \
-    --arg TIMESTAMP $(date -u +"%Y-%m-%dT%H:%M:%SZ") \
-    -n '{
-      "Profile": $PROFILE,
-      "Account Number": $ACCOUNT_NUM,
-      "Control": $TITLE_TEXT,
-      "Message": $MESSAGE,
-      "Status": "Fail",
-      "Scored": $SCORED,
-      "Level": $ITEM_LEVEL,
-      "Control ID": $TITLE_ID,
-      "Region": $REPREGION,
-      "Timestamp": $TIMESTAMP,
-    }'
   else
     echo "      $BAD FAIL! $1 $NORMAL"
   fi
@@ -179,7 +119,7 @@ textTitle(){
 
   if [[ "$MODE" == "csv" ]]; then
       >&2 echo "$TITLE_ID $TITLE_TEXT"
-  elif [[ "$MODE" == "json" ]]; then
+  elif [[ "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
     :
   else
     if [[ "$ITEM_SCORED" == "Scored" ]]; then
@@ -188,4 +128,89 @@ textTitle(){
       echo -e "\n$PURPLE $TITLE_ID $TITLE_TEXT $NORMAL"
     fi
   fi
+}
+
+generateJsonOutput(){
+  local message=$1
+  local status=$2
+  jq -M -c \
+  --arg PROFILE "$PROFILE" \
+  --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
+  --arg TITLE_TEXT "$TITLE_TEXT" \
+  --arg MESSAGE "$(echo -e "${message}" | sed -e 's/^[[:space:]]*//')" \
+  --arg STATUS "$status" \
+  --arg SCORED "$ITEM_SCORED" \
+  --arg ITEM_LEVEL "$ITEM_LEVEL" \
+  --arg TITLE_ID "$TITLE_ID" \
+  --arg REPREGION "$REPREGION" \
+  --arg TIMESTAMP $(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+  -n '{
+    "Profile": $PROFILE,
+    "Account Number": $ACCOUNT_NUM,
+    "Control": $TITLE_TEXT,
+    "Message": $MESSAGE,
+    "Status": $STATUS,
+    "Scored": $SCORED,
+    "Level": $ITEM_LEVEL,
+    "Control ID": $TITLE_ID,
+    "Region": $REPREGION,
+    "Timestamp": $TIMESTAMP,
+  }'
+}
+
+generateJsonAsffOutput(){
+  # UNIQUE_ID must only contain characters from the unreserved characters set defined in section 2.3 of RFC-3986
+  # Replace any successive non-conforming characters with a single underscore
+  local message=$1
+  local status=$2
+  local severity=$3
+  jq -M -c \
+  --arg PROFILE "$PROFILE" \
+  --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
+  --arg TITLE_TEXT "$TITLE_TEXT" \
+  --arg MESSAGE "$(echo -e "${message}" | sed -e 's/^[[:space:]]*//')" \
+  --arg UNIQUE_ID "$(LC_ALL=C echo -e "${message}" | tr -cs '[:alnum:]._~-\n' '_')" \
+  --arg STATUS "$status" \
+  --arg SEVERITY "$severity" \
+  --arg SCORED "$ITEM_SCORED" \
+  --arg ITEM_LEVEL "$ITEM_LEVEL" \
+  --arg TITLE_ID "$TITLE_ID" \
+  --arg TYPE "$ASFF_TYPE" \
+  --arg RESOURCE_TYPE "$ASFF_RESOURCE_TYPE" \
+  --arg REPREGION "$REPREGION" \
+  --arg TIMESTAMP $(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+  --arg PROWLER_VERSION "$PROWLER_VERSION" \
+-n '{
+      "SchemaVersion": "2018-10-08",
+      "Id": "prowler-\($TITLE_ID)-\($ACCOUNT_NUM)-\($REPREGION)-\($UNIQUE_ID)",
+      "ProductArn": "arn:aws:securityhub:\($REPREGION):\($ACCOUNT_NUM):product/\($ACCOUNT_NUM)/default",
+      "ProductFields": {
+          "ProviderName": "Prowler",
+          "ProviderVersion": $PROWLER_VERSION
+      },
+      "GeneratorId": "prowler-\($PROWLER_VERSION)",
+      "AwsAccountId": $ACCOUNT_NUM,
+      "Types": [
+          $TYPE
+      ],
+      "FirstObservedAt": $TIMESTAMP,
+      "UpdatedAt": $TIMESTAMP,
+      "CreatedAt": $TIMESTAMP,
+      "Severity": {
+          "Label": $SEVERITY
+      },
+      "Title": $TITLE_TEXT,
+      "Description": $MESSAGE,
+      "Resources": [
+          {
+              "Type": $RESOURCE_TYPE,
+              "Id": "AWS::::Account:\($ACCOUNT_NUM)",
+              "Partition": "aws",
+              "Region": $REPREGION
+          }
+      ],
+      "Compliance": {
+          "Status": $STATUS
+      }
+  }'
 }

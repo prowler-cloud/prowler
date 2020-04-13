@@ -14,6 +14,7 @@ CHECK_ID_extra746="7.46"
 CHECK_TITLE_extra746="[extra746] Check if API Gateway has configured authorizers (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra746="NOT_SCORED"
 CHECK_TYPE_extra746="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra746="AwsApiGatewayRestApi"
 CHECK_ALTERNATE_check746="extra746"
 
 extra746(){
@@ -23,7 +24,7 @@ extra746(){
       for api in $LIST_OF_REST_APIS; do
         API_GW_NAME=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query "items[?id==\`$api\`].name" --output text)
         AUTHORIZER_CONFIGURED=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-authorizers --rest-api-id $api --query items[*].type --output text)
-        if [[ $AUTHORIZER_CONFIGURED ]]; then 
+        if [[ $AUTHORIZER_CONFIGURED ]]; then
            textPass "$regx: API Gateway $API_GW_NAME ID $api has authorizer configured" "$regx"
         else
            textFail "$regx: API Gateway $API_GW_NAME ID $api has not authorizer configured" "$regx"

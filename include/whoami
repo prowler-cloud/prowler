@@ -28,7 +28,7 @@ getWhoami(){
     printCsvHeader
     textTitle "0.0" "Show report generation info" "NOT_SCORED" "SUPPORT"
     textInfo "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
-  elif [[ "$MODE" == "json" ]]; then
+  elif [[ "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
     :
   else
     echo ""

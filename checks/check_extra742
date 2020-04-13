@@ -14,11 +14,12 @@ CHECK_ID_extra742="7.42"
 CHECK_TITLE_extra742="[extra742] Find secrets in CloudFormation outputs (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra742="NOT_SCORED"
 CHECK_TYPE_extra742="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra742="AwsCloudFormationStack"
 CHECK_ALTERNATE_check742="extra742"
 
 extra742(){
   SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"
-  if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then 
+  if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then
     # this folder is deleted once this check is finished
     mkdir $SECRETS_TEMP_FOLDER
   fi

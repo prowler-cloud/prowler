@@ -14,6 +14,7 @@ CHECK_ID_extra783="7.83"
 CHECK_TITLE_extra783="[extra783] Check if Amazon Elasticsearch Service (ES) domains has enforce HTTPS enabled"
 CHECK_SCORED_extra783="NOT_SCORED"
 CHECK_TYPE_extra783="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra783="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check783="extra783"
 
 extra783(){
@@ -24,7 +25,7 @@ extra783(){
         CHECK_IF_ENFORCEHTTPS_ENABLED=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.DomainEndpointOptions.EnforceHTTPS' --output text|grep -i true)
         if [[ $CHECK_IF_ENFORCEHTTPS_ENABLED ]];then
           textPass "$regx: Amazon ES domain $domain has enforce HTTPS enabled" "$regx"
-        else 
+        else
           textFail "$regx: Amazon ES domain $domain does not have enforce HTTPS enabled" "$regx"
         fi
       done
