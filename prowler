@@ -77,12 +77,12 @@ USAGE:
       -s                  show scoring report
       -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by "check")
       -q                  suppress info messages and passing test output
-      -A                  account id for the account where to assume a role, requires -R and -T 
+      -A                  account id for the account where to assume a role, requires -R and -T
                             (i.e.: 123456789012)
-      -R                  role name to assume in the account, requires -A and -T 
+      -R                  role name to assume in the account, requires -A and -T
                             (i.e.: ProwlerRole)
       -T                  session durantion given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
-                            (i.e.: 43200) 
+                            (i.e.: 43200)
       -h                  this help
   "
   exit
@@ -344,38 +344,38 @@ show_all_group_titles() {
 	done
 }
 
-
 # Function to execute all checks but exclude some of them
 get_all_checks_without_exclusion() {
-        CHECKS_EXCLUDED=()
-        local CHECKS_TO_EXCLUDE=()
-        local TOTAL_CHECKS=()
-        #Get a list of checks to exclude
-        IFS=',' read -ra E_CHECKS <<< "$1"
-        for E_CHECK in "${E_CHECKS[@]}"; do
-            CHECKS_TO_EXCLUDE+=($E_CHECK)
-        done
-        #Get a list of total checks available by ID
-	for i in "${!GROUP_TITLE[@]}"; do
-		#show_group_title $i
-		IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$i]}
-		for j in ${CHECKS[@]}; do
-                    TOTAL_CHECKS+=($CHECK_ID_$j)
-		done
-	done
-        TOTAL_CHECKS=($(echo "${TOTAL_CHECKS[*]}" | tr ' ' '\n' | sort -u)) #removes duplicate and store the result as an array
-        #Create a list that contains all checks but excluded ones
-        for i in "${TOTAL_CHECKS[@]}"; do
-            local COINCIDENCE=false
-            for x in "${CHECKS_TO_EXCLUDE[@]}"; do
-                if [[ "$i" == "$x" ]]; then
-                    COINCIDENCE=true
-                fi
-            done
-            if [[ "$COINCIDENCE" = false ]]; then
-                CHECKS_EXCLUDED+=($i)
-            fi
-        done
+  CHECKS_EXCLUDED=()
+  local CHECKS_TO_EXCLUDE=()
+  local TOTAL_CHECKS=()
+  # Get a list of checks to exclude
+  IFS=',' read -ra E_CHECKS <<< "$1"
+  for E_CHECK in "${E_CHECKS[@]}"; do
+    CHECKS_TO_EXCLUDE+=($E_CHECK)
+  done
+  # Get a list of total checks available by ID
+  for i in "${!GROUP_TITLE[@]}"; do
+    # show_group_title $i
+    IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$i]}
+    for j in ${CHECKS[@]}; do
+      TOTAL_CHECKS+=($CHECK_ID_$j)
+    done
+  done
+  # Remove duplicates whilst preserving the order of checks, and store the result as an array
+  TOTAL_CHECKS=($(echo "${TOTAL_CHECKS[*]}" | tr ' ' '\n' | awk '!seen[$0]++'))
+  # Create a list that contains all checks but excluded ones
+  for i in "${TOTAL_CHECKS[@]}"; do
+    local COINCIDENCE=false
+    for x in "${CHECKS_TO_EXCLUDE[@]}"; do
+      if [[ "$i" == "$x" ]]; then
+        COINCIDENCE=true
+      fi
+    done
+    if [[ "$COINCIDENCE" = false ]]; then
+      CHECKS_EXCLUDED+=($i)
+    fi
+  done
 }
 
 ### All functions defined above ... run the workflow
