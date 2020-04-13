@@ -90,10 +90,11 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     export AWS_SESSION_TOKEN="XXXXXXXXX"
     ```
 
-- Those credentials must be associated to a user or role with proper permissions to do all checks. To make sure add SecurityAuditor default policy to your user. Policy ARN is
+- Those credentials must be associated to a user or role with proper permissions to do all checks. To make sure, add the AWS managed policies, SecurityAudit and ViewOnlyAccess, to the user or role being used.  Policy ARNs are:
 
     ```sh
     arn:aws:iam::aws:policy/SecurityAudit
+    arn:aws:iam::aws:policy/job-function/ViewOnlyAccess
     ```
 
     > Additional permissions needed: to make sure Prowler can scan all services included in the group *Extras*, make sure you attach also the custom policy [prowler-additions-policy.json](https://github.com/toniblyx/prowler/blob/master/iam/prowler-additions-policy.json) to the role you are using. If you want Prowler to send findings to [AWS Security Hub](https://aws.amazon.com/security-hub), make sure you also attach the custom policy [prowler-security-hub.json](https://github.com/toniblyx/prowler/blob/master/iam/prowler-security-hub.json).
@@ -327,27 +328,42 @@ or set manually up your `~/.aws/credentials` file properly.
 
 There are some helpfull tools to save time in this process like [aws-mfa-script](https://github.com/asagage/aws-mfa-script) or [aws-cli-mfa](https://github.com/sweharris/aws-cli-mfa).
 
+### AWS Managed IAM Policies
+
+[ViewOnlyAccess](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_job-functions.html#jf_view-only-user)
+- Use case: This user can view a list of AWS resources and basic metadata in the account across all services. The user cannot read resource content or metadata that goes beyond the quota and list information for resources.
+- Policy description: This policy grants List*, Describe*, Get*, View*, and Lookup* access to resources for most AWS services. To see what actions this policy includes for each service, see [ViewOnlyAccess Permissions](https://console.aws.amazon.com/iam/home#policies/arn:aws:iam::aws:policy/job-function/ViewOnlyAccess)
+
+[SecurityAudit](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_job-functions.html#jf_security-auditor)
+- Use case: This user monitors accounts for compliance with security requirements. This user can access logs and events to investigate potential security breaches or potential malicious activity.
+- Policy description: This policy grants permissions to view configuration data for many AWS services and to review their logs. To see what actions this policy includes for each service, see [SecurityAudit Permissions](https://console.aws.amazon.com/iam/home#policies/arn:aws:iam::aws:policy/SecurityAudit)
+
 ### Custom IAM Policy
 
-Some new and specific checks require Prowler to inherit more permissions than SecurityAudit to work properly. In addition to the AWS managed policy "SecurityAudit" for the role you use for checks you may need to create a custom policy with a few more permissions (get and list and additional services mostly). Here you go a good example for a "ProwlerReadOnlyPolicy" (see below bootstrap script for set it up):
+[Prowler-Additions-Policy](iam/prowler-additions-policy.json)
 
-[iam/prowler-additions-policy.json](iam/prowler-additions-policy.json)
+Some new and specific checks require Prowler to inherit more permissions than SecurityAudit and ViewOnlyAccess to work properly. In addition to the AWS managed policies, "SecurityAudit" and "ViewOnlyAccess", the user/role you use for checks may need to be granted a custom policy with a few more read-only permissions (to support additional services mostly). Here is an example policy with the additional rights, "Prowler-Additions-Policy" (see below bootstrap script for set it up):
+- [iam/prowler-additions-policy.json](iam/prowler-additions-policy.json)
 
-> Note: Action `ec2:get*` is included in "ProwlerReadOnlyPolicy" policy above, that includes `get-password-data`, type `aws ec2 get-password-data help` to better understand its implications.
+[Prowler-Security-Hub Policy](iam/prowler-security-hub.json)
+
+Allows Prowler to import its findings to [AWS Security Hub](https://aws.amazon.com/security-hub).  With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions.
+- [iam/prowler-security-hub.json](iam/prowler-security-hub.json)
 
 ### Bootstrap Script
 
-Quick bash script to set up a "prowler" IAM user with "SecurityAudit" group with the required permissions (including "ProwlerReadOnlyPolicy"). To run the script below, you need user with administrative permissions; set the `AWS_DEFAULT_PROFILE` to use that account:
+Quick bash script to set up a "prowler" IAM user with "SecurityAudit" and "ViewOnlyAccess" group with the required permissions (including "Prowler-Additions-Policy"). To run the script below, you need user with administrative permissions; set the `AWS_DEFAULT_PROFILE` to use that account:
 
 ```sh
 export AWS_DEFAULT_PROFILE=default
 export ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' | tr -d '"')
-aws iam create-group --group-name SecurityAudit
-aws iam create-policy --policy-name ProwlerReadOnlyPolicy --policy-document file://$(pwd)/iam/prowler-additions-policy.json
-aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::aws:policy/SecurityAudit
-aws iam attach-group-policy --group-name SecurityAudit --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ProwlerReadOnlyPolicy
+aws iam create-group --group-name Prowler
+aws iam create-policy --policy-name Prowler-Additions-Policy --policy-document file://$(pwd)/iam/prowler-additions-policy.json
+aws iam attach-group-policy --group-name Prowler --policy-arn arn:aws:iam::aws:policy/SecurityAudit
+aws iam attach-group-policy --group-name Prowler --policy-arn arn:aws:iam::aws:policy/job-function/ViewOnlyAccess
+aws iam attach-group-policy --group-name Prowler --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/Prowler-Additions-Policy
 aws iam create-user --user-name prowler
-aws iam add-user-to-group --user-name prowler --group-name SecurityAudit
+aws iam add-user-to-group --user-name prowler --group-name Prowler
 aws iam create-access-key --user-name prowler
 unset ACCOUNT_ID AWS_DEFAULT_PROFILE
 ```
