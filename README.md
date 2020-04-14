@@ -287,9 +287,9 @@ There are two requirements:
 
 1. Security Hub must be enabled for the active region from where you are calling Prowler (if no region is used with `-r` then `us-east-1` is used). It can be enabled by calling `aws securityhub enable-security-hub`
 2. As mentioned in section "Custom IAM Policy", to allow Prowler to import its findings to AWS Security Hub you need to add the policy below to the role or user running Prowler:
-
     - [iam/prowler-security-hub.json](iam/prowler-security-hub.json)
 
+>Note: to have updated findings in Security Hub you have to run Prowler periodically. Once a day or every certain amount of hours. 
 
 
 ## How to fix every FAIL
