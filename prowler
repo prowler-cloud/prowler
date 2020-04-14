@@ -244,7 +244,7 @@ show_check_title() {
 
 # Function to show the title of a group, by numeric id
 show_group_title() {
-	# when csv mode is used, no group tittle is shown
+	# when csv mode is used, no group title is shown
   if [[ "$MODE" != "csv" ]]; then
       textTitle "${GROUP_NUMBER[$1]}" "${GROUP_TITLE[$1]}" "NOT_SCORED" "SUPPORT"
   fi
@@ -280,7 +280,7 @@ execute_check() {
     local check_id_var=CHECK_ID_$1
     local check_id=${!check_id_var}
     if [ ${check_id} ]; then
-      if [[ ${check_id} == 1* || ${check_id} == 7.1,7.01 || ${check_id} == 7.74 ]];then
+      if [[ ${check_id} == 1* || ${check_id} == 7.1 || ${check_id} == 7.74 ]];then
         if [ ! -s $TEMP_REPORT_FILE ];then
           genCredReport
           saveReport

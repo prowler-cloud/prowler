@@ -8,7 +8,7 @@
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
-CHECK_ID_check24="2.4,2.04"
+CHECK_ID_check24="2.4"
 CHECK_TITLE_check24="[check24] Ensure CloudTrail trails are integrated with CloudWatch Logs (Scored)"
 CHECK_SCORED_check24="SCORED"
 CHECK_TYPE_check24="LEVEL1"

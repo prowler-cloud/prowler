@@ -8,7 +8,7 @@
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
-CHECK_ID_check14="1.4,1.04"
+CHECK_ID_check14="1.4"
 CHECK_TITLE_check14="[check14] Ensure access keys are rotated every 90 days or less (Scored)"
 CHECK_SCORED_check14="SCORED"
 CHECK_TYPE_check14="LEVEL1"

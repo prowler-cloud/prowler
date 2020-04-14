@@ -8,7 +8,7 @@
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
-CHECK_ID_check13="1.3,1.03"
+CHECK_ID_check13="1.3"
 CHECK_TITLE_check13="[check13] Ensure credentials unused for 90 days or greater are disabled (Scored)"
 CHECK_SCORED_check13="SCORED"
 CHECK_TYPE_check13="LEVEL1"
