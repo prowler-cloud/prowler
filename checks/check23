@@ -8,7 +8,7 @@
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
-CHECK_ID_check23="2.3,2.03"
+CHECK_ID_check23="2.3"
 CHECK_TITLE_check23="[check23] Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)"
 CHECK_SCORED_check23="SCORED"
 CHECK_TYPE_check23="LEVEL1"

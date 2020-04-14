@@ -8,7 +8,7 @@
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
-CHECK_ID_check26="2.6,2.06"
+CHECK_ID_check26="2.6"
 CHECK_TITLE_check26="[check26] Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)"
 CHECK_SCORED_check26="SCORED"
 CHECK_TYPE_check26="LEVEL1"
