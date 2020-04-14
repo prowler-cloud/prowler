@@ -30,7 +30,7 @@ extra725(){
       if [[ $LIST_OF_TRAILS ]]; then
         BUCKET_ENABLED_TRAILS=()
         for trail in $LIST_OF_TRAILS; do
-          BUCKET_ENABLED_IN_TRAIL=$($AWSCLI cloudtrail get-event-selectors $PROFILE_OPT --trail-name $trail --query "EventSelectors[*].DataResources[?Type == \`AWS::S3::Object\`].Values" --output text |xargs -n1| grep -E "^arn:aws:s3:::$bucketName/\S*$|^arn:aws:s3$")
+          BUCKET_ENABLED_IN_TRAIL=$($AWSCLI cloudtrail get-event-selectors $PROFILE_OPT --trail-name $trail --query "EventSelectors[*].DataResources[?Type == \`AWS::S3::Object\`].Values" --output text |xargs -n1| grep -E "^arn:aws:s3:::$bucketName/\S*$|^arn:aws:s3$|^arn:aws:s3:::$")
           if [[ $BUCKET_ENABLED_IN_TRAIL ]]; then
             BUCKET_ENABLED_TRAILS+=($trail)
             # textPass "$regx: S3 bucket $bucketName has Object-level logging enabled in trail $trail" "$regx"
