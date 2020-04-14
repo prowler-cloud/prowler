@@ -7,6 +7,7 @@
 - [Requirements and Installation](#requirements-and-installation)
 - [Usage](#usage)
 - [Advanced Usage](#advanced-usage)
+- [Security Hub integration](#security-hub-integration)
 - [Fix](#fix)
 - [Screenshots](#screenshots)
 - [Troubleshooting](#troubleshooting)
@@ -188,14 +189,6 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler -M mono | aws s3 cp - s3://bucket-name/prowler-report.txt
     ```
 
-1. If you want Prowler to submit findings to [AWS Security Hub](https://aws.amazon.com/security-hub):
-
-    ```sh
-    ./prowler -M json-asff -S
-    ```
-
-    > Note that Security Hub must be enabled for the active region. It can be enabled by calling `aws securityhub enable-security-hub`
-
 1. To perform an assessment based on CIS Profile Definitions you can use cislevel1 or cislevel2 with `-g` flag, more information about this [here, page 8](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf):
 
     ```sh
@@ -283,6 +276,21 @@ In order to remove noise and get only FAIL findings there is a `-q` flag that ma
 ./prowler -q -M csv -b
 ```
 
+## Security Hub integration
+
+Since version v2.3, Prowler supports natively sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows Prowler to import its findings to AWS Security Hub. With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions and now from Prowler. It is as simple as running the commanbd below:
+
+    ```sh
+    ./prowler -M json-asff -S
+    ```
+There are two requirements:
+
+1. Security Hub must be enabled for the active region from where you are calling Prowler (if no region is used with `-r` then `us-east-1` is used). It can be enabled by calling `aws securityhub enable-security-hub`
+2. As mentioned in section "Custom IAM Policy", to allow Prowler to import its findings to AWS Security Hub you need to add the policy below to the role or user running Prowler:
+
+    - [iam/prowler-security-hub.json](iam/prowler-security-hub.json)
+
+
 
 ## How to fix every FAIL
 
@@ -347,7 +355,7 @@ Some new and specific checks require Prowler to inherit more permissions than Se
 
 [Prowler-Security-Hub Policy](iam/prowler-security-hub.json)
 
-Allows Prowler to import its findings to [AWS Security Hub](https://aws.amazon.com/security-hub).  With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions.
+Allows Prowler to import its findings to [AWS Security Hub](https://aws.amazon.com/security-hub). More information in [Security Hub integration](#security-hub-integration):
 - [iam/prowler-security-hub.json](iam/prowler-security-hub.json)
 
 ### Bootstrap Script
