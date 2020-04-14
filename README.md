@@ -31,10 +31,10 @@ Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-20
 
 ## Features
 
-It covers hardening and security best practices for all AWS regions related to the next groups:
+~140 checks controls covering security best practices across all AWS regions and most of AWS services and related to the next groups:
 
-- Identity and Access Management (22 checks) [group1]
-- Logging (9 checks) [group2]
+- Identity and Access Management [group1]
+- Logging  [group2]
 - Monitoring (14 checks) [group3]
 - Networking (4 checks) [group4]
 - CIS Level 1 [cislevel1]
@@ -46,14 +46,14 @@ It covers hardening and security best practices for all AWS regions related to t
 - Trust Boundaries [trustboundaries] Read more [here](#trustboundaries-checks)
 
 
-For a comprehensive list and resolution look at the guide on the link above.
-
 With Prowler you can:
 
 - get a colorful or monochrome report
-- a CSV format report for diff
-- run specific checks without having to run the entire report
-- check multiple AWS accounts in parallel
+- a CSV, JSON or JSON ASFF format report
+- send findings directly to Security Hub
+- run specific checks
+- check multiple AWS accounts in parallel or sequentially
+- and more! Read examples below
 
 ## Requirements and Installation
 
@@ -281,6 +281,19 @@ For example, if you want to get only the fails in CSV format from all checks reg
 
 ```
 ./prowler -A 123456789012 -R RemoteRoleToAssume -T 3600 -I 123456 -b -M cvs -q -g rds
+```
+
+### Assume Role and across all accounts in AWS Organizations:
+
+If you want to run Prowler or just a check or a group across all accounts of AWS Organizations you can do this:
+
+First get a list of accounts:
+```
+ACCOUNTS_IN_ORGS=$(aws organizations list-accounts --query Accounts[*].Id --output text)
+```
+Then run Prowler to assume a role (same in all members) per each account, in this example it is just running one particular check:
+```
+for accountId in $ACCOUNTS_IN_ORGS; do ./prowler -A $accountId -R RemoteRoleToAssume -c extra79; done
 ```
 
 ### Custom folder for custom checks
