@@ -251,6 +251,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
                               (i.e.: ProwlerRole)
         -T                  session durantion given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
                               (i.e.: 43200)
+        -I                 External ID to be used when assuming roles (no mandatory)
         -h                  this help
     ```
 
@@ -264,6 +265,10 @@ Prowler uses the AWS CLI underneath so it uses the same authentication methods. 
 ./prowler -A 123456789012 -R ProwlerRole
 ```
 
+```
+./prowler -A 123456789012 -R ProwlerRole -I 123456
+```
+
 > *NOTE 1 about Session Duration*: By default it gets credentials valid for 1 hour (3600 seconds). Depending on the mount of checks you run and the size of your infrastructure, Prowler may require more than 1 hour to finish. Use option `-T <seconds>`  to allow up to 12h (43200 seconds). To allow more than 1h you need to modify *"Maximum CLI/API session duration"* for that particular role, read more [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session).
 
 > *NOTE 2 about Session Duration*: Bear in mind that if you are using roles assumed by role chaining there is a hard limit of 1 hour so consider not using role chaining if possible, read more about that, in foot note 1 below the table [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html).
@@ -272,6 +277,10 @@ For example, if you want to get only the fails in CSV format from all checks reg
 
 ```
 ./prowler -A 123456789012 -R RemoteRoleToAssume -T 3600 -b -M cvs -q -g rds
+```
+
+```
+./prowler -A 123456789012 -R RemoteRoleToAssume -T 3600 -I 123456 -b -M cvs -q -g rds
 ```
 
 ### Custom folder for custom checks
@@ -552,3 +561,4 @@ NOTE: If you are interested in using Prowler for commercial purposes remember th
 **I'm not related anyhow with CIS organization, I just write and maintain Prowler to help companies over the world to make their cloud infrastructure more secure.**
 
 If you want to contact me visit <https://blyx.com/contact>
+

@@ -85,13 +85,14 @@ USAGE:
       -R                  role name to assume in the account, requires -A and -T
                             (i.e.: ProwlerRole)
       -T                  session durantion given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
-                            (i.e.: 43200)
+                            (i.e.: 43200) 
+      -I                  External ID to be used when assuming roles (no mandatory), requires -A and -R.
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSx:A:R:T:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSxI:A:R:T:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -162,6 +163,9 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSx:A:R:T:" OPTION; do
         ;;
      R )
         ROLE_TO_ASSUME=$OPTARG
+        ;;
+     I )
+        ROLE_EXTERNAL_ID=$OPTARG
         ;;
      T )
         SESSION_DURATION_TO_ASSUME=$OPTARG
@@ -457,6 +461,10 @@ if [[ $CHECK_ID ]];then
   exit $EXITCODE
 fi
 
+execute_all
+scoring
+cleanTemp
+
 if [[ $ACCOUNT_TO_ASSUME ]]; then
   # unset env variables with assumed role credentials
   unset AWS_ACCESS_KEY_ID
@@ -465,7 +473,4 @@ if [[ $ACCOUNT_TO_ASSUME ]]; then
 fi
 
 
-execute_all
-scoring
-cleanTemp
 exit $EXITCODE
