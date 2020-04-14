@@ -8,7 +8,7 @@
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
-CHECK_ID_check43="4.3,4.03"
+CHECK_ID_check43="4.3"
 CHECK_TITLE_check43="[check43] Ensure the default security group of every VPC restricts all traffic (Scored)"
 CHECK_SCORED_check43="SCORED"
 CHECK_TYPE_check43="LEVEL2"

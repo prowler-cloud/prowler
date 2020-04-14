@@ -90,9 +90,8 @@ textTitle(){
   CHECKS_COUNTER=$((CHECKS_COUNTER+1))
   TITLE_ID=$1
   if [[ $NUMERAL ]]; then
-    TITLE_ID=$(echo $TITLE_ID | cut -d, -f2)
-  else
-    TITLE_ID=$(echo $TITLE_ID | cut -d, -f1)
+    # Left-pad the check ID with zeros to simplify sorting, e.g. 1.1 -> 1.01
+    TITLE_ID=$(awk -F'.' '{ printf "%d.%02d", $1, $2 }' <<< "$TITLE_ID")
   fi
 
   TITLE_TEXT=$2

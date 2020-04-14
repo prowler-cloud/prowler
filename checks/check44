@@ -8,7 +8,7 @@
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
-CHECK_ID_check44="4.4,4.04"
+CHECK_ID_check44="4.4"
 CHECK_TITLE_check44="[check44] Ensure routing tables for VPC peering are \"least access\" (Not Scored)"
 CHECK_SCORED_check44="NOT_SCORED"
 CHECK_TYPE_check44="LEVEL2"

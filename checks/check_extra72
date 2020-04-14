@@ -10,7 +10,7 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-CHECK_ID_extra72="7.2,7.02"
+CHECK_ID_extra72="7.2"
 CHECK_TITLE_extra72="[extra72] Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra72="NOT_SCORED"
 CHECK_TYPE_extra72="EXTRA"

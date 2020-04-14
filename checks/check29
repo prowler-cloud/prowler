@@ -8,7 +8,7 @@
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
-CHECK_ID_check29="2.9,2.09"
+CHECK_ID_check29="2.9"
 CHECK_TITLE_check29="[check29] Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
 CHECK_SCORED_check29="SCORED"
 CHECK_TYPE_check29="LEVEL2"

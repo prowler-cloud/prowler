@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-CHECK_ID_extra77="7.7,7.07"
+CHECK_ID_extra77="7.7"
 CHECK_TITLE_extra77="[extra77] Ensure there are no ECR repositories set as Public (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra77="NOT_SCORED"
 CHECK_TYPE_extra77="EXTRA"
