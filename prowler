@@ -65,7 +65,8 @@ USAGE:
       -f <filterregion>   specify an AWS region to run checks against
                             (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-      -M <mode>           output mode: text (default), mono, json, json-asff, csv (separator is ","; data is on stdout; progress on stderr)
+      -M <mode>           output mode: text (default), mono, json, json-asff, csv. They can be used combined comma separated.
+                            (separator is ","; data is on stdout; progress on stderr).
       -k                  keep the credential report
       -n                  show check numbers to sort easier
                             (i.e.: 1.01 instead of 1.1)
@@ -393,7 +394,7 @@ get_all_checks_without_exclusion() {
 }
 
 ### All functions defined above ... run the workflow
-if [[ $MODE != "csv" ]]; then
+if [[ ${MODES[@]} =~ "mono" || ${MODES[@]} =~ "text" ]]; then
   prowlerBanner
 fi
 
@@ -424,9 +425,7 @@ getWhoami
 # Execute group of checks if called with -g
 if [[ $GROUP_ID_READ ]];then
   if [[ " ${GROUP_ID[@]} " =~ " ${GROUP_ID_READ} " ]]; then
-    if [[ $MODE == "csv" ]]; then
-      BANNER=0
-    fi
+
     execute_group_by_id ${GROUP_ID_READ} ${EXCLUDE_CHECK_ID}
     cleanTemp
     scoring

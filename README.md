@@ -159,7 +159,25 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
     Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 and 3.10 is check310
 
-1. If you want to save your report for later analysis:
+### Save your reports 
+
+1. If you want to save your report for later analysis thare are different ways, natively (supported text, mono, csv, json and json-asff see note below for more info):
+
+    ```sh
+    ./prowler -M csv
+    ```
+    or with multiple formats at the same time:
+    ```sh
+    ./prowler -M csv,json,json-asff
+    ```
+    or just a group of checks in multiple formats:
+    ```sh
+    ./prowler -g gdpr -M csv,json,json-asff
+    ```
+
+    Now `-M` creates a file inside the prowler root directory named `prowler-output-YYYYMMDDHHMMSS.format`. You don't have to specify anything else, no pipes, no redirects.
+
+    or just saving the output to a file like below:
 
     ```sh
     ./prowler -M mono > prowler-report.txt
@@ -172,18 +190,9 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler | ansi2html -la > report.html
     ```
 
-    or if you want a pipe-delimited report file, do:
+    >Note about output formats to use with `-M`: "text" is the default one with colors, "mono" is like default one but monochrome, "csv" is comma separated values, "json" plain basic json (without comma between lines) and "json-asff" is also json with Amazon Security Finding Format that you can ship to Security Hub using `-S`. 
 
-    ```sh
-    ./prowler -M csv > output.psv
-    ```
-    or json formatted output using jq, do:
-
-    ```sh
-    ./prowler -M json > prowler-output.json
-    ```
-
-    or save your report in a S3 bucket:
+    or save your report in a S3 bucket (this only works for text or mono, for csv, json or json-asff it has to be copied afterwards):
 
     ```sh
     ./prowler -M mono | aws s3 cp - s3://bucket-name/prowler-report.txt
@@ -221,7 +230,8 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
         -f <filterregion>   specify an AWS region to run checks against
                                 (i.e.: us-west-1)
         -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-        -M <mode>           output mode: text (default), mono, json, csv (separator is ,; data is on stdout; progress on stderr)
+        -M <mode>           output mode: text (default), mono, json, json-asff, csv. They can be used combined comma separated.
+                                (separator is ","; data is on stdout; progress on stderr).
         -k                  keep the credential report
         -n                  show check numbers to sort easier
                                 (i.e.: 1.01 instead of 1.1)
@@ -280,7 +290,7 @@ In order to remove noise and get only FAIL findings there is a `-q` flag that ma
 
 Since version v2.3, Prowler supports natively sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows Prowler to import its findings to AWS Security Hub. With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions and now from Prowler. It is as simple as running the commanbd below:
 
-    ```sh
+    ```
     ./prowler -M json-asff -S
     ```
 There are two requirements:
