@@ -23,10 +23,13 @@ extra768(){
     # this folder is deleted once this check is finished
     mkdir $SECRETS_TEMP_FOLDER
   fi
-
+  DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
   textInfo "Looking for secrets in ECS task definitions' environment variables across all regions... "
   for regx in $REGIONS; do
-    LIST_OF_TASK_DEFINITIONS=$($AWSCLI ecs list-task-definitions $PROFILE_OPT --region $regx --query taskDefinitionArns[*] --output text)
+    # Get a list of ALL Task Definitions:
+    $AWSCLI ecs list-task-definitions $PROFILE_OPT --region $regx | jq -r .taskDefinitionArns[] > ALL_TASK_DEFINITIONS.txt
+    # Filter it down to ONLY the latest version of that task definition:
+    LIST_OF_TASK_DEFINITIONS=$(python ${DIR}/get_latest_ecs_task_definition_version.py -f ALL_TASK_DEFINITIONS.txt)
     if [[ $LIST_OF_TASK_DEFINITIONS ]]; then
       for taskDefinition in $LIST_OF_TASK_DEFINITIONS;do
         IFS='/' read -r -a splitArn <<< "$taskDefinition"
