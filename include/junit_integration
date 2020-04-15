@@ -33,7 +33,7 @@ prepare_junit_check_output() {
   JUNIT_CHECK_INDEX=1
   # To match JUnit behaviour in Java, and ensure that an aborted execution does not leave a partially written and therefore invalid XML file,
   # output a JUnit XML file per check
-  JUNIT_OUTPUT_FILE="$JUNIT_OUTPUT_DIRECTORY/$1.xml"
+  JUNIT_OUTPUT_FILE="$JUNIT_OUTPUT_DIRECTORY/TEST-$1.xml"
   printf '%s\n' \
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" \
     "<testsuite name=\"$(xml_escape "$(get_junit_classname)")\" timestamp=\"$(get_iso8601_timestamp)\">" \
