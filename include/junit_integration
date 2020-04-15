@@ -15,6 +15,14 @@
 
 JUNIT_OUTPUT_DIRECTORY="junit-reports"
 
+is_junit_output_enabled() {
+  if [[ ${MODES[@]} =~ "junit-xml" ]]; then
+    true
+  else
+    false
+  fi
+}
+
 xml_escape() {
   sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/\"/\&quot;/g; s/'"'"'/\&#39;/g' <<< "$1"
 }

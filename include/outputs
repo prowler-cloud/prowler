@@ -27,29 +27,28 @@ textPass(){
   fi
 
   PASS_COUNTER=$((PASS_COUNTER+1))
-  if [[ "${GENERATE_JUNIT}" -eq 1 ]]; then
+  if [[ $2 ]]; then
+    REPREGION=$2
+  else
+    REPREGION=$REGION
+  fi
+  if [[ "${MODES[@]}" =~ "csv" ]]; then
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV
+  fi
+  if [[ "${MODES[@]}" =~ "json" ]]; then
+    generateJsonOutput "$1" "Pass" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_JSON
+  fi
+  if [[ "${MODES[@]}" =~ "json-asff" ]]; then
+    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "PASSED" "INFORMATIONAL")
+    echo "${JSON_ASFF_OUTPUT}" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_ASFF
+    if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
+      sendToSecurityHub "${JSON_ASFF_OUTPUT}"
+    fi
+  fi
+  if is_junit_output_enabled; then
     output_junit_success "$1"
   fi
-  if [[ "${MODES[@]}" =~ "csv" || "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
-    if [[ $2 ]]; then
-      REPREGION=$2
-    else
-      REPREGION=$REGION
-    fi
-    if [[ "${MODES[@]}" =~ "csv" ]]; then
-      echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV
-    fi
-    if [[ "${MODES[@]}" =~ "json" ]]; then
-      generateJsonOutput "$1" "Pass" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_JSON
-    fi
-    if [[ "${MODES[@]}" =~ "json-asff" ]]; then
-      JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "PASSED" "INFORMATIONAL")
-      echo "${JSON_ASFF_OUTPUT}" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_ASFF
-      if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
-        sendToSecurityHub "${JSON_ASFF_OUTPUT}"
-      fi
-    fi
-  else
+  if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $OK PASS!$NORMAL $1"
   fi
 }
@@ -59,22 +58,21 @@ textInfo(){
     return
   fi
 
-  if [[ "${GENERATE_JUNIT}" -eq 1 ]]; then
+  if [[ $2 ]]; then
+    REPREGION=$2
+  else
+    REPREGION=$REGION
+  fi
+  if [[ "${MODES[@]}" =~ "csv" ]]; then
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV
+  fi
+  if [[ "${MODES[@]}" =~ "json" ]]; then
+    generateJsonOutput "$1" "Info" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_JSON
+  fi
+  if is_junit_output_enabled; then
     output_junit_info "$1"
   fi
-  if [[ "${MODES[@]}" =~ "csv" || "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
-    if [[ $2 ]]; then
-      REPREGION=$2
-    else
-      REPREGION=$REGION
-    fi
-    if [[ "${MODES[@]}" =~ "csv" ]]; then
-      echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV
-    fi
-    if [[ "${MODES[@]}" =~ "json" ]]; then
-      generateJsonOutput "$1" "Info" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_JSON
-    fi
-  else
+  if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $NOTICE INFO! $1 $NORMAL"
   fi
 }
@@ -82,29 +80,28 @@ textInfo(){
 textFail(){
   FAIL_COUNTER=$((FAIL_COUNTER+1))
   EXITCODE=3
-  if [[ "${GENERATE_JUNIT}" -eq 1 ]]; then
+  if [[ $2 ]]; then
+    REPREGION=$2
+  else
+    REPREGION=$REGION
+  fi
+  if [[ "${MODES[@]}" =~ "csv" ]]; then
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}FAIL${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV
+  fi
+  if [[ "${MODES[@]}" =~ "json" ]]; then
+    generateJsonOutput "$1" "Fail" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_JSON
+  fi
+  if [[ "${MODES[@]}" =~ "json-asff" ]]; then
+    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "FAILED" "HIGH")
+    echo "${JSON_ASFF_OUTPUT}" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_ASFF
+    if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
+      sendToSecurityHub "${JSON_ASFF_OUTPUT}"
+    fi
+  fi
+  if is_junit_output_enabled; then
     output_junit_failure "$1"
   fi
-  if [[ "${MODES[@]}" =~ "csv" || "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
-    if [[ $2 ]]; then
-      REPREGION=$2
-    else
-      REPREGION=$REGION
-    fi
-    if [[ "${MODES[@]}" =~ "csv" ]]; then
-      echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}FAIL${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV
-    fi
-    if [[ "${MODES[@]}" =~ "json" ]]; then
-      generateJsonOutput "$1" "Fail" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_JSON
-    fi
-    if [[ "${MODES[@]}" =~ "json-asff" ]]; then
-      JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "FAILED" "HIGH")
-      echo "${JSON_ASFF_OUTPUT}" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_ASFF
-      if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
-        sendToSecurityHub "${JSON_ASFF_OUTPUT}"
-      fi
-    fi
-  else
+  if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $BAD FAIL! $1 $NORMAL"
   fi
 }

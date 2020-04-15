@@ -170,7 +170,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
 ### Save your reports
 
-1. If you want to save your report for later analysis thare are different ways, natively (supported text, mono, csv, json and json-asff see note below for more info):
+1. If you want to save your report for later analysis thare are different ways, natively (supported text, mono, csv, json, json-asff and junit-xml see note below for more info):
 
     ```sh
     ./prowler -M csv
@@ -203,10 +203,10 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler | ansi2html -la > report.html
     ```
 
-    To generate JUnit report files add `-J`. This can be combined with any format. Files are written inside a prowler root directory named `junit-reports`:
+    To generate JUnit report files, include the junit-xml format. This can be combined with any other format. Files are written inside a prowler root directory named `junit-reports`:
 
     ```sh
-    ./prowler -J
+    ./prowler -M text,junit-xml
     ```
 
     >Note about output formats to use with `-M`: "text" is the default one with colors, "mono" is like default one but monochrome, "csv" is comma separated values, "json" plain basic json (without comma between lines) and "json-asff" is also json with Amazon Security Finding Format that you can ship to Security Hub using `-S`.
@@ -249,7 +249,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
         -f <filterregion>   specify an AWS region to run checks against
                                 (i.e.: us-west-1)
         -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-        -M <mode>           output mode: text (default), mono, json, json-asff, csv. They can be used combined comma separated.
+        -M <mode>           output mode: text (default), mono, json, json-asff, junit-xml, csv. They can be used combined comma separated.
                                 (separator is ","; data is on stdout; progress on stderr).
         -k                  keep the credential report
         -n                  show check numbers to sort easier
@@ -262,7 +262,6 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
         -V                  show version number & exit
         -s                  show scoring report
         -S                  send check output to AWS Security Hub - only valid when the output mode is json-asff (i.e. "-M json-asff -S")
-        -J                  generate JUnit reports, readable by Jenkins or other CI tools. Files are written to ./junit-reports
         -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by check)
         -q                  suppress info messages and passing test output
         -A                  account id for the account where to assume a role, requires -R and -T
