@@ -78,7 +78,7 @@ output_junit_test_case() {
   local test_case_duration
   time_now=$(get_time_in_milliseconds)
   # JUnit test case time values are in seconds, so divide by 1000 using e-3 to convert from milliseconds without losing accuracy due to non-floating point arithmetic
-  test_case_duration=$(printf "%.3f" "$(("$time_now" - "$JUNIT_CHECK_START_TIME"))e-3")
+  test_case_duration=$(printf "%.3f" "$((time_now - JUNIT_CHECK_START_TIME))e-3")
   printf '%s\n' \
     "  <testcase name=\"$(xml_escape "$TITLE_TEXT") ($JUNIT_CHECK_INDEX)\" classname=\"$(xml_escape "$(get_junit_classname)")\" time=\"$test_case_duration\">" \
     "    $2" \
