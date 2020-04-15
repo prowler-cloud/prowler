@@ -45,6 +45,7 @@ SEP=','
 KEEPCREDREPORT=0
 EXITCODE=0
 SEND_TO_SECURITY_HUB=0
+GENERATE_JUNIT=0
 SCRIPT_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
 TITLE_ID=""
 TITLE_TEXT="CALLER ERROR - UNSET TITLE"
@@ -78,21 +79,22 @@ USAGE:
       -V                  show version number & exit
       -s                  show scoring report
       -S                  send check output to AWS Security Hub - only valid when the output mode is json-asff (i.e. "-M json-asff -S")
+      -J                  generate JUnit reports, readable by Jenkins or other CI tools. Files are written to ./junit-reports
       -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by "check")
       -q                  suppress info messages and passing test output
       -A                  account id for the account where to assume a role, requires -R and -T
                             (i.e.: 123456789012)
       -R                  role name to assume in the account, requires -A and -T
                             (i.e.: ProwlerRole)
-      -T                  session durantion given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
-                            (i.e.: 43200) 
-      -I                  External ID to be used when assuming roles (no mandatory), requires -A and -R.
+      -T                  session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
+                            (i.e.: 43200)
+      -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R.
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSxI:A:R:T:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSJxI:A:R:T:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -152,6 +154,9 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSxI:A:R:T:" OPTION; do
      S )
         SEND_TO_SECURITY_HUB=1
         ;;
+     J )
+        GENERATE_JUNIT=1
+        ;;
      x )
         EXTERNAL_CHECKS_PATH=$OPTARG
         ;;
@@ -206,6 +211,7 @@ trap "{ rm -f /tmp/prowler*.policy.*; }" EXIT
 . $PROWLER_DIR/include/assume_role
 . $PROWLER_DIR/include/connection_tests
 . $PROWLER_DIR/include/securityhub_integration
+. $PROWLER_DIR/include/junit_integration
 
 # Get a list of all available AWS Regions
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
@@ -252,8 +258,8 @@ show_group_title() {
 
 # Function to execute the check
 execute_check() {
-	# See if this is an alternate name for a check
-	# for example, we might have been passed 1.01 which is another name for 1.1
+  # See if this is an alternate name for a check
+  # for example, we might have been passed 1.01 which is another name for 1.1
   local alternate_name_var=CHECK_ALTERNATE_$1
   local alternate_name=${!alternate_name_var}
   # See if this check defines an ASFF Type, if so, use this, falling back to a sane default
@@ -266,16 +272,23 @@ execute_check() {
   ASFF_RESOURCE_TYPE="${!asff_resource_type_var:-AwsAccount}"
   # Generate the credential report, only if it is group1 related which checks we
   # run so that the checks can safely assume it's available
-	if [ ${alternate_name} ];then
+  if [ ${alternate_name} ];then
     if [[ ${alternate_name} == check1* || ${alternate_name} == extra71 ]];then
       if [ ! -s $TEMP_REPORT_FILE ];then
         genCredReport
         saveReport
       fi
     fi
-		show_check_title ${alternate_name}
-		${alternate_name}
-	else
+    show_check_title ${alternate_name}
+    if [[ "${GENERATE_JUNIT}" -eq 1 ]]; then
+      prepare_junit_check_output "$1"
+    fi
+    # Execute the check
+    ${alternate_name}
+    if [[ "${GENERATE_JUNIT}" -eq 1 ]]; then
+      finalise_junit_check_output "$1"
+    fi
+  else
     # Check to see if this is a real check
     local check_id_var=CHECK_ID_$1
     local check_id=${!check_id_var}
@@ -286,13 +299,20 @@ execute_check() {
           saveReport
         fi
       fi
-		  show_check_title $1
-		  $1
+      show_check_title $1
+      if [[ "${GENERATE_JUNIT}" -eq 1 ]]; then
+        prepare_junit_check_output "$1"
+      fi
+      # Execute the check
+      $1
+      if [[ "${GENERATE_JUNIT}" -eq 1 ]]; then
+        finalise_junit_check_output "$1"
+      fi
     else
       textFail "ERROR! Use a valid check name (i.e. check41 or extra71)";
       exit $EXITCODE
     fi
-	fi
+  fi
 }
 
 # Function to execute all checks in a group
@@ -415,12 +435,16 @@ if [[ $PRINTGROUPSONLY == "1" ]]; then
 fi
 
 # Check that jq is installed for JSON outputs
-if [[ "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
+if [[ ${MODES[@]} =~ "json" || ${MODES[@]} =~ "json-asff" ]]; then
   . $PROWLER_DIR/include/jq_detector
 fi
 
 if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
   checkSecurityHubCompatibility
+fi
+
+if [[ "${GENERATE_JUNIT}" -eq 1 ]]; then
+  prepare_junit_output
 fi
 
 # Gather account data / test aws cli connectivity
