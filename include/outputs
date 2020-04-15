@@ -107,7 +107,12 @@ textFail(){
   ## ignore whitelists for current check
   level="FAIL"
   for i in $IGNORES; do
+    ignore_check_name="${i%:*}"
     ignore_value="${i#*${CHECK_NAME}:}"
+    if [[ ${ignore_check_name} != "${CHECK_NAME}" ]]; then
+      # not for this check
+      continue
+    fi
     if [[ $1 =~ ${ignore_value} ]]; then
       level="WARNING"
       break

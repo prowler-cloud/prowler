@@ -218,7 +218,8 @@ REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
 # Pre-process whitelist file if supplied
 if [[ -n "$WHITELIST_FILE" ]]; then
   # ignore lines starting with # (comments)
-  WHITELIST=$(awk   '!/^[[:space:]]*#/{print }' <(cat "$WHITELIST_FILE"))
+  # ignore inline comments: check1:foo # inline comment
+  WHITELIST=$(awk '!/^[[:space:]]*#/{print }' <(cat "$WHITELIST_FILE") | sed 's/[[:space:]]*#.*$//g')
 fi
 
 # Load all of the groups of checks inside groups folder named as "groupNumber*"
@@ -288,7 +289,7 @@ execute_check() {
       show_check_title "$1"
       ignores=$(awk '/${1}/{print}' <(echo "${WHITELIST}"))
       # set the custom ignores list for this check
-      IGNORES="${ignores}" $1
+      IGNORES="${ignores}" CHECK_NAME="$1" $1
     else
       textFail "ERROR! Use a valid check name (i.e. check41 or extra71)";
       exit $EXITCODE
