@@ -68,9 +68,9 @@ extra788(){
               textInfo "$regx: Amazon ES domain $domain policy allows Anonymous access but ES service endpoint $ES_DOMAIN_ENDPOINT responded $SERVER_RESPONSE" "$regx"
             fi
             # check for Kibana on port 443
-            CHECH_KIBANA_HTTPS=$(curl -m 2 -s -w "%{http_code}" -o /dev/null -X GET "https://$ES_DOMAIN_ENDPOINT/_plugin/kibana/api/status")
+            CHECH_KIBANA_HTTPS=$(curl -m 2 -s -w "%{http_code}" -o /dev/null -X GET "https://$ES_DOMAIN_ENDPOINT/_plugin/kibana")
             httpStatus $CHECH_KIBANA_HTTPS
-            if [[ $CHECH_KIBANA_HTTPS -eq "200" ]];then
+            if [[ $CHECH_KIBANA_HTTPS -eq "200" || $CHECH_KIBANA_HTTPS -eq "301" || $CHECH_KIBANA_HTTPS -eq "302" ]];then
               textFail "$regx: Amazon ES domain $domain policy allows Anonymous access and Kibana service endpoint $ES_DOMAIN_ENDPOINT responded $SERVER_RESPONSE" "$regx"
             else
               textInfo "$regx: Amazon ES domain $domain policy allows Anonymous access but Kibana service endpoint $ES_DOMAIN_ENDPOINT responded $SERVER_RESPONSE" "$regx"
