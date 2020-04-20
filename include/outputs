@@ -16,7 +16,7 @@
 EXTENSION_CSV="csv"
 EXTENSION_JSON="json"
 EXTENSION_ASFF="asff-json"
-EXTENSION_HTML="html" # not implemented yet, use ansi2html as in documentation 
+EXTENSION_HTML="html" # not implemented yet, use ansi2html as in documentation
 OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
 OUTPUT_FILE_NAME=prowler-output-$OUTPUT_DATE
 
@@ -27,26 +27,28 @@ textPass(){
   fi
 
   PASS_COUNTER=$((PASS_COUNTER+1))
-  if [[ "${MODES[@]}" =~ "csv" || "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
-    if [[ $2 ]]; then
-      REPREGION=$2
-    else
-      REPREGION=$REGION
-    fi
-    if [[ "${MODES[@]}" =~ "csv" ]]; then
-      echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV 
-    fi 
-    if [[ "${MODES[@]}" =~ "json" ]]; then
-      generateJsonOutput "$1" "Pass" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_JSON 
-    fi
-    if [[ "${MODES[@]}" =~ "json-asff" ]]; then
-      JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "PASSED" "INFORMATIONAL")
-      echo "${JSON_ASFF_OUTPUT}" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_ASFF 
-      if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
-        sendToSecurityHub "${JSON_ASFF_OUTPUT}"
-      fi
-    fi
+  if [[ $2 ]]; then
+    REPREGION=$2
   else
+    REPREGION=$REGION
+  fi
+  if [[ "${MODES[@]}" =~ "csv" ]]; then
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV
+  fi
+  if [[ "${MODES[@]}" =~ "json" ]]; then
+    generateJsonOutput "$1" "Pass" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_JSON
+  fi
+  if [[ "${MODES[@]}" =~ "json-asff" ]]; then
+    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "PASSED" "INFORMATIONAL")
+    echo "${JSON_ASFF_OUTPUT}" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_ASFF
+    if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
+      sendToSecurityHub "${JSON_ASFF_OUTPUT}"
+    fi
+  fi
+  if is_junit_output_enabled; then
+    output_junit_success "$1"
+  fi
+  if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $OK PASS!$NORMAL $1"
   fi
 }
@@ -56,19 +58,21 @@ textInfo(){
     return
   fi
 
-  if [[ "${MODES[@]}" =~ "csv" || "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
-    if [[ $2 ]]; then
-      REPREGION=$2
-    else
-      REPREGION=$REGION
-    fi
-    if [[ "${MODES[@]}" =~ "csv" ]]; then
-      echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV
-    fi
-    if [[ "${MODES[@]}" =~ "json" ]]; then
-      generateJsonOutput "$1" "Info" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_JSON
-    fi
+  if [[ $2 ]]; then
+    REPREGION=$2
   else
+    REPREGION=$REGION
+  fi
+  if [[ "${MODES[@]}" =~ "csv" ]]; then
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV
+  fi
+  if [[ "${MODES[@]}" =~ "json" ]]; then
+    generateJsonOutput "$1" "Info" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_JSON
+  fi
+  if is_junit_output_enabled; then
+    output_junit_info "$1"
+  fi
+  if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $NOTICE INFO! $1 $NORMAL"
   fi
 }
@@ -76,26 +80,28 @@ textInfo(){
 textFail(){
   FAIL_COUNTER=$((FAIL_COUNTER+1))
   EXITCODE=3
-  if [[ "${MODES[@]}" =~ "csv" || "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
-    if [[ $2 ]]; then
-      REPREGION=$2
-    else
-      REPREGION=$REGION
-    fi
-    if [[ "${MODES[@]}" =~ "csv" ]]; then
-      echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}FAIL${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV
-    fi
-    if [[ "${MODES[@]}" =~ "json" ]]; then
-      generateJsonOutput "$1" "Fail" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_JSON 
-    fi
-    if [[ "${MODES[@]}" =~ "json-asff" ]]; then
-      JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "FAILED" "HIGH")
-      echo "${JSON_ASFF_OUTPUT}" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_ASFF
-      if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
-        sendToSecurityHub "${JSON_ASFF_OUTPUT}"
-      fi
-    fi
+  if [[ $2 ]]; then
+    REPREGION=$2
   else
+    REPREGION=$REGION
+  fi
+  if [[ "${MODES[@]}" =~ "csv" ]]; then
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}FAIL${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV
+  fi
+  if [[ "${MODES[@]}" =~ "json" ]]; then
+    generateJsonOutput "$1" "Fail" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_JSON
+  fi
+  if [[ "${MODES[@]}" =~ "json-asff" ]]; then
+    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "FAILED" "HIGH")
+    echo "${JSON_ASFF_OUTPUT}" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_ASFF
+    if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
+      sendToSecurityHub "${JSON_ASFF_OUTPUT}"
+    fi
+  fi
+  if is_junit_output_enabled; then
+    output_junit_failure "$1"
+  fi
+  if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $BAD FAIL! $1 $NORMAL"
   fi
 }
@@ -131,7 +137,7 @@ textTitle(){
   esac
 
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-      >&2 echo "$TITLE_ID $TITLE_TEXT" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV 
+      >&2 echo "$TITLE_ID $TITLE_TEXT" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV
   elif [[ "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
     :
   else
@@ -156,7 +162,7 @@ generateJsonOutput(){
   --arg ITEM_LEVEL "$ITEM_LEVEL" \
   --arg TITLE_ID "$TITLE_ID" \
   --arg REPREGION "$REPREGION" \
-  --arg TIMESTAMP $(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+  --arg TIMESTAMP "$(get_iso8601_timestamp)" \
   -n '{
     "Profile": $PROFILE,
     "Account Number": $ACCOUNT_NUM,
@@ -178,20 +184,17 @@ generateJsonAsffOutput(){
   local status=$2
   local severity=$3
   jq -M -c \
-  --arg PROFILE "$PROFILE" \
   --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
   --arg TITLE_TEXT "$TITLE_TEXT" \
   --arg MESSAGE "$(echo -e "${message}" | sed -e 's/^[[:space:]]*//')" \
   --arg UNIQUE_ID "$(LC_ALL=C echo -e "${message}" | tr -cs '[:alnum:]._~-\n' '_')" \
   --arg STATUS "$status" \
   --arg SEVERITY "$severity" \
-  --arg SCORED "$ITEM_SCORED" \
-  --arg ITEM_LEVEL "$ITEM_LEVEL" \
   --arg TITLE_ID "$TITLE_ID" \
   --arg TYPE "$ASFF_TYPE" \
   --arg RESOURCE_TYPE "$ASFF_RESOURCE_TYPE" \
   --arg REPREGION "$REPREGION" \
-  --arg TIMESTAMP $(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+  --arg TIMESTAMP "$(get_iso8601_timestamp)" \
   --arg PROWLER_VERSION "$PROWLER_VERSION" \
 -n '{
       "SchemaVersion": "2018-10-08",

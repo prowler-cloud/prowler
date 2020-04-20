@@ -45,7 +45,6 @@ Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-20
 - HIPAA [hipaa] Read more [here](#hipaa-checks)
 - Trust Boundaries [trustboundaries] Read more [here](#trustboundaries-checks)
 
-
 With Prowler you can:
 
 - get a colorful or monochrome report
@@ -68,6 +67,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `ansi2html` and `detect-secrets` has to be installed using `pip`. You will need to install `jq` to get more accuracy in some checks.
 
 - Make sure jq is installed (example below with "apt" but use a valid package manager for your OS):
+
     ```sh
     sudo apt install jq
     ```
@@ -84,7 +84,9 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ```sh
     aws configure
     ```
+
     or
+
     ```sh
     export AWS_ACCESS_KEY_ID="ASXXXXXXX"
     export AWS_SECRET_ACCESS_KEY="XXXXXXXXX"
@@ -110,7 +112,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
     Use `-l` to list all available checks and group of checks (sections)
 
-    If you want to avoid installing dependences run it using Docker:
+    If you want to avoid installing dependencies run it using Docker:
 
     ```sh
     docker run -ti --rm --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest
@@ -127,16 +129,21 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ```sh
     ./prowler -c check310
     ```
+
     With Docker:
+
     ```sh
     docker run -ti --rm --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest "-c check310"
     ```
 
     or multiple checks separated by comma:
+
     ```sh
     ./prowler -c check310,check722
     ```
+
     or all checks but some of them:
+
     ```sh
     ./prowler -E check42,check43
     ```
@@ -152,25 +159,31 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ```sh
     ./prowler -g group1 # for iam related checks
     ```
+
     or exclude some checks in the group:
+
     ```sh
     ./prowler -g group4 -E check42,check43
     ```
 
     Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 and 3.10 is check310
 
-### Save your reports 
+### Save your reports
 
-1. If you want to save your report for later analysis thare are different ways, natively (supported text, mono, csv, json and json-asff see note below for more info):
+1. If you want to save your report for later analysis thare are different ways, natively (supported text, mono, csv, json, json-asff and junit-xml see note below for more info):
 
     ```sh
     ./prowler -M csv
     ```
+
     or with multiple formats at the same time:
+
     ```sh
     ./prowler -M csv,json,json-asff
     ```
+
     or just a group of checks in multiple formats:
+
     ```sh
     ./prowler -g gdpr -M csv,json,json-asff
     ```
@@ -190,7 +203,13 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler | ansi2html -la > report.html
     ```
 
-    >Note about output formats to use with `-M`: "text" is the default one with colors, "mono" is like default one but monochrome, "csv" is comma separated values, "json" plain basic json (without comma between lines) and "json-asff" is also json with Amazon Security Finding Format that you can ship to Security Hub using `-S`. 
+    To generate JUnit report files, include the junit-xml format. This can be combined with any other format. Files are written inside a prowler root directory named `junit-reports`:
+
+    ```sh
+    ./prowler -M text,junit-xml
+    ```
+
+    >Note about output formats to use with `-M`: "text" is the default one with colors, "mono" is like default one but monochrome, "csv" is comma separated values, "json" plain basic json (without comma between lines) and "json-asff" is also json with Amazon Security Finding Format that you can ship to Security Hub using `-S`.
 
     or save your report in a S3 bucket (this only works for text or mono, for csv, json or json-asff it has to be copied afterwards):
 
@@ -213,7 +232,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
 1. For help use:
 
-    ```
+    ```sh
     ./prowler -h
 
     USAGE:
@@ -230,7 +249,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
         -f <filterregion>   specify an AWS region to run checks against
                                 (i.e.: us-west-1)
         -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-        -M <mode>           output mode: text (default), mono, json, json-asff, csv. They can be used combined comma separated.
+        -M <mode>           output mode: text (default), mono, json, json-asff, junit-xml, csv. They can be used combined comma separated.
                                 (separator is ","; data is on stdout; progress on stderr).
         -k                  keep the credential report
         -n                  show check numbers to sort easier
@@ -261,11 +280,11 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
 Prowler uses the AWS CLI underneath so it uses the same authentication methods. However, there are few ways to run Prowler against multiple accounts using IAM Assume Role feature depending on eachg use case. You can just set up your custom profile inside `~/.aws/config` with all needed information about the role to assume then call it with `./prowler -p your-custom-profile`. Additionally you can use `-A 123456789012` and `-R RemoteRoleToAssume` and Prowler will get those temporary credentials using `aws sts assume-role`, set them up as environment variables and run against that given account.
 
-```
+```sh
 ./prowler -A 123456789012 -R ProwlerRole
 ```
 
-```
+```sh
 ./prowler -A 123456789012 -R ProwlerRole -I 123456
 ```
 
@@ -275,11 +294,11 @@ Prowler uses the AWS CLI underneath so it uses the same authentication methods. 
 
 For example, if you want to get only the fails in CSV format from all checks regarding RDS without banner from the AWS Account 123456789012 assuming the role RemoteRoleToAssume and set a fixed session duration of 1h:
 
-```
+```sh
 ./prowler -A 123456789012 -R RemoteRoleToAssume -T 3600 -b -M cvs -q -g rds
 ```
 
-```
+```sh
 ./prowler -A 123456789012 -R RemoteRoleToAssume -T 3600 -I 123456 -b -M cvs -q -g rds
 ```
 
@@ -304,25 +323,25 @@ Flag `-x /my/own/checks` will include any check in that particular directory. To
 
 In order to remove noise and get only FAIL findings there is a `-q` flag that makes Prowler to show and log only FAILs. It can be combined with any other option.
 
-```
+```sh
 ./prowler -q -M csv -b
 ```
 
 ## Security Hub integration
 
-Since version v2.3, Prowler supports natively sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows Prowler to import its findings to AWS Security Hub. With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions and now from Prowler. It is as simple as running the commanbd below:
+Since version v2.3, Prowler supports natively sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows Prowler to import its findings to AWS Security Hub. With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions and now from Prowler. It is as simple as running the command below:
 
-    ```
-    ./prowler -M json-asff -S
-    ```
+```sh
+./prowler -M json-asff -S
+```
+
 There are two requirements:
 
 1. Security Hub must be enabled for the active region from where you are calling Prowler (if no region is used with `-r` then `us-east-1` is used). It can be enabled by calling `aws securityhub enable-security-hub`
 2. As mentioned in section "Custom IAM Policy", to allow Prowler to import its findings to AWS Security Hub you need to add the policy below to the role or user running Prowler:
     - [iam/prowler-security-hub.json](iam/prowler-security-hub.json)
 
->Note: to have updated findings in Security Hub you have to run Prowler periodically. Once a day or every certain amount of hours. 
-
+>Note: to have updated findings in Security Hub you have to run Prowler periodically. Once a day or every certain amount of hours.
 
 ## How to fix every FAIL
 
@@ -344,7 +363,7 @@ Check your report and fix the issues following all specific guidelines per check
 
 If you are using an STS token for AWS-CLI and your session is expired you probably get this error:
 
-```
+```sh
 A client error (ExpiredToken) occurred when calling the GenerateCredentialReport operation: The security token included in the request is expired
 ```
 
@@ -354,16 +373,19 @@ To fix it, please renew your token by authenticating again to the AWS API, see n
 
 To run Prowler using a profile that requires MFA you just need to get the session token before hand. Just make sure you use this command:
 
-```
+```sh
 aws --profile <YOUR_AWS_PROFILE> sts get-session-token --duration 129600 --serial-number <ARN_OF_MFA> --token-code <MFA_TOKEN_CODE> --output text
- ```
-Once you get your token you can export it as environment variable:
 ```
+
+Once you get your token you can export it as environment variable:
+
+```sh
 export AWS_PROFILE=YOUR_AWS_PROFILE
 export AWS_SESSION_TOKEN=YOUR_NEW_TOKEN
 AWS_SECRET_ACCESS_KEY=YOUR_SECRET
 export AWS_ACCESS_KEY_ID=YOUR_KEY
 ```
+
 or set manually up your `~/.aws/credentials` file properly.
 
 There are some helpfull tools to save time in this process like [aws-mfa-script](https://github.com/asagage/aws-mfa-script) or [aws-cli-mfa](https://github.com/sweharris/aws-cli-mfa).
@@ -383,11 +405,13 @@ There are some helpfull tools to save time in this process like [aws-mfa-script]
 [Prowler-Additions-Policy](iam/prowler-additions-policy.json)
 
 Some new and specific checks require Prowler to inherit more permissions than SecurityAudit and ViewOnlyAccess to work properly. In addition to the AWS managed policies, "SecurityAudit" and "ViewOnlyAccess", the user/role you use for checks may need to be granted a custom policy with a few more read-only permissions (to support additional services mostly). Here is an example policy with the additional rights, "Prowler-Additions-Policy" (see below bootstrap script for set it up):
+
 - [iam/prowler-additions-policy.json](iam/prowler-additions-policy.json)
 
 [Prowler-Security-Hub Policy](iam/prowler-security-hub.json)
 
 Allows Prowler to import its findings to [AWS Security Hub](https://aws.amazon.com/security-hub). More information in [Security Hub integration](#security-hub-integration):
+
 - [iam/prowler-security-hub.json](iam/prowler-security-hub.json)
 
 ### Bootstrap Script
@@ -418,7 +442,7 @@ Some of these checks look for publicly facing resources may not actually be full
 
 To list all existing checks please run the command below:
 
-```
+```sh
 ./prowler -l
 ```
 
@@ -474,6 +498,7 @@ With this group of checks, Prowler shows results of controls related to the "Sec
 More information on the original PR is [here](https://github.com/toniblyx/prowler/issues/227).
 
 ### Note on Business Associate Addendum's (BAA)
+
 Under the HIPAA regulations, cloud service providers (CSPs) such as AWS are considered business associates. The Business Associate Addendum (BAA) is an AWS contract that is required under HIPAA rules to ensure that AWS appropriately safeguards protected health information (PHI). The BAA also serves to clarify and limit, as appropriate, the permissible uses and disclosures of PHI by AWS, based on the relationship between AWS and our customers, and the activities or services being performed by AWS. Customers may use any AWS service in an account designated as a HIPAA account, but they should only process, store, and transmit protected health information (PHI) in the HIPAA-eligible services defined in the Business Associate Addendum (BAA). For the latest list of HIPAA-eligible AWS services, see [HIPAA Eligible Services Reference](https://aws.amazon.com/compliance/hipaa-eligible-services-reference/).
 
 More information on AWS & HIPAA can be found [here](https://aws.amazon.com/compliance/hipaa-compliance/)
@@ -489,7 +514,9 @@ The `hipaa` group of checks uses existing and extra checks. To get a HIPAA repor
 ```
 
 ## Trust Boundaries Checks
+
 ### Definition and Terms
+
 The term "trust boundary" is originating from the threat modelling process and the most popular contributor Adam Shostack and author of "Threat Modeling: Designing for Security" defines it as following ([reference](https://adam.shostack.org/uncover.html)):
 
 > Trust boundaries are perhaps the most subjective of all: these represent the border between trusted and untrusted elements. Trust is complex. You might trust your mechanic with your car, your dentist with your teeth, and your banker with your money, but you probably don't trust your dentist to change your spark plugs.
@@ -498,17 +525,23 @@ AWS is made to be flexible for service links within and between different AWS ac
 
 This group of checks helps to analyse a particular AWS account (subject) on existing links to other AWS accounts across various AWS services, in order to identify untrusted links.
 
-### Run 
+### Run
+
 To give it a quick shot just call:
+
 ```sh
 ./prowler -g trustboundaries
 ```
+
 ### Scenarios
+
 Currently this check group supports two different scenarios:
-  1. Single account environment: no action required, the configuration is happening automatically for you.
-  2. Multi account environment: in case you environment has multiple trusted and known AWS accounts you maybe want to append them manually to [groups/group16_trustboundaries](groups/group16_trustboundaries) as a space separated list into `GROUP_TRUSTBOUNDARIES_TRUSTED_ACCOUNT_IDS` variable, then just run prowler.
+
+1. Single account environment: no action required, the configuration is happening automatically for you.
+2. Multi account environment: in case you environment has multiple trusted and known AWS accounts you maybe want to append them manually to [groups/group16_trustboundaries](groups/group16_trustboundaries) as a space separated list into `GROUP_TRUSTBOUNDARIES_TRUSTED_ACCOUNT_IDS` variable, then just run prowler.
 
 ### Coverage
+
 Current coverage of Amazon Web Service (AWS) taken from [here](https://docs.aws.amazon.com/whitepapers/latest/aws-overview/introduction.html):
 | Topic                           | Service    | Trust Boundary                                                            |
 |---------------------------------|------------|---------------------------------------------------------------------------|
@@ -518,6 +551,7 @@ Current coverage of Amazon Web Service (AWS) taken from [here](https://docs.aws.
 All ideas or recommendations to extend this group are very welcome [here](https://github.com/toniblyx/prowler/issues/new/choose).
 
 ### Detailed Explanation of the Concept
+
 The diagrams depict two common scenarios, single account and multi account environments.
 Every circle represents one AWS account.
 The dashed line represents the trust boundary, that separates trust and untrusted AWS accounts.
