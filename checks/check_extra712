@@ -25,9 +25,9 @@ extra712(){
       if [[ ${MACIE_MEMBER_ACCOUNTS} == *${MACIE_NOT_SUPPORTED}* ]];then
         textInfo "Macie is not supported in the $regx AWS Regions"
       elif [[ ${MACIE_MEMBER_ACCOUNTS} == *${MACIE_NOT_ENABLED}* ]];then
-        textFail "$regx: Amazon Macie is not enabled!"
+        textFail "$regx: Amazon Macie is not enabled!" "$regx"
       else
-        textPass "$regx: Amazon Macie is enabled!"
+        textPass "$regx: Amazon Macie is enabled!" "$regx"
       fi
   done
 } 
