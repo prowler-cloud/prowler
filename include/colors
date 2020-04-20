@@ -14,16 +14,15 @@
 
 IFS=',' read -ra MODES <<< "${MODE}"
 for MODE in "${MODES[@]}"; do
-  if [[ "$MODE" != "mono" && "$MODE" != "text" && "$MODE" != "csv" && "$MODE" != "json" && "$MODE" != "json-asff" ]]; then
-    echo -e "${OPTRED}ERROR!$OPTNORMAL Invalid output mode.  Choose text, mono, csv, json or json-asff. ./prowler -h for help"
+  if [[ "$MODE" != "mono" && "$MODE" != "text" && "$MODE" != "csv" && "$MODE" != "json" && "$MODE" != "json-asff" && "$MODE" != "junit-xml" ]]; then
+    echo -e "${OPTRED}ERROR!$OPTNORMAL Invalid output mode.  Choose text, mono, csv, json, json-asff or junit-xml. ./prowler -h for help"
     EXITCODE=1
     exit $EXITCODE
   fi
-done 
-
-if [[ "$MODE" == "mono" || "$MODE" == "csv" || "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
-  MONOCHROME=1
-fi
+  if [[ "$MODE" == "mono" || "$MODE" == "csv" || "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
+    MONOCHROME=1
+  fi
+done
 
 if [[ $MONOCHROME -eq 1 ]]; then
   # Colors
