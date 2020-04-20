@@ -110,7 +110,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler
     ```
 
-    Use `-l` to list all available checks and group of checks (sections)
+    Use `-l` to list all available checks and the groups (sections) that reference them
 
     If you want to avoid installing dependencies run it using Docker:
 
@@ -254,7 +254,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
         -k                  keep the credential report
         -n                  show check numbers to sort easier
                                 (i.e.: 1.01 instead of 1.1)
-        -l                  list all available checks only (does not perform any check)
+        -l                  list all available checks only (does not perform any check). Add -g <group_id> to only list checks within the specified group
         -L                  list all groups (does not perform any check)
         -e                  exclude group extras
         -E                  execute all tests except a list of specified checks separated by comma (i.e. check21,check31)
@@ -526,7 +526,6 @@ AWS is made to be flexible for service links within and between different AWS ac
 This group of checks helps to analyse a particular AWS account (subject) on existing links to other AWS accounts across various AWS services, in order to identify untrusted links.
 
 ### Run
-
 To give it a quick shot just call:
 
 ```sh

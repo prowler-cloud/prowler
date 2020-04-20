@@ -136,15 +136,20 @@ textTitle(){
     *)       ITEM_LEVEL="Unspecified or Invalid";;
   esac
 
+  local group_ids
+  if [[ -n "$5" ]]; then
+    group_ids="$CYAN [$5] $NORMAL"
+  fi
+
   if [[ "${MODES[@]}" =~ "csv" ]]; then
       >&2 echo "$TITLE_ID $TITLE_TEXT" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV
   elif [[ "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
     :
   else
     if [[ "$ITEM_SCORED" == "Scored" ]]; then
-      echo -e "\n$BLUE $TITLE_ID $NORMAL $TITLE_TEXT"
+      echo -e "\n$BLUE $TITLE_ID $NORMAL $TITLE_TEXT $group_ids"
     else
-      echo -e "\n$PURPLE $TITLE_ID $TITLE_TEXT $NORMAL"
+      echo -e "\n$PURPLE $TITLE_ID $TITLE_TEXT $NORMAL $group_ids"
     fi
   fi
 }
