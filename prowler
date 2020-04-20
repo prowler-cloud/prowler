@@ -251,15 +251,16 @@ show_check_title() {
   local check_scored=CHECK_SCORED_$1
   local check_type=CHECK_TYPE_$1
   local group_ids
+  local group_index
   # If requested ($2 is any non-null value) iterate all GROUP_CHECKS and produce a comma-separated list of all
   # the GROUP_IDs that include this particular check
   if [[ -n "$2" ]]; then
-    for i in "${!GROUP_ID[@]}"; do
-      if [[ "${GROUP_CHECKS[$i]}" =~ "$1" ]]; then
+    for group_index in "${!GROUP_ID[@]}"; do
+      if [[ "${GROUP_CHECKS[$group_index]}" =~ "$1" ]]; then
         if [[ -n "$group_ids" ]]; then
           group_ids+=", "
         fi
-        group_ids+="${GROUP_ID[$i]}"
+        group_ids+="${GROUP_ID[$group_index]}"
       fi
     done
   fi
@@ -378,7 +379,7 @@ show_all_titles() {
       for group_index in "${!GROUP_ID[@]}"; do
         if [ "${GROUP_ID[$group_index]}" == "${GROUP_ID_READ}" ]; then
           show_group_title "$group_index"
-          IFS=',' read -ra checks <<< "${GROUP_CHECKS[$i]}"
+          IFS=',' read -ra checks <<< "${GROUP_CHECKS[$group_index]}"
           for check_id in ${checks[@]}; do
             show_check_title "$check_id"
           done
