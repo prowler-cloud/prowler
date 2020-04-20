@@ -23,7 +23,7 @@ extra712(){
   for regx in $REGIONS; do
       MACIE_MEMBER_ACCOUNTS=$($AWSCLI macie list-member-accounts $PROFILE_OPT --region $regx --output text --query 'memberAccounts[*]' 2>&1)
       if [[ ${MACIE_MEMBER_ACCOUNTS} == *${MACIE_NOT_SUPPORTED}* ]];then
-        textInfo "Macie is not supported in the $regx AWS Regions"
+        textInfo "$regx: Amazon Macie is not supported in $regx" "$regx"
       elif [[ ${MACIE_MEMBER_ACCOUNTS} == *${MACIE_NOT_ENABLED}* ]];then
         textFail "$regx: Amazon Macie is not enabled!" "$regx"
       else
