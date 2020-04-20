@@ -66,7 +66,7 @@ USAGE:
       -f <filterregion>   specify an AWS region to run checks against
                             (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-      -M <mode>           output mode: text (default), mono, json, json-asff, csv. They can be used combined comma separated.
+      -M <mode>           output mode: text (default), mono, json, json-asff, junit-xml, csv. They can be used combined comma separated.
                             (separator is ","; data is on stdout; progress on stderr).
       -k                  keep the credential report
       -n                  show check numbers to sort easier
@@ -85,9 +85,9 @@ USAGE:
                             (i.e.: 123456789012)
       -R                  role name to assume in the account, requires -A and -T
                             (i.e.: ProwlerRole)
-      -T                  session durantion given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
+      -T                  session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
                             (i.e.: 43200)
-      -I                  External ID to be used when assuming roles (no mandatory), requires -A and -R.
+      -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R.
       -h                  this help
   "
   exit
@@ -207,6 +207,7 @@ trap "{ rm -f /tmp/prowler*.policy.*; }" EXIT
 . $PROWLER_DIR/include/assume_role
 . $PROWLER_DIR/include/connection_tests
 . $PROWLER_DIR/include/securityhub_integration
+. $PROWLER_DIR/include/junit_integration
 
 # Get a list of all available AWS Regions
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
@@ -277,8 +278,8 @@ show_group_title() {
 
 # Function to execute the check
 execute_check() {
-	# See if this is an alternate name for a check
-	# for example, we might have been passed 1.01 which is another name for 1.1
+  # See if this is an alternate name for a check
+  # for example, we might have been passed 1.01 which is another name for 1.1
   local alternate_name_var=CHECK_ALTERNATE_$1
   local alternate_name=${!alternate_name_var}
   # See if this check defines an ASFF Type, if so, use this, falling back to a sane default
@@ -291,16 +292,23 @@ execute_check() {
   ASFF_RESOURCE_TYPE="${!asff_resource_type_var:-AwsAccount}"
   # Generate the credential report, only if it is group1 related which checks we
   # run so that the checks can safely assume it's available
-	if [ ${alternate_name} ];then
+  if [ ${alternate_name} ];then
     if [[ ${alternate_name} == check1* || ${alternate_name} == extra71 ]];then
       if [ ! -s $TEMP_REPORT_FILE ];then
         genCredReport
         saveReport
       fi
     fi
-		show_check_title ${alternate_name}
-		${alternate_name}
-	else
+    show_check_title ${alternate_name}
+    if is_junit_output_enabled; then
+      prepare_junit_check_output "$1"
+    fi
+    # Execute the check
+    ${alternate_name}
+    if is_junit_output_enabled; then
+      finalise_junit_check_output "$1"
+    fi
+  else
     # Check to see if this is a real check
     local check_id_var=CHECK_ID_$1
     local check_id=${!check_id_var}
@@ -311,13 +319,20 @@ execute_check() {
           saveReport
         fi
       fi
-		  show_check_title $1
-		  $1
+      show_check_title $1
+      if is_junit_output_enabled; then
+        prepare_junit_check_output "$1"
+      fi
+      # Execute the check
+      $1
+      if is_junit_output_enabled; then
+        finalise_junit_check_output "$1"
+      fi
     else
       textFail "ERROR! Use a valid check name (i.e. check41 or extra71)";
       exit $EXITCODE
     fi
-	fi
+  fi
 }
 
 # Function to execute all checks in a group
@@ -447,12 +462,16 @@ if [[ $PRINTGROUPSONLY == "1" ]]; then
 fi
 
 # Check that jq is installed for JSON outputs
-if [[ "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
+if [[ ${MODES[@]} =~ "json" || ${MODES[@]} =~ "json-asff" ]]; then
   . $PROWLER_DIR/include/jq_detector
 fi
 
 if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
   checkSecurityHubCompatibility
+fi
+
+if is_junit_output_enabled; then
+  prepare_junit_output
 fi
 
 # Gather account data / test aws cli connectivity
