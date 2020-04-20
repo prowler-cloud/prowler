@@ -108,9 +108,9 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler
     ```
 
-    Use `-l` to list all available checks and group of checks (sections)
+    Use `-l` to list all available checks and the groups (sections) that reference them
 
-    If you want to avoid installing dependences run it using Docker:
+    If you want to avoid installing dependencies run it using Docker:
 
     ```sh
     docker run -ti --rm --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest
@@ -159,7 +159,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
     Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 and 3.10 is check310
 
-### Save your reports 
+### Save your reports
 
 1. If you want to save your report for later analysis thare are different ways, natively (supported text, mono, csv, json and json-asff see note below for more info):
 
@@ -190,7 +190,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler | ansi2html -la > report.html
     ```
 
-    >Note about output formats to use with `-M`: "text" is the default one with colors, "mono" is like default one but monochrome, "csv" is comma separated values, "json" plain basic json (without comma between lines) and "json-asff" is also json with Amazon Security Finding Format that you can ship to Security Hub using `-S`. 
+    >Note about output formats to use with `-M`: "text" is the default one with colors, "mono" is like default one but monochrome, "csv" is comma separated values, "json" plain basic json (without comma between lines) and "json-asff" is also json with Amazon Security Finding Format that you can ship to Security Hub using `-S`.
 
     or save your report in a S3 bucket (this only works for text or mono, for csv, json or json-asff it has to be copied afterwards):
 
@@ -235,7 +235,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
         -k                  keep the credential report
         -n                  show check numbers to sort easier
                                 (i.e.: 1.01 instead of 1.1)
-        -l                  list all available checks only (does not perform any check)
+        -l                  list all available checks only (does not perform any check). Add -g <group_id> to only list checks within the specified group
         -L                  list all groups (does not perform any check)
         -e                  exclude group extras
         -E                  execute all tests except a list of specified checks separated by comma (i.e. check21,check31)
@@ -321,7 +321,7 @@ There are two requirements:
 2. As mentioned in section "Custom IAM Policy", to allow Prowler to import its findings to AWS Security Hub you need to add the policy below to the role or user running Prowler:
     - [iam/prowler-security-hub.json](iam/prowler-security-hub.json)
 
->Note: to have updated findings in Security Hub you have to run Prowler periodically. Once a day or every certain amount of hours. 
+>Note: to have updated findings in Security Hub you have to run Prowler periodically. Once a day or every certain amount of hours.
 
 
 ## How to fix every FAIL
@@ -498,7 +498,7 @@ AWS is made to be flexible for service links within and between different AWS ac
 
 This group of checks helps to analyse a particular AWS account (subject) on existing links to other AWS accounts across various AWS services, in order to identify untrusted links.
 
-### Run 
+### Run
 To give it a quick shot just call:
 ```sh
 ./prowler -g trustboundaries
