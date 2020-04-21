@@ -14,6 +14,7 @@ CHECK_ID_extra774="7.74"
 CHECK_TITLE_extra774="[extra774] Check if user have unused console login"
 CHECK_SCORED_extra774="NOT_SCORED"
 CHECK_TYPE_extra774="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra774="AwsIamUser"
 CHECK_ALTERNATE_check774="extra774"
 
 extra774(){
@@ -24,11 +25,23 @@ extra774(){
     user=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$5 }' |grep "^$i " |awk '{ print $1 }')
     last_login_date=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$5 }' |grep "^$i " |awk '{ print $2 }')
 
-    days_not_in_use=$(how_many_days_from_today ${last_login_date%T*})
-    if [ "$days_not_in_use" -lt "$MAX_DAYS" ];then
-        textFail "User $user has not used console login for more then ${MAX_DAYS#-} days"
+    # If the user has never logged into the console, their last login date is 'no_information'. See:
+    # https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html#id_credentials_understanding_the_report_format
+    if [[ "${last_login_date}" == "no_information" ]]; then
+      user_created_date=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$3 }' |grep "^$i " |awk '{ print $2 }')
+      days_since_user_created=$(how_many_days_from_today ${user_created_date%T*})
+      if [ "$days_since_user_created" -lt "$MAX_DAYS" ];then
+        textFail "User $user has never used console login since they were created over ${MAX_DAYS#-} days ago"
+      else
+        textInfo "User $user has not used console login since they were created"
+      fi
+    else
+      days_not_in_use=$(how_many_days_from_today ${last_login_date%T*})
+      if [ "$days_not_in_use" -lt "$MAX_DAYS" ];then
+        textFail "User $user has not used console login for more than ${MAX_DAYS#-} days"
       else
         textPass "User $user has used console login in the past ${MAX_DAYS#-} days"
+      fi
     fi
   done
 }

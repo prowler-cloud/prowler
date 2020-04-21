@@ -14,6 +14,7 @@ CHECK_ID_extra740="7.40"
 CHECK_TITLE_extra740="[extra740] Check if EBS snapshots are encrypted (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra740="NOT_SCORED"
 CHECK_TYPE_extra740="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra740="AwsEc2Snapshot"
 CHECK_ALTERNATE_check740="extra740"
 
 extra740(){
@@ -30,7 +31,7 @@ extra740(){
         fi
       done
     else
-      textInfo "$regx: No EBS Snapshots found" "$regx" 
+      textInfo "$regx: No EBS Snapshots found" "$regx"
     fi
   done
 }

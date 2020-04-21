@@ -37,6 +37,8 @@ CHECK_ID_check311="3.11"
 CHECK_TITLE_check311="[check311] Ensure a log metric filter and alarm exist for changes to Network Access Control Lists (NACL) (Scored)"
 CHECK_SCORED_check311="SCORED"
 CHECK_TYPE_check311="LEVEL2"
+CHECK_ASFF_TYPE_check311="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_check311="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check311="check311"
 
 check311(){

@@ -14,6 +14,7 @@ CHECK_ID_extra756="7.56"
 CHECK_TITLE_extra756="[extra756] Check if Redshift cluster is Public Accessible (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra756="NOT_SCORED"
 CHECK_TYPE_extra756="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra756="AwsRedshiftCluster"
 CHECK_ALTERNATE_check756="extra756"
 
 extra756(){
@@ -22,10 +23,10 @@ extra756(){
     if [[ $LIST_OF_RS_CLUSTERS ]];then
       for cluster in $LIST_OF_RS_CLUSTERS; do
         IS_PUBLICLY_ACCESSIBLE=$($AWSCLI $PROFILE_OPT redshift describe-clusters --region $regx --cluster-identifier $cluster --query Clusters[*].PubliclyAccessible --output text|grep True)
-        if [[ $IS_PUBLICLY_ACCESSIBLE ]]; then 
-           textFail "$regx: Redshift cluster $cluster is publicly accessible" "$regx"
+        if [[ $IS_PUBLICLY_ACCESSIBLE ]]; then
+          textFail "$regx: Redshift cluster $cluster is publicly accessible" "$regx"
         else
-           textPass "$regx: Redshift cluster $cluster is not publicly accessible" "$regx"
+          textPass "$regx: Redshift cluster $cluster is not publicly accessible" "$regx"
         fi
       done
     else

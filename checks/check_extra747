@@ -14,6 +14,7 @@ CHECK_ID_extra747="7.47"
 CHECK_TITLE_extra747="[extra747] Check if RDS instances is integrated with CloudWatch Logs  (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra747="NOT_SCORED"
 CHECK_TYPE_extra747="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra747="AwsRdsDbInstance"
 CHECK_ALTERNATE_check747="extra747"
 
 extra747(){
@@ -21,7 +22,7 @@ extra747(){
     LIST_OF_RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[*].DBInstanceIdentifier' --output text)
     if [[ $LIST_OF_RDS_INSTANCES ]];then
       for rdsinstance in $LIST_OF_RDS_INSTANCES; do
-        # if retention is 0 then is disabled 
+        # if retention is 0 then is disabled
         ENABLED_CLOUDWATCHLOGS_EXPORTS=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --db-instance-identifier $rdsinstance --query 'DBInstances[*].EnabledCloudwatchLogsExports' --output text)
         if [[ $ENABLED_CLOUDWATCHLOGS_EXPORTS ]]; then
           textPass "$regx: RDS instance $rdsinstance is shipping $ENABLED_CLOUDWATCHLOGS_EXPORTS to CloudWatch Logs" "$regx"

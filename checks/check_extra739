@@ -14,6 +14,7 @@ CHECK_ID_extra739="7.39"
 CHECK_TITLE_extra739="[extra739] Check if RDS instances have backup enabled (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra739="NOT_SCORED"
 CHECK_TYPE_extra739="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra739="AwsRdsDbInstance"
 CHECK_ALTERNATE_check739="extra739"
 
 extra739(){
@@ -21,12 +22,12 @@ extra739(){
     LIST_OF_RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[*].DBInstanceIdentifier' --output text)
     if [[ $LIST_OF_RDS_INSTANCES ]];then
       for rdsinstance in $LIST_OF_RDS_INSTANCES; do
-        # if retention is 0 then is disabled 
+        # if retention is 0 then is disabled
         BACKUP_RETENTION=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --db-instance-identifier $rdsinstance --query 'DBInstances[*].BackupRetentionPeriod' --output text)
         if [[ $BACKUP_RETENTION == "0" ]]; then
           textFail "$regx: RDS instance $rdsinstance has not backup enabled!" "$regx"
         else
-          textPass "$regx: RDS instance $rdsinstance has backup enabled with retention period $BACKUP_RETENTION days " "$regx"
+          textPass "$regx: RDS instance $rdsinstance has backup enabled with retention period $BACKUP_RETENTION days" "$regx"
         fi
       done
     else

@@ -33,10 +33,12 @@
 #     --actions-enabled \
 #     --alarm-actions arn:aws:sns:us-east-1:123456789012:CloudWatchAlarmTopic
 
-CHECK_ID_check34="3.4,3.04"
+CHECK_ID_check34="3.4"
 CHECK_TITLE_check34="[check34] Ensure a log metric filter and alarm exist for IAM policy changes (Scored)"
 CHECK_SCORED_check34="SCORED"
 CHECK_TYPE_check34="LEVEL1"
+CHECK_ASFF_TYPE_check34="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_check34="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check304="check34"
 
 check34(){
