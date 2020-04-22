@@ -425,7 +425,6 @@ show_all_group_titles() {
 get_all_checks_without_exclusion() {
   CHECKS_EXCLUDED=()
   local CHECKS_TO_EXCLUDE=()
-  local TOTAL_CHECKS=()
   # Get a list of checks to exclude
   IFS=',' read -ra E_CHECKS <<< "$1"
   for E_CHECK in "${E_CHECKS[@]}"; do
