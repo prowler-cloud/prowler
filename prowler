@@ -203,6 +203,7 @@ trap "{ rm -f /tmp/prowler*.policy.*; }" EXIT
 . $PROWLER_DIR/include/scoring
 . $PROWLER_DIR/include/python_detector
 . $PROWLER_DIR/include/secrets_detector
+. $PROWLER_DIR/include/check_creds_last_used
 . $PROWLER_DIR/include/check3x
 . $PROWLER_DIR/include/assume_role
 . $PROWLER_DIR/include/connection_tests

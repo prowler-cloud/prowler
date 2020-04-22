@@ -25,10 +25,10 @@ check121(){
   LIST_USERS_KEY1_ACTIVE=$(for user in $LIST_USERS_KEY1_NA; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$4,$9 }'|grep "true true$"|awk '{ print $1 }'|sed 's/[[:blank:]]+/,/g' ; done)
   if [[ $LIST_USERS_KEY1_ACTIVE ]]; then
     for user in $LIST_USERS_KEY1_ACTIVE; do
-      textFail "$user has never used Access Key 1"
+      textFail "User $user has never used access key 1"
     done
   else
-    textPass "No users found with Access Key 1 never used"
+    textPass "No users found with access key 1 never used"
   fi
   # List of USERS with KEY2 last_used_date as N/A
   LIST_USERS_KEY2_NA=$(for user in $LIST_USERS; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$16 }'|grep N/A |awk '{ print $1 }' ; done)
@@ -36,9 +36,9 @@ check121(){
   LIST_USERS_KEY2_ACTIVE=$(for user in $LIST_USERS_KEY2_NA; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$4,$14 }'|grep "true true$" |awk '{ print $1 }' ; done)
   if [[ $LIST_USERS_KEY2_ACTIVE ]]; then
     for user in $LIST_USERS_KEY2_ACTIVE; do
-      textFail "$user has never used Access Key 2"
+      textFail "User $user has never used access key 2"
     done
   else
-    textPass "No users found with Access Key 2 never used"
+    textPass "No users found with access key 2 never used"
   fi
 }
