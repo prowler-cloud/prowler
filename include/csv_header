@@ -15,5 +15,5 @@
 printCsvHeader() {
   >&2 echo ""
   >&2 echo "Generating \"${SEP}\" delimited report on stdout for profile $PROFILE, account $ACCOUNT_NUM"
-      echo "PROFILE${SEP}ACCOUNT_NUM${SEP}REGION${SEP}TITLE_ID${SEP}RESULT${SEP}SCORED${SEP}LEVEL${SEP}TITLE_TEXT${SEP}NOTES"
+      echo "PROFILE${SEP}ACCOUNT_NUM${SEP}REGION${SEP}TITLE_ID${SEP}RESULT${SEP}SCORED${SEP}LEVEL${SEP}TITLE_TEXT${SEP}NOTES" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_CSV
 }
