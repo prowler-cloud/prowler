@@ -12,6 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 DATE_CMD="date"
+BASE64_CMD="base64"
 
 gnu_how_older_from_today() {
   DATE_TO_COMPARE=$1
@@ -44,10 +45,10 @@ bsd_timestamp_to_date() {
 }
 
 gnu_decode_report() {
-  base64 -d
+  "$BASE64_CMD" -d
 }
 bsd_decode_report() {
-  base64 -D
+  "$BASE64_CMD" -D
 }
 
 gnu_how_many_days_from_today() {
@@ -146,11 +147,15 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
   # It is possible that the user has installed GNU coreutils on OS X. By default, this will make GNU commands
   # available with a 'g' prefix, e.g. 'gdate'. Test if this is present, and use it if so, as it supports more features.
   # The user also may have replaced the default Mac OS X BSD tools with the GNU coreutils equivalents.
-  # Only GNU date allows --version as a valid argument, so use the validity of this argument
+  # Only GNU date/base64 allows --version as a valid argument, so use the validity of this argument
   # as a means to detect that coreutils is installed and is overriding the default tools
   GDATE=$(which gdate)
   if [ -n "${GDATE}" ]; then
     DATE_CMD="gdate"
+  fi
+  GBASE64=$(which gbase64)
+  if [ -n "${GBASE64}" ]; then
+    BASE64_CMD="gbase64"
   fi
   if "$DATE_CMD" --version >/dev/null 2>&1 ; then
     how_older_from_today() {
@@ -158,9 +163,6 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     }
     timestamp_to_date() {
       gnu_timestamp_to_date "$1"
-    }
-    decode_report() {
-      gnu_decode_report
     }
     how_many_days_from_today() {
       gnu_how_many_days_from_today "$1"
@@ -181,9 +183,6 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     timestamp_to_date() {
       bsd_timestamp_to_date "$1"
     }
-    decode_report() {
-      bsd_decode_report
-    }
     how_many_days_from_today() {
       bsd_how_many_days_from_today "$1"
     }
@@ -195,6 +194,15 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     }
     get_iso8601_timestamp() {
       bsd_get_iso8601_timestamp
+    }
+  fi
+  if "$BASE64_CMD" --version >/dev/null 2>&1 ; then
+    decode_report() {
+      gnu_decode_report
+    }
+  else
+    decode_report() {
+      bsd_decode_report
     }
   fi
   test_tcp_connectivity() {
