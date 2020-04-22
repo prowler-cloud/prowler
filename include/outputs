@@ -13,13 +13,6 @@
 
 # Output formatting functions
 
-# if [[ $ACCOUNT_TO_ASSUME ]];then
-#   ACCOUNT_ID="$ACCOUNT_TO_ASSUME"
-# else
-#   ACCOUNT_ID="$ACCOUNT_NUM"
-# fi 
-
-
 EXTENSION_CSV="csv"
 EXTENSION_JSON="json"
 EXTENSION_ASFF="asff-json"
