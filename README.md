@@ -188,7 +188,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler -g gdpr -M csv,json,json-asff
     ```
 
-    Now `-M` creates a file inside the prowler root directory named `prowler-output-YYYYMMDDHHMMSS.format`. You don't have to specify anything else, no pipes, no redirects.
+    Now `-M` creates a file inside the prowler root directory named `prowler-output-AWSACCOUNTID-YYYYMMDDHHMMSS.format`. You don't have to specify anything else, no pipes, no redirects.
 
     or just saving the output to a file like below:
 
