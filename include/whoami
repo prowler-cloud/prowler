@@ -25,6 +25,7 @@ fi
 
 CALLER_ARN=$($AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "Arn")
 USER_ID=$($AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "UserId")
+AWS_PARTITION=$(echo $CALLER_ARN| cut -d: -f2)
 
 if [[ $ACCOUNT_TO_ASSUME ]]; then
   ACCOUNT_NUM=$ACCOUNT_TO_ASSUME
