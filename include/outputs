@@ -16,6 +16,7 @@
 EXTENSION_CSV="csv"
 EXTENSION_JSON="json"
 EXTENSION_ASFF="asff-json"
+EXTENSION_TEXT="txt"
 EXTENSION_HTML="html" # not implemented yet, use ansi2html as in documentation
 OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
 OUTPUT_FILE_NAME="prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
@@ -47,7 +48,10 @@ textPass(){
   if is_junit_output_enabled; then
     output_junit_success "$1"
   fi
-  if [[ "${MODES[@]}" =~ "text" ]]; then
+  if [[ "${MODES[@]}" =~ "mono" ]]; then
+    echo "      $OK PASS!$NORMAL $1" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
+  fi
+  if [[ "${MODES[@]}" =~ "text" || "${MODES[@]}" =~ "mono" ]]; then
     echo "      $OK PASS!$NORMAL $1"
   fi
 }
@@ -70,6 +74,9 @@ textInfo(){
   fi
   if is_junit_output_enabled; then
     output_junit_info "$1"
+  fi
+  if [[ "${MODES[@]}" =~ "mono" ]]; then
+    echo "      $NOTICE INFO! $1 $NORMAL" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
   fi
   if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $NOTICE INFO! $1 $NORMAL"
@@ -99,6 +106,9 @@ textFail(){
   fi
   if is_junit_output_enabled; then
     output_junit_failure "$1"
+  fi
+  if [[ "${MODES[@]}" =~ "mono" ]]; then
+    echo "      $BAD FAIL! $1 $NORMAL" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
   fi
   if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $BAD FAIL! $1 $NORMAL"

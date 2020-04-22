@@ -195,10 +195,10 @@ trap "{ rm -f /tmp/prowler*.policy.*; }" EXIT
 . $PROWLER_DIR/include/os_detector
 . $PROWLER_DIR/include/aws_profile_loader
 . $PROWLER_DIR/include/awscli_detector
+. $PROWLER_DIR/include/whoami
 . $PROWLER_DIR/include/outputs
 . $PROWLER_DIR/include/csv_header
 . $PROWLER_DIR/include/banner
-. $PROWLER_DIR/include/whoami
 . $PROWLER_DIR/include/credentials_report
 . $PROWLER_DIR/include/scoring
 . $PROWLER_DIR/include/python_detector
