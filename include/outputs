@@ -201,7 +201,7 @@ generateJsonAsffOutput(){
   --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
   --arg TITLE_TEXT "$TITLE_TEXT" \
   --arg MESSAGE "$(echo -e "${message}" | sed -e 's/^[[:space:]]*//')" \
-  --arg UNIQUE_ID "$(LC_ALL=C echo -e "${message}" | tr -cs '[:alnum:]._~-\n' '_')" \
+  --arg UNIQUE_ID "$(LC_ALL=C echo -e "${message}" | tr -cs '[:alnum:]._~-\n' '_' 2> /dev/null)" \
   --arg STATUS "$status" \
   --arg SEVERITY "$severity" \
   --arg TITLE_ID "$TITLE_ID" \
