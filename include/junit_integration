@@ -16,7 +16,7 @@
 JUNIT_OUTPUT_DIRECTORY="junit-reports"
 
 is_junit_output_enabled() {
-  if [[ ${MODES[@]} =~ "junit-xml" ]]; then
+  if [[ " ${MODES[@]} " =~ " junit-xml " ]]; then
     true
   else
     false

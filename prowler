@@ -445,7 +445,7 @@ get_all_checks_without_exclusion() {
 }
 
 ### All functions defined above ... run the workflow
-if [[ ${MODES[@]} =~ "mono" || ${MODES[@]} =~ "text" ]]; then
+if [[ " ${MODES[@]} " =~ " mono " || " ${MODES[@]} " =~ " text " ]]; then
   prowlerBanner
 fi
 
@@ -462,7 +462,7 @@ if [[ $PRINTGROUPSONLY == "1" ]]; then
 fi
 
 # Check that jq is installed for JSON outputs
-if [[ ${MODES[@]} =~ "json" || ${MODES[@]} =~ "json-asff" ]]; then
+if [[ " ${MODES[@]} " =~ " json " || " ${MODES[@]} " =~ " json-asff " ]]; then
   . $PROWLER_DIR/include/jq_detector
 fi
 
