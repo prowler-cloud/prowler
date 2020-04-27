@@ -28,3 +28,7 @@ junit-reports/
 
 # VSCode files
 .vscode/
+/.idea
+/bin
+/lib
+/pyvenv.cfg

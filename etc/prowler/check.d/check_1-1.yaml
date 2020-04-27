@@ -1,0 +1,48 @@
+---
+check_id: "1.1"
+check_title: "Avoid the use of the root account"
+check_groups:
+  - cis
+  - cis=>level1
+  - cis=>section1
+  - cis_scored
+platform: aws
+regions:
+  - "us-east-1"
+call:
+  name: iam
+  action: get_credential_report
+  kwargs: {}
+  args: []
+  pre_call:
+    name: iam
+    action: generate_credential_report
+    kwargs: {}
+    args: []
+    delay: 10
+post_process:
+  - type: bcsv
+    field: ".Content"
+    name: csv_report
+rule:
+  name: Root Access Key 1 Credential Check
+  pass_reason: Root's Access seems Acceptable
+  item:
+    jqiter: .post_process.csv_report[]
+    target_strategy:
+      target_jq: .user
+      target_regex: "<root_account>"
+      subject_jq: .arn
+  compare:
+    - comp_jq: .access_key_1_active
+      rematch: "false"
+      fail_reason: Root's Access Key 1 is Active
+    - comp_jq: .access_key_2_active
+      rematch: "false"
+      fail_reason: Root's Access Key 2 is Active
+    - comp_jq: .password_last_used
+      type: time
+      time_format: "%Y-%m-%dT%H:%M:%S+00:00"
+      time_older: 7776000
+      fail_reason: Root's Password was used in Last 90 Days
+

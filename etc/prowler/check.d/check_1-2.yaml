@@ -1,0 +1,40 @@
+---
+check_id: "1.2"
+check_title: "Ensure MFA is Enabled for All IAM Users with Console Password"
+check_groups:
+  - cis
+  - cis=>level1
+  - cis=>section1
+  - cis_scored
+platform: aws
+regions:
+  - "us-east-1"
+call:
+  name: iam
+  action: get_credential_report
+  kwargs: {}
+  args: []
+  pre_call:
+    name: iam
+    action: generate_credential_report
+    kwargs: {}
+    args: []
+    delay: 10
+post_process:
+  - type: bcsv
+    field: ".Content"
+    name: csv_report
+rule:
+  name: Console Users Need MFA Enabled
+  fail_reason: User in Question doesn't have MFA Enabled
+  pass_reason: User in Question has MFA Enabled
+  item:
+    jqiter: .post_process.csv_report[]
+    target_strategy:
+      target_jq: .password_enabled
+      target_regex: "true"
+      subject_jq: .arn
+  compare:
+    - comp_jq: .mfa_active
+      rematch: "true"
+      fail_reason: User with Console Access has Uneabled MFA Token
