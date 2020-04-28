@@ -61,7 +61,7 @@ Parameters:
   ProwlerCron:
     Description: Enter cron schedule.  Default, runs everyday at 1am.  See https://crontab.guru/, for syntax help.
     Type: String
-    Default: 10 * * * *
+    Default: "0 1 * * *"
   LatestAmazonLinux2AmiId:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Description: Latest AMI ID for Amazon Linux 2 (via AWS Publis SSM Parameters.  See https://tinyurl.com/aws-public-ssm-parameters.
@@ -196,16 +196,16 @@ Resources:
               group: ec2-user
         prowler-schedule:
           files:
-            /home/ec2-user/prowlercron:
+            /home/ec2-user/mycron-prowler:
               content: !Sub |
-                ${ProwlerCron} run-prowler-reports.sh
+                ${ProwlerCron} bash -lc ./run-prowler-reports.sh > mycron-prowler.log
               mode: "000600"
               owner: ec2-user
               group: ec2-user
           commands:
             01-create-prowler-cron-job:
               command: |
-                sudo -u ec2-user crontab /home/ec2-user/prowlercron
+                sudo -u ec2-user crontab /home/ec2-user/mycron-prowler
 
   ProwlerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
