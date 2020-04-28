@@ -1,15 +1,17 @@
 ---
-check_id: "1.1"
-check_title: "Avoid the use of the root account"
+check_id: "1.12"
+check_title: "Ensure no root account access key exists (Scored)"
+check_alts:
+  - CCE-78910-7
 check_groups:
   - cis
   - cis=>level1
   - cis=>section1
   - cis_scored
+  - ciscontrolv6=>5
+  - ciscontrolv6=>5.1
   - ciscontrol=>4
   - ciscontrol=>4.3
-  - ciscontrol=>5
-  - ciscontrol=>5.1
 platform: aws
 regions:
   - "us-east-1"
@@ -29,8 +31,8 @@ post_process:
     field: ".Content"
     name: csv_report
 rule:
-  name: Root Access Key 1 Credential Check
-  pass_reason: Root's Access seems Acceptable
+  name: Root Access Key Credential Check
+  pass_reason: Root's Access Keys are Disabled
   item:
     jqiter: .post_process.csv_report[]
     target_strategy:
@@ -44,9 +46,3 @@ rule:
     - comp_jq: .access_key_2_active
       rematch: "false"
       fail_reason: Root's Access Key 2 is Active
-    - comp_jq: .password_last_used
-      type: time
-      time_format: "%Y-%m-%dT%H:%M:%S+00:00"
-      time_older: 7776000
-      fail_reason: Root's Password was used in Last 90 Days
-

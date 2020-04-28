@@ -1,0 +1,57 @@
+---
+check_id: "1.16"
+check_title: "Ensure IAM policies are attached only to groups or roles (Scored)"
+check_alts:
+  - CCE-78911-5
+check_groups:
+  - cis
+  - cis=>level1
+  - cis=>section1
+  - cis_scored
+  - ciscontrol=>4
+  - ciscontrol=>4.5
+  - ciscontrolv6=>5
+  - ciscontrolv6=>5.6
+  - ciscontrolv6=>11
+  - ciscontrolv6=>11.4
+  - ciscontrolv6=>12
+  - ciscontrolv6=>12.6
+  - ciscontrolv6=>16
+  - ciscontrolv6=>16.11
+platform: aws
+regions:
+  - "us-east-1"
+call:
+  name: iam
+  action: list_users
+  args: []
+  take: ".Users[]"
+  fo_def:
+    - name: iam
+      inname: list_attached_user_policies
+      action: list_attached_user_policies
+      kwargs:
+        UserName: "{{ UserName }}"
+    - name: iam
+      inname: list_user_policies
+      action: list_user_policies
+      kwargs:
+        UserName: "{{ UserName }}"
+rule:
+  name: Searching for User Attached Policies
+  fail_reason: User has Attached Policies
+  pass_reason: User has no AWS or Inline Policies Attached
+  item:
+    jqiter: .result[]
+    target_strategy:
+      subject_jq: .Arn
+      strat_type: all
+  compare:
+    - comp_jq: .list_attached_user_policies.AttachedPolicies | length
+      type: "int"
+      eq: 0
+      fail_reason: Account has AWS Managed Policies Attached Directly
+    - comp_jq: .list_user_policies.AttachedPolicies | length
+      type: "int"
+      eq: 0
+      fail_reason: Account has Inline or Custom Policies Attached Directly

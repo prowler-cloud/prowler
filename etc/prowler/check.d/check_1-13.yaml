@@ -1,0 +1,43 @@
+---
+check_id: "1.13"
+check_title: "Ensure MFA is enabled for the 'root' account (Scored)"
+check_alts:
+  - CCE-78911-5
+check_groups:
+  - cis
+  - cis=>level1
+  - cis=>section1
+  - cis_scored
+  - ciscontrol=>4
+  - ciscontrol=>4.5
+  - ciscontrolv6=>6
+  - ciscontrolv6=>6.0
+  - ciscontrolv6=>5
+  - ciscontrolv6=>5.6
+  - ciscontrolv6=>11
+  - ciscontrolv6=>11.4
+  - ciscontrolv6=>12
+  - ciscontrolv6=>12.6
+  - ciscontrolv6=>16
+  - ciscontrolv6=>16.11
+platform: aws
+regions:
+  - "us-east-1"
+call:
+  name: iam
+  action: get_account_summary
+  kwargs: {}
+  args: []
+rule:
+  name: Account Root Needs MFA Enabled
+  fail_reason: Root Account needds MFA Enabled
+  pass_reason: Root Account has MFA Enabled
+  item:
+    jqone: .result.SummaryMap
+    target_strategy:
+      subject_const: Account Summary
+  compare:
+    - comp_jq: .AccountMFAEnabled
+      type: "int"
+      eq: 1
+      fail_reason: Account MFA is Not Enabled

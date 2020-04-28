@@ -3,3 +3,4 @@ ansi2html
 detect-secrets
 pyyaml
 pyjq
+jinja2

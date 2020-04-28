@@ -10,6 +10,7 @@ import logging
 import os
 import pathlib
 import json
+import csv
 
 import boto3
 
@@ -29,6 +30,8 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--checkd", help="Directory Containing Checks", default="./etc/prowler/check.d")
     parser.add_argument("-c", "--check", help="Run these Checks", action="append", default=[])
     parser.add_argument("--cache_dir", help="Directory to Cache Checks", default="/tmp/hk_cache/")
+    parser.add_argument("--csv", help="Save a to this CSV", default=False)
+    parser.add_argument("--json", help="Print a JSON of the data", default=False)
 
     args = parser.parse_args()
 
@@ -77,21 +80,28 @@ if __name__ == "__main__":
 
     for this_smell in available_configs:
 
+        # Add Only Fail Logic Here
         audit_results.extend(this_smell.execute())
 
 
-    print(json.dumps(audit_results, default=str))
+    if args.csv is not False:
 
+        field_names = ["platform", "account_id", "region", "subject", "pfi", "pfi_reason", "check_id", "check_title"]
 
+        logger.info("Writing CSV Result to : {}".format(args.csv))
 
+        with open(args.csv, "w") as csv_out_file:
+            writer = csv.DictWriter(csv_out_file, field_names)
 
+            writer.writeheader()
 
+            for row in audit_results:
+                writer.writerow({key: value for key, value in row.items() if key in field_names})
 
+    if args.json is True:
 
+        logger.info("Writing JSON Results to : {}".format(args.json))
 
-
-
-
-
-
+        with open(args.json, "w") as json_out_file:
+            json.dump(audit_results, json_out_file, default=str)
 

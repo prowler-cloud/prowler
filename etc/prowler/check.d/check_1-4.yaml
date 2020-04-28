@@ -1,0 +1,74 @@
+---
+check_id: "1.4"
+check_title: "Ensure Access Keys are Rotated Every 90 Days or Less"
+check_alts:
+  - CCE-78902-4
+check_groups:
+  - cis
+  - cis=>level1
+  - cis=>section1
+  - cis_scored
+  - ciscontrol=>16
+platform: aws
+regions:
+  - "us-east-1"
+call:
+  name: iam
+  action: get_credential_report
+  kwargs: {}
+  args: []
+  pre_call:
+    name: iam
+    action: generate_credential_report
+    kwargs: {}
+    args: []
+    delay: 10
+post_process:
+  - type: bcsv
+    field: ".Content"
+    name: csv_report
+rule:
+  name: AWS Access Key 90 Days Check
+  fail_reason: Imporper Access Key Rotation (>90 Days)
+  pass_reason: Access Keys Have been Rotated within 90 Days
+  item:
+    jqiter: .post_process.csv_report[]
+    target_strategy:
+      target_jq: (.access_key_1_active + .access_key_2_active)
+      target_regex: "true"
+      subject_jq: .arn
+  compare:
+    - comp_jq: .access_key_1_active
+      renomatch: "true"
+      subfailcompare:
+        comp_jq: .access_key_1_last_rotated
+        rematch: "N/A"
+        subpasscompare:
+          comp_jq: .user_creation_time
+          type: time
+          time_format: "%Y-%m-%dT%H:%M:%S+00:00"
+          time_newer: 7776000
+          fail_reason: Access Key 1 never Rotated on an Account over 90 Days Old.
+        subfailcompare:
+          comp_jq: .access_key_1_last_rotated
+          type: time
+          time_format: "%Y-%m-%dT%H:%M:%S+00:00"
+          time_newer: 7776000
+          fail_reason: Access Key 1 Not Rotated in the Last 90 Days
+    - comp_jq: .access_key_2_active
+      renomatch: "true"
+      subfailcompare:
+        comp_jq: .access_key_2_last_rotated
+        rematch: "N/A"
+        subpasscompare:
+          comp_jq: .user_creation_time
+          type: time
+          time_format: "%Y-%m-%dT%H:%M:%S+00:00"
+          time_newer: 7776000
+          fail_reason: Access Key 2 never Rotated on an Account over 90 Days Old.
+        subfailcompare:
+          comp_jq: .access_key_2_last_rotated
+          type: time
+          time_format: "%Y-%m-%dT%H:%M:%S+00:00"
+          time_newer: 7776000
+          fail_reason: Access Key 2 Not Rotated in the Last 90 Days

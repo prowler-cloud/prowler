@@ -32,3 +32,6 @@ junit-reports/
 /bin
 /lib
 /pyvenv.cfg
+
+# 
+__pycache__

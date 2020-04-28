@@ -1,0 +1,30 @@
+---
+check_id: "1.5"
+check_title: "Ensure IAM password policy requires at least one uppercase letter (Scored)"
+check_alts:
+  - CCE-78903-2
+check_groups:
+  - cis
+  - cis=>level1
+  - cis=>section1
+  - cis_scored
+  - ciscontrol=>16
+platform: aws
+regions:
+  - "us-east-1"
+call:
+  name: iam
+  action: get_account_password_policy
+  kwargs: {}
+  args: []
+rule:
+  name: Account Password Policy Upper Case Check
+  pass_reason: Account Requires Uppercase Characters in Passwords
+  item:
+    jqone: .result.PasswordPolicy
+    target_strategy:
+      subject_const: "Account Password Policy"
+  compare:
+    - comp_jq: .RequireUppercaseCharacters
+      rematch: "true"
+      fail_reason: Account wide Password Policy Doesn't require Uppercase Characters

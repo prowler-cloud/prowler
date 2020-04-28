@@ -1,0 +1,36 @@
+---
+check_id: "1.9"
+check_title: "Ensure IAM password policy requires minimum length of 14 or greater (Scored)"
+check_alts:
+  - CCE-78907-3
+check_groups:
+  - cis
+  - cis=>level1
+  - cis=>section1
+  - cis_scored
+  - ciscontrol=>16
+  - ciscontrol=>16.12
+  - ciscontrolv6=>5
+  - ciscontrolv6=>5.7
+  - ciscontrolv6=>16
+  - ciscontrolv6=>16.12
+platform: aws
+regions:
+  - "us-east-1"
+call:
+  name: iam
+  action: get_account_password_policy
+  kwargs: {}
+  args: []
+rule:
+  name: Account Password Policy Number Check
+  pass_reason: Account Requires Number in Password
+  item:
+    jqone: .result.PasswordPolicy
+    target_strategy:
+      subject_const: "Account Password Policy"
+  compare:
+    - comp_jq: .MinimumPasswordLength
+      type: "int"
+      ge: 14
+      fail_reason: Account wide Password Policy Doesn't Passwords of 14 or greater Characters

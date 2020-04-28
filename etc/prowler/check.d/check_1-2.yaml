@@ -1,11 +1,22 @@
 ---
 check_id: "1.2"
 check_title: "Ensure MFA is Enabled for All IAM Users with Console Password"
+check_alts:
+  - CCE-78901-6
+  - RFC6238
 check_groups:
   - cis
   - cis=>level1
   - cis=>section1
   - cis_scored
+  - ciscontrol=>4
+  - ciscontrol=>4.5
+  - ciscontrolv6=>5
+  - ciscontrolv6=>5.6
+  - ciscontrolv6=>11
+  - ciscontrolv6=>11.4
+  - ciscontrolv6=>12
+  - ciscontrolv6=>12.6
 platform: aws
 regions:
   - "us-east-1"

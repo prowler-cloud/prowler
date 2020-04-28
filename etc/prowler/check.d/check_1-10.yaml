@@ -1,0 +1,32 @@
+---
+check_id: "1.10"
+check_title: "Ensure IAM password policy prevents password reuse (Scored)"
+check_alts:
+  - CCE-78908-1
+check_groups:
+  - cis
+  - cis=>level1
+  - cis=>section1
+  - cis_scored
+  - ciscontrol=>4
+  - ciscontrol=>4.4
+platform: aws
+regions:
+  - "us-east-1"
+call:
+  name: iam
+  action: get_account_password_policy
+  kwargs: {}
+  args: []
+rule:
+  name: Account Password Policy Reuse Check
+  pass_reason: Account Requires Disables Last 24 Used Passwords
+  item:
+    jqone: .result.PasswordPolicy
+    target_strategy:
+      subject_const: "Account Password Policy"
+  compare:
+    - comp_jq: .PasswordReusePrevention
+      type: "int"
+      ge: 24
+      fail_reason: Account wide Password Policy Prevents the Reuse of last 24 or More Passwords

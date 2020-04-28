@@ -72,7 +72,7 @@ class Smell:
         """
 
         # Post Process
-        for process_def in self.data["post_process"]:
+        for process_def in self.data.get("post_process", list()):
             for region, stank_obj in self.stank_data.items():
                 stank_obj.post_process(this_def=process_def)
 
@@ -90,6 +90,8 @@ class Smell:
         pfi = "pass"
         fail_reason = None
 
+        self.logger.debug("This Item : {}".format(this_item))
+
         this_type = comparison.get("type", "str")
         # Compare Object Pull
 
@@ -101,6 +103,8 @@ class Smell:
         # Any Additional Formatting
         if this_type == "str":
             compare_item = str(compare_item)
+        elif this_type == "int":
+            compare_item = int(compare_item)
         elif this_type == "time":
             # Always A Timestamp
             try:
@@ -127,19 +131,32 @@ class Smell:
                 this_passed_so_far = "fail"
                 fail_reason = comparison.get("fail_reason", "Failed time_newer Check")
         elif "rematch" in comparison.keys() and this_type == "str":
-            if re.match(comparison["rematch"], compare_item) is None:
+            if re.match(comparison["rematch"], compare_item, re.I) is None:
                 this_passed_so_far = "fail"
                 fail_reason = comparison.get("fail_reason", "Failed rematch Check")
         elif "renomatch" in comparison.keys() and this_type == "str":
-            if re.match(comparison["renomatch"], compare_item) is not None:
+            if re.match(comparison["renomatch"], compare_item, re.I) is not None:
                 this_passed_so_far = "fail"
                 fail_reason = comparison.get("fail_reason", "Failed renomatch Check")
+        elif "ge" in comparison.keys() and this_type == "int":
+            if compare_item < comparison["ge"]:
+                this_passed_so_far = "fail"
+                fail_reason = comparison.get("fail_reason", "Failed a GE of {} Check".format(comparison["ge"]))
+        elif "le" in comparison.keys() and this_type == "int":
+            if compare_item > comparison["le"]:
+                this_passed_so_far = "fail"
+                fail_reason = comparison.get("fail_reason", "Failed a LE of {} Check".format(comparison["ge"]))
+        elif "eq" in comparison.keys() and this_type == "int":
+            if compare_item != comparison["eq"]:
+                this_passed_so_far = "fail"
+                fail_reason = comparison.get("fail_reason", "Failed an EQ of {} Check".format(comparison["eq"]))
         else:
             raise NotImplementedError("Unknown Comparison Strategy")
 
         self.logger.debug(comparison)
         if this_passed_so_far == "fail":
             self.logger.debug("fail")
+            self.logger.debug(compare_item)
             if "subfailcompare" in comparison.keys():
                 pfi, fail_reason = self.compare_logic(comparison=comparison["subfailcompare"], this_item=this_item)
             else:
@@ -149,6 +166,34 @@ class Smell:
             pfi, fail_reason = self.compare_logic(comparison=comparison["subpasscompare"], this_item=this_item)
 
         return pfi, fail_reason
+
+    def subject_strategy(self, item_def=None, potential_item=None):
+
+        if "subject_jq" in item_def["target_strategy"].keys():
+            this_item_subject = str(pyjq.first(item_def["target_strategy"]["subject_jq"], potential_item))
+        elif "subject_const" in item_def["target_strategy"].keys():
+            this_item_subject = item_def["target_strategy"]["subject_const"]
+        # Add a subject args jinja here for the future
+        else:
+
+            self.logger.error("Subject Strategy Not Implemented")
+            this_item_subject = "Not Specified"
+
+        return this_item_subject
+
+    def const_include(self, item_def=None, fulL_data=None):
+
+        """
+        Add Const Extras
+        :return:
+        """
+
+        const_include = dict()
+
+        for name, const_jq in item_def.get("include_const", dict()).items():
+            const_include[name] = pyjq.one(const_jq, full_data)
+
+        return const_include
 
     def execute(self):
 
@@ -180,14 +225,12 @@ class Smell:
 
                     eval_item = False
 
-                    if "subject_jq" in item_def["target_strategy"].keys():
-                        this_item_subject = str(pyjq.first(item_def["target_strategy"]["subject_jq"], potential_item))
-                    else:
-                        self.logger.error("Subject Strategy Not Implemented")
-                        this_item_subject = "Not Specified"
+                    this_item_subject = self.subject_strategy(item_def=item_def, potential_item=potential_item)
 
+                    if "include_const" in item_def["target_strategy"].keys():
+                        potential_item = {**potential_item, **self.const_include(item_def, stank_obj.data)}
 
-                    if item_def["target_strategy"].get("strat_type", "jqregex"):
+                    if item_def["target_strategy"].get("strat_type", "jqregex") == "jqregex":
 
                         this_ts_jq = item_def["target_strategy"]["target_jq"]
                         this_ts_regex = item_def["target_strategy"].get("target_regex", False)
@@ -210,6 +253,11 @@ class Smell:
                                 if re.match(this_ts_noregex, str(jq_pulled_string)) is None:
                                     eval_item = True
 
+                    elif item_def["target_strategy"].get("strat_type", "jqregex") == "all":
+                        eval_item = True
+                    else:
+                        raise NotImplementedError("Unknown strat_type of {}".format(item_def["target_strategy"].get("strat_type", "jqregex")))
+
                     if eval_item is True:
 
                         # Found a Match let's add it.
@@ -224,8 +272,33 @@ class Smell:
                                         "platform": self.data.get("platform", "Unspecified Resource Used")})
                     else:
                         self.logger.debug("Not evaluating {} ".format(this_item_subject))
+            elif "jqone" in rule_definition["item"].keys():
+
+                one_item = pyjq.one(item_def["jqone"], stank_obj.data)
+
+                self.logger.debug("One Item : {}".format(one_item))
+                self.logger.debug(stank_obj.data)
+
+                this_item_subject = self.subject_strategy(item_def=item_def, potential_item=one_item)
+
+                if "include_const" in item_def["target_strategy"].keys():
+                    one_item = {**one_item, **self.const_include(item_def, stank_obj.data)}
+
+                pfi_log.append({"subject": this_item_subject,
+                                "data": one_item,
+                                "pfi": "toeval",
+                                "pfi_reason": "to be determined",
+                                "region": region,
+                                "account_id": self.account_id,
+                                "check_id": self.id,
+                                "check_title": self.data.get("check_title", "Untitled Check"),
+                                "platform": self.data.get("platform", "Unspecified Resource Used")})
+
+
             else:
                 raise NotImplementedError("This Subject Method Not Yet Supported")
+
+
 
 
         ## Okay I now have all of the Subjects I wish to Evaluate

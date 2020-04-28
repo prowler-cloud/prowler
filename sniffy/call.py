@@ -13,8 +13,10 @@ import os.path
 import time
 import io
 import csv
+import collections
 
 import pyjq
+import sniffy
 
 class Stank:
 
@@ -33,12 +35,15 @@ class Stank:
         self.account_id = kwargs.get("account_id",
                                      self.aws_session.client('sts').get_caller_identity()['Account'])
 
-        self.call_string = "{}.{}.{}.{}.{}".format(self.call_def["name"],
-                                                   self.call_def["action"],
-                                                   sorted(self.call_def.get("kwargs", dict())),
-                                                   sorted(self.call_def.get("args", list())),
-                                                   self.region
-                                                  )
+        self.call_string = "{}.{}.{}.{}.{}.{}.{}.{}".format(self.call_def["name"],
+                                                            self.call_def["action"],
+                                                            sorted(self.call_def.get("kwargs", dict())),
+                                                            sorted(self.call_def.get("args", list())),
+                                                            self.call_def.get("take", "all"),
+                                                            self.region,
+                                                            str(json.dumps(self.call_def.get("pre_call", {}), sort_keys=True, default=str)),
+                                                            str(json.dumps(self.call_def.get("fo_def", {}), sort_keys=True, default=str))
+                                                            )
 
         self.call_hash = hashlib.sha256(self.call_string.encode()).hexdigest()
 
@@ -88,7 +93,7 @@ class Stank:
 
         if "pre_call" in self.call_def.keys():
             # Do a Pre-Call
-            self.logger.debug("Attempt a Pre_call")
+            self.logger.debug("Attempt a pre_call")
             pre_client = self.aws_session.client(self.call_def["pre_call"]["name"], region_name=self.region)
 
             pre_call_data = getattr(pre_client, self.call_def["pre_call"]["action"])(*self.call_def["pre_call"].get("args", list()),
@@ -99,13 +104,43 @@ class Stank:
             self.logger.debug(data)
 
             # Allow a Delay if Neccessary
-            time.sleep(self.call_data["pre_call"].get("delay", 10))
+            time.sleep(self.call_def["pre_call"].get("delay", 10))
 
         # Do AWS Load
         this_client = self.aws_session.client(self.call_def["name"], region_name=self.region)
 
-        data["result"] = getattr(this_client, self.call_def["action"])(*self.call_def.get("args", list()),
-                                                                       **self.call_def.get("kwags", dict()))
+        niave_data = getattr(this_client, self.call_def["action"])(*self.call_def.get("args", list()),
+                                                                   **self.call_def.get("kwags", dict()))
+
+        if self.call_def.get("take", "all") != "all":
+            self.logger.info("Taking a Subset of the Main Result")
+            data["result"] = pyjq.all(self.call_def["take"], niave_data)
+            self.logger.debug("Post take obj : {}".format(data["result"]))
+        else:
+            data["result"] = niave_data
+
+
+        if isinstance(data["result"], collections.Iterable) and "fo_def" in self.call_def.keys():
+            self.logger.info("Executing FODef Calls for Iterable Items")
+
+            for index in range(0, len(data["result"])):
+                if isinstance(data["result"][index], dict) is True:
+                    fan_out_subject = data["result"][index]
+                    for this_fo_def in self.call_def["fo_def"]:
+
+                        this_fo_client = self.aws_session.client(this_fo_def["name"], region_name=self.region)
+
+                        this_fo_data = getattr(this_client,
+                                               this_fo_def["action"])(*sniffy.hydrate(this_fo_def.get("args", list()),
+                                                                                      fan_out_subject),
+                                                                       **sniffy.hydrate(this_fo_def.get("kwargs", dict()),
+                                                                                        fan_out_subject)
+                                                                      )
+
+                        # Have Data Inject Back into Main Result
+                        data["result"][index][this_fo_def["inname"]] = this_fo_data
+                else:
+                    self.logger.warning("Ignoring fodef directive for index'ed item {} as it's not a dictionary.".format(index))
 
         clean_data = json.loads(json.dumps(data, default=str, sort_keys=True))
 

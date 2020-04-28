@@ -1,0 +1,35 @@
+---
+check_id: "1.11"
+check_title: "Ensure IAM password policy expires passwords within 90 days or less (Scored)"
+check_alts:
+  - CCE-78909-9
+check_groups:
+  - cis
+  - cis=>level1
+  - cis=>section1
+  - cis_scored
+  - ciscontrol=>16
+platform: aws
+regions:
+  - "us-east-1"
+call:
+  name: iam
+  action: get_account_password_policy
+  kwargs: {}
+  args: []
+rule:
+  name: Account Password Expiration Check
+  pass_reason: Account Expires Passwords every 90 Days or Less
+  item:
+    jqone: .result.PasswordPolicy
+    target_strategy:
+      subject_const: "Account Password Policy"
+  compare:
+    - comp_jq: .ExpirePasswords
+      rematch: "true"
+      fail_reason: Account Wide Password Policy Doesn't Expire Passwords
+      subpasscompare:
+        comp_jq: .MaxPasswordAge
+        type: "int"
+        le: 90
+        fail_reason: Account Wide Password Policy Expires Passwords with a Duration greater than 90 Days
