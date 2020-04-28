@@ -81,3 +81,11 @@ Deploys Prowler to assess all Accounts in an AWS Organization.
       - If using Session Manager, then after login, switch to "ec2-user", via:  sudo -u ec2-user
       - If using SSH, then login as "ec2-user"
     - Run Script:  /home/ec2-user/run-prowler-reports.sh
+1. Adhoc: Run Prowler Interactively
+    - Connect to Prowler EC2 Instance
+      - If using Session Manager, then after login, switch to "ec2-user", via:  sudo -u ec2-user
+      - If using SSH, then login as "ec2-user"
+    - Run Prowler.  See [Usage Examples](https://github.com/toniblyx/prowler#usage)
+    - See CloudFormation Data variables for Prowler (Cross-Account Role, S3 bucket, and AWS Account # where S3 bucket resides)
+
+          cat /home/ec2-user/.awsvariables
