@@ -1,0 +1,449 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create Prowler EC2 with UserData (Shell Scripts, & AWS CLI Profiles)
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: EC2 Instance Settings
+        Parameters:
+          - BuildNumber
+          - Ec2Name
+          - InstanceType
+          - KeyPair
+          - SubnetId
+          - VpcId
+          - Ec2Role
+          - LatestAmazonLinux2AmiId
+          - ProwlerCron
+      - Label:
+          default: S3 Settings
+        Parameters:
+          - S3
+          - S3Account
+      - Label:
+          default: CrossAccount Role
+        Parameters:
+          - AwsOrgId
+          - CrossAccountRole
+
+Parameters:
+  BuildNumber:
+    Type: String
+    Description: Enter Build Number (increment with Updates for cfn-init)
+    AllowedPattern: ^\d*$
+    ConstraintDescription: Build Number must be a numeric string.
+    Default: 1
+  Ec2Name:
+    Type: String
+    Description: Enter Name for EC2 Instance to create
+    Default: Prowler-EC2
+  InstanceType:
+    Description: Enter Instance Type
+    Type: String
+    Default: t2.micro
+  KeyPair:
+    Description: Choose a KeyPair
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: delgjul-labctaudit
+  SubnetId:
+    Description: Choose Subnet
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-04dfbeda2dc588875
+  VpcId:
+    Description: Choose VPC
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-0285f35dd91ac4c58
+  Ec2Role:
+    Description: Enter Name for EC2 Instance Role to create
+    Type: String
+    Default: ProwlerEC2-Role
+  ProwlerCron:
+    Description: Enter cron schedule.  Default, runs everyday at 1am.  See https://crontab.guru/, for syntax help.
+    Type: String
+    Default: 10 * * * *
+  LatestAmazonLinux2AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Latest AMI ID for Amazon Linux 2 (via AWS Publis SSM Parameters.  See https://tinyurl.com/aws-public-ssm-parameters.
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-ebs
+
+  S3:
+    Type: String
+    Description: Enter S3 Bucket to grant rights to EC2 Instance
+    Default: prowler-417425889548-us-east-1
+  S3Account:
+    Type: String
+    Description: Enter AWS Account Number where S3 Bucket resides
+    AllowedPattern: ^\d{12}$
+    ConstraintDescription: An AWS Account Number must be a 12 digit numeric string.
+    Default: 417425889548
+
+  AwsOrgId:
+    Type: String
+    Description: Enter AWS Organizations ID
+    AllowedPattern: ^o-[a-z0-9]{10,32}$
+    ConstraintDescription: The Org Id must be a 12 character string starting with o- and followed by 10 lower case alphanumeric characters.
+    Default: o-nbfb46ay7u
+  CrossAccountRole:
+    Type: String
+    Description: Enter CrossAccount Role you will be using across the AWS Organization
+    Default: ProwlerXA-Role
+
+Resources:
+  ProwlerEc2:
+    Type: AWS::EC2::Instance
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT5M
+    Properties:
+      KeyName: !Ref KeyPair
+      ImageId: !Ref LatestAmazonLinux2AmiId
+      IamInstanceProfile: !Ref ProwlerInstanceProfile
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds:
+        - !Ref ProwlerSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Ref Ec2Name
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash
+            yum update -y aws-cfn-bootstrap
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ProwlerEc2 --configsets onfirstboot --region ${AWS::Region}
+            yum -y update
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ProwlerEc2 --region ${AWS::Region}
+    Metadata:
+      AWS::CloudFormation::Authentication:
+        S3AccessCreds:
+          type: S3
+          buckets:
+            - !Ref S3
+          roleName:
+            Ref: ProwlerEc2Role
+      AWS::CloudFormation::Init:
+        configSets:
+          onfirstboot:
+            - build-number
+            - configure-cfn
+            - prowler-prereqs
+            - prowler-reports
+            - prowler-schedule
+          onupdate:
+            - build-number
+            - prowler-prereqs
+            - prowler-reports
+            - prowler-schedule
+        build-number:
+          commands:
+            show-build-number:
+              command: !Sub |
+                echo "BUILDNUMBER:   ${BuildNumber}"
+        configure-cfn:
+          files:
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.ProwlerEc2.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ProwlerEc2 --configsets onupdate --region ${AWS::Region}
+                runas=root
+              mode: "000400"
+              owner: root
+              group: root
+            /etc/cfn/cfn-hup.conf:
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+                verbose=true
+                interval=5
+              mode: "000400"
+              owner: root
+              group: root
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: true
+                ensureRunning: true
+                files:
+                  - /etc/cfn/cfn-hup.conf
+                  - /etc/cfn/hooks.d/cfn-auto-reloader.conf
+        prowler-prereqs:
+          files:
+            /home/ec2-user/.awsvariables:
+              content: !Sub |
+                export S3=s3://${S3}
+                export S3ACCOUNT=${S3Account}
+                export ROLE=${CrossAccountRole}
+              mode: "000600"
+              owner: ec2-user
+              group: ec2-user
+          commands:
+            01-install-prowler-prereqs-yum:
+              command: |
+                yum install python-pip git jq -y
+            02-install-prowler-prereqs-pip:
+              command: |
+                sudo -u ec2-user pip install --user boto3 awscli ansi2html detect-secrets
+        prowler-reports:
+          files:
+            # /home/ec2-user/run-prowler-reports-v4.sh:
+            #   source: !Sub https://${S3}.s3.${AWS::Region}.amazonaws.com/run-prowler-reports-v4.sh
+            #   mode: "000700"
+            #   owner: ec2-user
+            #   group: ec2-user
+            /home/ec2-user/run-prowler.sh:
+              content: |
+                #!/bin/bash -e
+                #
+                # Run Prowler against All AWS Accounts in an AWS Organization
+
+                # Change Directory (rest of the script, assumes your in the ec2-user home directory)
+                cd /home/ec2-user
+
+                # Download Prowler
+                rm -rf prowler
+                git clone https://github.com/toniblyx/prowler.git
+
+                # Source .awsvariables (to read in Environment Variables from CloudFormation Data)
+                # shellcheck disable=SC1091
+                source .awsvariables
+
+                # Get Values from Environment Variables Created on EC2 Instance from CloudFormation Data
+                echo "S3:             $S3"
+                echo "S3ACCOUNT:      $S3ACCOUNT"
+                echo "ROLE:           $ROLE"
+
+                # Create Folder to Store Prowler Reports
+                mkdir -p prowler-reports
+
+                # CleanUp Last Ran Prowler Reports
+                rm -rf prowler-reports/*.html
+
+                # Function to unset AWS Profile Variables
+                unset_aws() {
+                    unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+                }
+                unset_aws
+
+                # Find THIS Account AWS Number
+                THISACCOUNT=$(aws sts get-caller-identity --output text --query Account)
+                PARTITION=$(aws sts get-caller-identity --output text --query Arn | cut -d: -f2)
+                echo "THISACCOUNT:    $THISACCOUNT"
+                echo "PARTITION:      $PARTITION"
+
+                # Function to Assume Role to THIS Account & Create Session
+                this_account_session() {
+                    unset_aws
+                    role_credentials=$(aws sts assume-role --role-arn arn:"$PARTITION":iam::"$THISACCOUNT":role/"$ROLE" --role-session-name ProwlerRun --output json)
+                    AWS_ACCESS_KEY_ID=$(echo "$role_credentials" | jq -r .Credentials.AccessKeyId)
+                    AWS_SECRET_ACCESS_KEY=$(echo "$role_credentials" | jq -r .Credentials.SecretAccessKey)
+                    AWS_SESSION_TOKEN=$(echo "$role_credentials" | jq -r .Credentials.SessionToken)
+                    export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+                }
+
+                # Find AWS Master Account
+                this_account_session
+                AWSMASTER=$(aws organizations describe-organization --query Organization.MasterAccountId --output text)
+                echo "AWSMASTER:      $AWSMASTER"
+
+                # Function to Assume Role to Master Account & Create Session
+                master_account_session() {
+                    unset_aws
+                    role_credentials=$(aws sts assume-role --role-arn arn:"$PARTITION":iam::"$AWSMASTER":role/"$ROLE" --role-session-name ProwlerRun --output json)
+                    AWS_ACCESS_KEY_ID=$(echo "$role_credentials" | jq -r .Credentials.AccessKeyId)
+                    AWS_SECRET_ACCESS_KEY=$(echo "$role_credentials" | jq -r .Credentials.SecretAccessKey)
+                    AWS_SESSION_TOKEN=$(echo "$role_credentials" | jq -r .Credentials.SessionToken)
+                    export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+                }
+
+                # Lookup All Accounts in AWS Organization
+                master_account_session
+                ACCOUNTS_IN_ORGS=$(aws organizations list-accounts --query Accounts[*].Id --output text)
+
+                # Function to Assume Role to S3 Account & Create Session
+                s3_account_session() {
+                    unset_aws
+                    role_credentials=$(aws sts assume-role --role-arn arn:"$PARTITION":iam::"$S3ACCOUNT":role/"$ROLE" --role-session-name ProwlerRun --output json)
+                    AWS_ACCESS_KEY_ID=$(echo "$role_credentials" | jq -r .Credentials.AccessKeyId)
+                    AWS_SECRET_ACCESS_KEY=$(echo "$role_credentials" | jq -r .Credentials.SecretAccessKey)
+                    AWS_SESSION_TOKEN=$(echo "$role_credentials" | jq -r .Credentials.SessionToken)
+                    export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+                }
+
+                # Run Prowler against Accounts in AWS Organization
+                echo "AWS Accounts in Organization"
+                echo "$ACCOUNTS_IN_ORGS"
+                for accountId in $ACCOUNTS_IN_ORGS; do
+                    # Unset AWS Profile Variables
+                    unset_aws
+                    # Run Prowler
+                    Report="prowler-reports/$(date +'%Y-%m-%d-%H%M%P')-$accountId-report.html"
+                    echo -e "Analyzing AWS Account: $accountId, using Role: $ROLE"
+                    ./prowler/prowler -R "$ROLE" -A "$accountId" -c check29 | ansi2html -la >"$Report"
+                    echo "Report stored locally at: $Report"
+                    # Upload Prowler Report to S3
+                    s3_account_session
+                    aws s3 cp "$Report" "$S3/reports/"
+                    echo ""
+                done
+
+              mode: "000700"
+              owner: ec2-user
+              group: ec2-user
+
+        prowler-schedule:
+          files:
+            /home/ec2-user/prowlercron:
+              content: !Sub |
+                ${ProwlerCron} run-prowler-reports-v4.sh
+              mode: "000600"
+              owner: ec2-user
+              group: ec2-user
+          commands:
+            01-create-prowler-cron-job:
+              command: |
+                sudo -u ec2-user crontab /home/ec2-user/prowlercron
+
+  ProwlerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: Prowler-EC2-RemoteAdministration
+      GroupDescription: Allow Remote Administration
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - Description: Allow SSH Administration
+          IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourcePrefixListId: pl-60b85b09
+      SecurityGroupEgress:
+        - Description: Allow HTTP Outbound
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - Description: Allow HTTPS Outbound
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W5
+            reason: "Using http/https to Internet for updates."
+          - id: W28
+            reason: "Using a defined Security Group Name."
+
+  ProwlerInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref ProwlerEc2Role
+
+  ProwlerEc2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref Ec2Role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: SSM-Agent
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: AllowSsmAgent
+                Effect: Allow
+                Resource: "*"
+                Action:
+                  - ssm:UpdateInstanceInformation
+                  - ssm:ListInstanceAssociations
+                  - ssm:UpdateInstanceAssociationStatus
+                  - ssm:PutConfigurePackageResult
+                  - ssm:GetManifest
+                  - ssm:PutComplianceItems
+                  - ec2messages:AcknowledgeMessage
+                  - ec2messages:DeleteMessage
+                  - ec2messages:FailMessage
+                  - ec2messages:GetEndpoint
+                  - ec2messages:GetMessages
+                  - ec2messages:SendReply
+        - PolicyName: SSM-Inventory
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: AllowPutInventory
+                Effect: Allow
+                Resource: "*"
+                Action:
+                  - ssm:PutInventory
+              - Sid: AllowGatherInventory
+                Effect: Allow
+                Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}::document/AWS-GatherSoftwareInventory
+                Action:
+                  - ssm:GetDocument
+                  - ssm:DescribeDocument
+        - PolicyName: SSM-SessionManager
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: AllowSessionManager
+                Effect: Allow
+                Resource: "*"
+                Action:
+                  - ssmmessages:CreateControlChannel
+                  - ssmmessages:CreateDataChannel
+                  - ssmmessages:OpenControlChannel
+                  - ssmmessages:OpenDataChannel
+        - PolicyName: Prowler-S3-Reports
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: AllowGetPutListObject
+                Effect: Allow
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::${S3}
+                  - !Sub arn:${AWS::Partition}:s3:::${S3}/*
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+        - PolicyName: Prowler-CrossAccount-AssumeRole
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: AllowStsAssumeRole
+                Effect: Allow
+                Resource: !Sub arn:${AWS::Partition}:iam::*:role/${CrossAccountRole}
+                Action: sts:AssumeRole
+                Condition:
+                  StringEquals:
+                    aws:PrincipalOrgId: !Ref AwsOrgId
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W28
+            reason: "Using a defined Role Name."
+          - id: W11
+            reason: "Needed for SSM features."
+
+Outputs:
+  ProwlerEc2Account:
+    Description: AWS Account where Prowler EC2 resides
+    Value: !Ref AWS::AccountId
+  ProwlerEc2Role:
+    Description: Prowler EC2 Instance Role
+    Value: !Ref ProwlerEc2Role
+  ProwlerS3:
+    Description: S3 Bucket for Prowler Reports
+    Value: !Ref S3

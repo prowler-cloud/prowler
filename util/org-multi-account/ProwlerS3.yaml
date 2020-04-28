@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create Prowler S3 Bucket for Prowler Reports
+
+Parameters:
+  AwsOrgId:
+    Type: String
+    Description: Enter AWS Organizations ID.  This is used to restrict permissions to least privilege.
+    AllowedPattern: ^o-[a-z0-9]{10,32}$
+    ConstraintDescription: The Org Id must be a 12 character string starting with o- and followed by 10 lower case alphanumeric characters.
+    Default: o-nbfb46ay7u
+  S3Prefix:
+    Type: String
+    Description: >
+      Enter S3 Bucket Name Prefix (in lowercase).
+      Bucket will be named: prefix-accountid-region
+    Default: prowler
+
+Resources:
+  ProwlerS3:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${S3Prefix}-${AWS::AccountId}-${AWS::Region}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: "AES256"
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+      VersioningConfiguration:
+        Status: Enabled
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W35
+            reason: "This S3 Bucket is only being used by the AWS Organization to download/upload prowler reports."
+
+  ProwlerS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ProwlerS3
+      PolicyDocument:
+        Statement:
+          - Sid: AllowGetPutListObject
+            Effect: Allow
+            Principal: "*"
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+              - s3:ListBucket
+            Resource:
+              - !Sub arn:${AWS::Partition}:s3:::${ProwlerS3}
+              - !Sub arn:${AWS::Partition}:s3:::${ProwlerS3}/*
+            Condition:
+              StringEquals:
+                aws:PrincipalOrgId: !Ref AwsOrgId
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: F16
+            reason: "This S3 Bucket Policy has a condition that only allows access to the AWS Organization."
+
+Outputs:
+  ProwlerS3:
+    Description: S3 Bucket for Prowler Reports
+    Value: !Ref ProwlerS3
+  ProwlerS3Account:
+    Description: AWS Account Number where S3 Resides
+    Value: !Ref AWS::AccountId
