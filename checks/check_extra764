@@ -21,6 +21,13 @@ extra764(){
   LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text --region $REGION|xargs -n1)
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
+
+      # check website hosting bucket, which does not support HTTPS
+      if [[ $($AWSCLI s3api get-bucket-website $PROFILE_OPT --bucket $bucket --output text --region $REGION 2>&1 | grep INDEXDOCUMENT) ]]; then
+        textInfo "Bucket $bucket is website hosting bucket"
+        continue
+      fi
+
       TEMP_STP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
 
       # get bucket policy
