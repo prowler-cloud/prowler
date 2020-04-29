@@ -1,0 +1,50 @@
+---
+check_id: "1.22"
+check_title: "Ensure IAM policies that allow full administrative privileges are not created (Scored)"
+check_alts:
+  - CCE-78912-3
+check_groups:
+  - cis
+  - cis=>level1
+  - cis=>section1
+  - cis_scored
+  - ciscontrol=>4
+platform: aws
+regions:
+  - "us-east-1"
+call:
+  name: iam
+  action: list_policies
+  args: []
+  kwargs:
+    scope: Local
+  paginator: .Policies[]
+  fo_def:
+    - name: iam
+      inname: get_policy_version
+      action: get_policy_version
+      kwargs:
+        PolicyArn: "{{ Arn }}"
+        VersionId: "{{ DefaultVersionId }}"
+rule:
+  name: Search Local Policies
+  fail_reason: Local Policy is Too Permissive  Allows Action * to *
+  pass_reason: Local Policy does not allow *:*
+  item:
+    jqiter: .result[]
+    target_strategy:
+      subject_jq: .Arn
+      strat_type: all
+  compare:
+    - comp_jq: '.get_policy_version.PolicyVersion.Document.Statement | type'
+      rematch: array
+      subpasscompare:
+        comp_jq: '.get_policy_version.PolicyVersion.Document  | [ .Statement[]| select(((.Effect == "Allow") and .Action == "*" ) and .Resource == "*") | add ] | length'
+        type: "int"
+        eq: 0
+        fail_reason: Policy Allows Improperly Action * to *
+      subfailcompare:
+        comp_jq: '.get_policy_version.PolicyVersion.Document .Statement | [  select(((.Effect == "Allow") and .Action == "*" ) and .Resource == "*") | add ] | length'
+        type: "int"
+        eq: 0
+        fail_reason: Older Style Policy Allows Improperly Action * to *

@@ -1,0 +1,48 @@
+---
+check_id: "1.21"
+check_title: "Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)"
+check_groups:
+  - cis
+  - cis=>level1
+  - cis=>section1
+  - ciscontrol=>16
+platform: aws
+regions:
+  - "us-east-1"
+call:
+  name: iam
+  action: get_credential_report
+  kwargs: {}
+  args: []
+  pre_call:
+    name: iam
+    action: generate_credential_report
+    kwargs: {}
+    args: []
+    delay: 10
+post_process:
+  - type: bcsv
+    field: ".Content"
+    name: csv_report
+rule:
+  name: Ensure Unused Access Keys are Deleted
+  pass_reason: All enabled access Keys have been used
+  item:
+    jqiter: .post_process.csv_report[]
+    target_strategy:
+      target_jq: (.access_key_1_active + .access_key_2_active)
+      target_regex: "true"
+      subject_jq: .arn
+  compare:
+    - comp_jq: .access_key_1_active
+      rematch: "true"
+      subfailcompare:
+        comp_jq: .access_key_1_last_used_date
+        renomatch: "N/A"
+        fail_reason: Access Key 1 is Active but Has Never been Used.
+    - comp_jq: .access_key_2_active
+      rematch: "true"
+      subfailcompare:
+        comp_jq: .access_key_2_last_used_date
+        renomatch: "N/A"
+        fail_reason: Access Key 2 is Active but Has Never been Used.
