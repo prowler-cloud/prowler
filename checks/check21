@@ -35,6 +35,11 @@ check21(){
 	done
 
 	if [[ $trail_count == 0 ]]; then
-    textFail "No CloudTrail trails were found in the account"
+	  ORG_TRAIL=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region us-east-1 | jq '.trailList[] | select(.IsMultiRegionTrail and .IsOrganizationTrail) | .Name' | sed 's/"//g')
+	  if [[ $ORG_TRAIL != "" ]]; then
+      textPass "$ORG_TRAIL trail in $regx is enabled for all regions"
+    else
+      textFail "No CloudTrail trails were found in the account"
+    fi
   fi
 }
