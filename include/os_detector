@@ -32,16 +32,28 @@ bsd_how_older_from_today() {
 # function to convert from timestamp to date
 # output date format %Y-%m-%d
 gnu_timestamp_to_date() {
-  # remove fractions of a second
-  TIMESTAMP_TO_CONVERT=$(echo $1 | cut -f1 -d".")
-  OUTPUT_DATE=$("$DATE_CMD" -d @$TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
-  echo $OUTPUT_DATE
+  # if date comes from cli v2 in format like 2020-04-29T10:13:09.191000-04:00
+  # we have to get only '%Y-%m-%d'
+  if [[ $1 = 20* ]];then 
+    echo $1 | cut -f1 -d"T"
+  else 
+    # remove fractions of a second
+    TIMESTAMP_TO_CONVERT=$(echo $1 | cut -f1 -d".")
+    OUTPUT_DATE=$("$DATE_CMD" -d @$TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
+    echo $OUTPUT_DATE
+  fi 
 }
 bsd_timestamp_to_date() {
-  # remove fractions of a second
-  TIMESTAMP_TO_CONVERT=$(echo $1 | cut -f1 -d".")
-  OUTPUT_DATE=$("$DATE_CMD" -r $TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
-  echo $OUTPUT_DATE
+  # if date comes from cli v2 in format like 2020-04-29T10:13:09.191000-04:00
+  # we have to get only '%Y-%m-%d'
+  if [[ $1 = 20* ]];then 
+    echo $1 | cut -f1 -d"T"
+  else
+    # remove fractions of a second
+    TIMESTAMP_TO_CONVERT=$(echo $1 | cut -f1 -d".")
+    OUTPUT_DATE=$("$DATE_CMD" -r $TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
+    echo $OUTPUT_DATE
+  fi 
 }
 
 gnu_decode_report() {
