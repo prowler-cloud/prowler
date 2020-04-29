@@ -119,7 +119,7 @@ class Smell:
         pfi = "pass"
         fail_reason = None
 
-        self.logger.debug("This Item : {}".format(this_item))
+        self.logger.debug("This Item : {}".format(json.dumps(this_item, default=str)))
 
         this_type = comparison.get("type", "str")
         # Compare Object Pull
