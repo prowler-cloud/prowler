@@ -5,11 +5,6 @@ check_groups:
   - cis
   - cis=>level1
   - cis=>section1
-  - cis_scored
-  - ciscontrol=>4
-  - ciscontrol=>4.3
-  - ciscontrol=>5
-  - ciscontrol=>5.1
 platform: aws
 regions:
   - "us-east-1"
@@ -30,6 +25,7 @@ post_process:
     name: csv_report
 rule:
   name: Root Access Key 1 Credential Check
+  fail_reason: Root's Access Key 1 is Active
   pass_reason: Root's Access seems Acceptable
   item:
     jqiter: .post_process.csv_report[]

@@ -109,8 +109,26 @@ class Stank:
         # Do AWS Load
         this_client = self.aws_session.client(self.call_def["name"], region_name=self.region)
 
-        niave_data = getattr(this_client, self.call_def["action"])(*self.call_def.get("args", list()),
-                                                                   **self.call_def.get("kwags", dict()))
+        if self.call_def.get("paginator", False) is False:
+            niave_data = getattr(this_client, self.call_def["action"])(*self.call_def.get("args", list()),
+                                                                       **self.call_def.get("kwags", dict()))
+        else:
+            plist = list()
+            paginator = this_client.get_paginator(self.call_def["action"])
+
+            for p in paginator.paginate():
+                this_page = pyjq.all(self.call_def.get("paginator", False), p)
+
+                self.logger.debug(this_page)
+                self.logger.debug(plist)
+
+                if len(this_page) > 0:
+
+                    plist.extend(this_page)
+
+
+            niave_data = plist
+
 
         if self.call_def.get("take", "all") != "all":
             self.logger.info("Taking a Subset of the Main Result")
@@ -118,7 +136,6 @@ class Stank:
             self.logger.debug("Post take obj : {}".format(data["result"]))
         else:
             data["result"] = niave_data
-
 
         if isinstance(data["result"], collections.Iterable) and "fo_def" in self.call_def.keys():
             self.logger.info("Executing FODef Calls for Iterable Items")

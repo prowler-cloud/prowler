@@ -12,6 +12,7 @@ import time
 
 import yaml
 import pyjq
+import botocore.exceptions
 
 import sniffy
 
@@ -39,6 +40,8 @@ class Smell:
 
         self.id = self.data["check_id"]
 
+        self.blind_regions = list()
+
     def load_stank(self):
 
         """
@@ -47,7 +50,7 @@ class Smell:
         """
 
         if self.data.get("regions", True) is True or self.data.get("regions", True) == "all":
-            regions = self.kwargs["aws_session"].get_ailable_regions(self.data["call"]["name"])
+            regions = self.aws_session.get_available_regions(self.data["call"]["name"])
 
         elif isinstance(self.data.get("regions", True), str):
             regions = [self.data["regions"]]
@@ -60,10 +63,36 @@ class Smell:
 
         for this_region in regions:
             # Load Stankload_smell
-            self.stank_data[this_region] = sniffy.Stank(region=this_region,
-                                                        aws_session=self.aws_session,
-                                                        call_def=self.data["call"],
-                                                        cache_dir=self.kwargs.get("cache_dir", None))
+            try:
+                self.stank_data[this_region] = sniffy.Stank(region=this_region,
+                                                            aws_session=self.aws_session,
+                                                            call_def=self.data["call"],
+                                                            cache_dir=self.kwargs.get("cache_dir", None))
+            except botocore.exceptions.ClientError as aws_call_error:
+                error_code_cat = aws_call_error.response.get("Error", dict()).get("Code", "Unspecified")
+
+                self.logger.debug("Call Definition: {}".format(self.data["call"]))
+                self.logger.debug("Region: {}".format(this_region))
+
+                if error_code_cat == "AuthFailure":
+                    self.logger.error("Authentication Failure {}:{} in regions {} with specified Profile".format(self.data["call"]["name"],
+                                                                                                                 self.data["call"]["action"],
+                                                                                                                 this_region))
+
+                    self.blind_regions.append(this_region)
+
+                    self.logger.warning("Continuing with Partial Evaulation")
+
+                else:
+                    self.logger.error("Error {} to {}:{} in regions {} with specified User".format(error_code_cat,
+                                                                                                   self.data["call"]["name"],
+                                                                                                   self.data["call"]["action"],
+                                                                                                   this_region))
+
+                    self.blind_regions.append(this_region)
+
+                    raise aws_call_error
+
     def do_post_processing(self):
 
         """
@@ -299,8 +328,6 @@ class Smell:
                 raise NotImplementedError("This Subject Method Not Yet Supported")
 
 
-
-
         ## Okay I now have all of the Subjects I wish to Evaluate
         for this_item_index in range(0, len(pfi_log)):
 
@@ -326,6 +353,24 @@ class Smell:
             # I've a result
             pfi_log[this_item_index]["pfi"] = pfi
             pfi_log[this_item_index]["pfi_reason"] = pfi_reason
+
+        if rule_definition.get("zero_fail", False) is not False:
+            if len(pfi_log) == 0:
+                # I have a Zero Fail
+                self.logger.debug("Zero Fail Condition")
+                pfi_log.append({"subject" : "no_subjects",
+                                "data": {},
+                                "pfi": "fail",
+                                "pfi_reason": rule_definition.get("zero_fail", "Zero Failure Condition"),
+                                "region": "all_regions",
+                                "account_id": self.account_id,
+                                "check_id": self.id,
+                                "check_title": self.data.get("check_title", "Untitled Check"),
+                                "platform": self.data.get("platform", "Unspecified Resource Used")})
+            else:
+                # There was some Result, Ignore
+                self.logger.debug("Zero Fail Not a Problem for this Collection")
+
 
         return pfi_log
 

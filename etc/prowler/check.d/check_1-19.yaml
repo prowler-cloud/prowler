@@ -1,0 +1,32 @@
+---
+check_id: "1.19"
+check_title: "Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
+check_groups:
+  - cis
+  - cis=>level2
+  - cis=>section1
+  - cis_scored
+  - ciscontrol=>19
+platform: aws
+regions: all
+call:
+  name: ec2
+  action: describe_instances
+  args: []
+  paginator: ".Reservations[].Instances[]"
+rule:
+  name: Ensuring Attached IAM Instance Roles are used with EC2 Instances
+  pass_reason: EC2 Instance has an Attached IAM Instance Role
+  item:
+    jqiter: .result[]
+    target_strategy:
+      subject_jq: .InstanceId
+      strat_type: all
+  compare:
+    - comp_jq: .State.Name
+      type: "str"
+      renomatch: "running"
+      subfailcompare:
+        comp_jq: .IamInstanceProfile.Arn
+        rematch: "^arn:"
+        fail_reason: "Instance not associated with an Instance Role"
