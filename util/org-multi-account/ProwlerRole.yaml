@@ -7,55 +7,54 @@ Metadata:
       - Label:
           default: EC2 Settings
         Parameters:
-          - Ec2Account
-          - Ec2Role
+          - ProwlerEc2Account
+          - ProwlerEc2Role
       - Label:
           default: S3 Settings
         Parameters:
-          - S3
+          - ProwlerS3
       - Label:
           default: CrossAccount Role
         Parameters:
-          - CrossAccountRole
+          - ProwlerCrossAccountRole
 
 Parameters:
-  S3:
+  ProwlerS3:
     Type: String
-    Description: Enter S3 Bucket to grant rights to EC2 Instance
+    Description: Enter S3 Bucket for Prowler Reports
     Default: prowler-417425889548-us-east-1
-  Ec2Account:
+  ProwlerEc2Account:
     Type: String
-    Description: Enter AWS Account Number where EC2 Instance resides
+    Description: Enter AWS Account Number where Prowler EC2 Instance will reside.
     AllowedPattern: ^\d{12}$
     ConstraintDescription: An AWS Account Number must be a 12 digit numeric string.
     Default: 544425379660
-  Ec2Role:
+  ProwlerEc2Role:
     Type: String
-    Description: Enter Instance Role given to EC2 Instance (to grant sts:AssumeRole rights).
+    Description: Enter Instance Role that will be given to the Prowler EC2 Instance (needed to grant sts:AssumeRole rights).
     Default: ProwlerEC2-Role
-  CrossAccountRole:
+  ProwlerCrossAccountRole:
     Type: String
-    Description: Enter Name for CrossAccount Role to be created
+    Description: Enter Name for CrossAccount Role to be created for Prowler tto assess AWS Accounts in the AWS Organization.
     Default: ProwlerXA-Role
 
 Resources:
   ProwlerRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Ref CrossAccountRole
+      RoleName: !Ref ProwlerCrossAccountRole
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
             Principal:
               AWS:
-                # - !Sub arn:${AWS::Partition}:iam::${Ec2Account}:role/${Ec2Role}
-                - !Sub arn:${AWS::Partition}:iam::${Ec2Account}:root
+                - !Sub arn:${AWS::Partition}:iam::${ProwlerEc2Account}:root
             Action:
               - sts:AssumeRole
             Condition:
               StringLike:
-                aws:PrincipalArn: !Sub arn:${AWS::Partition}:iam::${Ec2Account}:role/${Ec2Role}
+                aws:PrincipalArn: !Sub arn:${AWS::Partition}:iam::${ProwlerEc2Account}:role/${ProwlerEc2Role}
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/SecurityAudit
         - !Sub arn:${AWS::Partition}:iam::aws:policy/job-function/ViewOnlyAccess
@@ -96,8 +95,8 @@ Resources:
               - Sid: AllowGetPutListObject
                 Effect: Allow
                 Resource:
-                  - !Sub arn:${AWS::Partition}:s3:::${S3}
-                  - !Sub arn:${AWS::Partition}:s3:::${S3}/*
+                  - !Sub arn:${AWS::Partition}:s3:::${ProwlerS3}
+                  - !Sub arn:${AWS::Partition}:s3:::${ProwlerS3}/*
                 Action:
                   - s3:GetObject
                   - s3:PutObject
@@ -112,5 +111,5 @@ Resources:
 
 Outputs:
   ProwlerCrossAccountRole:
-    Description: Prowler CrossAccount Role
-    Value: !Ref CrossAccountRole
+    Description: CrossAccount Role to be used by Prowler to assess AWS Accounts in the AWS Organization.
+    Value: !Ref ProwlerCrossAccountRole
