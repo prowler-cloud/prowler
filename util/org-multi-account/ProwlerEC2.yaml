@@ -5,10 +5,10 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: EC2 Instance Settings
+          default: Prowler EC2 Instance Settings
         Parameters:
           - BuildNumber
-          - Ec2Name
+          - ProwlerEc2Name
           - InstanceType
           - KeyPair
           - SubnetId
@@ -19,8 +19,8 @@ Metadata:
       - Label:
           default: S3 Settings
         Parameters:
-          - S3
-          - S3Account
+          - ProwlerS3
+          - ProwlerS3Account
       - Label:
           default: CrossAccount Role
         Parameters:
@@ -34,9 +34,9 @@ Parameters:
     AllowedPattern: ^\d*$
     ConstraintDescription: Build Number must be a numeric string.
     Default: 1
-  Ec2Name:
+  ProwlerEc2Name:
     Type: String
-    Description: Enter Name for EC2 Instance to create
+    Description: Enter Name for Prowler EC2 Instance to create
     Default: Prowler-EC2
   InstanceType:
     Description: Enter Instance Type
@@ -55,25 +55,25 @@ Parameters:
     Type: AWS::EC2::VPC::Id
     Default: vpc-0285f35dd91ac4c58
   Ec2Role:
-    Description: Enter Name for EC2 Instance Role to create
+    Description: Enter Name for EC2 Instance Role to create and attach to Prowler EC2 Instance
     Type: String
     Default: ProwlerEC2-Role
   ProwlerCron:
-    Description: Enter cron schedule.  Default, runs everyday at 1am.  See https://crontab.guru/, for syntax help.
+    Description: Enter cron schedule.  Default, runs everyday at 1am. See https://crontab.guru/, for syntax help.
     Type: String
     Default: "0 1 * * *"
   LatestAmazonLinux2AmiId:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Latest AMI ID for Amazon Linux 2 (via AWS Publis SSM Parameters.  See https://tinyurl.com/aws-public-ssm-parameters.
+    Description: Latest AMI ID for Amazon Linux 2 (via AWS Publis SSM Parameters. See https://tinyurl.com/aws-public-ssm-parameters.
     Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-ebs
 
-  S3:
+  ProwlerS3:
     Type: String
-    Description: Enter S3 Bucket to grant rights to EC2 Instance
+    Description: Enter S3 Bucket for Prowler Reports
     Default: prowler-417425889548-us-east-1
-  S3Account:
+  ProwlerS3Account:
     Type: String
-    Description: Enter AWS Account Number where S3 Bucket resides
+    Description: Enter AWS Account Number where Prowler S3 Bucket resides.
     AllowedPattern: ^\d{12}$
     ConstraintDescription: An AWS Account Number must be a 12 digit numeric string.
     Default: 417425889548
@@ -86,7 +86,7 @@ Parameters:
     Default: o-nbfb46ay7u
   CrossAccountRole:
     Type: String
-    Description: Enter CrossAccount Role you will be using across the AWS Organization
+    Description: Enter CrossAccount Role Prowler will be using to assess AWS Accounts in the AWS Organization. (ProwlerCrossAccountRole)
     Default: ProwlerXA-Role
 
 Resources:
@@ -105,7 +105,7 @@ Resources:
         - !Ref ProwlerSecurityGroup
       Tags:
         - Key: Name
-          Value: !Ref Ec2Name
+          Value: !Ref ProwlerEc2Name
       UserData:
         Fn::Base64:
           !Sub |
@@ -119,7 +119,7 @@ Resources:
         S3AccessCreds:
           type: S3
           buckets:
-            - !Ref S3
+            - !Ref ProwlerS3
           roleName:
             Ref: ProwlerEc2Role
       AWS::CloudFormation::Init:
@@ -174,8 +174,8 @@ Resources:
           files:
             /home/ec2-user/.awsvariables:
               content: !Sub |
-                export S3=s3://${S3}
-                export S3ACCOUNT=${S3Account}
+                export S3=s3://${ProwlerS3}
+                export S3ACCOUNT=${ProwlerS3Account}
                 export ROLE=${CrossAccountRole}
               mode: "000600"
               owner: ec2-user
@@ -190,7 +190,7 @@ Resources:
         prowler-reports:
           files:
             /home/ec2-user/run-prowler-reports.sh:
-              source: !Sub https://${S3}.s3.${AWS::Region}.amazonaws.com/run-prowler-reports.sh
+              source: !Sub https://${ProwlerS3}.s3.${AWS::Region}.amazonaws.com/run-prowler-reports.sh
               mode: "000700"
               owner: ec2-user
               group: ec2-user
@@ -312,8 +312,8 @@ Resources:
               - Sid: AllowGetPutListObject
                 Effect: Allow
                 Resource:
-                  - !Sub arn:${AWS::Partition}:s3:::${S3}
-                  - !Sub arn:${AWS::Partition}:s3:::${S3}/*
+                  - !Sub arn:${AWS::Partition}:s3:::${ProwlerS3}
+                  - !Sub arn:${AWS::Partition}:s3:::${ProwlerS3}/*
                 Action:
                   - s3:GetObject
                   - s3:PutObject
@@ -339,11 +339,11 @@ Resources:
 
 Outputs:
   ProwlerEc2Account:
-    Description: AWS Account where Prowler EC2 resides
+    Description: AWS Account Number where Prowler EC2 Instance resides.
     Value: !Ref AWS::AccountId
   ProwlerEc2Role:
-    Description: Prowler EC2 Instance Role
+    Description: Instance Role given to the Prowler EC2 Instance (needed to grant sts:AssumeRole rights).
     Value: !Ref ProwlerEc2Role
   ProwlerS3:
     Description: S3 Bucket for Prowler Reports
-    Value: !Ref S3
+    Value: !Ref ProwlerS3
