@@ -3,11 +3,13 @@
 # Run Prowler against All AWS Accounts in an AWS Organization
 
 # Change Directory (rest of the script, assumes your in the ec2-user home directory)
-cd /home/ec2-user
+cd /home/ec2-user || exit
 
-# Download Prowler
-rm -rf prowler
-git clone https://github.com/toniblyx/prowler.git
+# Show Prowler Version, and Download Prowler, if it doesn't already exist
+if ! ./prowler/prowler -V 2>/dev/null; then
+    git clone https://github.com/toniblyx/prowler.git
+    ./prowler/prowler -V
+fi
 
 # Source .awsvariables (to read in Environment Variables from CloudFormation Data)
 # shellcheck disable=SC1091
@@ -21,7 +23,7 @@ echo "ROLE:           $ROLE"
 # Create Folder to Store Prowler Reports
 mkdir -p prowler-reports
 
-# CleanUp Last Ran Prowler Reports
+# CleanUp Last Ran Prowler Reports, as they are already stored in S3.
 rm -rf prowler-reports/*.html
 
 # Function to unset AWS Profile Variables
@@ -31,8 +33,9 @@ unset_aws() {
 unset_aws
 
 # Find THIS Account AWS Number
-THISACCOUNT=$(aws sts get-caller-identity --output text --query Account)
-PARTITION=$(aws sts get-caller-identity --output text --query Arn | cut -d: -f2)
+CALLER_ARN=$(aws sts get-caller-identity --output text --query "Arn")
+PARTITION=$(echo "$CALLER_ARN" | cut -d: -f2)
+THISACCOUNT=$(echo "$CALLER_ARN" | cut -d: -f5)
 echo "THISACCOUNT:    $THISACCOUNT"
 echo "PARTITION:      $PARTITION"
 
@@ -84,10 +87,13 @@ for accountId in $ACCOUNTS_IN_ORGS; do
     # Run Prowler
     Report="prowler-reports/$(date +'%Y-%m-%d-%H%M%P')-$accountId-report.html"
     echo -e "Analyzing AWS Account: $accountId, using Role: $ROLE"
-    ./prowler/prowler -R "$ROLE" -A "$accountId" -c check29 | ansi2html -la >"$Report"
+    ./prowler/prowler -R "$ROLE" -A "$accountId" -g cislevel1 | ansi2html -la >"$Report"
     echo "Report stored locally at: $Report"
     # Upload Prowler Report to S3
     s3_account_session
     aws s3 cp "$Report" "$S3/reports/"
     echo ""
 done
+
+# Unset AWS Profile Variables
+unset_aws
