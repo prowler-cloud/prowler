@@ -4,10 +4,13 @@ Description: Create Prowler S3 Bucket for Prowler Reports
 Parameters:
   AwsOrgId:
     Type: String
-    Description: Enter AWS Organizations ID.  This is used to restrict permissions to least privilege.
+    Description: >
+      Enter AWS Organizations ID.
+      This is used to restrict permissions to least privilege.
     AllowedPattern: ^o-[a-z0-9]{10,32}$
     ConstraintDescription: The Org Id must be a 12 character string starting with o- and followed by 10 lower case alphanumeric characters.
     Default: o-nbfb46ay7u
+    # Default: o-abcde12345
   S3Prefix:
     Type: String
     Description: >
@@ -68,5 +71,5 @@ Outputs:
     Description: S3 Bucket for Prowler Reports
     Value: !Ref ProwlerS3
   ProwlerS3Account:
-    Description: AWS Account Number where S3 Resides
+    Description: AWS Account Number where Prowler S3 Bucket resides.
     Value: !Ref AWS::AccountId
