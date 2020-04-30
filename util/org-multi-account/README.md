@@ -1,8 +1,7 @@
 # Organizational Prowler Deployment <!-- omit in toc -->
-
 Created by: Julio Delgado Jr. <delgjul@amazon.com>
 
-Deploys Prowler to assess all Accounts in an AWS Organization.
+Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, create assessment reports in HTML, and store them in an S3 bucket.
 
 [Prowler](https://github.com/toniblyx/prowler) is an independent third-party command line tool for AWS Security Best Practices Assessment, Auditing, Hardening, and Forensic Readiness. It evaluates guidelines of the CIS Amazon Web Services Foundations Benchmark and dozens of additional checks, including for GDPR, and HIPAA.
 
@@ -29,7 +28,7 @@ Deploys Prowler to assess all Accounts in an AWS Organization.
 1. [ProwlerS3.yaml](util\org-multi-account\ProwlerS3.yaml)
     - Creates Private S3 Bucket for Prowler script and reports.
     - Public Access Block permissions enabled.
-    - SSE-S3 used for encryption
+    - SSE-S3 used with Amazon S3 Default Encryption
     - Versioning Enabled
     - Bucket Policy only grants GetObject, PutObject, and ListObject to Principals from the same AWS Organization.
 1. [ProwlerRole.yaml](util\org-multi-account\ProwlerRole.yaml)
@@ -55,8 +54,14 @@ Deploys Prowler to assess all Accounts in an AWS Organization.
       - Role has rights to Assume Cross-Account Role from Component #2.
 1. [run-prowler-reports.sh](util\org-multi-account\src\run-prowler-reports.sh)
     - Script is documented accordingly.
+    - Script loops through all AWS Accounts in AWS Organization, and by default, Runs Prowler as follows:
+      - -R: used to specify Cross-Account role for Prowler to assume to run its assessment.
+      - -A: used to specify AWS Account number for Prowler to run assessment against.
+      - -g cislevel1: used to specify cislevel1 checks for Prowler to assess
+      - ansi2html -la: used to generate HTML assessment report
+      - NOTE: Script can be modified to run Prowler as desired.
     - In summary:
-      - Download latest version of [Prowler ](https://github.com/toniblyx/prowler)
+      - Download latest version of [Prowler](https://github.com/toniblyx/prowler)
       - Find AWS Master Account
       - Lookup All Accounts in AWS Organization
       - Run Prowler against All Accounts in AWS Organization
@@ -69,10 +74,13 @@ Deploys Prowler to assess all Accounts in an AWS Organization.
 
 1. Deploy [ProwlerS3.yaml](util\org-multi-account\ProwlerS3.yaml) in the Logging Account.
     - Could be deployed to any account in the AWS Organizations, if desired.
+    - See [How to get AWS Organization ID](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_details.html#orgs_view_org)
+    - Take Note of CloudFormation Outputs, that will be needed in deploying the below CloudFormation templates.
 1. Upload [run-prowler-reports.sh](util\org-multi-account\src\run-prowler-reports.sh) to the root of the S3 Bucket created in Step #1.
 1. Deploy [ProwlerRole.yaml](util\org-multi-account\ProwlerRole.yaml) in the Master Account
     - Use CloudFormation Stacks, to deploy to Master Account, as organizational StackSets don't apply to the Master Account.
-    - Use CloudFormation StackSet, to deploy to all Member Accounts.
+    - Use CloudFormation StackSet, to deploy to all Member Accounts. See [Create Stack Set with Service-Managed Permissions](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-getting-started-create.html#stacksets-orgs-associate-stackset-with-org)
+    - Take Note of CloudFormation Outputs, that will be needed in deploying the below CloudFormation templates.
 1. Deploy [ProwlerEC2.yaml](util\org-multi-account\ProwlerEC2.yaml) in the Audit/Security Account
     - Could be deployed to any account in the AWS Organizations, if desired.
 1. Scheduled: Run Prowler against all Accounts in AWS Organization, based on schedule you provided, and set for the cron job.
