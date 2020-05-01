@@ -210,7 +210,7 @@ class Smell:
 
         return this_item_subject
 
-    def const_include(self, item_def=None, fulL_data=None):
+    def const_include(self, item_def=None, full_data=None):
 
         """
         Add Const Extras
