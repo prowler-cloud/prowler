@@ -21,28 +21,36 @@ Metadata:
 Parameters:
   ProwlerS3:
     Type: String
-    Description: Enter S3 Bucket for Prowler Reports
-    Default: prowler-417425889548-us-east-1
+    Description: Enter S3 Bucket for Prowler Reports.  prefix-awsaccount-awsregion
+    AllowedPattern: ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$
+    Default: prowler-123456789012-us-east-1
   ProwlerEc2Account:
     Type: String
     Description: Enter AWS Account Number where Prowler EC2 Instance will reside.
     AllowedPattern: ^\d{12}$
     ConstraintDescription: An AWS Account Number must be a 12 digit numeric string.
-    Default: 544425379660
   ProwlerEc2Role:
     Type: String
     Description: Enter Instance Role that will be given to the Prowler EC2 Instance (needed to grant sts:AssumeRole rights).
+    AllowedPattern: ^[\w+=,.@-]{1,64}$
+    ConstraintDescription: Max 64 alphanumeric characters. Also special characters supported [+, =, ., @, -]
     Default: ProwlerEC2-Role
   ProwlerCrossAccountRole:
     Type: String
-    Description: Enter Name for CrossAccount Role to be created for Prowler tto assess AWS Accounts in the AWS Organization.
+    Description: Enter Name for CrossAccount Role to be created for Prowler to assess all Accounts in the AWS Organization.
+    AllowedPattern: ^[\w+=,.@-]{1,64}$
+    ConstraintDescription: Max 64 alphanumeric characters. Also special characters supported [+, =, ., @, -]
     Default: ProwlerXA-Role
 
 Resources:
   ProwlerRole:
     Type: AWS::IAM::Role
     Properties:
+      Description: Provides Prowler EC2 instance permissions to assess security of Accounts in AWS Organization
       RoleName: !Ref ProwlerCrossAccountRole
+      Tags:
+        - Key: App
+          Value: Prowler
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
