@@ -43,7 +43,7 @@ Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, cre
       - Uses "t2.micro" Instance Type
     - Uses [cfn-init](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-init.html) for prepping the Prowler EC2
       - Installs necessary [packages](https://github.com/toniblyx/prowler#requirements-and-installation) for Prowler
-      - Downloads [run-prowler-reports.sh](src\run-prowler-reports.sh) script from Prowler S3 from Component #1.
+      - Downloads [run-prowler-reports.sh](src/run-prowler-reports.sh) script from Prowler S3 from Component #1.
       - Creates /home/ec2-user/.awsvariables, to store CloudFormation data as variables to be used in script.
       - Creates cron job for Prowler to run on a schedule.
     - Creates Prowler Security Group
@@ -53,7 +53,7 @@ Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, cre
       - Role has permissions for [Systems Manager Agent](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html) communications, and [Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html)
       - Role has GetObject, PutObject, and ListObject rights to Prowler S3 from Component #1.
       - Role has rights to Assume Cross-Account Role from Component #2.
-1. [run-prowler-reports.sh](src\run-prowler-reports.sh)
+1. [run-prowler-reports.sh](src/run-prowler-reports.sh)
     - Script is documented accordingly.
     - Script loops through all AWS Accounts in AWS Organization, and by default, Runs Prowler as follows:
       - -R: used to specify Cross-Account role for Prowler to assume to run its assessment.
@@ -90,7 +90,7 @@ Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, cre
     - Could be deployed to any account in the AWS Organizations, if desired.
     - See [How to get AWS Organization ID](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_details.html#orgs_view_org)
     - Take Note of CloudFormation Outputs, that will be needed in deploying the below CloudFormation templates.
-1. Upload [run-prowler-reports.sh](src\run-prowler-reports.sh) to the root of the S3 Bucket created in Step #1.
+1. Upload [run-prowler-reports.sh](src/run-prowler-reports.sh) to the root of the S3 Bucket created in Step #1.
 1. Deploy [ProwlerRole.yaml](ProwlerRole.yaml) in the Master Account
     - Use CloudFormation Stacks, to deploy to Master Account, as organizational StackSets don't apply to the Master Account.
     - Use CloudFormation StackSet, to deploy to all Member Accounts. See [Create Stack Set with Service-Managed Permissions](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-getting-started-create.html#stacksets-orgs-associate-stackset-with-org)
