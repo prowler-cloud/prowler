@@ -21,6 +21,7 @@ Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, cre
 - Adhering to the principle of least privilege.
 - Supporting an AWS Multi-Account approach
   - Runs Prowler against All accounts in the AWS Organization
+- ***NOTE: If using this solution, you are responsible for making your own independent assessment of the solution and ensuring it complies with your company security and operational standards.***
 
 ---
 
@@ -28,30 +29,30 @@ Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, cre
 
 1. [ProwlerS3.yaml](ProwlerS3.yaml)
     - Creates Private S3 Bucket for Prowler script and reports.
-    - Public Access Block permissions enabled.
-    - SSE-S3 used with Amazon S3 Default Encryption
+    - Enables [Amazon S3 Block Public Access](https://docs.aws.amazon.com/AmazonS3/latest/dev/access-control-block-public-access.html)
+    - Enables SSE-S3 with [Amazon S3 Default Encryption](https://docs.aws.amazon.com/AmazonS3/latest/dev/bucket-encryption.html)
     - Versioning Enabled
-    - Bucket Policy only grants GetObject, PutObject, and ListObject to Principals from the same AWS Organization.
+    - Bucket Policy limits API actions to Principals from the same AWS Organization.
 1. [ProwlerRole.yaml](ProwlerRole.yaml)
     - Creates Cross-Account Role for Prowler to assess accounts in AWS Organization
     - Allows Role to be assumed by the Prowler EC2 instance role in the AWS account where Prowler EC2 resides (preferably the Audit/Security account).
     - Role has [permissions](https://github.com/toniblyx/prowler#custom-iam-policy) needed for Prowler to assess accounts.
-    - Role has GetObject, PutObject, and ListObject rights to Prowler S3 from Component #1.
+    - Role has rights to Prowler S3 from Component #1.
 1. [ProwlerEC2.yaml](ProwlerEC2.yaml)
     - Creates Prowler EC2 instance
       - Uses the Latest Amazon Linux 2 AMI
-      - Uses "t2.micro" Instance Type
+      - Uses ```t2.micro``` Instance Type
     - Uses [cfn-init](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-init.html) for prepping the Prowler EC2
       - Installs necessary [packages](https://github.com/toniblyx/prowler#requirements-and-installation) for Prowler
       - Downloads [run-prowler-reports.sh](src/run-prowler-reports.sh) script from Prowler S3 from Component #1.
-      - Creates /home/ec2-user/.awsvariables, to store CloudFormation data as variables to be used in script.
+      - Creates ```/home/ec2-user/.awsvariables```, to store CloudFormation data as variables to be used in script.
       - Creates cron job for Prowler to run on a schedule.
     - Creates Prowler Security Group
       - Denies inbound access.  If using ssh to manage Prowler, then update Security Group with pertinent rule.
       - Allows outbound 80/443 for updates, and Amazon S3 communications
     - Creates Instance Role that is used for Prowler EC2
       - Role has permissions for [Systems Manager Agent](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html) communications, and [Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html)
-      - Role has GetObject, PutObject, and ListObject rights to Prowler S3 from Component #1.
+      - Role has rights to Prowler S3 from Component #1.
       - Role has rights to Assume Cross-Account Role from Component #2.
 1. [run-prowler-reports.sh](src/run-prowler-reports.sh)
     - Script is documented accordingly.
