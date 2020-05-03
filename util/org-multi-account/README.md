@@ -1,4 +1,5 @@
 # Organizational Prowler Deployment <!-- omit in toc -->
+
 Created by: Julio Delgado Jr. <delgjul@amazon.com>
 
 Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, create assessment reports in HTML, and store them in an S3 bucket.
@@ -25,24 +26,24 @@ Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, cre
 
 ## Components
 
-1. [ProwlerS3.yaml](util\org-multi-account\ProwlerS3.yaml)
+1. [ProwlerS3.yaml](ProwlerS3.yaml)
     - Creates Private S3 Bucket for Prowler script and reports.
     - Public Access Block permissions enabled.
     - SSE-S3 used with Amazon S3 Default Encryption
     - Versioning Enabled
     - Bucket Policy only grants GetObject, PutObject, and ListObject to Principals from the same AWS Organization.
-1. [ProwlerRole.yaml](util\org-multi-account\ProwlerRole.yaml)
+1. [ProwlerRole.yaml](ProwlerRole.yaml)
     - Creates Cross-Account Role for Prowler to assess accounts in AWS Organization
     - Allows Role to be assumed by the Prowler EC2 instance role in the AWS account where Prowler EC2 resides (preferably the Audit/Security account).
     - Role has [permissions](https://github.com/toniblyx/prowler#custom-iam-policy) needed for Prowler to assess accounts.
     - Role has GetObject, PutObject, and ListObject rights to Prowler S3 from Component #1.
-1. [ProwlerEC2.yaml](util\org-multi-account\ProwlerEC2.yaml)
+1. [ProwlerEC2.yaml](ProwlerEC2.yaml)
     - Creates Prowler EC2 instance
       - Uses the Latest Amazon Linux 2 AMI
       - Uses "t2.micro" Instance Type
     - Uses [cfn-init](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-init.html) for prepping the Prowler EC2
       - Installs necessary [packages](https://github.com/toniblyx/prowler#requirements-and-installation) for Prowler
-      - Downloads [run-prowler-reports.sh](util\org-multi-account\src\run-prowler-reports.sh) script from Prowler S3 from Component #1.
+      - Downloads [run-prowler-reports.sh](src\run-prowler-reports.sh) script from Prowler S3 from Component #1.
       - Creates /home/ec2-user/.awsvariables, to store CloudFormation data as variables to be used in script.
       - Creates cron job for Prowler to run on a schedule.
     - Creates Prowler Security Group
@@ -52,14 +53,27 @@ Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, cre
       - Role has permissions for [Systems Manager Agent](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html) communications, and [Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html)
       - Role has GetObject, PutObject, and ListObject rights to Prowler S3 from Component #1.
       - Role has rights to Assume Cross-Account Role from Component #2.
-1. [run-prowler-reports.sh](util\org-multi-account\src\run-prowler-reports.sh)
+1. [run-prowler-reports.sh](src\run-prowler-reports.sh)
     - Script is documented accordingly.
     - Script loops through all AWS Accounts in AWS Organization, and by default, Runs Prowler as follows:
       - -R: used to specify Cross-Account role for Prowler to assume to run its assessment.
       - -A: used to specify AWS Account number for Prowler to run assessment against.
       - -g cislevel1: used to specify cislevel1 checks for Prowler to assess
       - ansi2html -la: used to generate HTML assessment report
+
+        ```bash
+        ./prowler/prowler -R "$ROLE" -A "$accountId" -g cislevel1 | ansi2html -la >"$Report"
+        ```
+
       - NOTE: Script can be modified to run Prowler as desired.
+    - Script runs Prowler against 1 AWS Account at a time.
+      - Update PARALLEL_ACCOUNTS variable in script, to specify how many Accounts to assess with Prowler in parallel.
+      - If running against multiple AWS Accounts in parallel, monitor performance, and upgrade Instance Type as necessary.
+
+        ```bash
+        PARALLEL_ACCOUNTS="1"
+        ```
+
     - In summary:
       - Download latest version of [Prowler](https://github.com/toniblyx/prowler)
       - Find AWS Master Account
@@ -72,28 +86,69 @@ Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, cre
 
 ## Instructions
 
-1. Deploy [ProwlerS3.yaml](util\org-multi-account\ProwlerS3.yaml) in the Logging Account.
+1. Deploy [ProwlerS3.yaml](ProwlerS3.yaml) in the Logging Account.
     - Could be deployed to any account in the AWS Organizations, if desired.
     - See [How to get AWS Organization ID](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_details.html#orgs_view_org)
     - Take Note of CloudFormation Outputs, that will be needed in deploying the below CloudFormation templates.
-1. Upload [run-prowler-reports.sh](util\org-multi-account\src\run-prowler-reports.sh) to the root of the S3 Bucket created in Step #1.
-1. Deploy [ProwlerRole.yaml](util\org-multi-account\ProwlerRole.yaml) in the Master Account
+1. Upload [run-prowler-reports.sh](src\run-prowler-reports.sh) to the root of the S3 Bucket created in Step #1.
+1. Deploy [ProwlerRole.yaml](ProwlerRole.yaml) in the Master Account
     - Use CloudFormation Stacks, to deploy to Master Account, as organizational StackSets don't apply to the Master Account.
     - Use CloudFormation StackSet, to deploy to all Member Accounts. See [Create Stack Set with Service-Managed Permissions](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-getting-started-create.html#stacksets-orgs-associate-stackset-with-org)
     - Take Note of CloudFormation Outputs, that will be needed in deploying the below CloudFormation templates.
-1. Deploy [ProwlerEC2.yaml](util\org-multi-account\ProwlerEC2.yaml) in the Audit/Security Account
+1. Deploy [ProwlerEC2.yaml](ProwlerEC2.yaml) in the Audit/Security Account
     - Could be deployed to any account in the AWS Organizations, if desired.
-1. Scheduled: Run Prowler against all Accounts in AWS Organization, based on schedule you provided, and set for the cron job.
-1. Adhoc: Run Prowler against all Accounts in AWS Organization
-    - Connect to Prowler EC2 Instance
-      - If using Session Manager, then after login, switch to "ec2-user", via:  sudo -u ec2-user
-      - If using SSH, then login as "ec2-user"
-    - Run Script:  /home/ec2-user/run-prowler-reports.sh
-1. Adhoc: Run Prowler Interactively
-    - Connect to Prowler EC2 Instance
-      - If using Session Manager, then after login, switch to "ec2-user", via:  sudo -u ec2-user
-      - If using SSH, then login as "ec2-user"
-    - Run Prowler.  See [Usage Examples](https://github.com/toniblyx/prowler#usage)
-    - See CloudFormation Data variables for Prowler (Cross-Account Role, S3 bucket, and AWS Account # where S3 bucket resides)
+1. Prowler will run against all Accounts in AWS Organization, based on the schedule you provided, and therefore set in a cron job for ec2-user.
 
-          cat /home/ec2-user/.awsvariables
+---
+
+## Post-Setup
+
+### Run Prowler on a Schedule against all Accounts in AWS Organization
+
+1. Prowler will run on the Schedule you provided.
+1. Cron job for ec2-user is managing the schedule.
+1. This solution implemented this automatically. Nothing for you to do.
+
+### Run Prowler Adhoc against all Accounts in AWS Organization
+
+1. Connect to Prowler EC2 Instance
+    - If using Session Manager, then after login, switch to "ec2-user", via:  sudo -u ec2-user
+    - If using SSH, then login as "ec2-user"
+1. Run Prowler Script
+
+    ```bash
+    cd /home/ec2-user
+    ./run-prowler-reports.sh
+    ```
+
+### Run Prowler Adhoc Interactively
+
+1. Connect to Prowler EC2 Instance
+    - If using Session Manager, then after login, switch to "ec2-user", via:  sudo -u ec2-user
+    - If using SSH, then login as "ec2-user"
+1. See Cross-Account Role and S3 Bucket being used for Prowler
+
+      ```bash
+      cd /home/ec2-user
+      cat .awsvariables
+      ```
+
+1. Run Prowler interactively. See [Usage Examples](https://github.com/toniblyx/prowler#usage)
+
+      ```bash
+      cd /home/ec2-user
+      ./prowler/prowler
+      ```
+
+### Upgrading Prowler to Latest Version
+
+1. Connect to Prowler EC2 Instance
+    - If using Session Manager, then after login, switch to "ec2-user", via:  sudo -u ec2-user
+    - If using SSH, then login as "ec2-user"
+1. Delete the existing version of Prowler, and download the latest version of Prowler
+
+    ```bash
+    cd /home/ec2-user
+    rm -rf prowler
+    git clone https://github.com/toniblyx/prowler.git
+    ```
