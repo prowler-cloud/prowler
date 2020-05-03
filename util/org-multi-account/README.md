@@ -10,7 +10,7 @@ Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, cre
 
 ## Solution Goals
 
-- Use minimal technologies, so solution can be more easily adopted, and further enhanced as needed.
+- Using minimal technologies, so solution can be more easily adopted, and further enhanced as needed.
   - [Amazon EC2](https://aws.amazon.com/ec2/), to run Prowler
   - [Amazon S3](https://aws.amazon.com/s3/), to store Prowler script & reports.
   - [AWS CloudFormation](https://aws.amazon.com/cloudformation/), to provision the AWS resources.
@@ -18,8 +18,8 @@ Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, cre
 - Staying cohesive with Prowler, for scripting, only leveraging:
   - Bash Shell
   - AWS CLI
-- Adhere to the principle of least privilege.
-- Support an AWS Multi-Account approach
+- Adhering to the principle of least privilege.
+- Supporting an AWS Multi-Account approach
   - Runs Prowler against All accounts in the AWS Organization
 
 ---
