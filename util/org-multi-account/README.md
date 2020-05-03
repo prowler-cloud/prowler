@@ -98,7 +98,7 @@ Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, cre
     - Take Note of CloudFormation Outputs, that will be needed in deploying the below CloudFormation templates.
 1. Deploy [ProwlerEC2.yaml](ProwlerEC2.yaml) in the Audit/Security Account
     - Could be deployed to any account in the AWS Organizations, if desired.
-1. Prowler will run against all Accounts in AWS Organization, per the schedule you provided, and set in a cron job for ec2-user.
+1. Prowler will run against all Accounts in AWS Organization, per the schedule you provided, and set in a cron job for ```ec2-user```
 
 ---
 
@@ -107,14 +107,14 @@ Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, cre
 ### Run Prowler on a Schedule against all Accounts in AWS Organization
 
 1. Prowler will run on the Schedule you provided.
-1. Cron job for ec2-user is managing the schedule.
+1. Cron job for ```ec2-user``` is managing the schedule.
 1. This solution implemented this automatically. Nothing for you to do.
 
 ### Run Prowler Adhoc against all Accounts in AWS Organization
 
 1. Connect to Prowler EC2 Instance
-    - If using Session Manager, then after login, switch to "ec2-user", via:  sudo -u ec2-user
-    - If using SSH, then login as "ec2-user"
+    - If using Session Manager, then after login, switch to ```ec2-user```, via: ```sudo -u ec2-user```
+    - If using SSH, then login as ```ec2-user```
 1. Run Prowler Script
 
     ```bash
@@ -125,8 +125,8 @@ Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, cre
 ### Run Prowler Adhoc Interactively
 
 1. Connect to Prowler EC2 Instance
-    - If using Session Manager, then after login, switch to "ec2-user", via:  sudo -u ec2-user
-    - If using SSH, then login as "ec2-user"
+    - If using Session Manager, then after login, switch to ```ec2-user```, via: ```sudo -u ec2-user```
+    - If using SSH, then login as ```ec2-user```
 1. See Cross-Account Role and S3 Bucket being used for Prowler
 
       ```bash
@@ -144,8 +144,8 @@ Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, cre
 ### Upgrading Prowler to Latest Version
 
 1. Connect to Prowler EC2 Instance
-    - If using Session Manager, then after login, switch to "ec2-user", via:  sudo -u ec2-user
-    - If using SSH, then login as "ec2-user"
+    - If using Session Manager, then after login, switch to ```ec2-user```, via: ```sudo -u ec2-user```
+    - If using SSH, then login as ```ec2-user```
 1. Delete the existing version of Prowler, and download the latest version of Prowler
 
     ```bash
