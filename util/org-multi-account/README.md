@@ -1,4 +1,4 @@
-# Organizational Prowler Deployment <!-- omit in toc -->
+# Organizational Prowler Deployment
 
 Created by: Julio Delgado Jr. <delgjul@amazon.com>
 
