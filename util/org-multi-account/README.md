@@ -98,7 +98,7 @@ Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, cre
     - Take Note of CloudFormation Outputs, that will be needed in deploying the below CloudFormation templates.
 1. Deploy [ProwlerEC2.yaml](ProwlerEC2.yaml) in the Audit/Security Account
     - Could be deployed to any account in the AWS Organizations, if desired.
-1. Prowler will run against all Accounts in AWS Organization, based on the schedule you provided, and therefore set in a cron job for ec2-user.
+1. Prowler will run against all Accounts in AWS Organization, based on the schedule you provided, and set in a cron job for ec2-user.
 
 ---
 
