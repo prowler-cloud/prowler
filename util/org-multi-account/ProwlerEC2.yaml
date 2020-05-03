@@ -223,12 +223,6 @@ Resources:
         - Key: App
           Value: Prowler
       VpcId: !Ref VpcId
-      SecurityGroupIngress:
-        - Description: Allow SSH Administration
-          IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          SourcePrefixListId: pl-60b85b09
       SecurityGroupEgress:
         - Description: Allow HTTP Outbound
           IpProtocol: tcp
