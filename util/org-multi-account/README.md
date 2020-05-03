@@ -2,9 +2,7 @@
 
 Created by: Julio Delgado Jr. <delgjul@amazon.com>
 
-Deploys Prowler to assess all Accounts in an AWS Organization on a schedule, create assessment reports in HTML, and store them in an S3 bucket.
-
-[Prowler](https://github.com/toniblyx/prowler) is an independent third-party command line tool for AWS Security Best Practices Assessment, Auditing, Hardening, and Forensic Readiness. It evaluates guidelines of the CIS Amazon Web Services Foundations Benchmark and dozens of additional checks, including for GDPR, and HIPAA.
+Deploys [Prowler](https://github.com/toniblyx/prowler) to assess all Accounts in an AWS Organization on a schedule, creates assessment reports in HTML, and stores them in an S3 bucket.
 
 ---
 
