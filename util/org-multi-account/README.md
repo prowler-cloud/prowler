@@ -1,4 +1,4 @@
-# Organizational Prowler Deployment
+# Example Solution:  Organizational Prowler Deployment
 
 Created by: Julio Delgado Jr. <delgjul@amazon.com>
 
@@ -6,7 +6,7 @@ Deploys [Prowler](https://github.com/toniblyx/prowler) to assess all Accounts in
 
 ---
 
-## Solution Goals
+## Example Solution Goals
 
 - Using minimal technologies, so solution can be more easily adopted, and further enhanced as needed.
   - [Amazon EC2](https://aws.amazon.com/ec2/), to run Prowler
