@@ -37,6 +37,8 @@ Parameters:
   ProwlerEc2Name:
     Type: String
     Description: Enter Name for Prowler EC2 Instance to create
+    AllowedPattern: ^[\w\s_.\/=+-]{1,128}$
+    ConstraintDescription: Max 128 alphanumeric characters. Also special characters supported [whitespace, _, ., /, =, +, -]
     Default: Prowler-EC2
   InstanceType:
     Description: Enter Instance Type
@@ -45,18 +47,17 @@ Parameters:
   KeyPair:
     Description: Choose a KeyPair
     Type: AWS::EC2::KeyPair::KeyName
-    Default: delgjul-labctaudit
   SubnetId:
     Description: Choose Subnet
     Type: AWS::EC2::Subnet::Id
-    Default: subnet-04dfbeda2dc588875
   VpcId:
     Description: Choose VPC
     Type: AWS::EC2::VPC::Id
-    Default: vpc-0285f35dd91ac4c58
   Ec2Role:
     Description: Enter Name for EC2 Instance Role to create and attach to Prowler EC2 Instance
     Type: String
+    AllowedPattern: ^[\w+=,.@-]{1,64}$
+    ConstraintDescription: Max 64 alphanumeric characters. Also special characters supported [+, =, ., @, -]
     Default: ProwlerEC2-Role
   ProwlerCron:
     Description: Enter cron schedule.  Default, runs everyday at 1am. See https://crontab.guru/, for syntax help.
@@ -69,24 +70,28 @@ Parameters:
 
   ProwlerS3:
     Type: String
-    Description: Enter S3 Bucket for Prowler Reports
-    Default: prowler-417425889548-us-east-1
+    Description: Enter S3 Bucket for Prowler Reports.  prefix-awsaccount-awsregion
+    AllowedPattern: ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$
+    ConstraintDescription: Max 63 characters. Can't start or end with dash.  Can use numbers and lowercase letters.
+    Default: prowler-123456789012-us-east-1
   ProwlerS3Account:
     Type: String
     Description: Enter AWS Account Number where Prowler S3 Bucket resides.
     AllowedPattern: ^\d{12}$
     ConstraintDescription: An AWS Account Number must be a 12 digit numeric string.
-    Default: 417425889548
+    Default: 123456789012
 
   AwsOrgId:
     Type: String
     Description: Enter AWS Organizations ID
     AllowedPattern: ^o-[a-z0-9]{10,32}$
     ConstraintDescription: The Org Id must be a 12 character string starting with o- and followed by 10 lower case alphanumeric characters.
-    Default: o-nbfb46ay7u
+    Default: o-abcde12345
   CrossAccountRole:
     Type: String
     Description: Enter CrossAccount Role Prowler will be using to assess AWS Accounts in the AWS Organization. (ProwlerCrossAccountRole)
+    AllowedPattern: ^[\w+=,.@-]{1,64}$
+    ConstraintDescription: Max 64 alphanumeric characters. Also special characters [+, =, ., @, -]
     Default: ProwlerXA-Role
 
 Resources:
@@ -106,6 +111,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref ProwlerEc2Name
+        - Key: App
+          Value: Prowler
       UserData:
         Fn::Base64:
           !Sub |
@@ -212,6 +219,9 @@ Resources:
     Properties:
       GroupName: Prowler-EC2-RemoteAdministration
       GroupDescription: Allow Remote Administration
+      Tags:
+        - Key: App
+          Value: Prowler
       VpcId: !Ref VpcId
       SecurityGroupIngress:
         - Description: Allow SSH Administration
@@ -247,7 +257,11 @@ Resources:
   ProwlerEc2Role:
     Type: AWS::IAM::Role
     Properties:
+      Description: Prowler EC2 Instance Role
       RoleName: !Ref Ec2Role
+      Tags:
+        - Key: App
+          Value: Prowler
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
