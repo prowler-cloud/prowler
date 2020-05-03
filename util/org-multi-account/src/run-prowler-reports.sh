@@ -81,9 +81,10 @@ s3_account_session() {
 # Run Prowler against Accounts in AWS Organization
 echo "AWS Accounts in Organization"
 echo "$ACCOUNTS_IN_ORGS"
+PARALLEL_ACCOUNTS="1"
 for accountId in $ACCOUNTS_IN_ORGS; do
     # shellcheck disable=SC2015
-    test "$(jobs | wc -l)" -ge 1 && wait || true
+    test "$(jobs | wc -l)" -ge $PARALLEL_ACCOUNTS && wait || true
     {
         START_TIME=$SECONDS
         # Unset AWS Profile Variables
