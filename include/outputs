@@ -86,6 +86,7 @@ textInfo(){
 textFail(){
   ## ignore whitelists for current check
   level="FAIL"
+  colorcode="$BAD"
   for i in $IGNORES; do
     ignore_check_name="${i%:*}"
     ignore_value="${i#*${CHECK_NAME}:}"
@@ -95,6 +96,7 @@ textFail(){
     fi
     if [[ $1 =~ ${ignore_value} ]]; then
       level="WARNING"
+      colorcode="$WARNING"
       break
     fi
   done
@@ -128,10 +130,10 @@ textFail(){
     output_junit_failure "$1"
   fi
   if [[ "${MODES[@]}" =~ "mono" ]]; then
-    echo "      $BAD ${level}! $1 $NORMAL" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
+    echo "      $colorcode ${level}! $1 $NORMAL" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
   fi
   if [[ "${MODES[@]}" =~ "text" ]]; then
-    echo "      $BAD ${level}! $1 $NORMAL"
+    echo "      $colorcode ${level}! $1 $NORMAL"
   fi
 }
 
