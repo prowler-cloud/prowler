@@ -8,14 +8,16 @@
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
-CHECK_ID_check29="2.9,2.09"
+CHECK_ID_check29="2.9"
 CHECK_TITLE_check29="[check29] Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
 CHECK_SCORED_check29="SCORED"
 CHECK_TYPE_check29="LEVEL2"
+CHECK_ASFF_TYPE_check29="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_check29="AwsEc2Vpc"
 CHECK_ALTERNATE_check209="check29"
 
 check29(){
-  # "Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"  
+  # "Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
   for regx in $REGIONS; do
     AVAILABLE_VPC=$($AWSCLI ec2 describe-vpcs $PROFILE_OPT --region $regx --query 'Vpcs[?State==`available`].VpcId' --output text)
     for vpcx in $AVAILABLE_VPC; do
@@ -26,7 +28,7 @@ check29(){
         done
       else
         textFail "VPC $vpcx: No VPCFlowLog has been found in Region $regx" "$regx"
-      fi      
+      fi
     done
   done
 }

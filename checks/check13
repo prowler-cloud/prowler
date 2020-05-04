@@ -8,32 +8,14 @@
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
-CHECK_ID_check13="1.3,1.03"
+CHECK_ID_check13="1.3"
 CHECK_TITLE_check13="[check13] Ensure credentials unused for 90 days or greater are disabled (Scored)"
 CHECK_SCORED_check13="SCORED"
 CHECK_TYPE_check13="LEVEL1"
+CHECK_ASFF_TYPE_check13="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_check13="AwsIamUser"
 CHECK_ALTERNATE_check103="check13"
 
 check13(){
-  # "Ensure credentials unused for 90 days or greater are disabled (Scored)"
-  COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$4 }' |grep true | awk '{ print $1 }')
-  # Only check Password last used for users with password enabled 
-  if [[ $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED ]]; then
-    for i in $COMMAND12_LIST_USERS_WITH_PASSWORD_ENABLED; do
-      DATEUSED=$($AWSCLI iam list-users --query "Users[?UserName=='$i'].PasswordLastUsed" --output text $PROFILE_OPT --region $REGION | cut -d'T' -f1)
-      if [ "$DATEUSED" == "" ]
-      then
-        textFail "User \"$i\" has not logged in during the last 90 days "
-      else
-        HOWOLDER=$(how_older_from_today $DATEUSED)
-        if [ $HOWOLDER -gt "90" ];then
-          textFail "User \"$i\" has not logged in during the last 90 days "
-        else
-          textPass "User \"$i\" found with credentials used in the last 90 days"
-        fi
-      fi
-    done
-  else
-      textPass "No users found with password enabled"
-  fi
+  check_creds_used_in_last_days 90
 }

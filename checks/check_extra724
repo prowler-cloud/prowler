@@ -14,6 +14,7 @@ CHECK_ID_extra724="7.24"
 CHECK_TITLE_extra724="[extra724] Check if ACM certificates have Certificate Transparency logging enabled (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra724="NOT_SCORED"
 CHECK_TYPE_extra724="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra724="AwsCertificateManagerCertificate"
 CHECK_ALTERNATE_check724="extra724"
 
 extra724(){
@@ -24,10 +25,16 @@ extra724(){
       for cert_arn in $LIST_OF_CERTS;do
         CT_ENABLED=$($AWSCLI acm describe-certificate $PROFILE_OPT --region $regx --certificate-arn $cert_arn --query Certificate.Options.CertificateTransparencyLoggingPreference --output text)
         CERT_DOMAIN_NAME=$(aws acm describe-certificate $PROFILE_OPT --region $regx --certificate-arn $cert_arn --query Certificate.DomainName --output text)
-        if [[ $CT_ENABLED == "ENABLED" ]];then
-          textPass "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging enabled!" "$regx"
+        CERT_TYPE=$(aws acm describe-certificate $PROFILE_OPT --region $regx --certificate-arn $cert_arn --query Certificate.Type --output text)
+        if [[ $CERT_TYPE == "IMPORTED" ]];then
+          # Ignore imported certificate
+          textInfo "$regx: ACM Certificate $CERT_DOMAIN_NAME is imported." "$regx"
         else
-          textFail "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging disabled!" "$regx"
+          if [[ $CT_ENABLED == "ENABLED" ]];then
+            textPass "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging enabled!" "$regx"
+          else
+            textFail "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging disabled!" "$regx"
+          fi
         fi
       done
     else

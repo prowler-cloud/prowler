@@ -33,10 +33,12 @@
 #     --actions-enabled \
 #     --alarm-actions arn:aws:sns:us-east-1:123456789012:CloudWatchAlarmTopic
 
-CHECK_ID_check38="3.8,3.08"
+CHECK_ID_check38="3.8"
 CHECK_TITLE_check38="[check38] Ensure a log metric filter and alarm exist for S3 bucket policy changes (Scored)"
 CHECK_SCORED_check38="SCORED"
 CHECK_TYPE_check38="LEVEL1"
+CHECK_ASFF_TYPE_check38="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_check38="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check308="check38"
 
 check38(){

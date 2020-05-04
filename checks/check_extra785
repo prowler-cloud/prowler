@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2020) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra785="7.85"
+CHECK_TITLE_extra785="[extra785] Check if Amazon Elasticsearch Service (ES) domains have updates available"
+CHECK_SCORED_extra785="NOT_SCORED"
+CHECK_TYPE_extra785="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra785="AwsElasticsearchDomain"
+CHECK_ALTERNATE_check785="extra785"
+
+# NOTE!
+# API does not properly shows if an update is available while it is a new version available
+# that can be done using the Console but not the API, not sure if it is a bug
+# I have to investigate further
+
+extra785(){
+  for regx in $REGIONS; do
+    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text)
+    if [[ $LIST_OF_DOMAINS ]]; then
+      for domain in $LIST_OF_DOMAINS;do
+        CHECK_IF_UPDATE_AVAILABLE_AND_VERSION=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.[ServiceSoftwareOptions.UpdateAvailable,ElasticsearchVersion]' --output text)
+        while read update_status es_version;do
+          if [[ $update_status != "False" ]];then
+            textInfo "$regx: Amazon ES domain $domain v$es_version has updates available" "$regx"
+          else
+            textPass "$regx: Amazon ES domain $domain v$es_version does not have have updates available" "$regx"
+          fi
+        done < <(echo $CHECK_IF_UPDATE_AVAILABLE_AND_VERSION)
+      done
+    else
+      textInfo "$regx: No Amazon ES domain found" "$regx"
+    fi
+  done
+}

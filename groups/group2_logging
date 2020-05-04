@@ -10,6 +10,6 @@
 
 GROUP_ID[2]='group2'
 GROUP_NUMBER[2]='2.0'
-GROUP_TITLE[2]='Logging - [group2] *********************************************'
+GROUP_TITLE[2]='Logging - CIS only - [group2] **********************************'
 GROUP_RUN_BY_DEFAULT[2]='Y' # run it when execute_all is called
 GROUP_CHECKS[2]='check21,check22,check23,check24,check25,check26,check27,check28,check29'

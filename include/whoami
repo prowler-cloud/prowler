@@ -13,10 +13,26 @@
 
 
 # Get whoami in AWS, who is the user running this shell script
+
+ACCOUNT_NUM=$($AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "Account")
+
+if [[ 255 -eq $? ]]; then
+        # Failed to get own identity ... exit
+        echo -e "$RED ERROR Getting credentials to run Prowler - EXITING! $NORMAL"
+        EXITCODE=2
+        exit $EXITCODE
+fi
+
+CALLER_ARN=$($AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "Arn")
+USER_ID=$($AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "UserId")
+AWS_PARTITION=$(echo $CALLER_ARN| cut -d: -f2)
+
+if [[ $ACCOUNT_TO_ASSUME ]]; then
+  ACCOUNT_NUM=$ACCOUNT_TO_ASSUME
+fi
+
 getWhoami(){
-  ACCOUNT_NUM=$($AWSCLI sts get-caller-identity --output json $PROFILE_OPT --region $REGION --query "Account" | tr -d '"')
   if [[ "$MODE" == "csv" ]]; then
-    CALLER_ARN_RAW=$($AWSCLI sts get-caller-identity --output json $PROFILE_OPT --region $REGION --query "Arn")
     if [[ 255 -eq $? ]]; then
       # Failed to get own identity ... exit
       echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
@@ -24,19 +40,18 @@ getWhoami(){
       EXITCODE=2
       exit $EXITCODE
     fi
-    CALLER_ARN=$(echo $CALLER_ARN_RAW | tr -d '"')
     printCsvHeader
     textTitle "0.0" "Show report generation info" "NOT_SCORED" "SUPPORT"
     textInfo "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
-  elif [[ "$MODE" == "json" ]]; then
+  elif [[ "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
     :
   else
     echo ""
     echo -e " This report is being generated using credentials below:\n"
-    echo -e " AWS-CLI Profile: $NOTICE[$PROFILE]$NORMAL AWS API Region: $NOTICE[$REGION]$NORMAL AWS Filter Region: $NOTICE[${FILTERREGION:-all}]$NORMAL\n"
+    echo -e " AWS-CLI Profile: $NOTICE[$PROFILE]$NORMAL AWS API Region: $NOTICE[$REGION]$NORMAL AWS Filter Region: $NOTICE[${FILTERREGION:-all}]$NORMAL"
     if [[ $MONOCHROME -eq 1 ]]; then
-      echo -e " Caller Identity:"
-      $AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "Arn"
+      echo -e " AWS Account: $NOTICE[$ACCOUNT_NUM]$NORMAL UserId: $NOTICE[$USER_ID]$NORMAL"
+      echo -e " Caller Identity ARN: $NOTICE[$CALLER_ARN]$NORMAL"
       if [[ 255 -eq $? ]]; then
         # Failed to get own identity ... exit
         echo "ERROR WITH $PROFILE CREDENTIALS - EXITING!"
@@ -44,8 +59,8 @@ getWhoami(){
         exit 2
       fi
     else
-      echo -e " Caller Identity:"
-      $AWSCLI sts get-caller-identity --output table $PROFILE_OPT --region $REGION
+      echo -e " AWS Account: $NOTICE[$ACCOUNT_NUM]$NORMAL UserId: $NOTICE[$USER_ID]$NORMAL"
+      echo -e " Caller Identity ARN: $NOTICE[$CALLER_ARN]$NORMAL"
       if [[ 255 -eq $? ]]; then
         # Failed to get own identity ... exit
         echo variable $PROFILE_OPT

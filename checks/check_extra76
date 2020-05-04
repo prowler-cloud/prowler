@@ -10,7 +10,7 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-CHECK_ID_extra76="7.6,7.06"
+CHECK_ID_extra76="7.6"
 CHECK_TITLE_extra76="[extra76] Ensure there are no EC2 AMIs set as Public (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra76="NOT_SCORED"
 CHECK_TYPE_extra76="EXTRA"

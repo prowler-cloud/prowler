@@ -8,10 +8,12 @@
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
-CHECK_ID_check26="2.6,2.06"
+CHECK_ID_check26="2.6"
 CHECK_TITLE_check26="[check26] Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket (Scored)"
 CHECK_SCORED_check26="SCORED"
 CHECK_TYPE_check26="LEVEL1"
+CHECK_ASFF_TYPE_check26="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_check26="AwsS3Bucket"
 CHECK_ALTERNATE_check206="check26"
 
 check26(){
@@ -27,9 +29,9 @@ check26(){
       if [[ $CLOUDTRAILBUCKET ]]; then
         bucket=$CLOUDTRAILBUCKET
         if [ "$CLOUDTRAIL_ACCOUNT_ID" == "$ACCOUNT_NUM" ]; then
-          CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --region $REGION --query 'LoggingEnabled.TargetBucket' --output text 2>&1)
+          CLOUDTRAILBUCKET_LOGENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --region $REGION --query 'LoggingEnabled.TargetBucket' 2>&1)
           if [[ $(echo "$CLOUDTRAILBUCKET_LOGENABLED" | grep AccessDenied) ]]; then
-            textFail "Access Denied Trying to Get Bucket Logging for $bucket"
+            textInfo "Access Denied Trying to Get Bucket Logging for $bucket"
             continue
           fi
           if [[ $CLOUDTRAILBUCKET_LOGENABLED != "null" ]]; then

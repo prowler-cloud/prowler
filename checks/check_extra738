@@ -14,6 +14,7 @@ CHECK_ID_extra738="7.38"
 CHECK_TITLE_extra738="[extra738] Check if CloudFront distributions are set to HTTPS (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra738="NOT_SCORED"
 CHECK_TYPE_extra738="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra738="AwsCloudFrontDistribution"
 CHECK_ALTERNATE_check738="extra738"
 
 extra738(){

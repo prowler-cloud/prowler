@@ -11,35 +11,79 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra716="7.16"
-CHECK_TITLE_extra716="[extra716] Check if Elasticsearch Service domains allow open access (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra716="[extra716] Check if Amazon Elasticsearch Service (ES) domains are set as Public or if it has open policy access"
 CHECK_SCORED_extra716="NOT_SCORED"
 CHECK_TYPE_extra716="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra716="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check716="extra716"
 
 extra716(){
-  # "Check if Elasticsearch Service domains allow open access (Not Scored) (Not part of CIS benchmark)"
   for regx in $REGIONS; do
     LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text)
     if [[ $LIST_OF_DOMAINS ]]; then
       for domain in $LIST_OF_DOMAINS;do
-        CHECK_IF_MEMBER_OF_VPC=$($AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.VPCOptions.Options.VPCId --output text|grep -v ^None)
-        if [[ ! $CHECK_IF_MEMBER_OF_VPC ]];then
-          TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-es-domain.policy.XXXXXXXXXX)
-          $AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.AccessPolicies.Options --output text > $TEMP_POLICY_FILE 2> /dev/null
-          # check if the policy has Principal as *
-          CHECK_ES_DOMAIN_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | jq -r '. | .Statement[] | select(.Effect == "Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and .Condition == null)')
-          if [[ $CHECK_ES_DOMAIN_ALLUSERS_POLICY ]];then
-            textFail "$regx: $domain policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx"
-          else
-            textPass "$regx: $domain is not open" "$regx"
-          fi
+        TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-es-domain.policy.XXXXXXXXXX)
+        # get endpoint or vpc endpoints
+        ES_DOMAIN_ENDPOINT=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.[Endpoint || Endpoints]' --output text)
+        # If the endpoint starts with "vpc-" it is in a VPC then it is fine.
+        if [[ "$ES_DOMAIN_ENDPOINT" =~ ^vpc-* ]];then
+          ES_DOMAIN_VPC=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.VPCOptions.VPCId' --output text)
+          textInfo "$regx: Amazon ES domain $domain is in VPC $ES_DOMAIN_VPC run extra779 to make sure it is not exposed using custom proxy" "$regx"
         else
-          textPass "$regx: $domain is in a VPC" "$regx"
+          $AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.AccessPolicies.Options --output text > $TEMP_POLICY_FILE 2> /dev/null
+          # check if the policy has a principal set up
+          CHECK_ES_POLICY_PRINCIPAL=$(cat $TEMP_POLICY_FILE | jq -r '. | .Statement[] | select(.Effect == "Allow" and (((.Principal|type == "object") and .Principal.AWS != "*") or ((.Principal|type == "string") and .Principal != "*")) and select(has("Condition") | not))')
+          if [[ $CHECK_ES_POLICY_PRINCIPAL ]]; then 
+            textPass "$regx: Amazon ES domain $domain does have a Principal set up" "$regx"
+          fi 
+          CHECK_ES_DOMAIN_POLICY_OPEN=$(cat $TEMP_POLICY_FILE | jq -r '. | .Statement[] | select(.Effect == "Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and select(has("Condition") | not))')
+          CHECK_ES_DOMAIN_POLICY_HAS_CONDITION=$(cat $TEMP_POLICY_FILE | jq -r '. | .Statement[] | select(.Effect == "Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and select(has("Condition")))' )
+          if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION ]]; then
+            # get content of IpAddress."aws:SourceIp" and get a clean list
+            LIST_CONDITION_IPS=$(cat $TEMP_POLICY_FILE | jq '.Statement[0] .Condition.IpAddress."aws:SourceIp"'| awk -F'"' '{print $2}' | tr -d '",^$' | sed '/^$/d')
+            unset CONDITION_HAS_PUBLIC_IP_ARRAY
+            for condition_ip in "${LIST_CONDITION_IPS}";do
+              CONDITION_HAS_PRIVATE_IP=$(echo "${condition_ip}" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')
+              if [[ $CONDITION_HAS_PRIVATE_IP ]];then
+                CONDITION_HAS_PRIVATE_IP_ARRAY+=($condition_ip)
+              fi
+              CONDITION_HAS_PUBLIC_IP=$(echo "${condition_ip}" | grep -vE '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.|0\.0\.0\.0|\*)')
+              if [[ $CONDITION_HAS_PUBLIC_IP ]];then
+                CONDITION_HAS_PUBLIC_IP_ARRAY+=($condition_ip)
+              fi
+              CONDITION_HAS_ZERO_NET=$(echo "${condition_ip}" | grep -E '^(0\.0\.0\.0)')
+              CONDITION_HAS_STAR=$(echo "${condition_ip}" | grep -E '^\*')
+            done
+            CHECK_ES_DOMAIN_POLICY_CONDITION_PRIVATE_IP=${CONDITION_HAS_PRIVATE_IP_ARRAY[@]}
+            CHECK_ES_DOMAIN_POLICY_CONDITION_PUBLIC_IP=${CONDITION_HAS_PUBLIC_IP_ARRAY[@]}
+            CHECK_ES_DOMAIN_POLICY_CONDITION_ZERO=$CONDITION_HAS_ZERO_NET
+            CHECK_ES_DOMAIN_POLICY_CONDITION_STAR=$CONDITION_HAS_STAR
+          fi
+          if [[ $CHECK_ES_DOMAIN_POLICY_OPEN || $CHECK_ES_DOMAIN_POLICY_CONDITION_ZERO || $CHECK_ES_DOMAIN_POLICY_CONDITION_STAR || ${CHECK_ES_DOMAIN_POLICY_CONDITION_PUBLIC_IP[@]} ]];then
+            if [[ $CHECK_ES_DOMAIN_POLICY_OPEN ]];then
+              textFail "$regx: Amazon ES domain $domain policy allows access (Principal: \"*\") - use extra788 to test AUTH" "$regx"
+            fi
+            if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION && $CHECK_ES_DOMAIN_POLICY_CONDITION_ZERO ]];then
+              textFail "$regx: Amazon ES domain $domain policy allows access (Principal: \"*\" and network 0.0.0.0) - use extra788 to test AUTH" "$regx"
+            fi
+            if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION && $CHECK_ES_DOMAIN_POLICY_CONDITION_STAR ]];then
+              textFail "$regx: Amazon ES domain $domain policy allows access (Principal: \"*\" and network \"*\") - use extra788 to test AUTH" "$regx"
+            fi
+            if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION && ${CHECK_ES_DOMAIN_POLICY_CONDITION_PUBLIC_IP[@]} ]];then
+              textInfo "$regx: Amazon ES domain $domain policy allows access (Principal: \"*\" and Public IP or Network $(echo ${CONDITION_HAS_PUBLIC_IP_ARRAY[@]})) - use extra788 to test AUTH" "$regx"
+            fi
+          else
+            if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION && ${CHECK_ES_DOMAIN_POLICY_CONDITION_PRIVATE_IP[@]} ]];then
+              textInfo "$regx: Amazon ES domain $domain policy allows access from a Private IP or CIDR RFC1918 $(echo ${CONDITION_HAS_PRIVATE_IP_ARRAY[@]})" "$regx"
+            else
+              textPass "$regx: Amazon ES domain $domain does not allow anonymous access" "$regx"
+            fi
+          fi
+          rm -f $TEMP_POLICY_FILE
         fi
-        rm -f $TEMP_POLICY_FILE
       done
     else
-      textInfo "$regx: No Elasticsearch Service domain found" "$regx"
+      textInfo "$regx: No Amazon ES domain found" "$regx"
     fi
   done
 }

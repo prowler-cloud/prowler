@@ -16,14 +16,13 @@ CHECK_SCORED_extra712="NOT_SCORED"
 CHECK_TYPE_extra712="EXTRA"
 CHECK_ALTERNATE_check712="extra712"
 
-extra712(){
-  # "Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)"
-  textInfo "No API commands available to check if Macie is enabled,"
-  textInfo "just looking if IAM Macie related permissions exist.  "
-  MACIE_IAM_ROLES_CREATED=$($AWSCLI iam list-roles $PROFILE_OPT --query 'Roles[*].Arn'|grep AWSMacieServiceCustomer|wc -l)
-  if [[ $MACIE_IAM_ROLES_CREATED -eq 2 ]];then
-    textPass "Macie related IAM roles exist so it might be enabled. Check it out manually."
-  else
-    textFail "No Macie related IAM roles found. It is most likely not to be enabled"
-  fi
+ extra712(){ 
+   textInfo "No API commands available to check if Macie is enabled," 
+   textInfo "just looking if IAM Macie related permissions exist.  " 
+   MACIE_IAM_ROLES_CREATED=$($AWSCLI iam list-roles $PROFILE_OPT --query 'Roles[*].Arn'|grep AWSMacieServiceCustomer|wc -l) 
+   if [[ $MACIE_IAM_ROLES_CREATED -eq 2 ]];then 
+     textPass "Macie related IAM roles exist so it might be enabled. Check it out manually" 
+else
+     textFail "No Macie related IAM roles found. It is most likely not to be enabled" 
+fi
 }

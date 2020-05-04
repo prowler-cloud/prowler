@@ -37,6 +37,8 @@ CHECK_ID_check313="3.13"
 CHECK_TITLE_check313="[check313] Ensure a log metric filter and alarm exist for route table changes (Scored)"
 CHECK_SCORED_check313="SCORED"
 CHECK_TYPE_check313="LEVEL1"
+CHECK_ASFF_TYPE_check313="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_check313="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check313="check313"
 
 check313(){

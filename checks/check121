@@ -12,6 +12,8 @@ CHECK_ID_check121="1.21"
 CHECK_TITLE_check121="[check121] Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)"
 CHECK_SCORED_check121="NOT_SCORED"
 CHECK_TYPE_check121="LEVEL1"
+CHECK_ASFF_TYPE_check121="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_check121="AwsIamUser"
 CHECK_ALTERNATE_check121="check121"
 
 check121(){
@@ -19,22 +21,24 @@ check121(){
   LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text $PROFILE_OPT --region $REGION)
   # List of USERS with KEY1 last_used_date as N/A
   LIST_USERS_KEY1_NA=$(for user in $LIST_USERS; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$11 }'|grep N/A |awk '{ print $1 }'; done)
-  LIST_USERS_KEY1_ACTIVE=$(for user in $LIST_USERS_KEY1_NA; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$9 }'|grep "true$"|awk '{ print $1 }'|sed 's/[[:blank:]]+/,/g' ; done)
+  # List of USERS with KEY1 active, last_used_date as N/A and have a console password
+  LIST_USERS_KEY1_ACTIVE=$(for user in $LIST_USERS_KEY1_NA; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$4,$9 }'|grep "true true$"|awk '{ print $1 }'|sed 's/[[:blank:]]+/,/g' ; done)
   if [[ $LIST_USERS_KEY1_ACTIVE ]]; then
     for user in $LIST_USERS_KEY1_ACTIVE; do
-      textFail "$user has never used Access Key 1"
+      textFail "User $user has never used access key 1"
     done
   else
-    textPass "No users found with Access Key 1 never used"
+    textPass "No users found with access key 1 never used"
   fi
   # List of USERS with KEY2 last_used_date as N/A
   LIST_USERS_KEY2_NA=$(for user in $LIST_USERS; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$16 }'|grep N/A |awk '{ print $1 }' ; done)
-  LIST_USERS_KEY2_ACTIVE=$(for user in $LIST_USERS_KEY2_NA; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$14 }'|grep "true$" |awk '{ print $1 }' ; done)
+  # List of USERS with KEY2 active, last_used_date as N/A and have a console password
+  LIST_USERS_KEY2_ACTIVE=$(for user in $LIST_USERS_KEY2_NA; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$4,$14 }'|grep "true true$" |awk '{ print $1 }' ; done)
   if [[ $LIST_USERS_KEY2_ACTIVE ]]; then
     for user in $LIST_USERS_KEY2_ACTIVE; do
-      textFail "$user has never used Access Key 2"
+      textFail "User $user has never used access key 2"
     done
   else
-    textPass "No users found with Access Key 2 never used"
+    textPass "No users found with access key 2 never used"
   fi
 }

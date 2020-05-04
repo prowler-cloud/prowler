@@ -33,10 +33,12 @@
 #     --actions-enabled \
 #     --alarm-actions arn:aws:sns:us-east-1:123456789012:CloudWatchAlarmTopic
 
-CHECK_ID_check36="3.6,3.06"
+CHECK_ID_check36="3.6"
 CHECK_TITLE_check36="[check36] Ensure a log metric filter and alarm exist for AWS Management Console authentication failures (Scored)"
 CHECK_SCORED_check36="SCORED"
 CHECK_TYPE_check36="LEVEL2"
+CHECK_ASFF_TYPE_check36="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_check36="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check306="check36"
 
 check36(){

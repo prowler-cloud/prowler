@@ -8,10 +8,11 @@
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
-CHECK_ID_check25="2.5,2.05"
+CHECK_ID_check25="2.5"
 CHECK_TITLE_check25="[check25] Ensure AWS Config is enabled in all regions (Scored)"
 CHECK_SCORED_check25="SCORED"
 CHECK_TYPE_check25="LEVEL1"
+CHECK_ASFF_TYPE_check25="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check205="check25"
 
 check25(){

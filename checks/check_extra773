@@ -14,6 +14,7 @@ CHECK_ID_extra773="7.73"
 CHECK_TITLE_extra773="[extra773] Check if CloudFront distributions are using WAF (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra773="NOT_SCORED"
 CHECK_TYPE_extra773="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra773="AwsCloudFrontDistribution"
 CHECK_ALTERNATE_check773="extra773"
 
 extra773(){

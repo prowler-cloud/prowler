@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2020) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Current VPC Limit is 120 rules (60 inbound and 60 outbound)
+# Reference: https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html
+
+CHECK_ID_extra777="7.77"
+CHECK_TITLE_extra777="[extra777] Find VPC security groups with many ingress or egress rules (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra777="NOT_SCORED"
+CHECK_TYPE_extra777="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra777="AwsEc2SecurityGroup"
+CHECK_ALTERNATE_check777="extra777"
+
+extra777(){
+    THRESHOLD=50
+    textInfo "Looking for VPC security groups with more than ${THRESHOLD} rules across all regions...  "
+
+    for regx in ${REGIONS}; do
+        SECURITY_GROUP_IDS=$(${AWSCLI} ec2 describe-security-groups \
+                             ${PROFILE_OPT} \
+                             --region ${regx} \
+                             --query 'SecurityGroups[*].GroupId' \
+                             --output text | xargs
+                             )
+
+        for SECURITY_GROUP in ${SECURITY_GROUP_IDS}; do
+
+            INGRESS_TOTAL=$(${AWSCLI} ec2 describe-security-groups \
+                            ${PROFILE_OPT} \
+                            --filter "Name=group-id,Values=${SECURITY_GROUP}" \
+                            --query "SecurityGroups[*].IpPermissions[*].IpRanges" \
+                            --region ${regx} \
+                            --output text | wc -l | xargs
+                            )
+
+            EGRESS_TOTAL=$(${AWSCLI} ec2 describe-security-groups \
+                            ${PROFILE_OPT} \
+                            --filter "Name=group-id,Values=${SECURITY_GROUP}" \
+                            --query "SecurityGroups[*].IpPermissionsEgress[*].IpRanges" \
+                            --region ${regx} \
+                            --output text | wc -l | xargs
+                            )
+
+            if [[ (${INGRESS_TOTAL} -ge ${THRESHOLD}) || (${EGRESS_TOTAL} -ge ${THRESHOLD}) ]]; then
+                textFail "${regx}: ${SECURITY_GROUP} has ${INGRESS_TOTAL} inbound rules and ${EGRESS_TOTAL} outbound rules" "${regx}"
+            fi
+        done
+    done
+}

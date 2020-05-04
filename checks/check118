@@ -12,6 +12,7 @@ CHECK_ID_check118="1.18"
 CHECK_TITLE_check118="[check118] Ensure security contact information is registered (Not Scored)"
 CHECK_SCORED_check118="NOT_SCORED"
 CHECK_TYPE_check118="LEVEL1"
+CHECK_ASFF_TYPE_check118="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check118="check118"
 
 check118(){
