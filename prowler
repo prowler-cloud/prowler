@@ -234,7 +234,7 @@ REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
 if [[ -n "$WHITELIST_FILE" ]]; then
   # ignore lines starting with # (comments)
   # ignore inline comments: check1:foo # inline comment
-  WHITELIST=$(awk '!/^[[:space:]]*#/{print }' <(cat "$WHITELIST_FILE") | sed 's/[[:space:]]*#.*$//g')
+  WHITELIST="$(awk '!/^[[:space:]]*#/{print }' <(cat "$WHITELIST_FILE") | sed 's/[[:space:]]*#.*$//g')"
 fi
 
 # Load all of the groups of checks inside groups folder named as "groupNumber*"
@@ -313,6 +313,9 @@ execute_check() {
   ASFF_RESOURCE_TYPE="${!asff_resource_type_var:-AwsAccount}"
   # Generate the credential report, only if it is group1 related which checks we
   # run so that the checks can safely assume it's available
+  # set the custom ignores list for this check
+  ignores="$(awk "/${1}/{print}" <(echo "${WHITELIST}"))"
+
   if [ ${alternate_name} ];then
     if [[ ${alternate_name} == check1* || ${alternate_name} == extra71 ]];then
       if [ ! -s $TEMP_REPORT_FILE ];then
@@ -325,7 +328,7 @@ execute_check() {
       prepare_junit_check_output "$1"
     fi
     # Execute the check
-    ${alternate_name}
+    IGNORES="${ignores}" CHECK_NAME="$1" ${alternate_name}
     if is_junit_output_enabled; then
       finalise_junit_check_output "$1"
     fi
@@ -341,8 +344,6 @@ execute_check() {
         fi
       fi
       show_check_title "$1"
-      # set the custom ignores list for this check
-      ignores=$(awk '/${1}/{print}' <(echo "${WHITELIST}"))
       if is_junit_output_enabled; then
         prepare_junit_check_output "$1"
       fi
