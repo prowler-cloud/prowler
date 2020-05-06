@@ -40,6 +40,7 @@ extra788(){
           if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION ]]; then
             # get content of IpAddress."aws:SourceIp" and get a clean list
             LIST_CONDITION_IPS=$(cat $TEMP_POLICY_FILE | jq '.Statement[0] .Condition.IpAddress."aws:SourceIp"'| awk -F'"' '{print $2}' | tr -d '",^$' | sed '/^$/d')
+            unset CONDITION_HAS_PUBLIC_IP_ARRAY
             for condition_ip in "${LIST_CONDITION_IPS}";do
               CONDITION_HAS_PRIVATE_IP=$(echo "${condition_ip}" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')
               if [[ $CONDITION_HAS_PRIVATE_IP ]];then

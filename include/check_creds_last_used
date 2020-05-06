@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Set of functions for checking credential usage, following CIS 1.3 "Ensure credentials unused for 90 days or greater are disabled" rules
+# but support a custom time-range to allow for stricter policies, e.g. extra774
+
+# CSV Report Column Numbering
+# See also https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html#id_credentials_understanding_the_report_format
+#  1 - user
+#  2 - arn
+#  3 - user_creation_time
+#  4 - password_enabled
+#  5 - password_last_used
+#  6 - password_last_changed
+#  7 - password_next_rotation
+#  8 - mfa_active
+#  9 - access_key_1_active
+# 10 - access_key_1_last_rotated
+# 11 - access_key_1_last_used_date
+# 12 - access_key_1_last_used_region
+# 13 - access_key_1_last_used_service
+# 14 - access_key_2_active
+# 15 - access_key_2_last_rotated
+# 16 - access_key_2_last_used_date
+# 17 - access_key_2_last_used_region
+# 18 - access_key_2_last_used_service
+# 19 - cert_1_active
+# 20 - cert_1_last_rotated
+# 21 - cert_2_active
+# 22 - cert_2_last_rotated
+
+# Check both passwords and access keys - e.g. CIS rule
+check_creds_used_in_last_days() {
+  local max_days=$1
+
+  check_passwords_used_in_last_days "$max_days"
+  check_access_keys_used_in_last_days "$max_days"
+}
+
+check_passwords_used_in_last_days() {
+  local max_days=$1
+
+  local user
+  local users_with_password_enabled
+  local last_login_date
+  local days_since_password_last_changed
+  local days_password_not_in_use
+  users_with_password_enabled=$(awk -F, '{ print $1,$4 }' "$TEMP_REPORT_FILE" | grep " true$" | awk '{ print $1 }')
+  # Only check password last used date for users with password enabled
+  if [[ $users_with_password_enabled ]]; then
+    for user in $users_with_password_enabled; do
+      last_login_date=$(awk -F, '{ print $1,$5 }' "$TEMP_REPORT_FILE" | grep "^$user " | awk '{ print $2 }')
+
+      # If the user has never logged into the console, their last login date is 'no_information'. See:
+      # https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html#id_credentials_understanding_the_report_format
+      if [[ "${last_login_date}" == "no_information" ]]; then
+        user_password_changed_date=$(awk -F, '{ print $1,$6 }' "$TEMP_REPORT_FILE" | grep "^$user " | awk '{ print $2 }')
+        days_since_password_last_changed=$(how_older_from_today "${user_password_changed_date%T*}")
+
+        # "When password_enabled is set to TRUE and password_last_used is set to no_information, ensure password_last_changed is less than X days ago"
+        if [[ "$days_since_password_last_changed" -ge "$max_days" ]]; then
+          textFail "User $user has never logged into the console since creation and their password not changed in the past ${max_days} days"
+        else
+          textInfo "User $user has not logged into the console since creation"
+        fi
+      else
+        days_password_not_in_use=$(how_older_from_today "${last_login_date%T*}")
+
+        # "For each user having password_enabled set to TRUE, ensure password_last_used_date is less than X days ago."
+        if [[ "$days_password_not_in_use" -ge "$max_days" ]]; then
+          textFail "User $user has not logged into the console in the past ${max_days} days"
+        else
+          textPass "User $user has logged into the console in the past ${max_days} days"
+        fi
+      fi
+    done
+  else
+    textPass "No users found with password enabled"
+  fi
+}
+
+check_access_keys_used_in_last_days() {
+  local max_days=$1
+
+  check_access_key_used_in_last_days "$max_days" 1 9 10 11
+  check_access_key_used_in_last_days "$max_days" 2 14 15 16
+}
+
+check_access_key_used_in_last_days() {
+  local max_days=$1
+  local access_key_name=$2
+  local access_key_active_col=$3
+  local access_key_last_rotated_col=$4
+  local access_key_last_used_col=$5
+
+  local user
+  local users_with_access_key_enabled
+  local access_key_last_used_date
+  local access_key_last_rotated_date
+  local days_since_access_key_rotated
+  local days_since_access_key_used
+  users_with_access_key_enabled=$(awk -F, -v i="$access_key_active_col" '{ print $1,$i }' "$TEMP_REPORT_FILE" | grep " true$" | awk '{ print $1 }')
+  # Only check access key last used date for users with this access key enabled
+  if [[ $users_with_access_key_enabled ]]; then
+    for user in $users_with_access_key_enabled; do
+      access_key_last_used_date=$(awk -F, -v i="$access_key_last_used_col" '{ print $1,$i }' "$TEMP_REPORT_FILE" | grep "^$user " | awk '{ print $2 }')
+
+      if [[ "${access_key_last_used_date}" == "N/A" ]]; then
+        access_key_last_rotated_date=$(awk -F, -v i="$access_key_last_rotated_col" '{ print $1,$i }' "$TEMP_REPORT_FILE" | grep "^$user " | awk '{ print $2 }')
+        days_since_access_key_rotated=$(how_older_from_today "${access_key_last_rotated_date%T*}")
+
+        # "When a user having an access_key_x_active (where x is 1 or 2) to TRUE and corresponding access_key_x_last_used_date is set to N/A,
+        # ensure access_key_x_last_rotated is less than X days ago"
+        if [[ "$days_since_access_key_rotated" -ge "$max_days" ]]; then
+          textFail "User $user has never used access key $access_key_name since creation and not rotated it in the past ${max_days} days"
+        else
+          textInfo "User $user has not used access key $access_key_name since creation"
+        fi
+      else
+        days_since_access_key_used=$(how_older_from_today "${access_key_last_used_date%T*}")
+
+        # "For each user having an access_key_1_active or access_key_2_active to TRUE, ensure the corresponding access_key_n_last_used_date is less than X days ago"
+        if [[ "$days_since_access_key_used" -ge "$max_days" ]]; then
+          textFail "User $user has not used access key $access_key_name in the past ${max_days} days"
+        else
+          textPass "User $user has used access key $access_key_name in the past ${max_days} days"
+        fi
+      fi
+    done
+  else
+    textPass "No users found with access key $access_key_name enabled"
+  fi
+}

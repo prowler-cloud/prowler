@@ -18,13 +18,13 @@ CHECK_ASFF_RESOURCE_TYPE_extra764="AwsS3Bucket"
 CHECK_ALTERNATE_check764="extra764"
 
 extra764(){
-  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text|xargs -n1)
+  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text --region $REGION|xargs -n1)
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
       TEMP_STP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
 
       # get bucket policy
-      $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy > $TEMP_STP_POLICY_FILE 2>&1
+      $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy --region $REGION > $TEMP_STP_POLICY_FILE 2>&1
       if [[ $(grep AccessDenied $TEMP_STP_POLICY_FILE) ]]; then
         textFail "Access Denied Trying to Get Bucket Policy for $bucket"
         rm -f $TEMP_STP_POLICY_FILE

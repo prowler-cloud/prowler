@@ -195,14 +195,15 @@ trap "{ rm -f /tmp/prowler*.policy.*; }" EXIT
 . $PROWLER_DIR/include/os_detector
 . $PROWLER_DIR/include/aws_profile_loader
 . $PROWLER_DIR/include/awscli_detector
+. $PROWLER_DIR/include/whoami
 . $PROWLER_DIR/include/outputs
 . $PROWLER_DIR/include/csv_header
 . $PROWLER_DIR/include/banner
-. $PROWLER_DIR/include/whoami
 . $PROWLER_DIR/include/credentials_report
 . $PROWLER_DIR/include/scoring
 . $PROWLER_DIR/include/python_detector
 . $PROWLER_DIR/include/secrets_detector
+. $PROWLER_DIR/include/check_creds_last_used
 . $PROWLER_DIR/include/check3x
 . $PROWLER_DIR/include/assume_role
 . $PROWLER_DIR/include/connection_tests
@@ -424,7 +425,6 @@ show_all_group_titles() {
 get_all_checks_without_exclusion() {
   CHECKS_EXCLUDED=()
   local CHECKS_TO_EXCLUDE=()
-  local TOTAL_CHECKS=()
   # Get a list of checks to exclude
   IFS=',' read -ra E_CHECKS <<< "$1"
   for E_CHECK in "${E_CHECKS[@]}"; do
@@ -445,7 +445,7 @@ get_all_checks_without_exclusion() {
 }
 
 ### All functions defined above ... run the workflow
-if [[ ${MODES[@]} =~ "mono" || ${MODES[@]} =~ "text" ]]; then
+if [[ " ${MODES[@]} " =~ " mono " || " ${MODES[@]} " =~ " text " ]]; then
   prowlerBanner
 fi
 
@@ -462,7 +462,7 @@ if [[ $PRINTGROUPSONLY == "1" ]]; then
 fi
 
 # Check that jq is installed for JSON outputs
-if [[ ${MODES[@]} =~ "json" || ${MODES[@]} =~ "json-asff" ]]; then
+if [[ " ${MODES[@]} " =~ " json " || " ${MODES[@]} " =~ " json-asff " ]]; then
   . $PROWLER_DIR/include/jq_detector
 fi
 

@@ -188,7 +188,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler -g gdpr -M csv,json,json-asff
     ```
 
-    Now `-M` creates a file inside the prowler root directory named `prowler-output-YYYYMMDDHHMMSS.format`. You don't have to specify anything else, no pipes, no redirects.
+    Now `-M` creates a file inside the prowler root directory named `prowler-output-AWSACCOUNTID-YYYYMMDDHHMMSS.format`. You don't have to specify anything else, no pipes, no redirects.
 
     or just saving the output to a file like below:
 
@@ -325,6 +325,16 @@ In order to remove noise and get only FAIL findings there is a `-q` flag that ma
 
 ```sh
 ./prowler -q -M csv -b
+```
+
+### Set the entropy limit for detect-secrets
+
+Sets the entropy limit for high entropy base64 strings from environment variable `BASE64_LIMIT`. Value must be between 0.0 and 8.0, defaults is 4.5.
+Sets the entropy limit for high entropy hex strings from environment variable `HEX_LIMIT`. Value must be between 0.0 and 8.0, defaults is 3.0.
+
+```sh
+export BASE64_LIMIT=4.5
+export HEX_LIMIT=3.0
 ```
 
 ## Security Hub integration
