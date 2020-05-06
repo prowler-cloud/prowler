@@ -232,7 +232,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
 1. For help use:
 
-    ```sh
+    ```
     ./prowler -h
 
     USAGE:
@@ -362,7 +362,7 @@ Sometimes you may find resources that are intentionally configured in a certain 
 ./prowler -w whitelist_sample.txt
 ```
 
-Whitelist option works along with other options and adds a WARNING instead of INFO, PASS or FAIL to any output format except for json-asff.
+Whitelist option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format except for `json-asff`.
 
 ## How to fix every FAIL
 
