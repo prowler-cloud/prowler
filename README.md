@@ -240,6 +240,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ```
 
   Options:
+  
     ```
       -p <profile>        specify your AWS profile to use (i.e.: default)
       -r <region>         specify an AWS region to direct API requests to
