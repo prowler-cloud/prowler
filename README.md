@@ -237,11 +237,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
     USAGE:
       prowler [ -p <profile> -r <region>  -h ]
-    ```
 
-  Options:
-  
-    ```
       -p <profile>        specify your AWS profile to use (i.e.: default)
       -r <region>         specify an AWS region to direct API requests to
                             (i.e.: us-east-1), all regions are checked anyway if the check requires it
