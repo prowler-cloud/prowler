@@ -40,6 +40,7 @@ Deploys [Prowler](https://github.com/toniblyx/prowler) to assess all Accounts in
     - Creates Prowler EC2 instance
       - Uses the Latest Amazon Linux 2 AMI
       - Uses ```t2.micro``` Instance Type
+      - Encrypts Root Volume with AWS Managed Key "aws/ebs"
     - Uses [cfn-init](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-init.html) for prepping the Prowler EC2
       - Installs necessary [packages](https://github.com/toniblyx/prowler#requirements-and-installation) for Prowler
       - Downloads [run-prowler-reports.sh](src/run-prowler-reports.sh) script from Prowler S3 from Component #1.
@@ -47,7 +48,7 @@ Deploys [Prowler](https://github.com/toniblyx/prowler) to assess all Accounts in
       - Creates cron job for Prowler to run on a schedule.
     - Creates Prowler Security Group
       - Denies inbound access.  If using ssh to manage Prowler, then update Security Group with pertinent rule.
-      - Allows outbound 80/443 for updates, and Amazon S3 communications
+      - Allows outbound 80/443 for updates, and Amazon S3 communications      -
     - Creates Instance Role that is used for Prowler EC2
       - Role has permissions for [Systems Manager Agent](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html) communications, and [Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html)
       - Role has rights to Prowler S3 from Component #1.

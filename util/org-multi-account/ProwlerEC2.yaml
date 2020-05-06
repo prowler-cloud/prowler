@@ -108,6 +108,14 @@ Resources:
       SubnetId: !Ref SubnetId
       SecurityGroupIds:
         - !Ref ProwlerSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            Encrypted: true
+            KmsKeyId: alias/aws/ebs
+            VolumeType: standard
+            DeleteOnTermination: true
+            VolumeSize: 8
       Tags:
         - Key: Name
           Value: !Ref ProwlerEc2Name
