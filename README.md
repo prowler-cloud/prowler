@@ -327,6 +327,16 @@ In order to remove noise and get only FAIL findings there is a `-q` flag that ma
 ./prowler -q -M csv -b
 ```
 
+### Set the entropy limit for detect-secrets
+
+Sets the entropy limit for high entropy base64 strings from environment variable `BASE64_LIMIT`. Value must be between 0.0 and 8.0, defaults is 4.5.
+Sets the entropy limit for high entropy hex strings from environment variable `HEX_LIMIT`. Value must be between 0.0 and 8.0, defaults is 3.0.
+
+```sh
+export BASE64_LIMIT=4.5
+export HEX_LIMIT=3.0
+```
+
 ## Security Hub integration
 
 Since version v2.3, Prowler supports natively sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows Prowler to import its findings to AWS Security Hub. With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions and now from Prowler. It is as simple as running the command below:
