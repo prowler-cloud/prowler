@@ -84,34 +84,56 @@ textInfo(){
 }
 
 textFail(){
-  FAIL_COUNTER=$((FAIL_COUNTER+1))
-  EXITCODE=3
+  ## ignore whitelists for current check
+  level="FAIL"
+  colorcode="$BAD"
+  for i in $IGNORES; do
+    ignore_check_name="${i%:*}"
+    ignore_value="${i#*${CHECK_NAME}:}"
+    if [[ ${ignore_check_name} != "${CHECK_NAME}" ]]; then
+      # not for this check
+      continue
+    fi
+    if [[ $1 =~ ${ignore_value} ]]; then
+      level="WARNING"
+      colorcode="$WARNING"
+      break
+    fi
+  done
+
+  # only set non-0 exit code on FAIL mode, WARN is ok
+  if [[ "$level" == "FAIL" ]]; then
+    FAIL_COUNTER=$((FAIL_COUNTER+1))
+    EXITCODE=3
+  fi
+  
   if [[ $2 ]]; then
     REPREGION=$2
   else
     REPREGION=$REGION
   fi
+  
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}FAIL${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}${level}${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
-    generateJsonOutput "$1" "Fail" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
+    generateJsonOutput "$1" "${level}" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
   fi
   if [[ "${MODES[@]}" =~ "json-asff" ]]; then
-    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "FAILED" "HIGH")
+    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "${level}" "HIGH")
     echo "${JSON_ASFF_OUTPUT}" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_ASFF}
     if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
       sendToSecurityHub "${JSON_ASFF_OUTPUT}"
     fi
   fi
-  if is_junit_output_enabled; then
+  if is_junit_output_enabled && [[ "$level" == "FAIL" ]]; then
     output_junit_failure "$1"
   fi
   if [[ "${MODES[@]}" =~ "mono" ]]; then
-    echo "      $BAD FAIL! $1 $NORMAL" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
+    echo "      $colorcode ${level}! $1 $NORMAL" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
   fi
   if [[ "${MODES[@]}" =~ "text" ]]; then
-    echo "      $BAD FAIL! $1 $NORMAL"
+    echo "      $colorcode ${level}! $1 $NORMAL"
   fi
 }
 

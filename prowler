@@ -48,6 +48,7 @@ SEND_TO_SECURITY_HUB=0
 SCRIPT_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
 TITLE_ID=""
 TITLE_TEXT="CALLER ERROR - UNSET TITLE"
+WHITELIST_FILE=""
 TOTAL_CHECKS=()
 
 # Command usage menu
@@ -85,6 +86,13 @@ USAGE:
                             (i.e.: 123456789012)
       -R                  role name to assume in the account, requires -A and -T
                             (i.e.: ProwlerRole)
+      -w                  whitelist file. (Lines starting with # are ignored as comments) Format:
+                            # ignore these due to some reason
+                            # check1 checks s3 buckets
+                            <checkid1>:<resource to ignore 1>
+                            <checkid1>:<resource to ignore 2>
+                            # checkid2
+                            <checkid2>:<resource to ignore 1>
       -T                  session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
                             (i.e.: 43200)
       -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R.
@@ -93,7 +101,7 @@ USAGE:
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSxI:A:R:T:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSxI:A:R:T:w:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -171,6 +179,11 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSxI:A:R:T:" OPTION; do
      T )
         SESSION_DURATION_TO_ASSUME=$OPTARG
         ;;
+     w )
+        WHITELIST_FILE=$OPTARG
+        echo ""
+        echo "$OPTNORMAL Using Whitelist file: $OPTARG"
+        ;;
      : )
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL  -$OPTARG requires an argument"
@@ -216,6 +229,13 @@ REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
   $PROFILE_OPT \
   --region $REGION \
   --region-names $FILTERREGION)
+
+# Pre-process whitelist file if supplied
+if [[ -n "$WHITELIST_FILE" ]]; then
+  # ignore lines starting with # (comments)
+  # ignore inline comments: check1:foo # inline comment
+  WHITELIST="$(awk '!/^[[:space:]]*#/{print }' <(cat "$WHITELIST_FILE") | sed 's/[[:space:]]*#.*$//g')"
+fi
 
 # Load all of the groups of checks inside groups folder named as "groupNumber*"
 for group in $(ls $PROWLER_DIR/groups/group[0-9]*|grep -v groupN_sample); do
@@ -293,6 +313,9 @@ execute_check() {
   ASFF_RESOURCE_TYPE="${!asff_resource_type_var:-AwsAccount}"
   # Generate the credential report, only if it is group1 related which checks we
   # run so that the checks can safely assume it's available
+  # set the custom ignores list for this check
+  ignores="$(awk "/${1}/{print}" <(echo "${WHITELIST}"))"
+
   if [ ${alternate_name} ];then
     if [[ ${alternate_name} == check1* || ${alternate_name} == extra71 ]];then
       if [ ! -s $TEMP_REPORT_FILE ];then
@@ -305,7 +328,7 @@ execute_check() {
       prepare_junit_check_output "$1"
     fi
     # Execute the check
-    ${alternate_name}
+    IGNORES="${ignores}" CHECK_NAME="$1" ${alternate_name}
     if is_junit_output_enabled; then
       finalise_junit_check_output "$1"
     fi
@@ -320,12 +343,12 @@ execute_check() {
           saveReport
         fi
       fi
-      show_check_title $1
+      show_check_title "$1"
       if is_junit_output_enabled; then
         prepare_junit_check_output "$1"
       fi
       # Execute the check
-      $1
+      IGNORES="${ignores}" CHECK_NAME="$1" $1
       if is_junit_output_enabled; then
         finalise_junit_check_output "$1"
       fi
