@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.2.1
+PROWLER_VERSION=2.3.0
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -77,7 +77,6 @@ USAGE:
       -e                  exclude group extras
       -E                  execute all tests except a list of specified checks separated by comma (i.e. check21,check31)
       -b                  do not print Prowler banner
-      -V                  show version number & exit
       -s                  show scoring report
       -S                  send check output to AWS Security Hub - only valid when the output mode is json-asff (i.e. "-M json-asff -S")
       -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by "check")
@@ -86,16 +85,12 @@ USAGE:
                             (i.e.: 123456789012)
       -R                  role name to assume in the account, requires -A and -T
                             (i.e.: ProwlerRole)
-      -w                  whitelist file. (Lines starting with # are ignored as comments) Format:
-                            # ignore these due to some reason
-                            # check1 checks s3 buckets
-                            <checkid1>:<resource to ignore 1>
-                            <checkid1>:<resource to ignore 2>
-                            # checkid2
-                            <checkid2>:<resource to ignore 1>
       -T                  session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
                             (i.e.: 43200)
-      -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R.
+      -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R
+      -w                  whitelist file. See whitelist_sample.txt for reference and format
+                            (i.e.: whitelist_sample.txt)
+      -V                  show version number & exit
       -h                  this help
   "
   exit
@@ -181,8 +176,6 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSxI:A:R:T:w:" OPTION; do
         ;;
      w )
         WHITELIST_FILE=$OPTARG
-        echo ""
-        echo "$OPTNORMAL Using Whitelist file: $OPTARG"
         ;;
      : )
         echo ""
