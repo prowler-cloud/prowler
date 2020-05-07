@@ -222,6 +222,11 @@ generateJsonAsffOutput(){
   # Replace any successive non-conforming characters with a single underscore
   local message=$1
   local status=$2
+
+  if [[ "$status" == "FAIL" ]]; then
+    status="FAILED"
+  fi
+
   local severity=$3
   jq -M -c \
   --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
