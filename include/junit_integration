@@ -76,6 +76,10 @@ output_junit_failure() {
   output_junit_test_case "$1" "<failure message=\"$(xml_escape "$1")\"/>"
 }
 
+output_junit_skipped() {
+  output_junit_test_case "$1" "<skipped message=\"$(xml_escape "$1")\"/>"
+}
+
 get_junit_classname() {
   # <section>.<check_id> naturally follows a Java package structure, so it is suitable as a package name
   echo "$TITLE_ID"
