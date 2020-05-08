@@ -194,8 +194,19 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSxI:A:R:T:w:" OPTION; do
    esac
 done
 
+clean_up() {
+  rm -f /tmp/prowler*.policy.*
+}
+
+handle_ctrl_c() {
+  clean_up
+  exit $EXITCODE
+}
+
 # Clean up any temp files when prowler quits unexpectedly
-trap "{ rm -f /tmp/prowler*.policy.*; }" EXIT
+trap clean_up EXIT
+# Clean up and exit if Ctrl-C occurs. Required to allow Ctrl-C to stop Prowler when running in Docker
+trap handle_ctrl_c INT
 
 . $PROWLER_DIR/include/colors
 . $PROWLER_DIR/include/os_detector
