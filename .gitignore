@@ -21,7 +21,7 @@ tags
 *.DS_Store
 
 # Prowler output
-prowler-output-*
+output/
 
 # JUnit Reports
 junit-reports/
