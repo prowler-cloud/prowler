@@ -106,13 +106,13 @@ textFail(){
     FAIL_COUNTER=$((FAIL_COUNTER+1))
     EXITCODE=3
   fi
-  
+
   if [[ $2 ]]; then
     REPREGION=$2
   else
     REPREGION=$REGION
   fi
-  
+
   if [[ "${MODES[@]}" =~ "csv" ]]; then
     echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}${level}${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
   fi
@@ -126,8 +126,12 @@ textFail(){
       sendToSecurityHub "${JSON_ASFF_OUTPUT}"
     fi
   fi
-  if is_junit_output_enabled && [[ "$level" == "FAIL" ]]; then
-    output_junit_failure "$1"
+  if is_junit_output_enabled; then
+    if [[ "${level}" == "FAIL" ]]; then
+      output_junit_failure "$1"
+    elif [[ "${level}" == "WARNING" ]]; then
+      output_junit_skipped "$1"
+    fi
   fi
   if [[ "${MODES[@]}" =~ "mono" ]]; then
     echo "      $colorcode ${level}! $1 $NORMAL" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
@@ -218,6 +222,11 @@ generateJsonAsffOutput(){
   # Replace any successive non-conforming characters with a single underscore
   local message=$1
   local status=$2
+
+  if [[ "$status" == "FAIL" ]]; then
+    status="FAILED"
+  fi
+
   local severity=$3
   jq -M -c \
   --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
