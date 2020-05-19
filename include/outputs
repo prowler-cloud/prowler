@@ -21,6 +21,10 @@ EXTENSION_HTML="html" # not implemented yet, use ansi2html as in documentation
 OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
 OUTPUT_FILE_NAME="prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
 
+if [[ $PROFILE == "" ]];then
+  PROFILE="ENV"
+fi
+
 textPass(){
   if [[ "$QUIET" == 1 ]]; then
     return
