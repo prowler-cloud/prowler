@@ -19,7 +19,11 @@ EXTENSION_ASFF="asff-json"
 EXTENSION_TEXT="txt"
 EXTENSION_HTML="html" # not implemented yet, use ansi2html as in documentation
 OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
-OUTPUT_FILE_NAME="prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
+OUTPUT_DIR="${PROWLER_DIR}/output"
+OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
+
+# Ensure that output directory always exists
+mkdir -p "${OUTPUT_DIR}"
 
 if [[ $PROFILE == "" ]];then
   PROFILE="ENV"

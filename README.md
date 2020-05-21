@@ -188,7 +188,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler -g gdpr -M csv,json,json-asff
     ```
 
-    Now `-M` creates a file inside the prowler root directory named `prowler-output-AWSACCOUNTID-YYYYMMDDHHMMSS.format`. You don't have to specify anything else, no pipes, no redirects.
+    Now `-M` creates a file inside the prowler `output` directory named `prowler-output-AWSACCOUNTID-YYYYMMDDHHMMSS.format`. You don't have to specify anything else, no pipes, no redirects.
 
     or just saving the output to a file like below:
 
@@ -211,10 +211,16 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
     >Note about output formats to use with `-M`: "text" is the default one with colors, "mono" is like default one but monochrome, "csv" is comma separated values, "json" plain basic json (without comma between lines) and "json-asff" is also json with Amazon Security Finding Format that you can ship to Security Hub using `-S`.
 
-    or save your report in a S3 bucket (this only works for text or mono, for csv, json or json-asff it has to be copied afterwards):
+    or save your report in an S3 bucket (this only works for text or mono. For csv, json or json-asff it has to be copied afterwards):
 
     ```sh
     ./prowler -M mono | aws s3 cp - s3://bucket-name/prowler-report.txt
+    ```
+
+    When generating multiple formats and running using Docker, to retrieve the reports, bind a local directory to the container, e.g.:
+
+    ```sh
+    docker run -ti --rm --name prowler --volume "$(pwd)":/prowler/output --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest -M csv,json
     ```
 
 1. To perform an assessment based on CIS Profile Definitions you can use cislevel1 or cislevel2 with `-g` flag, more information about this [here, page 8](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf):
