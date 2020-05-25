@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.3.0RC
+PROWLER_VERSION=2.3.0RC2
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -196,6 +196,10 @@ done
 
 clean_up() {
   rm -f /tmp/prowler*.policy.*
+  # in case html output is used, make sure it closes html file properly
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
 }
 
 handle_ctrl_c() {
@@ -213,16 +217,17 @@ trap handle_ctrl_c INT
 . $PROWLER_DIR/include/aws_profile_loader
 . $PROWLER_DIR/include/awscli_detector
 . $PROWLER_DIR/include/whoami
-. $PROWLER_DIR/include/outputs
+. $PROWLER_DIR/include/assume_role
 . $PROWLER_DIR/include/csv_header
 . $PROWLER_DIR/include/banner
+. $PROWLER_DIR/include/html_report
+. $PROWLER_DIR/include/outputs
 . $PROWLER_DIR/include/credentials_report
 . $PROWLER_DIR/include/scoring
 . $PROWLER_DIR/include/python_detector
 . $PROWLER_DIR/include/secrets_detector
 . $PROWLER_DIR/include/check_creds_last_used
 . $PROWLER_DIR/include/check3x
-. $PROWLER_DIR/include/assume_role
 . $PROWLER_DIR/include/connection_tests
 . $PROWLER_DIR/include/securityhub_integration
 . $PROWLER_DIR/include/junit_integration
@@ -509,6 +514,9 @@ if [[ $GROUP_ID_READ ]];then
   if [[ " ${GROUP_ID[@]} " =~ " ${GROUP_ID_READ} " ]]; then
 
     execute_group_by_id ${GROUP_ID_READ} ${EXCLUDE_CHECK_ID}
+    if [[ "${MODES[@]}" =~ "html" ]]; then
+      addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    fi
     cleanTemp
     scoring
     exit $EXITCODE
@@ -535,11 +543,17 @@ if [[ $CHECK_ID ]];then
   for CHECK in "${CHECKS[@]}"; do
     execute_check $CHECK
   done
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
   cleanTemp
   exit $EXITCODE
 fi
 
 execute_all
+if [[ "${MODES[@]}" =~ "html" ]]; then
+  addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+fi
 scoring
 cleanTemp
 
@@ -549,6 +563,5 @@ if [[ $ACCOUNT_TO_ASSUME ]]; then
   unset AWS_SECRET_ACCESS_KEY
   unset AWS_SESSION_TOKEN
 fi
-
 
 exit $EXITCODE

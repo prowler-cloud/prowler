@@ -6,10 +6,10 @@
 - [Features](#features)
 - [Requirements and Installation](#requirements-and-installation)
 - [Usage](#usage)
+- [Screenshots](#screenshots)
 - [Advanced Usage](#advanced-usage)
 - [Security Hub integration](#security-hub-integration)
 - [Fix](#fix)
-- [Screenshots](#screenshots)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
 - [Forensics Ready Checks](#forensics-ready-checks)
@@ -168,9 +168,22 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
     Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 and 3.10 is check310
 
+## Screenshots
+
+- Sample screenshot of report first lines:
+
+    <img width="1125" alt="screenshot 2016-09-13 16 05 42" src="https://cloud.githubusercontent.com/assets/3985464/18489640/50fe6824-79cc-11e6-8a9c-e788b88a8a6b.png">
+
+- Sample screenshot of single check for check 3.3:
+
+    <img width="1006" alt="screenshot 2016-09-14 13 20 46" src="https://cloud.githubusercontent.com/assets/3985464/18522590/a04ca9a6-7a7e-11e6-8730-b545c9204990.png">
+
+- Sample screenshot of the html output `-M html`:
+    <img width="1006" alt="Prowler html" src="https://user-images.githubusercontent.com/3985464/82838608-0229ce80-9ecd-11ea-860c-468f66aa2790.png">
+
 ### Save your reports
 
-1. If you want to save your report for later analysis thare are different ways, natively (supported text, mono, csv, json, json-asff and junit-xml see note below for more info):
+1. If you want to save your report for later analysis thare are different ways, natively (supported text, mono, csv, json, json-asff, junit-xml and html, see note below for more info):
 
     ```sh
     ./prowler -M csv
@@ -179,7 +192,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     or with multiple formats at the same time:
 
     ```sh
-    ./prowler -M csv,json,json-asff
+    ./prowler -M csv,json,json-asff,html
     ```
 
     or just a group of checks in multiple formats:
@@ -188,19 +201,18 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler -g gdpr -M csv,json,json-asff
     ```
 
+    or if you want a sorted and dynamic HTML report do:
+
+    ```sh
+    ./prowler -M html
+    ```
+
     Now `-M` creates a file inside the prowler `output` directory named `prowler-output-AWSACCOUNTID-YYYYMMDDHHMMSS.format`. You don't have to specify anything else, no pipes, no redirects.
 
     or just saving the output to a file like below:
 
     ```sh
     ./prowler -M mono > prowler-report.txt
-    ```
-
-    or if you want a coloured HTML report do:
-
-    ```sh
-    pip install ansi2html
-    ./prowler | ansi2html -la > report.html
     ```
 
     To generate JUnit report files, include the junit-xml format. This can be combined with any other format. Files are written inside a prowler root directory named `junit-reports`:
@@ -373,16 +385,6 @@ Whitelist option works along with other options and adds a `WARNING` instead of 
 ## How to fix every FAIL
 
 Check your report and fix the issues following all specific guidelines per check in <https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf>
-
-## Screenshots
-
-- Sample screenshot of report first lines:
-
-    <img width="1125" alt="screenshot 2016-09-13 16 05 42" src="https://cloud.githubusercontent.com/assets/3985464/18489640/50fe6824-79cc-11e6-8a9c-e788b88a8a6b.png">
-
-- Sample screenshot of single check for check 3.3:
-
-    <img width="1006" alt="screenshot 2016-09-14 13 20 46" src="https://cloud.githubusercontent.com/assets/3985464/18522590/a04ca9a6-7a7e-11e6-8730-b545c9204990.png">
 
 ## Troubleshooting
 

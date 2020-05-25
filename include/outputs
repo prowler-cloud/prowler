@@ -17,13 +17,23 @@ EXTENSION_CSV="csv"
 EXTENSION_JSON="json"
 EXTENSION_ASFF="asff-json"
 EXTENSION_TEXT="txt"
-EXTENSION_HTML="html" # not implemented yet, use ansi2html as in documentation
+EXTENSION_HTML="html"
 OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
 OUTPUT_DIR="${PROWLER_DIR}/output"
 OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
+HTML_LOGO_URL="https://github.com/toniblyx/prowler/"
+HTML_LOGO_IMG="https://raw.githubusercontent.com/toniblyx/prowler/master/util/html/prowler-logo.png"
+TIMESTAMP=$(get_iso8601_timestamp)
+PROWLER_PARAMETERS=$@
 
-# Ensure that output directory always exists
-mkdir -p "${OUTPUT_DIR}"
+# Ensure that output directory always exists when -M is used
+if [[ $MODE ]];then 
+  mkdir -p "${OUTPUT_DIR}"
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    addHtmlHeader > ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    HTML_REPORT_INIT="1"
+  fi
+fi 
 
 if [[ $PROFILE == "" ]];then
   PROFILE="ENV"
@@ -62,6 +72,9 @@ textPass(){
   if [[ "${MODES[@]}" =~ "text" || "${MODES[@]}" =~ "mono" ]]; then
     echo "      $OK PASS!$NORMAL $1"
   fi
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    generateHtmlOutput "$1" "PASS"
+  fi
 }
 
 textInfo(){
@@ -88,6 +101,9 @@ textInfo(){
   fi
   if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $NOTICE INFO! $1 $NORMAL"
+  fi
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    generateHtmlOutput "$1" "INFO"
   fi
 }
 
@@ -146,6 +162,9 @@ textFail(){
   fi
   if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $colorcode ${level}! $1 $NORMAL"
+  fi
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    generateHtmlOutput "$1" "${level}"
   fi
 }
 
@@ -283,4 +302,57 @@ generateJsonAsffOutput(){
           "Status": $STATUS
       }
   }'
+}
+
+generateHtmlOutput(){
+  local message=$1
+  local status=$2
+  if [[ $status == "INFO" ]];then
+    echo '<tr class="table-info">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td><i class="fas fa-info-circle"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>INFO</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi 
+  if [[ $status == "PASS" ]];then
+    echo '<tr class="p-3 mb-2 bg-success">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td><i class="fas fa-thumbs-up"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>PASS</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
+  if [[ $status == "FAIL" ]];then
+    echo '<tr class="table-danger" >' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td> <i class="fas fa-thumbs-down"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>FAIL</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
+  if [[ $status == "WARNING" ]];then
+    echo '<tr class="table-warning">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td><i class="fas fa-exclamation-triangle"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>WARN</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    echo '</tr>'>> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
 }
