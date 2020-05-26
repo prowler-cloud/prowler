@@ -22,9 +22,9 @@ extra764(){
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
       TEMP_STP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
-
+      BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location $PROFILE_OPT --region $REGION --bucket $bucket --output text)
       # get bucket policy
-      $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy --region $REGION > $TEMP_STP_POLICY_FILE 2>&1
+      $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy --region $BUCKET_LOCATION > $TEMP_STP_POLICY_FILE 2>&1
       if [[ $(grep AccessDenied $TEMP_STP_POLICY_FILE) ]]; then
         textFail "Access Denied Trying to Get Bucket Policy for $bucket"
         rm -f $TEMP_STP_POLICY_FILE

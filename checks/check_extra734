@@ -21,14 +21,14 @@ extra734(){
   LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --region $REGION --query Buckets[*].Name --output text|xargs -n1)
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
-
+      BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location $PROFILE_OPT --region $REGION --bucket $bucket --output text)
       # For this test to pass one of the following must be present:
       # - Configure ServerSideEncryptionConfiguration rule for AES256 or aws:kms
       #  OR
       # - Have bucket policy denying s3:PutObject when s3:x-amz-server-side-encryption is absent
 
       # query to get if has encryption enabled or not
-      RESULT=$($AWSCLI s3api get-bucket-encryption $PROFILE_OPT --region $REGION --bucket $bucket --query ServerSideEncryptionConfiguration.Rules[].ApplyServerSideEncryptionByDefault[].SSEAlgorithm --output text 2>&1)
+      RESULT=$($AWSCLI s3api get-bucket-encryption $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --query ServerSideEncryptionConfiguration.Rules[].ApplyServerSideEncryptionByDefault[].SSEAlgorithm --output text 2>&1)
       if [[ $(echo "$RESULT" | grep AccessDenied) ]]; then
         textFail "Access Denied Trying to Get Encryption for $bucket"
         continue
@@ -43,7 +43,7 @@ extra734(){
       TEMP_SSE_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
 
       # get bucket policy
-      $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --region $REGION --output text --query Policy > $TEMP_SSE_POLICY_FILE 2>&1
+      $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --region $BUCKET_LOCATION --output text --query Policy > $TEMP_SSE_POLICY_FILE 2>&1
       if [[ $(grep AccessDenied $TEMP_SSE_POLICY_FILE) ]]; then
         textFail "Access Denied Trying to Get Bucket Policy for $bucket"
         rm -f $TEMP_SSE_POLICY_FILE

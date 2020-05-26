@@ -1,0 +1,12 @@
+# Each line is a (checkid:item) tuple
+
+# Example: Will not consider a myignoredbucket failures as full failure. (Still printed as a warning)
+check26:myignoredbucket
+
+# line starting with # are ignored as comments
+# add a line per resource as here:
+#<checkid1>:<resource to ignore 1>
+#<checkid1>:<resource to ignore 2>
+# checkid2
+#<checkid2>:<resource to ignore 1>
+

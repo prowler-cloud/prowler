@@ -17,9 +17,27 @@ EXTENSION_CSV="csv"
 EXTENSION_JSON="json"
 EXTENSION_ASFF="asff-json"
 EXTENSION_TEXT="txt"
-EXTENSION_HTML="html" # not implemented yet, use ansi2html as in documentation
+EXTENSION_HTML="html"
 OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
-OUTPUT_FILE_NAME="prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
+OUTPUT_DIR="${PROWLER_DIR}/output"
+OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
+HTML_LOGO_URL="https://github.com/toniblyx/prowler/"
+HTML_LOGO_IMG="https://raw.githubusercontent.com/toniblyx/prowler/master/util/html/prowler-logo.png"
+TIMESTAMP=$(get_iso8601_timestamp)
+PROWLER_PARAMETERS=$@
+
+# Ensure that output directory always exists when -M is used
+if [[ $MODE ]];then 
+  mkdir -p "${OUTPUT_DIR}"
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    addHtmlHeader > ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    HTML_REPORT_INIT="1"
+  fi
+fi 
+
+if [[ $PROFILE == "" ]];then
+  PROFILE="ENV"
+fi
 
 textPass(){
   if [[ "$QUIET" == 1 ]]; then
@@ -54,6 +72,9 @@ textPass(){
   if [[ "${MODES[@]}" =~ "text" || "${MODES[@]}" =~ "mono" ]]; then
     echo "      $OK PASS!$NORMAL $1"
   fi
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    generateHtmlOutput "$1" "PASS"
+  fi
 }
 
 textInfo(){
@@ -81,37 +102,69 @@ textInfo(){
   if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $NOTICE INFO! $1 $NORMAL"
   fi
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    generateHtmlOutput "$1" "INFO"
+  fi
 }
 
 textFail(){
-  FAIL_COUNTER=$((FAIL_COUNTER+1))
-  EXITCODE=3
+  ## ignore whitelists for current check
+  level="FAIL"
+  colorcode="$BAD"
+  for i in $IGNORES; do
+    ignore_check_name="${i%:*}"
+    ignore_value="${i#*${CHECK_NAME}:}"
+    if [[ ${ignore_check_name} != "${CHECK_NAME}" ]]; then
+      # not for this check
+      continue
+    fi
+    if [[ $1 =~ ${ignore_value} ]]; then
+      level="WARNING"
+      colorcode="$WARNING"
+      break
+    fi
+  done
+
+  # only set non-0 exit code on FAIL mode, WARN is ok
+  if [[ "$level" == "FAIL" ]]; then
+    FAIL_COUNTER=$((FAIL_COUNTER+1))
+    EXITCODE=3
+  fi
+
   if [[ $2 ]]; then
     REPREGION=$2
   else
     REPREGION=$REGION
   fi
+
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}FAIL${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}${level}${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
-    generateJsonOutput "$1" "Fail" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
+    generateJsonOutput "$1" "${level}" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
   fi
   if [[ "${MODES[@]}" =~ "json-asff" ]]; then
-    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "FAILED" "HIGH")
+    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "${level}" "HIGH")
     echo "${JSON_ASFF_OUTPUT}" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_ASFF}
     if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
       sendToSecurityHub "${JSON_ASFF_OUTPUT}"
     fi
   fi
   if is_junit_output_enabled; then
-    output_junit_failure "$1"
+    if [[ "${level}" == "FAIL" ]]; then
+      output_junit_failure "$1"
+    elif [[ "${level}" == "WARNING" ]]; then
+      output_junit_skipped "$1"
+    fi
   fi
   if [[ "${MODES[@]}" =~ "mono" ]]; then
-    echo "      $BAD FAIL! $1 $NORMAL" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
+    echo "      $colorcode ${level}! $1 $NORMAL" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
   fi
   if [[ "${MODES[@]}" =~ "text" ]]; then
-    echo "      $BAD FAIL! $1 $NORMAL"
+    echo "      $colorcode ${level}! $1 $NORMAL"
+  fi
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    generateHtmlOutput "$1" "${level}"
   fi
 }
 
@@ -196,6 +249,11 @@ generateJsonAsffOutput(){
   # Replace any successive non-conforming characters with a single underscore
   local message=$1
   local status=$2
+
+  if [[ "$status" == "FAIL" ]]; then
+    status="FAILED"
+  fi
+
   local severity=$3
   jq -M -c \
   --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
@@ -210,10 +268,11 @@ generateJsonAsffOutput(){
   --arg REPREGION "$REPREGION" \
   --arg TIMESTAMP "$(get_iso8601_timestamp)" \
   --arg PROWLER_VERSION "$PROWLER_VERSION" \
+  --arg AWS_PARTITION "$AWS_PARTITION" \
 -n '{
       "SchemaVersion": "2018-10-08",
       "Id": "prowler-\($TITLE_ID)-\($ACCOUNT_NUM)-\($REPREGION)-\($UNIQUE_ID)",
-      "ProductArn": "arn:${AWS_PARTITION}:securityhub:\($REPREGION):\($ACCOUNT_NUM):product/\($ACCOUNT_NUM)/default",
+      "ProductArn": "arn:\($AWS_PARTITION):securityhub:\($REPREGION):\($ACCOUNT_NUM):product/\($ACCOUNT_NUM)/default",
       "ProductFields": {
           "ProviderName": "Prowler",
           "ProviderVersion": $PROWLER_VERSION
@@ -243,4 +302,57 @@ generateJsonAsffOutput(){
           "Status": $STATUS
       }
   }'
+}
+
+generateHtmlOutput(){
+  local message=$1
+  local status=$2
+  if [[ $status == "INFO" ]];then
+    echo '<tr class="table-info">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td><i class="fas fa-info-circle"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>INFO</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi 
+  if [[ $status == "PASS" ]];then
+    echo '<tr class="p-3 mb-2 bg-success">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td><i class="fas fa-thumbs-up"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>PASS</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
+  if [[ $status == "FAIL" ]];then
+    echo '<tr class="table-danger" >' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td> <i class="fas fa-thumbs-down"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>FAIL</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
+  if [[ $status == "WARNING" ]];then
+    echo '<tr class="table-warning">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td><i class="fas fa-exclamation-triangle"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>WARN</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    echo '</tr>'>> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
 }

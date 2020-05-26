@@ -26,7 +26,7 @@ extra71(){
   for grp in $AWS_GROUPS; do
     # aws --profile onlinetraining iam list-attached-group-policies --group-name Administrators --query 'AttachedPolicies[].PolicyArn' | grep 'arn:aws:iam::aws:policy/AdministratorAccess'
     # list-attached-group-policies
-    CHECK_ADMIN_GROUP=$($AWSCLI $PROFILE_OPT --region $REGION iam list-attached-group-policies --group-name $grp --output json --query 'AttachedPolicies[].PolicyArn' | grep  'arn:${AWS_PARTITION}:iam::aws:policy/AdministratorAccess')
+    CHECK_ADMIN_GROUP=$($AWSCLI $PROFILE_OPT --region $REGION iam list-attached-group-policies --group-name $grp --output json --query 'AttachedPolicies[].PolicyArn' | grep  "arn:${AWS_PARTITION}:iam::aws:policy/AdministratorAccess")
     if [[ $CHECK_ADMIN_GROUP ]]; then
       ADMIN_GROUPS="$ADMIN_GROUPS $grp"
       textInfo "$grp group provides administrative access"

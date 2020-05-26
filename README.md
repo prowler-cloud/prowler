@@ -6,10 +6,10 @@
 - [Features](#features)
 - [Requirements and Installation](#requirements-and-installation)
 - [Usage](#usage)
+- [Screenshots](#screenshots)
 - [Advanced Usage](#advanced-usage)
 - [Security Hub integration](#security-hub-integration)
 - [Fix](#fix)
-- [Screenshots](#screenshots)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
 - [Forensics Ready Checks](#forensics-ready-checks)
@@ -168,9 +168,22 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
     Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 and 3.10 is check310
 
+## Screenshots
+
+- Sample screenshot of report first lines:
+
+    <img width="1125" alt="screenshot 2016-09-13 16 05 42" src="https://cloud.githubusercontent.com/assets/3985464/18489640/50fe6824-79cc-11e6-8a9c-e788b88a8a6b.png">
+
+- Sample screenshot of single check for check 3.3:
+
+    <img width="1006" alt="screenshot 2016-09-14 13 20 46" src="https://cloud.githubusercontent.com/assets/3985464/18522590/a04ca9a6-7a7e-11e6-8730-b545c9204990.png">
+
+- Sample screenshot of the html output `-M html`:
+    <img width="1006" alt="Prowler html" src="https://user-images.githubusercontent.com/3985464/82838608-0229ce80-9ecd-11ea-860c-468f66aa2790.png">
+
 ### Save your reports
 
-1. If you want to save your report for later analysis thare are different ways, natively (supported text, mono, csv, json, json-asff and junit-xml see note below for more info):
+1. If you want to save your report for later analysis thare are different ways, natively (supported text, mono, csv, json, json-asff, junit-xml and html, see note below for more info):
 
     ```sh
     ./prowler -M csv
@@ -179,7 +192,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     or with multiple formats at the same time:
 
     ```sh
-    ./prowler -M csv,json,json-asff
+    ./prowler -M csv,json,json-asff,html
     ```
 
     or just a group of checks in multiple formats:
@@ -188,19 +201,18 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler -g gdpr -M csv,json,json-asff
     ```
 
-    Now `-M` creates a file inside the prowler root directory named `prowler-output-AWSACCOUNTID-YYYYMMDDHHMMSS.format`. You don't have to specify anything else, no pipes, no redirects.
+    or if you want a sorted and dynamic HTML report do:
+
+    ```sh
+    ./prowler -M html
+    ```
+
+    Now `-M` creates a file inside the prowler `output` directory named `prowler-output-AWSACCOUNTID-YYYYMMDDHHMMSS.format`. You don't have to specify anything else, no pipes, no redirects.
 
     or just saving the output to a file like below:
 
     ```sh
     ./prowler -M mono > prowler-report.txt
-    ```
-
-    or if you want a coloured HTML report do:
-
-    ```sh
-    pip install ansi2html
-    ./prowler | ansi2html -la > report.html
     ```
 
     To generate JUnit report files, include the junit-xml format. This can be combined with any other format. Files are written inside a prowler root directory named `junit-reports`:
@@ -211,10 +223,16 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
     >Note about output formats to use with `-M`: "text" is the default one with colors, "mono" is like default one but monochrome, "csv" is comma separated values, "json" plain basic json (without comma between lines) and "json-asff" is also json with Amazon Security Finding Format that you can ship to Security Hub using `-S`.
 
-    or save your report in a S3 bucket (this only works for text or mono, for csv, json or json-asff it has to be copied afterwards):
+    or save your report in an S3 bucket (this only works for text or mono. For csv, json or json-asff it has to be copied afterwards):
 
     ```sh
     ./prowler -M mono | aws s3 cp - s3://bucket-name/prowler-report.txt
+    ```
+
+    When generating multiple formats and running using Docker, to retrieve the reports, bind a local directory to the container, e.g.:
+
+    ```sh
+    docker run -ti --rm --name prowler --volume "$(pwd)":/prowler/output --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest -M csv,json
     ```
 
 1. To perform an assessment based on CIS Profile Definitions you can use cislevel1 or cislevel2 with `-g` flag, more information about this [here, page 8](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf):
@@ -232,46 +250,47 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
 
 1. For help use:
 
-    ```sh
+    ```
     ./prowler -h
 
     USAGE:
-        prowler [ -p <profile> -r <region>  -h ]
+      prowler [ -p <profile> -r <region>  -h ]
 
-    Options:
-        -p <profile>        specify your AWS profile to use (i.e.: default)
-        -r <region>         specify an AWS region to direct API requests to
-                                (i.e.: us-east-1), all regions are checked anyway if the check requires it
-        -c <check_id>       specify a check id, to see all available checks use -l option
-                                (i.e.: check11 for check 1.1 or extra71 for extra check 71)
-        -g <group_id>       specify a group of checks by id, to see all available group of checks use -L
-                                (i.e.: check3 for entire section 3, cislevel1 for CIS Level 1 Profile Definitions or forensics-ready)
-        -f <filterregion>   specify an AWS region to run checks against
-                                (i.e.: us-west-1)
-        -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-        -M <mode>           output mode: text (default), mono, json, json-asff, junit-xml, csv. They can be used combined comma separated.
-                                (separator is ","; data is on stdout; progress on stderr).
-        -k                  keep the credential report
-        -n                  show check numbers to sort easier
-                                (i.e.: 1.01 instead of 1.1)
-        -l                  list all available checks only (does not perform any check). Add -g <group_id> to only list checks within the specified group
-        -L                  list all groups (does not perform any check)
-        -e                  exclude group extras
-        -E                  execute all tests except a list of specified checks separated by comma (i.e. check21,check31)
-        -b                  do not print Prowler banner
-        -V                  show version number & exit
-        -s                  show scoring report
-        -S                  send check output to AWS Security Hub - only valid when the output mode is json-asff (i.e. "-M json-asff -S")
-        -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by check)
-        -q                  suppress info messages and passing test output
-        -A                  account id for the account where to assume a role, requires -R and -T
-                              (i.e.: 123456789012)
-        -R                  role name to assume in the account, requires -A and -T
-                              (i.e.: ProwlerRole)
-        -T                  session durantion given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
-                              (i.e.: 43200)
-        -I                 External ID to be used when assuming roles (no mandatory)
-        -h                  this help
+      -p <profile>        specify your AWS profile to use (i.e.: default)
+      -r <region>         specify an AWS region to direct API requests to
+                            (i.e.: us-east-1), all regions are checked anyway if the check requires it
+      -c <check_id>       specify one or multiple check ids separated by commas, to see all available checks use -l option
+                            (i.e.: check11 for check 1.1 or extra71,extra72 for extra check 71 and extra check 72)
+      -g <group_id>       specify a group of checks by id, to see all available group of checks use -L
+                            (i.e.: check3 for entire section 3, level1 for CIS Level 1 Profile Definitions or forensics-ready)
+      -f <filterregion>   specify an AWS region to run checks against
+                            (i.e.: us-west-1)
+      -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
+      -M <mode>           output mode: text (default), mono, json, json-asff, junit-xml, csv. They can be used combined comma separated.
+                            (separator is ,; data is on stdout; progress on stderr).
+      -k                  keep the credential report
+      -n                  show check numbers to sort easier
+                            (i.e.: 1.01 instead of 1.1)
+      -l                  list all available checks only (does not perform any check). Add -g <group_id> to only list checks within the specified group
+      -L                  list all groups (does not perform any check)
+      -e                  exclude group extras
+      -E                  execute all tests except a list of specified checks separated by comma (i.e. check21,check31)
+      -b                  do not print Prowler banner
+      -s                  show scoring report
+      -S                  send check output to AWS Security Hub - only valid when the output mode is json-asff (i.e. -M json-asff -S)
+      -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by check)
+      -q                  suppress info messages and passing test output
+      -A                  account id for the account where to assume a role, requires -R and -T
+                            (i.e.: 123456789012)
+      -R                  role name to assume in the account, requires -A and -T
+                            (i.e.: ProwlerRole)
+      -T                  session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
+                            (i.e.: 43200)
+      -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R
+      -w                  whitelist file. See whitelist_sample.txt for reference and format
+                            (i.e.: whitelist_sample.txt)
+      -V                  show version number & exit
+      -h                  this help
     ```
 
 ## Advanced Usage
@@ -353,19 +372,19 @@ There are two requirements:
 
 >Note: to have updated findings in Security Hub you have to run Prowler periodically. Once a day or every certain amount of hours.
 
+## Whitelist or remove FAIL from resources
+
+Sometimes you may find resources that are intentionally configured in a certain way that may be a bad practice but it is all right with it, for example an S3 bucket open to the internet hosting a web site, or a security group with an open port needed in your use case. Now you can use `-w whitelist_sample.txt` and add your resources as `checkID:resourcename` as in this command:
+
+```
+./prowler -w whitelist_sample.txt
+```
+
+Whitelist option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format except for `json-asff`.
+
 ## How to fix every FAIL
 
 Check your report and fix the issues following all specific guidelines per check in <https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf>
-
-## Screenshots
-
-- Sample screenshot of report first lines:
-
-    <img width="1125" alt="screenshot 2016-09-13 16 05 42" src="https://cloud.githubusercontent.com/assets/3985464/18489640/50fe6824-79cc-11e6-8a9c-e788b88a8a6b.png">
-
-- Sample screenshot of single check for check 3.3:
-
-    <img width="1006" alt="screenshot 2016-09-14 13 20 46" src="https://cloud.githubusercontent.com/assets/3985464/18522590/a04ca9a6-7a7e-11e6-8730-b545c9204990.png">
 
 ## Troubleshooting
 

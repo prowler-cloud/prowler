@@ -14,8 +14,8 @@
 
 IFS=',' read -ra MODES <<< "${MODE}"
 for MODE in "${MODES[@]}"; do
-  if [[ "$MODE" != "mono" && "$MODE" != "text" && "$MODE" != "csv" && "$MODE" != "json" && "$MODE" != "json-asff" && "$MODE" != "junit-xml" ]]; then
-    echo -e "${OPTRED}ERROR!$OPTNORMAL Invalid output mode.  Choose text, mono, csv, json, json-asff or junit-xml. ./prowler -h for help"
+  if [[ "$MODE" != "mono" && "$MODE" != "text" && "$MODE" != "csv" && "$MODE" != "json" && "$MODE" != "json-asff" && "$MODE" != "junit-xml" && "$MODE" != "html" ]]; then
+    echo -e "${OPTRED}ERROR!$OPTNORMAL Invalid output mode.  Choose text, mono, csv, json, json-asff, junit-xml or html. ./prowler -h for help"
     EXITCODE=1
     exit $EXITCODE
   fi
@@ -47,7 +47,7 @@ else
   # Colors
   # NOTE: Your editor may NOT show the 0x1b / escape character left of the '['
   NORMAL="[0;39m"
-  WARNING="[1;33m"          # Bad (red)
+  WARNING="[0;33m"          # Warning (brown)
   SECTION="[1;33m"          # Section (yellow)
   NOTICE="[1;33m"           # Notice (yellow)
   OK="[1;32m"               # Ok (green)
@@ -68,6 +68,6 @@ fi
 printColorsCode(){
   if [[ $MONOCHROME -eq 0 ]]; then
     echo -e "\n$NORMAL Colors code for results: "
-    echo -e "$NOTICE INFO (Information)$NORMAL,$OK PASS (Recommended value)$NORMAL, $BAD FAIL (Fix required)$NORMAL, $PURPLE Not Scored $NORMAL"
+    echo -e "$NOTICE INFO (Information)$NORMAL,$OK PASS (Recommended value)$NORMAL, $WARNING WARNING (Ignored by whitelist)$NORMAL, $BAD FAIL (Fix required)$NORMAL, $PURPLE Not Scored $NORMAL"
   fi
 }

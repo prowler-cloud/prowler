@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.2.1
+PROWLER_VERSION=2.3.0RC2
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -48,6 +48,7 @@ SEND_TO_SECURITY_HUB=0
 SCRIPT_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
 TITLE_ID=""
 TITLE_TEXT="CALLER ERROR - UNSET TITLE"
+WHITELIST_FILE=""
 TOTAL_CHECKS=()
 
 # Command usage menu
@@ -76,7 +77,6 @@ USAGE:
       -e                  exclude group extras
       -E                  execute all tests except a list of specified checks separated by comma (i.e. check21,check31)
       -b                  do not print Prowler banner
-      -V                  show version number & exit
       -s                  show scoring report
       -S                  send check output to AWS Security Hub - only valid when the output mode is json-asff (i.e. "-M json-asff -S")
       -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by "check")
@@ -87,13 +87,16 @@ USAGE:
                             (i.e.: ProwlerRole)
       -T                  session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
                             (i.e.: 43200)
-      -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R.
+      -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R
+      -w                  whitelist file. See whitelist_sample.txt for reference and format
+                            (i.e.: whitelist_sample.txt)
+      -V                  show version number & exit
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSxI:A:R:T:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSxI:A:R:T:w:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -171,6 +174,9 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSxI:A:R:T:" OPTION; do
      T )
         SESSION_DURATION_TO_ASSUME=$OPTARG
         ;;
+     w )
+        WHITELIST_FILE=$OPTARG
+        ;;
      : )
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL  -$OPTARG requires an argument"
@@ -188,24 +194,40 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSxI:A:R:T:" OPTION; do
    esac
 done
 
+clean_up() {
+  rm -f /tmp/prowler*.policy.*
+  # in case html output is used, make sure it closes html file properly
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
+}
+
+handle_ctrl_c() {
+  clean_up
+  exit $EXITCODE
+}
+
 # Clean up any temp files when prowler quits unexpectedly
-trap "{ rm -f /tmp/prowler*.policy.*; }" EXIT
+trap clean_up EXIT
+# Clean up and exit if Ctrl-C occurs. Required to allow Ctrl-C to stop Prowler when running in Docker
+trap handle_ctrl_c INT
 
 . $PROWLER_DIR/include/colors
 . $PROWLER_DIR/include/os_detector
 . $PROWLER_DIR/include/aws_profile_loader
 . $PROWLER_DIR/include/awscli_detector
 . $PROWLER_DIR/include/whoami
-. $PROWLER_DIR/include/outputs
+. $PROWLER_DIR/include/assume_role
 . $PROWLER_DIR/include/csv_header
 . $PROWLER_DIR/include/banner
+. $PROWLER_DIR/include/html_report
+. $PROWLER_DIR/include/outputs
 . $PROWLER_DIR/include/credentials_report
 . $PROWLER_DIR/include/scoring
 . $PROWLER_DIR/include/python_detector
 . $PROWLER_DIR/include/secrets_detector
 . $PROWLER_DIR/include/check_creds_last_used
 . $PROWLER_DIR/include/check3x
-. $PROWLER_DIR/include/assume_role
 . $PROWLER_DIR/include/connection_tests
 . $PROWLER_DIR/include/securityhub_integration
 . $PROWLER_DIR/include/junit_integration
@@ -216,6 +238,13 @@ REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
   $PROFILE_OPT \
   --region $REGION \
   --region-names $FILTERREGION)
+
+# Pre-process whitelist file if supplied
+if [[ -n "$WHITELIST_FILE" ]]; then
+  # ignore lines starting with # (comments)
+  # ignore inline comments: check1:foo # inline comment
+  WHITELIST="$(awk '!/^[[:space:]]*#/{print }' <(cat "$WHITELIST_FILE") | sed 's/[[:space:]]*#.*$//g')"
+fi
 
 # Load all of the groups of checks inside groups folder named as "groupNumber*"
 for group in $(ls $PROWLER_DIR/groups/group[0-9]*|grep -v groupN_sample); do
@@ -293,6 +322,9 @@ execute_check() {
   ASFF_RESOURCE_TYPE="${!asff_resource_type_var:-AwsAccount}"
   # Generate the credential report, only if it is group1 related which checks we
   # run so that the checks can safely assume it's available
+  # set the custom ignores list for this check
+  ignores="$(awk "/${1}/{print}" <(echo "${WHITELIST}"))"
+
   if [ ${alternate_name} ];then
     if [[ ${alternate_name} == check1* || ${alternate_name} == extra71 ]];then
       if [ ! -s $TEMP_REPORT_FILE ];then
@@ -305,7 +337,7 @@ execute_check() {
       prepare_junit_check_output "$1"
     fi
     # Execute the check
-    ${alternate_name}
+    IGNORES="${ignores}" CHECK_NAME="$1" ${alternate_name}
     if is_junit_output_enabled; then
       finalise_junit_check_output "$1"
     fi
@@ -320,12 +352,12 @@ execute_check() {
           saveReport
         fi
       fi
-      show_check_title $1
+      show_check_title "$1"
       if is_junit_output_enabled; then
         prepare_junit_check_output "$1"
       fi
       # Execute the check
-      $1
+      IGNORES="${ignores}" CHECK_NAME="$1" $1
       if is_junit_output_enabled; then
         finalise_junit_check_output "$1"
       fi
@@ -482,6 +514,9 @@ if [[ $GROUP_ID_READ ]];then
   if [[ " ${GROUP_ID[@]} " =~ " ${GROUP_ID_READ} " ]]; then
 
     execute_group_by_id ${GROUP_ID_READ} ${EXCLUDE_CHECK_ID}
+    if [[ "${MODES[@]}" =~ "html" ]]; then
+      addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    fi
     cleanTemp
     scoring
     exit $EXITCODE
@@ -508,11 +543,17 @@ if [[ $CHECK_ID ]];then
   for CHECK in "${CHECKS[@]}"; do
     execute_check $CHECK
   done
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
   cleanTemp
   exit $EXITCODE
 fi
 
 execute_all
+if [[ "${MODES[@]}" =~ "html" ]]; then
+  addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+fi
 scoring
 cleanTemp
 
@@ -522,6 +563,5 @@ if [[ $ACCOUNT_TO_ASSUME ]]; then
   unset AWS_SECRET_ACCESS_KEY
   unset AWS_SESSION_TOKEN
 fi
-
 
 exit $EXITCODE
