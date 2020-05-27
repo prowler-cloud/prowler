@@ -7,7 +7,6 @@ verify_ssl = true
 
 [packages]
 boto3 = ">=1.9.188"
-ansi2html = ">=1.5.2"
 detect-secrets = ">=0.12.4"
 
 [requires]
