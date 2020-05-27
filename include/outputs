@@ -111,19 +111,19 @@ textFail(){
   ## ignore whitelists for current check
   level="FAIL"
   colorcode="$BAD"
-  for i in $IGNORES; do
+  while read -r i; do
     ignore_check_name="${i%:*}"
     ignore_value="${i#*${CHECK_NAME}:}"
     if [[ ${ignore_check_name} != "${CHECK_NAME}" ]]; then
       # not for this check
       continue
     fi
-    if [[ $1 =~ ${ignore_value} ]]; then
+    if [[ $1 =~ .*"${ignore_value}".* ]]; then
       level="WARNING"
       colorcode="$WARNING"
       break
     fi
-  done
+  done <<< "$IGNORES"
 
   # only set non-0 exit code on FAIL mode, WARN is ok
   if [[ "$level" == "FAIL" ]]; then
