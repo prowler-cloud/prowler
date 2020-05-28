@@ -109,10 +109,10 @@ Deploys [Prowler](https://github.com/toniblyx/prowler) to assess all Accounts in
 1. Cron job for ```ec2-user``` is managing the schedule.
 1. This solution implemented this automatically. Nothing for you to do.
 
-### Run Prowler Adhoc against all Accounts in AWS Organization
+### Ad hoc Run Prowler against all Accounts in AWS Organization
 
 1. Connect to Prowler EC2 Instance
-    - If using Session Manager, then after login, switch to ```ec2-user```, via: ```sudo -u ec2-user```
+    - If using Session Manager, then after login, switch to ```ec2-user```, via: ```sudo bash; su - ec2-user```
     - If using SSH, then login as ```ec2-user```
 1. Run Prowler Script
 
@@ -121,10 +121,10 @@ Deploys [Prowler](https://github.com/toniblyx/prowler) to assess all Accounts in
     ./run-prowler-reports.sh
     ```
 
-### Run Prowler Adhoc Interactively
+### Ad hoc Run Prowler Interactively
 
 1. Connect to Prowler EC2 Instance
-    - If using Session Manager, then after login, switch to ```ec2-user```, via: ```sudo -u ec2-user```
+    - If using Session Manager, then after login, switch to ```ec2-user```, via: ```sudo bash; su - ec2-user```
     - If using SSH, then login as ```ec2-user```
 1. See Cross-Account Role and S3 Bucket being used for Prowler
 
@@ -143,7 +143,7 @@ Deploys [Prowler](https://github.com/toniblyx/prowler) to assess all Accounts in
 ### Upgrading Prowler to Latest Version
 
 1. Connect to Prowler EC2 Instance
-    - If using Session Manager, then after login, switch to ```ec2-user```, via: ```sudo -u ec2-user```
+    - If using Session Manager, then after login, switch to ```ec2-user```, via: ```sudo bash; su - ec2-user```
     - If using SSH, then login as ```ec2-user```
 1. Delete the existing version of Prowler, and download the latest version of Prowler
 
