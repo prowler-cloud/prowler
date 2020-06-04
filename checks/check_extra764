@@ -23,6 +23,12 @@ extra764(){
     for bucket in $LIST_OF_BUCKETS;do
       TEMP_STP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
       BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location $PROFILE_OPT --region $REGION --bucket $bucket --output text)
+      if [[ "None" == $BUCKET_LOCATION ]]; then
+        BUCKET_LOCATION="us-east-1"
+      fi
+      if [[ "EU" == $BUCKET_LOCATION ]]; then
+        BUCKET_LOCATION="eu-west-1"
+      fi
       # get bucket policy
       $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy --region $BUCKET_LOCATION > $TEMP_STP_POLICY_FILE 2>&1
       if [[ $(grep AccessDenied $TEMP_STP_POLICY_FILE) ]]; then
@@ -38,7 +44,8 @@ extra764(){
 
       # https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-policy-for-config-rule/
       # checking if $TEMP_STP_POLICY_FILE is a valid json before converting it to json with jq
-      if jq -e . >/dev/null 2>&1 <<< "$TEMP_STP_POLICY_FILE"; then
+      policy_str=$(cat "$TEMP_STP_POLICY_FILE")
+      if jq -e . >/dev/null 2>&1 <<< "$policy_str"; then
         CHECK_BUCKET_STP_POLICY_PRESENT=$(cat $TEMP_STP_POLICY_FILE | jq --arg arn "arn:aws:s3:::${bucket}" '.Statement[]|select(((.Principal|type == "string") and .Principal == "*") and .Action=="s3:*" and (.Resource|type == "array") and (.Resource|map({(.):0})[]|has($arn)) and (.Resource|map({(.):0})[]|has($arn+"/*")) and .Condition.Bool."aws:SecureTransport" == "false")')
         if [[ $CHECK_BUCKET_STP_POLICY_PRESENT ]]; then
           textPass "Bucket $bucket has S3 bucket policy to deny requests over insecure transport"
@@ -46,7 +53,7 @@ extra764(){
           textFail "Bucket $bucket allows requests over insecure transport"
         fi
       else
-          textInfo "Unknown Error occurred: $TEMP_STP_POLICY_FILE"
+          textInfo "Unknown Error occurred: $policy_str"
       fi
 
       rm -fr $TEMP_STP_POLICY_FILE
