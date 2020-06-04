@@ -27,6 +27,12 @@ extra734(){
       #  OR
       # - Have bucket policy denying s3:PutObject when s3:x-amz-server-side-encryption is absent
 
+      if [[ $BUCKET_LOCATION == "None" ]]; then
+        BUCKET_LOCATION="us-east-1"
+      fi
+      if [[ $BUCKET_LOCATION == "EU" ]]; then
+        BUCKET_LOCATION="eu-west-1"
+      fi
       # query to get if has encryption enabled or not
       RESULT=$($AWSCLI s3api get-bucket-encryption $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --query ServerSideEncryptionConfiguration.Rules[].ApplyServerSideEncryptionByDefault[].SSEAlgorithm --output text 2>&1)
       if [[ $(echo "$RESULT" | grep AccessDenied) ]]; then
