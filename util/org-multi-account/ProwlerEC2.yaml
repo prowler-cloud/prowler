@@ -201,7 +201,7 @@ Resources:
                 yum install python-pip git jq -y
             02-install-prowler-prereqs-pip:
               command: |
-                sudo -u ec2-user pip install --user boto3 awscli ansi2html detect-secrets
+                sudo -u ec2-user pip install --user boto3 awscli detect-secrets
         prowler-reports:
           files:
             /home/ec2-user/run-prowler-reports.sh:

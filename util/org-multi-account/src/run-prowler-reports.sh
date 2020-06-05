@@ -20,11 +20,8 @@ echo "S3:             $S3"
 echo "S3ACCOUNT:      $S3ACCOUNT"
 echo "ROLE:           $ROLE"
 
-# Create Folder to Store Prowler Reports
-mkdir -p prowler-reports
-
 # CleanUp Last Ran Prowler Reports, as they are already stored in S3.
-rm -rf prowler-reports/*.html
+rm -rf prowler/output/*.html
 
 # Function to unset AWS Profile Variables
 unset_aws() {
@@ -90,13 +87,13 @@ for accountId in $ACCOUNTS_IN_ORGS; do
         # Unset AWS Profile Variables
         unset_aws
         # Run Prowler
-        Report="prowler-reports/$(date +'%Y-%m-%d-%H%M%P')-$accountId-report.html"
         echo -e "Assessing AWS Account: $accountId, using Role: $ROLE on $(date)"
-        ./prowler/prowler -R "$ROLE" -A "$accountId" -g cislevel1 | ansi2html -la >"$Report"
-        echo "Report stored locally at: $Report"
+        # remove -g cislevel for a full report and add other formats if needed
+        ./prowler/prowler -R "$ROLE" -A "$accountId" -g cislevel1 -M html
+        echo "Report stored locally at: prowler/output/ directory"
         # Upload Prowler Report to S3
         s3_account_session
-        aws s3 cp "$Report" "$S3/reports/"
+        aws s3 cp prowler/output/ "$S3/reports/" --recursive --include "*.html"
         TOTAL_SEC=$((SECONDS - START_TIME))
         echo -e "Completed AWS Account: $accountId, using Role: $ROLE on $(date)"
         printf "Completed AWS Account: $accountId in %02dh:%02dm:%02ds" $((TOTAL_SEC / 3600)) $((TOTAL_SEC % 3600 / 60)) $((TOTAL_SEC % 60))
