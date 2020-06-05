@@ -27,13 +27,13 @@ TIMESTAMP=$(get_iso8601_timestamp)
 PROWLER_PARAMETERS=$@
 
 # Ensure that output directory always exists when -M is used
-if [[ $MODE ]];then 
+if [[ $MODE ]];then
   mkdir -p "${OUTPUT_DIR}"
   if [[ "${MODES[@]}" =~ "html" ]]; then
     addHtmlHeader > ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     HTML_REPORT_INIT="1"
   fi
-fi 
+fi
 
 if [[ $PROFILE == "" ]];then
   PROFILE="ENV"
@@ -60,7 +60,7 @@ textPass(){
     JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "PASSED" "INFORMATIONAL")
     echo "${JSON_ASFF_OUTPUT}" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_ASFF
     if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
-      sendToSecurityHub "${JSON_ASFF_OUTPUT}"
+      sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REPREGION}"
     fi
   fi
   if is_junit_output_enabled; then
@@ -147,7 +147,7 @@ textFail(){
     JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "${level}" "HIGH")
     echo "${JSON_ASFF_OUTPUT}" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_ASFF}
     if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
-      sendToSecurityHub "${JSON_ASFF_OUTPUT}"
+      sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REPREGION}"
     fi
   fi
   if is_junit_output_enabled; then
@@ -318,7 +318,7 @@ generateHtmlOutput(){
       echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  fi 
+  fi
   if [[ $status == "PASS" ]];then
     echo '<tr class="p-3 mb-2 bg-success">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><i class="fas fa-thumbs-up"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
