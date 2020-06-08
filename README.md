@@ -16,6 +16,7 @@
 - [GDPR Checks](#gdpr-checks)
 - [HIPAA Checks](#hipaa-checks)
 - [Trust Boundaries Checks](#trust-boundaries-checks)
+- [Multi Account and Continuous Monitoring](util/org-multi-account/README.md)
 - [Add Custom Checks](#add-custom-checks)
 - [Third Party Integrations](#third-party-integrations)
 - [Full list of checks and groups](/LIST_OF_CHECKS_AND_GROUPS.md)
