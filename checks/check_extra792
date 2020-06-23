@@ -10,7 +10,7 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-CHECK_ID_extra792="7.87"
+CHECK_ID_extra792="7.92"
 CHECK_TITLE_extra792="[extra792] Check if Elastic Load Balancers have insecure SSL ciphers (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra792="NOT_SCORED"
 CHECK_TYPE_extra792="EXTRA"
