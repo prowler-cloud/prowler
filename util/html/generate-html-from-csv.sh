@@ -157,7 +157,7 @@ addHtmlFooter() {
   <!-- dataTables-->
   <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
   <script>
-    \$(document).ready(function(){ \$('#findingsTable').dataTable( { ordering: true } ); });
+    \$(document).ready(function(){ \$('#findingsTable').dataTable( { "lengthMenu": [ [50, 100, -1], [50, 100, "All"] ], "ordering": true } ); });
   </script>
 </body>
 </html>
