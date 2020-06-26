@@ -18,7 +18,7 @@ CHECK_ALTERNATE_check119="check119"
 
 check119(){
   for regx in $REGIONS; do
-    EC2_DATA=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query 'Reservations[].Instances[].[InstanceId, IamInstanceProfile.Arn, State.Name]')
+    EC2_DATA=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query 'Reservations[].Instances[].[InstanceId, IamInstanceProfile.Arn, State.Name]' --output json)
     EC2_DATA=$(echo $EC2_DATA | jq '.[]|{InstanceId: .[0], ProfileArn: .[1], StateName: .[2]}')
     INSTANCE_LIST=$(echo $EC2_DATA | jq -r '.InstanceId')
     if [[ $INSTANCE_LIST ]]; then
