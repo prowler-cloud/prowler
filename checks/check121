@@ -15,28 +15,35 @@ CHECK_TYPE_check121="LEVEL1"
 CHECK_ASFF_TYPE_check121="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check121="AwsIamUser"
 CHECK_ALTERNATE_check121="check121"
+INSTANT_ACCESS_KEY_CREATION_DELTA=3
 
 check121(){
   # "Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)"
   LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text $PROFILE_OPT --region $REGION)
-  # List of USERS with KEY1 last_used_date as N/A
-  LIST_USERS_KEY1_ACTIVE=$(for user in $LIST_USERS; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$9 }'|grep "true$"|awk '{ print $1 }'|sed 's/[[:blank:]]+/,/g' ; done)
-  LIST_USERS_KEY1_NA=$(for user in $LIST_USERS_KEY1_ACTIVE; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$11 }'|grep N/A |awk '{ print $1 }'; done)
-  for user in $LIST_USERS_KEY1_ACTIVE; do
-    if [[ "$LIST_USERS_KEY1_NA" =~ ( |^)$(echo "$user")( .*|$) ]]; then
-      textFail "$user has never used Access Key 1"
+  # List of USERS with active console password and access key 1
+  LIST_USERS_KEY1_AND_PASSWORD_ACTIVE=$(for user in $LIST_USERS; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$4,$9 }'|grep "true true"|awk '{ print $1 }'|sed 's/[[:blank:]]+/,/g' ; done)
+  for user in $LIST_USERS_KEY1_AND_PASSWORD_ACTIVE; do
+    USER_CREATION_DATE=$(grep "$user" $TEMP_REPORT_FILE | awk -F, ' { print $3 } ')
+    USER_CREATION_DATE_SECONDS=$(iso8601_date_in_seconds "$USER_CREATION_DATE")
+    USER_ACCESS_KEY1_CREATED_DATE=$(grep "$user" $TEMP_REPORT_FILE | awk -F, ' { print $10 } ')
+    USER_ACCESS_KEY1_CREATED_DATE_SECONDS=$(iso8601_date_in_seconds "$USER_ACCESS_KEY1_CREATED_DATE")
+    if (( USER_ACCESS_KEY1_CREATED_DATE_SECONDS - USER_CREATION_DATE_SECONDS <= INSTANT_ACCESS_KEY_CREATION_DELTA)); then
+      textFail "$user had Access Key 1 setup on initial user setup"
     else
-      textPass "$user is using Access Key 1"
+      textPass "$user didn't have Access Key 1 setup on initial user setup"
     fi
   done
-  # List of USERS with KEY2 last_used_date as N/A
-  LIST_USERS_KEY2_ACTIVE=$(for user in $LIST_USERS; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$14 }'|grep "true$" |awk '{ print $1 }' ; done)
-  LIST_USERS_KEY2_NA=$(for user in $LIST_USERS_KEY2_ACTIVE; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$16 }'|grep N/A |awk '{ print $1 }' ; done)
-  for user in $LIST_USERS_KEY2_ACTIVE; do
-    if [[ "$LIST_USERS_KEY2_NA" =~ ( |^)$(echo "$user")( .*|$) ]]; then
-      textFail "$user has never used Access Key 2"
+  # List of USERS with active console password and access key 2
+  LIST_USERS_KEY2_LIST_USERS_KEY1_AND_PASSWORD_ACTIVE=$(for user in $LIST_USERS; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$4,$14 }'|grep "true true"|awk '{ print $1 }'|sed 's/[[:blank:]]+/,/g' ; done)
+  for user in $LIST_USERS_KEY2_LIST_USERS_KEY1_AND_PASSWORD_ACTIVE; do
+    USER_CREATION_DATE=$(grep "$user" $TEMP_REPORT_FILE | awk -F, ' { print $3 } ')
+    USER_CREATION_DATE_SECONDS=$(iso8601_date_in_seconds "$USER_CREATION_DATE")
+    USER_ACCESS_KEY2_CREATED_DATE=$(grep "$user" $TEMP_REPORT_FILE | awk -F, ' { print $10 } ')
+    USER_ACCESS_KEY2_CREATED_DATE_SECONDS=$(iso8601_date_in_seconds "$USER_ACCESS_KEY2_CREATED_DATE")
+    if (( USER_ACCESS_KEY2_CREATED_DATE_SECONDS - USER_CREATION_DATE_SECONDS <= INSTANT_ACCESS_KEY_CREATION_DELTA)); then
+      textFail "$user had Access Key 2 setup on initial user setup"
     else
-      textPass "$user is using Access Key 2"
+      textPass "$user didn't have Access Key 2 setup on initial user setup"
     fi
   done
 }

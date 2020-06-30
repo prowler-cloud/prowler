@@ -107,6 +107,18 @@ bsd_get_iso8601_timestamp() {
   "$DATE_CMD" -u +"%Y-%m-%dT%H:%M:%SZ"
 }
 
+gnu_iso8601_date_in_seconds() {
+  ISO_DATE=$1
+  "$DATE_CMD" -d "$ISO_DATE" "+%s"
+}
+
+bsd_iso8601_date_in_seconds() {
+  # Emit timezone specifier semicolon (00:00 -> 00000) so BSD date command can parse the ISO date
+  ISO_DATE=$(echo $1 | sed 's/\(.*\):/\1/')
+  ISO_FMT='%Y-%m-%dT%H:%M:%S%z'
+  "$DATE_CMD" -j -f "$ISO_FMT" "$ISO_DATE" "+%s"
+}
+
 gnu_test_tcp_connectivity() {
   HOST=$1
   PORT=$2
@@ -150,6 +162,10 @@ if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
   get_iso8601_timestamp() {
     gnu_get_iso8601_timestamp
   }
+  iso8601_date_in_seconds() {
+    gnu_iso8601_date_in_seconds $1
+  }
+
   test_tcp_connectivity() {
     gnu_test_tcp_connectivity "$1" "$2" "$3"
   }
@@ -188,6 +204,9 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     get_iso8601_timestamp() {
       gnu_get_iso8601_timestamp
     }
+    iso8601_date_in_seconds() {
+      gnu_iso8601_date_in_seconds $1
+    }
   else
     how_older_from_today() {
       bsd_how_older_from_today "$1"
@@ -206,6 +225,9 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     }
     get_iso8601_timestamp() {
       bsd_get_iso8601_timestamp
+    }
+    iso8601_date_in_seconds() {
+      bsd_iso8601_date_in_seconds $1
     }
   fi
   if "$BASE64_CMD" --version >/dev/null 2>&1 ; then
