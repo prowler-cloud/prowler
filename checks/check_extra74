@@ -24,6 +24,17 @@ extra74(){
   for regx in $REGIONS; do
     LIST_OF_SECURITYGROUPS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --filters "Name=ip-permission.cidr,Values=0.0.0.0/0" --query "SecurityGroups[].[GroupId]" --output text --max-items $MAXITEMS)
     for SG_ID in $LIST_OF_SECURITYGROUPS; do
+      # to exclude ingresses with certain ports from this check, set IGNORE_INGRESS_FILTER_FOR_PORTS to a comma separated list of the ports
+      if [ ! -z $IGNORE_INGRESS_FILTER_FOR_PORTS ]; then
+        IGNORE_PORTS_PATTERN=".!=$(sed 's/,/ and .!=/g' <<< $IGNORE_INGRESS_FILTER_FOR_PORTS)"
+        PROBLEMATIC_INGRESS_PORTS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --group-ids $SG_ID \
+          | jq -j "[.SecurityGroups[].IpPermissions[] | select(.IpRanges[]?.CidrIp==\"0.0.0.0/0\") | .ToPort | select($IGNORE_PORTS_PATTERN)] | @csv")
+        if [ -z $PROBLEMATIC_INGRESS_PORTS ]; then
+          continue
+        else
+          textInfo "$regx: unfiltered ingresses for $SG_ID found with the following ports: $PROBLEMATIC_INGRESS_PORTS" "$regx"
+        fi
+      fi
       SG_NO_INGRESS_FILTER=$($AWSCLI ec2 describe-network-interfaces $PROFILE_OPT --region $regx --filters "Name=group-id,Values=$SG_ID" --query "length(NetworkInterfaces)" --output text)
       if [[ $SG_NO_INGRESS_FILTER -ne 0 ]];then
         textFail "$regx: $SG_ID has no ingress filtering and it is being used!" "$regx"
