@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra778="7.78"
+CHECK_TITLE_extra778="[extra778] Find VPC security groups with wide-open public IPv4 CIDR ranges (non-RFC1918) (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra778="NOT_SCORED"
+CHECK_TYPE_extra778="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra778="AwsEc2SecurityGroup"
+CHECK_ALTERNATE_check778="extra778"
+
+extra778(){
+    CIDR_THRESHOLD=24
+    RFC1918_REGEX="(^127\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.)"
+    textInfo "Looking for VPC security groups with wide-open (</${CIDR_THRESHOLD}) non-RFC1918 IPv4 address ranges in all regions...  "
+
+    check_cidr() {
+        local SECURITY_GROUP=$1
+        local DIRECTION=$2
+        local DIRECTION_FILTER=""
+        local REGION=$3
+
+        case ${DIRECTION} in
+            "inbound")
+                DIRECTION_FILTER="IpPermissions"
+                ;;
+            "outbound")
+                DIRECTION_FILTER="IpPermissionsEgress"
+                ;;
+        esac
+
+        CIDR_IP_LIST=$(${AWSCLI} ec2 describe-security-groups \
+                        ${PROFILE_OPT} \
+                        --filter "Name=group-id,Values=${SECURITY_GROUP}" \
+                        --query "SecurityGroups[*].${DIRECTION_FILTER}[*].IpRanges[*].CidrIp" \
+                        --region ${REGION} \
+                        --output text | xargs
+                        )
+
+        for CIDR_IP in ${CIDR_IP_LIST}; do
+            if [[ ! ${CIDR_IP} =~ ${RFC1918_REGEX} ]]; then
+                CIDR=$(echo ${CIDR_IP} | cut -d"/" -f2 | xargs)
+
+                # Edge case "0.0.0.0/0" for RDP and SSH are checked already by check41 and check42
+                if [[ ${CIDR} < ${CIDR_THRESHOLD} && 0 < ${CIDR} ]]; then
+                    textFail "${REGION}: ${SECURITY_GROUP} has potential wide-open non-RFC1918 address ${CIDR_IP} in ${DIRECTION} rule" "${REGION}"
+                fi
+            fi
+        done
+    }
+
+    for regx in ${REGIONS}; do
+        SECURITY_GROUP_IDS=$(${AWSCLI} ec2 describe-security-groups \
+                              ${PROFILE_OPT} \
+                              --region ${regx} \
+                              --query 'SecurityGroups[*].GroupId' \
+                              --output text | xargs
+                              )
+        for SECURITY_GROUP in ${SECURITY_GROUP_IDS}; do
+            check_cidr "${SECURITY_GROUP}" "inbound" "${regx}"
+            check_cidr "${SECURITY_GROUP}" "outbound" "${regx}"
+        done
+    done
+}

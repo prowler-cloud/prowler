@@ -11,24 +11,12 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra774="7.74"
-CHECK_TITLE_extra774="[extra774] Check if user have unused console login"
+CHECK_TITLE_extra774="[extra774] Ensure credentials unused for 30 days or greater are disabled"
 CHECK_SCORED_extra774="NOT_SCORED"
 CHECK_TYPE_extra774="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra774="AwsIamUser"
 CHECK_ALTERNATE_check774="extra774"
 
 extra774(){
-  MAX_DAYS=-30
-  LIST_USERS_WITH_PASSWORD_ENABLED=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$4,$5 }' |grep true | awk '{ print $1 }')
-
-  for i in $LIST_USERS_WITH_PASSWORD_ENABLED; do
-    user=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$5 }' |grep "^$i " |awk '{ print $1 }')
-    last_login_date=$(cat $TEMP_REPORT_FILE|awk -F, '{ print $1,$5 }' |grep "^$i " |awk '{ print $2 }')
-
-    days_not_in_use=$(how_many_days_from_today ${last_login_date%T*})
-    if [ "$days_not_in_use" -lt "$MAX_DAYS" ];then
-        textFail "User $user has not used console login for more then ${MAX_DAYS#-} days"
-      else
-        textPass "User $user has used console login in the past ${MAX_DAYS#-} days"
-    fi
-  done
+  check_creds_used_in_last_days 30
 }

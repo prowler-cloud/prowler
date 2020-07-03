@@ -10,10 +10,11 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-CHECK_ID_extra74="7.4,7.04"
+CHECK_ID_extra74="7.4"
 CHECK_TITLE_extra74="[extra74] Ensure there are no Security Groups without ingress filtering being used (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra74="NOT_SCORED"
 CHECK_TYPE_extra74="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra74="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_extra704="extra74"
 CHECK_ALTERNATE_check74="extra74"
 CHECK_ALTERNATE_check704="extra74"

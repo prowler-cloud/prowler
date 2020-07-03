@@ -14,16 +14,23 @@ CHECK_ID_extra764="7.64"
 CHECK_TITLE_extra764="[extra764] Check if S3 buckets have secure transport policy (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra764="NOT_SCORED"
 CHECK_TYPE_extra764="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra764="AwsS3Bucket"
 CHECK_ALTERNATE_check764="extra764"
 
 extra764(){
-  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text|xargs -n1)
+  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text --region $REGION|xargs -n1)
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
       TEMP_STP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
-
+      BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location $PROFILE_OPT --region $REGION --bucket $bucket --output text)
+      if [[ "None" == $BUCKET_LOCATION ]]; then
+        BUCKET_LOCATION="us-east-1"
+      fi
+      if [[ "EU" == $BUCKET_LOCATION ]]; then
+        BUCKET_LOCATION="eu-west-1"
+      fi
       # get bucket policy
-      $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy > $TEMP_STP_POLICY_FILE 2>&1
+      $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy --region $BUCKET_LOCATION > $TEMP_STP_POLICY_FILE 2>&1
       if [[ $(grep AccessDenied $TEMP_STP_POLICY_FILE) ]]; then
         textFail "Access Denied Trying to Get Bucket Policy for $bucket"
         rm -f $TEMP_STP_POLICY_FILE
@@ -36,13 +43,18 @@ extra764(){
       fi
 
       # https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-policy-for-config-rule/
-      CHECK_BUCKET_STP_POLICY_PRESENT=$(cat $TEMP_STP_POLICY_FILE | jq --arg arn "arn:aws:s3:::${bucket}" '.Statement[]|select((((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and .Action=="s3:*" and (.Resource|type == "array") and (.Resource|map({(.):0})[]|has($arn)) and (.Resource|map({(.):0})[]|has($arn+"/*")) and .Condition.Bool."aws:SecureTransport" == "false")')
-      if [[ $CHECK_BUCKET_STP_POLICY_PRESENT ]]; then
-        textPass "Bucket $bucket has S3 bucket policy to deny requests over insecure transport"
+      # checking if $TEMP_STP_POLICY_FILE is a valid json before converting it to json with jq
+      policy_str=$(cat "$TEMP_STP_POLICY_FILE")
+      if jq -e . >/dev/null 2>&1 <<< "$policy_str"; then
+        CHECK_BUCKET_STP_POLICY_PRESENT=$(cat $TEMP_STP_POLICY_FILE | jq --arg arn "arn:${AWS_PARTITION}:s3:::${bucket}" '.Statement[]|select((((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and .Action=="s3:*" and (.Resource|type == "array") and (.Resource|map({(.):0})[]|has($arn)) and (.Resource|map({(.):0})[]|has($arn+"/*")) and .Condition.Bool."aws:SecureTransport" == "false")')
+        if [[ $CHECK_BUCKET_STP_POLICY_PRESENT ]]; then
+          textPass "Bucket $bucket has S3 bucket policy to deny requests over insecure transport"
+        else
+          textFail "Bucket $bucket allows requests over insecure transport"
+        fi
       else
-        textFail "Bucket $bucket allows requests over insecure transport"
+          textInfo "Unknown Error occurred: $policy_str"
       fi
-
       rm -fr $TEMP_STP_POLICY_FILE
     done
 

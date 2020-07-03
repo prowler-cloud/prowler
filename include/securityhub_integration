@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Checks that the correct mode (json-asff) has been specified if wanting to send check output to AWS Security Hub
+# and that Security Hub is enabled in the chosen region
+checkSecurityHubCompatibility(){
+  local regx
+  if [[ "${MODE}" != "json-asff" ]]; then
+    echo -e "\n$RED ERROR!$NORMAL Output can only be sent to Security Hub when the output mode is json-asff, i.e. -M json-asff -S\n"
+    EXITCODE=1
+    exit $EXITCODE
+  fi
+  for regx in $REGIONS; do
+    SECURITY_HUB_ENABLED=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT describe-hub)
+    if [[ -z "${SECURITY_HUB_ENABLED}" ]]; then
+      echo -e "\n$RED ERROR!$NORMAL Security Hub is not enabled in $regx. Enable it by calling '$AWSCLI securityhub --region $regx $PROFILE_OPT enable-security-hub'\n"
+      EXITCODE=1
+      exit $EXITCODE
+    fi
+  done
+}
+
+sendToSecurityHub(){
+  local findings="$1"
+  local region="$2"
+  BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-import-findings --findings "${findings}")
+  # A successful CLI response is: {"SuccessCount": 1,"FailedFindings": [],"FailedCount": 0}
+  # Therefore, check that SuccessCount is indeed 1
+  if [[ -z "${BATCH_IMPORT_RESULT}" ]] || ! jq -e '.SuccessCount == 1' <<< "${BATCH_IMPORT_RESULT}" > /dev/null 2>&1; then
+    echo -e "\n$RED ERROR!$NORMAL Failed to send check output to AWS Security Hub\n"
+  fi
+}

@@ -11,9 +11,10 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra715="7.15"
-CHECK_TITLE_extra715="[extra715] Check if Elasticsearch Service domains have logging enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra715="[extra715] Check if Amazon Elasticsearch Service (ES) domains have logging enabled"
 CHECK_SCORED_extra715="NOT_SCORED"
 CHECK_TYPE_extra715="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra715="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check715="extra715"
 
 extra715(){
@@ -23,19 +24,19 @@ extra715(){
       for domain in $LIST_OF_DOMAINS;do
         SEARCH_SLOWLOG_ENABLED=$($AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.LogPublishingOptions.Options.SEARCH_SLOW_LOGS.Enabled --output text |grep -v ^None|grep -v ^False)
         if [[ $SEARCH_SLOWLOG_ENABLED ]];then
-          textPass "$regx: ElasticSearch Service domain $domain SEARCH_SLOW_LOGS enabled" "$regx"
+          textPass "$regx: Amazon ES domain $domain SEARCH_SLOW_LOGS enabled" "$regx"
         else
-          textFail "$regx: ElasticSearch Service domain $domain SEARCH_SLOW_LOGS disabled!" "$regx"
+          textFail "$regx: Amazon ES domain $domain SEARCH_SLOW_LOGS disabled!" "$regx"
         fi
         INDEX_SLOWLOG_ENABLED=$($AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.LogPublishingOptions.Options.INDEX_SLOW_LOGS.Enabled --output text |grep -v ^None|grep -v ^False)
         if [[ $INDEX_SLOWLOG_ENABLED ]];then
-          textPass "$regx: ElasticSearch Service domain $domain INDEX_SLOW_LOGS enabled" "$regx"
+          textPass "$regx: Amazon ES domain $domain INDEX_SLOW_LOGS enabled" "$regx"
         else
-          textFail "$regx: ElasticSearch Service domain $domain INDEX_SLOW_LOGS disabled!" "$regx"
+          textFail "$regx: Amazon ES domain $domain INDEX_SLOW_LOGS disabled!" "$regx"
         fi
       done
     else
-      textInfo "$regx: No Elasticsearch Service domain found" "$regx"
+      textInfo "$regx: No Amazon ES domain found" "$regx"
     fi
   done
 }

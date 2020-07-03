@@ -10,10 +10,11 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-CHECK_ID_extra78="7.8,7.08"
+CHECK_ID_extra78="7.8"
 CHECK_TITLE_extra78="[extra78] Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra78="NOT_SCORED"
 CHECK_TYPE_extra78="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra78="AwsRdsDbInstance"
 CHECK_ALTERNATE_extra708="extra78"
 CHECK_ALTERNATE_check78="extra78"
 CHECK_ALTERNATE_check708="extra78"

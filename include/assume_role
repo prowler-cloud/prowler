@@ -25,11 +25,26 @@ if [[ $ACCOUNT_TO_ASSUME ]]; then
 
     # temporary file where to store credentials
     TEMP_STS_ASSUMED_FILE=$(mktemp -t prowler.sts_assumed-XXXXXX)
+    
+    #Check if external ID has bee provided if so execute with external ID if not ignore
+    if [[ -z $ROLE_EXTERNAL_ID ]]; then
+        # assume role command
+        $AWSCLI $PROFILE_OPT sts assume-role --role-arn arn:${AWS_PARTITION}:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME \
+            --role-session-name ProwlerAssessmentSession \
+            --region $REGION \
+            --duration-seconds $SESSION_DURATION_TO_ASSUME > $TEMP_STS_ASSUMED_FILE 
+    else 
+        $AWSCLI $PROFILE_OPT sts assume-role --role-arn arn:${AWS_PARTITION}:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME \
+            --role-session-name ProwlerAssessmentSession \
+            --duration-seconds $SESSION_DURATION_TO_ASSUME \
+            --region $REGION \
+            --external-id $ROLE_EXTERNAL_ID > $TEMP_STS_ASSUMED_FILE 
+    fi 
 
     # assume role command
-    $AWSCLI $PROFILE_OPT sts assume-role --role-arn arn:aws:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME \
-        --role-session-name ProwlerAssessmentSession \
-        --duration-seconds $SESSION_DURATION_TO_ASSUME > $TEMP_STS_ASSUMED_FILE 
+    #$AWSCLI $PROFILE_OPT sts assume-role --role-arn arn:${AWS_PARTITION}:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME \
+    #    --role-session-name ProwlerAssessmentSession \
+    #    --duration-seconds $SESSION_DURATION_TO_ASSUME > $TEMP_STS_ASSUMED_FILE 
 
     # if previous command fails exit with the given error from aws-cli
     # this is likely to be due to session duration limit of 1h in case 

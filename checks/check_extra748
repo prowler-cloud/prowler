@@ -14,6 +14,7 @@ CHECK_ID_extra748="7.48"
 CHECK_TITLE_extra748="[extra748] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to any port (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra748="NOT_SCORED"
 CHECK_TYPE_extra748="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra748="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check748="extra748"
 
 extra748(){

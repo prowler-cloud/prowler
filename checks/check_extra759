@@ -14,14 +14,15 @@ CHECK_ID_extra759="7.59"
 CHECK_TITLE_extra759="[extra759] Find secrets in Lambda functions variables (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra759="NOT_SCORED"
 CHECK_TYPE_extra759="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra759="AwsLambdaFunction"
 CHECK_ALTERNATE_check759="extra759"
 
 extra759(){
   SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"
-  if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then 
+  if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then
     # this folder is deleted once this check is finished
     mkdir $SECRETS_TEMP_FOLDER
-  fi 
+  fi
 
   textInfo "Looking for secrets in Lambda variables across all regions... "
   for regx in $REGIONS; do

@@ -19,3 +19,12 @@ tags
 
 # MacOs DS_Store
 *.DS_Store
+
+# Prowler output
+output/
+
+# JUnit Reports
+junit-reports/
+
+# VSCode files
+.vscode/

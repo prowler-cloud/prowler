@@ -14,6 +14,7 @@ CHECK_ID_extra710="7.10"
 CHECK_TITLE_extra710="[extra710] Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra710="NOT_SCORED"
 CHECK_TYPE_extra710="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra710="AwsEc2Instance"
 CHECK_ALTERNATE_check710="extra710"
 
 extra710(){

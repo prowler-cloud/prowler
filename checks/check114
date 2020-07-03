@@ -12,19 +12,20 @@ CHECK_ID_check114="1.14"
 CHECK_TITLE_check114="[check114] Ensure hardware MFA is enabled for the root account (Scored)"
 CHECK_SCORED_check114="SCORED"
 CHECK_TYPE_check114="LEVEL2"
+CHECK_ASFF_TYPE_check114="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check114="check114"
 
 check114(){
   # "Ensure hardware MFA is enabled for the root account (Scored)"
   COMMAND113=$($AWSCLI iam get-account-summary $PROFILE_OPT --region $REGION --output json --query 'SummaryMap.AccountMFAEnabled')
   if [ "$COMMAND113" == "1" ]; then
-    COMMAND114=$($AWSCLI iam list-virtual-mfa-devices $PROFILE_OPT --region $REGION --output text --assignment-status Assigned --query 'VirtualMFADevices[*].[SerialNumber]' | grep '^arn:aws:iam::[0-9]\{12\}:mfa/root-account-mfa-device$')
+    COMMAND114=$($AWSCLI iam list-virtual-mfa-devices $PROFILE_OPT --region $REGION --output text --assignment-status Assigned --query 'VirtualMFADevices[*].[SerialNumber]' | grep "^arn:${AWS_PARTITION}:iam::[0-9]\{12\}:mfa/root-account-mfa-device$")
     if [[ "$COMMAND114" ]]; then
       textFail "Only Virtual MFA is enabled for root"
     else
-      textPass "Hardware MFA is enabled for root "
+      textPass "Hardware MFA is enabled for root"
     fi
   else
-    textFail "MFA is not ENABLED for root account "
+    textFail "MFA is not ENABLED for root account"
   fi
 }

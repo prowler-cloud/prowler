@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2020) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra789="7.89"
+CHECK_TITLE_extra789="[extra789] Find trust boundaries in VPC endpoint services connections"
+CHECK_SCORED_extra789="NOT_SCORED"
+CHECK_TYPE_extra789="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra789="AwsEc2Vpc"
+CHECK_ALTERNATE_extra789="extra789"
+
+extra789(){
+    TRUSTED_ACCOUNT_IDS=$( echo "${ACCOUNT_NUM} ${GROUP_TRUSTBOUNDARIES_TRUSTED_ACCOUNT_IDS}" | xargs )
+
+    for regx in ${REGIONS}; do
+        ENDPOINT_SERVICES_IDS=$(${AWSCLI} ec2 describe-vpc-endpoint-services \
+                                ${PROFILE_OPT} \
+                                --query "ServiceDetails[?Owner=='${ACCOUNT_NUM}'].ServiceId" \
+                                --region ${regx} \
+                                --output text | xargs
+                                )
+
+        for ENDPOINT_SERVICE_ID in ${ENDPOINT_SERVICES_IDS}; do
+
+            ENDPOINT_CONNECTION_LIST=$(${AWSCLI} ec2 describe-vpc-endpoint-connections \
+                                        ${PROFILE_OPT} \
+                                        --query "VpcEndpointConnections[?VpcEndpointState=='available'].VpcEndpointOwner" \
+                                        --region ${regx} \
+                                        --output text | xargs
+                                        )
+
+            for ENDPOINT_CONNECTION in ${ENDPOINT_CONNECTION_LIST}; do
+                for ACCOUNT_ID in ${TRUSTED_ACCOUNT_IDS}; do
+                    if [[ "${ACCOUNT_ID}" == "${ENDPOINT_CONNECTION}" ]]; then
+                        textPass "${regx}: Found trusted account in VPC endpoint service connection ${ENDPOINT_CONNECTION}" "${regx}"
+                        # Algorithm:
+                        # Remove all trusted ACCOUNT_IDs from ENDPOINT_CONNECTION_LIST.
+                        # As a result, the ENDPOINT_CONNECTION_LIST finally contains only unknown/untrusted account ids.
+                        ENDPOINT_CONNECTION_LIST=("${ENDPOINT_CONNECTION_LIST[@]/$ENDPOINT_CONNECTION}") # remove hit from whitelist
+                    fi
+                done
+            done
+
+            for UNTRUSTED_CONNECTION in ${ENDPOINT_CONNECTION_LIST}; do
+                textFail "${regx}: Found untrusted account in VPC endpoint service connection ${UNTRUSTED_CONNECTION}" "${regx}"
+            done
+        done
+    done
+}

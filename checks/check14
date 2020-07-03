@@ -8,10 +8,12 @@
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
-CHECK_ID_check14="1.4,1.04"
+CHECK_ID_check14="1.4"
 CHECK_TITLE_check14="[check14] Ensure access keys are rotated every 90 days or less (Scored)"
 CHECK_SCORED_check14="SCORED"
 CHECK_TYPE_check14="LEVEL1"
+CHECK_ASFF_TYPE_check14="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_check14="AwsIamUser"
 CHECK_ALTERNATE_check104="check14"
 
 check14(){
@@ -28,15 +30,15 @@ check14(){
         HOWOLDER=$(how_older_from_today $DATEROTATED1)
 
         if [ $HOWOLDER -gt "90" ];then
-          textFail " $user has not rotated access key1 in over 90 days."
+          textFail "$user has not rotated access key 1 in over 90 days"
           C14_NUM_USERS1=$(expr $C14_NUM_USERS1 + 1)
         fi
       done
       if [[ $C14_NUM_USERS1 -eq 0 ]]; then
-        textPass "No users with access key 1 older than 90 days."
+        textPass "No users with access key 1 older than 90 days"
       fi
     else
-      textPass "No users with access key 1."
+      textPass "No users with access key 1"
     fi
 
     if [[ $LIST_OF_USERS_WITH_ACCESS_KEY2 ]]; then
@@ -46,14 +48,14 @@ check14(){
         DATEROTATED2=$(cat $TEMP_REPORT_FILE | grep -v user_creation_time | grep "^${user},"| awk -F, '{ print $15 }' | grep -v "N/A" | awk -F"T" '{ print $1 }')
         HOWOLDER=$(how_older_from_today $DATEROTATED2)
         if [ $HOWOLDER -gt "90" ];then
-          textFail " $user has not rotated access key2 in over 90 days. "
+          textFail "$user has not rotated access key 2 in over 90 days"
           C14_NUM_USERS2=$(expr $C14_NUM_USERS2 + 1)
         fi
       done
       if [[ $C14_NUM_USERS2 -eq 0 ]]; then
-        textPass "No users with access key 2 older than 90 days."
+        textPass "No users with access key 2 older than 90 days"
       fi
     else
-      textPass "No users with access key 2."
+      textPass "No users with access key 2"
     fi
 }

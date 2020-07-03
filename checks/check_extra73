@@ -11,10 +11,11 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-CHECK_ID_extra73="7.3,7.03"
+CHECK_ID_extra73="7.3"
 CHECK_TITLE_extra73="[extra73] Ensure there are no S3 buckets open to the Everyone or Any AWS user (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra73="NOT_SCORED"
 CHECK_TYPE_extra73="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra73="AwsS3Bucket"
 CHECK_ALTERNATE_extra703="extra73"
 CHECK_ALTERNATE_check73="extra73"
 CHECK_ALTERNATE_check703="extra73"

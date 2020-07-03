@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.2.0
+PROWLER_VERSION=2.3.0RC2
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -44,9 +44,12 @@ QUIET=0
 SEP=','
 KEEPCREDREPORT=0
 EXITCODE=0
+SEND_TO_SECURITY_HUB=0
 SCRIPT_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
 TITLE_ID=""
 TITLE_TEXT="CALLER ERROR - UNSET TITLE"
+WHITELIST_FILE=""
+TOTAL_CHECKS=()
 
 # Command usage menu
 usage(){
@@ -64,33 +67,38 @@ USAGE:
       -f <filterregion>   specify an AWS region to run checks against
                             (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-      -M <mode>           output mode: text (default), mono, json, csv (separator is ","; data is on stdout; progress on stderr)
+      -M <mode>           output mode: text (default), mono, json, json-asff, junit-xml, csv. They can be used combined comma separated.
+                            (separator is ","; data is on stdout; progress on stderr).
       -k                  keep the credential report
       -n                  show check numbers to sort easier
                             (i.e.: 1.01 instead of 1.1)
-      -l                  list all available checks only (does not perform any check)
+      -l                  list all available checks only (does not perform any check). Add -g <group_id> to only list checks within the specified group
       -L                  list all groups (does not perform any check)
       -e                  exclude group extras
       -E                  execute all tests except a list of specified checks separated by comma (i.e. check21,check31)
       -b                  do not print Prowler banner
-      -V                  show version number & exit
       -s                  show scoring report
+      -S                  send check output to AWS Security Hub - only valid when the output mode is json-asff (i.e. "-M json-asff -S")
       -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by "check")
       -q                  suppress info messages and passing test output
-      -A                  account id for the account where to assume a role, requires -R and -T 
+      -A                  account id for the account where to assume a role, requires -R and -T
                             (i.e.: 123456789012)
-      -R                  role name to assume in the account, requires -A and -T 
+      -R                  role name to assume in the account, requires -A and -T
                             (i.e.: ProwlerRole)
-      -T                  session durantion given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
-                            (i.e.: 43200) 
+      -T                  session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
+                            (i.e.: 43200)
       -B <buckets>        a regex for buckets to exclude from check extra718
                             (i.e.: '^bucket-name-prefix.*\|other-prefix-for-a-bucket.*$')
+      -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R
+      -w                  whitelist file. See whitelist_sample.txt for reference and format
+                            (i.e.: whitelist_sample.txt)
+      -V                  show version number & exit
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:B:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSxI:A:R:T:B:w:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -147,6 +155,9 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:B:" OPTION; do
      s )
         SCORING=1
         ;;
+     S )
+        SEND_TO_SECURITY_HUB=1
+        ;;
      x )
         EXTERNAL_CHECKS_PATH=$OPTARG
         ;;
@@ -159,11 +170,17 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:B:" OPTION; do
      R )
         ROLE_TO_ASSUME=$OPTARG
         ;;
+     I )
+        ROLE_EXTERNAL_ID=$OPTARG
+        ;;
      T )
         SESSION_DURATION_TO_ASSUME=$OPTARG
         ;;
      B )
         EXTRA718_EXCLUDED_BUCKETS=$OPTARG
+        ;;
+     w )
+        WHITELIST_FILE=$OPTARG
         ;;
      : )
         echo ""
@@ -182,23 +199,43 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsx:A:R:T:B:" OPTION; do
    esac
 done
 
+clean_up() {
+  rm -f /tmp/prowler*.policy.*
+  # in case html output is used, make sure it closes html file properly
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
+}
+
+handle_ctrl_c() {
+  clean_up
+  exit $EXITCODE
+}
+
 # Clean up any temp files when prowler quits unexpectedly
-trap "{ rm -f /tmp/prowler*.policy.*; }" EXIT
+trap clean_up EXIT
+# Clean up and exit if Ctrl-C occurs. Required to allow Ctrl-C to stop Prowler when running in Docker
+trap handle_ctrl_c INT
 
 . $PROWLER_DIR/include/colors
 . $PROWLER_DIR/include/os_detector
 . $PROWLER_DIR/include/aws_profile_loader
 . $PROWLER_DIR/include/awscli_detector
-. $PROWLER_DIR/include/outputs
+. $PROWLER_DIR/include/whoami
+. $PROWLER_DIR/include/assume_role
 . $PROWLER_DIR/include/csv_header
 . $PROWLER_DIR/include/banner
-. $PROWLER_DIR/include/whoami
+. $PROWLER_DIR/include/html_report
+. $PROWLER_DIR/include/outputs
 . $PROWLER_DIR/include/credentials_report
 . $PROWLER_DIR/include/scoring
 . $PROWLER_DIR/include/python_detector
 . $PROWLER_DIR/include/secrets_detector
+. $PROWLER_DIR/include/check_creds_last_used
 . $PROWLER_DIR/include/check3x
-. $PROWLER_DIR/include/assume_role
+. $PROWLER_DIR/include/connection_tests
+. $PROWLER_DIR/include/securityhub_integration
+. $PROWLER_DIR/include/junit_integration
 
 # Get a list of all available AWS Regions
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
@@ -206,6 +243,13 @@ REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
   $PROFILE_OPT \
   --region $REGION \
   --region-names $FILTERREGION)
+
+# Pre-process whitelist file if supplied
+if [[ -n "$WHITELIST_FILE" ]]; then
+  # ignore lines starting with # (comments)
+  # ignore inline comments: check1:foo # inline comment
+  WHITELIST="$(awk '!/^[[:space:]]*#/{print }' <(cat "$WHITELIST_FILE") | sed 's/[[:space:]]*#.*$//g')"
+fi
 
 # Load all of the groups of checks inside groups folder named as "groupNumber*"
 for group in $(ls $PROWLER_DIR/groups/group[0-9]*|grep -v groupN_sample); do
@@ -225,19 +269,43 @@ if [[ $EXTERNAL_CHECKS_PATH ]]; then
   done
 fi
 
-# Function to show the title of the check
+# Get a list of total checks available by ID
+for i in "${!GROUP_TITLE[@]}"; do
+  IFS=',' read -ra CHECKS <<< "${GROUP_CHECKS[$i]}"
+  for j in "${CHECKS[@]}"; do
+    TOTAL_CHECKS+=("$CHECK_ID_$j")
+  done
+done
+# Remove duplicates whilst preserving the order of checks, and store the result as an array
+TOTAL_CHECKS=($(echo "${TOTAL_CHECKS[*]}" | tr ' ' '\n' | awk '!seen[$0]++'))
+
+# Function to show the title of the check, and optionally which group(s) it belongs to
 # using this way instead of arrays to keep bash3 (osx) and bash4(linux) compatibility
 show_check_title() {
   local check_id=CHECK_ID_$1
   local check_title=CHECK_TITLE_$1
   local check_scored=CHECK_SCORED_$1
   local check_type=CHECK_TYPE_$1
-  textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_type}"
+  local group_ids
+  local group_index
+  # If requested ($2 is any non-null value) iterate all GROUP_CHECKS and produce a comma-separated list of all
+  # the GROUP_IDs that include this particular check
+  if [[ -n "$2" ]]; then
+    for group_index in "${!GROUP_ID[@]}"; do
+      if [[ "${GROUP_CHECKS[$group_index]}" =~ "$1" ]]; then
+        if [[ -n "$group_ids" ]]; then
+          group_ids+=", "
+        fi
+        group_ids+="${GROUP_ID[$group_index]}"
+      fi
+    done
+  fi
+  textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_type}" "$group_ids"
 }
 
 # Function to show the title of a group, by numeric id
 show_group_title() {
-	# when csv mode is used, no group tittle is shown
+	# when csv mode is used, no group title is shown
   if [[ "$MODE" != "csv" ]]; then
       textTitle "${GROUP_NUMBER[$1]}" "${GROUP_TITLE[$1]}" "NOT_SCORED" "SUPPORT"
   fi
@@ -245,39 +313,64 @@ show_group_title() {
 
 # Function to execute the check
 execute_check() {
-	# See if this is an alternate name for a check
-	# for example, we might have been passed 1.01 which is another name for 1.1
+  # See if this is an alternate name for a check
+  # for example, we might have been passed 1.01 which is another name for 1.1
   local alternate_name_var=CHECK_ALTERNATE_$1
   local alternate_name=${!alternate_name_var}
+  # See if this check defines an ASFF Type, if so, use this, falling back to a sane default
+  # For a list of Types, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#securityhub-findings-format-type-taxonomy
+  local asff_type_var=CHECK_ASFF_TYPE_$1
+  ASFF_TYPE="${!asff_type_var:-Software and Configuration Checks}"
+  # See if this check defines an ASFF Resource Type, if so, use this, falling back to a sane default
+  # For a list of Resource Types, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
+  local asff_resource_type_var=CHECK_ASFF_RESOURCE_TYPE_$1
+  ASFF_RESOURCE_TYPE="${!asff_resource_type_var:-AwsAccount}"
   # Generate the credential report, only if it is group1 related which checks we
   # run so that the checks can safely assume it's available
-	if [ ${alternate_name} ];then
+  # set the custom ignores list for this check
+  ignores="$(awk "/${1}/{print}" <(echo "${WHITELIST}"))"
+
+  if [ ${alternate_name} ];then
     if [[ ${alternate_name} == check1* || ${alternate_name} == extra71 ]];then
       if [ ! -s $TEMP_REPORT_FILE ];then
         genCredReport
         saveReport
       fi
     fi
-		show_check_title ${alternate_name}
-		${alternate_name}
-	else
+    show_check_title ${alternate_name}
+    if is_junit_output_enabled; then
+      prepare_junit_check_output "$1"
+    fi
+    # Execute the check
+    IGNORES="${ignores}" CHECK_NAME="$1" ${alternate_name}
+    if is_junit_output_enabled; then
+      finalise_junit_check_output "$1"
+    fi
+  else
     # Check to see if this is a real check
     local check_id_var=CHECK_ID_$1
     local check_id=${!check_id_var}
     if [ ${check_id} ]; then
-      if [[ ${check_id} == 1* || ${check_id} == 7.1,7.01 ]];then
+      if [[ ${check_id} == 1* || ${check_id} == 7.1 || ${check_id} == 7.74 ]];then
         if [ ! -s $TEMP_REPORT_FILE ];then
           genCredReport
           saveReport
         fi
       fi
-      show_check_title $1
-      $1
+      show_check_title "$1"
+      if is_junit_output_enabled; then
+        prepare_junit_check_output "$1"
+      fi
+      # Execute the check
+      IGNORES="${ignores}" CHECK_NAME="$1" $1
+      if is_junit_output_enabled; then
+        finalise_junit_check_output "$1"
+      fi
     else
       textFail "ERROR! Use a valid check name (i.e. check41 or extra71)";
       exit $EXITCODE
     fi
-	fi
+  fi
 }
 
 # Function to execute all checks in a group
@@ -328,62 +421,68 @@ execute_all() {
 	done
 }
 
-# Function to show the titles of everything
+# Function to show the titles of either all checks or only those in the specified group
 show_all_titles() {
-  MAIN_GROUPS=(1 2 3 4 7)
-  for i in "${MAIN_GROUPS[@]}"; do
-		show_group_title $i
-		# Display the title of the checks in groups 1,2,3,4 and 7
-    # Any other group has checks in these groups
-		IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$i]}
-		for j in ${CHECKS[@]}; do
-			show_check_title $j
-		done
-	done
+  local checks
+  local check_id
+  local group_index
+  # If '-g <group_id>' has been specified, only show the titles of checks within the specified group
+  if [[ $GROUP_ID_READ ]];then
+    if [[ " ${GROUP_ID[@]} " =~ " ${GROUP_ID_READ} " ]]; then
+      for group_index in "${!GROUP_ID[@]}"; do
+        if [ "${GROUP_ID[$group_index]}" == "${GROUP_ID_READ}" ]; then
+          show_group_title "$group_index"
+          IFS=',' read -ra checks <<< "${GROUP_CHECKS[$group_index]}"
+          for check_id in ${checks[@]}; do
+            show_check_title "$check_id"
+          done
+        fi
+      done
+    else
+      textFail "Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
+      show_all_group_titles
+      exit $EXITCODE
+    fi
+  else
+    for check_id in "${TOTAL_CHECKS[@]}"; do
+      # Pass 1 so that the group IDs that this check belongs to are printed
+      show_check_title "$check_id" 1
+    done
+  fi
 }
 
 show_all_group_titles() {
-	for i in "${!GROUP_TITLE[@]}"; do
-		show_group_title $i
-	done
+  local group_index
+  for group_index in "${!GROUP_TITLE[@]}"; do
+    show_group_title "$group_index"
+  done
 }
-
 
 # Function to execute all checks but exclude some of them
 get_all_checks_without_exclusion() {
-        CHECKS_EXCLUDED=()
-        local CHECKS_TO_EXCLUDE=()
-        local TOTAL_CHECKS=()
-        #Get a list of checks to exclude
-        IFS=',' read -ra E_CHECKS <<< "$1"
-        for E_CHECK in "${E_CHECKS[@]}"; do
-            CHECKS_TO_EXCLUDE+=($E_CHECK)
-        done
-        #Get a list of total checks available by ID
-	for i in "${!GROUP_TITLE[@]}"; do
-		#show_group_title $i
-		IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$i]}
-		for j in ${CHECKS[@]}; do
-                    TOTAL_CHECKS+=($CHECK_ID_$j)
-		done
-	done
-        TOTAL_CHECKS=($(echo "${TOTAL_CHECKS[*]}" | tr ' ' '\n' | sort -u)) #removes duplicate and store the result as an array
-        #Create a list that contains all checks but excluded ones
-        for i in "${TOTAL_CHECKS[@]}"; do
-            local COINCIDENCE=false
-            for x in "${CHECKS_TO_EXCLUDE[@]}"; do
-                if [[ "$i" == "$x" ]]; then
-                    COINCIDENCE=true
-                fi
-            done
-            if [[ "$COINCIDENCE" = false ]]; then
-                CHECKS_EXCLUDED+=($i)
-            fi
-        done
+  CHECKS_EXCLUDED=()
+  local CHECKS_TO_EXCLUDE=()
+  # Get a list of checks to exclude
+  IFS=',' read -ra E_CHECKS <<< "$1"
+  for E_CHECK in "${E_CHECKS[@]}"; do
+    CHECKS_TO_EXCLUDE+=($E_CHECK)
+  done
+  # Create a list that contains all checks but excluded ones
+  for i in "${TOTAL_CHECKS[@]}"; do
+    local COINCIDENCE=false
+    for x in "${CHECKS_TO_EXCLUDE[@]}"; do
+      if [[ "$i" == "$x" ]]; then
+        COINCIDENCE=true
+      fi
+    done
+    if [[ "$COINCIDENCE" = false ]]; then
+      CHECKS_EXCLUDED+=($i)
+    fi
+  done
 }
 
 ### All functions defined above ... run the workflow
-if [[ $MODE != "csv" ]]; then
+if [[ " ${MODES[@]} " =~ " mono " || " ${MODES[@]} " =~ " text " ]]; then
   prowlerBanner
 fi
 
@@ -399,9 +498,17 @@ if [[ $PRINTGROUPSONLY == "1" ]]; then
   exit $EXITCODE
 fi
 
-# Check that jq is installed for JSON output
-if [[ $MODE == "json" ]]; then
+# Check that jq is installed for JSON outputs
+if [[ " ${MODES[@]} " =~ " json " || " ${MODES[@]} " =~ " json-asff " ]]; then
   . $PROWLER_DIR/include/jq_detector
+fi
+
+if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
+  checkSecurityHubCompatibility
+fi
+
+if is_junit_output_enabled; then
+  prepare_junit_output
 fi
 
 # Gather account data / test aws cli connectivity
@@ -410,10 +517,11 @@ getWhoami
 # Execute group of checks if called with -g
 if [[ $GROUP_ID_READ ]];then
   if [[ " ${GROUP_ID[@]} " =~ " ${GROUP_ID_READ} " ]]; then
-    if [[ $MODE == "csv" ]]; then
-      BANNER=0
-    fi
+
     execute_group_by_id ${GROUP_ID_READ} ${EXCLUDE_CHECK_ID}
+    if [[ "${MODES[@]}" =~ "html" ]]; then
+      addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    fi
     cleanTemp
     scoring
     exit $EXITCODE
@@ -440,9 +548,19 @@ if [[ $CHECK_ID ]];then
   for CHECK in "${CHECKS[@]}"; do
     execute_check $CHECK
   done
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
   cleanTemp
   exit $EXITCODE
 fi
+
+execute_all
+if [[ "${MODES[@]}" =~ "html" ]]; then
+  addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+fi
+scoring
+cleanTemp
 
 if [[ $ACCOUNT_TO_ASSUME ]]; then
   # unset env variables with assumed role credentials
@@ -451,8 +569,4 @@ if [[ $ACCOUNT_TO_ASSUME ]]; then
   unset AWS_SESSION_TOKEN
 fi
 
-
-execute_all
-scoring
-cleanTemp
 exit $EXITCODE

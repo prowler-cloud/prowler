@@ -14,14 +14,15 @@ CHECK_ID_extra741="7.41"
 CHECK_TITLE_extra741="[extra741] Find secrets in EC2 User Data (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra741="NOT_SCORED"
 CHECK_TYPE_extra741="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra741="AwsEc2Instance"
 CHECK_ALTERNATE_check741="extra741"
 
 extra741(){
   SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"
-  if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then 
+  if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then
     # this folder is deleted once this check is finished
     mkdir $SECRETS_TEMP_FOLDER
-  fi 
+  fi
 
   textInfo "Looking for secrets in EC2 User Data in instances across all regions... (max 100 instances per region use -m to increase it)  "
   for regx in $REGIONS; do
@@ -30,33 +31,25 @@ extra741(){
       for instance in $LIST_OF_EC2_INSTANCES; do
         EC2_USERDATA_FILE="$SECRETS_TEMP_FOLDER/extra741-$instance-userData.decoded"
         EC2_USERDATA=$($AWSCLI ec2 describe-instance-attribute --attribute userData $PROFILE_OPT --region $regx --instance-id $instance --query UserData.Value --output text| grep -v ^None | decode_report > $EC2_USERDATA_FILE)
-        if [ -s $EC2_USERDATA_FILE ];then
-          FILE_FORMAT_ASCII=$(file -b $EC2_USERDATA_FILE|grep ASCII)
+        if [ -s "$EC2_USERDATA_FILE" ];then
           # This finds ftp or http URLs with credentials and common keywords
           # FINDINGS=$(egrep -i '[[:alpha:]]*://[[:alnum:]]*:[[:alnum:]]*@.*/|key|secret|token|pass' $EC2_USERDATA_FILE |wc -l|tr -d '\ ')
           # New implementation using https://github.com/Yelp/detect-secrets
-          if [[ $FILE_FORMAT_ASCII ]]; then
-          FINDINGS=$(secretsDetector file $EC2_USERDATA_FILE)
-            if [[ $FINDINGS -eq 0 ]]; then
-              textPass "$regx: No secrets found in $instance" "$regx"
-              # delete file if nothing interesting is there
-              rm -f $EC2_USERDATA_FILE
-            else
-              textFail "$regx: Potential secret found in $instance" "$regx"
-              # delete file to not leave trace, user must look at the instance User Data
-              rm -f $EC2_USERDATA_FILE
-            fi
-          else
-            mv $EC2_USERDATA_FILE $EC2_USERDATA_FILE.gz ; gunzip $EC2_USERDATA_FILE.gz
-            FINDINGS=$(secretsDetector file $EC2_USERDATA_FILE)
-            if [[ $FINDINGS -eq 0 ]]; then
-              textPass "$regx: No secrets found in $instance User Data" "$regx"
-              rm -f $EC2_USERDATA_FILE
-            else
-              textFail "$regx: Potential secret found in $instance" "$regx"
-            fi
+          # Test if user data is a valid GZIP file, if so gunzip first
+          if gunzip -t "$EC2_USERDATA_FILE" > /dev/null 2>&1; then
+            mv "$EC2_USERDATA_FILE" "$EC2_USERDATA_FILE.gz" ; gunzip "$EC2_USERDATA_FILE.gz"
           fi
-        else 
+          FINDINGS=$(secretsDetector file "$EC2_USERDATA_FILE")
+          if [[ $FINDINGS -eq 0 ]]; then
+            textPass "$regx: No secrets found in $instance User Data" "$regx"
+            # delete file if nothing interesting is there
+            rm -f "$EC2_USERDATA_FILE"
+          else
+            textFail "$regx: Potential secret found in $instance User Data" "$regx"
+            # delete file to not leave trace, user must look at the instance User Data
+            rm -f "$EC2_USERDATA_FILE"
+          fi
+        else
           textPass "$regx: No secrets found in $instance User Data or it is empty" "$regx"
         fi
       done

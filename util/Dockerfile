@@ -7,12 +7,14 @@ RUN addgroup -g ${USERID} ${USERNAME} && \
     adduser -s /bin/sh -G ${USERNAME} -D -u ${USERID} ${USERNAME} && \
     apk --update --no-cache add python3 bash curl jq file && \
     pip3 install --upgrade pip && \
-    pip install awscli ansi2html boto3 detect-secrets
+    pip install awscli boto3 detect-secrets
 
-ADD . /prowler
+WORKDIR /prowler
 
-RUN chown -R prowler /prowler/
+COPY . ./
+
+RUN chown -R prowler .
 
 USER ${USERNAME}
 
-ENTRYPOINT ["/prowler/prowler"]
+ENTRYPOINT ["./prowler"]

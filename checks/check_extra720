@@ -14,6 +14,7 @@ CHECK_ID_extra720="7.20"
 CHECK_TITLE_extra720="[extra720] Check if Lambda functions invoke API operations are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra720="NOT_SCORED"
 CHECK_TYPE_extra720="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra720="AwsLambdaFunction"
 CHECK_ALTERNATE_check720="extra720"
 
 extra720(){
@@ -22,10 +23,10 @@ extra720(){
     LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --query Functions[*].FunctionName --output text)
     if [[ $LIST_OF_FUNCTIONS ]]; then
       for lambdafunction in $LIST_OF_FUNCTIONS;do
-        LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query trailList[?HomeRegion==\`$regx\`].Name --output text)
+        LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query trailList[].TrailARN --output text)
         if [[ $LIST_OF_TRAILS ]]; then
           for trail in $LIST_OF_TRAILS; do
-            FUNCTION_ENABLED_IN_TRAIL=$($AWSCLI cloudtrail get-event-selectors $PROFILE_OPT --trail-name $trail --region $regx --query "EventSelectors[*].DataResources[?Type == \`AWS::Lambda::Function\`].Values" --output text |xargs -n1| grep -E "^arn:aws:lambda.*function:$lambdafunction$|^arn:aws:lambda$")
+            FUNCTION_ENABLED_IN_TRAIL=$($AWSCLI cloudtrail get-event-selectors $PROFILE_OPT --trail-name $trail --region $regx --query "EventSelectors[*].DataResources[?Type == \`AWS::Lambda::Function\`].Values" --output text |xargs -n1| grep -E "^arn:${AWS_PARTITION}:lambda.*function:$lambdafunction$|^arn:${AWS_PARTITION}:lambda$")
             if [[ $FUNCTION_ENABLED_IN_TRAIL ]]; then
               textPass "$regx: Lambda function $lambdafunction enabled in trail $trail" "$regx"
             else

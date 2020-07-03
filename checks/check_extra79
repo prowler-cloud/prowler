@@ -10,10 +10,11 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-CHECK_ID_extra79="7.9,7.09"
+CHECK_ID_extra79="7.9"
 CHECK_TITLE_extra79="[extra79] Check for internet facing Elastic Load Balancers (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra79="NOT_SCORED"
 CHECK_TYPE_extra79="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra79="AwsElbLoadBalancer"
 CHECK_ALTERNATE_extra709="extra79"
 CHECK_ALTERNATE_check79="extra79"
 CHECK_ALTERNATE_check709="extra79"

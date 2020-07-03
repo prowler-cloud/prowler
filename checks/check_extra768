@@ -14,6 +14,7 @@ CHECK_ID_extra768="7.68"
 CHECK_TITLE_extra768="[extra768] Find secrets in ECS task definitions variables (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra768="NOT_SCORED"
 CHECK_TYPE_extra768="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra768="AwsEcsTaskDefinition"
 CHECK_ALTERNATE_check768="extra768"
 
 extra768(){
@@ -22,19 +23,22 @@ extra768(){
     # this folder is deleted once this check is finished
     mkdir $SECRETS_TEMP_FOLDER
   fi
-
   textInfo "Looking for secrets in ECS task definitions' environment variables across all regions... "
   for regx in $REGIONS; do
-    LIST_OF_TASK_DEFINITIONS=$($AWSCLI ecs list-task-definitions $PROFILE_OPT --region $regx --query taskDefinitionArns[*] --output text)
-    if [[ $LIST_OF_TASK_DEFINITIONS ]]; then
-      for taskDefinition in $LIST_OF_TASK_DEFINITIONS;do
-        IFS='/' read -r -a splitArn <<< "$taskDefinition"
+    # Get a list of all families first:
+    FAMILIES=$($AWSCLI ecs list-task-definition-families $PROFILE_OPT --region $regx --status ACTIVE | jq -r .families[])
+    if [[ $FAMILIES ]]; then
+      for FAMILY in $FAMILIES;do
+        # Get the full task definition arn:
+        TASK_DEFINITION_TEMP=$($AWSCLI ecs list-task-definitions $PROFILE_OPT --region $regx --family-prefix $FAMILY --sort DESC --max-items 1 | jq -r .taskDefinitionArns[0])
+        # We only care about the task definition name:
+        IFS='/' read -r -a splitArn <<< "$TASK_DEFINITION_TEMP"
         TASK_DEFINITION=${splitArn[1]}
         TASK_DEFINITION_ENV_VARIABLES_FILE="$SECRETS_TEMP_FOLDER/extra768-$TASK_DEFINITION-$regx-variables.txt"
-        TASK_DEFINITION_ENV_VARIABLES=$($AWSCLI ecs $PROFILE_OPT --region $regx describe-task-definition --task-definition $taskDefinition --query 'taskDefinition.containerDefinitions[*].environment' --output text > $TASK_DEFINITION_ENV_VARIABLES_FILE)
+        TASK_DEFINITION_ENV_VARIABLES=$($AWSCLI ecs $PROFILE_OPT --region $regx describe-task-definition --task-definition $TASK_DEFINITION --query 'taskDefinition.containerDefinitions[*].environment' --output text > $TASK_DEFINITION_ENV_VARIABLES_FILE)
         if [ -s $TASK_DEFINITION_ENV_VARIABLES_FILE ];then
-        # Implementation using https://github.com/Yelp/detect-secrets
-        FINDINGS=$(secretsDetector file $TASK_DEFINITION_ENV_VARIABLES_FILE)
+          # Implementation using https://github.com/Yelp/detect-secrets
+          FINDINGS=$(secretsDetector file $TASK_DEFINITION_ENV_VARIABLES_FILE)
           if [[ $FINDINGS -eq 0 ]]; then
             textPass "$regx: No secrets found in ECS task definition $TASK_DEFINITION variables" "$regx"
             # delete file if nothing interesting is there

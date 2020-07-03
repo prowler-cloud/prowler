@@ -10,10 +10,11 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-CHECK_ID_extra71="7.1,7.01"
+CHECK_ID_extra71="7.1"
 CHECK_TITLE_extra71="[extra71] Ensure users of groups with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra71="NOT_SCORED"
 CHECK_TYPE_extra71="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra71="AwsIamUser"
 CHECK_ALTERNATE_extra701="extra71"
 CHECK_ALTERNATE_check71="extra71"
 CHECK_ALTERNATE_check701="extra71"
@@ -21,15 +22,15 @@ CHECK_ALTERNATE_check701="extra71"
 extra71(){
   # "Ensure users of groups with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)"
   ADMIN_GROUPS=''
-  AWS_GROUPS=$($AWSCLI $PROFILE_OPT iam list-groups --output text --query 'Groups[].GroupName')
+  AWS_GROUPS=$($AWSCLI $PROFILE_OPT iam list-groups --output text --region $REGION --query 'Groups[].GroupName')
   for grp in $AWS_GROUPS; do
     # aws --profile onlinetraining iam list-attached-group-policies --group-name Administrators --query 'AttachedPolicies[].PolicyArn' | grep 'arn:aws:iam::aws:policy/AdministratorAccess'
     # list-attached-group-policies
-    CHECK_ADMIN_GROUP=$($AWSCLI $PROFILE_OPT iam list-attached-group-policies --group-name $grp --output json --query 'AttachedPolicies[].PolicyArn' | grep  'arn:aws:iam::aws:policy/AdministratorAccess')
+    CHECK_ADMIN_GROUP=$($AWSCLI $PROFILE_OPT --region $REGION iam list-attached-group-policies --group-name $grp --output json --query 'AttachedPolicies[].PolicyArn' | grep  "arn:${AWS_PARTITION}:iam::aws:policy/AdministratorAccess")
     if [[ $CHECK_ADMIN_GROUP ]]; then
       ADMIN_GROUPS="$ADMIN_GROUPS $grp"
       textInfo "$grp group provides administrative access"
-      ADMIN_USERS=$($AWSCLI $PROFILE_OPT iam get-group --group-name $grp --output json --query 'Users[].UserName' | grep '"' | cut -d'"' -f2 )
+      ADMIN_USERS=$($AWSCLI $PROFILE_OPT iam get-group --region $REGION --group-name $grp --output json --query 'Users[].UserName' | grep '"' | cut -d'"' -f2 )
       for auser in $ADMIN_USERS; do
         # users in group are Administrators
         # users

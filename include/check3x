@@ -14,17 +14,19 @@ check3x(){
   local CHECK_WARN
   local CHECK_CROSS_ACCOUNT_WARN
 
-  DESCRIBE_TRAILS_CACHE=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION")
-  TRAIL_LIST=$(echo $DESCRIBE_TRAILS_CACHE | jq -r '.trailList[]|@base64')
+  # In order to make all these checks work properly logs and alarms have to 
+  # be based only on CloudTrail tail with CloudWatchLog configuration.
+  DESCRIBE_TRAILS_CACHE=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[?CloudWatchLogsLogGroupArn != `null`]')
+  TRAIL_LIST=$(echo $DESCRIBE_TRAILS_CACHE | jq -r '. |@base64')
   CURRENT_ACCOUNT_ID=$($AWSCLI sts $PROFILE_OPT get-caller-identity --region "$REGION" --query Account --output text)
   CLOUDWATCH_LOGGROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text| tr '\011' '\012' | awk -F: '{print $7}')
 
   if [[ $CLOUDWATCH_LOGGROUP != "" ]]; then
     for group_obj_enc in $TRAIL_LIST; do
       group_obj_raw=$(echo $group_obj_enc | decode_report)
-      CLOUDWATCH_LOGGROUP_NAME=$(echo $group_obj_raw | jq -r '.CloudWatchLogsLogGroupArn|split(":")[6]')
-      CLOUDWATCH_LOGGROUP_REGION=$(echo $group_obj_raw | jq -r '.CloudWatchLogsLogGroupArn|split(":")[3]')
-      CLOUDWATCH_LOGGROUP_ACCOUNT=$(echo $group_obj_raw | jq -r '.CloudWatchLogsLogGroupArn|split(":")[4]')
+      CLOUDWATCH_LOGGROUP_NAME=$(echo $group_obj_raw | jq -r '.[] | .CloudWatchLogsLogGroupArn|split(":")[6]')
+      CLOUDWATCH_LOGGROUP_REGION=$(echo $group_obj_raw | jq -r '.[] | .CloudWatchLogsLogGroupArn|split(":")[3]')
+      CLOUDWATCH_LOGGROUP_ACCOUNT=$(echo $group_obj_raw | jq -r '.[] | .CloudWatchLogsLogGroupArn|split(":")[4]')
       if [ "$CLOUDWATCH_LOGGROUP_ACCOUNT" == "$CURRENT_ACCOUNT_ID" ];then
         # Filter control and whitespace from .metricFilters[*].filterPattern for easier matching later
         METRICFILTER_CACHE=$($AWSCLI logs describe-metric-filters --log-group-name "$CLOUDWATCH_LOGGROUP_NAME" $PROFILE_OPT --region "$CLOUDWATCH_LOGGROUP_REGION"|jq '.metricFilters|=map(.filterPattern|=gsub("[[:space:]]+"; " "))')

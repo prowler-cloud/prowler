@@ -12,49 +12,68 @@
 # specific language governing permissions and limitations under the License.
 
 # Output formatting functions
+
+EXTENSION_CSV="csv"
+EXTENSION_JSON="json"
+EXTENSION_ASFF="asff-json"
+EXTENSION_TEXT="txt"
+EXTENSION_HTML="html"
+OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
+OUTPUT_DIR="${PROWLER_DIR}/output"
+OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
+HTML_LOGO_URL="https://github.com/toniblyx/prowler/"
+HTML_LOGO_IMG="https://raw.githubusercontent.com/toniblyx/prowler/master/util/html/prowler-logo.png"
+TIMESTAMP=$(get_iso8601_timestamp)
+PROWLER_PARAMETERS=$@
+
+# Ensure that output directory always exists when -M is used
+if [[ $MODE ]];then
+  mkdir -p "${OUTPUT_DIR}"
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    addHtmlHeader > ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    HTML_REPORT_INIT="1"
+  fi
+fi
+
+if [[ $PROFILE == "" ]];then
+  PROFILE="ENV"
+fi
+
 textPass(){
   if [[ "$QUIET" == 1 ]]; then
     return
   fi
 
   PASS_COUNTER=$((PASS_COUNTER+1))
-  if [[ "$MODE" == "csv" ]]; then
-    if [[ $2 ]]; then
-      REPREGION=$2
-    else
-      REPREGION=$REGION
-    fi
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
-  elif [[ "$MODE" == "json" ]]; then
-    if [[ $2 ]]; then
-      REPREGION=$2
-    else
-      REPREGION=$REGION
-    fi
-    jq -M -c \
-    --arg PROFILE "$PROFILE" \
-    --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
-    --arg TITLE_TEXT "$TITLE_TEXT" \
-    --arg MESSAGE "$(echo -e "${1}" | sed -e 's/^[[:space:]]*//')" \
-    --arg SCORED "$ITEM_SCORED" \
-    --arg ITEM_LEVEL "$ITEM_LEVEL" \
-    --arg TITLE_ID "$TITLE_ID" \
-    --arg REPREGION "$REPREGION" \
-    --arg TIMESTAMP $(date -u +"%Y-%m-%dT%H:%M:%SZ") \
-    -n '{
-      "Profile": $PROFILE,
-      "Account Number": $ACCOUNT_NUM,
-      "Control": $TITLE_TEXT,
-      "Message": $MESSAGE,
-      "Status": "Pass",
-      "Scored": $SCORED,
-      "Level": $ITEM_LEVEL,
-      "Control ID": $TITLE_ID,
-      "Region": $REPREGION,
-      "Timestamp": $TIMESTAMP,
-    }'
+  if [[ $2 ]]; then
+    REPREGION=$2
   else
+    REPREGION=$REGION
+  fi
+  if [[ "${MODES[@]}" =~ "csv" ]]; then
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
+  fi
+  if [[ "${MODES[@]}" =~ "json" ]]; then
+    generateJsonOutput "$1" "Pass" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_JSON
+  fi
+  if [[ "${MODES[@]}" =~ "json-asff" ]]; then
+    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "PASSED" "INFORMATIONAL")
+    echo "${JSON_ASFF_OUTPUT}" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_ASFF
+    if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
+      sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REPREGION}"
+    fi
+  fi
+  if is_junit_output_enabled; then
+    output_junit_success "$1"
+  fi
+  if [[ "${MODES[@]}" =~ "mono" ]]; then
+    echo "      $OK PASS!$NORMAL $1" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
+  fi
+  if [[ "${MODES[@]}" =~ "text" || "${MODES[@]}" =~ "mono" ]]; then
     echo "      $OK PASS!$NORMAL $1"
+  fi
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    generateHtmlOutput "$1" "PASS"
   fi
 }
 
@@ -63,86 +82,89 @@ textInfo(){
     return
   fi
 
-  if [[ "$MODE" == "csv" ]]; then
-    if [[ $2 ]]; then
-      REPREGION=$2
-    else
-      REPREGION=$REGION
-    fi
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
-  elif [[ "$MODE" == "json" ]]; then
-    if [[ $2 ]]; then
-      REPREGION=$2
-    else
-      REPREGION=$REGION
-    fi
-    jq -M -c \
-    --arg PROFILE "$PROFILE" \
-    --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
-    --arg TITLE_TEXT "$TITLE_TEXT" \
-    --arg MESSAGE "$(echo -e "${1}" | sed -e 's/^[[:space:]]*//')" \
-    --arg SCORED "$ITEM_SCORED" \
-    --arg ITEM_LEVEL "$ITEM_LEVEL" \
-    --arg TITLE_ID "$TITLE_ID" \
-    --arg REPREGION "$REPREGION" \
-    --arg TIMESTAMP $(date -u +"%Y-%m-%dT%H:%M:%SZ") \
-    -n '{
-      "Profile": $PROFILE,
-      "Account Number": $ACCOUNT_NUM,
-      "Control": $TITLE_TEXT,
-      "Message": $MESSAGE,
-      "Status": "Info",
-      "Scored": $SCORED,
-      "Level": $ITEM_LEVEL,
-      "Control ID": $TITLE_ID,
-      "Region": $REPREGION,
-      "Timestamp": $TIMESTAMP,
-    }'
+  if [[ $2 ]]; then
+    REPREGION=$2
   else
+    REPREGION=$REGION
+  fi
+  if [[ "${MODES[@]}" =~ "csv" ]]; then
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
+  fi
+  if [[ "${MODES[@]}" =~ "json" ]]; then
+    generateJsonOutput "$1" "Info" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
+  fi
+  if is_junit_output_enabled; then
+    output_junit_info "$1"
+  fi
+  if [[ "${MODES[@]}" =~ "mono" ]]; then
+    echo "      $NOTICE INFO! $1 $NORMAL" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
+  fi
+  if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $NOTICE INFO! $1 $NORMAL"
+  fi
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    generateHtmlOutput "$1" "INFO"
   fi
 }
 
 textFail(){
-  FAIL_COUNTER=$((FAIL_COUNTER+1))
-  EXITCODE=3
-  if [[ "$MODE" == "csv" ]]; then
-    if [[ $2 ]]; then
-      REPREGION=$2
-    else
-      REPREGION=$REGION
+  ## ignore whitelists for current check
+  level="FAIL"
+  colorcode="$BAD"
+  while read -r i; do
+    ignore_check_name="${i%:*}"
+    ignore_value="${i#*${CHECK_NAME}:}"
+    if [[ ${ignore_check_name} != "${CHECK_NAME}" ]]; then
+      # not for this check
+      continue
     fi
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}FAIL${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1"
-  elif [[ "$MODE" == "json" ]]; then
-    if [[ $2 ]]; then
-      REPREGION=$2
-    else
-      REPREGION=$REGION
+    if [[ $1 =~ .*"${ignore_value}".* ]]; then
+      level="WARNING"
+      colorcode="$WARNING"
+      break
     fi
-    jq -M -c \
-    --arg PROFILE "$PROFILE" \
-    --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
-    --arg TITLE_TEXT "$TITLE_TEXT" \
-    --arg MESSAGE "$(echo -e "${1}" | sed -e 's/^[[:space:]]*//')" \
-    --arg SCORED "$ITEM_SCORED" \
-    --arg ITEM_LEVEL "$ITEM_LEVEL" \
-    --arg TITLE_ID "$TITLE_ID" \
-    --arg REPREGION "$REPREGION" \
-    --arg TIMESTAMP $(date -u +"%Y-%m-%dT%H:%M:%SZ") \
-    -n '{
-      "Profile": $PROFILE,
-      "Account Number": $ACCOUNT_NUM,
-      "Control": $TITLE_TEXT,
-      "Message": $MESSAGE,
-      "Status": "Fail",
-      "Scored": $SCORED,
-      "Level": $ITEM_LEVEL,
-      "Control ID": $TITLE_ID,
-      "Region": $REPREGION,
-      "Timestamp": $TIMESTAMP,
-    }'
+  done <<< "$IGNORES"
+
+  # only set non-0 exit code on FAIL mode, WARN is ok
+  if [[ "$level" == "FAIL" ]]; then
+    FAIL_COUNTER=$((FAIL_COUNTER+1))
+    EXITCODE=3
+  fi
+
+  if [[ $2 ]]; then
+    REPREGION=$2
   else
-    echo "      $BAD FAIL! $1 $NORMAL"
+    REPREGION=$REGION
+  fi
+
+  if [[ "${MODES[@]}" =~ "csv" ]]; then
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}${level}${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
+  fi
+  if [[ "${MODES[@]}" =~ "json" ]]; then
+    generateJsonOutput "$1" "${level}" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
+  fi
+  if [[ "${MODES[@]}" =~ "json-asff" ]]; then
+    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "${level}" "HIGH")
+    echo "${JSON_ASFF_OUTPUT}" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_ASFF}
+    if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
+      sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REPREGION}"
+    fi
+  fi
+  if is_junit_output_enabled; then
+    if [[ "${level}" == "FAIL" ]]; then
+      output_junit_failure "$1"
+    elif [[ "${level}" == "WARNING" ]]; then
+      output_junit_skipped "$1"
+    fi
+  fi
+  if [[ "${MODES[@]}" =~ "mono" ]]; then
+    echo "      $colorcode ${level}! $1 $NORMAL" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
+  fi
+  if [[ "${MODES[@]}" =~ "text" ]]; then
+    echo "      $colorcode ${level}! $1 $NORMAL"
+  fi
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    generateHtmlOutput "$1" "${level}"
   fi
 }
 
@@ -150,9 +172,8 @@ textTitle(){
   CHECKS_COUNTER=$((CHECKS_COUNTER+1))
   TITLE_ID=$1
   if [[ $NUMERAL ]]; then
-    TITLE_ID=$(echo $TITLE_ID | cut -d, -f2)
-  else
-    TITLE_ID=$(echo $TITLE_ID | cut -d, -f1)
+    # Left-pad the check ID with zeros to simplify sorting, e.g. 1.1 -> 1.01
+    TITLE_ID=$(awk -F'.' '{ printf "%d.%02d", $1, $2 }' <<< "$TITLE_ID")
   fi
 
   TITLE_TEXT=$2
@@ -177,15 +198,161 @@ textTitle(){
     *)       ITEM_LEVEL="Unspecified or Invalid";;
   esac
 
-  if [[ "$MODE" == "csv" ]]; then
-      >&2 echo "$TITLE_ID $TITLE_TEXT"
-  elif [[ "$MODE" == "json" ]]; then
+  local group_ids
+  if [[ -n "$5" ]]; then
+    group_ids="$CYAN [$5] $NORMAL"
+  fi
+
+  if [[ "${MODES[@]}" =~ "csv" ]]; then
+      >&2 echo "$TITLE_ID $TITLE_TEXT" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
+  elif [[ "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
     :
   else
     if [[ "$ITEM_SCORED" == "Scored" ]]; then
-      echo -e "\n$BLUE $TITLE_ID $NORMAL $TITLE_TEXT"
+      echo -e "\n$BLUE $TITLE_ID $NORMAL $TITLE_TEXT $group_ids"
     else
-      echo -e "\n$PURPLE $TITLE_ID $TITLE_TEXT $NORMAL"
+      echo -e "\n$PURPLE $TITLE_ID $TITLE_TEXT $NORMAL $group_ids"
     fi
+  fi
+}
+
+generateJsonOutput(){
+  local message=$1
+  local status=$2
+  jq -M -c \
+  --arg PROFILE "$PROFILE" \
+  --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
+  --arg TITLE_TEXT "$TITLE_TEXT" \
+  --arg MESSAGE "$(echo -e "${message}" | sed -e 's/^[[:space:]]*//')" \
+  --arg STATUS "$status" \
+  --arg SCORED "$ITEM_SCORED" \
+  --arg ITEM_LEVEL "$ITEM_LEVEL" \
+  --arg TITLE_ID "$TITLE_ID" \
+  --arg REPREGION "$REPREGION" \
+  --arg TIMESTAMP "$(get_iso8601_timestamp)" \
+  -n '{
+    "Profile": $PROFILE,
+    "Account Number": $ACCOUNT_NUM,
+    "Control": $TITLE_TEXT,
+    "Message": $MESSAGE,
+    "Status": $STATUS,
+    "Scored": $SCORED,
+    "Level": $ITEM_LEVEL,
+    "Control ID": $TITLE_ID,
+    "Region": $REPREGION,
+    "Timestamp": $TIMESTAMP,
+  }'
+}
+
+generateJsonAsffOutput(){
+  # UNIQUE_ID must only contain characters from the unreserved characters set defined in section 2.3 of RFC-3986
+  # Replace any successive non-conforming characters with a single underscore
+  local message=$1
+  local status=$2
+
+  if [[ "$status" == "FAIL" ]]; then
+    status="FAILED"
+  fi
+
+  local severity=$3
+  jq -M -c \
+  --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
+  --arg TITLE_TEXT "$TITLE_TEXT" \
+  --arg MESSAGE "$(echo -e "${message}" | sed -e 's/^[[:space:]]*//')" \
+  --arg UNIQUE_ID "$(LC_ALL=C echo -e -n "${message}" | tr -cs '[:alnum:]._~-' '_')" \
+  --arg STATUS "$status" \
+  --arg SEVERITY "$severity" \
+  --arg TITLE_ID "$TITLE_ID" \
+  --arg TYPE "$ASFF_TYPE" \
+  --arg RESOURCE_TYPE "$ASFF_RESOURCE_TYPE" \
+  --arg REPREGION "$REPREGION" \
+  --arg TIMESTAMP "$(get_iso8601_timestamp)" \
+  --arg PROWLER_VERSION "$PROWLER_VERSION" \
+  --arg AWS_PARTITION "$AWS_PARTITION" \
+-n '{
+      "SchemaVersion": "2018-10-08",
+      "Id": "prowler-\($TITLE_ID)-\($ACCOUNT_NUM)-\($REPREGION)-\($UNIQUE_ID)",
+      "ProductArn": "arn:\($AWS_PARTITION):securityhub:\($REPREGION):\($ACCOUNT_NUM):product/\($ACCOUNT_NUM)/default",
+      "ProductFields": {
+          "ProviderName": "Prowler",
+          "ProviderVersion": $PROWLER_VERSION
+      },
+      "GeneratorId": "prowler-\($PROWLER_VERSION)",
+      "AwsAccountId": $ACCOUNT_NUM,
+      "Types": [
+          $TYPE
+      ],
+      "FirstObservedAt": $TIMESTAMP,
+      "UpdatedAt": $TIMESTAMP,
+      "CreatedAt": $TIMESTAMP,
+      "Severity": {
+          "Label": $SEVERITY
+      },
+      "Title": $TITLE_TEXT,
+      "Description": $MESSAGE,
+      "Resources": [
+          {
+              "Type": $RESOURCE_TYPE,
+              "Id": "AWS::::Account:\($ACCOUNT_NUM)",
+              "Partition": "aws",
+              "Region": $REPREGION
+          }
+      ],
+      "Compliance": {
+          "Status": $STATUS
+      }
+  }'
+}
+
+generateHtmlOutput(){
+  local message=$1
+  local status=$2
+  if [[ $status == "INFO" ]];then
+    echo '<tr class="table-info">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td><i class="fas fa-info-circle"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>INFO</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
+  if [[ $status == "PASS" ]];then
+    echo '<tr class="p-3 mb-2 bg-success">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td><i class="fas fa-thumbs-up"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>PASS</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
+  if [[ $status == "FAIL" ]];then
+    echo '<tr class="table-danger" >' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td> <i class="fas fa-thumbs-down"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>FAIL</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
+  if [[ $status == "WARNING" ]];then
+    echo '<tr class="table-warning">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td><i class="fas fa-exclamation-triangle"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>WARN</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    echo '</tr>'>> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
 }

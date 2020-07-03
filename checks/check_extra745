@@ -14,6 +14,7 @@ CHECK_ID_extra745="7.45"
 CHECK_TITLE_extra745="[extra745] Check if API Gateway endpoint is public or private (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra745="NOT_SCORED"
 CHECK_TYPE_extra745="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra745="AwsApiGatewayRestApi"
 CHECK_ALTERNATE_check745="extra745"
 
 extra745(){
@@ -23,7 +24,7 @@ extra745(){
       for api in $LIST_OF_REST_APIS; do
         API_GW_NAME=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query "items[?id==\`$api\`].name" --output text)
         ENDPOINT_CONFIG_TYPE=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-rest-api --rest-api-id $api --query endpointConfiguration.types --output text)
-        if [[ $ENDPOINT_CONFIG_TYPE ]]; then 
+        if [[ $ENDPOINT_CONFIG_TYPE ]]; then
           case $ENDPOINT_CONFIG_TYPE in
             PRIVATE )
               textPass "$regx: API Gateway $API_GW_NAME ID $api is set as $ENDPOINT_CONFIG_TYPE" "$regx"

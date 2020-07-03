@@ -31,7 +31,10 @@ elif [[ -n $AWS_CONTAINER_CREDENTIALS_RELATIVE_URI ]] && [[ -z $INSTANCE_PROFILE
     AWS_ACCESS_KEY_ID=$(curl -s 169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI | grep AccessKeyId | cut -d':' -f2 | sed 's/[^0-9A-Z]*//g')
     AWS_SECRET_ACCESS_KEY_ID=$(curl -s 169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI | grep SecretAccessKey | cut -d':' -f2 | sed 's/[^0-9A-Za-z/+=]*//g')
     AWS_SESSION_TOKEN=$(curl -s 169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI  grep Token| cut -d':' -f2 | sed 's/[^0-9A-Za-z/+=]*//g')
-elif [[ $INSTANCE_PROFILE ]];then
+elif [[ $AWS_WEB_IDENTITY_TOKEN_FILE ]]; then
+    PROFILE=""
+    PROFILE_OPT=""
+elif [[ $INSTANCE_PROFILE ]]; then
     PROFILE="INSTANCE-PROFILE"
     AWS_ACCESS_KEY_ID=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${INSTANCE_PROFILE} | grep AccessKeyId | cut -d':' -f2 | sed 's/[^0-9A-Z]*//g')
     AWS_SECRET_ACCESS_KEY_ID=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${INSTANCE_PROFILE} | grep SecretAccessKey | cut -d':' -f2 | sed 's/[^0-9A-Za-z/+=]*//g')

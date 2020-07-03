@@ -14,20 +14,27 @@ CHECK_ID_extra734="7.34"
 CHECK_TITLE_extra734="[extra734] Check if S3 buckets have default encryption (SSE) enabled or use a bucket policy to enforce it (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra734="NOT_SCORED"
 CHECK_TYPE_extra734="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra734="AwsS3Bucket"
 CHECK_ALTERNATE_check734="extra734"
 
 extra734(){
-  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text|xargs -n1)
+  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --region $REGION --query Buckets[*].Name --output text|xargs -n1)
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
-
+      BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location $PROFILE_OPT --region $REGION --bucket $bucket --output text)
       # For this test to pass one of the following must be present:
       # - Configure ServerSideEncryptionConfiguration rule for AES256 or aws:kms
       #  OR
       # - Have bucket policy denying s3:PutObject when s3:x-amz-server-side-encryption is absent
 
+      if [[ $BUCKET_LOCATION == "None" ]]; then
+        BUCKET_LOCATION="us-east-1"
+      fi
+      if [[ $BUCKET_LOCATION == "EU" ]]; then
+        BUCKET_LOCATION="eu-west-1"
+      fi
       # query to get if has encryption enabled or not
-      RESULT=$($AWSCLI s3api get-bucket-encryption $PROFILE_OPT --bucket $bucket --query ServerSideEncryptionConfiguration.Rules[].ApplyServerSideEncryptionByDefault[].SSEAlgorithm --output text 2>&1)
+      RESULT=$($AWSCLI s3api get-bucket-encryption $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --query ServerSideEncryptionConfiguration.Rules[].ApplyServerSideEncryptionByDefault[].SSEAlgorithm --output text 2>&1)
       if [[ $(echo "$RESULT" | grep AccessDenied) ]]; then
         textFail "Access Denied Trying to Get Encryption for $bucket"
         continue
@@ -42,7 +49,7 @@ extra734(){
       TEMP_SSE_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
 
       # get bucket policy
-      $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --output text --query Policy > $TEMP_SSE_POLICY_FILE 2>&1
+      $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --region $BUCKET_LOCATION --output text --query Policy > $TEMP_SSE_POLICY_FILE 2>&1
       if [[ $(grep AccessDenied $TEMP_SSE_POLICY_FILE) ]]; then
         textFail "Access Denied Trying to Get Bucket Policy for $bucket"
         rm -f $TEMP_SSE_POLICY_FILE
@@ -55,7 +62,7 @@ extra734(){
       fi
 
       # check if the S3 policy forces SSE s3:x-amz-server-side-encryption:true
-      CHECK_BUCKET_SSE_POLICY_PRESENT=$(cat $TEMP_SSE_POLICY_FILE | jq --arg arn "arn:aws:s3:::${bucket}/*" '.Statement[]|select(.Effect=="Deny" and ((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*") and .Action=="s3:PutObject" and .Resource==$arn and .Condition.StringEquals."s3:x-amz-server-side-encryption" != null)')
+      CHECK_BUCKET_SSE_POLICY_PRESENT=$(cat $TEMP_SSE_POLICY_FILE | jq --arg arn "arn:${AWS_PARTITION}:s3:::${bucket}/*" '.Statement[]|select(.Effect=="Deny" and ((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*") and .Action=="s3:PutObject" and .Resource==$arn and .Condition.StringEquals."s3:x-amz-server-side-encryption" != null)')
       if [[ $CHECK_BUCKET_SSE_POLICY_PRESENT == "" ]]; then
         textFail "Bucket $bucket does not enforce encryption!"
         rm -f $TEMP_SSE_POLICY_FILE

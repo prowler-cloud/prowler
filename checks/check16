@@ -8,10 +8,11 @@
 # You should have received a copy of the license along with this
 # work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
-CHECK_ID_check16="1.6,1.06"
+CHECK_ID_check16="1.6"
 CHECK_TITLE_check16="[check16] Ensure IAM password policy require at least one lowercase letter (Scored)"
 CHECK_SCORED_check16="SCORED"
 CHECK_TYPE_check16="LEVEL1"
+CHECK_ASFF_TYPE_check16="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check106="check16"
 
 check16(){

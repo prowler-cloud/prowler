@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'This template creates a custom policy and role to be assumed by account 123456789012 (change it in line 12 as needed) to run Prowler from and perform a security assessment with a command like: ./prowler -A <THIS_ACCOUNT_ID> -R ProwlerExecRole'
+Resources:
+  ProwlerExecRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: arn:aws:iam::123456789012:root
+            Action: 'sts:AssumeRole'
+            ## In case MFA is required uncomment lines below 
+            ## and read https://github.com/toniblyx/prowler#run-prowler-with-mfa-protected-credentials
+            # Condition:
+            #   Bool:
+            #     'aws:MultiFactorAuthPresent': true
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/SecurityAudit'
+        - 'arn:aws:iam::aws:policy/job-function/ViewOnlyAccess'
+      RoleName: ProwlerExecRole
+      Policies: 
+        - PolicyName: ProwlerExecRoleAdditionalViewPrivileges
+          PolicyDocument:
+            Version : '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - 'dax:ListTables'
+                - 'ds:ListAuthorizedApplications'
+                - 'ds:DescribeRoles'
+                - 'ec2:GetEbsEncryptionByDefault'
+                - 'ecr:Describe*'
+                - 'support:Describe*'
+                - 'tag:GetTagKeys'
+              Resource: '*'

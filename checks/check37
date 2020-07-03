@@ -33,10 +33,12 @@
 #     --actions-enabled \
 #     --alarm-actions arn:aws:sns:us-east-1:123456789012:CloudWatchAlarmTopic
 
-CHECK_ID_check37="3.7,3.07"
+CHECK_ID_check37="3.7"
 CHECK_TITLE_check37="[check37] Ensure a log metric filter and alarm exist for disabling or scheduled deletion of customer created CMKs (Scored)"
 CHECK_SCORED_check37="SCORED"
 CHECK_TYPE_check37="LEVEL2"
+CHECK_ASFF_TYPE_check37="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_check37="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check307="check37"
 
 check37(){

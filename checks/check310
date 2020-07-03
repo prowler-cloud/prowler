@@ -37,6 +37,8 @@ CHECK_ID_check310="3.10"
 CHECK_TITLE_check310="[check310] Ensure a log metric filter and alarm exist for security group changes (Scored)"
 CHECK_SCORED_check310="SCORED"
 CHECK_TYPE_check310="LEVEL2"
+CHECK_ASFF_TYPE_check310="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_check310="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check310="check310"
 
 check310(){

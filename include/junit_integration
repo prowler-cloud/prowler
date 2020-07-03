@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Generates JUnit XML reports which can be read by Jenkins or other CI tools
+
+JUNIT_OUTPUT_DIRECTORY="junit-reports"
+
+is_junit_output_enabled() {
+  if [[ " ${MODES[@]} " =~ " junit-xml " ]]; then
+    true
+  else
+    false
+  fi
+}
+
+xml_escape() {
+  sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/\"/\&quot;/g; s/'"'"'/\&#39;/g' <<< "$1"
+}
+
+prepare_junit_output() {
+  # Remove any JUnit output from previous runs
+  rm -rf "$JUNIT_OUTPUT_DIRECTORY"
+  mkdir "$JUNIT_OUTPUT_DIRECTORY"
+  echo ""
+  echo "$NOTICE Writing JUnit XML reports to $PROWLER_DIR/$JUNIT_OUTPUT_DIRECTORY $NORMAL"
+}
+
+prepare_junit_check_output() {
+  # JUnit test cases must be named uniquely, but each Prowler check can output many times due to multiple resources,
+  # therefore append an index value to the test case name to provide uniqueness, reset it to 1 before starting this check
+  JUNIT_CHECK_INDEX=1
+  # To match JUnit behaviour in Java, and ensure that an aborted execution does not leave a partially written and therefore invalid XML file,
+  # output a JUnit XML file per check
+  JUNIT_OUTPUT_FILE="$JUNIT_OUTPUT_DIRECTORY/TEST-$1.xml"
+  printf '%s\n' \
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" \
+    "<testsuite name=\"$(xml_escape "$(get_junit_classname)")\" timestamp=\"$(get_iso8601_timestamp)\">" \
+    "  <properties>" \
+    "    <property name=\"prowler.version\" value=\"$(xml_escape "$PROWLER_VERSION")\"/>" \
+    "    <property name=\"aws.profile\" value=\"$(xml_escape "$PROFILE")\"/>" \
+    "    <property name=\"aws.accountNumber\" value=\"$(xml_escape "$ACCOUNT_NUM")\"/>" \
+    "    <property name=\"check.id\" value=\"$(xml_escape "$TITLE_ID")\"/>" \
+    "    <property name=\"check.scored\" value=\"$(xml_escape "$ITEM_SCORED")\"/>" \
+    "    <property name=\"check.level\" value=\"$(xml_escape "$ITEM_LEVEL")\"/>" \
+    "    <property name=\"check.asff.type\" value=\"$(xml_escape "$ASFF_TYPE")\"/>" \
+    "    <property name=\"check.asff.resourceType\" value=\"$(xml_escape "$ASFF_RESOURCE_TYPE")\"/>" \
+    "  </properties>" \
+    > "$JUNIT_OUTPUT_FILE"
+  JUNIT_CHECK_START_TIME=$(get_time_in_milliseconds)
+}
+
+finalise_junit_check_output() {
+  echo '</testsuite>' >> "$JUNIT_OUTPUT_FILE"
+}
+
+output_junit_success() {
+  output_junit_test_case "$1" "<system-out>$(xml_escape "$1")</system-out>"
+}
+
+output_junit_info() {
+  # Nothing to output for JUnit for this level of message, but reset the check timer for timing the next check
+  JUNIT_CHECK_START_TIME=$(get_time_in_milliseconds)
+}
+
+output_junit_failure() {
+  output_junit_test_case "$1" "<failure message=\"$(xml_escape "$1")\"/>"
+}
+
+output_junit_skipped() {
+  output_junit_test_case "$1" "<skipped message=\"$(xml_escape "$1")\"/>"
+}
+
+get_junit_classname() {
+  # <section>.<check_id> naturally follows a Java package structure, so it is suitable as a package name
+  echo "$TITLE_ID"
+}
+
+output_junit_test_case() {
+  local time_now
+  local test_case_duration
+  time_now=$(get_time_in_milliseconds)
+  # JUnit test case time values are in seconds, so divide by 1000 using e-3 to convert from milliseconds without losing accuracy due to non-floating point arithmetic
+  test_case_duration=$(printf "%.3f" "$((time_now - JUNIT_CHECK_START_TIME))e-3")
+  printf '%s\n' \
+    "  <testcase name=\"$(xml_escape "$TITLE_TEXT") ($JUNIT_CHECK_INDEX)\" classname=\"$(xml_escape "$(get_junit_classname)")\" time=\"$test_case_duration\">" \
+    "    $2" \
+    "  </testcase>" >> "$JUNIT_OUTPUT_FILE"
+  # Reset the check timer for timing the next check
+  JUNIT_CHECK_START_TIME=$(get_time_in_milliseconds)
+  ((JUNIT_CHECK_INDEX+=1))
+}
