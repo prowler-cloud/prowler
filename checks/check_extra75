@@ -24,7 +24,7 @@ extra75(){
   textInfo "Looking for Security Groups in all regions...  "
 
   for regx in $REGIONS; do
-    SECURITYGROUPS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --max-items $MAXITEMS | jq '.SecurityGroups|map({(.GroupId): (.GroupName)})|add')
+    SECURITYGROUPS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --max-items $MAXITEMS --output json | jq '.SecurityGroups|map({(.GroupId): (.GroupName)})|add')
     if [[ $SECURITYGROUPS == "null" ]];
     then
       continue

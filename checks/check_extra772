@@ -19,7 +19,7 @@ CHECK_ALTERNATE_check772="extra772"
 
 extra772(){
   for region in $REGIONS; do
-    EIP_DUMP=$($AWSCLI ec2 describe-addresses ${PROFILE_OPT} --region $region)
+    EIP_DUMP=$($AWSCLI ec2 describe-addresses ${PROFILE_OPT} --region $region --output json)
     EIP_LIST=$(echo $EIP_DUMP | jq -r '.Addresses[].AllocationId')
     if [[ $EIP_LIST ]]; then
       for eip in $EIP_LIST; do
