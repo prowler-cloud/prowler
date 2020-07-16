@@ -21,7 +21,7 @@ extra792(){
   # "Check if Elastic Load Balancers have insecure SSL ciphers (Not Scored) (Not part of CIS benchmark)"
   for regx in $REGIONS; do
     LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].LoadBalancerName' --output text|xargs -n1)
-    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?(Type == `application`)].LoadBalancerArn' --output text|xargs -n1)
+    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].LoadBalancerArn' --output text|xargs -n1)
     if [[ $LIST_OF_ELBS || $LIST_OF_ELBSV2 ]]; then
       if [[ $LIST_OF_ELBS ]]; then
         # https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-ssl-security-policy.html#ssl-ciphers
@@ -30,34 +30,41 @@ extra792(){
         ELBSECURECIPHERS=("Protocol-TLSv1.2" "Protocol-TLSv1.1" "Protocol-TLSv1" "ECDHE-ECDSA-AES128-GCM-SHA256" "ECDHE-RSA-AES128-GCM-SHA256" "ECDHE-ECDSA-AES128-SHA256" "ECDHE-RSA-AES128-SHA256" "ECDHE-ECDSA-AES128-SHA" "ECDHE-RSA-AES128-SHA" "ECDHE-ECDSA-AES256-GCM-SHA384" "ECDHE-RSA-AES256-GCM-SHA384" "ECDHE-ECDSA-AES256-SHA384" "ECDHE-RSA-AES256-SHA384" "ECDHE-RSA-AES256-SHA" "ECDHE-ECDSA-AES256-SHA" "AES128-GCM-SHA256" "AES128-SHA256" "AES128-SHA" "AES256-GCM-SHA384" "AES256-SHA256" "AES256-SHA" "Server-Defined-Cipher-Order")
 
         for elb in $LIST_OF_ELBS; do
-          ELB_POLICIES=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --load-balancer-name $elb --query "LoadBalancerDescriptions[0].ListenerDescriptions[*].PolicyNames" --output text) 
-          passed=true
-          for policy in $ELB_POLICIES; do
-            # Check for secure default policy 
-            REFPOLICY=$($AWSCLI elb describe-load-balancer-policies $PROFILE_OPT --region $regx --load-balancer-name $elb --policy-name $policy --query "PolicyDescriptions[0].PolicyAttributeDescriptions[?(AttributeName == 'Reference-Security-Policy')].AttributeValue" --output text)
-            if [[ -n "$REFPOLICY" ]]; then 
-              if array_contains ELBSECUREPOLICIES "$REFPOLICY"; then
-                continue 	# Passed for this listener/policy
-              else
-                passed=false
-              fi
-            else
-              # A custom policy is in use.  Check Ciphers
-              CIPHERS=$($AWSCLI  elb describe-load-balancer-policies $PROFILE_OPT --region $regx --load-balancer-name $elb --policy-name $policy --query "PolicyDescriptions[0].PolicyAttributeDescriptions[?(AttributeValue == 'true')].AttributeName" --output text)
-              for cipher in $CIPHERS; do
-                if array_contains ELBSECURECIPHERS "$cipher"; then
-                  continue
-                else
-                  passed=false
-                fi 
-              done
-            fi
-          done
+          ELB_LISTENERS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --load-balancer-name $elb --query "LoadBalancerDescriptions[0]")
+
+          ELB_PROTOCOLS=$(echo $ELB_LISTENERS | jq -r '.ListenerDescriptions[].Listener.Protocol')
+          if [[ $(echo $ELB_PROTOCOLS | grep HTTPS) || $(echo $ELB_PROTOCOLS | grep SSL) ]]; then
+             ELB_POLICIES=$(echo $ELB_LISTENERS | jq -r '.ListenerDescriptions[].PolicyNames | .[]') 
+             passed=true
+             for policy in $ELB_POLICIES; do
+               # Check for secure default policy 
+               REFPOLICY=$($AWSCLI elb describe-load-balancer-policies $PROFILE_OPT --region $regx --load-balancer-name $elb --policy-name $policy --query "PolicyDescriptions[0].PolicyAttributeDescriptions[?(AttributeName == 'Reference-Security-Policy')].AttributeValue" --output text)
+               if [[ -n "$REFPOLICY" ]]; then 
+                 if array_contains ELBSECUREPOLICIES "$REFPOLICY"; then
+                    continue 	# Passed for this listener/policy
+                 else
+                    passed=false
+                 fi
+               else
+                 # A custom policy is in use.  Check Ciphers
+                 CIPHERS=$($AWSCLI  elb describe-load-balancer-policies $PROFILE_OPT --region $regx --load-balancer-name $elb --policy-name $policy --query "PolicyDescriptions[0].PolicyAttributeDescriptions[?(AttributeValue == 'true')].AttributeName" --output text)
+                 for cipher in $CIPHERS; do
+                   if array_contains ELBSECURECIPHERS "$cipher"; then
+                     continue
+                   else
+                     passed=false
+                   fi 
+                 done
+               fi
+             done
           
-          if $passed; then
-            textPass "$regx: $elb has no insecure SSL ciphers" "$regx"
+             if $passed; then
+               textPass "$regx: $elb has no insecure SSL ciphers" "$regx"
+             else
+               textFail "$regx: $elb has insecure SSL ciphers" "$regx" 
+             fi
           else
-            textFail "$regx: $elb has insecure SSL ciphers" "$regx" 
+             textInfo "$regx: $elb does not have an HTTPS or SSL listener" "$regx"
           fi
         done
       fi
@@ -67,21 +74,36 @@ extra792(){
         ELBV2SECUREPOLICIES=("ELBSecurityPolicy-2016-08" "ELBSecurityPolicy-TLS-1-1-2017-01" "ELBSecurityPolicy-TLS-1-2-2017-01" "ELBSecurityPolicy-TLS-1-2-Ext-2018-06" "ELBSecurityPolicy-FS-2018-06" "ELBSecurityPolicy-FS-1-1-2019-08" "ELBSecurityPolicy-FS-1-2-2019-08" "ELBSecurityPolicy-FS-1-2-Res-2019-08" "ELBSecurityPolicy-2015-05")
         for elbarn in $LIST_OF_ELBSV2; do
           passed=true
-          elbname=$(echo $elbarn | awk -F 'loadbalancer/app/' '{print $2}' | awk -F '/' '{print $1}')
-          ELBV2_SSL_POLICIES=$($AWSCLI elbv2 describe-listeners $PROFILE_OPT --region $regx --load-balancer-arn $elbarn --query 'Listeners[*].SslPolicy' --output text)
-       
-          for policy in $ELBV2_SSL_POLICIES; do
-            if array_contains ELBV2SECUREPOLICIES "$policy"; then
-              continue        # Passed for this listener/policy
-            else
-              passed=false
-            fi
-          done
-
-          if $passed; then
-            textPass "$regx: $elbname has no insecure SSL ciphers" "$regx"
+          if [[ $(echo $elbarn | grep "loadbalancer/app/") ]]; then
+            elbname=$(echo $elbarn | awk -F 'loadbalancer/app/' '{print $2}' | awk -F '/' '{print $1}')
+          elif [[ $(echo $elbarn | grep "loadbalancer/net/") ]]; then
+            elbname=$(echo $elbarn | awk -F 'loadbalancer/net/' '{print $2}' | awk -F '/' '{print $1}')
           else
-            textFail "$regx: $elbname has insecure SSL ciphers" "$regx"
+            elbname=$elbarn
+          fi
+
+          ELBV2_LISTENERS=$($AWSCLI elbv2 describe-listeners $PROFILE_OPT --region $regx --load-balancer-arn $elbarn --query "Listeners[*]")
+
+          ELBV2_PROTOCOLS=$(echo $ELBV2_LISTENERS | jq -r '.[].Protocol')
+
+          if [[ $(echo $ELBV2_PROTOCOLS | grep HTTPS) || $(echo $ELBV2_PROTOCOLS | grep TLS) ]]; then
+             ELBV2_SSL_POLICIES=$($AWSCLI elbv2 describe-listeners $PROFILE_OPT --region $regx --load-balancer-arn $elbarn --query 'Listeners[*].SslPolicy' --output text)
+       
+             for policy in $ELBV2_SSL_POLICIES; do
+               if array_contains ELBV2SECUREPOLICIES "$policy"; then
+                 continue        # Passed for this listener/policy
+               else
+                 passed=false
+               fi
+             done
+   
+             if $passed; then
+               textPass "$regx: $elbname has no insecure SSL ciphers" "$regx"
+             else
+               textFail "$regx: $elbname has insecure SSL ciphers" "$regx"
+             fi
+          else
+             textInfo "$regx: $elbname does not have an HTTPS or TLS listener" "$regx"
           fi
         done
       fi
