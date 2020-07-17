@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra793="7.93"
+CHECK_TITLE_extra793="[extra793] Check if Elastic Load Balancers have SSL listeners (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra793="NOT_SCORED"
+CHECK_TYPE_extra793="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra793="AwsElbLoadBalancer"
+CHECK_ALTERNATE_check793="extra793"
+
+extra793(){
+  # "Check if Elastic Load Balancers have encrypted listeners (Not Scored) (Not part of CIS benchmark)"
+  for regx in $REGIONS; do
+    LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].LoadBalancerName' --output text|xargs -n1)
+    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?(Type == `application`)].LoadBalancerArn' --output text|xargs -n1)
+    if [[ $LIST_OF_ELBS || $LIST_OF_ELBSV2 ]]; then
+      if [[ $LIST_OF_ELBS ]]; then
+        ENCRYPTEDPROTOCOLS=("HTTPS" "SSL") 
+        for elb in $LIST_OF_ELBS; do
+          ELB_PROTOCOLS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --load-balancer-name $elb --query "LoadBalancerDescriptions[0].ListenerDescriptions[*].Listener.Protocol" --output text) 
+          passed=true
+          potential_redirect=false
+          for protocol in $ELB_PROTOCOLS; do
+            if array_contains ENCRYPTEDPROTOCOLS "$protocol"; then
+              continue
+            else
+              # Check if both HTTP and HTTPS in use
+              if [[ $(echo $ELB_PROTOCOLS | grep HTTPS) ]]; then 
+                 potential_redirect=true
+              fi
+              passed=false
+            fi
+          done
+          
+          if $passed; then
+            textPass "$regx: $elb has encrypted listeners" "$regx"
+          else
+            if $potential_redirect; then
+              textInfo "$regx: $elb has both encrypted and non-encrypted listeners" "$regx"
+            else
+              textFail "$regx: $elb has non-encrypted listeners" "$regx" 
+            fi 
+          fi
+        done
+      fi
+      if [[ $LIST_OF_ELBSV2 ]]; then
+        for elbarn in $LIST_OF_ELBSV2; do
+          https_only=true
+          redirect_rule=false
+          elbname=$(echo $elbarn | awk -F 'loadbalancer/app/' '{print $2}' | awk -F '/' '{print $1}')
+
+          ELBV2_LISTENERS=$($AWSCLI elbv2 describe-listeners $PROFILE_OPT --region $regx --load-balancer-arn $elbarn --query "Listeners[*]")
+          ELBV2_PROTOCOLS=$(echo $ELBV2_LISTENERS | jq -r '.[].Protocol')
+  
+          if [[ $(echo $ELBV2_PROTOCOLS | grep HTTPS) ]]; then
+             for line in $(echo $ELBV2_LISTENERS | jq -r '.[] | .Protocol + "," + .ListenerArn'); do
+                protocol=$(echo $line | awk -F ',' '{print $1}')
+                listenerArn=$(echo $line | awk -F ',' '{print $2}')
+                if [[ $protocol  == "HTTP" ]]; then
+                  https_only=false
+                  # Check for redirect rule
+                  ELBV2_RULES=$($AWSCLI elbv2 describe-rules $PROFILE_OPT --region $regx --listener-arn $listenerArn --query 'Rules[]')
+                  if [[ $(echo $ELBV2_RULES | jq -r '.[].Actions[].RedirectConfig.Protocol' | grep HTTPS) ]]; then
+                     redirect_rule=true
+                  fi
+               fi
+             done
+
+             if $https_only; then
+               textPass "$regx: $elbname has HTTPS listeners only" "$regx"
+             else
+               if $redirect_rule; then
+                 textInfo "$regx: $elbname has HTTP listener that redirects to HTTPS" "$regx"
+               else
+                 textFail "$regx: $elbname has non-encrypted listeners" "$regx"
+               fi
+             fi
+          else
+            textFail "$regx: $elbname has non-encrypted listeners" "$regx"
+          fi
+        done
+      fi
+    else
+      textInfo "$regx: No ELBs found" "$regx"
+    fi
+  done
+}
+
+array_contains () { 
+    local array="$1[@]"
+    local seeking=$2
+    local in=1
+    for element in "${!array}"; do
+        if [[ $element == "$seeking" ]]; then
+            in=0
+            break
+        fi
+    done
+    return $in
+}
