@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra793="7.93"
+CHECK_TITLE_extra793="[extra793] Check for internet facing EC2 Instances behind load balancers (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra793="NOT_SCORED"
+CHECK_TYPE_extra793="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra793="AwsEc2Instance"
+CHECK_ALTERNATE_check793="extra793"
+
+extra793(){
+  # "Check for internet facing EC2 Instances behind load balancers (Not Scored) (Not part of CIS benchmark)"
+
+  # This check finds all EC2 targets behind load balancers, which is done in two ways:
+  # 1. For ALBs / NLBs ("ELBV2"), map the load balancers to targets to instances.
+  # 2. For classic ELBs, just find the instances behind the LBs.
+  # All the found instances per region are saved in a list, de-duped, and then queried for those that have public IPs.
+  # The check passes if there are no LBs, no instances behind LBs, or no instances with public IPs behind LBs.
+  textInfo "Looking for instances in all regions..."
+  for regx in $REGIONS; do
+
+    ALL_INSTANCES=""
+
+    #ELBV2 check
+    LIST_OF_PUBLIC_LBS=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].[LoadBalancerArn]' --output text)
+
+    
+    if [[ $LIST_OF_PUBLIC_LBS ]]; then
+      while read -r LB; do
+        LB_TARGET_ARNS=$($AWSCLI elbv2 describe-target-groups $PROFILE_OPT --region $regx --load-balancer-arn $LB --query 'TargetGroups[?TargetType==`instance`].[TargetGroupArn]' --output text)
+
+        if [[ $LB_TARGET_ARNS ]]; then
+
+          while read -r TARGET; do
+            TARGET_INSTANCES=$($AWSCLI elbv2 describe-target-health $PROFILE_OPT --region $regx --target-group-arn $TARGET --query 'TargetHealthDescriptions[*].[Target.Id]' --output text)
+            if [[ $TARGET_INSTANCES ]]; then
+              while read -r INSTANCE ; do
+                ALL_INSTANCES="$ALL_INSTANCES $INSTANCE"
+              done <<< "$TARGET_INSTANCES"
+            fi
+
+          done <<< "$LB_TARGET_ARNS"
+
+      fi
+
+      done <<< "$LIST_OF_PUBLIC_LBS"
+
+    fi
+
+    #Classic ELB check
+    LIST_OF_INSTANCES=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].Instances[*].[InstanceId]' --output text)
+
+    if [[ $LIST_OF_INSTANCES ]]; then
+      while read -r INSTANCE; do
+        ALL_INSTANCES="$ALL_INSTANCES $INSTANCE"
+      done <<< "$LIST_OF_INSTANCES"
+    fi
+
+    # Now remove duplicates and then check for instances with public IPs
+    if [[ $ALL_INSTANCES ]]; then
+      UNIQUE_INSTANCES=$(for i in $ALL_INSTANCES; do echo "$i"; done | sort -u)
+      PUBLIC_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --instance-ids $UNIQUE_INSTANCES --query 'Reservations[*].Instances[?PublicIpAddress].[InstanceId,PublicIpAddress]' --output text)
+
+      if [[ $PUBLIC_INSTANCES ]];then
+          while read -r instance; do
+            INSTANCE_ID=$(echo $instance | awk '{ print $1; }')
+            PUBLIC_IP=$(echo $instance | awk '{ print $2; }')
+            textFail "$regx: Instance: $INSTANCE_ID at IP: $PUBLIC_IP is behind a load balancer but still internet-facing!" "$regx"
+          done <<< "$PUBLIC_INSTANCES"
+          else
+            textInfo "$regx: no Internet Facing EC2 Instances found behind a load balancer" "$regx"
+        fi
+
+    else
+      textInfo "$regx: no Internet Facing EC2 Instances found behind a load balancer" "$regx"
+    fi
+  done
+}
