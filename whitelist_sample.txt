@@ -3,6 +3,13 @@
 # Example: Will not consider a myignoredbucket failures as full failure. (Still printed as a warning)
 check26:myignoredbucket
 
+# By default, whitelisting something (e.g. "ci-logs") will only whitelist resources specifically called 
+# "ci-logs". However, if you put ":f" at the end of the line, it will do a fuzzy match, and will
+# whitelist all resources with "ci-logs" in their name.
+# For example:
+#   extra718:ci-logs    # Will block bucket "ci-logs" but not bucket "ci-logs-replica"
+#   extra718:ci-logs:f  # Will block any bucket containing the term "ci-logs"
+
 # line starting with # are ignored as comments
 # add a line per resource as here:
 #<checkid1>:<resource to ignore 1>
@@ -10,3 +17,7 @@ check26:myignoredbucket
 # checkid2
 #<checkid2>:<resource to ignore 1>
 
+# REGEXES
+# This whitelist works with regexes (ERE, the same style of regex as grep -E and bash's =~ use)
+# therefore:
+# extra718:[[:alnum:]]+-logs:f # will ignore all buckets containing the terms ci-logs, qa-logs, etc.
