@@ -15,9 +15,10 @@ GROUP_ID[9]='gdpr'
 GROUP_NUMBER[9]='9.0'
 GROUP_TITLE[9]='GDPR Readiness - ONLY AS REFERENCE - [gdpr] ********************'
 GROUP_RUN_BY_DEFAULT[9]='N' # run it when execute_all is called
-GROUP_CHECKS[9]='extra718,extra725,extra727,check12,check113,check114,extra71,extra731,extra732,extra733,check25,check39,check21,check22,check23,check24,check26,check27,check35,extra726,extra714,extra715,extra717,extra719,extra720,extra721,extra722,check43,check25,extra714,extra729,extra734,extra735,extra736,extra738,extra740,extra761'
+GROUP_CHECKS[9]='extra718,extra725,extra727,check12,check113,check114,extra71,extra731,extra732,extra733,check25,check39,check21,check22,check23,check24,check26,check27,check35,extra726,extra714,extra715,extra717,extra719,extra720,extra721,extra722,check43,check25,extra714,extra729,extra734,extra735,extra736,extra738,extra740,extra761,check11,check110,check111,check112,check116,check120,check122,check13,check14,check15,check16,check17,check18,check19,check28,check29,check31,check310,check311,check312,check313,check314,check32,check33,check34,check36,check37,check38,check41,check42,extra711,extra72,extra723,extra730,extra739,extra76,extra763,extra778,extra78,extra792'
 
 # Resources:
 # https://d1.awsstatic.com/whitepapers/compliance/GDPR_Compliance_on_AWS.pdf
 # https://www.slideshare.net/AmazonWebServices/sid303-navigating-gdpr-compliance-on-aws
 # https://aws.amazon.com/compliance/gdpr-center/
+# https://eur-lex.europa.eu/eli/reg/2016/679/2016-05-04
