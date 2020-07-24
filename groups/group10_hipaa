@@ -15,7 +15,7 @@ GROUP_ID[10]='hipaa'
 GROUP_NUMBER[10]='10.0'
 GROUP_TITLE[10]='HIPAA Compliance - ONLY AS REFERENCE - [hipaa] ****************'
 GROUP_RUN_BY_DEFAULT[10]='N' # run it when execute_all is called
-GROUP_CHECKS[10]='check12,check113,check23,check26,check27,check29,extra718,extra725,extra72,extra75,extra717,extra729,extra734,check38,extra73,extra740,extra735'
+GROUP_CHECKS[10]='check12,check113,check23,check26,check27,check29,extra718,extra725,extra72,extra75,extra717,extra729,extra734,check38,extra73,extra740,extra735,check112,check13,check15,check16,check17,check18,check19,check21,check24,check28,check31,check310,check311,check312,check313,check314,check32,check33,check34,check35,check36,check37,check39,extra792'
 
 # Resources:
 # https://d0.awsstatic.com/whitepapers/compliance/AWS_HIPAA_Compliance_Whitepaper.pdf
