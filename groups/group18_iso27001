@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2020) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+GROUP_ID[18]='iso27001'
+GROUP_NUMBER[18]='18.0'
+GROUP_TITLE[15]='ISO 27001:2013 Readiness - ONLY AS REFERENCE - [iso27001] *********'
+GROUP_RUN_BY_DEFAULT[18]='N' # run it when execute_all is called
+GROUP_CHECKS[18]='check11,check110,check111,check112,check113,check116,check12,check122,check13,check14,check15,check16,check17,check18,check19,check21,check23,check24,check25,check26,check29,check31,check310,check311,check312,check313,check314,check32,check33,check34,check35,check36,check37,check38,check39,check41,check42,check43,extra711,extra72,extra723,extra731,extra735,extra76,extra78,extra792'
+
+# #	Category	Objective ID	Objective Name	Prowler check ID	Check Summary
+# 1	A.10 Cryptography	A.10.1	Cryptographic Controls	extra735	Setup Encryption at rest for RDS instances
+# 2	A.10 Cryptography	A.10.1	Cryptographic Controls	extra792	Detect use of insecure ciphers on ELBs
+# 3	A.10 Cryptography	A.10.1	Cryptographic Controls	check37	Detect Customer Master Keys (CMKs) scheduled for deletion
+# 4	A.12 Operations Security	A.12.4	Logging and Monitoring	check314	Ensure a log metric filter and alarm exist for VPC changes
+# 5	A.12 Operations Security	A.12.4	Logging and Monitoring	check313	Ensure a log metric filter and alarm exist for route table changes
+# 6	A.12 Operations Security	A.12.4	Logging and Monitoring	check312	Ensure a log metric filter and alarm exist for changes to network gateways
+# 7	A.12 Operations Security	A.12.4	Logging and Monitoring	check311	Ensure a log metric filter and alarm exist for changes to Network Access Control Lists (NACL)
+# 8	A.12 Operations Security	A.12.4	Logging and Monitoring	check310	Ensure a log metric filter and alarm exist for security group changes
+# 9	A.12 Operations Security	A.12.4	Logging and Monitoring	check39	Ensure a log metric filter and alarm exist for AWS Config configuration changes
+# 10	A.12 Operations Security	A.12.4	Logging and Monitoring	check38	Ensure a log metric filter and alarm exist for S3 bucket policy changes
+# 11	A.12 Operations Security	A.12.4	Logging and Monitoring	check37	Ensure a log metric filter and alarm exist for disabling or scheduled deletion of customer created CMKs
+# 12	A.12 Operations Security	A.12.4	Logging and Monitoring	check36	Ensure a log metric filter and alarm exist for AWS Management Console authentication failures
+# 13	A.12 Operations Security	A.12.4	Logging and Monitoring	check35	Ensure a log metric filter and alarm exist for CloudTrail configuration changes
+# 14	A.12 Operations Security	A.12.4	Logging and Monitoring	check34	Ensure a log metric filter and alarm exist for IAM policy changes
+# 15	A.12 Operations Security	A.12.4	Logging and Monitoring	check33	Ensure a log metric filter and alarm exist for usage of "root" account
+# 16	A.12 Operations Security	A.12.4	Logging and Monitoring	check32	Ensure a log metric filter and alarm exist for Management Console sign-in without MFA
+# 17	A.12 Operations Security	A.12.4	Logging and Monitoring	check31	Ensure a log metric filter and alarm exist for unauthorized API calls
+# 18	A.12 Operations Security	A.12.4	Logging and Monitoring	check26	Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket
+# 19	A.12 Operations Security	A.12.4	Logging and Monitoring	check25	Ensure AWS Config is enabled in all regions
+# 20	A.12 Operations Security	A.12.4	Logging and Monitoring	check24	Ensure CloudTrail trails are integrated with CloudWatch Logs
+# 21	A.12 Operations Security	A.12.4	Logging and Monitoring	check29	Ensure VPC flow logging is enabled in all VPCs
+# 22	A.12 Operations Security	A.12.4	Logging and Monitoring	check23	Ensure the S3 bucket CloudTrail logs to is not publicly accessible
+# 23	A.12 Operations Security	A.12.4	Logging and Monitoring	check21	Ensure CloudTrail is enabled in all regions
+# 24	A.12 Operations Security	A.12.6	Technical Vulnerability Management	check43	Ensure the default security group of every VPC restricts all traffic
+# 25	A.12 Operations Security	A.12.6	Technical Vulnerability Management	check42	Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389
+# 26	A.12 Operations Security	A.12.6	Technical Vulnerability Management	check41	Ensure no security groups allow ingress from 0.0.0.0/0 to port 22
+# 27	A.12 Operations Security	A.12.6	Technical Vulnerability Management	extra76	Check for publicly shared AMIs
+# 28	A.12 Operations Security	A.12.6	Technical Vulnerability Management	extra72	Ensure EBS snapshots are not publicly accessible
+# 29	A.12 Operations Security	A.12.6	Technical Vulnerability Management	extra731	Ensure SNS topics do not allow global send or subscribe
+# 30	A.12 Operations Security	A.12.6	Technical Vulnerability Management	extra711	Ensure Redshift clusters do not have a public endpoint
+# 31	A.12 Operations Security	A.12.6	Technical Vulnerability Management	extra723	Ensure RDS snapshots are not publicly accessible
+# 32	A.12 Operations Security	A.12.6	Technical Vulnerability Management	extra78	Ensure RDS instances are not accessible to the world.
+# 33	A.12 Operations Security	A.12.6	Technical Vulnerability Management	check23	Ensure the S3 bucket CloudTrail logs to is not publicly accessible
+# 34	A.13 Communications Security	A.13.1	Network Security Management	check43	Ensure the default security group of every VPC restricts all traffic
+# 35	A.13 Communications Security	A.13.1	Network Security Management	check42	Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389
+# 36	A.13 Communications Security	A.13.1	Network Security Management	check41	Ensure no security groups allow ingress from 0.0.0.0/0 to port 22
+# 37	A.13 Communications Security	A.13.1	Network Security Management	extra72	Ensure EBS snapshots are not publicly accessible
+# 38	A.13 Communications Security	A.13.1	Network Security Management	extra731	Ensure SNS topics do not allow global send or subscribe
+# 39	A.13 Communications Security	A.13.1	Network Security Management	extra711	Ensure Redshift clusters do not have a public endpoint
+# 40	A.13 Communications Security	A.13.1	Network Security Management	extra723	Ensure RDS snapshots are not publicly accessible
+# 41	A.13 Communications Security	A.13.1	Network Security Management	extra78	Ensure RDS instances are not accessible to the world.
+# 42	A.9 Access Control	A.9.2	User Access Management	check122	Ensure IAM policies that allow full "*:*" administrative privileges are not created.
+# 43	A.9 Access Control	A.9.2	User Access Management	check111	Ensure IAM password policy expires passwords within 90 days or less
+# 44	A.9 Access Control	A.9.2	User Access Management	check110	Ensure IAM password policy prevents password reuse
+# 45	A.9 Access Control	A.9.2	User Access Management	check19	Ensure IAM password policy requires minimum length of 14 or greater
+# 46	A.9 Access Control	A.9.2	User Access Management	check18	Ensure IAM password policy require at least one number
+# 47	A.9 Access Control	A.9.2	User Access Management	check17	Ensure IAM password policy require at least one symbol
+# 48	A.9 Access Control	A.9.2	User Access Management	check16	Ensure IAM password policy require at least one lowercase letter
+# 49	A.9 Access Control	A.9.2	User Access Management	check15	Ensure IAM password policy requires at least one uppercase letter
+# 50	A.9 Access Control	A.9.2	User Access Management	check11	Avoid the use of the 'root' account
+# 51	A.9 Access Control	A.9.2	User Access Management	check116	Ensure IAM policies are attached only to groups or roles
+# 52	A.9 Access Control	A.9.2	User Access Management	check12	Ensure multi-factor authentication (MFA) is enabled for all IAM users that have console access
+# 53	A.9 Access Control	A.9.2	User Access Management	check113	Ensure MFA is enabled for the 'root' account
+# 54	A.9 Access Control	A.9.2	User Access Management	check14	Ensure access keys are rotated every 90 days or less
+# 55	A.9 Access Control	A.9.2	User Access Management	check13	Ensure credentials unused for 90 days or greater are disabled
+# 56	A.9 Access Control	A.9.2	User Access Management	check112	Ensure no root account access key exists
+# 57	A.9 Access Control	A.9.3	User Responsibilities	check111	Ensure IAM password policy expires passwords within 90 days or less
+# 58	A.9 Access Control	A.9.3	User Responsibilities	check110	Ensure IAM password policy prevents password reuse
+# 59	A.9 Access Control	A.9.3	User Responsibilities	check19	Ensure IAM password policy requires minimum length of 14 or greater
+# 60	A.9 Access Control	A.9.3	User Responsibilities	check18	Ensure IAM password policy require at least one number
+# 61	A.9 Access Control	A.9.3	User Responsibilities	check17	Ensure IAM password policy require at least one symbol
+# 62	A.9 Access Control	A.9.3	User Responsibilities	check16	Ensure IAM password policy require at least one lowercase letter
+# 63	A.9 Access Control	A.9.3	User Responsibilities	check15	Ensure IAM password policy requires at least one uppercase letter
+# 64	A.9 Access Control	A.9.3	User Responsibilities	check12	Ensure multi-factor authentication (MFA) is enabled for all IAM users that have console access
+# 65	A.9 Access Control	A.9.3	User Responsibilities	check14	Ensure access keys are rotated every 90 days or less
+# 66	A.9 Access Control	A.9.3	User Responsibilities	check13	Ensure credentials unused for 90 days or greater are disabled
+# 67	A.9 Access Control	A.9.4	System and Application Access Control	check122	Ensure IAM policies that allow full "*:*" administrative privileges are not created.
+# 68	A.9 Access Control	A.9.4	System and Application Access Control	check111	Ensure IAM password policy expires passwords within 90 days or less
+# 69	A.9 Access Control	A.9.4	System and Application Access Control	check110	Ensure IAM password policy prevents password reuse
+# 70	A.9 Access Control	A.9.4	System and Application Access Control	check19	Ensure IAM password policy requires minimum length of 14 or greater
+# 71	A.9 Access Control	A.9.4	System and Application Access Control	check18	Ensure IAM password policy require at least one number
+# 72	A.9 Access Control	A.9.4	System and Application Access Control	check17	Ensure IAM password policy require at least one symbol
+# 73	A.9 Access Control	A.9.4	System and Application Access Control	check16	Ensure IAM password policy require at least one lowercase letter
+# 74	A.9 Access Control	A.9.4	System and Application Access Control	check15	Ensure IAM password policy requires at least one uppercase letter
+# 75	A.9 Access Control	A.9.4	System and Application Access Control	check11	Avoid the use of the 'root' account
+# 76	A.9 Access Control	A.9.4	System and Application Access Control	check116	Ensure IAM policies are attached only to groups or roles
+# 77	A.9 Access Control	A.9.4	System and Application Access Control	check12	Ensure multi-factor authentication (MFA) is enabled for all IAM users that have console access
+# 78	A.9 Access Control	A.9.4	System and Application Access Control	check113	Ensure MFA is enabled for the 'root' account
+# 79	A.9 Access Control	A.9.4	System and Application Access Control	check14	Ensure access keys are rotated every 90 days or less
+# 80	A.9 Access Control	A.9.4	System and Application Access Control	check13	Ensure credentials unused for 90 days or greater are disabled
+# 81	A.9 Access Control	A.9.4	System and Application Access Control	check112	Ensure no root account access key exists
