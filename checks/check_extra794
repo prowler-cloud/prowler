@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra794="7.94"
+CHECK_TITLE_extra794="[extra794] Ensure EKS Control Plane Audit Logging is enabled for all log types"
+CHECK_SCORED_extra794="NOT_SCORED"
+CHECK_TYPE_extra794="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra794="AwsEksCluster"
+CHECK_ALTERNATE_check794="extra794"
+
+extra794(){
+  textInfo "Looking for control plane logging enabled for EKS clusters across all regions... "
+  for regx in $REGIONS; do
+    # Get a list of EKS clusters (Unless us-west-1 which doesn't support EKS):
+    if [[ $regx == "us-west-1" ]]; then
+      textInfo "$regx: EKS not supported in this region" "$regx"
+    else
+      CLUSTERS=$($AWSCLI eks list-clusters $PROFILE_OPT --region $regx --query 'clusters[]' --output text)
+    fi
+    if [[ $CLUSTERS ]]; then
+      for CLUSTER in $CLUSTERS;do
+        CLUSTERDEF=$($AWSCLI eks describe-cluster $PROFILE_OPT --region $regx --name $CLUSTER --query 'cluster.logging.clusterLogging[0]')
+        LOGGING_ENABLED=$(echo $CLUSTERDEF | jq -r '.enabled')
+        TYPES=$(echo $CLUSTERDEF | jq -r '.types[]')
+        if [[ $LOGGING_ENABLED == "true" ]]; then
+           if [[ $(echo $TYPES | egrep "api.*audit.*authenticator.*controllerManager.*scheduler") ]]; then
+              textPass "$regx: Control plane logging enabled and correctly configured for EKS cluster $CLUSTER" "$regx"
+           else
+              textFail "$regx: Control plane logging enabled, but not all log types collected for EKS cluster $CLUSTER" "$regx"
+           fi
+        else
+              textFail "$regx: Control plane logging is not enabled for EKS cluster $CLUSTER" "$regx"
+        fi
+      done
+    else
+      if [[ $regx != "us-west-1" ]]; then
+        textInfo "$regx: No EKS clusters found" "$regx"
+      fi
+    fi
+  done
+}
