@@ -114,13 +114,8 @@ textFail(){
   while read -r i; do
     ignore_check_name="${i%%:*}" # Check name is everything up to the first :
     ignore_value="${i#*${CHECK_NAME}:}" # Ignore value is everything after the first :
-    if [[ ${ignore_value} =~ .*:f ]]; then
-      # Fuzzy search - if this pattern appears anywhere in the line, it matches.
-      resource_value=".*${ignore_value%:*}.*"
-    else
-      # Strict search - pattern has to be its own word.
-      resource_value="[[:space:]^]${ignore_value}[[:space:]$]"
-    fi
+    # Check to see if ignore value appears anywhere within log message.
+    resource_value=".*${ignore_value}.*"
     if [[ ${ignore_check_name} != "${CHECK_NAME}" ]]; then
       # not for this check
       continue
