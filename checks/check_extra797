@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra797="7.97"
+CHECK_TITLE_extra797="[extra797] Ensure Kubernetes Secrets are encrypted using Customer Master Keys (CMKs)"
+CHECK_SCORED_extra797="NOT_SCORED"
+CHECK_TYPE_extra797="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra797="AwsEksCluster"
+CHECK_ALTERNATE_check797="extra797"
+
+extra797(){
+  textInfo "Looking for encryption config for EKS clusters across all regions... "
+  for regx in $REGIONS; do
+    # Get a list of EKS clusters (Unless us-west-1 which doesn't support EKS):
+    if [[ $regx == "us-west-1" ]]; then
+      textInfo "$regx: EKS not supported in this region" "$regx"
+    else
+      CLUSTERS=$($AWSCLI eks list-clusters $PROFILE_OPT --region $regx --query 'clusters[]' --output text)
+    fi
+    if [[ $CLUSTERS ]]; then
+      for CLUSTER in $CLUSTERS;do
+        ENC_CONFIG=$($AWSCLI eks describe-cluster $PROFILE_OPT --region $regx --name $CLUSTER --query 'cluster.encryptionConfig')
+
+        if [[ $ENC_CONFIG == "null" ]]; then
+           textFail "$regx: Encryption for Kubernetes secrets is not configured for EKS cluster $CLUSTER" "$regx"
+        else
+           textPass "$regx: Encryption for Kubernetes secrets is configured for EKS cluster $CLUSTER" "$regx"
+        fi
+      done
+    else
+      if [[ $regx != "us-west-1" ]]; then
+        textInfo "$regx: No EKS clusters found" "$regx"
+      fi
+    fi
+  done
+}

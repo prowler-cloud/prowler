@@ -11,77 +11,99 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra793="7.93"
-CHECK_TITLE_extra793="[extra793] Check for internet facing EC2 Instances behind load balancers (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra793="[extra793] Check if Elastic Load Balancers have SSL listeners (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra793="NOT_SCORED"
 CHECK_TYPE_extra793="EXTRA"
-CHECK_ASFF_RESOURCE_TYPE_extra793="AwsEc2Instance"
+CHECK_ASFF_RESOURCE_TYPE_extra793="AwsElbLoadBalancer"
 CHECK_ALTERNATE_check793="extra793"
 
 extra793(){
-  # "Check for internet facing EC2 Instances behind load balancers (Not Scored) (Not part of CIS benchmark)"
-
-  # This check finds all EC2 targets behind load balancers, which is done in two ways:
-  # 1. For ALBs / NLBs ("ELBV2"), map the load balancers to targets to instances.
-  # 2. For classic ELBs, just find the instances behind the LBs.
-  # All the found instances per region are saved in a list, de-duped, and then queried for those that have public IPs.
-  # The check passes if there are no LBs, no instances behind LBs, or no instances with public IPs behind LBs.
-  textInfo "Looking for instances in all regions..."
+  # "Check if Elastic Load Balancers have encrypted listeners (Not Scored) (Not part of CIS benchmark)"
   for regx in $REGIONS; do
-
-    ALL_INSTANCES=""
-
-    #ELBV2 check
-    LIST_OF_PUBLIC_LBS=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].[LoadBalancerArn]' --output text)
-
-    
-    if [[ $LIST_OF_PUBLIC_LBS ]]; then
-      while read -r LB; do
-        LB_TARGET_ARNS=$($AWSCLI elbv2 describe-target-groups $PROFILE_OPT --region $regx --load-balancer-arn $LB --query 'TargetGroups[?TargetType==`instance`].[TargetGroupArn]' --output text)
-
-        if [[ $LB_TARGET_ARNS ]]; then
-
-          while read -r TARGET; do
-            TARGET_INSTANCES=$($AWSCLI elbv2 describe-target-health $PROFILE_OPT --region $regx --target-group-arn $TARGET --query 'TargetHealthDescriptions[*].[Target.Id]' --output text)
-            if [[ $TARGET_INSTANCES ]]; then
-              while read -r INSTANCE ; do
-                ALL_INSTANCES="$ALL_INSTANCES $INSTANCE"
-              done <<< "$TARGET_INSTANCES"
+    LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].LoadBalancerName' --output text|xargs -n1)
+    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?(Type == `application`)].LoadBalancerArn' --output text|xargs -n1)
+    if [[ $LIST_OF_ELBS || $LIST_OF_ELBSV2 ]]; then
+      if [[ $LIST_OF_ELBS ]]; then
+        ENCRYPTEDPROTOCOLS=("HTTPS" "SSL")
+        for elb in $LIST_OF_ELBS; do
+          ELB_PROTOCOLS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --load-balancer-name $elb --query "LoadBalancerDescriptions[0].ListenerDescriptions[*].Listener.Protocol" --output text)
+          passed=true
+          potential_redirect=false
+          for protocol in $ELB_PROTOCOLS; do
+            if array_contains ENCRYPTEDPROTOCOLS "$protocol"; then
+              continue
+            else
+              # Check if both HTTP and HTTPS in use
+              if [[ $(echo $ELB_PROTOCOLS | grep HTTPS) ]]; then
+                 potential_redirect=true
+              fi
+              passed=false
             fi
+          done
 
-          done <<< "$LB_TARGET_ARNS"
-
-      fi
-
-      done <<< "$LIST_OF_PUBLIC_LBS"
-
-    fi
-
-    #Classic ELB check
-    LIST_OF_INSTANCES=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].Instances[*].[InstanceId]' --output text)
-
-    if [[ $LIST_OF_INSTANCES ]]; then
-      while read -r INSTANCE; do
-        ALL_INSTANCES="$ALL_INSTANCES $INSTANCE"
-      done <<< "$LIST_OF_INSTANCES"
-    fi
-
-    # Now remove duplicates and then check for instances with public IPs
-    if [[ $ALL_INSTANCES ]]; then
-      UNIQUE_INSTANCES=$(for i in $ALL_INSTANCES; do echo "$i"; done | sort -u)
-      PUBLIC_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --instance-ids $UNIQUE_INSTANCES --query 'Reservations[*].Instances[?PublicIpAddress].[InstanceId,PublicIpAddress]' --output text)
-
-      if [[ $PUBLIC_INSTANCES ]];then
-          while read -r instance; do
-            INSTANCE_ID=$(echo $instance | awk '{ print $1; }')
-            PUBLIC_IP=$(echo $instance | awk '{ print $2; }')
-            textFail "$regx: Instance: $INSTANCE_ID at IP: $PUBLIC_IP is behind a load balancer but still internet-facing!" "$regx"
-          done <<< "$PUBLIC_INSTANCES"
+          if $passed; then
+            textPass "$regx: $elb has encrypted listeners" "$regx"
           else
-            textInfo "$regx: no Internet Facing EC2 Instances found behind a load balancer" "$regx"
-        fi
+            if $potential_redirect; then
+              textInfo "$regx: $elb has both encrypted and non-encrypted listeners" "$regx"
+            else
+              textFail "$regx: $elb has non-encrypted listeners" "$regx"
+            fi
+          fi
+        done
+      fi
+      if [[ $LIST_OF_ELBSV2 ]]; then
+        for elbarn in $LIST_OF_ELBSV2; do
+          https_only=true
+          redirect_rule=false
+          elbname=$(echo $elbarn | awk -F 'loadbalancer/app/' '{print $2}' | awk -F '/' '{print $1}')
 
+          ELBV2_LISTENERS=$($AWSCLI elbv2 describe-listeners $PROFILE_OPT --region $regx --load-balancer-arn $elbarn --query "Listeners[*]")
+          ELBV2_PROTOCOLS=$(echo $ELBV2_LISTENERS | jq -r '.[].Protocol')
+
+          if [[ $(echo $ELBV2_PROTOCOLS | grep HTTPS) ]]; then
+             for line in $(echo $ELBV2_LISTENERS | jq -r '.[] | .Protocol + "," + .ListenerArn'); do
+                protocol=$(echo $line | awk -F ',' '{print $1}')
+                listenerArn=$(echo $line | awk -F ',' '{print $2}')
+                if [[ $protocol  == "HTTP" ]]; then
+                  https_only=false
+                  # Check for redirect rule
+                  ELBV2_RULES=$($AWSCLI elbv2 describe-rules $PROFILE_OPT --region $regx --listener-arn $listenerArn --query 'Rules[]')
+                  if [[ $(echo $ELBV2_RULES | jq -r '.[].Actions[].RedirectConfig.Protocol' | grep HTTPS) ]]; then
+                     redirect_rule=true
+                  fi
+               fi
+             done
+
+             if $https_only; then
+               textPass "$regx: $elbname has HTTPS listeners only" "$regx"
+             else
+               if $redirect_rule; then
+                 textInfo "$regx: $elbname has HTTP listener that redirects to HTTPS" "$regx"
+               else
+                 textFail "$regx: $elbname has non-encrypted listeners" "$regx"
+               fi
+             fi
+          else
+            textFail "$regx: $elbname has non-encrypted listeners" "$regx"
+          fi
+        done
+      fi
     else
-      textInfo "$regx: no Internet Facing EC2 Instances found behind a load balancer" "$regx"
+      textInfo "$regx: No ELBs found" "$regx"
     fi
   done
+}
+
+array_contains () {
+    local array="$1[@]"
+    local seeking=$2
+    local in=1
+    for element in "${!array}"; do
+        if [[ $element == "$seeking" ]]; then
+            in=0
+            break
+        fi
+    done
+    return $in
 }
