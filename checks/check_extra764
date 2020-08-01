@@ -55,6 +55,7 @@ extra764(){
       else
           textInfo "Unknown Error occurred: $policy_str"
       fi
+
       rm -fr $TEMP_STP_POLICY_FILE
     done
 

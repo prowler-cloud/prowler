@@ -17,6 +17,11 @@ tags
 # Persistent undo
 [._]*.un~
 
+# Development
+.idea
+secrets-*
+
+
 # MacOs DS_Store
 *.DS_Store
 

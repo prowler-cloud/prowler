@@ -19,25 +19,18 @@ CHECK_ALTERNATE_check122="check122"
 check122(){
   # "Ensure IAM policies that allow full \"*:*\" administrative privileges are not created (Scored)"
   LIST_CUSTOM_POLICIES=$($AWSCLI iam list-policies --output text $PROFILE_OPT --region $REGION --scope Local --query 'Policies[*].[Arn,DefaultVersionId]' | grep -v -e '^None$' | awk -F '\t' '{print $1","$2"\n"}')
-  if [[ $LIST_CUSTOM_POLICIES ]]; then
-    textInfo "Looking for custom policies: (skipping default policies - it may take few seconds...)"
-    for policy in $LIST_CUSTOM_POLICIES; do
-      POLICY_ARN=$(echo $policy | awk -F ',' '{print $1}')
-      POLICY_VERSION=$(echo $policy | awk -F ',' '{print $2}')
-      POLICY_WITH_FULL=$($AWSCLI iam get-policy-version --output text --policy-arn $POLICY_ARN --version-id $POLICY_VERSION --query "[PolicyVersion.Document.Statement] | [] | [?Action!=null] | [?Effect == 'Allow' && Resource == '*' && Action == '*']" $PROFILE_OPT --region $REGION)
-      if [[ $POLICY_WITH_FULL ]]; then
-        POLICIES_ALLOW_LIST="$POLICIES_ALLOW_LIST $POLICY_ARN"
-      fi
-    done
-    if [[ $POLICIES_ALLOW_LIST ]]; then
-      textInfo "List of custom policies: "
-      for policy in $POLICIES_ALLOW_LIST; do
-        textFail "Policy $policy allows \"*:*\""
-      done
+  textInfo "Looking for custom policies: (skipping default policies - it may take few seconds...)"
+  for policy in $LIST_CUSTOM_POLICIES; do
+    POLICY_ARN=$(echo $policy | awk -F ',' '{print $1}')
+    POLICY_VERSION=$(echo $policy | awk -F ',' '{print $2}')
+    POLICY_WITH_FULL=$($AWSCLI iam get-policy-version --output text --policy-arn $POLICY_ARN --version-id $POLICY_VERSION --query "[PolicyVersion.Document.Statement] | [] | [?Action!=null] | [?Effect == 'Allow' && Resource == '*' && Action == '*']" $PROFILE_OPT --region $REGION)
+    if [[ $POLICY_WITH_FULL ]]; then
+      textFail "Policy $policy allows \"*:*\""
     else
-        textPass "No custom policy found that allow full \"*:*\" administrative privileges"
+      textPass "Policy $policy doesn't allow \"*:*\""
     fi
-  else
-    textPass "No custom policies found"
+  done
+  if [[ -z $POLICIES_ALLOW_LIST ]]; then
+      textInfo "No custom policy found that allow full \"*:*\" administrative privileges"
   fi
 }
