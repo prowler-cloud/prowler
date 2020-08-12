@@ -38,8 +38,6 @@ extra799(){
 
   textInfo "Looking for roles..."
 
-  # aws iam list-roles ...
-
   ROLES_FILENAME=$(mktemp)
   $AWSCLI iam list-roles $PROFILE_OPT > $ROLES_FILENAME
 
