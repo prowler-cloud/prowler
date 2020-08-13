@@ -41,7 +41,7 @@ extra799(){
   ROLES_FILENAME=$(mktemp)
   $AWSCLI iam list-roles $PROFILE_OPT > $ROLES_FILENAME
 
-  FAILED_ROLES=$(cat $ROLES_FILENAME | jq -r '.Roles[] | select([.AssumeRolePolicyDocument.Statement[] | select((.Effect == "Allow") and (((.Principal.AWS | type == "string") and (.Principal.AWS == "*")) or ((.Principal.AWS | type == "array") and (.Principal.AWS[] | contains ("*")))))]| length > 0) | .RoleName')
+  FAILED_ROLES=$(cat $ROLES_FILENAME | jq -r '.Roles[] | select([.AssumeRolePolicyDocument.Statement[] | select((.Effect == "Allow") and (((.Principal.AWS | type == "string") and (.Principal.AWS == "*")) or ((.Principal.AWS | type == "array") and (.Principal.AWS[] | contains ("*")))))]| length > 0) | .Arn')
 
   FOUND_ROLES=false
 
