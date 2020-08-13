@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra799="7.99"
+CHECK_TITLE_extra799="[extra799] Check for role trust relationships allowing any Principal (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra799="NOT_SCORED"
+CHECK_TYPE_extra799="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra799="AwsIamRole"
+CHECK_ALTERNATE_check799="extra799"
+
+extra799(){
+  # Check for role trust relationships allowing any Principal (Not Scored) (Not part of CIS benchmark)
+
+  # Checks assume-role policy docs for any AWS principal of *. The principal can be a string or an array, e.g.
+  # "Principal": {
+  #   "AWS": "*"
+  # }
+
+  # or
+
+  # "Principal": {
+  #   "AWS": [
+  #     "arn:aws:iam::1234:root",
+  #     "*"
+  #   ]
+  # }
+
+  # Only prints failing roles, to avoid thousands of lines of passes.
+
+  textInfo "Looking for roles..."
+
+  ROLES_FILENAME=$(mktemp)
+  $AWSCLI iam list-roles $PROFILE_OPT > $ROLES_FILENAME
+
+  FAILED_ROLES=$(cat $ROLES_FILENAME | jq -r '.Roles[] | select([.AssumeRolePolicyDocument.Statement[] | select((.Effect == "Allow") and (((.Principal.AWS | type == "string") and (.Principal.AWS == "*")) or ((.Principal.AWS | type == "array") and (.Principal.AWS[] | contains ("*")))))]| length > 0) | .RoleName')
+
+  FOUND_ROLES=false
+
+  for r in $FAILED_ROLES; do
+  	FOUND_ROLES=true
+  	textFail "Role $r has a trust relationship allowing any Principal to assume it"
+  done
+
+  if ! $FOUND_ROLES; then
+  	textInfo "No roles found allowing any Principal to assume it"
+  fi
+
+  rm -rf $ROLES_FILENAME
+}
