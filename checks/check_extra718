@@ -19,12 +19,12 @@ CHECK_ALTERNATE_check718="extra718"
 
 extra718(){
   # "Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)"
-  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text|xargs -n1)
+  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --region $REGION --output text|xargs -n1)
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
-      BUCKET_SERVER_LOG_ENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --query [LoggingEnabled] --output text 2>&1)
+      BUCKET_SERVER_LOG_ENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --region $REGION --query [LoggingEnabled] --output text 2>&1)
       if [[ $(echo "$BUCKET_SERVER_LOG_ENABLED" | grep AccessDenied) ]]; then
-        textFail "Access Denied Trying to Get Bucket Logging for $bucket"
+        textFail "Access Denied Trying to get Logging for $bucket"
         continue
       fi
       if [[ $(echo "$BUCKET_SERVER_LOG_ENABLED" | grep "^None$") ]]; then

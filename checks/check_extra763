@@ -19,10 +19,10 @@ CHECK_ALTERNATE_check763="extra763"
 
 extra763(){
   # "Check if S3 buckets have object versioning enabled (Not Scored) (Not part of CIS benchmark)"
-  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text|xargs -n1)
+  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --region $REGION --query Buckets[*].Name --output text|xargs -n1)
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
-      BUCKET_VERSIONING_ENABLED=$($AWSCLI s3api get-bucket-versioning --bucket $bucket $PROFILE_OPT --query Status --output text 2>&1)
+      BUCKET_VERSIONING_ENABLED=$($AWSCLI s3api get-bucket-versioning --region $REGION --bucket $bucket $PROFILE_OPT --query Status --output text 2>&1)
       if [[ $(echo "$BUCKET_VERSIONING_ENABLED" | grep AccessDenied) ]]; then
         textFail "Access Denied Trying to Get Bucket Versioning for $bucket"
         continue

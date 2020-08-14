@@ -62,7 +62,7 @@ extra73(){
   #
   # Otherwise start to iterate bucket
   #
-  ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --query 'Buckets[*].{Name:Name}' $PROFILE_OPT --output text 2>&1)
+  ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --region $REGION --query 'Buckets[*].{Name:Name}' $PROFILE_OPT --output text 2>&1)
   if [[ $(echo "$ALL_BUCKETS_LIST" | grep AccessDenied) ]]; then
     textFail "Access Denied Trying to List Buckets"
     return
@@ -79,7 +79,7 @@ extra73(){
     # must be made to S3 endpoints in the same region as the bucket was
     # created.
     #
-    BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --bucket $bucket $PROFILE_OPT --output text 2>&1)
+    BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --region $REGION --bucket $bucket $PROFILE_OPT --output text 2>&1)
     if [[ $(echo "$BUCKET_LOCATION" | grep AccessDenied) ]]; then
       textFail "Access Denied Trying to Get Bucket Location for $bucket"
       continue
