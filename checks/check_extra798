@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# This check was contributed by Nick Malcolm (github.com/nickmalcolm), building
+# on the hard work of others.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra798="7.98"
+CHECK_TITLE_extra798="[extra798] Ensure that no custom policies exist which allow permissive role assumption (e.g. sts:AssumeRole on *)"
+CHECK_SCORED_extra798="NOT_SCORED"
+CHECK_TYPE_extra798="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra798="AwsIamPolicy"
+CHECK_ALTERNATE_extra798="extra798"
+
+extra798(){
+  # "Ensure that no custom policies exist which permit assuming any role (e.g. sts:AssumeRole on *)"
+  #
+  # A permissive STS Role assumption policy is one where the Resource (ARN) is not explicitly defined
+  # This is most often seen as sts:assumeRole on *, but can take other forms.
+  #
+  # Learn more: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_permissions-to-switch.html#roles-usingrole-createpolicy
+  LIST_CUSTOM_POLICIES=$($AWSCLI iam list-policies --output text $PROFILE_OPT --region $REGION --scope Local --query 'Policies[*].[Arn,DefaultVersionId]' | grep -v -e '^None$' | awk -F '\t' '{print $1","$2"\n"}')
+  if [[ $LIST_CUSTOM_POLICIES ]]; then
+    textInfo "Looking for custom policies: (skipping default policies - it may take few seconds...)"
+    for policy in $LIST_CUSTOM_POLICIES; do
+      POLICY_ARN=$(echo $policy | awk -F ',' '{print $1}')
+      POLICY_VERSION=$(echo $policy | awk -F ',' '{print $2}')
+
+      POLICY_STATEMENTS_WITH_ALLOW=$($AWSCLI iam get-policy-version \
+        --output json \
+        --policy-arn $POLICY_ARN \
+        --version-id $POLICY_VERSION \
+        --query "[PolicyVersion.Document.Statement] | [] | [?Effect == 'Allow']" \
+        $PROFILE_OPT \
+        --region $REGION
+      )
+
+      # Identify permissive policies by:
+      #   1 & 2) Casting all the Resource and Action keys to Arrays (sometimes they're a single string)
+      #   3) Iterate over the policy statements
+      #   4) Narrow the scope to Actions which are sts:* or sts:assumeRole(WithSAML|WithWebIdentity)
+      #   5) Narrow the scope to Resources (IAM Roles) which include a wildcard
+      POLICY_WITH_PERMISSIVE_STS=$(echo $POLICY_STATEMENTS_WITH_ALLOW \
+        | jq 'map( .Resource |= (if type=="array" then . else [.] end) )' \
+        | jq 'map( .Action |= (if type=="array" then . else [.] end) )' \
+        | jq '.[]' \
+        | jq 'select(.Action[] | contains("sts:AssumeRole") or contains("sts:*"))' \
+        | jq 'select(.Resource[] | contains("*"))')
+
+      if [[ $POLICY_WITH_PERMISSIVE_STS ]]; then
+        PERMISSIVE_POLICIES_LIST="$PERMISSIVE_POLICIES_LIST $POLICY_ARN"
+      fi
+
+    done
+    if [[ $PERMISSIVE_POLICIES_LIST ]]; then
+      textInfo "STS AssumeRole Policies should only include the complete ARNs for the Roles that the user needs"
+      textInfo "Learn more: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_permissions-to-switch.html#roles-usingrole-createpolicy"
+      for policy in $PERMISSIVE_POLICIES_LIST; do
+        textFail "Policy $policy allows permissive STS Role assumption"
+      done
+    else
+      textPass "No custom policies found that allow permissive STS Role assumption"
+    fi
+  else
+    textPass "No custom policies found"
+  fi
+}
