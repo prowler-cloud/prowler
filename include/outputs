@@ -256,6 +256,7 @@ generateJsonAsffOutput(){
 
   local severity=$3
   jq -M -c \
+  --arg UUID $(uuidgen | awk '{print tolower($0)}') \
   --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
   --arg TITLE_TEXT "$TITLE_TEXT" \
   --arg MESSAGE "$(echo -e "${message}" | sed -e 's/^[[:space:]]*//')" \
@@ -269,15 +270,15 @@ generateJsonAsffOutput(){
   --arg TIMESTAMP "$(get_iso8601_timestamp)" \
   --arg PROWLER_VERSION "$PROWLER_VERSION" \
   --arg AWS_PARTITION "$AWS_PARTITION" \
--n '{
+  -n '{
       "SchemaVersion": "2018-10-08",
-      "Id": "prowler-\($TITLE_ID)-\($ACCOUNT_NUM)-\($REPREGION)-\($UNIQUE_ID)",
+      "Id": "arn:\($AWS_PARTITION):securityhub:\($REPREGION):\($ACCOUNT_NUM):product/prowler/\($PROWLER_VERSION)/finding/\($UUID)",
       "ProductArn": "arn:\($AWS_PARTITION):securityhub:\($REPREGION):\($ACCOUNT_NUM):product/\($ACCOUNT_NUM)/default",
       "ProductFields": {
           "ProviderName": "Prowler",
           "ProviderVersion": $PROWLER_VERSION
       },
-      "GeneratorId": "prowler-\($PROWLER_VERSION)",
+      "GeneratorId": "prowler-\($TITLE_ID)-\($ACCOUNT_NUM)-\($REPREGION)-\($UNIQUE_ID)",
       "AwsAccountId": $ACCOUNT_NUM,
       "Types": [
           $TYPE
