@@ -96,7 +96,7 @@ USAGE:
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:enbVsSxI:A:R:T:w:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:" OPTION; do
    case $OPTION in
      h )
         usage

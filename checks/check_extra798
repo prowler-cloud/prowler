@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra798="7.98"
+CHECK_TITLE_extra798="[extra798] Check if Lambda functions have resource-based policy set as Public"
+CHECK_SCORED_extra798="NOT_SCORED"
+CHECK_TYPE_extra798="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra798="AwsLambdaFunction"
+CHECK_ALTERNATE_check798="extra798"
+
+extra798(){
+  for regx in $REGIONS; do
+    LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --output text --query 'Functions[*].FunctionName')
+    if [[ $LIST_OF_FUNCTIONS ]]; then
+      for lambdafunction in $LIST_OF_FUNCTIONS; do
+        # get the policy per function
+        FUNCTION_POLICY=$($AWSCLI lambda get-policy  $PROFILE_OPT --region $regx --function-name $lambdafunction --query Policy --output text 2>/dev/null)
+        if [[ $FUNCTION_POLICY ]]; then
+          FUNCTION_POLICY_ALLOW_ALL=$(echo $FUNCTION_POLICY \
+            | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*")')
+          if [[ $FUNCTION_POLICY_ALLOW_ALL ]]; then
+            textFail "$regx: Lambda function $lambdafunction has a policy with public access" "$regx"
+          else
+            textPass "$regx: Lambda function $lambdafunction has a policy resource-based policy and is not public" "$regx"
+          fi
+        else
+          textPass "$regx: Lambda function $lambdafunction does not have resource-based policy" "$regx"
+        fi
+      done
+    else
+      textInfo "$regx: No Lambda functions found" "$regx"
+    fi
+  done
+}

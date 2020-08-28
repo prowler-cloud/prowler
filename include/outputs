@@ -295,7 +295,7 @@ generateJsonAsffOutput(){
           {
               "Type": $RESOURCE_TYPE,
               "Id": "AWS::::Account:\($ACCOUNT_NUM)",
-              "Partition": "aws",
+              "Partition": $AWS_PARTITION,
               "Region": $REPREGION
           }
       ],
