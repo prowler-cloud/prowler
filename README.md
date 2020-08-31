@@ -263,7 +263,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
       -c <check_id>       specify one or multiple check ids separated by commas, to see all available checks use -l option
                             (i.e.: check11 for check 1.1 or extra71,extra72 for extra check 71 and extra check 72)
       -g <group_id>       specify a group of checks by id, to see all available group of checks use -L
-                            (i.e.: check3 for entire section 3, level1 for CIS Level 1 Profile Definitions or forensics-ready)
+                            (i.e.: group3 for entire section 3, cislevel1 for CIS Level 1 Profile Definitions or forensics-ready)
       -f <filterregion>   specify an AWS region to run checks against
                             (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)

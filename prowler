@@ -63,7 +63,7 @@ USAGE:
       -c <check_id>       specify one or multiple check ids separated by commas, to see all available checks use "-l" option
                             (i.e.: "check11" for check 1.1 or "extra71,extra72" for extra check 71 and extra check 72)
       -g <group_id>       specify a group of checks by id, to see all available group of checks use "-L"
-                            (i.e.: "check3" for entire section 3, "level1" for CIS Level 1 Profile Definitions or "forensics-ready")
+                            (i.e.: "group3" for entire section 3, "cislevel1" for CIS Level 1 Profile Definitions or "forensics-ready")
       -f <filterregion>   specify an AWS region to run checks against
                             (i.e.: us-west-1)
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
@@ -271,8 +271,10 @@ for i in "${!GROUP_TITLE[@]}"; do
     TOTAL_CHECKS+=("$CHECK_ID_$j")
   done
 done
-# Remove duplicates whilst preserving the order of checks, and store the result as an array
-TOTAL_CHECKS=($(echo "${TOTAL_CHECKS[*]}" | tr ' ' '\n' | awk '!seen[$0]++'))
+# Remove duplicates, sort checks numerically, and store the result as an array
+# Note: the sort mechanism relies on the fact that the check ID prefixes 'check' and 'extra' are both 5 characters long.
+#       6th character is the section number, 7th character onwards is the individual ID (e.g. check110 = check 1 10)
+TOTAL_CHECKS=($(echo "${TOTAL_CHECKS[*]}" | tr ' ' '\n' | awk '!seen[$0]++' | sort -k 1.6,1.6n -k 1.7n))
 
 # Function to show the title of the check, and optionally which group(s) it belongs to
 # using this way instead of arrays to keep bash3 (osx) and bash4(linux) compatibility
