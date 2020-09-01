@@ -560,7 +560,6 @@ execute_all
 if [[ "${MODES[@]}" =~ "html" ]]; then
   addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
 fi
-
 scoring
 cleanTemp
 
