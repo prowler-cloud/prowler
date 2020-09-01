@@ -64,19 +64,16 @@ sendToSecurityHub(){
     SUPPRESSED=$(echo $PREVIOUS_FINDING | jq '.[] | select(.Workflow.Status=="SUPPRESSED")')
     # If are old non-resolved findings with different status, re-import it to update with previous Id
     if [[ ! -z $SAME_STATUS && -z $SUPPRESSED ]]; then
-      echo "Reimport"
       PREVIOUS_FINDING_ID=$(echo $PREVIOUS_FINDING | jq '.[0].Id' );
       findings =$(echo $findings | jq --arg previous_id "$PREVIOUS_FINDING_ID"  .[0].Id = previous_id)
       BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-import-findings --findings "${findings}")
     else
       # Update to avoid being deleted after 90 dayss
-      echo "Comment"
-      # BATCH_UPDATE_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-update-findings --finding-identifiers "${PREVIOUS_FINDING_IDS}" --note '{"Text": "Finding re-detected by Prowler scan", "UpdatedBy": "prowler"}')
+      BATCH_UPDATE_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-update-findings --finding-identifiers "${PREVIOUS_FINDING_IDS}" --note '{"Text": "Finding re-detected by Prowler scan", "UpdatedBy": "prowler"}')
     fi
   else
-    echo "Import"
     #If new, import it
-    # BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-import-findings --findings "${findings}")
+    BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-import-findings --findings "${findings}")
   fi
 
   # Check for success if updated
