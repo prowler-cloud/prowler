@@ -559,6 +559,11 @@ if [[ $CHECK_ID ]];then
 fi
 
 execute_all
+
+if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
+  resolveSecurityHubPreviousFails
+fi
+
 if [[ "${MODES[@]}" =~ "html" ]]; then
   addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
 fi

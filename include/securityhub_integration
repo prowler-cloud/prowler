@@ -28,15 +28,65 @@ checkSecurityHubCompatibility(){
       exit $EXITCODE
     fi
   done
+  # Get unresolved findings, == FAIL as PASSED are moved to RESOLVED. 
+  SECURITY_HUB_PREVIOUS_FINDINGS=$($AWSCLI securityhub get-findings --filters '{"GeneratorId":[{"Value": "prowler-","Comparison":"PREFIX"}],"WorkflowStatus":[{"Value": "RESOLVED","Comparison":"NOT_EQUALS"}]}' | jq -r ".Findings[] | {Id, GeneratorId, Workflow, Compliance}"| jq -cs)
+}
+
+resolveSecurityHubPreviousFails(){
+  # Move previous findings to Workflow to RESOLVED (as prowler didn't re-detect them)
+  echo "TEST"
+  PREVIOUS_FAILED_IDS=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq -c --arg parn "$product_arn" '.[] | select(.Compliance.Status==FAILED) | map({"Id": .Id, ProductArn: $parn} )');
+  BATCH_UPDATE_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-update-findings --finding-identifiers "${PREVIOUS_FAILED_IDS}" --workflow '{"Status": "RESOLVED"}')
+
+  # Check for success if updated
+  if [[ ! -z "${BATCH_UPDATE_RESULT}" ]] && ! jq -e '.ProcessedFindings >= 1' <<< "${BATCH_UPDATE_RESULT}" > /dev/null 2>&1; then
+    echo -e "\n$RED ERROR!$NORMAL Failed to update AWS Security Hub finding\n"
+  fi
+
 }
 
 sendToSecurityHub(){
+
   local findings="$1"
   local region="$2"
-  BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-import-findings --findings "${findings}")
-  # A successful CLI response is: {"SuccessCount": 1,"FailedFindings": [],"FailedCount": 0}
-  # Therefore, check that SuccessCount is indeed 1
-  if [[ -z "${BATCH_IMPORT_RESULT}" ]] || ! jq -e '.SuccessCount == 1' <<< "${BATCH_IMPORT_RESULT}" > /dev/null 2>&1; then
+  local finding_id=$(echo $findings | jq -r ".Id")
+  local status=$(echo $findings | jq -r ".Compliance.Status")
+  local product_arn=$(echo $findings | jq -r ".ProductArn")
+  local generator_id=$(echo $findings | jq -r ".GeneratorId")
+
+  PREVIOUS_FINDING=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq --arg finding "$generator_id" '.[] | select((.GeneratorId==$finding))' | jq -cs)
+
+  if [[ $CHECK_PREVIOUS_FINDING != "[]" ]]; then
+    # Remove from previous findings to update (using generator)
+    SECURITY_HUB_PREVIOUS_FINDINGS=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq -s --arg finding "$generator_id" '[ .[] | select((.GeneratorId!=$finding)) ]')
+
+    SAME_STATUS=$(echo $PREVIOUS_FINDING | jq --arg status "$status" '.[] | select(.Compliance.Status!=$status)')
+    SUPPRESSED=$(echo $PREVIOUS_FINDING | jq '.[] | select(.Workflow.Status=="SUPPRESSED")')
+    # If are old non-resolved findings with different status, re-import it to update with previous Id
+    if [[ ! -z $SAME_STATUS && -z $SUPPRESSED ]]; then
+      echo "Reimport"
+      PREVIOUS_FINDING_ID=$(echo $PREVIOUS_FINDING | jq '.[0].Id' );
+      findings =$(echo $findings | jq --arg previous_id "$PREVIOUS_FINDING_ID"  .[0].Id = previous_id)
+      BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-import-findings --findings "${findings}")
+    else
+      # Update to avoid being deleted after 90 dayss
+      echo "Comment"
+      # BATCH_UPDATE_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-update-findings --finding-identifiers "${PREVIOUS_FINDING_IDS}" --note '{"Text": "Finding re-detected by Prowler scan", "UpdatedBy": "prowler"}')
+    fi
+  else
+    echo "Import"
+    #If new, import it
+    # BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-import-findings --findings "${findings}")
+  fi
+
+  # Check for success if updated
+  if [[ ! -z "${BATCH_UPDATE_RESULT}" ]] && ! jq -e '.ProcessedFindings >= 1' <<< "${BATCH_UPDATE_RESULT}" > /dev/null 2>&1; then
+    echo -e "\n$RED ERROR!$NORMAL Failed to update AWS Security Hub finding\n"
+  fi
+
+  # Check for success if imported
+  if [[ ! -z "${BATCH_IMPORT_RESULT}" ]] && ! jq -e '.SuccessCount == 1' <<< "${BATCH_IMPORT_RESULT}" > /dev/null 2>&1; then
     echo -e "\n$RED ERROR!$NORMAL Failed to send check output to AWS Security Hub\n"
   fi
+
 }
