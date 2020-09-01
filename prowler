@@ -411,9 +411,13 @@ execute_all() {
       GROUP_RUN_BY_DEFAULT[7]='N'
     fi
     if [ "${GROUP_RUN_BY_DEFAULT[$i]}" == "Y" ]; then
-		  execute_group $i
+      execute_group $i
     fi
 	done
+  for checks in $(ls $EXTERNAL_CHECKS_PATH/check*); do
+    CHECK_ID=$(echo $checks | awk -F '_' '{ print $2 }')
+    execute_check $CHECK_ID
+  done
 }
 
 # Function to show the titles of either all checks or only those in the specified group
@@ -554,6 +558,11 @@ execute_all
 if [[ "${MODES[@]}" =~ "html" ]]; then
   addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
 fi
+
+if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
+  resolveSecurityHubPreviousFails
+fi
+
 scoring
 cleanTemp
 
