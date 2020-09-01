@@ -559,10 +559,6 @@ if [[ "${MODES[@]}" =~ "html" ]]; then
   addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
 fi
 
-if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
-  resolveSecurityHubPreviousFails
-fi
-
 scoring
 cleanTemp
 
