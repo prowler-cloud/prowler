@@ -34,7 +34,6 @@ checkSecurityHubCompatibility(){
 
 resolveSecurityHubPreviousFails(){
   # Move previous findings to Workflow to RESOLVED (as prowler didn't re-detect them)
-  echo "TEST"
   PREVIOUS_FAILED_IDS=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq -c --arg parn "$product_arn" '.[] | select(.Compliance.Status==FAILED) | map({"Id": .Id, ProductArn: $parn} )');
   BATCH_UPDATE_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-update-findings --finding-identifiers "${PREVIOUS_FAILED_IDS}" --workflow '{"Status": "RESOLVED"}')
 
