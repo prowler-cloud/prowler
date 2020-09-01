@@ -28,7 +28,7 @@ checkSecurityHubCompatibility(){
       exit $EXITCODE
     fi
   done
-  # Get unresolved findings, == FAIL as PASSED are moved to RESOLVED. 
+  # Get unresolved findings
   SECURITY_HUB_PREVIOUS_FINDINGS=$($AWSCLI securityhub get-findings --filters '{"GeneratorId":[{"Value": "prowler-","Comparison":"PREFIX"}],"WorkflowStatus":[{"Value": "RESOLVED","Comparison":"NOT_EQUALS"}]}' | jq -r ".Findings[] | {Id, GeneratorId, Workflow, Compliance}"| jq -cs)
 }
 
