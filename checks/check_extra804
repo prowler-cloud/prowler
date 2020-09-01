@@ -47,11 +47,11 @@ extra804(){
     textInfo "Access Denied Trying to Get Public Access Block at account level"
   fi
   if [[ $(echo "$ACCOUNT_PUBLIC_ACCESS_BLOCK" | grep NoSuchPublicAccessBlockConfiguration) ]]; then
-    ACCOUNT_BLOCK_PUBLIC_ACLS=""
+    ACCOUNT_RESTRICT_PUBLIC_BUCKET=""
   else
-    ACCOUNT_BLOCK_PUBLIC_ACLS=$(echo "$ACCOUNT_PUBLIC_ACCESS_BLOCK" | jq -r '.PublicAccessBlockConfiguration.RestrictPublicBuckets')
+    ACCOUNT_RESTRICT_PUBLIC_BUCKET=$(echo "$ACCOUNT_PUBLIC_ACCESS_BLOCK" | jq -r '.PublicAccessBlockConfiguration.RestrictPublicBuckets')
   fi
-  if [[ $ACCOUNT_BLOCK_PUBLIC_ACLS == "true" ]]; then
+  if [[ $ACCOUNT_RESTRICT_PUBLIC_BUCKET == "true" ]]; then
     textPass "All S3 public buckets restricted at account level"
     return
   fi
@@ -97,11 +97,11 @@ extra804(){
     fi
     if [[ $(echo "$BUCKET_PUBLIC_ACCESS_BLOCK" | grep NoSuchPublicAccessBlockConfiguration) ]]; then
       # This is the case when a newly created bucket does not set the block, so it defaults to false.
-      BUCKET_BLOCK_PUBLIC_ACLS="false"
+      BUCKET_RESTRICT_PUBLIC_BUCKET="false"
     else
-      BUCKET_BLOCK_PUBLIC_ACLS=$(echo "$BUCKET_PUBLIC_ACCESS_BLOCK" | jq -r '.PublicAccessBlockConfiguration.RestrictPublicBuckets')
+      BUCKET_RESTRICT_PUBLIC_BUCKET=$(echo "$BUCKET_PUBLIC_ACCESS_BLOCK" | jq -r '.PublicAccessBlockConfiguration.RestrictPublicBuckets')
     fi
-    if [[ $BUCKET_BLOCK_PUBLIC_ACLS == "true" ]]; then
+    if [[ $BUCKET_RESTRICT_PUBLIC_BUCKET == "true" ]]; then
       textPass "$BUCKET_LOCATION: $bucket bucket restricts public buckets" "$BUCKET_LOCATION"
     else
       textFail "$BUCKET_LOCATION: $bucket bucket does not restrict public buckets" "$BUCKET_LOCATION"

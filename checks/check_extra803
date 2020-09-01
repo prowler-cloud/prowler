@@ -47,11 +47,11 @@ extra803(){
     textInfo "Access Denied Trying to Get Public Access Block at account level"
   fi
   if [[ $(echo "$ACCOUNT_PUBLIC_ACCESS_BLOCK" | grep NoSuchPublicAccessBlockConfiguration) ]]; then
-    ACCOUNT_BLOCK_PUBLIC_ACLS=""
+    ACCOUNT_IGNORE_PUBLIC_ACLS=""
   else
-    ACCOUNT_BLOCK_PUBLIC_ACLS=$(echo "$ACCOUNT_PUBLIC_ACCESS_BLOCK" | jq -r '.PublicAccessBlockConfiguration.IgnorePublicAcls')
+    ACCOUNT_IGNORE_PUBLIC_ACLS=$(echo "$ACCOUNT_PUBLIC_ACCESS_BLOCK" | jq -r '.PublicAccessBlockConfiguration.IgnorePublicAcls')
   fi
-  if [[ $ACCOUNT_BLOCK_PUBLIC_ACLS == "true" ]]; then
+  if [[ $ACCOUNT_IGNORE_PUBLIC_ACLS == "true" ]]; then
     textPass "All S3 public ACLs ignored at account level"
     return
   fi
@@ -97,11 +97,11 @@ extra803(){
     fi
     if [[ $(echo "$BUCKET_PUBLIC_ACCESS_BLOCK" | grep NoSuchPublicAccessBlockConfiguration) ]]; then
       # This is the case when a newly created bucket does not set the block, so it defaults to false.
-      BUCKET_BLOCK_PUBLIC_ACLS="false"
+      BUCKET_IGNORE_PUBLIC_ACLS="false"
     else
-      BUCKET_BLOCK_PUBLIC_ACLS=$(echo "$BUCKET_PUBLIC_ACCESS_BLOCK" | jq -r '.PublicAccessBlockConfiguration.IgnorePublicAcls')
+      BUCKET_IGNORE_PUBLIC_ACLS=$(echo "$BUCKET_PUBLIC_ACCESS_BLOCK" | jq -r '.PublicAccessBlockConfiguration.IgnorePublicAcls')
     fi
-    if [[ $BUCKET_BLOCK_PUBLIC_ACLS == "true" ]]; then
+    if [[ $BUCKET_IGNORE_PUBLIC_ACLS == "true" ]]; then
       textPass "$BUCKET_LOCATION: $bucket bucket ignores public ACLs" "$BUCKET_LOCATION"
     else
       textFail "$BUCKET_LOCATION: $bucket bucket does not ignore public ACLs" "$BUCKET_LOCATION"
