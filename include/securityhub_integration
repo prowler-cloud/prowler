@@ -72,7 +72,6 @@ sendToSecurityHub(){
     fi
   else
     #If new, import it
-    echo "Import"
     BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-import-findings --findings "${findings}")
   fi
 
