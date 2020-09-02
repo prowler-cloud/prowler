@@ -29,7 +29,7 @@ checkSecurityHubCompatibility(){
     fi
   done
   # Get unresolved findings
-  SECURITY_HUB_PREVIOUS_FINDINGS=$($AWSCLI securityhub get-findings --filters '{"GeneratorId":[{"Value": "prowler-","Comparison":"PREFIX"}],"WorkflowStatus":[{"Value": "RESOLVED","Comparison":"NOT_EQUALS"}]}' | jq -r ".Findings[] | {Id, GeneratorId, Workflow, Compliance}"| jq -cs)
+  SECURITY_HUB_PREVIOUS_FINDINGS=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT get-findings --filters '{"GeneratorId":[{"Value": "prowler-","Comparison":"PREFIX"}],"WorkflowStatus":[{"Value": "RESOLVED","Comparison":"NOT_EQUALS"}]}' | jq -r ".Findings[] | {Id, GeneratorId, Workflow, Compliance}"| jq -cs)
 }
 
 resolveSecurityHubPreviousFails(){
@@ -54,8 +54,7 @@ sendToSecurityHub(){
   local generator_id=$(echo $findings | jq -r ".GeneratorId")
 
   PREVIOUS_FINDING=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq --arg finding "$generator_id" '.[] | select((.GeneratorId==$finding))' | jq -cs)
-
-  if [[ $CHECK_PREVIOUS_FINDING != "[]" ]]; then
+  if [[ $PREVIOUS_FINDING != "[]" ]]; then
     # Remove from previous findings to update (using generator)
     SECURITY_HUB_PREVIOUS_FINDINGS=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq -s --arg finding "$generator_id" '[ .[] | select((.GeneratorId!=$finding)) ]')
 
@@ -67,11 +66,13 @@ sendToSecurityHub(){
       findings =$(echo $findings | jq --arg previous_id "$PREVIOUS_FINDING_ID"  .[0].Id = previous_id)
       BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-import-findings --findings "${findings}")
     else
+      PREVIOUS_FINDING_IDS=$(echo $PREVIOUS_FINDING | jq -c --arg parn "$product_arn" 'map({"Id": .Id, ProductArn: $parn} )');
       # Update to avoid being deleted after 90 dayss
       BATCH_UPDATE_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-update-findings --finding-identifiers "${PREVIOUS_FINDING_IDS}" --note '{"Text": "Finding re-detected by Prowler scan", "UpdatedBy": "prowler"}')
     fi
   else
     #If new, import it
+    echo "Import"
     BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-import-findings --findings "${findings}")
   fi
 
