@@ -14,6 +14,7 @@ CHECK_ID_extra792="7.92"
 CHECK_TITLE_extra792="[extra792] Check if Elastic Load Balancers have insecure SSL ciphers (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra792="NOT_SCORED"
 CHECK_TYPE_extra792="EXTRA"
+CHECK_SEVERITY_extra792="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra792="AwsElbLoadBalancer"
 CHECK_ALTERNATE_check792="extra792"
 

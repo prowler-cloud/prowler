@@ -15,6 +15,7 @@ CHECK_ID_extra732="7.32"
 CHECK_TITLE_extra732="[extra732] Check if Geo restrictions are enabled in CloudFront distributions (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra732="NOT_SCORED"
 CHECK_TYPE_extra732="EXTRA"
+CHECK_SEVERITY_extra732="Low"
 CHECK_ASFF_RESOURCE_TYPE_extra732="AwsCloudFrontDistribution"
 CHECK_ALTERNATE_check732="extra732"
 

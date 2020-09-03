@@ -14,6 +14,7 @@ CHECK_ID_extra785="7.85"
 CHECK_TITLE_extra785="[extra785] Check if Amazon Elasticsearch Service (ES) domains have updates available"
 CHECK_SCORED_extra785="NOT_SCORED"
 CHECK_TYPE_extra785="EXTRA"
+CHECK_SEVERITY_extra785="Low"
 CHECK_ASFF_RESOURCE_TYPE_extra785="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check785="extra785"
 

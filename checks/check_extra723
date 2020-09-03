@@ -14,6 +14,7 @@ CHECK_ID_extra723="7.23"
 CHECK_TITLE_extra723="[extra723] Check if RDS Snapshots and Cluster Snapshots are public (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra723="NOT_SCORED"
 CHECK_TYPE_extra723="EXTRA"
+CHECK_SEVERITY_extra723="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra723="AwsRdsDbSnapshot"
 CHECK_ALTERNATE_check723="extra723"
 

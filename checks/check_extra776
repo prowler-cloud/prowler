@@ -29,6 +29,7 @@ CHECK_ID_extra776="7.76"
 CHECK_TITLE_extra776="[extra776] Check if ECR image scan found vulnerabilities in the newest image version (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra776="NOT_SCORED"
 CHECK_TYPE_extra776="EXTRA"
+CHECK_SEVERITY_extra776="Medium"
 CHECK_ALTERNATE_check776="extra776"
 
 extra776(){

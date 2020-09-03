@@ -14,6 +14,7 @@ CHECK_ID_extra770="7.70"
 CHECK_TITLE_extra770="[extra770] Check for internet facing EC2 instances with Instance Profiles attached (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra770="NOT_SCORED"
 CHECK_TYPE_extra770="EXTRA"
+CHECK_SEVERITY_extra770="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra770="AwsEc2Instance"
 CHECK_ALTERNATE_check770="extra770"
 

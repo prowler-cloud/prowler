@@ -14,6 +14,7 @@ CHECK_ID_extra794="7.94"
 CHECK_TITLE_extra794="[extra794] Ensure EKS Control Plane Audit Logging is enabled for all log types"
 CHECK_SCORED_extra794="NOT_SCORED"
 CHECK_TYPE_extra794="EXTRA"
+CHECK_SEVERITY_extra794="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra794="AwsEksCluster"
 CHECK_ALTERNATE_check794="extra794"
 

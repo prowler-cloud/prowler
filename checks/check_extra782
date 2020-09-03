@@ -14,6 +14,7 @@ CHECK_ID_extra782="7.82"
 CHECK_TITLE_extra782="[extra782] Check if Amazon Elasticsearch Service (ES) domains has node-to-node encryption enabled"
 CHECK_SCORED_extra782="NOT_SCORED"
 CHECK_TYPE_extra782="EXTRA"
+CHECK_SEVERITY_extra782="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra782="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check782="extra782"
 

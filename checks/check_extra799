@@ -15,9 +15,9 @@ CHECK_ID_extra799="7.99"
 CHECK_TITLE_extra799="[extra799] Check if Security Hub is enabled and its standard subscriptions"
 CHECK_SCORED_extra799="NOT_SCORED"
 CHECK_TYPE_extra799="EXTRA"
+CHECK_SEVERITY_extra799="High"
 CHECK_ASFF_RESOURCE_TYPE_extra799="AwsSecurityHubHub"
 CHECK_ALTERNATE_check799="extra799"
-CHECK_SEVERITY_extra799="medium"
 
 extra799(){
   for regx in $REGIONS; do

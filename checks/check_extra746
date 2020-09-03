@@ -14,6 +14,7 @@ CHECK_ID_extra746="7.46"
 CHECK_TITLE_extra746="[extra746] Check if API Gateway has configured authorizers (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra746="NOT_SCORED"
 CHECK_TYPE_extra746="EXTRA"
+CHECK_SEVERITY_extra746="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra746="AwsApiGatewayRestApi"
 CHECK_ALTERNATE_check746="extra746"
 

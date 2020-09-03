@@ -103,8 +103,17 @@ bsd_get_time_in_milliseconds() {
 gnu_get_iso8601_timestamp() {
   "$DATE_CMD" -u +"%Y-%m-%dT%H:%M:%SZ"
 }
+
+gsu_get_iso8601_hundred_days_ago() {
+  "$DATE_CMD" -d "100 days ago" -u +"%Y-%m-%dT%H:%M:%SZ"
+}
+
 bsd_get_iso8601_timestamp() {
   "$DATE_CMD" -u +"%Y-%m-%dT%H:%M:%SZ"
+}
+
+bsd_get_iso8601_hundred_days_ago() {
+  "$DATE_CMD" -v-100d -u +"%Y-%m-%dT%H:%M:%SZ"
 }
 
 gnu_test_tcp_connectivity() {
@@ -149,6 +158,9 @@ if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
   }
   get_iso8601_timestamp() {
     gnu_get_iso8601_timestamp
+  }
+  get_iso8601_hundred_days_ago() {
+    gsu_get_iso8601_hundred_days_ago
   }
   test_tcp_connectivity() {
     gnu_test_tcp_connectivity "$1" "$2" "$3"
@@ -206,6 +218,9 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     }
     get_iso8601_timestamp() {
       bsd_get_iso8601_timestamp
+    }
+    get_iso8601_hundred_days_ago() {
+      bsd_get_iso8601_hundred_days_ago
     }
   fi
   if "$BASE64_CMD" --version >/dev/null 2>&1 ; then

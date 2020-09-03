@@ -57,7 +57,7 @@ textPass(){
     generateJsonOutput "$1" "Pass" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_JSON
   fi
   if [[ "${MODES[@]}" =~ "json-asff" ]]; then
-    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "PASSED" "INFORMATIONAL")
+    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "PASSED")
     echo "${JSON_ASFF_OUTPUT}" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_ASFF
     if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
       sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REPREGION}"
@@ -144,7 +144,7 @@ textFail(){
     generateJsonOutput "$1" "${level}" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
   fi
   if [[ "${MODES[@]}" =~ "json-asff" ]]; then
-    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "${level}" "HIGH")
+    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "${level}")
     echo "${JSON_ASFF_OUTPUT}" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_ASFF}
     if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
       sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REPREGION}"
@@ -225,6 +225,7 @@ generateJsonOutput(){
   --arg TITLE_TEXT "$TITLE_TEXT" \
   --arg MESSAGE "$(echo -e "${message}" | sed -e 's/^[[:space:]]*//')" \
   --arg STATUS "$status" \
+  --arg SEVERITY "$CHECK_SEVERITY" \
   --arg SCORED "$ITEM_SCORED" \
   --arg ITEM_LEVEL "$ITEM_LEVEL" \
   --arg TITLE_ID "$TITLE_ID" \
@@ -235,6 +236,7 @@ generateJsonOutput(){
     "Account Number": $ACCOUNT_NUM,
     "Control": $TITLE_TEXT,
     "Message": $MESSAGE,
+    "Severity": "$SEVERITY",
     "Status": $STATUS,
     "Scored": $SCORED,
     "Level": $ITEM_LEVEL,
@@ -253,8 +255,6 @@ generateJsonAsffOutput(){
   if [[ "$status" == "FAIL" ]]; then
     status="FAILED"
   fi
-
-  local severity=$3
   jq -M -c \
   --arg UUID $(uuidgen | awk '{print tolower($0)}') \
   --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
@@ -262,8 +262,9 @@ generateJsonAsffOutput(){
   --arg MESSAGE "$(echo -e "${message}" | sed -e 's/^[[:space:]]*//')" \
   --arg UNIQUE_ID "$(LC_ALL=C echo -e -n "${message}" | tr -cs '[:alnum:]._~-' '_')" \
   --arg STATUS "$status" \
-  --arg SEVERITY "$severity" \
+  --arg SEVERITY "$(echo $CHECK_SEVERITY| awk '{ print toupper($0) }')" \
   --arg TITLE_ID "$TITLE_ID" \
+  --arg CHECK_ID "$CHECK_ID" \
   --arg TYPE "$ASFF_TYPE" \
   --arg RESOURCE_TYPE "$ASFF_RESOURCE_TYPE" \
   --arg REPREGION "$REPREGION" \
@@ -272,13 +273,13 @@ generateJsonAsffOutput(){
   --arg AWS_PARTITION "$AWS_PARTITION" \
   -n '{
       "SchemaVersion": "2018-10-08",
-      "Id": "arn:\($AWS_PARTITION):securityhub:\($REPREGION):\($ACCOUNT_NUM):product/prowler/\($PROWLER_VERSION)/finding/\($UUID)",
+      "Id": "arn:\($AWS_PARTITION):securityhub:\($REPREGION):\($ACCOUNT_NUM):product/prowler/finding/\($TITLE_ID)-\($ACCOUNT_NUM)-\($REPREGION)-($UNIQUE_ID)",
       "ProductArn": "arn:\($AWS_PARTITION):securityhub:\($REPREGION):\($ACCOUNT_NUM):product/\($ACCOUNT_NUM)/default",
       "ProductFields": {
           "ProviderName": "Prowler",
           "ProviderVersion": $PROWLER_VERSION
       },
-      "GeneratorId": "prowler-\($TITLE_ID)-\($ACCOUNT_NUM)-\($REPREGION)-\($UNIQUE_ID)",
+      "GeneratorId": "prowler-\($CHECK_ID)",
       "AwsAccountId": $ACCOUNT_NUM,
       "Types": [
           $TYPE

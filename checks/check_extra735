@@ -14,6 +14,7 @@ CHECK_ID_extra735="7.35"
 CHECK_TITLE_extra735="[extra735] Check if RDS instances storage is encrypted (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra735="NOT_SCORED"
 CHECK_TYPE_extra735="EXTRA"
+CHECK_SEVERITY_extra735="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra735="AwsRdsDbInstance"
 CHECK_ALTERNATE_check735="extra735"
 

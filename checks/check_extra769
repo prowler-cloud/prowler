@@ -15,6 +15,7 @@ CHECK_ID_extra769="7.69"
 CHECK_TITLE_extra769="[extra769] Check if IAM Access Analyzer is enabled and its findings (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra769="NOT_SCORED"
 CHECK_TYPE_extra769="EXTRA"
+CHECK_SEVERITY_extra769="High"
 CHECK_ALTERNATE_check769="extra769"
 
 extra769(){

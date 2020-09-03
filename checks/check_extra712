@@ -14,6 +14,7 @@ CHECK_ID_extra712="7.12"
 CHECK_TITLE_extra712="[extra712] Check if Amazon Macie is enabled (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra712="NOT_SCORED"
 CHECK_TYPE_extra712="EXTRA"
+CHECK_SEVERITY_extra712="Low"
 CHECK_ALTERNATE_check712="extra712"
 
  extra712(){ 

@@ -12,6 +12,7 @@ CHECK_ID_check15="1.5"
 CHECK_TITLE_check15="[check15] Ensure IAM password policy requires at least one uppercase letter (Scored)"
 CHECK_SCORED_check15="SCORED"
 CHECK_TYPE_check15="LEVEL1"
+   CHECK_SEVERITY_check15="medium"
 CHECK_ASFF_TYPE_check15="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check105="check15"
 

@@ -15,6 +15,7 @@ CHECK_ID_extra798="7.98"
 CHECK_TITLE_extra798="[extra798] Check if Lambda functions have resource-based policy set as Public"
 CHECK_SCORED_extra798="NOT_SCORED"
 CHECK_TYPE_extra798="EXTRA"
+CHECK_SEVERITY_extra798="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra798="AwsLambdaFunction"
 CHECK_ALTERNATE_check798="extra798"
 

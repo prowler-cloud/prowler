@@ -15,6 +15,7 @@ CHECK_ID_extra733="7.33"
 CHECK_TITLE_extra733="[extra733] Check if there are SAML Providers then STS can be used (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra733="NOT_SCORED"
 CHECK_TYPE_extra733="EXTRA"
+CHECK_SEVERITY_extra733="Low"
 CHECK_ALTERNATE_check733="extra733"
 
 extra733(){

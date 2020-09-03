@@ -15,6 +15,7 @@ CHECK_ID_extra789="7.89"
 CHECK_TITLE_extra789="[extra789] Find trust boundaries in VPC endpoint services connections"
 CHECK_SCORED_extra789="NOT_SCORED"
 CHECK_TYPE_extra789="EXTRA"
+ CHECK_SEVERITY_extra789="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra789="AwsEc2Vpc"
 CHECK_ALTERNATE_extra789="extra789"
 

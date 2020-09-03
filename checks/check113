@@ -12,6 +12,7 @@ CHECK_ID_check113="1.13"
 CHECK_TITLE_check113="[check113] Ensure MFA is enabled for the root account (Scored)"
 CHECK_SCORED_check113="SCORED"
 CHECK_TYPE_check113="LEVEL1"
+CHECK_SEVERITY_check113="Critical"
 CHECK_ASFF_TYPE_check113="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check113="check113"
 

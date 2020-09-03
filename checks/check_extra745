@@ -14,6 +14,7 @@ CHECK_ID_extra745="7.45"
 CHECK_TITLE_extra745="[extra745] Check if API Gateway endpoint is public or private (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra745="NOT_SCORED"
 CHECK_TYPE_extra745="EXTRA"
+CHECK_SEVERITY_extra745="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra745="AwsApiGatewayRestApi"
 CHECK_ALTERNATE_check745="extra745"
 

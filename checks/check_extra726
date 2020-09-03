@@ -15,6 +15,7 @@ CHECK_ID_extra726="7.26"
 CHECK_TITLE_extra726="[extra726] Check Trusted Advisor for errors and warnings (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra726="NOT_SCORED"
 CHECK_TYPE_extra726="EXTRA"
+CHECK_SEVERITY_extra726="Medium"
 CHECK_ALTERNATE_check726="extra726"
 
 extra726(){

@@ -12,6 +12,7 @@ CHECK_ID_check18="1.8"
 CHECK_TITLE_check18="[check18] Ensure IAM password policy require at least one number (Scored)"
 CHECK_SCORED_check18="SCORED"
 CHECK_TYPE_check18="LEVEL1"
+CHECK_SEVERITY_check18="Medium"
 CHECK_ASFF_TYPE_check18="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check108="check18"
 

@@ -14,6 +14,7 @@ CHECK_ID_extra775="7.75"
 CHECK_TITLE_extra775="[extra775] Find secrets in EC2 Auto Scaling Launch Configuration (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra775="NOT_SCORED"
 CHECK_TYPE_extra775="EXTRA"
+CHECK_SEVERITY_extra775="Medium"
 CHECK_ALTERNATE_check775="extra775"
 
 extra775(){

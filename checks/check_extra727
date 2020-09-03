@@ -15,6 +15,7 @@ CHECK_ID_extra727="7.27"
 CHECK_TITLE_extra727="[extra727] Check if SQS queues have policy set as Public (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra727="NOT_SCORED"
 CHECK_TYPE_extra727="EXTRA"
+CHECK_SEVERITY_extra727="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra727="AwsSqsQueue"
 CHECK_ALTERNATE_check727="extra727"
 
