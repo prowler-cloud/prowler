@@ -256,7 +256,6 @@ generateJsonAsffOutput(){
     status="FAILED"
   fi
   jq -M -c \
-  --arg UUID $(uuidgen | awk '{print tolower($0)}') \
   --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
   --arg TITLE_TEXT "$TITLE_TEXT" \
   --arg MESSAGE "$(echo -e "${message}" | sed -e 's/^[[:space:]]*//')" \
