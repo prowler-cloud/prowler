@@ -35,11 +35,14 @@ resolveSecurityHubPreviousFails(){
   for regx in $REGIONS; do
 
     local check="$1"
+    
+    NEW_TIMESTAMP=$(get_iso8601_timestamp)
+
     PREVIOUS_DATE=$(get_iso8601_hundred_days_ago)
     FILTER="{\"UpdatedAt\":[{\"Start\":\"$PREVIOUS_DATE\",\"End\":\"$TIMESTAMP\"}],\"GeneratorId\":[{\"Value\": \"prowler-$check\",\"Comparison\":\"PREFIX\"}],\"ComplianceStatus\":[{\"Value\": \"FAILED\",\"Comparison\":\"EQUALS\"}]}"
-    SECURITY_HUB_PREVIOUS_FINDINGS=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT get-findings --filters "${FILTER}" | jq -r ".Findings[] | {Id, ProductArn}"| jq -cs)
+    SECURITY_HUB_PREVIOUS_FINDINGS=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT get-findings --filters "${FILTER}" | jq -c --arg updated_at $NEW_TIMESTAMP  '[ .Findings[] | .Compliance = {"Status":"PASSED"} | .UpdatedAt = $updated_at ]')
     if [[ $SECURITY_HUB_PREVIOUS_FINDINGS != "[]" ]]; then
-      BATCH_UPDATE_RESULT=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT batch-update-findings --finding-identifiers "${SECURITY_HUB_PREVIOUS_FINDINGS}" --workflow '{"Status": "RESOLVED"}')
+      BATCH_UPDATE_RESULT=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT batch-import-findings --findings "${SECURITY_HUB_PREVIOUS_FINDINGS}")
 
       # Check for success if updated
       if [[ ! -z "${BATCH_UPDATE_RESULT}" ]] && ! jq -e '.ProcessedFindings >= 1' <<< "${BATCH_UPDATE_RESULT}" > /dev/null 2>&1; then
