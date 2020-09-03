@@ -31,7 +31,7 @@ checkSecurityHubCompatibility(){
 }
 
 resolveSecurityHubPreviousFails(){
-  # Move previous check findings to Workflow to RESOLVED (as prowler didn't re-detect them)
+  # Move previous check findings to Workflow to PASSED (as prowler didn't re-detect them)
   for regx in $REGIONS; do
 
     local check="$1"
