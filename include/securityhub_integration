@@ -58,7 +58,7 @@ sendToSecurityHub(){
   BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-import-findings --findings "${findings}")
   
   # Check for success if imported
-  if [[ ! -z "${BATCH_IMPORT_RESULT}" ]] && ! jq -e '.SuccessCount == 1' <<< "${BATCH_IMPORT_RESULT}" > /dev/null 2>&1; then
+  if [[ -z "${BATCH_IMPORT_RESULT}" ]] || ! jq -e '.SuccessCount == 1' <<< "${BATCH_IMPORT_RESULT}" > /dev/null 2>&1; then
     echo -e "\n$RED ERROR!$NORMAL Failed to send check output to AWS Security Hub\n"
   fi
 
