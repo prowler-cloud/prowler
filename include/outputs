@@ -272,7 +272,7 @@ generateJsonAsffOutput(){
   --arg AWS_PARTITION "$AWS_PARTITION" \
   -n '{
       "SchemaVersion": "2018-10-08",
-      "Id": "prowler-\($TITLE_ID)-\($ACCOUNT_NUM)-\($REPREGION)-($UNIQUE_ID)",
+      "Id": "prowler-\($TITLE_ID)-\($ACCOUNT_NUM)-\($REPREGION)-\($UNIQUE_ID)",
       "ProductArn": "arn:\($AWS_PARTITION):securityhub:\($REPREGION):\($ACCOUNT_NUM):product/\($ACCOUNT_NUM)/default",
       "ProductFields": {
           "ProviderName": "Prowler",
