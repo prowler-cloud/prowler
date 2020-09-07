@@ -236,7 +236,7 @@ generateJsonOutput(){
     "Account Number": $ACCOUNT_NUM,
     "Control": $TITLE_TEXT,
     "Message": $MESSAGE,
-    "Severity": "$SEVERITY",
+    "Severity": $SEVERITY,
     "Status": $STATUS,
     "Scored": $SCORED,
     "Level": $ITEM_LEVEL,
