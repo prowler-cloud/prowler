@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra804="8.04"
+CHECK_TITLE_extra804="[extra804] Ensure S3 bucket has restrict public bucket enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra804="NOT_SCORED"
+CHECK_TYPE_extra804="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra804="AwsS3Bucket"
+CHECK_ALTERNATE_extra804="extra804"
+CHECK_ALTERNATE_check804="extra804"
+CHECK_ALTERNATE_check804="extra804"
+
+# Verified with AWS support that if get-bucket-acl doesn't return a grant
+# for All and get-bucket-policy-status returns IsPublic false or bad request
+# (no policy) then the bucket can be considered not public - though
+# individual objects may still be. If in addition put-public-access-block is
+# used to set IgnorePublicAcls and RestrictPublicBuckets to true then that
+# causes Amazon S3 to ignore all public ACLs on a bucket and any objects that
+# it contains.
+#
+# This check does not address legacy ACLs or policies that would give
+# public access if not blocked at account or bucket level, instead it tries
+# to reward the use of more broadly restrictive controls with quicker and less
+# computational intensive checks.
+#
+# If we are assembling an inventory then maybe that is not what we want but
+# for day to day usage that is probably desirable.
+
+extra804(){
+  textInfo "Looking for S3 buckets not restricting public bucket in all regions...  "
+
+  #
+  # If public ACLs disabled at account level then look no further
+  #
+  ACCOUNT_PUBLIC_ACCESS_BLOCK=$($AWSCLI s3control get-public-access-block $PROFILE_OPT --region $REGION --account-id $ACCOUNT_NUM --output json 2>&1)
+  if [[ $(echo "$ACCOUNT_PUBLIC_ACCESS_BLOCK" | grep AccessDenied) ]]; then
+    textInfo "Access Denied Trying to Get Public Access Block at account level"
+  fi
+  if [[ $(echo "$ACCOUNT_PUBLIC_ACCESS_BLOCK" | grep NoSuchPublicAccessBlockConfiguration) ]]; then
+    ACCOUNT_RESTRICT_PUBLIC_BUCKET=""
+  else
+    ACCOUNT_RESTRICT_PUBLIC_BUCKET=$(echo "$ACCOUNT_PUBLIC_ACCESS_BLOCK" | jq -r '.PublicAccessBlockConfiguration.RestrictPublicBuckets')
+  fi
+  if [[ $ACCOUNT_RESTRICT_PUBLIC_BUCKET == "true" ]]; then
+    textPass "All S3 public buckets restricted at account level"
+    return
+  fi
+
+  #
+  # Otherwise start to iterate bucket
+  #
+  ALL_BUCKETS_LIST=$($AWSCLI s3api list-buckets --region $REGION --query 'Buckets[*].{Name:Name}' $PROFILE_OPT --output text 2>&1)
+  if [[ $(echo "$ALL_BUCKETS_LIST" | grep AccessDenied) ]]; then
+    textFail "Access Denied Trying to List Buckets"
+    return
+  fi
+  if [[ "$ALL_BUCKETS_LIST" == "" ]]; then
+    textInfo "No buckets found"
+    return
+  fi
+
+  for bucket in $ALL_BUCKETS_LIST; do
+    #
+    # LOCATION - requests referencing buckets created after March 20, 2019
+    # must be made to S3 endpoints in the same region as the bucket was
+    # created.
+    #
+    BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location --region $REGION --bucket $bucket $PROFILE_OPT --output text 2>&1)
+    if [[ $(echo "$BUCKET_LOCATION" | grep AccessDenied) ]]; then
+      textFail "Access Denied Trying to Get Bucket Location for $bucket"
+      continue
+    fi
+    if [[ "None" == $BUCKET_LOCATION ]]; then
+      BUCKET_LOCATION="us-east-1"
+    fi
+    if [[ "EU" == $BUCKET_LOCATION ]]; then
+      BUCKET_LOCATION="eu-west-1"
+    fi
+
+    #
+    # If public ACLs disabled at bucket level then look no further
+    #
+    BUCKET_PUBLIC_ACCESS_BLOCK=$($AWSCLI s3api get-public-access-block $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --output json 2>&1)
+    if [[ $(echo "$BUCKET_PUBLIC_ACCESS_BLOCK" | grep AccessDenied) ]]; then
+      textFail "Access Denied Trying to Get Public Access Block for $bucket"
+      continue
+    fi
+    if [[ $(echo "$BUCKET_PUBLIC_ACCESS_BLOCK" | grep NoSuchPublicAccessBlockConfiguration) ]]; then
+      # This is the case when a newly created bucket does not set the block, so it defaults to false.
+      BUCKET_RESTRICT_PUBLIC_BUCKET="false"
+    else
+      BUCKET_RESTRICT_PUBLIC_BUCKET=$(echo "$BUCKET_PUBLIC_ACCESS_BLOCK" | jq -r '.PublicAccessBlockConfiguration.RestrictPublicBuckets')
+    fi
+    if [[ $BUCKET_RESTRICT_PUBLIC_BUCKET == "true" ]]; then
+      textPass "$BUCKET_LOCATION: $bucket bucket restricts public buckets" "$BUCKET_LOCATION"
+    else
+      textFail "$BUCKET_LOCATION: $bucket bucket does not restrict public buckets" "$BUCKET_LOCATION"
+    fi
+
+  done
+}
