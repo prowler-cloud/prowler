@@ -396,8 +396,6 @@ execute_group() {
 # Function to execute group by name
 execute_group_by_id() {
   
-    genCredReport
-    saveReport
   	for i in "${!GROUP_ID[@]}"; do
 		if [ "${GROUP_ID[$i]}" == "$1" ]; then
 			execute_group ${i} $2
