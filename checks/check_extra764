@@ -46,7 +46,7 @@ extra764(){
       # checking if $TEMP_STP_POLICY_FILE is a valid json before converting it to json with jq
       policy_str=$(cat "$TEMP_STP_POLICY_FILE")
       if jq -e . >/dev/null 2>&1 <<< "$policy_str"; then
-        CHECK_BUCKET_STP_POLICY_PRESENT=$(cat $TEMP_STP_POLICY_FILE | jq --arg arn "arn:${AWS_PARTITION}:s3:::${bucket}" '.Statement[]|select((((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and .Action=="s3:*" and (((.Resource|type == "array") and (.Resource|map({(.):0})[]|has($arn)) and (.Resource|map({(.):0})[]|has($arn+"/*"))) or ((.Resource|type == "string") and (.Resource == ($arn+"/*")))) and (.Condition.Bool."aws:SecureTransport" | ascii_downcase) == "false")')
+        CHECK_BUCKET_STP_POLICY_PRESENT=$(cat $TEMP_STP_POLICY_FILE | jq --arg arn "arn:${AWS_PARTITION}:s3:::${bucket}" '.Statement[]|select((((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and .Action=="s3:*" and (((.Resource|type == "array") and (.Resource|map({(.):0})[]|has($arn)) and (.Resource|map({(.):0})[]|has($arn+"/*"))) or ((.Resource|type == "string") and (.Resource == ($arn+"/*")))) and (.Condition.Bool."aws:SecureTransport" | tostring | ascii_downcase) == "false")')
         if [[ $CHECK_BUCKET_STP_POLICY_PRESENT ]]; then
           textPass "Bucket $bucket has S3 bucket policy to deny requests over insecure transport"
         else
