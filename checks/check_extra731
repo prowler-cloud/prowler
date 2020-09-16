@@ -15,6 +15,7 @@ CHECK_ID_extra731="7.31"
 CHECK_TITLE_extra731="[extra731] Check if SNS topics have policy set as Public (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra731="NOT_SCORED"
 CHECK_TYPE_extra731="EXTRA"
+CHECK_SEVERITY_extra731="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra731="AwsSnsTopic"
 CHECK_ALTERNATE_check731="extra731"
 

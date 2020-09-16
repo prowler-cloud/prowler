@@ -12,6 +12,7 @@ CHECK_ID_check112="1.12"
 CHECK_TITLE_check112="[check112] Ensure no root account access key exists (Scored)"
 CHECK_SCORED_check112="SCORED"
 CHECK_TYPE_check112="LEVEL1"
+CHECK_SEVERITY_check112="Critical"
 CHECK_ASFF_TYPE_check112="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check112="check112"
 

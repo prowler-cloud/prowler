@@ -12,6 +12,7 @@ CHECK_ID_check19="1.9"
 CHECK_TITLE_check19="[check19] Ensure IAM password policy requires minimum length of 14 or greater (Scored)"
 CHECK_SCORED_check19="SCORED"
 CHECK_TYPE_check19="LEVEL1"
+CHECK_SEVERITY_check19="Medium"
 CHECK_ASFF_TYPE_check19="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check109="check19"
 

@@ -12,6 +12,7 @@ CHECK_ID_check117="1.17"
 CHECK_TITLE_check117="[check117] Maintain current contact details (Not Scored)"
 CHECK_SCORED_check117="NOT_SCORED"
 CHECK_TYPE_check117="LEVEL1"
+CHECK_SEVERITY_check117="Medium"
 CHECK_ASFF_TYPE_check117="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check117="check117"
 

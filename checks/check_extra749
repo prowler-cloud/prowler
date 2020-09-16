@@ -14,6 +14,7 @@ CHECK_ID_extra749="7.49"
 CHECK_TITLE_extra749="[extra749] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Oracle ports 1521 or 2483 (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra749="NOT_SCORED"
 CHECK_TYPE_extra749="EXTRA"
+CHECK_SEVERITY_extra749="High"
 CHECK_ASFF_RESOURCE_TYPE_extra749="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check749="extra749"
 

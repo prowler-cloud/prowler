@@ -14,6 +14,7 @@ CHECK_ID_extra781="7.81"
 CHECK_TITLE_extra781="[extra781] Check if Amazon Elasticsearch Service (ES) domains has encryption at-rest enabled"
 CHECK_SCORED_extra781="NOT_SCORED"
 CHECK_TYPE_extra781="EXTRA"
+CHECK_SEVERITY_extra781="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra781="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check781="extra781"
 

@@ -14,6 +14,7 @@ CHECK_ID_extra764="7.64"
 CHECK_TITLE_extra764="[extra764] Check if S3 buckets have secure transport policy (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra764="NOT_SCORED"
 CHECK_TYPE_extra764="EXTRA"
+CHECK_SEVERITY_extra764="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra764="AwsS3Bucket"
 CHECK_ALTERNATE_check764="extra764"
 

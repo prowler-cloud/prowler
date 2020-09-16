@@ -14,6 +14,7 @@ CHECK_ID_extra760="7.60"
 CHECK_TITLE_extra760="[extra760] Find secrets in Lambda functions code (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra760="NOT_SCORED"
 CHECK_TYPE_extra760="EXTRA"
+CHECK_SEVERITY_extra760="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra760="AwsLambdaFunction"
 CHECK_ALTERNATE_check760="extra760"
 

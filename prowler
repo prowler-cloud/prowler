@@ -317,11 +317,20 @@ execute_check() {
   # See if this check defines an ASFF Type, if so, use this, falling back to a sane default
   # For a list of Types, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#securityhub-findings-format-type-taxonomy
   local asff_type_var=CHECK_ASFF_TYPE_$1
+
+  local severity_var=CHECK_SEVERITY_$1
+  
+  CHECK_SEVERITY="${!severity_var}"
+
+  CHECK_ID="$1"
+
   ASFF_TYPE="${!asff_type_var:-Software and Configuration Checks}"
   # See if this check defines an ASFF Resource Type, if so, use this, falling back to a sane default
   # For a list of Resource Types, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
   local asff_resource_type_var=CHECK_ASFF_RESOURCE_TYPE_$1
+
   ASFF_RESOURCE_TYPE="${!asff_resource_type_var:-AwsAccount}"
+
   # Generate the credential report, only if it is group1 related which checks we
   # run so that the checks can safely assume it's available
   # set the custom ignores list for this check
@@ -360,6 +369,12 @@ execute_check() {
       fi
       # Execute the check
       IGNORES="${ignores}" CHECK_NAME="$1" $1
+
+
+      if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
+        resolveSecurityHubPreviousFails "$1"
+      fi
+
       if is_junit_output_enabled; then
         finalise_junit_check_output "$1"
       fi
@@ -416,12 +431,6 @@ execute_all() {
       execute_group $i
     fi
 	done
-  if [[ $EXTERNAL_CHECKS_PATH ]]; then
-    for checks in $(ls $EXTERNAL_CHECKS_PATH/check*); do
-      CHECK_ID=$(echo $checks | awk -F '_' '{ print $2 }')
-      execute_check $CHECK_ID
-    done
-  fi
 }
 
 # Function to show the titles of either all checks or only those in the specified group
@@ -559,6 +568,7 @@ if [[ $CHECK_ID ]];then
 fi
 
 execute_all
+
 if [[ "${MODES[@]}" =~ "html" ]]; then
   addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
 fi

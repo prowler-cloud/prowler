@@ -18,6 +18,7 @@ CHECK_ID_extra777="7.77"
 CHECK_TITLE_extra777="[extra777] Find VPC security groups with many ingress or egress rules (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra777="NOT_SCORED"
 CHECK_TYPE_extra777="EXTRA"
+CHECK_SEVERITY_extra777="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra777="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check777="extra777"
 

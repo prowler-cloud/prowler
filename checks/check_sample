@@ -28,6 +28,7 @@
 # CHECK_TITLE_checkN="[checkN] Description (Not Scored) (Not part of CIS benchmark)"
 # CHECK_SCORED_checkN="NOT_SCORED"
 # CHECK_TYPE_checkN="EXTRA"
+# CHECK_SEVERITY_check="Medium"
 # CHECK_ASFF_RESOURCE_TYPE_checkN="AwsAccount" # Choose appropriate value from https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
 # CHECK_ALTERNATE_checkN="extraN"
 #

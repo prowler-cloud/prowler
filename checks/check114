@@ -12,6 +12,7 @@ CHECK_ID_check114="1.14"
 CHECK_TITLE_check114="[check114] Ensure hardware MFA is enabled for the root account (Scored)"
 CHECK_SCORED_check114="SCORED"
 CHECK_TYPE_check114="LEVEL2"
+CHECK_SEVERITY_check114="Critical"
 CHECK_ASFF_TYPE_check114="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check114="check114"
 

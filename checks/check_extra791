@@ -14,6 +14,7 @@ CHECK_ID_extra791="7.91"
 CHECK_TITLE_extra791="[extra791] Check if CloudFront distributions are using deprecated SSL protocols"
 CHECK_SCORED_extra791="NOT_SCORED"
 CHECK_TYPE_extra791="EXTRA"
+CHECK_SEVERITY_extra791="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra791="AwsCloudFrontDistribution"
 CHECK_ALTERNATE_check791="extra791"
 

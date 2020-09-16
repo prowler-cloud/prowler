@@ -14,6 +14,7 @@ CHECK_ID_extra780="7.80"
 CHECK_TITLE_extra780="[extra780] Check if Amazon Elasticsearch Service (ES) domains has Amazon Cognito authentication for Kibana enabled"
 CHECK_SCORED_extra780="NOT_SCORED"
 CHECK_TYPE_extra780="EXTRA"
+CHECK_SEVERITY_extra780="High"
 CHECK_ASFF_RESOURCE_TYPE_extra780="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check780="extra780"
 
