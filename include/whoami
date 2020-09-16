@@ -14,24 +14,24 @@
 
 # Get whoami in AWS, who is the user running this shell script
 
-ACCOUNT_NUM=$($AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "Account")
-
-if [[ 255 -eq $? ]]; then
-        # Failed to get own identity ... exit
-        echo -e "$RED ERROR Getting credentials to run Prowler - EXITING! $NORMAL"
-        EXITCODE=2
-        exit $EXITCODE
-fi
-
-CALLER_ARN=$($AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "Arn")
-USER_ID=$($AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "UserId")
-AWS_PARTITION=$(echo $CALLER_ARN| cut -d: -f2)
-
-if [[ $ACCOUNT_TO_ASSUME ]]; then
-  ACCOUNT_NUM=$ACCOUNT_TO_ASSUME
-fi
-
 getWhoami(){
+  ACCOUNT_NUM=$($AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "Account")
+
+  if [[ 255 -eq $? ]]; then
+          # Failed to get own identity ... exit
+          echo -e "$RED ERROR Getting credentials to run Prowler - EXITING! $NORMAL"
+          EXITCODE=2
+          exit $EXITCODE
+  fi
+
+  CALLER_ARN=$($AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "Arn")
+  USER_ID=$($AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "UserId")
+  AWS_PARTITION=$(echo $CALLER_ARN| cut -d: -f2)
+
+  if [[ $ACCOUNT_TO_ASSUME ]]; then
+    ACCOUNT_NUM=$ACCOUNT_TO_ASSUME
+  fi
+
   if [[ "$MODE" == "csv" ]]; then
     if [[ 255 -eq $? ]]; then
       # Failed to get own identity ... exit
