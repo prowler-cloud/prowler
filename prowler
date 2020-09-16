@@ -413,9 +413,15 @@ execute_all() {
       GROUP_RUN_BY_DEFAULT[7]='N'
     fi
     if [ "${GROUP_RUN_BY_DEFAULT[$i]}" == "Y" ]; then
-		  execute_group $i
+      execute_group $i
     fi
 	done
+  if [[ $EXTERNAL_CHECKS_PATH ]]; then
+    for checks in $(ls $EXTERNAL_CHECKS_PATH/check*); do
+      CHECK_ID=$(echo $checks | awk -F '_' '{ print $2 }')
+      execute_check $CHECK_ID
+    done
+  fi
 }
 
 # Function to show the titles of either all checks or only those in the specified group
