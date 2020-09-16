@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.3.0RC3
+PROWLER_VERSION=2.3.0RC4
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
