@@ -3,7 +3,8 @@
     "Statement": [
         {
             "Action": [
-                "securityhub:BatchImportFindings"
+                "securityhub:BatchImportFindings",
+                "securityhub:GetFindings"
             ],
             "Effect": "Allow",
             "Resource": "*"
