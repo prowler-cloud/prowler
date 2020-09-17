@@ -10,6 +10,6 @@
 
 GROUP_ID[19]='eks-cis'
 GROUP_NUMBER[19]='19.0'
-GROUP_TITLE[19]='CIS EKS Benchmark *****************************************'
+GROUP_TITLE[19]='CIS EKS Benchmark *********************************************'
 GROUP_RUN_BY_DEFAULT[19]='N' # run it when execute_all is called
 GROUP_CHECKS[19]='extra765,extra794,extra795,extra796,extra797'

@@ -13,7 +13,7 @@
 
 GROUP_ID[18]='iso27001'
 GROUP_NUMBER[18]='18.0'
-GROUP_TITLE[18]='ISO 27001:2013 Readiness - ONLY AS REFERENCE - [iso27001] *********'
+GROUP_TITLE[18]='ISO 27001:2013 Readiness - ONLY AS REFERENCE - [iso27001] *****'
 GROUP_RUN_BY_DEFAULT[18]='N' # run it when execute_all is called
 GROUP_CHECKS[18]='check11,check110,check111,check112,check113,check116,check12,check122,check13,check14,check15,check16,check17,check18,check19,check21,check23,check24,check25,check26,check29,check31,check310,check311,check312,check313,check314,check32,check33,check34,check35,check36,check37,check38,check39,check41,check42,check43,extra711,extra72,extra723,extra731,extra735,extra76,extra78,extra792'
 
