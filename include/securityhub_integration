@@ -31,7 +31,7 @@ checkSecurityHubCompatibility(){
 }
 
 resolveSecurityHubPreviousFails(){
-  # Move previous check findings to Workflow to PASSED (as prowler didn't re-detect them)
+  # Move previous check findings RecordState to ARCHIVED (as prowler didn't re-detect them)
   for regx in $REGIONS; do
 
     local check="$1"
@@ -40,7 +40,7 @@ resolveSecurityHubPreviousFails(){
 
     PREVIOUS_DATE=$(get_iso8601_hundred_days_ago)
     FILTER="{\"UpdatedAt\":[{\"Start\":\"$PREVIOUS_DATE\",\"End\":\"$TIMESTAMP\"}],\"GeneratorId\":[{\"Value\": \"prowler-$check\",\"Comparison\":\"PREFIX\"}],\"ComplianceStatus\":[{\"Value\": \"FAILED\",\"Comparison\":\"EQUALS\"}]}"
-    SECURITY_HUB_PREVIOUS_FINDINGS=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT get-findings --filters "${FILTER}" | jq -c --arg updated_at $NEW_TIMESTAMP  '[ .Findings[] | .Compliance = {"Status":"PASSED"} | .UpdatedAt = $updated_at ]')
+    SECURITY_HUB_PREVIOUS_FINDINGS=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT get-findings --filters "${FILTER}" | jq -c --arg updated_at $NEW_TIMESTAMP  '[ .Findings[] | .RecordState="ARCHIVED" | .UpdatedAt = $updated_at ]')
     if [[ $SECURITY_HUB_PREVIOUS_FINDINGS != "[]" ]]; then
       BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT batch-import-findings --findings "${SECURITY_HUB_PREVIOUS_FINDINGS}")
 
