@@ -112,15 +112,13 @@ textFail(){
   level="FAIL"
   colorcode="$BAD"
   while read -r i; do
-    ignore_check_name="${i%%:*}" # Check name is everything up to the first :
-    ignore_value="${i#*${CHECK_NAME}:}" # Ignore value is everything after the first :
-    # Check to see if ignore value appears anywhere within log message.
-    resource_value=".*${ignore_value}.*"
+    ignore_check_name="${i%:*}"
+    ignore_value="${i#*${CHECK_NAME}:}"
     if [[ ${ignore_check_name} != "${CHECK_NAME}" ]]; then
       # not for this check
       continue
     fi
-    if [[ $1 =~ ${resource_value} ]]; then
+    if [[ $1 =~ .*"${ignore_value}".* ]]; then
       level="WARNING"
       colorcode="$WARNING"
       break
@@ -276,6 +274,7 @@ generateJsonAsffOutput(){
       "SchemaVersion": "2018-10-08",
       "Id": "prowler-\($TITLE_ID)-\($ACCOUNT_NUM)-\($REPREGION)-\($UNIQUE_ID)",
       "ProductArn": "arn:\($AWS_PARTITION):securityhub:\($REPREGION):\($ACCOUNT_NUM):product/\($ACCOUNT_NUM)/default",
+      "RecordState": "ACTIVE",
       "ProductFields": {
           "ProviderName": "Prowler",
           "ProviderVersion": $PROWLER_VERSION
@@ -283,7 +282,7 @@ generateJsonAsffOutput(){
       "GeneratorId": "prowler-\($CHECK_ID)",
       "AwsAccountId": $ACCOUNT_NUM,
       "Types": [
-          $TYPE
+          "\($TYPE)-Policy:\($TITLE_TEXT)"
       ],
       "FirstObservedAt": $TIMESTAMP,
       "UpdatedAt": $TIMESTAMP,

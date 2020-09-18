@@ -35,13 +35,15 @@ resolveSecurityHubPreviousFails(){
   for regx in $REGIONS; do
 
     local check="$1"
-    
+    OLD_TIMESTAMP=$(get_iso8601_one_minute_ago)
     NEW_TIMESTAMP=$(get_iso8601_timestamp)
 
     PREVIOUS_DATE=$(get_iso8601_hundred_days_ago)
-    FILTER="{\"UpdatedAt\":[{\"Start\":\"$PREVIOUS_DATE\",\"End\":\"$TIMESTAMP\"}],\"GeneratorId\":[{\"Value\": \"prowler-$check\",\"Comparison\":\"PREFIX\"}],\"ComplianceStatus\":[{\"Value\": \"FAILED\",\"Comparison\":\"EQUALS\"}]}"
-    SECURITY_HUB_PREVIOUS_FINDINGS=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT get-findings --filters "${FILTER}" | jq -c --arg updated_at $NEW_TIMESTAMP  '[ .Findings[] | .RecordState="ARCHIVED" | .UpdatedAt = $updated_at ]')
+
+    FILTER="{\"UpdatedAt\":[{\"Start\":\"$PREVIOUS_DATE\",\"End\":\"$OLD_TIMESTAMP\"}],\"GeneratorId\":[{\"Value\": \"prowler-$check\",\"Comparison\":\"PREFIX\"}],\"ComplianceStatus\":[{\"Value\": \"FAILED\",\"Comparison\":\"EQUALS\"}]}"
+    SECURITY_HUB_PREVIOUS_FINDINGS=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT get-findings --filters "${FILTER}" | jq -c --arg updated_at $NEW_TIMESTAMP  '[ .Findings[] | .RecordState = "ARCHIVED" | .UpdatedAt = $updated_at ]')
     if [[ $SECURITY_HUB_PREVIOUS_FINDINGS != "[]" ]]; then
+      echo "$SECURITY_HUB_PREVIOUS_FINDINGS"
       BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT batch-import-findings --findings "${SECURITY_HUB_PREVIOUS_FINDINGS}")
 
     # Check for success if imported
