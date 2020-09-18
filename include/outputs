@@ -276,7 +276,7 @@ generateJsonAsffOutput(){
       "SchemaVersion": "2018-10-08",
       "Id": "prowler-\($TITLE_ID)-\($ACCOUNT_NUM)-\($REPREGION)-\($UNIQUE_ID)",
       "ProductArn": "arn:\($AWS_PARTITION):securityhub:\($REPREGION):\($ACCOUNT_NUM):product/\($ACCOUNT_NUM)/default",
-      "RecordState": "ACTIVE"
+      "RecordState": "ACTIVE",
       "ProductFields": {
           "ProviderName": "Prowler",
           "ProviderVersion": $PROWLER_VERSION
