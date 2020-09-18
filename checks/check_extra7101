@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7101="7.101"
+CHECK_TITLE_extra7101="[extra7101] Check if Amazon Elasticsearch Service (ES) domains have audit logging enabled"
+CHECK_SCORED_extra7101="NOT_SCORED"
+CHECK_TYPE_extra7101="EXTRA"
+CHECK_SEVERITY_extra7101="Low"
+CHECK_ASFF_RESOURCE_TYPE_extra7101="AwsElasticsearchDomain"
+CHECK_ALTERNATE_check7101="extra7101"
+
+# More info 
+# Works for  Amazon Elasticsearch Service domains (version 6.7+) with Fine Grained Access Control enabled 
+# https://aws.amazon.com/about-aws/whats-new/2020/09/audit-logs-launch/
+# https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/audit-logs.html
+
+# Remediation
+# aws es update-elasticsearch-domain-config --domain-name test1 --log-publishing-options "AUDIT_LOGS={CloudWatchLogsLogGroupArn=arn:aws:logs:us-east-1:123456789012:log-group:my-log-group,Enabled=true}" --region eu-west-1
+
+extra7101(){
+  for regx in $REGIONS; do
+    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text)
+    if [[ $LIST_OF_DOMAINS ]]; then
+      for domain in $LIST_OF_DOMAINS;do
+        AUDIT_LOGS_ENABLED=$($AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.LogPublishingOptions.Options.AUDIT_LOGS.Enabled --output text |grep -v ^None|grep -v ^False)
+        if [[ $AUDIT_LOGS_ENABLED ]];then
+          textPass "$regx: Amazon ES domain $domain AUDIT_LOGS enabled" "$regx"
+        else
+          textFail "$regx: Amazon ES domain $domain AUDIT_LOGS disabled!" "$regx"
+        fi
+      done
+    else
+      textInfo "$regx: No Amazon ES domain found" "$regx"
+    fi
+  done
+}

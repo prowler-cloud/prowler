@@ -15,4 +15,4 @@ GROUP_ID[14]='elasticsearch'
 GROUP_NUMBER[14]='14.0'
 GROUP_TITLE[14]='Elasticsearch related security checks - [elasticsearch] *******'
 GROUP_RUN_BY_DEFAULT[14]='N' # run it when execute_all is called
-GROUP_CHECKS[14]='extra715,extra716,extra779,extra780,extra781,extra782,extra783,extra784,extra785,extra787,extra788'
+GROUP_CHECKS[14]='extra715,extra716,extra779,extra780,extra781,extra782,extra783,extra784,extra785,extra787,extra788,extra7101'

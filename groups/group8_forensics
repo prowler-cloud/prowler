@@ -15,4 +15,4 @@ GROUP_ID[8]='forensics-ready'
 GROUP_NUMBER[8]='8.0'
 GROUP_TITLE[8]='Forensics Readiness - [forensics-ready] ************************'
 GROUP_RUN_BY_DEFAULT[8]='N' # run it when execute_all is called
-GROUP_CHECKS[8]='check21,check22,check23,check24,check25,check26,check27,check29,extra712,extra713,extra714,extra715,extra717,extra718,extra719,extra720,extra721,extra722,extra725'
+GROUP_CHECKS[8]='check21,check22,check23,check24,check25,check26,check27,check29,extra712,extra713,extra714,extra715,extra717,extra718,extra719,extra720,extra721,extra722,extra725,extra7101'
