@@ -14,6 +14,8 @@
 # Checks that the correct mode (json-asff) has been specified if wanting to send check output to AWS Security Hub
 # and that Security Hub is enabled in the chosen region
 checkSecurityHubCompatibility(){
+  OLD_TIMESTAMP=$(get_iso8601_one_minute_ago)
+
   local regx
   if [[ "${MODE}" != "json-asff" ]]; then
     echo -e "\n$RED ERROR!$NORMAL Output can only be sent to Security Hub when the output mode is json-asff, i.e. -M json-asff -S\n"
@@ -35,7 +37,6 @@ resolveSecurityHubPreviousFails(){
   for regx in $REGIONS; do
 
     local check="$1"
-    OLD_TIMESTAMP=$(get_iso8601_one_minute_ago)
     NEW_TIMESTAMP=$(get_iso8601_timestamp)
 
     PREVIOUS_DATE=$(get_iso8601_hundred_days_ago)
