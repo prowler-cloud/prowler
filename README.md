@@ -359,15 +359,19 @@ export HEX_LIMIT=3.0
 
 ## Security Hub integration
 
-Since version v2.3, Prowler supports natively sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows Prowler to import its findings to AWS Security Hub. With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions and now from Prowler. It is as simple as running the command below:
+Since version v2.3, Prowler supports natively sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows Prowler to import its findings to AWS Security Hub. With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions and now from Prowler. It is as simple as running the command below (for all regions):
 
 ```sh
 ./prowler -M json-asff -S
 ```
+or for only one filtered region like eu-west-1:
+```sh
+./prowler -M json-asff -S -f eu-west-1
+```
 
 There are two requirements:
 
-1. Security Hub must be enabled for the active region from where you are calling Prowler (if no region is used with `-r` then `us-east-1` is used). It can be enabled by calling `aws securityhub enable-security-hub`
+1. Since Security Hub is a region based service, it will send findings to each region and needs to have a hub enabled. Since Prowler perform checks to all regions by defaults you may need to filter by region when runing Security Hub integration. Remember to enable Security Hub in the region or regions you need by calling `aws securityhub enable-security-hub --region <region>` and run Prowler with the option `-f <region>` (if no region is used it will try to push findings in all regions hubs).
 2. As mentioned in section "Custom IAM Policy", to allow Prowler to import its findings to AWS Security Hub you need to add the policy below to the role or user running Prowler:
     - [iam/prowler-security-hub.json](iam/prowler-security-hub.json)
 
