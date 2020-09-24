@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 # both variables are mandatory to be set together 
-if [[ $ACCOUNT_TO_ASSUME ]]; then
+assume_role(){
     if [[ -z $ROLE_TO_ASSUME ]]; then
         echo "$OPTRED ERROR!$OPTNORMAL - Both Account ID (-A) and IAM Role to assume (-R) must be set"
         exit 1
@@ -65,4 +65,5 @@ if [[ $ACCOUNT_TO_ASSUME ]]; then
     export AWS_SECRET_ACCESS_KEY=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SecretAccessKey')
     export AWS_SESSION_TOKEN=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SessionToken')
     rm -fr $TEMP_STS_ASSUMED_FILE
-fi
+}
+

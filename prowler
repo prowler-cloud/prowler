@@ -522,6 +522,9 @@ fi
 
 # Gather account data / test aws cli connectivity
 getWhoami
+if [[ $ACCOUNT_TO_ASSUME ]]; then
+  assume_role
+fi
 
 # Execute group of checks if called with -g
 if [[ $GROUP_ID_READ ]];then
