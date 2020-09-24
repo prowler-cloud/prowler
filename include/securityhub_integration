@@ -41,15 +41,19 @@ resolveSecurityHubPreviousFails(){
 
     PREVIOUS_DATE=$(get_iso8601_hundred_days_ago)
 
-    FILTER="{\"UpdatedAt\":[{\"Start\":\"$PREVIOUS_DATE\",\"End\":\"$OLD_TIMESTAMP\"}],\"GeneratorId\":[{\"Value\": \"prowler-$check\",\"Comparison\":\"PREFIX\"}],\"ComplianceStatus\":[{\"Value\": \"FAILED\",\"Comparison\":\"EQUALS\"}]}"
+    FILTER="{\"UpdatedAt\":[{\"Start\":\"$PREVIOUS_DATE\",\"End\":\"$OLD_TIMESTAMP\"}],\"GeneratorId\":[{\"Value\": \"prowler-$check\",\"Comparison\":\"PREFIX\"}],\"ComplianceStatus\":[{\"Value\": \"FAILED\",\"Comparison\":\"EQUALS\"}],\"RecordState\":[{\"Value\": \"ACTIVE\",\"Comparison\":\"EQUALS\"}]}"
     SECURITY_HUB_PREVIOUS_FINDINGS=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT get-findings --filters "${FILTER}" | jq -c --arg updated_at $NEW_TIMESTAMP  '[ .Findings[] | .RecordState = "ARCHIVED" | .UpdatedAt = $updated_at ]')
     if [[ $SECURITY_HUB_PREVIOUS_FINDINGS != "[]" ]]; then
-      BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT batch-import-findings --findings "${SECURITY_HUB_PREVIOUS_FINDINGS}")
-
-    # Check for success if imported
-      if [[ -z "${BATCH_IMPORT_RESULT}" ]] || ! jq -e '.SuccessCount == 1' <<< "${BATCH_IMPORT_RESULT}" > /dev/null 2>&1; then
-        echo -e "\n$RED ERROR!$NORMAL Failed to send check output to AWS Security Hub\n"
-      fi
+      FINDINGS_COUNT=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq '. | length')
+      for i in `seq 0 100 $FINDINGS_COUNT`; 
+      do 
+        # Import in batches of 100
+        BATCH_FINDINGS=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq '.['"$i:$i+100"']')
+        BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT batch-import-findings --findings "${BATCH_FINDINGS}")
+        if [[ -z "${BATCH_IMPORT_RESULT}" ]] || jq -e '.FailedCount >= 1' <<< "${BATCH_IMPORT_RESULT}" > /dev/null 2>&1; then
+          echo -e "\n$RED ERROR!$NORMAL Failed to send check output to AWS Security Hub\n"
+        fi
+      done
     fi
   done
 
