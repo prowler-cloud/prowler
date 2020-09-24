@@ -121,7 +121,7 @@ bsd_get_iso8601_hundred_days_ago() {
 }
 
 bsd_get_iso8601_one_minute_ago() {
-  "$DATE_CMD" -v-1m -u +"%Y-%m-%dT%H:%M:%SZ"
+  "$DATE_CMD" -v-1M -u +"%Y-%m-%dT%H:%M:%SZ"
 }
 
 gnu_test_tcp_connectivity() {
