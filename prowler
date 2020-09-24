@@ -352,6 +352,10 @@ execute_check() {
     if is_junit_output_enabled; then
       finalise_junit_check_output "$1"
     fi
+
+    if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
+      resolveSecurityHubPreviousFails "$1"
+    fi
   else
     # Check to see if this is a real check
     local check_id_var=CHECK_ID_$1
@@ -370,14 +374,14 @@ execute_check() {
       # Execute the check
       IGNORES="${ignores}" CHECK_NAME="$1" $1
 
+      if is_junit_output_enabled; then
+        finalise_junit_check_output "$1"
+      fi
 
       if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
         resolveSecurityHubPreviousFails "$1"
       fi
 
-      if is_junit_output_enabled; then
-        finalise_junit_check_output "$1"
-      fi
     else
       textFail "ERROR! Use a valid check name (i.e. check41 or extra71)";
       exit $EXITCODE
