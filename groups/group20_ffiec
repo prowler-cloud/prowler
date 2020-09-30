@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2020) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+GROUP_ID[20]='ffiec'
+GROUP_NUMBER[20]='20.0'
+GROUP_TITLE[20]='FFIEC Cybersecurity Readiness - ONLY AS REFERENCE - [ffiec] ***'
+GROUP_RUN_BY_DEFAULT[20]='N' # run it when execute_all is called
+GROUP_CHECKS[20]='check11,check12,check13,check14,check16,check18,check19,check21,check23,check25,check29,check29,check31,check32,check33,check34,check35,check36,check37,check37,check38,check39,check41,check42,check43,check110,check112,check113,check116,check310,check311,check312,check313,check314,extra72,extra76,extra78,extra711,extra723,extra729,extra731,extra734,extra735,extra763,extra792'
+
+# References:
+# 1. https://www.ffiec.gov/pdf/cybersecurity/FFIEC_CAT_May_2017.pdf
+# 2. https://ithandbook.ffiec.gov/media/274793/ffiec_itbooklet_informationsecurity.pdf
