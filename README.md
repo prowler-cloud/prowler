@@ -26,46 +26,53 @@
 
 Prowler is a command line tool for AWS Security Best Practices Assessment, Auditing, Hardening and Forensics Readiness Tool.
 
-It follows guidelines of the CIS Amazon Web Services Foundations Benchmark (49 checks) and has 40 additional checks including related to GDPR and HIPAA.
+It follows guidelines of the CIS Amazon Web Services Foundations Benchmark (49 checks) and has more than 100 additional checks including related to GDPR, HIPAA, PCI-DSS, ISO-27001, FFIEC, SOC2 and others.
 
 Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-2018](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf)
 
 ## Features
 
-~140 checks controls covering security best practices across all AWS regions and most of AWS services and related to the next groups:
++150 checks covering security best practices across all AWS regions and most of AWS services and related to the next groups:
 
 - Identity and Access Management [group1]
 - Logging  [group2]
-- Monitoring (14 checks) [group3]
-- Networking (4 checks) [group4]
+- Monitoring [group3]
+- Networking [group4]
 - CIS Level 1 [cislevel1]
 - CIS Level 2 [cislevel2]
-- Extras (39 checks) *see Extras section* [extras]
+- Extras *see Extras section* [extras]
 - Forensics related group of checks [forensics-ready]
 - GDPR [gdpr] Read more [here](#gdpr-checks)
 - HIPAA [hipaa] Read more [here](#hipaa-checks)
 - Trust Boundaries [trustboundaries] Read more [here](#trustboundaries-checks)
+- Secrets 
+- PCI-DSS
+- ISO-27001
+- Internet exposed resources
+- EKS-CIS
+- FFIEC
+- SOC2
 
 With Prowler you can:
 
-- get a colorful or monochrome report
-- a CSV, JSON or JSON ASFF format report
+- get a direct colorful or monochrome report 
+- a HTML, CSV, JUNIT, JSON or JSON ASFF format report
 - send findings directly to Security Hub
-- run specific checks
+- run specific checks and groups or create your own
 - check multiple AWS accounts in parallel or sequentially
 - and more! Read examples below
 
 ## Requirements and Installation
 
-This script has been written in bash using AWS-CLI and it works in Linux and OSX.
+Prowler has been written in bash using AWS-CLI and it works in Linux and OSX.
 
-- Make sure the latest version of AWS-CLI is installed on your workstation, and other components needed, with Python pip already installed:
+- Make sure the latest version of AWS-CLI is installed on your workstation (it works with either v1 or v2), and other components needed, with Python pip already installed:
 
     ```sh
     pip install awscli detect-secrets
     ```
 
-    AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `detect-secrets` has to be installed using `pip`. You will need to install `jq` to get more accuracy in some checks.
+    AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `detect-secrets` has to be installed using `pip`. You will need to install `jq` to get the most from Prowler.
 
 - Make sure jq is installed (example below with "apt" but use a valid package manager for your OS):
 
@@ -80,7 +87,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     cd prowler
     ```
 
-- Make sure you have properly configured your AWS-CLI with a valid Access Key and Region or declare AWS variables properly (or intance profile):
+- Since Prowler users AWS CLI under the hood, you can follow any authentication method as described [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence). Make sure you have properly configured your AWS-CLI with a valid Access Key and Region or declare AWS variables properly (or intance profile):
 
     ```sh
     aws configure
@@ -111,7 +118,7 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler
     ```
 
-    Use `-l` to list all available checks and the groups (sections) that reference them
+    Use `-l` to list all available checks and the groups (sections) that reference them. To list all groups use `-L` and to list content of a group use `-l -g <groupname>`.
 
     If you want to avoid installing dependencies run it using Docker:
 
@@ -242,56 +249,17 @@ This script has been written in bash using AWS-CLI and it works in Linux and OSX
     ./prowler -g cislevel1
     ```
 
-1. If you want to run Prowler to check multiple AWS accounts in parallel (runs up to 4 simultaneously `-P 4`):
+1. If you want to run Prowler to check multiple AWS accounts in parallel (runs up to 4 simultaneously `-P 4`) but you may want to read below in Advanced Usage section to do so assuming a role:
 
     ```sh
     grep -E '^\[([0-9A-Aa-z_-]+)\]'  ~/.aws/credentials | tr -d '][' | shuf |  \
     xargs -n 1 -L 1 -I @ -r -P 4 ./prowler -p @ -M csv  2> /dev/null  >> all-accounts.csv
     ```
 
-1. For help use:
+1. For help about usage run:
 
     ```
     ./prowler -h
-
-    USAGE:
-      prowler [ -p <profile> -r <region>  -h ]
-
-      -p <profile>        specify your AWS profile to use (i.e.: default)
-      -r <region>         specify an AWS region to direct API requests to
-                            (i.e.: us-east-1), all regions are checked anyway if the check requires it
-      -c <check_id>       specify one or multiple check ids separated by commas, to see all available checks use -l option
-                            (i.e.: check11 for check 1.1 or extra71,extra72 for extra check 71 and extra check 72)
-      -g <group_id>       specify a group of checks by id, to see all available group of checks use -L
-                            (i.e.: group3 for entire section 3, cislevel1 for CIS Level 1 Profile Definitions or forensics-ready)
-      -f <filterregion>   specify an AWS region to run checks against
-                            (i.e.: us-west-1)
-      -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-      -M <mode>           output mode: text (default), mono, html, json, json-asff, junit-xml, csv. They can be used combined comma separated.
-                            (separator is ,; data is on stdout; progress on stderr).
-      -k                  keep the credential report
-      -n                  show check numbers to sort easier
-                            (i.e.: 1.01 instead of 1.1)
-      -l                  list all available checks only (does not perform any check). Add -g <group_id> to only list checks within the specified group
-      -L                  list all groups (does not perform any check)
-      -e                  exclude group extras
-      -E                  execute all tests except a list of specified checks separated by comma (i.e. check21,check31)
-      -b                  do not print Prowler banner
-      -s                  show scoring report
-      -S                  send check output to AWS Security Hub - only valid when the output mode is json-asff (i.e. -M json-asff -S)
-      -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by check)
-      -q                  suppress info messages and passing test output
-      -A                  account id for the account where to assume a role, requires -R and -T
-                            (i.e.: 123456789012)
-      -R                  role name to assume in the account, requires -A and -T
-                            (i.e.: ProwlerRole)
-      -T                  session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
-                            (i.e.: 43200)
-      -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R
-      -w                  whitelist file. See whitelist_sample.txt for reference and format
-                            (i.e.: whitelist_sample.txt)
-      -V                  show version number & exit
-      -h                  this help
     ```
 
 ## Advanced Usage
@@ -317,12 +285,12 @@ For example, if you want to get only the fails in CSV format from all checks reg
 ```sh
 ./prowler -A 123456789012 -R RemoteRoleToAssume -T 3600 -b -M cvs -q -g rds
 ```
-
+or with a given External ID:
 ```sh
 ./prowler -A 123456789012 -R RemoteRoleToAssume -T 3600 -I 123456 -b -M cvs -q -g rds
 ```
 
-### Assume Role and across all accounts in AWS Organizations:
+### Assume Role and across all accounts in AWS Organizations or just a list of accounts:
 
 If you want to run Prowler or just a check or a group across all accounts of AWS Organizations you can do this:
 
@@ -334,6 +302,7 @@ Then run Prowler to assume a role (same in all members) per each account, in thi
 ```
 for accountId in $ACCOUNTS_IN_ORGS; do ./prowler -A $accountId -R RemoteRoleToAssume -c extra79; done
 ```
+Usig the same for loop it can be scanned a list of accounts with a variable like `ACCOUNTS_LIST='11111111111 2222222222 333333333'`
 
 ### Custom folder for custom checks
 
@@ -368,6 +337,7 @@ or for only one filtered region like eu-west-1:
 ```sh
 ./prowler -M json-asff -S -f eu-west-1
 ```
+> Note: It is recommended to send only fails to Security Hub and that is possible adding `-q` to the command.
 
 There are two requirements:
 
@@ -466,7 +436,9 @@ aws iam create-access-key --user-name prowler
 unset ACCOUNT_ID AWS_DEFAULT_PROFILE
 ```
 
-The `aws iam create-access-key` command will output the secret access key and the key id; keep these somewhere safe, and add them to `~/.aws/credentials` with an appropriate profile name to use them with prowler. This is the only time they secret key will be shown.  If you lose it, you will need to generate a replacement.
+The `aws iam create-access-key` command will output the secret access key and the key id; keep these somewhere safe, and add them to `~/.aws/credentials` with an appropriate profile name to use them with Prowler. This is the only time they secret key will be shown.  If you lose it, you will need to generate a replacement.
+
+> [This CloudFormation template](iam/create_role_to_assume_cfn.yaml) may also help you on that task.
 
 ## Extras
 
@@ -474,10 +446,10 @@ We are adding additional checks to improve the information gather from each acco
 
 Some of these checks look for publicly facing resources may not actually be fully public due to other layered controls like S3 Bucket Policies, Security Groups or Network ACLs.
 
-To list all existing checks please run the command below:
+To list all existing checks in the extras group run the command below:
 
 ```sh
-./prowler -l
+./prowler -l -g extras
 ```
 
 >There are some checks not included in that list, they are experimental or checks that takes long to run like `extra759` and `extra760` (search for secrets in Lambda function variables and code).
@@ -616,10 +588,6 @@ In order to add any new check feel free to create a new extra check in the extra
 
 ## Third Party Integrations
 
-### AWS Security Hub
-
-There is a blog post about that integration in the AWS Security blog here <https://aws.amazon.com/blogs/security/use-aws-fargate-prowler-send-security-configuration-findings-about-aws-services-security-hub/>
-
 ### Telegram
 
 Javier Pecete has done an awesome job integrating Prowler with Telegram, you have more details here <https://github.com/i4specete/ServerTelegramBot>
@@ -630,15 +598,9 @@ The guys of SecurityFTW have added Prowler in their Cloud Security Suite along w
 
 ## License
 
-All CIS based checks in the checks folder are licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License.
-The link to the license terms can be found at
-<https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode>
-Any other piece of code is licensed as Apache License 2.0 as specified in each file. You may obtain a copy of the License at
+Prowler is licensed as Apache License 2.0 as specified in each file. You may obtain a copy of the License at
 <http://www.apache.org/licenses/LICENSE-2.0>
-
-NOTE: If you are interested in using Prowler for commercial purposes remember that due to the CC4.0 license “The distributors or partners that are interested and using Prowler would need to enroll as CIS SecureSuite Members to incorporate this product, which includes references to CIS resources, in their offering.". Information about CIS pricing for vendors here: <https://www.cisecurity.org/cis-securesuite/pricing-and-categories/product-vendor/>
 
 **I'm not related anyhow with CIS organization, I just write and maintain Prowler to help companies over the world to make their cloud infrastructure more secure.**
 
-If you want to contact me visit <https://blyx.com/contact>
-
+If you want to contact me visit <https://blyx.com/contact> or follow me on Twitter <https://twitter.com/toniblyx> my DMs are open.
