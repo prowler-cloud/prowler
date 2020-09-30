@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2020) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+GROUP_ID[21]='soc2'
+GROUP_NUMBER[21]='21.0'
+GROUP_TITLE[21]='SOC2 Readiness - ONLY AS REFERENCE - [soc2] ***'
+GROUP_RUN_BY_DEFAULT[21]='N' # run it when execute_all is called
+GROUP_CHECKS[21]='check110,check111,check113,check12,check122,check13,check15,check16,check17,check18,check19,check21,check31,check310,check32,check33,check34,check35,check36,check37,check38,check39,check41,check42,check43,extra711,extra72,extra723,extra729,extra731,extra734,extra735,extra739,extra76,extra78,extra792'
+
+# References:
+# 1. https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+# 2. https://www.aicpa.org/interestareas/frc/assuranceadvisoryservices/mappingsrelevanttothesocsuiteofservices.html
+# 3. https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/othermapping/mapping-final-2017-tsc-to-extant-2016-tspc.xlsx
