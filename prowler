@@ -113,7 +113,7 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:" OPTION; do
         KEEPCREDREPORT=1
         ;;
      p )
-        PROFILE=$OPTARG
+        PROFILE_OPT=$OPTARG
         ;;
      r )
         REGION_OPT=$OPTARG
