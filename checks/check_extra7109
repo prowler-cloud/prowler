@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+    
+# Prowler - the handy cloud security tool (copyright 2020) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra7109="7.109"
+CHECK_TITLE_extra7109="[extra7109] Check if Amazon SageMaker Training jobs have network isolation enabled"
+CHECK_SCORED_extra7109="NOT_SCORED"
+CHECK_TYPE_extra7109="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra7109="AwsSageMakerNotebookInstance"
+CHECK_ALTERNATE_check7109="extra7109"
+CHECK_SEVERITY_extra7109="Medium"
+    
+extra7109(){
+    for regx in ${REGIONS}; do
+        LIST_SM_NB_JOBS=$($AWSCLI $PROFILE_OPT --region $regx sagemaker list-training-jobs --query 'TrainingJobSummaries[*].TrainingJobName' --output text)
+        if [[ $LIST_SM_NB_JOBS ]];then 
+            for nb_job_name in $LIST_SM_NB_JOBS; do
+                SM_NB_NETWORKISOLATION=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-training-job --training-job-name $nb_job_name --query 'EnableNetworkIsolation' --output text)
+                if [[ $SM_NB_NETWORKISOLATION == False ]]; then
+                    textFail "${regx}: Sagemaker Training job $nb_job_name has network isolation disabled" "${regx}"
+                else
+                    textPass "${regx}: Sagemaker Training job $nb_job_name has network isolation enabled" "${regx}"
+                fi 
+            done
+        else 
+            textInfo "${regx}: No Sagemaker Trainings jobs found" "${regx}"
+        fi 
+    done
+}
+	

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+    
+# Prowler - the handy cloud security tool (copyright 2020) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra7104="7.104"
+CHECK_TITLE_extra7104="[extra7104] Check if Amazon SageMaker Notebook instances have VPC settings configured"
+CHECK_SCORED_extra7104="NOT_SCORED"
+CHECK_TYPE_extra7104="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra7104="AwsSageMakerNotebookInstance"
+CHECK_ALTERNATE_check7104="extra7104"
+CHECK_SEVERITY_extra7104="Medium"
+
+extra7104(){
+    for regx in ${REGIONS}; do
+        LIST_SM_NB_INSTANCES=$($AWSCLI $PROFILE_OPT --region $regx sagemaker list-notebook-instances --query 'NotebookInstances[*].NotebookInstanceName' --output text)
+        if [[ $LIST_SM_NB_INSTANCES ]];then 
+            for nb_instance in $LIST_SM_NB_INSTANCES; do
+                SM_NB_SUBNETID=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-notebook-instance --notebook-instance-name $nb_instance --query 'SubnetId' --output text)
+                if [[ "${SM_NB_SUBNETID}" == "None" ]]; then
+                    textFail "${regx}: Sagemaker Notebook instance $nb_instance has VPC settings disabled" "${regx}"
+                else
+                    textPass "${regx}: Sagemaker Notebook instance $nb_instance is in a VPC" "${regx}"
+                fi 
+            done
+        else 
+            textInfo "${regx}: No Sagemaker Notebook instances found" "${regx}"
+        fi 
+    done
+}

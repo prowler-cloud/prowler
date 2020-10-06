@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+    
+# Prowler - the handy cloud security tool (copyright 2020) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra7106="7.106"
+CHECK_TITLE_extra7106="[extra7106] Check if Amazon SageMaker Models have VPC settings configured"
+CHECK_SCORED_extra7106="NOT_SCORED"
+CHECK_TYPE_extra7106="EXTRA"
+CHECK_ASFF_RESOURCE_TYPE_extra7106="AwsSageMakerModel"
+CHECK_ALTERNATE_check7106="extra7106"
+CHECK_SEVERITY_extra7106="Medium"
+    
+extra7106(){
+    for regx in ${REGIONS}; do
+        LIST_SM_NB_MODELS=$($AWSCLI $PROFILE_OPT --region $regx sagemaker list-models --query 'Models[*].ModelName' --output text)
+        if [[ $LIST_SM_NB_MODELS ]];then 
+            for nb_model_name in $LIST_SM_NB_MODELS; do
+                SM_NB_VPCCONFIG=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-model --model-name $nb_model_name --query 'VpcConfig.Subnets' --output text)
+                if [[ $SM_NB_VPCCONFIG == "None" ]]; then
+                    textFail "${regx}: Amazon SageMaker Model $nb_model_name has VPC settings disabled" "${regx}"
+                else
+                    textPass "${regx}: Amazon SageMaker Model $nb_model_name has VPC settings enabled" "${regx}"
+                fi 
+            done
+        else 
+            textInfo "${regx}: No Sagemaker Models found" "${regx}"
+        fi 
+    done
+}
+	
