@@ -15,7 +15,9 @@ run_prowler(){
   echo "Uploading result to s3://${BUCKET}/prowler/${CUSTOMER_NAME}/${ACCOUNT_ID}/${CATEGORY}/$1/output.json"
   aws s3api put-object --bucket "${BUCKET}" --key prowler/"${CUSTOMER_NAME}"/"${ACCOUNT_ID}"/"${CATEGORY}"/$1/output.json --body output_$1.json
 }
-if [ "${CATEGORY}" == "IAM" ]; then
+
+# IAM - uses the same report. Secrets - use local storage, don't want to delete it while the others run
+if [ "${CATEGORY}" == "IAM" ] || [ "${CATEGORY}" == "Secrets" ]; then
   ./prowler -p "${ACCOUNT_ID}" -c "${CHECKS}" -M json | tee output_IAM.json
   echo "Uploading result to s3://${BUCKET}/prowler/${CUSTOMER_NAME}/${ACCOUNT_ID}/${CATEGORY}/output.json"
   aws s3api put-object --bucket "${BUCKET}" --key prowler/"${CUSTOMER_NAME}"/"${ACCOUNT_ID}"/"${CATEGORY}"/output.json --body output_IAM.json
