@@ -304,6 +304,14 @@ for accountId in $ACCOUNTS_IN_ORGS; do ./prowler -A $accountId -R RemoteRoleToAs
 ```
 Usig the same for loop it can be scanned a list of accounts with a variable like `ACCOUNTS_LIST='11111111111 2222222222 333333333'`
 
+### GovCloud
+
+Prowler runs in GovCloud regions as well. To make sure it points to the right API endpoint use `-r` to either `us-gov-west-1` or `us-gov-east-1`. If not filter region is used it will look for resources in both GovCloud regions by default:
+```
+./prowler -r us-gov-west-1
+```
+> For Security Hub integration see below in Security Hub section.
+
 ### Custom folder for custom checks
 
 Flag `-x /my/own/checks` will include any check in that particular directory. To see how to write checks see [Add Custom Checks](#add-custom-checks) section.
@@ -335,7 +343,7 @@ Since version v2.3, Prowler supports natively sending findings to [AWS Security 
 ```
 or for only one filtered region like eu-west-1:
 ```sh
-./prowler -M json-asff -S -f eu-west-1
+./prowler -M json-asff -q -S -f eu-west-1
 ```
 > Note: It is recommended to send only fails to Security Hub and that is possible adding `-q` to the command.
 
@@ -346,6 +354,14 @@ There are two requirements:
     - [iam/prowler-security-hub.json](iam/prowler-security-hub.json)
 
 >Note: to have updated findings in Security Hub you have to run Prowler periodically. Once a day or every certain amount of hours.
+
+### Security Hub in GovCloud regions
+
+To use Prowler and Security Hub integration in GovCloud there is an additional requirement, usage of `-r` is needed to point the API queries to the right API endpoint. Here is a sample command that sends only failed findings to Security Hub in region `us-gov-west-1`:
+```
+./prowler -r us-gov-west-1 -f us-gov-west-1 -S -M csv,json-asff -q
+```
+
 
 ## Whitelist or remove FAIL from resources
 
