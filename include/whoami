@@ -13,9 +13,10 @@
 
 
 # Get whoami in AWS, who is the user running this shell script
+GETCALLER=$($AWSCLI sts get-caller-identity $PROFILE_OPT --region $REGION)
+ACCOUNT_NUM=$(echo $GETCALLER | jq -r '.Account')
 
 getWhoami(){
-  ACCOUNT_NUM=$($AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "Account")
 
   if [[ 255 -eq $? ]]; then
           # Failed to get own identity ... exit
@@ -24,8 +25,8 @@ getWhoami(){
           exit $EXITCODE
   fi
 
-  CALLER_ARN=$($AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "Arn")
-  USER_ID=$($AWSCLI sts get-caller-identity --output text $PROFILE_OPT --region $REGION --query "UserId")
+  CALLER_ARN=$(echo $GETCALLER | jq -r '.Arn')
+  USER_ID=$(echo $GETCALLER | jq -r '.UserId')
   AWS_PARTITION=$(echo $CALLER_ARN| cut -d: -f2)
 
   if [[ $ACCOUNT_TO_ASSUME ]]; then
