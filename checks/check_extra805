@@ -20,7 +20,6 @@ CHECK_ALTERNATE_check805="extra805"
 extra805(){
   textInfo "Looking for instances in all regions..."
   for regx in $REGIONS; do
-
     INSTANCES_WITH_REBOOT=$($AWSCLI ec2 describe-instance-status $PROFILE_OPT --region $regx --filters Name=event.code,Values=instance-reboot,system-reboot,system-maintenance,instance-retirement,instance-stop --query 'InstanceStatuses[].[InstanceId]' --output text)
 
     if [[ $INSTANCES_WITH_REBOOT ]]; then
