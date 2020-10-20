@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra805="8.05"
-CHECK_TITLE_extra805="[extra805] Ensure instances with scheduled reboots are rescheduled or manually rebooted (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra805="[extra805] Take action on EC2 instances with scheduled maintenance (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra805="NOT_SCORED"
 CHECK_TYPE_extra805="EXTRA"
 CHECK_ASFF_RESOURCE_TYPE_extra805="AwsEc2Instance"
@@ -21,14 +21,14 @@ extra805(){
   textInfo "Looking for instances in all regions..."
   for regx in $REGIONS; do
 
-    INSTANCES_WITH_REBOOT=$($AWSCLI ec2 describe-instance-status $PROFILE_OPT --region $regx --filters Name=event.code,Values=instance-reboot,system-reboot --query 'InstanceStatuses[].[InstanceId]' --output text)
+    INSTANCES_WITH_REBOOT=$($AWSCLI ec2 describe-instance-status $PROFILE_OPT --region $regx --filters Name=event.code,Values=instance-reboot,system-reboot,system-maintenance,instance-retirement,instance-stop --query 'InstanceStatuses[].[InstanceId]' --output text)
 
     if [[ $INSTANCES_WITH_REBOOT ]]; then
       while read -r instance; do
-        textFail "$regx: Instance: $instance is scheduled for a reboot" "$regx"
+        textFail "$regx: Instance: $instance has scheduled maintenance" "$regx"
       done <<< "$INSTANCES_WITH_REBOOT"
     else
-      textInfo "$regx: no instances found with scheduled reboot" "$regx"
+      textInfo "$regx: no instances found with scheduled maintenance" "$regx"
     fi
   done
 }
