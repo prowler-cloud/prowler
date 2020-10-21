@@ -61,6 +61,20 @@ prepare_junit_check_output() {
 
 finalise_junit_check_output() {
   echo '</testsuite>' >> "$JUNIT_OUTPUT_FILE"
+  TEST_COUNT="0"
+  TEST_SUCCESS_COUNT="0"
+  TEST_FAILURE_COUNT="0"
+  TEST_SKIPPED_COUNT="0"
+  TEST_ERROR_COUNT="0"
+  TEST_COUNT=$(grep -c "testcase name=" "$JUNIT_OUTPUT_FILE")
+  TEST_SUCCESS_COUNT=$(grep -A1 "testcase name=" "$JUNIT_OUTPUT_FILE" | grep -c "<system-out>")
+  TEST_FAILURE_COUNT=$(grep -A1 "testcase name=" "$JUNIT_OUTPUT_FILE" | grep -c "<failure message")
+  TEST_SKIPPED_COUNT=$(grep -A1 "testcase name=" "$JUNIT_OUTPUT_FILE" | grep -c "<skipped message")
+  TEST_ERROR_COUNT=$(grep -A1 "testcase name=" "$JUNIT_OUTPUT_FILE" | grep -c "<error message")
+  EXTRACT_TESTSUITE_NAME=$(awk '/<testsuite name=/ { print $1,$2}' "$JUNIT_OUTPUT_FILE")
+  EXTRACT_TESTSUITE_TIME=$(awk '/<testsuite name=/ { print $3}' "$JUNIT_OUTPUT_FILE");
+  NEW_TESTSUITE_NAME=$(echo "$EXTRACT_TESTSUITE_NAME tests=\"$TEST_COUNT\" failures=\"$TEST_FAILURE_COUNT\" skipped=\"$TEST_SKIPPED_COUNT\" errors=\"$TEST_ERROR_COUNT\" $EXTRACT_TESTSUITE_TIME")
+  sed "s/<testsuite name=.*/$NEW_TESTSUITE_NAME/g" "$JUNIT_OUTPUT_FILE" > "$JUNIT_OUTPUT_FILE.$$" && mv "$JUNIT_OUTPUT_FILE.$$" "$JUNIT_OUTPUT_FILE"
 }
 
 output_junit_success() {
