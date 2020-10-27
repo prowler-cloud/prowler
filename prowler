@@ -232,13 +232,6 @@ trap handle_ctrl_c INT
 . $PROWLER_DIR/include/securityhub_integration
 . $PROWLER_DIR/include/junit_integration
 
-# Get a list of all available AWS Regions
-REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
-  --output text \
-  $PROFILE_OPT \
-  --region $REGION \
-  --region-names $FILTERREGION)
-
 # Pre-process whitelist file if supplied
 if [[ -n "$WHITELIST_FILE" ]]; then
   # ignore lines starting with # (comments)
@@ -319,7 +312,7 @@ execute_check() {
   local asff_type_var=CHECK_ASFF_TYPE_$1
 
   local severity_var=CHECK_SEVERITY_$1
-  
+
   CHECK_SEVERITY="${!severity_var}"
 
   CHECK_ID="$1"
@@ -416,7 +409,7 @@ execute_group() {
 
 # Function to execute group by name
 execute_group_by_id() {
-  
+
   	for i in "${!GROUP_ID[@]}"; do
 		if [ "${GROUP_ID[$i]}" == "$1" ]; then
 			execute_group ${i} $2
@@ -518,18 +511,25 @@ if [[ " ${MODES[@]} " =~ " json " || " ${MODES[@]} " =~ " json-asff " ]]; then
   . $PROWLER_DIR/include/jq_detector
 fi
 
+# Gather account data / test aws cli connectivity
+getWhoami
+if [[ $ACCOUNT_TO_ASSUME ]]; then
+  assume_role
+fi
+
+# Get a list of all available AWS Regions
+REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
+  --output text \
+  $PROFILE_OPT \
+  --region $REGION \
+  --region-names $FILTERREGION)
+
 if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
   checkSecurityHubCompatibility
 fi
 
 if is_junit_output_enabled; then
   prepare_junit_output
-fi
-
-# Gather account data / test aws cli connectivity
-getWhoami
-if [[ $ACCOUNT_TO_ASSUME ]]; then
-  assume_role
 fi
 
 # Execute group of checks if called with -g
