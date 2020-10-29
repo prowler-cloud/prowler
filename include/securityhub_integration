@@ -23,11 +23,20 @@ checkSecurityHubCompatibility(){
     exit $EXITCODE
   fi
   for regx in $REGIONS; do
-    SECURITY_HUB_ENABLED=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT describe-hub)
+    SECURITY_HUB_ENABLED=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT describe-hub 2>/dev/null)
     if [[ -z "${SECURITY_HUB_ENABLED}" ]]; then
-      echo -e "\n$RED ERROR!$NORMAL Security Hub is not enabled in $regx. Enable it by calling '$AWSCLI securityhub --region $regx $PROFILE_OPT enable-security-hub'\n"
-      EXITCODE=1
-      exit $EXITCODE
+      if [[ -z "${PROWLER_PRODUCT_SUBSCRIPTION_ENABLED}" ]]; then
+        echo -e "\n$RED ERROR!$NORMAL Security Hub is not enabled in $regx. Enable it running '$AWSCLI securityhub --region $regx $PROFILE_OPT enable-security-hub'. More info: https://github.com/toniblyx/prowler/#security-hub-integration\n"
+        EXITCODE=1
+        exit $EXITCODE
+      fi
+    else
+      PROWLER_PRODUCT_SUBSCRIPTION_ENABLED=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT list-enabled-products-for-import --output text | grep "prowler/prowler" )
+      if [[ -z "${PROWLER_PRODUCT_SUBSCRIPTION_ENABLED}" ]]; then
+        echo -e "\n$RED ERROR!$NORMAL Security Hub is enabled in $regx but Prowler integration does not accept findings. Enable it running '$AWSCLI securityhub --region $regx $PROFILE_OPT enable-import-findings-for-product --product-arn arn:aws:securityhub:$regx::product/prowler/prowler'. More info: https://github.com/toniblyx/prowler/#security-hub-integration\n"
+        EXITCODE=1
+        exit $EXITCODE
+      fi
     fi
   done
 }
