@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Remediation:
+#
+# https://www.cloudconformity.com/knowledge-base/aws/RDS/instance-deletion-protection.html
+# https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html
+#
+# aws rds modify-db-instance \
+#	--region us-east-1 \
+#	--db-instance-identifier test-db \
+#	--deletion-protection \
+#	[--apply-immediately | --no-apply-immediately]
+
+CHECK_ID_extra7124="7.124"
+CHECK_TITLE_extra7124="[extra7124] ETL Job Server-side encryption (Enables Amazon S3-managed encryption of the data at the target (SSE-S3) must be enabled."
+CHECK_SCORED_extra7124="NOT_SCORED"
+CHECK_TYPE_extra7124="EXTRA"
+CHECK_SEVERITY_extra7124="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7124="AwsGlue"
+CHECK_ALTERNATE_check7124="extra7124"
+
+extra7124(){
+  textInfo "Looking for ETL Jobs in all regions...  "
+  for regx in $REGIONS; do
+    LIST_GLUE_SC=$($AWSCLI glue get-jobs $PROFILE_OPT --region $regx --query 'Jobs[*].SecurityConfiguration'--output text)
+    if [[ $LIST_GLUE_SC ]]; then
+      for sc in $(echo '${LIST_GLUE_SC}'| jq -r '.[] | @base64');do
+        textInfo "$ENDPOINT_SECURITY"
+        ENDPOINT_SC_ENCRYPTION=$($AWSCLI $PROFILE_OPT --region $regx glue get-security-configurations $sc --query 'SecurityConfiguration.EncryptionConfiguration.JobBookmarksEncryption.JobBookmarksEncryptionMode' --output text)
+        if [[ENDPOINT_SC_ENCRYPTION == "SSE-S3" ]]; then
+          textFail "$regx: ETL Job Security Configuration $sc has (SSE-S3) encryption enabled" "$regx"
+        else
+          textPass "$regx: ETL Job Security Configuration $sc has (SSE-S3) encryption is not enabled!" "$regx"
+        fi
+      done
+    else
+      textInfo "$regx: No ETL Development endpoints found" "$regx"
+    fi
+  done
+}

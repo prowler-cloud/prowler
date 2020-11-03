@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Remediation:
+#
+# https://www.cloudconformity.com/knowledge-base/aws/RDS/instance-deletion-protection.html
+# https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html
+#
+# aws rds modify-db-instance \
+#	--region us-east-1 \
+#	--db-instance-identifier test-db \
+#	--deletion-protection \
+#	[--apply-immediately | --no-apply-immediately]
+
+CHECK_ID_extra7121="7.121"
+CHECK_TITLE_extra7121="[extra7121] Security configurations used by ETL Development endpoints must have CloudWatch logs encryption enabled."
+CHECK_SCORED_extra7121="NOT_SCORED"
+CHECK_TYPE_extra7121="EXTRA"
+CHECK_SEVERITY_extra7121="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7121="AwsGlue"
+CHECK_ALTERNATE_check7121="extra7121"
+
+extra7121(){
+  textInfo "Looking for Development Endpoints in all regions...  "
+  for regx in $REGIONS; do
+    LIST_GLUE_SC=$($AWSCLI glue get-dev-endpoints $PROFILE_OPT --region $regx --query 'DevEndpoints[*].SecurityConfiguration' --output text)
+    if [[ $LIST_GLUE_SC ]]; then
+      for sc in $(echo '${LIST_GLUE_SC}'| jq -r '.[] | @base64');do
+        textInfo "$ENDPOINT_SECURITY"
+        ENDPOINT_SC_ENCRYPTION=$($AWSCLI $PROFILE_OPT --region $regx glue get-security-configurations $sc --query 'SecurityConfiguration.EncryptionConfiguration.CloudWatchEncryption.CloudWatchEncryptionMode' --output text)
+        if [[ENDPOINT_SC_ENCRYPTION == "DISABLED" ]]; then
+          textFail "$regx: Development Endpoint Security Configuration $sc has CloudWatch logs encryption not enabled!" "$regx"
+        else
+          textPass "$regx: Development Endpoint Security Configuration $sc has CloudWatch logs encryption enabled" "$regx"
+        fi
+      done
+    else
+      textInfo "$regx: No Security Configuration found" "$regx"
+    fi
+  done
+}
