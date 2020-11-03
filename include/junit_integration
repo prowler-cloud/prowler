@@ -79,7 +79,7 @@ finalise_junit_check_output() {
 }
 
 output_junit_success() {
-  JUNIT_SUCCESS_COUNT=$(($JUNIT_SUCCESS_COUNT+1))
+  ((JUNIT_SUCCESS_COUNT++))
   output_junit_test_case "$1" "<system-out>$(xml_escape "$1")</system-out>"
 }
 
@@ -89,12 +89,12 @@ output_junit_info() {
 }
 
 output_junit_failure() {
-  JUNIT_FAILURES_COUNT=$(($JUNIT_FAILURES_COUNT+1))
+  ((JUNIT_FAILURES_COUNT++))
   output_junit_test_case "$1" "<failure message=\"$(xml_escape "$1")\"/>"
 }
 
 output_junit_skipped() {
-  JUNIT_SKIPPED_COUNT=$(($UNIT_SKIPPED_COUNT+1))
+  ((JUNIT_SKIPPED_COUNT++))
   output_junit_test_case "$1" "<skipped message=\"$(xml_escape "$1")\"/>"
 }
 
