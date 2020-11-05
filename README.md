@@ -9,7 +9,9 @@
 - [Screenshots](#screenshots)
 - [Advanced Usage](#advanced-usage)
 - [Security Hub integration](#security-hub-integration)
-- [Fix](#fix)
+- [CodeBuild deployment](#codebuild-deployment)
+- [Whitelist/allowlist or remove FAIL from resources](whitelist-allowlist-or-remove-fail-from-resources)
+- [Fix](#how-to-fix-every-fail)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
 - [Forensics Ready Checks](#forensics-ready-checks)
@@ -381,7 +383,11 @@ To use Prowler and Security Hub integration in China regions there is an additio
 ./prowler -r cn-north-1 -f cn-north-1 -q -S -M csv,json-asff
 ```
 
-## Whitelist or remove FAIL from resources
+## CodeBuild deployment
+
+CodeBuild can help you running Prowler and there is a Cloud Formation template that helps you doing that [here](https://github.com/toniblyx/prowler/blob/master/util/codebuild/codebuild-auditor-account-cfn.yaml).
+
+## Whitelist or allowlist or remove a fail from resources
 
 Sometimes you may find resources that are intentionally configured in a certain way that may be a bad practice but it is all right with it, for example an S3 bucket open to the internet hosting a web site, or a security group with an open port needed in your use case. Now you can use `-w whitelist_sample.txt` and add your resources as `checkID:resourcename` as in this command:
 
