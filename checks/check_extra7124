@@ -33,7 +33,7 @@ CHECK_ALTERNATE_check7124="extra7124"
 extra7124(){
   textInfo "Looking for ETL Jobs in all regions...  "
   for regx in $REGIONS; do
-    LIST_GLUE_SC=$($AWSCLI glue get-jobs $PROFILE_OPT --region $regx --query 'Jobs[*].SecurityConfiguration'--output text)
+    LIST_GLUE_SC=$($AWSCLI glue get-jobs $PROFILE_OPT --region $regx --query 'Jobs[*].SecurityConfiguration' --output text)
     if [[ $LIST_GLUE_SC ]]; then
       for sc in $(echo '${LIST_GLUE_SC}'| jq -r '.[] | @base64');do
         textInfo "$ENDPOINT_SECURITY"
@@ -45,7 +45,7 @@ extra7124(){
         fi
       done
     else
-      textInfo "$regx: No ETL Development endpoints found" "$regx"
+      textInfo "$regx: No ETL Jobs found" "$regx"
     fi
   done
 }

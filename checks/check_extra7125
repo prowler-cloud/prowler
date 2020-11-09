@@ -43,7 +43,7 @@ extra7125(){
         fi
       done
     else
-      textInfo "$regx: No Security Configuration found" "$regx"
+      textInfo "$regx: No Private Addresses for endpoints found" "$regx"
     fi
   done
 }
