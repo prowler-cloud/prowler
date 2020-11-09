@@ -23,7 +23,7 @@
 #	[--apply-immediately | --no-apply-immediately]
 
 CHECK_ID_extra7124="7.124"
-CHECK_TITLE_extra7124="[extra7124] ETL Job Server-side encryption (Enables Amazon S3-managed encryption of the data at the target (SSE-S3) must be enabled."
+CHECK_TITLE_extra7124="[extra7124] Check if ETL Job Server-side encryption (Enables Amazon S3-managed encryption of the data at the target, SSE-S3) is enabled."
 CHECK_SCORED_extra7124="NOT_SCORED"
 CHECK_TYPE_extra7124="EXTRA"
 CHECK_SEVERITY_extra7124="Medium"

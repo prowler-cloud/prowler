@@ -23,7 +23,7 @@
 #	[--apply-immediately | --no-apply-immediately]
 
 CHECK_ID_extra7121="7.121"
-CHECK_TITLE_extra7121="[extra7121] Security configurations used by ETL Development endpoints must have CloudWatch logs encryption enabled."
+CHECK_TITLE_extra7121="[extra7121] Check if Security configurations used by ETL Development endpoints have CloudWatch logs encryption enabled."
 CHECK_SCORED_extra7121="NOT_SCORED"
 CHECK_TYPE_extra7121="EXTRA"
 CHECK_SEVERITY_extra7121="Medium"

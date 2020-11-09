@@ -23,7 +23,7 @@
 #	[--apply-immediately | --no-apply-immediately]
 
 CHECK_ID_extra7119="7.119"
-CHECK_TITLE_extra7119="[extra7119] Security configurations used by ETL Development endpoints must have S3 encryption enabled."
+CHECK_TITLE_extra7119="[extra7119] Check if Security configurations used by ETL Development endpoints have S3 encryption enabled."
 CHECK_SCORED_extra7119="NOT_SCORED"
 CHECK_TYPE_extra7119="EXTRA"
 CHECK_SEVERITY_extra7119="Medium"
