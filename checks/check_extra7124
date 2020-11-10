@@ -33,19 +33,27 @@ CHECK_ALTERNATE_check7124="extra7124"
 extra7124(){
   textInfo "Looking for ETL Jobs in all regions...  "
   for regx in $REGIONS; do
-    LIST_GLUE_SC=$($AWSCLI glue get-jobs $PROFILE_OPT --region $regx --query 'Jobs[*].SecurityConfiguration' --output text)
-    if [[ $LIST_GLUE_SC ]]; then
-      for sc in $(echo '${LIST_GLUE_SC}'| jq -r '.[] | @base64');do
-        textInfo "$ENDPOINT_SECURITY"
-        ENDPOINT_SC_ENCRYPTION=$($AWSCLI $PROFILE_OPT --region $regx glue get-security-configurations $sc --query 'SecurityConfiguration.EncryptionConfiguration.JobBookmarksEncryption.JobBookmarksEncryptionMode' --output text)
-        if [[ENDPOINT_SC_ENCRYPTION == "SSE-S3" ]]; then
-          textFail "$regx: ETL Job Security Configuration $sc has (SSE-S3) encryption enabled" "$regx"
-        else
-          textPass "$regx: ETL Job Security Configuration $sc has (SSE-S3) encryption is not enabled!" "$regx"
-        fi
+    JOB_LIST=$($AWSCLI glue get-jobs $PROFILE_OPT --region $regx --output json --query 'Jobs[*].{Name:Name,SecurityConfiguration:SecurityConfiguration,JobEncryption:DefaultArguments."--encryption-type"}')
+    if [[ ! -z "$JOB_LIST" ]]; then
+      for job in $(echo "${JOB_LIST}" | jq -r '.[] | @base64'); do
+          JOB_NAME=$(echo $job | base64 --decode | jq -r '.Name')
+          SECURITY_CONFIGURATION=$(echo $job | base64 --decode | jq -r '.SecurityConfiguration // empty')
+          JOB_ENCRYPTION=$(echo $job | base64 --decode | jq -r '.JobEncryption // empty')
+          if [[ ! -z "$SECURITY_CONFIGURATION" ]]; then
+            S3_ENCRYPTION=$($AWSCLI glue get-security-configuration --name "${SECURITY_CONFIGURATION}" $PROFILE_OPT --region $regx --output text --query 'SecurityConfiguration.EncryptionConfiguration.S3Encryption[0].S3EncryptionMode')
+            if [[ "$S3_ENCRYPTION" == "SSE-S3" ]]; then
+              textFail "$regx: Job $JOB_NAME has Server side encryption (SSE-S3) enabled" "$regx"
+            else
+              textInfo "$regx: Job $JOB_NAME does not have Server side encryption (SSE-S3) enabled" "$regx"
+            fi
+          elif [[ ! -z "$JOB_ENCRYPTION" ]]; then
+            textInfo "$regx: Job $JOB_NAME does have $JOB_ENCRYPTION S3 encryption enabled" "$regx"
+          else
+            textFail "$regx: Job $JOB_NAME does not have S3 encryption enabled" "$regx"
+          fi
       done
     else
-      textInfo "$regx: No ETL Jobs found" "$regx"
+      textInfo "$regx: There are no ETL jobs" "$regx"
     fi
   done
 }

@@ -33,19 +33,24 @@ CHECK_ALTERNATE_check7121="extra7121"
 extra7121(){
   textInfo "Looking for Development Endpoints in all regions...  "
   for regx in $REGIONS; do
-    LIST_GLUE_SC=$($AWSCLI glue get-dev-endpoints $PROFILE_OPT --region $regx --query 'DevEndpoints[*].SecurityConfiguration' --output text)
-    if [[ $LIST_GLUE_SC ]]; then
-      for sc in $(echo '${LIST_GLUE_SC}'| jq -r '.[] | @base64');do
-        textInfo "$ENDPOINT_SECURITY"
-        ENDPOINT_SC_ENCRYPTION=$($AWSCLI $PROFILE_OPT --region $regx glue get-security-configurations $sc --query 'SecurityConfiguration.EncryptionConfiguration.CloudWatchEncryption.CloudWatchEncryptionMode' --output text)
-        if [[ENDPOINT_SC_ENCRYPTION == "DISABLED" ]]; then
-          textFail "$regx: Development Endpoint Security Configuration $sc has CloudWatch logs encryption not enabled!" "$regx"
+    LIST_EP_SC=$($AWSCLI glue get-dev-endpoints $PROFILE_OPT --region $regx --query 'DevEndpoints[*].{Name:EndpointName,Security:SecurityConfiguration}' --output json)
+    if [[ ! -z "$LIST_EP_SC" ]]; then
+      for ep in $(echo "${LIST_EP_SC}"| jq -r '.[] | @base64');do
+        ENDPOINT_NAME=$(echo $ep | base64 --decode | jq -r '.Name')
+        ENDPOINT_SC=$(echo $ep | base64 --decode | jq -r '.Security // empty')
+        if [[ ! -z "$ENDPOINT_SC" ]]; then
+          ENDPOINT_SC_ENCRYPTION=$($AWSCLI glue get-security-configuration --name "${ENDPOINT_SC}" $PROFILE_OPT --region $regx --query 'SecurityConfiguration.EncryptionConfiguration.CloudWatchEncryption.CloudWatchEncryptionMode' --output text)
+          if [[ $ENDPOINT_SC_ENCRYPTION == "DISABLED" ]]; then
+            textFail "$regx: Development Endpoint $ENDPOINT_NAME does not have CloudWatch logs encryption enabled!" "$regx"
+          else
+            textPass "$regx: Development Endpoint $ENDPOINT_NAME has CloudWatch logs encryption enabled" "$regx"
+          fi
         else
-          textPass "$regx: Development Endpoint Security Configuration $sc has CloudWatch logs encryption enabled" "$regx"
+          textInfo "$regx: No Security Configuration found" "$regx"
         fi
       done
     else
-      textInfo "$regx: No Security Configuration found" "$regx"
+      textInfo "$regx: There are no Development Endpoints" "$regx"
     fi
   done
 }

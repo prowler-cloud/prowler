@@ -33,17 +33,19 @@ CHECK_ALTERNATE_check7125="extra7125"
 extra7125(){
   textInfo "Looking for Development Endpoints in all regions...  "
   for regx in $REGIONS; do
-    LIST_GLUE_SC=$($AWSCLI glue get-dev-endpoints $PROFILE_OPT --region $regx --query 'DevEndpoints[*].PrivateAddress' --output text)
-    if [[ $LIST_GLUE_SC ]]; then
-      for pa in $(echo '${LIST_GLUE_SC}'| jq -r '.[] | @base64');do
-        if [[ ! pa ]]; then
-          textFail "$regx: AWS Glue uses a VPC Endpoint $pa" "$regx"
+    LIST_EP_PA=$($AWSCLI glue get-dev-endpoints $PROFILE_OPT --region $regx --query 'DevEndpoints[*].{Name:EndpointName,Address:PrivateAddress}' --output json)
+    if [[ ! -z "$LIST_EP_PA" ]]; then
+      for ep in $(echo "${LIST_EP_PA}" | jq -r '.[] | @base64'); do
+        EP_NAME=$(echo $ep | base64 --decode | jq -r '.Name')
+        PRIVATE_ADDRESS=$(echo $ep | base64 --decode | jq -r '.Address')
+        if [[ ! -z "$PRIVATE_ADDRESS" ]]; then
+          textFail "$regx: AWS Glue Development Endpoint $EP_NAME uses a VPC Endpoint" "$regx"
         else
-          textPass "$regx: AWS Glue does not use a VPC Endpoint $pa" "$regx"
+          textPass "$regx: AWS Glue  Development Endpoint $EP_NAME does not use a VPC Endpoint" "$regx"
         fi
       done
     else
-      textInfo "$regx: No Private Addresses for endpoints found" "$regx"
+      textInfo "$regx: No Development Endpoints found" "$regx"
     fi
   done
 }
