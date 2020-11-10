@@ -39,9 +39,9 @@ extra7125(){
         EP_NAME=$(echo $ep | base64 --decode | jq -r '.Name')
         PRIVATE_ADDRESS=$(echo $ep | base64 --decode | jq -r '.Address')
         if [[ ! -z "$PRIVATE_ADDRESS" ]]; then
-          textFail "$regx: AWS Glue Development Endpoint $EP_NAME uses a VPC Endpoint" "$regx"
+          textPass "$regx: AWS Glue Development Endpoint $EP_NAME uses a VPC Endpoint" "$regx"
         else
-          textPass "$regx: AWS Glue  Development Endpoint $EP_NAME does not use a VPC Endpoint" "$regx"
+          textFail "$regx: AWS Glue  Development Endpoint $EP_NAME does not use a VPC Endpoint" "$regx"
         fi
       done
     else
