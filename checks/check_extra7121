@@ -23,7 +23,7 @@
 #	[--apply-immediately | --no-apply-immediately]
 
 CHECK_ID_extra7121="7.121"
-CHECK_TITLE_extra7121="[extra7121] Check if Security configurations used by ETL Development endpoints have CloudWatch logs encryption enabled."
+CHECK_TITLE_extra7121="[extra7121] Check if Glue security configurations used by ETL Development endpoints have CloudWatch logs encryption enabled."
 CHECK_SCORED_extra7121="NOT_SCORED"
 CHECK_TYPE_extra7121="EXTRA"
 CHECK_SEVERITY_extra7121="Medium"
@@ -31,7 +31,6 @@ CHECK_ASFF_RESOURCE_TYPE_extra7121="AwsGlue"
 CHECK_ALTERNATE_check7121="extra7121"
 
 extra7121(){
-  textInfo "Looking for Development Endpoints in all regions...  "
   for regx in $REGIONS; do
     LIST_EP_SC=$($AWSCLI glue get-dev-endpoints $PROFILE_OPT --region $regx --query 'DevEndpoints[*].{Name:EndpointName,Security:SecurityConfiguration}' --output json)
     if [[ ! -z "$LIST_EP_SC" ]]; then
@@ -41,16 +40,16 @@ extra7121(){
         if [[ ! -z "$ENDPOINT_SC" ]]; then
           ENDPOINT_SC_ENCRYPTION=$($AWSCLI glue get-security-configuration --name "${ENDPOINT_SC}" $PROFILE_OPT --region $regx --query 'SecurityConfiguration.EncryptionConfiguration.CloudWatchEncryption.CloudWatchEncryptionMode' --output text)
           if [[ $ENDPOINT_SC_ENCRYPTION == "DISABLED" ]]; then
-            textFail "$regx: Development Endpoint $ENDPOINT_NAME does not have CloudWatch logs encryption enabled!" "$regx"
+            textFail "$regx: Glue Development Endpoint $ENDPOINT_NAME does not have CloudWatch logs encryption enabled!" "$regx"
           else
-            textPass "$regx: Development Endpoint $ENDPOINT_NAME has CloudWatch logs encryption enabled" "$regx"
+            textPass "$regx: Glue Development Endpoint $ENDPOINT_NAME has CloudWatch logs encryption enabled" "$regx"
           fi
         else
-          textInfo "$regx: No Security Configuration found" "$regx"
+          textInfo "$regx: No Glue security configuration found" "$regx"
         fi
       done
     else
-      textInfo "$regx: There are no Development Endpoints" "$regx"
+      textInfo "$regx: There are no Glue Development Endpoints" "$regx"
     fi
   done
 }
