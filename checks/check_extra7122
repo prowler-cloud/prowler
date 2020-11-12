@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra7122="7.117"
-CHECK_TITLE_extra7122="[extra7122] Check if Security configurations used by ETL Jobs have Job bookmark encryption enabled. (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra7122="[extra7122] Check if Glue security configurations used by ETL Jobs have Job bookmark encryption enabled. (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra7122="NOT_SCORED"
 CHECK_TYPE_extra7122="EXTRA"
 CHECK_SEVERITY_extra7122="Medium"
@@ -28,16 +28,16 @@ extra7122(){
           if [[ ! -z "$SECURITY_CONFIGURATION" ]]; then
             JOB_BOOKMARK_ENCRYPTION=$($AWSCLI glue get-security-configuration --name "${SECURITY_CONFIGURATION}" $PROFILE_OPT --region $regx --output text --query 'SecurityConfiguration.EncryptionConfiguration.JobBookmarksEncryption.JobBookmarksEncryptionMode')
             if [[ "$JOB_BOOKMARK_ENCRYPTION" == "DISABLED" ]]; then
-              textFail "$regx: Job $JOB_NAME does not have Job bookmark encryption enabled" "$regx"
+              textFail "$regx: Glue job $JOB_NAME does not have Job bookmark encryption enabled" "$regx"
             else
-              textInfo "$regx: Job $JOB_NAME does have $JOB_BOOKMARK_ENCRYPTION Job bookmark  encryption enabled" "$regx"
+              textInfo "$regx: Glue job $JOB_NAME does have $JOB_BOOKMARK_ENCRYPTION Job bookmark  encryption enabled" "$regx"
             fi
           else
-            textFail "$regx: Job $JOB_NAME does not have Job bookmark encryption enabled" "$regx"
+            textFail "$regx: Glue job $JOB_NAME does not have Job bookmark encryption enabled" "$regx"
           fi
       done
     else 
-      textInfo "$regx: There are no jobs" "$regx"
+      textInfo "$regx: There are no Glue jobs" "$regx"
     fi 
   done
 }

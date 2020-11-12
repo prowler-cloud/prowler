@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra7118="7.117"
-CHECK_TITLE_extra7118="[extra7118] Check if Security configurations used by ETL Jobs have S3 encryption enabled. (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra7118="[extra7118] Check if Glue Security configurations used by ETL Jobs have S3 encryption enabled. (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra7118="NOT_SCORED"
 CHECK_TYPE_extra7118="EXTRA"
 CHECK_SEVERITY_extra7118="Medium"
@@ -29,18 +29,18 @@ extra7118(){
           if [[ ! -z "$SECURITY_CONFIGURATION" ]]; then
             S3_ENCRYPTION=$($AWSCLI glue get-security-configuration --name "${SECURITY_CONFIGURATION}" $PROFILE_OPT --region $regx --output text --query 'SecurityConfiguration.EncryptionConfiguration.S3Encryption[0].S3EncryptionMode')
             if [[ "$S3_ENCRYPTION" == "DISABLED" ]]; then
-              textFail "$regx: Job $JOB_NAME does not have S3 encryption enabled" "$regx"
+              textFail "$regx: Glue job $JOB_NAME does not have S3 encryption enabled" "$regx"
             else
-              textInfo "$regx: Job $JOB_NAME does have $S3_ENCRYPTION S3 encryption enabled" "$regx"
+              textInfo "$regx: Glue job $JOB_NAME does have $S3_ENCRYPTION S3 encryption enabled" "$regx"
             fi
           elif [[ ! -z "$JOB_ENCRYPTION" ]]; then
-            textInfo "$regx: Job $JOB_NAME does have $JOB_ENCRYPTION S3 encryption enabled" "$regx"
+            textInfo "$regx: Glue job $JOB_NAME does have $JOB_ENCRYPTION S3 encryption enabled" "$regx"
           else 
-            textFail "$regx: Job $JOB_NAME does not have S3 encryption enabled" "$regx"
+            textFail "$regx: Glue job $JOB_NAME does not have S3 encryption enabled" "$regx"
           fi
       done
     else 
-      textInfo "$regx: There are no jobs" "$regx"
+      textInfo "$regx: There are no Glue jobs" "$regx"
     fi 
   done
 }

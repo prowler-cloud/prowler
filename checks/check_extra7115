@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra7115="7.115"
-CHECK_TITLE_extra7115="[extra7115] Check if Glue Database connection must have SSL connection enabled. (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra7115="[extra7115] Check if Glue database connection must have SSL connection enabled. (Not Scored) (Not part of CIS benchmark)"
 CHECK_SCORED_extra7115="NOT_SCORED"
 CHECK_TYPE_extra7115="EXTRA"
 CHECK_SEVERITY_extra7115="Medium"
@@ -26,13 +26,13 @@ extra7115(){
           CONNECTION_NAME=$(echo $connection | base64 --decode   | jq -r '.Name' )
           CONNECTION_SSL_STATE=$(echo $connection | base64 --decode  | jq -r '.SSL')
           if [[ "$CONNECTION_SSL_STATE" == "false" ]]; then
-              textFail "$regx: Connection $CONNECTION_NAME has SSL connection disabled"  "$regx"
+              textFail "$regx: Glue connection $CONNECTION_NAME has SSL connection disabled"  "$regx"
           else 
-              textInfo "$regx: Connection $CONNECTION_NAME has SSL connection enabled"  "$regx"
+              textInfo "$regx: Glue connection $CONNECTION_NAME has SSL connection enabled"  "$regx"
           fi
       done
     else 
-      textInfo "$regx: There are no connections" "$regx"
+      textInfo "$regx: There are no Glue connections" "$regx"
     fi 
   done     
 }
