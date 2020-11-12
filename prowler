@@ -331,6 +331,8 @@ execute_check() {
 
   ASFF_RESOURCE_TYPE="${!asff_resource_type_var:-AwsAccount}"
 
+  SECURITYHUB_NEW_FINDINGS_IDS=()
+
   # Generate the credential report, only if it is group1 related which checks we
   # run so that the checks can safely assume it's available
   # set the custom ignores list for this check
