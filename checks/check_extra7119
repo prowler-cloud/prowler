@@ -11,17 +11,6 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-# Remediation:
-#
-# https://www.cloudconformity.com/knowledge-base/aws/RDS/instance-deletion-protection.html
-# https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html
-#
-# aws rds modify-db-instance \
-#	--region us-east-1 \
-#	--db-instance-identifier test-db \
-#	--deletion-protection \
-#	[--apply-immediately | --no-apply-immediately]
-
 CHECK_ID_extra7119="7.119"
 CHECK_TITLE_extra7119="[extra7119] Check if Glue security configurations used by ETL Development endpoints have S3 encryption enabled."
 CHECK_SCORED_extra7119="NOT_SCORED"
