@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra7117="7.117"
-CHECK_TITLE_extra7117="[extra7117] Check if Glue data-catalog settings must have Encrypt connection password enabled. (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra7117="[extra7117] Check if Glue data-catalog settings have Encrypt connection password enabled."
 CHECK_SCORED_extra7117="NOT_SCORED"
 CHECK_TYPE_extra7117="EXTRA"
 CHECK_SEVERITY_extra7117="Medium"
