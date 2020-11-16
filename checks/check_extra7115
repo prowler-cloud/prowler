@@ -21,14 +21,14 @@ CHECK_ALTERNATE_check7115="extra7115"
 extra7115(){
   for regx in $REGIONS; do
     CONNECTION_LIST=$($AWSCLI glue get-connections $PROFILE_OPT --region $regx  --output json --query 'ConnectionList[*].{Name:Name,SSL:ConnectionProperties.JDBC_ENFORCE_SSL}')
-    if [[ ! -z "$CONNECTION_LIST" ]]; then
+    if [[ $CONNECTION_LIST != '[]' ]]; then
       for connection in $(echo "${CONNECTION_LIST}" | jq -r '.[] | @base64'); do
           CONNECTION_NAME=$(echo $connection | base64 --decode   | jq -r '.Name' )
           CONNECTION_SSL_STATE=$(echo $connection | base64 --decode  | jq -r '.SSL')
           if [[ "$CONNECTION_SSL_STATE" == "false" ]]; then
               textFail "$regx: Glue connection $CONNECTION_NAME has SSL connection disabled"  "$regx"
           else 
-              textInfo "$regx: Glue connection $CONNECTION_NAME has SSL connection enabled"  "$regx"
+              textPass "$regx: Glue connection $CONNECTION_NAME has SSL connection enabled"  "$regx"
           fi
       done
     else 

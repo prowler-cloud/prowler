@@ -22,9 +22,9 @@ extra7116(){
   for regx in $REGIONS; do
     METADATA_ENCRYPTED=$($AWSCLI glue get-data-catalog-encryption-settings $PROFILE_OPT --region $regx --output text --query "DataCatalogEncryptionSettings.EncryptionAtRest.CatalogEncryptionMode")
     if [[ "$METADATA_ENCRYPTED" == "DISABLED" ]]; then
-      textFail "$regx: Glue data-catalog settings have metadata encryption disabled" "$regx"
+      textFail "$regx: Glue data catalog settings have metadata encryption disabled" "$regx"
     else
-      textInfo "$regx: Glue data-catalog settings have metadata encryption enabled" "$regx"
+      textPass "$regx: Glue data catalog settings have metadata encryption enabled" "$regx"
     fi
   done
 }
