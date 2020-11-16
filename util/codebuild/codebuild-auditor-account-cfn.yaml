@@ -19,6 +19,67 @@ Parameters:
     Default: -r eu-west-1 -f eu-west-1 -M text,junit-xml,html -c check11,check12,check13,check14
 
 Resources:
+  CodeBuildStartBuild:
+    Type: 'Custom::CodeBuildStartBuild'
+    Properties:
+      Build: !Ref ProwlerCodeBuild
+      ServiceToken:
+        'Fn::GetAtt':
+          - CodeBuildStartBuildLambda
+          - Arn
+  CodeBuildStartBuildLambdaRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: StartBuildInline
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'codebuild:StartBuild'
+                Resource: '*'
+  CodeBuildStartBuildLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: index.lambda_handler
+      MemorySize: 128
+      Role:
+        'Fn::GetAtt':
+          - CodeBuildStartBuildLambdaRole
+          - Arn
+      Runtime: python3.6
+      Timeout: 120
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          from botocore.exceptions import ClientError
+
+          def lambda_handler(event,context):
+            props = event['ResourceProperties']
+            codebuil_client = boto3.client('codebuild')
+
+            if (event['RequestType'] == 'Create' or event['RequestType'] == 'Update'):
+              try:
+                  response = codebuil_client.start_build(projectName=props['Build'])
+                  print(response)
+                  print("Respond: SUCCESS")
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              except Exception as ex:
+                  print(ex.response['Error']['Message'])
+                  cfnresponse.send(event, context, cfnresponse.FAILED, ex.response)
+
   ArtifactBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -78,7 +139,7 @@ Resources:
           - id: W28
             reason: "Explicit name is required for this resource to avoid circular dependencies."
     Properties:
-      RoleName: prowler-codebuild-role
+      RoleName: !Sub 'prowler-codebuild-role-${ServiceName}'
       Path: '/service-role/'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/job-function/SupportUser'
@@ -197,7 +258,7 @@ Resources:
   ProwlerCodeBuildReportGroup:
     Type: AWS::CodeBuild::ReportGroup
     Properties:
-      Name: prowler
+      Name: !Ref ServiceName
       Type: TEST
       ExportConfig:
         ExportConfigType: NO_EXPORT
