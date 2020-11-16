@@ -11,8 +11,8 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-GROUP_ID[23]='glue'
-GROUP_NUMBER[23]='23.0'
-GROUP_TITLE[23]='Amazon Glue related security checks - [glue] ********'
-GROUP_RUN_BY_DEFAULT[23]='N' # run it when execute_all is called
-GROUP_CHECKS[23]='extra7115,extra7116,extra7117,extra7118,extra7120,extra7122'
+GROUP_ID[24]='glue'
+GROUP_NUMBER[24]='24.0'
+GROUP_TITLE[24]='Amazon Glue related security checks - [glue] ******************'
+GROUP_RUN_BY_DEFAULT[24]='N' # run it when execute_all is called
+GROUP_CHECKS[24]='extra7114,extra7115,extra7116,extra7117,extra7118,extra7119,extra7120,extra7121,extra7122'

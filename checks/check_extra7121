@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra7121="7.121"
+CHECK_TITLE_extra7121="[extra7121] Check if Glue development endpoints have Job bookmark encryption enabled."
+CHECK_SCORED_extra7121="NOT_SCORED"
+CHECK_TYPE_extra7121="EXTRA"
+CHECK_SEVERITY_extra7121="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7121="AwsGlue"
+CHECK_ALTERNATE_check7121="extra7121"
+
+extra7121(){
+  for regx in $REGIONS; do
+    LIST_EP_SC=$($AWSCLI glue get-dev-endpoints $PROFILE_OPT --region $regx --query 'DevEndpoints[*].{Name:EndpointName,Security:SecurityConfiguration}' --output json)
+    if [[ $LIST_EP_SC != '[]' ]]; then
+      for ep in $(echo "${LIST_EP_SC}"| jq -r '.[] | @base64');do
+        ENDPOINT_NAME=$(echo $ep | base64 --decode | jq -r '.Name')
+        ENDPOINT_SC=$(echo $ep | base64 --decode | jq -r '.Security // empty')
+        if [[ ! -z "$ENDPOINT_SC" ]]; then
+          ENDPOINT_SC_ENCRYPTION=$($AWSCLI glue get-security-configuration --name "${ENDPOINT_SC}" $PROFILE_OPT --region $regx --query 'SecurityConfiguration.EncryptionConfiguration.JobBookmarksEncryption.JobBookmarksEncryptionMode' --output text)
+          if [[ "$ENDPOINT_SC_ENCRYPTION" == "DISABLED" ]]; then
+            textFail "$regx: Glue development endpoint $ENDPOINT_NAME does not have Job Bookmark encryption enabled!" "$regx"
+          else
+            textPass "$regx: Glue development endpoint $ENDPOINT_NAME has Job Bookmark encryption enabled" "$regx"
+          fi
+        else
+          textFail "$regx: Glue development endpoint $ENDPOINT_NAME does not have security configuration" "$regx"
+        fi
+      done
+    else
+      textInfo "$regx: There are no Glue development endpoints" "$regx"
+    fi
+  done
+}
+
+
