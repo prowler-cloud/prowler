@@ -1,0 +1,216 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creates a CodeBuild project to audit the AWS account with Prowler and stores the html report in a S3 bucket / Original author https://github.com/stevecjones
+Parameters:
+  ServiceName:
+    Description: 'Specifies the service name used within component naming'
+    Type: String
+    Default: 'prowler'
+
+  LogsRetentionInDays:
+    Description: 'Specifies the number of days you want to retain CodeBuild run log events in the specified log group. Junit reports are kept for 30 days'
+    Type: Number
+    Default: 3
+    AllowedValues: [1, 3, 5, 7, 14, 30, 60]
+  
+  ProwlerOptions:
+    Description: 'Options to pass to Prowler command, make sure at least -M junit-xml is used. -r for the region to send API queries, -f to filter only that region, -M output formats, -c for comma separated checks, for all checks do not use -c, for more options see -h'
+    Type: String
+    Default: -r eu-west-1 -f eu-west-1 -M text,junit-xml,html -c check11,check12,check13,check14
+
+Resources:
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join ['-', ['AP2', 'INF', !Ref 'ServiceName', !Ref 'AWS::AccountId', 'S3', 'Prowler']]
+      BucketName: !Sub '${ServiceName}-${AWS::Region}-prowler-${AWS::AccountId}'
+      AccessControl: LogDeliveryWrite
+      VersioningConfiguration:
+        Status: Enabled
+      # LoggingConfiguration:
+      #   DestinationBucketName: !ImportValue 'ProviderLogBucket'
+      #   LogFilePrefix: !Sub '${ServiceName}-${AWS::Region}-prowler-${AWS::AccountId}/'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  ArtifactBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref 'ArtifactBucket'
+      PolicyDocument:
+        Id: Content
+        Version: '2012-10-17'
+        Statement:
+          - Action: '*'
+            Condition:
+              Bool:
+                aws:SecureTransport: 'false'
+            Effect: Deny
+            Principal: '*'
+            Resource:
+              - !Join ['', ['arn:aws:s3:::', !Ref 'ArtifactBucket', '/*']]
+            Sid: S3ForceSSL
+          - Action: 's3:PutObject'
+            Condition:
+              'Null':
+                s3:x-amz-server-side-encryption: 'true'
+            Effect: Deny
+            Principal: '*'
+            Resource:
+              - !Join ['', ['arn:aws:s3:::', !Ref 'ArtifactBucket', '/*']]
+            Sid: DenyUnEncryptedObjectUploads
+
+  # Codebuild Project
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W28
+            reason: "Explicit name is required for this resource to avoid circular dependencies."
+    Properties:
+      RoleName: prowler-codebuild-role
+      Path: '/service-role/'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/job-function/SupportUser'
+        - 'arn:aws:iam::aws:policy/job-function/ViewOnlyAccess'
+        - 'arn:aws:iam::aws:policy/SecurityAudit'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+      Policies:
+        - PolicyName: LogGroup
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Effect: Allow
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*'
+        - PolicyName: S3
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketAcl
+                  - s3:GetBucketLocation
+                Effect: Allow
+                Resource: !Sub 'arn:aws:s3:::${ArtifactBucket}/*'
+        - PolicyName: CodeBuild
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - codebuild:CreateReportGroup
+                  - codebuild:CreateReport
+                  - codebuild:UpdateReport
+                  - codebuild:BatchPutTestCases
+                  - codebuild:BatchPutCodeCoverages
+                Effect: Allow
+                Resource: !Sub 'arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*'
+        - PolicyName: AssumeRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - sts:AssumeRole
+                Effect: Allow
+                Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/service-role/prowler-codebuild-role'
+
+  ProwlerCodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Source:
+        Type: NO_SOURCE
+        # Prowler command below runs a set of checks, configure it base on your needs, no options will run all regions all checks.
+        # option -M junit-xml is requirede in order to get the report in CodeBuild.
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.8
+              commands:
+                - echo "Installing Prowler and dependencies..."
+                - pip3 install detect-secrets 
+                - yum -y install jq
+                - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                - unzip awscliv2.zip
+                - ./aws/install
+                - git clone https://github.com/toniblyx/prowler
+            build:
+              commands:
+                - echo "Running Prowler..."
+                - cd prowler
+                - ./prowler $PROWLER_OPTIONS 
+            post_build:
+              commands:
+                - echo "Uploading reports to S3..." 
+                - aws s3 cp --sse AES256 output/*.html s3://$BUCKET_REPORT/
+                - echo "Done!"
+          reports:
+            prowler:
+              files:
+                - '**/*'
+              base-directory: 'prowler/junit-reports'
+              file-format: JunitXml
+      Environment:
+        # UILD_GENERAL1_SMALL: Use up to 3 GB memory and 2 vCPUs for builds. 
+        # BUILD_GENERAL1_MEDIUM: Use up to 7 GB memory and 4 vCPUs for builds.
+        # BUILD_GENERAL1_LARGE: Use up to 15 GB memory and 8 vCPUs for builds.
+        ComputeType: "BUILD_GENERAL1_SMALL"
+        Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+        Type: "LINUX_CONTAINER"
+        EnvironmentVariables:
+          - Name: BUCKET_REPORT
+            Value: !Ref 'ArtifactBucket'
+            Type: PLAINTEXT
+          - Name: PROWLER_OPTIONS
+            Value: !Ref 'ProwlerOptions'
+            Type: PLAINTEXT
+      Description: Run Prowler assessment
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      TimeoutInMinutes: 300
+
+  ProwlerCodeBuildReportGroup:
+    Type: AWS::CodeBuild::ReportGroup
+    Properties:
+      Name: prowler
+      Type: TEST
+      ExportConfig:
+        ExportConfigType: NO_EXPORT
+
+  ProwlerLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      LogGroupName: !Sub '/aws/codebuild/${ProwlerCodeBuild}'
+      RetentionInDays: !Ref LogsRetentionInDays
+
+Outputs:
+  ArtifactBucketName:
+    Description: Artifact Bucket Name
+    Value: !Ref 'ArtifactBucket'
+    Export:
+      Name: !Sub 'ArtifactBucketName-${ServiceName}'

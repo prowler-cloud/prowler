@@ -14,6 +14,11 @@
 # Generates JUnit XML reports which can be read by Jenkins or other CI tools
 
 JUNIT_OUTPUT_DIRECTORY="junit-reports"
+JUNIT_TESTS_COUNT="0"
+JUNIT_SUCCESS_COUNT="0"
+JUNIT_FAILURES_COUNT="0"
+JUNIT_SKIPPED_COUNT="0"
+JUNIT_ERRORS_COUNT="0"
 
 is_junit_output_enabled() {
   if [[ " ${MODES[@]} " =~ " junit-xml " ]]; then
@@ -44,7 +49,7 @@ prepare_junit_check_output() {
   JUNIT_OUTPUT_FILE="$JUNIT_OUTPUT_DIRECTORY/TEST-$1.xml"
   printf '%s\n' \
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" \
-    "<testsuite name=\"$(xml_escape "$(get_junit_classname)")\" timestamp=\"$(get_iso8601_timestamp)\">" \
+    "<testsuite name=\"$(xml_escape "$(get_junit_classname)")\" tests=\"_TESTS_COUNT_\" failures=\"_FAILURES_COUNT_\" skipped=\"_SKIPPED_COUNT_\" errors=\"_ERRORS_COUNT_\" timestamp=\"$(get_iso8601_timestamp)\">" \
     "  <properties>" \
     "    <property name=\"prowler.version\" value=\"$(xml_escape "$PROWLER_VERSION")\"/>" \
     "    <property name=\"aws.profile\" value=\"$(xml_escape "$PROFILE")\"/>" \
@@ -60,10 +65,21 @@ prepare_junit_check_output() {
 }
 
 finalise_junit_check_output() {
+  # Calculate Total and populate summary info
+  JUNIT_TESTS_COUNT=$((JUNIT_SUCCESS_COUNT+$JUNIT_FAILURES_COUNT+$JUNIT_SKIPPED_COUNT+$JUNIT_ERRORS_COUNT))
+  sed "s/_TESTS_COUNT_/${JUNIT_TESTS_COUNT}/g;s/_FAILURES_COUNT_/${JUNIT_FAILURES_COUNT}/g;s/_SKIPPED_COUNT_/${JUNIT_SKIPPED_COUNT}/g;s/_ERRORS_COUNT_/${JUNIT_ERRORS_COUNT}/g" "$JUNIT_OUTPUT_FILE" > "$JUNIT_OUTPUT_FILE.$$"
+  mv "$JUNIT_OUTPUT_FILE.$$" "$JUNIT_OUTPUT_FILE"
   echo '</testsuite>' >> "$JUNIT_OUTPUT_FILE"
+  # Reset global counters as test output closed
+  JUNIT_TESTS_COUNT="0"
+  JUNIT_SUCCESS_COUNT="0"
+  JUNIT_FAILURES_COUNT="0"
+  JUNIT_SKIPPED_COUNT="0"
+  JUNIT_ERRORS_COUNT="0"
 }
 
 output_junit_success() {
+  ((JUNIT_SUCCESS_COUNT++))
   output_junit_test_case "$1" "<system-out>$(xml_escape "$1")</system-out>"
 }
 
@@ -73,10 +89,12 @@ output_junit_info() {
 }
 
 output_junit_failure() {
+  ((JUNIT_FAILURES_COUNT++))
   output_junit_test_case "$1" "<failure message=\"$(xml_escape "$1")\"/>"
 }
 
 output_junit_skipped() {
+  ((JUNIT_SKIPPED_COUNT++))
   output_junit_test_case "$1" "<skipped message=\"$(xml_escape "$1")\"/>"
 }
 

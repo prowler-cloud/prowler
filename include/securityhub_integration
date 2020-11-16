@@ -14,7 +14,6 @@
 # Checks that the correct mode (json-asff) has been specified if wanting to send check output to AWS Security Hub
 # and that Security Hub is enabled in the chosen region
 checkSecurityHubCompatibility(){
-  OLD_TIMESTAMP=$(get_iso8601_one_minute_ago)
 
   local regx
   if [[ "${MODE}" != "json-asff" ]]; then
@@ -48,16 +47,16 @@ resolveSecurityHubPreviousFails(){
     local check="$1"
     NEW_TIMESTAMP=$(get_iso8601_timestamp)
 
-    PREVIOUS_DATE=$(get_iso8601_hundred_days_ago)
+    FILTER="{\"GeneratorId\":[{\"Value\": \"prowler-$check\",\"Comparison\":\"EQUALS\"}],\"RecordState\":[{\"Value\": \"ACTIVE\",\"Comparison\":\"EQUALS\"}]}"
 
-    FILTER="{\"UpdatedAt\":[{\"Start\":\"$PREVIOUS_DATE\",\"End\":\"$OLD_TIMESTAMP\"}],\"GeneratorId\":[{\"Value\": \"prowler-$check\",\"Comparison\":\"PREFIX\"}],\"ComplianceStatus\":[{\"Value\": \"FAILED\",\"Comparison\":\"EQUALS\"}],\"RecordState\":[{\"Value\": \"ACTIVE\",\"Comparison\":\"EQUALS\"}]}"
-    SECURITY_HUB_PREVIOUS_FINDINGS=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT get-findings --filters "${FILTER}" | jq -c --arg updated_at $NEW_TIMESTAMP  '[ .Findings[] | .RecordState = "ARCHIVED" | .UpdatedAt = $updated_at ]')
+    NEW_FINDING_IDS=$(echo -n "${SECURITYHUB_NEW_FINDINGS_IDS[@]}" | jq -cRs 'split(" ")')
+    SECURITY_HUB_PREVIOUS_FINDINGS=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT get-findings --filters "${FILTER}" | jq -c --argjson ids "$NEW_FINDING_IDS" --arg updated_at $NEW_TIMESTAMP  '[ .Findings[] | select( .Id| first(select($ids[] == .)) // false | not) | .RecordState = "ARCHIVED" | .UpdatedAt = $updated_at ]')
+
     if [[ $SECURITY_HUB_PREVIOUS_FINDINGS != "[]" ]]; then
       FINDINGS_COUNT=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq '. | length')
       for i in `seq 0 100 $FINDINGS_COUNT`; 
       do 
-        # Import in batches of 100
-        BATCH_FINDINGS=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq '.['"$i:$i+100"']')
+        BATCH_FINDINGS=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq -c '.['"$i:$i+100"']')
         BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT batch-import-findings --findings "${BATCH_FINDINGS}")
         if [[ -z "${BATCH_IMPORT_RESULT}" ]] || jq -e '.FailedCount >= 1' <<< "${BATCH_IMPORT_RESULT}" > /dev/null 2>&1; then
           echo -e "\n$RED ERROR!$NORMAL Failed to send check output to AWS Security Hub\n"
@@ -73,6 +72,8 @@ sendToSecurityHub(){
   local findings="$1"
   local region="$2"
 
+  local finding_id=$(echo ${findings} | jq -r .Id )
+  SECURITYHUB_NEW_FINDINGS_IDS+=( "$finding_id" )
   BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-import-findings --findings "${findings}")
   
   # Check for success if imported

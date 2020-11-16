@@ -58,7 +58,7 @@ addHtmlHeader() {
             <li class="list-group-item">
               <b>Date:</b> $TIMESTAMP
             </li>
-            <li class="list-group-item">
+            <li class="list-group-item text-center">
               <a href="$HTML_LOGO_URL"><img src="$HTML_LOGO_IMG"
                   alt="prowler-logo"></a>
             </li>

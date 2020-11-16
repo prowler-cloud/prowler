@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (copyright 2222) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2020) by Toni de la Fuente
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy
@@ -16,4 +16,3 @@ GROUP_NUMBER[24]='24.0'
 GROUP_TITLE[24]='Amazon Glue related security checks - [glue] ******************'
 GROUP_RUN_BY_DEFAULT[24]='N' # run it when execute_all is called
 GROUP_CHECKS[24]='extra7114,extra7115,extra7116,extra7117,extra7118,extra7119,extra7120,extra7121,extra7122'
-
