@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra7121="7.121"
-CHECK_TITLE_extra7121="[extra7121] Check if Glue security configurations used by ETL Development endpoints have CloudWatch logs encryption enabled."
+CHECK_TITLE_extra7121="[extra7121] Check if Glue development endpoints have Job bookmark encryption enabled."
 CHECK_SCORED_extra7121="NOT_SCORED"
 CHECK_TYPE_extra7121="EXTRA"
 CHECK_SEVERITY_extra7121="Medium"
@@ -22,23 +22,25 @@ CHECK_ALTERNATE_check7121="extra7121"
 extra7121(){
   for regx in $REGIONS; do
     LIST_EP_SC=$($AWSCLI glue get-dev-endpoints $PROFILE_OPT --region $regx --query 'DevEndpoints[*].{Name:EndpointName,Security:SecurityConfiguration}' --output json)
-    if [[ ! -z "$LIST_EP_SC" ]]; then
+    if [[ $LIST_EP_SC != '[]' ]]; then
       for ep in $(echo "${LIST_EP_SC}"| jq -r '.[] | @base64');do
         ENDPOINT_NAME=$(echo $ep | base64 --decode | jq -r '.Name')
         ENDPOINT_SC=$(echo $ep | base64 --decode | jq -r '.Security // empty')
         if [[ ! -z "$ENDPOINT_SC" ]]; then
-          ENDPOINT_SC_ENCRYPTION=$($AWSCLI glue get-security-configuration --name "${ENDPOINT_SC}" $PROFILE_OPT --region $regx --query 'SecurityConfiguration.EncryptionConfiguration.CloudWatchEncryption.CloudWatchEncryptionMode' --output text)
-          if [[ $ENDPOINT_SC_ENCRYPTION == "DISABLED" ]]; then
-            textFail "$regx: Glue Development Endpoint $ENDPOINT_NAME does not have CloudWatch logs encryption enabled!" "$regx"
+          ENDPOINT_SC_ENCRYPTION=$($AWSCLI glue get-security-configuration --name "${ENDPOINT_SC}" $PROFILE_OPT --region $regx --query 'SecurityConfiguration.EncryptionConfiguration.JobBookmarksEncryption.JobBookmarksEncryptionMode' --output text)
+          if [[ "$ENDPOINT_SC_ENCRYPTION" == "DISABLED" ]]; then
+            textFail "$regx: Glue development endpoint $ENDPOINT_NAME does not have Job Bookmark encryption enabled!" "$regx"
           else
-            textPass "$regx: Glue Development Endpoint $ENDPOINT_NAME has CloudWatch logs encryption enabled" "$regx"
+            textPass "$regx: Glue development endpoint $ENDPOINT_NAME has Job Bookmark encryption enabled" "$regx"
           fi
         else
-          textInfo "$regx: No Glue security configuration found" "$regx"
+          textFail "$regx: Glue development endpoint $ENDPOINT_NAME does not have security configuration" "$regx"
         fi
       done
     else
-      textInfo "$regx: There are no Glue Development Endpoints" "$regx"
+      textInfo "$regx: There are no Glue development endpoints" "$regx"
     fi
   done
 }
+
+

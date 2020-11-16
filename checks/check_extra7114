@@ -11,34 +11,34 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-CHECK_ID_extra7123="7.123"
-CHECK_TITLE_extra7123="[extra7123] Check if Glue security configurations used by ETL Development endpoints have Job bookmark encryption enabled."
-CHECK_SCORED_extra7123="NOT_SCORED"
-CHECK_TYPE_extra7123="EXTRA"
-CHECK_SEVERITY_extra7123="Medium"
-CHECK_ASFF_RESOURCE_TYPE_extra7123="AwsGlue"
-CHECK_ALTERNATE_check7123="extra7123"
+CHECK_ID_extra7114="7.114"
+CHECK_TITLE_extra7114="[extra7114] Check if Glue development endpoints have S3 encryption enabled."
+CHECK_SCORED_extra7114="NOT_SCORED"
+CHECK_TYPE_extra7114="EXTRA"
+CHECK_SEVERITY_extra7114="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7114="AwsGlue"
+CHECK_ALTERNATE_check7114="extra7114"
 
-extra7123(){
+extra7114(){
   for regx in $REGIONS; do
     LIST_EP_SC=$($AWSCLI glue get-dev-endpoints $PROFILE_OPT --region $regx --query 'DevEndpoints[*].{Name:EndpointName,Security:SecurityConfiguration}' --output json)
-    if [[ ! -z "$LIST_EP_SC" ]]; then
+    if [[ $LIST_EP_SC != '[]' ]]; then
       for ep in $(echo "${LIST_EP_SC}"| jq -r '.[] | @base64');do
         ENDPOINT_NAME=$(echo $ep | base64 --decode | jq -r '.Name')
         ENDPOINT_SC=$(echo $ep | base64 --decode | jq -r '.Security // empty')
         if [[ ! -z "$ENDPOINT_SC" ]]; then
-          ENDPOINT_SC_ENCRYPTION=$($AWSCLI glue get-security-configuration --name "${ENDPOINT_SC}" $PROFILE_OPT --region $regx --query 'SecurityConfiguration.EncryptionConfiguration.JobBookmarksEncryption.JobBookmarksEncryptionMode' --output text)
+          ENDPOINT_SC_ENCRYPTION=$($AWSCLI glue get-security-configuration --name "${ENDPOINT_SC}" $PROFILE_OPT --region $regx --query 'SecurityConfiguration.EncryptionConfiguration.S3Encryption[0].S3EncryptionMode' --output text)
           if [[ "$ENDPOINT_SC_ENCRYPTION" == "DISABLED" ]]; then
-            textFail "$regx: Glue Development Endpoint $ENDPOINT_NAME does not have Job Bookmark encryption enabled!" "$regx"
+            textFail "$regx: Glue development endpoint $ENDPOINT_NAME does not have S3 encryption enabled!" "$regx"
           else
-            textPass "$regx: Glue Development Endpoint $ENDPOINT_NAME has Job Bookmark encryption enabled" "$regx"
+            textPass "$regx: Glue development endpoint $ENDPOINT_NAME has S3 encryption enabled" "$regx"
           fi
         else
-          textInfo "$regx: No Glue security configuration found" "$regx"
+          textFail "$regx: Glue development endpoint $ENDPOINT_NAME does not have security configuration" "$regx"
         fi
       done
     else
-      textInfo "$regx: There are no Glue Development Endpoints" "$regx"
+      textInfo "$regx: There are no Glue development endpoints" "$regx"
     fi
   done
 }
