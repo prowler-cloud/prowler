@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2020) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+GROUP_ID[23]='ens'
+GROUP_NUMBER[23]='23.0'
+GROUP_TITLE[23]='ENS Esquema Nacional de Seguridad security checks - [ens] *****'
+GROUP_RUN_BY_DEFAULT[23]='N' # run it when execute_all is called
+GROUP_CHECKS[23]='extra733,check13,check14,check121,extra7100,check120,check116,check12,check14,check13,check21,check25,check35,check24,check31,check36,check32,check33,check34,check22,extra71,check23,check23,check27,check37,extra736,extra737,extra713,check21,check29,extra793,extra792,extra764,extra738,check43,extra74,extra710,extra75,check41,check42,extra749,extra750,extra751,extra752,extra753,extra754,extra755,extra729,extra761,extra740,extra735,extra734,extra728,extra781,extra773,extra744'
+
+# ENS Control ID for AWS;Prowler checks that apply
+# op.acc.1.aws.iam.1;extra733
+# op.acc.1.aws.iam.2;todo
+# op.acc.1.aws.iam.3;check13
+# op.acc.1.aws.iam.4;check14
+# op.acc.1.aws.iam.5;check121
+# op.acc.2.aws.iam.1;extra7100
+# op.acc.1.aws.iam.4;check120
+# op.acc.3.aws.iam.1;check116
+# op.acc.4.aws.sys.1;todo ssm session manager
+# op.acc.5.aws.iam.1;check12
+# op.acc.5.aws.iam.2;todo
+# op.acc.5.aws.iam.3;check14
+# op.acc.5.aws.iam.4;check13
+# op.acc.7.aws.iam.1;check21
+# op.exp.1.aws.cfg.1;check25
+# op.exp.1.aws.sys.1;todo ssm inventory
+# op.exp.4.aws.sys.1;todo ssm compliance
+# op.exp.8.aws.trail.1;check35
+# op.exp.8.aws.cw.1;check24
+# op.exp.8.aws.trail.2;check31
+# op.exp.8.aws.trail.3;check36
+# op.exp.8.aws.trail.4;check32
+# op.exp.8.aws.trail.5;check33
+# op.exp.8.aws.trail.6;check34
+# op.exp.10.aws.trail.1;check22
+# op.exp.10.aws.trail.2;extra71
+# op.exp.10.aws.trail.3;check23
+# op.exp.10.aws.trail.4;check23
+# op.exp.10.aws.trail.5;check27
+# op.exp.11.aws.kms.1;check37
+# op.exp.11.aws.kms.2;extra736
+# op.exp.11.aws.kms.3;extra737
+# op.mon.1.aws.duty.1;extra713
+# op.mon.1.aws.trail.1;check21
+# op.mon.1.aws.flow.1;check29
+# mp.com.2.aws.elb.1;extra793
+# mp.com.2.aws.elb.2;extra792
+# mp.com.2.aws.s3.1;extra764
+# mp.com.2.aws.front.1;extra738
+# mp.com.4.aws.sg.1;check43
+# mp.com.4.aws.sg.2;extra74
+# mp.com.4.aws.vpc.1;extra710
+# mp.com.4.aws.sg.3;extra75
+# mp.com.4.aws.sg.4;check41
+# mp.com.4.aws.sg.5;check42
+# mp.com.4.aws.sg.6;extra749
+# mp.com.4.aws.sg.7;extra750
+# mp.com.4.aws.sg.8;extra751
+# mp.com.4.aws.sg.9;extra752
+# mp.com.4.aws.sg.10;extra753
+# mp.com.4.aws.sg.11;extra754
+# mp.com.4.aws.sg.12;extra755
+# mp.info.3.aws.dyndb.1;todo
+# mp.info.3.aws.ebs.1 ;extra729
+# mp.info.3.aws.ebs.2;extra761
+# mp.info.3.aws.ebs.3;extra740
+# mp.info.3.aws.rds.1;extra735
+# mp.info.3.s3.1;extra734
+# mp.info.3.sns.1;extra728
+# mp.info.3.aws.au.1;extra781
+# mp.s.2.aws.waf.1;extra773
+# mp.s.2.aws.waf.2;extra744
+# mp.s.2.aws.waf.3;todo
