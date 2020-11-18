@@ -37,11 +37,13 @@ Resources:
             Principal:
               AWS: !Sub ${AuthorisedARN}
             Action: 'sts:AssumeRole'
-            ## In case MFA is required uncomment lines below 
-            ## and read https://github.com/toniblyx/prowler#run-prowler-with-mfa-protected-credentials
+            ## In case MFA is required uncomment lines below and read https://github.com/toniblyx/prowler#run-prowler-with-mfa-protected-credentials
             # Condition:
             #   Bool:
             #     'aws:MultiFactorAuthPresent': true
+      # This is 12h that is maximum allowed, Minimum is 3600 = 1h
+      # to take advantage of this use -T like in './prowler -A <ACCOUNT_ID_TO_ASSUME> -R ProwlerExecRole -T 43200 -M text,html'
+      MaxSessionDuration: 43200
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/SecurityAudit'
         - 'arn:aws:iam::aws:policy/job-function/ViewOnlyAccess'
