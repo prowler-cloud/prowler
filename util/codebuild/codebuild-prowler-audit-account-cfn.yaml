@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-Description: Creates a CodeBuild project to audit the AWS account with Prowler and stores the html report in a S3 bucket / Original author https://github.com/stevecjones
+Description: Creates a CodeBuild project to audit the AWS account with Prowler and stores the html report in a S3 bucket / Original idea https://github.com/stevecjones
 Parameters:
   ServiceName:
     Description: 'Specifies the service name used within component naming'
@@ -8,15 +8,22 @@ Parameters:
     Default: 'prowler'
 
   LogsRetentionInDays:
-    Description: 'Specifies the number of days you want to retain CodeBuild run log events in the specified log group. Junit reports are kept for 30 days'
+    Description: 'Specifies the number of days you want to retain CodeBuild run log events in the specified log group. Junit reports are kept for 30 days, HTML reports in S3 are not deleted'
     Type: Number
     Default: 3
-    AllowedValues: [1, 3, 5, 7, 14, 30, 60]
+    AllowedValues: [1, 3, 5, 7, 14, 30, 60, 90, 180, 365]
   
   ProwlerOptions:
-    Description: 'Options to pass to Prowler command, make sure at least -M junit-xml is used. -r for the region to send API queries, -f to filter only that region, -M output formats, -c for comma separated checks, for all checks do not use -c, for more options see -h'
+    Description: 'Options to pass to Prowler command, make sure at least -M junit-xml is used for CodeBuild reports. Use -r for the region to send API queries, -f to filter only one region, -M output formats, -c for comma separated checks, for all checks do not use -c or -g, for more options see -h. For a complete assessment use  "-M text,junit-xml,html,csv,json", for SecurityHub integration use "-r region -f region -M text,junit-xml,html,csv,json,json-asff -S -q"'
     Type: String
-    Default: -r eu-west-1 -f eu-west-1 -M text,junit-xml,html -c check11,check12,check13,check14
+    # Prowler command below runs a set of checks, configure it base on your needs, no options will run all regions all checks.
+    # option -M junit-xml is requirede in order to get the report in CodeBuild.
+    Default: -r eu-west-1 -f eu-west-1 -M text,junit-xml,html,csv,json -c check11,check12,check13,check14
+  
+  ProwlerScheduler:
+    Description: The time when Prowler will run in cron format. Default is daily at 22:00h or 10PM 'cron(0 22 * * ? *)', for every 5 hours also works 'rate(5 hours)'. More info here https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html.
+    Type: String
+    Default: 'cron(0 22 * * ? *)'
 
 Resources:
   CodeBuildStartBuild:
@@ -27,6 +34,7 @@ Resources:
         'Fn::GetAtt':
           - CodeBuildStartBuildLambda
           - Arn
+
   CodeBuildStartBuildLambdaRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -49,17 +57,15 @@ Resources:
                 Action:
                   - 'codebuild:StartBuild'
                 Resource: '*'
+
   CodeBuildStartBuildLambda:
     Type: 'AWS::Lambda::Function'
     Properties:
       Handler: index.lambda_handler
       MemorySize: 128
-      Role:
-        'Fn::GetAtt':
-          - CodeBuildStartBuildLambdaRole
-          - Arn
-      Runtime: python3.6
+      Role: !Sub ${CodeBuildStartBuildLambdaRole.Arn}
       Timeout: 120
+      Runtime: python3.6
       Code:
         ZipFile: |
           import boto3
@@ -85,14 +91,11 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: !Join ['-', ['AP2', 'INF', !Ref 'ServiceName', !Ref 'AWS::AccountId', 'S3', 'Prowler']]
-      BucketName: !Sub '${ServiceName}-${AWS::Region}-prowler-${AWS::AccountId}'
+          Value: !Join ['-', [!Ref 'ServiceName', !Ref 'AWS::AccountId', 'S3', 'Prowler', !Ref AWS::StackName]]
+      BucketName: !Sub '${ServiceName}-reports-${AWS::Region}-prowler-${AWS::AccountId}'
       AccessControl: LogDeliveryWrite
       VersioningConfiguration:
         Status: Enabled
-      # LoggingConfiguration:
-      #   DestinationBucketName: !ImportValue 'ProviderLogBucket'
-      #   LogFilePrefix: !Sub '${ServiceName}-${AWS::Region}-prowler-${AWS::AccountId}/'
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -130,7 +133,6 @@ Resources:
               - !Join ['', ['arn:aws:s3:::', !Ref 'ArtifactBucket', '/*']]
             Sid: DenyUnEncryptedObjectUploads
 
-  # Codebuild Project
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
     Metadata:
@@ -139,7 +141,7 @@ Resources:
           - id: W28
             reason: "Explicit name is required for this resource to avoid circular dependencies."
     Properties:
-      RoleName: !Sub 'prowler-codebuild-role-${ServiceName}'
+      RoleName: !Sub 'prowler-codebuild-role-${ServiceName}-${AWS::StackName}'
       Path: '/service-role/'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/job-function/SupportUser'
@@ -189,6 +191,14 @@ Resources:
                   - codebuild:BatchPutCodeCoverages
                 Effect: Allow
                 Resource: !Sub 'arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*'
+        - PolicyName: SecurityHubBatchImportFindings
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - securityhub:BatchImportFindings
+                Effect: Allow
+                Resource: !Sub 'arn:aws:securityhub:${AWS::Region}::product/prowler/prowler'
         - PolicyName: AssumeRole
           PolicyDocument:
             Version: '2012-10-17'
@@ -205,8 +215,6 @@ Resources:
         Type: NO_ARTIFACTS
       Source:
         Type: NO_SOURCE
-        # Prowler command below runs a set of checks, configure it base on your needs, no options will run all regions all checks.
-        # option -M junit-xml is requirede in order to get the report in CodeBuild.
         BuildSpec: |
           version: 0.2
           phases:
@@ -223,13 +231,13 @@ Resources:
                 - git clone https://github.com/toniblyx/prowler
             build:
               commands:
-                - echo "Running Prowler..."
+                - echo "Running Prowler as ./prowler $PROWLER_OPTIONS"
                 - cd prowler
                 - ./prowler $PROWLER_OPTIONS 
             post_build:
               commands:
                 - echo "Uploading reports to S3..." 
-                - aws s3 cp --sse AES256 output/*.html s3://$BUCKET_REPORT/
+                - aws s3 cp --sse AES256 output/ s3://$BUCKET_REPORT/ --recursive
                 - echo "Done!"
           reports:
             prowler:
@@ -238,9 +246,11 @@ Resources:
               base-directory: 'prowler/junit-reports'
               file-format: JunitXml
       Environment:
-        # UILD_GENERAL1_SMALL: Use up to 3 GB memory and 2 vCPUs for builds. 
-        # BUILD_GENERAL1_MEDIUM: Use up to 7 GB memory and 4 vCPUs for builds.
-        # BUILD_GENERAL1_LARGE: Use up to 15 GB memory and 8 vCPUs for builds.
+        # AWS CodeBuild free tier includes 100 build minutes of BUILD_GENERAL1_SMALL per month.
+        # BUILD_GENERAL1_SMALL: Use up to 3 GB memory and 2 vCPUs for builds. $0.005/minute.
+        # BUILD_GENERAL1_MEDIUM: Use up to 7 GB memory and 4 vCPUs for builds. $0.01/minute.
+        # BUILD_GENERAL1_LARGE: Use up to 15 GB memory and 8 vCPUs for builds. $0.02/minute.
+        # BUILD_GENERAL1_2XLARGE: Use up to 144 GB memory and 72 vCPUs for builds. $0.20/minute.
         ComputeType: "BUILD_GENERAL1_SMALL"
         Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
         Type: "LINUX_CONTAINER"
@@ -258,7 +268,7 @@ Resources:
   ProwlerCodeBuildReportGroup:
     Type: AWS::CodeBuild::ReportGroup
     Properties:
-      Name: !Ref ServiceName
+      Name: !Sub 'prowler-report-group-${ServiceName}-${AWS::StackName}'
       Type: TEST
       ExportConfig:
         ExportConfigType: NO_EXPORT
@@ -269,9 +279,50 @@ Resources:
       LogGroupName: !Sub '/aws/codebuild/${ProwlerCodeBuild}'
       RetentionInDays: !Ref LogsRetentionInDays
 
+  ProwlerSchedule:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: >
+        A schedule for the Lambda function that triggers Prowler in CodeBuild..
+      ScheduleExpression: !Ref ProwlerScheduler
+      State: ENABLED
+      Targets:
+        - Arn: !Sub ${ProwlerScheduleLambdaFunction.Arn}
+          Id: ProwlerSchedule
+  
+  ProwlerSchedulePermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Sub ${ProwlerScheduleLambdaFunction.Arn}
+      Principal: 'events.amazonaws.com'
+      SourceArn: !Sub ${ProwlerSchedule.Arn}
+
+  ProwlerScheduleLambdaFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Handler: index.lambda_handler
+      MemorySize: 128
+      Role: !Sub ${CodeBuildStartBuildLambdaRole.Arn}
+      Timeout: 120
+      Runtime: python3.6
+      Environment:
+        Variables:
+          buildName: !Ref ProwlerCodeBuild
+      Code:
+        ZipFile: |
+          import boto3
+          import os
+
+          def lambda_handler(event,context):
+            codebuild_client = boto3.client('codebuild')
+            print("Running Prowler scheduled!: " + os.environ['buildName'])
+            project_name = os.environ['buildName']
+            response = codebuild_client.start_build(projectName=project_name)
+            print(response)
+            print("Respond: SUCCESS")
+
 Outputs:
   ArtifactBucketName:
     Description: Artifact Bucket Name
     Value: !Ref 'ArtifactBucket'
-    Export:
-      Name: !Sub 'ArtifactBucketName-${ServiceName}'
