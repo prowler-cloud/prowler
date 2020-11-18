@@ -29,7 +29,7 @@ extra7117(){
         textPass "$regx: Glue data catalog connection password is encrypted" "$regx"
       fi
     else
-      textInfo "$regx: Glue data catalog connection password encryption does not apply" "$regx"
+      textInfo "$regx: Glue data catalog connection password encryption does not apply since there are no connections" "$regx"
     fi
   done
 }
