@@ -20,11 +20,16 @@ CHECK_ALTERNATE_check7117="extra7117"
 
 extra7117(){
   for regx in $REGIONS; do
-    METADATA_ENCRYPTED=$($AWSCLI glue get-data-catalog-encryption-settings $PROFILE_OPT --region $regx --output text --query "DataCatalogEncryptionSettings.ConnectionPasswordEncryption.ReturnConnectionPasswordEncrypted")
-    if [[ "$METADATA_ENCRYPTED" == "False" ]]; then
-      textFail "$regx: Glue data catalog connection password is not encrypted" "$regx"
+    CONNECTION_LIST=$($AWSCLI glue get-connections $PROFILE_OPT --region $regx  --output text --query 'ConnectionList[*]')
+    if [[ ! -z $CONNECTION_LIST ]]; then
+      METADATA_ENCRYPTED=$($AWSCLI glue get-data-catalog-encryption-settings $PROFILE_OPT --region $regx --output text --query "DataCatalogEncryptionSettings.ConnectionPasswordEncryption.ReturnConnectionPasswordEncrypted")
+      if [[ "$METADATA_ENCRYPTED" == "False" ]]; then
+        textFail "$regx: Glue data catalog connection password is not encrypted" "$regx"
+      else
+        textPass "$regx: Glue data catalog connection password is encrypted" "$regx"
+      fi
     else
-      textPass "$regx: Glue data catalog connection password is encrypted" "$regx"
+      textInfo "$regx: Glue data catalog connection password encryption does not apply" "$regx"
     fi
   done
 }
