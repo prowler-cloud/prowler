@@ -25,7 +25,7 @@ check119(){
     if [[ $INSTANCE_LIST ]]; then
       for instance in $INSTANCE_LIST; do
         STATE_NAME=$(echo $EC2_DATA | jq -r --arg i "$instance" 'select(.InstanceId==$i)|.StateName')
-        if [[ $STATE_NAME != "terminated" ]]; then
+        if [[ $STATE_NAME != "terminated" && $STATE_NAME != "shutting-down" ]]; then
           PROFILEARN=$(echo $EC2_DATA | jq -r --arg i "$instance" 'select(.InstanceId==$i)|.ProfileArn')
           if [[ $PROFILEARN == "null" ]]; then
             textFail "$regx: Instance $instance not associated with an instance role" $regx

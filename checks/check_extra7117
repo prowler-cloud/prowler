@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7117="7.117"
+CHECK_TITLE_extra7117="[extra7117] Check if Glue data catalog settings have encrypt connection password enabled."
+CHECK_SCORED_extra7117="NOT_SCORED"
+CHECK_TYPE_extra7117="EXTRA"
+CHECK_SEVERITY_extra7117="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7117="AwsGlue"
+CHECK_ALTERNATE_check7117="extra7117"
+
+extra7117(){
+  for regx in $REGIONS; do
+    CONNECTION_LIST=$($AWSCLI glue get-connections $PROFILE_OPT --region $regx  --output text --query 'ConnectionList[*]')
+    if [[ ! -z $CONNECTION_LIST ]]; then
+      METADATA_ENCRYPTED=$($AWSCLI glue get-data-catalog-encryption-settings $PROFILE_OPT --region $regx --output text --query "DataCatalogEncryptionSettings.ConnectionPasswordEncryption.ReturnConnectionPasswordEncrypted")
+      if [[ "$METADATA_ENCRYPTED" == "False" ]]; then
+        textFail "$regx: Glue data catalog connection password is not encrypted" "$regx"
+      else
+        textPass "$regx: Glue data catalog connection password is encrypted" "$regx"
+      fi
+    else
+      textInfo "$regx: Glue data catalog connection password encryption does not apply since there are no connections" "$regx"
+    fi
+  done
+}

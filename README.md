@@ -385,7 +385,11 @@ To use Prowler and Security Hub integration in China regions there is an additio
 
 ## CodeBuild deployment
 
-CodeBuild can help you running Prowler and there is a Cloud Formation template that helps you doing that [here](https://github.com/toniblyx/prowler/blob/master/util/codebuild/codebuild-auditor-account-cfn.yaml).
+Either to run Prowler once or based on a schedule this template makes it pretty straight forward. This template will create a CodeBuild environment and run Prowler directly leaving all reports in a bucket and creating a report also inside CodeBuild basedon the JUnit output from Prowler. Scheduling can be cron based like `cron(0 22 * * ? *)` or rate based like `rate(5 hours)` since CloudWatch Event rules (or Eventbridge) is used here.
+
+The Cloud Formation template that helps you doing that is [here](https://github.com/toniblyx/prowler/blob/master/util/codebuild/codebuild-prowler-audit-account-cfn.yaml). 
+
+> This is a simple solution to monitor one account. For multiples accounts see [Multi Account and Continuous Monitoring](util/org-multi-account/README.md).
 
 ## Whitelist or allowlist or remove a fail from resources
 

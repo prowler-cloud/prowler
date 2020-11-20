@@ -1,0 +1,328 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creates a CodeBuild project to audit an AWS account with Prowler and stores the html report in a S3 bucket. This will run onece at the beginning and on a schedule afterwards. Partial contribution from https://github.com/stevecjones
+Parameters:
+  ServiceName:
+    Description: 'Specifies the service name used within component naming'
+    Type: String
+    Default: 'prowler'
+
+  LogsRetentionInDays:
+    Description: 'Specifies the number of days you want to retain CodeBuild run log events in the specified log group. Junit reports are kept for 30 days, HTML reports in S3 are not deleted'
+    Type: Number
+    Default: 3
+    AllowedValues: [1, 3, 5, 7, 14, 30, 60, 90, 180, 365]
+  
+  ProwlerOptions:
+    Description: 'Options to pass to Prowler command, make sure at least -M junit-xml is used for CodeBuild reports. Use -r for the region to send API queries, -f to filter only one region, -M output formats, -c for comma separated checks, for all checks do not use -c or -g, for more options see -h. For a complete assessment use  "-M text,junit-xml,html,csv,json", for SecurityHub integration use "-r region -f region -M text,junit-xml,html,csv,json,json-asff -S -q"'
+    Type: String
+    # Prowler command below runs a set of checks, configure it base on your needs, no options will run all regions all checks.
+    # option -M junit-xml is requirede in order to get the report in CodeBuild.
+    Default: -r eu-west-1 -f eu-west-1 -M text,junit-xml,html,csv,json -c check11,check12,check13,check14
+  
+  ProwlerScheduler:
+    Description: The time when Prowler will run in cron format. Default is daily at 22:00h or 10PM 'cron(0 22 * * ? *)', for every 5 hours also works 'rate(5 hours)'. More info here https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html.
+    Type: String
+    Default: 'cron(0 22 * * ? *)'
+
+Resources:
+  CodeBuildStartBuild:
+    Type: 'Custom::CodeBuildStartBuild'
+    Properties:
+      Build: !Ref ProwlerCodeBuild
+      ServiceToken:
+        'Fn::GetAtt':
+          - CodeBuildStartBuildLambda
+          - Arn
+
+  CodeBuildStartBuildLambdaRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: StartBuildInline
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'codebuild:StartBuild'
+                Resource: '*'
+
+  CodeBuildStartBuildLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: index.lambda_handler
+      MemorySize: 128
+      Role: !Sub ${CodeBuildStartBuildLambdaRole.Arn}
+      Timeout: 120
+      Runtime: python3.6
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          from botocore.exceptions import ClientError
+
+          def lambda_handler(event,context):
+            props = event['ResourceProperties']
+            codebuil_client = boto3.client('codebuild')
+
+            if (event['RequestType'] == 'Create' or event['RequestType'] == 'Update'):
+              try:
+                  response = codebuil_client.start_build(projectName=props['Build'])
+                  print(response)
+                  print("Respond: SUCCESS")
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              except Exception as ex:
+                  print(ex.response['Error']['Message'])
+                  cfnresponse.send(event, context, cfnresponse.FAILED, ex.response)
+
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join ['-', [!Ref 'ServiceName', !Ref 'AWS::AccountId', 'S3', 'Prowler', !Ref 'AWS::StackName']]
+      BucketName: !Sub '${ServiceName}-reports-${AWS::Region}-prowler-${AWS::AccountId}'
+      AccessControl: LogDeliveryWrite
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  ArtifactBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref 'ArtifactBucket'
+      PolicyDocument:
+        Id: Content
+        Version: '2012-10-17'
+        Statement:
+          - Action: '*'
+            Condition:
+              Bool:
+                aws:SecureTransport: 'false'
+            Effect: Deny
+            Principal: '*'
+            Resource:
+              - !Join ['', ['arn:aws:s3:::', !Ref 'ArtifactBucket', '/*']]
+            Sid: S3ForceSSL
+          - Action: 's3:PutObject'
+            Condition:
+              'Null':
+                s3:x-amz-server-side-encryption: 'true'
+            Effect: Deny
+            Principal: '*'
+            Resource:
+              - !Join ['', ['arn:aws:s3:::', !Ref 'ArtifactBucket', '/*']]
+            Sid: DenyUnEncryptedObjectUploads
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W28
+            reason: "Explicit name is required for this resource to avoid circular dependencies."
+    Properties:
+      RoleName: !Sub 'prowler-codebuild-role-${ServiceName}-${AWS::StackName}'
+      Path: '/service-role/'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/job-function/SupportUser'
+        - 'arn:aws:iam::aws:policy/job-function/ViewOnlyAccess'
+        - 'arn:aws:iam::aws:policy/SecurityAudit'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+      Policies:
+        - PolicyName: LogGroup
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Effect: Allow
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*'
+        - PolicyName: S3
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketAcl
+                  - s3:GetBucketLocation
+                Effect: Allow
+                Resource: !Sub 'arn:aws:s3:::${ArtifactBucket}/*'
+        - PolicyName: CodeBuild
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - codebuild:CreateReportGroup
+                  - codebuild:CreateReport
+                  - codebuild:UpdateReport
+                  - codebuild:BatchPutTestCases
+                  - codebuild:BatchPutCodeCoverages
+                Effect: Allow
+                Resource: !Sub 'arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*'
+        - PolicyName: SecurityHubBatchImportFindings
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - securityhub:BatchImportFindings
+                Effect: Allow
+                Resource: !Sub 'arn:aws:securityhub:${AWS::Region}::product/prowler/prowler'
+        - PolicyName: AssumeRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - sts:AssumeRole
+                Effect: Allow
+                Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/service-role/prowler-codebuild-role'
+
+  ProwlerCodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Source:
+        Type: NO_SOURCE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.8
+              commands:
+                - echo "Installing Prowler and dependencies..."
+                - pip3 install detect-secrets 
+                - yum -y install jq
+                - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                - unzip awscliv2.zip
+                - ./aws/install
+                - git clone https://github.com/toniblyx/prowler
+            build:
+              commands:
+                - echo "Running Prowler as ./prowler $PROWLER_OPTIONS"
+                - cd prowler
+                - ./prowler $PROWLER_OPTIONS 
+            post_build:
+              commands:
+                - echo "Uploading reports to S3..." 
+                - aws s3 cp --sse AES256 output/ s3://$BUCKET_REPORT/ --recursive
+                - echo "Done!"
+          reports:
+            prowler:
+              files:
+                - '**/*'
+              base-directory: 'prowler/junit-reports'
+              file-format: JunitXml
+      Environment:
+        # AWS CodeBuild free tier includes 100 build minutes of BUILD_GENERAL1_SMALL per month.
+        # BUILD_GENERAL1_SMALL: Use up to 3 GB memory and 2 vCPUs for builds. $0.005/minute.
+        # BUILD_GENERAL1_MEDIUM: Use up to 7 GB memory and 4 vCPUs for builds. $0.01/minute.
+        # BUILD_GENERAL1_LARGE: Use up to 15 GB memory and 8 vCPUs for builds. $0.02/minute.
+        # BUILD_GENERAL1_2XLARGE: Use up to 144 GB memory and 72 vCPUs for builds. $0.20/minute.
+        ComputeType: "BUILD_GENERAL1_SMALL"
+        Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+        Type: "LINUX_CONTAINER"
+        EnvironmentVariables:
+          - Name: BUCKET_REPORT
+            Value: !Ref 'ArtifactBucket'
+            Type: PLAINTEXT
+          - Name: PROWLER_OPTIONS
+            Value: !Ref 'ProwlerOptions'
+            Type: PLAINTEXT
+      Description: Run Prowler assessment
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      TimeoutInMinutes: 300
+
+  ProwlerCodeBuildReportGroup:
+    Type: AWS::CodeBuild::ReportGroup
+    Properties:
+      Name: !Sub 'prowler-report-group-${ServiceName}-${AWS::StackName}'
+      Type: TEST
+      ExportConfig:
+        ExportConfigType: NO_EXPORT
+
+  ProwlerLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      LogGroupName: !Sub '/aws/codebuild/${ProwlerCodeBuild}'
+      RetentionInDays: !Ref LogsRetentionInDays
+
+  ProwlerSchedule:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: >
+        A schedule for the Lambda function that triggers Prowler in CodeBuild..
+      ScheduleExpression: !Ref ProwlerScheduler
+      State: ENABLED
+      Targets:
+        - Arn: !Sub ${ProwlerScheduleLambdaFunction.Arn}
+          Id: ProwlerSchedule
+  
+  ProwlerSchedulePermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Sub ${ProwlerScheduleLambdaFunction.Arn}
+      Principal: 'events.amazonaws.com'
+      SourceArn: !Sub ${ProwlerSchedule.Arn}
+
+  ProwlerScheduleLambdaFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Handler: index.lambda_handler
+      MemorySize: 128
+      Role: !Sub ${CodeBuildStartBuildLambdaRole.Arn}
+      Timeout: 120
+      Runtime: python3.6
+      Environment:
+        Variables:
+          buildName: !Ref ProwlerCodeBuild
+      Code:
+        ZipFile: |
+          import boto3
+          import os
+
+          def lambda_handler(event,context):
+            codebuild_client = boto3.client('codebuild')
+            print("Running Prowler scheduled!: " + os.environ['buildName'])
+            project_name = os.environ['buildName']
+            response = codebuild_client.start_build(projectName=project_name)
+            print(response)
+            print("Respond: SUCCESS")
+
+Outputs:
+  ArtifactBucketName:
+    Description: Artifact Bucket Name
+    Value: !Ref 'ArtifactBucket'
