@@ -154,7 +154,7 @@ if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
   test_tcp_connectivity() {
     gnu_test_tcp_connectivity "$1" "$2" "$3"
   }
-elif [[ "$OSTYPE" == "darwin"* ]]; then
+elif [[ "$OSTYPE" == "darwin"* ]] || [[ "$OSTYPE" == "freebsd"* ]]; then
   # BSD/OSX commands compatibility
   TEMP_REPORT_FILE=$(mktemp -t prowler.cred_report-XXXXXX)
   # It is possible that the user has installed GNU coreutils on OS X. By default, this will make GNU commands
