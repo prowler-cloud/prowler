@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-Description: Creates a CodeBuild project to audit the AWS account with Prowler and stores the html report in a S3 bucket / Original idea https://github.com/stevecjones
+Description: Creates a CodeBuild project to audit an AWS account with Prowler and stores the html report in a S3 bucket. This will run onece at the beginning and on a schedule afterwards. Partial contribution from https://github.com/stevecjones
 Parameters:
   ServiceName:
     Description: 'Specifies the service name used within component naming'
@@ -91,7 +91,7 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: !Join ['-', [!Ref 'ServiceName', !Ref 'AWS::AccountId', 'S3', 'Prowler', !Ref AWS::StackName]]
+          Value: !Join ['-', [!Ref 'ServiceName', !Ref 'AWS::AccountId', 'S3', 'Prowler', !Ref 'AWS::StackName']]
       BucketName: !Sub '${ServiceName}-reports-${AWS::Region}-prowler-${AWS::AccountId}'
       AccessControl: LogDeliveryWrite
       VersioningConfiguration:
