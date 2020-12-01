@@ -100,6 +100,7 @@ addHtmlHeader() {
               <th scope="col">Result</th>
               <th scope="col">AccountID</th>
               <th scope="col">Region</th>
+              <th scope="col">Compliance</th>
               <th scope="col">Group</th>
               <th scope="col">CheckID</th>
               <th style="width:40%" scope="col">Check Title</th>

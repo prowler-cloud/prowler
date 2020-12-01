@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.3.0RC5
+PROWLER_VERSION=2.3.0RC6
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -283,6 +283,7 @@ show_check_title() {
   local check_title=CHECK_TITLE_$1
   local check_scored=CHECK_SCORED_$1
   local check_type=CHECK_TYPE_$1
+  local check_asff_compliance_type=CHECK_ASFF_COMPLIANCE_TYPE_$1
   local group_ids
   local group_index
   # If requested ($2 is any non-null value) iterate all GROUP_CHECKS and produce a comma-separated list of all
@@ -297,7 +298,12 @@ show_check_title() {
       fi
     done
   fi
-  textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_type}" "$group_ids"
+  # This shows ASFF_COMPLIANCE_TYPE if group used is ens, this si used to show ENS compliance ID control, can be used for other compliance groups as well.
+  if [[ ${GROUP_ID_READ} == "ens" ]];then
+    textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_type}" "$group_ids" "(${!check_asff_compliance_type})"
+  else
+    textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_type}" "$group_ids"
+  fi
 }
 
 # Function to show the title of a group, by numeric id
@@ -317,6 +323,8 @@ execute_check() {
   # See if this check defines an ASFF Type, if so, use this, falling back to a sane default
   # For a list of Types, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#securityhub-findings-format-type-taxonomy
   local asff_type_var=CHECK_ASFF_TYPE_$1
+  local asff_compliance_type_var=CHECK_ASFF_COMPLIANCE_TYPE_$1
+
 
   local severity_var=CHECK_SEVERITY_$1
   
@@ -325,6 +333,7 @@ execute_check() {
   CHECK_ID="$1"
 
   ASFF_TYPE="${!asff_type_var:-Software and Configuration Checks}"
+  ASFF_COMPLIANCE_TYPE="${!asff_compliance_type_var:-Software and Configuration Checks}"
   # See if this check defines an ASFF Resource Type, if so, use this, falling back to a sane default
   # For a list of Resource Types, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
   local asff_resource_type_var=CHECK_ASFF_RESOURCE_TYPE_$1
@@ -339,7 +348,7 @@ execute_check() {
   ignores="$(awk "/${1}/{print}" <(echo "${WHITELIST}"))"
 
   if [ ${alternate_name} ];then
-    if [[ ${alternate_name} == check1* || ${alternate_name} == extra71 ]];then
+    if [[ ${alternate_name} == check1* || ${alternate_name} == extra71 || ${alternate_name} == extra774 || ${alternate_name} == extra7123 ]];then
       if [ ! -s $TEMP_REPORT_FILE ];then
         genCredReport
         saveReport
@@ -363,7 +372,7 @@ execute_check() {
     local check_id_var=CHECK_ID_$1
     local check_id=${!check_id_var}
     if [ ${check_id} ]; then
-      if [[ ${check_id} == 1* || ${check_id} == 7.1 || ${check_id} == 7.74 ]];then
+      if [[ ${check_id} == 1* || ${check_id} == 7.1 || ${check_id} == 7.74 || ${check_id} == 7.123 ]];then
         if [ ! -s $TEMP_REPORT_FILE ];then
           genCredReport
           saveReport

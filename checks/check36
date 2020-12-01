@@ -41,6 +41,7 @@ CHECK_SEVERITY_check36="Medium"
 CHECK_ASFF_TYPE_check36="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check36="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check306="check36"
+CHECK_ASFF_COMPLIANCE_TYPE_check36="ens-op.exp.8.aws.trail.3"
 
 check36(){
   check3x '\$\.eventName\s*=\s*ConsoleLogin.+\$\.errorMessage\s*=\s*"Failed authentication"'

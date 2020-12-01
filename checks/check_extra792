@@ -17,6 +17,7 @@ CHECK_TYPE_extra792="EXTRA"
 CHECK_SEVERITY_extra792="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra792="AwsElbLoadBalancer"
 CHECK_ALTERNATE_check792="extra792"
+CHECK_ASFF_COMPLIANCE_TYPE_extra792="ens-mp.com.2.aws.elb.2"
 
 extra792(){
   # "Check if Elastic Load Balancers have insecure SSL ciphers (Not Scored) (Not part of CIS benchmark)"

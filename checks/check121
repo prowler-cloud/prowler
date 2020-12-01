@@ -16,6 +16,7 @@ CHECK_SEVERITY_check121="Medium"
 CHECK_ASFF_TYPE_check121="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check121="AwsIamUser"
 CHECK_ALTERNATE_check121="check121"
+CHECK_ASFF_COMPLIANCE_TYPE_check121="ens-op.acc.1.aws.iam.5"
 
 check121(){
   # "Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)"

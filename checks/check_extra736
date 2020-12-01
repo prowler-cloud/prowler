@@ -17,6 +17,7 @@ CHECK_TYPE_extra736="EXTRA"
 CHECK_SEVERITY_extra736="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra736="AwsKmsKey"
 CHECK_ALTERNATE_check736="extra736"
+CHECK_ASFF_COMPLIANCE_TYPE_extra736="ens-op.exp.11.aws.kms.2"
 
 extra736(){
   textInfo "Looking for KMS keys in all regions...  "

@@ -10,7 +10,7 @@
 - [Advanced Usage](#advanced-usage)
 - [Security Hub integration](#security-hub-integration)
 - [CodeBuild deployment](#codebuild-deployment)
-- [Whitelist/allowlist or remove FAIL from resources](whitelist-allowlist-or-remove-fail-from-resources)
+- [Whitelist/allowlist or remove FAIL from resources](#whitelist-or-allowlist-or-remove-a-fail-from-resources)
 - [Fix](#how-to-fix-every-fail)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
@@ -54,6 +54,7 @@ Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-20
 - EKS-CIS
 - FFIEC
 - SOC2
+- ENS (Esquema Nacional de Seguridad of Spain)
 
 With Prowler you can:
 
