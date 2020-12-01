@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7129="7.129"
+CHECK_TITLE_extra7129="[extra7129] Check if Application Load Balancer has a WAF ACL attached"
+CHECK_SCORED_extra7129="NOT_SCORED"
+CHECK_TYPE_extra7129="EXTRA"
+CHECK_SEVERITY_extra7129="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7129="AwsElasticLoadBalancingV2LoadBalancer"
+CHECK_ALTERNATE_check7129="extra7129"
+CHECK_ASFF_COMPLIANCE_TYPE_extra7129="ens-mp.s.2.aws.waf.3"
+
+extra7129(){
+  for regx in $REGIONS; do
+    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Scheme == `internet-facing` && Type == `application`].[LoadBalancerName]' --output text)
+    LIST_OF_WAFV2_WEBACL_ARN=$($AWSCLI wafv2 list-web-acls $PROFILE_OPT --region=$regx --scope=REGIONAL --query WebACLs[*].ARN --output text)
+    if [[ $LIST_OF_ELBSV2 ]]; then
+      for alb in $LIST_OF_ELBSV2; do
+        if [[ $LIST_OF_WAFV2_WEBACL_ARN ]]; then 
+          WAF_PROTECTED_ALBS=()
+          for wafaclarn in $LIST_OF_WAFV2_WEBACL_ARN; do
+            ALB_RESOURCES_IN_WEBACL=$($AWSCLI wafv2 list-resources-for-web-acl $PROFILE_OPT --web-acl-arn $wafaclarn --region=$regx --resource-type APPLICATION_LOAD_BALANCER --query ResourceArns --output text | xargs -n1 | awk -F'/' '{ print $3 }'| grep $alb)
+            if [[ $ALB_RESOURCES_IN_WEBACL ]]; then 
+              WAF_PROTECTED_ALBS+=($wafaclarn)
+            fi
+          done
+          if [[ ${#WAF_PROTECTED_ALBS[@]} -gt 0 ]]; then
+            for wafaclarn in "${WAF_PROTECTED_ALBS[@]}"; do
+              WAFV2_WEBACL_ARN_SHORT=$(echo $wafaclarn |  awk -F'/' '{ print $3 }')
+              textPass "$regx: Application Load Balancer $alb is protected by WAFv2 ACL $WAFV2_WEBACL_ARN_SHORT" "$regx"
+            done
+          else
+            textFail "$regx: Application Load Balancer $alb is not protected by WAFv2 ACL" "$regx"
+          fi
+        else 
+          textFail "$regx: Application Load Balancer $alb is not protected no WAFv2 ACL found" "$regx"
+        fi
+      done         
+    else
+      textInfo "$regx: No Application Load Balancers found" "$regx"
+    fi    
+  done
+}

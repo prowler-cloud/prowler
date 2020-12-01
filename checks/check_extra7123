@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7123="7.123"
+CHECK_TITLE_extra7123="[extra7123] Check if IAM users have two active access keys"
+CHECK_SCORED_extra7123="NOT_SCORED"
+CHECK_TYPE_extra7123="EXTRA"
+CHECK_SEVERITY_extra7123="Medium"
+CHECK_ASFF_TYPE_extra7123="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_extra7123="AwsIamUser"
+CHECK_ALTERNATE_check7123="extra7123"
+CHECK_ASFF_COMPLIANCE_TYPE_extra7123="ens-op.acc.1.aws.iam.2"
+
+extra7123(){
+  LIST_OF_USERS_WITH_2ACCESS_KEYS=$(cat $TEMP_REPORT_FILE| awk -F, '{ print $1, $9, $14 }' |grep "\ true\ true" | awk '{ print $1 }')
+  if [[ $LIST_OF_USERS_WITH_2ACCESS_KEYS ]]; then
+    # textFail "Users with access key 1 older than 90 days:"
+    for user in $LIST_OF_USERS_WITH_2ACCESS_KEYS; do
+      textFail "User $user has 2 active access keys" 
+    done
+  else
+    textPass "No users with 2 active access keys"
+  fi
+}

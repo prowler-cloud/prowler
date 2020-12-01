@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7125="7.125"
+CHECK_TITLE_extra7125="[extra7125] Check if IAM users have Hardware MFA enabled."
+CHECK_SCORED_extra7125="NOT_SCORED"
+CHECK_TYPE_extra7125="EXTRA"
+CHECK_SEVERITY_extra7125="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7125="AwsIamUser"
+CHECK_ALTERNATE_check7125="extra7125"
+CHECK_ASFF_COMPLIANCE_TYPE_extra7125="ens-op.acc.5.aws.iam.2"
+
+extra7125(){
+  LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text $PROFILE_OPT --region $REGION)
+  if [[ $LIST_USERS ]]; then
+    # textFail "Users with access key 1 older than 90 days:"
+    for user in $LIST_USERS; do
+      # Would be virtual if sms-mfa or mfa, hardware is u2f or different.
+      MFA_TYPE=$($AWSCLI iam list-mfa-devices --user-name $user $PROFILE_OPT --region $REGION --query MFADevices[].SerialNumber --output text | awk -F':' '{ print $6 }'| awk -F'/' '{ print $1 }')
+      if [[ $MFA_TYPE == "mfa" || $MFA_TYPE == "sms-mfa" ]]; then 
+        textInfo "User $user has virtual MFA enabled" 
+      elif [[ $MFA_TYPE == "" ]]; then 
+        textFail "User $user has not hardware MFA enabled"
+      else 
+        textPass "User $user has hardware MFA enabled"
+      fi
+    done
+  else
+    textPass "No users found"
+  fi
+}
