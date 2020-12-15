@@ -297,9 +297,9 @@ or with a given External ID:
 
 If you want to run Prowler or just a check or a group across all accounts of AWS Organizations you can do this:
 
-First get a list of accounts:
+First get a list of accounts that are not suspended:
 ```
-ACCOUNTS_IN_ORGS=$(aws organizations list-accounts --query Accounts[*].Id --output text)
+ACCOUNTS_IN_ORGS=$(aws organizations list-accounts --query Accounts[?Status==`ACTIVE`].Id --output text)
 ```
 Then run Prowler to assume a role (same in all members) per each account, in this example it is just running one particular check:
 ```

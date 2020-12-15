@@ -320,6 +320,18 @@ show_group_title() {
 
 # Function to execute the check
 execute_check() {
+  if [[ $ACCOUNT_TO_ASSUME ]]; then
+    MINIMUM_REMAINING_TIME_ALLOWED=$(( SESSION_DURATION_TO_ASSUME / 10 ))
+    CURRENT_TIMESTAMP=$(date -u "+%s")
+    SESSION_CUTOFF=$(( CURRENT_TIMESTAMP + MINIMUM_REMAINING_TIME_ALLOWED ))
+    if (( AWS_SESSION_EXPIRATION < SESSION_CUTOFF )); then
+      unset AWS_ACCESS_KEY_ID
+      unset AWS_SECRET_ACCESS_KEY
+      unset AWS_SESSION_TOKEN
+      assume_role
+    fi
+  fi
+
   # See if this is an alternate name for a check
   # for example, we might have been passed 1.01 which is another name for 1.1
   local alternate_name_var=CHECK_ALTERNATE_$1
