@@ -90,13 +90,14 @@ USAGE:
       -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R
       -w                  whitelist file. See whitelist_sample.txt for reference and format
                             (i.e.: whitelist_sample.txt)
+      -N <shodan_api_key> Shoadan API key used by check extra7102.
       -V                  show version number & exit
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -176,6 +177,9 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:" OPTION; do
         ;;
      w )
         WHITELIST_FILE=$OPTARG
+        ;;
+     N )
+        SHODAN_API_KEY=$OPTARG
         ;;
      : )
         echo ""
