@@ -28,6 +28,10 @@ extra77(){
       textFail "Access Denied Trying to describe ECR repositories"
       continue
     fi
+    if [[ $(echo "$LIST_ECR_REPOS" | grep SubscriptionRequiredException) ]]; then
+      textFail "Subscription Required Exception trying to describe ECR repositories"
+      continue
+    fi
     if [[ ! -z "$LIST_ECR_REPOS" ]]; then
       for repo in $LIST_ECR_REPOS; do
         TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-ecr-repo.policy.XXXXXXXXXX)
