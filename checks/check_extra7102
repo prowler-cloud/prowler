@@ -24,6 +24,7 @@ CHECK_ALTERNATE_check7102="extra7102"
 # This is the right way to do so
 # curl -ks https://api.shodan.io/shodan/host/{ip}?key={YOUR_API_KEY}
 
+
 # Each finding will be saved in prowler/output folder for further review.
 
 extra7102(){
@@ -35,6 +36,8 @@ extra7102(){
       if [[ $LIST_OF_EIP ]]; then
         for ip in $LIST_OF_EIP;do
           SHODAN_QUERY=$(curl -ks https://api.shodan.io/shodan/host/$ip?key=$SHODAN_API_KEY)
+	  # Shodan has a request rate limit of 1 request/second.
+          sleep 1
           if [[ $SHODAN_QUERY == *"No information available for that IP"* ]]; then
             textPass "$regx: IP $ip is not listed in Shodan" "$regx"
           else
