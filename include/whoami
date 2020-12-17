@@ -13,8 +13,30 @@
 
 
 # Get whoami in AWS, who is the user running this shell script
-GETCALLER=$($AWSCLI sts get-caller-identity $PROFILE_OPT --region $REGION)
-ACCOUNT_NUM=$(echo $GETCALLER | jq -r '.Account')
+# Get a list of all available AWS Regions
+# sice describe-regions doesn't seem to work at me-south-1|eu-south-1|ap-east-1|af-south-1.
+# Probably dased on https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html
+# when invoking regions with -r, those regions with STS disabled make GETCALLER fail then
+# this if will filter them out (Africa (Cape Town), Asia Pacific (Hong Kong), Europe (Milan) and Middle East (Bahrain) ):
+
+
+case "$REGION" in
+  me-south-1|eu-south-1|ap-east-1|af-south-1)
+    REGION_FOR_STS="us-east-1"
+  ;;
+  *)
+    REGION_FOR_STS=$REGION
+  ;;
+esac
+
+GETCALLER=$($AWSCLI sts get-caller-identity $PROFILE_OPT --region $REGION_FOR_STS)
+
+if [[ $ACCOUNT_TO_ASSUME ]]; then
+  ACCOUNT_NUM=$ACCOUNT_TO_ASSUME
+else
+  ACCOUNT_NUM=$(echo $GETCALLER | jq -r '.Account')
+fi
+
 CALLER_ARN=$(echo $GETCALLER | jq -r '.Arn')
 USER_ID=$(echo $GETCALLER | jq -r '.UserId')
 AWS_PARTITION=$(echo $CALLER_ARN| cut -d: -f2)
@@ -26,10 +48,6 @@ getWhoami(){
           echo -e "$RED ERROR Getting credentials to run Prowler - EXITING! $NORMAL"
           EXITCODE=2
           exit $EXITCODE
-  fi
-
-  if [[ $ACCOUNT_TO_ASSUME ]]; then
-    ACCOUNT_NUM=$ACCOUNT_TO_ASSUME
   fi
 
   if [[ "$MODE" == "csv" ]]; then

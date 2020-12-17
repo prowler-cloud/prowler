@@ -236,12 +236,8 @@ trap handle_ctrl_c INT
 . $PROWLER_DIR/include/securityhub_integration
 . $PROWLER_DIR/include/junit_integration
 
-# Get a list of all available AWS Regions
-REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' \
-  --output text \
-  $PROFILE_OPT \
-  --region $REGION \
-  --region-names $FILTERREGION)
+# Get list of regions based on include/whoami
+REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' --output text $PROFILE_OPT --region $REGION_FOR_STS --region-names $FILTERREGION)
 
 # Pre-process whitelist file if supplied
 if [[ -n "$WHITELIST_FILE" ]]; then
