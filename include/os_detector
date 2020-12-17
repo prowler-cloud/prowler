@@ -113,7 +113,9 @@ gnu_convert_date_to_timestamp() {
 }
 
 bsd_convert_date_to_timestamp() {
-  date -j -f "%Y-%m-%dT%H:%M:%S" "$1" "+%s"
+  echo $(( $(date -j -f %Y-%m-%dT%H:%M:%S "$1" +%s) + 3600 ))
+  # Change above is because epoch time generator in BSD is 1h less than in Linux ¯\_(ツ)_/¯
+  #date -j -f "%Y-%m-%dT%H:%M:%S" "$1" "+%s"
 }
 
 gnu_test_tcp_connectivity() {
