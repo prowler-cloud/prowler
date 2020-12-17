@@ -30,6 +30,17 @@ case "$REGION" in
 esac
 
 GETCALLER=$($AWSCLI sts get-caller-identity $PROFILE_OPT --region $REGION_FOR_STS)
+RESULT_CALL=$?
+if [[ $RESULT_CALL == 254 ]]; then
+  if [[ $PRINTCHECKSONLY || $PRINTGROUPSONLY ]]; then
+    echo Listing... 
+  else
+    # Failed to get own identity ... exit
+    echo -e "$RED ERROR Getting credentials to run Prowler - EXITING! $NORMAL"
+    EXITCODE=2
+    exit $EXITCODE
+  fi
+fi 
 
 if [[ $ACCOUNT_TO_ASSUME ]]; then
   ACCOUNT_NUM=$ACCOUNT_TO_ASSUME
@@ -42,13 +53,6 @@ USER_ID=$(echo $GETCALLER | jq -r '.UserId')
 AWS_PARTITION=$(echo $CALLER_ARN| cut -d: -f2)
 
 getWhoami(){
-
-  if [[ 255 -eq $? ]]; then
-          # Failed to get own identity ... exit
-          echo -e "$RED ERROR Getting credentials to run Prowler - EXITING! $NORMAL"
-          EXITCODE=2
-          exit $EXITCODE
-  fi
 
   if [[ "$MODE" == "csv" ]]; then
     if [[ 255 -eq $? ]]; then
