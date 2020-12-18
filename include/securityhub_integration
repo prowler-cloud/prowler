@@ -57,8 +57,10 @@ resolveSecurityHubPreviousFails(){
       for i in `seq 0 100 $FINDINGS_COUNT`; 
       do 
         BATCH_FINDINGS=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq -c '.['"$i:$i+100"']')
-        BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT batch-import-findings --findings "${BATCH_FINDINGS}")
-        if [[ -z "${BATCH_IMPORT_RESULT}" ]] || jq -e '.FailedCount >= 1' <<< "${BATCH_IMPORT_RESULT}" > /dev/null 2>&1; then
+        FINDING_ID=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq -r '.[].Id')
+        BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT batch-update-findings --finding-identifiers Id="$FINDING_ID",ProductArn="arn:aws:securityhub:$regx::product/prowler/prowler" --note '{"Text": "Resolved by Prowler, issue no longer present.", "UpdatedBy": "prowler"}' --workflow '{"Status": "RESOLVED"}')
+
+        if [[ -z "${BATCH_IMPORT_RESULT}" ]] || jq -e '.UnprocessedFindings | length >= 1' <<< "${BATCH_IMPORT_RESULT}" > /dev/null 2>&1; then
           echo -e "\n$RED ERROR!$NORMAL Failed to send check output to AWS Security Hub\n"
         fi
       done
