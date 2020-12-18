@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7127="7.127"
+CHECK_TITLE_extra7127="[extra7127] Check if EC2 instances managed by Systems Manager are compliant with patching requirements"
+CHECK_SCORED_extra7127="NOT_SCORED"
+CHECK_TYPE_extra7127="EXTRA"
+CHECK_SEVERITY_extra7127="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7127="AwsEc2Instance"
+CHECK_ASFF_TYPE_extra7127="Software and Configuration Checks/ENS op.exp.4.aws.sys.1"
+CHECK_ALTERNATE_check7127="extra7127"
+CHECK_ASFF_COMPLIANCE_TYPE_extra7127="ens-op.exp.1.aws.sys.1,ens-op.exp.4.aws.sys.1"
+
+
+extra7127(){
+  for regx in $REGIONS; do
+    NON_COMPLIANT_SSM_MANAGED_INSTANCES=$($AWSCLI ssm list-resource-compliance-summaries $PROFILE_OPT --region $regx --filters Key=Status,Values=NON_COMPLIANT --query ResourceComplianceSummaryItems[].ResourceId --output text)
+    COMPLIANT_SSM_MANAGED_INSTANCES=$($AWSCLI ssm list-resource-compliance-summaries $PROFILE_OPT --region $regx --filters Key=Status,Values=COMPLIANT --query ResourceComplianceSummaryItems[].ResourceId --output text)
+    if [[ $NON_COMPLIANT_SSM_MANAGED_INSTANCES || $COMPLIANT_SSM_MANAGED_INSTANCES ]]; then
+      if [[ $NON_COMPLIANT_SSM_MANAGED_INSTANCES ]]; then
+        for instance in $NON_COMPLIANT_SSM_MANAGED_INSTANCES; do
+          textFail "$regx: EC2 managed instance $instance is non-compliant" "$regx"
+        done
+      fi
+      if [[ $COMPLIANT_SSM_MANAGED_INSTANCES ]]; then
+        for instance in $COMPLIANT_SSM_MANAGED_INSTANCES; do
+          textPass "$regx: EC2 managed instance $instance is compliant" "$regx"
+        done
+      fi 
+    else 
+      textInfo "$regx: No EC2 managed instances found" "$regx"
+    fi
+  done
+}

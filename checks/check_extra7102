@@ -22,21 +22,22 @@ CHECK_ALTERNATE_check7102="extra7102"
 # your IP will be banned by Shodan
 
 # This is the right way to do so
-# curl -ks https://api.shodan.io/shodan/host/{ip}?key={YOUR_API_KEY} 
+# curl -ks https://api.shodan.io/shodan/host/{ip}?key={YOUR_API_KEY}
+
 
 # Each finding will be saved in prowler/output folder for further review.
 
-SHODAN_API_KEY=""
-
 extra7102(){
   if [[ ! $SHODAN_API_KEY ]]; then
-    textInfo "[extra7102] Requires a Shodan API key to work. Edit checks/check_extra7102 first"
+    textInfo "[extra7102] Requires a Shodan API key to work. Use -N <shodan_api_key>"
   else 
     for regx in $REGIONS; do
       LIST_OF_EIP=$($AWSCLI $PROFILE_OPT --region $regx ec2 describe-addresses --query 'Addresses[*].PublicIp' --output text)
       if [[ $LIST_OF_EIP ]]; then
         for ip in $LIST_OF_EIP;do
           SHODAN_QUERY=$(curl -ks https://api.shodan.io/shodan/host/$ip?key=$SHODAN_API_KEY)
+	  # Shodan has a request rate limit of 1 request/second.
+          sleep 1
           if [[ $SHODAN_QUERY == *"No information available for that IP"* ]]; then
             textPass "$regx: IP $ip is not listed in Shodan" "$regx"
           else

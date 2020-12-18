@@ -17,6 +17,7 @@ CHECK_SCORED_extra733="NOT_SCORED"
 CHECK_TYPE_extra733="EXTRA"
 CHECK_SEVERITY_extra733="Low"
 CHECK_ALTERNATE_check733="extra733"
+CHECK_ASFF_COMPLIANCE_TYPE_extra733="ens-op.acc.1.aws.iam.1"
 
 extra733(){
   LIST_SAML_PROV=$($AWSCLI iam list-saml-providers $PROFILE_OPT --query 'SAMLProviderList[*].Arn' --output text |grep -v ^None)
@@ -26,6 +27,6 @@ extra733(){
       textInfo "SAML Provider $PROVIDER_NAME has been found"
     done
   else
-    textInfo "No SAML Provider found, add one and use STS"
+    textInfo "No SAML Provider found. Add one and use STS"
   fi
 }

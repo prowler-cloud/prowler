@@ -41,6 +41,7 @@ CHECK_SEVERITY_check37="Medium"
 CHECK_ASFF_TYPE_check37="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check37="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check307="check37"
+CHECK_ASFF_COMPLIANCE_TYPE_check37="ens-op.exp.11.aws.kms.1"
 
 check37(){
   check3x '\$\.eventSource\s*=\s*kms.amazonaws.com.+\$\.eventName\s*=\s*DisableKey.+\$\.eventName\s*=\s*ScheduleKeyDeletion'

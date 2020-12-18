@@ -41,6 +41,7 @@ CHECK_SEVERITY_check35="Medium"
 CHECK_ASFF_TYPE_check35="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check35="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check305="check35"
+CHECK_ASFF_COMPLIANCE_TYPE_check35="ens-op.exp.8.aws.trail.1"
 
 check35(){
   check3x '\$\.eventName\s*=\s*CreateTrail.+\$\.eventName\s*=\s*UpdateTrail.+\$\.eventName\s*=\s*DeleteTrail.+\$\.eventName\s*=\s*StartLogging.+\$\.eventName\s*=\s*StopLogging'

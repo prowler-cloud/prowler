@@ -17,22 +17,67 @@ CHECK_TYPE_extra740="EXTRA"
 CHECK_SEVERITY_extra740="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra740="AwsEc2Snapshot"
 CHECK_ALTERNATE_check740="extra740"
+CHECK_ASFF_COMPLIANCE_TYPE_extra740="ens-mp.info.3.aws.ebs.3"
 
 extra740(){
-  textInfo "Looking for EBS Snapshots in all regions...  "
-  for regx in $REGIONS; do
-    LIST_OF_EBS_SNAPSHOTS=$($AWSCLI ec2 describe-snapshots $PROFILE_OPT --region $regx --owner-ids $ACCOUNT_NUM --output text --query 'Snapshots[*].{ID:SnapshotId}' --max-items $MAXITEMS | grep -v None 2> /dev/null)
-    if [[ $LIST_OF_EBS_SNAPSHOTS ]];then
-      for snapshot in $LIST_OF_EBS_SNAPSHOTS; do
-        SNAPSHOT_IS_ENCRYPTED=$($AWSCLI ec2 describe-snapshots $PROFILE_OPT --region $regx --output text --snapshot-id $snapshot --query Snapshots[*].Encrypted|grep False)
-        if [[ $SNAPSHOT_IS_ENCRYPTED ]];then
-          textFail "$regx: $snapshot is currently not encrypted!" "$regx"
-        else
-          textPass "$regx: $snapshot is encrypted" "$regx"
-        fi
+  textInfo "Examining EBS Volume Snapshots ..."
+  # This does NOT use max-items, which would limit the number of items
+  # considered. It considers all snapshots, but only reports at most 
+  # max-items passing and max-items failing.
+  for regx in ${REGIONS}; do
+    UNENCRYPTED_SNAPSHOTS=$(${AWSCLI} ec2 describe-snapshots ${PROFILE_OPT} \
+    --region ${regx} --owner-ids ${ACCOUNT_NUM} --output text \
+    --query 'Snapshots[?Encrypted==`false`]|[*].{Id:SnapshotId}' \
+     | grep -v None 2> /dev/null)
+    ENCRYPTED_SNAPSHOTS=$(${AWSCLI} ec2 describe-snapshots ${PROFILE_OPT} \
+    --region ${regx} --owner-ids ${ACCOUNT_NUM} --output text \
+    --query 'Snapshots[?Encrypted==`true`]|[*].{Id:SnapshotId}' \
+     | grep -v None 2> /dev/null)
+    typeset -i unencrypted
+    typeset -i encrypted
+    unencrypted=0
+    encrypted=0
+
+    if [[ ${UNENCRYPTED_SNAPSHOTS} ]]; then
+      for snapshot in ${UNENCRYPTED_SNAPSHOTS}; do
+          unencrypted=${unencrypted}+1
+          if [ "${unencrypted}" -le "${MAXITEMS}" ]; then
+            textFail "${regx}: ${snapshot} is not encrypted!" "${regx}"
+          fi
       done
+    fi
+    if [[ ${ENCRYPTED_SNAPSHOTS} ]]; then
+      for snapshot in ${ENCRYPTED_SNAPSHOTS}; do
+          encrypted=${encrypted}+1
+          if [ "${encrypted}" -le "${MAXITEMS}" ]; then
+            textPass "${regx}: ${snapshot} is encrypted." "${regx}"
+          fi
+      done
+    fi
+    if [[ "${encrypted}" = "0" ]] && [[ "${unencrypted}" = "0" ]] ; then
+      textInfo "${regx}: No EBS volume snapshots" "${regx}"
     else
-      textInfo "$regx: No EBS Snapshots found" "$regx"
+      typeset -i total
+      total=${encrypted}+${unencrypted}
+      if [[ "${unencrypted}" -ge "${MAXITEMS}" ]]; then
+        textFail "${unencrypted} unencrypted snapshots out of ${total} snapshots found. Only the first ${MAXITEMS} unencrypted snapshots are reported!"
+      fi
+      if [[ "${encrypted}" -ge "${MAXITEMS}" ]]; then
+        textPass "${encrypted} encrypted snapshots out of ${total} snapshots found. Only the first ${MAXITEMS} encrypted snapshots are reported."
+      fi
+      # Bit of 'bc' magic to print something like 10.42% or 0.85% or similar. 'bc' has a
+      # bug where it will never print leading zeros. So 0.5 is output as ".5". This has a
+      # little extra clause to print a 0 if 0 < x < 1.
+      ratio=$(echo "scale=2; p=(100*${encrypted}/(${encrypted}+${unencrypted})); if(p<1 && p>0) print 0;print p, \"%\";" | bc 2>/dev/null)
+      exit=$?
+
+      # maybe 'bc' doesn't exist, or it exits with an error
+      if [[ "${exit}" = "0" ]]
+      then
+        textInfo "${regx}: ${ratio} encrypted EBS volumes (${encrypted} out of ${total})" "${regx}"
+      else
+        textInfo "${regx}: ${unencrypted} unencrypted EBS volume snapshots out of ${total} total snapshots" "${regx}"
+      fi
     fi
   done
 }

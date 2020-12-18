@@ -17,6 +17,7 @@ CHECK_TYPE_extra734="EXTRA"
 CHECK_SEVERITY_extra734="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra734="AwsS3Bucket"
 CHECK_ALTERNATE_check734="extra734"
+CHECK_ASFF_COMPLIANCE_TYPE_extra734="ens-mp.info.3.s3.1"
 
 extra734(){
   LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --region $REGION --query Buckets[*].Name --output text|xargs -n1)

@@ -16,6 +16,7 @@ CHECK_SEVERITY_check116="Low"
 CHECK_ASFF_TYPE_check116="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check116="AwsIamUser"
 CHECK_ALTERNATE_check116="check116"
+CHECK_ASFF_COMPLIANCE_TYPE_check116="ens-op.acc.3.aws.iam.1"
 
 check116(){
   # "Ensure IAM policies are attached only to groups or roles (Scored)"

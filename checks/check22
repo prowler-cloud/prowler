@@ -16,6 +16,7 @@ CHECK_SEVERITY_check22="Medium"
 CHECK_ASFF_TYPE_check22="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check22="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check202="check22"
+CHECK_ASFF_COMPLIANCE_TYPE_check22="ens-op.exp.10.aws.trail.1"
 
 check22(){
   # "Ensure CloudTrail log file validation is enabled (Scored)"
