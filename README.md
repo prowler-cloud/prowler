@@ -1,4 +1,4 @@
-# Prowler: AWS CIS Benchmark Tool
+# Prowler AWS Security Tool
 
 ## Table of Contents
 
