@@ -167,7 +167,7 @@ if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
   convert_date_to_timestamp() {
     gnu_convert_date_to_timestamp "$1"
   }
-elif [[ "$OSTYPE" == "darwin"* ]]; then
+elif [[ "$OSTYPE" == "darwin"* ]] || [[ "$OSTYPE" == "freebsd"* ]]; then
   # BSD/OSX commands compatibility
   TEMP_REPORT_FILE=$(mktemp -t prowler.cred_report-XXXXXX)
   # It is possible that the user has installed GNU coreutils on OS X. By default, this will make GNU commands
