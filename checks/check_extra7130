@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra7130="7.130"
-CHECK_TITLE_extra7130="[extra7130] Ensure there are no SNS Topics unencrypted (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra7130="[extra7130] Ensure there are no SNS Topics unencrypted"
 CHECK_SCORED_extra7130="NOT_SCORED"
 CHECK_TYPE_extra7130="EXTRA"
 CHECK_SEVERITY_extra7130="Medium"
@@ -34,7 +34,7 @@ extra7130(){
         fi
       done
     else
-      textInfo "$regx: No SNS topic found" "$SHORT_TOPIC" "$regx"
+      textInfo "$regx: No SNS topic found" "$regx"
     fi
   done
 }
