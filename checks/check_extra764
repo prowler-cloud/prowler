@@ -24,11 +24,15 @@ extra764(){
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
       TEMP_STP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
-      BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location $PROFILE_OPT --region $REGION --bucket $bucket --output text)
-      if [[ "None" == $BUCKET_LOCATION ]]; then
+      BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location $PROFILE_OPT --region $REGION --bucket $bucket --output text 2>&1)
+      if [[ $(echo "$BUCKET_LOCATION" | grep AccessDenied) ]]; then
+        textFail "Access Denied Trying to Get Bucket Location for $bucket"
+        continue
+      fi
+      if [[ $BUCKET_LOCATION == "None" ]]; then
         BUCKET_LOCATION="us-east-1"
       fi
-      if [[ "EU" == $BUCKET_LOCATION ]]; then
+      if [[ $BUCKET_LOCATION == "EU" ]]; then
         BUCKET_LOCATION="eu-west-1"
       fi
       # get bucket policy
