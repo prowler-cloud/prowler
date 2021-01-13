@@ -33,12 +33,11 @@ check27(){
         trail_count=$((trail_count + 1))
 
         KMSKEYID=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $TRAIL_REGION --query 'trailList[*].KmsKeyId' --output text --trail-name-list $trail)
-        if [[ "$KMSKEYID" == 'None' ]];then
-          textFail "Trail $trail in $regx has encryption disabled"
-        else
+        if [[ "$KMSKEYID" ]];then
           textPass "Trail $trail in $regx has encryption enabled"
+        else
+          textFail "Trail $trail in $regx has encryption disabled"
         fi
-
       done
     fi
   done
