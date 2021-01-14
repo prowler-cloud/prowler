@@ -216,6 +216,9 @@ trap clean_up EXIT
 # Clean up and exit if Ctrl-C occurs. Required to allow Ctrl-C to stop Prowler when running in Docker
 trap handle_ctrl_c INT
 
+# Environment variable takes precedence over command line
+unset AWS_DEFAULT_OUTPUT
+
 . $PROWLER_DIR/include/colors
 . $PROWLER_DIR/include/os_detector
 . $PROWLER_DIR/include/aws_profile_loader
