@@ -45,7 +45,7 @@ extra73(){
   #
   ACCOUNT_PUBLIC_ACCESS_BLOCK=$($AWSCLI s3control get-public-access-block $PROFILE_OPT --region $REGION --account-id $ACCOUNT_NUM --output json 2>&1)
   if [[ $(echo "$ACCOUNT_PUBLIC_ACCESS_BLOCK" | grep AccessDenied) ]]; then
-    textFail "Access Denied Trying to Get Public Access Block for $bucket"
+    textFail "Access Denied getting PublicAccessBlock configuration for AWS account"
     return
   fi
   if [[ $(echo "$ACCOUNT_PUBLIC_ACCESS_BLOCK" | grep NoSuchPublicAccessBlockConfiguration) ]]; then
