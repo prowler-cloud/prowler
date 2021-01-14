@@ -20,22 +20,68 @@ CHECK_ASFF_COMPLIANCE_TYPE_check23="ens-op.exp.10.aws.trail.3 ens-op.exp.10.aws.
 CHECK_SERVICENAME_check23="cloudtrail"
 
 check23(){
+  trail_count=0
   # "Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)"
-  CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails --query 'trailList[*].S3BucketName' --output text $PROFILE_OPT --region $REGION)
-  if [[ $CLOUDTRAILBUCKET ]]; then
-    for bucket in $CLOUDTRAILBUCKET;do
-      CLOUDTRAILBUCKET_HASALLPERMISIONS=$($AWSCLI s3api get-bucket-acl --bucket $bucket --query 'Grants[?Grantee.URI==`http://acs.amazonaws.com/groups/global/AllUsers`]' $PROFILE_OPT --region $REGION --output text 2>&1)
-      if [[ $(echo "$CLOUDTRAILBUCKET_HASALLPERMISIONS" | grep AccessDenied) ]]; then
-        textInfo "Access Denied Trying to Get Bucket Acl for $bucket"
-        continue
-      fi
-      if [[ $CLOUDTRAILBUCKET_HASALLPERMISIONS ]]; then
-        textFail "check your $bucket CloudTrail bucket ACL and Policy!"
-      else
-        textPass "Bucket $bucket is set correctly"
-      fi
-    done
-  else
-    textFail "No CloudTrail bucket found!"
+  for regx in $REGIONS; do
+    TRAILS_AND_REGIONS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].{Name:TrailARN, HomeRegion:HomeRegion}' --output text 2>&1 | tr "	" ',')
+    if [[ $(echo "$TRAILS_AND_REGIONS" | grep AccessDenied) ]]; then
+      textFail "Access Denied trying to describe trails in $regx"
+      continue
+    fi
+    if [[ $TRAILS_AND_REGIONS ]]; then
+      for reg_trail in $TRAILS_AND_REGIONS; do
+        TRAIL_REGION=$(echo $reg_trail | cut -d',' -f1)
+        if [ $TRAIL_REGION != $regx ]; then # Only report trails once in home region
+          continue
+        fi
+        trail=$(echo $reg_trail | cut -d',' -f2)
+        trail_count=$((trail_count + 1))
+
+        CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $TRAIL_REGION --query 'trailList[*].[S3BucketName]' --output text --trail-name-list $trail)
+        if [[ -z $CLOUDTRAILBUCKET ]]; then
+          textFail "Trail $trail in $TRAIL_REGION does not publish to S3"
+          continue
+        fi
+
+        CLOUDTRAIL_ACCOUNT_ID=$(echo $trail | awk -F: '{ print $5 }')
+        if [ "$CLOUDTRAIL_ACCOUNT_ID" != "$ACCOUNT_NUM" ]; then
+          textInfo "Trail $trail in $TRAIL_REGION S3 logging bucket $CLOUDTRAILBUCKET is not in current account"
+          continue
+        fi
+
+        #
+        # LOCATION - requests referencing buckets created after March 20, 2019
+        # must be made to S3 endpoints in the same region as the bucket was
+        # created.
+        #
+        BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location $PROFILE_OPT --region $regx --bucket $CLOUDTRAILBUCKET --output text 2>&1)
+        if [[ $(echo "$BUCKET_LOCATION" | grep AccessDenied) ]]; then
+          textFail "Trail $trail in $TRAIL_REGION Access Denied getting bucket location for $CLOUDTRAILBUCKET"
+          continue
+        fi
+        if [[ $BUCKET_LOCATION == "None" ]]; then
+          BUCKET_LOCATION="us-east-1"
+        fi
+        if [[ $BUCKET_LOCATION == "EU" ]]; then
+          BUCKET_LOCATION="eu-west-1"
+        fi
+
+        CLOUDTRAILBUCKET_HASALLPERMISIONS=$($AWSCLI s3api get-bucket-acl --bucket $CLOUDTRAILBUCKET $PROFILE_OPT --region $BUCKET_LOCATION --query 'Grants[?Grantee.URI==`http://acs.amazonaws.com/groups/global/AllUsers`]' --output text 2>&1)
+        if [[ $(echo "$CLOUDTRAILBUCKET_HASALLPERMISIONS" | grep AccessDenied) ]]; then
+          textInfo "Trail $trail in $TRAIL_REGION Access Denied getting bucket acl for $CLOUDTRAILBUCKET"
+          continue
+        fi
+
+        if [[ -z $CLOUDTRAILBUCKET_HASALLPERMISIONS ]]; then
+          textPass "Trail $trail in $TRAIL_REGION S3 logging bucket $CLOUDTRAILBUCKET is not publicly accessible"
+        else
+          textFail "Trail $trail in $TRAIL_REGION S3 logging bucket $CLOUDTRAILBUCKET is publicly accessible"
+        fi
+
+      done
+    fi
+  done
+  if [[ $trail_count == 0 ]]; then
+    textFail "No CloudTrail trails were found in the account"
   fi
 }
