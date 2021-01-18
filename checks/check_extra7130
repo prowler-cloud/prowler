@@ -22,11 +22,11 @@ CHECK_ALTERNATE_check7130="extra7130"
 extra7130(){
   textInfo "Looking for SNS Topics in all regions...  "
   for regx in $REGIONS; do
-    LIST_SNS=$($AWSCLI sns list-topics --region $regx --query 'Topics[*].TopicArn' --output text)
+    LIST_SNS=$($AWSCLI sns list-topics $PROFILE_OPT --region $regx --query 'Topics[*].TopicArn' --output text)
     if [[ $LIST_SNS ]];then
       for topic in $LIST_SNS; do
         SHORT_TOPIC=$(echo $topic | awk -F ":" '{print $NF}')
-        SNS_ENCRYPTION=$($AWSCLI sns get-topic-attributes --region $regx --topic-arn $topic --query 'Attributes.KmsMasterKeyId' --output text)
+        SNS_ENCRYPTION=$($AWSCLI sns get-topic-attributes $PROFILE_OPT --region $regx --topic-arn $topic --query 'Attributes.KmsMasterKeyId' --output text)
         if [[ "None" == $SNS_ENCRYPTION ]]; then
           textFail "$regx: $SHORT_TOPIC is not encrypted!" "$regx"
         else
