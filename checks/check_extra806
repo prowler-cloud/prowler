@@ -25,10 +25,10 @@
 
 
  CHECK_ID_extra806="8.06"
- CHECK_TITLE_extra806="[checkN] Description Check to see if PGaudit has been set for Postgres (Not Scored) (Not part of CIS benchmark)"
+ CHECK_TITLE_extra806="[check806] Description Check to see if PGaudit has been set for Postgres (Not Scored) (Not part of CIS benchmark)"
  CHECK_SCORED_extra806="NOT_SCORED"
  CHECK_TYPE_extra806="EXTRA"
- CHECK_ASFF_RESOURCE_TYPE_extra99="AwsRDSInstance" # Choose appropriate value from https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
+ CHECK_ASFF_RESOURCE_TYPE_extra806="AwsRDSInstance" # Choose appropriate value from https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
  CHECK_ALTERNATE_check806="extra806"
 
  extra806(){
@@ -43,15 +43,15 @@
           while read -r group;do
             ROLE=$($AWSCLI rds describe-db-parameters $PROFILE_OPT --region $regx --db-parameter-group-name $group --query 'Parameters[?ParameterName==`pgaudit.role`].[ParameterValue]' --output text)
             if [[ $ROLE == 'None' ]]; then
-              textFail "$regx: Instance: $instance is not setup for pgaudit" "$regx"
+              textFail "$regx: instance: $instance is not setup for pgaudit" "$regx"
             else
-              textPass "$regx: Instance: $instance is setup for pgaudit with role $ROLE" "$regx"
+              textPass "$regx: instance: $instance is setup for pgaudit with role $ROLE" "$regx"
             fi
           done <<< "$PROPERTY_GROUPS"
         fi
       done
     else
-      textPass "$regx: no RDS Postgres Instances found" "$regx"
+      textInfo "$regx: no RDS Postgres Instances found" "$regx"
     fi
   done
 }
