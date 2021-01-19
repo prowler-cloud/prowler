@@ -11,19 +11,6 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-# Remediation:
-#
-#   here URL to the relevand/official documentation
-#
-#   here commands or steps to fix it if avalable, like:
-#   aws logs put-metric-filter \
-#     --region us-east-1 \
-#     --log-group-name CloudTrail/MyCloudTrailLG \
-#     --filter-name AWSCloudTrailChanges \
-#     --filter-pattern '{ ($.eventName = CreateTrail) || ($.eventName = UpdateTrail) || ($.eventName = DeleteTrail) || ($.eventName = StartLogging) || ($.eventName = StopLogging) }' \
-#     --metric-transformations metricName=CloudTrailEventCount,metricNamespace=CloudTrailMetrics,metricValue=1
-
-
  CHECK_ID_extra806="8.06"
  CHECK_TITLE_extra806="[check806] Description Check to see if PGaudit has been set for Postgres (Not Scored) (Not part of CIS benchmark)"
  CHECK_SCORED_extra806="NOT_SCORED"
