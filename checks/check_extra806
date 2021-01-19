@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2021) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+ CHECK_ID_extra806="8.06"
+ CHECK_TITLE_extra806="[check806] Description Check to see if PGaudit has been set for Postgres (Not Scored) (Not part of CIS benchmark)"
+ CHECK_SCORED_extra806="NOT_SCORED"
+ CHECK_TYPE_extra806="EXTRA"
+ CHECK_ASFF_RESOURCE_TYPE_extra806="AwsRDSInstance" # Choose appropriate value from https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
+ CHECK_ALTERNATE_check806="extra806"
+
+ extra806(){
+   # "Description Check to see if PGaudit has been set for Postgres (Not Scored) (Not part of CIS benchmark)"
+   textInfo "Ensure RDS Postgres instances have PGAudit enabled"
+  for regx in $REGIONS; do
+    LIST_OF_RDS_DBS=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --filter Name=engine,Values=postgres --query 'DBInstances[*].DBInstanceIdentifier' --output text)
+    if [[ $LIST_OF_RDS_DBS ]]; then
+      for instance in $LIST_OF_RDS_DBS; do
+        PROPERTY_GROUPS=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --db-instance-identifier $instance --query 'DBInstances[*].DBParameterGroups[*].DBParameterGroupName' --output text)
+        if [[ $PROPERTY_GROUPS ]]; then
+          while read -r group;do
+            ROLE=$($AWSCLI rds describe-db-parameters $PROFILE_OPT --region $regx --db-parameter-group-name $group --query 'Parameters[?ParameterName==`pgaudit.role`].[ParameterValue]' --output text)
+            if [[ $ROLE == 'None' ]]; then
+              textFail "$regx: instance: $instance is not setup for pgaudit" "$regx"
+            else
+              textPass "$regx: instance: $instance is setup for pgaudit with role $ROLE" "$regx"
+            fi
+          done <<< "$PROPERTY_GROUPS"
+        fi
+      done
+    else
+      textInfo "$regx: no RDS Postgres Instances found" "$regx"
+    fi
+  done
+}
+  
