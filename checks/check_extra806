@@ -20,7 +20,7 @@
 
  extra806(){
    # "Description Check to see if PGaudit has been set for Postgres (Not Scored) (Not part of CIS benchmark)"
-   textInfo "Checking that PGAudit is set for RDS postgres"
+   textInfo "Ensure RDS Postgres instances have PGAudit enabled"
   for regx in $REGIONS; do
     LIST_OF_RDS_DBS=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --filter Name=engine,Values=postgres --query 'DBInstances[*].DBInstanceIdentifier' --output text)
     if [[ $LIST_OF_RDS_DBS ]]; then
