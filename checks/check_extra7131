@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra7131="7.131"
-CHECK_TITLE_extra7131="[extra7131] Ensure there RDS instances have minor version upgrade enabled"
+CHECK_TITLE_extra7131="[extra7131] Ensure RDS instances have minor version upgrade enabled"
 CHECK_SCORED_extra7131="NOT_SCORED"
 CHECK_TYPE_extra7131="EXTRA"
 CHECK_SEVERITY_extra7131="Low"
