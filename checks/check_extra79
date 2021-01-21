@@ -21,7 +21,6 @@ CHECK_ALTERNATE_check79="extra79"
 CHECK_ALTERNATE_check709="extra79"
 CHECK_SERVICENAME_extra79="elb"
 
-
 extra79(){
   # "Check for internet facing Elastic Load Balancers (Not Scored) (Not part of CIS benchmark)"
   textInfo "Looking for Elastic Load Balancers in all regions...  "
