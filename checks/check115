@@ -15,6 +15,7 @@ CHECK_TYPE_check115="LEVEL1"
 CHECK_SEVERITY_check115="Medium"
 CHECK_ASFF_TYPE_check115="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check115="check115"
+CHECK_SERVICENAME_check115="support"
 
 check115(){
   # "Ensure security questions are registered in the AWS account (Not Scored)"

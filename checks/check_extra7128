@@ -18,6 +18,7 @@ CHECK_SEVERITY_extra7128="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7128="AwsDynamoDBTable"
 CHECK_ALTERNATE_check7128="extra7128"
 CHECK_ASFF_COMPLIANCE_TYPE_extra7128="ens-mp.info.3.aws.dyndb.1"
+CHECK_SERVICENAME_extra7128="dynamodb"
 
 extra7128(){
   for regx in $REGIONS; do

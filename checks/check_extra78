@@ -19,6 +19,7 @@ CHECK_ASFF_RESOURCE_TYPE_extra78="AwsRdsDbInstance"
 CHECK_ALTERNATE_extra708="extra78"
 CHECK_ALTERNATE_check78="extra78"
 CHECK_ALTERNATE_check708="extra78"
+CHECK_SERVICENAME_extra78="rds"
 
 extra78(){
   # "Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)"

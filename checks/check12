@@ -17,6 +17,7 @@ CHECK_ASFF_TYPE_check12="Software and Configuration Checks/Industry and Regulato
 CHECK_ASFF_RESOURCE_TYPE_check12="AwsIamUser"
 CHECK_ALTERNATE_check102="check12"
 CHECK_ASFF_COMPLIANCE_TYPE_check12="ens-op.acc.5.aws.iam.1"
+CHECK_SERVICENAME_check12="iam"
 
 check12(){
   # "Ensure multi-factor authentication (MFA) is enabled for all IAM users that have a console password (Scored)"

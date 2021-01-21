@@ -41,6 +41,7 @@ CHECK_SEVERITY_check314="Medium"
 CHECK_ASFF_TYPE_check314="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check314="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check314="check314"
+CHECK_SERVICENAME_check314="vpc"
 
 check314(){
   check3x '\$\.eventName\s*=\s*CreateVpc.+\$\.eventName\s*=\s*DeleteVpc.+\$\.eventName\s*=\s*ModifyVpcAttribute.+\$\.eventName\s*=\s*AcceptVpcPeeringConnection.+\$\.eventName\s*=\s*CreateVpcPeeringConnection.+\$\.eventName\s*=\s*DeleteVpcPeeringConnection.+\$\.eventName\s*=\s*RejectVpcPeeringConnection.+\$\.eventName\s*=\s*AttachClassicLinkVpc.+\$\.eventName\s*=\s*DetachClassicLinkVpc.+\$\.eventName\s*=\s*DisableVpcClassicLink.+\$\.eventName\s*=\s*EnableVpcClassicLink'

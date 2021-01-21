@@ -19,6 +19,7 @@ CHECK_ASFF_TYPE_extra7123="Software and Configuration Checks/Industry and Regula
 CHECK_ASFF_RESOURCE_TYPE_extra7123="AwsIamUser"
 CHECK_ALTERNATE_check7123="extra7123"
 CHECK_ASFF_COMPLIANCE_TYPE_extra7123="ens-op.acc.1.aws.iam.2"
+CHECK_SERVICENAME_extra7123="iam"
 
 extra7123(){
   LIST_OF_USERS_WITH_2ACCESS_KEYS=$(cat $TEMP_REPORT_FILE| awk -F, '{ print $1, $9, $14 }' |grep "\ true\ true" | awk '{ print $1 }')

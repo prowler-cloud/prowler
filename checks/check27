@@ -17,6 +17,7 @@ CHECK_ASFF_TYPE_check27="Software and Configuration Checks/Industry and Regulato
 CHECK_ASFF_RESOURCE_TYPE_check27="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check207="check27"
 CHECK_ASFF_COMPLIANCE_TYPE_check27="ens-op.exp.10.aws.trail.5"
+CHECK_SERVICENAME_check27="cloudtrail"
 
 check27(){
   trail_count=0

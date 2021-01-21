@@ -18,6 +18,7 @@ CHECK_TYPE_extra7130="EXTRA"
 CHECK_SEVERITY_extra7130="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7130="AwsSnsTopic"
 CHECK_ALTERNATE_check7130="extra7130"
+CHECK_SERVICENAME_extra7130="sns"
 
 extra7130(){
   textInfo "Looking for SNS Topics in all regions...  "

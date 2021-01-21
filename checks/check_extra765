@@ -26,6 +26,7 @@ CHECK_SCORED_extra765="NOT_SCORED"
 CHECK_TYPE_extra765="EXTRA"
 CHECK_SEVERITY_extra765="Medium"
 CHECK_ALTERNATE_check765="extra765"
+CHECK_SERVICENAME_extra765="ecr"
 
 extra765(){
   for region in $REGIONS; do

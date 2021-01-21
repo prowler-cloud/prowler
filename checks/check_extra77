@@ -19,6 +19,7 @@ CHECK_SEVERITY_extra77="Critical"
 CHECK_ALTERNATE_extra707="extra77"
 CHECK_ALTERNATE_check77="extra77"
 CHECK_ALTERNATE_check707="extra77"
+CHECK_SERVICENAME_extra77="ecr"
 
 extra77(){
   # "Ensure there are no ECR repositories set as Public (Not Scored) (Not part of CIS benchmark)"

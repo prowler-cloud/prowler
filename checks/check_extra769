@@ -17,6 +17,7 @@ CHECK_SCORED_extra769="NOT_SCORED"
 CHECK_TYPE_extra769="EXTRA"
 CHECK_SEVERITY_extra769="High"
 CHECK_ALTERNATE_check769="extra769"
+CHECK_SERVICENAME_extra769="accessanalyzer"
 
 extra769(){
   for regx in $REGIONS; do

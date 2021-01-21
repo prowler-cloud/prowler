@@ -17,6 +17,7 @@ CHECK_TYPE_extra7115="EXTRA"
 CHECK_SEVERITY_extra7115="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7115="AwsGlue"
 CHECK_ALTERNATE_check7115="extra7115"
+CHECK_SERVICENAME_extra7115="glue"
 
 extra7115(){
   for regx in $REGIONS; do

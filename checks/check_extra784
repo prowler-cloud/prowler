@@ -17,6 +17,7 @@ CHECK_TYPE_extra784="EXTRA"
 CHECK_SEVERITY_extra784="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra784="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check784="extra784"
+CHECK_SERVICENAME_extra784="es"
 
 extra784(){
   for regx in $REGIONS; do

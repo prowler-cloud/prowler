@@ -41,6 +41,7 @@ CHECK_SEVERITY_check311="Medium"
 CHECK_ASFF_TYPE_check311="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check311="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check311="check311"
+CHECK_SERVICENAME_check311="vpc"
 
 check311(){
   check3x '\$\.eventName\s*=\s*CreateNetworkAcl.+\$\.eventName\s*=\s*CreateNetworkAclEntry.+\$\.eventName\s*=\s*DeleteNetworkAcl.+\$\.eventName\s*=\s*DeleteNetworkAclEntry.+\$\.eventName\s*=\s*ReplaceNetworkAclEntry.+\$\.eventName\s*=\s*ReplaceNetworkAclAssociation'

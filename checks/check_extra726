@@ -17,6 +17,7 @@ CHECK_SCORED_extra726="NOT_SCORED"
 CHECK_TYPE_extra726="EXTRA"
 CHECK_SEVERITY_extra726="Medium"
 CHECK_ALTERNATE_check726="extra726"
+CHECK_SERVICENAME_extra726="trustedadvisor"
 
 extra726(){
   trap "exit" INT

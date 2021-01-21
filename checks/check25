@@ -16,6 +16,7 @@ CHECK_SEVERITY_check25="Medium"
 CHECK_ASFF_TYPE_check25="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check205="check25"
 CHECK_ASFF_COMPLIANCE_TYPE_check25="ens-op.exp.1.aws.cfg.1"
+CHECK_SERVICENAME_check25="configservice"
 
 check25(){
   # "Ensure AWS Config is enabled in all regions (Scored)"

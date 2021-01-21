@@ -17,6 +17,7 @@ CHECK_ASFF_TYPE_check43="Software and Configuration Checks/Industry and Regulato
 CHECK_ASFF_RESOURCE_TYPE_check43="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check403="check43"
 CHECK_ASFF_COMPLIANCE_TYPE_check43="ens-mp.com.4.aws.sg.1"
+CHECK_SERVICENAME_check43="ec2"
 
 check43(){
   # "Ensure the default security group of every VPC restricts all traffic (Scored)"

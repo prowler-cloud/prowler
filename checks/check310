@@ -41,6 +41,7 @@ CHECK_SEVERITY_check310="Medium"
 CHECK_ASFF_TYPE_check310="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check310="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check310="check310"
+CHECK_SERVICENAME_check310="ec2"
 
 check310(){
   check3x '\$\.eventName\s*=\s*AuthorizeSecurityGroupIngress.+\$\.eventName\s*=\s*AuthorizeSecurityGroupEgress.+\$\.eventName\s*=\s*RevokeSecurityGroupIngress.+\$\.eventName\s*=\s*RevokeSecurityGroupEgress.+\$\.eventName\s*=\s*CreateSecurityGroup.+\$\.eventName\s*=\s*DeleteSecurityGroup'
