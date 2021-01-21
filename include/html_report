@@ -98,6 +98,7 @@ addHtmlHeader() {
             <tr>
               <th style="align-content:center" scope="col">Status</th>
               <th scope="col">Result</th>
+              <th scope="col">Severity</th>
               <th scope="col">AccountID</th>
               <th scope="col">Region</th>
               <th scope="col">Compliance</th>
