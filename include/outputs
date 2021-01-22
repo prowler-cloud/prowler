@@ -51,7 +51,7 @@ textPass(){
     REPREGION=$REGION
   fi
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1${SEP}$ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}PASS${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1${SEP}$ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
     generateJsonOutput "$1" "Pass" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_JSON
@@ -88,7 +88,7 @@ textInfo(){
     REPREGION=$REGION
   fi
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1${SEP}$ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}INFO${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1${SEP}$ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
     generateJsonOutput "$1" "Info" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
@@ -140,7 +140,7 @@ textFail(){
   fi
 
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}${level}${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1${SEP}$ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}${level}${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$1${SEP}$ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
     generateJsonOutput "$1" "${level}" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
@@ -234,6 +234,7 @@ generateJsonOutput(){
   --arg REPREGION "$REPREGION" \
   --arg TYPE "$ASFF_COMPLIANCE_TYPE" \
   --arg TIMESTAMP "$(get_iso8601_timestamp)" \
+  --arg SERVICENAME "$CHECK_SERVICENAME" \
   -n '{
     "Profile": $PROFILE,
     "Account Number": $ACCOUNT_NUM,
@@ -246,7 +247,8 @@ generateJsonOutput(){
     "Control ID": $TITLE_ID,
     "Region": $REPREGION,
     "Timestamp": $TIMESTAMP,
-    "Compliance": $TYPE
+    "Compliance": $TYPE,
+    "Service": $SERVICENAME
   }'
 }
 
@@ -323,7 +325,7 @@ generateHtmlOutput(){
       echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$ASFF_COMPLIANCE_TYPE'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$CHECK_SERVICENAME'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
@@ -337,7 +339,7 @@ generateHtmlOutput(){
       echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$ASFF_COMPLIANCE_TYPE'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$CHECK_SERVICENAME'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
@@ -351,7 +353,7 @@ generateHtmlOutput(){
       echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$ASFF_COMPLIANCE_TYPE'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$CHECK_SERVICENAME'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
@@ -365,7 +367,7 @@ generateHtmlOutput(){
       echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$ASFF_COMPLIANCE_TYPE'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$ITEM_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$CHECK_SERVICENAME'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML

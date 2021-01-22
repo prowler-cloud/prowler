@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.3.0-18122020
+PROWLER_VERSION=2.3.0-22012021
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -347,8 +347,10 @@ execute_check() {
 
 
   local severity_var=CHECK_SEVERITY_$1
-
   CHECK_SEVERITY="${!severity_var}"
+
+  local servicename_var=CHECK_SERVICENAME_$1
+  CHECK_SERVICENAME="${!servicename_var}"
 
   CHECK_ID="$1"
 
