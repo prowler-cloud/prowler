@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
  CHECK_ID_extra806="8.06"
- CHECK_TITLE_extra806="[check806] Description Check to see if PGaudit has been set for Postgres (Not Scored) (Not part of CIS benchmark)"
+ CHECK_TITLE_extra806="[extra806] Description Check to see if PGaudit has been set for Postgres (Not Scored) (Not part of CIS benchmark)"
  CHECK_SCORED_extra806="NOT_SCORED"
  CHECK_TYPE_extra806="EXTRA"
  CHECK_ASFF_RESOURCE_TYPE_extra806="AwsRDSInstance" # Choose appropriate value from https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
