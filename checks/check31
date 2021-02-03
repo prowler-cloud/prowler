@@ -42,6 +42,7 @@ CHECK_ASFF_TYPE_check31="Software and Configuration Checks/Industry and Regulato
 CHECK_ASFF_RESOURCE_TYPE_check31="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check301="check31"
 CHECK_ASFF_COMPLIANCE_TYPE_check31="ens-op.exp.8.aws.trail.2"
+CHECK_SERVICENAME_check31="iam"
 
 check31(){
   check3x '\$\.errorCode\s*=\s*"\*UnauthorizedOperation".+\$\.errorCode\s*=\s*"AccessDenied\*"'

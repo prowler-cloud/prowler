@@ -17,6 +17,7 @@ CHECK_TYPE_extra761="EXTRA"
 CHECK_SEVERITY_extra761="Medium"
 CHECK_ALTERNATE_check761="extra761"
 CHECK_ASFF_COMPLIANCE_TYPE_extra761="ens-mp.info.3.aws.ebs.2"
+CHECK_SERVICENAME_extra761="ec2"
 
 extra761(){
   textInfo "Looking for EBS Default Encryption activation in all regions...  "

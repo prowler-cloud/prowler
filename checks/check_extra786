@@ -17,6 +17,7 @@ CHECK_TYPE_extra786="EXTRA"
 CHECK_SEVERITY_extra786="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra786="AwsEc2Instance"
 CHECK_ALTERNATE_check786="extra786"
+CHECK_SERVICENAME_extra786="ec2"
 
 extra786(){
   for regx in $REGIONS; do

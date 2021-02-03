@@ -16,6 +16,8 @@ CHECK_SCORED_extra719="NOT_SCORED"
 CHECK_TYPE_extra719="EXTRA"
 CHECK_SEVERITY_extra719="Medium"
 CHECK_ALTERNATE_check719="extra719"
+CHECK_ASFF_RESOURCE_TYPE_extra719="AwsRoute53HostedZone"
+CHECK_SERVICENAME_extra719="route53"
 
 extra719(){
   # You can't create a query logging config for a private hosted zone.

@@ -17,6 +17,7 @@ CHECK_TYPE_extra718="EXTRA"
 CHECK_SEVERITY_extra718="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra718="AwsS3Bucket"
 CHECK_ALTERNATE_check718="extra718"
+CHECK_SERVICENAME_extra718="s3"
 
 extra718(){
   # "Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)"

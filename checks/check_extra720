@@ -17,6 +17,7 @@ CHECK_TYPE_extra720="EXTRA"
 CHECK_SEVERITY_extra720="Low"
 CHECK_ASFF_RESOURCE_TYPE_extra720="AwsLambdaFunction"
 CHECK_ALTERNATE_check720="extra720"
+CHECK_SERVICENAME_extra720="lambda"
 
 extra720(){
   # "Check if Lambda functions invoke API operations are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)"

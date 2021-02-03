@@ -17,6 +17,7 @@ CHECK_ASFF_TYPE_check29="Software and Configuration Checks/Industry and Regulato
 CHECK_ASFF_RESOURCE_TYPE_check29="AwsEc2Vpc"
 CHECK_ALTERNATE_check209="check29"
 CHECK_ASFF_COMPLIANCE_TYPE_check29="ens-op.mon.1.aws.flow.1"
+CHECK_SERVICENAME_check29="vpc"
 
 check29(){
   # "Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"

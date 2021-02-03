@@ -17,6 +17,7 @@ CHECK_TYPE_extra747="EXTRA"
 CHECK_SEVERITY_extra747="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra747="AwsRdsDbInstance"
 CHECK_ALTERNATE_check747="extra747"
+CHECK_SERVICENAME_extra747="rds"
 
 extra747(){
   for regx in $REGIONS; do

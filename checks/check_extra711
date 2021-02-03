@@ -17,6 +17,7 @@ CHECK_TYPE_extra711="EXTRA"
 CHECK_SEVERITY_extra711="High"
 CHECK_ASFF_RESOURCE_TYPE_extra711="AwsRedshiftCluster"
 CHECK_ALTERNATE_check711="extra711"
+CHECK_SERVICENAME_extra711="redshift"
 
 extra711(){
   # "Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)"

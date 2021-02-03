@@ -15,6 +15,7 @@ CHECK_TYPE_check18="LEVEL1"
 CHECK_SEVERITY_check18="Medium"
 CHECK_ASFF_TYPE_check18="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check108="check18"
+CHECK_SERVICENAME_check18="iam"
 
 check18(){
   # "Ensure IAM password policy require at least one number (Scored)"

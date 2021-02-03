@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.3.0-18122020
+PROWLER_VERSION=2.3.0-22012021
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -216,6 +216,9 @@ trap clean_up EXIT
 # Clean up and exit if Ctrl-C occurs. Required to allow Ctrl-C to stop Prowler when running in Docker
 trap handle_ctrl_c INT
 
+# Environment variable takes precedence over command line
+unset AWS_DEFAULT_OUTPUT
+
 . $PROWLER_DIR/include/colors
 . $PROWLER_DIR/include/os_detector
 . $PROWLER_DIR/include/aws_profile_loader
@@ -237,7 +240,12 @@ trap handle_ctrl_c INT
 . $PROWLER_DIR/include/junit_integration
 
 # Get list of regions based on include/whoami
-REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' --output text $PROFILE_OPT --region $REGION_FOR_STS --region-names $FILTERREGION)
+REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' --output text $PROFILE_OPT --region $REGION_FOR_STS --region-names $FILTERREGION 2>&1)
+if [[ $(echo "$REGIONS" | grep AccessDenied) ]]; then
+  echo "Access Denied trying to describe regions"
+  EXITCODE=1
+  exit $EXITCODE
+fi
 
 # Pre-process whitelist file if supplied
 if [[ -n "$WHITELIST_FILE" ]]; then
@@ -339,8 +347,10 @@ execute_check() {
 
 
   local severity_var=CHECK_SEVERITY_$1
-  
   CHECK_SEVERITY="${!severity_var}"
+
+  local servicename_var=CHECK_SERVICENAME_$1
+  CHECK_SERVICENAME="${!servicename_var}"
 
   CHECK_ID="$1"
 
@@ -437,7 +447,6 @@ execute_group() {
 
 # Function to execute group by name
 execute_group_by_id() {
-  
   	for i in "${!GROUP_ID[@]}"; do
 		if [ "${GROUP_ID[$i]}" == "$1" ]; then
 			execute_group ${i} $2
@@ -447,14 +456,14 @@ execute_group_by_id() {
 
 # Function to execute all checks in all groups except extras if -e is invoked
 execute_all() {
-	for i in "${!GROUP_TITLE[@]}"; do
+  for i in "${!GROUP_TITLE[@]}"; do
     if [[ $EXTRAS ]]; then
       GROUP_RUN_BY_DEFAULT[7]='N'
     fi
     if [ "${GROUP_RUN_BY_DEFAULT[$i]}" == "Y" ]; then
       execute_group $i
     fi
-	done
+  done
 }
 
 # Function to show the titles of either all checks or only those in the specified group

@@ -18,6 +18,7 @@ CHECK_SEVERITY_extra744="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra744="AwsApiGatewayRestApi"
 CHECK_ALTERNATE_check744="extra744"
 CHECK_ASFF_COMPLIANCE_TYPE_extra744="ens-mp.s.2.aws.waf.2"
+CHECK_SERVICENAME_extra744="apigateway"
 
 extra744(){
   for regx in $REGIONS; do

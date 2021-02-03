@@ -42,6 +42,7 @@ CHECK_ASFF_TYPE_check34="Software and Configuration Checks/Industry and Regulato
 CHECK_ASFF_RESOURCE_TYPE_check34="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check304="check34"
 CHECK_ASFF_COMPLIANCE_TYPE_check34="ens-op.exp.8.aws.trail.6"
+CHECK_SERVICENAME_check34="iam"
 
 check34(){
   check3x '\$\.eventName\s*=\s*DeleteGroupPolicy.+\$\.eventName\s*=\s*DeleteRolePolicy.+\$\.eventName\s*=\s*DeleteUserPolicy.+\$\.eventName\s*=\s*PutGroupPolicy.+\$\.eventName\s*=\s*PutRolePolicy.+\$\.eventName\s*=\s*PutUserPolicy.+\$\.eventName\s*=\s*CreatePolicy.+\$\.eventName\s*=\s*DeletePolicy.+\$\.eventName\s*=\s*CreatePolicyVersion.+\$\.eventName\s*=\s*DeletePolicyVersion.+\$\.eventName\s*=\s*AttachRolePolicy.+\$\.eventName\s*=\s*DetachRolePolicy.+\$\.eventName\s*=\s*AttachUserPolicy.+\$\.eventName\s*=\s*DetachUserPolicy.+\$\.eventName\s*=\s*AttachGroupPolicy.+\$\.eventName\s*=\s*DetachGroupPolicy'

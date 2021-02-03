@@ -17,16 +17,12 @@ CHECK_TYPE_extra794="EXTRA"
 CHECK_SEVERITY_extra794="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra794="AwsEksCluster"
 CHECK_ALTERNATE_check794="extra794"
+CHECK_SERVICENAME_extra794="eks"
 
 extra794(){
   textInfo "Looking for control plane logging enabled for EKS clusters across all regions... "
   for regx in $REGIONS; do
-    # Get a list of EKS clusters (Unless us-west-1 which doesn't support EKS):
-    if [[ $regx == "us-west-1" ]]; then
-      textInfo "$regx: EKS not supported in this region" "$regx"
-    else
-      CLUSTERS=$($AWSCLI eks list-clusters $PROFILE_OPT --region $regx --query 'clusters[]' --output text)
-    fi
+    CLUSTERS=$($AWSCLI eks list-clusters $PROFILE_OPT --region $regx --query 'clusters[]' --output text)
     if [[ $CLUSTERS ]]; then
       for CLUSTER in $CLUSTERS;do
         CLUSTERDEF=$($AWSCLI eks describe-cluster $PROFILE_OPT --region $regx --name $CLUSTER --query 'cluster.logging.clusterLogging[0]')
@@ -43,9 +39,7 @@ extra794(){
         fi
       done
     else
-      if [[ $regx != "us-west-1" ]]; then
-        textInfo "$regx: No EKS clusters found" "$regx"
-      fi
+      textInfo "$regx: No EKS clusters found" "$regx"
     fi
   done
 }

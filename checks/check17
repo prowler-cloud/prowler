@@ -15,6 +15,7 @@ CHECK_TYPE_check17="LEVEL1"
 CHECK_SEVERITY_check17="Medium"
 CHECK_ASFF_TYPE_check17="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check107="check17"
+CHECK_SERVICENAME_check17="iam"
 
 check17(){
   # "Ensure IAM password policy require at least one symbol (Scored)"

@@ -18,6 +18,7 @@ CHECK_SEVERITY_extra76="Critical"
 CHECK_ALTERNATE_extra706="extra76"
 CHECK_ALTERNATE_check76="extra76"
 CHECK_ALTERNATE_check706="extra76"
+CHECK_SERVICENAME_extra76="ec2"
 
 extra76(){
   # "Ensure there are no EC2 AMIs set as Public (Not Scored) (Not part of CIS benchmark)"

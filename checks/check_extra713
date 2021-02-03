@@ -17,6 +17,8 @@ CHECK_TYPE_extra713="EXTRA"
 CHECK_SEVERITY_extra713="High"
 CHECK_ALTERNATE_check713="extra713"
 CHECK_ASFF_COMPLIANCE_TYPE_extra713="ens-op.mon.1.aws.duty.1"
+CHECK_ASFF_RESOURCE_TYPE_extra713="AwsGuardDutyDetector"
+CHECK_SERVICENAME_extra713="guardduty"
 
 extra713(){
   # "Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)"

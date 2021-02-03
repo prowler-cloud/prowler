@@ -18,6 +18,7 @@ CHECK_SEVERITY_extra792="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra792="AwsElbLoadBalancer"
 CHECK_ALTERNATE_check792="extra792"
 CHECK_ASFF_COMPLIANCE_TYPE_extra792="ens-mp.com.2.aws.elb.2"
+CHECK_SERVICENAME_extra792="elb"
 
 extra792(){
   # "Check if Elastic Load Balancers have insecure SSL ciphers (Not Scored) (Not part of CIS benchmark)"
@@ -73,7 +74,8 @@ extra792(){
       if [[ $LIST_OF_ELBSV2 ]]; then
         # NOTE - ALBs do NOT support custom security policies 
         # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html
-        ELBV2SECUREPOLICIES=("ELBSecurityPolicy-2016-08" "ELBSecurityPolicy-TLS-1-1-2017-01" "ELBSecurityPolicy-TLS-1-2-2017-01" "ELBSecurityPolicy-TLS-1-2-Ext-2018-06" "ELBSecurityPolicy-FS-2018-06" "ELBSecurityPolicy-FS-1-1-2019-08" "ELBSecurityPolicy-FS-1-2-2019-08" "ELBSecurityPolicy-FS-1-2-Res-2019-08" "ELBSecurityPolicy-2015-05")
+        ELBV2SECUREPOLICIES=("ELBSecurityPolicy-2016-08" "ELBSecurityPolicy-TLS-1-1-2017-01" "ELBSecurityPolicy-TLS-1-2-2017-01" "ELBSecurityPolicy-TLS-1-2-Ext-2018-06" "ELBSecurityPolicy-FS-2018-06" "ELBSecurityPolicy-FS-1-1-2019-08" "ELBSecurityPolicy-FS-1-2-2019-08" "ELBSecurityPolicy-FS-1-2-Res-2019-08" "ELBSecurityPolicy-FS-1-2-Res-2020-10" "ELBSecurityPolicy-2015-05")
+
         for elbarn in $LIST_OF_ELBSV2; do
           passed=true
           if [[ $(echo $elbarn | grep "loadbalancer/app/") ]]; then

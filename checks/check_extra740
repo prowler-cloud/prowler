@@ -18,6 +18,7 @@ CHECK_SEVERITY_extra740="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra740="AwsEc2Snapshot"
 CHECK_ALTERNATE_check740="extra740"
 CHECK_ASFF_COMPLIANCE_TYPE_extra740="ens-mp.info.3.aws.ebs.3"
+CHECK_SERVICENAME_extra740="ec2"
 
 extra740(){
   textInfo "Examining EBS Volume Snapshots ..."

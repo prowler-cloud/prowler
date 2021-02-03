@@ -20,6 +20,7 @@ CHECK_ALTERNATE_extra701="extra71"
 CHECK_ALTERNATE_check71="extra71"
 CHECK_ALTERNATE_check701="extra71"
 CHECK_ASFF_COMPLIANCE_TYPE_extra71="ens-op.exp.10.aws.trail.2"
+CHECK_SERVICENAME_extra71="iam"
 
 extra71(){
   # "Ensure users of groups with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)"

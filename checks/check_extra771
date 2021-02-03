@@ -17,6 +17,7 @@ CHECK_TYPE_extra771="EXTRA"
 CHECK_SEVERITY_extra771="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra771="AwsS3Bucket"
 CHECK_ALTERNATE_check771="extra771"
+CHECK_SERVICENAME_extra771="s3"
 
 extra771(){
   LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --region $REGION --query Buckets[*].Name --output text|xargs -n1)

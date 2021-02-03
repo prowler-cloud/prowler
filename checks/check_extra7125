@@ -18,6 +18,7 @@ CHECK_SEVERITY_extra7125="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7125="AwsIamUser"
 CHECK_ALTERNATE_check7125="extra7125"
 CHECK_ASFF_COMPLIANCE_TYPE_extra7125="ens-op.acc.5.aws.iam.2"
+CHECK_SERVICENAME_extra7125="iam"
 
 extra7125(){
   LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text $PROFILE_OPT --region $REGION)

@@ -15,6 +15,7 @@ CHECK_TYPE_check11="LEVEL1"
 CHECK_SEVERITY_check11="High"
 CHECK_ASFF_TYPE_check11="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check101="check11"
+CHECK_SERVICENAME_check11="iam"
 
 check11(){
   # "Avoid the use of the root account (Scored)."

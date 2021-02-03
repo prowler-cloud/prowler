@@ -17,6 +17,7 @@ CHECK_ASFF_TYPE_check42="Software and Configuration Checks/Industry and Regulato
 CHECK_ASFF_RESOURCE_TYPE_check42="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check402="check42"
 CHECK_ASFF_COMPLIANCE_TYPE_check42="ens-mp.com.4.aws.sg.5"
+CHECK_SERVICENAME_check42="ec2"
 
 check42(){
   # "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to port 3389 (Scored)"

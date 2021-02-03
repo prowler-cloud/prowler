@@ -17,6 +17,7 @@ CHECK_ASFF_TYPE_check120="Software and Configuration Checks/Industry and Regulat
 CHECK_ASFF_RESOURCE_TYPE_check120="AwsIamRole"
 CHECK_ALTERNATE_check120="check120"
 CHECK_ASFF_COMPLIANCE_TYPE_check120="ens-op.acc.1.aws.iam.4"
+CHECK_SERVICENAME_check120="iam"
 
 check120(){
   # "Ensure a support role has been created to manage incidents with AWS Support (Scored)"

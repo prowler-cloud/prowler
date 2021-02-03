@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra7130="7.130"
+CHECK_TITLE_extra7130="[extra7130] Ensure there are no SNS Topics unencrypted"
+CHECK_SCORED_extra7130="NOT_SCORED"
+CHECK_TYPE_extra7130="EXTRA"
+CHECK_SEVERITY_extra7130="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7130="AwsSnsTopic"
+CHECK_ALTERNATE_check7130="extra7130"
+CHECK_SERVICENAME_extra7130="sns"
+
+extra7130(){
+  textInfo "Looking for SNS Topics in all regions...  "
+  for regx in $REGIONS; do
+    LIST_SNS=$($AWSCLI sns list-topics $PROFILE_OPT --region $regx --query 'Topics[*].TopicArn' --output text)
+    if [[ $LIST_SNS ]];then
+      for topic in $LIST_SNS; do
+        SHORT_TOPIC=$(echo $topic | awk -F ":" '{print $NF}')
+        SNS_ENCRYPTION=$($AWSCLI sns get-topic-attributes $PROFILE_OPT --region $regx --topic-arn $topic --query 'Attributes.KmsMasterKeyId' --output text)
+        if [[ "None" == $SNS_ENCRYPTION ]]; then
+          textFail "$regx: $SHORT_TOPIC is not encrypted!" "$regx"
+        else
+          textPass "$regx: $SHORT_TOPIC is encrypted" "$regx"
+        fi
+      done
+    else
+      textInfo "$regx: No SNS topic found" "$regx"
+    fi
+  done
+}

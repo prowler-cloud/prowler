@@ -18,6 +18,7 @@ CHECK_SEVERITY_extra749="High"
 CHECK_ASFF_RESOURCE_TYPE_extra749="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check749="extra749"
 CHECK_ASFF_COMPLIANCE_TYPE_extra749="ens-mp.com.4.aws.sg.6"
+CHECK_SERVICENAME_extra749="ec2"
 
 extra749(){
   for regx in $REGIONS; do

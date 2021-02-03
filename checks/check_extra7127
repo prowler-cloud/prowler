@@ -18,7 +18,8 @@ CHECK_SEVERITY_extra7127="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7127="AwsEc2Instance"
 CHECK_ASFF_TYPE_extra7127="Software and Configuration Checks/ENS op.exp.4.aws.sys.1"
 CHECK_ALTERNATE_check7127="extra7127"
-CHECK_ASFF_COMPLIANCE_TYPE_extra7127="ens-op.exp.1.aws.sys.1,ens-op.exp.4.aws.sys.1"
+CHECK_ASFF_COMPLIANCE_TYPE_extra7127="ens-op.exp.1.aws.sys.1 ens-op.exp.4.aws.sys.1"
+CHECK_SERVICENAME_extra7127="ssm"
 
 
 extra7127(){

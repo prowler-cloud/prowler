@@ -41,6 +41,7 @@ CHECK_SEVERITY_check313="Medium"
 CHECK_ASFF_TYPE_check313="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check313="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check313="check313"
+CHECK_SERVICENAME_check313="vpc"
 
 check313(){
   check3x '\$\.eventName\s*=\s*CreateRoute.+\$\.eventName\s*=\s*CreateRouteTable.+\$\.eventName\s*=\s*ReplaceRoute.+\$\.eventName\s*=\s*ReplaceRouteTableAssociation.+\$\.eventName\s*=\s*DeleteRouteTable.+\$\.eventName\s*=\s*DeleteRoute.+\$\.eventName\s*=\s*DisassociateRouteTable'

@@ -12,8 +12,11 @@
 # specific language governing permissions and limitations under the License.
 
 # AWS-CLI detector variable
-AWSCLI=$(which aws)
-if [ -z "${AWSCLI}" ]; then
+if [ ! -z $(which aws) ]; then
+  AWSCLI=$(which aws)
+elif [ ! -z $(type -p aws) ]; then
+  AWSCLI=$(type -p aws)
+else
   echo -e "\n$RED ERROR!$NORMAL AWS-CLI (aws command) not found. Make sure it is installed correctly and in your \$PATH\n"
   EXITCODE=1
   exit $EXITCODE

@@ -18,6 +18,7 @@ CHECK_SEVERITY_extra7129="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7129="AwsElasticLoadBalancingV2LoadBalancer"
 CHECK_ALTERNATE_check7129="extra7129"
 CHECK_ASFF_COMPLIANCE_TYPE_extra7129="ens-mp.s.2.aws.waf.3"
+CHECK_SERVICENAME_extra7129="elb"
 
 extra7129(){
   for regx in $REGIONS; do

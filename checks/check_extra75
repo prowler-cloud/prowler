@@ -20,6 +20,7 @@ CHECK_ALTERNATE_extra705="extra75"
 CHECK_ALTERNATE_check75="extra75"
 CHECK_ALTERNATE_check705="extra75"
 CHECK_ASFF_COMPLIANCE_TYPE_extra75="ens-mp.com.4.aws.sg.3"
+CHECK_SERVICENAME_extra75="ec2"
 
 extra75(){
   # "Ensure there are no Security Groups not being used (Not Scored) (Not part of CIS benchmark)"

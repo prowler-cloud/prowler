@@ -11,13 +11,13 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-# both variables are mandatory to be set together 
+# both variables are mandatory to be set together
 assume_role(){
     if [[ -z $ROLE_TO_ASSUME ]]; then
         echo "$OPTRED ERROR!$OPTNORMAL - Both Account ID (-A) and IAM Role to assume (-R) must be set"
         exit 1
-    fi 
-    # if not session duration set with -T, then will be 1h. 
+    fi
+    # if not session duration set with -T, then will be 1h.
     # In some cases you will need more than 1h.
     if [[ -z $SESSION_DURATION_TO_ASSUME ]]; then
         SESSION_DURATION_TO_ASSUME="3600"
@@ -25,31 +25,37 @@ assume_role(){
 
     # temporary file where to store credentials
     TEMP_STS_ASSUMED_FILE=$(mktemp -t prowler.sts_assumed-XXXXXX)
-    
+
     #Check if external ID has bee provided if so execute with external ID if not ignore
     if [[ -z $ROLE_EXTERNAL_ID ]]; then
         # assume role command
         $AWSCLI $PROFILE_OPT sts assume-role --role-arn arn:${AWS_PARTITION}:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME \
             --role-session-name ProwlerAssessmentSession \
             --region $REGION_FOR_STS \
-            --duration-seconds $SESSION_DURATION_TO_ASSUME > $TEMP_STS_ASSUMED_FILE 
-    else 
+            --duration-seconds $SESSION_DURATION_TO_ASSUME > $TEMP_STS_ASSUMED_FILE 2>&1
+    else
         $AWSCLI $PROFILE_OPT sts assume-role --role-arn arn:${AWS_PARTITION}:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME \
             --role-session-name ProwlerAssessmentSession \
             --duration-seconds $SESSION_DURATION_TO_ASSUME \
             --region $REGION_FOR_STS \
-            --external-id $ROLE_EXTERNAL_ID > $TEMP_STS_ASSUMED_FILE 
-    fi 
+            --external-id $ROLE_EXTERNAL_ID > $TEMP_STS_ASSUMED_FILE 2>&1
+    fi
+    if [[ $(grep AccessDenied $TEMP_STS_ASSUMED_FILE) ]]; then
+      textFail "Access Denied assuming role arn:${AWS_PARTITION}:iam::${ACCOUNT_TO_ASSUME}:role/${ROLE_TO_ASSUME}"
+      rm -f $TEMP_STS_ASSUMED_FILE
+      EXITCODE=1
+      exit $EXITCODE
+    fi
 
     # assume role command
     #$AWSCLI $PROFILE_OPT sts assume-role --role-arn arn:${AWS_PARTITION}:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME \
     #    --role-session-name ProwlerAssessmentSession \
-    #    --duration-seconds $SESSION_DURATION_TO_ASSUME > $TEMP_STS_ASSUMED_FILE 
+    #    --duration-seconds $SESSION_DURATION_TO_ASSUME > $TEMP_STS_ASSUMED_FILE
 
     # if previous command fails exit with the given error from aws-cli
-    # this is likely to be due to session duration limit of 1h in case 
+    # this is likely to be due to session duration limit of 1h in case
     # of assume role chaining:
-    # "The requested DurationSeconds exceeds the 1 hour session limit 
+    # "The requested DurationSeconds exceeds the 1 hour session limit
     # for roles assumed by role chaining."
     # https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html
     if [[ $? != 0 ]];then

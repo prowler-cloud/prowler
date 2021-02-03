@@ -18,6 +18,7 @@ CHECK_TYPE_extra7108="EXTRA"
 CHECK_ASFF_RESOURCE_TYPE_extra7108="AwsSageMakerNotebookInstance"
 CHECK_ALTERNATE_check7108="extra7108"
 CHECK_SEVERITY_extra7108="Medium"
+CHECK_SERVICENAME_extra7108="sagemaker"
     
 extra7108(){
     for regx in ${REGIONS}; do

@@ -17,6 +17,7 @@ CHECK_TYPE_extra767="EXTRA"
 CHECK_SEVERITY_extra767="Low"
 CHECK_ASFF_RESOURCE_TYPE_extra767="AwsCloudFrontDistribution"
 CHECK_ALTERNATE_check767="extra767"
+CHECK_SERVICENAME_extra767="cloudfront"
 
 extra767(){
     LIST_OF_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions --query 'DistributionList.Items[*].Id' $PROFILE_OPT --output text|grep -v ^None)

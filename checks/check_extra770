@@ -17,6 +17,7 @@ CHECK_TYPE_extra770="EXTRA"
 CHECK_SEVERITY_extra770="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra770="AwsEc2Instance"
 CHECK_ALTERNATE_check770="extra770"
+CHECK_SERVICENAME_extra770="ec2"
 
 extra770(){
   # "Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)"

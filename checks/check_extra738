@@ -18,6 +18,7 @@ CHECK_SEVERITY_extra738="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra738="AwsCloudFrontDistribution"
 CHECK_ALTERNATE_check738="extra738"
 CHECK_ASFF_COMPLIANCE_TYPE_extra738="ens-mp.com.2.aws.front.1"
+CHECK_SERVICENAME_extra738="cloudfront"
 
 extra738(){
     LIST_OF_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions --query 'DistributionList.Items[*].Id' $PROFILE_OPT --output text|grep -v ^None)

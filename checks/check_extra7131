@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7131="7.131"
+CHECK_TITLE_extra7131="[extra7131] Ensure RDS instances have minor version upgrade enabled"
+CHECK_SCORED_extra7131="NOT_SCORED"
+CHECK_TYPE_extra7131="EXTRA"
+CHECK_SEVERITY_extra7131="Low"
+CHECK_ASFF_RESOURCE_TYPE_extra7131="AwsRdsDbInstance"
+CHECK_ALTERNATE_check7131="extra7131"
+CHECK_SERVICENAME_extra7131="rds"
+
+extra7131(){
+  for regx in $REGIONS; do
+    # LIST_OF_RDS_PUBLIC_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[?PubliclyAccessible==`true` && DBInstanceStatus==`"available"`].[DBInstanceIdentifier,Endpoint.Address]' --output text)
+    LIST_OF_RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[*].[DBInstanceIdentifier,AutoMinorVersionUpgrade]'  --output text)
+    if [[ $LIST_OF_RDS_INSTANCES ]];then
+      while read -r rds_instance;do
+        RDS_NAME=$(echo $rds_instance | awk '{ print $1; }')
+        RDS_AUTOMINORUPGRADE_FLAG=$(echo $rds_instance | awk '{ print $2; }')
+        if [[ $RDS_AUTOMINORUPGRADE_FLAG == "True" ]];then 
+            textPass "$regx: RDS instance: $RDS_NAME is has minor version upgrade enabled" "$regx"
+        else
+            textFail "$regx: RDS instance: $RDS_NAME does not have minor version upgrade enabled" "$regx"
+        fi
+      done <<< "$LIST_OF_RDS_INSTANCES"
+      else
+        textInfo "$regx: no RDS instances found" "$regx"
+    fi
+  done
+}
