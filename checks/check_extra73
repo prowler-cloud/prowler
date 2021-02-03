@@ -20,6 +20,8 @@ CHECK_ASFF_RESOURCE_TYPE_extra73="AwsS3Bucket"
 CHECK_ALTERNATE_extra703="extra73"
 CHECK_ALTERNATE_check73="extra73"
 CHECK_ALTERNATE_check703="extra73"
+CHECK_SERVICENAME_extra73="s3"
+
 
 # Verified with AWS support that if get-bucket-acl doesn't return a grant
 # for All and get-bucket-policy-status returns IsPublic false or bad request
