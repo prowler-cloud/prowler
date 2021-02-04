@@ -25,7 +25,7 @@ check28(){
     if [[ $CHECK_KMS_KEYLIST ]];then
       CHECK_KMS_KEYLIST_NO_DEFAULT=$(
         for key in $CHECK_KMS_KEYLIST; do
-          $AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.{key:KeyId,state:KeyState,man:KeyManager}' --output text|grep Enabled$|grep -v AWS| awk '{ print $1 }'
+          $AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.{key:KeyId,state:KeyState,man:KeyManager,spec:CustomerMasterKeySpec}' --output text|grep Enabled$|grep -v AWS|grep SYMMETRIC| awk '{ print $1 }'
         done )
       if [[ $CHECK_KMS_KEYLIST_NO_DEFAULT ]]; then
         for key in $CHECK_KMS_KEYLIST_NO_DEFAULT; do
