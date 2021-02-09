@@ -14,14 +14,20 @@ check3x(){
   local CHECK_WARN
   local CHECK_CROSS_ACCOUNT_WARN
 
-  # In order to make all these checks work properly logs and alarms have to 
+  # In order to make all these checks work properly logs and alarms have to
   # be based only on CloudTrail tail with CloudWatchLog configuration.
-  DESCRIBE_TRAILS_CACHE=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[?CloudWatchLogsLogGroupArn != `null`]')
+  DESCRIBE_TRAILS_CACHE=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[?CloudWatchLogsLogGroupArn != `null`]' 2>&1)
+  if [[ $(echo "$DESCRIBE_TRAILS_CACHE" | grep AccessDenied) ]]; then
+    textFail "Access Denied trying to describe trails in $REGION"
+    return
+  fi
+
   TRAIL_LIST=$(echo $DESCRIBE_TRAILS_CACHE | jq -r -c '.[] |@base64') # this treats each array element as its own line
   CURRENT_ACCOUNT_ID=$($AWSCLI sts $PROFILE_OPT get-caller-identity --region "$REGION" --query Account --output text)
   CLOUDWATCH_LOGGROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text| tr '\011' '\012' | awk -F: '{print $7}')
 
   if [[ $CLOUDWATCH_LOGGROUP != "" ]]; then
+    pass_count=0
     for group_obj_enc in $TRAIL_LIST; do
 
       group_obj_raw=$(echo $group_obj_enc | decode_report)
@@ -41,6 +47,7 @@ check3x(){
           HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region "$CLOUDWATCH_LOGGROUP_REGION" --query 'MetricAlarms[?MetricName==`'"$metric_name"'`]' --output text)
           if [[ $HAS_ALARM_ASSOCIATED ]];then
             CHECK_OK="$CHECK_OK $CLOUDWATCH_LOGGROUP_NAME:$metric"
+            pass_count=$((pass_count + 1))
           else
             CHECK_WARN="$CHECK_WARN $CLOUDWATCH_LOGGROUP_NAME:$metric"
           fi
@@ -64,15 +71,24 @@ check3x(){
         case $group in
            *:*) metric=${group#*:}
                 group=${group%:*}
-                textFail "CloudWatch group $group found with metric filter $metric but no alarms associated"
+                if [[ $pass_count == 0 ]]; then
+                  textFail "CloudWatch group $group found with metric filter $metric but no alarms associated"
+                else
+                  textInfo "CloudWatch group $group found with metric filter $metric but no alarms associated"
+                fi
                 ;;
-             *) textFail "CloudWatch group $group found but no metric filters or alarms associated"
+             *) if [[ $pass_count == 0 ]]; then
+                  textFail "CloudWatch group $group found but no metric filters or alarms associated"
+                else
+                  textInfo "CloudWatch group $group found but no metric filters or alarms associated"
+                fi
+                ;;
         esac
       done
     fi
     if [[ $CHECK_CROSS_ACCOUNT_WARN ]]; then
       for group in $CHECK_CROSS_ACCOUNT_WARN; do
-        textInfo "CloudWatch group $group is not in this account" 
+        textInfo "CloudWatch group $group is not in this account"
       done
     fi
   else
