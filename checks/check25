@@ -21,11 +21,20 @@ CHECK_SERVICENAME_check25="configservice"
 check25(){
   # "Ensure AWS Config is enabled in all regions (Scored)"
   for regx in $REGIONS; do
-    CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice get-status $PROFILE_OPT --region $regx --output json| grep "recorder: ON")
-    if [[ $CHECK_AWSCONFIG_STATUS ]];then
-      textPass "Region $regx has AWS Config recorder: ON" "$regx"
+    CHECK_AWSCONFIG_RECORDING=$($AWSCLI configservice describe-configuration-recorder-status $PROFILE_OPT --region $regx --query 'ConfigurationRecordersStatus[*].recording' --output text 2>&1)
+    CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice describe-configuration-recorder-status $PROFILE_OPT --region $regx --query 'ConfigurationRecordersStatus[*].lastStatus' --output text 2>&1)
+    if [[ $(echo "$CHECK_AWSCONFIG_STATUS" | grep AccessDenied) ]]; then
+      textFail "Access Denied trying to describe configuration recorder status in $regx"
+      continue
+    fi
+    if [[ $CHECK_AWSCONFIG_RECORDING == "True" ]]; then
+      if [[ $CHECK_AWSCONFIG_STATUS == "SUCCESS" ]]; then
+        textPass "Region $regx AWS Config recorder enabled"
+      else
+        textFail "Region $regx AWS Config recorder in failure state"
+      fi
     else
-      textFail "Region $regx has AWS Config disabled or not configured" "$regx"
+      textFail "Region $regx AWS Config recorder disabled"
     fi
   done
 }
