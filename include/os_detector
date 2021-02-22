@@ -34,26 +34,26 @@ bsd_how_older_from_today() {
 gnu_timestamp_to_date() {
   # if date comes from cli v2 in format like 2020-04-29T10:13:09.191000-04:00
   # we have to get only '%Y-%m-%d'
-  if [[ $1 = 20* ]]; then
+  if [[ $1 = 20* ]];then 
     echo $1 | cut -f1 -d"T"
-  else
+  else 
     # remove fractions of a second
     TIMESTAMP_TO_CONVERT=$(echo $1 | cut -f1 -d".")
     OUTPUT_DATE=$("$DATE_CMD" -d @$TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
     echo $OUTPUT_DATE
-  fi
+  fi 
 }
 bsd_timestamp_to_date() {
   # if date comes from cli v2 in format like 2020-04-29T10:13:09.191000-04:00
   # we have to get only '%Y-%m-%d'
-  if [[ $1 = 20* ]]; then
+  if [[ $1 = 20* ]];then 
     echo $1 | cut -f1 -d"T"
   else
     # remove fractions of a second
     TIMESTAMP_TO_CONVERT=$(echo $1 | cut -f1 -d".")
     OUTPUT_DATE=$("$DATE_CMD" -r $TIMESTAMP_TO_CONVERT +'%Y-%m-%d')
     echo $OUTPUT_DATE
-  fi
+  fi 
 }
 
 gnu_decode_report() {
@@ -108,6 +108,20 @@ bsd_get_iso8601_timestamp() {
   "$DATE_CMD" -u +"%Y-%m-%dT%H:%M:%SZ"
 }
 
+gnu_convert_date_to_timestamp() {
+  # if [ "$OSTYPE" == "linux-musl" ]; then
+  #   date -D "%Y-%m-%dT%H:%M:%SZ" -d "$1" +%s
+  # else
+    date -d "$1" +%s
+  # fi
+}
+
+bsd_convert_date_to_timestamp() {
+  echo $(( $(date -j -f %Y-%m-%dT%H:%M:%S "$1" +%s) + 3600 ))
+  # Change above is because epoch time generator in BSD is 1h less than in Linux ¯\_(ツ)_/¯
+  #date -j -f "%Y-%m-%dT%H:%M:%S" "$1" "+%s"
+}
+
 gnu_test_tcp_connectivity() {
   HOST=$1
   PORT=$2
@@ -154,6 +168,9 @@ if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
   test_tcp_connectivity() {
     gnu_test_tcp_connectivity "$1" "$2" "$3"
   }
+  convert_date_to_timestamp() {
+    gnu_convert_date_to_timestamp "$1"
+  }
 elif [[ "$OSTYPE" == "darwin"* ]] || [[ "$OSTYPE" == "freebsd"* ]]; then
   # BSD/OSX commands compatibility
   TEMP_REPORT_FILE=$(mktemp -t prowler.cred_report-XXXXXX)
@@ -189,6 +206,9 @@ elif [[ "$OSTYPE" == "darwin"* ]] || [[ "$OSTYPE" == "freebsd"* ]]; then
     get_iso8601_timestamp() {
       gnu_get_iso8601_timestamp
     }
+    convert_date_to_timestamp() {
+      gnu_convert_date_to_timestamp "$1"
+    }
   else
     how_older_from_today() {
       bsd_how_older_from_today "$1"
@@ -207,6 +227,9 @@ elif [[ "$OSTYPE" == "darwin"* ]] || [[ "$OSTYPE" == "freebsd"* ]]; then
     }
     get_iso8601_timestamp() {
       bsd_get_iso8601_timestamp
+    }
+    convert_date_to_timestamp() {
+      bsd_convert_date_to_timestamp "$1"
     }
   fi
   if "$BASE64_CMD" --version >/dev/null 2>&1 ; then
@@ -247,6 +270,9 @@ elif [[ "$OSTYPE" == "cygwin" ]]; then
   }
   test_tcp_connectivity() {
     gnu_test_tcp_connectivity "$1" "$2" "$3"
+  }
+  convert_date_to_timestamp() {
+    gnu_convert_date_to_timestamp "$1"
   }
 else
   echo "Unknown Operating System! Valid \$OSTYPE: linux-gnu, linux-musl, darwin* or cygwin"
