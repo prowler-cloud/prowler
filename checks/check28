@@ -21,31 +21,53 @@ CHECK_SERVICENAME_check28="kms"
 check28(){
   # "Ensure rotation for customer created CMKs is enabled (Scored)"
   for regx in $REGIONS; do
-  CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys $PROFILE_OPT --region $regx --output text --query 'Keys[*].KeyId')
-    if [[ $CHECK_KMS_KEYLIST ]];then
-      CHECK_KMS_KEYLIST_NO_DEFAULT=$(
-        for key in $CHECK_KMS_KEYLIST; do
-          $AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.{key:KeyId,state:KeyState,man:KeyManager,spec:CustomerMasterKeySpec}' --output text|grep Enabled$|grep -v AWS|grep SYMMETRIC| awk '{ print $1 }'
-        done )
-      if [[ $CHECK_KMS_KEYLIST_NO_DEFAULT ]]; then
-        for key in $CHECK_KMS_KEYLIST_NO_DEFAULT; do
-          CHECK_KMS_KEY_TYPE=$($AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.Origin' | sed 's/["]//g')
-            if [[ "$CHECK_KMS_KEY_TYPE" == "EXTERNAL" ]];then
-              textPass "$regx: Key $key in Region $regx Customer Uploaded Key Material" "$regx"
-            else
-              CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key $PROFILE_OPT --region $regx --output text)
-              if [[ "$CHECK_KMS_KEY_ROTATION" == "True" ]];then
-                textPass "$regx: Key $key is set correctly" "$regx"
-              else
-                textFail "$regx: Key $key is not set to rotate!" "$regx"
-              fi
-            fi
-        done
-      else
-        textInfo "$regx: This region doesn't have CUSTOM encryption keys" "$regx"
+    CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys $PROFILE_OPT --region $regx --output text --query 'Keys[*].KeyId' --output text 2>&1)
+    if [[ $(echo "$CHECK_KMS_KEYLIST" | grep AccessDenied) ]]; then
+      textFail "Access Denied trying to list keys in $regx"
+      continue
+    fi
+    if [[ $CHECK_KMS_KEYLIST ]]; then
+      cmk_count=0
+      for key in $CHECK_KMS_KEYLIST; do
+        KMSDETAILS=$($AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.{key:KeyId,state:KeyState,man:KeyManager,spec:CustomerMasterKeySpec}' --output text 2>&1|grep Enabled$|grep -v AWS|grep SYMMETRIC| awk '{ print $1 }')
+        if [[ $(echo "$KMSDETAILS" | grep AccessDenied) ]]; then
+           textFail "$regx: Key $key Access Denied describing key"
+           continue
+        fi
+
+        KEYID=$(echo $KMSDETAILS | awk '{print $1}')
+        KEYMANAGER=$(echo $KMSDETAILS | awk '{print $2}')
+        KEYORIGIN=$(echo $KMSDETAILS | awk '{print $3}')
+        KEYSTATE=$(echo $KMSDETAILS | awk '{print $4}')
+
+        if [[ "$KEYMANAGER" == "AWS" ]]; then
+          continue
+        fi
+        if [[ "$KEYSTATE" != "Enabled" ]]; then
+          continue
+        fi
+        cmk_count=$((cmk_count + 1))
+
+        if [[ "$KEYORIGIN" == "EXTERNAL" ]]; then
+          textPass "$regx: Key $key uses imported key material"
+        else
+          CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key $PROFILE_OPT --region $regx --output text 2>&1)
+          if [[ $(echo "$CHECK_KMS_KEY_ROTATION" | grep AccessDenied) ]]; then
+            textFail "$regx: Key $key Access Denied getting key rotation status"
+            continue
+          fi
+          if [[ "$CHECK_KMS_KEY_ROTATION" == "True" ]];then
+            textPass "$regx: Key $key automatic rotation of the key material is enabled"
+          else
+            textFail "$regx: Key $key automatic rotation of the key material is disabled"
+          fi
+        fi
+      done
+      if [[ $cmk_count == 0 ]]; then
+        textInfo "$regx: This region has no customer managed keys"
       fi
     else
-      textInfo "$regx: This region doesn't have ANY encryption keys" "$regx"
+      textInfo "$regx: This region has no KMS keys"
     fi
   done
 }

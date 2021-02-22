@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7132="7.132"
+CHECK_TITLE_extra7132="[extra7132] Check if RDS instances has enhanced monitoring enabled"
+CHECK_SCORED_extra7132="NOT_SCORED"
+CHECK_TYPE_extra7132="EXTRA"
+CHECK_SEVERITY_extra7132="Low"
+CHECK_ASFF_RESOURCE_TYPE_extra7132="AwsRdsDbInstance"
+CHECK_ALTERNATE_check7132="extra7132"
+CHECK_SERVICENAME_extra7132="rds"
+
+extra7132(){
+  for regx in $REGIONS; do
+    RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[*].DBInstanceIdentifier' --output text)
+    if [[ $RDS_INSTANCES ]];then
+      for rdsinstance in ${RDS_INSTANCES}; do
+          RDS_NAME="$rdsinstance"
+          MONITORING_FLAG=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --db-instance-identifier $rdsinstance --query 'DBInstances[*].[EnhancedMonitoringResourceArn]' --output text)
+          if [[ $MONITORING_FLAG == "None" ]];then 
+              textFail "$regx: RDS instance: $RDS_NAME has enhanced monitoring disabled!" "$rex"
+          else
+              textPass "$regx: RDS instance: $RDS_NAME has enhanced monitoring enabled." "$regx"
+          fi
+      done
+    else
+      textInfo "$regx: no RDS instances found" "$regx"
+    fi
+  done
+}
