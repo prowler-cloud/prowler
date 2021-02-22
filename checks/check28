@@ -29,7 +29,7 @@ check28(){
     if [[ $CHECK_KMS_KEYLIST ]]; then
       cmk_count=0
       for key in $CHECK_KMS_KEYLIST; do
-        KMSDETAILS=$($AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.{key:KeyId,man:KeyManager,origin:Origin,state:KeyState}' --output text 2>&1)
+        KMSDETAILS=$($AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.{key:KeyId,man:KeyManager,origin:Origin,spec:CustomerMasterKeySpec,state:KeyState}' --output text 2>&1 | grep SYMMETRIC)
         if [[ $(echo "$KMSDETAILS" | grep AccessDenied) ]]; then
            textFail "$regx: Key $key Access Denied describing key"
            continue
@@ -38,7 +38,7 @@ check28(){
         KEYID=$(echo $KMSDETAILS | awk '{print $1}')
         KEYMANAGER=$(echo $KMSDETAILS | awk '{print $2}')
         KEYORIGIN=$(echo $KMSDETAILS | awk '{print $3}')
-        KEYSTATE=$(echo $KMSDETAILS | awk '{print $4}')
+        KEYSTATE=$(echo $KMSDETAILS | awk '{print $5}')
 
         if [[ "$KEYMANAGER" == "AWS" ]]; then
           continue
