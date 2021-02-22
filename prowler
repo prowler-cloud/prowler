@@ -51,6 +51,15 @@ TITLE_TEXT="CALLER ERROR - UNSET TITLE"
 WHITELIST_FILE=""
 TOTAL_CHECKS=()
 
+# Ensures command output will always be set to JSON.
+# If the default value is already set, ORIGINAL_OUTPUT will be used to store it and reset it at cleanup
+if [[ -z "${AWS_DEFAULT_OUTPUT}" ]]; then
+  ORIGINAL_OUTPUT=$AWS_DEFAULT_OUTPUT
+  export AWS_DEFAULT_OUTPUT="json"
+else
+  export AWS_DEFAULT_OUTPUT="json"
+fi
+
 # Command usage menu
 usage(){
   echo "
@@ -203,6 +212,12 @@ clean_up() {
   # in case html output is used, make sure it closes html file properly
   if [[ "${MODES[@]}" =~ "html" ]]; then
     addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
+  # puts the AWS_DEFAULT_OUTPUT back to what it was at the start
+  if [ -z "$ORIGINAL_OUTPUT"]; then
+    export AWS_DEFAULT_OUTPUT="$ORIGINAL_OUTPUT"
+  else
+    unset AWS_DEFAULT_OUTPUT
   fi
 }
 
