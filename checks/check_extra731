@@ -47,3 +47,4 @@ extra731(){
       textInfo "$regx: No SNS topic found" "$regx"
     fi
   done
+}
