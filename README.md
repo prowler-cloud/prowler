@@ -4,6 +4,7 @@
 
 - [Description](#description)
 - [Features](#features)
+- [High level architecture](#high-level-architecture)
 - [Requirements and Installation](#requirements-and-installation)
 - [Usage](#usage)
 - [Screenshots](#screenshots)
@@ -34,7 +35,7 @@ Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-20
 
 ## Features
 
-+150 checks covering security best practices across all AWS regions and most of AWS services and related to the next groups:
++180 checks covering security best practices across all AWS regions and most of AWS services and related to the next groups:
 
 - Identity and Access Management [group1]
 - Logging  [group2]
@@ -46,7 +47,7 @@ Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-20
 - Forensics related group of checks [forensics-ready]
 - GDPR [gdpr] Read more [here](#gdpr-checks)
 - HIPAA [hipaa] Read more [here](#hipaa-checks)
-- Trust Boundaries [trustboundaries] Read more [here](#trustboundaries-checks)
+- Trust Boundaries [trustboundaries] Read more [here](#trust-boundaries-checks)
 - Secrets 
 - PCI-DSS
 - ISO-27001
@@ -65,6 +66,11 @@ With Prowler you can:
 - check multiple AWS accounts in parallel or sequentially
 - and more! Read examples below
 
+## High level architecture
+
+You can run Prowler from your workstation, an EC2 instance, Fargate or any other container, Codebuild, CloudShell and Cloud9.
+
+![Prowler high level architecture](https://user-images.githubusercontent.com/3985464/109143232-1488af80-7760-11eb-8d83-726790fda592.jpg)
 ## Requirements and Installation
 
 Prowler has been written in bash using AWS-CLI and it works in Linux and OSX.
