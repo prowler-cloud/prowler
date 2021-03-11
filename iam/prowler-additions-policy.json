@@ -9,7 +9,8 @@
                 "ec2:GetEbsEncryptionByDefault",
                 "ecr:Describe*",
                 "support:Describe*",
-                "tag:GetTagKeys"
+                "tag:GetTagKeys",
+		"lambda:GetFunction"
             ],
             "Resource": "*",
             "Effect": "Allow",
