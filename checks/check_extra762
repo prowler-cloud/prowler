@@ -23,7 +23,7 @@ extra762(){
 
   # regex to match OBSOLETE runtimes in string functionName%runtime
   # https://docs.aws.amazon.com/lambda/latest/dg/runtime-support-policy.html
-  OBSOLETE='%(nodejs4.3|nodejs4.3-edge|nodejs6.10|nodejs8.10|dotnetcore1.0|dotnetcore2.0)'
+  OBSOLETE='%(nodejs4.3|nodejs4.3-edge|nodejs6.10|nodejs8.10|dotnetcore1.0|dotnetcore2.0|python2.7)'
 
   for regx in $REGIONS; do
     LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --output text --query 'Functions[*].{R:Runtime,N:FunctionName}' | tr "\t" "%")
