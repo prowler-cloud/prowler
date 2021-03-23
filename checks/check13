@@ -18,6 +18,10 @@ CHECK_ASFF_RESOURCE_TYPE_check13="AwsIamUser"
 CHECK_ALTERNATE_check103="check13"
 CHECK_ASFF_COMPLIANCE_TYPE_check13="ens-op.acc.1.aws.iam.3 ens-op.acc.5.aws.iam.4"
 CHECK_SERVICENAME_check13="iam"
+CHECK_RISK_check13='AWS IAM users can access AWS resources using different types of credentials (passwords or access keys). It is recommended that all credentials that have been unused in 90 or greater days be removed or deactivated.'
+CHECK_REMEDIATION_check13='Use the credential report to  ensure password_last_changed is less than 90 days ago.'
+CHECK_DOC_check13='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html'
+CHECK_CAF_EPIC_check13='IAM'
 
 check13(){
   check_creds_used_in_last_days 90
