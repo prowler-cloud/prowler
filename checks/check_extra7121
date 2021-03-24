@@ -19,6 +19,10 @@ CHECK_SEVERITY_extra7121="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7121="AwsGlue"
 CHECK_ALTERNATE_check7121="extra7121"
 CHECK_SERVICENAME_extra7121="glue"
+CHECK_RISK_extra7121='If not enabled sensible information at rest is not protected.'
+CHECK_REMEDIATION_extra7121='Enable Encryption in the Security configurations.'
+CHECK_DOC_extra7121='https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html'
+CHECK_CAF_EPIC_extra7121='Data Protection'
 
 extra7121(){
   for regx in $REGIONS; do

@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra7124="AwsEc2Instance"
 CHECK_ALTERNATE_check7124="extra7124"
 CHECK_ASFF_COMPLIANCE_TYPE_extra7124="ens-op.exp.1.aws.sys.1 ens-op.acc.4.aws.sys.1"
 CHECK_SERVICENAME_extra7124="ssm"
+CHECK_RISK_extra7124='AWS Config provides AWS Managed Rules; which are predefined; customizable rules that AWS Config uses to evaluate whether your AWS resource configurations comply with common best practices.'
+CHECK_REMEDIATION_extra7124='Verify and apply Systems Manager Prerequisites.'
+CHECK_DOC_extra7124='https://docs.aws.amazon.com/systems-manager/latest/userguide/managed_instances.html'
+CHECK_CAF_EPIC_extra7124='Infrastructure Security'
 
 extra7124(){
   for regx in $REGIONS; do

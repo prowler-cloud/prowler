@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra791="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra791="AwsCloudFrontDistribution"
 CHECK_ALTERNATE_check791="extra791"
 CHECK_SERVICENAME_extra791="cloudfront"
+CHECK_RISK_extra791='Using insecure ciphers could affect privacy of in transit information.'
+CHECK_REMEDIATION_extra791='Use a Security policy with a ciphers that are stronger as possible. Drop legacy and unsecure ciphers.'
+CHECK_DOC_extra791='https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/secure-connections-supported-viewer-protocols-ciphers.html'
+CHECK_CAF_EPIC_extra791='Data Protection'
 
 extra791(){
     LIST_OF_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions --query 'DistributionList.Items[*].Id' $PROFILE_OPT --output text|grep -v ^None)

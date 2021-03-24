@@ -18,6 +18,10 @@ CHECK_TYPE_extra769="EXTRA"
 CHECK_SEVERITY_extra769="High"
 CHECK_ALTERNATE_check769="extra769"
 CHECK_SERVICENAME_extra769="accessanalyzer"
+CHECK_RISK_extra769='AWS IAM Access Analyzer helps you identify the resources in your organization and accounts; such as Amazon S3 buckets or IAM roles; that are shared with an external entity. This lets you identify unintended access to your resources and data; which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning; which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.'
+CHECK_REMEDIATION_extra769='Enable IAM Access Analyzer for all accounts; create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost).'
+CHECK_DOC_extra769='https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html'
+CHECK_CAF_EPIC_extra769='IAM'
 
 extra769(){
   for regx in $REGIONS; do

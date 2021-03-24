@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra785="Low"
 CHECK_ASFF_RESOURCE_TYPE_extra785="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check785="extra785"
 CHECK_SERVICENAME_extra785="es"
+CHECK_RISK_extra785='Amazon ES regularly releases system software updates that add features or otherwise improve your domains.'
+CHECK_REMEDIATION_extra785='The Notifications panel in the console is the easiest way to see if an update is available or check the status of an update. You can also receive these notifications through Amazon EventBridge. If you take no action on required updates; Amazon ES still updates your domain service software automatically after a certain timeframe (typically two weeks). In this situation; Amazon ES sends notifications when it starts the update and when the update is complete.'
+CHECK_DOC_extra785='https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-service-software.html'
+CHECK_CAF_EPIC_extra785='Infrastructure Security'
 
 # NOTE!
 # API does not properly shows if an update is available while it is a new version available

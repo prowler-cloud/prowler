@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra7132="Low"
 CHECK_ASFF_RESOURCE_TYPE_extra7132="AwsRdsDbInstance"
 CHECK_ALTERNATE_check7132="extra7132"
 CHECK_SERVICENAME_extra7132="rds"
+CHECK_RISK_extra7132='A smaller monitoring interval results in more frequent reporting of OS metrics.'
+CHECK_REMEDIATION_extra7132='To use Enhanced Monitoring; you must create an IAM role; and then enable Enhanced Monitoring.'
+CHECK_DOC_extra7132='https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Monitoring.OS.html'
+CHECK_CAF_EPIC_extra7132='Logging and Monitoring'
 
 extra7132(){
   for regx in $REGIONS; do

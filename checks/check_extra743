@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra743="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra743="AwsApiGatewayRestApi"
 CHECK_ALTERNATE_check743="extra743"
 CHECK_SERVICENAME_extra743="apigateway"
+CHECK_RISK_extra743='Possible man in the middle attacks and other similar risks.'
+CHECK_REMEDIATION_extra743='Enable client certificate. Mutual TLS is recommended and commonly used for business-to-business (B2B) applications. It’s used in standards such as Open Banking. API Gateway now provides integrated mutual TLS authentication at no additional cost.'
+CHECK_DOC_extra743='https://aws.amazon.com/blogs/compute/introducing-mutual-tls-authentication-for-amazon-api-gateway/'
+CHECK_CAF_EPIC_extra743='Data Protection'
 
 extra743(){
   for regx in $REGIONS; do

@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra773="AwsCloudFrontDistribution"
 CHECK_ALTERNATE_check773="extra773"
 CHECK_ASFF_COMPLIANCE_TYPE_extra773="ens-mp.s.2.aws.waf.1"
 CHECK_SERVICENAME_extra773="cloudfront"
+CHECK_RISK_extra773='Potential attacks and / or abuse of service; more even for even for internet reachable services.'
+CHECK_REMEDIATION_extra773='Use AWS WAF to protect your service from common web exploits. These could affect availability and performance; compromise security; or consume excessive resources.'
+CHECK_DOC_extra773='https://docs.aws.amazon.com/waf/latest/developerguide/cloudfront-features.html'
+CHECK_CAF_EPIC_extra773='Infrastructure Security'
 
 extra773(){
   # "Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)"

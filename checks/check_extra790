@@ -19,6 +19,10 @@ CHECK_SEVERITY_extra790="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra790="AwsEc2Vpc"
 CHECK_ALTERNATE_extra790="extra790"
 CHECK_SERVICENAME_extra790="vpc"
+CHECK_RISK_extra790='Account VPC could be linked to other accounts.'
+CHECK_REMEDIATION_extra790='In multi Account environments identify untrusted links. Check trust chaining and dependencies between accounts.'
+CHECK_DOC_extra790='https://github.com/toniblyx/prowler/#trust-boundaries-checks'
+CHECK_CAF_EPIC_extra790='Infrastructure Security'
 
 extra790(){
     TRUSTED_ACCOUNT_IDS=$( echo "${ACCOUNT_NUM} ${GROUP_TRUSTBOUNDARIES_TRUSTED_ACCOUNT_IDS}" | xargs )

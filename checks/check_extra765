@@ -27,6 +27,10 @@ CHECK_TYPE_extra765="EXTRA"
 CHECK_SEVERITY_extra765="Medium"
 CHECK_ALTERNATE_check765="extra765"
 CHECK_SERVICENAME_extra765="ecr"
+CHECK_RISK_extra765='Amazon ECR image scanning helps in identifying software vulnerabilities in your container images. Amazon ECR uses the Common Vulnerabilities and Exposures (CVEs) database from the open-source Clair project and provides a list of scan findings. '
+CHECK_REMEDIATION_extra765='Enable ECR image scanning and review the scan findings for information about the security of the container images that are being deployed.'
+CHECK_DOC_extra765='https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html'
+CHECK_CAF_EPIC_extra765='Infrastructure Security'
 
 extra765(){
   for region in $REGIONS; do

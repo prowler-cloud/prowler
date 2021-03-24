@@ -19,6 +19,11 @@ CHECK_ASFF_RESOURCE_TYPE_extra764="AwsS3Bucket"
 CHECK_ALTERNATE_check764="extra764"
 CHECK_ASFF_COMPLIANCE_TYPE_extra764="ens-mp.com.2.aws.s3.1"
 CHECK_SERVICENAME_extra764="s3"
+CHECK_RISK_extra764='If HTTPS is not enforced on the bucket policy; communication between clients and S3 buckets can use unencrypted HTTP. As a result; sensitive information could be transmitted in clear text over the network or internet.'
+CHECK_REMEDIATION_extra764='Ensure that S3 buckets has encryption in transit enabled.'
+CHECK_DOC_extra764='https://docs.aws.amazon.com/AmazonS3/latest/dev/security-best-practices.html'
+CHECK_CAF_EPIC_extra764='Data Protection'
+
 
 extra764(){
   LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text --region $REGION|xargs -n1)

@@ -19,7 +19,11 @@ CHECK_ASFF_RESOURCE_TYPE_extra7109="AwsSageMakerNotebookInstance"
 CHECK_ALTERNATE_check7109="extra7109"
 CHECK_SEVERITY_extra7109="Medium"
 CHECK_SERVICENAME_extra7109="sagemaker"
-    
+CHECK_RISK_extra7109='This could provide an avenue for unauthorized access to your data.'
+CHECK_REMEDIATION_extra7109='Restrict which traffic can access by launching Studio in a Virtual Private Cloud (VPC) of your choosing.'
+CHECK_DOC_extra7109='https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html'
+CHECK_CAF_EPIC_extra7109='Infrastructure Security'
+
 extra7109(){
     for regx in ${REGIONS}; do
         LIST_SM_NB_JOBS=$($AWSCLI $PROFILE_OPT --region $regx sagemaker list-training-jobs --query 'TrainingJobSummaries[*].TrainingJobName' --output text)
