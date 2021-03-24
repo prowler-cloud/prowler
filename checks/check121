@@ -18,6 +18,10 @@ CHECK_ASFF_RESOURCE_TYPE_check121="AwsIamUser"
 CHECK_ALTERNATE_check121="check121"
 CHECK_ASFF_COMPLIANCE_TYPE_check121="ens-op.acc.1.aws.iam.5"
 CHECK_SERVICENAME_check121="iam"
+CHECK_RISK_check121='AWS console defaults the checkbox for creating access keys to enabled. This results in many access keys being generated unnecessarily. In addition to unnecessary credentials; it also generates unnecessary management work in auditing and rotating these keys. Requiring that additional steps be taken by the user after their profile has been created will give a stronger indication of intent that access keys are (a) necessary for their work and (b) once the access key is established on an account that the keys may be in use somewhere in the organization.'
+CHECK_REMEDIATION_check121='From the IAM console: generate credential report and disable not required keys.'
+CHECK_DOC_check121='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html'
+CHECK_CAF_EPIC_check121='IAM'
 
 check121(){
   # "Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)"

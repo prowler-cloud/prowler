@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra736="AwsKmsKey"
 CHECK_ALTERNATE_check736="extra736"
 CHECK_ASFF_COMPLIANCE_TYPE_extra736="ens-op.exp.11.aws.kms.2"
 CHECK_SERVICENAME_extra736="kms"
+CHECK_RISK_extra736='Exposed KMS Keys or wide policy permissions my leave data unprotected.'
+CHECK_REMEDIATION_extra736='To determine the full extent of who or what currently has access to a customer master key (CMK) in AWS KMS; you must examine the CMK key policy; all grants that apply to the CMK; and potentially all AWS Identity and Access Management (IAM) policies. You might do this to determine the scope of potential usage of a CMK.'
+CHECK_DOC_extra736='https://docs.aws.amazon.com/kms/latest/developerguide/determining-access.html'
+CHECK_CAF_EPIC_extra736='Data Protection'
 
 extra736(){
   textInfo "Looking for KMS keys in all regions...  "

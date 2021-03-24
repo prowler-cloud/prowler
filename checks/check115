@@ -16,6 +16,10 @@ CHECK_SEVERITY_check115="Medium"
 CHECK_ASFF_TYPE_check115="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check115="check115"
 CHECK_SERVICENAME_check115="support"
+CHECK_RISK_check115='The AWS support portal allows account owners to establish security questions that can be used to authenticate individuals calling AWS customer service for support. It is recommended that security questions be established. When creating a new AWS account a default super user is automatically created. This account is referred to as the "root" account. It is recommended that the use of this account be limited and highly controlled. During events in which the root password is no longer accessible or the MFA token associated with root is lost/destroyed it is possible through authentication using secret questions and associated answers to recover root login access.'
+CHECK_REMEDIATION_check115='Login as root account and from My Account configure Security questions.'
+CHECK_DOC_check115='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys_retrieve.html'
+CHECK_CAF_EPIC_check115='IAM'
 
 check115(){
   # "Ensure security questions are registered in the AWS account (Not Scored)"

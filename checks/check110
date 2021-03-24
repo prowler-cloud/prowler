@@ -16,6 +16,10 @@ CHECK_SEVERITY_check110="Medium"
 CHECK_ASFF_TYPE_check110="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check110="check110"
 CHECK_SERVICENAME_check110="iam"
+CHECK_RISK_check110='Password policies are used to enforce password complexity requirements. IAM password policies can be used to ensure password are comprised of different character sets. It is recommended that the password policy require at least one uppercase letter.'
+CHECK_REMEDIATION_check110='Ensure "Number of passwords to remember" is set to 24.'
+CHECK_DOC_check110='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_account-policy.html'
+CHECK_CAF_EPIC_check110='IAM'
 
 check110(){
   # "Ensure IAM password policy prevents password reuse: 24 or greater (Scored)"

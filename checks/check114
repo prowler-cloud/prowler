@@ -16,6 +16,10 @@ CHECK_SEVERITY_check114="Critical"
 CHECK_ASFF_TYPE_check114="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check114="check114"
 CHECK_SERVICENAME_check114="iam"
+CHECK_RISK_check114='The root account is the most privileged user in an AWS account. MFA adds an extra layer of protection on top of a user name and password. With MFA enabled when a user signs in to an AWS website they will be prompted for their user name and password as well as for an authentication code from their AWS MFA device. For Level 2 it is recommended that the root account be protected with a hardware MFA.'
+CHECK_REMEDIATION_check114='Using IAM console navigate to Dashboard and expand Activate MFA on your root account.'
+CHECK_DOC_check114='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html#id_root-user_manage_mfa'
+CHECK_CAF_EPIC_check114='IAM'
 
 check114(){
   # "Ensure hardware MFA is enabled for the root account (Scored)"

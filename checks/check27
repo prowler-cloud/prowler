@@ -18,6 +18,10 @@ CHECK_ASFF_RESOURCE_TYPE_check27="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check207="check27"
 CHECK_ASFF_COMPLIANCE_TYPE_check27="ens-op.exp.10.aws.trail.5"
 CHECK_SERVICENAME_check27="cloudtrail"
+CHECK_RISK_check27='By default; the log files delivered by CloudTrail to your bucket are encrypted by Amazon server-side encryption with Amazon S3-managed encryption keys (SSE-S3). To provide a security layer that is directly manageable; you can instead use server-side encryption with AWS KMS–managed keys (SSE-KMS) for your CloudTrail log files.'
+CHECK_REMEDIATION_check27='This approach has the following advantages: You can create and manage the CMK encryption keys yourself. You can use a single CMK to encrypt and decrypt log files for multiple accounts across all regions. You have control over who can use your key for encrypting and decrypting CloudTrail log files. You can assign permissions for the key to the users. You have enhanced security.'
+CHECK_DOC_check27='https://docs.aws.amazon.com/awscloudtrail/latest/userguide/encrypting-cloudtrail-log-files-with-aws-kms.html'
+CHECK_CAF_EPIC_check27='Logging and Monitoring'
 
 check27(){
   trail_count=0

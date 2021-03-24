@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra717="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra717="AwsElbLoadBalancer"
 CHECK_ALTERNATE_check717="extra717"
 CHECK_SERVICENAME_extra717="elb"
+CHECK_RISK_extra717='If logs are not enabled monitoring of service use and threat analysis is not possible.'
+CHECK_REMEDIATION_extra717='Enable ELB logging; create la log lifecycle and define use cases.'
+CHECK_DOC_extra717='https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html'
+CHECK_CAF_EPIC_extra717='Logging and Monitoring'
 
 extra717(){
   # "Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)"
