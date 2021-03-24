@@ -42,6 +42,10 @@ CHECK_ASFF_TYPE_check310="Software and Configuration Checks/Industry and Regulat
 CHECK_ASFF_RESOURCE_TYPE_check310="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check310="check310"
 CHECK_SERVICENAME_check310="ec2"
+CHECK_RISK_check310='Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.'
+CHECK_REMEDIATION_check310='It is recommended that a metric filter and alarm be established for unauthorized requests.'
+CHECK_DOC_check310='https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html'
+CHECK_CAF_EPIC_check310='Logging and Monitoring'
 
 check310(){
   check3x '\$\.eventName\s*=\s*AuthorizeSecurityGroupIngress.+\$\.eventName\s*=\s*AuthorizeSecurityGroupEgress.+\$\.eventName\s*=\s*RevokeSecurityGroupIngress.+\$\.eventName\s*=\s*RevokeSecurityGroupEgress.+\$\.eventName\s*=\s*CreateSecurityGroup.+\$\.eventName\s*=\s*DeleteSecurityGroup'

@@ -19,7 +19,10 @@ CHECK_SEVERITY_extra725="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra725="AwsS3Bucket"
 CHECK_ALTERNATE_check725="extra725"
 CHECK_SERVICENAME_extra725="s3"
-
+CHECK_RISK_extra725='If logs are not enabled; monitoring of service use and threat analysis is not possible.'
+CHECK_REMEDIATION_extra725='Enable logs. Create an S3 lifecycle policy. Define use cases; metrics and automated responses where applicable.'
+CHECK_DOC_extra725='https://docs.aws.amazon.com/AmazonS3/latest/userguide/enable-cloudtrail-logging-for-s3.html'
+CHECK_CAF_EPIC_extra725='Logging and Monitoring'
 
 # per Object-level logging is not configured at Bucket level but at CloudTrail trail level
 extra725(){

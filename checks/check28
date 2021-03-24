@@ -17,6 +17,10 @@ CHECK_ASFF_TYPE_check28="Software and Configuration Checks/Industry and Regulato
 CHECK_ASFF_RESOURCE_TYPE_check28="AwsKmsKey"
 CHECK_ALTERNATE_check208="check28"
 CHECK_SERVICENAME_check28="kms"
+CHECK_RISK_check28='Cryptographic best practices discourage extensive reuse of encryption keys. Consequently; Customer Master Keys (CMKs) should be rotated to prevent usage of compromised keys.'
+CHECK_REMEDIATION_check28='For every KMS Customer Master Keys (CMKs); ensure that Rotate this key every year is enabled.'
+CHECK_DOC_check28='https://docs.aws.amazon.com/kms/latest/developerguide/rotate-keys.html'
+CHECK_CAF_EPIC_check28='Data Protection'
 
 check28(){
   # "Ensure rotation for customer created CMKs is enabled (Scored)"

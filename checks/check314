@@ -42,6 +42,10 @@ CHECK_ASFF_TYPE_check314="Software and Configuration Checks/Industry and Regulat
 CHECK_ASFF_RESOURCE_TYPE_check314="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check314="check314"
 CHECK_SERVICENAME_check314="vpc"
+CHECK_RISK_check314='Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.'
+CHECK_REMEDIATION_check314='It is recommended that a metric filter and alarm be established for unauthorized requests.'
+CHECK_DOC_check314='https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html'
+CHECK_CAF_EPIC_check314='Logging and Monitoring'
 
 check314(){
   check3x '\$\.eventName\s*=\s*CreateVpc.+\$\.eventName\s*=\s*DeleteVpc.+\$\.eventName\s*=\s*ModifyVpcAttribute.+\$\.eventName\s*=\s*AcceptVpcPeeringConnection.+\$\.eventName\s*=\s*CreateVpcPeeringConnection.+\$\.eventName\s*=\s*DeleteVpcPeeringConnection.+\$\.eventName\s*=\s*RejectVpcPeeringConnection.+\$\.eventName\s*=\s*AttachClassicLinkVpc.+\$\.eventName\s*=\s*DetachClassicLinkVpc.+\$\.eventName\s*=\s*DisableVpcClassicLink.+\$\.eventName\s*=\s*EnableVpcClassicLink'

@@ -18,6 +18,10 @@ CHECK_ASFF_RESOURCE_TYPE_check43="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check403="check43"
 CHECK_ASFF_COMPLIANCE_TYPE_check43="ens-mp.com.4.aws.sg.1"
 CHECK_SERVICENAME_check43="ec2"
+CHECK_RISK_check43='Even having a perimeter firewall; having security groups open allows any user or malware with vpc access to scan for well known and sensitive ports and gain access to instance.'
+CHECK_REMEDIATION_check43='Apply Zero Trust approach. Implement a process to scan and remediate unrestricted or overly permissive security groups. Recommended best practices is to narrow the definition for the minimum ports required.'
+CHECK_DOC_check43='https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html'
+CHECK_CAF_EPIC_check43='Infrastructure Security'
 
 check43(){
   # "Ensure the default security group of every VPC restricts all traffic (Scored)"
