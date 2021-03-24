@@ -18,6 +18,10 @@ CHECK_ASFF_RESOURCE_TYPE_check22="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check202="check22"
 CHECK_ASFF_COMPLIANCE_TYPE_check22="ens-op.exp.10.aws.trail.1"
 CHECK_SERVICENAME_check22="cloudtrail"
+CHECK_RISK_check22='Enabling log file validation will provide additional integrity checking of CloudTrail logs. '
+CHECK_REMEDIATION_check22='Ensure LogFileValidationEnabled is set to true for each trail.'
+CHECK_DOC_check22='http://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-filevalidation-enabling.html'
+CHECK_CAF_EPIC_check22='Logging and Monitoring'
 
 check22(){
   trail_count=0

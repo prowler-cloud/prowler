@@ -16,6 +16,10 @@ CHECK_SEVERITY_check16="Medium"
 CHECK_ASFF_TYPE_check16="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check106="check16"
 CHECK_SERVICENAME_check16="iam"
+CHECK_RISK_check16='Password policies are used to enforce password complexity requirements. IAM password policies can be used to ensure password are comprised of different character sets. It is recommended that the password policy require at least one uppercase letter.'
+CHECK_REMEDIATION_check16='Ensure "Requires at least one lowercase letter" is checked under "Password Policy".'
+CHECK_DOC_check16='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_account-policy.html'
+CHECK_CAF_EPIC_check16='IAM'
 
 check16(){
   # "Ensure IAM password policy require at least one lowercase letter (Scored)"

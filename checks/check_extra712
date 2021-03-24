@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra712="Low"
 CHECK_ALTERNATE_check712="extra712"
 CHECK_ASFF_RESOURCE_TYPE_extra712="AwsMacieSession"
 CHECK_SERVICENAME_extra712="macie"
+CHECK_RISK_extra712='Amazon Macie is a fully managed data security and data privacy service that uses machine learning and pattern matching to help you discover; monitor; and protect your sensitive data in AWS.'
+CHECK_REMEDIATION_extra712='Enable Amazon Macie and create appropriate jobs to discover sensitive data.'
+CHECK_DOC_extra712='https://docs.aws.amazon.com/macie/latest/user/getting-started.html'
+CHECK_CAF_EPIC_extra712='Data Protection'
 
  extra712(){ 
    textInfo "No API commands available to check if Macie is enabled," 

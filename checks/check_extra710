@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra710="AwsEc2Instance"
 CHECK_ALTERNATE_check710="extra710"
 CHECK_ASFF_COMPLIANCE_TYPE_extra710="ens-mp.com.4.aws.vpc.1"
 CHECK_SERVICENAME_extra710="ec2"
+CHECK_RISK_extra710='Exposing an EC2 directly to internet increases the attack surface and therefore the risk of compromise.'
+CHECK_REMEDIATION_extra710='Use an ALB and apply WAF ACL.'
+CHECK_DOC_extra710='https://aws.amazon.com/blogs/aws/aws-web-application-firewall-waf-for-application-load-balancers/'
+CHECK_CAF_EPIC_extra710='Infrastructure Security'
 
 extra710(){
   # "Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)"

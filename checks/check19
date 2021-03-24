@@ -16,6 +16,10 @@ CHECK_SEVERITY_check19="Medium"
 CHECK_ASFF_TYPE_check19="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check109="check19"
 CHECK_SERVICENAME_check19="iam"
+CHECK_RISK_check19='Password policies are used to enforce password complexity requirements. IAM password policies can be used to ensure password are comprised of different character sets. It is recommended that the password policy require at least one uppercase letter.'
+CHECK_REMEDIATION_check19='Ensure "Minimum password length" is set to 14 or greater.'
+CHECK_DOC_check19='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_account-policy.html'
+CHECK_CAF_EPIC_check19='IAM'
 
 check19(){
   # "Ensure IAM password policy requires minimum length of 14 or greater (Scored)"

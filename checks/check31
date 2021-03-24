@@ -43,6 +43,10 @@ CHECK_ASFF_RESOURCE_TYPE_check31="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check301="check31"
 CHECK_ASFF_COMPLIANCE_TYPE_check31="ens-op.exp.8.aws.trail.2"
 CHECK_SERVICENAME_check31="iam"
+CHECK_RISK_check31='Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.'
+CHECK_REMEDIATION_check31='It is recommended that a metric filter and alarm be established for unauthorized requests.'
+CHECK_DOC_check31='https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html'
+CHECK_CAF_EPIC_check31='Logging and Monitoring'
 
 check31(){
   check3x '\$\.errorCode\s*=\s*"\*UnauthorizedOperation".+\$\.errorCode\s*=\s*"AccessDenied\*"'

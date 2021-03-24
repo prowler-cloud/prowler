@@ -18,6 +18,10 @@ CHECK_TYPE_extra726="EXTRA"
 CHECK_SEVERITY_extra726="Medium"
 CHECK_ALTERNATE_check726="extra726"
 CHECK_SERVICENAME_extra726="trustedadvisor"
+CHECK_RISK_extra726='Improve the security of your application by closing gaps; enabling various AWS security features; and examining your permissions.'
+CHECK_REMEDIATION_extra726='Review and act upon its recommendations.'
+CHECK_DOC_extra726='https://aws.amazon.com/premiumsupport/technology/trusted-advisor/best-practice-checklist/'
+CHECK_CAF_EPIC_extra726='IAM'
 
 extra726(){
   trap "exit" INT

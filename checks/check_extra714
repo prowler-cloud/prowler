@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra714="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra714="AwsCloudFrontDistribution"
 CHECK_ALTERNATE_check714="extra714"
 CHECK_SERVICENAME_extra714="cloudfront"
+CHECK_RISK_extra714='If not enabled monitoring of service use is not possible.'
+CHECK_REMEDIATION_extra714='Real-time monitoring can be achieved by directing CloudTrail Logs to CloudWatch Logs and establishing corresponding metric filters and alarms. Enable logging for services with defined log rotation. This logs are useful for Incident Response and forensics investigation among other use cases.'
+CHECK_DOC_extra714='https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html'
+CHECK_CAF_EPIC_extra714='Logging and Monitoring'
 
 extra714(){
   # "Check if CloudFront distributions have logging enabled (Not Scored) (Not part of CIS benchmark)"

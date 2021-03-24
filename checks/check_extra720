@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra720="Low"
 CHECK_ASFF_RESOURCE_TYPE_extra720="AwsLambdaFunction"
 CHECK_ALTERNATE_check720="extra720"
 CHECK_SERVICENAME_extra720="lambda"
+CHECK_RISK_extra720='If logs are not enabled; monitoring of service use and threat analysis is not possible.'
+CHECK_REMEDIATION_extra720='Make sure you are logging information about Lambda operations. Create a lifecycle and use cases for each trail.'
+CHECK_DOC_extra720='https://docs.aws.amazon.com/lambda/latest/dg/logging-using-cloudtrail.html'
+CHECK_CAF_EPIC_extra720='Logging and Monitoring'
 
 extra720(){
   # "Check if Lambda functions invoke API operations are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)"
