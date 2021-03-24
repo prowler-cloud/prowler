@@ -254,9 +254,13 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/securityhub_integration
 . $PROWLER_DIR/include/junit_integration
 
+if [[ $ACCOUNT_TO_ASSUME ]]; then
+  assume_role
+fi
+
 # Get list of regions based on include/whoami
 REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' --output text $PROFILE_OPT --region $REGION_FOR_STS --region-names $FILTERREGION 2>&1)
-if [[ $(echo "$REGIONS" | grep AccessDenied) ]]; then
+if [[ $(echo "$REGIONS" | grep 'AccessDenied\|UnauthorizedOperation') ]]; then
   echo "Access Denied trying to describe regions"
   EXITCODE=1
   exit $EXITCODE
