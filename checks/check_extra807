@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+#
+# This Prowler check is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+#
+# You should have received a copy of the license along with this
+# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+CHECK_ID_extra807="8.07"
+CHECK_TITLE_extra807="[check807] Ensure credentials unused for 180 days or greater are disabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra807="SCORED"
+CHECK_TYPE_extra807="LEVEL1"
+CHECK_ASFF_RESOURCE_TYPE_extra807="AwsIamUser"
+CHECK_ALTERNATE_check807="extra807"
+
+extra807(){
+  check_creds_used_in_last_days 180
+}
