@@ -346,7 +346,7 @@ execute_check() {
     local check_id_var=CHECK_ID_$1
     local check_id=${!check_id_var}
     if [ ${check_id} ]; then
-      if [[ ${check_id} == 1* || ${check_id} == 7.1 || ${check_id} == 7.74 ]];then
+      if [[ ${check_id} == 1* || ${check_id} == 7.1 || ${check_id} == 7.74 || ${check_id} == 8.07 ]];then
         if [ ! -s $TEMP_REPORT_FILE ];then
           genCredReport
           saveReport
