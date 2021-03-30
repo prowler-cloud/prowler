@@ -254,14 +254,6 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/securityhub_integration
 . $PROWLER_DIR/include/junit_integration
 
-# Get list of regions based on include/whoami
-REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' --output text $PROFILE_OPT --region $REGION_FOR_STS --region-names $FILTERREGION 2>&1)
-if [[ $(echo "$REGIONS" | grep AccessDenied) ]]; then
-  echo "Access Denied trying to describe regions"
-  EXITCODE=1
-  exit $EXITCODE
-fi
-
 # Pre-process whitelist file if supplied
 if [[ -n "$WHITELIST_FILE" ]]; then
   # ignore lines starting with # (comments)
@@ -298,6 +290,17 @@ done
 # Note: the sort mechanism relies on the fact that the check ID prefixes 'check' and 'extra' are both 5 characters long.
 #       6th character is the section number, 7th character onwards is the individual ID (e.g. check110 = check 1 10)
 TOTAL_CHECKS=($(echo "${TOTAL_CHECKS[*]}" | tr ' ' '\n' | awk '!seen[$0]++' | sort -k 1.6,1.6n -k 1.7n))
+
+# Function to get all regions
+get_regions() {
+  # Get list of regions based on include/whoami
+  REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' --output text $PROFILE_OPT --region $REGION_FOR_STS --region-names $FILTERREGION 2>&1)
+  if [[ $(echo "$REGIONS" | grep 'AccessDenied\|UnauthorizedOperation') ]]; then
+    echo "Access Denied trying to describe regions"
+    EXITCODE=1
+    exit $EXITCODE
+  fi
+}
 
 # Function to show the title of the check, and optionally which group(s) it belongs to
 # using this way instead of arrays to keep bash3 (osx) and bash4(linux) compatibility
@@ -576,6 +579,9 @@ getWhoami
 if [[ $ACCOUNT_TO_ASSUME ]]; then
   assume_role
 fi
+
+# List regions
+get_regions
 
 # Execute group of checks if called with -g
 if [[ $GROUP_ID_READ ]];then
