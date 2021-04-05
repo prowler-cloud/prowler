@@ -16,6 +16,10 @@ CHECK_SEVERITY_check118="Medium"
 CHECK_ASFF_TYPE_check118="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check118="check118"
 CHECK_SERVICENAME_check118="support"
+CHECK_RISK_check118='AWS provides customers with the option of specifying the contact information for accounts security team. It is recommended that this information be provided. Specifying security-specific contact information will help ensure that security advisories sent by AWS reach the team in your organization that is best equipped to respond to them.'
+CHECK_REMEDIATION_check118='Go to the My Account section and complete alternate contacts.'
+CHECK_DOC_check118='https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/manage-account-payment.html'
+CHECK_CAF_EPIC_check118='IAM'
 
 check118(){
   # "Ensure security contact information is registered (Scored)"

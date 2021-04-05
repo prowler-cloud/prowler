@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra754="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check754="extra754"
 CHECK_ASFF_COMPLIANCE_TYPE_extra754="ens-mp.com.4.aws.sg.11"
 CHECK_SERVICENAME_extra754="ec2"
+CHECK_RISK_extra754='If Security groups are not properly configured the attack surface is increased. '
+CHECK_REMEDIATION_extra754='Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.'
+CHECK_DOC_extra754='https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html'
+CHECK_CAF_EPIC_extra754='Infrastructure Security'
 
 extra754(){
   for regx in $REGIONS; do

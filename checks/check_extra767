@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra767="Low"
 CHECK_ASFF_RESOURCE_TYPE_extra767="AwsCloudFrontDistribution"
 CHECK_ALTERNATE_check767="extra767"
 CHECK_SERVICENAME_extra767="cloudfront"
+CHECK_RISK_extra767='Allows you protect specific data throughout system processing so that only certain applications can see it.'
+CHECK_REMEDIATION_extra767='Check if applicable to any sensible data. This encryption ensures that only applications that need the data—and have the credentials to decrypt it - are able to do so.'
+CHECK_DOC_extra767='https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/field-level-encryption.html'
+CHECK_CAF_EPIC_extra767='Data Protection'
 
 extra767(){
     LIST_OF_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions --query 'DistributionList.Items[*].Id' $PROFILE_OPT --output text|grep -v ^None)

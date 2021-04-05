@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra737="AwsKmsKey"
 CHECK_ALTERNATE_check737="extra737"
 CHECK_ASFF_COMPLIANCE_TYPE_extra737="ens-op.exp.11.aws.kms.3"
 CHECK_SERVICENAME_extra737="kms"
+CHECK_RISK_extra737='Cryptographic best practices discourage extensive reuse of encryption keys. Consequently; Customer Master Keys (CMKs) should be rotated to prevent usage of compromised keys.'
+CHECK_REMEDIATION_extra737='For every KMS Customer Master Keys (CMKs); ensure that Rotate this key every year is enabled.'
+CHECK_DOC_extra737='https://docs.aws.amazon.com/kms/latest/developerguide/rotate-keys.html'
+CHECK_CAF_EPIC_extra737='Data Protection'
 
 extra737(){
   textInfo "Looking for KMS keys in all regions...  "

@@ -43,6 +43,10 @@ CHECK_ASFF_RESOURCE_TYPE_check34="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check304="check34"
 CHECK_ASFF_COMPLIANCE_TYPE_check34="ens-op.exp.8.aws.trail.6"
 CHECK_SERVICENAME_check34="iam"
+CHECK_RISK_check34='Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.'
+CHECK_REMEDIATION_check34='It is recommended that a metric filter and alarm be established for unauthorized requests.'
+CHECK_DOC_check34='https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html'
+CHECK_CAF_EPIC_check34='IAM'
 
 check34(){
   check3x '\$\.eventName\s*=\s*DeleteGroupPolicy.+\$\.eventName\s*=\s*DeleteRolePolicy.+\$\.eventName\s*=\s*DeleteUserPolicy.+\$\.eventName\s*=\s*PutGroupPolicy.+\$\.eventName\s*=\s*PutRolePolicy.+\$\.eventName\s*=\s*PutUserPolicy.+\$\.eventName\s*=\s*CreatePolicy.+\$\.eventName\s*=\s*DeletePolicy.+\$\.eventName\s*=\s*CreatePolicyVersion.+\$\.eventName\s*=\s*DeletePolicyVersion.+\$\.eventName\s*=\s*AttachRolePolicy.+\$\.eventName\s*=\s*DetachRolePolicy.+\$\.eventName\s*=\s*AttachUserPolicy.+\$\.eventName\s*=\s*DetachUserPolicy.+\$\.eventName\s*=\s*AttachGroupPolicy.+\$\.eventName\s*=\s*DetachGroupPolicy'

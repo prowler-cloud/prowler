@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra788="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra788="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check788="extra788"
 CHECK_SERVICENAME_extra788="es"
+CHECK_RISK_extra788='Internet exposed services increases the risk of unauthorised.'
+CHECK_REMEDIATION_extra788='Placing an Amazon ES domain within a VPC enables secure communication between Amazon ES and other services within the VPC without the need for an internet gateway; NAT device; or VPN connection. All traffic remains securely within the AWS Cloud.'
+CHECK_DOC_extra788='https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html'
+CHECK_CAF_EPIC_extra788='Infrastructure Security'
 
 extra788(){
   # Prowler will try to access each ElasticSearch server to the public URI endpoint.

@@ -17,6 +17,10 @@ CHECK_TYPE_extra775="EXTRA"
 CHECK_SEVERITY_extra775="Critical"
 CHECK_ALTERNATE_check775="extra775"
 CHECK_SERVICENAME_extra775="autoscaling"
+CHECK_RISK_extra775='The use of a hard-coded password increases the possibility of password guessing.  If hard-coded passwords are used; it is possible that malicious users gain access through the account in question.'
+CHECK_REMEDIATION_extra775='Use Secrets Manager to securely provide database credentials to Lambda functions and secure the databases as well as use the credentials to connect and query them without hardcoding the secrets in code or passing them through environmental variables. '
+CHECK_DOC_extra775='https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html'
+CHECK_CAF_EPIC_extra775='IAM'
 
 extra775(){
   SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"

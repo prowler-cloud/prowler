@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra7126="AwsKmsKey"
 CHECK_ALTERNATE_check7126="extra7126"
 CHECK_ASFF_COMPLIANCE_TYPE_extra7126="op.exp.11.aws.kms.2"
 CHECK_SERVICENAME_extra7126="kms"
+CHECK_RISK_extra7126='Unused keys may increase service cost.'
+CHECK_REMEDIATION_extra7126='Before deleting a customer master key (CMK); you might want to know how many cipher-texts were encrypted under that key.  '
+CHECK_DOC_extra7126='https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys-determining-usage.html'
+CHECK_CAF_EPIC_extra7126='Data Protection'
 
 extra7126(){
   for regx in $REGIONS; do

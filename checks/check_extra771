@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra771="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra771="AwsS3Bucket"
 CHECK_ALTERNATE_check771="extra771"
 CHECK_SERVICENAME_extra771="s3"
+CHECK_RISK_extra771='Non intended users can put objects in a given bucket.'
+CHECK_REMEDIATION_extra771='Ensure proper bucket policy is in place with the least privilege principle applied.'
+CHECK_DOC_extra771='https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_s3_rw-bucket.html'
+CHECK_CAF_EPIC_extra771='IAM'
 
 extra771(){
   LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --region $REGION --query Buckets[*].Name --output text|xargs -n1)

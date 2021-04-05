@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra780="High"
 CHECK_ASFF_RESOURCE_TYPE_extra780="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check780="extra780"
 CHECK_SERVICENAME_extra780="es"
+CHECK_RISK_extra780='Amazon Elasticsearch Service supports Amazon Cognito for Kibana authentication. '
+CHECK_REMEDIATION_extra780='If you do not configure Amazon Cognito authentication; you can still protect Kibana using an IP-based access policy and a proxy server; HTTP basic authentication; or SAML.'
+CHECK_DOC_extra780='https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-ac.html'
+CHECK_CAF_EPIC_extra780='IAM'
 
 extra780(){
   for regx in $REGIONS; do

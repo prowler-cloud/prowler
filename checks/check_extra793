@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra793="AwsElbLoadBalancer"
 CHECK_ALTERNATE_check793="extra793"
 CHECK_ASFF_COMPLIANCE_TYPE_extra793="ens-mp.com.2.aws.elb.1"
 CHECK_SERVICENAME_extra793="elb"
+CHECK_RISK_extra793='Clear text communication could affect privacy of information in transit.'
+CHECK_REMEDIATION_extra793='Scan for Load Balancers with HTTP or TCP listeners and understand the reason for each of them. Check if the listener can be implemented as TLS instead.'
+CHECK_DOC_extra793='https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html'
+CHECK_CAF_EPIC_extra793='Data Protection'
 
 extra793(){
   # "Check if Elastic Load Balancers have encrypted listeners (Not Scored) (Not part of CIS benchmark)"

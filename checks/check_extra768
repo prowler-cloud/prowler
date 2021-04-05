@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra768="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra768="AwsEcsTaskDefinition"
 CHECK_ALTERNATE_check768="extra768"
 CHECK_SERVICENAME_extra768="ecs"
+CHECK_RISK_extra768='The use of a hard-coded password increases the possibility of password guessing.  If hard-coded passwords are used; it is possible that malicious users gain access through the account in question.'
+CHECK_REMEDIATION_extra768='Use Secrets Manager to securely provide database credentials to Lambda functions and secure the databases as well as use the credentials to connect and query them without hardcoding the secrets in code or passing them through environmental variables. '
+CHECK_DOC_extra768='https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html'
+CHECK_CAF_EPIC_extra768='Logging and Monitoring'
 
 extra768(){
   SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"

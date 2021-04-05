@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra781="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check781="extra781"
 CHECK_ASFF_COMPLIANCE_TYPE_extra781="ens-mp.info.3.aws.au.1"
 CHECK_SERVICENAME_extra781="es"
+CHECK_RISK_extra781='If not enable unauthorized access to your data could risk increases.'
+CHECK_REMEDIATION_extra781='Enable encryption at rest using AWS KMS to store and manage your encryption keys and the Advanced Encryption Standard algorithm with 256-bit keys (AES-256) to perform the encryption.'
+CHECK_DOC_extra781='https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/encryption-at-rest.html'
+CHECK_CAF_EPIC_extra781='Data Protection'
 
 extra781(){
   for regx in $REGIONS; do

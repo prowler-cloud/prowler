@@ -17,6 +17,10 @@ CHECK_ASFF_TYPE_check44="Software and Configuration Checks/Industry and Regulato
 CHECK_ASFF_RESOURCE_TYPE_check44="AwsEc2Vpc"
 CHECK_ALTERNATE_check404="check44"
 CHECK_SERVICENAME_check44="vpc"
+CHECK_RISK_check44='Being highly selective in peering routing tables is a very effective way of minimizing the impact of breach as resources outside of these routes are inaccessible to the peered VPC.'
+CHECK_REMEDIATION_check44='Review routing tables of peered VPCs for whether they route all subnets of each VPC and whether that is necessary to accomplish the intended purposes for peering the VPCs.'
+CHECK_DOC_check44='https://docs.aws.amazon.com/vpc/latest/peering/peering-configurations-partial-access.html'
+CHECK_CAF_EPIC_check44='Infrastructure Security'
 
 check44(){
   # "Ensure routing tables for VPC peering are \"least access\" (Not Scored)"

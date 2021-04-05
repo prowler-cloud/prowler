@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra772="Low"
 CHECK_ASFF_RESOURCE_TYPE_extra772="AwsEc2Eip"
 CHECK_ALTERNATE_check772="extra772"
 CHECK_SERVICENAME_extra772="ec2"
+CHECK_RISK_extra772='You are charged by the hour for each Elastic IP address that are not attached to an EC2 instance .'
+CHECK_REMEDIATION_extra772='If you don’t need an Elastic IP address; you can stop the charges by releasing the IP address.'
+CHECK_DOC_extra772='https://aws.amazon.com/premiumsupport/knowledge-center/elastic-ip-charges/'
+CHECK_CAF_EPIC_extra772='Infrastructure Security'
 
 extra772(){
   for region in $REGIONS; do

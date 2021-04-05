@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra7103="AwsSageMakerNotebookInstance"
 CHECK_ALTERNATE_check7103="extra7103"
 CHECK_SEVERITY_extra7103="Medium"
 CHECK_SERVICENAME_extra7103="sagemaker"
+CHECK_RISK_extra7103='Users with root access have administrator privileges; users can access and edit all files on a notebook instance with root access enabled.'
+CHECK_REMEDIATION_extra7103='set the RootAccess field to Disabled. You can also disable root access for users when you create or update a notebook instance in the Amazon SageMaker console.'
+CHECK_DOC_extra7103='https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-root-access.html'
+CHECK_CAF_EPIC_extra7103='IAM'
 
 extra7103(){
     for regx in ${REGIONS}; do

@@ -18,6 +18,10 @@ CHECK_ASFF_RESOURCE_TYPE_check42="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check402="check42"
 CHECK_ASFF_COMPLIANCE_TYPE_check42="ens-mp.com.4.aws.sg.5"
 CHECK_SERVICENAME_check42="ec2"
+CHECK_RISK_check42='Even having a perimeter firewall; having security groups open allows any user or malware with vpc access to scan for well known and sensitive ports and gain access to instance.'
+CHECK_REMEDIATION_check42='Apply Zero Trust approach. Implement a process to scan and remediate unrestricted or overly permissive security groups. Recommended best practices is to narrow the definition for the minimum ports required.'
+CHECK_DOC_check42='https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html'
+CHECK_CAF_EPIC_check42='Infrastructure Security'
 
 check42(){
   # "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to port 3389 (Scored)"

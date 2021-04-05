@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra744="AwsApiGatewayRestApi"
 CHECK_ALTERNATE_check744="extra744"
 CHECK_ASFF_COMPLIANCE_TYPE_extra744="ens-mp.s.2.aws.waf.2"
 CHECK_SERVICENAME_extra744="apigateway"
+CHECK_RISK_extra744='Potential attacks and / or abuse of service; more even for even for internet reachable services.'
+CHECK_REMEDIATION_extra744='Use AWS WAF to protect your API Gateway API from common web exploits; such as SQL injection and cross-site scripting (XSS) attacks. These could affect API availability and performance; compromise security; or consume excessive resources.'
+CHECK_DOC_extra744='https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-control-access-aws-waf.html'
+CHECK_CAF_EPIC_extra744='Infrastructure Security'
 
 extra744(){
   for regx in $REGIONS; do

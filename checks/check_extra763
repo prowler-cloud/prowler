@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra763="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra763="AwsS3Bucket"
 CHECK_ALTERNATE_check763="extra763"
 CHECK_SERVICENAME_extra763="s3"
+CHECK_RISK_extra763=' With versioning; you can easily recover from both unintended user actions and application failures.'
+CHECK_REMEDIATION_extra763='Configure versioning using the Amazon console or API for buckets with sensible information that is changing frecuently; and backup may not be enough to capture all the changes.'
+CHECK_DOC_extra763='https://docs.aws.amazon.com/AmazonS3/latest/dev-retired/Versioning.html'
+CHECK_CAF_EPIC_extra763='Data Protection'
 
 extra763(){
   # "Check if S3 buckets have object versioning enabled (Not Scored) (Not part of CIS benchmark)"

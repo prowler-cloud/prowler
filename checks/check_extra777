@@ -22,6 +22,10 @@ CHECK_SEVERITY_extra777="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra777="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check777="extra777"
 CHECK_SERVICENAME_extra777="ec2"
+CHECK_RISK_extra777='If Security groups are not properly configured the attack surface is increased. '
+CHECK_REMEDIATION_extra777='Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.'
+CHECK_DOC_extra777='https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html'
+CHECK_CAF_EPIC_extra777='Infrastructure Security'
 
 extra777(){
     THRESHOLD=50
