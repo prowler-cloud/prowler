@@ -36,7 +36,7 @@ extra7102(){
     textInfo "[extra7102] Requires a Shodan API key to work. Use -N <shodan_api_key>"
   else 
     for regx in $REGIONS; do
-      LIST_OF_EIP=$($AWSCLI $PROFILE_OPT --region $regx ec2 describe-addresses --query 'Addresses[*].PublicIp' --output text)
+      LIST_OF_EIP=$($AWSCLI $PROFILE_OPT --region $regx ec2 describe-network-interfaces --query 'NetworkInterfaces[*].Association.PublicIp' --output text)
       if [[ $LIST_OF_EIP ]]; then
         for ip in $LIST_OF_EIP;do
           SHODAN_QUERY=$(curl -ks https://api.shodan.io/shodan/host/$ip?key=$SHODAN_API_KEY)
