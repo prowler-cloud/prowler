@@ -189,14 +189,15 @@ Prowler has been written in bash using AWS-CLI and it works in Linux and OSX.
 
 - Sample screenshot of report first lines:
 
-    <img width="1125" alt="screenshot 2016-09-13 16 05 42" src="https://cloud.githubusercontent.com/assets/3985464/18489640/50fe6824-79cc-11e6-8a9c-e788b88a8a6b.png">
-
-- Sample screenshot of single check for check 3.3:
-
-    <img width="1006" alt="screenshot 2016-09-14 13 20 46" src="https://cloud.githubusercontent.com/assets/3985464/18522590/a04ca9a6-7a7e-11e6-8730-b545c9204990.png">
+    <img width="1125" src="https://user-images.githubusercontent.com/3985464/113942728-92c97e80-9801-11eb-9dfc-aef27ad9f5fb.png">
 
 - Sample screenshot of the html output `-M html`:
-    <img width="1006" alt="Prowler html" src="https://user-images.githubusercontent.com/3985464/82838608-0229ce80-9ecd-11ea-860c-468f66aa2790.png">
+
+    <img width="1006" alt="Prowler html" src="https://user-images.githubusercontent.com/3985464/113942724-8f35f780-9801-11eb-8089-d3163dd4e5a4.png">
+
+- Sample screenshot of the junit-xml output in CodeBuild `-M junit-xml`:
+
+    <img width="1006" src="https://user-images.githubusercontent.com/3985464/113942824-ca382b00-9801-11eb-84e5-d7731548a7a9.png">
 
 ### Save your reports
 
