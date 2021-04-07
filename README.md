@@ -2,7 +2,7 @@
   <img src="https://user-images.githubusercontent.com/3985464/113734260-7ba06900-96fb-11eb-82bc-d4f68a1e2710.png" />
 </p>
 
-# Prowler AWS Security Tool
+# Prowler - AWS Security Tool
 
 ## Table of Contents
 
@@ -31,7 +31,7 @@
 
 ## Description
 
-Prowler is a command line tool for AWS Security Best Practices Assessment, Auditing, Hardening and Forensics Readiness Tool.
+Prowler is a command line tool that helps you with AWS security assessment, auditing, hardening and incident response.
 
 It follows guidelines of the CIS Amazon Web Services Foundations Benchmark (49 checks) and has more than 100 additional checks including related to GDPR, HIPAA, PCI-DSS, ISO-27001, FFIEC, SOC2 and others.
 
@@ -52,23 +52,19 @@ Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-20
 - GDPR [gdpr] Read more [here](#gdpr-checks)
 - HIPAA [hipaa] Read more [here](#hipaa-checks)
 - Trust Boundaries [trustboundaries] Read more [here](#trust-boundaries-checks)
-- Secrets 
-- PCI-DSS
-- ISO-27001
+- Secrets
 - Internet exposed resources
 - EKS-CIS
-- FFIEC
-- SOC2
-- ENS (Esquema Nacional de Seguridad of Spain)
+- Also includes PCI-DSS, ISO-27001, FFIEC, SOC2, ENS (Esquema Nacional de Seguridad of Spain).
 
 With Prowler you can:
 
-- get a direct colorful or monochrome report 
-- a HTML, CSV, JUNIT, JSON or JSON ASFF format report
-- send findings directly to Security Hub
-- run specific checks and groups or create your own
-- check multiple AWS accounts in parallel or sequentially
-- and more! Read examples below
+- Get a direct colorful or monochrome report
+- A HTML, CSV, JUNIT, JSON or JSON ASFF format report
+- Send findings directly to Security Hub
+- Run specific checks and groups or create your own
+- Check multiple AWS accounts in parallel or sequentially
+- And more! Read examples below
 
 ## High level architecture
 
