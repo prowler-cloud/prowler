@@ -590,7 +590,6 @@ if [[ $GROUP_ID_READ ]];then
     execute_group_by_id ${GROUP_ID_READ} ${EXCLUDE_CHECK_ID}
     if [[ "${MODES[@]}" =~ "html" ]]; then
       addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo "called with -g"
     fi
     scoring
     cleanTemp
