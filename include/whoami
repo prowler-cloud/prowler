@@ -62,8 +62,8 @@ getWhoami(){
       exit $EXITCODE
     fi
     printCsvHeader
-    textTitle "0.0" "Show report generation info" "NOT_SCORED" "SUPPORT"
-    textInfo "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
+    # textTitle "0.0" "Show report generation info" "NOT_SCORED" "SUPPORT"
+    # textInfo "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
   elif [[ "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
     :
   else

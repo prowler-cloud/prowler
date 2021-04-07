@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.3.0-22012021
+PROWLER_VERSION=2.4.0-07042021
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -354,15 +354,24 @@ execute_check() {
     fi
   fi
 
+  CHECK_ID="$1" 
+
   # See if this is an alternate name for a check
   # for example, we might have been passed 1.01 which is another name for 1.1
   local alternate_name_var=CHECK_ALTERNATE_$1
   local alternate_name=${!alternate_name_var}
   # See if this check defines an ASFF Type, if so, use this, falling back to a sane default
-  # For a list of Types, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#securityhub-findings-format-type-taxonomy
+  # For a list of Types Taxonomy, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-type-taxonomy.html
   local asff_type_var=CHECK_ASFF_TYPE_$1
-  local asff_compliance_type_var=CHECK_ASFF_COMPLIANCE_TYPE_$1
+  CHECK_ASFF_TYPE="${!asff_type_var:-Software and Configuration Checks}"
 
+  local asff_compliance_type_var=CHECK_ASFF_COMPLIANCE_TYPE_$1
+  CHECK_ASFF_COMPLIANCE_TYPE="${!asff_compliance_type_var:-Software and Configuration Checks}"
+  
+  # See if this check defines an ASFF Resource Type, if so, use this, falling back to a sane default
+  # For a list of Resource Types, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
+  local asff_resource_type_var=CHECK_ASFF_RESOURCE_TYPE_$1
+  CHECK_ASFF_RESOURCE_TYPE="${!asff_resource_type_var:-AwsAccount}"
 
   local severity_var=CHECK_SEVERITY_$1
   CHECK_SEVERITY="${!severity_var}"
@@ -370,15 +379,17 @@ execute_check() {
   local servicename_var=CHECK_SERVICENAME_$1
   CHECK_SERVICENAME="${!servicename_var}"
 
-  CHECK_ID="$1"
+  local risk_var=CHECK_RISK_$1
+  CHECK_RISK="${!risk_var}"
 
-  ASFF_TYPE="${!asff_type_var:-Software and Configuration Checks}"
-  ASFF_COMPLIANCE_TYPE="${!asff_compliance_type_var:-Software and Configuration Checks}"
-  # See if this check defines an ASFF Resource Type, if so, use this, falling back to a sane default
-  # For a list of Resource Types, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
-  local asff_resource_type_var=CHECK_ASFF_RESOURCE_TYPE_$1
+  local remediation_var=CHECK_REMEDIATION_$1
+  CHECK_REMEDIATION="${!remediation_var}"
 
-  ASFF_RESOURCE_TYPE="${!asff_resource_type_var:-AwsAccount}"
+  local doc_var=CHECK_DOC_$1
+  CHECK_DOC="${!doc_var}"
+
+  local caf_epic_var=CHECK_CAF_EPIC_$1
+  CHECK_CAF_EPIC="${!caf_epic_var}"
 
   SECURITYHUB_NEW_FINDINGS_IDS=()
 
