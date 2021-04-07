@@ -13,19 +13,19 @@
 
 # Scoring POC
 scoring(){
+  if [[ ! $PASS_COUNTER ]]; then
+    PASS_COUNTER=0
+  fi
+  if [[ ! $FAIL_COUNTER ]]; then
+    FAIL_COUNTER=0
+  fi
+
+  # TOTAL_RESOURCES=$(awk "BEGIN {print $FAIL_COUNTER+$PASS_COUNTER; exit}")
+  TOTAL_RESOURCES=$(($FAIL_COUNTER + $PASS_COUNTER))
+  # Score is % of passed compared to failures. The higher score, the better
+  PROWLER_SCORE=$(( $PASS_COUNTER * 100 / $TOTAL_RESOURCES ))
+
   if [[ $SCORING == "1" ]]; then
-    if [[ ! $PASS_COUNTER ]]; then
-      PASS_COUNTER=0
-    fi
-    if [[ ! $FAIL_COUNTER ]]; then
-      FAIL_COUNTER=0
-    fi
-
-    # TOTAL_RESOURCES=$(awk "BEGIN {print $FAIL_COUNTER+$PASS_COUNTER; exit}")
-    TOTAL_RESOURCES=$(($FAIL_COUNTER + $PASS_COUNTER))
-    # Score is % of passed compared to failures. The higher score, the better
-    PROWLER_SCORE=$(( $PASS_COUNTER * 100 / $TOTAL_RESOURCES ))
-
     echo -e "$BLUE------------------------------------------------------------------ $NORMAL"
     echo -e "$CYAN                          _"
     echo -e "  _ __  _ __ _____      _| | ___ _ __"
@@ -49,5 +49,12 @@ scoring(){
     echo -e "$BLUE------------------------------------------------------------------ $NORMAL"
     echo -e " * the highest the better (0 to 100)$NORMAL"
     echo -e " Prowler scoring uses any check, including CIS not scored checks$NORMAL"
+  fi 
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    replace_sed 's/PROWLER_SCORE/'$PROWLER_SCORE'/g' ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    replace_sed 's/PASS_COUNTER/'$PASS_COUNTER'/g' ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    replace_sed 's/TOTAL_RESOURCES/'$TOTAL_RESOURCES'/g' ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    replace_sed 's/FAIL_COUNTER/'$FAIL_COUNTER'/g' ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    replace_sed 's/CHECKS_COUNTER/'$CHECKS_COUNTER'/g' ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
 }

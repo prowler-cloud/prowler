@@ -55,18 +55,18 @@ addHtmlHeader() {
           display: none;
       }
   </style>
-  <title>Prowler - AWS Security Assesments</title>
+  <title>Prowler - AWS Security Assessments</title>
 </head>
 <body>
   <nav class="navbar navbar-expand-xl sticky-top navbar-dark bg-dark">
-      <a class="navbar-brand" href="#">Prowler - Security Assesments in AWS</a>
+      <a class="navbar-brand" href="#">Prowler - Security Assessments in AWS</a>
   </nav>
   <div class="container-fluid">
     <div class="row mt-3">
       <div class="col-md-4">
         <div class="card">
           <div class="card-header">
-            Report Information
+            Report Information:
           </div>
           <ul class="list-group list-group-flush">
             <li class="list-group-item">
@@ -90,10 +90,10 @@ addHtmlHeader() {
         </div>
       </div>
 
-      <div class="col-md-8">
+      <div class="col-md-4">
         <div class="card">
           <div class="card-header">
-            Assesment Summary
+            Assessment Summary:
           </div>
           <ul class="list-group list-group-flush">
             <li class="list-group-item">
@@ -110,6 +110,30 @@ addHtmlHeader() {
             </li>
             <li class="list-group-item">
               <b>Caller Identity ARN:</b> $CALLER_ARN
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">
+            Scoring Information:
+          </div>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <b>Prowler Score:</b> PROWLER_SCORE%
+            </li>
+            <li class="list-group-item">
+              <b>Total Resources:</b> TOTAL_RESOURCES
+            </li>
+            <li class="list-group-item">
+              <b>Passed:</b> PASS_COUNTER
+            </li>
+            <li class="list-group-item">
+              <b>Failed:</b> FAIL_COUNTER
+            </li>
+            <li class="list-group-item">
+              <b>Total Checks Executed:</b> CHECKS_COUNTER
             </li>
           </ul>
         </div>
