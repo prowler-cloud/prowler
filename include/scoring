@@ -49,5 +49,8 @@ scoring(){
     echo -e "$BLUE------------------------------------------------------------------ $NORMAL"
     echo -e " * the highest the better (0 to 100)$NORMAL"
     echo -e " Prowler scoring uses any check, including CIS not scored checks$NORMAL"
+    if [[ "${MODES[@]}" =~ "html" ]]; then
+	    sed -i "s/<\!--SCORING-->/<li class=\"list-group-item\"><b>Prowler Score<\/b> ${PROWLER_SCORE}% (${PASS_COUNTER} passed out of ${TOTAL_RESOURCES} checked resources)<\/li>/g" ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    fi
   fi
 }

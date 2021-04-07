@@ -86,6 +86,7 @@ addHtmlHeader() {
             <li class="list-group-item">
               <b>Caller Identity ARN:</b> $CALLER_ARN
             </li>
+	    <!--SCORING-->
           </ul>
         </div>
         * Sortable columns are CheckID (default) and Result 
