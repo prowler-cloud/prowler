@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra797="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra797="AwsEksCluster"
 CHECK_ALTERNATE_check797="extra797"
 CHECK_SERVICENAME_extra797="eks"
+CHECK_RISK_extra797='Implementing envelope encryption is considered a security best practice for applications that store sensitive data and is part of a defense in depth security strategy.'
+CHECK_REMEDIATION_extra797=' Setup your own Customer Master Key (CMK) in KMS and link this key by providing the CMK ARN when you create an EKS cluster.'
+CHECK_DOC_extra797='https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html'
+CHECK_CAF_EPIC_extra797='Data Protection'
 
 extra797(){
   textInfo "Looking for encryption config for EKS clusters across all regions... "

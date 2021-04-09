@@ -23,6 +23,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra7100="AwsIamPolicy"
 CHECK_ALTERNATE_check7100="extra7100"
 CHECK_ASFF_COMPLIANCE_TYPE_extra7100="ens-op.acc.2.aws.iam.1"
 CHECK_SERVICENAME_extra7100="iam"
+CHECK_RISK_extra7100='If not restricted unintended access could happen.'
+CHECK_REMEDIATION_extra7100='Use the least privilege principle when granting permissions.'
+CHECK_DOC_extra7100='https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html'
+CHECK_CAF_EPIC_extra7100='IAM'
 
 extra7100(){
   # "Ensure that no custom policies exist which permit assuming any role (e.g. sts:AssumeRole on *)"

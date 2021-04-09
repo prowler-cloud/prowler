@@ -42,6 +42,10 @@ CHECK_ASFF_TYPE_check312="Software and Configuration Checks/Industry and Regulat
 CHECK_ASFF_RESOURCE_TYPE_check312="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check312="check312"
 CHECK_SERVICENAME_check312="vpc"
+CHECK_RISK_check312='Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.'
+CHECK_REMEDIATION_check312='It is recommended that a metric filter and alarm be established for unauthorized requests.'
+CHECK_DOC_check312='https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html'
+CHECK_CAF_EPIC_check312='Logging and Monitoring'
 
 check312(){
   check3x '\$\.eventName\s*=\s*CreateCustomerGateway.+\$\.eventName\s*=\s*DeleteCustomerGateway.+\$\.eventName\s*=\s*AttachInternetGateway.+\$\.eventName\s*=\s*CreateInternetGateway.+\$\.eventName\s*=\s*DeleteInternetGateway.+\$\.eventName\s*=\s*DetachInternetGateway'

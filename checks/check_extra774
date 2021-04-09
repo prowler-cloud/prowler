@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra774="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra774="AwsIamUser"
 CHECK_ALTERNATE_check774="extra774"
 CHECK_SERVICENAME_extra774="iam"
+CHECK_RISK_extra774='To increase the security of your AWS account; remove IAM user credentials (that is; passwords and access keys) that are not needed. For example; when users leave your organization or no longer need AWS access.'
+CHECK_REMEDIATION_extra774='Find the credentials that they were using and ensure that they are no longer operational. Ideally; you delete credentials if they are no longer needed. You can always recreate them at a later date if the need arises. At the very least; you should change the password or deactivate the access keys so that the former users no longer have access.'
+CHECK_DOC_extra774='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_finding-unused.html'
+CHECK_CAF_EPIC_extra774='IAM'
 
 extra774(){
   check_creds_used_in_last_days 30

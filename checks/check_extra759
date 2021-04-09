@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra759="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra759="AwsLambdaFunction"
 CHECK_ALTERNATE_check759="extra759"
 CHECK_SERVICENAME_extra759="lambda"
+CHECK_RISK_extra759='The use of a hard-coded password increases the possibility of password guessing.  If hard-coded passwords are used; it is possible that malicious users gain access through the account in question.'
+CHECK_REMEDIATION_extra759='Use Secrets Manager to securely provide database credentials to Lambda functions and secure the databases as well as use the credentials to connect and query them without hardcoding the secrets in code or passing them through environmental variables. '
+CHECK_DOC_extra759='https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html'
+CHECK_CAF_EPIC_extra759='IAM'
 
 extra759(){
   SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"

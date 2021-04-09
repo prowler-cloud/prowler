@@ -19,6 +19,10 @@ CHECK_SEVERITY_extra7114="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7114="AwsGlue"
 CHECK_ALTERNATE_check7114="extra7114"
 CHECK_SERVICENAME_extra7114="glue"
+CHECK_RISK_extra7114='Data exfiltration could happen if information is not protected. KMS keys provide additional security level to IAM policies.'
+CHECK_REMEDIATION_extra7114='Specify AWS KMS keys to use for input and output from S3 and EBS.'
+CHECK_DOC_extra7114='https://docs.aws.amazon.com/glue/latest/dg/encryption-security-configuration.html'
+CHECK_CAF_EPIC_extra7114='Data Protection'
 
 extra7114(){
   for regx in $REGIONS; do

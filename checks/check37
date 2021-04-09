@@ -43,6 +43,10 @@ CHECK_ASFF_RESOURCE_TYPE_check37="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check307="check37"
 CHECK_ASFF_COMPLIANCE_TYPE_check37="ens-op.exp.11.aws.kms.1"
 CHECK_SERVICENAME_check37="kms"
+CHECK_RISK_check37='Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.'
+CHECK_REMEDIATION_check37='It is recommended that a metric filter and alarm be established for unauthorized requests.'
+CHECK_DOC_check37='https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html'
+CHECK_CAF_EPIC_check37='Logging and Monitoring'
 
 check37(){
   check3x '\$\.eventSource\s*=\s*kms.amazonaws.com.+\$\.eventName\s*=\s*DisableKey.+\$\.eventName\s*=\s*ScheduleKeyDeletion'

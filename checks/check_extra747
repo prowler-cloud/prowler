@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra747="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra747="AwsRdsDbInstance"
 CHECK_ALTERNATE_check747="extra747"
 CHECK_SERVICENAME_extra747="rds"
+CHECK_RISK_extra747='If logs are not enabled; monitoring of service use and threat analysis is not possible.'
+CHECK_REMEDIATION_extra747='Use CloudWatch Logs to perform real-time analysis of the log data. Create alarms and view metrics.'
+CHECK_DOC_extra747='https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/publishing_cloudwatchlogs.html'
+CHECK_CAF_EPIC_extra747='Logging and Monitoring'
 
 extra747(){
   for regx in $REGIONS; do

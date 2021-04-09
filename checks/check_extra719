@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra719="Medium"
 CHECK_ALTERNATE_check719="extra719"
 CHECK_ASFF_RESOURCE_TYPE_extra719="AwsRoute53HostedZone"
 CHECK_SERVICENAME_extra719="route53"
+CHECK_RISK_extra719='If logs are not enabled; monitoring of service use and threat analysis is not possible.'
+CHECK_REMEDIATION_extra719='Enable CloudWatch logs and define metrics and uses cases for the events recorded.'
+CHECK_DOC_extra719='https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/monitoring-hosted-zones-with-cloudwatch.html'
+CHECK_CAF_EPIC_extra719='Logging and Monitoring'
 
 extra719(){
   # You can't create a query logging config for a private hosted zone.

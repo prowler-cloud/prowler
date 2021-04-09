@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra7115="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7115="AwsGlue"
 CHECK_ALTERNATE_check7115="extra7115"
 CHECK_SERVICENAME_extra7115="glue"
+CHECK_RISK_extra7115='Data exfiltration could happen if information is not protected in transit.'
+CHECK_REMEDIATION_extra7115='Configure encryption settings for crawlers; ETL jobs; and development endpoints using security configurations in AWS Glue.'
+CHECK_DOC_extra7115='https://docs.aws.amazon.com/glue/latest/dg/encryption-in-transit.html'
+CHECK_CAF_EPIC_extra7115='Data Protection'
 
 extra7115(){
   for regx in $REGIONS; do

@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra796="High"
 CHECK_ASFF_RESOURCE_TYPE_extra796="AwsEksCluster"
 CHECK_ALTERNATE_check796="extra796"
 CHECK_SERVICENAME_extra796="eks"
+CHECK_RISK_extra796='By default; this API server endpoint is public to the internet; and access to the API server is secured using a combination of AWS Identity and Access Management (IAM) and native Kubernetes Role Based Access Control (RBAC).'
+CHECK_REMEDIATION_extra796='You should enable private access to the Kubernetes API server so that all communication between your nodes and the API server stays within your VPC. You can limit the IP addresses that can access your API server from the internet; or completely disable internet access to the API server.'
+CHECK_DOC_extra796='https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html'
+CHECK_CAF_EPIC_extra796='Infrastructure Security'
 
 extra796(){
   textInfo "Looking for public access CIDRs for EKS clusters across all regions... "

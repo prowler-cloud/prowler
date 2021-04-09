@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra716="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra716="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check716="extra716"
 CHECK_SERVICENAME_extra716="es"
+CHECK_RISK_extra716='Publicly accessible services could expose sensible data to bad actors.'
+CHECK_REMEDIATION_extra716='Use  VPC endpoints for internal services.'
+CHECK_DOC_extra716='https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html'
+CHECK_CAF_EPIC_extra716='Infrastructure Security'
 
 extra716(){
   for regx in $REGIONS; do

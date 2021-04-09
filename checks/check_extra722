@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra722="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra722="AwsApiGatewayRestApi"
 CHECK_ALTERNATE_check722="extra722"
 CHECK_SERVICENAME_extra722="apigateway"
+CHECK_RISK_extra722='If not enabled; monitoring of service use is not possible. Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs and establishing corresponding metric filters and alarms.'
+CHECK_REMEDIATION_extra722='Monitoring is an important part of maintaining the reliability; availability; and performance of API Gateway and your AWS solutions. You should collect monitoring data from all of the parts of your AWS solution. CloudTrail provides a record of actions taken by a user; role; or an AWS service in API Gateway. Using the information collected by CloudTrail; you can determine the request that was made to API Gateway; the IP address from which the request was made; who made the request; etc.'
+CHECK_DOC_extra722='https://docs.aws.amazon.com/apigateway/latest/developerguide/security-monitoring.html'
+CHECK_CAF_EPIC_extra722='Logging and Monitoring'
 
 extra722(){
   # "Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)"

@@ -20,7 +20,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra729="AwsEc2Volume"
 CHECK_ALTERNATE_check729="extra729"
 CHECK_ASFF_COMPLIANCE_TYPE_extra729="ens-mp.info.3.aws.ebs.1"
 CHECK_SERVICENAME_extra729="ec2"
-
+CHECK_RISK_extra729='Data encryption at rest prevents data visibility in the event of its unauthorized access or theft.'
+CHECK_REMEDIATION_extra729='Encrypt al EBS volumes and Enable Encryption by default You can configure your AWS account to enforce the encryption of the new EBS volumes and snapshot copies that you create. For example; Amazon EBS encrypts the EBS volumes created when you launch an instance and the snapshots that you copy from an unencrypted snapshot.'
+CHECK_DOC_extra729='https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html'
+CHECK_CAF_EPIC_extra729='Data Protection'
 
 extra729(){
   # "Ensure there are no EBS Volumes unencrypted (Not Scored) (Not part of CIS benchmark)"

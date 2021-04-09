@@ -19,7 +19,11 @@ CHECK_ASFF_RESOURCE_TYPE_extra7106="AwsSageMakerModel"
 CHECK_ALTERNATE_check7106="extra7106"
 CHECK_SEVERITY_extra7106="Medium"
 CHECK_SERVICENAME_extra7106="sagemaker"
-    
+CHECK_RISK_extra7106='This could provide an avenue for unauthorized access to your data.'
+CHECK_REMEDIATION_extra7106='Restrict which traffic can access by launching Studio in a Virtual Private Cloud (VPC) of your choosing.'
+CHECK_DOC_extra7106='https://docs.aws.amazon.com/sagemaker/latest/dg/studio-notebooks-and-internet-access.html'
+CHECK_CAF_EPIC_extra7106='Infrastructure Security'
+
 extra7106(){
     for regx in ${REGIONS}; do
         LIST_SM_NB_MODELS=$($AWSCLI $PROFILE_OPT --region $regx sagemaker list-models --query 'Models[*].ModelName' --output text)

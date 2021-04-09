@@ -112,13 +112,12 @@ gnu_convert_date_to_timestamp() {
   # if [ "$OSTYPE" == "linux-musl" ]; then
   #   date -D "%Y-%m-%dT%H:%M:%SZ" -d "$1" +%s
   # else
-    date -d "$1" +%s
+    date -u -d "$1" +%s
   # fi
 }
 
 bsd_convert_date_to_timestamp() {
-  echo $(( $(date -j -f %Y-%m-%dT%H:%M:%S "$1" +%s) + 3600 ))
-  # Change above is because epoch time generator in BSD is 1h less than in Linux ¯\_(ツ)_/¯
+  echo $(date -u -j -f %Y-%m-%dT%H:%M:%S "$1" +%s)
   #date -j -f "%Y-%m-%dT%H:%M:%S" "$1" "+%s"
 }
 
@@ -137,6 +136,14 @@ bsd_test_tcp_connectivity() {
   # This is initially for ES port 9300, not not HTTP but I add HTTP error
   # codes for better handling, so 200 is open and 000 is not responding
   nc -z -G $TIMEOUT $HOST $PORT >/dev/null 2>&1 && echo "200" || echo "000"
+}
+
+gnu_replace_sed(){
+  sed -i $1 $2
+}
+
+bsd_replace_sed(){
+  sed -i '' $1 $2
 }
 
 # Functions to manage dates depending on OS
@@ -171,6 +178,10 @@ if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
   convert_date_to_timestamp() {
     gnu_convert_date_to_timestamp "$1"
   }
+  replace_sed() {
+    gnu_replace_sed $1 $2
+  }
+
 elif [[ "$OSTYPE" == "darwin"* ]] || [[ "$OSTYPE" == "freebsd"* ]]; then
   # BSD/OSX commands compatibility
   TEMP_REPORT_FILE=$(mktemp -t prowler.cred_report-XXXXXX)
@@ -244,6 +255,9 @@ elif [[ "$OSTYPE" == "darwin"* ]] || [[ "$OSTYPE" == "freebsd"* ]]; then
   test_tcp_connectivity() {
     bsd_test_tcp_connectivity "$1" "$2" "$3"
   }
+  replace_sed() {
+    bsd_replace_sed $1 $2
+  }
 elif [[ "$OSTYPE" == "cygwin" ]]; then
   # POSIX compatibility layer and Linux environment emulation for Windows
   TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
@@ -273,6 +287,9 @@ elif [[ "$OSTYPE" == "cygwin" ]]; then
   }
   convert_date_to_timestamp() {
     gnu_convert_date_to_timestamp "$1"
+  }
+  replace_sed() {
+    gnu_replace_sed $1 $2
   }
 else
   echo "Unknown Operating System! Valid \$OSTYPE: linux-gnu, linux-musl, darwin* or cygwin"

@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra735="AwsRdsDbInstance"
 CHECK_ALTERNATE_check735="extra735"
 CHECK_ASFF_COMPLIANCE_TYPE_extra735="ens-mp.info.3.aws.rds.1"
 CHECK_SERVICENAME_extra735="rds"
+CHECK_RISK_extra735='If not enabled sensible information at rest is not protected.'
+CHECK_REMEDIATION_extra735='Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.'
+CHECK_DOC_extra735='https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html'
+CHECK_CAF_EPIC_extra735='Data Protection'
 
 extra735(){
   textInfo "Looking for RDS Volumes in all regions...  "

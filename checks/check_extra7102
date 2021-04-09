@@ -18,13 +18,16 @@ CHECK_SEVERITY_extra7102="High"
 CHECK_ASFF_RESOURCE_TYPE_extra7102="AwsEc2Eip"
 CHECK_ALTERNATE_check7102="extra7102"
 CHECK_SERVICENAME_extra7102="ec2"
+CHECK_RISK_extra7102='Sites like Shodan index exposed systems and further expose them to wider audiences as a quick way to find exploitable systems.'
+CHECK_REMEDIATION_extra7102='Check Identified IPs; consider changing them to private ones and delete them from Shodan.'
+CHECK_DOC_extra7102='https://www.shodan.io/'
+CHECK_CAF_EPIC_extra7102='Infrastructure Security'
 
 # Watch out, always use Shodan API key, if you use `curl https://www.shodan.io/host/{ip}` massively 
 # your IP will be banned by Shodan
 
 # This is the right way to do so
 # curl -ks https://api.shodan.io/shodan/host/{ip}?key={YOUR_API_KEY}
-
 
 # Each finding will be saved in prowler/output folder for further review.
 
@@ -33,7 +36,7 @@ extra7102(){
     textInfo "[extra7102] Requires a Shodan API key to work. Use -N <shodan_api_key>"
   else 
     for regx in $REGIONS; do
-      LIST_OF_EIP=$($AWSCLI $PROFILE_OPT --region $regx ec2 describe-addresses --query 'Addresses[*].PublicIp' --output text)
+      LIST_OF_EIP=$($AWSCLI $PROFILE_OPT --region $regx ec2 describe-network-interfaces --query 'NetworkInterfaces[*].Association.PublicIp' --output text)
       if [[ $LIST_OF_EIP ]]; then
         for ip in $LIST_OF_EIP;do
           SHODAN_QUERY=$(curl -ks https://api.shodan.io/shodan/host/$ip?key=$SHODAN_API_KEY)

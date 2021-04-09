@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra786="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra786="AwsEc2Instance"
 CHECK_ALTERNATE_check786="extra786"
 CHECK_SERVICENAME_extra786="ec2"
+CHECK_RISK_extra786='Using IMDSv2 will protect from misconfiguration and SSRF vulnerabilities. IMDSv1 will not.'
+CHECK_REMEDIATION_extra786='If you don’t need IMDS you can turn it off. Using aws-cli you can force the instance to use only IMDSv2.'
+CHECK_DOC_extra786='https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html#configuring-instance-metadata-options'
+CHECK_CAF_EPIC_extra786='Infrastructure Security'
 
 extra786(){
   for regx in $REGIONS; do
