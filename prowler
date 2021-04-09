@@ -296,7 +296,7 @@ get_regions() {
   # Get list of regions based on include/whoami
   REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' --output text $PROFILE_OPT --region $REGION_FOR_STS --region-names $FILTERREGION 2>&1)
   if [[ $(echo "$REGIONS" | grep 'AccessDenied\|UnauthorizedOperation') ]]; then
-    echo "Access Denied trying to describe regions"
+    echo "$OPTRED Access Denied trying to describe regions! Review permissions as described here: https://github.com/toniblyx/prowler/#requirements-and-installation $OPTNORMAL"
     EXITCODE=1
     exit $EXITCODE
   fi
@@ -342,11 +342,14 @@ show_group_title() {
 
 # Function to execute the check
 execute_check() {
+
   if [[ $ACCOUNT_TO_ASSUME ]]; then
-    MINIMUM_REMAINING_TIME_ALLOWED=$(($SESSION_DURATION_TO_ASSUME / 10 ))
+    # Following logic looks for time remaining in the session and review it 
+    # if it is less than 600 seconds, 10 minutes.
     CURRENT_TIMESTAMP=$(date -u "+%s")
-    SESSION_CUTOFF=$(($CURRENT_TIMESTAMP + $MINIMUM_REMAINING_TIME_ALLOWED))
-    if [[ $AWS_SESSION_EXPIRATION < $SESSION_CUTOFF ]]; then
+    SESSION_TIME_REMAINING=$(expr $AWS_SESSION_EXPIRATION - $CURRENT_TIMESTAMP)
+    MINIMUM_REMAINING_TIME_ALLOWED="600"
+    if [[ $MINIMUM_REMAINING_TIME_ALLOWED > $SESSION_TIME_REMAINING ]]; then
       unset AWS_ACCESS_KEY_ID
       unset AWS_SECRET_ACCESS_KEY
       unset AWS_SESSION_TOKEN
