@@ -22,7 +22,6 @@ OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
 OUTPUT_DIR="${PROWLER_DIR}/output" # default output if none 
 OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
 HTML_LOGO_URL="https://github.com/toniblyx/prowler/"
-#HTML_LOGO_IMG="https://raw.githubusercontent.com/toniblyx/prowler/master/util/html/prowler-logo.png"
 HTML_LOGO_IMG="https://github.com/toniblyx/prowler/raw/2.4/util/html/prowler-logo-new.png"
 TIMESTAMP=$(get_iso8601_timestamp)
 PROWLER_PARAMETERS=$@
@@ -303,7 +302,7 @@ generateJsonAsffOutput(){
   --arg CHECK_ID "$CHECK_ID" \
   --arg TYPE "$CHECK_ASFF_COMPLIANCE_TYPE" \
   --arg COMPLIANCE_RELATED_REQUIREMENTS "$CHECK_ASFF_COMPLIANCE_TYPE" \
-  --arg RESOURCE_TYPE "$ASFF_RESOURCE_TYPE" \
+  --arg RESOURCE_TYPE "$CHECK_ASFF_RESOURCE_TYPE" \
   --arg REPREGION "$REPREGION" \
   --arg TIMESTAMP "$(get_iso8601_timestamp)" \
   --arg PROWLER_VERSION "$PROWLER_VERSION" \

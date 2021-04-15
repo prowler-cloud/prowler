@@ -70,7 +70,7 @@ assume_role(){
     export AWS_ACCESS_KEY_ID=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.AccessKeyId')
     export AWS_SECRET_ACCESS_KEY=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SecretAccessKey')
     export AWS_SESSION_TOKEN=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SessionToken')
-    export AWS_SESSION_EXPIRATION=$(convert_date_to_timestamp "$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.Expiration'| sed 's/+00:00//g')")
+    export AWS_SESSION_EXPIRATION=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.Expiration | sub("\\+00:00";"Z") | fromdateiso8601')
     rm -fr $TEMP_STS_ASSUMED_FILE
 }
 

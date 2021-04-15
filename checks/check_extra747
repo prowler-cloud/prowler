@@ -33,7 +33,7 @@ extra747(){
         if [[ $ENABLED_CLOUDWATCHLOGS_EXPORTS ]]; then
           textPass "$regx: RDS instance $rdsinstance is shipping $ENABLED_CLOUDWATCHLOGS_EXPORTS to CloudWatch Logs" "$regx"
         else
-          textFail "$regx: RDS instance $rdsinstance has not CloudWatch Logs enabled!" "$regx"
+          textFail "$regx: RDS instance $rdsinstance has no CloudWatch Logs enabled!" "$regx"
         fi
       done
     else
