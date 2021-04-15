@@ -20,6 +20,20 @@ EXTENSION_TEXT="txt"
 EXTENSION_HTML="html"
 OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
 OUTPUT_DIR="${PROWLER_DIR}/output" # default output if none 
+if [[ $OUTPUT_DIR_CUSTOM ]]; then
+  # output mode has to be set to other than text
+  if [[ ! " ${MODES[@]} " =~ " text " || ${check_id} == 7.1 || ${check_id} == 7.74  ]]; then
+    if [[ ! -d $OUTPUT_DIR_CUSTOM ]]; then
+      echo "$OPTRED ERROR!$OPTNORMAL directory \"$OUTPUT_DIR_CUSTOM\" does not exist."
+      exit 1
+    else
+      OUTPUT_DIR=$OUTPUT_DIR_CUSTOM
+    fi
+  else
+    echo "$OPTRED ERROR!$OPTNORMAL - Mode (-M) has to be set as well. Use -h for help."
+    exit 1
+  fi 
+fi
 OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
 HTML_LOGO_URL="https://github.com/toniblyx/prowler/"
 #HTML_LOGO_IMG="https://raw.githubusercontent.com/toniblyx/prowler/master/util/html/prowler-logo.png"
