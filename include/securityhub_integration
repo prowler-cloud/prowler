@@ -42,7 +42,14 @@ checkSecurityHubCompatibility(){
 
 resolveSecurityHubPreviousFails(){
   # Move previous check findings RecordState to ARCHIVED (as prowler didn't re-detect them)
-  for regx in $REGIONS; do
+  if [ -z "$REGION_OPT" ]
+  then
+    REGIONS_SECHUB=$REGIONS
+  else
+    REGIONS_SECHUB=$REGION_OPT
+  fi
+
+  for regx in $REGIONS_SECHUB; do
 
     local check="$1"
     NEW_TIMESTAMP=$(get_iso8601_timestamp)
@@ -54,8 +61,8 @@ resolveSecurityHubPreviousFails(){
 
     if [[ $SECURITY_HUB_PREVIOUS_FINDINGS != "[]" ]]; then
       FINDINGS_COUNT=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq '. | length')
-      for i in `seq 0 100 $FINDINGS_COUNT`; 
-      do 
+      for i in `seq 0 100 $FINDINGS_COUNT`;
+      do
         BATCH_FINDINGS=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq -c '.['"$i:$i+100"']')
         BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT batch-import-findings --findings "${BATCH_FINDINGS}")
         if [[ -z "${BATCH_IMPORT_RESULT}" ]] || jq -e '.FailedCount >= 1' <<< "${BATCH_IMPORT_RESULT}" > /dev/null 2>&1; then
@@ -75,7 +82,7 @@ sendToSecurityHub(){
   local finding_id=$(echo ${findings} | jq -r .Id )
   SECURITYHUB_NEW_FINDINGS_IDS+=( "$finding_id" )
   BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-import-findings --findings "${findings}")
-  
+
   # Check for success if imported
   if [[ -z "${BATCH_IMPORT_RESULT}" ]] || ! jq -e '.SuccessCount == 1' <<< "${BATCH_IMPORT_RESULT}" > /dev/null 2>&1; then
     echo -e "\n$RED ERROR!$NORMAL Failed to send check output to AWS Security Hub\n"
