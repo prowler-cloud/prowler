@@ -31,18 +31,42 @@ addHtmlHeader() {
   <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
   <script type="text/javascript" src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
   <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jqc-1.12.4/dt-1.10.21/b-1.6.2/sl-1.3.1/datatables.min.js"></script>
-  <title>Prowler - AWS Security Assesments</title>
+  <script>
+    \$(document).ready(function(){
+      var maxLength = 30;
+      \$(".show-read-more").each(function(){
+        var myStr = \$(this).text();
+        if(\$.trim(myStr).length > maxLength){
+          var newStr = myStr.substring(0, maxLength);
+          var removedStr = myStr.substring(maxLength, \$.trim(myStr).length);
+          \$(this).empty().html(newStr);
+          \$(this).append(' <a href="javascript:void(0);" class="read-more">read more...</a>');
+          \$(this).append('<span class="more-text">' + removedStr + '</span>');
+        }
+      });
+      \$(".read-more").click(function(){
+        \$(this).siblings(".more-text").contents().unwrap();
+        \$(this).remove();
+      });
+    });
+    </script>
+    <style>
+      .show-read-more .more-text{
+          display: none;
+      }
+  </style>
+  <title>Prowler - AWS Security Assessments</title>
 </head>
 <body>
   <nav class="navbar navbar-expand-xl sticky-top navbar-dark bg-dark">
-      <a class="navbar-brand" href="#">Prowler - Security Assesments in AWS</a>
+      <a class="navbar-brand" href="#">Prowler - Security Assessments in AWS</a>
   </nav>
   <div class="container-fluid">
     <div class="row mt-3">
       <div class="col-md-4">
         <div class="card">
           <div class="card-header">
-            Report Information
+            Report Information:
           </div>
           <ul class="list-group list-group-flush">
             <li class="list-group-item">
@@ -65,10 +89,11 @@ addHtmlHeader() {
           </ul>
         </div>
       </div>
-      <div class="col-md-8">
+
+      <div class="col-md-4">
         <div class="card">
           <div class="card-header">
-            Assesment Summary
+            Assessment Summary:
           </div>
           <ul class="list-group list-group-flush">
             <li class="list-group-item">
@@ -88,7 +113,30 @@ addHtmlHeader() {
             </li>
           </ul>
         </div>
-        * Sortable columns are CheckID (default) and Result 
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">
+            Scoring Information:
+          </div>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <b>Prowler Score:</b> PROWLER_SCORE%
+            </li>
+            <li class="list-group-item">
+              <b>Total Resources:</b> TOTAL_RESOURCES
+            </li>
+            <li class="list-group-item">
+              <b>Passed:</b> PASS_COUNTER
+            </li>
+            <li class="list-group-item">
+              <b>Failed:</b> FAIL_COUNTER
+            </li>
+            <li class="list-group-item">
+              <b>Total Checks Executed:</b> CHECKS_COUNTER
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
     <div class="row mt-3">
@@ -106,6 +154,10 @@ addHtmlHeader() {
               <th scope="col">CheckID</th>
               <th style="width:40%" scope="col">Check Title</th>
               <th style="width:40%" scope="col">Check Output</th>
+              <th scope="col">CAF Epic</th>
+              <th style="width:40%" scope="col">Risk</th>
+              <th style="width:40%" scope="col">Remediation</th>
+              <th style="width:40%" scope="col">Link to doc</th>
             </tr>
           </thead>
           <tbody>

@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra7129="AwsElasticLoadBalancingV2LoadBalancer"
 CHECK_ALTERNATE_check7129="extra7129"
 CHECK_ASFF_COMPLIANCE_TYPE_extra7129="ens-mp.s.2.aws.waf.3"
 CHECK_SERVICENAME_extra7129="elb"
+CHECK_RISK_extra7129='If not WAF ACL is attached risk of web attacks increases.'
+CHECK_REMEDIATION_extra7129='Using the AWS Management Console open the AWS WAF console to attach an ACL.'
+CHECK_DOC_extra7129='https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html'
+CHECK_CAF_EPIC_extra7129='Infrastructure Security'
 
 extra7129(){
   for regx in $REGIONS; do

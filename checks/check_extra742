@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra742="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra742="AwsCloudFormationStack"
 CHECK_ALTERNATE_check742="extra742"
 CHECK_SERVICENAME_extra742="cloudformation"
+CHECK_RISK_extra742='Secrets hardcoded into CloudFormation outputs can be used by malware and bad actors to gain lateral access to other services.'
+CHECK_REMEDIATION_extra742='Implement automated detective control (e.g. using tools like Prowler ) to scan accounts for passwords and secrets. Use secrets manager service to store and retrieve passwords and secrets. '
+CHECK_DOC_extra742='https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-secretsmanager-secret-generatesecretstring.html'
+CHECK_CAF_EPIC_extra742='IAM'
 
 extra742(){
   SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"

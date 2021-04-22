@@ -19,7 +19,11 @@ CHECK_ASFF_RESOURCE_TYPE_extra7108="AwsSageMakerNotebookInstance"
 CHECK_ALTERNATE_check7108="extra7108"
 CHECK_SEVERITY_extra7108="Medium"
 CHECK_SERVICENAME_extra7108="sagemaker"
-    
+CHECK_RISK_extra7108='Data exfiltration could happen if information is not protected. KMS keys provide additional security level to IAM policies.'
+CHECK_REMEDIATION_extra7108='Specify AWS KMS keys to use for input and output from S3 and EBS.'
+CHECK_DOC_extra7108='https://docs.aws.amazon.com/sagemaker/latest/dg/key-management.html'
+CHECK_CAF_EPIC_extra7108='Data Protection'
+
 extra7108(){
     for regx in ${REGIONS}; do
         LIST_SM_NB_JOBS=$($AWSCLI $PROFILE_OPT --region $regx sagemaker list-training-jobs --query 'TrainingJobSummaries[*].TrainingJobName' --output text)

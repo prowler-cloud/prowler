@@ -20,6 +20,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra728="AwsSqsQueue"
 CHECK_ALTERNATE_check728="extra728"
 CHECK_ASFF_COMPLIANCE_TYPE_extra728="ens-mp.info.3.sns.1"
 CHECK_SERVICENAME_extra728="sqs"
+CHECK_RISK_extra728='If not enabled sensible information in transit is not protected.'
+CHECK_REMEDIATION_extra728='Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.'
+CHECK_DOC_extra728='https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-sse-existing-queue.html'
+CHECK_CAF_EPIC_extra728='Data Protection'
 
 extra728(){
   for regx in $REGIONS; do

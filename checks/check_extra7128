@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra7128="AwsDynamoDBTable"
 CHECK_ALTERNATE_check7128="extra7128"
 CHECK_ASFF_COMPLIANCE_TYPE_extra7128="ens-mp.info.3.aws.dyndb.1"
 CHECK_SERVICENAME_extra7128="dynamodb"
+CHECK_RISK_extra7128='All user data stored in Amazon DynamoDB is fully encrypted at rest. This functionality helps reduce the operational burden and complexity involved in protecting sensitive data.'
+CHECK_REMEDIATION_extra7128='Specify an encryption key when you create a new table or switch the encryption keys on an existing table by using the AWS Management Console.'
+CHECK_DOC_extra7128='https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/EncryptionAtRest.html'
+CHECK_CAF_EPIC_extra7128='Data Protection'
 
 extra7128(){
   for regx in $REGIONS; do

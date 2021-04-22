@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra783="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra783="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check783="extra783"
 CHECK_SERVICENAME_extra783="es"
+CHECK_RISK_extra783='If not enable unauthorized access to your data could risk increases.'
+CHECK_REMEDIATION_extra783='When creating ES Domains; enable "Require HTTPS fo all traffic to the domain".'
+CHECK_DOC_extra783='https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-createupdatedomains.html'
+CHECK_CAF_EPIC_extra783='Data Protection'
 
 extra783(){
   for regx in $REGIONS; do

@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra7111="AwsSageMakerNotebookInstance"
 CHECK_ALTERNATE_check7111="extra7111"
 CHECK_SEVERITY_extra7111="Medium"
 CHECK_SERVICENAME_extra7111="sagemaker"
+CHECK_RISK_extra7111='This could provide an avenue for unauthorized access to your data.'
+CHECK_REMEDIATION_extra7111='Restrict which traffic can access by launching Studio in a Virtual Private Cloud (VPC) of your choosing.'
+CHECK_DOC_extra7111='https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html'
+CHECK_CAF_EPIC_extra7111='Infrastructure Security'
 
 extra7111(){
     for regx in ${REGIONS}; do

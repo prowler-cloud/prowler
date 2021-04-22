@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra741="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra741="AwsEc2Instance"
 CHECK_ALTERNATE_check741="extra741"
 CHECK_SERVICENAME_extra741="ec2"
+CHECK_RISK_extra741='Secrets hardcoded into instance user data can be used by malware and bad actors to gain lateral access to other services.'
+CHECK_REMEDIATION_extra741='Implement automated detective control (e.g. using tools like Prowler ) to scan accounts for passwords and secrets. Use secrets manager service to store and retrieve passwords and secrets. '
+CHECK_DOC_extra741='https://docs.aws.amazon.com/secretsmanager/latest/userguide/tutorials_basic.html'
+CHECK_CAF_EPIC_extra741='IAM'
 
 extra741(){
   SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"

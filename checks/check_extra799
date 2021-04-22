@@ -19,6 +19,10 @@ CHECK_SEVERITY_extra799="High"
 CHECK_ASFF_RESOURCE_TYPE_extra799="AwsSecurityHubHub"
 CHECK_ALTERNATE_check799="extra799"
 CHECK_SERVICENAME_extra799="securityhub"
+CHECK_RISK_extra799='AWS Security Hub gives you a comprehensive view of your security alerts and security posture across your AWS accounts.'
+CHECK_REMEDIATION_extra799='Security Hub is Regional. When you enable or disable a security standard; it is enabled or disabled only in the current Region or in the Region that you specify.'
+CHECK_DOC_extra799='https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-standards-enable-disable.html'
+CHECK_CAF_EPIC_extra799='Logging and Monitoring'
 
 extra799(){
   for regx in $REGIONS; do

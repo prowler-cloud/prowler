@@ -43,6 +43,10 @@ CHECK_ASFF_RESOURCE_TYPE_check35="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check305="check35"
 CHECK_ASFF_COMPLIANCE_TYPE_check35="ens-op.exp.8.aws.trail.1"
 CHECK_SERVICENAME_check35="cloudtrail"
+CHECK_RISK_check35='Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.'
+CHECK_REMEDIATION_check35='It is recommended that a metric filter and alarm be established for unauthorized requests.'
+CHECK_DOC_check35='https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html'
+CHECK_CAF_EPIC_check35='Logging and Monitoring'
 
 check35(){
   check3x '\$\.eventName\s*=\s*CreateTrail.+\$\.eventName\s*=\s*UpdateTrail.+\$\.eventName\s*=\s*DeleteTrail.+\$\.eventName\s*=\s*StartLogging.+\$\.eventName\s*=\s*StopLogging'

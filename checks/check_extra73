@@ -21,6 +21,10 @@ CHECK_ALTERNATE_extra703="extra73"
 CHECK_ALTERNATE_check73="extra73"
 CHECK_ALTERNATE_check703="extra73"
 CHECK_SERVICENAME_extra73="s3"
+CHECK_RISK_extra73='Even if you enable all possible bucket ACL options available in the Amazon S3 console the ACL alone does not allow everyone to download objects from your bucket. Depending on which option you select any user could perform some actions.'
+CHECK_REMEDIATION_extra73='You can enable block public access settings only for access points; buckets; and AWS accounts. Amazon S3 does not support block public access settings on a per-object basis. When you apply block public access settings to an account; the settings apply to all AWS Regions globally. The settings might not take effect in all Regions immediately or simultaneously; but they eventually propagate to all Regions.'
+CHECK_DOC_extra73='https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html'
+CHECK_CAF_EPIC_extra73='Data Protection'
 
 # Verified with AWS support that if get-bucket-acl doesn't return a grant
 # for All and get-bucket-policy-status returns IsPublic false or bad request

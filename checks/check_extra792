@@ -19,6 +19,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra792="AwsElbLoadBalancer"
 CHECK_ALTERNATE_check792="extra792"
 CHECK_ASFF_COMPLIANCE_TYPE_extra792="ens-mp.com.2.aws.elb.2"
 CHECK_SERVICENAME_extra792="elb"
+CHECK_RISK_extra792='Using insecure ciphers could affect privacy of in transit information.'
+CHECK_REMEDIATION_extra792='Use a Security policy with a ciphers that are stronger as possible. Drop legacy and unsecure ciphers.'
+CHECK_DOC_extra792='https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-ssl-security-policy.html'
+CHECK_CAF_EPIC_extra792='Data Protection'
 
 extra792(){
   # "Check if Elastic Load Balancers have insecure SSL ciphers (Not Scored) (Not part of CIS benchmark)"

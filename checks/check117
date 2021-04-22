@@ -16,6 +16,10 @@ CHECK_SEVERITY_check117="Medium"
 CHECK_ASFF_TYPE_check117="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ALTERNATE_check117="check117"
 CHECK_SERVICENAME_check117="support"
+CHECK_RISK_check117='Ensure contact email and telephone details for AWS accounts are current and map to more than one individual in your organization. An AWS account supports a number of contact details; and AWS will use these to contact the account owner if activity judged to be in breach of Acceptable Use Policy. If an AWS account is observed to be behaving in a prohibited or suspicious manner; AWS will attempt to contact the account owner by email and phone using the contact details listed. If this is unsuccessful and the account behavior needs urgent mitigation; proactive measures may be taken; including throttling of traffic between the account exhibiting suspicious behavior and the AWS API endpoints and the Internet. This will result in impaired service to and from the account in question.'
+CHECK_REMEDIATION_check117='Using the Billing and Cost Management console complete contact details.'
+CHECK_DOC_check117='https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/manage-account-payment.html#contact-info'
+CHECK_CAF_EPIC_check117='IAM'
 
 check117(){
   # "Maintain current contact details (Scored)"

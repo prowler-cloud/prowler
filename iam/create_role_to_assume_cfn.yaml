@@ -62,4 +62,5 @@ Resources:
                 - 'ecr:Describe*'
                 - 'support:Describe*'
                 - 'tag:GetTagKeys'
+                - 'lambda:GetFunction'
               Resource: '*'

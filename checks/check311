@@ -42,6 +42,10 @@ CHECK_ASFF_TYPE_check311="Software and Configuration Checks/Industry and Regulat
 CHECK_ASFF_RESOURCE_TYPE_check311="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check311="check311"
 CHECK_SERVICENAME_check311="vpc"
+CHECK_RISK_check311='Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.'
+CHECK_REMEDIATION_check311='It is recommended that a metric filter and alarm be established for unauthorized requests.'
+CHECK_DOC_check311='https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html'
+CHECK_CAF_EPIC_check311='Logging and Monitoring'
 
 check311(){
   check3x '\$\.eventName\s*=\s*CreateNetworkAcl.+\$\.eventName\s*=\s*CreateNetworkAclEntry.+\$\.eventName\s*=\s*DeleteNetworkAcl.+\$\.eventName\s*=\s*DeleteNetworkAclEntry.+\$\.eventName\s*=\s*ReplaceNetworkAclEntry.+\$\.eventName\s*=\s*ReplaceNetworkAclAssociation'

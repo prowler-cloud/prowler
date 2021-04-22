@@ -19,6 +19,10 @@ CHECK_SEVERITY_extra733="Low"
 CHECK_ALTERNATE_check733="extra733"
 CHECK_ASFF_COMPLIANCE_TYPE_extra733="ens-op.acc.1.aws.iam.1"
 CHECK_SERVICENAME_extra733="iam"
+CHECK_RISK_extra733='Without SAML provider users with AWS CLI or AWS API access can use IAM static credentials. SAML helps users to assume role by default each time they authenticate.'
+CHECK_REMEDIATION_extra733='Enable SAML provider and use temporary credentials. You can use temporary security credentials to make programmatic requests for AWS resources using the AWS CLI or AWS API (using the AWS SDKs ). The temporary credentials provide the same permissions that you have with use long-term security credentials such as IAM user credentials. In case of not having SAML provider capabilities prevent usage of long-lived credentials.'
+CHECK_DOC_extra733='https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithSAML.html'
+CHECK_CAF_EPIC_extra733='IAM'
 
 extra733(){
   LIST_SAML_PROV=$($AWSCLI iam list-saml-providers $PROFILE_OPT --query 'SAMLProviderList[*].Arn' --output text |grep -v ^None)

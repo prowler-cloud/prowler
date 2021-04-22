@@ -18,6 +18,10 @@ CHECK_SEVERITY_extra794="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra794="AwsEksCluster"
 CHECK_ALTERNATE_check794="extra794"
 CHECK_SERVICENAME_extra794="eks"
+CHECK_RISK_extra794='If logs are not enabled; monitoring of service use and threat analysis is not possible.'
+CHECK_REMEDIATION_extra794='Make sure you logging for EKS control plane is enabled.'
+CHECK_DOC_extra794='https://docs.aws.amazon.com/eks/latest/userguide/logging-monitoring.html'
+CHECK_CAF_EPIC_extra794='Logging and Monitoring'
 
 extra794(){
   textInfo "Looking for control plane logging enabled for EKS clusters across all regions... "

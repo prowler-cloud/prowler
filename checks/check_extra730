@@ -21,6 +21,10 @@ CHECK_SEVERITY_extra730="High"
 CHECK_ASFF_RESOURCE_TYPE_extra730="AwsCertificateManagerCertificate"
 CHECK_ALTERNATE_check730="extra730"
 CHECK_SERVICENAME_extra730="acm"
+CHECK_RISK_extra730='Expired certificates can impact service availability.'
+CHECK_REMEDIATION_extra730='Monitor certificate expiration and take automated action to renew; replace or remove. Having shorter TTL for any security artifact is a general recommendation; but requires additional automation in place. If not longer required delete certificate. Use AWS config using the managed rule: acm-certificate-expiration-check.'
+CHECK_DOC_extra730='https://docs.aws.amazon.com/config/latest/developerguide/acm-certificate-expiration-check.html'
+CHECK_CAF_EPIC_extra730='Data Protection'
 
 extra730(){
   # "Check if ACM Certificates are about to expire in $DAYS_TO_EXPIRE_THRESHOLD days or less"

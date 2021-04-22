@@ -20,6 +20,10 @@ CHECK_ALTERNATE_extra709="extra79"
 CHECK_ALTERNATE_check79="extra79"
 CHECK_ALTERNATE_check709="extra79"
 CHECK_SERVICENAME_extra79="elb"
+CHECK_RISK_extra79='Publicly accessible load balancers could expose sensible data to bad actors.'
+CHECK_REMEDIATION_extra79='Ensure the load balancer should be publicly accessible. If publiccly exposed ensure a WAF ACL is implemented.'
+CHECK_DOC_extra79='https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html'
+CHECK_CAF_EPIC_extra79='Data Protection'
 
 extra79(){
   # "Check for internet facing Elastic Load Balancers (Not Scored) (Not part of CIS benchmark)"

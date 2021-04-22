@@ -18,8 +18,10 @@ CHECK_SEVERITY_extra7133="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7133="AwsRdsDbInstance"
 CHECK_ALTERNATE_check7133="extra7133"
 CHECK_SERVICENAME_extra7133="rds"
-CHECK_RISK_extra7133="In case of failure with a single-AZ deployment configuration should an availability zone specific database failure occur Amazon RDS can not automatically fail over to the standby availability zone."
-CHECK_REMEDIATION_extra7133="Enable multi-AZ deployment for production databases. More here: https://aws.amazon.com/rds/features/multi-az/."
+CHECK_RISK_extra7133='In case of failure; with a single-AZ deployment configuration; should an availability zone specific database failure occur; Amazon RDS can not automatically fail over to the standby availability zone.'
+CHECK_REMEDIATION_extra7133='Enable multi-AZ deployment for production databases.'
+CHECK_DOC_extra7133='https://aws.amazon.com/rds/features/multi-az/'
+CHECK_CAF_EPIC_extra7133='Data Protection'
 
 extra7133(){
   for regx in $REGIONS; do

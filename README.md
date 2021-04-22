@@ -1,4 +1,8 @@
-# Prowler AWS Security Tool
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/3985464/113734260-7ba06900-96fb-11eb-82bc-d4f68a1e2710.png" />
+</p>
+
+# Prowler - AWS Security Tool
 
 ## Table of Contents
 
@@ -27,7 +31,7 @@
 
 ## Description
 
-Prowler is a command line tool for AWS Security Best Practices Assessment, Auditing, Hardening and Forensics Readiness Tool.
+Prowler is a command line tool that helps you with AWS security assessment, auditing, hardening and incident response.
 
 It follows guidelines of the CIS Amazon Web Services Foundations Benchmark (49 checks) and has more than 100 additional checks including related to GDPR, HIPAA, PCI-DSS, ISO-27001, FFIEC, SOC2 and others.
 
@@ -48,23 +52,19 @@ Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-20
 - GDPR [gdpr] Read more [here](#gdpr-checks)
 - HIPAA [hipaa] Read more [here](#hipaa-checks)
 - Trust Boundaries [trustboundaries] Read more [here](#trust-boundaries-checks)
-- Secrets 
-- PCI-DSS
-- ISO-27001
+- Secrets
 - Internet exposed resources
 - EKS-CIS
-- FFIEC
-- SOC2
-- ENS (Esquema Nacional de Seguridad of Spain)
+- Also includes PCI-DSS, ISO-27001, FFIEC, SOC2, ENS (Esquema Nacional de Seguridad of Spain).
 
 With Prowler you can:
 
-- get a direct colorful or monochrome report 
-- a HTML, CSV, JUNIT, JSON or JSON ASFF format report
-- send findings directly to Security Hub
-- run specific checks and groups or create your own
-- check multiple AWS accounts in parallel or sequentially
-- and more! Read examples below
+- Get a direct colorful or monochrome report
+- A HTML, CSV, JUNIT, JSON or JSON ASFF format report
+- Send findings directly to Security Hub
+- Run specific checks and groups or create your own
+- Check multiple AWS accounts in parallel or sequentially
+- And more! Read examples below
 
 ## High level architecture
 
@@ -189,14 +189,15 @@ Prowler has been written in bash using AWS-CLI and it works in Linux and OSX.
 
 - Sample screenshot of report first lines:
 
-    <img width="1125" alt="screenshot 2016-09-13 16 05 42" src="https://cloud.githubusercontent.com/assets/3985464/18489640/50fe6824-79cc-11e6-8a9c-e788b88a8a6b.png">
-
-- Sample screenshot of single check for check 3.3:
-
-    <img width="1006" alt="screenshot 2016-09-14 13 20 46" src="https://cloud.githubusercontent.com/assets/3985464/18522590/a04ca9a6-7a7e-11e6-8730-b545c9204990.png">
+    <img width="1125" src="https://user-images.githubusercontent.com/3985464/113942728-92c97e80-9801-11eb-9dfc-aef27ad9f5fb.png">
 
 - Sample screenshot of the html output `-M html`:
-    <img width="1006" alt="Prowler html" src="https://user-images.githubusercontent.com/3985464/82838608-0229ce80-9ecd-11ea-860c-468f66aa2790.png">
+
+    <img width="1006" alt="Prowler html" src="https://user-images.githubusercontent.com/3985464/113942724-8f35f780-9801-11eb-8089-d3163dd4e5a4.png">
+
+- Sample screenshot of the junit-xml output in CodeBuild `-M junit-xml`:
+
+    <img width="1006" src="https://user-images.githubusercontent.com/3985464/113942824-ca382b00-9801-11eb-84e5-d7731548a7a9.png">
 
 ### Save your reports
 

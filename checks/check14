@@ -18,6 +18,10 @@ CHECK_ASFF_RESOURCE_TYPE_check14="AwsIamUser"
 CHECK_ALTERNATE_check104="check14"
 CHECK_ASFF_COMPLIANCE_TYPE_check14="ens-op.acc.1.aws.iam.4 ens-op.acc.5.aws.iam.3"
 CHECK_SERVICENAME_check14="iam"
+CHECK_RISK_check14='Access keys consist of an access key ID and secret access key which are used to sign programmatic requests that you make to AWS. AWS users need their own access keys to make programmatic calls to AWS from the AWS Command Line Interface (AWS CLI)- Tools for Windows PowerShell- the AWS SDKs- or direct HTTP calls using the APIs for individual AWS services. It is recommended that all access keys be regularly rotated.'
+CHECK_REMEDIATION_check14='Use the credential report to  ensure  access_key_X_last_rotated  is less than 90 days ago.'
+CHECK_DOC_check14='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html'
+CHECK_CAF_EPIC_check14='IAM'
 
 check14(){
   # "Ensure access keys are rotated every 90 days or less (Scored)" # also checked by Security Monkey

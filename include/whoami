@@ -29,9 +29,8 @@ case "$REGION" in
   ;;
 esac
 
-GETCALLER=$($AWSCLI sts get-caller-identity $PROFILE_OPT --region $REGION_FOR_STS)
-RESULT_CALL=$?
-if [[ $RESULT_CALL == 254 ]]; then
+GETCALLER=$($AWSCLI sts get-caller-identity $PROFILE_OPT --region $REGION_FOR_STS 2>&1)
+if [[ $(echo "$GETCALLER" | grep 'Unable') ]]; then
   if [[ $PRINTCHECKSONLY || $PRINTGROUPSONLY ]]; then
     echo Listing... 
   else
@@ -45,11 +44,11 @@ fi
 if [[ $ACCOUNT_TO_ASSUME ]]; then
   ACCOUNT_NUM=$ACCOUNT_TO_ASSUME
 else
-  ACCOUNT_NUM=$(echo $GETCALLER | jq -r '.Account')
+  ACCOUNT_NUM=$(echo $GETCALLER | jq -r '.Account' 2>&1)
 fi
 
-CALLER_ARN=$(echo $GETCALLER | jq -r '.Arn')
-USER_ID=$(echo $GETCALLER | jq -r '.UserId')
+CALLER_ARN=$(echo $GETCALLER | jq -r '.Arn' 2>&1)
+USER_ID=$(echo $GETCALLER | jq -r '.UserId' 2>&1)
 AWS_PARTITION=$(echo $CALLER_ARN| cut -d: -f2)
 
 getWhoami(){
@@ -63,8 +62,8 @@ getWhoami(){
       exit $EXITCODE
     fi
     printCsvHeader
-    textTitle "0.0" "Show report generation info" "NOT_SCORED" "SUPPORT"
-    textInfo "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
+    # textTitle "0.0" "Show report generation info" "NOT_SCORED" "SUPPORT"
+    # textInfo "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
   elif [[ "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
     :
   else

@@ -18,6 +18,10 @@ CHECK_ASFF_RESOURCE_TYPE_check12="AwsIamUser"
 CHECK_ALTERNATE_check102="check12"
 CHECK_ASFF_COMPLIANCE_TYPE_check12="ens-op.acc.5.aws.iam.1"
 CHECK_SERVICENAME_check12="iam"
+CHECK_RISK_check12='Unauthorized access to this critical account if password is not secure or it is disclosed in any way.'
+CHECK_REMEDIATION_check12='Enable MFA for root account. is a simple best practice that adds an extra layer of protection on top of your user name and password. Recommended to use hardware keys over virtual MFA.'
+CHECK_DOC_check12='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html'
+CHECK_CAF_EPIC_check12='IAM'
 
 check12(){
   # "Ensure multi-factor authentication (MFA) is enabled for all IAM users that have a console password (Scored)"

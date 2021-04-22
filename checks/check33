@@ -43,6 +43,10 @@ CHECK_ASFF_RESOURCE_TYPE_check33="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check303="check33"
 CHECK_ASFF_COMPLIANCE_TYPE_check33="ens-op.exp.8.aws.trail.5"
 CHECK_SERVICENAME_check33="iam"
+CHECK_RISK_check33='Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.'
+CHECK_REMEDIATION_check33='It is recommended that a metric filter and alarm be established for unauthorized requests.'
+CHECK_DOC_check33='https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html'
+CHECK_CAF_EPIC_check33='Logging and Monitoring'
 
 check33(){
   check3x '\$\.userIdentity\.type\s*=\s*"Root".+\$\.userIdentity\.invokedBy NOT EXISTS.+\$\.eventType\s*!=\s*"AwsServiceEvent"'

@@ -19,6 +19,10 @@ CHECK_SEVERITY_extra732="Low"
 CHECK_ASFF_RESOURCE_TYPE_extra732="AwsCloudFrontDistribution"
 CHECK_ALTERNATE_check732="extra732"
 CHECK_SERVICENAME_extra732="cloudfront"
+CHECK_RISK_extra732='Consider countries where service should not be accessed; by legal or compliance requirements. Additionally if not restricted the attack vector is increased.'
+CHECK_REMEDIATION_extra732='If possible; define and enable Geo restrictions for this service.'
+CHECK_DOC_extra732='https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/georestrictions.html'
+CHECK_CAF_EPIC_extra732='Infrastructure Security'
 
 extra732(){
   LIST_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions $PROFILE_OPT --query 'DistributionList.Items[*].Id' --output text |grep -v ^None)

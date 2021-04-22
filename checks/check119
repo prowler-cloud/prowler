@@ -17,6 +17,10 @@ CHECK_ASFF_TYPE_check119="Software and Configuration Checks/Industry and Regulat
 CHECK_ASFF_RESOURCE_TYPE_check119="AwsEc2Instance"
 CHECK_ALTERNATE_check119="check119"
 CHECK_SERVICENAME_check119="ec2"
+CHECK_RISK_check119='AWS access from within AWS instances can be done by either encoding AWS keys into AWS API calls or by assigning the instance to a role which has an appropriate permissions policy for the required access. AWS IAM roles reduce the risks associated with sharing and rotating credentials that can be used outside of AWS itself. If credentials are compromised; they can be used from outside of the AWS account.'
+CHECK_REMEDIATION_check119='IAM roles can only be associated at the launch of an instance. To remediate an instance to add it to a role you must create or re-launch a new instance. (Check for external dependencies on its current private ip or public addresses).'
+CHECK_DOC_check119='http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html'
+CHECK_CAF_EPIC_check119='IAM'
 
 check119(){
   for regx in $REGIONS; do

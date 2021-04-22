@@ -19,7 +19,11 @@ CHECK_ASFF_RESOURCE_TYPE_extra7107="AwsSageMakerNotebookInstance"
 CHECK_ALTERNATE_check7107="extra7107"
 CHECK_SEVERITY_extra7107="Medium"
 CHECK_SERVICENAME_extra7107="sagemaker"
-    
+CHECK_RISK_extra7107='If not restricted unintended access could happen.'
+CHECK_REMEDIATION_extra7107='Internetwork communications support TLS 1.2 encryption between all components and clients.'
+CHECK_DOC_extra7107='https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html'
+CHECK_CAF_EPIC_extra7107='Data Protection'
+
 extra7107(){
     for regx in ${REGIONS}; do
         LIST_SM_NB_JOBS=$($AWSCLI $PROFILE_OPT --region $regx sagemaker list-training-jobs --query 'TrainingJobSummaries[*].TrainingJobName' --output text)

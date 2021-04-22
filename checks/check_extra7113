@@ -30,6 +30,10 @@ CHECK_SEVERITY_extra7113="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7113="AwsRdsDbInstance"
 CHECK_ALTERNATE_check7113="extra7113"
 CHECK_SERVICENAME_extra7113="rds"
+CHECK_RISK_extra7113='You can only delete instances that do not have deletion protection enabled.'
+CHECK_REMEDIATION_extra7113='Enable deletion protection using the AWS Management Console for production DB instances.'
+CHECK_DOC_extra7113='https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_DeleteInstance.html'
+CHECK_CAF_EPIC_extra7113='Data Protection'
 
 extra7113(){
   textInfo "Looking for RDS Volumes in all regions...  "

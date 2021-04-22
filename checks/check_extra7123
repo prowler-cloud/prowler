@@ -20,6 +20,10 @@ CHECK_ASFF_RESOURCE_TYPE_extra7123="AwsIamUser"
 CHECK_ALTERNATE_check7123="extra7123"
 CHECK_ASFF_COMPLIANCE_TYPE_extra7123="ens-op.acc.1.aws.iam.2"
 CHECK_SERVICENAME_extra7123="iam"
+CHECK_RISK_extra7123='Access Keys could be lost or stolen. It creates a critical risk.'
+CHECK_REMEDIATION_extra7123='Avoid using long lived access keys.'
+CHECK_DOC_extra7123='https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListAccessKeys.html'
+CHECK_CAF_EPIC_extra7123='IAM'
 
 extra7123(){
   LIST_OF_USERS_WITH_2ACCESS_KEYS=$(cat $TEMP_REPORT_FILE| awk -F, '{ print $1, $9, $14 }' |grep "\ true\ true" | awk '{ print $1 }')
