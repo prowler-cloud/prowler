@@ -29,7 +29,7 @@ check45(){
     NACL_LIST=$($AWSCLI ec2 describe-network-acls --query 'NetworkAcls[?Entries[?(((!PortRange) || (PortRange.From<=`22` && PortRange.To>=`22`)) && ((CidrBlock == `0.0.0.0/0`) && (Egress == `false`) && (RuleAction == `allow`)))]].{NetworkAclId:NetworkAclId}' $PROFILE_OPT --region $regx --output text)
     if [[ $NACL_LIST ]];then
       for NACL in $NACL_LIST;do
-        textFail "$regx: Found Network ACL: $NACL open to 0.0.0.0/0 for SSH port 22" "$regx"
+        textInfo "$regx: Found Network ACL: $NACL open to 0.0.0.0/0 for SSH port 22" "$regx"
       done
     else
       textPass "$regx: No Network ACL found with SSH port 22 open to 0.0.0.0/0" "$regx"
