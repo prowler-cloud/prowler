@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.4.0-07042021
+PROWLER_VERSION=2.5.0-15042021
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -100,13 +100,17 @@ USAGE:
       -w                  whitelist file. See whitelist_sample.txt for reference and format
                             (i.e.: whitelist_sample.txt)
       -N <shodan_api_key> Shoadan API key used by check extra7102.
+      -o                  Custom output directory, if not specified will use default prowler/output, requires -M <mode>
+                            (i.e.: -M csv -o /tmp/reports/)
+      -B                  Custom output bucket, requires -M <mode> and it can work also with -o flag.
+                            (i.e.: -M csv -B my-bucket or -M csv -B my-bucket/folder/)
       -V                  show version number & exit
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -190,6 +194,12 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:" OPTION; do
      N )
         SHODAN_API_KEY=$OPTARG
         ;;
+     o )
+        OUTPUT_DIR_CUSTOM=$OPTARG
+        ;;
+     B )
+        OUTPUT_BUCKET=$OPTARG
+        ;;
      : )
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL  -$OPTARG requires an argument"
@@ -243,6 +253,7 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/csv_header
 . $PROWLER_DIR/include/banner
 . $PROWLER_DIR/include/html_report
+. $PROWLER_DIR/include/outputs_bucket
 . $PROWLER_DIR/include/outputs
 . $PROWLER_DIR/include/credentials_report
 . $PROWLER_DIR/include/scoring
@@ -295,7 +306,8 @@ TOTAL_CHECKS=($(echo "${TOTAL_CHECKS[*]}" | tr ' ' '\n' | awk '!seen[$0]++' | so
 get_regions() {
   # Get list of regions based on include/whoami
   REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' --output text $PROFILE_OPT --region $REGION_FOR_STS --region-names $FILTERREGION 2>&1)
-  if [[ $(echo "$REGIONS" | grep 'AccessDenied\|UnauthorizedOperation') ]]; then
+  ret=$?
+  if [[ $ret -ne 0 ]]; then
     echo "$OPTRED Access Denied trying to describe regions! Review permissions as described here: https://github.com/toniblyx/prowler/#requirements-and-installation $OPTNORMAL"
     EXITCODE=1
     exit $EXITCODE
@@ -607,6 +619,7 @@ if [[ $GROUP_ID_READ ]];then
     fi
     cleanTemp
     scoring
+    copyToS3
     exit $EXITCODE
   else
     textFail "Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
@@ -634,6 +647,7 @@ if [[ $CHECK_ID ]];then
   if [[ "${MODES[@]}" =~ "html" ]]; then
     addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
+  copyToS3
   cleanTemp
   exit $EXITCODE
 fi
@@ -643,8 +657,10 @@ execute_all
 if [[ "${MODES[@]}" =~ "html" ]]; then
   addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
 fi
+
 scoring
 cleanTemp
+copyToS3
 
 if [[ $ACCOUNT_TO_ASSUME ]]; then
   # unset env variables with assumed role credentials
