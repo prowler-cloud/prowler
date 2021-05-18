@@ -21,7 +21,7 @@ CHECK_ALTERNATE_check7138="extra7138"
 CHECK_SERVICENAME_extra7138="ec2"
 CHECK_RISK_extra7138='Even having a perimeter firewall; having network acls open allows any user or malware with vpc access to scan for well known and sensitive ports and gain access to instance.'
 CHECK_REMEDIATION_extra7138='Apply Zero Trust approach. Implement a process to scan and remediate unrestricted or overly permissive network acls. Recommended best practices is to narrow the definition for the minimum ports required.'
-CHECK_DOC_extra7138=''
+CHECK_DOC_extra7138='https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html'
 CHECK_CAF_EPIC_extra7138='Infrastructure Security'
 
 extra7138(){
