@@ -32,13 +32,13 @@ extra7131(){
         RDS_NAME=$(echo $rds_instance | awk '{ print $1; }')
         RDS_AUTOMINORUPGRADE_FLAG=$(echo $rds_instance | awk '{ print $2; }')
         if [[ $RDS_AUTOMINORUPGRADE_FLAG == "True" ]];then 
-            textPass "$regx: RDS instance: $RDS_NAME is has minor version upgrade enabled" "$regx"
+            textPass "$regx: RDS instance: $RDS_NAME is has minor version upgrade enabled" "$regx" "$RDS_NAME"
         else
-            textFail "$regx: RDS instance: $RDS_NAME does not have minor version upgrade enabled" "$regx"
+            textFail "$regx: RDS instance: $RDS_NAME does not have minor version upgrade enabled" "$regx" "$RDS_NAME"
         fi
       done <<< "$LIST_OF_RDS_INSTANCES"
       else
-        textInfo "$regx: no RDS instances found" "$regx"
+        textInfo "$regx: no RDS instances found" "$regx" "$RDS_NAME"
     fi
   done
 }

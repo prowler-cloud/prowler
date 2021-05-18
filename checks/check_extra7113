@@ -36,20 +36,19 @@ CHECK_DOC_extra7113='https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER
 CHECK_CAF_EPIC_extra7113='Data Protection'
 
 extra7113(){
-  textInfo "Looking for RDS Volumes in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[*].DBInstanceIdentifier' --output text)
     if [[ $LIST_OF_RDS_INSTANCES ]];then
       for rdsinstance in $LIST_OF_RDS_INSTANCES; do
         IS_DELETIONPROTECTION=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --db-instance-identifier $rdsinstance --query 'DBInstances[*].DeletionProtection' --output text)
         if [[ $IS_DELETIONPROTECTION == "False" ]]; then
-          textFail "$regx: RDS instance $rdsinstance deletion protection is not enabled!" "$regx"
+          textFail "$regx: RDS instance $rdsinstance deletion protection is not enabled!" "$regx" "$rdsinstance"
         else
-          textPass "$regx: RDS instance $rdsinstance deletion protection is enabled" "$regx"
+          textPass "$regx: RDS instance $rdsinstance deletion protection is enabled" "$regx" "$rdsinstance"
         fi
       done
     else
-      textInfo "$regx: No RDS instances found" "$regx"
+      textInfo "$regx: No RDS instances found" "$regx" "$rdsinstance"
     fi
   done
 }

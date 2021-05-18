@@ -77,6 +77,7 @@ fi
 textPass(){
   CHECK_RESULT="PASS"
   CHECK_RESULT_EXTENDED="$1"
+  CHECK_RESOURCE_ID="$3"
 
   if [[ "$QUIET" == 1 ]]; then
     return
@@ -89,13 +90,13 @@ textPass(){
     REPREGION=$REGION
   fi
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
-    generateJsonOutput "$1" "Pass" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_JSON
+    generateJsonOutput "$1" "Pass" "$CHECK_RESOURCE_ID" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_JSON
   fi
   if [[ "${MODES[@]}" =~ "json-asff" ]]; then
-    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "PASSED")
+    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "PASSED" "$CHECK_RESOURCE_ID")
     echo "${JSON_ASFF_OUTPUT}" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_ASFF
     if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
       sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REPREGION}"
@@ -118,6 +119,7 @@ textPass(){
 textInfo(){
   CHECK_RESULT="INFO"
   CHECK_RESULT_EXTENDED="$1"
+  CHECK_RESOURCE_ID="$3"
 
   if [[ "$QUIET" == 1 ]]; then
     return
@@ -129,10 +131,10 @@ textInfo(){
     REPREGION=$REGION
   fi
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
-    generateJsonOutput "$1" "Info" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
+    generateJsonOutput "$1" "Info" "$CHECK_RESOURCE_ID" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
   fi
   if is_junit_output_enabled; then
     output_junit_info "$1"
@@ -144,7 +146,7 @@ textInfo(){
     echo "      $NOTICE INFO! $1 $NORMAL"
   fi
   if [[ "${MODES[@]}" =~ "html" ]]; then
-    generateHtmlOutput "$1" "INFO"
+    generateHtmlOutput "$1" "INFO" "$CHECK_RESOURCE_ID"
   fi
 }
 
@@ -176,6 +178,7 @@ textFail(){
 
   CHECK_RESULT=$level
   CHECK_RESULT_EXTENDED="$1"
+  CHECK_RESOURCE_ID="$3"
 
   if [[ $2 ]]; then
     REPREGION=$2
@@ -184,13 +187,13 @@ textFail(){
   fi
 
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
-    generateJsonOutput "$1" "${level}" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
+    generateJsonOutput "$1" "${level}" "$CHECK_RESOURCE_ID"| tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
   fi
   if [[ "${MODES[@]}" =~ "json-asff" ]]; then
-    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "${level}")
+    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "${level}" "$CHECK_RESOURCE_ID")
     echo "${JSON_ASFF_OUTPUT}" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_ASFF}
     if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
       sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REPREGION}"
@@ -210,7 +213,7 @@ textFail(){
     echo "      $colorcode ${level}! $1 $NORMAL"
   fi
   if [[ "${MODES[@]}" =~ "html" ]]; then
-    generateHtmlOutput "$1" "${level}"
+    generateHtmlOutput "$1" "${level}" "$CHECK_RESOURCE_ID"
   fi
 }
 
@@ -265,6 +268,7 @@ textTitle(){
 generateJsonOutput(){
   local message=$1
   local status=$2
+  local resource_id=$3
   jq -M -c \
   --arg PROFILE "$PROFILE" \
   --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
@@ -279,6 +283,11 @@ generateJsonOutput(){
   --arg TYPE "$CHECK_ASFF_COMPLIANCE_TYPE" \
   --arg TIMESTAMP "$(get_iso8601_timestamp)" \
   --arg SERVICENAME "$CHECK_SERVICENAME" \
+  --arg CHECK_CAF_EPIC "$CHECK_CAF_EPIC" \
+  --arg CHECK_RISK "$CHECK_RISK" \
+  --arg CHECK_REMEDIATION "$CHECK_REMEDIATION" \
+  --arg CHECK_DOC "$CHECK_DOC" \
+  --arg CHECK_RESOURCE_ID "$resource_id" \
   -n '{
     "Profile": $PROFILE,
     "Account Number": $ACCOUNT_NUM,
@@ -292,7 +301,12 @@ generateJsonOutput(){
     "Region": $REPREGION,
     "Timestamp": $TIMESTAMP,
     "Compliance": $TYPE,
-    "Service": $SERVICENAME
+    "Service": $SERVICENAME,
+    "CAF Epic": $CHECK_CAF_EPIC,
+    "Risk": $CHECK_RISK,
+    "Remediation": $CHECK_REMEDIATION,
+    "Doc link": $CHECK_DOC,
+    "Resource ID": $CHECK_RESOURCE_ID
   }'
 }
 
@@ -377,6 +391,7 @@ generateHtmlOutput(){
       echo '<td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><a href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$CHECK_RESOURCE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
   if [[ $status == "PASS" ]];then
@@ -395,6 +410,7 @@ generateHtmlOutput(){
       echo '<td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><a href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$CHECK_RESOURCE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
   if [[ $status == "FAIL" ]];then
@@ -413,6 +429,7 @@ generateHtmlOutput(){
       echo '<td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><a href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$CHECK_RESOURCE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
   if [[ $status == "WARNING" ]];then
@@ -431,6 +448,7 @@ generateHtmlOutput(){
       echo '<td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><a href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td>'$CHECK_RESOURCE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     echo '</tr>'>> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
 }

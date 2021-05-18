@@ -31,13 +31,13 @@ extra747(){
         # if retention is 0 then is disabled
         ENABLED_CLOUDWATCHLOGS_EXPORTS=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --db-instance-identifier $rdsinstance --query 'DBInstances[*].EnabledCloudwatchLogsExports' --output text)
         if [[ $ENABLED_CLOUDWATCHLOGS_EXPORTS ]]; then
-          textPass "$regx: RDS instance $rdsinstance is shipping $ENABLED_CLOUDWATCHLOGS_EXPORTS to CloudWatch Logs" "$regx"
+          textPass "$regx: RDS instance $rdsinstance is shipping $ENABLED_CLOUDWATCHLOGS_EXPORTS to CloudWatch Logs" "$regx" "$rdsinstance"
         else
-          textFail "$regx: RDS instance $rdsinstance has no CloudWatch Logs enabled!" "$regx"
+          textFail "$regx: RDS instance $rdsinstance has no CloudWatch Logs enabled!" "$regx" "$rdsinstance"
         fi
       done
     else
-      textInfo "$regx: No RDS instances found" "$regx"
+      textInfo "$regx: No RDS instances found" "$regx" "$rdsinstance"
     fi
   done
 }

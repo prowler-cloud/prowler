@@ -158,6 +158,7 @@ addHtmlHeader() {
               <th style="width:40%" scope="col">Risk</th>
               <th style="width:40%" scope="col">Remediation</th>
               <th style="width:40%" scope="col">Link to doc</th>
+              <th scope="col">Resource ID</th>
             </tr>
           </thead>
           <tbody>
