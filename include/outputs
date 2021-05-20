@@ -19,7 +19,7 @@ EXTENSION_ASFF="asff-json"
 EXTENSION_TEXT="txt"
 EXTENSION_HTML="html"
 OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
-OUTPUT_DIR="${PROWLER_DIR}/output" # default output if none 
+OUTPUT_DIR="${PROWLER_DIR}/output" # default output if none
 if [[ $OUTPUT_DIR_CUSTOM ]]; then
   # output mode has to be set to other than text
   if [[ ! " ${MODES[@]} " =~ " text " || ${check_id} == 7.1 || ${check_id} == 7.74  ]]; then
@@ -32,9 +32,11 @@ if [[ $OUTPUT_DIR_CUSTOM ]]; then
   else
     echo "$OPTRED ERROR!$OPTNORMAL - Mode (-M) has to be set as well. Use -h for help."
     exit 1
-  fi 
+  fi
 fi
-OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
+if [ -z ${OUTPUT_FILE_NAME+x} ]; then
+  OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
+fi
 HTML_LOGO_URL="https://github.com/toniblyx/prowler/"
 HTML_LOGO_IMG="https://github.com/toniblyx/prowler/raw/2.4/util/html/prowler-logo-new.png"
 TIMESTAMP=$(get_iso8601_timestamp)
@@ -46,19 +48,19 @@ PROWLER_PARAMETERS=$@
 # $ACCOUNT_NUM AWS Account ID
 # $REPREGION AWS region scanned
 # $TITLE_ID Numeric identifier of each check (1.2, 2.3, etc), originally based on CIS checks.
-# $CHECK_RESULT values can be PASS, FAIL, INFO or WARNING if whitelisted 
+# $CHECK_RESULT values can be PASS, FAIL, INFO or WARNING if whitelisted
 # $ITEM_SCORED corresponds to CHECK_SCORED, values can be Scored/Not Scored. This is CIS only, will be deprecated in Prowler.
 # $ITEM_LEVEL corresponds to CHECK_TYPE_ currently only for CIS Level 1, CIS Level 2 and Extras (all checks not part of CIS)
-# $TITLE_TEXT corresponds to CHECK_TITLE_ shows title of each check 
+# $TITLE_TEXT corresponds to CHECK_TITLE_ shows title of each check
 # $CHECK_RESULT_EXTENDED shows response of each check per resource like sg-123438 is open!
-# $CHECK_ASFF_COMPLIANCE_TYPE specify type from taxonomy https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-type-taxonomy.html 
+# $CHECK_ASFF_COMPLIANCE_TYPE specify type from taxonomy https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-type-taxonomy.html
 # $CHECK_SEVERITY severity Low, Medium, High, Critical
 # $CHECK_SERVICENAME AWS service name short name
 # $CHECK_ASFF_RESOURCE_TYPE values from https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
 # $CHECK_ASFF_TYPE generic type from taxonomy here  https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-type-taxonomy.html
-# $CHECK_RISK text about risk 
-# $CHECK_REMEDIATION text about remediation 
-# $CHECK_DOC link to related documentation 
+# $CHECK_RISK text about risk
+# $CHECK_REMEDIATION text about remediation
+# $CHECK_DOC link to related documentation
 # $CHECK_CAF_EPIC it can be Logging and Monitoring, IAM, Data Protection, Infrastructure Security. Incident Response is not included since CAF has not specific checks on it logs enablement are part of Logging and Monitoring.
 
 # Ensure that output directory always exists when -M is used
