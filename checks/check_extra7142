@@ -27,13 +27,13 @@ extra7142(){
       for alb in $LIST_OF_ELBSV2;do
         CHECK_IF_DROP_INVALID_HEADER_FIELDS=$($AWSCLI elbv2 describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-arn $alb --query 'Attributes[6]' --output text|grep -i true)
         if [[ $CHECK_IF_DROP_INVALID_HEADER_FIELDS ]];then
-          textPass "Application Load Balancer $alb is dropping invalid header fields"
+          textPass "$regx: Application Load Balancer $alb is dropping invalid header fields." "$regx" "$alb"
         else
-          textFail "Application Load Balancer $alb is not dropping invalid header fields"
+          textFail "$regx: Application Load Balancer $alb is not dropping invalid header fields" "$regx" "$alb"
         fi
       done
     else 
-      textInfo "no ALBs found"
+      textInfo "$regx: no ALBs found"
     fi
   done
 }
