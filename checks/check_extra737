@@ -19,7 +19,7 @@ CHECK_ALTERNATE_check737="extra737"
 extra737(){
   textInfo "Looking for KMS keys in all regions...  "
   for regx in $REGIONS; do
-    LIST_OF_CUSTOMER_KMS_KEYS=$($AWSCLI kms list-aliases $PROFILE_OPT --region $regx --output text |grep -v :alias/aws/ |awk '{ print $4 }')
+    LIST_OF_CUSTOMER_KMS_KEYS=$($AWSCLI kms list-aliases $PROFILE_OPT --region $regx --query "Aliases[].[AliasName,TargetKeyId]" --output text |grep -v ^alias/aws/ |awk '{ print $2 }')
     if [[ $LIST_OF_CUSTOMER_KMS_KEYS ]];then
       for key in $LIST_OF_CUSTOMER_KMS_KEYS; do
         CHECK_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key $PROFILE_OPT --region $regx  --output text)
