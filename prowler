@@ -74,7 +74,7 @@ USAGE:
       -g <group_id>       specify a group of checks by id, to see all available group of checks use "-L"
                             (i.e.: "group3" for entire section 3, "cislevel1" for CIS Level 1 Profile Definitions or "forensics-ready")
       -f <filterregion>   specify an AWS region to run checks against
-                            (i.e.: us-west-1)
+                            (i.e.: us-west-1 or for multiple regions use single quote like 'us-west-1 us-west-2')
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
       -M <mode>           output mode: text (default), mono, html, json, json-asff, junit-xml, csv. They can be used combined comma separated.
                             (separator is ","; data is on stdout; progress on stderr).
