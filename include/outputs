@@ -219,49 +219,51 @@ textFail(){
 
 textTitle(){
   CHECKS_COUNTER=$((CHECKS_COUNTER+1))
-  TITLE_ID=$1
+  TITLE_ID="$BLUE$1$NORMAL"
   if [[ $NUMERAL ]]; then
     # Left-pad the check ID with zeros to simplify sorting, e.g. 1.1 -> 1.01
     TITLE_ID=$(awk -F'.' '{ printf "%d.%02d", $1, $2 }' <<< "$TITLE_ID")
   fi
 
   TITLE_TEXT=$2
+  CHECK_SERVICENAME="$MAGENTA$3$NORMAL"
+  CHECK_SEVERITY="$BROWN[$4]$NORMAL"
 
-  case "$3" in
-    0|No|NOT_SCORED)
-      ITEM_SCORED="Not Scored"
-      ;;
-    1|Yes|SCORED)
-      ITEM_SCORED="Scored"
-      ;;
-    *)
-      ITEM_SCORED="Unspecified"
-      ;;
-  esac
+  # case "$3" in
+  #   0|No|NOT_SCORED)
+  #     ITEM_SCORED="Not Scored"
+  #     ;;
+  #   1|Yes|SCORED)
+  #     ITEM_SCORED="Scored"
+  #     ;;
+  #   *)
+  #     ITEM_SCORED="Unspecified"
+  #     ;;
+  # esac
 
-  case "$4" in
-    LEVEL1)  ITEM_LEVEL="Level 1";;
-    LEVEL2)  ITEM_LEVEL="Level 2";;
-    EXTRA)   ITEM_LEVEL="Extra";;
-    SUPPORT) ITEM_LEVEL="Support";;
-    *)       ITEM_LEVEL="Unspecified or Invalid";;
-  esac
+  # case "$4" in
+  #   LEVEL1)  ITEM_LEVEL="Level 1";;
+  #   LEVEL2)  ITEM_LEVEL="Level 2";;
+  #   EXTRA)   ITEM_LEVEL="Extra";;
+  #   SUPPORT) ITEM_LEVEL="Support";;
+  #   *)       ITEM_LEVEL="Unspecified or Invalid";;
+  # esac
 
   local group_ids
-  if [[ -n "$5" ]]; then
-    group_ids="$CYAN [$5] $NORMAL"
-  fi
+  # if [[ -n "$4" ]]; then
+    group_ids="$CYAN[$5]$NORMAL"
+  # fi
 
   if [[ "${MODES[@]}" =~ "csv" ]]; then
     >&2 echo "$TITLE_ID $TITLE_TEXT" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
   elif [[ "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
     :
   else
-    if [[ "$ITEM_SCORED" == "Scored" ]]; then
-      echo -e "\n$BLUE $TITLE_ID $NORMAL $TITLE_TEXT $6 $group_ids "
-    else
-      echo -e "\n$PURPLE $TITLE_ID $TITLE_TEXT $6 $NORMAL $group_ids "
-    fi
+    # if [[ "$ITEM_SCORED" == "Scored" ]]; then
+       echo -e "$TITLE_ID $CHECK_SERVICENAME $TITLE_TEXT $CHECK_SEVERITY $group_ids "
+    # else
+    #   echo -e "\n$PURPLE $TITLE_ID $TITLE_TEXT $6 $NORMAL $group_ids "
+    # fi
   fi
 }
 

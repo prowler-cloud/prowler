@@ -322,6 +322,8 @@ show_check_title() {
   local check_scored=CHECK_SCORED_$1
   local check_type=CHECK_TYPE_$1
   local check_asff_compliance_type=CHECK_ASFF_COMPLIANCE_TYPE_$1
+  local check_severity=CHECK_SEVERITY_$1
+  local check_servicename=CHECK_SERVICENAME_$1
   local group_ids
   local group_index
   # If requested ($2 is any non-null value) iterate all GROUP_CHECKS and produce a comma-separated list of all
@@ -340,7 +342,7 @@ show_check_title() {
   if [[ ${GROUP_ID_READ} == "ens" ]];then
     textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_type}" "$group_ids" "(${!check_asff_compliance_type})"
   else
-    textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_type}" "$group_ids"
+    textTitle "${!check_id}" "${!check_title}" "${!check_servicename}" "${!check_severity}" "$group_ids"
   fi
 }
 
