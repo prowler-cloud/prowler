@@ -38,7 +38,7 @@ CHECK_CAF_EPIC_extra7113='Data Protection'
 extra7113(){
   textInfo "Looking for RDS Volumes in all regions...  "
   for regx in $REGIONS; do
-    LIST_OF_RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[*].DBInstanceIdentifier' --output text)
+    LIST_OF_RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query "DBInstances[?Engine != 'docdb'].DBInstanceIdentifier" --output text)
     if [[ $LIST_OF_RDS_INSTANCES ]];then
       for rdsinstance in $LIST_OF_RDS_INSTANCES; do
         IS_DELETIONPROTECTION=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --db-instance-identifier $rdsinstance --query 'DBInstances[*].DeletionProtection' --output text)
