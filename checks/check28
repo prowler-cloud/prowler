@@ -18,7 +18,7 @@ CHECK_ALTERNATE_check208="check28"
 
 check28(){
   # "Ensure rotation for customer created CMKs is enabled (Scored)"
-  for regx in us-west-2; do
+  for regx in $REGIONS; do
   CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys $PROFILE_OPT --region $regx --output text --query 'Keys[*].KeyId')
     if [[ $CHECK_KMS_KEYLIST ]];then
       CHECK_KMS_KEYLIST_NO_DEFAULT=$(
