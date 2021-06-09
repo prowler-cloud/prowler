@@ -18,7 +18,7 @@ CHECK_ALTERNATE_check208="check28"
 
 check28(){
   # "Ensure rotation for customer created CMKs is enabled (Scored)"
-  for regx in $REGIONS; do
+  for regx in us-west-2; do
   CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys $PROFILE_OPT --region $regx --output text --query 'Keys[*].KeyId')
     if [[ $CHECK_KMS_KEYLIST ]];then
       CHECK_KMS_KEYLIST_NO_DEFAULT=$(
@@ -27,9 +27,14 @@ check28(){
         done )
       if [[ $CHECK_KMS_KEYLIST_NO_DEFAULT ]]; then
         for key in $CHECK_KMS_KEYLIST_NO_DEFAULT; do
-          CHECK_KMS_KEY_TYPE=$($AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.Origin' | sed 's/["]//g')
-            if [[ "$CHECK_KMS_KEY_TYPE" == "EXTERNAL" ]];then
-              textPass "$regx: Key $key in Region $regx Customer Uploaded Key Material" "$regx"
+          KEY_DETAILS=$($AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx)
+          CHECK_KMS_KEY_TYPE=$(echo "$KEY_DETAILS" | jq -r '.KeyMetadata.Origin')
+          if [[ "$CHECK_KMS_KEY_TYPE" == "EXTERNAL" ]];then
+            textPass "$regx: Key $key in Region $regx Customer Uploaded Key Material" "$regx"
+          else
+            CHECK_KMS_KEY_SPEC=$(echo "$KEY_DETAILS" | jq -r '.KeyMetadata.CustomerMasterKeySpec')
+            if [[ "$CHECK_KMS_KEY_SPEC" != "SYMMETRIC_DEFAULT" ]]; then
+              textInfo "$regx: Key $key is asymmetric and does not support auto-rotation" 
             else
               CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key $PROFILE_OPT --region $regx --output text)
               if [[ "$CHECK_KMS_KEY_ROTATION" == "True" ]];then
@@ -38,6 +43,7 @@ check28(){
                 textFail "$regx: Key $key is not set to rotate!" "$regx"
               fi
             fi
+          fi
         done
       else
         textInfo "$regx: This region doesn't have CUSTOM encryption keys" "$regx"
