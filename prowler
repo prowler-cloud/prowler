@@ -330,16 +330,19 @@ show_check_title() {
   local check_servicename=CHECK_SERVICENAME_$1
   local group_ids
   local group_index
+  local check_name
   # If requested ($2 is any non-null value) iterate all GROUP_CHECKS and produce a comma-separated list of all
   # the GROUP_IDs that include this particular check
   if [[ -n "$2" ]]; then
     for group_index in "${!GROUP_ID[@]}"; do
-      if [[ "${GROUP_CHECKS[$group_index]}" =~ "$1" ]]; then
-        if [[ -n "$group_ids" ]]; then
-          group_ids+=", "
+      for check_name in $(echo "${GROUP_CHECKS[$group_index]}" | sed "s/,/ /g");do
+        if [[ "$check_name" == "$1" ]]; then
+          if [[ -n "$group_ids" ]]; then
+            group_ids+=", "
+          fi
+          group_ids+="${GROUP_ID[$group_index]}"
         fi
-        group_ids+="${GROUP_ID[$group_index]}"
-      fi
+      done
     done
   fi
   # This shows ASFF_COMPLIANCE_TYPE if group used is ens, this si used to show ENS compliance ID control, can be used for other compliance groups as well.
