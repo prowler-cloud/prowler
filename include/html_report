@@ -168,7 +168,6 @@ addHtmlFooter() {
       // Initialise the table with 50 rows, and some search/filtering panes
       \$('#findingsTable').DataTable( {
         lengthMenu: [ [50, 100, -1], [50, 100, "All"] ],
-        ordering: true,
         searchPanes: {
             cascadePanes: true,
             viewTotal: true
