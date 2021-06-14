@@ -379,80 +379,35 @@ generateJsonAsffOutput(){
 generateHtmlOutput(){
   local message=$1
   local status=$2
+
   if [[ $status == "INFO" ]];then
-    echo '<tr class="table-info">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><i class="fas fa-info-circle"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>INFO</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_SEVERITY'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_ASFF_COMPLIANCE_TYPE'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_SERVICENAME'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_CAF_EPIC'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><a href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_RESOURCE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-    echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    local ROW_CLASS='table-info'
   fi
   if [[ $status == "PASS" ]];then
-    echo '<tr class="p-3 mb-2 bg-success">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><i class="fas fa-thumbs-up"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>PASS</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_SEVERITY'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_ASFF_COMPLIANCE_TYPE'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_SERVICENAME'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_CAF_EPIC'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><a href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_RESOURCE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-    echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    local ROW_CLASS='p-3 mb-2 bg-success'
   fi
   if [[ $status == "FAIL" ]];then
-    echo '<tr class="table-danger" >' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td> <i class="fas fa-thumbs-down"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>FAIL</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_SEVERITY'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_ASFF_COMPLIANCE_TYPE'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_SERVICENAME'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_CAF_EPIC'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><a href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_RESOURCE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-    echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    local ROW_CLASS='table-danger'
   fi
-  if [[ $status == "WARNING" ]];then
-    echo '<tr class="table-warning">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><i class="fas fa-exclamation-triangle"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>WARN</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_SEVERITY'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_ASFF_COMPLIANCE_TYPE'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_SERVICENAME'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_CAF_EPIC'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><a href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td>'$CHECK_RESOURCE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-    echo '</tr>'>> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  if [[ $status == "WARN" ]];then
+    local ROW_CLASS='table-warning'
   fi
+
+  echo '<tr class="'$ROW_CLASS'">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td>'$status'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td>'$CHECK_SEVERITY'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td>'$CHECK_ASFF_COMPLIANCE_TYPE'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td>'$CHECK_SERVICENAME'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td>'$CHECK_CAF_EPIC'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td><a href="'$CHECK_DOC'"><i class="fas fa-external-link-alt"></i></a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td>'$CHECK_RESOURCE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
 }
