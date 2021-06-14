@@ -26,7 +26,7 @@ CHECK_CAF_EPIC_extra7126='Data Protection'
 
 extra7126(){
   for regx in $REGIONS; do
-    LIST_OF_CUSTOMER_KMS_KEYS=$($AWSCLI kms list-aliases $PROFILE_OPT --region $regx --output text |grep -v :alias/aws/ |awk '{ print $4 }')
+    LIST_OF_CUSTOMER_KMS_KEYS=$($AWSCLI kms list-aliases $PROFILE_OPT --region $regx --query "Aliases[].[AliasName,TargetKeyId]" --output text |grep -v ^alias/aws/ |awk '{ print $2 }')
     if [[ $LIST_OF_CUSTOMER_KMS_KEYS ]];then
       for key in $LIST_OF_CUSTOMER_KMS_KEYS; do
         CHECK_STATUS=$($AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --output json | jq -r '.KeyMetadata.KeyState')
