@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra95="9.5"
+CHECK_TITLE_extra95="[extra95] Check if there is any unassigned elastic ip's (Not Scored) (Not part of CIS benchmark) (Custom Check)"
+CHECK_SCORED_extra95="NOT_SCORED"
+CHECK_TYPE_extra95="EXTRA"
+CHECK_SEVERITY_extra95="Critical"
+CHECK_ASFF_RESOURCE_TYPE_extra95="AwsCloudWatch"
+CHECK_ALTERNATE_check95="extra95"
+CHECK_SERVICENAME_extra95="CloudWatch"
+
+# If there is any elasting ip which is not assigned to any instance or network interface, we will list that out.
+
+extra95(){
+  for region in $REGIONS; do
+  ELASTIC_IP_ADDRESSES=$($AWSCLI ec2 describe-addresses $PROFILE_OPT --region $region --query Addresses --output json)
+  if [[ $ELASTIC_IP_ADDRESSES != [] ]]; then
+    LIST_OF_ASSOCIATED_IPS=$(echo $ELASTIC_IP_ADDRESSES | jq -r '.[] | select(.AssociationId!=null) | .PublicIp')
+    LIST_OF_UNASSOCIATED_IPS=$(echo $ELASTIC_IP_ADDRESSES | jq -r '.[] | select(.AssociationId==null) | .PublicIp')
+    for ass_ip in $LIST_OF_ASSOCIATED_IPS; do
+     textPass "$region : Elastic IP $ass_ip is associated with an instance or network interface"
+     done
+    for unass_ip in $LIST_OF_UNASSOCIATED_IPS; do
+     textInfo "$region : Elastic IP $unass_ip is not associated with any instance or network interface, it may incurr cost"
+     done
+  else
+    textInfo "No elastic ip's found in region $region"
+  fi
+ done
+}
