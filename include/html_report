@@ -124,7 +124,6 @@ addHtmlHeader() {
         <table class="table compact stripe row-border ordering" id="findingsTable" data-order='[[ 5, "asc" ]]' data-page-length='100'>
           <thead class="thead-light">
             <tr>
-              <th style="align-content:center" scope="col">Status</th>
               <th scope="col">Result</th>
               <th scope="col">Severity</th>
               <th scope="col">AccountID</th>
@@ -132,12 +131,12 @@ addHtmlHeader() {
               <th scope="col">Compliance</th>
               <th scope="col">Service</th>
               <th scope="col">CheckID</th>
-              <th style="width:40%" scope="col">Check Title</th>
-              <th style="width:40%" scope="col">Check Output</th>
+              <th style="width:20%" scope="col">Check Title</th>
+              <th style="width:20%" scope="col">Check Output</th>
               <th scope="col">CAF Epic</th>
-              <th style="width:40%" scope="col">Risk</th>
-              <th style="width:40%" scope="col">Remediation</th>
-              <th style="width:40%" scope="col">Link to doc</th>
+              <th scope="col">Risk</th>
+              <th scope="col">Remediation</th>
+              <th scope="col">Docs</th>
             </tr>
           </thead>
           <tbody>
@@ -181,7 +180,7 @@ addHtmlFooter() {
                   show: false
               },
               // Hide Compliance, Check ID (in favour of Check Title), CAF Epic, Risk, Remediation, Link
-              targets: [0,5, 7, 10, 11, 12, 13]
+              targets: [4, 6, 9, 10, 11, 12]
           }
         ]
       });
