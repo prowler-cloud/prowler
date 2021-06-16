@@ -319,17 +319,25 @@ generateJsonAsffOutput(){
   # Replace any successive non-conforming characters with a single underscore
   local message=$1
   local status=$2
-
+  
+  #Checks to determine if the rule passes in a resource name that prowler uses to track the AWS Resource for whitelisting purposes
+  if [ -z $3 ]
+  then
+    local resource_id="NONE_PROVIDED"
+   else
+    local resource_id=$3
+  fi
+  
   if [[ "$status" == "FAIL" ]]; then
     status="FAILED"
   fi
   jq -M -c \
   --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
   --arg TITLE_TEXT "$TITLE_TEXT" \
-  --arg MESSAGE "$(echo -e "${message}" | sed -e 's/^[[:space:]]*//')" \
+  --arg MESSAGE "$(echo -e "${message}")" \
   --arg UNIQUE_ID "$(LC_ALL=C echo -e -n "${message}" | tr -cs '[:alnum:]._~-' '_')" \
   --arg STATUS "$status" \
-  --arg SEVERITY "$(echo $CHECK_SEVERITY| awk '{ print toupper($0) }')" \
+  --arg SEVERITY "$(echo $CHECK_SEVERITY| awk '{ print toupper($0) }' |  sed 's/[][]//g')" \
   --arg TITLE_ID "$TITLE_ID" \
   --arg CHECK_ID "$CHECK_ID" \
   --arg TYPE "$CHECK_ASFF_COMPLIANCE_TYPE" \
@@ -339,6 +347,7 @@ generateJsonAsffOutput(){
   --arg TIMESTAMP "$(get_iso8601_timestamp)" \
   --arg PROWLER_VERSION "$PROWLER_VERSION" \
   --arg AWS_PARTITION "$AWS_PARTITION" \
+  --arg CHECK_RESOURCE_ID "$resource_id" \
   -n '{
       "SchemaVersion": "2018-10-08",
       "Id": "prowler-\($TITLE_ID)-\($ACCOUNT_NUM)-\($REPREGION)-\($UNIQUE_ID)",
@@ -346,7 +355,8 @@ generateJsonAsffOutput(){
       "RecordState": "ACTIVE",
       "ProductFields": {
           "ProviderName": "Prowler",
-          "ProviderVersion": $PROWLER_VERSION
+          "ProviderVersion": $PROWLER_VERSION,
+          "ProwlerResourceName": $CHECK_RESOURCE_ID
       },
       "GeneratorId": "prowler-\($CHECK_ID)",
       "AwsAccountId": $ACCOUNT_NUM,
@@ -373,6 +383,7 @@ generateJsonAsffOutput(){
           "Status": $STATUS,
           "RelatedRequirements": [ $COMPLIANCE_RELATED_REQUIREMENTS ]
       }
+      
   }'
 }
 
