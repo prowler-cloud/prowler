@@ -20,8 +20,8 @@ CHECK_ASFF_RESOURCE_TYPE_extra93="AwsCloudWatch"
 CHECK_ALTERNATE_check93="extra93"
 CHECK_SERVICENAME_extra93="CloudWatch"
 
-# When CloudWatch allows cross account sharing, a role with name CloudWatch-CrossAccountSharingRole get's created by aws itself. So we are validating role name existance for checking the 
-# cloudwatch security.
+# When CloudWatch allows cross account sharing, a role with name CloudWatch-CrossAccountSharingRole 
+# get's created by aws itself. So we are validating role name existance for checking the cloudwatch security.
 
 extra93(){
   

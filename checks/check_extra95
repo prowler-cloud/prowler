@@ -16,9 +16,9 @@ CHECK_TITLE_extra95="[extra95] Check if there is any unassigned elastic ip's (No
 CHECK_SCORED_extra95="NOT_SCORED"
 CHECK_TYPE_extra95="EXTRA"
 CHECK_SEVERITY_extra95="Critical"
-CHECK_ASFF_RESOURCE_TYPE_extra95="AwsCloudWatch"
+CHECK_ASFF_RESOURCE_TYPE_extra95="AwsElasticIPs"
 CHECK_ALTERNATE_check95="extra95"
-CHECK_SERVICENAME_extra95="CloudWatch"
+CHECK_SERVICENAME_extra95="ElasticIPs"
 
 # If there is any elasting ip which is not assigned to any instance or network interface, we will list that out.
 

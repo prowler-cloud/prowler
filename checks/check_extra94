@@ -12,15 +12,16 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra94="9.4"
-CHECK_TITLE_extra94="[extra94] Check if lambda functions has policies which allow access to everyone having an aws account (Not Scored) (Not part of CIS benchmark) (Custom Check)"
+CHECK_TITLE_extra94="[extra94] Check if lambda functions have policies which allow access to everyone having an aws account (Not Scored) (Not part of CIS benchmark) (Custom Check)"
 CHECK_SCORED_extra94="NOT_SCORED"
 CHECK_TYPE_extra94="EXTRA"
 CHECK_SEVERITY_extra94="Critical"
-CHECK_ASFF_RESOURCE_TYPE_extra94="AwsCloudWatch"
+CHECK_ASFF_RESOURCE_TYPE_extra94="AwsLambda"
 CHECK_ALTERNATE_check94="extra94"
-CHECK_SERVICENAME_extra94="CloudWatch"
+CHECK_SERVICENAME_extra94="Lambda"
 
-# If a lambda function has a policy principle as *, It can be accessed by any aws account. We consider such functions as publicly accessible resource.
+# If a lambda function has a policy principle as *, It can be accessed by any aws account. 
+# We consider such functions as publicly accessible resource.
 
 extra94(){
   for region in $REGIONS; do

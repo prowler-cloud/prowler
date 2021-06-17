@@ -19,8 +19,9 @@ CHECK_ASFF_RESOURCE_TYPE_extra92="AwsEFS"
 CHECK_ALTERNATE_check92="extra92"
 CHECK_SERVICENAME_extra92="EFS"
 
-# If an EFS has a policy principle as *, we consider it as public accessible even though client connects through a vpc peering or transit gateway. Also if EFS has a default policy(no user defined
-# policy), it's also a security risk, as default policy grants full access to any client that can connect to the file system using a file system mount target.
+# If an EFS has a policy principle as *, we consider it as public accessible even though client connects through a 
+# vpc peering or transit gateway. Also if EFS has a default policy(no user defined policy), it's also a security risk, 
+# as default policy grants full access to any client that can connect to the file system using a file system mount target.
 
 extra92(){
   for region in $REGIONS; do
@@ -30,7 +31,6 @@ extra92(){
       EFS_POLICY_STATEMENTS=$($AWSCLI efs $PROFILE_OPT describe-file-system-policy --region $region --file-system-id $efsId --output json --query Policy 2>&1)
       if [[ $EFS_POLICY_STATEMENTS == *PolicyNotFound* ]]; then
         textFail "$region :  EFS $efsId doesn't have any policy which means it grants full access to any client"
-        # textInfo "EFS policy does not exist for efs id $efsId"
       else
         EFS_POLICY_BAD_STATEMENTS=$(echo $EFS_POLICY_STATEMENTS | jq '. | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*")')
         if [[ $EFS_POLICY_BAD_STATEMENTS != "" ]]; then
