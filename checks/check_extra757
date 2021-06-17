@@ -35,7 +35,7 @@ extra757(){
         do
           EC2_ID=$(echo "$ec2_instace" | awk '{print $1}')
           LAUNCH_DATE=$(echo "$ec2_instace" | awk '{print $2}')
-          textFail "$regx: EC2 Instance $EC2_ID running before than $OLDAGE" "$regx"
+          textFail "$regx: EC2 Instance $EC2_ID running before than $OLDAGE" "$regx" "$EC2_ID"
         done <<< "$INSTACES_OLD_THAN_AGE"
       else
         textPass "$regx: All Instances newer than 6 months" "$regx"

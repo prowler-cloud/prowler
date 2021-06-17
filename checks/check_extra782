@@ -30,9 +30,9 @@ extra782(){
       for domain in $LIST_OF_DOMAINS;do
         CHECK_IF_NODETOENCR_ENABLED=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.NodeToNodeEncryptionOptions.Enabled' --output text|grep -i true)
         if [[ $CHECK_IF_NODETOENCR_ENABLED ]];then
-          textPass "$regx: Amazon ES domain $domain has node-to-node encryption enabled" "$regx"
+          textPass "$regx: Amazon ES domain $domain has node-to-node encryption enabled" "$regx" "$domain"
         else
-          textFail "$regx: Amazon ES domain $domain does not have node-to-node encryption enabled" "$regx"
+          textFail "$regx: Amazon ES domain $domain does not have node-to-node encryption enabled" "$regx" "$domain"
         fi
       done
     else

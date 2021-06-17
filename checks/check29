@@ -34,15 +34,15 @@ check29(){
     for vpcx in $AVAILABLE_VPC; do
       CHECK_FL=$($AWSCLI ec2 describe-flow-logs $PROFILE_OPT --region $regx --filter Name="resource-id",Values="${vpcx}" --query 'FlowLogs[?FlowLogStatus==`ACTIVE`].FlowLogId' --output text 2>&1)
       if [[ $(echo "$CHECK_FL" | grep AccessDenied) ]]; then
-        textFail "$regx: VPC $vpcx Access Denied trying to describe flow logs"
+        textFail "$regx: VPC $vpcx Access Denied trying to describe flow logs" "$regx" "$vpcx"
         continue
       fi
       if [[ $CHECK_FL ]]; then
         for FL in $CHECK_FL; do
-          textPass "$regx: VPC $vpcx VPCFlowLog is enabled for LogGroupName: $FL"
+          textPass "$regx: VPC $vpcx VPCFlowLog is enabled for LogGroupName: $FL" "$regx" "$vpcx"
         done
       else
-        textFail "$regx: VPC $vpcx VPCFlowLog is disabled"
+        textFail "$regx: VPC $vpcx VPCFlowLog is disabled" "$regx" "$vpcx"
       fi
     done
   done

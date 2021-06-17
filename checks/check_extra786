@@ -35,11 +35,11 @@ extra786(){
       while read httpendpoint httptokens_status instanceid  ; do
         #echo i:$instanceid tok:$httptokens_status end:$httpendpoint
         if [[ "$httpendpoint" == "enabled" &&  "$httptokens_status" == "required" ]];then
-          textPass "$regx: EC2 Instance $instanceid has IMDSv2 enabled and required" "$regx"
+          textPass "$regx: EC2 Instance $instanceid has IMDSv2 enabled and required" "$regx" "$instanceid"
         elif [[ "$httpendpoint" == "disabled" ]];then
           textInfo "$regx: EC2 Instance $instanceid has HTTP endpoint access to metadata service disabled" "$regx"
         else
-          textFail "$regx: EC2 Instance $instanceid has IMDSv2 disabled or not required" "$regx"
+          textFail "$regx: EC2 Instance $instanceid has IMDSv2 disabled or not required" "$regx" "$instanceid"
         fi
       done < <(cat $TEMP_EXTRA786_FILE)
     else

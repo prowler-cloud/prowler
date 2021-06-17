@@ -34,9 +34,9 @@ extra743(){
           for stage in $LIST_OF_STAGES; do
             CHECK_CERTIFICATE=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-stages --rest-api-id $api --query "item[?stageName==\`$stage\`].clientCertificateId" --output text)
             if [[ $CHECK_CERTIFICATE ]]; then
-                textPass "$regx: API Gateway $API_GW_NAME ID $api in $stage has client certificate enabled" "$regx"
+                textPass "$regx: API Gateway $API_GW_NAME ID $api in $stage has client certificate enabled" "$regx" "$API_GW_NAME"
               else
-                textFail "$regx: API Gateway $API_GW_NAME ID $api in $stage has not client certificate enabled" "$regx"
+                textFail "$regx: API Gateway $API_GW_NAME ID $api in $stage has not client certificate enabled" "$regx" "$API_GW_NAME"
             fi
           done
         fi

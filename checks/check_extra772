@@ -31,9 +31,9 @@ extra772(){
       for eip in $EIP_LIST; do
         ASSOCIATION_ID=$(echo $EIP_DUMP | jq -r --arg i "$eip" '.Addresses[]|select(.AllocationId==$i)|.AssociationId')
         if [[ "$ASSOCIATION_ID" == "null" ]]; then
-          textFail "$region: EIP $eip is unused" $region
+          textFail "$region: EIP $eip is unused" "$region" "$eip"
         else
-          textPass "$region: EIP $eip is used" $region
+          textPass "$region: EIP $eip is used" "$region" "$eip"
         fi
       done
     else

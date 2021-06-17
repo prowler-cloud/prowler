@@ -31,9 +31,9 @@ extra7108(){
             for nb_job_name in $LIST_SM_NB_JOBS; do
                 SM_JOB_KMSENCRYPTION=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-training-job --training-job-name $nb_job_name --query 'ResourceConfig.VolumeKmsKeyId' --output text)
                 if [[ "${SM_JOB_KMSENCRYPTION}" == "None" ]];then
-                    textFail "${regx}: Sagemaker Trainings job $nb_job_name has KMS encryption disabled" "${regx}"
+                    textFail "${regx}: Sagemaker Trainings job $nb_job_name has KMS encryption disabled" "${regx}" "$nb_job_name"
                 else
-                    textPass "${regx}: Sagemaker Trainings job $nb_job_name has KSM encryption enabled" "${regx}"
+                    textPass "${regx}: Sagemaker Trainings job $nb_job_name has KSM encryption enabled" "${regx}" "$nb_job_name"
                 fi 
             done
         else 

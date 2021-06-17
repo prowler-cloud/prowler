@@ -32,10 +32,10 @@ extra711(){
       while read -r cluster;do
         CLUSTER_ID=$(echo $cluster | awk '{ print $1; }')
         CLUSTER_ENDPOINT=$(echo $cluster | awk '{ print $2; }')
-        textFail "$regx: Cluster: $CLUSTER_ID at Endpoint: $CLUSTER_ENDPOINT is publicly accessible!" "$regx"
+        textFail "$regx: Cluster: $CLUSTER_ID at Endpoint: $CLUSTER_ENDPOINT is publicly accessible!" "$regx" "$CLUSTER_ID"
       done <<< "$LIST_OF_PUBLIC_REDSHIFT_CLUSTERS"
       else
-        textPass "$regx: no Publicly Accessible Redshift Clusters found" "$regx"
+        textPass "$regx: no Publicly Accessible Redshift Clusters found" "$regx" "$CLUSTER_ID"
     fi
   done
 }

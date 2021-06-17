@@ -72,7 +72,7 @@ extra7100(){
       textInfo "STS AssumeRole Policies should only include the complete ARNs for the Roles that the user needs"
       textInfo "Learn more: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_permissions-to-switch.html#roles-usingrole-createpolicy"
       for policy in $PERMISSIVE_POLICIES_LIST; do
-        textFail "Policy $policy allows permissive STS Role assumption"
+        textFail "Policy $policy allows permissive STS Role assumption" "us-east-1" "$policy"
       done
     else
       textPass "No custom policies found that allow permissive STS Role assumption"

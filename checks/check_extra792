@@ -66,9 +66,9 @@ extra792(){
              done
           
              if $passed; then
-               textPass "$regx: $elb has no insecure SSL ciphers" "$regx"
+               textPass "$regx: $elb has no insecure SSL ciphers" "$regx" "$elb"
              else
-               textFail "$regx: $elb has insecure SSL ciphers" "$regx" 
+               textFail "$regx: $elb has insecure SSL ciphers" "$regx" "$elb"
              fi
           else
              textInfo "$regx: $elb does not have an HTTPS or SSL listener" "$regx"
@@ -106,9 +106,9 @@ extra792(){
              done
    
              if $passed; then
-               textPass "$regx: $elbname has no insecure SSL ciphers" "$regx"
+               textPass "$regx: $elbname has no insecure SSL ciphers" "$regx" "$elbname"
              else
-               textFail "$regx: $elbname has insecure SSL ciphers" "$regx"
+               textFail "$regx: $elbname has insecure SSL ciphers" "$regx" "$elbname"
              fi
           else
              textInfo "$regx: $elbname does not have an HTTPS or TLS listener" "$regx"

@@ -33,12 +33,12 @@ extra7120(){
           if [[ ! -z "$SECURITY_CONFIGURATION" ]]; then
             CLOUDWATCH_ENCRYPTION=$($AWSCLI glue get-security-configuration --name "${SECURITY_CONFIGURATION}" $PROFILE_OPT --region $regx --output text --query 'SecurityConfiguration.EncryptionConfiguration.CloudWatchEncryption.CloudWatchEncryptionMode')
             if [[ "$CLOUDWATCH_ENCRYPTION" == "DISABLED" ]]; then
-              textFail "$regx: Glue job $JOB_NAME does not have CloudWatch Logs encryption enabled" "$regx"
+              textFail "$regx: Glue job $JOB_NAME does not have CloudWatch Logs encryption enabled" "$regx" "$JOB_NAME"
             else
-              textPass "$regx: Glue job $JOB_NAME does have $CLOUDWATCH_ENCRYPTION CloudWatch Logs encryption enabled" "$regx"
+              textPass "$regx: Glue job $JOB_NAME does have $CLOUDWATCH_ENCRYPTION CloudWatch Logs encryption enabled" "$regx" "$JOB_NAME"
             fi
           else
-            textFail "$regx: Glue job $JOB_NAME does not have CloudWatch Logs encryption enabled" "$regx"
+            textFail "$regx: Glue job $JOB_NAME does not have CloudWatch Logs encryption enabled" "$regx" "$JOB_NAME"
           fi
       done
     else 

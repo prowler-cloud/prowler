@@ -30,9 +30,9 @@ extra714(){
     for dist in $LIST_OF_DISTRIBUTIONS; do
       LOG_ENABLED=$($AWSCLI cloudfront get-distribution $PROFILE_OPT --id "$dist" --query 'Distribution.DistributionConfig.Logging.Enabled' | grep true)
       if [[ $LOG_ENABLED ]]; then
-        textPass "CloudFront distribution $dist has logging enabled"
+        textPass "CloudFront distribution $dist has logging enabled" "us-east-1" "$dist"
       else
-        textFail "CloudFront distribution $dist has logging disabled"
+        textFail "CloudFront distribution $dist has logging disabled" "us-east-1" "$dist" 
       fi
     done
   else

@@ -34,12 +34,12 @@ extra724(){
         CERT_TYPE=$(aws acm describe-certificate $PROFILE_OPT --region $regx --certificate-arn $cert_arn --query Certificate.Type --output text)
         if [[ $CERT_TYPE == "IMPORTED" ]];then
           # Ignore imported certificate
-          textInfo "$regx: ACM Certificate $CERT_DOMAIN_NAME is imported." "$regx"
+          textInfo "$regx: ACM Certificate $CERT_DOMAIN_NAME is imported." "$regx" 
         else
           if [[ $CT_ENABLED == "ENABLED" ]];then
-            textPass "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging enabled!" "$regx"
+            textPass "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging enabled!" "$regx" "$CERT_DOMAIN_NAME"
           else
-            textFail "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging disabled!" "$regx"
+            textFail "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging disabled!" "$regx" "$CERT_DOMAIN_NAME"
           fi
         fi
       done

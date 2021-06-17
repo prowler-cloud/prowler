@@ -33,13 +33,13 @@ extra745(){
         if [[ $ENDPOINT_CONFIG_TYPE ]]; then
           case $ENDPOINT_CONFIG_TYPE in
             PRIVATE )
-              textPass "$regx: API Gateway $API_GW_NAME ID $api is set as $ENDPOINT_CONFIG_TYPE" "$regx"
+              textPass "$regx: API Gateway $API_GW_NAME ID $api is set as $ENDPOINT_CONFIG_TYPE" "$regx" "$API_GW_NAME"
             ;;
             REGIONAL )
-              textFail "$regx: API Gateway $API_GW_NAME ID $api is internet accesible as $ENDPOINT_CONFIG_TYPE" "$regx"
+              textFail "$regx: API Gateway $API_GW_NAME ID $api is internet accesible as $ENDPOINT_CONFIG_TYPE" "$regx" "$API_GW_NAME"
             ;;
             EDGE )
-              textFail "$regx: API Gateway $API_GW_NAME ID $api is internet accesible as $ENDPOINT_CONFIG_TYPE" "$regx"
+              textFail "$regx: API Gateway $API_GW_NAME ID $api is internet accesible as $ENDPOINT_CONFIG_TYPE" "$regx" "$API_GW_NAME"
           esac
         fi
       done

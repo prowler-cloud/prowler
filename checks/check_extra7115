@@ -31,9 +31,9 @@ extra7115(){
           CONNECTION_NAME=$(echo $connection | base64 --decode   | jq -r '.Name' )
           CONNECTION_SSL_STATE=$(echo $connection | base64 --decode  | jq -r '.SSL')
           if [[ "$CONNECTION_SSL_STATE" == "false" ]]; then
-              textFail "$regx: Glue connection $CONNECTION_NAME has SSL connection disabled"  "$regx"
+              textFail "$regx: Glue connection $CONNECTION_NAME has SSL connection disabled"  "$regx" "$CONNECTION_NAME"
           else 
-              textPass "$regx: Glue connection $CONNECTION_NAME has SSL connection enabled"  "$regx"
+              textPass "$regx: Glue connection $CONNECTION_NAME has SSL connection enabled"  "$regx" "$CONNECTION_NAME"
           fi
       done
     else 

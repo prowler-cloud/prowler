@@ -38,7 +38,7 @@ check122(){
     if [[ $POLICIES_ALLOW_LIST ]]; then
       textInfo "List of custom policies: "
       for policy in $POLICIES_ALLOW_LIST; do
-        textFail "Policy $policy allows \"*:*\""
+        textFail "Policy $policy allows \"*:*\"" "us-east-1" "$policy"
       done
     else
         textPass "No custom policy found that allow full \"*:*\" administrative privileges"

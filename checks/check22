@@ -43,9 +43,9 @@ check22(){
 
         LOGFILEVALIDATION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $TRAIL_REGION --query 'trailList[*].LogFileValidationEnabled' --output text --trail-name-list $trail)
         if [[ "$LOGFILEVALIDATION_TRAIL_STATUS" == 'False' ]];then
-          textFail "Trail $trail in $regx log file validation disabled"
+          textFail "Trail $trail in $regx log file validation disabled" "$regx" "$trail"
         else
-          textPass "Trail $trail in $regx log file validation enabled"
+          textPass "Trail $trail in $regx log file validation enabled" "$regx" "$trail"
         fi
 
       done

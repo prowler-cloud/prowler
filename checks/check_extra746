@@ -31,9 +31,9 @@ extra746(){
         API_GW_NAME=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query "items[?id==\`$api\`].name" --output text)
         AUTHORIZER_CONFIGURED=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-authorizers --rest-api-id $api --query items[*].type --output text)
         if [[ $AUTHORIZER_CONFIGURED ]]; then
-           textPass "$regx: API Gateway $API_GW_NAME ID $api has authorizer configured" "$regx"
+           textPass "$regx: API Gateway $API_GW_NAME ID $api has authorizer configured" "$regx" "$API_GW_NAME"
         else
-           textFail "$regx: API Gateway $API_GW_NAME ID $api has not authorizer configured" "$regx"
+           textFail "$regx: API Gateway $API_GW_NAME ID $api has not authorizer configured" "$regx" "$API_GW_NAME"
         fi
       done
     else

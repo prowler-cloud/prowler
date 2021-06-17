@@ -30,9 +30,9 @@ extra756(){
       for cluster in $LIST_OF_RS_CLUSTERS; do
         IS_PUBLICLY_ACCESSIBLE=$($AWSCLI $PROFILE_OPT redshift describe-clusters --region $regx --cluster-identifier $cluster --query Clusters[*].PubliclyAccessible --output text|grep True)
         if [[ $IS_PUBLICLY_ACCESSIBLE ]]; then
-          textFail "$regx: Redshift cluster $cluster is publicly accessible" "$regx"
+          textFail "$regx: Redshift cluster $cluster is publicly accessible" "$regx" "$cluster"
         else
-          textPass "$regx: Redshift cluster $cluster is not publicly accessible" "$regx"
+          textPass "$regx: Redshift cluster $cluster is not publicly accessible" "$regx" "$cluster"
         fi
       done
     else

@@ -35,9 +35,9 @@ extra737(){
         if [[ $CHECK_STATUS == "PendingDeletion" ]]; then
           textInfo "$regx: KMS key $key is pending deletion and cannot be rotated" "$regx"
         elif [[ $CHECK_ROTATION == "False" ]]; then
-          textFail "$regx: KMS key $key has rotation disabled!" "$regx"
+          textFail "$regx: KMS key $key has rotation disabled!" "$regx" "$key"
         else
-          textPass "$regx: KMS key $key has rotation enabled" "$regx"
+          textPass "$regx: KMS key $key has rotation enabled" "$regx" "$key"
         fi
       done
     else

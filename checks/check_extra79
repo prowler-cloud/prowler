@@ -37,7 +37,7 @@ extra79(){
       while read -r elb;do
         ELB_NAME=$(echo $elb | awk '{ print $1; }')
         ELB_DNSNAME=$(echo $elb | awk '{ print $2; }')
-        textFail "$regx: ELB: $ELB_NAME at DNS: $ELB_DNSNAME is internet-facing!" "$regx"
+        textFail "$regx: ELB: $ELB_NAME at DNS: $ELB_DNSNAME is internet-facing!" "$regx" "$ELB_NAME"
       done <<< "$LIST_OF_ALL_ELBS_PER_LINE"
       else
         textPass "$regx: no Internet Facing ELBs found" "$regx"

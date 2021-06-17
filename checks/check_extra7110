@@ -31,9 +31,9 @@ extra7110(){
             for nb_job_name in $LIST_SM_NB_JOBS; do
                 SM_NB_SUBNETS=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-training-job --training-job-name $nb_job_name --query 'VpcConfig.Subnets' --output text)
                 if [[ $SM_NB_SUBNETS == "None" ]]; then
-                    textFail "${regx}: Sagemaker Training job $nb_job_name has VPC settings for the training job volume and output disabled" "${regx}"
+                    textFail "${regx}: Sagemaker Training job $nb_job_name has VPC settings for the training job volume and output disabled" "${regx}" "$nb_job_name"
                 else
-                    textPass "${regx}: Sagemaker Training job $nb_job_name has VPC settings for the training job volume and output enabled" "${regx}"
+                    textPass "${regx}: Sagemaker Training job $nb_job_name has VPC settings for the training job volume and output enabled" "${regx}" "$nb_job_name"
                 fi 
             done
         else 

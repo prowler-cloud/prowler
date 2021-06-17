@@ -33,9 +33,9 @@ extra7130(){
         SHORT_TOPIC=$(echo $topic | awk -F ":" '{print $NF}')
         SNS_ENCRYPTION=$($AWSCLI sns get-topic-attributes $PROFILE_OPT --region $regx --topic-arn $topic --query 'Attributes.KmsMasterKeyId' --output text)
         if [[ "None" == $SNS_ENCRYPTION ]]; then
-          textFail "$regx: $SHORT_TOPIC is not encrypted!" "$regx"
+          textFail "$regx: $SHORT_TOPIC is not encrypted!" "$regx" "$SHORT_TOPIC"
         else
-          textPass "$regx: $SHORT_TOPIC is encrypted" "$regx"
+          textPass "$regx: $SHORT_TOPIC is encrypted" "$regx" "$SHORT_TOPIC"
         fi
       done
     else

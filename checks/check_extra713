@@ -34,9 +34,9 @@ extra713(){
         while read -r detector;do
           DETECTOR_ENABLED=$($AWSCLI guardduty get-detector --detector-id $detector $PROFILE_OPT --region $regx --query "Status" --output text|grep ENABLED)
           if [[ $DETECTOR_ENABLED ]]; then
-            textPass "$regx: GuardDuty detector $detector enabled" "$regx"
+            textPass "$regx: GuardDuty detector $detector enabled" "$regx" "$detector"
           else
-            textFail "$regx: GuardDuty detector $detector configured but suspended" "$regx"
+            textFail "$regx: GuardDuty detector $detector configured but suspended" "$regx" "$detector"
           fi
         done <<< "$LIST_OF_GUARDDUTY_DETECTORS"
         else

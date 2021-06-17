@@ -29,9 +29,9 @@ extra7140(){
       for ssmdoc in $SSM_DOCS; do 
         SSM_DOC_SHARED_ALL=$($AWSCLI $PROFILE_OPT --region $regx ssm describe-document-permission --name "$ssmdoc" --permission-type "Share" --query AccountIds[] --output text | grep all)
         if [[ $SSM_DOC_SHARED_ALL ]];then
-          textFail "$regx: SSM Document $ssmdoc is public." "$regx"
+          textFail "$regx: SSM Document $ssmdoc is public." "$regx" "$ssmdoc"
         else
-          textPass "$regx: SSM Document $ssmdoc is not public." "$regx"
+          textPass "$regx: SSM Document $ssmdoc is not public." "$regx" "$ssmdoc"
         fi
       done
     else

@@ -45,11 +45,11 @@ extra742(){
           # New implementation using https://github.com/Yelp/detect-secrets
           FINDINGS=$(secretsDetector file $CFN_OUTPUTS_FILE)
             if [[ $FINDINGS -eq 0 ]]; then
-              textPass "$regx: No secrets found in stack $stack Outputs" "$regx"
+              textPass "$regx: No secrets found in stack $stack Outputs" "$regx" "$stack"
               # delete file if nothing interesting is there
               rm -f $CFN_OUTPUTS_FILE
             else
-              textFail "$regx: Potential secret found in stack $stack Outputs" "$regx"
+              textFail "$regx: Potential secret found in stack $stack Outputs" "$regx" "$stack"
               # delete file to not leave trace, user must look at the CFN Stack
               rm -f $CFN_OUTPUTS_FILE
             fi

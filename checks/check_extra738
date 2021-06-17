@@ -30,11 +30,11 @@ extra738(){
       for dist in $LIST_OF_DISTRIBUTIONS; do
         CHECK_HTTPS_STATUS=$($AWSCLI cloudfront get-distribution --id $dist --query Distribution.DistributionConfig.DefaultCacheBehavior.ViewerProtocolPolicy $PROFILE_OPT --output text)
         if [[ $CHECK_HTTPS_STATUS == "allow-all" ]]; then
-          textFail "CloudFront distribution $dist viewers can use HTTP or HTTPS!" "$regx"
+          textFail "CloudFront distribution $dist viewers can use HTTP or HTTPS!" "$regx" "$dist"
         elif [[ $CHECK_HTTPS_STATUS == "redirect-to-https" ]]; then
-          textPass "CloudFront distribution $dist has redirect to HTTPS" "$regx"
+          textPass "CloudFront distribution $dist has redirect to HTTPS" "$regx" "$dist"
         else
-          textPass "CloudFront distribution $dist has HTTPS only" "$regx"
+          textPass "CloudFront distribution $dist has HTTPS only" "$regx" "$dist"
         fi
       done
     else
