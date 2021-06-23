@@ -34,9 +34,9 @@ extra718(){
         continue
       fi
       if [[ $(echo "$BUCKET_SERVER_LOG_ENABLED" | grep "^None$") ]]; then
-        textFail "Bucket $bucket has server access logging disabled!"
+        textFail "Bucket $bucket has server access logging disabled!" "us-east-1" "$bucket"
       else
-        textPass "Bucket $bucket has server access logging enabled"
+        textPass "Bucket $bucket has server access logging enabled" "us-east-1" "$bucket"
       fi
     done
   else

@@ -32,9 +32,9 @@ extra736(){
       for key in $LIST_OF_CUSTOMER_KMS_KEYS; do
         CHECK_POLICY=$($AWSCLI kms get-key-policy --key-id $key --policy-name default $PROFILE_OPT --region $regx  --output text|awk '/Principal/{n=NR+1} n>=NR' |grep AWS\"\ :\ \"\\*\"$)
         if [[ $CHECK_POLICY ]]; then
-          textFail "$regx: KMS key $key may be publicly accessible!" "$regx"
+          textFail "$regx: KMS key $key may be publicly accessible!" "$regx" "$key"
         else
-          textPass "$regx: KMS key $key is not exposed to Public" "$regx"
+          textPass "$regx: KMS key $key is not exposed to Public" "$regx" "$key"
         fi
       done
     else

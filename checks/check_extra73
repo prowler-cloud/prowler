@@ -127,13 +127,13 @@ extra73(){
 
     ALLUSERS_ACL=$(echo "$BUCKET_ACL" | jq '.Grants[]|select(.Grantee.URI != null)|select(.Grantee.URI | endswith("/AllUsers"))')
     if [[ $ALLUSERS_ACL != "" ]]; then
-      textFail "$BUCKET_LOCATION: $bucket bucket is Public!" "$BUCKET_LOCATION"
+      textFail "$BUCKET_LOCATION: $bucket bucket is Public!" "$BUCKET_LOCATION" "$bucket"
       continue
     fi
 
     AUTHENTICATEDUSERS_ACL=$(echo "$BUCKET_ACL" | jq '.Grants[]|select(.Grantee.URI != null)|select(.Grantee.URI | endswith("/AuthenticatedUsers"))')
     if [[ $AUTHENTICATEDUSERS_ACL != "" ]]; then
-      textFail "$BUCKET_LOCATION: $bucket bucket is Public!" "$BUCKET_LOCATION"
+      textFail "$BUCKET_LOCATION: $bucket bucket is Public!" "$BUCKET_LOCATION" "$bucket"
       continue
     fi
 
@@ -150,11 +150,11 @@ extra73(){
     fi
 
     if [[ $BUCKET_POLICY_STATUS != "" && $BUCKET_POLICY_STATUS != "False" ]]; then
-      textFail "$BUCKET_LOCATION: $bucket bucket is Public!" "$BUCKET_LOCATION"
+      textFail "$BUCKET_LOCATION: $bucket bucket is Public!" "$BUCKET_LOCATION" "$bucket"
       continue
     fi
 
-    textPass "$BUCKET_LOCATION: $bucket bucket is not Public" "$BUCKET_LOCATION"
+    textPass "$BUCKET_LOCATION: $bucket bucket is not Public" "$BUCKET_LOCATION" "$bucket"
 
   done
 }

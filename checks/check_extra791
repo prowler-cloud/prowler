@@ -29,9 +29,9 @@ extra791(){
       for dist in $LIST_OF_DISTRIBUTIONS; do
         CHECK_ORIGINSSLPROTOCOL_STATUS=$($AWSCLI cloudfront get-distribution --id $dist --query Distribution.DistributionConfig.Origins.Items[].CustomOriginConfig.OriginSslProtocols.Items $PROFILE_OPT --output text)
         if [[ $CHECK_ORIGINSSLPROTOCOL_STATUS == *"SSLv2"* ]] || [[ $CHECK_ORIGINSSLPROTOCOL_STATUS == *"SSLv3"* ]]; then
-          textFail "CloudFront distribution $dist is using a deprecated SSL protocol!" "$regx"
+          textFail "CloudFront distribution $dist is using a deprecated SSL protocol!" "$regx" "$dist"
         else
-          textPass "CloudFront distribution $dist is not using a deprecated SSL protocol" "$regx"
+          textPass "CloudFront distribution $dist is not using a deprecated SSL protocol" "$regx" "$dist"
         fi
       done
     else

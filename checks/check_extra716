@@ -40,7 +40,7 @@ extra716(){
           # check if the policy has a principal set up
           CHECK_ES_POLICY_PRINCIPAL=$(cat $TEMP_POLICY_FILE | jq -r '. | .Statement[] | select(.Effect == "Allow" and (((.Principal|type == "object") and .Principal.AWS != "*") or ((.Principal|type == "string") and .Principal != "*")) and select(has("Condition") | not))')
           if [[ $CHECK_ES_POLICY_PRINCIPAL ]]; then 
-            textPass "$regx: Amazon ES domain $domain does have a Principal set up" "$regx"
+            textPass "$regx: Amazon ES domain $domain does have a Principal set up" "$regx" "$domain"
           fi 
           CHECK_ES_DOMAIN_POLICY_OPEN=$(cat $TEMP_POLICY_FILE | jq -r '. | .Statement[] | select(.Effect == "Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and select(has("Condition") | not))')
           CHECK_ES_DOMAIN_POLICY_HAS_CONDITION=$(cat $TEMP_POLICY_FILE | jq -r '. | .Statement[] | select(.Effect == "Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and select(has("Condition")))' )
@@ -67,13 +67,13 @@ extra716(){
           fi
           if [[ $CHECK_ES_DOMAIN_POLICY_OPEN || $CHECK_ES_DOMAIN_POLICY_CONDITION_ZERO || $CHECK_ES_DOMAIN_POLICY_CONDITION_STAR || ${CHECK_ES_DOMAIN_POLICY_CONDITION_PUBLIC_IP[@]} ]];then
             if [[ $CHECK_ES_DOMAIN_POLICY_OPEN ]];then
-              textFail "$regx: Amazon ES domain $domain policy allows access (Principal: \"*\") - use extra788 to test AUTH" "$regx"
+              textFail "$regx: Amazon ES domain $domain policy allows access (Principal: \"*\") - use extra788 to test AUTH" "$regx" "$domain"
             fi
             if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION && $CHECK_ES_DOMAIN_POLICY_CONDITION_ZERO ]];then
-              textFail "$regx: Amazon ES domain $domain policy allows access (Principal: \"*\" and network 0.0.0.0) - use extra788 to test AUTH" "$regx"
+              textFail "$regx: Amazon ES domain $domain policy allows access (Principal: \"*\" and network 0.0.0.0) - use extra788 to test AUTH" "$regx" "$domain"
             fi
             if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION && $CHECK_ES_DOMAIN_POLICY_CONDITION_STAR ]];then
-              textFail "$regx: Amazon ES domain $domain policy allows access (Principal: \"*\" and network \"*\") - use extra788 to test AUTH" "$regx"
+              textFail "$regx: Amazon ES domain $domain policy allows access (Principal: \"*\" and network \"*\") - use extra788 to test AUTH" "$regx" "$domain"
             fi
             if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION && ${CHECK_ES_DOMAIN_POLICY_CONDITION_PUBLIC_IP[@]} ]];then
               textInfo "$regx: Amazon ES domain $domain policy allows access (Principal: \"*\" and Public IP or Network $(echo ${CONDITION_HAS_PUBLIC_IP_ARRAY[@]})) - use extra788 to test AUTH" "$regx"
@@ -82,7 +82,7 @@ extra716(){
             if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION && ${CHECK_ES_DOMAIN_POLICY_CONDITION_PRIVATE_IP[@]} ]];then
               textInfo "$regx: Amazon ES domain $domain policy allows access from a Private IP or CIDR RFC1918 $(echo ${CONDITION_HAS_PRIVATE_IP_ARRAY[@]})" "$regx"
             else
-              textPass "$regx: Amazon ES domain $domain does not allow anonymous access" "$regx"
+              textPass "$regx: Amazon ES domain $domain does not allow anonymous access" "$regx" "$domain"
             fi
           fi
           rm -f $TEMP_POLICY_FILE

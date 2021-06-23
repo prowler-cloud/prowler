@@ -32,12 +32,12 @@ extra7127(){
     if [[ $NON_COMPLIANT_SSM_MANAGED_INSTANCES || $COMPLIANT_SSM_MANAGED_INSTANCES ]]; then
       if [[ $NON_COMPLIANT_SSM_MANAGED_INSTANCES ]]; then
         for instance in $NON_COMPLIANT_SSM_MANAGED_INSTANCES; do
-          textFail "$regx: EC2 managed instance $instance is non-compliant" "$regx"
+          textFail "$regx: EC2 managed instance $instance is non-compliant" "$regx" "$instance"
         done
       fi
       if [[ $COMPLIANT_SSM_MANAGED_INSTANCES ]]; then
         for instance in $COMPLIANT_SSM_MANAGED_INSTANCES; do
-          textPass "$regx: EC2 managed instance $instance is compliant" "$regx"
+          textPass "$regx: EC2 managed instance $instance is compliant" "$regx" "$instance"
         done
       fi 
     else 

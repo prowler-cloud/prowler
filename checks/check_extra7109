@@ -31,9 +31,9 @@ extra7109(){
             for nb_job_name in $LIST_SM_NB_JOBS; do
                 SM_NB_NETWORKISOLATION=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-training-job --training-job-name $nb_job_name --query 'EnableNetworkIsolation' --output text)
                 if [[ $SM_NB_NETWORKISOLATION == False ]]; then
-                    textFail "${regx}: Sagemaker Training job $nb_job_name has network isolation disabled" "${regx}"
+                    textFail "${regx}: Sagemaker Training job $nb_job_name has network isolation disabled" "${regx}" "$nb_job_name"
                 else
-                    textPass "${regx}: Sagemaker Training job $nb_job_name has network isolation enabled" "${regx}"
+                    textPass "${regx}: Sagemaker Training job $nb_job_name has network isolation enabled" "${regx}" "$nb_job_name"
                 fi 
             done
         else 

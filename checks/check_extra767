@@ -29,9 +29,9 @@ extra767(){
       for dist in $LIST_OF_DISTRIBUTIONS; do
         CHECK_FLE=$($AWSCLI cloudfront get-distribution --id $dist --query Distribution.DistributionConfig.DefaultCacheBehavior.FieldLevelEncryptionId $PROFILE_OPT --output text)
         if [[ $CHECK_FLE ]]; then
-          textPass "CloudFront distribution $dist has Field Level Encryption enabled" "$regx"
+          textPass "CloudFront distribution $dist has Field Level Encryption enabled" "$regx" "$dist"
         else
-          textFail "CloudFront distribution $dist has Field Level Encryption disabled!" "$regx"
+          textFail "CloudFront distribution $dist has Field Level Encryption disabled!" "$regx" "$dist"
         fi
       done
     else

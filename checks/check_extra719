@@ -30,9 +30,9 @@ extra719(){
     for hostedzoneid in $LIST_OF_HOSTED_ZONES;do
       HOSTED_ZONE_QUERY_LOG_ENABLED=$($AWSCLI route53 list-query-logging-configs --hosted-zone-id $hostedzoneid $PROFILE_OPT --query QueryLoggingConfigs[*].CloudWatchLogsLogGroupArn --output text|cut -d: -f7)
       if [[ $HOSTED_ZONE_QUERY_LOG_ENABLED ]];then
-        textPass "Route53 public hosted zone Id $hostedzoneid has query logging enabled in Log Group $HOSTED_ZONE_QUERY_LOG_ENABLED"
+        textPass "Route53 public hosted zone Id $hostedzoneid has query logging enabled in Log Group $HOSTED_ZONE_QUERY_LOG_ENABLED" "us-east-1" "$hostedzoneid"
       else
-        textFail "Route53 public hosted zone Id $hostedzoneid has query logging disabled!"
+        textFail "Route53 public hosted zone Id $hostedzoneid has query logging disabled!" "us-east-1" "$hostedzoneid"
       fi
     done
   else

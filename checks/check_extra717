@@ -33,9 +33,9 @@ extra717(){
         for elb in $LIST_OF_ELBS; do
           CHECK_ELBS_LOG_ENABLED=$($AWSCLI elb describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-name $elb --query 'LoadBalancerAttributes.AccessLog.Enabled'|grep "^true")
           if [[ $CHECK_ELBS_LOG_ENABLED ]]; then
-            textPass "$regx: $elb has access logs to S3 configured" "$regx"
+            textPass "$regx: $elb has access logs to S3 configured" "$regx" "$elb"
           else
-            textFail "$regx: $elb has not configured access logs" "$regx"
+            textFail "$regx: $elb has not configured access logs" "$regx" "$elb"
           fi
         done
       fi
@@ -44,9 +44,9 @@ extra717(){
           CHECK_ELBSV2_LOG_ENABLED=$($AWSCLI elbv2 describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-arn $elbarn --query Attributes[*] --output text|grep "^access_logs.s3.enabled"|cut -f2|grep true)
           ELBV2_NAME=$(echo $elbarn|cut -d\/ -f3)
           if [[ $CHECK_ELBSV2_LOG_ENABLED ]]; then
-            textPass "$regx: $ELBV2_NAME has access logs to S3 configured" "$regx"
+            textPass "$regx: $ELBV2_NAME has access logs to S3 configured" "$regx" "$elb"
           else
-            textFail "$regx: $ELBV2_NAME has not configured access logs" "$regx"
+            textFail "$regx: $ELBV2_NAME has not configured access logs" "$regx" "$elb"
           fi
         done
       fi

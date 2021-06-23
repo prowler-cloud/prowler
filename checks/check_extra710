@@ -33,10 +33,10 @@ extra710(){
       while read -r instance;do
         INSTANCE_ID=$(echo $instance | awk '{ print $1; }')
         PUBLIC_IP=$(echo $instance | awk '{ print $2; }')
-        textFail "$regx: Instance: $INSTANCE_ID at IP: $PUBLIC_IP is internet-facing!" "$regx"
+        textFail "$regx: Instance: $INSTANCE_ID at IP: $PUBLIC_IP is internet-facing!" "$regx" "$INSTANCE_ID"
       done <<< "$LIST_OF_PUBLIC_INSTANCES"
       else
-        textPass "$regx: no Internet Facing EC2 Instances found" "$regx"
+        textPass "$regx: no Internet Facing EC2 Instances found" "$regx" "$INSTANCE_ID"
     fi
   done
 }

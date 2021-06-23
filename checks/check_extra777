@@ -58,7 +58,7 @@ extra777(){
                             )
 
             if [[ (${INGRESS_TOTAL} -ge ${THRESHOLD}) || (${EGRESS_TOTAL} -ge ${THRESHOLD}) ]]; then
-                textFail "${regx}: ${SECURITY_GROUP} has ${INGRESS_TOTAL} inbound rules and ${EGRESS_TOTAL} outbound rules" "${regx}"
+                textFail "${regx}: ${SECURITY_GROUP} has ${INGRESS_TOTAL} inbound rules and ${EGRESS_TOTAL} outbound rules" "${regx}" "${SECURITY_GROUP}"
             fi
         done
     done

@@ -51,12 +51,12 @@ extra741(){
             # delete file if nothing interesting is there
             rm -f "$EC2_USERDATA_FILE"
           else
-            textFail "$regx: Potential secret found in $instance User Data" "$regx"
+            textFail "$regx: Potential secret found in $instance User Data" "$regx" "$regx" "$instance"
             # delete file to not leave trace, user must look at the instance User Data
             rm -f "$EC2_USERDATA_FILE"
           fi
         else
-          textPass "$regx: No secrets found in $instance User Data or it is empty" "$regx"
+          textPass "$regx: No secrets found in $instance User Data or it is empty" "$regx" "$instance"
         fi
       done
     else

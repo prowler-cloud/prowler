@@ -31,9 +31,9 @@ extra7111(){
             for nb_instance in $LIST_SM_NB_INSTANCES; do
                 SM_NB_DIRECTINET=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-notebook-instance --notebook-instance-name $nb_instance --query 'DirectInternetAccess' --output text)
                 if [[ "${SM_NB_DIRECTINET}" == "Enabled" ]]; then
-                    textFail "${regx}: Sagemaker Notebook instance $nb_instance has direct internet access enabled" "${regx}"
+                    textFail "${regx}: Sagemaker Notebook instance $nb_instance has direct internet access enabled" "${regx}" "$nb_instance"
                 else
-                    textPass "${regx}: Sagemaker Notebook instance $nb_instance has direct internet access disabled" "${regx}"
+                    textPass "${regx}: Sagemaker Notebook instance $nb_instance has direct internet access disabled" "${regx}" "$nb_instance"
                 fi 
             done
         else 

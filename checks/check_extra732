@@ -30,9 +30,9 @@ extra732(){
     for dist in $LIST_DISTRIBUTIONS; do
       GEO_ENABLED=$($AWSCLI cloudfront get-distribution-config $PROFILE_OPT --id $dist --query DistributionConfig.Restrictions.GeoRestriction.RestrictionType --output text)
       if [[ $GEO_ENABLED == "none" ]]; then
-        textFail "CloudFront distribution $dist has not Geo restrictions"
+        textFail "CloudFront distribution $dist has not Geo restrictions" "us-east-1" "$dist"
       else
-        textPass "CloudFront distribution $dist has Geo restrictions enabled"
+        textPass "CloudFront distribution $dist has Geo restrictions enabled" "us-east-1" "$dist"
       fi
     done
   else

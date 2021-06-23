@@ -59,10 +59,10 @@ extra7129(){
               done
             fi
           else
-            textFail "$regx: Application Load Balancer $alb is not protected by WAF ACL" "$regx"
+            textFail "$regx: Application Load Balancer $alb is not protected by WAF ACL" "$regx" "$alb"
           fi
         else
-          textFail "$regx: Application Load Balancer $alb is not protected no WAF ACL found" "$regx"
+          textFail "$regx: Application Load Balancer $alb is not protected no WAF ACL found" "$regx" "$alb"
         fi
       done
     else

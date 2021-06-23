@@ -31,9 +31,9 @@ extra7103(){
             for nb_instance in $LIST_SM_NB_INSTANCES; do
                 SM_NB_ROOTACCESS=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-notebook-instance --notebook-instance-name $nb_instance --query 'RootAccess' --output text)
                 if [[ "${SM_NB_ROOTACCESS}" == "Enabled" ]]; then
-                    textFail "${regx}: Sagemaker Notebook instance $nb_instance has root access enabled" "${regx}"
+                    textFail "${regx}: Sagemaker Notebook instance $nb_instance has root access enabled" "${regx}" "$nb_instance"
                 else
-                    textPass "${regx}: Sagemaker Notebook instance $nb_instance has root access disabled" "${regx}"                    
+                    textPass "${regx}: Sagemaker Notebook instance $nb_instance has root access disabled" "${regx}" "$nb_instance"                    
                 fi 
             done
         else 

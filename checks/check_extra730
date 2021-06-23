@@ -37,9 +37,9 @@ extra730(){
           EXPIRES_DATE=$(timestamp_to_date $NOTAFTER)
           COUNTER_DAYS=$(how_many_days_from_today $EXPIRES_DATE)
           if [[ $COUNTER_DAYS -le $DAYS_TO_EXPIRE_THRESHOLD ]]; then
-            textFail "$regx: Certificate for $FQDN is about to expire in $COUNTER_DAYS days!" "$regx"
+            textFail "$regx: Certificate for $FQDN is about to expire in $COUNTER_DAYS days!" "$regx" "$FQDN"
           else
-            textPass "$regx: Certificate for $FQDN expires in $COUNTER_DAYS days" "$regx"
+            textPass "$regx: Certificate for $FQDN expires in $COUNTER_DAYS days" "$regx" "$FQDN"
           fi
         done
       done

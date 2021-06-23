@@ -32,9 +32,9 @@ extra721(){
         REDSHIFT_LOG_ENABLED=$($AWSCLI redshift describe-logging-status $PROFILE_OPT --region $regx --cluster-identifier $redshiftcluster --query LoggingEnabled --output text | grep True)
         if [[ $REDSHIFT_LOG_ENABLED ]];then
           REDSHIFT_LOG_ENABLED_BUCKET=$($AWSCLI redshift describe-logging-status $PROFILE_OPT --region $regx --cluster-identifier $redshiftcluster --query BucketName --output text)
-          textPass "$regx: Redshift cluster $redshiftcluster has audit logging enabled to bucket $REDSHIFT_LOG_ENABLED_BUCKET" "$regx"
+          textPass "$regx: Redshift cluster $redshiftcluster has audit logging enabled to bucket $REDSHIFT_LOG_ENABLED_BUCKET" "$regx" "$redshiftcluster"
         else
-          textFail "$regx: Redshift cluster $redshiftcluster logging disabled!" "$regx"
+          textFail "$regx: Redshift cluster $redshiftcluster logging disabled!" "$regx" "$redshiftcluster"
         fi
       done
     else

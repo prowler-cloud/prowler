@@ -39,15 +39,15 @@ extra727(){
             if [[ $SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION ]]; then
               SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS=$(echo $SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION \
                 | jq '"[Principal: " + (.Principal|tostring) + " Action: " + (.Action|tostring) + "]"' )
-              textFail "$regx: SQS $queue queue policy with public access: $SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS" "$regx"
+              textFail "$regx: SQS $queue queue policy with public access: $SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS" "$regx" "$queue"
             else
               textInfo "$regx: SQS $queue queue policy with public access but has a Condition" "$regx"
             fi
           else
-            textPass "$regx: SQS $queue queue without public access" "$regx"
+            textPass "$regx: SQS $queue queue without public access" "$regx" "$queue"
           fi
         else
-          textPass "$regx: SQS $queue queue without policy" "$regx"
+          textPass "$regx: SQS $queue queue without policy" "$regx" "$queue"
         fi
       done
     else

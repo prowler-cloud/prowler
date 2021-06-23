@@ -31,9 +31,9 @@ extra7106(){
             for nb_model_name in $LIST_SM_NB_MODELS; do
                 SM_NB_VPCCONFIG=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-model --model-name $nb_model_name --query 'VpcConfig.Subnets' --output text)
                 if [[ $SM_NB_VPCCONFIG == "None" ]]; then
-                    textFail "${regx}: Amazon SageMaker Model $nb_model_name has VPC settings disabled" "${regx}"
+                    textFail "${regx}: Amazon SageMaker Model $nb_model_name has VPC settings disabled" "${regx}" "$nb_model_name"
                 else
-                    textPass "${regx}: Amazon SageMaker Model $nb_model_name has VPC settings enabled" "${regx}"
+                    textPass "${regx}: Amazon SageMaker Model $nb_model_name has VPC settings enabled" "${regx}" "$nb_model_name"
                 fi 
             done
         else 

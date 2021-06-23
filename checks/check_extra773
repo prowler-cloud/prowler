@@ -31,9 +31,9 @@ extra773(){
     for dist in $LIST_OF_DISTRIBUTIONS; do
       WEB_ACL_ID=$($AWSCLI cloudfront get-distribution $PROFILE_OPT --id "$dist" --query 'Distribution.DistributionConfig.WebACLId' --output text)
       if [[ $WEB_ACL_ID ]]; then
-        textPass "CloudFront distribution $dist is using AWS WAF web ACL $WEB_ACL_ID"
+        textPass "CloudFront distribution $dist is using AWS WAF web ACL $WEB_ACL_ID" "us-east-1" "$dist"
       else
-        textFail "CloudFront distribution $dist is not using AWS WAF web ACL"
+        textFail "CloudFront distribution $dist is not using AWS WAF web ACL" "us-east-1" "$dist"
       fi
     done
   else

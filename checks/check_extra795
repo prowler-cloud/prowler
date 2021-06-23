@@ -34,9 +34,9 @@ extra795(){
         PRIV_ENABLED=$(echo $CLUSTERDEF | jq -r '.endpointPrivateAccess')
 
         if [[ $PUB_ENABLED == "false" ]] && [[ $PRIV_ENABLED == "true" ]] ; then
-          textPass "$regx: Cluster endpoint access is private for EKS cluster $CLUSTER" "$regx"
+          textPass "$regx: Cluster endpoint access is private for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
         else
-              textFail "$regx: Cluster endpoint access is public for EKS cluster $CLUSTER" "$regx"
+              textFail "$regx: Cluster endpoint access is public for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
         fi
       done
     else

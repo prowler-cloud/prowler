@@ -46,11 +46,11 @@ extra768(){
           # Implementation using https://github.com/Yelp/detect-secrets
           FINDINGS=$(secretsDetector file $TASK_DEFINITION_ENV_VARIABLES_FILE)
           if [[ $FINDINGS -eq 0 ]]; then
-            textPass "$regx: No secrets found in ECS task definition $TASK_DEFINITION variables" "$regx"
+            textPass "$regx: No secrets found in ECS task definition $TASK_DEFINITION variables" "$regx" "$TASK_DEFINITION"
             # delete file if nothing interesting is there
             rm -f $TASK_DEFINITION_ENV_VARIABLES_FILE
           else
-            textFail "$regx: Potential secret found in ECS task definition $TASK_DEFINITION variables" "$regx"
+            textFail "$regx: Potential secret found in ECS task definition $TASK_DEFINITION variables" "$regx" "$TASK_DEFINITION"
           fi
         else
           textInfo "$regx: ECS task definition $TASK_DEFINITION has no variables" "$regx"

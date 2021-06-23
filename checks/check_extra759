@@ -41,11 +41,11 @@ extra759(){
         # Implementation using https://github.com/Yelp/detect-secrets
         FINDINGS=$(secretsDetector file $LAMBDA_FUNCTION_VARIABLES_FILE)
           if [[ $FINDINGS -eq 0 ]]; then
-            textPass "$regx: No secrets found in Lambda function $lambdafunction variables" "$regx"
+            textPass "$regx: No secrets found in Lambda function $lambdafunction variables" "$regx" "$lambdafunction"
             # delete file if nothing interesting is there
             rm -f $LAMBDA_FUNCTION_VARIABLES_FILE
           else
-            textFail "$regx: Potential secret found in Lambda function $lambdafunction variables" "$regx"
+            textFail "$regx: Potential secret found in Lambda function $lambdafunction variables" "$regx" "$lambdafunction"
             # delete file to not leave trace, user must look at the function
             rm -f $LAMBDA_FUNCTION_VARIABLES_FILE
           fi

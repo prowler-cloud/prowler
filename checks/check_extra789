@@ -47,7 +47,7 @@ extra789(){
             for ENDPOINT_CONNECTION in ${ENDPOINT_CONNECTION_LIST}; do
                 for ACCOUNT_ID in ${TRUSTED_ACCOUNT_IDS}; do
                     if [[ "${ACCOUNT_ID}" == "${ENDPOINT_CONNECTION}" ]]; then
-                        textPass "${regx}: Found trusted account in VPC endpoint service connection ${ENDPOINT_CONNECTION}" "${regx}"
+                        textPass "${regx}: Found trusted account in VPC endpoint service connection ${ENDPOINT_CONNECTION}" "${regx}" "${ENDPOINT_CONNECTION}"
                         # Algorithm:
                         # Remove all trusted ACCOUNT_IDs from ENDPOINT_CONNECTION_LIST.
                         # As a result, the ENDPOINT_CONNECTION_LIST finally contains only unknown/untrusted account ids.
@@ -57,7 +57,7 @@ extra789(){
             done
 
             for UNTRUSTED_CONNECTION in ${ENDPOINT_CONNECTION_LIST}; do
-                textFail "${regx}: Found untrusted account in VPC endpoint service connection ${UNTRUSTED_CONNECTION}" "${regx}"
+                textFail "${regx}: Found untrusted account in VPC endpoint service connection ${UNTRUSTED_CONNECTION}" "${regx}" "${ENDPOINT_CONNECTION}"
             done
         done
     done

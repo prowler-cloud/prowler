@@ -32,9 +32,9 @@ extra797(){
         ENC_CONFIG=$($AWSCLI eks describe-cluster $PROFILE_OPT --region $regx --name $CLUSTER --query 'cluster.encryptionConfig')
 
         if [[ $ENC_CONFIG == "null" ]]; then
-           textFail "$regx: Encryption for Kubernetes secrets is not configured for EKS cluster $CLUSTER" "$regx"
+           textFail "$regx: Encryption for Kubernetes secrets is not configured for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
         else
-           textPass "$regx: Encryption for Kubernetes secrets is configured for EKS cluster $CLUSTER" "$regx"
+           textPass "$regx: Encryption for Kubernetes secrets is configured for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
         fi
       done
     else

@@ -38,9 +38,9 @@ extra796(){
           textPass "$regx: Cluster endpoint access is private for EKS cluster $CLUSTER" "$regx"
         else
           if [[ $(echo $PUB_ACCESS_CIDRS | grep "0.0.0.0/0") ]] ; then
-            textFail "$regx: Cluster control plane access is not restricted for EKS cluster $CLUSTER" "$regx"
+            textFail "$regx: Cluster control plane access is not restricted for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
           else
-            textPass "$regx: Cluster control plane access is restricted for EKS cluster $CLUSTER" "$regx"
+            textPass "$regx: Cluster control plane access is restricted for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
           fi
         fi
       done

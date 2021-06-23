@@ -54,7 +54,7 @@ extra793(){
             if $potential_redirect; then
               textInfo "$regx: $elb has both encrypted and non-encrypted listeners" "$regx"
             else
-              textFail "$regx: $elb has non-encrypted listeners" "$regx" 
+              textFail "$regx: $elb has non-encrypted listeners" "$regx" "$elb"
             fi 
           fi
         done
@@ -88,11 +88,11 @@ extra793(){
                if $redirect_rule; then
                  textInfo "$regx: $elbname has HTTP listener that redirects to HTTPS" "$regx"
                else
-                 textFail "$regx: $elbname has non-encrypted listeners" "$regx"
+                 textFail "$regx: $elbname has non-encrypted listeners" "$regx" "$elbname"
                fi
              fi
           else
-            textFail "$regx: $elbname has non-encrypted listeners" "$regx"
+            textFail "$regx: $elbname has non-encrypted listeners" "$regx" "$elbname"
           fi
         done
       fi

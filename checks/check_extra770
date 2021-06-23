@@ -33,7 +33,7 @@ extra770(){
         INSTANCE_ID=$(echo $instance | awk '{ print $1; }')
         PUBLIC_IP=$(echo $instance | awk '{ print $2; }')
         INSTANCE_PROFILE=$(echo $instance | awk '{ print $3; }')
-        textFail "$regx: Instance: $INSTANCE_ID at IP: $PUBLIC_IP is internet-facing with Instance Profile $INSTANCE_PROFILE" "$regx"
+        textFail "$regx: Instance: $INSTANCE_ID at IP: $PUBLIC_IP is internet-facing with Instance Profile $INSTANCE_PROFILE" "$regx" "$INSTANCE_ID"
       done <<< "$LIST_OF_PUBLIC_INSTANCES_WITH_INSTANCE_PROFILES"
       else
         textPass "$regx: no Internet Facing EC2 Instances with Instance Profiles found" "$regx"

@@ -58,7 +58,7 @@ extra778(){
 
                 # Edge case "0.0.0.0/0" for RDP and SSH are checked already by check41 and check42
                 if [[ ${CIDR} < ${CIDR_THRESHOLD} && 0 < ${CIDR} ]]; then
-                    textFail "${REGION}: ${SECURITY_GROUP} has potential wide-open non-RFC1918 address ${CIDR_IP} in ${DIRECTION} rule" "${REGION}"
+                    textFail "${REGION}: ${SECURITY_GROUP} has potential wide-open non-RFC1918 address ${CIDR_IP} in ${DIRECTION} rule" "${REGION}" "${SECURITY_GROUP}"
                 fi
             fi
         done

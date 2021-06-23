@@ -60,7 +60,7 @@ extra790(){
             done
 
             for UNTRUSTED_PERMISSION in ${ENDPOINT_PERMISSIONS_LIST}; do
-                textFail "${regx}: Found untrusted account in VPC endpoint service permission ${UNTRUSTED_PERMISSION}" "${regx}"
+                textFail "${regx}: Found untrusted account in VPC endpoint service permission ${UNTRUSTED_PERMISSION}" "${regx}" "${UNTRUSTED_PERMISSION}"
             done
         done
     done

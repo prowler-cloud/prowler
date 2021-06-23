@@ -44,12 +44,12 @@ extra75(){
         GROUP_NAME=$(echo $SECURITYGROUPS | jq -r --arg id $SG_ID '.[$id]')
         if [[ $GROUP_NAME != "default" ]];
         then
-          textFail "$regx: $SG_ID is not being used!" "$regx"
+          textFail "$regx: $SG_ID is not being used!" "$regx" "$SG_ID"
         else
           textInfo "$regx: $SG_ID is not being used - default security group" "$regx"
         fi
       else
-        textPass "$regx: $SG_ID is being used" "$regx"
+        textPass "$regx: $SG_ID is being used" "$regx" "$SG_ID"
       fi
     done
   done

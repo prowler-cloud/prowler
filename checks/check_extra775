@@ -44,11 +44,11 @@ extra775(){
           if [[ $FILE_FORMAT_ASCII ]]; then
           FINDINGS=$(secretsDetector file $EC2_AUTOSCALING_USERDATA_FILE)
             if [[ $FINDINGS -eq 0 ]]; then
-              textPass "$regx: No secrets found in $autoscaling_configuration" "$regx"
+              textPass "$regx: No secrets found in $autoscaling_configuration" "$regx" "$autoscaling_configuration"
               # delete file if nothing interesting is there
               rm -f $EC2_AUTOSCALING_USERDATA_FILE
             else
-              textFail "$regx: Potential secret found in $autoscaling_configuration" "$regx"
+              textFail "$regx: Potential secret found in $autoscaling_configuration" "$regx" "$autoscaling_configuration"
               # delete file to not leave trace, user must look at the autoscaling_configuration User Data
               rm -f $EC2_AUTOSCALING_USERDATA_FILE
             fi
@@ -56,14 +56,14 @@ extra775(){
             mv $EC2_AUTOSCALING_USERDATA_FILE $EC2_AUTOSCALING_USERDATA_FILE.gz ; gunzip $EC2_AUTOSCALING_USERDATA_FILE.gz
             FINDINGS=$(secretsDetector file $EC2_AUTOSCALING_USERDATA_FILE)
             if [[ $FINDINGS -eq 0 ]]; then
-              textPass "$regx: No secrets found in $autoscaling_configuration User Data" "$regx"
+              textPass "$regx: No secrets found in $autoscaling_configuration User Data" "$regx" "$autoscaling_configuration"
               rm -f $EC2_AUTOSCALING_USERDATA_FILE
             else
-              textFail "$regx: Potential secret found in $autoscaling_configuration" "$regx"
+              textFail "$regx: Potential secret found in $autoscaling_configuration" "$regx" "$autoscaling_configuration"
             fi
           fi
         else 
-          textPass "$regx: No secrets found in $autoscaling_configuration User Data or it is empty" "$regx"
+          textPass "$regx: No secrets found in $autoscaling_configuration User Data or it is empty" "$regx" "$autoscaling_configuration"
         fi
       done
     else

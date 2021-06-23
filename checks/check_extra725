@@ -53,14 +53,14 @@ extra725(){
 
         if [[ ${#BUCKET_ENABLED_TRAILS[@]} -gt 0 ]]; then
           for trail in "${BUCKET_ENABLED_TRAILS[@]}"; do
-            textPass "$regx: S3 bucket $bucketName has Object-level logging enabled in trail $trail" "$regx"
+            textPass "$regx: S3 bucket $bucketName has Object-level logging enabled in trail $trail" "$regx" "$bucketName"
           done
         else
-          textFail "$regx: S3 bucket $bucketName has Object-level logging disabled" "$regx"
+          textFail "$regx: S3 bucket $bucketName has Object-level logging disabled" "$regx" "$bucketName"
         fi
 
       else
-        textFail "$regx: S3 bucket $bucketName is not being recorded no CloudTrail found!" "$regx"
+        textFail "$regx: S3 bucket $bucketName is not being recorded no CloudTrail found!" "$regx" "$bucketName"
       fi
     done
   else

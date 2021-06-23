@@ -48,7 +48,7 @@ extra77(){
         fi
         # https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-policies.html - "By default, only the repository owner has access to a repository."
         if [[ $(grep RepositoryPolicyNotFoundException $TEMP_POLICY_FILE) ]]; then
-          textPass "$region: $repo is not open" "$region"
+          textPass "$region: $repo is not open" "$region" "$repo"
           rm -f $TEMP_POLICY_FILE
           continue
         fi
@@ -57,12 +57,12 @@ extra77(){
         if [[ $CHECK_ECR_REPO_ALLUSERS_POLICY ]]; then
           textFail "$region: $repo policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$region"
         else
-          textPass "$region: $repo is not open" "$region"
+          textPass "$region: $repo is not open" "$region" "$repo"
         fi
         rm -f $TEMP_POLICY_FILE
       done
     else
-      textInfo "$region: No ECR repositories found" "$region"
+      textInfo "$region: No ECR repositories found" "$region" "$repo"
     fi
   done
 }

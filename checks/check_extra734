@@ -52,7 +52,7 @@ extra734(){
 
       if [[ $RESULT == "AES256" || $RESULT == "aws:kms" ]];
       then
-        textPass "Bucket $bucket is enabled for default encryption with $RESULT"
+        textPass "Bucket $bucket is enabled for default encryption with $RESULT" "us-east-1" "$bucket"
         continue
       fi
 
@@ -66,7 +66,7 @@ extra734(){
         continue
       fi
       if [[ $(grep NoSuchBucketPolicy $TEMP_SSE_POLICY_FILE) ]]; then
-        textFail "No bucket policy for $bucket"
+        textFail "No bucket policy for $bucket" "us-east-1" "$bucket" "us-east-1" "$bucket"
         rm -f $TEMP_SSE_POLICY_FILE
         continue
       fi
@@ -74,7 +74,7 @@ extra734(){
       # check if the S3 policy forces SSE s3:x-amz-server-side-encryption:true
       CHECK_BUCKET_SSE_POLICY_PRESENT=$(cat $TEMP_SSE_POLICY_FILE | jq --arg arn "arn:${AWS_PARTITION}:s3:::${bucket}/*" '.Statement[]|select(.Effect=="Deny" and ((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*") and .Action=="s3:PutObject" and .Resource==$arn and .Condition.StringEquals."s3:x-amz-server-side-encryption" != null)')
       if [[ $CHECK_BUCKET_SSE_POLICY_PRESENT == "" ]]; then
-        textFail "Bucket $bucket does not enforce encryption!"
+        textFail "Bucket $bucket does not enforce encryption!" "us-east-1" "$bucket"
         rm -f $TEMP_SSE_POLICY_FILE
         continue
       fi
