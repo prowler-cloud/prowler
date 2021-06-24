@@ -10,25 +10,25 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
+CHECK_ID_extra7144="7.144"
+CHECK_TITLE_extra7144="[extra7144] Check if aws cloudwatch has allowed sharing with other accounts (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra7144="NOT_SCORED"
+CHECK_TYPE_extra7144="EXTRA"
+CHECK_SEVERITY_extra7144="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7144="AwsCloudWatch"
+CHECK_ALTERNATE_check7144="extra7144"
+CHECK_SERVICENAME_extra7144="cloudwatch"
+CHECK_RISK_extra7144=''
+CHECK_REMEDIATION_extra7144=''
+CHECK_DOC_extra7144='https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Cross-Account-Cross-Region.html'
+CHECK_CAF_EPIC_extra7144=''
 
-CHECK_ID_extra93="9.3"
-CHECK_TITLE_extra93="[extra93] Check if aws cloudwatch has allowed sharing with other accounts (Not Scored) (Not part of CIS benchmark) (Custom Check)"
-CHECK_SCORED_extra93="NOT_SCORED"
-CHECK_TYPE_extra93="EXTRA"
-CHECK_SEVERITY_extra93="Critical"
-CHECK_ASFF_RESOURCE_TYPE_extra93="AwsCloudWatch"
-CHECK_ALTERNATE_check93="extra93"
-CHECK_SERVICENAME_extra93="CloudWatch"
-
-# When CloudWatch allows cross account sharing, a role with name CloudWatch-CrossAccountSharingRole 
-# get's created by aws itself. So we are validating role name existance for checking the cloudwatch security.
-
-extra93(){
-  
+extra7144(){
+  # "Check if aws cloudwatch has allowed sharing with other accounts (Not Scored) (Not part of CIS benchmark)"
   CLOUDWATCH_CROSS_ACCOUNT_ROLE=$($AWSCLI iam get-role $PROFILE_OPT --role-name=CloudWatch-CrossAccountSharingRole --output json --query Role 2>&1)
   if [[ $CLOUDWATCH_CROSS_ACCOUNT_ROLE != *NoSuchEntity* ]]; then
       CLOUDWATCH_POLICY_BAD_STATEMENTS=$(echo $CLOUDWATCH_CROSS_ACCOUNT_ROLE | jq '.AssumeRolePolicyDocument')
-      textFail "Cloudwatch has allowed cross account sharing with policy as $CLOUDWATCH_POLICY_BAD_STATEMENTS"
+      textInfo "Cloudwatch has allowed cross account sharing"
   else
       textPass "CloudWatch doesn't allows cross account sharing"
   fi

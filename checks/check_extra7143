@@ -10,39 +10,40 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-CHECK_ID_extra92="9.2"
-CHECK_TITLE_extra92="[extra92] Check if EFS have policies which allow access to everyone (Not Scored) (Not part of CIS benchmark) (Custom Check)"
-CHECK_SCORED_extra92="NOT_SCORED"
-CHECK_TYPE_extra92="EXTRA"
-CHECK_SEVERITY_extra92="Critical"
-CHECK_ASFF_RESOURCE_TYPE_extra92="AwsEFS"
-CHECK_ALTERNATE_check92="extra92"
-CHECK_SERVICENAME_extra92="EFS"
+CHECK_ID_extra7143="7.143"
+CHECK_TITLE_extra7143="[extra7143] Check if EFS have policies which allow access to everyone (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra7143="NOT_SCORED"
+CHECK_TYPE_extra7143="EXTRA"
+CHECK_SEVERITY_extra7143="Critical"
+CHECK_ASFF_RESOURCE_TYPE_extra7143="AwsEFS"
+CHECK_ALTERNATE_check7143="extra7143"
+CHECK_SERVICENAME_extra7143="efs"
+CHECK_RISK_extra7143='EFS accessible to everyone could expose sensible data to bad actors'
+CHECK_REMEDIATION_extra7143='Ensure efs has some policy but it does not have principle as *'
+CHECK_DOC_extra7143='https://docs.aws.amazon.com/efs/latest/ug/access-control-block-public-access.html'
+CHECK_CAF_EPIC_extra7143='Data Protection'
 
-# If an EFS has a policy principle as *, we consider it as public accessible even though client connects through a 
-# vpc peering or transit gateway. Also if EFS has a default policy(no user defined policy), it's also a security risk, 
-# as default policy grants full access to any client that can connect to the file system using a file system mount target.
-
-extra92(){
+extra7143(){
+  # "Check if EFS have policies which allow access to everyone (Not Scored) (Not part of CIS benchmark)"
   for region in $REGIONS; do
   LIST_OF_EFS_IDS=$($AWSCLI efs describe-file-systems $PROFILE_OPT --region $region --query FileSystems[*].FileSystemId --output text|xargs -n1)
   if [[ $LIST_OF_EFS_IDS ]]; then
     for efsId in $LIST_OF_EFS_IDS;do
       EFS_POLICY_STATEMENTS=$($AWSCLI efs $PROFILE_OPT describe-file-system-policy --region $region --file-system-id $efsId --output json --query Policy 2>&1)
       if [[ $EFS_POLICY_STATEMENTS == *PolicyNotFound* ]]; then
-        textFail "$region :  EFS $efsId doesn't have any policy which means it grants full access to any client"
+        textFail "$region:  EFS: $efsId doesn't have any policy which means it grants full access to any client" "$region" "$efsId"
       else
         EFS_POLICY_BAD_STATEMENTS=$(echo $EFS_POLICY_STATEMENTS | jq '. | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*")')
         if [[ $EFS_POLICY_BAD_STATEMENTS != "" ]]; then
-          textFail "$region : EFS $efsId allows public access with policy as: $EFS_POLICY_BAD_STATEMENTS"
+          textFail "$region: EFS: $efsId has policy which allows access to everyone" "$region" "$efsId"
         else
-          textPass "$region : EFS $efsId has file system policy which does not allow public access"
+          textPass "$region: EFS: $efsId has policy which does not allow access to everyone" "$region" "$efsId"
         fi
       fi
     done
 
   else
-    textInfo "No EFS found in $region region"
+    textInfo "$region: No EFS found" "$region"
   fi
  done
 }

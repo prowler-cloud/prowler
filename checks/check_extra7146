@@ -10,32 +10,34 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
+CHECK_ID_extra7146="7.146"
+CHECK_TITLE_extra7146="[extra7146] Check if there is any unassigned elastic ip's (Not Scored) (Not part of CIS benchmark)"
+CHECK_SCORED_extra7146="NOT_SCORED"
+CHECK_TYPE_extra7146="EXTRA"
+CHECK_SEVERITY_extra7146="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7146="AwsElasticIPs"
+CHECK_ALTERNATE_check7146="extra7146"
+CHECK_SERVICENAME_extra7146="elasticip"
+CHECK_RISK_extra7146='Unassigned elastic ips may result in extra cost'
+CHECK_REMEDIATION_extra7146='Ensure elastic ips are not unassigned'
+CHECK_DOC_extra7146='https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html'
+CHECK_CAF_EPIC_extra7146=''
 
-CHECK_ID_extra95="9.5"
-CHECK_TITLE_extra95="[extra95] Check if there is any unassigned elastic ip's (Not Scored) (Not part of CIS benchmark) (Custom Check)"
-CHECK_SCORED_extra95="NOT_SCORED"
-CHECK_TYPE_extra95="EXTRA"
-CHECK_SEVERITY_extra95="Critical"
-CHECK_ASFF_RESOURCE_TYPE_extra95="AwsElasticIPs"
-CHECK_ALTERNATE_check95="extra95"
-CHECK_SERVICENAME_extra95="ElasticIPs"
-
-# If there is any elasting ip which is not assigned to any instance or network interface, we will list that out.
-
-extra95(){
+extra7146(){
+  # "Check if there is any unassigned elastic ip (Not Scored) (Not part of CIS benchmark)"
   for region in $REGIONS; do
   ELASTIC_IP_ADDRESSES=$($AWSCLI ec2 describe-addresses $PROFILE_OPT --region $region --query Addresses --output json)
   if [[ $ELASTIC_IP_ADDRESSES != [] ]]; then
     LIST_OF_ASSOCIATED_IPS=$(echo $ELASTIC_IP_ADDRESSES | jq -r '.[] | select(.AssociationId!=null) | .PublicIp')
     LIST_OF_UNASSOCIATED_IPS=$(echo $ELASTIC_IP_ADDRESSES | jq -r '.[] | select(.AssociationId==null) | .PublicIp')
     for ass_ip in $LIST_OF_ASSOCIATED_IPS; do
-     textPass "$region : Elastic IP $ass_ip is associated with an instance or network interface"
+     textPass "$region: Elastic IP: $ass_ip is associated with an instance or network interface" "$region" "$ass_ip"
      done
     for unass_ip in $LIST_OF_UNASSOCIATED_IPS; do
-     textInfo "$region : Elastic IP $unass_ip is not associated with any instance or network interface, it may incurr cost"
+     textInfo "$region: Elastic IP: $unass_ip is not associated with any instance or network interface, it may incurr extra cost" "$region" "$unass_ip"
      done
   else
-    textInfo "No elastic ip's found in region $region"
+    textInfo "$region: No elastic ip's found" "$region"
   fi
  done
 }
