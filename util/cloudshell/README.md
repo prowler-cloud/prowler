@@ -1,6 +1,4 @@
-# ShortCut
-
-ShortCut - Run Prowler and ScoutSuite in Customer's environment using AWS CloudShell
+# ShortCut script: run Prowler and ScoutSuite in Customer's environment using AWS CloudShell
 
 ### Use Case:
 
