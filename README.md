@@ -343,6 +343,9 @@ Sets the entropy limit for high entropy hex strings from environment variable `H
 export BASE64_LIMIT=4.5
 export HEX_LIMIT=3.0
 ```
+### Run Prowler using AWS CloudShell
+
+An easy way to run Prowler to scan your account is using AWS CloudShell. Read more and learn how to do it [here](util/cloudshell/README.md).
 
 ## Security Hub integration
 
