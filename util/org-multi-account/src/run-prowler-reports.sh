@@ -91,9 +91,6 @@ for accountId in $ACCOUNTS_IN_ORGS; do
         # remove -g cislevel for a full report and add other formats if needed
         ./prowler/prowler -R "$ROLE" -A "$accountId" -g cislevel1 -M html
         echo "Report stored locally at: prowler/output/ directory"
-        # Upload Prowler Report to S3
-        s3_account_session
-        aws s3 cp prowler/output/ "$S3/reports/" --recursive --include "*.html"
         TOTAL_SEC=$((SECONDS - START_TIME))
         echo -e "Completed AWS Account: $accountId, using Role: $ROLE on $(date)"
         printf "Completed AWS Account: $accountId in %02dh:%02dm:%02ds" $((TOTAL_SEC / 3600)) $((TOTAL_SEC % 3600 / 60)) $((TOTAL_SEC % 60))
@@ -103,7 +100,16 @@ done
 
 # Wait for All Prowler Processes to finish
 wait
-echo "Prowler Assessments Completed against All Accounts in the AWS Organization"
+echo "Prowler Assessments Completed against All Accounts in the AWS Organization. Starting S3 copy operations..."
+
+# Upload Prowler Report to S3
+s3_account_session
+aws s3 cp prowler/output/ "$S3/reports/" --recursive --include "*.html" --acl bucket-owner-full-control
+echo "Assessment reports successfully copied to S3 bucket"
+
+# Final Wait for All Prowler Processes to finish
+wait
+echo "Prowler Assessments Completed"
 
 # Unset AWS Profile Variables
 unset_aws
