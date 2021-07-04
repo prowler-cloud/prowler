@@ -10,6 +10,7 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
+
 CHECK_ID_check46="4.6"
 CHECK_TITLE_check46="[check46] Ensure no Network ACLs allow ingress from 0.0.0.0/0 to Microsoft RDP port 3389"
 CHECK_SCORED_check46="SCORED"
