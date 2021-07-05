@@ -1,0 +1,12 @@
+{
+    "fileLocations": [{
+        "URIPrefixes": [
+            "https://s3-eu-west-1.amazonaws.com/prowler-ens-reports-eu-west-1-prowler-951061203682/"
+        ]
+    }],
+    "globalUploadSettings": {
+        "format": "CSV",
+        "delimiter": ",",
+        "containsHeader": "true"
+    }
+}

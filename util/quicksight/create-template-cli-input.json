@@ -1,0 +1,18 @@
+{
+    "AwsAccountId": "951061203682",
+    "TemplateId": "DemoDashboardTemplate",
+    "Name": "Demo Dashboard Template",
+    "SourceEntity": {
+        "SourceAnalysis": {
+            "Arn": "arn:aws:quicksight:eu-west-1:951061203682:analysis/ e52808ac-43df-46c2-bde6-d08393effcf",
+            "DataSetReferences": [
+                {
+                    "DataSetPlaceholder": "DS1",
+                    "DataSetArn": " arn:aws:quicksight:eu-west-1:951061203682:dataset/44767579-c881-42e7-bf4c-929af56bdc69"
+                }
+            ]
+        }
+    },
+    "VersionDescription": "1"
+}
+
