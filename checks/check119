@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_check119="1.19"
-CHECK_TITLE_check119="[check119] Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
+CHECK_TITLE_check119="[check119] Ensure IAM instance roles are used for AWS resource access from instances"
 CHECK_SCORED_check119="NOT_SCORED"
 CHECK_TYPE_check119="LEVEL2"
 CHECK_SEVERITY_check119="Medium"
@@ -38,12 +38,12 @@ check119(){
           if [[ $PROFILEARN == "null" ]]; then
             textFail "$regx: Instance $instance not associated with an instance role" "$regx" "$instance"
           else
-            textPass "$regx: Instance $instance associated with role ${PROFILEARN##*/}" $regx
+            textPass "$regx: Instance $instance associated with role ${PROFILEARN##*/}" "$regx" "$instance"
           fi
         fi
       done
     else
-      textInfo "$regx: No EC2 instances found" $regx
+      textInfo "$regx: No EC2 instances found" "$regx" "$instance"
     fi
   done
 }

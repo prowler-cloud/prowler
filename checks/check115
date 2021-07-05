@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_check115="1.15"
-CHECK_TITLE_check115="[check115] Ensure security questions are registered in the AWS account (Not Scored)"
+CHECK_TITLE_check115="[check115] Ensure security questions are registered in the AWS account"
 CHECK_SCORED_check115="NOT_SCORED"
 CHECK_TYPE_check115="LEVEL1"
 CHECK_SEVERITY_check115="Medium"
@@ -26,7 +26,5 @@ CHECK_CAF_EPIC_check115='IAM'
 
 check115(){
   # "Ensure security questions are registered in the AWS account (Not Scored)"
-  textInfo "No command available for check 1.15 "
-  textInfo "Login to the AWS Console as root & click on the Account "
-  textInfo "Name -> My Account -> Configure Security Challenge Questions "
+  textInfo "No command available for check 1.15. Login to the AWS Console as root & click on the Account. Name -> My Account -> Configure Security Challenge Questions."
 }

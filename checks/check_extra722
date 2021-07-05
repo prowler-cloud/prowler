@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra722="7.22"
-CHECK_TITLE_extra722="[extra722] Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra722="[extra722] Check if API Gateway has logging enabled"
 CHECK_SCORED_extra722="NOT_SCORED"
 CHECK_TYPE_extra722="EXTRA"
 CHECK_SEVERITY_extra722="Medium"
@@ -24,7 +24,7 @@ CHECK_DOC_extra722='https://docs.aws.amazon.com/apigateway/latest/developerguide
 CHECK_CAF_EPIC_extra722='Logging and Monitoring'
 
 extra722(){
-  # "Check if API Gateway has logging enabled (Not Scored) (Not part of CIS benchmark)"
+  # "Check if API Gateway has logging enabled "
   for regx in $REGIONS; do
     LIST_OF_API_GW=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query items[*].id --output text)
     if [[ $LIST_OF_API_GW ]];then

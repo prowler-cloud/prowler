@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_check117="1.17"
-CHECK_TITLE_check117="[check117] Maintain current contact details (Not Scored)"
+CHECK_TITLE_check117="[check117] Maintain current contact details"
 CHECK_SCORED_check117="NOT_SCORED"
 CHECK_TYPE_check117="LEVEL1"
 CHECK_SEVERITY_check117="Medium"
@@ -27,6 +27,5 @@ CHECK_CAF_EPIC_check117='IAM'
 check117(){
   # "Maintain current contact details (Scored)"
   # No command available
-  textInfo "No command available for check 1.17 "
-  textInfo "See section 1.17 on the CIS Benchmark guide for details "
+  textInfo "No command available for check 1.17. See section 1.17 on the CIS Benchmark guide for details."
 }

@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra745="7.45"
-CHECK_TITLE_extra745="[extra745] Check if API Gateway endpoint is public or private (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra745="[extra745] Check if API Gateway endpoint is public or private"
 CHECK_SCORED_extra745="NOT_SCORED"
 CHECK_TYPE_extra745="EXTRA"
 CHECK_SEVERITY_extra745="Medium"

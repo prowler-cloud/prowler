@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_check118="1.18"
-CHECK_TITLE_check118="[check118] Ensure security contact information is registered (Not Scored)"
+CHECK_TITLE_check118="[check118] Ensure security contact information is registered"
 CHECK_SCORED_check118="NOT_SCORED"
 CHECK_TYPE_check118="LEVEL1"
 CHECK_SEVERITY_check118="Medium"
@@ -27,6 +27,5 @@ CHECK_CAF_EPIC_check118='IAM'
 check118(){
   # "Ensure security contact information is registered (Scored)"
   # No command available
-  textInfo "No command available for check 1.18 "
-  textInfo "See section 1.18 on the CIS Benchmark guide for details "
+  textInfo "No command available for check 1.18. See section 1.18 on the CIS Benchmark guide for details."
 }

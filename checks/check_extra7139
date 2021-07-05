@@ -10,7 +10,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra7139="7.139"
-CHECK_TITLE_extra7139="[extra7139] There are High severity GuardDuty findings (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra7139="[extra7139] There are High severity GuardDuty findings "
 CHECK_SCORED_extra7139="NOT_SCORED"
 CHECK_TYPE_extra7139="EXTRA"
 CHECK_SEVERITY_extra7139="High"

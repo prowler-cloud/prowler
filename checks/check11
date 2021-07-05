@@ -35,13 +35,13 @@ check11(){
       days_not_in_use=$(how_many_days_from_today ${date%T*})
       if [ "$days_not_in_use" -gt "$MAX_DAYS" ];then
           failures=1
-          textFail "Root user in the account was last accessed ${MAX_DAYS#-} day ago"
+          textFail "$REGION: Root user in the account was last accessed ${MAX_DAYS#-} day ago" "$REGION" "root"
           break
       fi
     fi
   done
 
   if [[ $failures == 0 ]]; then
-      textPass "Root user in the account wasn't accessed in the last ${MAX_DAYS#-} days"
+      textPass "$REGION: Root user in the account wasn't accessed in the last ${MAX_DAYS#-} days" "$REGION" "root"
   fi
 }

@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_check18="1.8"
-CHECK_TITLE_check18="[check18] Ensure IAM password policy require at least one number (Scored)"
+CHECK_TITLE_check18="[check18] Ensure IAM password policy require at least one number"
 CHECK_SCORED_check18="SCORED"
 CHECK_TYPE_check18="LEVEL1"
 CHECK_SEVERITY_check18="Medium"
@@ -28,8 +28,8 @@ check18(){
   # "Ensure IAM password policy require at least one number (Scored)"
   COMMAND18=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json --query 'PasswordPolicy.RequireNumbers' 2> /dev/null) # must be true
   if [[ "$COMMAND18" == "true" ]];then
-    textPass "Password Policy requires number"
+    textPass "$REGION: Password Policy requires number" "$REGION" "password policy"
   else
-    textFail "Password Policy missing number requirement"
+    textFail "$REGION: Password Policy missing number requirement" "$REGION" "password policy"
   fi
 }

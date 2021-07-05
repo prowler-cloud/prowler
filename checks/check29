@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_check29="2.9"
-CHECK_TITLE_check29="[check29] Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
+CHECK_TITLE_check29="[check29] Ensure VPC Flow Logging is Enabled in all VPCs"
 CHECK_SCORED_check29="SCORED"
 CHECK_TYPE_check29="LEVEL2"
 CHECK_SEVERITY_check29="Medium"
@@ -31,7 +31,7 @@ check29(){
   for regx in $REGIONS; do
     AVAILABLE_VPC=$($AWSCLI ec2 describe-vpcs $PROFILE_OPT --region $regx --query 'Vpcs[?State==`available`].VpcId' --output text 2>&1)
     if [[ $(echo "$AVAILABLE_VPC" | grep AccessDenied) ]]; then
-      textFail "$regx: Access Denied trying to describe VPCs"
+      textFail "$regx: Access Denied trying to describe VPCs" "$regx" "$vpcx"
       continue
     fi
     for vpcx in $AVAILABLE_VPC; do

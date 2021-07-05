@@ -25,7 +25,6 @@ CHECK_DOC_extra7130='https://docs.aws.amazon.com/sns/latest/dg/sns-server-side-e
 CHECK_CAF_EPIC_extra7130='Data Protection'
 
 extra7130(){
-  textInfo "Looking for SNS Topics in all regions...  "
   for regx in $REGIONS; do
     LIST_SNS=$($AWSCLI sns list-topics $PROFILE_OPT --region $regx --query 'Topics[*].TopicArn' --output text)
     if [[ $LIST_SNS ]];then

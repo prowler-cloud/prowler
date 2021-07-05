@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra753="7.53"
-CHECK_TITLE_extra753="[extra753] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to MongoDB ports 27017 and 27018 (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra753="[extra753] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to MongoDB ports 27017 and 27018"
 CHECK_SCORED_extra753="NOT_SCORED"
 CHECK_TYPE_extra753="EXTRA"
 CHECK_SEVERITY_extra753="High"

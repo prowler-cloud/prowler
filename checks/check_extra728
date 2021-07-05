@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra728="7.28"
-CHECK_TITLE_extra728="[extra728] Check if SQS queues have Server Side Encryption enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra728="[extra728] Check if SQS queues have Server Side Encryption enabled"
 CHECK_SCORED_extra728="NOT_SCORED"
 CHECK_TYPE_extra728="EXTRA"
 CHECK_SEVERITY_extra728="Medium"

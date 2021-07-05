@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_check120="1.20"
-CHECK_TITLE_check120="[check120] Ensure a support role has been created to manage incidents with AWS Support (Scored)"
+CHECK_TITLE_check120="[check120] Ensure a support role has been created to manage incidents with AWS Support"
 CHECK_SCORED_check120="SCORED"
 CHECK_TYPE_check120="LEVEL1"
 CHECK_SEVERITY_check120="Medium"
@@ -34,16 +34,16 @@ check120(){
       POLICYROLES=$($AWSCLI iam list-entities-for-policy --policy-arn $SUPPORTPOLICYARN $PROFILE_OPT --region $REGION --output text | awk -F$'\t' '{ print $3 }')
       if [[ $POLICYROLES ]];then
         for name in $POLICYROLES; do
-          textPass "Support Policy attached to $name"
+          textPass "$REGION: Support Policy attached to $name" "$REGION" "$name"
         done
         # for user in $(echo "$POLICYUSERS" | grep UserName | cut -d'"' -f4) ; do
         #   textInfo "User $user has support access via $policyarn"
         # done
       else
-        textFail "Support Policy not applied to any Role"
+        textFail "$REGION: Support Policy not applied to any Role" "$REGION" "$name"
       fi
     done
   else
-    textFail "No Support Policy found"
+    textFail "$REGION: No Support Policy found" "$REGION" "$name"
   fi
 }

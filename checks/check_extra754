@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra754="7.54"
-CHECK_TITLE_extra754="[extra754] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Cassandra ports 7199 or 9160 or 8888 (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra754="[extra754] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Cassandra ports 7199 or 9160 or 8888"
 CHECK_SCORED_extra754="NOT_SCORED"
 CHECK_TYPE_extra754="EXTRA"
 CHECK_SEVERITY_extra754="High"

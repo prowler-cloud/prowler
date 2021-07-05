@@ -28,8 +28,8 @@ check19(){
   # "Ensure IAM password policy requires minimum length of 14 or greater (Scored)"
   COMMAND19=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --output json --query 'PasswordPolicy.MinimumPasswordLength' 2> /dev/null)
   if [[ $COMMAND19 -gt "13" ]];then
-    textPass "Password Policy requires more than 13 characters"
+    textPass "$REGION: Password Policy requires more than 13 characters" "$REGION" "password policy"
   else
-    textFail "Password Policy missing or weak length requirement"
+    textFail "$REGION: Password Policy missing or weak length requirement" "$REGION" "password policy"
   fi
 }

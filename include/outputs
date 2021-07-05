@@ -15,7 +15,7 @@
 
 EXTENSION_CSV="csv"
 EXTENSION_JSON="json"
-EXTENSION_ASFF="asff-json"
+EXTENSION_ASFF="asff.json"
 EXTENSION_TEXT="txt"
 EXTENSION_HTML="html"
 OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
@@ -72,6 +72,11 @@ if [[ $MODE ]];then
   fi
 fi
 
+# textInfo "HTML report will be saved: ${OUTPUT_FILE_NAME}.$EXTENSION_HTML"
+# textInfo "JSON ASFF report will be saved: ${OUTPUT_FILE_NAME}.$EXTENSION_ASFF"
+# textInfo "CSV report will be saved: ${OUTPUT_FILE_NAME}.$EXTENSION_CSV"
+# textInfo "JSON report will be saved: ${OUTPUT_FILE_NAME}.$EXTENSION_JSON"
+
 if [[ $PROFILE == "" ]];then
   PROFILE="ENV"
 fi
@@ -92,23 +97,23 @@ textPass(){
     REPREGION=$REGION
   fi
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
-    generateJsonOutput "$1" "Pass" "$CHECK_RESOURCE_ID" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_JSON
+    generateJsonOutput "$1" "Pass" "$CHECK_RESOURCE_ID" >> ${OUTPUT_FILE_NAME}.$EXTENSION_JSON
   fi
   if [[ "${MODES[@]}" =~ "json-asff" ]]; then
     JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "PASSED" "$CHECK_RESOURCE_ID")
-    echo "${JSON_ASFF_OUTPUT}" | tee -a $OUTPUT_FILE_NAME.$EXTENSION_ASFF
+    echo "${JSON_ASFF_OUTPUT}" >> $OUTPUT_FILE_NAME.$EXTENSION_ASFF
     if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
-      sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REPREGION}"
+      sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REPREGION}" 
     fi
   fi
   if is_junit_output_enabled; then
     output_junit_success "$1"
   fi
   if [[ "${MODES[@]}" =~ "mono" ]]; then
-    echo "      $OK PASS!$NORMAL $1" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
+    echo "      $OK PASS!$NORMAL $1" >> ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
   fi
   if [[ "${MODES[@]}" =~ "text" || "${MODES[@]}" =~ "mono" ]]; then
     echo "      $OK PASS!$NORMAL $1"
@@ -133,16 +138,16 @@ textInfo(){
     REPREGION=$REGION
   fi
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
-    generateJsonOutput "$1" "Info" "$CHECK_RESOURCE_ID" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
+    generateJsonOutput "$1" "Info" "$CHECK_RESOURCE_ID" >> ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
   fi
   if is_junit_output_enabled; then
     output_junit_info "$1"
   fi
   if [[ "${MODES[@]}" =~ "mono" ]]; then
-    echo "      $NOTICE INFO! $1 $NORMAL" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
+    echo "      $NOTICE INFO! $1 $NORMAL" >> ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
   fi
   if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $NOTICE INFO! $1 $NORMAL"
@@ -189,14 +194,14 @@ textFail(){
   fi
 
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
-    generateJsonOutput "$1" "${level}" "$CHECK_RESOURCE_ID"| tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
+    generateJsonOutput "$1" "${level}" "$CHECK_RESOURCE_ID">> ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
   fi
   if [[ "${MODES[@]}" =~ "json-asff" ]]; then
     JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "${level}" "$CHECK_RESOURCE_ID")
-    echo "${JSON_ASFF_OUTPUT}" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_ASFF}
+    echo "${JSON_ASFF_OUTPUT}" >> ${OUTPUT_FILE_NAME}.${EXTENSION_ASFF}
     if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
       sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REPREGION}"
     fi
@@ -209,7 +214,7 @@ textFail(){
     fi
   fi
   if [[ "${MODES[@]}" =~ "mono" ]]; then
-    echo "      $colorcode ${level}! $1 $NORMAL" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
+    echo "      $colorcode ${level}! $1 $NORMAL" >> ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
   fi
   if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $colorcode ${level}! $1 $NORMAL"
@@ -257,7 +262,7 @@ textTitle(){
   # fi
 
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-    >&2 echo "$TITLE_ID $TITLE_TEXT" | tee -a ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
+    >&2 echo "$TITLE_ID $TITLE_TEXT" >> ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
   elif [[ "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
     :
   else
@@ -279,7 +284,7 @@ generateJsonOutput(){
   --arg TITLE_TEXT "$TITLE_TEXT" \
   --arg MESSAGE "$(echo -e "${message}" | sed -e 's/^[[:space:]]*//')" \
   --arg STATUS "$status" \
-  --arg SEVERITY "$CHECK_SEVERITY" \
+  --arg SEVERITY "$(echo $CHECK_SEVERITY | sed 's/[][]//g')" \
   --arg SCORED "$ITEM_SCORED" \
   --arg ITEM_LEVEL "$ITEM_LEVEL" \
   --arg TITLE_ID "$TITLE_ID" \
@@ -321,10 +326,9 @@ generateJsonAsffOutput(){
   local status=$2
   
   #Checks to determine if the rule passes in a resource name that prowler uses to track the AWS Resource for whitelisting purposes
-  if [ -z $3 ]
-  then
+  if [ -z $3 ]; then
     local resource_id="NONE_PROVIDED"
-   else
+  else
     local resource_id=$3
   fi
   
@@ -374,7 +378,7 @@ generateJsonAsffOutput(){
       "Resources": [
           {
               "Type": $RESOURCE_TYPE,
-              "Id": "AWS::::Account:\($ACCOUNT_NUM)",
+              "Id": $CHECK_RESOURCE_ID,
               "Partition": $AWS_PARTITION,
               "Region": $REPREGION
           }
@@ -403,6 +407,8 @@ generateHtmlOutput(){
   if [[ $status == "WARN" ]];then
     local ROW_CLASS='table-warning'
   fi
+  
+  local CHECK_SEVERITY="$(echo $CHECK_SEVERITY | sed 's/[][]//g')"
 
   echo '<tr class="'$ROW_CLASS'">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   echo '  <td>'$status'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML

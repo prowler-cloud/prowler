@@ -24,7 +24,6 @@ CHECK_DOC_extra795='https://docs.aws.amazon.com/eks/latest/userguide/infrastruct
 CHECK_CAF_EPIC_extra795='Infrastructure Security'
 
 extra795(){
-  textInfo "Looking for public access enabled for EKS clusters across all regions... "
   for regx in $REGIONS; do
     CLUSTERS=$($AWSCLI eks list-clusters $PROFILE_OPT --region $regx --query 'clusters[]' --output text)
     if [[ $CLUSTERS ]]; then

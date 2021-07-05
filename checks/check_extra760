@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra760="7.60"
-CHECK_TITLE_extra760="[extra760] Find secrets in Lambda functions code (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra760="[extra760] Find secrets in Lambda functions code "
 CHECK_SCORED_extra760="NOT_SCORED"
 CHECK_TYPE_extra760="EXTRA"
 CHECK_SEVERITY_extra760="Critical"
@@ -30,8 +30,6 @@ extra760(){
     mkdir $SECRETS_TEMP_FOLDER
   fi
 
-  textInfo "Looking for secrets in Lambda functions code across all regions... "
-  textInfo "This check may take a while depending on your functions size! "
   for regx in $REGIONS; do
     LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --query Functions[*].FunctionName --output text)
     if [[ $LIST_OF_FUNCTIONS ]]; then

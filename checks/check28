@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_check28="2.8"
-CHECK_TITLE_check28="[check28] Ensure rotation for customer created KMS CMKs is enabled (Scored)"
+CHECK_TITLE_check28="[check28] Ensure rotation for customer created KMS CMKs is enabled"
 CHECK_SCORED_check28="SCORED"
 CHECK_TYPE_check28="LEVEL2"
 CHECK_SEVERITY_check28="Medium"
@@ -30,7 +30,7 @@ check28(){
   for regx in $REGIONS; do
     CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys $PROFILE_OPT --region $regx --output text --query 'Keys[*].KeyId' --output text 2>&1)
     if [[ $(echo "$CHECK_KMS_KEYLIST" | grep AccessDenied) ]]; then
-      textFail "Access Denied trying to list keys in $regx" "$regx" "$key"
+      textFail "$regx: Access Denied trying to list keys" "$regx" "$key"
       continue
     fi
     if [[ $CHECK_KMS_KEYLIST ]]; then

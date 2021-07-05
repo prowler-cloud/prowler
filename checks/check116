@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_check116="1.16"
-CHECK_TITLE_check116="[check116] Ensure IAM policies are attached only to groups or roles (Scored)"
+CHECK_TITLE_check116="[check116] Ensure IAM policies are attached only to groups or roles"
 CHECK_SCORED_check116="SCORED"
 CHECK_TYPE_check116="LEVEL1"
 CHECK_SEVERITY_check116="Low"
@@ -33,16 +33,16 @@ check116(){
   for user in $LIST_USERS;do
     USER_POLICY=$($AWSCLI iam list-attached-user-policies --output text $PROFILE_OPT --region $REGION --user-name $user)
     if [[ $USER_POLICY ]]; then
-      textFail "$user has managed policy directly attached" "us-east-1" "$user"
+      textFail "$REGION: $user has managed policy directly attached" "$REGION" "$user"
       C116_NUM_USERS=$(expr $C116_NUM_USERS + 1)
     fi
     USER_POLICY=$($AWSCLI iam list-user-policies --output text $PROFILE_OPT --region $REGION --user-name $user)
     if [[ $USER_POLICY ]]; then
-      textFail "$user has inline policy directly attached" "us-east-1" "$user"
+      textFail "$REGION: $user has inline policy directly attached" "$REGION" "$user"
       C116_NUM_USERS=$(expr $C116_NUM_USERS + 1)
     fi
   done
   if [[ $C116_NUM_USERS -eq 0 ]]; then
-    textPass "No policies attached to users"
+    textPass "$REGION: No policies attached to users" "$REGION" "$user"
   fi
 }

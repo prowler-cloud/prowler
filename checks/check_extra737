@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra737="7.37"
-CHECK_TITLE_extra737="[extra737] Check KMS keys with key rotation disabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra737="[extra737] Check KMS keys with key rotation disabled"
 CHECK_SCORED_extra737="NOT_SCORED"
 CHECK_TYPE_extra737="EXTRA"
 CHECK_SEVERITY_extra737="Medium"
@@ -25,7 +25,6 @@ CHECK_DOC_extra737='https://docs.aws.amazon.com/kms/latest/developerguide/rotate
 CHECK_CAF_EPIC_extra737='Data Protection'
 
 extra737(){
-  textInfo "Looking for KMS keys in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_CUSTOMER_KMS_KEYS=$($AWSCLI kms list-aliases $PROFILE_OPT --region $regx --query "Aliases[].[AliasName,TargetKeyId]" --output text |grep -v ^alias/aws/ |awk '{ print $2 }')
     if [[ $LIST_OF_CUSTOMER_KMS_KEYS ]];then

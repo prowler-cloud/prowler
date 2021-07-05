@@ -36,9 +36,9 @@ check12(){
     done)
     if [[ $COMMAND12 ]]; then
       for u in $COMMAND12; do
-        textFail "User $u has Password enabled but MFA disabled"
+        textFail "$REGION: User $u has Password enabled but MFA disabled" "$REGION" "$u"
       done
     else
-      textPass "No users found with Password enabled and MFA disabled"
+      textPass "$REGION: No users found with Password enabled and MFA disabled" "$REGION" "$u"
     fi
 }

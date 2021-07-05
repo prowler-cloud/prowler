@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_check111="1.11"
-CHECK_TITLE_check111="[check111] Ensure IAM password policy expires passwords within 90 days or less (Scored)"
+CHECK_TITLE_check111="[check111] Ensure IAM password policy expires passwords within 90 days or less"
 CHECK_SCORED_check111="SCORED"
 CHECK_TYPE_check111="LEVEL1"
 CHECK_SEVERITY_check111="Medium"
@@ -29,11 +29,11 @@ check111(){
   COMMAND111=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --query PasswordPolicy.MaxPasswordAge --output text 2> /dev/null)
   if [[ $COMMAND111 == [0-9]* ]];then
     if [[ "$COMMAND111" -le "90" ]];then
-      textPass "Password Policy includes expiration (Value: $COMMAND111)"
+      textPass "$REGION: Password Policy includes expiration (Value: $COMMAND111)" "$REGION" "password policy"
     else
-      textFail "Password expiration is set greater than 90 days"
+      textFail "$REGION: Password expiration is set greater than 90 days" "$REGION" "password policy"
     fi
   else
-    textFail "Password expiration is not set"
+    textFail "$REGION: Password expiration is not set" "$REGION" "password policy"
   fi
 }

@@ -23,7 +23,7 @@
 #	[--apply-immediately | --no-apply-immediately]
 
 CHECK_ID_extra7113="7.113"
-CHECK_TITLE_extra7113="[extra7113] Check if RDS instances have deletion protection enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra7113="[extra7113] Check if RDS instances have deletion protection enabled "
 CHECK_SCORED_extra7113="NOT_SCORED"
 CHECK_TYPE_extra7113="EXTRA"
 CHECK_SEVERITY_extra7113="Medium"

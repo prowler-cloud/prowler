@@ -27,7 +27,7 @@ extra788(){
   # Prowler will try to access each ElasticSearch server to the public URI endpoint.
   # That is from the host where Prowler is running and will try to read indices or get kibana status
 
-  # "Check if Elasticsearch Service domains allow open access (Not Scored) (Not part of CIS benchmark)"
+  # "Check if Elasticsearch Service domains allow open access "
   for regx in $REGIONS; do
     LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text)
     if [[ $LIST_OF_DOMAINS ]]; then

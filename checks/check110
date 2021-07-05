@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_check110="1.10"
-CHECK_TITLE_check110="[check110] Ensure IAM password policy prevents password reuse: 24 or greater (Scored)"
+CHECK_TITLE_check110="[check110] Ensure IAM password policy prevents password reuse: 24 or greater"
 CHECK_SCORED_check110="SCORED"
 CHECK_TYPE_check110="LEVEL1"
 CHECK_SEVERITY_check110="Medium"
@@ -29,11 +29,11 @@ check110(){
   COMMAND110=$($AWSCLI iam get-account-password-policy $PROFILE_OPT --region $REGION --query 'PasswordPolicy.PasswordReusePrevention' --output text 2> /dev/null)
   if [[ $COMMAND110 ]];then
     if [[ $COMMAND110 -gt "23" ]];then
-      textPass "Password Policy limits reuse"
+      textPass "$REGION: Password Policy limits reuse" "$REGION" "password policy"
     else
-      textFail "Password Policy has weak reuse requirement (lower than 24)"
+      textFail "$REGION: Password Policy has weak reuse requirement (lower than 24)" "$REGION" "password policy"
     fi
   else
-    textFail "Password Policy missing reuse requirement"
+    textFail "$REGION: Password Policy missing reuse requirement" "$REGION" "password policy"
   fi
 }

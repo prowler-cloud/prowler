@@ -24,7 +24,6 @@ CHECK_DOC_extra794='https://docs.aws.amazon.com/eks/latest/userguide/logging-mon
 CHECK_CAF_EPIC_extra794='Logging and Monitoring'
 
 extra794(){
-  textInfo "Looking for control plane logging enabled for EKS clusters across all regions... "
   for regx in $REGIONS; do
     CLUSTERS=$($AWSCLI eks list-clusters $PROFILE_OPT --region $regx --query 'clusters[]' --output text)
     if [[ $CLUSTERS ]]; then

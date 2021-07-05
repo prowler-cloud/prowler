@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra7137="7.137"
-CHECK_TITLE_extra7137="[extra7137] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Windows SQL Server ports 1433 or 1434 (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra7137="[extra7137] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Windows SQL Server ports 1433 or 1434 "
 CHECK_SCORED_extra7137="NOT_SCORED"
 CHECK_TYPE_extra7137="EXTRA"
 CHECK_SEVERITY_extra7137="High"

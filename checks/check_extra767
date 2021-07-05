@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra767="7.67"
-CHECK_TITLE_extra767="[extra767] Check if CloudFront distributions have Field Level Encryption enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra767="[extra767] Check if CloudFront distributions have Field Level Encryption enabled "
 CHECK_SCORED_extra767="NOT_SCORED"
 CHECK_TYPE_extra767="EXTRA"
 CHECK_SEVERITY_extra767="Low"

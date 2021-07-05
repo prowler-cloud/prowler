@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_check25="2.5"
-CHECK_TITLE_check25="[check25] Ensure AWS Config is enabled in all regions (Scored)"
+CHECK_TITLE_check25="[check25] Ensure AWS Config is enabled in all regions"
 CHECK_SCORED_check25="SCORED"
 CHECK_TYPE_check25="LEVEL1"
 CHECK_SEVERITY_check25="Medium"
@@ -31,17 +31,17 @@ check25(){
     CHECK_AWSCONFIG_RECORDING=$($AWSCLI configservice describe-configuration-recorder-status $PROFILE_OPT --region $regx --query 'ConfigurationRecordersStatus[*].recording' --output text 2>&1)
     CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice describe-configuration-recorder-status $PROFILE_OPT --region $regx --query 'ConfigurationRecordersStatus[*].lastStatus' --output text 2>&1)
     if [[ $(echo "$CHECK_AWSCONFIG_STATUS" | grep AccessDenied) ]]; then
-      textFail "Access Denied trying to describe configuration recorder status in $regx"
+      textFail "$regx: Access Denied trying to describe configuration recorder status" "$regx" "recorder"
       continue
     fi
     if [[ $CHECK_AWSCONFIG_RECORDING == "True" ]]; then
       if [[ $CHECK_AWSCONFIG_STATUS == "SUCCESS" ]]; then
-        textPass "Region $regx AWS Config recorder enabled"
+        textPass "$regx: AWS Config recorder enabled" "$regx" "recorder"
       else
-        textFail "Region $regx AWS Config recorder in failure state"
+        textFail "$regx: AWS Config recorder in failure state" "$regx" "recorder"
       fi
     else
-      textFail "Region $regx AWS Config recorder disabled"
+      textFail "$regx: AWS Config recorder disabled" "$regx" "recorder"
     fi
   done
 }
