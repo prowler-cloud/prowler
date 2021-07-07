@@ -38,16 +38,20 @@ copyToS3(){
   # and processing by Quicksight or others.
   if [[ $OUTPUT_BUCKET ]]; then
     if [[ "${MODES[@]}" =~ "csv" ]]; then
-      $AWSCLI s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_CSV s3://$OUTPUT_BUCKET/csv/
+      $AWSCLI s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_CSV \
+      s3://$OUTPUT_BUCKET/csv/ --acl bucket-owner-full-control
     fi 
     if [[ "${MODES[@]}" =~ "html" ]]; then
-      $AWSCLI s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_HTML s3://$OUTPUT_BUCKET/html/
+      $AWSCLI s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_HTML \
+      s3://$OUTPUT_BUCKET/html/ --acl bucket-owner-full-control
     fi 
     if [[ "${MODES[@]}" =~ "json" ]]; then
-      $AWSCLI s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_JSON s3://$OUTPUT_BUCKET/json/
+      $AWSCLI s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_JSON \
+      s3://$OUTPUT_BUCKET/json/ --acl bucket-owner-full-control
     fi
     if [[ "${MODES[@]}" =~ "json-asff" ]]; then
-      $AWSCLI s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_ASFF s3://$OUTPUT_BUCKET/json-asff/
+      $AWSCLI s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_ASFF \
+      s3://$OUTPUT_BUCKET/json-asff/ --acl bucket-owner-full-control
     fi
   fi
 }
