@@ -40,10 +40,10 @@ extra7118(){
                 textFail "$regx: Glue job $JOB_NAME does not have S3 encryption enabled" "$regx" "$JOB_NAME"
               fi 
             else
-              textPass "$regx: Glue job $JOB_NAME does have $S3_ENCRYPTION for S3 encryption enabled" "$regx"
+              textPass "$regx: Glue job $JOB_NAME does have $S3_ENCRYPTION for S3 encryption enabled" "$regx" "$JOB_NAME"
             fi
           elif [[ ! -z "$JOB_ENCRYPTION" ]]; then
-            textPass "$regx: Glue job $JOB_NAME does have $JOB_ENCRYPTION for S3 encryption enabled" "$regx"
+            textPass "$regx: Glue job $JOB_NAME does have $JOB_ENCRYPTION for S3 encryption enabled" "$regx" "$JOB_NAME"
           else 
             textFail "$regx: Glue job $JOB_NAME does not have S3 encryption enabled" "$regx" "$JOB_NAME"
           fi

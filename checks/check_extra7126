@@ -33,9 +33,9 @@ extra7126(){
         if [[ $CHECK_STATUS == "PendingDeletion" ]]; then
           textInfo "$regx: KMS key $key is pending deletion" "$regx"
         elif [[ $CHECK_STATUS == "Disabled"  ]]; then
-          textInfo "$regx: KMS key $key is disabled" "$regx"
+          textInfo "$regx: KMS key $key is disabled" "$regx" "$key"
         else
-          textPass "$regx: KMS key $key is not disabled or pending deletion" "$regx"
+          textPass "$regx: KMS key $key is not disabled or pending deletion" "$regx" "$key"
         fi
       done
     else

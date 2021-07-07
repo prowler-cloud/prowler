@@ -50,12 +50,12 @@ extra7129(){
             if [[ ${#WAF_PROTECTED_ALBS[@]} -gt 0 ]]; then
               for wafaclarn in "${WAF_PROTECTED_ALBS[@]}"; do
                 WAFV2_WEBACL_ARN_SHORT=$(echo $wafaclarn |  awk -F'/' '{ print $3 }')
-                textPass "$regx: Application Load Balancer $alb is protected by WAFv2 ACL $WAFV2_WEBACL_ARN_SHORT" "$regx"
+                textPass "$regx: Application Load Balancer $alb is protected by WAFv2 ACL $WAFV2_WEBACL_ARN_SHORT" "$regx" "$alb"
               done
             fi
             if [[ ${#WAFv1_PROTECTED_ALBS[@]} -gt 0 ]]; then
               for wafv1aclid in "${WAFv1_PROTECTED_ALBS[@]}"; do
-                textPass "$regx: Application Load Balancer $alb is protected by WAFv1 ACL $wafv1aclid" "$regx"
+                textPass "$regx: Application Load Balancer $alb is protected by WAFv1 ACL $wafv1aclid" "$regx" "$alb"
               done
             fi
           else

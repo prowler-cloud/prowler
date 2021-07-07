@@ -36,7 +36,7 @@ extra7114(){
           if [[ "$ENDPOINT_SC_ENCRYPTION" == "DISABLED" ]]; then
             textFail "$regx: Glue development endpoint $ENDPOINT_NAME does not have S3 encryption enabled!" "$regx" "$ENDPOINT_NAME"
           else
-            textPass "$regx: Glue development endpoint $ENDPOINT_NAME has S3 encryption enabled" "$regx" 
+            textPass "$regx: Glue development endpoint $ENDPOINT_NAME has S3 encryption enabled" "$regx" "$ENDPOINT_NAME"
           fi
         else
           textFail "$regx: Glue development endpoint $ENDPOINT_NAME does not have security configuration" "$regx" "$ENDPOINT_NAME"
