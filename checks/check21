@@ -48,7 +48,12 @@ check21(){
         if [[ "$MULTIREGION_TRAIL_STATUS" == 'False' ]];then
           textFail "$regx: Trail $trail is not enabled for all regions" "$regx" "$trail"
         else
-          textPass "$regx: Trail $trail is enabled for all regions" "$regx" "$trail"
+          TRAIL_ON_OFF_STATUS=$($AWSCLI cloudtrail get-trail-status $PROFILE_OPT --region $TRAIL_REGION --name $trail --query IsLogging --output text)
+          if [[ "$TRAIL_ON_OFF_STATUS" == 'False'  ]];then
+            textFail "$regx: Trail $trail is configured for all regions but it is OFF" "$regx" "$trail"
+          else
+            textPass "$regx: Trail $trail is enabled for all regions" "$regx" "$trail"
+          fi 
         fi
 
       done
