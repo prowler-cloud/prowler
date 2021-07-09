@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2021) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+ CHECK_ID_extra808="8.08"
+ CHECK_TITLE_extra808="[extra808] Ensure that route 53 A records are from the AWS Account- EIP"
+ CHECK_SCORED_extra808="NOT_SCORED"
+ CHECK_TYPE_extra808="EXTRA"
+ CHECK_ALTERNATE_check808="extra808"
+
+ extra808(){
+   # "get a list of all the zones - this is global"
+   textInfo "Ensure that route 53A records are from this AWS Account - e.g.EIP"
+   LIST_OF_HOSTED_ZONES=$($AWSCLI route53 list-hosted-zones $PROFILE_OPT --output text --query "HostedZones[*].[Id]")
+   NOT_EMPTY=()
+   LIST_OF_PUBLIC_IPS=()
+   if [[ $LIST_OF_HOSTED_ZONES ]]; then
+      for zone in $LIST_OF_HOSTED_ZONES; do
+         LIST_OF_PUBLIC_IPS+=$($AWSCLI route53 list-resource-record-sets --hosted-zone-id $zone --query "ResourceRecordSets[?(Type == 'A')].[ResourceRecords]" --output text)
+         if [[ LIST_OF_PUBLIC_IPS ]]; then
+            for ip in $LIST_OF_PUBLIC_IPS; do
+              result=''
+              for regx in $REGIONS; do
+                 result+=$($AWSCLI ec2 describe-addresses $PROFILE_OPT --region $regx --output text --public-ips=$ip 2> /dev/null) 
+                 if [[ $result ]]; then 
+                    break
+                 fi
+              done
+              address=$($AWSCLI route53 list-resource-record-sets --hosted-zone-id $zone --query "ResourceRecordSets[?(Type == 'A') && contains(ResourceRecords[].Value,'$ip' )].[Name]" --output text)
+
+              if [[ $result ]]; then
+                textPass "Route53 record IP: $ip in Zone: ${zone:12} Address: $address is an EIP"
+              else
+                textFail "Route53 record IP: $ip in Zone: ${zone:12} Address: $address is not an EIP"
+              fi
+            done
+         else 
+             textInfo "$zone: No A records found" 
+         fi
+      done
+   else
+      textInfo "No Route53 Zones found" 
+   fi
+ }
