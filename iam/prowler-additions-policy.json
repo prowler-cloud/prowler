@@ -3,9 +3,7 @@
     "Statement": [
         {
             "Action": [
-                "dax:ListTables",
                 "ds:ListAuthorizedApplications",
-                "ds:DescribeRoles",
                 "ec2:GetEbsEncryptionByDefault",
                 "ecr:Describe*",
                 "support:Describe*",
