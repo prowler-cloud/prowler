@@ -10,6 +10,7 @@
                 "tag:GetTagKeys",
 		        "lambda:GetFunction",
                 "glue:GetConnections",
+                "glue:SearchTables",
                 "s3:GetAccountPublicAccessBlock"
             ],
             "Resource": "*",
