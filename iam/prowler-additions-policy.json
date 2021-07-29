@@ -10,7 +10,9 @@
                 "ecr:Describe*",
                 "support:Describe*",
                 "tag:GetTagKeys",
-		"lambda:GetFunction"
+		        "lambda:GetFunction",
+                "glue:GetConnections",
+                "glue:SearchTables"
             ],
             "Resource": "*",
             "Effect": "Allow",

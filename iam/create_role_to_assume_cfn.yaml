@@ -63,4 +63,6 @@ Resources:
                 - 'support:Describe*'
                 - 'tag:GetTagKeys'
                 - 'lambda:GetFunction'
+                - 'glue:GetConnections'
+                - 'glue:SearchTables'
               Resource: '*'

@@ -207,6 +207,17 @@ Resources:
                   - sts:AssumeRole
                 Effect: Allow
                 Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/service-role/prowler-codebuild-role'
+        - PolicyName: Glue
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - glue:GetConnections
+                  - glue:SearchTables
+                Effect: Allow
+                Resource: 
+                  - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:catalog'
+                  - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:connection/*'
 
   ProwlerCodeBuild:
     Type: AWS::CodeBuild::Project
