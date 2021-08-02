@@ -362,11 +362,11 @@ generateHtmlOutput(){
       echo '<td>'$CHECK_CAF_EPIC'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><a href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td><a class="read-more" href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
   if [[ $status == "PASS" ]];then
-    echo '<tr class="p-3 mb-2 bg-success">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    echo '<tr class="p-3 mb-2 bg-success-custom">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><i class="fas fa-thumbs-up"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>PASS</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$CHECK_SEVERITY'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
@@ -380,7 +380,7 @@ generateHtmlOutput(){
       echo '<td>'$CHECK_CAF_EPIC'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><a href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td><a class="read-more" href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
   if [[ $status == "FAIL" ]];then
@@ -398,7 +398,7 @@ generateHtmlOutput(){
       echo '<td>'$CHECK_CAF_EPIC'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><a href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td><a class="read-more" href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
   if [[ $status == "WARNING" ]];then
@@ -416,7 +416,7 @@ generateHtmlOutput(){
       echo '<td>'$CHECK_CAF_EPIC'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-      echo '<td><a href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      echo '<td><a class="read-more" href="'$CHECK_DOC'">'$CHECK_DOC'</a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     echo '</tr>'>> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
 }
