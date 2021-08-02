@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra772="7.72"
-CHECK_TITLE_extra772="[extra772] Check if elastic IPs are unused (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra772="[extra772] Check if elastic IPs are unused "
 CHECK_SCORED_extra772="NOT_SCORED"
 CHECK_TYPE_extra772="EXTRA"
 CHECK_SEVERITY_extra772="Low"
@@ -31,9 +31,9 @@ extra772(){
       for eip in $EIP_LIST; do
         ASSOCIATION_ID=$(echo $EIP_DUMP | jq -r --arg i "$eip" '.Addresses[]|select(.AllocationId==$i)|.AssociationId')
         if [[ "$ASSOCIATION_ID" == "null" ]]; then
-          textFail "$region: EIP $eip is unused" $region
+          textFail "$region: EIP $eip is unused" "$region" "$eip"
         else
-          textPass "$region: EIP $eip is used" $region
+          textPass "$region: EIP $eip is used" "$region" "$eip"
         fi
       done
     else

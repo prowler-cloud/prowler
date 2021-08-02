@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra745="7.45"
-CHECK_TITLE_extra745="[extra745] Check if API Gateway endpoint is public or private (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra745="[extra745] Check if API Gateway endpoint is public or private"
 CHECK_SCORED_extra745="NOT_SCORED"
 CHECK_TYPE_extra745="EXTRA"
 CHECK_SEVERITY_extra745="Medium"
@@ -33,13 +33,13 @@ extra745(){
         if [[ $ENDPOINT_CONFIG_TYPE ]]; then
           case $ENDPOINT_CONFIG_TYPE in
             PRIVATE )
-              textPass "$regx: API Gateway $API_GW_NAME ID $api is set as $ENDPOINT_CONFIG_TYPE" "$regx"
+              textPass "$regx: API Gateway $API_GW_NAME ID $api is set as $ENDPOINT_CONFIG_TYPE" "$regx" "$API_GW_NAME"
             ;;
             REGIONAL )
-              textFail "$regx: API Gateway $API_GW_NAME ID $api is internet accesible as $ENDPOINT_CONFIG_TYPE" "$regx"
+              textFail "$regx: API Gateway $API_GW_NAME ID $api is internet accesible as $ENDPOINT_CONFIG_TYPE" "$regx" "$API_GW_NAME"
             ;;
             EDGE )
-              textFail "$regx: API Gateway $API_GW_NAME ID $api is internet accesible as $ENDPOINT_CONFIG_TYPE" "$regx"
+              textFail "$regx: API Gateway $API_GW_NAME ID $api is internet accesible as $ENDPOINT_CONFIG_TYPE" "$regx" "$API_GW_NAME"
           esac
         fi
       done

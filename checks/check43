@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
-# This Prowler check is licensed under a
-# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the license along with this
-# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
 CHECK_ID_check43="4.3"
-CHECK_TITLE_check43="[check43] Ensure the default security group of every VPC restricts all traffic (Scored)"
+CHECK_TITLE_check43="[check43] Ensure the default security group of every VPC restricts all traffic"
 CHECK_SCORED_check43="SCORED"
 CHECK_TYPE_check43="LEVEL2"
 CHECK_SEVERITY_check43="High"
@@ -30,9 +33,9 @@ check43(){
     for CHECK_SGDEFAULT_ID in $CHECK_SGDEFAULT_IDS; do
       CHECK_SGDEFAULT_ID_OPEN=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --group-ids $CHECK_SGDEFAULT_ID --query 'SecurityGroups[*].{IpPermissions:IpPermissions,IpPermissionsEgress:IpPermissionsEgress,GroupId:GroupId}' --output text |egrep '\s0.0.0.0|\:\:\/0')
       if [[ $CHECK_SGDEFAULT_ID_OPEN ]];then
-        textFail "Default Security Groups ($CHECK_SGDEFAULT_ID) found that allow 0.0.0.0 IN or OUT traffic in Region $regx" "$regx"
+        textFail "$regx: Default Security Groups ($CHECK_SGDEFAULT_ID) found that allow 0.0.0.0 IN or OUT traffic" "$regx" "$CHECK_SGDEFAULT_ID"
       else
-        textPass "No Default Security Groups ($CHECK_SGDEFAULT_ID) open to 0.0.0.0 found in Region $regx" "$regx"
+        textPass "$regx: No Default Security Groups ($CHECK_SGDEFAULT_ID) open to 0.0.0.0 found" "$regx" "$CHECK_SGDEFAULT_ID"
       fi
     done
   done

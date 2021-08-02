@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra719="7.19"
-CHECK_TITLE_extra719="[extra719] Check if Route53 public hosted zones are logging queries to CloudWatch Logs (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra719="[extra719] Check if Route53 public hosted zones are logging queries to CloudWatch Logs"
 CHECK_SCORED_extra719="NOT_SCORED"
 CHECK_TYPE_extra719="EXTRA"
 CHECK_SEVERITY_extra719="Medium"
@@ -30,12 +30,12 @@ extra719(){
     for hostedzoneid in $LIST_OF_HOSTED_ZONES;do
       HOSTED_ZONE_QUERY_LOG_ENABLED=$($AWSCLI route53 list-query-logging-configs --hosted-zone-id $hostedzoneid $PROFILE_OPT --query QueryLoggingConfigs[*].CloudWatchLogsLogGroupArn --output text|cut -d: -f7)
       if [[ $HOSTED_ZONE_QUERY_LOG_ENABLED ]];then
-        textPass "Route53 public hosted zone Id $hostedzoneid has query logging enabled in Log Group $HOSTED_ZONE_QUERY_LOG_ENABLED"
+        textPass "$REGION: Route53 public hosted zone Id $hostedzoneid has query logging enabled in Log Group $HOSTED_ZONE_QUERY_LOG_ENABLED" "$REGION" "$hostedzoneid"
       else
-        textFail "Route53 public hosted zone Id $hostedzoneid has query logging disabled!"
+        textFail "$REGION: Route53 public hosted zone Id $hostedzoneid has query logging disabled!" "$REGION" "$hostedzoneid"
       fi
     done
   else
-    textInfo "No Route53 hosted zones found"
+    textInfo "$REGION: No Route53 hosted zones found" "$REGION" 
   fi
 }

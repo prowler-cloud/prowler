@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra726="7.26"
-CHECK_TITLE_extra726="[extra726] Check Trusted Advisor for errors and warnings (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra726="[extra726] Check Trusted Advisor for errors and warnings"
 CHECK_SCORED_extra726="NOT_SCORED"
 CHECK_TYPE_extra726="EXTRA"
 CHECK_SEVERITY_extra726="Medium"
@@ -25,32 +25,32 @@ CHECK_CAF_EPIC_extra726='IAM'
 
 extra726(){
   trap "exit" INT
-  # forcing us-east-1 region only since support only works in that region
-  TA_CHECKS_ID=$($AWSCLI support describe-trusted-advisor-checks --language en $PROFILE_OPT --region us-east-1 --query checks[*].id  --output text 2>&1)
+  # forcing REGION if not set will be us-east-1 region only since support only works in that region
+  TA_CHECKS_ID=$($AWSCLI support describe-trusted-advisor-checks --language en $PROFILE_OPT --region $REGION --query checks[*].id  --output text 2>&1)
   if [[ $(echo "$TA_CHECKS_ID" | grep SubscriptionRequiredException) ]]; then
-    textInfo "Trusted Advisor requires AWS Premium Support Subscription"
+    textInfo "$REGION: Trusted Advisor requires AWS Premium Support Subscription" "$REGION"
     return
   fi
 
   for checkid in $TA_CHECKS_ID; do
-    TA_CHECKS_NAME=$($AWSCLI support describe-trusted-advisor-checks --language en $PROFILE_OPT --region us-east-1 --query "checks[?id==\`$checkid\`].{name:name}[*]" --output text)
-    QUERY_TA_CHECK_RESULT=$($AWSCLI support describe-trusted-advisor-check-result --check-id $checkid --language en $PROFILE_OPT --region us-east-1 --query 'result.status' --output text)
+    TA_CHECKS_NAME=$($AWSCLI support describe-trusted-advisor-checks --language en $PROFILE_OPT --region $REGION --query "checks[?id==\`$checkid\`].{name:name}[*]" --output text)
+    QUERY_TA_CHECK_RESULT=$($AWSCLI support describe-trusted-advisor-check-result --check-id $checkid --language en $PROFILE_OPT --region $REGION --query 'result.status' --output text)
     # Possible results - https://docs.aws.amazon.com/cli/latest/reference/support/describe-trusted-advisor-check-result.html
     case "$QUERY_TA_CHECK_RESULT" in
       "ok")
-        textPass "Trusted Advisor check $TA_CHECKS_NAME is in ok state $QUERY_TA_CHECK_RESULT"
+        textPass "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in ok state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
         ;;
       "error")
-        textFail "Trusted Advisor check $TA_CHECKS_NAME is in error state $QUERY_TA_CHECK_RESULT"
+        textFail "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in error state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
         ;;
       "warning")
-        textInfo "Trusted Advisor check $TA_CHECKS_NAME is in warning state $QUERY_TA_CHECK_RESULT"
+        textInfo "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in warning state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
         ;;
       "not_available")
-        textInfo "Trusted Advisor check $TA_CHECKS_NAME is in not_available state $QUERY_TA_CHECK_RESULT"
+        textInfo "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in not_available state $QUERY_TA_CHECK_RESULT" "u$REGION" "$TA_CHECKS_NAME"
         ;;
       "*")
-        textFail "Trusted Advisor check $TA_CHECKS_NAME is in unknown state $QUERY_TA_CHECK_RESULT"
+        textFail "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in unknown state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
         ;;
     esac
   done

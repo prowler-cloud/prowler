@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra718="7.18"
-CHECK_TITLE_extra718="[extra718] Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra718="[extra718] Check if S3 buckets have server access logging enabled"
 CHECK_SCORED_extra718="NOT_SCORED"
 CHECK_TYPE_extra718="EXTRA"
 CHECK_SEVERITY_extra718="Medium"
@@ -24,22 +24,22 @@ CHECK_DOC_extra718='https://docs.aws.amazon.com/AmazonS3/latest/dev/security-bes
 CHECK_CAF_EPIC_extra718='Logging and Monitoring'
 
 extra718(){
-  # "Check if S3 buckets have server access logging enabled (Not Scored) (Not part of CIS benchmark)"
+  # "Check if S3 buckets have server access logging enabled "
   LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text|xargs -n1)
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
       BUCKET_SERVER_LOG_ENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --query [LoggingEnabled] --output text 2>&1)
       if [[ $(echo "$BUCKET_SERVER_LOG_ENABLED" | grep AccessDenied) ]]; then
-        textFail "Access Denied Trying to Get Bucket Logging for $bucket"
+        textFail "$REGION: Access Denied Trying to Get Bucket Logging for $bucket" "$REGION" "$bucket"
         continue
       fi
       if [[ $(echo "$BUCKET_SERVER_LOG_ENABLED" | grep "^None$") ]]; then
-        textFail "Bucket $bucket has server access logging disabled!"
+        textFail "$REGION: Bucket $bucket has server access logging disabled!" "$REGION" "$bucket"
       else
-        textPass "Bucket $bucket has server access logging enabled"
+        textPass "$REGION: Bucket $bucket has server access logging enabled" "$REGION" "$bucket"
       fi
     done
   else
-    textInfo "No S3 Buckets found"
+    textInfo "$REGION: No S3 Buckets found" "$REGION" "$bucket"
   fi
 }

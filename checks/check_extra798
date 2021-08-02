@@ -35,12 +35,12 @@ extra798(){
           FUNCTION_POLICY_ALLOW_ALL=$(echo $FUNCTION_POLICY \
             | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*")')
           if [[ $FUNCTION_POLICY_ALLOW_ALL ]]; then
-            textFail "$regx: Lambda function $lambdafunction has a policy with public access" "$regx"
+            textFail "$regx: Lambda function $lambdafunction has a policy with public access" "$regx" "$lambdafunction"
           else
-            textPass "$regx: Lambda function $lambdafunction has a policy resource-based policy and is not public" "$regx"
+            textPass "$regx: Lambda function $lambdafunction has a policy resource-based policy and is not public" "$regx" "$lambdafunction"
           fi
         else
-          textPass "$regx: Lambda function $lambdafunction does not have resource-based policy" "$regx"
+          textPass "$regx: Lambda function $lambdafunction does not have resource-based policy" "$regx" "$lambdafunction"
         fi
       done
     else

@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra710="7.10"
-CHECK_TITLE_extra710="[extra710] Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra710="[extra710] Check for internet facing EC2 Instances"
 CHECK_SCORED_extra710="NOT_SCORED"
 CHECK_TYPE_extra710="EXTRA"
 CHECK_SEVERITY_extra710="Medium"
@@ -25,18 +25,17 @@ CHECK_DOC_extra710='https://aws.amazon.com/blogs/aws/aws-web-application-firewal
 CHECK_CAF_EPIC_extra710='Infrastructure Security'
 
 extra710(){
-  # "Check for internet facing EC2 Instances (Not Scored) (Not part of CIS benchmark)"
-  textInfo "Looking for instances in all regions...  "
+  # "Check for internet facing EC2 Instances "
   for regx in $REGIONS; do
     LIST_OF_PUBLIC_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query 'Reservations[*].Instances[?PublicIpAddress].[InstanceId,PublicIpAddress]' --output text)
     if [[ $LIST_OF_PUBLIC_INSTANCES ]];then
       while read -r instance;do
         INSTANCE_ID=$(echo $instance | awk '{ print $1; }')
         PUBLIC_IP=$(echo $instance | awk '{ print $2; }')
-        textFail "$regx: Instance: $INSTANCE_ID at IP: $PUBLIC_IP is internet-facing!" "$regx"
+        textFail "$regx: Instance: $INSTANCE_ID at IP: $PUBLIC_IP is internet-facing!" "$regx" "$INSTANCE_ID"
       done <<< "$LIST_OF_PUBLIC_INSTANCES"
       else
-        textPass "$regx: no Internet Facing EC2 Instances found" "$regx"
+        textPass "$regx: no Internet Facing EC2 Instances found" "$regx" "$INSTANCE_ID"
     fi
   done
 }

@@ -27,7 +27,7 @@ extra788(){
   # Prowler will try to access each ElasticSearch server to the public URI endpoint.
   # That is from the host where Prowler is running and will try to read indices or get kibana status
 
-  # "Check if Elasticsearch Service domains allow open access (Not Scored) (Not part of CIS benchmark)"
+  # "Check if Elasticsearch Service domains allow open access "
   for regx in $REGIONS; do
     LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text)
     if [[ $LIST_OF_DOMAINS ]]; then
@@ -78,15 +78,15 @@ extra788(){
             CHECH_KIBANA_HTTPS=$(curl -m 2 -s -w "%{http_code}" -o /dev/null -X GET "https://$ES_DOMAIN_ENDPOINT/_plugin/kibana")
             httpStatus $CHECH_KIBANA_HTTPS
             if [[ $CHECH_KIBANA_HTTPS -eq "200" || $CHECH_KIBANA_HTTPS -eq "301" || $CHECH_KIBANA_HTTPS -eq "302" ]];then
-              textFail "$regx: Amazon ES domain $domain policy allows Anonymous access and Kibana service endpoint $ES_DOMAIN_ENDPOINT responded $SERVER_RESPONSE" "$regx"
+              textFail "$regx: Amazon ES domain $domain policy allows Anonymous access and Kibana service endpoint $ES_DOMAIN_ENDPOINT responded $SERVER_RESPONSE" "$regx" "$domain"
             else
-              textInfo "$regx: Amazon ES domain $domain policy allows Anonymous access but Kibana service endpoint $ES_DOMAIN_ENDPOINT responded $SERVER_RESPONSE" "$regx"
+              textInfo "$regx: Amazon ES domain $domain policy allows Anonymous access but Kibana service endpoint $ES_DOMAIN_ENDPOINT responded $SERVER_RESPONSE" "$regx" "$domain"
             fi
           else
             if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION && ${CHECK_ES_DOMAIN_POLICY_CONDITION_PRIVATE_IP[@]} ]];then
               textInfo "$regx: Amazon ES domain $domain policy allows access from a Private IP or CIDR RFC1918 $(echo ${CONDITION_HAS_PRIVATE_IP_ARRAY[@]})" "$regx"
             else
-              textPass "$regx: Amazon ES domain $domain does not allow Anonymous cross account access" "$regx"
+              textPass "$regx: Amazon ES domain $domain does not allow Anonymous cross account access" "$regx" "$domain"
             fi
           fi
           rm -f $TEMP_POLICY_FILE

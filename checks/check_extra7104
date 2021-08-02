@@ -31,9 +31,9 @@ extra7104(){
             for nb_instance in $LIST_SM_NB_INSTANCES; do
                 SM_NB_SUBNETID=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-notebook-instance --notebook-instance-name $nb_instance --query 'SubnetId' --output text)
                 if [[ "${SM_NB_SUBNETID}" == "None" ]]; then
-                    textFail "${regx}: Sagemaker Notebook instance $nb_instance has VPC settings disabled" "${regx}"
+                    textFail "${regx}: Sagemaker Notebook instance $nb_instance has VPC settings disabled" "${regx}" "$nb_instance"
                 else
-                    textPass "${regx}: Sagemaker Notebook instance $nb_instance is in a VPC" "${regx}"
+                    textPass "${regx}: Sagemaker Notebook instance $nb_instance is in a VPC" "${regx}" "$nb_instance"
                 fi 
             done
         else 

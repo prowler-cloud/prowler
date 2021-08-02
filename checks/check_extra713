@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra713="7.13"
-CHECK_TITLE_extra713="[extra713] Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra713="[extra713] Check if GuardDuty is enabled"
 CHECK_SCORED_extra713="NOT_SCORED"
 CHECK_TYPE_extra713="EXTRA"
 CHECK_SEVERITY_extra713="High"
@@ -25,7 +25,7 @@ CHECK_DOC_extra713='https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_se
 CHECK_CAF_EPIC_extra713='Data Protection'
 
 extra713(){
-  # "Check if GuardDuty is enabled (Not Scored) (Not part of CIS benchmark)"
+  # "Check if GuardDuty is enabled "
   for regx in $REGIONS; do
     LIST_OF_GUARDDUTY_DETECTORS=$($AWSCLI guardduty list-detectors $PROFILE_OPT --region $regx --output text --query DetectorIds[*] 2> /dev/null)
     RESULT=$?
@@ -34,9 +34,9 @@ extra713(){
         while read -r detector;do
           DETECTOR_ENABLED=$($AWSCLI guardduty get-detector --detector-id $detector $PROFILE_OPT --region $regx --query "Status" --output text|grep ENABLED)
           if [[ $DETECTOR_ENABLED ]]; then
-            textPass "$regx: GuardDuty detector $detector enabled" "$regx"
+            textPass "$regx: GuardDuty detector $detector enabled" "$regx" "$detector"
           else
-            textFail "$regx: GuardDuty detector $detector configured but suspended" "$regx"
+            textFail "$regx: GuardDuty detector $detector configured but suspended" "$regx" "$detector"
           fi
         done <<< "$LIST_OF_GUARDDUTY_DETECTORS"
         else

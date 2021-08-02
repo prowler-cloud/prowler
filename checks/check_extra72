@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra72="7.2"
-CHECK_TITLE_extra72="[extra72] Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra72="[extra72] Ensure there are no EBS Snapshots set as Public"
 CHECK_SCORED_extra72="NOT_SCORED"
 CHECK_TYPE_extra72="EXTRA"
 CHECK_SEVERITY_extra72="Critical"
@@ -26,16 +26,15 @@ CHECK_DOC_extra72='https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-modif
 CHECK_CAF_EPIC_extra72='Data Protection'
 
 extra72(){
-  # "Ensure there are no EBS Snapshots set as Public (Not Scored) (Not part of CIS benchmark)"
-  textInfo "Looking for EBS Snapshots in all regions...  "
+  # "Ensure there are no EBS Snapshots set as Public "
   for regx in $REGIONS; do
     LIST_OF_EBS_SNAPSHOTS=$($AWSCLI ec2 describe-snapshots $PROFILE_OPT --region $regx --owner-ids $ACCOUNT_NUM --output text --query 'Snapshots[*].{ID:SnapshotId}' --max-items $MAXITEMS | grep -v None 2> /dev/null)
     for snapshot in $LIST_OF_EBS_SNAPSHOTS; do
       SNAPSHOT_IS_PUBLIC=$($AWSCLI ec2 describe-snapshot-attribute $PROFILE_OPT --region $regx --output text --snapshot-id $snapshot --attribute createVolumePermission --query "CreateVolumePermissions[?Group=='all']")
       if [[ $SNAPSHOT_IS_PUBLIC ]];then
-        textFail "$regx: $snapshot is currently Public!" "$regx"
+        textFail "$regx: $snapshot is currently Public!" "$regx" "$snapshot"
       else
-        textPass "$regx: $snapshot is not Public" "$regx"
+        textPass "$regx: $snapshot is not Public" "$regx" "$snapshot"
       fi
     done
   done

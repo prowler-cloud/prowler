@@ -67,7 +67,10 @@ fi
 
 printColorsCode(){
   if [[ $MONOCHROME -eq 0 ]]; then
-    echo -e "\n$NORMAL Colors code for results: "
-    echo -e "$NOTICE INFO (Information)$NORMAL,$OK PASS (Recommended value)$NORMAL, $WARNING WARNING (Ignored by whitelist)$NORMAL, $BAD FAIL (Fix required)$NORMAL, $PURPLE Not Scored $NORMAL"
+    echo -e "\n$NORMAL Color code for results: "
+    echo -e " - $NOTICE INFO (Information)$NORMAL"
+    echo -e " - $OK PASS (Recommended value)$NORMAL"
+    echo -e " - $WARNING WARNING (Ignored by whitelist)$NORMAL"
+    echo -e " - $BAD FAIL (Fix required)$NORMAL"
   fi
 }

@@ -60,6 +60,7 @@ Resources:
               - s3:GetObject
               - s3:PutObject
               - s3:ListBucket
+              - s3:PutObjectAcl
             Resource:
               - !Sub arn:${AWS::Partition}:s3:::${ProwlerS3}
               - !Sub arn:${AWS::Partition}:s3:::${ProwlerS3}/*

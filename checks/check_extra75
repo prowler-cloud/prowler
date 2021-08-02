@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra75="7.5"
-CHECK_TITLE_extra75="[extra75] Ensure there are no Security Groups not being used (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra75="[extra75] Ensure there are no Security Groups not being used"
 CHECK_SCORED_extra75="NOT_SCORED"
 CHECK_TYPE_extra75="EXTRA"
 CHECK_SEVERITY_extra75="Informational"
@@ -27,9 +27,7 @@ CHECK_DOC_extra75='https://aws.amazon.com/premiumsupport/knowledge-center/ec2-fi
 CHECK_CAF_EPIC_extra75='Infrastructure Security'
 
 extra75(){
-  # "Ensure there are no Security Groups not being used (Not Scored) (Not part of CIS benchmark)"
-  textInfo "Looking for Security Groups in all regions...  "
-
+  # "Ensure there are no Security Groups not being used "
   for regx in $REGIONS; do
     SECURITYGROUPS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --max-items $MAXITEMS --output json | jq '.SecurityGroups|map({(.GroupId): (.GroupName)})|add')
     if [[ $SECURITYGROUPS == "null" ]];
@@ -44,12 +42,12 @@ extra75(){
         GROUP_NAME=$(echo $SECURITYGROUPS | jq -r --arg id $SG_ID '.[$id]')
         if [[ $GROUP_NAME != "default" ]];
         then
-          textFail "$regx: $SG_ID is not being used!" "$regx"
+          textFail "$regx: $SG_ID is not being used!" "$regx" "$SG_ID"
         else
-          textInfo "$regx: $SG_ID is not being used - default security group" "$regx"
+          textInfo "$regx: $SG_ID is not being used - default security group" "$regx" "$SG_ID"
         fi
       else
-        textPass "$regx: $SG_ID is being used" "$regx"
+        textPass "$regx: $SG_ID is being used" "$regx" "$SG_ID"
       fi
     done
   done

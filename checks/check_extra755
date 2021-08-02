@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra755="7.55"
-CHECK_TITLE_extra755="[extra755] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Memcached port 11211 (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra755="[extra755] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Memcached port 11211"
 CHECK_SCORED_extra755="NOT_SCORED"
 CHECK_TYPE_extra755="EXTRA"
 CHECK_SEVERITY_extra755="High"
@@ -29,7 +29,7 @@ extra755(){
     SG_LIST=$($AWSCLI ec2 describe-security-groups --query 'SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort<=`11211` && ToPort>=`11211`)) && (contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}' $PROFILE_OPT --region $regx --output text)
     if [[ $SG_LIST ]];then
       for SG in $SG_LIST;do
-        textFail "$regx: Found Security Group: $SG open to 0.0.0.0/0 for Memcached port" "$regx"
+        textFail "$regx: Found Security Group: $SG open to 0.0.0.0/0 for Memcached port" "$regx" "$SG"
       done
     else
       textPass "$regx: No Security Groups found open to 0.0.0.0/0 for Memcached port" "$regx"

@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra79="7.9"
-CHECK_TITLE_extra79="[extra79] Check for internet facing Elastic Load Balancers (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra79="[extra79] Check for internet facing Elastic Load Balancers"
 CHECK_SCORED_extra79="NOT_SCORED"
 CHECK_TYPE_extra79="EXTRA"
 CHECK_SEVERITY_extra79="Medium"
@@ -26,8 +26,7 @@ CHECK_DOC_extra79='https://docs.aws.amazon.com/waf/latest/developerguide/web-acl
 CHECK_CAF_EPIC_extra79='Data Protection'
 
 extra79(){
-  # "Check for internet facing Elastic Load Balancers (Not Scored) (Not part of CIS benchmark)"
-  textInfo "Looking for Elastic Load Balancers in all regions...  "
+  # "Check for internet facing Elastic Load Balancers "
   for regx in $REGIONS; do
     LIST_OF_PUBLIC_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[?Scheme == `internet-facing`].[LoadBalancerName,DNSName]' --output text)
     LIST_OF_PUBLIC_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Scheme == `internet-facing`].[LoadBalancerName,DNSName]' --output text)
@@ -37,10 +36,10 @@ extra79(){
       while read -r elb;do
         ELB_NAME=$(echo $elb | awk '{ print $1; }')
         ELB_DNSNAME=$(echo $elb | awk '{ print $2; }')
-        textFail "$regx: ELB: $ELB_NAME at DNS: $ELB_DNSNAME is internet-facing!" "$regx"
+        textFail "$regx: ELB: $ELB_NAME at DNS: $ELB_DNSNAME is internet-facing!" "$regx" "$ELB_NAME"
       done <<< "$LIST_OF_ALL_ELBS_PER_LINE"
       else
-        textPass "$regx: no Internet Facing ELBs found" "$regx"
+        textPass "$regx: no Internet Facing ELBs found" "$regx" "$ELB_NAME"
     fi
   done
 }

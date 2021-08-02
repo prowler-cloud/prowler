@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
-# This Prowler check is licensed under a
-# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the license along with this
-# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
 CHECK_ID_check44="4.4"
-CHECK_TITLE_check44="[check44] Ensure routing tables for VPC peering are \"least access\" (Not Scored)"
+CHECK_TITLE_check44="[check44] Ensure routing tables for VPC peering are \"least access\""
 CHECK_SCORED_check44="NOT_SCORED"
 CHECK_TYPE_check44="LEVEL2"
 CHECK_SEVERITY_check44="Medium"
@@ -24,11 +27,10 @@ CHECK_CAF_EPIC_check44='Infrastructure Security'
 
 check44(){
   # "Ensure routing tables for VPC peering are \"least access\" (Not Scored)"
-  textInfo "Looking for VPC peering in all regions...  "
   for regx in $REGIONS; do
     LIST_OF_VPCS_PEERING_CONNECTIONS=$($AWSCLI ec2 describe-vpc-peering-connections --output text $PROFILE_OPT --region $regx --query 'VpcPeeringConnections[*].VpcPeeringConnectionId'| sort | paste -s -d" " -)
     if [[ $LIST_OF_VPCS_PEERING_CONNECTIONS ]];then
-      textInfo "$regx: $LIST_OF_VPCS_PEERING_CONNECTIONS - review routing tables" "$regx"
+      textInfo "$regx: $LIST_OF_VPCS_PEERING_CONNECTIONS - review routing tables" "$regx" "$LIST_OF_VPCS_PEERING_CONNECTIONS"
       #LIST_OF_VPCS=$($AWSCLI ec2 describe-vpcs $PROFILE_OPT --region $regx --query 'Vpcs[*].VpcId' --output text)
       #aws ec2 describe-route-tables --filter "Name=vpc-id,Values=vpc-0213e864" --query "RouteTables[*].{RouteTableId:RouteTableId, VpcId:VpcId, Routes:Routes, AssociatedSubnets:Associations[*].SubnetId}" $PROFILE_OPT --region $regx
       # for vpc in $LIST_OF_VPCS; do
@@ -36,7 +38,7 @@ check44(){
       # done
       #echo $VPCS_WITH_PEERING
     else
-      textPass "$regx: No VPC peering found" "$regx"
+      textPass "$regx: No VPC peering found" "$regx" "$LIST_OF_VPCS_PEERING_CONNECTIONS"
     fi
   done
 }

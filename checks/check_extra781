@@ -31,9 +31,9 @@ extra781(){
       for domain in $LIST_OF_DOMAINS;do
         CHECK_IF_ENCREST_ENABLED=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.EncryptionAtRestOptions.Enabled' --output text|grep -i true)
         if [[ $CHECK_IF_ENCREST_ENABLED ]];then
-          textPass "$regx: Amazon ES domain $domain has encryption at-rest enabled" "$regx"
+          textPass "$regx: Amazon ES domain $domain has encryption at-rest enabled" "$regx" "$domain"
         else
-          textFail "$regx: Amazon ES domain $domain does not have encryption at-rest enabled" "$regx"
+          textFail "$regx: Amazon ES domain $domain does not have encryption at-rest enabled" "$regx" "$domain"
         fi
       done
     else
