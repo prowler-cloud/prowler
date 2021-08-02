@@ -399,7 +399,7 @@ generateHtmlOutput(){
     local ROW_CLASS='table-info'
   fi
   if [[ $status == "PASS" ]];then
-    local ROW_CLASS='p-3 mb-2 bg-success'
+    local ROW_CLASS='p-3 mb-2 bg-success-custom'
   fi
   if [[ $status == "FAIL" ]];then
     local ROW_CLASS='table-danger'
@@ -423,7 +423,7 @@ generateHtmlOutput(){
   echo '  <td>'$CHECK_CAF_EPIC'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   echo '  <td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   echo '  <td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td><a href="'$CHECK_DOC'"><i class="fas fa-external-link-alt"></i></a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td><a class="read-more" href="'$CHECK_DOC'"><i class="fas fa-external-link-alt"></i></a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   echo '  <td>'$CHECK_RESOURCE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   echo '' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
