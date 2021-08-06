@@ -14,6 +14,7 @@ Sessionx.vim
 *~
 # Auto-generated tag files
 tags
+
 # Persistent undo
 [._]*.un~
 
@@ -22,6 +23,9 @@ tags
 
 # Prowler output
 output/
+
+# Prowler found secrets
+secrets-*/
 
 # JUnit Reports
 junit-reports/
