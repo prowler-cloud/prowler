@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra769="7.69"
-CHECK_TITLE_extra769="[extra769] Check if IAM Access Analyzer is enabled and its findings (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra769="[extra769] Check if IAM Access Analyzer is enabled and its findings "
 CHECK_SCORED_extra769="NOT_SCORED"
 CHECK_TYPE_extra769="EXTRA"
 CHECK_SEVERITY_extra769="High"
@@ -38,9 +38,9 @@ extra769(){
       for accessAnalyzerArn in $LIST_OF_ACCESS_ANALYZERS;do
         ANALYZER_ACTIVE_FINDINGS_COUNT=$($AWSCLI accessanalyzer list-findings $PROFILE_OPT --region $regx --analyzer-arn $accessAnalyzerArn --query 'findings[?status == `ACTIVE`].[id,status]' --output text | wc -l | tr -d ' ')
         if [[ $ANALYZER_ACTIVE_FINDINGS_COUNT -eq 0 ]];then
-            textPass "$regx: IAM Access Analyzer $accessAnalyzerArn has no active findings" "$regx"
+            textPass "$regx: IAM Access Analyzer $accessAnalyzerArn has no active findings" "$regx" "$accessAnalyzerArn"
         else
-            textInfo "$regx: IAM Access Analyzer $accessAnalyzerArn has $ANALYZER_ACTIVE_FINDINGS_COUNT active findings" "$regx"
+            textInfo "$regx: IAM Access Analyzer $accessAnalyzerArn has $ANALYZER_ACTIVE_FINDINGS_COUNT active findings" "$regx" 
         fi
       done
     else

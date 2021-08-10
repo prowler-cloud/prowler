@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra763="7.63"
-CHECK_TITLE_extra763="[extra763] Check if S3 buckets have object versioning enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra763="[extra763] Check if S3 buckets have object versioning enabled "
 CHECK_SCORED_extra763="NOT_SCORED"
 CHECK_TYPE_extra763="EXTRA"
 CHECK_SEVERITY_extra763="Medium"
@@ -24,7 +24,7 @@ CHECK_DOC_extra763='https://docs.aws.amazon.com/AmazonS3/latest/dev-retired/Vers
 CHECK_CAF_EPIC_extra763='Data Protection'
 
 extra763(){
-  # "Check if S3 buckets have object versioning enabled (Not Scored) (Not part of CIS benchmark)"
+  # "Check if S3 buckets have object versioning enabled "
   LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text|xargs -n1)
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
@@ -34,9 +34,9 @@ extra763(){
         continue
       fi
       if [[ $(echo "$BUCKET_VERSIONING_ENABLED" | grep "^Enabled$") ]]; then
-        textPass "Bucket $bucket has versioning enabled"
+        textPass "Bucket $bucket has versioning enabled" "us-east-1" "$bucket"
       else
-        textFail "Bucket $bucket has versioning disabled!"
+        textFail "Bucket $bucket has versioning disabled!" "us-east-1" "$bucket"
       fi
     done
   else

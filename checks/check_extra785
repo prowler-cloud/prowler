@@ -36,9 +36,9 @@ extra785(){
         CHECK_IF_UPDATE_AVAILABLE_AND_VERSION=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.[ServiceSoftwareOptions.UpdateAvailable,ElasticsearchVersion]' --output text)
         while read update_status es_version;do
           if [[ $update_status != "False" ]];then
-            textInfo "$regx: Amazon ES domain $domain v$es_version has updates available" "$regx"
+            textInfo "$regx: Amazon ES domain $domain v$es_version has updates available" "$regx" "$domain"
           else
-            textPass "$regx: Amazon ES domain $domain v$es_version does not have have updates available" "$regx"
+            textPass "$regx: Amazon ES domain $domain v$es_version does not have have updates available" "$regx" "$domain"
           fi
         done < <(echo $CHECK_IF_UPDATE_AVAILABLE_AND_VERSION)
       done

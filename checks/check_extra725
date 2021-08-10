@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra725="7.25"
-CHECK_TITLE_extra725="[extra725] Check if S3 buckets have Object-level logging enabled in CloudTrail (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra725="[extra725] Check if S3 buckets have Object-level logging enabled in CloudTrail"
 CHECK_SCORED_extra725="NOT_SCORED"
 CHECK_TYPE_extra725="EXTRA"
 CHECK_SEVERITY_extra725="Medium"
@@ -26,17 +26,15 @@ CHECK_CAF_EPIC_extra725='Logging and Monitoring'
 
 # per Object-level logging is not configured at Bucket level but at CloudTrail trail level
 extra725(){
-  # "Check if S3 buckets have Object-level logging enabled in CloudTrail (Not Scored) (Not part of CIS benchmark)"
-  textInfo "Looking for S3 Buckets Object-level logging information in all trails...  "
-
+  # "Check if S3 buckets have Object-level logging enabled in CloudTrail "
   LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --region $REGION --query 'Buckets[*].{Name:Name}' --output text 2>&1)
   if [[ $(echo "$LIST_OF_BUCKETS" | grep AccessDenied) ]]; then
-    textFail "Access Denied trying to list buckets"
+    textFail "$REGION: Access Denied trying to list buckets"
     return
   fi
   LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $REGION --query 'trailList[].TrailARN' --output text 2>&1)
   if [[ $(echo "$LIST_OF_TRAILS" | grep AccessDenied) ]]; then
-    textFail "Access Denied trying to describe trails"
+    textFail "$REGION: Access Denied trying to describe trails"
     return
   fi
   if [[ $LIST_OF_BUCKETS ]]; then
@@ -53,17 +51,17 @@ extra725(){
 
         if [[ ${#BUCKET_ENABLED_TRAILS[@]} -gt 0 ]]; then
           for trail in "${BUCKET_ENABLED_TRAILS[@]}"; do
-            textPass "$regx: S3 bucket $bucketName has Object-level logging enabled in trail $trail" "$regx"
+            textPass "$REGION: S3 bucket $bucketName has Object-level logging enabled in trail $trail" "$REGION" "$bucketName"
           done
         else
-          textFail "$regx: S3 bucket $bucketName has Object-level logging disabled" "$regx"
+          textFail "$REGION: S3 bucket $bucketName has Object-level logging disabled" "$REGION" "$bucketName"
         fi
 
       else
-        textFail "$regx: S3 bucket $bucketName is not being recorded no CloudTrail found!" "$regx"
+        textFail "$REGION: S3 bucket $bucketName is not being recorded no CloudTrail found!" "$REGION" "$bucketName"
       fi
     done
   else
-    textInfo "$regx: No S3 buckets found" "$regx"
+    textInfo "$REGION: No S3 buckets found" "$REGION"
   fi
 }

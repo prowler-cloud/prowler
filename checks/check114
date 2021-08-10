@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
-# This Prowler check is licensed under a
-# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the license along with this
-# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
 CHECK_ID_check114="1.14"
-CHECK_TITLE_check114="[check114] Ensure hardware MFA is enabled for the root account (Scored)"
+CHECK_TITLE_check114="[check114] Ensure hardware MFA is enabled for the root account"
 CHECK_SCORED_check114="SCORED"
 CHECK_TYPE_check114="LEVEL2"
 CHECK_SEVERITY_check114="Critical"
@@ -27,11 +30,11 @@ check114(){
   if [ "$COMMAND113" == "1" ]; then
     COMMAND114=$($AWSCLI iam list-virtual-mfa-devices $PROFILE_OPT --region $REGION --output text --assignment-status Assigned --query 'VirtualMFADevices[*].[SerialNumber]' | grep "^arn:${AWS_PARTITION}:iam::[0-9]\{12\}:mfa/root-account-mfa-device$")
     if [[ "$COMMAND114" ]]; then
-      textFail "Only Virtual MFA is enabled for root"
+      textFail "$REGION: Only Virtual MFA is enabled for root" "$REGION" "MFA"
     else
-      textPass "Hardware MFA is enabled for root"
+      textPass "$REGION: Hardware MFA is enabled for root" "$REGION" "MFA"
     fi
   else
-    textFail "MFA is not ENABLED for root account"
+    textFail "$REGION: MFA is not ENABLED for root account" "$REGION" "MFA"
   fi
 }

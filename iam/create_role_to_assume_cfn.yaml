@@ -55,12 +55,12 @@ Resources:
             Statement:
             - Effect: Allow
               Action:
-                - 'dax:ListTables'
                 - 'ds:ListAuthorizedApplications'
-                - 'ds:DescribeRoles'
                 - 'ec2:GetEbsEncryptionByDefault'
                 - 'ecr:Describe*'
                 - 'support:Describe*'
                 - 'tag:GetTagKeys'
                 - 'lambda:GetFunction'
+                - 'glue:GetConnections'
+                - 's3:GetAccountPublicAccessBlock'
               Resource: '*'

@@ -25,7 +25,6 @@ CHECK_DOC_extra7130='https://docs.aws.amazon.com/sns/latest/dg/sns-server-side-e
 CHECK_CAF_EPIC_extra7130='Data Protection'
 
 extra7130(){
-  textInfo "Looking for SNS Topics in all regions...  "
   for regx in $REGIONS; do
     LIST_SNS=$($AWSCLI sns list-topics $PROFILE_OPT --region $regx --query 'Topics[*].TopicArn' --output text)
     if [[ $LIST_SNS ]];then
@@ -33,9 +32,9 @@ extra7130(){
         SHORT_TOPIC=$(echo $topic | awk -F ":" '{print $NF}')
         SNS_ENCRYPTION=$($AWSCLI sns get-topic-attributes $PROFILE_OPT --region $regx --topic-arn $topic --query 'Attributes.KmsMasterKeyId' --output text)
         if [[ "None" == $SNS_ENCRYPTION ]]; then
-          textFail "$regx: $SHORT_TOPIC is not encrypted!" "$regx"
+          textFail "$regx: $SHORT_TOPIC is not encrypted!" "$regx" "$SHORT_TOPIC"
         else
-          textPass "$regx: $SHORT_TOPIC is encrypted" "$regx"
+          textPass "$regx: $SHORT_TOPIC is encrypted" "$regx" "$SHORT_TOPIC"
         fi
       done
     else

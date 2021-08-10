@@ -3,14 +3,15 @@
     "Statement": [
         {
             "Action": [
-                "dax:ListTables",
                 "ds:ListAuthorizedApplications",
-                "ds:DescribeRoles",
                 "ec2:GetEbsEncryptionByDefault",
                 "ecr:Describe*",
                 "support:Describe*",
                 "tag:GetTagKeys",
-		"lambda:GetFunction"
+		        "lambda:GetFunction",
+                "glue:GetConnections",
+                "glue:SearchTables",
+                "s3:GetAccountPublicAccessBlock"
             ],
             "Resource": "*",
             "Effect": "Allow",

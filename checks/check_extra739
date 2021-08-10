@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra739="7.39"
-CHECK_TITLE_extra739="[extra739] Check if RDS instances have backup enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra739="[extra739] Check if RDS instances have backup enabled"
 CHECK_SCORED_extra739="NOT_SCORED"
 CHECK_TYPE_extra739="EXTRA"
 CHECK_SEVERITY_extra739="Medium"
@@ -31,13 +31,13 @@ extra739(){
         # if retention is 0 then is disabled
         BACKUP_RETENTION=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --db-instance-identifier $rdsinstance --query 'DBInstances[*].BackupRetentionPeriod' --output text)
         if [[ $BACKUP_RETENTION == "0" ]]; then
-          textFail "$regx: RDS instance $rdsinstance has not backup enabled!" "$regx"
+          textFail "$regx: RDS instance $rdsinstance has not backup enabled!" "$regx" "$rdsinstance"
         else
-          textPass "$regx: RDS instance $rdsinstance has backup enabled with retention period $BACKUP_RETENTION days" "$regx"
+          textPass "$regx: RDS instance $rdsinstance has backup enabled with retention period $BACKUP_RETENTION days" "$regx" "$rdsinstance"
         fi
       done
     else
-      textInfo "$regx: No RDS instances found" "$regx"
+      textInfo "$regx: No RDS instances found" "$regx" "$rdsinstance"
     fi
   done
 }

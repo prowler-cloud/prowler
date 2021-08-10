@@ -34,12 +34,12 @@ extra7121(){
         if [[ ! -z "$ENDPOINT_SC" ]]; then
           ENDPOINT_SC_ENCRYPTION=$($AWSCLI glue get-security-configuration --name "${ENDPOINT_SC}" $PROFILE_OPT --region $regx --query 'SecurityConfiguration.EncryptionConfiguration.JobBookmarksEncryption.JobBookmarksEncryptionMode' --output text)
           if [[ "$ENDPOINT_SC_ENCRYPTION" == "DISABLED" ]]; then
-            textFail "$regx: Glue development endpoint $ENDPOINT_NAME does not have Job Bookmark encryption enabled!" "$regx"
+            textFail "$regx: Glue development endpoint $ENDPOINT_NAME does not have Job Bookmark encryption enabled!" "$regx" "$ENDPOINT_NAME"
           else
-            textPass "$regx: Glue development endpoint $ENDPOINT_NAME has Job Bookmark encryption enabled" "$regx"
+            textPass "$regx: Glue development endpoint $ENDPOINT_NAME has Job Bookmark encryption enabled" "$regx" "$ENDPOINT_NAME"
           fi
         else
-          textFail "$regx: Glue development endpoint $ENDPOINT_NAME does not have security configuration" "$regx"
+          textFail "$regx: Glue development endpoint $ENDPOINT_NAME does not have security configuration" "$regx" "$ENDPOINT_NAME"
         fi
       done
     else

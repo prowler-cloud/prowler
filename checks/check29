@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
-# This Prowler check is licensed under a
-# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the license along with this
-# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
 CHECK_ID_check29="2.9"
-CHECK_TITLE_check29="[check29] Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
+CHECK_TITLE_check29="[check29] Ensure VPC Flow Logging is Enabled in all VPCs"
 CHECK_SCORED_check29="SCORED"
 CHECK_TYPE_check29="LEVEL2"
 CHECK_SEVERITY_check29="Medium"
@@ -28,21 +31,21 @@ check29(){
   for regx in $REGIONS; do
     AVAILABLE_VPC=$($AWSCLI ec2 describe-vpcs $PROFILE_OPT --region $regx --query 'Vpcs[?State==`available`].VpcId' --output text 2>&1)
     if [[ $(echo "$AVAILABLE_VPC" | grep AccessDenied) ]]; then
-      textFail "$regx: Access Denied trying to describe VPCs"
+      textFail "$regx: Access Denied trying to describe VPCs" "$regx" "$vpcx"
       continue
     fi
     for vpcx in $AVAILABLE_VPC; do
       CHECK_FL=$($AWSCLI ec2 describe-flow-logs $PROFILE_OPT --region $regx --filter Name="resource-id",Values="${vpcx}" --query 'FlowLogs[?FlowLogStatus==`ACTIVE`].FlowLogId' --output text 2>&1)
       if [[ $(echo "$CHECK_FL" | grep AccessDenied) ]]; then
-        textFail "$regx: VPC $vpcx Access Denied trying to describe flow logs"
+        textFail "$regx: VPC $vpcx Access Denied trying to describe flow logs" "$regx" "$vpcx"
         continue
       fi
       if [[ $CHECK_FL ]]; then
         for FL in $CHECK_FL; do
-          textPass "$regx: VPC $vpcx VPCFlowLog is enabled for LogGroupName: $FL"
+          textPass "$regx: VPC $vpcx VPCFlowLog is enabled for LogGroupName: $FL" "$regx" "$vpcx"
         done
       else
-        textFail "$regx: VPC $vpcx VPCFlowLog is disabled"
+        textFail "$regx: VPC $vpcx VPCFlowLog is disabled" "$regx" "$vpcx"
       fi
     done
   done
