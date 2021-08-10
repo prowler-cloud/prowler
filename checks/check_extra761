@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra761="7.61"
-CHECK_TITLE_extra761="[extra761] Check if EBS Default Encryption is activated (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra761="[extra761] Check if EBS Default Encryption is activated "
 CHECK_SCORED_extra761="NOT_SCORED"
 CHECK_TYPE_extra761="EXTRA"
 CHECK_SEVERITY_extra761="Medium"
@@ -24,15 +24,14 @@ CHECK_DOC_extra761='https://aws.amazon.com/premiumsupport/knowledge-center/ebs-a
 CHECK_CAF_EPIC_extra761='Data Protection'
 
 extra761(){
-  textInfo "Looking for EBS Default Encryption activation in all regions...  "
   for regx in $REGIONS; do
     EBS_DEFAULT_ENCRYPTION=$($AWSCLI ec2 get-ebs-encryption-by-default $PROFILE_OPT --region $regx --query 'EbsEncryptionByDefault' 2>&1)
     if [[ $(echo "$EBS_DEFAULT_ENCRYPTION" | grep "argument operation: Invalid choice") ]]; then
-      textFail "Newer aws cli needed for get-ebs-encryption-by-default"
+      textFail "$regx: Newer aws cli needed for get-ebs-encryption-by-default" "$regx"
       continue
     fi
     if [[ $(echo "$EBS_DEFAULT_ENCRYPTION" | grep UnauthorizedOperation) ]]; then
-      textFail "Prowler needs ec2:GetEbsEncryptionByDefault permission for this check"
+      textFail "$regx: Prowler needs ec2:GetEbsEncryptionByDefault permission for this check" "$regx"
       continue
     fi
     if [[ $EBS_DEFAULT_ENCRYPTION == "true" ]];then

@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra728="7.28"
-CHECK_TITLE_extra728="[extra728] Check if SQS queues have Server Side Encryption enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra728="[extra728] Check if SQS queues have Server Side Encryption enabled"
 CHECK_SCORED_extra728="NOT_SCORED"
 CHECK_TYPE_extra728="EXTRA"
 CHECK_SEVERITY_extra728="Medium"
@@ -33,9 +33,9 @@ extra728(){
         # check if the policy has KmsMasterKeyId therefore SSE enabled
         SSE_ENABLED_QUEUE=$($AWSCLI sqs get-queue-attributes --queue-url $queue $PROFILE_OPT --region $regx --attribute-names All --query Attributes.KmsMasterKeyId --output text|grep -v ^None)
         if [[ $SSE_ENABLED_QUEUE ]]; then
-          textPass "$regx: SQS queue $queue is using Server Side Encryption" "$regx"
+          textPass "$regx: SQS queue $queue is using Server Side Encryption" "$regx" "$queue"
         else
-          textFail "$regx: SQS queue $queue is not using Server Side Encryption" "$regx"
+          textFail "$regx: SQS queue $queue is not using Server Side Encryption" "$regx" "$queue"
         fi
       done
     else

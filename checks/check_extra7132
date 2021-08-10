@@ -25,19 +25,19 @@ CHECK_CAF_EPIC_extra7132='Logging and Monitoring'
 
 extra7132(){
   for regx in $REGIONS; do
-    RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[*].DBInstanceIdentifier' --output text)
+    RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query "DBInstances[?Engine != 'docdb'].DBInstanceIdentifier" --output text)
     if [[ $RDS_INSTANCES ]];then
       for rdsinstance in ${RDS_INSTANCES}; do
           RDS_NAME="$rdsinstance"
           MONITORING_FLAG=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --db-instance-identifier $rdsinstance --query 'DBInstances[*].[EnhancedMonitoringResourceArn]' --output text)
           if [[ $MONITORING_FLAG == "None" ]];then 
-              textFail "$regx: RDS instance: $RDS_NAME has enhanced monitoring disabled!" "$rex"
+              textFail "$regx: RDS instance: $RDS_NAME has enhanced monitoring disabled!" "$rex" "$RDS_NAME"
           else
-              textPass "$regx: RDS instance: $RDS_NAME has enhanced monitoring enabled." "$regx"
+              textPass "$regx: RDS instance: $RDS_NAME has enhanced monitoring enabled." "$regx" "$RDS_NAME"
           fi
       done
     else
-      textInfo "$regx: no RDS instances found" "$regx"
+      textInfo "$regx: no RDS instances found" "$regx" "$RDS_NAME"
     fi
   done
 }

@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra78="7.8"
-CHECK_TITLE_extra78="[extra78] Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra78="[extra78] Ensure there are no Public Accessible RDS instances"
 CHECK_SCORED_extra78="NOT_SCORED"
 CHECK_TYPE_extra78="EXTRA"
 CHECK_SEVERITY_extra78="Critical"
@@ -26,18 +26,17 @@ CHECK_DOC_extra78='https://docs.amazonaws.cn/en_us/config/latest/developerguide/
 CHECK_CAF_EPIC_extra78='Data Protection'
 
 extra78(){
-  # "Ensure there are no Public Accessible RDS instances (Not Scored) (Not part of CIS benchmark)"
-  textInfo "Looking for RDS instances in all regions...  "
+  # "Ensure there are no Public Accessible RDS instances "
   for regx in $REGIONS; do
     LIST_OF_RDS_PUBLIC_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[?PubliclyAccessible==`true` && DBInstanceStatus==`"available"`].[DBInstanceIdentifier,Endpoint.Address]' --output text)
     if [[ $LIST_OF_RDS_PUBLIC_INSTANCES ]];then
       while read -r rds_instance;do
         RDS_NAME=$(echo $rds_instance | awk '{ print $1; }')
         RDS_DNSNAME=$(echo $rds_instance | awk '{ print $2; }')
-        textFail "$regx: RDS instance: $RDS_NAME at $RDS_DNSNAME is set as Publicly Accessible!" "$regx"
+        textFail "$regx: RDS instance: $RDS_NAME at $RDS_DNSNAME is set as Publicly Accessible!" "$regx" "$RDS_NAME"
       done <<< "$LIST_OF_RDS_PUBLIC_INSTANCES"
       else
-        textPass "$regx: no Publicly Accessible RDS instances found" "$regx"
+        textPass "$regx: no Publicly Accessible RDS instances found" "$regx" "$RDS_NAME"
     fi
   done
 }

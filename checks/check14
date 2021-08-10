@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
-# This Prowler check is licensed under a
-# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the license along with this
-# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
 CHECK_ID_check14="1.4"
-CHECK_TITLE_check14="[check14] Ensure access keys are rotated every 90 days or less (Scored)"
+CHECK_TITLE_check14="[check14] Ensure access keys are rotated every 90 days or less"
 CHECK_SCORED_check14="SCORED"
 CHECK_TYPE_check14="LEVEL1"
 CHECK_SEVERITY_check14="Medium"
@@ -37,15 +40,15 @@ check14(){
         HOWOLDER=$(how_older_from_today $DATEROTATED1)
 
         if [ $HOWOLDER -gt "90" ];then
-          textFail "$user has not rotated access key 1 in over 90 days"
+          textFail "$REGION: $user has not rotated access key 1 in over 90 days" "$REGION" "$user"
           C14_NUM_USERS1=$(expr $C14_NUM_USERS1 + 1)
         fi
       done
       if [[ $C14_NUM_USERS1 -eq 0 ]]; then
-        textPass "No users with access key 1 older than 90 days"
+        textPass "$REGION: No users with access key 1 older than 90 days" "$REGION" "$user"
       fi
     else
-      textPass "No users with access key 1"
+      textPass "$REGION: No users with access key 1" "$REGION" "$user"
     fi
 
     if [[ $LIST_OF_USERS_WITH_ACCESS_KEY2 ]]; then
@@ -55,14 +58,14 @@ check14(){
         DATEROTATED2=$(cat $TEMP_REPORT_FILE | grep -v user_creation_time | grep "^${user},"| awk -F, '{ print $15 }' | grep -v "N/A" | awk -F"T" '{ print $1 }')
         HOWOLDER=$(how_older_from_today $DATEROTATED2)
         if [ $HOWOLDER -gt "90" ];then
-          textFail "$user has not rotated access key 2 in over 90 days"
+          textFail "$REGION: $user has not rotated access key 2 in over 90 days" "$REGION" "$user"
           C14_NUM_USERS2=$(expr $C14_NUM_USERS2 + 1)
         fi
       done
       if [[ $C14_NUM_USERS2 -eq 0 ]]; then
-        textPass "No users with access key 2 older than 90 days"
+        textPass "$REGION: No users with access key 2 older than 90 days" "$REGION" "$user"
       fi
     else
-      textPass "No users with access key 2"
+      textPass "$REGION: No users with access key 2" "$REGION" "$user"
     fi
 }

@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra729="7.29"
-CHECK_TITLE_extra729="[extra729] Ensure there are no EBS Volumes unencrypted (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra729="[extra729] Ensure there are no EBS Volumes unencrypted"
 CHECK_SCORED_extra729="NOT_SCORED"
 CHECK_TYPE_extra729="EXTRA"
 CHECK_SEVERITY_extra729="Medium"
@@ -26,19 +26,18 @@ CHECK_DOC_extra729='https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncry
 CHECK_CAF_EPIC_extra729='Data Protection'
 
 extra729(){
-  # "Ensure there are no EBS Volumes unencrypted (Not Scored) (Not part of CIS benchmark)"
-  textInfo "Looking for EBS Volumes in all regions...  "
+  # "Ensure there are no EBS Volumes unencrypted "
   for regx in $REGIONS; do
     LIST_OF_EBS_NON_ENC_VOLUMES=$($AWSCLI ec2 describe-volumes $PROFILE_OPT --region $regx --query 'Volumes[?Encrypted==`false`].VolumeId' --output text)
     if [[ $LIST_OF_EBS_NON_ENC_VOLUMES ]];then
       for volume in $LIST_OF_EBS_NON_ENC_VOLUMES; do
-        textFail "$regx: $volume is not encrypted!" "$regx"
+        textFail "$regx: $volume is not encrypted!" "$regx" "$volume"
       done
     fi
     LIST_OF_EBS_ENC_VOLUMES=$($AWSCLI ec2 describe-volumes $PROFILE_OPT --region $regx --query 'Volumes[?Encrypted==`true`].VolumeId' --output text)
     if [[ $LIST_OF_EBS_ENC_VOLUMES ]];then
       for volume in $LIST_OF_EBS_ENC_VOLUMES; do
-        textPass "$regx: $volume is encrypted" "$regx"
+        textPass "$regx: $volume is encrypted" "$regx" "$volume"
       done
     fi
   done

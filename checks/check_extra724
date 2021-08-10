@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra724="7.24"
-CHECK_TITLE_extra724="[extra724] Check if ACM certificates have Certificate Transparency logging enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra724="[extra724] Check if ACM certificates have Certificate Transparency logging enabled"
 CHECK_SCORED_extra724="NOT_SCORED"
 CHECK_TYPE_extra724="EXTRA"
 CHECK_SEVERITY_extra724="Medium"
@@ -24,7 +24,7 @@ CHECK_DOC_extra724='https://aws.amazon.com/blogs/security/how-to-get-ready-for-c
 CHECK_CAF_EPIC_extra724='Logging and Monitoring'
 
 extra724(){
-  # "Check if ACM certificates have Certificate Transparency logging enabled (Not Scored) (Not part of CIS benchmark)"
+  # "Check if ACM certificates have Certificate Transparency logging enabled "
   for regx in $REGIONS; do
     LIST_OF_CERTS=$($AWSCLI acm list-certificates $PROFILE_OPT  --region $regx --query CertificateSummaryList[].CertificateArn --output text)
     if [[ $LIST_OF_CERTS ]];then
@@ -34,12 +34,12 @@ extra724(){
         CERT_TYPE=$(aws acm describe-certificate $PROFILE_OPT --region $regx --certificate-arn $cert_arn --query Certificate.Type --output text)
         if [[ $CERT_TYPE == "IMPORTED" ]];then
           # Ignore imported certificate
-          textInfo "$regx: ACM Certificate $CERT_DOMAIN_NAME is imported." "$regx"
+          textInfo "$regx: ACM Certificate $CERT_DOMAIN_NAME is imported." "$regx" "$CERT_DOMAIN_NAME"
         else
           if [[ $CT_ENABLED == "ENABLED" ]];then
-            textPass "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging enabled!" "$regx"
+            textPass "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging enabled!" "$regx" "$CERT_DOMAIN_NAME"
           else
-            textFail "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging disabled!" "$regx"
+            textFail "$regx: ACM Certificate $CERT_DOMAIN_NAME has Certificate Transparency logging disabled!" "$regx" "$CERT_DOMAIN_NAME"
           fi
         fi
       done
@@ -47,5 +47,4 @@ extra724(){
        textInfo "$regx: No ACM Certificates found" "$regx"
     fi
   done
-  textInfo "*Read more about this here: https://aws.amazon.com/blogs/security/how-to-get-ready-for-certificate-transparency/"
 }

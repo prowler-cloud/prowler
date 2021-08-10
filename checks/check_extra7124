@@ -33,12 +33,12 @@ extra7124(){
       LIST_EC2_UNMANAGED=$(echo ${LIST_SSM_MANAGED_INSTANCES[@]} ${LIST_EC2_INSTANCES[@]} | tr ' ' '\n' | sort | uniq -u)
       if [[ $LIST_EC2_UNMANAGED ]]; then
         for instance in $LIST_EC2_UNMANAGED; do
-          textFail "$regx: EC2 instance $instance is not managed by Systems Manager" "$regx"
+          textFail "$regx: EC2 instance $instance is not managed by Systems Manager" "$regx" "$instance"
         done
       fi 
       if [[ $LIST_SSM_MANAGED_INSTANCES ]]; then
         for instance in $LIST_SSM_MANAGED_INSTANCES; do 
-          textPass "$regx: EC2 instance $instance is managed by Systems Manager" "$regx"
+          textPass "$regx: EC2 instance $instance is managed by Systems Manager" "$regx" "$instance"
         done 
       fi 
     else 

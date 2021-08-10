@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra731="7.31"
-CHECK_TITLE_extra731="[extra731] Check if SNS topics have policy set as Public (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra731="[extra731] Check if SNS topics have policy set as Public"
 CHECK_SCORED_extra731="NOT_SCORED"
 CHECK_TYPE_extra731="EXTRA"
 CHECK_SEVERITY_extra731="Critical"
@@ -39,9 +39,9 @@ extra731(){
           if [[ $SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION ]]; then
             SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS=$(echo $SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION \
               | jq '"[Principal: " + (.Principal|tostring) + " Action: " + (.Action|tostring) + "]"' )
-            textFail "$regx: SNS topic $SHORT_TOPIC's policy with public access: $SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS" "$regx"
+            textFail "$regx: SNS topic $SHORT_TOPIC's policy with public access: $SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS" "$regx" "$SHORT_TOPIC"
           else
-            textPass "$regx: SNS topic $SHORT_TOPIC's policy with public access but has a Condition" "$regx"
+            textPass "$regx: SNS topic $SHORT_TOPIC's policy with public access but has a Condition" "$regx" "$SHORT_TOPIC"
           fi
         else
           textPass "$regx: SNS topic without public access" "$regx"

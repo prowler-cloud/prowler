@@ -21,7 +21,7 @@
 #     --image-scanning-configuration scanOnPush=true
 
 CHECK_ID_extra765="7.65"
-CHECK_TITLE_extra765="[extra765] Check if ECR image scan on push is enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra765="[extra765] Check if ECR image scan on push is enabled "
 CHECK_SCORED_extra765="NOT_SCORED"
 CHECK_TYPE_extra765="EXTRA"
 CHECK_SEVERITY_extra765="Medium"
@@ -44,16 +44,16 @@ extra765(){
         SCAN_ENABLED=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $region --query "repositories[?repositoryName==\`$repo\`].[imageScanningConfiguration.scanOnPush]" --output text 2>&1)
         case "$SCAN_ENABLED" in
           "True")
-            textPass "$region: ECR repository $repo has scan on push enabled" "$region"
+            textPass "$region: ECR repository $repo has scan on push enabled" "$region" "$repo"
             ;;
           "False")
-            textFail "$region: ECR repository $repo has scan on push disabled!" "$region"
+            textFail "$region: ECR repository $repo has scan on push disabled!" "$region" "$repo"
             ;;
           "None")
-            textInfo "$region: ECR repository $repo has no scanOnPush status, newer awscli needed" "$region"
+            textInfo "$region: ECR repository $repo has no scanOnPush status, newer awscli needed" "$region" "$repo"
             ;;
           "*")
-            textInfo "$region: ECR repository $repo has unknown scanOnPush status \"$SCAN_ENABLED\"" "$region"
+            textInfo "$region: ECR repository $repo has unknown scanOnPush status \"$SCAN_ENABLED\"" "$region" "$repo"
             ;;
         esac
       done

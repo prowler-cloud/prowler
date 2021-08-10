@@ -179,6 +179,22 @@ Resources:
                   - s3:GetBucketLocation
                 Effect: Allow
                 Resource: !Sub 'arn:aws:s3:::${ArtifactBucket}/*'
+        - PolicyName: ProwlerAdditions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - s3:GetAccountPublicAccessBlock
+                  - glue:GetConnections
+                  - glue:SearchTables
+                  - ds:ListAuthorizedApplications
+                  - ec2:GetEbsEncryptionByDefault
+                  - ecr:Describe*
+                  - support:Describe*
+                  - tag:GetTagKeys
+                  - lambda:GetFunction
+                Effect: Allow
+                Resource: !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:catalog'
         - PolicyName: CodeBuild
           PolicyDocument:
             Version: '2012-10-17'

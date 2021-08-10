@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra768="7.68"
-CHECK_TITLE_extra768="[extra768] Find secrets in ECS task definitions variables (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra768="[extra768] Find secrets in ECS task definitions variables "
 CHECK_SCORED_extra768="NOT_SCORED"
 CHECK_TYPE_extra768="EXTRA"
 CHECK_SEVERITY_extra768="Critical"
@@ -29,7 +29,6 @@ extra768(){
     # this folder is deleted once this check is finished
     mkdir $SECRETS_TEMP_FOLDER
   fi
-  textInfo "Looking for secrets in ECS task definitions' environment variables across all regions... "
   for regx in $REGIONS; do
     # Get a list of all families first:
     FAMILIES=$($AWSCLI ecs list-task-definition-families $PROFILE_OPT --region $regx --status ACTIVE | jq -r .families[])
@@ -46,14 +45,14 @@ extra768(){
           # Implementation using https://github.com/Yelp/detect-secrets
           FINDINGS=$(secretsDetector file $TASK_DEFINITION_ENV_VARIABLES_FILE)
           if [[ $FINDINGS -eq 0 ]]; then
-            textPass "$regx: No secrets found in ECS task definition $TASK_DEFINITION variables" "$regx"
+            textPass "$regx: No secrets found in ECS task definition $TASK_DEFINITION variables" "$regx" "$TASK_DEFINITION"
             # delete file if nothing interesting is there
             rm -f $TASK_DEFINITION_ENV_VARIABLES_FILE
           else
-            textFail "$regx: Potential secret found in ECS task definition $TASK_DEFINITION variables" "$regx"
+            textFail "$regx: Potential secret found in ECS task definition $TASK_DEFINITION variables" "$regx" "$TASK_DEFINITION"
           fi
         else
-          textInfo "$regx: ECS task definition $TASK_DEFINITION has no variables" "$regx"
+          textInfo "$regx: ECS task definition $TASK_DEFINITION has no variables" "$regx" "$TASK_DEFINITION"
           rm -f $TASK_DEFINITION_ENV_VARIABLES_FILE
         fi
       done

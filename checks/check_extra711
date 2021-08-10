@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra711="7.11"
-CHECK_TITLE_extra711="[extra711] Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra711="[extra711] Check for Publicly Accessible Redshift Clusters"
 CHECK_SCORED_extra711="NOT_SCORED"
 CHECK_TYPE_extra711="EXTRA"
 CHECK_SEVERITY_extra711="High"
@@ -24,18 +24,17 @@ CHECK_DOC_extra711='https://docs.aws.amazon.com/redshift/latest/mgmt/managing-cl
 CHECK_CAF_EPIC_extra711='Data Protection'
 
 extra711(){
-  # "Check for Publicly Accessible Redshift Clusters (Not Scored) (Not part of CIS benchmark)"
-  textInfo "Looking for Redshift clusters in all regions...  "
+  # "Check for Publicly Accessible Redshift Clusters "
   for regx in $REGIONS; do
     LIST_OF_PUBLIC_REDSHIFT_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --region $regx --query 'Clusters[?PubliclyAccessible == `true`].[ClusterIdentifier,Endpoint.Address]' --output text)
     if [[ $LIST_OF_PUBLIC_REDSHIFT_CLUSTERS ]];then
       while read -r cluster;do
         CLUSTER_ID=$(echo $cluster | awk '{ print $1; }')
         CLUSTER_ENDPOINT=$(echo $cluster | awk '{ print $2; }')
-        textFail "$regx: Cluster: $CLUSTER_ID at Endpoint: $CLUSTER_ENDPOINT is publicly accessible!" "$regx"
+        textFail "$regx: Cluster: $CLUSTER_ID at Endpoint: $CLUSTER_ENDPOINT is publicly accessible!" "$regx" "$CLUSTER_ID"
       done <<< "$LIST_OF_PUBLIC_REDSHIFT_CLUSTERS"
       else
-        textPass "$regx: no Publicly Accessible Redshift Clusters found" "$regx"
+        textPass "$regx: no Publicly Accessible Redshift Clusters found" "$regx" "$CLUSTER_ID"
     fi
   done
 }

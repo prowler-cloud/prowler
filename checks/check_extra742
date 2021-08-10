@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra742="7.42"
-CHECK_TITLE_extra742="[extra742] Find secrets in CloudFormation outputs (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra742="[extra742] Find secrets in CloudFormation outputs"
 CHECK_SCORED_extra742="NOT_SCORED"
 CHECK_TYPE_extra742="EXTRA"
 CHECK_SEVERITY_extra742="Critical"
@@ -30,7 +30,6 @@ extra742(){
     mkdir $SECRETS_TEMP_FOLDER
   fi
 
-  textInfo "Looking for secrets in CloudFormation output across all regions... "
   for regx in $REGIONS; do
     CFN_STACKS=$($AWSCLI cloudformation describe-stacks $PROFILE_OPT --region $regx --output json)
     LIST_OF_CFN_STACKS=$(echo $CFN_STACKS | jq -r '.Stacks[].StackName')
@@ -45,11 +44,11 @@ extra742(){
           # New implementation using https://github.com/Yelp/detect-secrets
           FINDINGS=$(secretsDetector file $CFN_OUTPUTS_FILE)
             if [[ $FINDINGS -eq 0 ]]; then
-              textPass "$regx: No secrets found in stack $stack Outputs" "$regx"
+              textPass "$regx: No secrets found in stack $stack Outputs" "$regx" "$stack"
               # delete file if nothing interesting is there
               rm -f $CFN_OUTPUTS_FILE
             else
-              textFail "$regx: Potential secret found in stack $stack Outputs" "$regx"
+              textFail "$regx: Potential secret found in stack $stack Outputs" "$regx" "$stack"
               # delete file to not leave trace, user must look at the CFN Stack
               rm -f $CFN_OUTPUTS_FILE
             fi

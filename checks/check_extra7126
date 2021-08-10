@@ -26,16 +26,16 @@ CHECK_CAF_EPIC_extra7126='Data Protection'
 
 extra7126(){
   for regx in $REGIONS; do
-    LIST_OF_CUSTOMER_KMS_KEYS=$($AWSCLI kms list-aliases $PROFILE_OPT --region $regx --output text |grep -v :alias/aws/ |awk '{ print $4 }')
+    LIST_OF_CUSTOMER_KMS_KEYS=$($AWSCLI kms list-aliases $PROFILE_OPT --region $regx --query "Aliases[].[AliasName,TargetKeyId]" --output text |grep -v ^alias/aws/ |awk '{ print $2 }')
     if [[ $LIST_OF_CUSTOMER_KMS_KEYS ]];then
       for key in $LIST_OF_CUSTOMER_KMS_KEYS; do
         CHECK_STATUS=$($AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --output json | jq -r '.KeyMetadata.KeyState')
         if [[ $CHECK_STATUS == "PendingDeletion" ]]; then
           textInfo "$regx: KMS key $key is pending deletion" "$regx"
         elif [[ $CHECK_STATUS == "Disabled"  ]]; then
-          textInfo "$regx: KMS key $key is disabled" "$regx"
+          textInfo "$regx: KMS key $key is disabled" "$regx" "$key"
         else
-          textPass "$regx: KMS key $key is not disabled or pending deletion" "$regx"
+          textPass "$regx: KMS key $key is not disabled or pending deletion" "$regx" "$key"
         fi
       done
     else

@@ -28,30 +28,45 @@ extra7129(){
   for regx in $REGIONS; do
     LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Scheme == `internet-facing` && Type == `application`].[LoadBalancerName]' --output text)
     LIST_OF_WAFV2_WEBACL_ARN=$($AWSCLI wafv2 list-web-acls $PROFILE_OPT --region=$regx --scope=REGIONAL --query WebACLs[*].ARN --output text)
+    LIST_OF_WAFV1_WEBACL_WEBACLID=$($AWSCLI waf-regional list-web-acls $PROFILE_OPT --region $regx --query WebACLs[*].[WebACLId] --output text)
+
     if [[ $LIST_OF_ELBSV2 ]]; then
       for alb in $LIST_OF_ELBSV2; do
-        if [[ $LIST_OF_WAFV2_WEBACL_ARN ]]; then 
+        if [[ ${#LIST_OF_WAFV2_WEBACL_ARN[@]} -gt 0 || ${#LIST_OF_WAFV1_WEBACL_WEBACLID[@]} -gt 0 ]]; then
           WAF_PROTECTED_ALBS=()
           for wafaclarn in $LIST_OF_WAFV2_WEBACL_ARN; do
             ALB_RESOURCES_IN_WEBACL=$($AWSCLI wafv2 list-resources-for-web-acl $PROFILE_OPT --web-acl-arn $wafaclarn --region=$regx --resource-type APPLICATION_LOAD_BALANCER --query ResourceArns --output text | xargs -n1 | awk -F'/' '{ print $3 }'| grep $alb)
-            if [[ $ALB_RESOURCES_IN_WEBACL ]]; then 
+            if [[ $ALB_RESOURCES_IN_WEBACL ]]; then
               WAF_PROTECTED_ALBS+=($wafaclarn)
             fi
           done
-          if [[ ${#WAF_PROTECTED_ALBS[@]} -gt 0 ]]; then
-            for wafaclarn in "${WAF_PROTECTED_ALBS[@]}"; do
-              WAFV2_WEBACL_ARN_SHORT=$(echo $wafaclarn |  awk -F'/' '{ print $3 }')
-              textPass "$regx: Application Load Balancer $alb is protected by WAFv2 ACL $WAFV2_WEBACL_ARN_SHORT" "$regx"
-            done
+          for wafv1aclid in $LIST_OF_WAFV1_WEBACL_WEBACLID; do
+            ALB_RESOURCES_IN_WEBACL=$($AWSCLI waf-regional list-resources-for-web-acl $PROFILE_OPT --web-acl-id $wafv1aclid --region=$regx --resource-type APPLICATION_LOAD_BALANCER --output text --query "[ResourceArns]"| grep $alb)
+            if [[ $ALB_RESOURCES_IN_WEBACL ]]; then
+              WAFv1_PROTECTED_ALBS+=($wafv1aclid)
+            fi
+          done
+          if [[ ${#WAF_PROTECTED_ALBS[@]} -gt 0 || ${#WAFv1_PROTECTED_ALBS[@]} -gt 0 ]]; then
+            if [[ ${#WAF_PROTECTED_ALBS[@]} -gt 0 ]]; then
+              for wafaclarn in "${WAF_PROTECTED_ALBS[@]}"; do
+                WAFV2_WEBACL_ARN_SHORT=$(echo $wafaclarn |  awk -F'/' '{ print $3 }')
+                textPass "$regx: Application Load Balancer $alb is protected by WAFv2 ACL $WAFV2_WEBACL_ARN_SHORT" "$regx" "$alb"
+              done
+            fi
+            if [[ ${#WAFv1_PROTECTED_ALBS[@]} -gt 0 ]]; then
+              for wafv1aclid in "${WAFv1_PROTECTED_ALBS[@]}"; do
+                textPass "$regx: Application Load Balancer $alb is protected by WAFv1 ACL $wafv1aclid" "$regx" "$alb"
+              done
+            fi
           else
-            textFail "$regx: Application Load Balancer $alb is not protected by WAFv2 ACL" "$regx"
+            textFail "$regx: Application Load Balancer $alb is not protected by WAF ACL" "$regx" "$alb"
           fi
-        else 
-          textFail "$regx: Application Load Balancer $alb is not protected no WAFv2 ACL found" "$regx"
+        else
+          textFail "$regx: Application Load Balancer $alb is not protected no WAF ACL found" "$regx" "$alb"
         fi
-      done         
+      done
     else
       textInfo "$regx: No Application Load Balancers found" "$regx"
-    fi    
+    fi
   done
 }

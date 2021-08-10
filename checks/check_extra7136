@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7136="7.136"
+CHECK_TITLE_extra7136="[extra7136] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Telnet port 23 "
+CHECK_SCORED_extra7136="NOT_SCORED"
+CHECK_TYPE_extra7136="EXTRA"
+CHECK_SEVERITY_extra7136="High"
+CHECK_ASFF_RESOURCE_TYPE_extra7136="AwsEc2SecurityGroup"
+CHECK_ALTERNATE_check7136="extra7136"
+CHECK_SERVICENAME_extra7136="ec2"
+CHECK_RISK_extra7136='If Security groups are not properly configured the attack surface is increased. '
+CHECK_REMEDIATION_extra7136='Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.'
+CHECK_DOC_extra7136='https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html'
+CHECK_CAF_EPIC_extra7136='Infrastructure Security'
+
+extra7136(){
+  for regx in $REGIONS; do
+    SG_LIST=$($AWSCLI ec2 describe-security-groups --query 'SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort==`23` && ToPort==`23`)) && (contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}' $PROFILE_OPT --region $regx --output text)
+    if [[ $SG_LIST ]];then
+      for SG in $SG_LIST;do
+        textFail "$regx: Found Security Group: $SG open to 0.0.0.0/0 for Telnet ports" "$regx" "$SG"
+      done
+    else
+      textPass "$regx: No Security Groups found with any port open to 0.0.0.0/0 for Telnet ports" "$regx" "$SG"
+    fi
+  done
+}

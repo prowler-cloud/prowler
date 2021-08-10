@@ -31,9 +31,9 @@ extra7107(){
             for nb_job_name in $LIST_SM_NB_JOBS; do
                 SM_NB_INTERCONTAINERENCRYPTION=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-training-job --training-job-name $nb_job_name --query 'EnableInterContainerTrafficEncryption' --output text)
                 if [[ $SM_NB_INTERCONTAINERENCRYPTION == "False" ]]; then
-                    textFail "${regx}: SageMaker Training job $nb_job_name has intercontainer encryption disabled" "${regx}"
+                    textFail "${regx}: SageMaker Training job $nb_job_name has intercontainer encryption disabled" "${regx}" "$nb_job_name"
                 else
-                    textPass "${regx}: SageMaker Training jobs $nb_job_name has intercontainer encryption enabled" "${regx}"
+                    textPass "${regx}: SageMaker Training jobs $nb_job_name has intercontainer encryption enabled" "${regx}" "$nb_job_name"
                 fi 
             done
         else 

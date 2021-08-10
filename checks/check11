@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
-# This Prowler check is licensed under a
-# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the license along with this
-# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
 CHECK_ID_check11="1.1"
-CHECK_TITLE_check11="[check11] Avoid the use of the root account (Scored)"
+CHECK_TITLE_check11="[check11] Avoid the use of the root account"
 CHECK_SCORED_check11="SCORED"
 CHECK_TYPE_check11="LEVEL1"
 CHECK_SEVERITY_check11="High"
@@ -32,13 +35,13 @@ check11(){
       days_not_in_use=$(how_many_days_from_today ${date%T*})
       if [ "$days_not_in_use" -gt "$MAX_DAYS" ];then
           failures=1
-          textFail "Root user in the account was last accessed ${MAX_DAYS#-} day ago"
+          textFail "$REGION: Root user in the account was last accessed ${MAX_DAYS#-} day ago" "$REGION" "root"
           break
       fi
     fi
   done
 
   if [[ $failures == 0 ]]; then
-      textPass "Root user in the account wasn't accessed in the last ${MAX_DAYS#-} days"
+      textPass "$REGION: Root user in the account wasn't accessed in the last ${MAX_DAYS#-} days" "$REGION" "root"
   fi
 }

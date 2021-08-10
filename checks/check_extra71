@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra71="7.1"
-CHECK_TITLE_extra71="[extra71] Ensure users of groups with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra71="[extra71] Ensure users of groups with AdministratorAccess policy have MFA tokens enabled"
 CHECK_SCORED_extra71="NOT_SCORED"
 CHECK_TYPE_extra71="EXTRA"
 CHECK_SEVERITY_extra71="High"
@@ -27,7 +27,7 @@ CHECK_DOC_extra71='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentia
 CHECK_CAF_EPIC_extra71='Infrastructure Security'
 
 extra71(){
-  # "Ensure users of groups with AdministratorAccess policy have MFA tokens enabled (Not Scored) (Not part of CIS benchmark)"
+  # "Ensure users of groups with AdministratorAccess policy have MFA tokens enabled "
   ADMIN_GROUPS=''
   AWS_GROUPS=$($AWSCLI $PROFILE_OPT iam list-groups --output text --region $REGION --query 'Groups[].GroupName')
   for grp in $AWS_GROUPS; do
@@ -36,7 +36,7 @@ extra71(){
     CHECK_ADMIN_GROUP=$($AWSCLI $PROFILE_OPT --region $REGION iam list-attached-group-policies --group-name $grp --output json --query 'AttachedPolicies[].PolicyArn' | grep  "arn:${AWS_PARTITION}:iam::aws:policy/AdministratorAccess")
     if [[ $CHECK_ADMIN_GROUP ]]; then
       ADMIN_GROUPS="$ADMIN_GROUPS $grp"
-      textInfo "$grp group provides administrative access"
+      textInfo "$REGION: $grp group provides administrative access" "$REGION" "$grp"
       ADMIN_USERS=$($AWSCLI $PROFILE_OPT iam get-group --region $REGION --group-name $grp --output json --query 'Users[].UserName' | grep '"' | cut -d'"' -f2 )
       for auser in $ADMIN_USERS; do
         # users in group are Administrators
@@ -44,13 +44,13 @@ extra71(){
         # check for user MFA device in credential report
         USER_MFA_ENABLED=$( cat $TEMP_REPORT_FILE | grep "^$auser," | cut -d',' -f8)
         if [[ "true" == $USER_MFA_ENABLED ]]; then
-          textPass "$auser / MFA Enabled / admin via group $grp"
+          textPass "$REGION: $auser / MFA Enabled / admin via group $grp" "$REGION" "$grp"
         else
-          textFail "$auser / MFA DISABLED / admin via group $grp"
+          textFail "$REGION: $auser / MFA DISABLED / admin via group $grp" "$REGION" "$grp"
         fi
       done
     else
-      textInfo "$grp group provides non-administrative access"
+      textInfo "$REGION: $grp group provides non-administrative access" "$REGION" "$grp"
     fi
   done
 }

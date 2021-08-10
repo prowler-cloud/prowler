@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.4.0-07042021
+PROWLER_VERSION=2.5.0-05July2021
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -45,7 +45,7 @@ SEP=','
 KEEPCREDREPORT=0
 EXITCODE=0
 SEND_TO_SECURITY_HUB=0
-SCRIPT_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
+PROWLER_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
 TITLE_ID=""
 TITLE_TEXT="CALLER ERROR - UNSET TITLE"
 WHITELIST_FILE=""
@@ -74,7 +74,7 @@ USAGE:
       -g <group_id>       specify a group of checks by id, to see all available group of checks use "-L"
                             (i.e.: "group3" for entire section 3, "cislevel1" for CIS Level 1 Profile Definitions or "forensics-ready")
       -f <filterregion>   specify an AWS region to run checks against
-                            (i.e.: us-west-1)
+                            (i.e.: us-west-1 or for multiple regions use single quote like 'us-west-1 us-west-2')
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
       -M <mode>           output mode: text (default), mono, html, json, json-asff, junit-xml, csv. They can be used combined comma separated.
                             (separator is ","; data is on stdout; progress on stderr).
@@ -100,13 +100,18 @@ USAGE:
       -w                  whitelist file. See whitelist_sample.txt for reference and format
                             (i.e.: whitelist_sample.txt)
       -N <shodan_api_key> Shoadan API key used by check extra7102.
+      -o                  Custom output directory, if not specified will use default prowler/output, requires -M <mode>
+                            (i.e.: -M csv -o /tmp/reports/)
+      -B                  Custom output bucket, requires -M <mode> and it can work also with -o flag.
+                            (i.e.: -M csv -B my-bucket or -M csv -B my-bucket/folder/)
+      -F                  Custom output report name, if not specified will use default output/prowler-output-ACCOUNT_NUM-OUTPUT_DATE
       -V                  show version number & exit
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -190,6 +195,15 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:" OPTION; do
      N )
         SHODAN_API_KEY=$OPTARG
         ;;
+     o )
+        OUTPUT_DIR_CUSTOM=$OPTARG
+        ;;
+     B )
+        OUTPUT_BUCKET=$OPTARG
+        ;;
+     F )
+        OUTPUT_FILE_NAME=$OPTARG
+        ;;
      : )
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL  -$OPTARG requires an argument"
@@ -243,6 +257,7 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/csv_header
 . $PROWLER_DIR/include/banner
 . $PROWLER_DIR/include/html_report
+. $PROWLER_DIR/include/outputs_bucket
 . $PROWLER_DIR/include/outputs
 . $PROWLER_DIR/include/credentials_report
 . $PROWLER_DIR/include/scoring
@@ -295,7 +310,8 @@ TOTAL_CHECKS=($(echo "${TOTAL_CHECKS[*]}" | tr ' ' '\n' | awk '!seen[$0]++' | so
 get_regions() {
   # Get list of regions based on include/whoami
   REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' --output text $PROFILE_OPT --region $REGION_FOR_STS --region-names $FILTERREGION 2>&1)
-  if [[ $(echo "$REGIONS" | grep 'AccessDenied\|UnauthorizedOperation') ]]; then
+  ret=$?
+  if [[ $ret -ne 0 ]]; then
     echo "$OPTRED Access Denied trying to describe regions! Review permissions as described here: https://github.com/toniblyx/prowler/#requirements-and-installation $OPTNORMAL"
     EXITCODE=1
     exit $EXITCODE
@@ -310,25 +326,30 @@ show_check_title() {
   local check_scored=CHECK_SCORED_$1
   local check_type=CHECK_TYPE_$1
   local check_asff_compliance_type=CHECK_ASFF_COMPLIANCE_TYPE_$1
+  local check_severity=CHECK_SEVERITY_$1
+  local check_servicename=CHECK_SERVICENAME_$1
   local group_ids
   local group_index
+  local check_name
   # If requested ($2 is any non-null value) iterate all GROUP_CHECKS and produce a comma-separated list of all
   # the GROUP_IDs that include this particular check
   if [[ -n "$2" ]]; then
     for group_index in "${!GROUP_ID[@]}"; do
-      if [[ "${GROUP_CHECKS[$group_index]}" =~ "$1" ]]; then
-        if [[ -n "$group_ids" ]]; then
-          group_ids+=", "
+      for check_name in $(echo "${GROUP_CHECKS[$group_index]}" | sed "s/,/ /g");do
+        if [[ "$check_name" == "$1" ]]; then
+          if [[ -n "$group_ids" ]]; then
+            group_ids+=", "
+          fi
+          group_ids+="${GROUP_ID[$group_index]}"
         fi
-        group_ids+="${GROUP_ID[$group_index]}"
-      fi
+      done
     done
   fi
   # This shows ASFF_COMPLIANCE_TYPE if group used is ens, this si used to show ENS compliance ID control, can be used for other compliance groups as well.
   if [[ ${GROUP_ID_READ} == "ens" ]];then
     textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_type}" "$group_ids" "(${!check_asff_compliance_type})"
   else
-    textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_type}" "$group_ids"
+    textTitle "${!check_id}" "${!check_title}" "${!check_servicename}" "${!check_severity}" "$group_ids"
   fi
 }
 
@@ -336,7 +357,7 @@ show_check_title() {
 show_group_title() {
 	# when csv mode is used, no group title is shown
   if [[ "$MODE" != "csv" ]]; then
-      textTitle "${GROUP_NUMBER[$1]}" "${GROUP_TITLE[$1]}" "NOT_SCORED" "SUPPORT"
+      textTitle "${GROUP_NUMBER[$1]}" "${GROUP_TITLE[$1]}"
   fi
 }
 
@@ -344,7 +365,7 @@ show_group_title() {
 execute_check() {
 
   if [[ $ACCOUNT_TO_ASSUME ]]; then
-    # Following logic looks for time remaining in the session and review it 
+    # Following logic looks for time remaining in the session and review it
     # if it is less than 600 seconds, 10 minutes.
     CURRENT_TIMESTAMP=$(date -u "+%s")
     SESSION_TIME_REMAINING=$(expr $AWS_SESSION_EXPIRATION - $CURRENT_TIMESTAMP)
@@ -357,7 +378,7 @@ execute_check() {
     fi
   fi
 
-  CHECK_ID="$1" 
+  CHECK_ID="$1"
 
   # See if this is an alternate name for a check
   # for example, we might have been passed 1.01 which is another name for 1.1
@@ -370,7 +391,7 @@ execute_check() {
 
   local asff_compliance_type_var=CHECK_ASFF_COMPLIANCE_TYPE_$1
   CHECK_ASFF_COMPLIANCE_TYPE="${!asff_compliance_type_var:-Software and Configuration Checks}"
-  
+
   # See if this check defines an ASFF Resource Type, if so, use this, falling back to a sane default
   # For a list of Resource Types, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
   local asff_resource_type_var=CHECK_ASFF_RESOURCE_TYPE_$1
@@ -559,9 +580,9 @@ get_all_checks_without_exclusion() {
 }
 
 ### All functions defined above ... run the workflow
-if [[ " ${MODES[@]} " =~ " mono " || " ${MODES[@]} " =~ " text " ]]; then
+#if [[ " ${MODES[@]} " =~ " mono " || " ${MODES[@]} " =~ " text " ]]; then
   prowlerBanner
-fi
+#fi
 
 # List only check tittles
 if [[ $PRINTCHECKSONLY == "1" ]]; then
@@ -607,6 +628,7 @@ if [[ $GROUP_ID_READ ]];then
     fi
     cleanTemp
     scoring
+    copyToS3
     exit $EXITCODE
   else
     textFail "Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
@@ -634,6 +656,7 @@ if [[ $CHECK_ID ]];then
   if [[ "${MODES[@]}" =~ "html" ]]; then
     addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
+  copyToS3
   cleanTemp
   exit $EXITCODE
 fi
@@ -643,8 +666,10 @@ execute_all
 if [[ "${MODES[@]}" =~ "html" ]]; then
   addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
 fi
+
 scoring
 cleanTemp
+copyToS3
 
 if [[ $ACCOUNT_TO_ASSUME ]]; then
   # unset env variables with assumed role credentials

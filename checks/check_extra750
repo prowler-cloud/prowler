@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra750="7.50"
-CHECK_TITLE_extra750="[extra750] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to MySQL port 3306 (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra750="[extra750] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to MySQL port 3306"
 CHECK_SCORED_extra750="NOT_SCORED"
 CHECK_TYPE_extra750="EXTRA"
 CHECK_SEVERITY_extra750="High"
@@ -29,7 +29,7 @@ extra750(){
     SG_LIST=$($AWSCLI ec2 describe-security-groups --query 'SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort<=`3306` && ToPort>=`3306`)) && (contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}' $PROFILE_OPT --region $regx --output text)
     if [[ $SG_LIST ]];then
       for SG in $SG_LIST;do
-        textFail "$regx: Found Security Group: $SG open to 0.0.0.0/0 for MySQL port" "$regx"
+        textFail "$regx: Found Security Group: $SG open to 0.0.0.0/0 for MySQL port" "$regx" "$SG"
       done
     else
       textPass "$regx: No Security Groups found open to 0.0.0.0/0 for MySQL port" "$regx"

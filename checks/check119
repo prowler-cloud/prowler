@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
-# This Prowler check is licensed under a
-# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the license along with this
-# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
 CHECK_ID_check119="1.19"
-CHECK_TITLE_check119="[check119] Ensure IAM instance roles are used for AWS resource access from instances (Not Scored)"
+CHECK_TITLE_check119="[check119] Ensure IAM instance roles are used for AWS resource access from instances"
 CHECK_SCORED_check119="NOT_SCORED"
 CHECK_TYPE_check119="LEVEL2"
 CHECK_SEVERITY_check119="Medium"
@@ -33,14 +36,14 @@ check119(){
         if [[ $STATE_NAME != "terminated" && $STATE_NAME != "shutting-down" ]]; then
           PROFILEARN=$(echo $EC2_DATA | jq -r --arg i "$instance" 'select(.InstanceId==$i)|.ProfileArn')
           if [[ $PROFILEARN == "null" ]]; then
-            textFail "$regx: Instance $instance not associated with an instance role" $regx
+            textFail "$regx: Instance $instance not associated with an instance role" "$regx" "$instance"
           else
-            textPass "$regx: Instance $instance associated with role ${PROFILEARN##*/}" $regx
+            textPass "$regx: Instance $instance associated with role ${PROFILEARN##*/}" "$regx" "$instance"
           fi
         fi
       done
     else
-      textInfo "$regx: No EC2 instances found" $regx
+      textInfo "$regx: No EC2 instances found" "$regx" "$instance"
     fi
   done
 }

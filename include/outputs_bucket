@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2021) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+if [[ $OUTPUT_BUCKET ]]; then
+  # output mode has to be set to other than text
+  if [[ "${MODES[@]}" =~ "html" ]] || [[ "${MODES[@]}" =~ "csv" ]] || [[ "${MODES[@]}" =~ "json" ]] || [[ "${MODES[@]}" =~ "json-asff" ]]; then
+      OUTPUT_BUCKET_WITHOUT_FOLDERS=$(echo $OUTPUT_BUCKET | awk -F'/' '{ print $1 }')
+      OUTPUT_BUCKET_STATUS=$($AWSCLI s3api head-bucket --bucket "$OUTPUT_BUCKET" 2>&1 || true)
+      if [[ ! -z $OUTPUT_BUCKET_STATUS ]]; then 
+        echo "$OPTRED ERROR!$OPTNORMAL wrong bucket name or not right permissions."
+        exit 1
+      else 
+        # need to make sure last / is not set to avoid // in S3
+        if [[ $OUTPUT_BUCKET != *"/" ]]; then 
+          OUTPUT_BUCKET="$OUTPUT_BUCKET"
+        else
+          OUTPUT_BUCKET=${OUTPUT_BUCKET::-1}
+        fi 
+      fi
+  else
+    echo "$OPTRED ERROR!$OPTNORMAL - Mode (-M) has to be set as well. Use -h for help."
+    exit 1
+  fi 
+fi
+
+copyToS3(){
+  # Prowler will copy each format to its own folder in S3, that is for better handling 
+  # and processing by Quicksight or others.
+  if [[ $OUTPUT_BUCKET ]]; then
+    if [[ "${MODES[@]}" =~ "csv" ]]; then
+      $AWSCLI s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_CSV \
+      s3://$OUTPUT_BUCKET/csv/ --acl bucket-owner-full-control
+    fi 
+    if [[ "${MODES[@]}" =~ "html" ]]; then
+      $AWSCLI s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_HTML \
+      s3://$OUTPUT_BUCKET/html/ --acl bucket-owner-full-control
+    fi 
+    if [[ "${MODES[@]}" =~ "json" ]]; then
+      $AWSCLI s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_JSON \
+      s3://$OUTPUT_BUCKET/json/ --acl bucket-owner-full-control
+    fi
+    if [[ "${MODES[@]}" =~ "json-asff" ]]; then
+      $AWSCLI s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_ASFF \
+      s3://$OUTPUT_BUCKET/json-asff/ --acl bucket-owner-full-control
+    fi
+  fi
+}

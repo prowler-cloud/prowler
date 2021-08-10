@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
-# This Prowler check is licensed under a
-# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the license along with this
-# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
 CHECK_ID_check121="1.21"
-CHECK_TITLE_check121="[check121] Do not setup access keys during initial user setup for all IAM users that have a console password (Not Scored)"
+CHECK_TITLE_check121="[check121] Do not setup access keys during initial user setup for all IAM users that have a console password"
 CHECK_SCORED_check121="NOT_SCORED"
 CHECK_TYPE_check121="LEVEL1"
 CHECK_SEVERITY_check121="Medium"
@@ -32,10 +35,10 @@ check121(){
   LIST_USERS_KEY1_ACTIVE=$(for user in $LIST_USERS_KEY1_NA; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$4,$9 }'|grep "true true$"|awk '{ print $1 }'|sed 's/[[:blank:]]+/,/g' ; done)
   if [[ $LIST_USERS_KEY1_ACTIVE ]]; then
     for user in $LIST_USERS_KEY1_ACTIVE; do
-      textFail "User $user has never used access key 1"
+      textFail "$REGION: User $user has never used access key 1" "$REGION" "$user"
     done
   else
-    textPass "No users found with access key 1 never used"
+    textPass "$REGION: No users found with access key 1 never used" "$REGION" "$user"
   fi
   # List of USERS with KEY2 last_used_date as N/A
   LIST_USERS_KEY2_NA=$(for user in $LIST_USERS; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$16 }'|grep N/A |awk '{ print $1 }' ; done)
@@ -43,9 +46,9 @@ check121(){
   LIST_USERS_KEY2_ACTIVE=$(for user in $LIST_USERS_KEY2_NA; do grep "^${user}," $TEMP_REPORT_FILE|awk -F, '{ print $1,$4,$14 }'|grep "true true$" |awk '{ print $1 }' ; done)
   if [[ $LIST_USERS_KEY2_ACTIVE ]]; then
     for user in $LIST_USERS_KEY2_ACTIVE; do
-      textFail "User $user has never used access key 2"
+      textFail "$REGION: User $user has never used access key 2" "$REGION" "$user"
     done
   else
-    textPass "No users found with access key 2 never used"
+    textPass "$REGION: No users found with access key 2 never used" "$REGION" "$user"
   fi
 }

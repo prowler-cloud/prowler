@@ -18,7 +18,7 @@ check3x(){
   # be based only on CloudTrail tail with CloudWatchLog configuration.
   DESCRIBE_TRAILS_CACHE=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[?CloudWatchLogsLogGroupArn != `null`]' 2>&1)
   if [[ $(echo "$DESCRIBE_TRAILS_CACHE" | grep AccessDenied) ]]; then
-    textFail "Access Denied trying to describe trails in $REGION"
+    textFail "$REGION: Access Denied trying to describe trails in $REGION"  "$REGION" "$group"
     return
   fi
 
@@ -63,7 +63,7 @@ check3x(){
       for group in $CHECK_OK; do
         metric=${group#*:}
         group=${group%:*}
-        textPass "CloudWatch group $group found with metric filter $metric and alarms set"
+        textPass "$REGION: CloudWatch group $group found with metric filter $metric and alarms set" "$REGION" "$group"
       done
     fi
     if [[ $CHECK_WARN ]]; then
@@ -72,15 +72,15 @@ check3x(){
            *:*) metric=${group#*:}
                 group=${group%:*}
                 if [[ $pass_count == 0 ]]; then
-                  textFail "CloudWatch group $group found with metric filter $metric but no alarms associated"
+                  textFail "$REGION: CloudWatch group $group found with metric filter $metric but no alarms associated" "$REGION" "$group"
                 else
-                  textInfo "CloudWatch group $group found with metric filter $metric but no alarms associated"
+                  textInfo "$REGION: CloudWatch group $group found with metric filter $metric but no alarms associated" "$REGION" "$group"
                 fi
                 ;;
              *) if [[ $pass_count == 0 ]]; then
-                  textFail "CloudWatch group $group found but no metric filters or alarms associated"
+                  textFail "$REGION: CloudWatch group $group found but no metric filters or alarms associated" "$REGION" "$group"
                 else
-                  textInfo "CloudWatch group $group found but no metric filters or alarms associated"
+                  textInfo "$REGION: CloudWatch group $group found but no metric filters or alarms associated" "$REGION" "$group"
                 fi
                 ;;
         esac
@@ -88,10 +88,10 @@ check3x(){
     fi
     if [[ $CHECK_CROSS_ACCOUNT_WARN ]]; then
       for group in $CHECK_CROSS_ACCOUNT_WARN; do
-        textInfo "CloudWatch group $group is not in this account"
+        textInfo "$REGION: CloudWatch group $group is not in this account" "$REGION" "$group"
       done
     fi
   else
-    textFail "No CloudWatch group found for CloudTrail events"
+    textFail "$REGION: No CloudWatch group found for CloudTrail events" "$REGION" "$group"
   fi
 }

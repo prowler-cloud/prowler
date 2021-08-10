@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra753="7.53"
-CHECK_TITLE_extra753="[extra753] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to MongoDB ports 27017 and 27018 (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra753="[extra753] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to MongoDB ports 27017 and 27018"
 CHECK_SCORED_extra753="NOT_SCORED"
 CHECK_TYPE_extra753="EXTRA"
 CHECK_SEVERITY_extra753="High"
@@ -29,7 +29,7 @@ extra753(){
     SG_LIST=$($AWSCLI ec2 describe-security-groups --query 'SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || ((FromPort<=`27017` && ToPort>=`27017`) || (FromPort<=`27018` && ToPort>=`27018`))) && (contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}' $PROFILE_OPT --region $regx --output text)
     if [[ $SG_LIST ]];then
       for SG in $SG_LIST;do
-        textFail "$regx: Found Security Group: $SG open to 0.0.0.0/0 for MongoDB ports" "$regx"
+        textFail "$regx: Found Security Group: $SG open to 0.0.0.0/0 for MongoDB ports" "$regx" "$SG"
       done
     else
       textPass "$regx: No Security Groups found open to 0.0.0.0/0 for MongoDB ports" "$regx"

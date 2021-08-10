@@ -31,9 +31,9 @@ extra7128(){
       for table in $DDB_TABLES_LIST; do
           DDB_TABLE_WITH_KMS=$($AWSCLI dynamodb describe-table --table-name $table $PROFILE_OPT --region $regx --query Table.SSEDescription.SSEType --output text)
           if [[ $DDB_TABLE_WITH_KMS == "KMS" ]]; then
-            textPass "$regx: DynamoDB table $table does have KMS encryption enabled" "$regx"
+            textPass "$regx: DynamoDB table $table does have KMS encryption enabled" "$regx" "$table"
           else
-            textInfo "$regx: DynamoDB table $table does have DEFAULT encryption enabled" "$regx"
+            textInfo "$regx: DynamoDB table $table does have DEFAULT encryption enabled" "$regx" "$table"
           fi
       done
     else 

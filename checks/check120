@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
-# This Prowler check is licensed under a
-# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the license along with this
-# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
 CHECK_ID_check120="1.20"
-CHECK_TITLE_check120="[check120] Ensure a support role has been created to manage incidents with AWS Support (Scored)"
+CHECK_TITLE_check120="[check120] Ensure a support role has been created to manage incidents with AWS Support"
 CHECK_SCORED_check120="SCORED"
 CHECK_TYPE_check120="LEVEL1"
 CHECK_SEVERITY_check120="Medium"
@@ -31,16 +34,16 @@ check120(){
       POLICYROLES=$($AWSCLI iam list-entities-for-policy --policy-arn $SUPPORTPOLICYARN $PROFILE_OPT --region $REGION --output text | awk -F$'\t' '{ print $3 }')
       if [[ $POLICYROLES ]];then
         for name in $POLICYROLES; do
-          textPass "Support Policy attached to $name"
+          textPass "$REGION: Support Policy attached to $name" "$REGION" "$name"
         done
         # for user in $(echo "$POLICYUSERS" | grep UserName | cut -d'"' -f4) ; do
         #   textInfo "User $user has support access via $policyarn"
         # done
       else
-        textFail "Support Policy not applied to any Role"
+        textFail "$REGION: Support Policy not applied to any Role" "$REGION" "$name"
       fi
     done
   else
-    textFail "No Support Policy found"
+    textFail "$REGION: No Support Policy found" "$REGION" "$name"
   fi
 }

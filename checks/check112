@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
-# This Prowler check is licensed under a
-# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the license along with this
-# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
 CHECK_ID_check112="1.12"
-CHECK_TITLE_check112="[check112] Ensure no root account access key exists (Scored)"
+CHECK_TITLE_check112="[check112] Ensure no root account access key exists"
 CHECK_SCORED_check112="SCORED"
 CHECK_TYPE_check112="LEVEL1"
 CHECK_SEVERITY_check112="Critical"
@@ -27,13 +30,13 @@ check112(){
   ROOTKEY1=$(cat $TEMP_REPORT_FILE |grep root_account|awk -F',' '{ print $9 }')
   ROOTKEY2=$(cat $TEMP_REPORT_FILE |grep root_account|awk -F',' '{ print $14 }')
   if [ "$ROOTKEY1" == "false" ];then
-    textPass "No access key 1 found for root"
+    textPass "$REGION: No access key 1 found for root" "$REGION" "root access key1"
   else
-    textFail "Found access key 1 for root"
+    textFail "$REGION: Found access key 1 for root" "$REGION" "root access key1"
   fi
   if [ "$ROOTKEY2" == "false" ];then
-    textPass "No access key 2 found for root"
+    textPass "$REGION: No access key 2 found for root" "$REGION" "root access key2"
   else
-    textFail "Found access key 2 for root"
+    textFail "$REGION: Found access key 2 for root" "$REGION" "root access key2"
   fi
 }

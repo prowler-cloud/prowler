@@ -31,9 +31,9 @@ extra7101(){
       for domain in $LIST_OF_DOMAINS;do
         AUDIT_LOGS_ENABLED=$($AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.LogPublishingOptions.Options.AUDIT_LOGS.Enabled --output text |grep -v ^None|grep -v ^False)
         if [[ $AUDIT_LOGS_ENABLED ]];then
-          textPass "$regx: Amazon ES domain $domain AUDIT_LOGS enabled" "$regx"
+          textPass "$regx: Amazon ES domain $domain AUDIT_LOGS enabled" "$regx" "$domain"
         else
-          textFail "$regx: Amazon ES domain $domain AUDIT_LOGS disabled!" "$regx"
+          textFail "$regx: Amazon ES domain $domain AUDIT_LOGS disabled!" "$regx" "$domain"
         fi
       done
     else
