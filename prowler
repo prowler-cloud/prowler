@@ -45,7 +45,7 @@ SEP=','
 KEEPCREDREPORT=0
 EXITCODE=0
 SEND_TO_SECURITY_HUB=0
-SCRIPT_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
+PROWLER_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
 TITLE_ID=""
 TITLE_TEXT="CALLER ERROR - UNSET TITLE"
 WHITELIST_FILE=""
@@ -357,7 +357,7 @@ show_check_title() {
 show_group_title() {
 	# when csv mode is used, no group title is shown
   if [[ "$MODE" != "csv" ]]; then
-      textTitle "${GROUP_NUMBER[$1]}" "${GROUP_TITLE[$1]}" "NOT_SCORED" "SUPPORT"
+      textTitle "${GROUP_NUMBER[$1]}" "${GROUP_TITLE[$1]}"
   fi
 }
 
