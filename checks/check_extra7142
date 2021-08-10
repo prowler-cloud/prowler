@@ -19,6 +19,11 @@ CHECK_ASFF_RESOURCE_TYPE_extra7142="AwsElasticLoadBalancingV2LoadBalancer"
 CHECK_ALTERNATE_check7142="extra7142"
 CHECK_ASFF_COMPLIANCE_TYPE_extra7142=""
 CHECK_SERVICENAME_extra7142="elb"
+CHECK_RISK_extra7142='ALB can be target of actors sendingn bad http headers'
+CHECK_REMEDIATION_extra7142='Ensure Application Load Balancer is configured for HTTP headers with header fields that are not valid are removed by the load balancer (true)'
+CHECK_DOC_extra7142='https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html#desync-mitigation-mode'
+CHECK_CAF_EPIC_extra7142='Data Protection'
+
 
 extra7142(){
   for regx in $REGIONS; do
