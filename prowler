@@ -580,9 +580,9 @@ get_all_checks_without_exclusion() {
 }
 
 ### All functions defined above ... run the workflow
-if [[ " ${MODES[@]} " =~ " mono " || " ${MODES[@]} " =~ " text " ]]; then
+#if [[ " ${MODES[@]} " =~ " mono " || " ${MODES[@]} " =~ " text " ]]; then
   prowlerBanner
-fi
+#fi
 
 # List only check tittles
 if [[ $PRINTCHECKSONLY == "1" ]]; then
