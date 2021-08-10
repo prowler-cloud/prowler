@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra7143="7.143"
-CHECK_TITLE_extra7143="[extra7143] Check if EFS have policies which allow access to everyone (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra7143="[extra7143] Check if EFS have policies which allow access to everyone"
 CHECK_SCORED_extra7143="NOT_SCORED"
 CHECK_TYPE_extra7143="EXTRA"
 CHECK_SEVERITY_extra7143="Critical"
@@ -25,25 +25,25 @@ CHECK_CAF_EPIC_extra7143='Data Protection'
 
 extra7143(){
   # "Check if EFS have policies which allow access to everyone (Not Scored) (Not part of CIS benchmark)"
-  for region in $REGIONS; do
-  LIST_OF_EFS_IDS=$($AWSCLI efs describe-file-systems $PROFILE_OPT --region $region --query FileSystems[*].FileSystemId --output text|xargs -n1)
+  for regx in $REGIONS; do
+  LIST_OF_EFS_IDS=$($AWSCLI efs describe-file-systems $PROFILE_OPT --region $regx --query FileSystems[*].FileSystemId --output text|xargs -n1)
   if [[ $LIST_OF_EFS_IDS ]]; then
     for efsId in $LIST_OF_EFS_IDS;do
-      EFS_POLICY_STATEMENTS=$($AWSCLI efs $PROFILE_OPT describe-file-system-policy --region $region --file-system-id $efsId --output json --query Policy 2>&1)
+      EFS_POLICY_STATEMENTS=$($AWSCLI efs $PROFILE_OPT describe-file-system-policy --region $regx --file-system-id $efsId --output json --query Policy 2>&1)
       if [[ $EFS_POLICY_STATEMENTS == *PolicyNotFound* ]]; then
-        textFail "$region:  EFS: $efsId doesn't have any policy which means it grants full access to any client" "$region" "$efsId"
+        textFail "$regx:  EFS: $efsId doesn't have any policy which means it grants full access to any client" "$regx" "$efsId"
       else
         EFS_POLICY_BAD_STATEMENTS=$(echo $EFS_POLICY_STATEMENTS | jq '. | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*")')
         if [[ $EFS_POLICY_BAD_STATEMENTS != "" ]]; then
-          textFail "$region: EFS: $efsId has policy which allows access to everyone" "$region" "$efsId"
+          textFail "$regx: EFS $efsId has policy which allows access to everyone" "$regx" "$efsId"
         else
-          textPass "$region: EFS: $efsId has policy which does not allow access to everyone" "$region" "$efsId"
+          textPass "$regx: EFS $efsId has policy which does not allow access to everyone" "$regx" "$efsId"
         fi
       fi
     done
 
   else
-    textInfo "$region: No EFS found" "$region"
+    textInfo "$regx: No EFS found" "$regx"
   fi
  done
 }
