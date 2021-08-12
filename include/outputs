@@ -227,7 +227,7 @@ textFail(){
 
 textTitle(){
   CHECKS_COUNTER=$((CHECKS_COUNTER+1))
-  TITLE_ID="$BLUE$1$NORMAL"
+  TITLE_ID="$1"
   if [[ $NUMERAL ]]; then
     # Left-pad the check ID with zeros to simplify sorting, e.g. 1.1 -> 1.01
     TITLE_ID=$(awk -F'.' '{ printf "%d.%02d", $1, $2 }' <<< "$TITLE_ID")
@@ -269,7 +269,7 @@ textTitle(){
   # else
   #   # if [[ "$ITEM_SCORED" == "Scored" ]]; then
   #      echo -e "$TITLE_ID $CHECK_SERVICENAME $TITLE_TEXT $CHECK_SEVERITY $group_ids "
-        echo -e "$TITLE_ID $TITLE_TEXT $CHECK_SERVICENAME $CHECK_SEVERITY"
+        echo -e "$TITLE_ID $TITLE_TEXT - $CHECK_SERVICENAME $CHECK_SEVERITY"
   #   # else
   #   #   echo -e "\n$PURPLE $TITLE_ID $TITLE_TEXT $6 $NORMAL $group_ids "
   #   # fi
