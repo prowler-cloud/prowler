@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7145="7.145"
+CHECK_TITLE_extra7145="[extra7145] Check if Lambda functions have policies which allow access to any AWS account"
+CHECK_SCORED_extra7145="NOT_SCORED"
+CHECK_TYPE_extra7145="EXTRA"
+CHECK_SEVERITY_extra7145="Critical"
+CHECK_ASFF_RESOURCE_TYPE_extra7145="AwsLambda"
+CHECK_ALTERNATE_check7145="extra7145"
+CHECK_SERVICENAME_extra7145="lambda"
+CHECK_RISK_extra7145='Lambda function access to any AWS account may result security issues'
+CHECK_REMEDIATION_extra7145='Ensure Lambda function policiy does not allow access to any account'
+CHECK_DOC_extra7145='https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html'
+CHECK_CAF_EPIC_extra7145='IAM'
+
+extra7145(){
+  # "Check if lambda functions have policies which allow access to every aws account (Not Scored) (Not part of CIS benchmark)"
+  for regx in $REGIONS; do
+  LIST_OF_LAMBDA_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --query Functions[*].FunctionName --output text)
+  if [[ $LIST_OF_LAMBDA_FUNCTIONS ]]; then
+    for lambdaFunction in $LIST_OF_LAMBDA_FUNCTIONS;do
+      FUNCTION_POLICY_STATEMENTS=$($AWSCLI lambda $PROFILE_OPT get-policy --region $regx --function-name $lambdaFunction --output json --query Policy 2>&1)
+      if [[ $FUNCTION_POLICY_STATEMENTS == *ResourceNotFoundException* ]]; then
+        textInfo "$regx: Lambda function $lambdaFunction doesn't have any policy" "$regx" "$lambdaFunction"
+      else
+        FUNCTION_POLICY_BAD_STATEMENTS=$(echo $FUNCTION_POLICY_STATEMENTS | jq '. | fromjson' | jq '.Statement[] | select(.Effect=="Allow")	 | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*")')
+        if [[ $FUNCTION_POLICY_BAD_STATEMENTS != "" ]]; then
+          textFail "$regx: Lambda function $lambdaFunction allows public access to any AWS account" "$regx" "$lambdaFunction"
+        else
+          textPass "$regx: Lambda function $lambdaFunction has policy which doesn't allow access to everyone having an AWS account" "$regx" "$lambdaFunction"
+        fi
+      fi
+    done
+
+  else
+    textInfo "$regx: No lambda functions found" "$regx"
+  fi
+ done
+}

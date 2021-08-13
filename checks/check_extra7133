@@ -25,19 +25,19 @@ CHECK_CAF_EPIC_extra7133='Data Protection'
 
 extra7133(){
   for regx in $REGIONS; do
-    RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[*].DBInstanceIdentifier' --output text)
+    RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query "DBInstances[?Engine != 'docdb'].DBInstanceIdentifier" --output text)
     if [[ $RDS_INSTANCES ]];then
       for rdsinstance in ${RDS_INSTANCES}; do
           RDS_NAME="$rdsinstance"
           MULTIAZ_FLAG=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --db-instance-identifier $rdsinstance --query 'DBInstances[*].MultiAZ' --output text)
           if [[ $MULTIAZ_FLAG == "True" ]];then 
-              textPass "$regx: RDS instance: $RDS_NAME has multi-AZ enabled" "$rex"
+              textPass "$regx: RDS instance: $RDS_NAME has multi-AZ enabled" "$regx" "$RDS_NAME"
           else
-              textFail "$regx: RDS instance: $RDS_NAME has multi-AZ disabled!" "$regx"
+              textFail "$regx: RDS instance: $RDS_NAME has multi-AZ disabled!" "$regx" "$RDS_NAME"
           fi
       done
     else
-      textInfo "$regx: no RDS instances found" "$regx"
+      textInfo "$regx: no RDS instances found" "$regx" "$RDS_NAME"
     fi
   done
 }

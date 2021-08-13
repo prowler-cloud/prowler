@@ -50,9 +50,9 @@ extra787(){
               CHECH_HTTP_ES_API=$(curl -m 2 -s -w "%{http_code}" -o /dev/null -X GET "http://$eip:$ES_API_PORT/_cat/indices")
               httpStatus $CHECH_HTTP_ES_API
               if [[ $CHECH_HTTP_ES_API -eq "200" ]];then
-                textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_API_PORT response $SERVER_RESPONSE" "$regx"
+                textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_API_PORT response $SERVER_RESPONSE" "$regx" "$instance"
               else
-                textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_API_PORT response $SERVER_RESPONSE" "$regx"
+                textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_API_PORT response $SERVER_RESPONSE" "$regx" "$instance"
               fi
               # check for port $ES_DATA_PORT TCP, this is the communication port, not:
               # test_tcp_connectivity is in include/os_detector
@@ -62,17 +62,17 @@ extra787(){
               # codes for better handling, so 200 is open and 000 is not responding
               httpStatus $CHECH_HTTP_ES_DATA
               if [[ $CHECH_HTTP_ES_DATA -eq "200" ]];then
-                textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_DATA_PORT response $SERVER_RESPONSE" "$regx"
+                textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_DATA_PORT response $SERVER_RESPONSE" "$regx" "$instance"
               else
-                textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_DATA_PORT response $SERVER_RESPONSE" "$regx"
+                textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Elasticsearch port $ES_DATA_PORT response $SERVER_RESPONSE" "$regx" "$instance"
               fi
               # check for Kibana on port $ES_KIBANA_PORT
               CHECH_HTTP_ES_KIBANA=$(curl -m 2 -s -w "%{http_code}" -o /dev/null -X GET "http://$eip:$ES_KIBANA_PORT/api/status")
               httpStatus $CHECH_HTTP_ES_KIBANA
               if [[ $CHECH_AUTH_5601 -eq "200" ]];then
-                textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana on port $ES_KIBANA_PORT response $SERVER_RESPONSE" "$regx"
+                textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana on port $ES_KIBANA_PORT response $SERVER_RESPONSE" "$regx" "$instance"
               else
-                textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana on port $ES_KIBANA_PORT response $SERVER_RESPONSE" "$regx"
+                textInfo "$regx: Found instance $instance with public IP $eip on Security Group: $sg with Kibana on port $ES_KIBANA_PORT response $SERVER_RESPONSE" "$regx" "$instance"
               fi
             else
               textInfo "$regx: Found instance $instance with private IP on Security Group: $sg" "$regx"

@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra717="7.17"
-CHECK_TITLE_extra717="[extra717] Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra717="[extra717] Check if Elastic Load Balancers have logging enabled"
 CHECK_SCORED_extra717="NOT_SCORED"
 CHECK_TYPE_extra717="EXTRA"
 CHECK_SEVERITY_extra717="Medium"
@@ -24,7 +24,7 @@ CHECK_DOC_extra717='https://docs.aws.amazon.com/elasticloadbalancing/latest/appl
 CHECK_CAF_EPIC_extra717='Logging and Monitoring'
 
 extra717(){
-  # "Check if Elastic Load Balancers have logging enabled (Not Scored) (Not part of CIS benchmark)"
+  # "Check if Elastic Load Balancers have logging enabled "
   for regx in $REGIONS; do
     LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].LoadBalancerName' --output text|xargs -n1)
     LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].LoadBalancerArn' --output text|xargs -n1)
@@ -33,9 +33,9 @@ extra717(){
         for elb in $LIST_OF_ELBS; do
           CHECK_ELBS_LOG_ENABLED=$($AWSCLI elb describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-name $elb --query 'LoadBalancerAttributes.AccessLog.Enabled'|grep "^true")
           if [[ $CHECK_ELBS_LOG_ENABLED ]]; then
-            textPass "$regx: $elb has access logs to S3 configured" "$regx"
+            textPass "$regx: $elb has access logs to S3 configured" "$regx" "$elb"
           else
-            textFail "$regx: $elb has not configured access logs" "$regx"
+            textFail "$regx: $elb has not configured access logs" "$regx" "$elb"
           fi
         done
       fi
@@ -44,9 +44,9 @@ extra717(){
           CHECK_ELBSV2_LOG_ENABLED=$($AWSCLI elbv2 describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-arn $elbarn --query Attributes[*] --output text|grep "^access_logs.s3.enabled"|cut -f2|grep true)
           ELBV2_NAME=$(echo $elbarn|cut -d\/ -f3)
           if [[ $CHECK_ELBSV2_LOG_ENABLED ]]; then
-            textPass "$regx: $ELBV2_NAME has access logs to S3 configured" "$regx"
+            textPass "$regx: $ELBV2_NAME has access logs to S3 configured" "$regx" "$elb"
           else
-            textFail "$regx: $ELBV2_NAME has not configured access logs" "$regx"
+            textFail "$regx: $ELBV2_NAME has not configured access logs" "$regx" "$elb"
           fi
         done
       fi

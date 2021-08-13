@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra793="7.93"
-CHECK_TITLE_extra793="[extra793] Check if Elastic Load Balancers have SSL listeners (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra793="[extra793] Check if Elastic Load Balancers have SSL listeners "
 CHECK_SCORED_extra793="NOT_SCORED"
 CHECK_TYPE_extra793="EXTRA"
 CHECK_SEVERITY_extra793="Medium"
@@ -25,7 +25,7 @@ CHECK_DOC_extra793='https://docs.aws.amazon.com/elasticloadbalancing/latest/appl
 CHECK_CAF_EPIC_extra793='Data Protection'
 
 extra793(){
-  # "Check if Elastic Load Balancers have encrypted listeners (Not Scored) (Not part of CIS benchmark)"
+  # "Check if Elastic Load Balancers have encrypted listeners "
   for regx in $REGIONS; do
     LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].LoadBalancerName' --output text|xargs -n1)
     LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?(Type == `application`)].LoadBalancerArn' --output text|xargs -n1)
@@ -54,7 +54,7 @@ extra793(){
             if $potential_redirect; then
               textInfo "$regx: $elb has both encrypted and non-encrypted listeners" "$regx"
             else
-              textFail "$regx: $elb has non-encrypted listeners" "$regx" 
+              textFail "$regx: $elb has non-encrypted listeners" "$regx" "$elb"
             fi 
           fi
         done
@@ -88,11 +88,11 @@ extra793(){
                if $redirect_rule; then
                  textInfo "$regx: $elbname has HTTP listener that redirects to HTTPS" "$regx"
                else
-                 textFail "$regx: $elbname has non-encrypted listeners" "$regx"
+                 textFail "$regx: $elbname has non-encrypted listeners" "$regx" "$elbname"
                fi
              fi
           else
-            textFail "$regx: $elbname has non-encrypted listeners" "$regx"
+            textFail "$regx: $elbname has non-encrypted listeners" "$regx" "$elbname"
           fi
         done
       fi

@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra738="7.38"
-CHECK_TITLE_extra738="[extra738] Check if CloudFront distributions are set to HTTPS (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra738="[extra738] Check if CloudFront distributions are set to HTTPS"
 CHECK_SCORED_extra738="NOT_SCORED"
 CHECK_TYPE_extra738="EXTRA"
 CHECK_SEVERITY_extra738="Medium"
@@ -30,14 +30,14 @@ extra738(){
       for dist in $LIST_OF_DISTRIBUTIONS; do
         CHECK_HTTPS_STATUS=$($AWSCLI cloudfront get-distribution --id $dist --query Distribution.DistributionConfig.DefaultCacheBehavior.ViewerProtocolPolicy $PROFILE_OPT --output text)
         if [[ $CHECK_HTTPS_STATUS == "allow-all" ]]; then
-          textFail "CloudFront distribution $dist viewers can use HTTP or HTTPS!" "$regx"
+          textFail "$REGION: CloudFront distribution $dist viewers can use HTTP or HTTPS!" "$REGION" "$dist"
         elif [[ $CHECK_HTTPS_STATUS == "redirect-to-https" ]]; then
-          textPass "CloudFront distribution $dist has redirect to HTTPS" "$regx"
+          textPass "$REGION: CloudFront distribution $dist has redirect to HTTPS" "$REGION" "$dist"
         else
-          textPass "CloudFront distribution $dist has HTTPS only" "$regx"
+          textPass "$REGION: CloudFront distribution $dist has HTTPS only" "$REGION" "$dist"
         fi
       done
     else
-      textInfo "No CloudFront distributions found" "$regx"
+      textInfo "$REGION: No CloudFront distributions found" "$REGION"
     fi
 }

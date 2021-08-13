@@ -25,7 +25,7 @@
 
 
 # CHECK_ID_checkN="N.N"
-# CHECK_TITLE_checkN="[checkN] Description (Not Scored) (Not part of CIS benchmark)"
+# CHECK_TITLE_checkN="[checkN] Description "
 # CHECK_SCORED_checkN="NOT_SCORED"
 # CHECK_TYPE_checkN="EXTRA"
 # CHECK_SEVERITY_check="Medium"
@@ -34,7 +34,7 @@
 # CHECK_SERVICENAME_checkN="service" # get service short name from `curl -s https://api.regional-table.region-services.aws.a2z.com/index.json | jq -r '.prices[] | .id' | awk -F: '{ print $1 }' | sort -u` 
 #
 # extraN(){
-#   # "Description (Not Scored) (Not part of CIS benchmark)"
+#   # "Description "
 #   textInfo "Looking for instances in all regions...  "
 #   for regx in $REGIONS; do
 #     LIST_OF_PUBLIC_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query 'Reservations[*].Instances[?PublicIpAddress].[InstanceId,PublicIpAddress]' --output text)

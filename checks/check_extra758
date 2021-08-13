@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra758="7.58"
-CHECK_TITLE_extra758="[extra758] Check EC2 Instances older than 12 months (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra758="[extra758] Check EC2 Instances older than 12 months "
 CHECK_SCORED_extra758="NOT_SCORED"
 CHECK_TYPE_extra758="EXTRA"
 CHECK_SEVERITY_extra758="Medium"
@@ -25,7 +25,6 @@ CHECK_CAF_EPIC_extra758='Infrastructure Security'
 
 extra758(){
   OLDAGE="$(get_date_previous_than_months 12)"
-  textInfo "Looking for EC2 instances in all regions..."
   for regx in $REGIONS; do
     EC2_RUNNING="$($AWSCLI ec2 describe-instances --query "Reservations[*].Instances[*].[InstanceId]" $PROFILE_OPT --region $regx --output text)"
     if [[ $EC2_RUNNING ]]; then
@@ -35,7 +34,7 @@ extra758(){
         do
           EC2_ID=$(echo "$ec2_instace" | awk '{print $1}')
           LAUNCH_DATE=$(echo "$ec2_instace" | awk '{print $2}')
-          textFail "$regx: EC2 Instance $EC2_ID running before than $OLDAGE" "$regx"
+          textFail "$regx: EC2 Instance $EC2_ID running before than $OLDAGE" "$regx" "$EC2_ID"
         done <<< "$INSTACES_OLD_THAN_AGE"
       else
         textPass "$regx: All Instances newer than 12 months" "$regx"

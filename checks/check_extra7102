@@ -47,7 +47,7 @@ extra7102(){
           else
             echo $SHODAN_QUERY > $OUTPUT_DIR/shodan-output-$ip.json
             IP_SHODAN_INFO=$(cat $OUTPUT_DIR/shodan-output-$ip.json | jq -r '. | { ports: .ports, org: .org, country: .country_name }| @text' | tr -d \"\{\}\}\]\[ | tr , '\ ' )
-            textFail "$regx: IP $ip is listed in Shodan with data $IP_SHODAN_INFO. More info https://www.shodan.io/host/$ip and $OUTPUT_DIR/shodan-output-$ip.json" "$regx"
+            textFail "$regx: IP $ip is listed in Shodan with data $IP_SHODAN_INFO. More info https://www.shodan.io/host/$ip and $OUTPUT_DIR/shodan-output-$ip.json" "$regx" "$ip"
           fi
         done
       else

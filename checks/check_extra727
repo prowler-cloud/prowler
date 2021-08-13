@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra727="7.27"
-CHECK_TITLE_extra727="[extra727] Check if SQS queues have policy set as Public (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra727="[extra727] Check if SQS queues have policy set as Public"
 CHECK_SCORED_extra727="NOT_SCORED"
 CHECK_TYPE_extra727="EXTRA"
 CHECK_SEVERITY_extra727="Critical"
@@ -39,15 +39,15 @@ extra727(){
             if [[ $SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION ]]; then
               SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS=$(echo $SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION \
                 | jq '"[Principal: " + (.Principal|tostring) + " Action: " + (.Action|tostring) + "]"' )
-              textFail "$regx: SQS $queue queue policy with public access: $SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS" "$regx"
+              textFail "$regx: SQS $queue queue policy with public access: $SQS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS" "$regx" "$queue"
             else
-              textInfo "$regx: SQS $queue queue policy with public access but has a Condition" "$regx"
+              textInfo "$regx: SQS $queue queue policy with public access but has a Condition" "$regx" "$queue"
             fi
           else
-            textPass "$regx: SQS $queue queue without public access" "$regx"
+            textPass "$regx: SQS $queue queue without public access" "$regx" "$queue"
           fi
         else
-          textPass "$regx: SQS $queue queue without policy" "$regx"
+          textPass "$regx: SQS $queue queue without policy" "$regx" "$queue"
         fi
       done
     else

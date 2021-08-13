@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7142="7.142"
+CHECK_TITLE_extra7142="[extra7142] Check if Application Load Balancer is dropping invalid packets to prevent header based http request smuggling"
+CHECK_SCORED_extra7142="NOT_SCORED"
+CHECK_TYPE_extra7142="EXTRA"
+CHECK_SEVERITY_extra7142="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7142="AwsElasticLoadBalancingV2LoadBalancer"
+CHECK_ALTERNATE_check7142="extra7142"
+CHECK_ASFF_COMPLIANCE_TYPE_extra7142=""
+CHECK_SERVICENAME_extra7142="elb"
+CHECK_RISK_extra7142='ALB can be target of actors sendingn bad http headers'
+CHECK_REMEDIATION_extra7142='Ensure Application Load Balancer is configured for HTTP headers with header fields that are not valid are removed by the load balancer (true)'
+CHECK_DOC_extra7142='https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html#desync-mitigation-mode'
+CHECK_CAF_EPIC_extra7142='Data Protection'
+
+
+extra7142(){
+  for regx in $REGIONS; do
+    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Type == `application`].[LoadBalancerArn]' --output text)
+    if [[ $LIST_OF_ELBSV2 ]];then
+      for alb in $LIST_OF_ELBSV2;do
+        CHECK_IF_DROP_INVALID_HEADER_FIELDS=$($AWSCLI elbv2 describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-arn $alb --query 'Attributes[6]' --output text|grep -i true)
+        if [[ $CHECK_IF_DROP_INVALID_HEADER_FIELDS ]];then
+          textPass "$regx: Application Load Balancer $alb is dropping invalid header fields." "$regx" "$alb"
+        else
+          textFail "$regx: Application Load Balancer $alb is not dropping invalid header fields" "$regx" "$alb"
+        fi
+      done
+    else 
+      textInfo "$regx: no ALBs found"
+    fi
+  done
+}

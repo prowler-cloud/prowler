@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra740="7.40"
-CHECK_TITLE_extra740="[extra740] Check if EBS snapshots are encrypted (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra740="[extra740] Check if EBS snapshots are encrypted"
 CHECK_SCORED_extra740="NOT_SCORED"
 CHECK_TYPE_extra740="EXTRA"
 CHECK_SEVERITY_extra740="Medium"
@@ -25,7 +25,6 @@ CHECK_DOC_extra740='https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncry
 CHECK_CAF_EPIC_extra740='Data Protection'
 
 extra740(){
-  textInfo "Examining EBS Volume Snapshots ..."
   # This does NOT use max-items, which would limit the number of items
   # considered. It considers all snapshots, but only reports at most 
   # max-items passing and max-items failing.
@@ -47,7 +46,7 @@ extra740(){
       for snapshot in ${UNENCRYPTED_SNAPSHOTS}; do
           unencrypted=${unencrypted}+1
           if [ "${unencrypted}" -le "${MAXITEMS}" ]; then
-            textFail "${regx}: ${snapshot} is not encrypted!" "${regx}"
+            textFail "${regx}: ${snapshot} is not encrypted!" "${regx}" "${snapshot}"
           fi
       done
     fi
@@ -55,7 +54,7 @@ extra740(){
       for snapshot in ${ENCRYPTED_SNAPSHOTS}; do
           encrypted=${encrypted}+1
           if [ "${encrypted}" -le "${MAXITEMS}" ]; then
-            textPass "${regx}: ${snapshot} is encrypted." "${regx}"
+            textPass "${regx}: ${snapshot} is encrypted." "${regx}" "${snapshot}"
           fi
       done
     fi

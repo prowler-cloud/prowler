@@ -31,9 +31,9 @@ extra7112(){
             for nb_instance in $LIST_SM_NB_INSTANCES; do
                 SM_NB_KMSKEY=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-notebook-instance --notebook-instance-name $nb_instance --query 'KmsKeyId' --output text)
                 if [[ "${SM_NB_KMSKEY}" == "None" ]]; then
-                    textFail "${regx}: Sagemaker Notebook instance $nb_instance has data encryption disabled" "${regx}"
+                    textFail "${regx}: Sagemaker Notebook instance $nb_instance has data encryption disabled" "${regx}" "$nb_instance"
                 else
-                    textPass "${regx}: Sagemaker Notebook instance $nb_instance has data encryption enabled" "${regx}"
+                    textPass "${regx}: Sagemaker Notebook instance $nb_instance has data encryption enabled" "${regx}" "$nb_instance"
                 fi 
             done
         else 

@@ -26,7 +26,7 @@
 #     --image-id imageTag=<value>
 
 CHECK_ID_extra776="7.76"
-CHECK_TITLE_extra776="[extra776] Check if ECR image scan found vulnerabilities in the newest image version (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra776="[extra776] Check if ECR image scan found vulnerabilities in the newest image version "
 CHECK_SCORED_extra776="NOT_SCORED"
 CHECK_TYPE_extra776="EXTRA"
 CHECK_SEVERITY_extra776="Medium"
@@ -54,28 +54,28 @@ extra776(){
             if [[ ! -z "$LIST_ECR_REPOS" ]]; then
               IMAGE_SCAN_STATUS=$($AWSCLI ecr describe-image-scan-findings $PROFILE_OPT --region $region --repository-name "$repo" --image-id imageDigest="$IMAGE_DIGEST" --query "imageScanStatus.status" 2>&1)
               if [[ $IMAGE_SCAN_STATUS == *"ScanNotFoundException"* ]]; then
-                textFail "$region: ECR repository $repo has imageTag $IMAGE_TAG without a scan" "$region"
+                textFail "$region: ECR repository $repo has imageTag $IMAGE_TAG without a scan" "$region" "$repo"
               else
                 if [[ $IMAGE_SCAN_STATUS == *"FAILED"* ]]; then
-                  textFail "$region: ECR repository $repo has imageTag $IMAGE_TAG with scan status $IMAGE_SCAN_STATUS" "$region"
+                  textFail "$region: ECR repository $repo has imageTag $IMAGE_TAG with scan status $IMAGE_SCAN_STATUS" "$region" "$repo"
                 else
                   FINDINGS_COUNT=$($AWSCLI ecr describe-image-scan-findings $PROFILE_OPT --region $region --repository-name "$repo" --image-id imageDigest="$IMAGE_DIGEST" --query "imageScanFindings.findingSeverityCounts" 2>&1)
                   if [[ ! -z "$FINDINGS_COUNT" ]]; then
                       SEVERITY_CRITICAL=$(echo "$FINDINGS_COUNT" | jq -r '.CRITICAL' )
                       if [[ "$SEVERITY_CRITICAL" != "null" ]]; then
-                        textFail "$region: ECR repository $repo has imageTag $IMAGE_TAG with CRITICAL ($SEVERITY_CRITICAL) findings" "$region"
+                        textFail "$region: ECR repository $repo has imageTag $IMAGE_TAG with CRITICAL ($SEVERITY_CRITICAL) findings" "$region" "$repo"
                       fi
                       SEVERITY_HIGH=$(echo "$FINDINGS_COUNT" | jq -r '.HIGH' )
                       if [[ "$SEVERITY_HIGH" != "null" ]]; then
-                        textFail "$region: ECR repository $repo has imageTag $IMAGE_TAG with HIGH ($SEVERITY_HIGH) findings" "$region"
+                        textFail "$region: ECR repository $repo has imageTag $IMAGE_TAG with HIGH ($SEVERITY_HIGH) findings" "$region" "$repo"
                       fi
                       SEVERITY_MEDIUM=$(echo "$FINDINGS_COUNT" | jq -r '.MEDIUM' )
                       if [[ "$SEVERITY_MEDIUM" != "null" ]]; then
-                        textFail "$region: ECR repository $repo has imageTag $IMAGE_TAG with MEDIUM ($SEVERITY_MEDIUM) findings" "$region"
+                        textFail "$region: ECR repository $repo has imageTag $IMAGE_TAG with MEDIUM ($SEVERITY_MEDIUM) findings" "$region" "$repo"
                       fi
                       SEVERITY_LOW=$(echo "$FINDINGS_COUNT" | jq -r '.LOW' )
                       if [[ "$SEVERITY_LOW" != "null" ]]; then
-                        textInfo "$region: ECR repository $repo has imageTag $IMAGE_TAG with LOW ($SEVERITY_LOW) findings" "$region"
+                        textInfo "$region: ECR repository $repo has imageTag $IMAGE_TAG with LOW ($SEVERITY_LOW) findings" "$region" 
                       fi
                       SEVERITY_INFORMATIONAL=$(echo "$FINDINGS_COUNT" | jq -r '.INFORMATIONAL' )
                       if [[ "$SEVERITY_INFORMATIONAL" != "null" ]]; then

@@ -24,7 +24,6 @@ CHECK_DOC_extra794='https://docs.aws.amazon.com/eks/latest/userguide/logging-mon
 CHECK_CAF_EPIC_extra794='Logging and Monitoring'
 
 extra794(){
-  textInfo "Looking for control plane logging enabled for EKS clusters across all regions... "
   for regx in $REGIONS; do
     CLUSTERS=$($AWSCLI eks list-clusters $PROFILE_OPT --region $regx --query 'clusters[]' --output text)
     if [[ $CLUSTERS ]]; then
@@ -34,12 +33,12 @@ extra794(){
         TYPES=$(echo $CLUSTERDEF | jq -r '.types[]')
         if [[ $LOGGING_ENABLED == "true" ]]; then
            if [[ $(echo $TYPES | egrep "api.*audit.*authenticator.*controllerManager.*scheduler") ]]; then
-              textPass "$regx: Control plane logging enabled and correctly configured for EKS cluster $CLUSTER" "$regx"
+              textPass "$regx: Control plane logging enabled and correctly configured for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
            else
-              textFail "$regx: Control plane logging enabled, but not all log types collected for EKS cluster $CLUSTER" "$regx"
+              textFail "$regx: Control plane logging enabled, but not all log types collected for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
            fi
         else
-              textFail "$regx: Control plane logging is not enabled for EKS cluster $CLUSTER" "$regx"
+              textFail "$regx: Control plane logging is not enabled for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
         fi
       done
     else

@@ -24,7 +24,6 @@ CHECK_DOC_extra795='https://docs.aws.amazon.com/eks/latest/userguide/infrastruct
 CHECK_CAF_EPIC_extra795='Infrastructure Security'
 
 extra795(){
-  textInfo "Looking for public access enabled for EKS clusters across all regions... "
   for regx in $REGIONS; do
     CLUSTERS=$($AWSCLI eks list-clusters $PROFILE_OPT --region $regx --query 'clusters[]' --output text)
     if [[ $CLUSTERS ]]; then
@@ -34,9 +33,9 @@ extra795(){
         PRIV_ENABLED=$(echo $CLUSTERDEF | jq -r '.endpointPrivateAccess')
 
         if [[ $PUB_ENABLED == "false" ]] && [[ $PRIV_ENABLED == "true" ]] ; then
-          textPass "$regx: Cluster endpoint access is private for EKS cluster $CLUSTER" "$regx"
+          textPass "$regx: Cluster endpoint access is private for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
         else
-              textFail "$regx: Cluster endpoint access is public for EKS cluster $CLUSTER" "$regx"
+              textFail "$regx: Cluster endpoint access is public for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
         fi
       done
     else

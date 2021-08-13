@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra792="7.92"
-CHECK_TITLE_extra792="[extra792] Check if Elastic Load Balancers have insecure SSL ciphers (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra792="[extra792] Check if Elastic Load Balancers have insecure SSL ciphers "
 CHECK_SCORED_extra792="NOT_SCORED"
 CHECK_TYPE_extra792="EXTRA"
 CHECK_SEVERITY_extra792="Medium"
@@ -25,7 +25,7 @@ CHECK_DOC_extra792='https://docs.aws.amazon.com/elasticloadbalancing/latest/clas
 CHECK_CAF_EPIC_extra792='Data Protection'
 
 extra792(){
-  # "Check if Elastic Load Balancers have insecure SSL ciphers (Not Scored) (Not part of CIS benchmark)"
+  # "Check if Elastic Load Balancers have insecure SSL ciphers "
   for regx in $REGIONS; do
     LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].LoadBalancerName' --output text|xargs -n1)
     LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].LoadBalancerArn' --output text|xargs -n1)
@@ -66,9 +66,9 @@ extra792(){
              done
           
              if $passed; then
-               textPass "$regx: $elb has no insecure SSL ciphers" "$regx"
+               textPass "$regx: $elb has no insecure SSL ciphers" "$regx" "$elb"
              else
-               textFail "$regx: $elb has insecure SSL ciphers" "$regx" 
+               textFail "$regx: $elb has insecure SSL ciphers" "$regx" "$elb"
              fi
           else
              textInfo "$regx: $elb does not have an HTTPS or SSL listener" "$regx"
@@ -106,9 +106,9 @@ extra792(){
              done
    
              if $passed; then
-               textPass "$regx: $elbname has no insecure SSL ciphers" "$regx"
+               textPass "$regx: $elbname has no insecure SSL ciphers" "$regx" "$elbname"
              else
-               textFail "$regx: $elbname has insecure SSL ciphers" "$regx"
+               textFail "$regx: $elbname has insecure SSL ciphers" "$regx" "$elbname"
              fi
           else
              textInfo "$regx: $elbname does not have an HTTPS or TLS listener" "$regx"

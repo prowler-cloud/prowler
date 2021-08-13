@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra720="7.20"
-CHECK_TITLE_extra720="[extra720] Check if Lambda functions invoke API operations are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra720="[extra720] Check if Lambda functions invoke API operations are being recorded by CloudTrail"
 CHECK_SCORED_extra720="NOT_SCORED"
 CHECK_TYPE_extra720="EXTRA"
 CHECK_SEVERITY_extra720="Low"
@@ -24,17 +24,17 @@ CHECK_DOC_extra720='https://docs.aws.amazon.com/lambda/latest/dg/logging-using-c
 CHECK_CAF_EPIC_extra720='Logging and Monitoring'
 
 extra720(){
-  # "Check if Lambda functions invoke API operations are being recorded by CloudTrail (Not Scored) (Not part of CIS benchmark)"
+  # "Check if Lambda functions invoke API operations are being recorded by CloudTrail "
   for regx in $REGIONS; do
     LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --query 'Functions[*].FunctionName' --output text 2>&1)
     if [[ $(echo "$LIST_OF_FUNCTIONS" | grep AccessDenied) ]]; then
-      textFail "$regx: Access Denied trying to list functions"
+      textFail "$regx: Access Denied trying to list functions" "$regx"
       continue
     fi
     if [[ $LIST_OF_FUNCTIONS ]]; then
       LIST_OF_TRAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].TrailARN' --output text 2>&1)
       if [[ $(echo "$LIST_OF_TRAILS" | grep AccessDenied) ]]; then
-        textFail "$regx: Access Denied trying to describe trails"
+        textFail "$regx: Access Denied trying to describe trails" "$regx"
         continue
       fi
       for lambdafunction in $LIST_OF_FUNCTIONS; do
@@ -42,9 +42,9 @@ extra720(){
           for trail in $LIST_OF_TRAILS; do
             FUNCTION_ENABLED_IN_TRAIL=$($AWSCLI cloudtrail get-event-selectors $PROFILE_OPT --trail-name $trail --region $regx --query "EventSelectors[*].DataResources[?Type == \`AWS::Lambda::Function\`].Values" --output text |xargs -n1| grep -E "^arn:${AWS_PARTITION}:lambda.*function:$lambdafunction$|^arn:${AWS_PARTITION}:lambda$")
             if [[ $FUNCTION_ENABLED_IN_TRAIL ]]; then
-              textPass "$regx: Lambda function $lambdafunction enabled in trail $trail" "$regx"
+              textPass "$regx: Lambda function $lambdafunction enabled in trail $trail" "$regx" "$trail"
             else
-              textFail "$regx: Lambda function $lambdafunction NOT enabled in trail $trail" "$regx"
+              textFail "$regx: Lambda function $lambdafunction NOT enabled in trail $trail" "$regx" "$trail"
             fi
           done
           # LIST_OF_MULTIREGION_TRAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query "trailList[?IsMultiRegionTrail == \`true\`].Name" --output text)
@@ -62,7 +62,7 @@ extra720(){
           #   textFail "$regx: Lambda function $lambdafunction is not being recorded!" "$regx"
           # fi
         else
-          textFail "$regx: Lambda function $lambdafunction is not being recorded no CloudTrail found!" "$regx"
+          textFail "$regx: Lambda function $lambdafunction is not being recorded no CloudTrail found!" "$regx" "$trail"
         fi
      done
     else

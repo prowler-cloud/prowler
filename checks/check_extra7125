@@ -34,9 +34,9 @@ extra7125(){
       if [[ $MFA_TYPE == "mfa" || $MFA_TYPE == "sms-mfa" ]]; then 
         textInfo "User $user has virtual MFA enabled" 
       elif [[ $MFA_TYPE == "" ]]; then 
-        textFail "User $user has not hardware MFA enabled"
+        textFail "User $user has not hardware MFA enabled" "$REGION" "$user"
       else 
-        textPass "User $user has hardware MFA enabled"
+        textPass "User $user has hardware MFA enabled" "$REGION" "$user"
       fi
     done
   else

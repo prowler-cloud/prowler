@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra734="7.34"
-CHECK_TITLE_extra734="[extra734] Check if S3 buckets have default encryption (SSE) enabled or use a bucket policy to enforce it (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra734="[extra734] Check if S3 buckets have default encryption (SSE) enabled or use a bucket policy to enforce it"
 CHECK_SCORED_extra734="NOT_SCORED"
 CHECK_TYPE_extra734="EXTRA"
 CHECK_SEVERITY_extra734="Medium"
@@ -30,7 +30,7 @@ extra734(){
     for bucket in $LIST_OF_BUCKETS;do
       BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location $PROFILE_OPT --region $REGION --bucket $bucket --output text 2>&1)
       if [[ $(echo "$BUCKET_LOCATION" | grep AccessDenied) ]]; then
-        textFail "Access Denied Trying to Get Bucket Location for $bucket"
+        textFail "$BUCKET_LOCATION Access Denied Trying to Get Bucket Location for $bucket" "$BUCKET_LOCATION" "$bucket"
         continue
       fi
       if [[ $BUCKET_LOCATION == "None" ]]; then
@@ -46,13 +46,13 @@ extra734(){
       # query to get if has encryption enabled or not
       RESULT=$($AWSCLI s3api get-bucket-encryption $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --query ServerSideEncryptionConfiguration.Rules[].ApplyServerSideEncryptionByDefault[].SSEAlgorithm --output text 2>&1)
       if [[ $(echo "$RESULT" | grep AccessDenied) ]]; then
-        textFail "Access Denied Trying to Get Encryption for $bucket"
+        textFail "$BUCKET_LOCATION: Access Denied Trying to Get Encryption for $bucket" "$BUCKET_LOCATION" "$bucket"
         continue
       fi
 
       if [[ $RESULT == "AES256" || $RESULT == "aws:kms" ]];
       then
-        textPass "Bucket $bucket is enabled for default encryption with $RESULT"
+        textPass "$BUCKET_LOCATION: Bucket $bucket is enabled for default encryption with $RESULT" "$BUCKET_LOCATION" "$bucket"
         continue
       fi
 
@@ -61,12 +61,12 @@ extra734(){
       # get bucket policy
       $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --region $BUCKET_LOCATION --output text --query Policy > $TEMP_SSE_POLICY_FILE 2>&1
       if [[ $(grep AccessDenied $TEMP_SSE_POLICY_FILE) ]]; then
-        textFail "Access Denied Trying to Get Bucket Policy for $bucket"
+        textFail "$BUCKET_LOCATION: Access Denied Trying to Get Bucket Policy for $bucket" "$BUCKET_LOCATION" "$bucket"
         rm -f $TEMP_SSE_POLICY_FILE
         continue
       fi
       if [[ $(grep NoSuchBucketPolicy $TEMP_SSE_POLICY_FILE) ]]; then
-        textFail "No bucket policy for $bucket"
+        textFail "$BUCKET_LOCATION: No bucket policy for $bucket" "$BUCKET_LOCATION" "$bucket"
         rm -f $TEMP_SSE_POLICY_FILE
         continue
       fi
@@ -74,18 +74,18 @@ extra734(){
       # check if the S3 policy forces SSE s3:x-amz-server-side-encryption:true
       CHECK_BUCKET_SSE_POLICY_PRESENT=$(cat $TEMP_SSE_POLICY_FILE | jq --arg arn "arn:${AWS_PARTITION}:s3:::${bucket}/*" '.Statement[]|select(.Effect=="Deny" and ((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*") and .Action=="s3:PutObject" and .Resource==$arn and .Condition.StringEquals."s3:x-amz-server-side-encryption" != null)')
       if [[ $CHECK_BUCKET_SSE_POLICY_PRESENT == "" ]]; then
-        textFail "Bucket $bucket does not enforce encryption!"
+        textFail "$BUCKET_LOCATION: Bucket $bucket does not enforce encryption!" "$BUCKET_LOCATION" "$bucket"
         rm -f $TEMP_SSE_POLICY_FILE
         continue
       fi
       CHECK_BUCKET_SSE_POLICY_VALUE=$(echo "$CHECK_BUCKET_SSE_POLICY_PRESENT" | jq -r '.Condition.StringNotEquals."s3:x-amz-server-side-encryption"')
 
-      textPass "Bucket $bucket has S3 bucket policy to enforce encryption with $CHECK_BUCKET_SSE_POLICY_VALUE"
+      textPass "$BUCKET_LOCATION: Bucket $bucket has S3 bucket policy to enforce encryption with $CHECK_BUCKET_SSE_POLICY_VALUE" "$BUCKET_LOCATION" "$bucket"
 
       rm -f $TEMP_SSE_POLICY_FILE
     done
 
   else
-    textInfo "No S3 Buckets found"
+    textInfo "$REGION No S3 Buckets found" "$REGION"
   fi
 }

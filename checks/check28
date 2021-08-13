@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
-# This Prowler check is licensed under a
-# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the license along with this
-# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
 CHECK_ID_check28="2.8"
-CHECK_TITLE_check28="[check28] Ensure rotation for customer created KMS CMKs is enabled (Scored)"
+CHECK_TITLE_check28="[check28] Ensure rotation for customer created KMS CMKs is enabled"
 CHECK_SCORED_check28="SCORED"
 CHECK_TYPE_check28="LEVEL2"
 CHECK_SEVERITY_check28="Medium"
@@ -27,7 +30,7 @@ check28(){
   for regx in $REGIONS; do
     CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys $PROFILE_OPT --region $regx --output text --query 'Keys[*].KeyId' --output text 2>&1)
     if [[ $(echo "$CHECK_KMS_KEYLIST" | grep AccessDenied) ]]; then
-      textFail "Access Denied trying to list keys in $regx"
+      textFail "$regx: Access Denied trying to list keys" "$regx" "$key"
       continue
     fi
     if [[ $CHECK_KMS_KEYLIST ]]; then
@@ -35,7 +38,7 @@ check28(){
       for key in $CHECK_KMS_KEYLIST; do
         KMSDETAILS=$($AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.{key:KeyId,man:KeyManager,origin:Origin,spec:CustomerMasterKeySpec,state:KeyState}' --output text 2>&1 | grep SYMMETRIC)
         if [[ $(echo "$KMSDETAILS" | grep AccessDenied) ]]; then
-           textFail "$regx: Key $key Access Denied describing key"
+           textFail "$regx: Key $key Access Denied describing key" "$regx" "$key"
            continue
         fi
 
@@ -53,25 +56,25 @@ check28(){
         cmk_count=$((cmk_count + 1))
 
         if [[ "$KEYORIGIN" == "EXTERNAL" ]]; then
-          textPass "$regx: Key $key uses imported key material"
+          textPass "$regx: Key $key uses imported key material" "$regx" "$key"
         else
           CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key $PROFILE_OPT --region $regx --output text 2>&1)
           if [[ $(echo "$CHECK_KMS_KEY_ROTATION" | grep AccessDenied) ]]; then
-            textFail "$regx: Key $key Access Denied getting key rotation status"
+            textFail "$regx: Key $key Access Denied getting key rotation status" "$regx" "$key"
             continue
           fi
           if [[ "$CHECK_KMS_KEY_ROTATION" == "True" ]];then
-            textPass "$regx: Key $key automatic rotation of the key material is enabled"
+            textPass "$regx: Key $key automatic rotation of the key material is enabled" "$regx" "$key"
           else
-            textFail "$regx: Key $key automatic rotation of the key material is disabled"
+            textFail "$regx: Key $key automatic rotation of the key material is disabled" "$regx" "$key"
           fi
         fi
       done
       if [[ $cmk_count == 0 ]]; then
-        textInfo "$regx: This region has no customer managed keys"
+        textInfo "$regx: This region has no customer managed keys" "$regx" "$key"
       fi
     else
-      textInfo "$regx: This region has no KMS keys"
+      textInfo "$regx: This region has no KMS keys" "$regx" "$key"
     fi
   done
 }

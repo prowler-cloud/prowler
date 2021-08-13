@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra767="7.67"
-CHECK_TITLE_extra767="[extra767] Check if CloudFront distributions have Field Level Encryption enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra767="[extra767] Check if CloudFront distributions have Field Level Encryption enabled "
 CHECK_SCORED_extra767="NOT_SCORED"
 CHECK_TYPE_extra767="EXTRA"
 CHECK_SEVERITY_extra767="Low"
@@ -29,9 +29,9 @@ extra767(){
       for dist in $LIST_OF_DISTRIBUTIONS; do
         CHECK_FLE=$($AWSCLI cloudfront get-distribution --id $dist --query Distribution.DistributionConfig.DefaultCacheBehavior.FieldLevelEncryptionId $PROFILE_OPT --output text)
         if [[ $CHECK_FLE ]]; then
-          textPass "CloudFront distribution $dist has Field Level Encryption enabled" "$regx"
+          textPass "CloudFront distribution $dist has Field Level Encryption enabled" "$regx" "$dist"
         else
-          textFail "CloudFront distribution $dist has Field Level Encryption disabled!" "$regx"
+          textFail "CloudFront distribution $dist has Field Level Encryption disabled!" "$regx" "$dist"
         fi
       done
     else

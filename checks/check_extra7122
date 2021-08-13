@@ -33,12 +33,12 @@ extra7122(){
           if [[ ! -z "$SECURITY_CONFIGURATION" ]]; then
             JOB_BOOKMARK_ENCRYPTION=$($AWSCLI glue get-security-configuration --name "${SECURITY_CONFIGURATION}" $PROFILE_OPT --region $regx --output text --query 'SecurityConfiguration.EncryptionConfiguration.JobBookmarksEncryption.JobBookmarksEncryptionMode')
             if [[ "$JOB_BOOKMARK_ENCRYPTION" == "DISABLED" ]]; then
-              textFail "$regx: Glue job $JOB_NAME does not have Job bookmark encryption enabled" "$regx"
+              textFail "$regx: Glue job $JOB_NAME does not have Job bookmark encryption enabled" "$regx" "$JOB_NAME"
             else
-              textPass "$regx: Glue job $JOB_NAME does have $JOB_BOOKMARK_ENCRYPTION for Job bookmark encryption enabled" "$regx"
+              textPass "$regx: Glue job $JOB_NAME does have $JOB_BOOKMARK_ENCRYPTION for Job bookmark encryption enabled" "$regx" "$JOB_NAME"
             fi
           else
-            textFail "$regx: Glue job $JOB_NAME does not have Job bookmark encryption enabled" "$regx"
+            textFail "$regx: Glue job $JOB_NAME does not have Job bookmark encryption enabled" "$regx" "$JOB_NAME"
           fi
       done
     else 
