@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
-# This Prowler check is licensed under a
-# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the license along with this
-# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
 CHECK_ID_check12="1.2"
-CHECK_TITLE_check12="[check12] Ensure multi-factor authentication (MFA) is enabled for all IAM users that have a console password (Scored)"
+CHECK_TITLE_check12="[check12] Ensure multi-factor authentication (MFA) is enabled for all IAM users that have a console password"
 CHECK_SCORED_check12="SCORED"
 CHECK_TYPE_check12="LEVEL1"
 CHECK_SEVERITY_check12="High"
@@ -19,7 +22,7 @@ CHECK_ALTERNATE_check102="check12"
 CHECK_ASFF_COMPLIANCE_TYPE_check12="ens-op.acc.5.aws.iam.1"
 CHECK_SERVICENAME_check12="iam"
 CHECK_RISK_check12='Unauthorized access to this critical account if password is not secure or it is disclosed in any way.'
-CHECK_REMEDIATION_check12='Enable MFA for root account. is a simple best practice that adds an extra layer of protection on top of your user name and password. Recommended to use hardware keys over virtual MFA.'
+CHECK_REMEDIATION_check12='Enable MFA for root account. MFA is a simple best practice that adds an extra layer of protection on top of your user name and password. Recommended to use hardware keys over virtual MFA.'
 CHECK_DOC_check12='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html'
 CHECK_CAF_EPIC_check12='IAM'
 
@@ -33,9 +36,9 @@ check12(){
     done)
     if [[ $COMMAND12 ]]; then
       for u in $COMMAND12; do
-        textFail "User $u has Password enabled but MFA disabled"
+        textFail "$REGION: User $u has Password enabled but MFA disabled" "$REGION" "$u"
       done
     else
-      textPass "No users found with Password enabled and MFA disabled"
+      textPass "$REGION: No users found with Password enabled and MFA disabled" "$REGION" "$u"
     fi
 }

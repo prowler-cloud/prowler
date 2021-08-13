@@ -185,6 +185,12 @@ Prowler has been written in bash using AWS-CLI and it works in Linux and OSX.
 
     Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 and 3.10 is check310
 
+### Regions
+
+By default Prowler scans all opt-in regions available, that might take a long execution time depending on the number of resources and regions used. Same applies for GovCloud or China regions. See below Advance usage for examples.
+
+Prowler has to parameters related to regions: `-r` that is used query AWS services API endpoints (it uses `us-east-1` by default and required for GovCloud or China) and the option `-f` that is to filter those regions you only want to scan. For example if you want to scan Dublin only use `-f eu-west-1` and if you want to scan Dublin and Ohio `-f 'eu-west-1 us-east-s'`, note the single quotes and space between regions.
+
 ## Screenshots
 
 - Sample screenshot of report first lines:
@@ -343,6 +349,9 @@ Sets the entropy limit for high entropy hex strings from environment variable `H
 export BASE64_LIMIT=4.5
 export HEX_LIMIT=3.0
 ```
+### Run Prowler using AWS CloudShell
+
+An easy way to run Prowler to scan your account is using AWS CloudShell. Read more and learn how to do it [here](util/cloudshell/README.md).
 
 ## Security Hub integration
 

@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra778="7.78"
-CHECK_TITLE_extra778="[extra778] Find VPC security groups with wide-open public IPv4 CIDR ranges (non-RFC1918) (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra778="[extra778] Find VPC security groups with wide-open public IPv4 CIDR ranges (non-RFC1918) "
 CHECK_SCORED_extra778="NOT_SCORED"
 CHECK_TYPE_extra778="EXTRA"
 CHECK_SEVERITY_extra778="Medium"
@@ -27,7 +27,6 @@ CHECK_CAF_EPIC_extra778='Infrastructure Security'
 extra778(){
     CIDR_THRESHOLD=24
     RFC1918_REGEX="(^127\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.)"
-    textInfo "Looking for VPC security groups with wide-open (</${CIDR_THRESHOLD}) non-RFC1918 IPv4 address ranges in all regions...  "
 
     check_cidr() {
         local SECURITY_GROUP=$1
@@ -58,7 +57,7 @@ extra778(){
 
                 # Edge case "0.0.0.0/0" for RDP and SSH are checked already by check41 and check42
                 if [[ ${CIDR} < ${CIDR_THRESHOLD} && 0 < ${CIDR} ]]; then
-                    textFail "${REGION}: ${SECURITY_GROUP} has potential wide-open non-RFC1918 address ${CIDR_IP} in ${DIRECTION} rule" "${REGION}"
+                    textFail "${REGION}: ${SECURITY_GROUP} has potential wide-open non-RFC1918 address ${CIDR_IP} in ${DIRECTION} rule" "${REGION}" "${SECURITY_GROUP}"
                 fi
             fi
         done

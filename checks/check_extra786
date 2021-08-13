@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra786="7.86"
-CHECK_TITLE_extra786="[extra786] Check if EC2 Instance Metadata Service Version 2 (IMDSv2) is Enabled and Required (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra786="[extra786] Check if EC2 Instance Metadata Service Version 2 (IMDSv2) is Enabled and Required "
 CHECK_SCORED_extra786="NOT_SCORED"
 CHECK_TYPE_extra786="EXTRA"
 CHECK_SEVERITY_extra786="Medium"
@@ -35,11 +35,11 @@ extra786(){
       while read httpendpoint httptokens_status instanceid  ; do
         #echo i:$instanceid tok:$httptokens_status end:$httpendpoint
         if [[ "$httpendpoint" == "enabled" &&  "$httptokens_status" == "required" ]];then
-          textPass "$regx: EC2 Instance $instanceid has IMDSv2 enabled and required" "$regx"
+          textPass "$regx: EC2 Instance $instanceid has IMDSv2 enabled and required" "$regx" "$instanceid"
         elif [[ "$httpendpoint" == "disabled" ]];then
           textInfo "$regx: EC2 Instance $instanceid has HTTP endpoint access to metadata service disabled" "$regx"
         else
-          textFail "$regx: EC2 Instance $instanceid has IMDSv2 disabled or not required" "$regx"
+          textFail "$regx: EC2 Instance $instanceid has IMDSv2 disabled or not required" "$regx" "$instanceid"
         fi
       done < <(cat $TEMP_EXTRA786_FILE)
     else

@@ -69,23 +69,23 @@ check_passwords_used_in_last_days() {
 
         # "When password_enabled is set to TRUE and password_last_used is set to no_information, ensure password_last_changed is less than X days ago"
         if [[ "$days_since_password_last_changed" -ge "$max_days" ]]; then
-          textFail "User $user has never logged into the console since creation and their password not changed in the past ${max_days} days"
+          textFail "$REGION: User $user has never logged into the console since creation and their password not changed in the past ${max_days} days" "$REGION" "$user"
         else
-          textInfo "User $user has not logged into the console since creation"
+          textInfo "$REGION: User $user has not logged into the console since creation" "$REGION" "$user"
         fi
       else
         days_password_not_in_use=$(how_older_from_today "${last_login_date%T*}")
 
         # "For each user having password_enabled set to TRUE, ensure password_last_used_date is less than X days ago."
         if [[ "$days_password_not_in_use" -ge "$max_days" ]]; then
-          textFail "User $user has not logged into the console in the past ${max_days} days"
+          textFail "$REGION: User $user has not logged into the console in the past ${max_days} days" "$REGION" "$user"
         else
-          textPass "User $user has logged into the console in the past ${max_days} days"
+          textPass "$REGION: User $user has logged into the console in the past ${max_days} days" "$REGION" "$user"
         fi
       fi
     done
   else
-    textPass "No users found with password enabled"
+    textPass "$REGION: No users found with password enabled" "$REGION" "$user"
   fi
 }
 
@@ -122,22 +122,22 @@ check_access_key_used_in_last_days() {
         # "When a user having an access_key_x_active (where x is 1 or 2) to TRUE and corresponding access_key_x_last_used_date is set to N/A,
         # ensure access_key_x_last_rotated is less than X days ago"
         if [[ "$days_since_access_key_rotated" -ge "$max_days" ]]; then
-          textFail "User $user has never used access key $access_key_name since creation and not rotated it in the past ${max_days} days"
+          textFail "$REGION: User $user has never used access key $access_key_name since creation and not rotated it in the past ${max_days} days" "$REGION" "$user"
         else
-          textInfo "User $user has not used access key $access_key_name since creation"
+          textInfo "$REGION: User $user has not used access key $access_key_name since creation" "$REGION" "$user"
         fi
       else
         days_since_access_key_used=$(how_older_from_today "${access_key_last_used_date%T*}")
 
         # "For each user having an access_key_1_active or access_key_2_active to TRUE, ensure the corresponding access_key_n_last_used_date is less than X days ago"
         if [[ "$days_since_access_key_used" -ge "$max_days" ]]; then
-          textFail "User $user has not used access key $access_key_name in the past ${max_days} days"
+          textFail "$REGION: User $user has not used access key $access_key_name in the past ${max_days} days" "$REGION" "$user"
         else
-          textPass "User $user has used access key $access_key_name in the past ${max_days} days"
+          textPass "$REGION: User $user has used access key $access_key_name in the past ${max_days} days" "$REGION" "$user"
         fi
       fi
     done
   else
-    textPass "No users found with access key $access_key_name enabled"
+    textPass "$REGION: No users found with access key $access_key_name enabled" "$REGION" "$user"
   fi
 }

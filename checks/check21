@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
-# This Prowler check is licensed under a
-# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the license along with this
-# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
 CHECK_ID_check21="2.1"
-CHECK_TITLE_check21="[check21] Ensure CloudTrail is enabled in all regions (Scored)"
+CHECK_TITLE_check21="[check21] Ensure CloudTrail is enabled in all regions"
 CHECK_SCORED_check21="SCORED"
 CHECK_TYPE_check21="LEVEL1"
 CHECK_SEVERITY_check21="High"
@@ -29,7 +32,7 @@ check21(){
   for regx in $REGIONS; do
     TRAILS_AND_REGIONS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].{Name:TrailARN, HomeRegion:HomeRegion}' --output text 2>&1 | tr "	" ',')
     if [[ $(echo "$TRAILS_AND_REGIONS" | grep AccessDenied) ]]; then
-      textFail "Access Denied trying to describe trails in $regx"
+      textFail "$regx: Access Denied trying to describe trails" "$regx" "$trail"
       continue
     fi
     if [[ $TRAILS_AND_REGIONS ]]; then
@@ -43,15 +46,20 @@ check21(){
 
         MULTIREGION_TRAIL_STATUS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $TRAIL_REGION --query 'trailList[*].IsMultiRegionTrail' --output text --trail-name-list $trail)
         if [[ "$MULTIREGION_TRAIL_STATUS" == 'False' ]];then
-          textFail "Trail $trail in $regx is not enabled for all regions"
+          textFail "$regx: Trail $trail is not enabled for all regions" "$regx" "$trail"
         else
-          textPass "Trail $trail in $regx is enabled for all regions"
+          TRAIL_ON_OFF_STATUS=$($AWSCLI cloudtrail get-trail-status $PROFILE_OPT --region $TRAIL_REGION --name $trail --query IsLogging --output text)
+          if [[ "$TRAIL_ON_OFF_STATUS" == 'False'  ]];then
+            textFail "$regx: Trail $trail is configured for all regions but it is OFF" "$regx" "$trail"
+          else
+            textPass "$regx: Trail $trail is enabled for all regions" "$regx" "$trail"
+          fi 
         fi
 
       done
     fi
   done
   if [[ $trail_count == 0 ]]; then
-    textFail "No CloudTrail trails were found in the account"
+    textFail "$regx: No CloudTrail trails were found in the account" "$regx" "$trail"
   fi
 }

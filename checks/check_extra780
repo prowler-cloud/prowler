@@ -30,9 +30,9 @@ extra780(){
       for domain in $LIST_OF_DOMAINS;do
         CHECK_IF_COGNITO_ENABLED=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.CognitoOptions.Enabled' --output text|grep -i true)
         if [[ $CHECK_IF_COGNITO_ENABLED ]];then
-          textPass "$regx: Amazon ES domain $domain has Amazon Cognito authentication for Kibana enabled" "$regx"
+          textPass "$regx: Amazon ES domain $domain has Amazon Cognito authentication for Kibana enabled" "$regx" "$domain"
         else
-          textFail "$regx: Amazon ES domain $domain does not have Amazon Cognito authentication for Kibana enabled" "$regx"
+          textFail "$regx: Amazon ES domain $domain does not have Amazon Cognito authentication for Kibana enabled" "$regx" "$domain"
         fi
       done
     else

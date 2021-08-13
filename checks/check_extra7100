@@ -37,7 +37,6 @@ extra7100(){
   # Learn more: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_permissions-to-switch.html#roles-usingrole-createpolicy
   LIST_CUSTOM_POLICIES=$($AWSCLI iam list-policies --output text $PROFILE_OPT --region $REGION --scope Local --query 'Policies[*].[Arn,DefaultVersionId]' | grep -v -e '^None$' | awk -F '\t' '{print $1","$2"\n"}')
   if [[ $LIST_CUSTOM_POLICIES ]]; then
-    textInfo "Looking for custom policies: (skipping default policies - it may take few seconds...)"
     for policy in $LIST_CUSTOM_POLICIES; do
       POLICY_ARN=$(echo $policy | awk -F ',' '{print $1}')
       POLICY_VERSION=$(echo $policy | awk -F ',' '{print $2}')
@@ -72,12 +71,12 @@ extra7100(){
       textInfo "STS AssumeRole Policies should only include the complete ARNs for the Roles that the user needs"
       textInfo "Learn more: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_permissions-to-switch.html#roles-usingrole-createpolicy"
       for policy in $PERMISSIVE_POLICIES_LIST; do
-        textFail "Policy $policy allows permissive STS Role assumption"
+        textFail "$REGION: Policy $policy allows permissive STS Role assumption" "$REGION" "$policy"
       done
     else
-      textPass "No custom policies found that allow permissive STS Role assumption"
+      textPass "$REGION: No custom policies found that allow permissive STS Role assumption" "$REGION"
     fi
   else
-    textPass "No custom policies found"
+    textPass "$REGION: No custom policies found" "$REGION"
   fi
 }

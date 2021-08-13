@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra732="7.32"
-CHECK_TITLE_extra732="[extra732] Check if Geo restrictions are enabled in CloudFront distributions (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra732="[extra732] Check if Geo restrictions are enabled in CloudFront distributions"
 CHECK_SCORED_extra732="NOT_SCORED"
 CHECK_TYPE_extra732="EXTRA"
 CHECK_SEVERITY_extra732="Low"
@@ -30,12 +30,12 @@ extra732(){
     for dist in $LIST_DISTRIBUTIONS; do
       GEO_ENABLED=$($AWSCLI cloudfront get-distribution-config $PROFILE_OPT --id $dist --query DistributionConfig.Restrictions.GeoRestriction.RestrictionType --output text)
       if [[ $GEO_ENABLED == "none" ]]; then
-        textFail "CloudFront distribution $dist has not Geo restrictions"
+        textFail "$REGION: CloudFront distribution $dist has not Geo restrictions" "$REGION" "$dist"
       else
-        textPass "CloudFront distribution $dist has Geo restrictions enabled"
+        textPass "$REGION: CloudFront distribution $dist has Geo restrictions enabled" "$REGION" "$dist"
       fi
     done
   else
-    textInfo "No CloudFront distributions found"
+    textInfo "$REGION: No CloudFront distributions found"
   fi
 }

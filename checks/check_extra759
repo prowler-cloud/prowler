@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra759="7.59"
-CHECK_TITLE_extra759="[extra759] Find secrets in Lambda functions variables (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra759="[extra759] Find secrets in Lambda functions variables "
 CHECK_SCORED_extra759="NOT_SCORED"
 CHECK_TYPE_extra759="EXTRA"
 CHECK_SEVERITY_extra759="Critical"
@@ -30,7 +30,6 @@ extra759(){
     mkdir $SECRETS_TEMP_FOLDER
   fi
 
-  textInfo "Looking for secrets in Lambda variables across all regions... "
   for regx in $REGIONS; do
     LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --query Functions[*].FunctionName --output text)
     if [[ $LIST_OF_FUNCTIONS ]]; then
@@ -41,11 +40,11 @@ extra759(){
         # Implementation using https://github.com/Yelp/detect-secrets
         FINDINGS=$(secretsDetector file $LAMBDA_FUNCTION_VARIABLES_FILE)
           if [[ $FINDINGS -eq 0 ]]; then
-            textPass "$regx: No secrets found in Lambda function $lambdafunction variables" "$regx"
+            textPass "$regx: No secrets found in Lambda function $lambdafunction variables" "$regx" "$lambdafunction"
             # delete file if nothing interesting is there
             rm -f $LAMBDA_FUNCTION_VARIABLES_FILE
           else
-            textFail "$regx: Potential secret found in Lambda function $lambdafunction variables" "$regx"
+            textFail "$regx: Potential secret found in Lambda function $lambdafunction variables" "$regx" "$lambdafunction"
             # delete file to not leave trace, user must look at the function
             rm -f $LAMBDA_FUNCTION_VARIABLES_FILE
           fi

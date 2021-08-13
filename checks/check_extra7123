@@ -30,7 +30,7 @@ extra7123(){
   if [[ $LIST_OF_USERS_WITH_2ACCESS_KEYS ]]; then
     # textFail "Users with access key 1 older than 90 days:"
     for user in $LIST_OF_USERS_WITH_2ACCESS_KEYS; do
-      textFail "User $user has 2 active access keys" 
+      textFail "User $user has 2 active access keys" "$REGION" "$user"
     done
   else
     textPass "No users with 2 active access keys"

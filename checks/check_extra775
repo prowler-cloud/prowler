@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra775="7.75"
-CHECK_TITLE_extra775="[extra775] Find secrets in EC2 Auto Scaling Launch Configuration (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra775="[extra775] Find secrets in EC2 Auto Scaling Launch Configuration "
 CHECK_SCORED_extra775="NOT_SCORED"
 CHECK_TYPE_extra775="EXTRA"
 CHECK_SEVERITY_extra775="Critical"
@@ -29,7 +29,6 @@ extra775(){
     mkdir $SECRETS_TEMP_FOLDER
   fi 
 
-  textInfo "Looking for secrets in EC2 Auto Scaling Launch Configuration across all regions... (max 100 autoscaling_configurations per region use -m to increase it)  "
   for regx in $REGIONS; do
     LIST_OF_EC2_AUTOSCALING=$($AWSCLI autoscaling describe-launch-configurations $PROFILE_OPT --region $regx --query LaunchConfigurations[*].LaunchConfigurationName --output text --max-items $MAXITEMS | grep -v None)
     if [[ $LIST_OF_EC2_AUTOSCALING ]];then
@@ -44,11 +43,11 @@ extra775(){
           if [[ $FILE_FORMAT_ASCII ]]; then
           FINDINGS=$(secretsDetector file $EC2_AUTOSCALING_USERDATA_FILE)
             if [[ $FINDINGS -eq 0 ]]; then
-              textPass "$regx: No secrets found in $autoscaling_configuration" "$regx"
+              textPass "$regx: No secrets found in $autoscaling_configuration" "$regx" "$autoscaling_configuration"
               # delete file if nothing interesting is there
               rm -f $EC2_AUTOSCALING_USERDATA_FILE
             else
-              textFail "$regx: Potential secret found in $autoscaling_configuration" "$regx"
+              textFail "$regx: Potential secret found in $autoscaling_configuration" "$regx" "$autoscaling_configuration"
               # delete file to not leave trace, user must look at the autoscaling_configuration User Data
               rm -f $EC2_AUTOSCALING_USERDATA_FILE
             fi
@@ -56,14 +55,14 @@ extra775(){
             mv $EC2_AUTOSCALING_USERDATA_FILE $EC2_AUTOSCALING_USERDATA_FILE.gz ; gunzip $EC2_AUTOSCALING_USERDATA_FILE.gz
             FINDINGS=$(secretsDetector file $EC2_AUTOSCALING_USERDATA_FILE)
             if [[ $FINDINGS -eq 0 ]]; then
-              textPass "$regx: No secrets found in $autoscaling_configuration User Data" "$regx"
+              textPass "$regx: No secrets found in $autoscaling_configuration User Data" "$regx" "$autoscaling_configuration"
               rm -f $EC2_AUTOSCALING_USERDATA_FILE
             else
-              textFail "$regx: Potential secret found in $autoscaling_configuration" "$regx"
+              textFail "$regx: Potential secret found in $autoscaling_configuration" "$regx" "$autoscaling_configuration"
             fi
           fi
         else 
-          textPass "$regx: No secrets found in $autoscaling_configuration User Data or it is empty" "$regx"
+          textPass "$regx: No secrets found in $autoscaling_configuration User Data or it is empty" "$regx" "$autoscaling_configuration"
         fi
       done
     else

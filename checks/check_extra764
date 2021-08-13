@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra764="7.64"
-CHECK_TITLE_extra764="[extra764] Check if S3 buckets have secure transport policy (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra764="[extra764] Check if S3 buckets have secure transport policy "
 CHECK_SCORED_extra764="NOT_SCORED"
 CHECK_TYPE_extra764="EXTRA"
 CHECK_SEVERITY_extra764="Medium"
@@ -49,7 +49,7 @@ extra764(){
         continue
       fi
       if [[ $(grep NoSuchBucketPolicy $TEMP_STP_POLICY_FILE) ]]; then
-        textFail "No bucket policy for $bucket"
+        textFail "No bucket policy for $bucket" "us-east-1" "$bucket"
         rm -f $TEMP_STP_POLICY_FILE
         continue
       fi
@@ -61,9 +61,9 @@ extra764(){
         CHECK_BUCKET_STP_POLICY_PRESENT=$(cat $TEMP_STP_POLICY_FILE | jq --arg arn "arn:${AWS_PARTITION}:s3:::${bucket}" \
           '.Statement[]|select((((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and .Effect=="Deny" and (.Action=="s3:*" or .Action=="*") and (.Resource|type == "array") and (.Resource|map({(.):0})[]|has($arn)) and (.Resource|map({(.):0})[]|has($arn+"/*")) and .Condition.Bool."aws:SecureTransport" == "false")')
         if [[ $CHECK_BUCKET_STP_POLICY_PRESENT ]]; then
-          textPass "Bucket $bucket has S3 bucket policy to deny requests over insecure transport"
+          textPass "Bucket $bucket has S3 bucket policy to deny requests over insecure transport" "us-east-1" "$bucket"
         else
-          textFail "Bucket $bucket allows requests over insecure transport"
+          textFail "Bucket $bucket allows requests over insecure transport" "us-east-1" "$bucket"
         fi
       else
           textInfo "Unknown Error occurred: $policy_str"

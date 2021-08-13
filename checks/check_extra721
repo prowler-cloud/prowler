@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra721="7.21"
-CHECK_TITLE_extra721="[extra721] Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra721="[extra721] Check if Redshift cluster has audit logging enabled"
 CHECK_SCORED_extra721="NOT_SCORED"
 CHECK_TYPE_extra721="EXTRA"
 CHECK_SEVERITY_extra721="Medium"
@@ -24,7 +24,7 @@ CHECK_DOC_extra721='https://docs.aws.amazon.com/redshift/latest/mgmt/db-auditing
 CHECK_CAF_EPIC_extra721='Logging and Monitoring'
 
 extra721(){
-  # "Check if Redshift cluster has audit logging enabled (Not Scored) (Not part of CIS benchmark)"
+  # "Check if Redshift cluster has audit logging enabled "
   for regx in $REGIONS; do
     LIST_OF_REDSHIFT_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --region $regx --query 'Clusters[*].ClusterIdentifier' --output text)
     if [[ $LIST_OF_REDSHIFT_CLUSTERS ]]; then
@@ -32,9 +32,9 @@ extra721(){
         REDSHIFT_LOG_ENABLED=$($AWSCLI redshift describe-logging-status $PROFILE_OPT --region $regx --cluster-identifier $redshiftcluster --query LoggingEnabled --output text | grep True)
         if [[ $REDSHIFT_LOG_ENABLED ]];then
           REDSHIFT_LOG_ENABLED_BUCKET=$($AWSCLI redshift describe-logging-status $PROFILE_OPT --region $regx --cluster-identifier $redshiftcluster --query BucketName --output text)
-          textPass "$regx: Redshift cluster $redshiftcluster has audit logging enabled to bucket $REDSHIFT_LOG_ENABLED_BUCKET" "$regx"
+          textPass "$regx: Redshift cluster $redshiftcluster has audit logging enabled to bucket $REDSHIFT_LOG_ENABLED_BUCKET" "$regx" "$redshiftcluster"
         else
-          textFail "$regx: Redshift cluster $redshiftcluster logging disabled!" "$regx"
+          textFail "$regx: Redshift cluster $redshiftcluster logging disabled!" "$regx" "$redshiftcluster"
         fi
       done
     else

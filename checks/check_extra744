@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra744="7.44"
-CHECK_TITLE_extra744="[extra744] Check if API Gateway has a WAF ACL attached (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra744="[extra744] Check if API Gateway has a WAF ACL attached"
 CHECK_SCORED_extra744="NOT_SCORED"
 CHECK_TYPE_extra744="EXTRA"
 CHECK_SEVERITY_extra744="Medium"
@@ -35,9 +35,9 @@ extra744(){
           for stage in $LIST_OF_STAGES; do
             CHECK_WAFACL=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-stages --rest-api-id $api --query "item[?stageName==\`$stage\`].webAclArn" --output text)
             if [[ $CHECK_WAFACL ]]; then
-                textPass "$regx: API Gateway $API_GW_NAME ID $api in $stage has $CHECK_WAFACL WAF ACL attached" "$regx"
+                textPass "$regx: API Gateway $API_GW_NAME ID $api in $stage has $CHECK_WAFACL WAF ACL attached" "$regx" "$API_GW_NAME"
               else
-                textFail "$regx: API Gateway $API_GW_NAME ID $api in $stage has not WAF ACL attached" "$regx"
+                textFail "$regx: API Gateway $API_GW_NAME ID $api in $stage has not WAF ACL attached" "$regx" "$API_GW_NAME"
             fi
           done
         fi

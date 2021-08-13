@@ -24,7 +24,6 @@ CHECK_DOC_extra797='https://docs.aws.amazon.com/eks/latest/userguide/create-clus
 CHECK_CAF_EPIC_extra797='Data Protection'
 
 extra797(){
-  textInfo "Looking for encryption config for EKS clusters across all regions... "
   for regx in $REGIONS; do
     CLUSTERS=$($AWSCLI eks list-clusters $PROFILE_OPT --region $regx --query 'clusters[]' --output text)
     if [[ $CLUSTERS ]]; then
@@ -32,9 +31,9 @@ extra797(){
         ENC_CONFIG=$($AWSCLI eks describe-cluster $PROFILE_OPT --region $regx --name $CLUSTER --query 'cluster.encryptionConfig')
 
         if [[ $ENC_CONFIG == "null" ]]; then
-           textFail "$regx: Encryption for Kubernetes secrets is not configured for EKS cluster $CLUSTER" "$regx"
+           textFail "$regx: Encryption for Kubernetes secrets is not configured for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
         else
-           textPass "$regx: Encryption for Kubernetes secrets is configured for EKS cluster $CLUSTER" "$regx"
+           textPass "$regx: Encryption for Kubernetes secrets is configured for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
         fi
       done
     else

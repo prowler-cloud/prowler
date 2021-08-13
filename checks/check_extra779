@@ -45,7 +45,7 @@ extra779(){
             if [[ "$eip" == "None" ]];then
               textInfo "$regx: Found instance $instance with private IP on Security Group: $sg" "$regx"
             else
-              textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg open to 0.0.0.0/0 on for Elasticsearch/Kibana ports - use extra787 to test AUTH" "$regx"
+              textFail "$regx: Found instance $instance with public IP $eip on Security Group: $sg open to 0.0.0.0/0 on for Elasticsearch/Kibana ports - use extra787 to test AUTH" "$regx" "$sg" 
             fi
           done < <(cat $TEMP_EXTRA779_FILE)
         fi

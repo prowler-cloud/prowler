@@ -29,8 +29,9 @@ case "$REGION" in
   ;;
 esac
 
-GETCALLER=$($AWSCLI sts get-caller-identity $PROFILE_OPT --region $REGION_FOR_STS 2>&1)
-if [[ $(echo "$GETCALLER" | grep 'Unable') ]]; then
+GETCALLER=$($AWSCLI sts get-caller-identity $PROFILE_OPT --output json --region $REGION_FOR_STS 2>&1)
+ret=$?
+if [[ $ret -ne 0 ]]; then
   if [[ $PRINTCHECKSONLY || $PRINTGROUPSONLY ]]; then
     echo Listing... 
   else

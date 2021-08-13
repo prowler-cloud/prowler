@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra74="7.4"
-CHECK_TITLE_extra74="[extra74] Ensure there are no Security Groups without ingress filtering being used (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra74="[extra74] Ensure there are no Security Groups without ingress filtering being used"
 CHECK_SCORED_extra74="NOT_SCORED"
 CHECK_TYPE_extra74="EXTRA"
 CHECK_SEVERITY_extra74="High"
@@ -27,16 +27,15 @@ CHECK_DOC_extra74='https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Security
 CHECK_CAF_EPIC_extra74='Infrastructure Security'
 
 extra74(){
-  # "Ensure there are no Security Groups without ingress filtering being used (Not Scored) (Not part of CIS benchmark)"
-  textInfo "Looking for Security Groups in all regions...  "
+  # "Ensure there are no Security Groups without ingress filtering being used "
   for regx in $REGIONS; do
     LIST_OF_SECURITYGROUPS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --filters "Name=ip-permission.cidr,Values=0.0.0.0/0" --query "SecurityGroups[].[GroupId]" --output text --max-items $MAXITEMS)
     for SG_ID in $LIST_OF_SECURITYGROUPS; do
       SG_NO_INGRESS_FILTER=$($AWSCLI ec2 describe-network-interfaces $PROFILE_OPT --region $regx --filters "Name=group-id,Values=$SG_ID" --query "length(NetworkInterfaces)" --output text)
       if [[ $SG_NO_INGRESS_FILTER -ne 0 ]];then
-        textFail "$regx: $SG_ID has no ingress filtering and it is being used!" "$regx"
+        textFail "$regx: $SG_ID has no ingress filtering and it is being used!" "$regx" "$SG_ID"
       else
-        textInfo "$regx: $SG_ID has no ingress filtering but it is not being used" "$regx"
+        textInfo "$regx: $SG_ID has no ingress filtering but it is not being used" "$regx" "$SG_ID"
       fi
     done
   done

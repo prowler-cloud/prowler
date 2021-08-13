@@ -31,9 +31,9 @@ extra7105(){
 			for nb_model_name in $LIST_SM_NB_MODELS; do
 				SM_NB_NETWORKISOLATION=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-model --model-name $nb_model_name --query 'EnableNetworkIsolation' --output text)
 				if [[ $SM_NB_NETWORKISOLATION == False ]]; then
-					textFail "${regx}: SageMaker Model $nb_model_name has network isolation disabled" "${regx}"
+					textFail "${regx}: SageMaker Model $nb_model_name has network isolation disabled" "${regx}" "$nb_model_name"
 				else
-					textPass "${regx}: SageMaker Model $nb_model_name has network isolation enabled" "${regx}"
+					textPass "${regx}: SageMaker Model $nb_model_name has network isolation enabled" "${regx}" "$nb_model_name"
 				fi 
 			done
 		else 

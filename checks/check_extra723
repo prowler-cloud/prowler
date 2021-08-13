@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra723="7.23"
-CHECK_TITLE_extra723="[extra723] Check if RDS Snapshots and Cluster Snapshots are public (Not Scored) (Not part of CIS benchmark)"
+CHECK_TITLE_extra723="[extra723] Check if RDS Snapshots and Cluster Snapshots are public"
 CHECK_SCORED_extra723="NOT_SCORED"
 CHECK_TYPE_extra723="EXTRA"
 CHECK_SEVERITY_extra723="Critical"
@@ -24,7 +24,7 @@ CHECK_DOC_extra723='https://docs.aws.amazon.com/config/latest/developerguide/rds
 CHECK_CAF_EPIC_extra723='Data Protection'
 
 extra723(){
-  # "Check if RDS Snapshots are public (Not Scored) (Not part of CIS benchmark)"
+  # "Check if RDS Snapshots are public "
   for regx in $REGIONS; do
     # RDS snapshots
     LIST_OF_RDS_SNAPSHOTS=$($AWSCLI rds describe-db-snapshots $PROFILE_OPT --region $regx --query DBSnapshots[*].DBSnapshotIdentifier --output text)
@@ -32,13 +32,13 @@ extra723(){
       for rdssnapshot in $LIST_OF_RDS_SNAPSHOTS;do
         SNAPSHOT_IS_PUBLIC=$($AWSCLI rds describe-db-snapshot-attributes $PROFILE_OPT --region $regx --db-snapshot-identifier $rdssnapshot --query DBSnapshotAttributesResult.DBSnapshotAttributes[*] --output text|grep ^ATTRIBUTEVALUES|cut -f2|grep all)
         if [[ $SNAPSHOT_IS_PUBLIC ]];then
-          textFail "$regx: RDS Snapshot $rdssnapshot is public!" "$regx"
+          textFail "$regx: RDS Snapshot $rdssnapshot is public!" "$regx" "$rdssnapshot"
         else
-          textPass "$regx: RDS Snapshot $rdssnapshot is not shared" "$regx"
+          textPass "$regx: RDS Snapshot $rdssnapshot is not shared" "$regx" "$rdssnapshot"
         fi
       done
     else
-      textInfo "$regx: No RDS Snapshots found" "$regx"
+      textInfo "$regx: No RDS Snapshots found" "$regx" "$rdssnapshot"
     fi
     # RDS cluster snapshots
     LIST_OF_RDS_CLUSTER_SNAPSHOTS=$($AWSCLI rds describe-db-cluster-snapshots $PROFILE_OPT --region $regx --query DBClusterSnapshots[*].DBClusterSnapshotIdentifier --output text)
@@ -46,13 +46,13 @@ extra723(){
       for rdsclustersnapshot in $LIST_OF_RDS_CLUSTER_SNAPSHOTS;do
         CLUSTER_SNAPSHOT_IS_PUBLIC=$($AWSCLI rds describe-db-cluster-snapshot-attributes $PROFILE_OPT --region $regx --db-cluster-snapshot-identifier $rdsclustersnapshot --query DBClusterSnapshotAttributesResult.DBClusterSnapshotAttributes[*] --output text|grep ^ATTRIBUTEVALUES|cut -f2|grep all)
         if [[ $CLUSTER_SNAPSHOT_IS_PUBLIC ]];then
-          textFail "$regx: RDS Cluster Snapshot $rdsclustersnapshot is public!" "$regx"
+          textFail "$regx: RDS Cluster Snapshot $rdsclustersnapshot is public!" "$regx" "$rdsclustersnapshot"
         else
-          textPass "$regx: RDS Cluster Snapshot $rdsclustersnapshot is not shared" "$regx"
+          textPass "$regx: RDS Cluster Snapshot $rdsclustersnapshot is not shared" "$regx" "$rdsclustersnapshot"
         fi
       done
     else
-      textInfo "$regx: No RDS Cluster Snapshots found" "$regx"
+      textInfo "$regx: No RDS Cluster Snapshots found" "$regx" "$rdsclustersnapshot"
     fi
   done
 }

@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (c) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
 #
-# This Prowler check is licensed under a
-# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the license along with this
-# work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
 CHECK_ID_check122="1.22"
-CHECK_TITLE_check122="[check122] Ensure IAM policies that allow full \"*:*\" administrative privileges are not created (Scored)"
+CHECK_TITLE_check122="[check122] Ensure IAM policies that allow full \"*:*\" administrative privileges are not created"
 CHECK_SCORED_check122="SCORED"
 CHECK_TYPE_check122="LEVEL1"
 CHECK_SEVERITY_check122="Medium"
@@ -26,7 +29,6 @@ check122(){
   # "Ensure IAM policies that allow full \"*:*\" administrative privileges are not created (Scored)"
   LIST_CUSTOM_POLICIES=$($AWSCLI iam list-policies --output text $PROFILE_OPT --region $REGION --scope Local --query 'Policies[*].[Arn,DefaultVersionId]' | grep -v -e '^None$' | awk -F '\t' '{print $1","$2"\n"}')
   if [[ $LIST_CUSTOM_POLICIES ]]; then
-    textInfo "Looking for custom policies: (skipping default policies - it may take few seconds...)"
     for policy in $LIST_CUSTOM_POLICIES; do
       POLICY_ARN=$(echo $policy | awk -F ',' '{print $1}')
       POLICY_VERSION=$(echo $policy | awk -F ',' '{print $2}')
@@ -36,14 +38,13 @@ check122(){
       fi
     done
     if [[ $POLICIES_ALLOW_LIST ]]; then
-      textInfo "List of custom policies: "
       for policy in $POLICIES_ALLOW_LIST; do
-        textFail "Policy $policy allows \"*:*\""
+        textFail "$REGION: Policy $policy allows \"*:*\"" "$REGION" "$policy"
       done
     else
-        textPass "No custom policy found that allow full \"*:*\" administrative privileges"
+        textPass "$REGION: No custom policy found that allow full \"*:*\" administrative privileges" "$REGION" "$policy"
     fi
   else
-    textPass "No custom policies found"
+    textPass "$REGION: No custom policies found" "$REGION" "$policy"
   fi
 }
