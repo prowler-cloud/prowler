@@ -141,7 +141,7 @@ Resources:
           - id: W28
             reason: "Explicit name is required for this resource to avoid circular dependencies."
     Properties:
-      RoleName: !Sub 'prowler-codebuild-role-${ServiceName}-${AWS::StackName}'
+      RoleName: !Sub 'prowler-codebuild-role'
       Path: '/service-role/'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/job-function/SupportUser'
