@@ -29,7 +29,7 @@ extra7139(){
     if [[ $DETECTORS_LIST ]];then
       for DETECTOR in $DETECTORS_LIST;do
         FINDINGS_COUNT=""
-        FINDINGS_COUNT=$($AWSCLI $PROFILE_OPT --region $regx --output text guardduty list-findings --detector-id $DETECTOR --finding-criteria '{"Criterion":{"severity": {"Eq":["8"]}}}' 2> /dev/null | wc -l | xargs) # Severity LOW=2, MED=4, HIGH=8
+        FINDINGS_COUNT=$($AWSCLI $PROFILE_OPT --region $regx --output text guardduty list-findings --detector-id $DETECTOR --finding-criteria '{"Criterion":{"severity": {"Eq":["8"]}, "service.archived": {"Eq": ["false"]}}}' 2> /dev/null | wc -l | xargs) # Severity LOW=2, MED=4, HIGH=8
           if [[ $FINDINGS_COUNT -gt 0 ]];then
             textFail "$regx: GuardDuty has $FINDINGS_COUNT high severity findings." "$regx"
           else
