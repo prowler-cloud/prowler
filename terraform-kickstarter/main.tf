@@ -229,7 +229,7 @@ variable "enable_security_hub_prowler_subscription" {
 variable "prowler_cli_options" {
   description = "Run Prowler With The Following Command"
   type        = string
-  default     =  "-q -M json_asff -S -f us-east-1"
+  default     =  "-q -M json-asff -S -f us-east-1"
 }
 variable "prowler_schedule"{
   description = "Run Prowler based on cron schedule"
@@ -267,7 +267,6 @@ output "account_id" {
   value = data.aws_caller_identity.current.account_id
 }
 resource "aws_iam_role" "prowler_kick_start_role" {
-  depends_on          = [aws.iam.policy.prowler_kickstarter_iam_policy]
   name                = "security_baseline_kickstarter_iam_role"
   managed_policy_arns = ["${data.aws_iam_policy.SecurityAudit.arn}",
                          "arn:aws:iam::aws:policy/job-function/SupportUser",
