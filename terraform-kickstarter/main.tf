@@ -229,7 +229,7 @@ variable "enable_security_hub_prowler_subscription" {
 variable "prowler_cli_options" {
   description = "Run Prowler With The Following Command"
   type        = string
-  default     =  "_q _M json_asff _S _f us_east_1"
+  default     =  "-q -M json_asff -S -f us-east-1"
 }
 variable "prowler_schedule"{
   description = "Run Prowler based on cron schedule"
@@ -336,7 +336,7 @@ resource "aws_iam_policy" "prowler_kickstarter_iam_policy" {
             "logs:PutLogEvents"
             ],
         Effect   = "Allow"
-        Resource =  "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log-group:*"
+        Resource =  "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log-group:*:log-stream:*"
       },
        {
         Action =  [
@@ -376,7 +376,7 @@ resource "aws_iam_policy" "prowler_kickstarter_iam_policy" {
                 "codebuild:BatchPutCodeCoverages"
                                     ]
         Effect   = "Allow"
-        Resource = "arn:aws:codebuild:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:report_group/*"
+        Resource = "arn:aws:codebuild:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:report-group/*"
                                     
       },
        {
@@ -396,7 +396,7 @@ resource "aws_iam_policy" "prowler_kickstarter_iam_policy" {
       },
       {
             "Action": ["s3:PutObject", "s3:GetObject", "s3:GetObjectVersion", "s3:GetBucketAcl", "s3:GetBucketLocation"],
-            "Resource": "arn:aws:s3:::prowler_kickstart_${data.aws_region.current.name}_${data.aws_caller_identity.current.account_id}_reports/*",
+            "Resource": "arn:aws:s3:::prowler-kickstart-${data.aws_region.current.name}_${data.aws_caller_identity.current.account_id}-reports/*",
             "Effect": "Allow"
       },
     ]
