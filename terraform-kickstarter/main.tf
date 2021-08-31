@@ -395,7 +395,7 @@ resource "aws_iam_policy" "prowler_kickstarter_iam_policy" {
       },
       {
             "Action": ["s3:PutObject", "s3:GetObject", "s3:GetObjectVersion", "s3:GetBucketAcl", "s3:GetBucketLocation"],
-            "Resource": "arn:aws:s3:::prowler-kickstart-${data.aws_region.current.name}_${data.aws_caller_identity.current.account_id}-reports/*",
+            "Resource": "arn:aws:s3:::prowler-kickstart-${data.aws_region.current.name}-${data.aws_caller_identity.current.account_id}-reports/*",
             "Effect": "Allow"
       },
     ]
@@ -470,7 +470,7 @@ resource "aws_s3_bucket_public_access_block" "prowler_report_storage_bucket_bloc
 
 resource "aws_codebuild_project" "prowler_codebuild" {
   name          = "security_baseline_kickstarter_codebuild"
-  description   = "Run a Prowler Assessment Kicing Starting Prowler"
+  description   = "Run a Prowler Assessment with Prowler"
   build_timeout = var.codebuild_timeout
   service_role  = aws_iam_role.prowler_kick_start_role.arn
 
