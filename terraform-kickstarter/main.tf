@@ -267,7 +267,8 @@ output "account_id" {
   value = data.aws_caller_identity.current.account_id
 }
 resource "aws_iam_role" "prowler_kick_start_role" {
-  name               = "security_baseline_kickstarter_iam_role"
+  depends_on          = [aws.iam.policy.prowler_kickstarter_iam_policy]
+  name                = "security_baseline_kickstarter_iam_role"
   managed_policy_arns = ["${data.aws_iam_policy.SecurityAudit.arn}",
                          "arn:aws:iam::aws:policy/job-function/SupportUser",
                          "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess"]
@@ -335,7 +336,7 @@ resource "aws_iam_policy" "prowler_kickstarter_iam_policy" {
             "logs:PutLogEvents"
             ],
         Effect   = "Allow"
-        Resource =  "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log_group:*:log_stream:*"
+        Resource =  "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log-group:*"
       },
        {
         Action =  [
@@ -343,7 +344,7 @@ resource "aws_iam_policy" "prowler_kickstarter_iam_policy" {
             "logs:CreateLogGroup"
             ],
         Effect   = "Allow"
-        Resource =  "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log_group:*"
+        Resource =  "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log-group:*"
       },
        {
         Action =  ["sts:AssumeRole"],
