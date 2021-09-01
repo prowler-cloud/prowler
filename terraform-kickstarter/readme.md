@@ -2,17 +2,14 @@
 
 ## Introduction
 
-The following demonstartes how to quickly install the resources necessary to perform a baseline using Prowler.  The speed is based on the prebuilt terraform script that can configure all the resources necessuary to run Prowler with the findings being sent to AWS Security Hub.
-
-  ![Prowler Subscription](docs/Prowler-Terraform-Install.gif)
-
+The following demonstartes how to quickly install the resources necessary to perform a security baseline using Prowler.  The speed is based on the prebuilt terraform module that can configure all the resources necessuary to run Prowler with the findings being sent to AWS Security Hub.
 
 ## Install
 
 Installing Prowler with Terraform is simple and can be completed in under 1 minute.
 
 - Start AWS CloudShell
-- Run the following commands to install Terraform and clone the repo
+- Run the following commands to install Terraform and clone the Prowler git repo
   ```
   git clone https://github.com/singergs/prowler.git
   git fetch
@@ -21,19 +18,22 @@ Installing Prowler with Terraform is simple and can be completed in under 1 minu
   sudo yum install -y yum-utils
   sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
   sudo yum -y install terraform
-  cd terraform-kickstart
+  cd terraform-kickstarter
   ```
 - Issue a `terraform init`
   
 - Issue a `terraform apply`
+
+  ![Prowler Install](docs/Prowler-Terraform-Install.gif)
   
    - It is likely an error will return related to the SecurityHub subscription.  This appears to be Terraform related and you can validate the configuration by navigating to the SecurityHub console.  Click Integreations and search for Prowler. Take noe of the green check where it says *Accepting findings*
   
   ![Prowler Subscription](docs/Validate-Prowler-Subscription.gif)
 
-- Re-Issue a `terraform apply` to ensure all IAM roles have been configured successfully
 
-## Resources
+Thats it!  Install is now complete.  The resources included a Cloudwatch event that will trigger the AWS Codebuild to run daily at 00:00 GMT.  If you'd like to run an assessment after the deployment then simply navigate to the Codebuild console and start the job manually.
+
+## Terraform Resources
 
 | Name | Type |
 |------|------|
@@ -54,3 +54,9 @@ Installing Prowler with Terraform is simple and can be completed in under 1 minu
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy.SecurityAudit](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
+
+## Kickoff Prowler Assessment From Install to Assessment Demo
+
+  ![Prowler Install](docs/Demo.m4v)
+
+
