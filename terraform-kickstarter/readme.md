@@ -35,6 +35,24 @@ Thats it!  Install is now complete.  The resources included a Cloudwatch event t
 
 ## Terraform Resources
 
+## Requirements
+
+| Name | Version |
+|------|---------|
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 3.54 |
+
+## Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 3.56.0 |
+
+## Modules
+
+No modules.
+
+## Resources
+
 | Name | Type |
 |------|------|
 | [aws_cloudwatch_event_rule.prowler_check_scheduler_event](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
@@ -54,6 +72,23 @@ Thats it!  Install is now complete.  The resources included a Cloudwatch event t
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy.SecurityAudit](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
+
+## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_codebuild_timeout"></a> [codebuild\_timeout](#input\_codebuild\_timeout) | Codebuild timeout setting | `number` | `300` | no |
+| <a name="input_enable_security_hub"></a> [enable\_security\_hub](#input\_enable\_security\_hub) | Enable AWS SecurityHub. | `bool` | `true` | no |
+| <a name="input_enable_security_hub_prowler_subscription"></a> [enable\_security\_hub\_prowler\_subscription](#input\_enable\_security\_hub\_prowler\_subscription) | Enable a Prowler Subscription. | `bool` | `true` | no |
+| <a name="input_prowler_cli_options"></a> [prowler\_cli\_options](#input\_prowler\_cli\_options) | Run Prowler With The Following Command | `string` | `"-q -M json-asff -S -f us-east-1"` | no |
+| <a name="input_prowler_schedule"></a> [prowler\_schedule](#input\_prowler\_schedule) | Run Prowler based on cron schedule | `string` | `"cron(0 0 ? * * *)"` | no |
+| <a name="input_select_region"></a> [select\_region](#input\_select\_region) | Uses the following AWS Region. | `string` | `"us-east-1"` | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_account_id"></a> [account\_id](#output\_account\_id) | n/a |
 
 ## Kickoff Prowler Assessment From Install to Assessment Demo
 

@@ -213,282 +213,39 @@ terraform import aws_securityhub_account.securityhubresource 123456789012
 
 */
 
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 3.54"
-    }
-  }
-}
-provider "aws" {
-  region = var.select_region
+variable "select_region" {
+  description = "Uses the following AWS Region."
+  type        = string
+  default     = "us-east-1"
 }
 
-resource "aws_iam_role" "prowler_kick_start_role" {
-  name                = "security_baseline_kickstarter_iam_role"
-  managed_policy_arns = ["${data.aws_iam_policy.SecurityAudit.arn}",
-                         "arn:aws:iam::aws:policy/job-function/SupportUser",
-                         "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess"]
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action="sts:AssumeRole"
-        Effect="Allow"
-        Sid = "CodeBuildProwler"
-        Principal = {Service="codebuild.amazonaws.com"}
-      }
-    ]
-  })
-  force_detach_policies=true
+variable "enable_security_hub" {
+  description = "Enable AWS SecurityHub."
+  type        = bool
+  default     = true
 }
-resource "aws_iam_role" "prowler_event_trigger_role" {
-    name = "security_baseline_kickstarter_event_trigger_iam_role"
-    assume_role_policy = jsonencode({
-                              Version = "2012-10-17"
-                              Statement = [
-                                {
-                                  Action="sts:AssumeRole"
-                                  Effect="Allow"
-                                  Sid = "TriggerCodeBuild"
-                                  Principal = {Service="events.amazonaws.com"}
-                                }
-                              ]
-                            })
-    
+
+variable "enable_security_hub_prowler_subscription" {
+  description = "Enable a Prowler Subscription."
+  type        = bool
+  default     = true
 }
-resource "aws_iam_policy" "prowler_event_trigger_policy" {
-  depends_on        = [aws_codebuild_project.prowler_codebuild]
-  name        = "security_baseline_kickstarter_trigger_iam_policy"
-  path        = "/"
-  description = "IAM Policy used to trigger the Prowler in AWS Codebuild"
-  policy = jsonencode({
-     Version = "2012-10-17"
-    Statement = [
-      {
-        Action =  ["codebuild:StartBuild"],
-        Effect   = "Allow"
-        Resource =  aws_codebuild_project.prowler_codebuild.arn
-      }]
-  })
+
+variable "prowler_cli_options" {
+  description = "Run Prowler With The Following Command"
+  type        = string
+  default     =  "-q -M json-asff -S -f us-east-1"
 }
-resource "aws_iam_policy_attachment" "prowler_event_trigger_policy_attach" {
-  depends_on = [aws_iam_policy.prowler_event_trigger_policy]
-  name       = "prowler_event_trigger_policy_attach"
-  roles      = toset([aws_iam_role.prowler_event_trigger_role.id])
-  policy_arn = aws_iam_policy.prowler_event_trigger_policy.arn
+
+variable "prowler_schedule"{
+  description = "Run Prowler based on cron schedule"
+  default="cron(0 0 ? * * *)"
+  type=string
+
 }
-resource "aws_iam_policy" "prowler_kickstarter_iam_policy" {
-  name        = "security_baseline_kickstarter_iam_policy"
-  path        = "/"
-  description = "IAM Policy used to run prowler from codebuild"
 
-  # Terraform's "jsonencode" function converts a
-  # Terraform expression result to valid JSON syntax.
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action =  [
-            "logs:PutLogEvents"
-            ],
-        Effect   = "Allow"
-        Resource =  "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log-group:*:log-stream:*"
-      },
-       {
-        Action =  [
-            "logs:CreateLogStream",
-            "logs:CreateLogGroup"
-            ],
-        Effect   = "Allow"
-        Resource =  "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log-group:*"
-      },
-       {
-        Action =  ["sts:AssumeRole"],
-        Effect   = "Allow"
-        Resource =  "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${aws_iam_role.prowler_kick_start_role.name}"
-      },
-      {
-        Action =  [
-                  "s3:GetAccountPublicAccessBlock",
-                  "glue:GetConnections",
-                  "glue:SearchTables",
-                  "ds:ListAuthorizedApplications",
-                  "ec2:GetEbsEncryptionByDefault",
-                  "ecr:Describe*",
-                  "support:Describe*",
-                  "tag:GetTagKeys",
-                  "lambda:GetFunction"
-                  ]
-        Effect   = "Allow"
-        Resource = "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog"
-                                    
-      },
-      {
-        Action =  [
-                "codebuild:CreateReportGroup",
-                "codebuild:CreateReport",
-                "codebuild:UpdateReport",
-                "codebuild:BatchPutTestCases",
-                "codebuild:BatchPutCodeCoverages"
-                                    ]
-        Effect   = "Allow"
-        Resource = "arn:aws:codebuild:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:report-group/*"
-                                    
-      },
-       {
-        Action =  [ "securityhub:BatchImportFindings"]
-        Effect   = "Allow"
-        Resource = "*"                      
-      },
-             {
-        Action =  [ "securityhub:GetFindings"]
-        Effect   = "Allow"
-        Resource = "*"                      
-      },
-      { 
-            "Action": "codebuild:StartBuild",
-            "Resource": "arn:aws:codebuild:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:project/*",
-            "Effect": "Allow"
-      },
-      {
-            "Action": ["s3:PutObject", "s3:GetObject", "s3:GetObjectVersion", "s3:GetBucketAcl", "s3:GetBucketLocation"],
-            "Resource": "arn:aws:s3:::prowler-kickstart-${data.aws_region.current.name}-${data.aws_caller_identity.current.account_id}-reports/*",
-            "Effect": "Allow"
-      },
-    ]
-  })
+variable "codebuild_timeout" {
+  description = "Codebuild timeout setting"
+  default = 300
+  type=number
 }
-resource "aws_iam_policy_attachment" "prowler_kickstarter_iam_policy_attach" {
-  depends_on = [aws_iam_policy.prowler_kickstarter_iam_policy]
-  name       = "security_baseline_kickstarter_policy_attach"
-  roles      = toset([aws_iam_role.prowler_kick_start_role.id])
-  policy_arn = aws_iam_policy.prowler_kickstarter_iam_policy.arn
-}
-resource "aws_s3_bucket" "prowler_report_storage_bucket" {
-    bucket = "prowler-kickstart-${data.aws_region.current.name}-${data.aws_caller_identity.current.account_id}-reports"
-    acl = "log-delivery-write"
-    versioning {
-        enabled = true
-    }
-    server_side_encryption_configuration {
-        rule {
-            apply_server_side_encryption_by_default {
-                sse_algorithm     = "AES256"
-            }
-        }
-    }
-    }
-
-resource "aws_s3_bucket_policy" "prowler_report_storage_bucket_policy" {
-    depends_on = [aws_s3_bucket.prowler_report_storage_bucket]
-    bucket = aws_s3_bucket.prowler_report_storage_bucket.id
-    policy = jsonencode({Version = "2012-10-17"
-                            Id      = "ProwlerBucketReportPolicy"
-                            Statement = [
-                            {
-                                Sid       = "S3ForceSSL"
-                                Effect    = "Deny"
-                                Principal = "*"
-                                Action    = "s3:*"
-                                Resource = ["${aws_s3_bucket.prowler_report_storage_bucket.arn}/*"]
-                                Condition = {
-                                Bool = {
-                                    "aws:SecureTransport" = "false"
-                                    }
-                                }
-                            },
-                            {
-                                Sid       = "DenyUnEncryptedObjectUploads"
-                                Effect    = "Deny"
-                                Principal = "*"
-                                Action    = "s3:*"
-                                Resource = ["${aws_s3_bucket.prowler_report_storage_bucket.arn}/*"]
-                                Condition = {
-                                Null = {
-                                    "s3:x-amz-server-side-encryption" = "true"
-                                    }
-                                }
-                            }
-                            
-                            ]
-                        })
-                        }
-
-
-
-resource "aws_s3_bucket_public_access_block" "prowler_report_storage_bucket_block_public" {
-    depends_on = [aws_s3_bucket.prowler_report_storage_bucket, aws_s3_bucket_policy.prowler_report_storage_bucket_policy]
-    bucket = aws_s3_bucket.prowler_report_storage_bucket.id
-    block_public_acls   = true
-    block_public_policy = true
-    ignore_public_acls = true
-    restrict_public_buckets = true
-    }
-
-resource "aws_codebuild_project" "prowler_codebuild" {
-  name          = "security_baseline_kickstarter_codebuild"
-  description   = "Run a Prowler Assessment with Prowler"
-  build_timeout = var.codebuild_timeout
-  service_role  = aws_iam_role.prowler_kick_start_role.arn
-
-  artifacts {
-    type = "NO_ARTIFACTS"
-  }
-
-  environment {
-    compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
-    type                        = "LINUX_CONTAINER"
-
-    environment_variable {
-      name  = "BUCKET_REPORT"
-      value = "${aws_s3_bucket.prowler_report_storage_bucket.id}"
-    }
-
-    environment_variable {
-      name  = "PROWLER_OPTIONS"
-      type  = "PLAINTEXT"
-      value = var.prowler_cli_options
-        }
-    }
-
-
-  source {
-    type            = "NO_SOURCE"
-    buildspec       =  "${file("prowler_build_spec.yml")}"
-    }
-
-  tags = {
-    Environment = "Prowler KickStarter"
-        }
-    }
-
-
-
-
-
-resource "aws_securityhub_account" "securityhub_resource" { 
-    }
-
-resource "aws_securityhub_product_subscription" "security_hub_enable_prowler_findings" {
-  depends_on  = [aws_securityhub_account.securityhub_resource]
-  //arn:aws:securityhub:<REGION>::product/prowler/prowler
-  product_arn = "arn:aws:securityhub:${data.aws_region.current.name}::product/prowler/prowler"
-    }
-
-resource "aws_cloudwatch_event_rule" "prowler_check_scheduler_event" {
-
-    name = "security_baseline_kickstarter_event_cron"
-    description = "Run Prowler every night"
-    schedule_expression = var.prowler_schedule
-    }
-
-resource "aws_cloudwatch_event_target" "run_prowler_scan" {
-
-  arn       = aws_codebuild_project.prowler_codebuild.arn
-  rule      = aws_cloudwatch_event_rule.prowler_check_scheduler_event.name
-  role_arn  = aws_iam_role.prowler_event_trigger_role.arn
-
-    }
