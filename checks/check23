@@ -23,7 +23,7 @@ CHECK_ASFF_COMPLIANCE_TYPE_check23="ens-op.exp.10.aws.trail.3 ens-op.exp.10.aws.
 CHECK_SERVICENAME_check23="cloudtrail"
 CHECK_RISK_check23='Allowing public access to CloudTrail log content may aid an adversary in identifying weaknesses in the affected accounts use or configuration.'
 CHECK_REMEDIATION_check23='Analyze Bucket policy to validate appropriate permissions. Ensure the AllUsers principal is not granted privileges. Ensure the AuthenticatedUsers principal is not granted privileges.'
-CHECK_DOC_check23='https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html '
+CHECK_DOC_check23='https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html'
 CHECK_CAF_EPIC_check23='Logging and Monitoring'
 
 check23(){
