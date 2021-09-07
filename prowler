@@ -45,6 +45,7 @@ SEP=','
 KEEPCREDREPORT=0
 EXITCODE=0
 SEND_TO_SECURITY_HUB=0
+FAILED_CHECK_FAILED_SCAN=1
 PROWLER_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
 TITLE_ID=""
 TITLE_TEXT="CALLER ERROR - UNSET TITLE"
@@ -105,13 +106,16 @@ USAGE:
       -B                  Custom output bucket, requires -M <mode> and it can work also with -o flag.
                             (i.e.: -M csv -B my-bucket or -M csv -B my-bucket/folder/)
       -F                  Custom output report name, if not specified will use default output/prowler-output-ACCOUNT_NUM-OUTPUT_DATE
+      -z                  Failed Checks do not trigger exit code 3
+      -Z                  Specify one or multiple check ids separated by commas that will trigger exit code 3 if they fail. Unspecified checks will not trigger exit code 3. This will override "-z".
+                            (i.e.: "-Z check11,check12" will cause check11 and/or check12 to trigger exit code 3
       -V                  show version number & exit
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:zZ:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -203,6 +207,12 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:" OPTION; do
         ;;
      F )
         OUTPUT_FILE_NAME=$OPTARG
+        ;;
+     z )
+        FAILED_CHECK_FAILED_SCAN=0
+        ;;
+     Z )
+        FAILED_CHECK_FAILED_SCAN_LIST=$OPTARG
         ;;
      : )
         echo ""
