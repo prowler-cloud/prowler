@@ -32,3 +32,9 @@ junit-reports/
 
 # VSCode files
 .vscode/
+
+terraform-kickstarter/.terraform.lock.hcl
+
+terraform-kickstarter/.terraform/providers/registry.terraform.io/hashicorp/aws/3.56.0/darwin_amd64/terraform-provider-aws_v3.56.0_x5
+
+terraform-kickstarter/terraform.tfstate
