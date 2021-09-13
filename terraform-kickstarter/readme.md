@@ -90,8 +90,7 @@ No modules.
 |------|-------------|
 | <a name="output_account_id"></a> [account\_id](#output\_account\_id) | n/a |
 
-## Kickoff Prowler Assessment From Install to Assessment Demo
+## Kickoff Prowler Assessment From Install to Assessment Demo (Link to YouTube)
 
-  ![Prowler Install](docs/Demo.m4v)
-
+ 
   [![Prowler Install](https://img.youtube.com/vi/ShhzIArO8X0/0.jpg)](https://www.youtube.com/watch?v=ShhzIArO8X0 "Prowler Install")
