@@ -26,22 +26,29 @@ assume_role(){
     # temporary file where to store credentials
     TEMP_STS_ASSUMED_FILE=$(mktemp -t prowler.sts_assumed-XXXXXX)
 
+    # check if role arn or role name
+    if [[ $ROLE_TO_ASSUME == arn:* ]]; then
+        PROWLER_ROLE=$ROLE_TO_ASSUME
+    else
+        PROWLER_ROLE=arn:${AWS_PARTITION}:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME
+    fi
+
     #Check if external ID has bee provided if so execute with external ID if not ignore
     if [[ -z $ROLE_EXTERNAL_ID ]]; then
         # assume role command
-        $AWSCLI $PROFILE_OPT sts assume-role --role-arn arn:${AWS_PARTITION}:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME \
+        $AWSCLI $PROFILE_OPT sts assume-role --role-arn $PROWLER_ROLE \
             --role-session-name ProwlerAssessmentSession \
             --region $REGION_FOR_STS \
             --duration-seconds $SESSION_DURATION_TO_ASSUME > $TEMP_STS_ASSUMED_FILE 2>&1
     else
-        $AWSCLI $PROFILE_OPT sts assume-role --role-arn arn:${AWS_PARTITION}:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME \
+        $AWSCLI $PROFILE_OPT sts assume-role --role-arn $PROWLER_ROLE \
             --role-session-name ProwlerAssessmentSession \
             --duration-seconds $SESSION_DURATION_TO_ASSUME \
             --region $REGION_FOR_STS \
             --external-id $ROLE_EXTERNAL_ID > $TEMP_STS_ASSUMED_FILE 2>&1
     fi
     if [[ $(grep AccessDenied $TEMP_STS_ASSUMED_FILE) ]]; then
-      textFail "Access Denied assuming role arn:${AWS_PARTITION}:iam::${ACCOUNT_TO_ASSUME}:role/${ROLE_TO_ASSUME}"
+      textFail "Access Denied assuming role $PROWLER_ROLE"
       rm -f $TEMP_STS_ASSUMED_FILE
       EXITCODE=1
       exit $EXITCODE
