@@ -28,9 +28,9 @@ extra7150(){
   for regx in $REGIONS; do
     LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].LoadBalancerArn' --output text|xargs -n1)
     if [[ $LIST_OF_ELBSV2 ]]; then
-      for elbarn in $LIST_OF_ELBSV2; do
-        CHECK_DELETION_PROTECTION_ENABLED=$($AWSCLI elbv2 describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-arn $elbarn --query Attributes[*] --output text|grep -B 1 "deletion_protection.enabled" | grep true)
-        ELBV2_NAME=$(echo $elbarn|cut -d\/ -f3)
+      for elb in $LIST_OF_ELBSV2; do
+        CHECK_DELETION_PROTECTION_ENABLED=$($AWSCLI elbv2 describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-arn $elb --query Attributes[*] --output text|grep "deletion_protection.enabled"|grep true )
+        ELBV2_NAME=$(echo $elb|cut -d\/ -f3)
         if [[ $CHECK_DELETION_PROTECTION_ENABLED ]]; then
           textPass "$regx: $ELBV2_NAME has the attribute deletion protection enabled" "$regx" "$elb"
         else
