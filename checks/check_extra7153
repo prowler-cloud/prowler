@@ -22,20 +22,20 @@
 #   --registrant-privacy \
 #   --tech-privacy
 
-CHECK_ID_extra7151="7.151"
-CHECK_TITLE_extra7151="[extra7151] Enable Privacy Protection for domain contact information"
-CHECK_SCORED_extra7151="NOT_SCORED"
-CHECK_TYPE_extra7151="EXTRA"
-CHECK_SEVERITY_extra7151="Medium"
-CHECK_ASFF_RESOURCE_TYPE_extra7151="AwsRoute53Domain"
-CHECK_ALTERNATE_check7151="extra7151"
-CHECK_SERVICENAME_extra7151="route53"
-CHECK_RISK_extra7151='Without privacy protection enabled, ones personal information is published to the public WHOIS database'
-CHECK_REMEDIATION_extra7151='Ensure default VPC is deleted'
-CHECK_DOC_extra7151='https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-privacy-protection.html'
-CHECK_CAF_EPIC_extra7151='Data Protection'
+CHECK_ID_extra7153="7.153"
+CHECK_TITLE_extra7153="[extra7153] Enable Transfer Lock for domains"
+CHECK_SCORED_extra7153="NOT_SCORED"
+CHECK_TYPE_extra7153="EXTRA"
+CHECK_SEVERITY_extra7153="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7153="AwsRoute53Domain"
+CHECK_ALTERNATE_check7153="extra7153"
+CHECK_SERVICENAME_extra7153="route53"
+CHECK_RISK_extra7153='Without transfer lock enabled, a domain name could be '
+CHECK_REMEDIATION_extra7153='Ensure default VPC is deleted'
+CHECK_DOC_extra7153='https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-privacy-protection.html'
+CHECK_CAF_EPIC_extra7153='Data Protection'
 
-extra7151(){
+extra7153(){
     echo "Route53 is a global service, looking for domains in US-EAST-1"
     DOMAIN_NAMES=$($AWSCLI route53domains list-domains $PROFILE_OPT --region us-east-1 --query 'Domains[*].DomainName' --output text )
     if [[ $DOMAIN_NAMES ]];then
