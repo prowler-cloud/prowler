@@ -1,1 +1,35 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+#
+# Remediation:
+#
+#   https://docs.aws.amazon.com/cli/latest/reference/cloudformation/update-termination-protection.html
+#
+#   aws cloudformation update-termination-protection \
+#   --stack-name my-stack \
+#   --enable-termination-protection
+
+CHECK_ID_extra7154="7.154"
+CHECK_TITLE_extra7154="[extra7154] Enable termination protection for Cloudformation Stacks"
+CHECK_SCORED_extra7154="NOT_SCORED"
+CHECK_TYPE_extra7154="EXTRA"
+CHECK_SEVERITY_extra7154="LOW"
+CHECK_ASFF_RESOURCE_TYPE_extra7154="AwsCloudFormationStack"
+CHECK_ALTERNATE_check7154="extra7154"
+CHECK_SERVICENAME_extra7154="cloudformation"
+CHECK_RISK_extra7154='Without termination protection enabled, a critical cloudformation stack can be accidently deleted.'
+CHECK_REMEDIATION_extra7154='Ensure termination protection is enabled for the cloudformation stacks'
+CHECK_DOC_extra7154='https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-protect-stacks.html'
+CHECK_CAF_EPIC_extra7154='Infrastructure Protection'
+
 
