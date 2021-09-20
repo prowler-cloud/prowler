@@ -39,8 +39,8 @@ extra7154() {
     if [[ $LIST_OF_CFN_STACKS ]];then
       for stack in $LIST_OF_CFN_STACKS; do
         CFN_STACK_DETAILS=$($AWSCLI cloudformation describe-stacks $PROFILE_OPT --region $regx --stack-name $stack --output json)
-        TERMINATION_ENABLED=echo $CFN_STACK_DETAILS | jq -r '.Stacks[] | select( .EnableTerminationProtection == true )'
-        if [[ $TERMINATION_ENABLED ]]; then
+        TERMINATION_ENABLED=$(echo $CFN_STACK_DETAILS | jq -r '.Stacks[].EnableTerminationProtection')
+        if [[ $TERMINATION_ENABLED == "true" ]]; then
           textPass "$regx: Cloudformation stack $stack has termination protection enabled" "$regx" "$stack"
         else
           textFail "$regx: Cloudformation stack $stack has termination protection disabled" "$regx" "$stack"
