@@ -40,7 +40,10 @@ extra7154() {
       for stack in $LIST_OF_CFN_STACKS; do
         CFN_STACK_DETAILS=$($AWSCLI cloudformation describe-stacks $PROFILE_OPT --region $regx --stack-name $stack --output json)
         TERMINATION_ENABLED=$(echo $CFN_STACK_DETAILS | jq -r '.Stacks[].EnableTerminationProtection')
-        if [[ $TERMINATION_ENABLED == "true" ]]; then
+        ROOT_ID=$(echo $CFN_STACK_DETAILS | jq -r '.Stacks[].RootId')
+        if [[ $ROOT_ID != null && $TERMINATION_ENABLED == "false" ]]; then
+          textFail "$regx: $stack is a nested stack, enable termination protection on the root stack $ROOT_ID" "$regx" "$stack" "$ROOT_ID"
+        elif [[ $TERMINATION_ENABLED == "true" ]]; then
           textPass "$regx: Cloudformation stack $stack has termination protection enabled" "$regx" "$stack"
         else
           textFail "$regx: Cloudformation stack $stack has termination protection disabled" "$regx" "$stack"
