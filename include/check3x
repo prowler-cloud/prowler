@@ -17,10 +17,13 @@ check3x(){
   # In order to make all these checks work properly logs and alarms have to 
   # be based only on CloudTrail tail with CloudWatchLog configuration.
   DESCRIBE_TRAILS_CACHE=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[?CloudWatchLogsLogGroupArn != `null`]')
+  echo "$DESCRIBE_TRAILS_CACHE"
   TRAIL_LIST=$(echo $DESCRIBE_TRAILS_CACHE | jq -r -c '.[] |@base64') # this treats each array element as its own line
+  echo "$TRAIL_LIST"
   CURRENT_ACCOUNT_ID=$($AWSCLI sts $PROFILE_OPT get-caller-identity --region "$REGION" --query Account --output text)
+  echo "$CURRENT_ACCOUNT_ID"
   CLOUDWATCH_LOGGROUP=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[*].CloudWatchLogsLogGroupArn' --output text| tr '\011' '\012' | awk -F: '{print $7}')
-
+  echo "$CLOUDWATCH_LOGGROUP"
   if [[ $CLOUDWATCH_LOGGROUP != "" ]]; then
     for group_obj_enc in $TRAIL_LIST; do
 
@@ -33,7 +36,9 @@ check3x(){
       if [ "$CLOUDWATCH_LOGGROUP_ACCOUNT" == "$CURRENT_ACCOUNT_ID" ];then
         # Filter control and whitespace from .metricFilters[*].filterPattern for easier matching later
         METRICFILTER_CACHE=$($AWSCLI logs describe-metric-filters --log-group-name "$CLOUDWATCH_LOGGROUP_NAME" $PROFILE_OPT --region "$CLOUDWATCH_LOGGROUP_REGION"|jq '.metricFilters|=map(.filterPattern|=gsub("[[:space:]]+"; " "))')
+        echo "$METRICFILTER_CACHE"
         METRICFILTER_SET=$(echo $METRICFILTER_CACHE | jq -r --arg re "$grep_filter" '.metricFilters[]|select(.filterPattern|test($re))|.filterName')
+        echo "$METRICFILTER_SET"
       fi
       if [[ $METRICFILTER_SET ]];then
         for metric in $METRICFILTER_SET; do

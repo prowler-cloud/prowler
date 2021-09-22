@@ -42,5 +42,5 @@ CHECK_ASFF_RESOURCE_TYPE_check310="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check310="check310"
 
 check310(){
-  check3x '\$\.eventName\s*=\s*AuthorizeSecurityGroupIngress.+\$\.eventName\s*=\s*AuthorizeSecurityGroupEgress.+\$\.eventName\s*=\s*RevokeSecurityGroupIngress.+\$\.eventName\s*=\s*RevokeSecurityGroupEgress.+\$\.eventName\s*=\s*CreateSecurityGroup.+\$\.eventName\s*=\s*DeleteSecurityGroup'
+  check3x '\$\.eventName\s*=\s*"?AuthorizeSecurityGroupIngress"?.+\$\.eventName\s*=\s*"?AuthorizeSecurityGroupEgress"?.+\$\.eventName\s*=\s*?RevokeSecurityGroupIngress"?.+\$\.eventName\s*=\s*"?RevokeSecurityGroupEgress"?.+\$\.eventName\s*=\s*"?CreateSecurityGroup"?.+\$\.eventName\s*=\s*"?DeleteSecurityGroup"?'
 }
