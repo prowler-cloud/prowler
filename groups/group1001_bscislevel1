@@ -12,9 +12,4 @@ GROUP_ID[1001]='bscislevel1'
 GROUP_NUMBER[1001]='1001.0'
 GROUP_TITLE[1001]='CIS Level 1 - CIS only - [bscislevel1] ***************************'
 GROUP_RUN_BY_DEFAULT[1001]='N' # run it when execute_all is called
-
-# Removed below schecks from standard CIS
-#- check114 - Hardware MFA on root - Not doing this as Virtual MFA is enabled
-#- check119 - Ensure IAM instance roles are used for AWS resource access from instances - Not Scored
-#- check25 - AWS config recorder - We have a custom AWS config implementation
 GROUP_CHECKS[1001]='check11,check12,check13,check14,check15,check16,check17,check18,check19,check110,check111,check112,check113,check115,check116,check117,check118,check120,check122,check21,check23,check24,check26,check31,check32,check33,check34,check35,check38,check312,check313,check314,check41,check42'
