@@ -1,1 +1,53 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+#
+# Remediation:
+#
+#   https://docs.aws.amazon.com/cli/latest/reference/redshift/modify-cluster.html
+#
+#   aws redshift modify-cluster \
+#   --cluster-identifier <my-cluster> \
+#   --automated-snapshot-retention-period <value>
+
+CHECK_ID_extra7155="7.155"
+CHECK_TITLE_extra7155="[extra7155] Check if Automated Snapshots is enabled for Redshift Clusters"
+CHECK_SCORED_extra7155="NOT_SCORED"
+CHECK_TYPE_extra7155="EXTRA"
+CHECK_SEVERITY_extra7155="MEDIUM"
+CHECK_ASFF_RESOURCE_TYPE_extra7155="AwsRedshiftCluster"
+CHECK_ALTERNATE_check7155="extra7155"
+CHECK_SERVICENAME_extra7155="redshift"
+CHECK_RISK_extra7155='Without automated snapshots enabled, there is possibility of data loss if cluster is deleted accidently and no manual backup is available for recovery.'
+CHECK_REMEDIATION_extra7155='Ensure Automatic snapshot retention period is 1 or more than 1.'
+CHECK_DOC_extra7155='https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-snapshots.html'
+CHECK_CAF_EPIC_extra7155='Data Protection'
+
+extra7155() {
+  for regx in $REGIONS; do
+    REDSHIFT_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --region $regx --output json)
+    LIST_OF_REDSHIFT_CLUSTERS=$(echo $REDSHIFT_CLUSTERS | jq -r '.Clusters[].ClusterIdentifier')
+    if [[ $LIST_OF_REDSHIFT_CLUSTERS ]];then
+      for cluster in $LIST_OF_REDSHIFT_CLUSTERS; do
+        SNAPSHOT_RETENTION=$(echo $REDSHIFT_CLUSTERS | jq --arg s "$cluster" -r '.Clusters[] | select( .ClusterIdentifier == $s ) | .AutomatedSnapshotRetentionPeriod')
+        if [[ $SNAPSHOT_RETENTION == 0 ]]; then
+          textFail "$regx: Redshift Cluster $cluster has automatic snapshots disabled" "$regx" "$cluster"
+        else
+          textPass "$regx: Redshift Cluster $cluster has automatic snapshots enabled" "$regx" "$cluster"
+        fi
+      done
+    else
+      textInfo "$regx: No Redshift Clusters found" "$regx"
+    fi
+  done
+}
 
