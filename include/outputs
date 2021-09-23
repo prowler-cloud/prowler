@@ -181,7 +181,12 @@ textFail(){
   # only set non-0 exit code on FAIL mode, WARN is ok
   if [[ "$level" == "FAIL" ]]; then
     FAIL_COUNTER=$((FAIL_COUNTER+1))
-    EXITCODE=3
+    if [ "$FAILED_CHECK_FAILED_SCAN" == 1 ] && [ -z "$FAILED_CHECK_FAILED_SCAN_LIST" ] ; then
+      EXITCODE=3
+    fi
+    if [[ "${FAILED_CHECK_FAILED_SCAN_LIST[@]}" =~ "$CHECK_NAME" ]]; then
+      EXITCODE=3
+    fi
   fi
 
   CHECK_RESULT=$level
