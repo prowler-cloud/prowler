@@ -42,5 +42,5 @@ CHECK_ASFF_RESOURCE_TYPE_check38="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check308="check38"
 
 check38(){
-  check3x '\$\.eventSource\s*=\s*s3.amazonaws.com.+\$\.eventName\s*=\s*PutBucketAcl.+\$\.eventName\s*=\s*PutBucketPolicy.+\$\.eventName\s*=\s*PutBucketCors.+\$\.eventName\s*=\s*PutBucketLifecycle.+\$\.eventName\s*=\s*PutBucketReplication.+\$\.eventName\s*=\s*DeleteBucketPolicy.+\$\.eventName\s*=\s*DeleteBucketCors.+\$\.eventName\s*=\s*DeleteBucketLifecycle.+\$\.eventName\s*=\s*DeleteBucketReplication'
+  check3x '\$\.eventSource\s*=\s*"?s3.amazonaws.com"?.+\$\.eventName\s*=\s*"?PutBucketAcl"?.+\$\.eventName\s*=\s*"?PutBucketPolicy"?.+\$\.eventName\s*=\s*"?PutBucketCors"?.+\$\.eventName\s*=\s*"?PutBucketLifecycle"?.+\$\.eventName\s*=\s*"?PutBucketReplication"?.+\$\.eventName\s*=\s*"?DeleteBucketPolicy"?.+\$\.eventName\s*=\s*"?DeleteBucketCors"?.+\$\.eventName\s*=\s*"?DeleteBucketLifecycle"?.+\$\.eventName\s*=\s*"?DeleteBucketReplication"?'
 }

@@ -42,5 +42,5 @@ CHECK_ASFF_RESOURCE_TYPE_check311="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check311="check311"
 
 check311(){
-  check3x '\$\.eventName\s*=\s*CreateNetworkAcl.+\$\.eventName\s*=\s*CreateNetworkAclEntry.+\$\.eventName\s*=\s*DeleteNetworkAcl.+\$\.eventName\s*=\s*DeleteNetworkAclEntry.+\$\.eventName\s*=\s*ReplaceNetworkAclEntry.+\$\.eventName\s*=\s*ReplaceNetworkAclAssociation'
+  check3x '\$\.eventName\s*=\s*"?CreateNetworkAcl"?.+\$\.eventName\s*=\s*"?CreateNetworkAclEntry"?.+\$\.eventName\s*=\s*"?DeleteNetworkAcl"?.+\$\.eventName\s*=\s*"?DeleteNetworkAclEntry"?.+\$\.eventName\s*=\s*"?ReplaceNetworkAclEntry"?.+\$\.eventName\s*=\s*"?ReplaceNetworkAclAssociation"?'
 }

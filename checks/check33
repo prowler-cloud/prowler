@@ -42,5 +42,5 @@ CHECK_ASFF_RESOURCE_TYPE_check33="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check303="check33"
 
 check33(){
-  check3x '\$\.userIdentity\.type\s*=\s*"Root".+\$\.userIdentity\.invokedBy NOT EXISTS.+\$\.eventType\s*!=\s*"AwsServiceEvent"'
+  check3x '\$\.userIdentity\.type\s*=\s*"?Root"?.+\$\.userIdentity\.invokedBy NOT EXISTS.+\$\.eventType\s*!=\s*"?AwsServiceEvent"?'
 }

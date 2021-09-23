@@ -42,5 +42,5 @@ CHECK_ASFF_RESOURCE_TYPE_check39="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check309="check39"
 
 check39(){
-  check3x '\$\.eventSource\s*=\s*config.amazonaws.com.+\$\.eventName\s*=\s*StopConfigurationRecorder.+\$\.eventName\s*=\s*DeleteDeliveryChannel.+\$\.eventName\s*=\s*PutDeliveryChannel.+\$\.eventName\s*=\s*PutConfigurationRecorder'
+  check3x '\$\.eventSource\s*=\s*"?config.amazonaws.com"?.+\$\.eventName\s*=\s*"?StopConfigurationRecorder"?.+\$\.eventName\s*=\s*"?DeleteDeliveryChannel"?.+\$\.eventName\s*=\s*"?PutDeliveryChannel"?.+\$\.eventName\s*=\s*"?PutConfigurationRecorder"?'
 }

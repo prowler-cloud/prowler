@@ -42,5 +42,5 @@ CHECK_ASFF_RESOURCE_TYPE_check37="AwsCloudTrailTrail"
 CHECK_ALTERNATE_check307="check37"
 
 check37(){
-  check3x '\$\.eventSource\s*=\s*kms.amazonaws.com.+\$\.eventName\s*=\s*DisableKey.+\$\.eventName\s*=\s*ScheduleKeyDeletion'
+  check3x '\$\.eventSource\s*=\s*"?kms.amazonaws.com"?.+\$\.eventName\s*=\s*"?DisableKey"?.+\$\.eventName\s*=\s*"?ScheduleKeyDeletion"?'
 }
