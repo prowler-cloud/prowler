@@ -16,7 +16,7 @@
 #
 #   aws elbv2 modify-load-balancer-attributes 
 #   --load-balancer-arn <alb arn>\
-#   --attributes Key=routing.http.desync_mitigation_mode.enabled,Value=<defensive/strictest>
+#   --attributes Key=routing.http.desync_mitigation_mode,Value=<defensive/strictest>
 
 CHECK_ID_extra7155="7.155"
 CHECK_TITLE_extra7155="[extra7155] Check whether the Application Load Balancer is configured with defensive or strictest desync mitigation mode."
