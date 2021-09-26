@@ -18,3 +18,5 @@ RUN chown -R prowler .
 USER ${USERNAME}
 
 ENTRYPOINT ["./prowler"]
+
+
