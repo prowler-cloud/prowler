@@ -42,7 +42,7 @@ extra7154() {
         TERMINATION_ENABLED=$(echo $CFN_STACK_DETAILS | jq -r '.Stacks[].EnableTerminationProtection')
         ROOT_ID=$(echo $CFN_STACK_DETAILS | jq -r '.Stacks[].RootId')
         if [[ $ROOT_ID != null && $TERMINATION_ENABLED == "false" ]]; then
-          textFail "$regx: $stack is a nested stack, enable termination protection on the root stack $ROOT_ID" "$regx" "$stack" "$ROOT_ID"
+          textInfo "$regx: $stack is a nested stack, enable termination protection on the root stack $ROOT_ID" "$regx" "$stack" "$ROOT_ID"
         elif [[ $TERMINATION_ENABLED == "true" ]]; then
           textPass "$regx: Cloudformation stack $stack has termination protection enabled" "$regx" "$stack"
         else
