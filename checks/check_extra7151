@@ -30,11 +30,11 @@ extra7151(){
     LIST_OF_DYNAMODB_TABLES=$($AWSCLI dynamodb list-tables $PROFILE_OPT --region $regx --query 'TableNames[*]' --output text)
     if [[ $LIST_OF_DYNAMODB_TABLES ]]; then
       for dynamodb_table in $LIST_OF_DYNAMODB_TABLES; do
-        POINT_IN_TIME_RECOVERY_ENABLED=$($AWSCLI dynamodb describe-continuous-backups $PROFILE_OPT --region $regx --table-name $dynamodb_table | jq '.[].PointInTimeRecoveryDescription | select(.PointInTimeRecoveryStatus=="ENABLED")')
+        POINT_IN_TIME_RECOVERY_ENABLED=$($AWSCLI dynamodb describe-continuous-backups $PROFILE_OPT --region $regx --table-name $dynamodb_table | jq '.[].PointInTimeRecoveryDescription | select(.PointInTimeRecoveryStatus=="ENABLED") | .PointInTimeRecoveryStatus')
         if [[ $POINT_IN_TIME_RECOVERY_ENABLED ]]; then
           textPass "$regx: $dynamodb_table has point-in-time recovery enabled." "$regx" "$dynamodb_table"
         else
-          textFail "$regx: $dynamodb_table does not have  point-in-time recovery enabled." "$regx" "$dynamodb_table"
+          textFail "$regx: $dynamodb_table does not have point-in-time recovery enabled." "$regx" "$dynamodb_table"
         fi
       done
     else
