@@ -90,7 +90,7 @@ USAGE:
       -s                  show scoring report
       -S                  send check output to AWS Security Hub - only valid when the output mode is json-asff (i.e. "-M json-asff -S")
       -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by "check")
-      -q                  suppress info messages and passing test output
+      -q                  get only FAIL findings, will show WARNINGS when a resource is excluded
       -A                  account id for the account where to assume a role, requires -R and -T
                             (i.e.: 123456789012)
       -R                  role name or role arn to assume in the account, requires -A and -T

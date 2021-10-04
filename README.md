@@ -187,7 +187,7 @@ Prowler has been written in bash using AWS-CLI and it works in Linux and OSX.
 
 ### Regions
 
-By default Prowler scans all opt-in regions available, that might take a long execution time depending on the number of resources and regions used. Same applies for GovCloud or China regions. See below Advance usage for examples.
+By default, Prowler scans all opt-in regions available, that might take a long execution time depending on the number of resources and regions used. Same applies for GovCloud or China regions. See below Advance usage for examples.
 
 Prowler has to parameters related to regions: `-r` that is used query AWS services API endpoints (it uses `us-east-1` by default and required for GovCloud or China) and the option `-f` that is to filter those regions you only want to scan. For example if you want to scan Dublin only use `-f eu-west-1` and if you want to scan Dublin and Ohio `-f 'eu-west-1 us-east-s'`, note the single quotes and space between regions.
 
@@ -323,7 +323,7 @@ Usig the same for loop it can be scanned a list of accounts with a variable like
 ### GovCloud
 
 Prowler runs in GovCloud regions as well. To make sure it points to the right API endpoint use `-r` to either `us-gov-west-1` or `us-gov-east-1`. If not filter region is used it will look for resources in both GovCloud regions by default:
-```
+```sh
 ./prowler -r us-gov-west-1
 ```
 > For Security Hub integration see below in Security Hub section.
@@ -334,9 +334,12 @@ Flag `-x /my/own/checks` will include any check in that particular directory. To
 
 ### Show or log only FAILs
 
-In order to remove noise and get only FAIL findings there is a `-q` flag that makes Prowler to show and log only FAILs. It can be combined with any other option.
+In order to remove noise and get only FAIL findings there is a `-q` flag that makes Prowler to show and log only FAILs. 
+It can be combined with any other option.
+Will show WARNINGS when a resource is excluded, just to take into consideration.
 
 ```sh
+# -q option combined with -M csv -b
 ./prowler -q -M csv -b
 ```
 
@@ -503,7 +506,7 @@ The `aws iam create-access-key` command will output the secret access key and th
 
 ## Extras
 
-We are adding additional checks to improve the information gather from each account, these checks are out of the scope of the CIS benchmark for AWS but we consider them very helpful to get to know each AWS account set up and find issues on it.
+We are adding additional checks to improve the information gather from each account, these checks are out of the scope of the CIS benchmark for AWS, but we consider them very helpful to get to know each AWS account set up and find issues on it.
 
 Some of these checks look for publicly facing resources may not actually be fully public due to other layered controls like S3 Bucket Policies, Security Groups or Network ACLs.
 
@@ -601,7 +604,7 @@ To give it a quick shot just call:
 
 ### Scenarios
 
-Currently this check group supports two different scenarios:
+Currently, this check group supports two different scenarios:
 
 1. Single account environment: no action required, the configuration is happening automatically for you.
 2. Multi account environment: in case you environment has multiple trusted and known AWS accounts you maybe want to append them manually to [groups/group16_trustboundaries](groups/group16_trustboundaries) as a space separated list into `GROUP_TRUSTBOUNDARIES_TRUSTED_ACCOUNT_IDS` variable, then just run prowler.
@@ -623,7 +626,7 @@ Every circle represents one AWS account.
 The dashed line represents the trust boundary, that separates trust and untrusted AWS accounts.
 The arrow simply describes the direction of the trust, however the data can potentially flow in both directions.
 
-Single Account environment assumes that only the AWS account subject to this analysis is trusted. However there is a chance that two VPCs are existing within that one AWS account which are still trusted as a self reference.
+Single Account environment assumes that only the AWS account subject to this analysis is trusted. However, there is a chance that two VPCs are existing within that one AWS account which are still trusted as a self reference.
 ![single-account-environment](/docs/images/prowler-single-account-environment.png)
 
 Multi Account environments assumes a minimum of two trusted or known accounts. For this particular example all trusted and known accounts will be tested. Therefore `GROUP_TRUSTBOUNDARIES_TRUSTED_ACCOUNT_IDS` variable in [groups/group16_trustboundaries](groups/group16_trustboundaries) should include all trusted accounts Account #A, Account #B, Account #C, and Account #D in order to finally raise Account #E and Account #F for being untrusted or unknown.
