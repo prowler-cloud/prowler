@@ -21,7 +21,7 @@
 #   --enable-domain-transfer-lock
 
 CHECK_ID_extra7153="7.153"
-CHECK_TITLE_extra7153="[extra7153] Enable Transfer Lock for domains"
+CHECK_TITLE_extra7153="[extra7153] Enable Transfer Lock for a Route53 Domain"
 CHECK_SCORED_extra7153="NOT_SCORED"
 CHECK_TYPE_extra7153="EXTRA"
 CHECK_SEVERITY_extra7153="Medium"
