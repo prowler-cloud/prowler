@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+# Remediation:
+#
+#   https://docs.aws.amazon.com/cli/latest/reference/elbv2/modify-load-balancer-attributes.html
+#
+#   aws elbv2 modify-load-balancer-attributes 
+#   --load-balancer-arn <alb arn>\
+#   --attributes Key=routing.http.desync_mitigation_mode,Value=<defensive/strictest>
+
+CHECK_ID_extra7155="7.155"
+CHECK_TITLE_extra7155="[extra7155] Check whether the Application Load Balancer is configured with defensive or strictest desync mitigation mode."
+CHECK_SCORED_extra7155="NOT_SCORED"
+CHECK_TYPE_extra7155="EXTRA"
+CHECK_SEVERITY_extra7155="MEDIUM"
+CHECK_ASFF_RESOURCE_TYPE_extra7155="AwsElasticLoadBalancingV2LoadBalancer"
+CHECK_ALTERNATE_check7155="extra7155"
+CHECK_SERVICENAME_extra7155="ElasticLoadBalancingV2"
+CHECK_RISK_extra7155='HTTP Desync issues can lead to request smuggling and make your applications vulnerable to request queue or cache poisoning; which could lead to credential hijacking or execution of unauthorized commands.'
+CHECK_REMEDIATION_extra7155='Ensure Application Load Balancer is configured with defensive or strictest desync mitigation mode'
+CHECK_DOC_extra7155='https://aws.amazon.com/about-aws/whats-new/2020/08/application-and-classic-load-balancers-adding-defense-in-depth-with-introduction-of-desync-mitigation-mode/'
+CHECK_CAF_EPIC_extra7155='Data Protection'
+
+extra7155() {
+  for regx in $REGIONS; do
+    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Type == `application`].[LoadBalancerArn]' --output text)
+    if [[ $LIST_OF_ELBSV2 ]];then
+      for alb in $LIST_OF_ELBSV2;do
+        CHECK_DESYNC_MITIGATION_MODE=$($AWSCLI elbv2 describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-arn $alb --query 'Attributes[8]' --output json | jq -r '.Value')
+        if [[ $CHECK_DESYNC_MITIGATION_MODE == "monitor" ]]; then
+          textFail "$regx: Application load balancer $alb does not have desync mitigation mode set as defensive or strictest." "$regx" "$alb"
+        else
+          textPass "$regx: Application load balancer $alb is configured with correct desync mitigation mode." "$regx" "$alb"
+        fi
+      done
+    else
+      textInfo "$regx: No Application Load Balancers found" "$regx"
+    fi
+  done
+}
