@@ -1,40 +1,24 @@
-#!/usr/bin/env python
-#
-# Authored by Jeremy Phillips <jeremy@uranusbytes.com>
-# Copyright: Apache License 2.0
-#
-# Wrapper around prowler script to parse results and forward to Wazuh
-# Prowler - https://github.com/toniblyx/prowler
-#
-# TODO: Add ability to disable different groups (EXTRA, etc...
-# TODO: Allow to disable individual checks
-# TODO: Remove all the commented out stuff
-#
-# Error Codes:
-#   1 - Unknown
-#   2 - SIGINT
-#   3 - Error output from execution of Prowler
-#   4 - Output row is invalid json
-#   5 - Wazuh must be running
-#   6 - Error sending to socket
-
-
+#!/usr/bin/python
 import signal
 import sys
-import socket
 import argparse
 import subprocess
 import json
 from datetime import datetime
 import os
 import re
+from socket import socket, AF_UNIX, SOCK_DGRAM
+
 
 ################################################################################
 # Constants
 ################################################################################
-WAZUH_PATH = open('/etc/ossec-init.conf').readline().split('"')[1]
+DEBUG = 0
+WAZUH_PATH = '/var/ossec'
+WAZUH_QUEUE = '/var/ossec/queue/sockets/queue'
 DEBUG_LEVEL = 0  # Enable/disable debug mode
-PATH_TO_PROWLER = '{0}/integrations/prowler'.format(WAZUH_PATH)  # No trailing slash
+PATH_TO_PROWLER ='/var/ossec/integrations/prowler'
+ACCOUNT_FILE='/var/ossec/integrations/prowler/account.lst'
 TEMPLATE_CHECK = '''
 {{
   "integration": "prowler",
@@ -51,7 +35,6 @@ TEMPLATE_ERROR = '''{{
   "status": "Error"
 }}
 '''
-WAZUH_QUEUE = '{0}/queue/ossec/queue'.format(WAZUH_PATH)
 FIELD_REMAP = {
   "Profile": "aws_profile",
   "Control": "control",
@@ -61,56 +44,52 @@ FIELD_REMAP = {
   "Timestamp": "timestamp",
   "Region": "region",
   "Control ID": "control_id",
+  "Service": "service",
   "Status": "status",
   "Scored": "scored",
-  "Message": "message"
+  "Message": "message",
+  "Compliance": "Compliance",
+  "remediation": "remediation",
+  "Resource ID": "resource_id",
+  "Doc Link": "doc_link",
+  "CAF Epic": "caf_epic",
+  "risk": "risk"
+
 }
 CHECKS_FILES_TO_IGNORE = [
   'check_sample'
 ]
 
+#functions
+def read_account():
+    with open(ACCOUNT_FILE,'r') as file:
+        lines=file.readlines()
+        acc=[line.strip() for line in lines]
+        return acc
 
-################################################################################
-# Functions
-################################################################################
 def _send_msg(msg):
   try:
     _json_msg = json.dumps(_reformat_msg(msg))
     _debug("Sending Msg: {0}".format(_json_msg), 3)
-    _socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-    _socket.connect(WAZUH_QUEUE)
-    _socket.send(TEMPLATE_MSG.format(_json_msg).encode())
-    _socket.close()
-  except socket.error as e:
-    if e.errno == 111:
-      print('ERROR: Wazuh must be running.')
-      sys.exit(5)
-    else:
-      print("ERROR: Error sending message to wazuh: {}".format(e))
-      sys.exit(6)
+    wsock = socket(AF_UNIX, SOCK_DGRAM)
+    wsock.connect(WAZUH_QUEUE)
+    wsock.send(TEMPLATE_MSG.format(_json_msg).encode())
+    wsock.close()
   except Exception as e:
-    print("ERROR: Error sending message to wazuh: {}".format(e))
-    sys.exit(6)
+        print("ERROR: Error sending message to wazuh: {}".format(e))
+        sys.exit(6)
   return
-
 
 def _handler(signal, frame):
   print("ERROR: SIGINT received.")
   sys.exit(12)
 
-
-def _debug(msg, msg_level):
-  if DEBUG_LEVEL >= msg_level:
-    print('DEBUG-{level}: {debug_msg}'.format(level=msg_level, debug_msg=msg))
-
-
 def _get_script_arguments():
   _parser = argparse.ArgumentParser(usage="usage: %(prog)s [options]",
                                     description="Wazuh wodle for evaluating AWS security configuration",
                                     formatter_class=argparse.RawTextHelpFormatter)
-  _parser.add_argument('-c', '--aws_account_id', dest='aws_account_id',
-                       help='AWS Account ID for logs',
-                       required=False)
+  _parser.add_argument('-R', '--role', help='You need to specify the role' ,dest='role', default=None,required=True)
+  _parser.add_argument('-f', '--zone', help='You need to specify the zone you need to scan. Due to support multiples accounts, just one zone once',dest='zone', default='All',required=True)
   _parser.add_argument('-d', '--debug', action='store', dest='debug', default=0, help='Enable debug')
   _parser.add_argument('-p', '--aws_profile', dest='aws_profile', help='The name of credential profile to use',
                        default=None)
@@ -121,35 +100,32 @@ def _get_script_arguments():
   return _parser.parse_args()
 
 
+def _debug(msg, msg_level):
+  if DEBUG_LEVEL >= msg_level:
+    print('DEBUG-{level}: {debug_msg}'.format(level=msg_level, debug_msg=msg))
+
 def _run_prowler(prowler_args):
-  _debug('Running prowler with args: {0}'.format(prowler_args), 1)
-  _prowler_command = '{prowler}/prowler {args}'.format(prowler=PATH_TO_PROWLER, args=prowler_args)
-  _debug('Running command: {0}'.format(_prowler_command), 2)
-  _process = subprocess.Popen(_prowler_command, stdout=subprocess.PIPE, shell=True)
-  _output, _error = _process.communicate()
-  _debug('Raw prowler output: {0}'.format(_output), 3)
-  _debug('Raw prowler error: {0}'.format(_error), 3)
-  if _error is not None:
-    _debug('PROWLER ERROR: {0}'.format(_error), 1)
-    exit(3)
-  return _output
+    _prowler_command = '{prowler}/prowler {args}'.format(prowler=PATH_TO_PROWLER,args=prowler_args)
+    _debug('Running command: {0}'.format(_prowler_command), 2)
+    _process = subprocess.Popen(_prowler_command, stdout=subprocess.PIPE, shell=True)
+    _output, _error = _process.communicate()
+    _debug('Raw prowler output: {0}'.format(_output), 3)
+    if _error is not None:
+        _debug('PROWLER ERROR: {0}'.format(_error), 1)
+        exit(3)
+    return _output
 
-
-def _get_prowler_version(options):
+def _get_prowler_version():
   _debug('+++ Get Prowler Version', 1)
   # Execute prowler, but only display the version and immediately exit
-  return _run_prowler('-p {0} -V'.format(options.aws_profile)).rstrip()
+  _version=subprocess.Popen('{prowler}/prowler -b -V'.format(prowler=PATH_TO_PROWLER), stdout=subprocess.PIPE, shell=True)
+  _output, _error = _version.communicate()
+  return _output.format().rstrip()
 
+def _get_prowler_results(prowler_check,account,options):
+  _debug('+++ Get Prowler Results '.format(), 1)
+  return _run_prowler('-M wazuh -b -c {check} -A {account} -R {role} -f {zone}'.format(check=prowler_check,account=account,role=options.role,zone=options.zone))
 
-def _get_prowler_results(options, prowler_check):
-  _debug('+++ Get Prowler Results - {check}'.format(check=prowler_check), 1)
-  # Execute prowler with all checks
-  # -b = disable banner
-  # -p = credential profile
-  # -M = output json
-
-  return _run_prowler('-b -c {check} -p {aws_profile} -M json'.format(check=prowler_check,
-                                                                      aws_profile=options.aws_profile))
 
 def _get_prowler_checks():
   _prowler_checks = []
@@ -167,7 +143,7 @@ def _get_prowler_checks():
   return _prowler_checks
 
 
-def _send_prowler_results(prowler_results, _prowler_version, options):
+def _send_prowler_results(prowler_results, _prowler_version,options):
   _debug('+++ Send Prowler Results', 1)
   for _check_result in prowler_results.splitlines():
     # Empty row
@@ -177,9 +153,11 @@ def _send_prowler_results(prowler_results, _prowler_version, options):
     elif _check_result[:17] == 'An error occurred':
       _debug('ERROR MSG --- {0}'.format(_check_result), 2)
       _temp_msg = TEMPLATE_ERROR.format(
-        aws_account_id=options.aws_account_id,
-        aws_profile=options.aws_profile,
-        prowler_error=_check_result.replace('"', '\"'),
+        aws_account_id="1",
+        aws_profile="default",
+        role = options.role,
+        zone = options.zone,
+        prowler_error="error",
         prowler_version=_prowler_version,
         timestamp=datetime.now().isoformat()
       )
@@ -192,9 +170,9 @@ def _send_prowler_results(prowler_results, _prowler_version, options):
     except:
       _debug('INVALID JSON --- {0}'.format(TEMPLATE_CHECK.format(_check_result)), 1)
       if not options.skip_on_error:
-        exit(4)
+          exit(4)
     _check_result['prowler']['prowler_version'] = _prowler_version
-    _check_result['prowler']['aws_account_alias'] = options.aws_account_alias
+    print(_check_result)
     _send_msg(_check_result)
 
   return True
@@ -207,24 +185,25 @@ def _reformat_msg(msg):
       del msg['prowler'][field]
   return msg
 
-
 # Main
 ###############################################################################
 def main(argv):
   _debug('+++ Begin script', 1)
   # Parse arguments
   _options = _get_script_arguments()
-
   if int(_options.debug) > 0:
     global DEBUG_LEVEL
     DEBUG_LEVEL = int(_options.debug)
     _debug('+++ Debug mode on - Level: {debug}'.format(debug=_options.debug), 1)
 
-  _prowler_version = _get_prowler_version(_options)
+
+  _prowler_version = _get_prowler_version()
   _prowler_checks = _get_prowler_checks()
-  for _check in _prowler_checks:
-    _prowler_results = _get_prowler_results(_options, _check)
-    _send_prowler_results(_prowler_results, _prowler_version, _options)
+  acc = read_account()
+  for account in acc:
+      for _check in _prowler_checks:
+          _prowler_results = _get_prowler_results(_check,account,_options)
+          _send_prowler_results(_prowler_results, _prowler_version,_options)
   _debug('+++ Finished script', 1)
   return
 

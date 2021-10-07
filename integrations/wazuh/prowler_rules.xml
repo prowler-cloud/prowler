@@ -10,36 +10,47 @@
     <!-- Filter 1: Only prowler events -->
     <rule id="110001" level="0">
         <field name="integration">prowler</field>
-        <description>Prowler Check Result: $(prowler.status) - Control $(prowler.control_id)</description>
+        <description>AWS Check Result: $(prowler.message) - Account $(prowler.aws_account_id)</description>
     </rule>
     <!-- Check Result: Pass -->
     <rule id="110002" level="1">
         <if_sid>110001</if_sid>
         <field name="prowler.status">Pass</field>
-        <description>Prowler Check Result: $(prowler.status) - Control $(prowler.control_id)</description>
+        <description>AWS Check Result: $(prowler.message) - Account $(prowler.aws_account_id)</description>
     </rule>
     <!-- Check Result: Info -->
     <rule id="110003" level="3">
         <if_sid>110001</if_sid>
         <field name="prowler.status">Info</field>
-        <description>Prowler Check Result: $(prowler.status) - Control $(prowler.control_id)</description>
+        <description>AWS Check Result: $(prowler.message) - Account $(prowler.aws_account_id)</description>
     </rule>
     <!-- Check Result: Error -->
     <rule id="110004" level="5">
         <if_sid>110001</if_sid>
         <field name="prowler.status">Error</field>
-        <description>Prowler Check Result: $(prowler.status) - Control $(prowler.control_id)</description>
+        <description>AWS Check Result: $(prowler.message) - Account $(prowler.aws_account_id)</description>
     </rule>
     <!-- Check Result: Fail, Scored -->
     <rule id="110005" level="9">
         <if_sid>110001</if_sid>
         <field name="prowler.status">Fail</field>
-        <description>Prowler Check Result: $(prowler.status) - Control $(prowler.control_id)</description>
+        <description>AWS Check Result: $(prowler.message) - Account $(prowler.aws_account_id)</description>
     </rule>
     <!-- Check Result: Fail, Not Scored -->
-    <rule id="110006" level="7">
+    <rule id="110006" level="10">
         <if_sid>110005</if_sid>
-        <field name="prowler.scored">Not Scored</field>
-        <description>Prowler Check Result: $(prowler.status) - Control $(prowler.control_id)</description>
+        <field name="prowler.Severity">Medium</field>
+	<description>AWS Check Result: $(prowler.message) - Account $(prowler.aws_account_id)</description>
     </rule>
+    <rule id="110007" level="11">
+        <if_sid>110005</if_sid>
+        <field name="prowler.Severity">High</field>
+	<description>AWS Check Result: $(prowler.message) - Account $(prowler.aws_account_id)</description>
+    </rule>
+    <rule id="110008" level="12">
+        <if_sid>110005</if_sid>
+        <field name="prowler.Severity">Critical</field>
+	<description>AWS Check Result: $(prowler.message) - Account $(prowler.aws_account_id)</description>
+    </rule>
+
 </group>

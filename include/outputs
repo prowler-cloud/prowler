@@ -99,6 +99,9 @@ textPass(){
   if [[ "${MODES[@]}" =~ "csv" ]]; then
     echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID${SEP}$PROWLER_START_TIME" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
+  if [[ "${MODES[@]}" =~ "wazuh" ]]; then
+   generateJsonOutput | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_JSON
+  fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
     generateJsonOutput "$1" "Pass" "$CHECK_RESOURCE_ID" >> ${OUTPUT_FILE_NAME}.$EXTENSION_JSON
   fi
@@ -115,10 +118,10 @@ textPass(){
   if [[ "${MODES[@]}" =~ "mono" ]]; then
     echo "      $OK PASS!$NORMAL $1" >> ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
   fi
-  # if [[ "${MODES[@]}" =~ "text" || "${MODES[@]}" =~ "mono" ]]; then
+   if [[ "${MODES[@]}" =~ "text" ]]; then
     # runs showing console output no mater what output is selected
     echo "      $OK PASS!$NORMAL $1"
-  # fi
+   fi
   if [[ "${MODES[@]}" =~ "html" ]]; then
     generateHtmlOutput "$1" "PASS"
   fi
@@ -141,6 +144,10 @@ textInfo(){
   if [[ "${MODES[@]}" =~ "csv" ]]; then
     echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID${SEP}$PROWLER_START_TIME" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
+  if [[ "${MODES[@]}" =~ "wazuh" ]]; then
+   generateJsonOutput | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_JSON
+  fi
+
   if [[ "${MODES[@]}" =~ "json" ]]; then
     generateJsonOutput "$1" "Info" "$CHECK_RESOURCE_ID" >> ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
   fi
@@ -150,9 +157,9 @@ textInfo(){
   if [[ "${MODES[@]}" =~ "mono" ]]; then
     echo "      $NOTICE INFO! $1 $NORMAL" >> ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
   fi
-  # if [[ "${MODES[@]}" =~ "text" ]]; then
+   if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $NOTICE INFO! $1 $NORMAL"
-  # fi
+   fi
   if [[ "${MODES[@]}" =~ "html" ]]; then
     generateHtmlOutput "$1" "INFO" "$CHECK_RESOURCE_ID"
   fi
@@ -162,6 +169,7 @@ textFail(){
   ## ignore whitelists for current check
   level="FAIL"
   colorcode="$BAD"
+
   while read -r i; do
     ignore_check_name="${i%%:*}" # Check name is everything up to the first :
     ignore_value="${i#*${CHECK_NAME}:}" # Ignore value is everything after the first :
@@ -188,6 +196,7 @@ textFail(){
   CHECK_RESULT_EXTENDED="$1"
   CHECK_RESOURCE_ID="$3"
 
+
   if [[ $2 ]]; then
     REPREGION=$2
   else
@@ -197,8 +206,11 @@ textFail(){
   if [[ "${MODES[@]}" =~ "csv" ]]; then
     echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID${SEP}$PROWLER_START_TIME" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
+  if [[ "${MODES[@]}" =~ "wazuh" ]]; then
+   generateJsonOutput "$1" "${level}" "$CHECK_RESOURCE_ID" | tee -a ${OUTPUT_FILE_NAME}.$EXTENSION_JSON
+  fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
-    generateJsonOutput "$1" "${level}" "$CHECK_RESOURCE_ID">> ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
+   generateJsonOutput "$1" "${level}" "$CHECK_RESOURCE_ID">> ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
   fi
   if [[ "${MODES[@]}" =~ "json-asff" ]]; then
     JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "${level}" "$CHECK_RESOURCE_ID")
@@ -217,9 +229,9 @@ textFail(){
   if [[ "${MODES[@]}" =~ "mono" ]]; then
     echo "      $colorcode ${level}! $1 $NORMAL" >> ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
   fi
-  # if [[ "${MODES[@]}" =~ "text" ]]; then
+   if [[ "${MODES[@]}" =~ "text" ]]; then
     echo "      $colorcode ${level}! $1 $NORMAL"
-  # fi
+   fi
   if [[ "${MODES[@]}" =~ "html" ]]; then
     generateHtmlOutput "$1" "${level}" "$CHECK_RESOURCE_ID"
   fi
@@ -262,18 +274,18 @@ textTitle(){
     group_ids="$CYAN[$5]$NORMAL"
   # fi
 
-  # if [[ "${MODES[@]}" =~ "csv" ]]; then
-  #   >&2 echo "$TITLE_ID $TITLE_TEXT" >> ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
-  # elif [[ "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
-  #   :
-  # else
-  #   # if [[ "$ITEM_SCORED" == "Scored" ]]; then
-  #      echo -e "$TITLE_ID $CHECK_SERVICENAME $TITLE_TEXT $CHECK_SEVERITY $group_ids "
+   if [[ "${MODES[@]}" =~ "csv" ]]; then
+     >&2 echo "$TITLE_ID $TITLE_TEXT" >> ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
+   elif [[ "${MODES[@]}" =~ "wazuh" || "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
+     :
+   else
+     # if [[ "$ITEM_SCORED" == "Scored" ]]; then
+        echo -e "$TITLE_ID $CHECK_SERVICENAME $TITLE_TEXT $CHECK_SEVERITY $group_ids "
         echo -e "$TITLE_ID $TITLE_TEXT - $CHECK_SERVICENAME $CHECK_SEVERITY"
-  #   # else
-  #   #   echo -e "\n$PURPLE $TITLE_ID $TITLE_TEXT $6 $NORMAL $group_ids "
-  #   # fi
-  # fi
+     # else
+     #   echo -e "\n$PURPLE $TITLE_ID $TITLE_TEXT $6 $NORMAL $group_ids "
+     # fi
+   fi
 }
 
 generateJsonOutput(){

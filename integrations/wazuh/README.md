@@ -45,7 +45,7 @@ chmod +x /var/ossec/integrations/prowler-wrapper.py
 ```
 Run Prowler wrapper manually to make sure it works fine, use `--debug 1` or `--debug 2`):
 ```
-/var/ossec/integrations/prowler-wrapper.py --aws_profile default --aws_account_alias default --debug 2
+/var/ossec/integrations/prowler-wrapper.py -R role -f zone default --debug 2
 ```
 
 Copy rules file to its location:
@@ -59,20 +59,22 @@ Edit `/var/ossec/etc/ossec.conf` and add the following wodle configuration. Reme
   <wodle name="command">
     <disabled>no</disabled>
     <tag>aws-prowler: account1</tag>
-    <command>/var/ossec/integrations/prowler-wrapper.py --aws_profile default --aws_account_alias default</command>
+    <command>/var/ossec/integrations/prowler-wrapper.py -R role-default -f eu-west-2</command>
     <interval>1d</interval>
     <ignore_output>no</ignore_output>
     <run_on_start>no</run_on_start>
     <timeout>21600</timeout>
   </wodle>
 ```
-To check multiple AWS accounts, add a wodle per account.
+To check AWS accounts, you can put the accounts in the file account.lst. It support one or multiple accounts , each one in a line.
+You need a command per zone to check.
 
 Now restart `wazuh-manager` and look at `/var/ossec/logs/alerts/alerts.json`, eventually you should see FAIL checks detected by Prowler, then you will find them using Kibana. Some Kibana search examples are:
 ```
 data.integration:"prowler" and data.prowler.status:"Fail"
 data.integration:"prowler" AND rule.level >= 5
 data.integration:"prowler" AND rule.level : 7 or 9
+
 ```
 
 Adjust the level range to what alerts you want to include, as alerts, Elastic Search only gets fail messages (7 and 9).
@@ -80,8 +82,10 @@ Adjust the level range to what alerts you want to include, as alerts, Elastic Se
 1 - pass
 3 - info
 5 - error
-7 - fail: not scored
-9 - fail: scored
+9 - Severity: Empty
+10 - Severity: Medium
+11 - Severity: High
+12 - Severity: Critical
 
 ## Troubleshooting
 
