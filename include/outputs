@@ -274,13 +274,13 @@ textTitle(){
     group_ids="$CYAN[$5]$NORMAL"
   # fi
 
-   if [[ "${MODES[@]}" =~ "csv" ]]; then
-     >&2 echo "$TITLE_ID $TITLE_TEXT" >> ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
-   elif [[ "${MODES[@]}" =~ "wazuh" || "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
+  # if [[ "${MODES[@]}" =~ "csv" ]]; then
+  #   >&2 echo "$TITLE_ID $TITLE_TEXT" >> ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
+  if [[ "${MODES[@]}" =~ "wazuh" || "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
      :
    else
-     # if [[ "$ITEM_SCORED" == "Scored" ]]; then
-        echo -e "$TITLE_ID $CHECK_SERVICENAME $TITLE_TEXT $CHECK_SEVERITY $group_ids "
+  #   # if [[ "$ITEM_SCORED" == "Scored" ]]; then
+  #      echo -e "$TITLE_ID $CHECK_SERVICENAME $TITLE_TEXT $CHECK_SEVERITY $group_ids "
         echo -e "$TITLE_ID $TITLE_TEXT - $CHECK_SERVICENAME $CHECK_SEVERITY"
      # else
      #   echo -e "\n$PURPLE $TITLE_ID $TITLE_TEXT $6 $NORMAL $group_ids "
