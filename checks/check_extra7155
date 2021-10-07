@@ -19,7 +19,7 @@
 #   --attributes Key=routing.http.desync_mitigation_mode,Value=<defensive/strictest>
 
 CHECK_ID_extra7155="7.155"
-CHECK_TITLE_extra7155="[extra7155] Check whether the Application Load Balancer is configured with defensive or strictest desync mitigation mode."
+CHECK_TITLE_extra7155="[extra7155] Check whether the Application Load Balancer is configured with defensive or strictest desync mitigation mode"
 CHECK_SCORED_extra7155="NOT_SCORED"
 CHECK_TYPE_extra7155="EXTRA"
 CHECK_SEVERITY_extra7155="MEDIUM"

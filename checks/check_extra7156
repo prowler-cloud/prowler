@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra7156="7.156"
-CHECK_TITLE_extra7156="[extra7156] Checks if API Gateway V2 has Access Logging enabled."
+CHECK_TITLE_extra7156="[extra7156] Checks if API Gateway V2 has Access Logging enabled"
 CHECK_SCORED_extra7156="NOT_SCORED"
 CHECK_TYPE_extra7156="EXTRA"
 CHECK_SEVERITY_extra7156="Medium"

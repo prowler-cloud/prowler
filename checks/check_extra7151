@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra7151="7.151"
-CHECK_TITLE_extra7151="[extra7151] Check if DynamoDB tables point-in-time recovery (PITR) is enabled."
+CHECK_TITLE_extra7151="[extra7151] Check if DynamoDB tables point-in-time recovery (PITR) is enabled"
 CHECK_SCORED_extra7151="NOT_SCORED"
 CHECK_TYPE_extra7151="EXTRA"
 CHECK_SEVERITY_extra7151="Medium"
