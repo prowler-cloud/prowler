@@ -72,6 +72,8 @@ USAGE:
                             (i.e.: us-east-1), all regions are checked anyway if the check requires it
       -c <check_id>       specify one or multiple check ids separated by commas, to see all available checks use "-l" option
                             (i.e.: "check11" for check 1.1 or "extra71,extra72" for extra check 71 and extra check 72)
+      -C                  Checklist file. See checklist.txt for reference and format.
+                            (i.e.: checklist.txt)
       -g <group_id>       specify a group of checks by id, to see all available group of checks use "-L"
                             (i.e.: "group3" for entire section 3, "cislevel1" for CIS Level 1 Profile Definitions or "forensics-ready")
       -f <filterregion>   specify an AWS region to run checks against
@@ -115,7 +117,7 @@ USAGE:
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:zZ:" OPTION; do
+while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:zZ:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -139,6 +141,9 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:zZ:" OPTION; do
         ;;
      c )
         CHECK_ID=$OPTARG
+        ;;
+     C )
+        CHECK_FILE=$OPTARG
         ;;
      g )
         GROUP_ID_READ=$OPTARG
@@ -278,6 +283,19 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/connection_tests
 . $PROWLER_DIR/include/securityhub_integration
 . $PROWLER_DIR/include/junit_integration
+
+# Parses the check file into CHECK_ID's.
+if [[ -n "$CHECK_FILE" ]]; then
+  if [[ -f $CHECK_FILE ]]; then
+    # Parses the file, converting it to a comma seperated list. Ignores all # comments and removes extra blank spaces
+    CHECK_ID="$(awk '!/^[[:space:]]*#/{print }' <(cat $CHECK_FILE | sed 's/[[:space:]]*#.*$//g;/^$/d' | sed 'H;1h;$!d;x;y/\n/,/' | tr -d ' '))"
+  else
+    # If the file doesn't exist, exits Prowler
+    echo "$CHECK_FILE does not exist"
+    EXITCODE=1
+    exit $EXITCODE
+  fi
+fi
 
 # Pre-process whitelist file if supplied
 if [[ -n "$WHITELIST_FILE" ]]; then
