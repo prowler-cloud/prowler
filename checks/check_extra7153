@@ -13,7 +13,7 @@
 
 # Remediation:
 #
-#   https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-lock.html
+#   https://docs.aws.amazon.com/cli/latest/reference/route53domains/enable-domain-transfer-lock.html
 #
 #   enable-domain-transfer-lock \
 #   --domain-name example.com
