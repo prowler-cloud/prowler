@@ -13,12 +13,11 @@
 
 # Remediation:
 #
-#   https://docs.aws.amazon.com/cli/latest/reference/route53domains/update-domain-contact-privacy.html
+#   https://docs.aws.amazon.com/cli/latest/reference/route53domains/enable-domain-transfer-lock.html
 #
-#   update-domain-contact-privacy \
-#   --region us-east-1 \
-#   --domain-name example.com \
-#   --enable-domain-transfer-lock
+#   enable-domain-transfer-lock \
+#   --domain-name example.com
+
 
 CHECK_ID_extra7153="7.153"
 CHECK_TITLE_extra7153="[extra7153] Enable Transfer Lock for a Route53 Domain"
@@ -30,7 +29,7 @@ CHECK_ALTERNATE_check7153="extra7153"
 CHECK_SERVICENAME_extra7153="route53"
 CHECK_RISK_extra7153='Without transfer lock enabled, a domain name could be incorrectly moved to a new registrar'
 CHECK_REMEDIATION_extra7153='Ensure transfer lock is enabled'
-CHECK_DOC_extra7153='https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-privacy-protection.html'
+CHECK_DOC_extra7153='https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-lock.html'
 CHECK_CAF_EPIC_extra7153='Data Protection'
 
 extra7153(){
