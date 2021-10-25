@@ -99,7 +99,7 @@ USAGE:
       -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R
       -w                  whitelist file. See whitelist_sample.txt for reference and format
                             (i.e.: whitelist_sample.txt)
-      -N <shodan_api_key> Shoadan API key used by check extra7102.
+      -N <shodan_api_key> Shodan API key used by check extra7102.
       -o                  Custom output directory, if not specified will use default prowler/output, requires -M <mode>
                             (i.e.: -M csv -o /tmp/reports/)
       -B                  Custom output bucket, requires -M <mode> and it can work also with -o flag.
