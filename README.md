@@ -56,6 +56,7 @@ Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-20
 - Internet exposed resources
 - EKS-CIS
 - Also includes PCI-DSS, ISO-27001, FFIEC, SOC2, ENS (Esquema Nacional de Seguridad of Spain).
+- AWS FTR [FTR] Read more [here](#aws-ftr-checks)
 
 With Prowler you can:
 
@@ -556,6 +557,18 @@ The `gdpr` group of checks uses existing and extra checks. To get a GDPR report,
 
 ```sh
 ./prowler -g gdpr
+```
+
+## AWS FTR Checks
+
+With this group of checks, Prowler shows result of checks related to the AWS Foundational Technical Review, more information [here](https://apn-checklists.s3.amazonaws.com/foundational/partner-hosted/partner-hosted/CVLHEC5X7.html). The list of checks can be seen in the group file at:
+
+[groups/group25_ftr](groups/group25_ftr)
+
+The `ftr` group of checks uses existing and extra checks. To get a AWS FTR report, run this command:
+
+```sh
+./prowler -g ftr
 ```
 
 ## HIPAA Checks
