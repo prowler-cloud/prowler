@@ -35,7 +35,7 @@ extra759(){
     if [[ $LIST_OF_FUNCTIONS ]]; then
       for lambdafunction in $LIST_OF_FUNCTIONS;do
         LAMBDA_FUNCTION_VARIABLES_FILE="$SECRETS_TEMP_FOLDER/extra759-$lambdafunction-$regx-variables.txt"
-        LAMBDA_FUNCTION_VARIABLES=$($AWSCLI lambda $PROFILE_OPT --region $regx get-function-configuration --function-name $lambdafunction --query 'Environment.Variables' --output text > $LAMBDA_FUNCTION_VARIABLES_FILE)
+        LAMBDA_FUNCTION_VARIABLES=$($AWSCLI lambda $PROFILE_OPT --region $regx get-function-configuration --function-name $lambdafunction --query 'Environment.Variables' --output json > $LAMBDA_FUNCTION_VARIABLES_FILE)
         if [ -s $LAMBDA_FUNCTION_VARIABLES_FILE ];then
         # Implementation using https://github.com/Yelp/detect-secrets
         FINDINGS=$(secretsDetector file $LAMBDA_FUNCTION_VARIABLES_FILE)
