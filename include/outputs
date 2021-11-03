@@ -81,6 +81,13 @@ if [[ $PROFILE == "" ]];then
   PROFILE="ENV"
 fi
 
+sendSyslog(){
+  if [[ $REMOTE_S_SERVER == "" ]];then
+  REMOTE_S_SERVER="127.0.0.1"
+  fi
+  /bin/logger -t Prowler --rfc3164 --size 4096 -d -n ${REMOTE_S_SERVER} $(generateJsonOutput $2 $1 $3)
+}
+
 textPass(){
   CHECK_RESULT="PASS"
   CHECK_RESULT_EXTENDED="$1"
@@ -119,6 +126,9 @@ textPass(){
     # runs showing console output no mater what output is selected
     echo "      $OK PASS!$NORMAL $1"
   # fi
+  if [[ "${MODES[@]}" =~ "syslog" ]]; then
+    sendSyslog "$1" "PASS" "$CHECK_RESOURCE_ID"
+  fi
   if [[ "${MODES[@]}" =~ "html" ]]; then
     generateHtmlOutput "$1" "PASS"
   fi
@@ -150,9 +160,12 @@ textInfo(){
   if [[ "${MODES[@]}" =~ "mono" ]]; then
     echo "      $NOTICE INFO! $1 $NORMAL" >> ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
   fi
-  # if [[ "${MODES[@]}" =~ "text" ]]; then
-    echo "      $NOTICE INFO! $1 $NORMAL"
-  # fi
+  if [[ "${MODES[@]}" =~ "syslog" ]]; then
+    sendSyslog "$1" "Info" "$CHECK_RESOURCE_ID"
+  fi
+  #if [[ "${MODES[@]}" =~ "text" ]]; then
+    #echo "      $NOTICE INFO! $1 $NORMAL"
+  #fi
   if [[ "${MODES[@]}" =~ "html" ]]; then
     generateHtmlOutput "$1" "INFO" "$CHECK_RESOURCE_ID"
   fi
@@ -222,9 +235,12 @@ textFail(){
   if [[ "${MODES[@]}" =~ "mono" ]]; then
     echo "      $colorcode ${level}! $1 $NORMAL" >> ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
   fi
-  # if [[ "${MODES[@]}" =~ "text" ]]; then
-    echo "      $colorcode ${level}! $1 $NORMAL"
-  # fi
+  if [[ "${MODES[@]}" =~ "syslog" ]]; then
+    sendSyslog "$1" "${level}" "$CHECK_RESOURCE_ID"
+  fi
+  #if [[ "${MODES[@]}" =~ "text" ]]; then
+    #echo "      $colorcode ${level}! $1 $NORMAL"
+  #fi
   if [[ "${MODES[@]}" =~ "html" ]]; then
     generateHtmlOutput "$1" "${level}" "$CHECK_RESOURCE_ID"
   fi

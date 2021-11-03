@@ -1,0 +1,9 @@
+<decoder name="prowler">
+  <program_name>Prowler</program_name>
+</decoder>
+
+<decoder name="profile">
+  <parent>prowler</parent>
+   <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>
+

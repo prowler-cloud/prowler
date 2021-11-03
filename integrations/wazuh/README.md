@@ -12,63 +12,51 @@
 
 ## Description
 
-Prowler integration with WAZUH using a python wrapper. Due to the wrapper limitations, this integration can be considered as a proof of concept at this time.
+Prowler integration is made through syslog. You can send directly to wazuh port 514 , or save in the system logs and wazuh will import.
 
 ## Features
 
-Wazuh, using a wodle, runs Prowler every certain time and stores alerts (failed checks) using JSON output which Wazuh processes and sends to Elastic Search to be queried from Kibana.
+We send the logs in format JSON through syslog to the listen port in wazuh.
 
 ## Requirements
 
 1. Latest AWS-CLI client (`pip install awscli`). If you have it already installed, make sure you are using the latest version, upgrade it: `pip install awscli --upgrade`.
 2. Also `jq` is needed (`pip install jq`).
+3. Configure wazuh to listen syslog port(514) through remote module. https://documentation.wazuh.com/current/user-manual/reference/ossec-conf/remote.html
 
 Remember, you must have AWS-CLI credentials already configured in the same instance running Wazuh (run `aws configure` if needed). In this DRAFT I'm using `/root/.aws/credentials` file with [default] as AWS-CLI profile and access keys but you can use assume role configuration as well. For the moment instance profile is not supported in this wrapper.
 
-It may work in previous versions of Wazuh, but this document and integration was tested on Wazuh 3.7.1. So to have a Wazuh running installation is obviously required.
+It may work in previous versions of Wazuh, but this document and integration was tested on Wazuh 4.2.X. So to have a Wazuh running installation is obviously required.
 
 ## Integration steps
 
-Add Prowler to Wazuh's integrations:
+
+Copy decoder to wazuh decoder folder:
+
+Activate remote module in wazuh, listening in 127.0.0.1 to local prowler execution.
+
 ```
-cd /var/ossec/integrations/
 git clone https://github.com/toniblyx/prowler
-```
-Copy `prowler-wrapper.py` to integrations folder:
+
+cp prowler/integrations/wazuh/prowler-decoder.xml /var/ossec/etc/decoders/
 
 ```
-cp /var/ossec/integrations/prowler/integrations/prowler-wrapper.py /var/ossec/integrations/prowler-wrapper.py
-```
-Then make sure it is executable:
-```
-chmod +x /var/ossec/integrations/prowler-wrapper.py
-```
-Run Prowler wrapper manually to make sure it works fine, use `--debug 1` or `--debug 2`):
-```
-/var/ossec/integrations/prowler-wrapper.py --aws_profile default --aws_account_alias default --debug 2
-```
-
-Copy rules file to its location:
+Copy rules to wazuh rules folder:
 
 ```
-cp /var/ossec/integrations/prowler/integrations/prowler_rules.xml /var/ossec/etc/rules/prowler_rules.xml
+cp prowler/integrations/wazuh/prowler-rules.xml /var/ossec/etc/rules/
+
 ```
 
-Edit `/var/ossec/etc/ossec.conf` and add the following wodle configuration. Remember that here `timeout 21600 seconds` is 6 hours, just to allow Prowler runs completely in case of a large account. The interval recommended is 1d:
-```xml 
-  <wodle name="command">
-    <disabled>no</disabled>
-    <tag>aws-prowler: account1</tag>
-    <command>/var/ossec/integrations/prowler-wrapper.py --aws_profile default --aws_account_alias default</command>
-    <interval>1d</interval>
-    <ignore_output>no</ignore_output>
-    <run_on_start>no</run_on_start>
-    <timeout>21600</timeout>
-  </wodle>
+Execute prowler with your prefered options:
+
 ```
-To check multiple AWS accounts, add a wodle per account.
+prowler -M syslog ......
+
+```
 
 Now restart `wazuh-manager` and look at `/var/ossec/logs/alerts/alerts.json`, eventually you should see FAIL checks detected by Prowler, then you will find them using Kibana. Some Kibana search examples are:
+
 ```
 data.integration:"prowler" and data.prowler.status:"Fail"
 data.integration:"prowler" AND rule.level >= 5
@@ -87,8 +75,9 @@ Adjust the level range to what alerts you want to include, as alerts, Elastic Se
 
 To make sure rules are working fine, run `/var/ossec/bin/ossec-logtest` and copy/paste this sample JSON:
 
-```json
-{"prowler":{"Timestamp":"2018-11-29T03:15:50Z","Region":"us-east-1","Profile":"default","Account Number”:”1234567890”,”Control":"[check34] Ensure a log metric filter and alarm exist for IAM policy changes (Scored)","Message":"No CloudWatch group found for CloudTrail events","Status":"Fail","Scored":"Scored","Level":"Level 1","Control ID":"3.4"}, "integration": "prowler"}
+```
+Nov  3 14:24:00 ip-10-102-132-209 Prowler: {"Profile":"PROFILE","Account Number":"123456789","Control":"[check14] Ensure access keys are rotated every 90 days or less","Message":"FAIL","Severity":"Medium","Status":"us-west-2:","Scored":"","Level":"","Control ID":"1.4","Region":"us-west-2","Timestamp":"2021-11-03T00:24:00Z","Compliance":"ens-op.acc.1.aws.iam.4 ens-op.acc.5.aws.iam.3","Service":"\u001b[1;35miam\u001b[0;39m","CAF Epic":"IAM","Risk":"Access keys consist of an access key ID and secret access key which are used to sign programmatic requests that you make to AWS. AWS users need their own access keys to make programmatic calls to AWS from the AWS Command Line Interface (AWS CLI)- Tools for Windows PowerShell- the AWS SDKs- or direct HTTP calls using the APIs for individual AWS services. It is recommended that all access keys be regularly rotated.","Remediation":"Use the credential report to ensure access_key_X_last_rotated is less than 90 days ago.","Doc link":"https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html","Resource ID":"passwd"}
+
 ```
 You must see 3 phases goin on.
 
