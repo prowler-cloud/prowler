@@ -1,3 +1,12 @@
+
+<!--
+  Rules for parsing syslog Prowler output
+  Authored by Anibal Canada <anibal@n2h4.es>
+  Copyright: Apache License 2.0
+  ID: 110000-110009
+  Prowler - https://github.com/toniblyx/prowler
+-->
+
 <decoder name="prowler">
   <program_name>Prowler</program_name>
 </decoder>
