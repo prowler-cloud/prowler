@@ -79,7 +79,7 @@ USAGE:
       -f <filterregion>   specify an AWS region to run checks against
                             (i.e.: us-west-1 or for multiple regions use single quote like 'us-west-1 us-west-2')
       -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-      -M <mode>           output mode: text (default), mono, html, json, json-asff, junit-xml, csv. They can be used combined comma separated.
+      -M <mode>           output mode: text (default), mono, html, json, json-asff, junit-xml, csv, syslog. They can be used combined comma separated.
                             (separator is ","; data is on stdout; progress on stderr).
       -k                  keep the credential report
       -n                  show check numbers to sort easier
@@ -111,13 +111,14 @@ USAGE:
       -z                  Failed Checks do not trigger exit code 3
       -Z                  Specify one or multiple check ids separated by commas that will trigger exit code 3 if they fail. Unspecified checks will not trigger exit code 3. This will override "-z".
                             (i.e.: "-Z check11,check12" will cause check11 and/or check12 to trigger exit code 3
+      -d <syslog_server_ip> Specify the ip of the remote syslog. Requires -M syslog. ex. -M syslog -d 127.0.0.1
       -V                  show version number & exit
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:zZ:" OPTION; do
+while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:d:zZ:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -212,6 +213,9 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:zZ:" OPTION; do
         ;;
      F )
         OUTPUT_FILE_NAME=$OPTARG
+        ;;
+     d )
+        REMOTE_S_SERVER=$OPTARG
         ;;
      z )
         FAILED_CHECK_FAILED_SCAN=0
