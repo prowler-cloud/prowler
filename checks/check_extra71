@@ -43,10 +43,13 @@ extra71(){
         # users
         # check for user MFA device in credential report
         USER_MFA_ENABLED=$( cat $TEMP_REPORT_FILE | grep "^$auser," | cut -d',' -f8)
-        if [[ "true" == $USER_MFA_ENABLED ]]; then
-          textPass "$REGION: $auser / MFA Enabled / admin via group $grp" "$REGION" "$grp"
-        else
-          textFail "$REGION: $auser / MFA DISABLED / admin via group $grp" "$REGION" "$grp"
+        USER_PASSWORD_ENABLED=$( cat $TEMP_REPORT_FILE | grep "^$auser," | cut -d',' -f4) 
+        if [ "true" == $USER_PASSWORD_ENABLED ] ; then
+              if [[ "true" == $USER_MFA_ENABLED ]] ; then
+                textPass "$auser / MFA Enabled / admin via group $grp"
+              else
+                textFail "$auser / MFA DISABLED / admin via group $grp"
+              fi
         fi
       done
     else
