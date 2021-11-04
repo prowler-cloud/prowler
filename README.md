@@ -79,10 +79,15 @@ Prowler has been written in bash using AWS-CLI and it works in Linux and OSX.
 - Make sure the latest version of AWS-CLI is installed on your workstation (it works with either v1 or v2), and other components needed, with Python pip already installed:
 
     ```sh
-    pip install awscli detect-secrets
+    pip install awscli
     ```
 
-    AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `detect-secrets` has to be installed using `pip`. You will need to install `jq` to get the most from Prowler.
+    > NOTE: detect-secrets Yelp version is no longer supported the one from IBM is mantained now. Use the one mentioned below or the specific Yelp version 1.0.3 to make sure it works as expected (`pip install detect-secrets==1.0.3`):
+    ```sh
+    pip install "git+https://github.com/ibm/detect-secrets.git@master#egg=detect-secrets"
+    ```
+
+    AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `detect-secrets` has to be installed using `pip` or `pip3`. You will need to install `jq` to get the most from Prowler.
 
 - Make sure jq is installed (example below with "apt" but use a valid package manager for your OS):
 
