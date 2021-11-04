@@ -190,7 +190,7 @@ Prowler has been written in bash using AWS-CLI and it works in Linux and OSX.
 
 By default, Prowler scans all opt-in regions available, that might take a long execution time depending on the number of resources and regions used. Same applies for GovCloud or China regions. See below Advance usage for examples.
 
-Prowler has to parameters related to regions: `-r` that is used query AWS services API endpoints (it uses `us-east-1` by default and required for GovCloud or China) and the option `-f` that is to filter those regions you only want to scan. For example if you want to scan Dublin only use `-f eu-west-1` and if you want to scan Dublin and Ohio `-f 'eu-west-1 us-east-s'`, note the single quotes and space between regions.
+Prowler has two parameters related to regions: `-r` that is used query AWS services API endpoints (it uses `us-east-1` by default and required for GovCloud or China) and the option `-f` that is to filter those regions you only want to scan. For example if you want to scan Dublin only use `-f eu-west-1` and if you want to scan Dublin and Ohio `-f 'eu-west-1 us-east-s'`, note the single quotes and space between regions.
 
 ## Screenshots
 
