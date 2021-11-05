@@ -239,7 +239,7 @@ textTitle(){
   fi
 
   TITLE_TEXT=$2
-  CHECK_SERVICENAME="$MAGENTA$3$NORMAL"
+  local CHECK_SERVICENAME="$MAGENTA$3$NORMAL"
   local CHECK_SEVERITY="$BROWN[$4]$NORMAL"
 
   # case "$3" in
