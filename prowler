@@ -685,6 +685,7 @@ if [[ $CHECK_ID ]];then
     addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
   copyToS3
+  scoring
   cleanTemp
   exit $EXITCODE
 fi
