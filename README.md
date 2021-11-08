@@ -4,7 +4,7 @@
 
 # Prowler - AWS Security Tool
 
-[![Discord Shield](https://discordapp.com/api/guilds/807208614288818196/widget.png?style=shield)]()
+[![Discord Shield](https://discordapp.com/api/guilds/807208614288818196/widget.png?style=shield)](https://discord.gg/UjSMCVnxSB)
    
 ## Table of Contents
 
