@@ -84,6 +84,7 @@ USAGE:
       -l                  list all available checks only (does not perform any check). Add -g <group_id> to only list checks within the specified group
       -L                  list all groups (does not perform any check)
       -e                  exclude group extras
+      -a <check>          start after the given check. Useful for restarting a failed run, in which case this would be set to the last succesfully ran check
       -E                  execute all tests except a list of specified checks separated by comma (i.e. check21,check31)
       -b                  do not print Prowler banner
       -s                  show scoring report
@@ -111,7 +112,7 @@ USAGE:
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:" OPTION; do
+while getopts ":hlLkqp:r:c:g:f:m:M:E:x:ea:nbVsSI:A:R:T:w:N:o:B:F:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -156,6 +157,9 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:" OPTION; do
         ;;
      e )
         EXTRAS=1
+        ;;
+     a )
+        START_AFTER=$OPTARG
         ;;
      E )
         EXCLUDE_CHECK_ID=$OPTARG
@@ -494,6 +498,13 @@ execute_group() {
         unset EXCLUDED_CHECKS
     fi
     for i in ${CHECKS[@]}; do
+        if [[ -n $START_AFTER && $START_AFTER == $i ]]; then
+            unset START_AFTER
+            continue
+        elif [[ -n $START_AFTER ]]; then
+            continue
+        fi
+
         execute_check ${i}
     done
 }
