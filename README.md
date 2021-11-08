@@ -89,10 +89,14 @@ Prowler has been written in bash using AWS-CLI and it works in Linux and OSX.
 
     AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `detect-secrets` has to be installed using `pip` or `pip3`. You will need to install `jq` to get the most from Prowler.
 
-- Make sure jq is installed (example below with "apt" but use a valid package manager for your OS):
+- Make sure jq is installed: examples below with "apt" for Debian alike and "yum" for RedHat alike distros (like Amazon Linux):
 
     ```sh
     sudo apt install jq
+    ```
+
+    ```sh
+    sudo yum install jq
     ```
 
 - Previous steps, from your workstation:
