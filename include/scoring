@@ -30,8 +30,6 @@ scoring(){
 
   fi
 
-  CHECKS_COUNTER=$((CHECKS_COUNTER-1))
-
   if [[ $SCORING == "1" ]]; then
     echo -e "$BLUE------------------------------------------------------------------ $NORMAL"
     echo -e "$CYAN                          _"
