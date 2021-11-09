@@ -70,6 +70,9 @@ if [[ $MODE ]];then
     addHtmlHeader > ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     HTML_REPORT_INIT="1"
   fi
+  if [[ "${MODES[@]}" =~ "csv" ]]; then
+    printCsvHeader
+  fi
 fi
 
 # textInfo "HTML report will be saved: ${OUTPUT_FILE_NAME}.$EXTENSION_HTML"
