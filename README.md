@@ -4,7 +4,10 @@
 
 # Prowler - AWS Security Tool
 
-[![Discord Shield](https://discordapp.com/api/guilds/807208614288818196/widget.png?style=shield)](https://discord.gg/UjSMCVnxSB)
+[![Discord Shield](https://discordapp.com/api/guilds/807208614288818196/widget.png?style=shield)](https://discord.gg/UjSMCVnxSB) 
+[![Docker Pulls](https://img.shields.io/docker/pulls/toniblyx/prowler)](https://hub.docker.com/r/toniblyx/prowler)
+[![aws-ecr](https://user-images.githubusercontent.com/3985464/141164269-8cfeef0f-6b62-4c99-8fe9-4537986a1613.png)](https://gallery.ecr.aws/o4g1s5r6/prowler)
+
    
 ## Table of Contents
 
