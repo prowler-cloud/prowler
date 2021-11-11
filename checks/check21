@@ -55,11 +55,14 @@ check21(){
             textPass "$regx: Trail $trail is enabled for all regions" "$regx" "$trail"
           fi 
         fi
-
       done
     fi
   done
   if [[ $trail_count == 0 ]]; then
-    textFail "$regx: No CloudTrail trails were found in the account" "$regx" "$trail"
+    if [[ $FILTERREGION ]]; then
+      textFail "$regx: No CloudTrail trails were found in the filtered region" "$regx" "$trail"
+    else
+      textFail "$regx: No CloudTrail trails were found in the account" "$regx" "$trail"
+    fi 
   fi
 }
