@@ -36,6 +36,8 @@ if [[ $OUTPUT_DIR_CUSTOM ]]; then
 fi
 if [ -z ${OUTPUT_FILE_NAME+x} ]; then
   OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
+else
+  OUTPUT_FILE_NAME="${OUTPUT_DIR}/$OUTPUT_FILE_NAME"
 fi
 HTML_LOGO_URL="https://github.com/toniblyx/prowler/"
 HTML_LOGO_IMG="https://github.com/toniblyx/prowler/raw/2.4/util/html/prowler-logo-new.png"
