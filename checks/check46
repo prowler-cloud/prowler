@@ -14,7 +14,7 @@
 CHECK_ID_check46="4.6"
 CHECK_TITLE_check46="[check46] Ensure no Network ACLs allow ingress from 0.0.0.0/0 to Microsoft RDP port 3389"
 CHECK_SCORED_check46="SCORED"
-CHECK_TYPE_check46="LEVEL2"
+CHECK_CIS_LEVEL_check46="LEVEL2"
 CHECK_SEVERITY_check46="High"
 CHECK_ASFF_TYPE_check46="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check46="AwsEc2NetworkAcl"

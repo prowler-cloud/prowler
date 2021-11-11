@@ -13,7 +13,7 @@
 CHECK_ID_extra7157="7.157"
 CHECK_TITLE_extra7157="[extra7157] Check if API Gateway V2 has configured authorizers"
 CHECK_SCORED_extra7157="NOT_SCORED"
-CHECK_TYPE_extra7157="EXTRA"
+CHECK_CIS_LEVEL_extra7157="EXTRA"
 CHECK_SEVERITY_extra7157="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7157="AwsApiGatewayV2Api"
 CHECK_ALTERNATE_check746="extra7157"

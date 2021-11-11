@@ -17,7 +17,7 @@
 CHECK_ID_extra7100="7.100"
 CHECK_TITLE_extra7100="[extra7100] Ensure that no custom IAM policies exist which allow permissive role assumption (e.g. sts:AssumeRole on *)"
 CHECK_SCORED_extra7100="NOT_SCORED"
-CHECK_TYPE_extra7100="EXTRA"
+CHECK_CIS_LEVEL_extra7100="EXTRA"
 CHECK_SEVERITY_extra7100="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra7100="AwsIamPolicy"
 CHECK_ALTERNATE_check7100="extra7100"

@@ -352,7 +352,7 @@ show_check_title() {
   local check_id=CHECK_ID_$1
   local check_title=CHECK_TITLE_$1
   local check_scored=CHECK_SCORED_$1
-  local check_type=CHECK_TYPE_$1
+  local check_cis_level=CHECK_CIS_LEVEL_$1
   local check_asff_compliance_type=CHECK_ASFF_COMPLIANCE_TYPE_$1
   local check_severity=CHECK_SEVERITY_$1
   local check_servicename=CHECK_SERVICENAME_$1
@@ -375,9 +375,9 @@ show_check_title() {
   fi
   # This shows ASFF_COMPLIANCE_TYPE if group used is ens, this si used to show ENS compliance ID control, can be used for other compliance groups as well.
   if [[ ${GROUP_ID_READ} == "ens" ]];then
-    textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_type}" "$group_ids" "(${!check_asff_compliance_type})"
+    textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_cis_level}" "$group_ids" "(${!check_asff_compliance_type})"
   else
-    textTitle "${!check_id}" "${!check_title}" "${!check_servicename}" "${!check_severity}" "$group_ids"
+    textTitle "${!check_id}" "${!check_title}" "${!check_servicename}" "${!check_severity}" "$group_ids" "${!check_cis_level}"
   fi
 }
 

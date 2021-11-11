@@ -13,7 +13,7 @@
 CHECK_ID_extra7146="7.146"
 CHECK_TITLE_extra7146="[extra7146] Check if there is any unassigned Elastic IP"
 CHECK_SCORED_extra7146="NOT_SCORED"
-CHECK_TYPE_extra7146="EXTRA"
+CHECK_CIS_LEVEL_extra7146="EXTRA"
 CHECK_SEVERITY_extra7146="Low"
 CHECK_ASFF_RESOURCE_TYPE_extra7146="AwsElasticIPs"
 CHECK_ALTERNATE_check7146="extra7146"

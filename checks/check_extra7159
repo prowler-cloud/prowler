@@ -13,7 +13,7 @@
 CHECK_ID_extra7159="7.159"
 CHECK_TITLE_extra7159="[extra7159] Check if ELB has listeners underneath"
 CHECK_SCORED_extra7159="NOT_SCORED"
-CHECK_TYPE_extra7159="EXTRA"
+CHECK_CIS_LEVEL_extra7159="EXTRA"
 CHECK_SEVERITY_extra7159="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7159="AwsElbLoadBalancer"
 CHECK_ALTERNATE_check7159="extra7159"

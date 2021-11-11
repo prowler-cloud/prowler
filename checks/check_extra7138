@@ -13,7 +13,7 @@
 CHECK_ID_extra7138="7.138"
 CHECK_TITLE_extra7138="[extra7138] Ensure no Network ACLs allow ingress from 0.0.0.0/0 to any port"
 CHECK_SCORED_extra7138="NOT SCORED"
-CHECK_TYPE_extra7138="LEVEL2"
+CHECK_CIS_LEVEL_extra7138="LEVEL2"
 CHECK_SEVERITY_extra7138="High"
 CHECK_ASFF_TYPE_extra7138="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_extra7138="AwsEc2NetworkAcl"

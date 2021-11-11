@@ -14,7 +14,7 @@
 CHECK_ID_extra7104="7.104"
 CHECK_TITLE_extra7104="[extra7104] Check if Amazon SageMaker Notebook instances have VPC settings configured"
 CHECK_SCORED_extra7104="NOT_SCORED"
-CHECK_TYPE_extra7104="EXTRA"
+CHECK_CIS_LEVEL_extra7104="EXTRA"
 CHECK_ASFF_RESOURCE_TYPE_extra7104="AwsSageMakerNotebookInstance"
 CHECK_ALTERNATE_check7104="extra7104"
 CHECK_SEVERITY_extra7104="Medium"

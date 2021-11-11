@@ -13,7 +13,7 @@
 CHECK_ID_extra7145="7.145"
 CHECK_TITLE_extra7145="[extra7145] Check if Lambda functions have policies which allow access to any AWS account"
 CHECK_SCORED_extra7145="NOT_SCORED"
-CHECK_TYPE_extra7145="EXTRA"
+CHECK_CIS_LEVEL_extra7145="EXTRA"
 CHECK_SEVERITY_extra7145="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra7145="AwsLambda"
 CHECK_ALTERNATE_check7145="extra7145"

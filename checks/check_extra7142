@@ -13,7 +13,7 @@
 CHECK_ID_extra7142="7.142"
 CHECK_TITLE_extra7142="[extra7142] Check if Application Load Balancer is dropping invalid packets to prevent header based HTTP request smuggling"
 CHECK_SCORED_extra7142="NOT_SCORED"
-CHECK_TYPE_extra7142="EXTRA"
+CHECK_CIS_LEVEL_extra7142="EXTRA"
 CHECK_SEVERITY_extra7142="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7142="AwsElasticLoadBalancingV2LoadBalancer"
 CHECK_ALTERNATE_check7142="extra7142"

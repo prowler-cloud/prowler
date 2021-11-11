@@ -14,7 +14,7 @@
 CHECK_ID_check45="4.5"
 CHECK_TITLE_check45="[check45] Ensure no Network ACLs allow ingress from 0.0.0.0/0 to SSH port 22"
 CHECK_SCORED_check45="SCORED"
-CHECK_TYPE_check45="LEVEL2"
+CHECK_CIS_LEVEL_check45="LEVEL2"
 CHECK_SEVERITY_check45="High"
 CHECK_ASFF_TYPE_check45="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check45="AwsEc2NetworkAcl"

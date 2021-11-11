@@ -13,7 +13,7 @@
 CHECK_ID_extra7136="7.136"
 CHECK_TITLE_extra7136="[extra7136] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Telnet port 23 "
 CHECK_SCORED_extra7136="NOT_SCORED"
-CHECK_TYPE_extra7136="EXTRA"
+CHECK_CIS_LEVEL_extra7136="EXTRA"
 CHECK_SEVERITY_extra7136="High"
 CHECK_ASFF_RESOURCE_TYPE_extra7136="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check7136="extra7136"

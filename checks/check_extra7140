@@ -12,7 +12,7 @@
 CHECK_ID_extra7140="7.140"
 CHECK_TITLE_extra7140="[extra7140] Check if there are SSM Documents set as public"
 CHECK_SCORED_extra7140="NOT_SCORED"
-CHECK_TYPE_extra7140="EXTRA"
+CHECK_CIS_LEVEL_extra7140="EXTRA"
 CHECK_SEVERITY_extra7140="High"
 CHECK_ASFF_RESOURCE_TYPE_extra7140="AwsSsmDocument"
 CHECK_ALTERNATE_check7140="extra7140"

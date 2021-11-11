@@ -13,7 +13,7 @@
 CHECK_ID_extra7117="7.117"
 CHECK_TITLE_extra7117="[extra7117] Check if Glue data catalog settings have encrypt connection password enabled."
 CHECK_SCORED_extra7117="NOT_SCORED"
-CHECK_TYPE_extra7117="EXTRA"
+CHECK_CIS_LEVEL_extra7117="EXTRA"
 CHECK_SEVERITY_extra7117="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7117="AwsGlue"
 CHECK_ALTERNATE_check7117="extra7117"

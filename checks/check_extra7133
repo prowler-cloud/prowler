@@ -13,7 +13,7 @@
 CHECK_ID_extra7133="7.133"
 CHECK_TITLE_extra7133="[extra7133] Check if RDS instances have multi-AZ enabled"
 CHECK_SCORED_extra7133="NOT_SCORED"
-CHECK_TYPE_extra7133="EXTRA"
+CHECK_CIS_LEVEL_extra7133="EXTRA"
 CHECK_SEVERITY_extra7133="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7133="AwsRdsDbInstance"
 CHECK_ALTERNATE_check7133="extra7133"
