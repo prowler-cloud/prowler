@@ -48,6 +48,11 @@ assume_role(){
       rm -f $TEMP_STS_ASSUMED_FILE
       EXITCODE=1
       exit $EXITCODE
+    elif [[ "$(grep MaxSessionDuration $TEMP_STS_ASSUMED_FILE)" ]]; then
+      textFail "The requested DurationSeconds exceeds the MaxSessionDuration set for the role arn:${AWS_PARTITION}:iam::${ACCOUNT_TO_ASSUME}:role/${ROLE_TO_ASSUME}"
+      rm -f $TEMP_STS_ASSUMED_FILE
+      EXITCODE=1
+      exit $EXITCODE
     fi
 
     # assume role command
