@@ -13,7 +13,7 @@
 CHECK_ID_extra7124="7.124"
 CHECK_TITLE_extra7124="[extra7124] Check if EC2 instances are managed by Systems Manager."
 CHECK_SCORED_extra7124="NOT_SCORED"
-CHECK_TYPE_extra7124="EXTRA"
+CHECK_CIS_LEVEL_extra7124="EXTRA"
 CHECK_SEVERITY_extra7124="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7124="AwsEc2Instance"
 CHECK_ALTERNATE_check7124="extra7124"

@@ -14,7 +14,7 @@
 CHECK_ID_check120="1.20"
 CHECK_TITLE_check120="[check120] Ensure a support role has been created to manage incidents with AWS Support"
 CHECK_SCORED_check120="SCORED"
-CHECK_TYPE_check120="LEVEL1"
+CHECK_CIS_LEVEL_check120="LEVEL1"
 CHECK_SEVERITY_check120="Medium"
 CHECK_ASFF_TYPE_check120="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check120="AwsIamRole"
@@ -31,7 +31,7 @@ check120(){
   SUPPORTPOLICYARN=$($AWSCLI iam list-policies --query "Policies[?PolicyName == 'AWSSupportAccess'].Arn" $PROFILE_OPT --region $REGION --output text)
   if [[ $SUPPORTPOLICYARN ]];then
     for policyarn in $SUPPORTPOLICYARN;do
-      POLICYROLES=$($AWSCLI iam list-entities-for-policy --policy-arn $SUPPORTPOLICYARN $PROFILE_OPT --region $REGION --output text | awk -F$'\t' '{ print $3 }')
+      POLICYROLES=$($AWSCLI iam list-entities-for-policy --policy-arn $policyarn $PROFILE_OPT --region $REGION --output text | awk -F$'\t' '{ print $3 }')
       if [[ $POLICYROLES ]];then
         for name in $POLICYROLES; do
           textPass "$REGION: Support Policy attached to $name" "$REGION" "$name"

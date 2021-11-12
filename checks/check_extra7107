@@ -14,7 +14,7 @@
 CHECK_ID_extra7107="7.107"
 CHECK_TITLE_extra7107="[extra7107] Check if Amazon SageMaker Training jobs have intercontainer encryption enabled"
 CHECK_SCORED_extra7107="NOT_SCORED"
-CHECK_TYPE_extra7107="EXTRA"
+CHECK_CIS_LEVEL_extra7107="EXTRA"
 CHECK_ASFF_RESOURCE_TYPE_extra7107="AwsSageMakerNotebookInstance"
 CHECK_ALTERNATE_check7107="extra7107"
 CHECK_SEVERITY_extra7107="Medium"

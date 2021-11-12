@@ -14,7 +14,7 @@
 CHECK_ID_extra7108="7.108"
 CHECK_TITLE_extra7108="[extra7108] Check if Amazon SageMaker Training jobs have volume and output with KMS encryption enabled"
 CHECK_SCORED_extra7108="NOT_SCORED"
-CHECK_TYPE_extra7108="EXTRA"
+CHECK_CIS_LEVEL_extra7108="EXTRA"
 CHECK_ASFF_RESOURCE_TYPE_extra7108="AwsSageMakerNotebookInstance"
 CHECK_ALTERNATE_check7108="extra7108"
 CHECK_SEVERITY_extra7108="Medium"

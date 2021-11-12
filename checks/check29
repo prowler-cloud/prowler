@@ -14,14 +14,14 @@
 CHECK_ID_check29="2.9"
 CHECK_TITLE_check29="[check29] Ensure VPC Flow Logging is Enabled in all VPCs"
 CHECK_SCORED_check29="SCORED"
-CHECK_TYPE_check29="LEVEL2"
+CHECK_CIS_LEVEL_check29="LEVEL2"
 CHECK_SEVERITY_check29="Medium"
 CHECK_ASFF_TYPE_check29="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check29="AwsEc2Vpc"
 CHECK_ALTERNATE_check209="check29"
 CHECK_ASFF_COMPLIANCE_TYPE_check29="ens-op.mon.1.aws.flow.1"
 CHECK_SERVICENAME_check29="vpc"
-CHECK_RISK_check29='PC Flow Logs provide visibility into network traffic that traverses the VPC and can be used to detect anomalous traffic or insight during security workflows.'
+CHECK_RISK_check29='VPC Flow Logs provide visibility into network traffic that traverses the VPC and can be used to detect anomalous traffic or insight during security workflows.'
 CHECK_REMEDIATION_check29='It is recommended that VPC Flow Logs be enabled for packet "Rejects" for VPCs. '
 CHECK_DOC_check29='http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/flow-logs.html '
 CHECK_CAF_EPIC_check29='Logging and Monitoring'

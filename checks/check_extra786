@@ -13,7 +13,7 @@
 CHECK_ID_extra786="7.86"
 CHECK_TITLE_extra786="[extra786] Check if EC2 Instance Metadata Service Version 2 (IMDSv2) is Enabled and Required "
 CHECK_SCORED_extra786="NOT_SCORED"
-CHECK_TYPE_extra786="EXTRA"
+CHECK_CIS_LEVEL_extra786="EXTRA"
 CHECK_SEVERITY_extra786="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra786="AwsEc2Instance"
 CHECK_ALTERNATE_check786="extra786"

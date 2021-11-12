@@ -13,7 +13,7 @@
 CHECK_ID_extra7132="7.132"
 CHECK_TITLE_extra7132="[extra7132] Check if RDS instances has enhanced monitoring enabled"
 CHECK_SCORED_extra7132="NOT_SCORED"
-CHECK_TYPE_extra7132="EXTRA"
+CHECK_CIS_LEVEL_extra7132="EXTRA"
 CHECK_SEVERITY_extra7132="Low"
 CHECK_ASFF_RESOURCE_TYPE_extra7132="AwsRdsDbInstance"
 CHECK_ALTERNATE_check7132="extra7132"

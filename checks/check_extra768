@@ -11,26 +11,25 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra768="7.68"
-CHECK_TITLE_extra768="[extra768] Find secrets in ECS task definitions variables "
+CHECK_TITLE_extra768="[extra768] Find secrets in ECS task definitions environment variables "
 CHECK_SCORED_extra768="NOT_SCORED"
-CHECK_TYPE_extra768="EXTRA"
+CHECK_CIS_LEVEL_extra768="EXTRA"
 CHECK_SEVERITY_extra768="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra768="AwsEcsTaskDefinition"
 CHECK_ALTERNATE_check768="extra768"
 CHECK_SERVICENAME_extra768="ecs"
-CHECK_RISK_extra768='The use of a hard-coded password increases the possibility of password guessing.  If hard-coded passwords are used; it is possible that malicious users gain access through the account in question.'
-CHECK_REMEDIATION_extra768='Use Secrets Manager to securely provide database credentials to Lambda functions and secure the databases as well as use the credentials to connect and query them without hardcoding the secrets in code or passing them through environmental variables. '
-CHECK_DOC_extra768='https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html'
+CHECK_RISK_extra768='The use of a hard-coded password increases the possibility of password guessing. If hard-coded passwords are used; it is possible that malicious users gain access through the account in question.'
+CHECK_REMEDIATION_extra768='Use Secrets Manager or Parameter Store to securely provide credentials to containers without hardcoding the secrets in code or passing them through environment variables.'
+CHECK_DOC_extra768='https://docs.aws.amazon.com/AmazonECS/latest/developerguide/specifying-sensitive-data.html'
 CHECK_CAF_EPIC_extra768='Logging and Monitoring'
 
 extra768(){
   SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"
   if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then
-    # this folder is deleted once this check is finished
     mkdir $SECRETS_TEMP_FOLDER
   fi
   for regx in $REGIONS; do
-    # Get a list of all families first:
+    # Get a list of all task definition families first:
     FAMILIES=$($AWSCLI ecs list-task-definition-families $PROFILE_OPT --region $regx --status ACTIVE | jq -r .families[])
     if [[ $FAMILIES ]]; then
       for FAMILY in $FAMILIES;do
@@ -60,5 +59,4 @@ extra768(){
       textInfo "$regx: No ECS task definitions found" "$regx"
     fi
   done
-#  rm -rf $SECRETS_TEMP_FOLDER
 }

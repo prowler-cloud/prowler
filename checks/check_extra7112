@@ -14,7 +14,7 @@
 CHECK_ID_extra7112="7.112"
 CHECK_TITLE_extra7112="[extra7112] Check if Amazon SageMaker Notebook instances have data encryption enabled"
 CHECK_SCORED_extra7112="NOT_SCORED"
-CHECK_TYPE_extra7112="EXTRA"
+CHECK_CIS_LEVEL_extra7112="EXTRA"
 CHECK_ASFF_RESOURCE_TYPE_extra7112="AwsSageMakerNotebookInstance"
 CHECK_ALTERNATE_check7112="extra7112"
 CHECK_SEVERITY_extra7112="Medium"

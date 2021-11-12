@@ -13,7 +13,7 @@
 CHECK_ID_extra7116="7.116"
 CHECK_TITLE_extra7116="[extra7116] Check if Glue data catalog settings have metadata encryption enabled."
 CHECK_SCORED_extra7116="NOT_SCORED"
-CHECK_TYPE_extra7116="EXTRA"
+CHECK_CIS_LEVEL_extra7116="EXTRA"
 CHECK_SEVERITY_extra7116="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7116="AwsGlue"
 CHECK_ALTERNATE_check7116="extra7116"

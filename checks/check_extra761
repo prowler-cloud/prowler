@@ -13,7 +13,7 @@
 CHECK_ID_extra761="7.61"
 CHECK_TITLE_extra761="[extra761] Check if EBS Default Encryption is activated "
 CHECK_SCORED_extra761="NOT_SCORED"
-CHECK_TYPE_extra761="EXTRA"
+CHECK_CIS_LEVEL_extra761="EXTRA"
 CHECK_SEVERITY_extra761="Medium"
 CHECK_ALTERNATE_check761="extra761"
 CHECK_ASFF_COMPLIANCE_TYPE_extra761="ens-mp.info.3.aws.ebs.2"

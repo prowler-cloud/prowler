@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+#
+# Remediation:
+#
+#   https://docs.aws.amazon.com/cli/latest/reference/cloudformation/update-termination-protection.html
+#
+#   aws cloudformation update-termination-protection \
+#   --stack-name my-stack \
+#   --enable-termination-protection
+
+CHECK_ID_extra7154="7.154"
+CHECK_TITLE_extra7154="[extra7154] Enable termination protection for Cloudformation Stacks"
+CHECK_SCORED_extra7154="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7154="EXTRA"
+CHECK_SEVERITY_extra7154="MEDIUM"
+CHECK_ASFF_RESOURCE_TYPE_extra7154="AwsCloudFormationStack"
+CHECK_ALTERNATE_check7154="extra7154"
+CHECK_SERVICENAME_extra7154="cloudformation"
+CHECK_RISK_extra7154='Without termination protection enabled; a critical cloudformation stack can be accidently deleted.'
+CHECK_REMEDIATION_extra7154='Ensure termination protection is enabled for the cloudformation stacks'
+CHECK_DOC_extra7154='https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-protect-stacks.html'
+CHECK_CAF_EPIC_extra7154='Infrastructure Protection'
+
+extra7154() {
+  for regx in $REGIONS; do
+    CFN_STACKS=$($AWSCLI cloudformation describe-stacks $PROFILE_OPT --region $regx --output json)
+    LIST_OF_CFN_STACKS=$(echo $CFN_STACKS | jq -r '.Stacks[].StackName')
+    if [[ $LIST_OF_CFN_STACKS ]];then
+      for stack in $LIST_OF_CFN_STACKS; do
+        CFN_STACK_DETAILS=$($AWSCLI cloudformation describe-stacks $PROFILE_OPT --region $regx --stack-name $stack --output json)
+        TERMINATION_ENABLED=$(echo $CFN_STACK_DETAILS | jq -r '.Stacks[].EnableTerminationProtection')
+        ROOT_ID=$(echo $CFN_STACK_DETAILS | jq -r '.Stacks[].RootId')
+        if [[ $ROOT_ID != null && $TERMINATION_ENABLED == "false" ]]; then
+          textInfo "$regx: $stack is a nested stack. Enable termination protection on the root stack $ROOT_ID" "$regx" "$stack" "$ROOT_ID"
+        elif [[ $TERMINATION_ENABLED == "true" ]]; then
+          textPass "$regx: Cloudformation stack $stack has termination protection enabled" "$regx" "$stack"
+        else
+          textFail "$regx: Cloudformation stack $stack has termination protection disabled" "$regx" "$stack"
+        fi
+      done
+    else
+      textInfo "$regx: No Cloudformation stacks found" "$regx"
+    fi
+  done
+}

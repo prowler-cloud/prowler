@@ -13,7 +13,7 @@
 CHECK_ID_extra734="7.34"
 CHECK_TITLE_extra734="[extra734] Check if S3 buckets have default encryption (SSE) enabled or use a bucket policy to enforce it"
 CHECK_SCORED_extra734="NOT_SCORED"
-CHECK_TYPE_extra734="EXTRA"
+CHECK_CIS_LEVEL_extra734="EXTRA"
 CHECK_SEVERITY_extra734="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra734="AwsS3Bucket"
 CHECK_ALTERNATE_check734="extra734"
@@ -72,7 +72,7 @@ extra734(){
       fi
 
       # check if the S3 policy forces SSE s3:x-amz-server-side-encryption:true
-      CHECK_BUCKET_SSE_POLICY_PRESENT=$(cat $TEMP_SSE_POLICY_FILE | jq --arg arn "arn:${AWS_PARTITION}:s3:::${bucket}/*" '.Statement[]|select(.Effect=="Deny" and ((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*") and .Action=="s3:PutObject" and .Resource==$arn and .Condition.StringEquals."s3:x-amz-server-side-encryption" != null)')
+      CHECK_BUCKET_SSE_POLICY_PRESENT=$(cat $TEMP_SSE_POLICY_FILE | jq --arg arn "arn:${AWS_PARTITION}:s3:::${bucket}/*" '.Statement[]|select(.Effect=="Deny" and ((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*") and .Action=="s3:PutObject" and .Resource==$arn and .Condition.StringNotEquals."s3:x-amz-server-side-encryption" != null)')
       if [[ $CHECK_BUCKET_SSE_POLICY_PRESENT == "" ]]; then
         textFail "$BUCKET_LOCATION: Bucket $bucket does not enforce encryption!" "$BUCKET_LOCATION" "$bucket"
         rm -f $TEMP_SSE_POLICY_FILE

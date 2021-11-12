@@ -14,7 +14,7 @@
 CHECK_ID_extra7109="7.109"
 CHECK_TITLE_extra7109="[extra7109] Check if Amazon SageMaker Training jobs have network isolation enabled"
 CHECK_SCORED_extra7109="NOT_SCORED"
-CHECK_TYPE_extra7109="EXTRA"
+CHECK_CIS_LEVEL_extra7109="EXTRA"
 CHECK_ASFF_RESOURCE_TYPE_extra7109="AwsSageMakerNotebookInstance"
 CHECK_ALTERNATE_check7109="extra7109"
 CHECK_SEVERITY_extra7109="Medium"

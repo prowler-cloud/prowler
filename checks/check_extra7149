@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7149="7.149"
+CHECK_TITLE_extra7149="[extra7149] Check if Redshift Clusters have automated snapshots enabled"
+CHECK_SCORED_extra7149="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7149="EXTRA"
+CHECK_SEVERITY_extra7149="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7149="AwsRedshiftCluster"
+CHECK_ALTERNATE_check7149="extra7149"
+CHECK_SERVICENAME_extra7149="redshift"
+CHECK_RISK_extra7149='If backup is not enabled; data is vulnerable. Human error or bad actors could erase or modify data.'
+CHECK_REMEDIATION_extra7149='Enable automated backup for production data. Define a retention period and periodically test backup restoration. A Disaster Recovery process should be in place to govern Data Protection approach.'
+CHECK_DOC_extra7149='https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Redshift.html'
+CHECK_CAF_EPIC_extra7149='Data Protection'
+
+extra7149() {
+    # "Check if Redshift cluster has audit logging enabled "
+    for regx in $REGIONS; do
+        LIST_OF_REDSHIFT_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --region $regx --query 'Clusters[*].ClusterIdentifier' --output text)
+        if [[ $LIST_OF_REDSHIFT_CLUSTERS ]]; then
+            for redshiftcluster in $LIST_OF_REDSHIFT_CLUSTERS; do
+                REDSHIFT_SNAPSHOT_ENABLED=$($AWSCLI redshift describe-cluster-snapshots $PROFILE_OPT --region $regx --cluster-identifier $redshiftcluster --snapshot-type automated)
+                if [[ $REDSHIFT_SNAPSHOT_ENABLED ]]; then
+                    textPass "$regx: Redshift cluster $redshiftcluster has automated snapshots $REDSHIFT_SNAPSHOT_ENABLED" "$regx" "$redshiftcluster"
+                else
+                    textFail "$regx: Redshift cluster $redshiftcluster has automated snapshots disabled!" "$regx" "$redshiftcluster"
+                fi
+            done
+        else
+            textInfo "$regx: No Redshift cluster configured" "$regx"
+        fi
+    done
+}

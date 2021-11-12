@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Remediation:
+#
+#   https://docs.aws.amazon.com/cli/latest/reference/route53domains/update-domain-contact-privacy.html
+#
+#   update-domain-contact-privacy \
+#   --region us-east-1 \
+#   --domain-name example.com \
+#   --admin-privacy \
+#   --registrant-privacy \
+#   --tech-privacy
+
+CHECK_ID_extra7152="7.152"
+CHECK_TITLE_extra7152="[extra7152] Enable Privacy Protection for for a Route53 Domain"
+CHECK_SCORED_extra7152="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7152="EXTRA"
+CHECK_SEVERITY_extra7152="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7152="AwsRoute53Domain"
+CHECK_ALTERNATE_check7152="extra7152"
+CHECK_SERVICENAME_extra7152="route53"
+CHECK_RISK_extra7152='Without privacy protection enabled, ones personal information is published to the public WHOIS database'
+CHECK_REMEDIATION_extra7152='Ensure default Privacy is enabled'
+CHECK_DOC_extra7152='https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-privacy-protection.html'
+CHECK_CAF_EPIC_extra7152='Data Protection'
+
+extra7152(){
+    echo "Route53 is a global service, looking for domains in US-EAST-1"
+    DOMAIN_NAMES=$($AWSCLI route53domains list-domains $PROFILE_OPT --region us-east-1 --query 'Domains[*].DomainName' --output text )
+    if [[ $DOMAIN_NAMES ]];then
+      for domain_name in $DOMAIN_NAMES;do
+        DOMAIN_DETAIL=$($AWSCLI route53domains get-domain-detail $PROFILE_OPT --region us-east-1 --query 'AdminPrivacy' --domain-name $domain_name)
+        if [[ $DOMAIN_DETAIL == false ]]; then
+          textFail "$regx: Contact information public for: $domain_name" "$regx" "$domain_name"
+          else
+          textPass "$regx: All contact information is private for: $domain_name" "$regx" "$domain_name"
+        fi
+      done
+      else
+      textPass "$regx: No Domain Names found" "$regx"
+    fi
+}

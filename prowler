@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.5.0-12August2021
+PROWLER_VERSION=2.6.0-12November2021
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -45,6 +45,7 @@ SEP=','
 KEEPCREDREPORT=0
 EXITCODE=0
 SEND_TO_SECURITY_HUB=0
+FAILED_CHECK_FAILED_SCAN=1
 PROWLER_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
 TITLE_ID=""
 TITLE_TEXT="CALLER ERROR - UNSET TITLE"
@@ -71,6 +72,8 @@ USAGE:
                             (i.e.: us-east-1), all regions are checked anyway if the check requires it
       -c <check_id>       specify one or multiple check ids separated by commas, to see all available checks use "-l" option
                             (i.e.: "check11" for check 1.1 or "extra71,extra72" for extra check 71 and extra check 72)
+      -C                  Checklist file. See checklist.txt for reference and format.
+                            (i.e.: checklist.txt)
       -g <group_id>       specify a group of checks by id, to see all available group of checks use "-L"
                             (i.e.: "group3" for entire section 3, "cislevel1" for CIS Level 1 Profile Definitions or "forensics-ready")
       -f <filterregion>   specify an AWS region to run checks against
@@ -89,10 +92,10 @@ USAGE:
       -s                  show scoring report
       -S                  send check output to AWS Security Hub - only valid when the output mode is json-asff (i.e. "-M json-asff -S")
       -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by "check")
-      -q                  suppress info messages and passing test output
+      -q                  get only FAIL findings, will show WARNINGS when a resource is excluded
       -A                  account id for the account where to assume a role, requires -R and -T
                             (i.e.: 123456789012)
-      -R                  role name to assume in the account, requires -A and -T
+      -R                  role name or role arn to assume in the account, requires -A and -T
                             (i.e.: ProwlerRole)
       -T                  session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
                             (i.e.: 43200)
@@ -105,13 +108,16 @@ USAGE:
       -B                  Custom output bucket, requires -M <mode> and it can work also with -o flag.
                             (i.e.: -M csv -B my-bucket or -M csv -B my-bucket/folder/)
       -F                  Custom output report name, if not specified will use default output/prowler-output-ACCOUNT_NUM-OUTPUT_DATE
+      -z                  Failed Checks do not trigger exit code 3
+      -Z                  Specify one or multiple check ids separated by commas that will trigger exit code 3 if they fail. Unspecified checks will not trigger exit code 3. This will override "-z".
+                            (i.e.: "-Z check11,check12" will cause check11 and/or check12 to trigger exit code 3
       -V                  show version number & exit
       -h                  this help
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:" OPTION; do
+while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:zZ:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -135,6 +141,9 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:" OPTION; do
         ;;
      c )
         CHECK_ID=$OPTARG
+        ;;
+     C )
+        CHECK_FILE=$OPTARG
         ;;
      g )
         GROUP_ID_READ=$OPTARG
@@ -204,6 +213,12 @@ while getopts ":hlLkqp:r:c:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:" OPTION; do
      F )
         OUTPUT_FILE_NAME=$OPTARG
         ;;
+     z )
+        FAILED_CHECK_FAILED_SCAN=0
+        ;;
+     Z )
+        FAILED_CHECK_FAILED_SCAN_LIST=$OPTARG
+        ;;
      : )
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL  -$OPTARG requires an argument"
@@ -269,6 +284,19 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/securityhub_integration
 . $PROWLER_DIR/include/junit_integration
 
+# Parses the check file into CHECK_ID's.
+if [[ -n "$CHECK_FILE" ]]; then
+  if [[ -f $CHECK_FILE ]]; then
+    # Parses the file, converting it to a comma seperated list. Ignores all # comments and removes extra blank spaces
+    CHECK_ID="$(awk '!/^[[:space:]]*#/{print }' <(cat $CHECK_FILE | sed 's/[[:space:]]*#.*$//g;/^$/d' | sed 'H;1h;$!d;x;y/\n/,/' | tr -d ' '))"
+  else
+    # If the file doesn't exist, exits Prowler
+    echo "$CHECK_FILE does not exist"
+    EXITCODE=1
+    exit $EXITCODE
+  fi
+fi
+
 # Pre-process whitelist file if supplied
 if [[ -n "$WHITELIST_FILE" ]]; then
   # ignore lines starting with # (comments)
@@ -324,7 +352,7 @@ show_check_title() {
   local check_id=CHECK_ID_$1
   local check_title=CHECK_TITLE_$1
   local check_scored=CHECK_SCORED_$1
-  local check_type=CHECK_TYPE_$1
+  local check_cis_level=CHECK_CIS_LEVEL_$1
   local check_asff_compliance_type=CHECK_ASFF_COMPLIANCE_TYPE_$1
   local check_severity=CHECK_SEVERITY_$1
   local check_servicename=CHECK_SERVICENAME_$1
@@ -347,9 +375,9 @@ show_check_title() {
   fi
   # This shows ASFF_COMPLIANCE_TYPE if group used is ens, this si used to show ENS compliance ID control, can be used for other compliance groups as well.
   if [[ ${GROUP_ID_READ} == "ens" ]];then
-    textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_type}" "$group_ids" "(${!check_asff_compliance_type})"
+    textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_cis_level}" "$group_ids" "(${!check_asff_compliance_type})"
   else
-    textTitle "${!check_id}" "${!check_title}" "${!check_servicename}" "${!check_severity}" "$group_ids"
+    textTitle "${!check_id}" "${!check_title}" "${!check_servicename}" "${!check_severity}" "$group_ids" "${!check_cis_level}"
   fi
 }
 
@@ -657,6 +685,7 @@ if [[ $CHECK_ID ]];then
     addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
   copyToS3
+  scoring
   cleanTemp
   exit $EXITCODE
 fi

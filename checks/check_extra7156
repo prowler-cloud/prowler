@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra7156="7.156"
+CHECK_TITLE_extra7156="[extra7156] Checks if API Gateway V2 has Access Logging enabled"
+CHECK_SCORED_extra7156="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7156="EXTRA"
+CHECK_SEVERITY_extra7156="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7156="AwsApiGatewayV2Api"
+CHECK_ALTERNATE_check7156="extra7156"
+CHECK_SERVICENAME_extra7156="apigateway"
+CHECK_RISK_extra7156="If not enabled the logging of API calls is not possible. This information is important for monitoring API access."
+CHECK_REMEDIATION_extra7156="Enable Access Logging in the API stage."
+CHECK_DOC_extra7156="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-apigatewayv2-stage-accesslogsettings.html"
+CHECK_CAF_EPIC_extra7156="Logging and Monitoring"
+
+extra7156(){
+
+    # "Check if API Gateway V2 has Access Logging enabled "
+    for regx in $REGIONS; do
+        LIST_OF_API_GW=$($AWSCLI apigatewayv2 get-apis $PROFILE_OPT --region $regx --query Items[*].ApiId --output text)
+        if [[ $LIST_OF_API_GW ]];then
+            for apigwid in $LIST_OF_API_GW;do
+                API_GW_NAME=$($AWSCLI apigatewayv2 get-apis $PROFILE_OPT --region $regx --query "Items[?ApiId==\`$apigwid\`].Name" --output text)
+                CHECK_STAGES_NAME=$($AWSCLI apigatewayv2 get-stages $PROFILE_OPT --region $regx --api-id $apigwid --query "Items[*].StageName" --output text)
+                if [[ $CHECK_STAGES_NAME ]];then
+                    for stagename in $CHECK_STAGES_NAME;do
+                        CHECK_STAGE_METHOD_LOGGING=$($AWSCLI apigatewayv2 get-stages $PROFILE_OPT --region $regx --api-id $apigwid --query "Items[?StageName == \`$stagename\` ].AccessLogSettings.DestinationArn" --output text)
+                        if [[ $CHECK_STAGE_METHOD_LOGGING ]];then
+                            textPass "$regx: API Gateway V2 $API_GW_NAME ID: $apigwid, stage: $stagename, has access logging enabled to $CHECK_STAGE_METHOD_LOGGING" "$regx" "$API_GW_NAME"
+                        else
+                            textFail "$regx: API Gateway V2 $API_GW_NAME ID: $apigwid, stage: $stagename, has access logging disabled" "$regx" "$API_GW_NAME"
+                        fi
+                    done
+                else
+                textFail "$regx: No Stage name found for $API_GW_NAME" "$regx" "$API_GW_NAME"
+                fi
+            done
+        else
+            textInfo "$regx: No API Gateway found" "$regx"
+        fi
+    done
+}

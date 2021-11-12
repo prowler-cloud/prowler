@@ -13,7 +13,7 @@
 CHECK_ID_extra7123="7.123"
 CHECK_TITLE_extra7123="[extra7123] Check if IAM users have two active access keys"
 CHECK_SCORED_extra7123="NOT_SCORED"
-CHECK_TYPE_extra7123="EXTRA"
+CHECK_CIS_LEVEL_extra7123="EXTRA"
 CHECK_SEVERITY_extra7123="Medium"
 CHECK_ASFF_TYPE_extra7123="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_extra7123="AwsIamUser"
