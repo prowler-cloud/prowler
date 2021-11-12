@@ -13,7 +13,7 @@
 CHECK_ID_extra736="7.36"
 CHECK_TITLE_extra736="[extra736] Check exposed KMS keys"
 CHECK_SCORED_extra736="NOT_SCORED"
-CHECK_TYPE_extra736="EXTRA"
+CHECK_CIS_LEVEL_extra736="EXTRA"
 CHECK_SEVERITY_extra736="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra736="AwsKmsKey"
 CHECK_ALTERNATE_check736="extra736"
@@ -29,7 +29,7 @@ extra736(){
     LIST_OF_CUSTOMER_KMS_KEYS=$($AWSCLI kms list-aliases $PROFILE_OPT --region $regx --query "Aliases[].[AliasName,TargetKeyId]" --output text |grep -v ^alias/aws/ |awk '{ print $2 }')
     if [[ $LIST_OF_CUSTOMER_KMS_KEYS ]];then
       for key in $LIST_OF_CUSTOMER_KMS_KEYS; do
-        CHECK_POLICY=$($AWSCLI kms get-key-policy --key-id $key --policy-name default $PROFILE_OPT --region $regx  --output text|awk '/Principal/{n=NR+1} n>=NR' |grep AWS\"\ :\ \"\\*\"$)
+        CHECK_POLICY=$($AWSCLI kms get-key-policy --key-id $key --policy-name default $PROFILE_OPT --region $regx  --output text| jq '.Statement[]|select(.Effect=="Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and .Condition == null)')
         if [[ $CHECK_POLICY ]]; then
           textFail "$regx: KMS key $key may be publicly accessible!" "$regx" "$key"
         else

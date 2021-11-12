@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7148="7.148"
+CHECK_TITLE_extra7148="[extra7148] Check if EFS File systems have backup enabled"
+CHECK_SCORED_extra7148="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7148="EXTRA"
+CHECK_SEVERITY_extra7148="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7148="AwsEfsFileSystem"
+CHECK_ALTERNATE_check7148="extra7148"
+CHECK_SERVICENAME_extra7148="efs"
+CHECK_RISK_extra7148='If backup is not enabled; data is vulnerable. Human error or bad actors could erase or modify data.'
+CHECK_REMEDIATION_extra7148='Enable automated backup for production data. Define a retention period and periodically test backup restoration. A Disaster Recovery process should be in place to govern Data Protection approach.'
+CHECK_DOC_extra7148='https://docs.aws.amazon.com/efs/latest/ug/whatisefs.html'
+CHECK_CAF_EPIC_extra7148='Data Protection'
+
+extra7148() {
+  for regx in $REGIONS; do
+    LIST_OF_EFS_SYSTEMS=$($AWSCLI efs describe-file-systems $PROFILE_OPT --region $regx --query 'FileSystems[*].FileSystemId' --output text)
+    if [[ $LIST_OF_EFS_SYSTEMS ]]; then
+      for filesystem in $LIST_OF_EFS_SYSTEMS; do
+        # if retention is 0 then is disabled
+        BACKUP_POLICY=$($AWSCLI efs describe-backup-policy $PROFILE_OPT --region $regx --file-system-id $filesystem --query BackupPolicy --output text)
+        if [[ $BACKUP_POLICY == "DISABLED" ]]; then
+          textFail "$regx: File system $filesystem does not have backup enabled!" "$regx" "$filesystem"
+        else
+          textPass "$regx: EFS File system $filesystem has backup enabled" "$regx" "$filesystem"
+        fi
+      done
+    else
+      textInfo "$regx: No EFS File systems found" "$regx" "$filesystem"
+    fi
+  done
+}

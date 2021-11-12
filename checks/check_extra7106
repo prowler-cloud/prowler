@@ -14,7 +14,7 @@
 CHECK_ID_extra7106="7.106"
 CHECK_TITLE_extra7106="[extra7106] Check if Amazon SageMaker Models have VPC settings configured"
 CHECK_SCORED_extra7106="NOT_SCORED"
-CHECK_TYPE_extra7106="EXTRA"
+CHECK_CIS_LEVEL_extra7106="EXTRA"
 CHECK_ASFF_RESOURCE_TYPE_extra7106="AwsSageMakerModel"
 CHECK_ALTERNATE_check7106="extra7106"
 CHECK_SEVERITY_extra7106="Medium"

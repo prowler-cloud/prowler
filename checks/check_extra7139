@@ -12,7 +12,7 @@
 CHECK_ID_extra7139="7.139"
 CHECK_TITLE_extra7139="[extra7139] There are High severity GuardDuty findings "
 CHECK_SCORED_extra7139="NOT_SCORED"
-CHECK_TYPE_extra7139="EXTRA"
+CHECK_CIS_LEVEL_extra7139="EXTRA"
 CHECK_SEVERITY_extra7139="High"
 CHECK_ASFF_RESOURCE_TYPE_extra7139="AwsGuardDutyDetector"
 CHECK_ALTERNATE_check7139="extra7139"
@@ -29,7 +29,7 @@ extra7139(){
     if [[ $DETECTORS_LIST ]];then
       for DETECTOR in $DETECTORS_LIST;do
         FINDINGS_COUNT=""
-        FINDINGS_COUNT=$($AWSCLI $PROFILE_OPT --region $regx --output text guardduty list-findings --detector-id $DETECTOR --finding-criteria '{"Criterion":{"severity": {"Eq":["8"]}}}' 2> /dev/null | wc -l | xargs) # Severity LOW=2, MED=4, HIGH=8
+        FINDINGS_COUNT=$($AWSCLI $PROFILE_OPT --region $regx --output text guardduty list-findings --detector-id $DETECTOR --finding-criteria '{"Criterion":{"severity": {"Eq":["8"]}, "service.archived": {"Eq": ["false"]}}}' 2> /dev/null | wc -l | xargs) # Severity LOW=2, MED=4, HIGH=8
           if [[ $FINDINGS_COUNT -gt 0 ]];then
             textFail "$regx: GuardDuty has $FINDINGS_COUNT high severity findings." "$regx"
           else

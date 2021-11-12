@@ -23,7 +23,12 @@ scoring(){
   # TOTAL_RESOURCES=$(awk "BEGIN {print $FAIL_COUNTER+$PASS_COUNTER; exit}")
   TOTAL_RESOURCES=$(($FAIL_COUNTER + $PASS_COUNTER))
   # Score is % of passed compared to failures. The higher the better
-  PROWLER_SCORE=$(( $PASS_COUNTER * 100 / $TOTAL_RESOURCES ))
+  if [[ $PASS_COUNTER == "0" ]]; then
+    PROWLER_SCORE="0"
+  else
+    PROWLER_SCORE=$(( $PASS_COUNTER * 100 / $TOTAL_RESOURCES ))
+
+  fi
 
   if [[ $SCORING == "1" ]]; then
     echo -e "$BLUE------------------------------------------------------------------ $NORMAL"

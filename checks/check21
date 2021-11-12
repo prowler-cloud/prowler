@@ -14,7 +14,7 @@
 CHECK_ID_check21="2.1"
 CHECK_TITLE_check21="[check21] Ensure CloudTrail is enabled in all regions"
 CHECK_SCORED_check21="SCORED"
-CHECK_TYPE_check21="LEVEL1"
+CHECK_CIS_LEVEL_check21="LEVEL1"
 CHECK_SEVERITY_check21="High"
 CHECK_ASFF_TYPE_check21="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_check21="AwsCloudTrailTrail"
@@ -55,11 +55,14 @@ check21(){
             textPass "$regx: Trail $trail is enabled for all regions" "$regx" "$trail"
           fi 
         fi
-
       done
     fi
   done
   if [[ $trail_count == 0 ]]; then
-    textFail "$regx: No CloudTrail trails were found in the account" "$regx" "$trail"
+    if [[ $FILTERREGION ]]; then
+      textFail "$regx: No CloudTrail trails were found in the filtered region" "$regx" "$trail"
+    else
+      textFail "$regx: No CloudTrail trails were found in the account" "$regx" "$trail"
+    fi 
   fi
 }

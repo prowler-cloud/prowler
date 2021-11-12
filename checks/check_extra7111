@@ -14,7 +14,7 @@
 CHECK_ID_extra7111="7.111"
 CHECK_TITLE_extra7111="[extra7111] Check if Amazon SageMaker Notebook instances have direct internet access"
 CHECK_SCORED_extra7111="NOT_SCORED"
-CHECK_TYPE_extra7111="EXTRA"
+CHECK_CIS_LEVEL_extra7111="EXTRA"
 CHECK_ASFF_RESOURCE_TYPE_extra7111="AwsSageMakerNotebookInstance"
 CHECK_ALTERNATE_check7111="extra7111"
 CHECK_SEVERITY_extra7111="Medium"

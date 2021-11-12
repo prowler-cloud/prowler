@@ -13,7 +13,7 @@
 CHECK_ID_extra7131="7.131"
 CHECK_TITLE_extra7131="[extra7131] Ensure RDS instances have minor version upgrade enabled"
 CHECK_SCORED_extra7131="NOT_SCORED"
-CHECK_TYPE_extra7131="EXTRA"
+CHECK_CIS_LEVEL_extra7131="EXTRA"
 CHECK_SEVERITY_extra7131="Low"
 CHECK_ASFF_RESOURCE_TYPE_extra7131="AwsRdsDbInstance"
 CHECK_ALTERNATE_check7131="extra7131"

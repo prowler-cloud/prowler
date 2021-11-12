@@ -13,7 +13,7 @@
 CHECK_ID_extra7128="7.128"
 CHECK_TITLE_extra7128="[extra7128] Check if DynamoDB table has encryption at rest enabled using CMK KMS"
 CHECK_SCORED_extra7128="NOT_SCORED"
-CHECK_TYPE_extra7128="EXTRA"
+CHECK_CIS_LEVEL_extra7128="EXTRA"
 CHECK_SEVERITY_extra7128="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7128="AwsDynamoDBTable"
 CHECK_ALTERNATE_check7128="extra7128"

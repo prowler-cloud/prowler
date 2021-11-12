@@ -13,7 +13,7 @@
 CHECK_ID_extra76="7.6"
 CHECK_TITLE_extra76="[extra76] Ensure there are no EC2 AMIs set as Public"
 CHECK_SCORED_extra76="NOT_SCORED"
-CHECK_TYPE_extra76="EXTRA"
+CHECK_CIS_LEVEL_extra76="EXTRA"
 CHECK_SEVERITY_extra76="Critical"
 CHECK_ALTERNATE_extra706="extra76"
 CHECK_ALTERNATE_check76="extra76"

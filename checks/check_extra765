@@ -23,7 +23,7 @@
 CHECK_ID_extra765="7.65"
 CHECK_TITLE_extra765="[extra765] Check if ECR image scan on push is enabled "
 CHECK_SCORED_extra765="NOT_SCORED"
-CHECK_TYPE_extra765="EXTRA"
+CHECK_CIS_LEVEL_extra765="EXTRA"
 CHECK_SEVERITY_extra765="Medium"
 CHECK_ALTERNATE_check765="extra765"
 CHECK_SERVICENAME_extra765="ecr"

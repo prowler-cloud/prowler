@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7150="7.150"
+CHECK_TITLE_extra7150="[extra7150] Check if Elastic Load Balancers have deletion protection enabled"
+CHECK_SCORED_extra7150="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7150="EXTRA"
+CHECK_SEVERITY_extra7150="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7150="AwsElbLoadBalancer"
+CHECK_ALTERNATE_check7150="extra7150"
+CHECK_SERVICENAME_extra7150="elb"
+CHECK_RISK_extra7150='If deletion protection is not enabled; the resource is not protected against deletion.'
+CHECK_REMEDIATION_extra7150='Enable deletion protection attribute; this is not enabled by default.'
+CHECK_DOC_extra7150='https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html#deletion-protection'
+CHECK_CAF_EPIC_extra7150='Data Protection'
+
+extra7150(){
+  # "Check if Elastic Load Balancers have delete protection enabled."
+  for regx in $REGIONS; do
+    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].LoadBalancerArn' --output text|xargs -n1)
+    if [[ $LIST_OF_ELBSV2 ]]; then
+      for elb in $LIST_OF_ELBSV2; do
+        CHECK_DELETION_PROTECTION_ENABLED=$($AWSCLI elbv2 describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-arn $elb --query Attributes[*] --output text|grep "deletion_protection.enabled"|grep true )
+        ELBV2_NAME=$(echo $elb|cut -d\/ -f3)
+        if [[ $CHECK_DELETION_PROTECTION_ENABLED ]]; then
+          textPass "$regx: $ELBV2_NAME has the attribute deletion protection enabled" "$regx" "$elb"
+        else
+          textFail "$regx: $ELBV2_NAME does not have deletion protection enabled." "$regx" "$elb"
+        fi
+      done
+    else
+      textInfo "$regx: No ELBs found" "$regx"
+    fi
+  done
+}

@@ -13,7 +13,7 @@
 CHECK_ID_extra7135="7.135"
 CHECK_TITLE_extra7135="[extra7135] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Kafka port 9092 "
 CHECK_SCORED_extra7135="NOT_SCORED"
-CHECK_TYPE_extra7135="EXTRA"
+CHECK_CIS_LEVEL_extra7135="EXTRA"
 CHECK_SEVERITY_extra7135="High"
 CHECK_ASFF_RESOURCE_TYPE_extra7135="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check7135="extra7135"

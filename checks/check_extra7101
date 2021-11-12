@@ -14,7 +14,7 @@
 CHECK_ID_extra7101="7.101"
 CHECK_TITLE_extra7101="[extra7101] Check if Amazon Elasticsearch Service (ES) domains have audit logging enabled"
 CHECK_SCORED_extra7101="NOT_SCORED"
-CHECK_TYPE_extra7101="EXTRA"
+CHECK_CIS_LEVEL_extra7101="EXTRA"
 CHECK_SEVERITY_extra7101="Low"
 CHECK_ASFF_RESOURCE_TYPE_extra7101="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check7101="extra7101"

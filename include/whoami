@@ -53,7 +53,6 @@ USER_ID=$(echo $GETCALLER | jq -r '.UserId' 2>&1)
 AWS_PARTITION=$(echo $CALLER_ARN| cut -d: -f2)
 
 getWhoami(){
-
   if [[ "$MODE" == "csv" ]]; then
     if [[ 255 -eq $? ]]; then
       # Failed to get own identity ... exit
@@ -62,7 +61,6 @@ getWhoami(){
       EXITCODE=2
       exit $EXITCODE
     fi
-    printCsvHeader
     # textTitle "0.0" "Show report generation info" "NOT_SCORED" "SUPPORT"
     # textInfo "ARN: $CALLER_ARN  TIMESTAMP: $SCRIPT_START_TIME"
   elif [[ "$MODE" == "json" || "$MODE" == "json-asff" ]]; then

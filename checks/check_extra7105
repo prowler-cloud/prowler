@@ -14,7 +14,7 @@
 CHECK_ID_extra7105="7.105"
 CHECK_TITLE_extra7105="[extra7105] Check if Amazon SageMaker Models have network isolation enabled"
 CHECK_SCORED_extra7105="NOT_SCORED"
-CHECK_TYPE_extra7105="EXTRA"
+CHECK_CIS_LEVEL_extra7105="EXTRA"
 CHECK_ASFF_RESOURCE_TYPE_extra7105="AwsSageMakerModel"
 CHECK_ALTERNATE_check7105="extra7105"
 CHECK_SEVERITY_extra7105="Medium"

@@ -137,6 +137,7 @@ addHtmlHeader() {
               <th scope="col">CheckID</th>
               <th style="width:20%" scope="col">Check Title</th>
               <th style="width:20%" scope="col">Check Output</th>
+              <th scope="col">CIS Level</th>
               <th scope="col">CAF Epic</th>
               <th scope="col">Risk</th>
               <th scope="col">Remediation</th>

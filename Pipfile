@@ -7,7 +7,7 @@ verify_ssl = true
 
 [packages]
 boto3 = ">=1.9.188"
-detect-secrets = ">=0.12.4"
+detect-secrets = "==1.0.3"
 
 [requires]
 python_version = "3.7"

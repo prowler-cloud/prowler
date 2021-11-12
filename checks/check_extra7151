@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra7151="7.151"
+CHECK_TITLE_extra7151="[extra7151] Check if DynamoDB tables point-in-time recovery (PITR) is enabled"
+CHECK_SCORED_extra7151="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7151="EXTRA"
+CHECK_SEVERITY_extra7151="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7151="AwsDynamoDbTable"
+CHECK_ALTERNATE_check7151="extra7151"
+CHECK_SERVICENAME_extra7151="dynamodb"
+CHECK_RISK_extra7151='If the DynamoDB Table does not have point-in-time recovery enabled; it is vulnerable to accidental write or delete operations.'
+CHECK_REMEDIATION_extra7151='Enable point-in-time recovery; this is not enabled by default.'
+CHECK_DOC_extra7151='https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery_Howitworks.html'
+CHECK_CAF_EPIC_extra7151='Data Protection'
+
+extra7151(){
+  # "Check if DynamoDB tables point-in-time recovery (PITR) is enabled"
+  for regx in $REGIONS; do
+    LIST_OF_DYNAMODB_TABLES=$($AWSCLI dynamodb list-tables $PROFILE_OPT --region $regx --query 'TableNames[*]' --output text)
+    if [[ $LIST_OF_DYNAMODB_TABLES ]]; then
+      for dynamodb_table in $LIST_OF_DYNAMODB_TABLES; do
+        POINT_IN_TIME_RECOVERY_ENABLED=$($AWSCLI dynamodb describe-continuous-backups $PROFILE_OPT --region $regx --table-name $dynamodb_table | jq '.[].PointInTimeRecoveryDescription | select(.PointInTimeRecoveryStatus=="ENABLED") | .PointInTimeRecoveryStatus')
+        if [[ $POINT_IN_TIME_RECOVERY_ENABLED ]]; then
+          textPass "$regx: $dynamodb_table has point-in-time recovery enabled." "$regx" "$dynamodb_table"
+        else
+          textFail "$regx: $dynamodb_table does not have point-in-time recovery enabled." "$regx" "$dynamodb_table"
+        fi
+      done
+    else
+      textInfo "$regx: No DynamoDB tables found" "$regx"
+    fi
+  done
+}

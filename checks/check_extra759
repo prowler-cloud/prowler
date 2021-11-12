@@ -13,7 +13,7 @@
 CHECK_ID_extra759="7.59"
 CHECK_TITLE_extra759="[extra759] Find secrets in Lambda functions variables "
 CHECK_SCORED_extra759="NOT_SCORED"
-CHECK_TYPE_extra759="EXTRA"
+CHECK_CIS_LEVEL_extra759="EXTRA"
 CHECK_SEVERITY_extra759="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra759="AwsLambdaFunction"
 CHECK_ALTERNATE_check759="extra759"
@@ -35,7 +35,7 @@ extra759(){
     if [[ $LIST_OF_FUNCTIONS ]]; then
       for lambdafunction in $LIST_OF_FUNCTIONS;do
         LAMBDA_FUNCTION_VARIABLES_FILE="$SECRETS_TEMP_FOLDER/extra759-$lambdafunction-$regx-variables.txt"
-        LAMBDA_FUNCTION_VARIABLES=$($AWSCLI lambda $PROFILE_OPT --region $regx get-function-configuration --function-name $lambdafunction --query 'Environment.Variables' --output text > $LAMBDA_FUNCTION_VARIABLES_FILE)
+        LAMBDA_FUNCTION_VARIABLES=$($AWSCLI lambda $PROFILE_OPT --region $regx get-function-configuration --function-name $lambdafunction --query 'Environment.Variables' --output json > $LAMBDA_FUNCTION_VARIABLES_FILE)
         if [ -s $LAMBDA_FUNCTION_VARIABLES_FILE ];then
         # Implementation using https://github.com/Yelp/detect-secrets
         FINDINGS=$(secretsDetector file $LAMBDA_FUNCTION_VARIABLES_FILE)

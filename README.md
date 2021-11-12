@@ -4,6 +4,11 @@
 
 # Prowler - AWS Security Tool
 
+[![Discord Shield](https://discordapp.com/api/guilds/807208614288818196/widget.png?style=shield)](https://discord.gg/UjSMCVnxSB) 
+[![Docker Pulls](https://img.shields.io/docker/pulls/toniblyx/prowler)](https://hub.docker.com/r/toniblyx/prowler)
+[![aws-ecr](https://user-images.githubusercontent.com/3985464/141164269-8cfeef0f-6b62-4c99-8fe9-4537986a1613.png)](https://gallery.ecr.aws/o4g1s5r6/prowler)
+
+   
 ## Table of Contents
 
 - [Description](#description)
@@ -39,7 +44,7 @@ Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-20
 
 ## Features
 
-+180 checks covering security best practices across all AWS regions and most of AWS services and related to the next groups:
++200 checks covering security best practices across all AWS regions and most of AWS services and related to the next groups:
 
 - Identity and Access Management [group1]
 - Logging  [group2]
@@ -56,6 +61,7 @@ Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-20
 - Internet exposed resources
 - EKS-CIS
 - Also includes PCI-DSS, ISO-27001, FFIEC, SOC2, ENS (Esquema Nacional de Seguridad of Spain).
+- AWS FTR [FTR] Read more [here](#aws-ftr-checks)
 
 With Prowler you can:
 
@@ -78,15 +84,24 @@ Prowler has been written in bash using AWS-CLI and it works in Linux and OSX.
 - Make sure the latest version of AWS-CLI is installed on your workstation (it works with either v1 or v2), and other components needed, with Python pip already installed:
 
     ```sh
-    pip install awscli detect-secrets
+    pip install awscli
     ```
 
-    AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `detect-secrets` has to be installed using `pip`. You will need to install `jq` to get the most from Prowler.
+    > NOTE: detect-secrets Yelp version is no longer supported the one from IBM is mantained now. Use the one mentioned below or the specific Yelp version 1.0.3 to make sure it works as expected (`pip install detect-secrets==1.0.3`):
+    ```sh
+    pip install "git+https://github.com/ibm/detect-secrets.git@master#egg=detect-secrets"
+    ```
 
-- Make sure jq is installed (example below with "apt" but use a valid package manager for your OS):
+    AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `detect-secrets` has to be installed using `pip` or `pip3`. You will need to install `jq` to get the most from Prowler.
+
+- Make sure jq is installed: examples below with "apt" for Debian alike and "yum" for RedHat alike distros (like Amazon Linux):
 
     ```sh
     sudo apt install jq
+    ```
+
+    ```sh
+    sudo yum install jq
     ```
 
 - Previous steps, from your workstation:
@@ -187,23 +202,27 @@ Prowler has been written in bash using AWS-CLI and it works in Linux and OSX.
 
 ### Regions
 
-By default Prowler scans all opt-in regions available, that might take a long execution time depending on the number of resources and regions used. Same applies for GovCloud or China regions. See below Advance usage for examples.
+By default, Prowler scans all opt-in regions available, that might take a long execution time depending on the number of resources and regions used. Same applies for GovCloud or China regions. See below Advance usage for examples.
 
-Prowler has to parameters related to regions: `-r` that is used query AWS services API endpoints (it uses `us-east-1` by default and required for GovCloud or China) and the option `-f` that is to filter those regions you only want to scan. For example if you want to scan Dublin only use `-f eu-west-1` and if you want to scan Dublin and Ohio `-f 'eu-west-1 us-east-s'`, note the single quotes and space between regions.
+Prowler has two parameters related to regions: `-r` that is used query AWS services API endpoints (it uses `us-east-1` by default and required for GovCloud or China) and the option `-f` that is to filter those regions you only want to scan. For example if you want to scan Dublin only use `-f eu-west-1` and if you want to scan Dublin and Ohio `-f 'eu-west-1 us-east-s'`, note the single quotes and space between regions.
 
 ## Screenshots
 
-- Sample screenshot of report first lines:
+- Sample screenshot of default console report first lines of command `./prowler`:
 
-    <img width="1125" src="https://user-images.githubusercontent.com/3985464/113942728-92c97e80-9801-11eb-9dfc-aef27ad9f5fb.png">
+    <img width="900" src="https://user-images.githubusercontent.com/3985464/141444529-84640bed-be0b-4112-80a2-2a43e3ebf53f.png">
 
 - Sample screenshot of the html output `-M html`:
 
-    <img width="1006" alt="Prowler html" src="https://user-images.githubusercontent.com/3985464/113942724-8f35f780-9801-11eb-8089-d3163dd4e5a4.png">
+    <img width="900" alt="Prowler html" src="https://user-images.githubusercontent.com/3985464/141443976-41d32cc2-533d-405a-92cb-affc3995d6ec.png">
+
+- Sample screenshot of the Quicksight dashboard, see [https://quicksight-security-dashboard.workshop.aws](quicksight-security-dashboard.workshop.aws/):
+
+    <img width="900" alt="Prowler with Quicksight" src="https://user-images.githubusercontent.com/3985464/128932819-0156e838-286d-483c-b953-fda68a325a3d.png">
 
 - Sample screenshot of the junit-xml output in CodeBuild `-M junit-xml`:
 
-    <img width="1006" src="https://user-images.githubusercontent.com/3985464/113942824-ca382b00-9801-11eb-84e5-d7731548a7a9.png">
+    <img width="900" src="https://user-images.githubusercontent.com/3985464/113942824-ca382b00-9801-11eb-84e5-d7731548a7a9.png">
 
 ### Save your reports
 
@@ -323,7 +342,7 @@ Usig the same for loop it can be scanned a list of accounts with a variable like
 ### GovCloud
 
 Prowler runs in GovCloud regions as well. To make sure it points to the right API endpoint use `-r` to either `us-gov-west-1` or `us-gov-east-1`. If not filter region is used it will look for resources in both GovCloud regions by default:
-```
+```sh
 ./prowler -r us-gov-west-1
 ```
 > For Security Hub integration see below in Security Hub section.
@@ -334,9 +353,12 @@ Flag `-x /my/own/checks` will include any check in that particular directory. To
 
 ### Show or log only FAILs
 
-In order to remove noise and get only FAIL findings there is a `-q` flag that makes Prowler to show and log only FAILs. It can be combined with any other option.
+In order to remove noise and get only FAIL findings there is a `-q` flag that makes Prowler to show and log only FAILs. 
+It can be combined with any other option.
+Will show WARNINGS when a resource is excluded, just to take into consideration.
 
 ```sh
+# -q option combined with -M csv -b
 ./prowler -q -M csv -b
 ```
 
@@ -503,7 +525,7 @@ The `aws iam create-access-key` command will output the secret access key and th
 
 ## Extras
 
-We are adding additional checks to improve the information gather from each account, these checks are out of the scope of the CIS benchmark for AWS but we consider them very helpful to get to know each AWS account set up and find issues on it.
+We are adding additional checks to improve the information gather from each account, these checks are out of the scope of the CIS benchmark for AWS, but we consider them very helpful to get to know each AWS account set up and find issues on it.
 
 Some of these checks look for publicly facing resources may not actually be fully public due to other layered controls like S3 Bucket Policies, Security Groups or Network ACLs.
 
@@ -558,6 +580,18 @@ The `gdpr` group of checks uses existing and extra checks. To get a GDPR report,
 ./prowler -g gdpr
 ```
 
+## AWS FTR Checks
+
+With this group of checks, Prowler shows result of checks related to the AWS Foundational Technical Review, more information [here](https://apn-checklists.s3.amazonaws.com/foundational/partner-hosted/partner-hosted/CVLHEC5X7.html). The list of checks can be seen in the group file at:
+
+[groups/group25_ftr](groups/group25_ftr)
+
+The `ftr` group of checks uses existing and extra checks. To get a AWS FTR report, run this command:
+
+```sh
+./prowler -g ftr
+```
+
 ## HIPAA Checks
 
 With this group of checks, Prowler shows results of controls related to the "Security Rule" of the Health Insurance Portability and Accountability Act aka [HIPAA](https://www.hhs.gov/hipaa/for-professionals/security/index.html) as defined in [45 CFR Subpart C - Security Standards for the Protection of Electronic Protected Health Information](https://www.law.cornell.edu/cfr/text/45/part-164/subpart-C) within [PART 160 - GENERAL ADMINISTRATIVE REQUIREMENTS](https://www.law.cornell.edu/cfr/text/45/part-160) and [Subpart A](https://www.law.cornell.edu/cfr/text/45/part-164/subpart-A) and [Subpart C](https://www.law.cornell.edu/cfr/text/45/part-164/subpart-C) of PART 164 - SECURITY AND PRIVACY
@@ -601,7 +635,7 @@ To give it a quick shot just call:
 
 ### Scenarios
 
-Currently this check group supports two different scenarios:
+Currently, this check group supports two different scenarios:
 
 1. Single account environment: no action required, the configuration is happening automatically for you.
 2. Multi account environment: in case you environment has multiple trusted and known AWS accounts you maybe want to append them manually to [groups/group16_trustboundaries](groups/group16_trustboundaries) as a space separated list into `GROUP_TRUSTBOUNDARIES_TRUSTED_ACCOUNT_IDS` variable, then just run prowler.
@@ -623,7 +657,7 @@ Every circle represents one AWS account.
 The dashed line represents the trust boundary, that separates trust and untrusted AWS accounts.
 The arrow simply describes the direction of the trust, however the data can potentially flow in both directions.
 
-Single Account environment assumes that only the AWS account subject to this analysis is trusted. However there is a chance that two VPCs are existing within that one AWS account which are still trusted as a self reference.
+Single Account environment assumes that only the AWS account subject to this analysis is trusted. However, there is a chance that two VPCs are existing within that one AWS account which are still trusted as a self reference.
 ![single-account-environment](/docs/images/prowler-single-account-environment.png)
 
 Multi Account environments assumes a minimum of two trusted or known accounts. For this particular example all trusted and known accounts will be tested. Therefore `GROUP_TRUSTBOUNDARIES_TRUSTED_ACCOUNT_IDS` variable in [groups/group16_trustboundaries](groups/group16_trustboundaries) should include all trusted accounts Account #A, Account #B, Account #C, and Account #D in order to finally raise Account #E and Account #F for being untrusted or unknown.
