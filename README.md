@@ -44,7 +44,7 @@ Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-20
 
 ## Features
 
-+180 checks covering security best practices across all AWS regions and most of AWS services and related to the next groups:
++200 checks covering security best practices across all AWS regions and most of AWS services and related to the next groups:
 
 - Identity and Access Management [group1]
 - Logging  [group2]
@@ -208,17 +208,21 @@ Prowler has two parameters related to regions: `-r` that is used query AWS servi
 
 ## Screenshots
 
-- Sample screenshot of report first lines:
+- Sample screenshot of default console report first lines of command `./prowler`:
 
-    <img width="1125" src="https://user-images.githubusercontent.com/3985464/113942728-92c97e80-9801-11eb-9dfc-aef27ad9f5fb.png">
+    <img width="900" src="https://user-images.githubusercontent.com/3985464/141444529-84640bed-be0b-4112-80a2-2a43e3ebf53f.png">
 
 - Sample screenshot of the html output `-M html`:
 
-    <img width="1006" alt="Prowler html" src="https://user-images.githubusercontent.com/3985464/113942724-8f35f780-9801-11eb-8089-d3163dd4e5a4.png">
+    <img width="900" alt="Prowler html" src="https://user-images.githubusercontent.com/3985464/141443976-41d32cc2-533d-405a-92cb-affc3995d6ec.png">
+
+- Sample screenshot of the Quicksight dashboard, see [https://quicksight-security-dashboard.workshop.aws](quicksight-security-dashboard.workshop.aws/):
+
+    <img width="900" alt="Prowler with Quicksight" src="https://user-images.githubusercontent.com/3985464/128932819-0156e838-286d-483c-b953-fda68a325a3d.png">
 
 - Sample screenshot of the junit-xml output in CodeBuild `-M junit-xml`:
 
-    <img width="1006" src="https://user-images.githubusercontent.com/3985464/113942824-ca382b00-9801-11eb-84e5-d7731548a7a9.png">
+    <img width="900" src="https://user-images.githubusercontent.com/3985464/113942824-ca382b00-9801-11eb-84e5-d7731548a7a9.png">
 
 ### Save your reports
 
