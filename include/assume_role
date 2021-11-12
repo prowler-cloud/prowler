@@ -21,6 +21,9 @@ assume_role(){
     # In some cases you will need more than 1h.
     if [[ -z $SESSION_DURATION_TO_ASSUME ]]; then
         SESSION_DURATION_TO_ASSUME="3600"
+    elif [[ "${SESSION_DURATION_TO_ASSUME}" -gt "43200" ]] || [[ "${SESSION_DURATION_TO_ASSUME}" -lt "900" ]]; then
+        echo "$OPTRED ERROR!$OPTNORMAL - Role session duration must be more than 900 seconds and less than 4300 seconds"
+        exit 1
     fi
 
     # temporary file where to store credentials
