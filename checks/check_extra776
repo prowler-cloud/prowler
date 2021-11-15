@@ -32,8 +32,9 @@ CHECK_CIS_LEVEL_extra776="EXTRA"
 CHECK_SEVERITY_extra776="Medium"
 CHECK_ALTERNATE_check776="extra776"
 CHECK_SERVICENAME_extra776="ecr"
+CHECK_ASFF_RESOURCE_TYPE_extra776="AwsEcrRepository"
 CHECK_RISK_extra776='Amazon ECR image scanning helps in identifying software vulnerabilities in your container images. Amazon ECR uses the Common Vulnerabilities and Exposures (CVEs) database from the open-source Clair project and provides a list of scan findings. '
-CHECK_REMEDIATION_extra776='Open the Amazon ECR console. look for vulnerabilities and fix them.'
+CHECK_REMEDIATION_extra776='Open the Amazon ECR console. Then look for vulnerabilities and fix them.'
 CHECK_DOC_extra776='https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html#describe-scan-findings'
 CHECK_CAF_EPIC_extra776='Logging and Monitoring'
 
@@ -75,18 +76,18 @@ extra776(){
                       fi
                       SEVERITY_LOW=$(echo "$FINDINGS_COUNT" | jq -r '.LOW' )
                       if [[ "$SEVERITY_LOW" != "null" ]]; then
-                        textInfo "$region: ECR repository $repo has imageTag $IMAGE_TAG with LOW ($SEVERITY_LOW) findings" "$region" 
+                        textInfo "$region: ECR repository $repo has imageTag $IMAGE_TAG with LOW ($SEVERITY_LOW) findings" "$region" "$repo"
                       fi
                       SEVERITY_INFORMATIONAL=$(echo "$FINDINGS_COUNT" | jq -r '.INFORMATIONAL' )
                       if [[ "$SEVERITY_INFORMATIONAL" != "null" ]]; then
-                        textInfo "$region: ECR repository $repo has imageTag $IMAGE_TAG with INFORMATIONAL ($SEVERITY_INFORMATIONAL) findings" "$region"
+                        textInfo "$region: ECR repository $repo has imageTag $IMAGE_TAG with INFORMATIONAL ($SEVERITY_INFORMATIONAL) findings" "$region" "$repo"
                       fi
                       SEVERITY_UNDEFINED=$(echo "$FINDINGS_COUNT" | jq -r '.UNDEFINED' )
                       if [[ "$SEVERITY_UNDEFINED" != "null" ]]; then
-                        textInfo "$region: ECR repository $repo has imageTag $IMAGE_TAG with UNDEFINED ($SEVERITY_UNDEFINED) findings" "$region"
+                        textInfo "$region: ECR repository $repo has imageTag $IMAGE_TAG with UNDEFINED ($SEVERITY_UNDEFINED) findings" "$region" "$repo"
                       fi
                   else
-                    textPass "$region: ECR repository $repo has imageTag $IMAGE_TAG without findings" "$region"
+                    textPass "$region: ECR repository $repo has imageTag $IMAGE_TAG without findings" "$region" "$repo"
                   fi
                 fi
               fi
@@ -95,7 +96,7 @@ extra776(){
             textInfo "$region: ECR repository $repo has no images" "$region"
           fi
         else
-          textInfo "$region: ECR repository $repo has no scanOnPush not enabled" "$region"
+          textInfo "$region: ECR repository $repo has scanOnPush not enabled" "$region" "$repo"
         fi
       done
     else
