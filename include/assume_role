@@ -21,6 +21,9 @@ assume_role(){
     # In some cases you will need more than 1h.
     if [[ -z $SESSION_DURATION_TO_ASSUME ]]; then
         SESSION_DURATION_TO_ASSUME="3600"
+    elif [[ "${SESSION_DURATION_TO_ASSUME}" -gt "43200" ]] || [[ "${SESSION_DURATION_TO_ASSUME}" -lt "900" ]]; then
+        echo "$OPTRED ERROR!$OPTNORMAL - Role session duration must be more than 900 seconds and less than 4300 seconds"
+        exit 1
     fi
 
     # temporary file where to store credentials
@@ -49,7 +52,10 @@ assume_role(){
     fi
     if [[ $(grep AccessDenied $TEMP_STS_ASSUMED_FILE) ]]; then
       textFail "Access Denied assuming role $PROWLER_ROLE"
-      rm -f $TEMP_STS_ASSUMED_FILE
+      EXITCODE=1
+      exit $EXITCODE
+    elif [[ "$(grep MaxSessionDuration $TEMP_STS_ASSUMED_FILE)" ]]; then
+      textFail "The requested DurationSeconds exceeds the MaxSessionDuration set for the role ${PROWLER_ROLE}"
       EXITCODE=1
       exit $EXITCODE
     fi
@@ -78,6 +84,9 @@ assume_role(){
     export AWS_SECRET_ACCESS_KEY=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SecretAccessKey')
     export AWS_SESSION_TOKEN=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SessionToken')
     export AWS_SESSION_EXPIRATION=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.Expiration | sub("\\+00:00";"Z") | fromdateiso8601')
-    rm -fr $TEMP_STS_ASSUMED_FILE
+    cleanSTSAssumeFile
 }
 
+cleanSTSAssumeFile() {
+    rm -fr "${TEMP_STS_ASSUMED_FILE}"
+}
