@@ -18,7 +18,7 @@ check3x(){
   # be based only on CloudTrail tail with CloudWatchLog configuration.
   DESCRIBE_TRAILS_CACHE=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region "$REGION" --query 'trailList[?CloudWatchLogsLogGroupArn != `null`]' 2>&1)
   if [[ $(echo "$DESCRIBE_TRAILS_CACHE" | grep AccessDenied) ]]; then
-    textFail "$REGION: Access Denied trying to describe trails in $REGION"  "$REGION" "$group"
+    textFail "$REGION: Access Denied trying to describe trails in $REGION"  "$REGION"
     return
   fi
 
@@ -92,6 +92,6 @@ check3x(){
       done
     fi
   else
-    textFail "$REGION: No CloudWatch group found for CloudTrail events" "$REGION" "$group"
+    textFail "$REGION: No CloudWatch group found for CloudTrail events" "$REGION"
   fi
 }
