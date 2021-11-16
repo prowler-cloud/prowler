@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7160="7.160"
+CHECK_TITLE_extra7160="[extra7160] Check if logging is enabled on CloudTrail trails"
+CHECK_SCORED_extra7160="NOT_SCORED"
+CHECK_TYPE_extra7160="EXTRA"
+CHECK_SEVERITY_extra7160="High"
+CHECK_ASFF_RESOURCE_TYPE_extra7160="AwsCloudTrail"
+CHECK_ALTERNATE_check7160="extra7160"
+CHECK_SERVICENAME_extra7160="cloudtrail"
+CHECK_RISK_extra7160='Data, Management and Insight events will not be tracked if logging is not enabled on CloudTrail Trails.'
+CHECK_REMEDIATION_extra7160='Enable logging on the CloudTrail Trails'
+CHECK_DOC_extra7160='https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-turning-off-logging.html'
+CHECK_CAF_EPIC_extra7160='Logging and Monitoring'
+
+extra7160(){
+  for regx in $REGIONS; do
+    LIST_OF_TRAILS=$($AWSCLI cloudtrail list-trails --query 'Trails[?HomeRegion == `'$regx'`].Name' $PROFILE_OPT --region $regx --output text)
+    if [[ $LIST_OF_TRAILS ]]; then
+      for trail in $LIST_OF_TRAILS; do
+        TRAIL_LOGGING_STATUS=$($AWSCLI cloudtrail get-trail-status --name $trail --query 'IsLogging' $PROFILE_OPT --region $regx --output text)
+        if [[ $TRAIL_LOGGING_STATUS == 'True' ]]; then
+            textPass "$regx: $trail has logging enabled" "$regx" "$trail"
+        else
+            textFail "$regx: $trail has no logging enabled" "$regx" "$trail"
+        fi
+      done
+    else
+      textInfo "$regx: No trails that belong to $regx region found" "$regx"
+    fi
+  done
+}
