@@ -26,17 +26,24 @@ CHECK_CAF_EPIC_extra7162='Data Retention'
 extra7162() {
     # "Check if Log Groups have retention Policy of 356 days"
     for regx in $REGIONS; do
-        LIST_OF_365_RETENTION_LOG_GROUPS=$($AWSCLI logs describe-log-groups $PROFILE_OPT --region $regx --query 'logGroups[?retentionInDays==`365`].[logGroupName]' --output text))
+        LIST_OF_365_RETENTION_LOG_GROUPS=$($AWSCLI logs describe-log-groups $PROFILE_OPT --region $regx --query 'logGroups[?retentionInDays==`365`].[logGroupName]' --output text)
         if [[ $LIST_OF_365_RETENTION_LOG_GROUPS ]]; then
             for log in $LIST_OF_365_RETENTION_LOG_GROUPS; do
-                textPass "$regx: $log has 365 days retention period!" "$regx" "$log"
+                textPass "$regx: $log Log Group has 365 days retention period!" "$regx" "$log"
             done
         fi
-        LIST_OF_NON_365_RETENTION_LOG_GROUPS=$($AWSCLI logs describe-log-groups $PROFILE_OPT --region $regx --query 'logGroups[?retentionInDays!=`365`].[logGroupName]' --output text))
+        LIST_OF_NON_365_RETENTION_LOG_GROUPS=$($AWSCLI logs describe-log-groups $PROFILE_OPT --region $regx --query 'logGroups[?retentionInDays!=`365`].[logGroupName]' --output text)
         if [[ $LIST_OF_NON_365_RETENTION_LOG_GROUPS ]]; then
             for log in $LIST_OF_NON_365_RETENTION_LOG_GROUPS; do
-                textFail "$regx: $log does not have 365 days retention period!" "$regx" "$log"
+                textFail "$regx: $log Log Group does not have 365 days retention period!" "$regx" "$log"
             done
+        fi
+        REGION_NO_LOG_GROUP=$($AWSCLI logs describe-log-groups $PROFILE_OPT --region $regx --output text)
+        if [[ $REGION_NO_LOG_GROUP ]]; then
+            :
+        else
+            textInfo "$regx does not have a Log Group!" "$regx"
+    
         fi
     done
 }
