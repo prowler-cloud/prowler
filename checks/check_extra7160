@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Remediation:
+#
+#   https://docs.aws.amazon.com/cli/latest/reference/secretsmanager/rotate-secret.html
+#
+#   rotate-secret
+#       --secret-id <value>
+#       [--client-request-token <value>]
+#       [--rotation-lambda-arn <value>]
+#       [--rotation-rules <value>]
+#       [--cli-input-json <value>]
+#       [--generate-cli-skeleton <value>]
+
+
+CHECK_ID_extra7160="7.160"
+CHECK_TITLE_extra7160="[extra7160] Check if Secrets Manager key rotation enabled"
+CHECK_SCORED_extra7160="NOT_SCORED"
+CHECK_TYPE_extra7160="EXTRA"
+CHECK_SEVERITY_extra7160="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7160="AwsSecretsManagerSecret"
+CHECK_ALTERNATE_extra7160="extra7160"
+CHECK_SERVICENAME_extra7160="secretsmanager"
+CHECK_RISK_extra7160="Rotating secrets minimizes exposure to attacks using stolen keys."
+CHECK_REMEDITATION_extra7160="Enable key rotation on Secrets Manager key."
+CHECK_DOC_extra7160="https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotating-secrets_strategies.html"
+CHECK_CAF_EPIC_extra7160="Data Protection"
+
+extra7160(){
+    # "Check if Secrets Manager key rotation enabled"
+    for regx in $REGIONS; do
+      LIST_OF_SECRETS=$($AWSCLI secretsmanager list-secrets $PROFILE_OPT --region $regx --query 'SecretList[*].Name' --output text)
+      if [[ $LIST_OF_SECRETS ]]; then
+        for secret in $LIST_OF_SECRETS; do
+          KEY_ROTATION_ENABLED=$($AWSCLI secretsmanager describe-secret $PROFILE_OPT --region $regx --secret-id $secret | jq '.RotationEnabled')
+          if [[ $KEY_ROTATION_ENABLED == true ]]; then
+            textPass "$regx: $secret has key rotation enabled." "$regx" "$secret"
+          else
+            textFail "$regx: $secret does not have key rotation enabled." "$regx" "$secret"
+          fi
+        done
+      else
+        textPass "$regx: No SecretsManager secrets found." "$regx"
+      fi
+    done
+}
