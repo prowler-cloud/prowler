@@ -216,7 +216,7 @@ Prowler has two parameters related to regions: `-r` that is used query AWS servi
 
     <img width="900" alt="Prowler html" src="https://user-images.githubusercontent.com/3985464/141443976-41d32cc2-533d-405a-92cb-affc3995d6ec.png">
 
-- Sample screenshot of the Quicksight dashboard, see [https://quicksight-security-dashboard.workshop.aws](quicksight-security-dashboard.workshop.aws/):
+- Sample screenshot of the Quicksight dashboard, see [https://quicksight-security-dashboard.workshop.aws](https://quicksight-security-dashboard.workshop.aws/):
 
     <img width="900" alt="Prowler with Quicksight" src="https://user-images.githubusercontent.com/3985464/128932819-0156e838-286d-483c-b953-fda68a325a3d.png">
 
