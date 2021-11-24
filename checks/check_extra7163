@@ -25,7 +25,7 @@
 
 
 CHECK_ID_extra7163="7.163"
-CHECK_TITLE_extra7163="[extra7163] Check if Secrets Manager key rotation enabled"
+CHECK_TITLE_extra7163="[extra7163] Check if Secrets Manager key rotation is enabled"
 CHECK_SCORED_extra7163="NOT_SCORED"
 CHECK_TYPE_extra7163="EXTRA"
 CHECK_SEVERITY_extra7163="Medium"
@@ -38,12 +38,12 @@ CHECK_DOC_extra7163="https://docs.aws.amazon.com/secretsmanager/latest/userguide
 CHECK_CAF_EPIC_extra7163="Data Protection"
 
 extra7163(){
-    # "Check if Secrets Manager key rotation enabled"
+    # "Check if Secrets Manager key rotation is enabled"
     for regx in $REGIONS; do
       LIST_OF_SECRETS=$($AWSCLI secretsmanager list-secrets $PROFILE_OPT --region $regx --query 'SecretList[*].Name' --output text)
       if [[ $LIST_OF_SECRETS ]]; then
         for secret in $LIST_OF_SECRETS; do
-          KEY_ROTATION_ENABLED=$($AWSCLI secretsmanager describe-secret $PROFILE_OPT --region $regx --secret-id $secret | jq '.RotationEnabled')
+          KEY_ROTATION_ENABLED=$($AWSCLI secretsmanager describe-secret $PROFILE_OPT --region $regx --secret-id $secret --output json | jq '.RotationEnabled')
           if [[ $KEY_ROTATION_ENABLED == true ]]; then
             textPass "$regx: $secret has key rotation enabled." "$regx" "$secret"
           else
@@ -51,7 +51,7 @@ extra7163(){
           fi
         done
       else
-        textPass "$regx: No SecretsManager secrets found." "$regx"
+        textPass "$regx: No Secrets Manager secrets found." "$regx"
       fi
     done
 }
