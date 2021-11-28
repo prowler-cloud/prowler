@@ -392,7 +392,7 @@ show_group_title() {
 # Function to execute the check
 execute_check() {
 
-  if [[ $ACCOUNT_TO_ASSUME ]]; then
+  if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
     # Following logic looks for time remaining in the session and review it
     # if it is less than 600 seconds, 10 minutes.
     CURRENT_TIMESTAMP=$(date -u "+%s")
@@ -639,7 +639,7 @@ fi
 
 # Gather account data / test aws cli connectivity
 getWhoami
-if [[ $ACCOUNT_TO_ASSUME ]]; then
+if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
   assume_role
 fi
 
