@@ -83,6 +83,7 @@ Resources:
                   - dax:ListTables
                   - ds:ListAuthorizedApplications
                   - ds:DescribeRoles
+                  - ec2:GetEbsEncryptionByDefault
                   - ecr:Describe*
                   - lambda:GetAccountSettings
                   - lambda:GetFunctionConfiguration

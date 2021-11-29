@@ -97,7 +97,7 @@ USAGE:
                             (i.e.: 123456789012)
       -R                  role name or role arn to assume in the account, requires -A and -T
                             (i.e.: ProwlerRole)
-      -T                  session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
+      -T                  session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, optional with -R and -A
                             (i.e.: 43200)
       -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R
       -w                  whitelist file. See whitelist_sample.txt for reference and format
@@ -392,7 +392,7 @@ show_group_title() {
 # Function to execute the check
 execute_check() {
 
-  if [[ $ACCOUNT_TO_ASSUME ]]; then
+  if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
     # Following logic looks for time remaining in the session and review it
     # if it is less than 600 seconds, 10 minutes.
     CURRENT_TIMESTAMP=$(date -u "+%s")
@@ -639,7 +639,7 @@ fi
 
 # Gather account data / test aws cli connectivity
 getWhoami
-if [[ $ACCOUNT_TO_ASSUME ]]; then
+if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
   assume_role
 fi
 
