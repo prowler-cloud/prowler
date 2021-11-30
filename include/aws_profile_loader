@@ -45,7 +45,8 @@ else
     PROFILE="default"
     PROFILE_OPT="--profile $PROFILE"
 fi
-
+# Backing up $PROFILE_OPT needed to renew assume_role
+PROFILE_OPT_BAK=$PROFILE_OPT
 # Set default region by aws config, fall back to us-east-1
 REGION_CONFIG=$(aws configure get region)
 if [[ $REGION_OPT ]]; then

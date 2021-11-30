@@ -13,6 +13,12 @@
 
 # both variables are mandatory to be set together
 assume_role(){
+    echo ASSUMING ROLE...
+
+    PROFILE_OPT=$PROFILE_OPT_BAK
+    echo PROFILE $PROFILE
+    echo PROFILE_OPT $PROFILE_OPT
+
     if [[ -z $ROLE_TO_ASSUME ]]; then
         echo "$OPTRED ERROR!$OPTNORMAL - Both Account ID (-A) and IAM Role to assume (-R) must be set"
         exit 1
@@ -50,6 +56,8 @@ assume_role(){
             --region $REGION_FOR_STS \
             --external-id $ROLE_EXTERNAL_ID > $TEMP_STS_ASSUMED_FILE 2>&1
     fi
+    echo FILE WITH TEMP CREDS: $TEMP_STS_ASSUMED_FILE
+
     if [[ $(grep AccessDenied $TEMP_STS_ASSUMED_FILE) ]]; then
       textFail "Access Denied assuming role $PROWLER_ROLE"
       EXITCODE=1
@@ -84,6 +92,10 @@ assume_role(){
     export AWS_SECRET_ACCESS_KEY=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SecretAccessKey')
     export AWS_SESSION_TOKEN=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SessionToken')
     export AWS_SESSION_EXPIRATION=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.Expiration | sub("\\+00:00";"Z") | fromdateiso8601')
+    echo TEMP AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+    echo TEMP AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+    echo TEMP AWS_SESSION_TOKEN: $AWS_SESSION_TOKEN
+    echo EXPIRATION EPOCH TIME: $AWS_SESSION_EXPIRATION
     cleanSTSAssumeFile
 }
 
