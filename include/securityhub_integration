@@ -83,7 +83,7 @@ resolveSecurityHubPreviousFails(){
       done
     fi
   done
-
+  rm -rf "$SH_TEMP_FOLDER"
 }
 
 sendToSecurityHub(){
