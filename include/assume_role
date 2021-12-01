@@ -12,7 +12,8 @@
 # specific language governing permissions and limitations under the License.
 
 assume_role(){
-    # Both variables are mandatory to be set togethe
+    PROFILE_OPT=$PROFILE_OPT_BAK
+    # Both variables are mandatory to be set together
     if [[ -z $ROLE_TO_ASSUME || -z $ACCOUNT_TO_ASSUME ]]; then
         echo "$OPTRED ERROR!$OPTNORMAL - Both Account ID (-A) and IAM Role to assume (-R) must be set"
         exit 1
@@ -55,10 +56,12 @@ assume_role(){
         EXITCODE=1
         exit $EXITCODE
     fi
-
+    
+    echo FILE WITH TEMP CREDS: $TEMP_STS_ASSUMED_FILE
+    
     # The profile shouldn't be used for CLI
     PROFILE=""
-    PROFILE_OPT=""
+    PROFILE_OPT=""   
 
     # Set AWS environment variables with assumed role credentials
     AWS_ACCESS_KEY_ID=$(jq -r '.Credentials.AccessKeyId' "${TEMP_STS_ASSUMED_FILE}")
@@ -69,6 +72,10 @@ assume_role(){
     export AWS_SESSION_TOKEN
     AWS_SESSION_EXPIRATION=$(jq -r '.Credentials.Expiration | sub("\\+00:00";"Z") | fromdateiso8601'  "${TEMP_STS_ASSUMED_FILE}")
     export AWS_SESSION_EXPIRATION
+    echo TEMP AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+    echo TEMP AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+    echo TEMP AWS_SESSION_TOKEN: $AWS_SESSION_TOKEN
+    echo EXPIRATION EPOCH TIME: $AWS_SESSION_EXPIRATION
 
     cleanSTSAssumeFile
 }
