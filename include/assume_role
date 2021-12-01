@@ -11,15 +11,10 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-# both variables are mandatory to be set together
 assume_role(){
-    echo ASSUMING ROLE...
-
     PROFILE_OPT=$PROFILE_OPT_BAK
-    echo PROFILE $PROFILE
-    echo PROFILE_OPT $PROFILE_OPT
-
-    if [[ -z $ROLE_TO_ASSUME ]]; then
+    # Both variables are mandatory to be set together
+    if [[ -z $ROLE_TO_ASSUME || -z $ACCOUNT_TO_ASSUME ]]; then
         echo "$OPTRED ERROR!$OPTNORMAL - Both Account ID (-A) and IAM Role to assume (-R) must be set"
         exit 1
     fi

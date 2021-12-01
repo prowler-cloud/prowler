@@ -216,7 +216,7 @@ Prowler has two parameters related to regions: `-r` that is used query AWS servi
 
     <img width="900" alt="Prowler html" src="https://user-images.githubusercontent.com/3985464/141443976-41d32cc2-533d-405a-92cb-affc3995d6ec.png">
 
-- Sample screenshot of the Quicksight dashboard, see [https://quicksight-security-dashboard.workshop.aws](quicksight-security-dashboard.workshop.aws/):
+- Sample screenshot of the Quicksight dashboard, see [https://quicksight-security-dashboard.workshop.aws](https://quicksight-security-dashboard.workshop.aws/):
 
     <img width="900" alt="Prowler with Quicksight" src="https://user-images.githubusercontent.com/3985464/128932819-0156e838-286d-483c-b953-fda68a325a3d.png">
 
@@ -584,7 +584,7 @@ The `gdpr` group of checks uses existing and extra checks. To get a GDPR report,
 
 With this group of checks, Prowler shows result of checks related to the AWS Foundational Technical Review, more information [here](https://apn-checklists.s3.amazonaws.com/foundational/partner-hosted/partner-hosted/CVLHEC5X7.html). The list of checks can be seen in the group file at:
 
-[groups/group25_ftr](groups/group25_ftr)
+[groups/group25_ftr](groups/group25_FTR)
 
 The `ftr` group of checks uses existing and extra checks. To get a AWS FTR report, run this command:
 
