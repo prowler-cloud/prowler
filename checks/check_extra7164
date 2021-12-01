@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Remediation:
+#
+#   https://docs.aws.amazon.com/cli/latest/reference/efs/put-backup-policy.html
+#
+#         put-backup-policy
+#       --file-system-id <value>
+#       --backup-policy <value>
+#       [--cli-input-json <value>]
+#       [--generate-cli-skeleton <value>]
+
+CHECK_ID_extra7164="7.164"
+CHECK_TITLE_extra7164="[extra7164] Check if EFS has backup policy enabled"
+CHECK_SCORED_extra7164="NOT_SCORED"
+CHECK_TYPE_extra7164="EXTRA"
+CHECK_SEVERITY_extra7164="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7164="AWSEFSFileSystem"
+CHECK_ALTERNATE_extra7164="extra7164"
+CHECK_SERVICENAME_extra7164="efs"
+CHECK_RISK_extra7164=""
+CHECK_REMEDITATION_extra7164="Enable backup policy for EFS filesystem."
+CHECK_DOC_extra7164="https://docs.aws.amazon.com/cli/latest/reference/efs/put-backup-policy.html"
+CHECK_CAF_EPIC_extra7164="Data Protection"
+
+extra7164(){
+    # "Check if EFS FileSystem backup policy is enabaled"
+    for regx in $REGIONS; do
+      LIST_OF_FILESYSTEMS=$($AWSCLI efs describe-file-systems $PROFILE_OPT --region $regx --query 'FileSystems[*].FileSystemId' --output text)
+      if [[ $LIST_OF_FILESYSTEMS ]]; then
+        for filesystem in $LIST_OF_FILESYSTEMS; do
+          EFS_BACKUP_ENABLED=$($AWSCLI efs describe-backup-policy $PROFILE_OPT --region $regx --file-system-id $filesystem --output text 2>&1)
+          if [[ $EFS_BACKUP_ENABLED == *"ENABLED"* ]]; then
+            textPass "$regx: $filesystem has backup enabled." "$regx" "$filesystem"
+          else
+            textFail "$regx: $filesystem does not have backup enabled." "$regx" "$filesystem"
+          fi
+        done
+      else
+        textPass "$regx: No EFS FileSystems found." "$regx"
+      fi
+    done
+}
