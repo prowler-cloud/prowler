@@ -42,15 +42,31 @@ checkSecurityHubCompatibility(){
 
 resolveSecurityHubPreviousFails(){
   # Move previous check findings RecordState to ARCHIVED (as prowler didn't re-detect them)
+    SH_TEMP_FOLDER="$PROWLER_DIR/SH-$ACCOUNT_NUM"
+    if [[ ! -d $SH_TEMP_FOLDER ]]; then
+      # this folder is deleted once the security hub update is completed
+      mkdir "$SH_TEMP_FOLDER"
+    fi
   for regx in $REGIONS; do
-
+    REGION_FOLDER="$SH_TEMP_FOLDER/$regx"
+    if [[ ! -d $REGION_FOLDER ]]; then
+      mkdir "$REGION_FOLDER"
+    fi
     local check="$1"
     NEW_TIMESTAMP=$(get_iso8601_timestamp)
 
     FILTER="{\"GeneratorId\":[{\"Value\": \"prowler-$check\",\"Comparison\":\"EQUALS\"}],\"RecordState\":[{\"Value\": \"ACTIVE\",\"Comparison\":\"EQUALS\"}],\"AwsAccountId\":[{\"Value\": \"$ACCOUNT_NUM\",\"Comparison\":\"EQUALS\"}]}"
 
-    NEW_FINDING_IDS=$(echo -n "${SECURITYHUB_NEW_FINDINGS_IDS[@]}" | jq -cRs 'split(" ")')
-    SECURITY_HUB_PREVIOUS_FINDINGS=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT get-findings --filters "${FILTER}" | jq -c --argjson ids "$NEW_FINDING_IDS" --arg updated_at $NEW_TIMESTAMP  '[ .Findings[] | select( .Id| first(select($ids[] == .)) // false | not) | .RecordState = "ARCHIVED" | .UpdatedAt = $updated_at ]')
+    NEW_FINDING_FILE="$REGION_FOLDER/findings.json"
+    NEW_FINDING_IDS=$(echo -n "${SECURITYHUB_NEW_FINDINGS_IDS[@]}" | jq -cRs 'split(" ")' > $NEW_FINDING_FILE)
+    EXISTING_FILE="$REGION_FOLDER/existing.json"
+    EXISTING_FINDINGS=$($AWSCLI securityhub --region "$regx" $PROFILE_OPT get-findings --filters "${FILTER}" > $EXISTING_FILE)
+
+    SECURITY_HUB_PREVIOUS_FINDINGS=$(for id in $(comm -23 <(jq '[.Findings[].Id] | sort | .[]' $EXISTING_FILE) <(jq '[.[]] | sort | .[]' $NEW_FINDING_FILE));
+      do
+        jq --arg updated_at $NEW_TIMESTAMP '.Findings[] | select(.Id == '"$id"') | .RecordState = "ARCHIVED" | .UpdatedAt = $updated_at ' < $EXISTING_FILE
+      done | jq -s '.')
+
 
     if [[ $SECURITY_HUB_PREVIOUS_FINDINGS != "[]" ]]; then
       FINDINGS_COUNT=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq '. | length')
