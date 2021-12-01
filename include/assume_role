@@ -29,6 +29,7 @@ assume_role(){
 
     # temporary file where to store credentials
     TEMP_STS_ASSUMED_FILE=$(mktemp -t prowler.sts_assumed-XXXXXX)
+    TEMP_STS_ASSUMED_ERROR=$(mktemp -t prowler.sts_assumed-XXXXXX)
 
     # check if role arn or role name
     if [[ $ROLE_TO_ASSUME == arn:* ]]; then
@@ -37,63 +38,49 @@ assume_role(){
         PROWLER_ROLE=arn:${AWS_PARTITION}:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME
     fi
 
-    #Check if external ID has bee provided if so execute with external ID if not ignore
-    if [[ -z $ROLE_EXTERNAL_ID ]]; then
-        # assume role command
-        $AWSCLI $PROFILE_OPT sts assume-role --role-arn $PROWLER_ROLE \
-            --role-session-name ProwlerAssessmentSession \
-            --region $REGION_FOR_STS \
-            --duration-seconds $SESSION_DURATION_TO_ASSUME > $TEMP_STS_ASSUMED_FILE 2>&1
-    else
-        $AWSCLI $PROFILE_OPT sts assume-role --role-arn $PROWLER_ROLE \
-            --role-session-name ProwlerAssessmentSession \
-            --duration-seconds $SESSION_DURATION_TO_ASSUME \
-            --region $REGION_FOR_STS \
-            --external-id $ROLE_EXTERNAL_ID > $TEMP_STS_ASSUMED_FILE 2>&1
+    # Check if external ID has bee provided if so execute with external ID if not ignore
+    ROLE_EXTERNAL_ID_OPTION=""
+    if [[ -n "${ROLE_EXTERNAL_ID}" ]]; then
+        ROLE_EXTERNAL_ID_OPTION="--external-id ${ROLE_EXTERNAL_ID}"
     fi
+
+    # Assume role
+    if ! $AWSCLI $PROFILE_OPT sts assume-role --role-arn $PROWLER_ROLE \
+        --role-session-name ProwlerAssessmentSession \
+        --duration-seconds $SESSION_DURATION_TO_ASSUME \
+        --region $REGION_FOR_STS \
+        "${ROLE_EXTERNAL_ID_OPTION}" > $TEMP_STS_ASSUMED_FILE 2>"${TEMP_STS_ASSUMED_ERROR}"
+    then
+        STS_ERROR="$(cat ${TEMP_STS_ASSUMED_ERROR} | tr '\n' ' ')"
+        textFail "${STS_ERROR}"
+        EXITCODE=1
+        exit $EXITCODE
+    fi
+    
     echo FILE WITH TEMP CREDS: $TEMP_STS_ASSUMED_FILE
-
-    if [[ $(grep AccessDenied $TEMP_STS_ASSUMED_FILE) ]]; then
-      textFail "Access Denied assuming role $PROWLER_ROLE"
-      EXITCODE=1
-      exit $EXITCODE
-    elif [[ "$(grep MaxSessionDuration $TEMP_STS_ASSUMED_FILE)" ]]; then
-      textFail "The requested DurationSeconds exceeds the MaxSessionDuration set for the role ${PROWLER_ROLE}"
-      EXITCODE=1
-      exit $EXITCODE
-    fi
-
-    # assume role command
-    #$AWSCLI $PROFILE_OPT sts assume-role --role-arn arn:${AWS_PARTITION}:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME \
-    #    --role-session-name ProwlerAssessmentSession \
-    #    --duration-seconds $SESSION_DURATION_TO_ASSUME > $TEMP_STS_ASSUMED_FILE
-
-    # if previous command fails exit with the given error from aws-cli
-    # this is likely to be due to session duration limit of 1h in case
-    # of assume role chaining:
-    # "The requested DurationSeconds exceeds the 1 hour session limit
-    # for roles assumed by role chaining."
-    # https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html
-    if [[ $? != 0 ]];then
-        exit 1
-    fi
-
+    
     # The profile shouldn't be used for CLI
     PROFILE=""
-    PROFILE_OPT=""
+    PROFILE_OPT=""   
 
-    # set env variables with assumed role credentials
-    export AWS_ACCESS_KEY_ID=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.AccessKeyId')
-    export AWS_SECRET_ACCESS_KEY=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SecretAccessKey')
-    export AWS_SESSION_TOKEN=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.SessionToken')
-    export AWS_SESSION_EXPIRATION=$(cat $TEMP_STS_ASSUMED_FILE | jq -r '.Credentials.Expiration | sub("\\+00:00";"Z") | fromdateiso8601')
+    # Set AWS environment variables with assumed role credentials
+    AWS_ACCESS_KEY_ID=$(jq -r '.Credentials.AccessKeyId' "${TEMP_STS_ASSUMED_FILE}")
+    export AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY=$(jq -r '.Credentials.SecretAccessKey'  "${TEMP_STS_ASSUMED_FILE}")
+    export AWS_SECRET_ACCESS_KEY
+    AWS_SESSION_TOKEN=$(jq -r '.Credentials.SessionToken'  "${TEMP_STS_ASSUMED_FILE}")
+    export AWS_SESSION_TOKEN
+    AWS_SESSION_EXPIRATION=$(jq -r '.Credentials.Expiration | sub("\\+00:00";"Z") | fromdateiso8601'  "${TEMP_STS_ASSUMED_FILE}")
+    export AWS_SESSION_EXPIRATION
     echo TEMP AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
     echo TEMP AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
     echo TEMP AWS_SESSION_TOKEN: $AWS_SESSION_TOKEN
     echo EXPIRATION EPOCH TIME: $AWS_SESSION_EXPIRATION
+
     cleanSTSAssumeFile
 }
 
 cleanSTSAssumeFile() {
     rm -fr "${TEMP_STS_ASSUMED_FILE}"
+    rm -fr "${TEMP_STS_ASSUMED_ERROR}"
 }
