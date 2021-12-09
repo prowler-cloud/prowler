@@ -31,7 +31,11 @@ extra760(){
   fi
 
   for regx in $REGIONS; do
-    LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --query Functions[*].FunctionName --output text)
+    LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --query Functions[*].FunctionName --output text 2>&1)
+    if [[ $(echo "$LIST_OF_FUNCTIONS" | grep AccessDenied) ]]; then
+      textFail "$regx: Access Denied trying to list Lambda functions" "$regx" "$lambdafunction"
+      continue
+    fi
     if [[ $LIST_OF_FUNCTIONS ]]; then
       for lambdafunction in $LIST_OF_FUNCTIONS;do
         LAMBDA_FUNCTION_FOLDER="$SECRETS_TEMP_FOLDER/extra760-$lambdafunction-$regx"
