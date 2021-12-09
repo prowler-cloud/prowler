@@ -501,7 +501,7 @@ execute_check() {
       fi
 
     else
-      textFail "ERROR! Use a valid check name (i.e. check41 or extra71)";
+      textFail "Check ${CHECK_ID} does not exist. Use a valid check name (i.e. check41 or extra71)";
       exit $EXITCODE
     fi
   fi
@@ -569,7 +569,7 @@ show_all_titles() {
         fi
       done
     else
-      textFail "Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
+      textFail "Group ${GROUP_ID_READ} does not exist. Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
       show_all_group_titles
       exit $EXITCODE
     fi
@@ -665,7 +665,7 @@ if [[ $GROUP_ID_READ ]];then
     copyToS3
     exit $EXITCODE
   else
-    textFail "Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
+    textFail "Group ${GROUP_ID_READ} does not exist. Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
     show_all_group_titles
     exit $EXITCODE
   fi
