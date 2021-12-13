@@ -150,6 +150,11 @@ Prowler has been written in bash using AWS-CLI and it works in Linux and OSX.
     docker run -ti --rm --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest
     ```
 
+    In case you want to get reports created by Prowler use docker volume option like in the example below:
+    ```sh
+    docker run -ti --rm -v /your/local/output:/prowler/output --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest -g hipaa -M csv,json,html
+    ```
+
 1. For custom AWS-CLI profile and region, use the following: (it will use your custom profile and run checks over all regions when needed):
 
     ```sh
