@@ -584,7 +584,7 @@ The `gdpr` group of checks uses existing and extra checks. To get a GDPR report,
 
 With this group of checks, Prowler shows result of checks related to the AWS Foundational Technical Review, more information [here](https://apn-checklists.s3.amazonaws.com/foundational/partner-hosted/partner-hosted/CVLHEC5X7.html). The list of checks can be seen in the group file at:
 
-[groups/group25_ftr](groups/group25_ftr)
+[groups/group25_ftr](groups/group25_FTR)
 
 The `ftr` group of checks uses existing and extra checks. To get a AWS FTR report, run this command:
 

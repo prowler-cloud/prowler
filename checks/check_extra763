@@ -34,9 +34,9 @@ extra763(){
         continue
       fi
       if [[ $(echo "$BUCKET_VERSIONING_ENABLED" | grep "^Enabled$") ]]; then
-        textPass "Bucket $bucket has versioning enabled" "us-east-1" "$bucket"
+        textPass "Bucket $bucket has versioning enabled" "$REGION" "$bucket"
       else
-        textFail "Bucket $bucket has versioning disabled!" "us-east-1" "$bucket"
+        textFail "Bucket $bucket has versioning disabled!" "$REGION" "$bucket"
       fi
     done
   else

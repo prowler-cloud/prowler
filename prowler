@@ -32,7 +32,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.6.1-15November2021
+PROWLER_VERSION=2.7.0-1December2021
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -97,7 +97,7 @@ USAGE:
                             (i.e.: 123456789012)
       -R                  role name or role arn to assume in the account, requires -A and -T
                             (i.e.: ProwlerRole)
-      -T                  session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
+      -T                  session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, optional with -R and -A
                             (i.e.: 43200)
       -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R
       -w                  whitelist file. See whitelist_sample.txt for reference and format
@@ -135,6 +135,7 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:zZ:" OPTION; do
         ;;
      p )
         PROFILE=$OPTARG
+        AWS_PROFILE=$OPTARG
         ;;
      r )
         REGION_OPT=$OPTARG
@@ -338,6 +339,7 @@ TOTAL_CHECKS=($(echo "${TOTAL_CHECKS[*]}" | tr ' ' '\n' | awk '!seen[$0]++' | so
 get_regions() {
   # Get list of regions based on include/whoami
   REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' --output text $PROFILE_OPT --region $REGION_FOR_STS --region-names $FILTERREGION 2>&1)
+  echo $REGIONS
   ret=$?
   if [[ $ret -ne 0 ]]; then
     echo "$OPTRED Access Denied trying to describe regions! Review permissions as described here: https://github.com/toniblyx/prowler/#requirements-and-installation $OPTNORMAL"
@@ -392,13 +394,15 @@ show_group_title() {
 # Function to execute the check
 execute_check() {
 
-  if [[ $ACCOUNT_TO_ASSUME ]]; then
+  if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
     # Following logic looks for time remaining in the session and review it
     # if it is less than 600 seconds, 10 minutes.
     CURRENT_TIMESTAMP=$(date -u "+%s")
     SESSION_TIME_REMAINING=$(expr $AWS_SESSION_EXPIRATION - $CURRENT_TIMESTAMP)
-    MINIMUM_REMAINING_TIME_ALLOWED="600"
-    if [[ $MINIMUM_REMAINING_TIME_ALLOWED > $SESSION_TIME_REMAINING ]]; then
+    echo SESSION TIME REMAINING IN SECONDS: $SESSION_TIME_REMAINING
+    MINIMUM_REMAINING_TIME_ALLOWED=600
+    if (( $MINIMUM_REMAINING_TIME_ALLOWED > $SESSION_TIME_REMAINING )); then
+      echo LESS THAN 10 MIN LEFT: RE-ASSUMING...
       unset AWS_ACCESS_KEY_ID
       unset AWS_SECRET_ACCESS_KEY
       unset AWS_SESSION_TOKEN
@@ -497,7 +501,7 @@ execute_check() {
       fi
 
     else
-      textFail "ERROR! Use a valid check name (i.e. check41 or extra71)";
+      textFail "Check ${CHECK_ID} does not exist. Use a valid check name (i.e. check41 or extra71)";
       exit $EXITCODE
     fi
   fi
@@ -565,7 +569,7 @@ show_all_titles() {
         fi
       done
     else
-      textFail "Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
+      textFail "Group ${GROUP_ID_READ} does not exist. Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
       show_all_group_titles
       exit $EXITCODE
     fi
@@ -639,12 +643,14 @@ fi
 
 # Gather account data / test aws cli connectivity
 getWhoami
-if [[ $ACCOUNT_TO_ASSUME ]]; then
+if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
   assume_role
 fi
 
 # List regions
+echo REGIONS_init
 get_regions
+echo REGIONS_end
 
 # Execute group of checks if called with -g
 if [[ $GROUP_ID_READ ]];then
@@ -659,7 +665,7 @@ if [[ $GROUP_ID_READ ]];then
     copyToS3
     exit $EXITCODE
   else
-    textFail "Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
+    textFail "Group ${GROUP_ID_READ} does not exist. Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
     show_all_group_titles
     exit $EXITCODE
   fi
