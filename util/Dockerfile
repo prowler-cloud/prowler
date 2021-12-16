@@ -1,13 +1,14 @@
-FROM alpine:3.13
+FROM public.ecr.aws/amazonlinux/amazonlinux:latest
 
 ARG USERNAME=prowler
 ARG USERID=34000
 
-RUN addgroup -g ${USERID} ${USERNAME} && \
-    adduser -s /bin/sh -G ${USERNAME} -D -u ${USERID} ${USERNAME} && \
-    apk --update --no-cache add python3 bash curl jq file coreutils py3-pip git && \
-    pip3 install --upgrade pip && \
-    pip3 install awscli boto3 detect-secrets==1.0.3
+RUN yum install -y shadow-utils && \
+  useradd -s /bin/sh -U -u ${USERID} ${USERNAME} && \
+  yum install -y python3 bash curl jq file coreutils py3-pip which && \
+  yum clean all && \
+  pip3 install --upgrade pip && \
+  pip3 install awscli boto3 detect-secrets
 
 WORKDIR /prowler
 
