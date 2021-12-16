@@ -28,4 +28,4 @@ RUN chown -R prowler .
 
 USER ${USERNAME}
 
-ENTRYPOINT [ "./prowler" ] 
+ENTRYPOINT ["./prowler"]
