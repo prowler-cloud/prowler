@@ -1,13 +1,24 @@
-FROM alpine:3.13
+FROM amazonlinux:latest
 
 ARG USERNAME=prowler
 ARG USERID=34000
 
-RUN addgroup -g ${USERID} ${USERNAME} && \
-    adduser -s /bin/sh -G ${USERNAME} -D -u ${USERID} ${USERNAME} && \
-    apk --update --no-cache add python3 bash curl jq file coreutils py3-pip git && \
-    pip3 install --upgrade pip && \
-    pip3 install awscli boto3 detect-secrets==1.0.3
+RUN \ 
+# The YUM stuff and cleanup
+  yum upgrade -y && \
+  yum install -y shadow-utils python3 bash curl jq coreutils py3-pip which unzip && \
+  yum clean all && \
+# The PIP stuff and cleanup
+  pip3 install --upgrade pip && \
+  pip3 install detect-secrets==1.0.3 && \
+  pip3 cache purge && \
+# The CURL stuff and cleanup 
+  curl -L https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip && \
+  unzip awscliv2.zip && \
+  aws/install && \
+  rm -rf awscliv2.zip aws /var/cache/yum && \
+# The SECURITY stuff
+  useradd -s /bin/sh -U -u ${USERID} ${USERNAME}
 
 WORKDIR /prowler
 
@@ -17,4 +28,4 @@ RUN chown -R prowler .
 
 USER ${USERNAME}
 
-ENTRYPOINT ["./prowler"]
+ENTRYPOINT [ "./prowler" ] 
