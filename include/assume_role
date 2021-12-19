@@ -95,3 +95,4 @@ cleanSTSAssumeFile() {
     export AWS_SECRET_ACCESS_KEY
     SESSION_TOKEN=$MY_AWS_SESSION_TOKEN
     export SESSION_TOKEN
+}
