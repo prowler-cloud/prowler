@@ -662,6 +662,9 @@ if [[ $GROUP_ID_READ ]];then
     fi
     cleanTemp
     scoring
+    if [[ $ACCOUNT_TO_ASSUME ]]; then
+      restoreAWSCredentials
+    fi
     copyToS3
     exit $EXITCODE
   else
@@ -690,6 +693,9 @@ if [[ $CHECK_ID ]];then
   if [[ "${MODES[@]}" =~ "html" ]]; then
     addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
+  if [[ $ACCOUNT_TO_ASSUME ]]; then
+    restoreAWSCredentials
+  fi
   copyToS3
   scoring
   cleanTemp
@@ -704,13 +710,9 @@ fi
 
 scoring
 cleanTemp
-copyToS3
-
 if [[ $ACCOUNT_TO_ASSUME ]]; then
-  # unset env variables with assumed role credentials
-  unset AWS_ACCESS_KEY_ID
-  unset AWS_SECRET_ACCESS_KEY
-  unset AWS_SESSION_TOKEN
+  restoreAWSCredentials
 fi
+copyToS3
 
 exit $EXITCODE

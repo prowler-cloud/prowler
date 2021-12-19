@@ -12,6 +12,9 @@
 # specific language governing permissions and limitations under the License.
 
 assume_role(){
+    MY_AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+    MY_AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+    MY_SESSION_TOKEN=$AWS_SESSION_TOKEN
     PROFILE_OPT=$PROFILE_OPT_BAK
     # Both variables are mandatory to be set together
     if [[ -z $ROLE_TO_ASSUME || -z $ACCOUNT_TO_ASSUME ]]; then
@@ -83,4 +86,10 @@ assume_role(){
 cleanSTSAssumeFile() {
     rm -fr "${TEMP_STS_ASSUMED_FILE}"
     rm -fr "${TEMP_STS_ASSUMED_ERROR}"
+}
+
+    restoreAWSCredentials() {
+    AWS_ACCESS_KEY_ID=$MY_AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY=$MY_AWS_SECRET_ACCESS_KEY
+    SESSION_TOKEN=$MY_AWS_SESSION_TOKEN 
 }
