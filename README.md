@@ -66,7 +66,7 @@ Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-20
 With Prowler you can:
 
 - Get a direct colorful or monochrome report
-- A HTML, CSV, JUNIT, JSON or JSON ASFF format report
+- A HTML, CSV, JUNIT, JSON or JSON ASFF (Security Hub) format report
 - Send findings directly to Security Hub
 - Run specific checks and groups or create your own
 - Check multiple AWS accounts in parallel or sequentially
@@ -79,39 +79,47 @@ You can run Prowler from your workstation, an EC2 instance, Fargate or any other
 ![Prowler high level architecture](https://user-images.githubusercontent.com/3985464/109143232-1488af80-7760-11eb-8d83-726790fda592.jpg)
 ## Requirements and Installation
 
-Prowler has been written in bash using AWS-CLI and it works in Linux and OSX.
+Prowler has been written in bash using AWS-CLI underneath and it works in Linux, Mac OS or Windows with cygwin or virtualization. Also requires `jq` and `detect-secrets` to work properly.
 
-- Make sure the latest version of AWS-CLI is installed on your workstation (it works with either v1 or v2), and other components needed, with Python pip already installed:
+- Make sure the latest version of AWS-CLI is installed. It works with either v1 or v2, however _latest v2 is recommended if using new regions since they require STS v2 token_, and other components needed, with Python pip already installed.
 
-    ```sh
-    pip install awscli
+- For Amazon Linux (`yum` based Linux distributions and AWS CLI v2):
+    ```
+    sudo yum update -y
+    sudo yum remove -y awscli
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    unzip awscliv2.zip
+    sudo ./aws/install
+    sudo yum install -y python3 jq git
+    sudo pip3 install detect-secrets==1.0.3
+    git clone https://github.com/toniblyx/prowler
+    ```
+- For Ubuntu Linux (`apt` based Linux distributions and AWS CLI v2):
+    ```
+    sudo apt update
+    sudo apt install python3 python3-pip jq git zip
+    pip install detect-secrets==1.0.3
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    unzip awscliv2.zip
+    sudo ./aws/install
+    git clone https://github.com/toniblyx/prowler
     ```
 
-    > NOTE: detect-secrets Yelp version is no longer supported the one from IBM is mantained now. Use the one mentioned below or the specific Yelp version 1.0.3 to make sure it works as expected (`pip install detect-secrets==1.0.3`):
+    > NOTE: detect-secrets Yelp version is no longer supported, the one from IBM is mantained now. Use the one mentioned below or the specific Yelp version 1.0.3 to make sure it works as expected (`pip install detect-secrets==1.0.3`):
     ```sh
     pip install "git+https://github.com/ibm/detect-secrets.git@master#egg=detect-secrets"
     ```
 
-    AWS-CLI can be also installed it using "brew", "apt", "yum" or manually from <https://aws.amazon.com/cli/>, but `detect-secrets` has to be installed using `pip` or `pip3`. You will need to install `jq` to get the most from Prowler.
+    AWS-CLI can be also installed it using other methods, refer to official documentation for more details: <https://aws.amazon.com/cli/>, but `detect-secrets` has to be installed using `pip` or `pip3`.
 
-- Make sure jq is installed: examples below with "apt" for Debian alike and "yum" for RedHat alike distros (like Amazon Linux):
-
-    ```sh
-    sudo apt install jq
-    ```
+- Once Prowler repository is cloned, get into the folder and you can run it:
 
     ```sh
-    sudo yum install jq
-    ```
-
-- Previous steps, from your workstation:
-
-    ```sh
-    git clone https://github.com/toniblyx/prowler
     cd prowler
+    ./prowler
     ```
 
-- Since Prowler users AWS CLI under the hood, you can follow any authentication method as described [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence). Make sure you have properly configured your AWS-CLI with a valid Access Key and Region or declare AWS variables properly (or intance profile):
+- Since Prowler users AWS CLI under the hood, you can follow any authentication method as described [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence). Make sure you have properly configured your AWS-CLI with a valid Access Key and Region or declare AWS variables properly (or instance profile/role):
 
     ```sh
     aws configure
