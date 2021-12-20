@@ -42,9 +42,9 @@ check122(){
         textFail "$REGION: Policy $policy allows \"*:*\"" "$REGION" "$policy"
       done
     else
-        textPass "$REGION: No custom policy found that allow full \"*:*\" administrative privileges" "$REGION" "$policy"
+        textPass "$REGION: No custom policy found that allow full \"*:*\" administrative privileges" "$REGION"
     fi
   else
-    textPass "$REGION: No custom policies found" "$REGION" "$policy"
+    textPass "$REGION: No custom policies found" "$REGION"
   fi
 }

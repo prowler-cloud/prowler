@@ -39,7 +39,7 @@ extra731(){
           if [[ $SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION ]]; then
             SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS=$(echo $SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION \
               | jq '"[Principal: " + (.Principal|tostring) + " Action: " + (.Action|tostring) + "]"' )
-            textFail "$regx: SNS topic $SHORT_TOPIC's policy with public access: $SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS" "$regx" "$SHORT_TOPIC"
+            textFail "$regx: SNS topic $SHORT_TOPIC's policy with public access" "$regx" "$SHORT_TOPIC"
           else
             textPass "$regx: SNS topic $SHORT_TOPIC's policy with public access but has a Condition" "$regx" "$SHORT_TOPIC"
           fi

@@ -37,9 +37,9 @@ extra7156(){
                     for stagename in $CHECK_STAGES_NAME;do
                         CHECK_STAGE_METHOD_LOGGING=$($AWSCLI apigatewayv2 get-stages $PROFILE_OPT --region $regx --api-id $apigwid --query "Items[?StageName == \`$stagename\` ].AccessLogSettings.DestinationArn" --output text)
                         if [[ $CHECK_STAGE_METHOD_LOGGING ]];then
-                            textPass "$regx: API Gateway V2 $API_GW_NAME ID: $apigwid, stage: $stagename, has access logging enabled to $CHECK_STAGE_METHOD_LOGGING" "$regx" "$API_GW_NAME"
+                            textPass "$regx: API Gateway V2 $API_GW_NAME ID: $apigwid with stage: $stagename has access logging enabled to $CHECK_STAGE_METHOD_LOGGING" "$regx" "$API_GW_NAME"
                         else
-                            textFail "$regx: API Gateway V2 $API_GW_NAME ID: $apigwid, stage: $stagename, has access logging disabled" "$regx" "$API_GW_NAME"
+                            textFail "$regx: API Gateway V2 $API_GW_NAME ID: $apigwid with stage: $stagename has access logging disabled" "$regx" "$API_GW_NAME"
                         fi
                     done
                 else
