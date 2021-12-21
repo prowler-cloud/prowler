@@ -91,20 +91,20 @@ backupInitialAWSCredentials() {
 #    echo Backing up current AWS ENV Credentials
     if [[ $(printenv AWS_ACCESS_KEY_ID) ]]; then 
 #        echo Current AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID      
-        MY_AWS_ACCESS_KEY_ID=$(printenv AWS_ACCESS_KEY_ID)
+        INITIAL_AWS_ACCESS_KEY_ID=$(printenv AWS_ACCESS_KEY_ID)
     fi
     if [[ $(printenv AWS_SECRET_ACCESS_KEY) ]]; then 
 #        echo AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY      
-        MY_AWS_SECRET_ACCESS_KEY=$(printenv AWS_SECRET_ACCESS_KEY)
+        INITIAL_AWS_SECRET_ACCESS_KEY=$(printenv AWS_SECRET_ACCESS_KEY)
     fi
     if [[ $(printenv AWS_SESSION_TOKEN) ]]; then 
 #        echo AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN      
-        MY_AWS_SESSION_TOKEN=$(printenv AWS_SESSION_TOKEN)
+        INITIAL_AWS_SESSION_TOKEN=$(printenv AWS_SESSION_TOKEN)
     fi    
 }
 
 restoreInitialAWSCredentials() {
-    export AWS_ACCESS_KEY_ID=$MY_AWS_ACCESS_KEY_ID
-    export AWS_SECRET_ACCESS_KEY=$MY_AWS_SECRET_ACCESS_KEY
-    export AWS_SESSION_TOKEN=$MY_AWS_SESSION_TOKEN
+    export AWS_ACCESS_KEY_ID=$INITIAL_AWS_ACCESS_KEY_ID
+    export AWS_SECRET_ACCESS_KEY=$INITIAL_AWS_SECRET_ACCESS_KEY
+    export AWS_SESSION_TOKEN=$INITIAL_AWS_SESSION_TOKEN
 }
