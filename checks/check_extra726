@@ -47,7 +47,7 @@ extra726(){
         textInfo "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in warning state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
         ;;
       "not_available")
-        textInfo "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in not_available state $QUERY_TA_CHECK_RESULT" "u$REGION" "$TA_CHECKS_NAME"
+        textInfo "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in not_available state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
         ;;
       "*")
         textFail "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in unknown state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
