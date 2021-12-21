@@ -107,6 +107,8 @@ USAGE:
                             (i.e.: -M csv -o /tmp/reports/)
       -B                  Custom output bucket, requires -M <mode> and it can work also with -o flag.
                             (i.e.: -M csv -B my-bucket or -M csv -B my-bucket/folder/)
+      -D                  Same as -B but do not use the assume role credentials to put objects to the bucket, instead
+                          uses the initial credentials
       -F                  Custom output report name, if not specified will use default output/prowler-output-ACCOUNT_NUM-OUTPUT_DATE
       -z                  Failed Checks do not trigger exit code 3
       -Z                  Specify one or multiple check ids separated by commas that will trigger exit code 3 if they fail. Unspecified checks will not trigger exit code 3. This will override "-z".
@@ -117,7 +119,7 @@ USAGE:
   exit
 }
 
-while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:zZ:" OPTION; do
+while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -210,6 +212,10 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:zZ:" OPTION; do
         ;;
      B )
         OUTPUT_BUCKET=$OPTARG
+        ;;
+     D )
+        OUTPUT_BUCKET=$OPTARG
+        OUTPUT_BUCKET_NOASSUME=1
         ;;
      F )
         OUTPUT_FILE_NAME=$OPTARG
@@ -395,6 +401,7 @@ show_group_title() {
 execute_check() {
 
   if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
+    echo ******* I am here again to check on my role *******
     # Following logic looks for time remaining in the session and review it
     # if it is less than 600 seconds, 10 minutes.
     CURRENT_TIMESTAMP=$(date -u "+%s")
@@ -644,6 +651,7 @@ fi
 # Gather account data / test aws cli connectivity
 getWhoami
 if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
+  backupInitialAWSCredentials
   assume_role
 fi
 
@@ -662,8 +670,8 @@ if [[ $GROUP_ID_READ ]];then
     fi
     cleanTemp
     scoring
-    if [[ $ACCOUNT_TO_ASSUME ]]; then
-      restoreAWSCredentials
+    if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
+      restoreInitialAWSCredentials
     fi
     copyToS3
     exit $EXITCODE
@@ -693,8 +701,8 @@ if [[ $CHECK_ID ]];then
   if [[ "${MODES[@]}" =~ "html" ]]; then
     addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
-  if [[ $ACCOUNT_TO_ASSUME ]]; then
-    restoreAWSCredentials
+  if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
+    restoreInitialAWSCredentials
   fi
   copyToS3
   scoring
@@ -710,8 +718,8 @@ fi
 
 scoring
 cleanTemp
-if [[ $ACCOUNT_TO_ASSUME ]]; then
-  restoreAWSCredentials
+if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
+  restoreInitialAWSCredentials
 fi
 copyToS3
 

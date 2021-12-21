@@ -12,10 +12,9 @@
 # specific language governing permissions and limitations under the License.
 
 assume_role(){
-    MY_AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-    MY_AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-    MY_SESSION_TOKEN=$AWS_SESSION_TOKEN
+
     PROFILE_OPT=$PROFILE_OPT_BAK
+
     # Both variables are mandatory to be set together
     if [[ -z $ROLE_TO_ASSUME || -z $ACCOUNT_TO_ASSUME ]]; then
         echo "$OPTRED ERROR!$OPTNORMAL - Both Account ID (-A) and IAM Role to assume (-R) must be set"
@@ -67,18 +66,18 @@ assume_role(){
     PROFILE_OPT=""   
 
     # Set AWS environment variables with assumed role credentials
-    AWS_ACCESS_KEY_ID=$(jq -r '.Credentials.AccessKeyId' "${TEMP_STS_ASSUMED_FILE}")
-    export AWS_ACCESS_KEY_ID
-    AWS_SECRET_ACCESS_KEY=$(jq -r '.Credentials.SecretAccessKey'  "${TEMP_STS_ASSUMED_FILE}")
-    export AWS_SECRET_ACCESS_KEY
-    AWS_SESSION_TOKEN=$(jq -r '.Credentials.SessionToken'  "${TEMP_STS_ASSUMED_FILE}")
-    export AWS_SESSION_TOKEN
-    AWS_SESSION_EXPIRATION=$(jq -r '.Credentials.Expiration | sub("\\+00:00";"Z") | fromdateiso8601'  "${TEMP_STS_ASSUMED_FILE}")
-    export AWS_SESSION_EXPIRATION
-    echo TEMP AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
-    echo TEMP AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
-    echo TEMP AWS_SESSION_TOKEN: $AWS_SESSION_TOKEN
-    echo EXPIRATION EPOCH TIME: $AWS_SESSION_EXPIRATION
+    ASSUME_AWS_ACCESS_KEY_ID=$(jq -r '.Credentials.AccessKeyId' "${TEMP_STS_ASSUMED_FILE}")
+    export AWS_ACCESS_KEY_ID=$ASSUME_AWS_ACCESS_KEY_ID
+    ASSUME_AWS_SECRET_ACCESS_KEY=$(jq -r '.Credentials.SecretAccessKey'  "${TEMP_STS_ASSUMED_FILE}")
+    export AWS_SECRET_ACCESS_KEY=$ASSUME_AWS_SECRET_ACCESS_KEY
+    ASSUME_AWS_SESSION_TOKEN=$(jq -r '.Credentials.SessionToken'  "${TEMP_STS_ASSUMED_FILE}")
+    export AWS_SESSION_TOKEN=$ASSUME_AWS_SESSION_TOKEN
+    ASSUME_AWS_SESSION_EXPIRATION=$(jq -r '.Credentials.Expiration | sub("\\+00:00";"Z") | fromdateiso8601'  "${TEMP_STS_ASSUMED_FILE}")
+    export AWS_SESSION_EXPIRATION=$ASSUME_AWS_SESSION_EXPIRATION
+    echo TEMP AWS_ACCESS_KEY_ID: $ASSUME_AWS_ACCESS_KEY_ID
+    echo TEMP AWS_SECRET_ACCESS_KEY: $ASSUME_AWS_SECRET_ACCESS_KEY
+    echo TEMP AWS_SESSION_TOKEN: $ASSUME_AWS_SESSION_TOKEN
+    echo EXPIRATION EPOCH TIME: $ASSUME_AWS_SESSION_EXPIRATION
 
     cleanSTSAssumeFile
 }
@@ -88,11 +87,24 @@ cleanSTSAssumeFile() {
     rm -fr "${TEMP_STS_ASSUMED_ERROR}"
 }
 
-    restoreAWSCredentials() {
-    AWS_ACCESS_KEY_ID=$MY_AWS_ACCESS_KEY_ID
-    export AWS_ACCESS_KEY_ID
-    AWS_SECRET_ACCESS_KEY=$MY_AWS_SECRET_ACCESS_KEY
-    export AWS_SECRET_ACCESS_KEY
-    SESSION_TOKEN=$MY_AWS_SESSION_TOKEN
-    export SESSION_TOKEN
+backupInitialAWSCredentials() {
+#    echo Backing up current AWS ENV Credentials
+    if [[ $(printenv AWS_ACCESS_KEY_ID) ]]; then 
+#        echo Current AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID      
+        MY_AWS_ACCESS_KEY_ID=$(printenv AWS_ACCESS_KEY_ID)
+    fi
+    if [[ $(printenv AWS_SECRET_ACCESS_KEY) ]]; then 
+#        echo AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY      
+        MY_AWS_SECRET_ACCESS_KEY=$(printenv AWS_SECRET_ACCESS_KEY)
+    fi
+    if [[ $(printenv AWS_SESSION_TOKEN) ]]; then 
+#        echo AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN      
+        MY_AWS_SESSION_TOKEN=$(printenv AWS_SESSION_TOKEN)
+    fi    
+}
+
+restoreInitialAWSCredentials() {
+    export AWS_ACCESS_KEY_ID=$MY_AWS_ACCESS_KEY_ID
+    export AWS_SECRET_ACCESS_KEY=$MY_AWS_SECRET_ACCESS_KEY
+    export AWS_SESSION_TOKEN=$MY_AWS_SESSION_TOKEN
 }
