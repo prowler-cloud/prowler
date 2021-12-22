@@ -35,7 +35,7 @@ extra794(){
            if [[ $(echo $TYPES | egrep "api.*audit.*authenticator.*controllerManager.*scheduler") ]]; then
               textPass "$regx: Control plane logging enabled and correctly configured for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
            else
-              textFail "$regx: Control plane logging enabled, but not all log types collected for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
+              textFail "$regx: Control plane logging enabled; not all log types collected for EKS cluster $CLUSTER" "$regx" "$CLUSTER"
            fi
         else
               textFail "$regx: Control plane logging is not enabled for EKS cluster $CLUSTER" "$regx" "$CLUSTER"

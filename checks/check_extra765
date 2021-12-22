@@ -50,7 +50,7 @@ extra765(){
             textFail "$region: ECR repository $repo has scan on push disabled!" "$region" "$repo"
             ;;
           "None")
-            textInfo "$region: ECR repository $repo has no scanOnPush status, newer awscli needed" "$region" "$repo"
+            textInfo "$region: ECR repository $repo has no scanOnPush status: newer awscli needed" "$region" "$repo"
             ;;
           "*")
             textInfo "$region: ECR repository $repo has unknown scanOnPush status \"$SCAN_ENABLED\"" "$region" "$repo"

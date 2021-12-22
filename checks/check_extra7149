@@ -31,7 +31,7 @@ extra7149() {
             for redshiftcluster in $LIST_OF_REDSHIFT_CLUSTERS; do
                 REDSHIFT_SNAPSHOT_ENABLED=$($AWSCLI redshift describe-cluster-snapshots $PROFILE_OPT --region $regx --cluster-identifier $redshiftcluster --snapshot-type automated)
                 if [[ $REDSHIFT_SNAPSHOT_ENABLED ]]; then
-                    textPass "$regx: Redshift cluster $redshiftcluster has automated snapshots $REDSHIFT_SNAPSHOT_ENABLED" "$regx" "$redshiftcluster"
+                    textPass "$regx: Redshift cluster $redshiftcluster has automated snapshots." "$regx" "$redshiftcluster"
                 else
                     textFail "$regx: Redshift cluster $redshiftcluster has automated snapshots disabled!" "$regx" "$redshiftcluster"
                 fi
