@@ -26,7 +26,7 @@
 CHECK_ID_extra7165="7.165"
 CHECK_TITLE_extra7165="[extra7165] Check if DynamoDB: DAX Clusters are encrypted at rest"
 CHECK_SCORED_extra7165="NOT_SCORED"
-CHECK_TYPE_extra7165="EXTRA"
+CHECK_CIS_LEVEL_extra7165="EXTRA"
 CHECK_SEVERITY_extra7165="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7165="AwsDaxCluster"
 CHECK_ALTERNATE_check7165="extra7165"
