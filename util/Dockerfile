@@ -10,7 +10,7 @@ ARG USERID=34000
 
 RUN yum install -y shadow-utils && \
   useradd -s /bin/sh -U -u ${USERID} ${USERNAME} && \
-  yum install -y python3 bash curl jq file coreutils py3-pip which unzip && \
+  yum install -y python3 bash curl jq coreutils py3-pip which unzip && \
   yum upgrade -y && \
   yum clean all && \
   pip3 install --upgrade pip && \
