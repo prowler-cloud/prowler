@@ -23,7 +23,6 @@
 #     --filter-pattern '{ ($.eventName = CreateTrail) || ($.eventName = UpdateTrail) || ($.eventName = DeleteTrail) || ($.eventName = StartLogging) || ($.eventName = StopLogging) }' \
 #     --metric-transformations metricName=CloudTrailEventCount,metricNamespace=CloudTrailMetrics,metricValue=1
 
-
 # CHECK_ID_checkN="N.N"
 # CHECK_TITLE_checkN="[checkN] Description "
 # CHECK_SCORED_checkN="NOT_SCORED"
@@ -31,8 +30,13 @@
 # CHECK_SEVERITY_check="Medium"
 # CHECK_ASFF_RESOURCE_TYPE_checkN="AwsAccount" # Choose appropriate value from https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
 # CHECK_ALTERNATE_checkN="extraN"
-# CHECK_SERVICENAME_checkN="service" # get service short name from `curl -s https://api.regional-table.region-services.aws.a2z.com/index.json | jq -r '.prices[] | .id' | awk -F: '{ print $1 }' | sort -u` 
-#
+# CHECK_SERVICENAME_checkN="service" # get service short name from `curl -s https://api.regional-table.region-services.aws.a2z.com/index.json | jq -r '.prices[] | .id' | awk -F: '{ print $1 }' | sort -u`
+# CHECK_RISK_checkN=""
+# CHECK_REMEDIATION_checkN=""
+# CHECK_DOC_checkN=""
+# CHECK_CAF_EPIC_checkN=""
+
+# Example of regional resource
 # extraN(){
 #   # "Description "
 #   textInfo "Looking for instances in all regions...  "
@@ -42,10 +46,28 @@
 #       while read -r instance;do
 #         INSTANCE_ID=$(echo $instance | awk '{ print $1; }')
 #         PUBLIC_IP=$(echo $instance | awk '{ print $2; }')
-#         textFail "$regx: Instance: $INSTANCE_ID at IP: $PUBLIC_IP is internet-facing!" "$regx"
+#         textFail "$regx: Instance: $INSTANCE_ID at IP: $PUBLIC_IP is internet-facing!" "$regx" "$INSTANCE_ID"
 #       done <<< "$LIST_OF_PUBLIC_INSTANCES"
 #       else
 #         textPass "$regx: no Internet Facing EC2 Instances found" "$regx"
 #     fi
 #   done
+# }
+
+# Example of global resource
+# extraN(){
+#   # "Description "
+#   LIST_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions $PROFILE_OPT --query 'DistributionList.Items[*].Id' --output text |grep -v ^None)
+#   if [[ $LIST_DISTRIBUTIONS ]]; then
+#     for dist in $LIST_DISTRIBUTIONS; do
+#       GEO_ENABLED=$($AWSCLI cloudfront get-distribution-config $PROFILE_OPT --id $dist --query DistributionConfig.Restrictions.GeoRestriction.RestrictionType --output text)
+#       if [[ $GEO_ENABLED == "none" ]]; then
+#         textFail "$REGION: CloudFront distribution $dist has not Geo restrictions" "$REGION" "$dist"
+#       else
+#         textPass "$REGION: CloudFront distribution $dist has Geo restrictions enabled" "$REGION" "$dist"
+#       fi
+#     done
+#   else
+#     textInfo "$REGION: No CloudFront distributions found"
+#   fi
 # }
