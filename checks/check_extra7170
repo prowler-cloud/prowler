@@ -12,12 +12,12 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra7170="7.170"
-CHECK_TITLE_extra7170="[extra7170] Check if internet-facing application load balancers are protected by AWS Shield"
+CHECK_TITLE_extra7170="[extra7170] Check if internet-facing application load balancers are protected by AWS Shield Advanced"
 CHECK_SCORED_extra7170="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7170="EXTRA"
-CHECK_SEVERITY_check="Medium"
+CHECK_SEVERITY_extra7170="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7170="AwsElasticLoadBalancingV2LoadBalancer"
-CHECK_ALTERNATE_extra7170="extra7170"
+CHECK_ALTERNATE_check7170="extra7170"
 CHECK_SERVICENAME_extra7170="shield"
 CHECK_RISK_extra7170='AWS Shield Advanced provides expanded DDoS attack protection for your resources'
 CHECK_REMEDIATION_extra7170='Add as a protected resource in AWS Shield Advanced.'
@@ -25,21 +25,21 @@ CHECK_DOC_extra7170='https://docs.aws.amazon.com/waf/latest/developerguide/confi
 CHECK_CAF_EPIC_extra7170='Infrastructure security'
 
 extra7170() {
-  if [[ "$($AWSCLI shield get-subscription-state --output text)" == "ACTIVE" ]]; then
+  if [[ "$($AWSCLI $PROFILE_OPT shield get-subscription-state --output text)" == "ACTIVE" ]]; then
     for regx in $REGIONS; do
       LIST_OF_APPLICATION_LOAD_BALANCERS=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Type == `application` && Scheme == `internet-facing`].[LoadBalancerName,LoadBalancerArn]' --output text)
       if [[ $LIST_OF_APPLICATION_LOAD_BALANCERS ]]; then
         while read -r alb; do
           ALB_NAME=$(echo $alb | awk '{ print $1; }')
           ALB_ARN=$(echo $alb | awk '{ print $2; }')
-          if aws shield describe-protection --resource-arn $ALB_ARN >/dev/null 2>&1; then
+          if $AWSCLI $PROFILE_OPT shield describe-protection --resource-arn $ALB_ARN >/dev/null 2>&1; then
             textPass "$regx: ALB $ALB_NAME is protected by AWS Shield Advanced" "$regx" "$ALB_NAME"
           else
             textFail "$regx: ALB $ALB_NAME is not protected by AWS Shield Advanced" "$regx" "$ALB_NAME"
           fi
         done <<<"$LIST_OF_APPLICATION_LOAD_BALANCERS"
       else
-        textPass "$regx: no application load balancers found" "$regx"
+        textInfo "$regx: no application load balancers found" "$regx"
       fi
     done
   else

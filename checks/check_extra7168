@@ -12,12 +12,12 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra7168="7.168"
-CHECK_TITLE_extra7168="[extra7168] Check if Route53 hosted zones are protected by AWS Shield"
+CHECK_TITLE_extra7168="[extra7168] Check if Route53 hosted zones are protected by AWS Shield Advanced"
 CHECK_SCORED_extra7168="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7168="EXTRA"
-CHECK_SEVERITY_check="Medium"
+CHECK_SEVERITY_extra7168="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7168="AwsRoute53Domain"
-CHECK_ALTERNATE_extra7168="extra7168"
+CHECK_ALTERNATE_check7168="extra7168"
 CHECK_SERVICENAME_extra7168="shield"
 CHECK_RISK_extra7168='AWS Shield Advanced provides expanded DDoS attack protection for your resources'
 CHECK_REMEDIATION_extra7168='Add as a protected resource in AWS Shield Advanced.'
@@ -25,7 +25,7 @@ CHECK_DOC_extra7168='https://docs.aws.amazon.com/waf/latest/developerguide/confi
 CHECK_CAF_EPIC_extra7168='Infrastructure security'
 
 extra7168() {
-  if [[ "$($AWSCLI shield get-subscription-state --output text)" == "ACTIVE" ]]; then
+  if [[ "$($AWSCLI $PROFILE_OPT shield get-subscription-state --output text)" == "ACTIVE" ]]; then
     CALLER_IDENTITY=$($AWSCLI sts get-caller-identity $PROFILE_OPT --query Arn)
     PARTITION=$(echo $CALLER_IDENTITY | cut -d: -f2)
     LIST_OF_ROUTE53_HOSTED_ZONES=$($AWSCLI route53 list-hosted-zones $PROFILE_OPT --query 'HostedZones[*].[Id,Name]' --output text)
@@ -34,14 +34,14 @@ extra7168() {
         HOSTED_ZONE_ID=$(echo $hosted_zone | awk '{ print $1; }')
         HOSTED_ZONE_NAME=$(echo $hosted_zone | awk '{ print $2; }')
         HOSTED_ZONE_ARN="arn:${PARTITION}:route53:::${HOSTED_ZONE_ID:1}"
-        if aws shield describe-protection --resource-arn $HOSTED_ZONE_ARN >/dev/null 2>&1; then
+        if $AWSCLI $PROFILE_OPT shield describe-protection --resource-arn $HOSTED_ZONE_ARN >/dev/null 2>&1; then
           textPass "$REGION: Route53 Hosted Zone $HOSTED_ZONE_NAME is protected by AWS Shield Advanced" "$REGION" "$HOSTED_ZONE_NAME"
         else
           textFail "$REGION: Route53 Hosted Zone $HOSTED_ZONE_NAME is not protected by AWS Shield Advanced" "$REGION" "$HOSTED_ZONE_NAME"
         fi
       done <<<"$LIST_OF_ROUTE53_HOSTED_ZONES"
     else
-      textPass "$REGION: no Route53 hosted zones found" "$REGION"
+      textInfo "$REGION: no Route53 hosted zones found" "$REGION"
     fi
   else
     textInfo "No AWS Shield Advanced subscription found. Skipping check."

@@ -27,7 +27,7 @@
 # CHECK_TITLE_checkN="[checkN] Description "
 # CHECK_SCORED_checkN="NOT_SCORED"
 # CHECK_CIS_LEVEL_checkN="EXTRA"
-# CHECK_SEVERITY_check="Medium"
+# CHECK_SEVERITY_checkNN="Medium"
 # CHECK_ASFF_RESOURCE_TYPE_checkN="AwsAccount" # Choose appropriate value from https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
 # CHECK_ALTERNATE_checkN="extraN"
 # CHECK_SERVICENAME_checkN="service" # get service short name from `curl -s https://api.regional-table.region-services.aws.a2z.com/index.json | jq -r '.prices[] | .id' | awk -F: '{ print $1 }' | sort -u`

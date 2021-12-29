@@ -12,12 +12,12 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra7169="7.169"
-CHECK_TITLE_extra7169="[extra7169] Check if global accelerators are protected by AWS Shield"
+CHECK_TITLE_extra7169="[extra7169] Check if global accelerators are protected by AWS Shield Advanced"
 CHECK_SCORED_extra7169="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7169="EXTRA"
-CHECK_SEVERITY_check="Medium"
+CHECK_SEVERITY_extra7169="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7169="AwsGlobalAccelerator"
-CHECK_ALTERNATE_extra7169="extra7169"
+CHECK_ALTERNATE_check7169="extra7169"
 CHECK_SERVICENAME_extra7169="shield"
 CHECK_RISK_extra7169='AWS Shield Advanced provides expanded DDoS attack protection for your resources'
 CHECK_REMEDIATION_extra7169='Add as a protected resource in AWS Shield Advanced.'
@@ -25,20 +25,20 @@ CHECK_DOC_extra7169='https://docs.aws.amazon.com/waf/latest/developerguide/confi
 CHECK_CAF_EPIC_extra7169='Infrastructure security'
 
 extra7169() {
-  if [[ "$($AWSCLI shield get-subscription-state --output text)" == "ACTIVE" ]]; then
+  if [[ "$($AWSCLI $PROFILE_OPT shield get-subscription-state --output text)" == "ACTIVE" ]]; then
     LIST_OF_GLOBAL_ACCELERATORS=$($AWSCLI globalaccelerator list-accelerators --region us-west-2 $PROFILE_OPT --query 'Accelerators[?Enabled].[Name,AcceleratorArn]' --output text)
     if [[ $LIST_OF_GLOBAL_ACCELERATORS ]]; then
       while read -r accelerator; do
         ACCELERATOR_NAME=$(echo $accelerator | awk '{ print $1; }')
         ACCELERATOR_ARN=$(echo $accelerator | awk '{ print $2; }')
-        if aws shield describe-protection --resource-arn $ACCELERATOR_ARN >/dev/null 2>&1; then
+        if $AWSCLI $PROFILE_OPT shield describe-protection --resource-arn $ACCELERATOR_ARN >/dev/null 2>&1; then
           textPass "$REGION: Global Accelerator $ACCELERATOR_NAME is protected by AWS Shield Advanced" "$REGION" "$ACCELERATOR_NAME"
         else
           textFail "$REGION: Global Accelerator $ACCELERATOR_NAME is not protected by AWS Shield Advanced" "$REGION" "$ACCELERATOR_NAME"
         fi
       done <<<"$LIST_OF_GLOBAL_ACCELERATORS"
     else
-      textPass "$REGION: no global accelerators found" "$REGION"
+      textInfo "$REGION: no global accelerators found" "$REGION"
     fi
   else
     textInfo "No AWS Shield Advanced subscription found. Skipping check."

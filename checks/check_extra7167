@@ -12,12 +12,12 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra7167="7.167"
-CHECK_TITLE_extra7167="[extra7167] Check if Cloudfront distributions are protected by AWS Shield"
+CHECK_TITLE_extra7167="[extra7167] Check if Cloudfront distributions are protected by AWS Shield Advanced"
 CHECK_SCORED_extra7167="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7167="EXTRA"
-CHECK_SEVERITY_check="Medium"
+CHECK_SEVERITY_extra7167="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7167="AwsCloudFrontDistribution"
-CHECK_ALTERNATE_extra7167="extra7167"
+CHECK_ALTERNATE_check7167="extra7167"
 CHECK_SERVICENAME_extra7167="shield"
 CHECK_RISK_extra7167='AWS Shield Advanced provides expanded DDoS attack protection for your resources'
 CHECK_REMEDIATION_extra7167='Add as a protected resource in AWS Shield Advanced.'
@@ -25,20 +25,20 @@ CHECK_DOC_extra7167='https://docs.aws.amazon.com/waf/latest/developerguide/confi
 CHECK_CAF_EPIC_extra7167='Infrastructure security'
 
 extra7167() {
-  if [[ "$($AWSCLI shield get-subscription-state --output text)" == "ACTIVE" ]]; then
+  if [[ "$($AWSCLI $PROFILE_OPT shield get-subscription-state --output text)" == "ACTIVE" ]]; then
     LIST_OF_CLOUDFRONT_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions $PROFILE_OPT --query 'DistributionList.Items[*].[Id,ARN]' --output text)
     if [[ $LIST_OF_CLOUDFRONT_DISTRIBUTIONS ]]; then
       while read -r distribution; do
         DISTRIBUTION_ID=$(echo $distribution | awk '{ print $1; }')
         DISTRIBUTION_ARN=$(echo $distribution | awk '{ print $2; }')
-        if aws shield describe-protection --resource-arn $DISTRIBUTION_ARN >/dev/null 2>&1; then
+        if $AWSCLI $PROFILE_OPT shield describe-protection --resource-arn $DISTRIBUTION_ARN >/dev/null 2>&1; then
           textPass "$REGION: Cloudfront distribution $DISTRIBUTION_ID is protected by AWS Shield Advanced" "$REGION" "$DISTRIBUTION_ID"
         else
           textFail "$REGION: Cloudfront distribution $DISTRIBUTION_ID is not protected by AWS Shield Advanced" "$REGION" "$DISTRIBUTION_ID"
         fi
       done <<<"$LIST_OF_CLOUDFRONT_DISTRIBUTIONS"
     else
-      textPass "$REGION: no Cloudfront distributions found" "$REGION"
+      textInfo "$REGION: no Cloudfront distributions found" "$REGION"
     fi
   else
     textInfo "No AWS Shield Advanced subscription found. Skipping check."
