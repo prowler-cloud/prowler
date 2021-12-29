@@ -11,7 +11,9 @@
 		        "lambda:GetFunction",
                 "glue:GetConnections",
                 "glue:SearchTables",
-                "s3:GetAccountPublicAccessBlock"
+                "s3:GetAccountPublicAccessBlock",
+                "shield:GetSubscriptionState",
+                "shield:DescribeProtection"
             ],
             "Resource": "*",
             "Effect": "Allow",

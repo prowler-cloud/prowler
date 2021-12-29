@@ -320,6 +320,8 @@ resource "aws_iam_policy" "prowler_kickstarter_iam_policy" {
                   "support:Describe*",
                   "tag:GetTagKeys",
                   "lambda:GetFunction"
+                  "shield:GetSubscriptionState",
+                  "shield:DescribeProtection"
                   ]
         Effect   = "Allow"
         Resource = "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog"

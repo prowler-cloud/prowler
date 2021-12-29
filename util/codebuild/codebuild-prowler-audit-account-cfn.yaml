@@ -193,6 +193,8 @@ Resources:
                   - support:Describe*
                   - tag:GetTagKeys
                   - lambda:GetFunction
+                  - shield:GetSubscriptionState
+                  - shield:DescribeProtection
                 Effect: Allow
                 Resource: !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:catalog'
         - PolicyName: CodeBuild
