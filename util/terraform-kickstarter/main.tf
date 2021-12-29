@@ -319,7 +319,7 @@ resource "aws_iam_policy" "prowler_kickstarter_iam_policy" {
                   "ecr:Describe*",
                   "support:Describe*",
                   "tag:GetTagKeys",
-                  "lambda:GetFunction"
+                  "lambda:GetFunction",
                   "shield:GetSubscriptionState",
                   "shield:DescribeProtection"
                   ]
