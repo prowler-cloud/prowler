@@ -348,7 +348,6 @@ TOTAL_CHECKS=($(echo "${TOTAL_CHECKS[*]}" | tr ' ' '\n' | awk '!seen[$0]++' | so
 get_regions() {
   # Get list of regions based on include/whoami
   REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' --output text $PROFILE_OPT --region $REGION_FOR_STS --region-names $FILTERREGION 2>&1)
-  echo $REGIONS
   ret=$?
   if [[ $ret -ne 0 ]]; then
     echo "$OPTRED Access Denied trying to describe regions! Review permissions as described here: https://github.com/toniblyx/prowler/#requirements-and-installation $OPTNORMAL"
@@ -404,15 +403,15 @@ show_group_title() {
 execute_check() {
 
   if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
-    echo ******* I am here again to check on my role *******
+    # echo ******* I am here again to check on my role *******
     # Following logic looks for time remaining in the session and review it
     # if it is less than 600 seconds, 10 minutes.
     CURRENT_TIMESTAMP=$(date -u "+%s")
     SESSION_TIME_REMAINING=$(expr $AWS_SESSION_EXPIRATION - $CURRENT_TIMESTAMP)
-    echo SESSION TIME REMAINING IN SECONDS: $SESSION_TIME_REMAINING
+    # echo SESSION TIME REMAINING IN SECONDS: $SESSION_TIME_REMAINING
     MINIMUM_REMAINING_TIME_ALLOWED=600
     if (( $MINIMUM_REMAINING_TIME_ALLOWED > $SESSION_TIME_REMAINING )); then
-      echo LESS THAN 10 MIN LEFT: RE-ASSUMING...
+      # echo LESS THAN 10 MIN LEFT: RE-ASSUMING...
       unset AWS_ACCESS_KEY_ID
       unset AWS_SECRET_ACCESS_KEY
       unset AWS_SESSION_TOKEN
@@ -659,9 +658,7 @@ if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
 fi
 
 # List regions
-echo REGIONS_init
 get_regions
-echo REGIONS_end
 
 # Execute group of checks if called with -g
 if [[ $GROUP_ID_READ ]];then
