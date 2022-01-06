@@ -29,12 +29,15 @@ CHECK_CAF_EPIC_extra75='Infrastructure Security'
 extra75(){
   # "Ensure there are no Security Groups not being used "
   for regx in $REGIONS; do
-    SECURITYGROUPS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --max-items $MAXITEMS --output json | jq '.SecurityGroups|map({(.GroupId): (.GroupName)})|add')
-    if [[ $SECURITYGROUPS == "null" ]];
-    then
+    SECURITYGROUPS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --max-items $MAXITEMS --output json 2>&1 )
+    if [[ $(echo "$SECURITYGROUPS" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
+        textFail "$regx: Access Denied trying to describe security groups" "$regx"
+        continue
+    fi
+    if [[ $SECURITYGROUPS == "null" ]]; then
       continue
     fi
-    LIST_OF_SECURITYGROUPS=$(echo $SECURITYGROUPS|jq -r 'to_entries|sort_by(.key)|.[]|.key')
+    LIST_OF_SECURITYGROUPS=$(echo $SECURITYGROUPS | jq '.SecurityGroups|map({(.GroupId): (.GroupName)})|add' |jq -r 'to_entries|sort_by(.key)|.[]|.key')
     for SG_ID in $LIST_OF_SECURITYGROUPS; do
       SG_NOT_USED=$($AWSCLI ec2 describe-network-interfaces $PROFILE_OPT --region $regx --filters "Name=group-id,Values=$SG_ID" --query "length(NetworkInterfaces)" --output text)
       # Default security groups can not be deleted, so draw attention to them

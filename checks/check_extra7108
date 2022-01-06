@@ -26,7 +26,11 @@ CHECK_CAF_EPIC_extra7108='Data Protection'
 
 extra7108(){
     for regx in ${REGIONS}; do
-        LIST_SM_NB_JOBS=$($AWSCLI $PROFILE_OPT --region $regx sagemaker list-training-jobs --query 'TrainingJobSummaries[*].TrainingJobName' --output text)
+        LIST_SM_NB_JOBS=$($AWSCLI $PROFILE_OPT --region $regx sagemaker list-training-jobs --query 'TrainingJobSummaries[*].TrainingJobName' --output text 2>&1)
+        if [[ $(echo "$LIST_SM_NB_JOBS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textFail "$regx: Access Denied trying to list training jobs" "$regx"
+            continue
+        fi
         if [[ $LIST_SM_NB_JOBS ]];then 
             for nb_job_name in $LIST_SM_NB_JOBS; do
                 SM_JOB_KMSENCRYPTION=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-training-job --training-job-name $nb_job_name --query 'ResourceConfig.VolumeKmsKeyId' --output text)

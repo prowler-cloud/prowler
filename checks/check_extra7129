@@ -29,7 +29,11 @@ PARALLEL_REGIONS="50"
 extra7129(){
   for regx in $REGIONS; do
       # (
-        LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Scheme == `internet-facing` && Type == `application`].[LoadBalancerName]' --output text)
+        LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Scheme == `internet-facing` && Type == `application`].[LoadBalancerName]' --output text 2>&1)
+        if [[ $(echo "$LIST_OF_ELBSV2" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textFail "$regx: Access Denied trying to describe load balancers" "$regx"
+            continue
+        fi  
         LIST_OF_WAFV2_WEBACL_ARN=$($AWSCLI wafv2 list-web-acls $PROFILE_OPT --region=$regx --scope=REGIONAL --query WebACLs[*].ARN --output text)
         LIST_OF_WAFV1_WEBACL_WEBACLID=$($AWSCLI waf-regional list-web-acls $PROFILE_OPT --region $regx --query WebACLs[*].[WebACLId] --output text)
 

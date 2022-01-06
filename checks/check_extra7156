@@ -28,7 +28,11 @@ extra7156(){
 
     # "Check if API Gateway V2 has Access Logging enabled "
     for regx in $REGIONS; do
-        LIST_OF_API_GW=$($AWSCLI apigatewayv2 get-apis $PROFILE_OPT --region $regx --query Items[*].ApiId --output text)
+        LIST_OF_API_GW=$($AWSCLI apigatewayv2 get-apis $PROFILE_OPT --region $regx --query Items[*].ApiId --output text 2>&1)
+        if [[ $(echo "$LIST_OF_API_GW" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textFail "$regx: Access Denied trying to get APIs" "$regx"
+            continue
+        fi
         if [[ $LIST_OF_API_GW ]];then
             for apigwid in $LIST_OF_API_GW;do
                 API_GW_NAME=$($AWSCLI apigatewayv2 get-apis $PROFILE_OPT --region $regx --query "Items[?ApiId==\`$apigwid\`].Name" --output text)

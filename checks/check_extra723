@@ -27,7 +27,11 @@ extra723(){
   # "Check if RDS Snapshots are public "
   for regx in $REGIONS; do
     # RDS snapshots
-    LIST_OF_RDS_SNAPSHOTS=$($AWSCLI rds describe-db-snapshots $PROFILE_OPT --region $regx --query DBSnapshots[*].DBSnapshotIdentifier --output text)
+    LIST_OF_RDS_SNAPSHOTS=$($AWSCLI rds describe-db-snapshots $PROFILE_OPT --region $regx --query DBSnapshots[*].DBSnapshotIdentifier --output text 2>&1)
+    if [[ $(echo "$LIST_OF_RDS_SNAPSHOTS" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
+        textFail "$regx: Access Denied trying to describe db snapshots" "$regx"
+        continue
+    fi 
     if [[ $LIST_OF_RDS_SNAPSHOTS ]]; then
       for rdssnapshot in $LIST_OF_RDS_SNAPSHOTS;do
         SNAPSHOT_IS_PUBLIC=$($AWSCLI rds describe-db-snapshot-attributes $PROFILE_OPT --region $regx --db-snapshot-identifier $rdssnapshot --query DBSnapshotAttributesResult.DBSnapshotAttributes[*] --output text|grep ^ATTRIBUTEVALUES|cut -f2|grep all)

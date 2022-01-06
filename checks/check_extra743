@@ -25,7 +25,11 @@ CHECK_CAF_EPIC_extra743='Data Protection'
 
 extra743(){
   for regx in $REGIONS; do
-    LIST_OF_REST_APIS=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-rest-apis --query 'items[*].id' --output text)
+    LIST_OF_REST_APIS=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-rest-apis --query 'items[*].id' --output text 2>&1)
+    if [[ $(echo "$LIST_OF_REST_APIS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textFail "$regx: Access Denied trying to get rest APIs" "$regx"
+        continue
+    fi 
     if [[ $LIST_OF_REST_APIS ]];then
       for api in $LIST_OF_REST_APIS; do
         API_GW_NAME=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query "items[?id==\`$api\`].name" --output text)

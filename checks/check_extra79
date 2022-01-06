@@ -28,8 +28,16 @@ CHECK_CAF_EPIC_extra79='Data Protection'
 extra79(){
   # "Check for internet facing Elastic Load Balancers "
   for regx in $REGIONS; do
-    LIST_OF_PUBLIC_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[?Scheme == `internet-facing`].[LoadBalancerName,DNSName]' --output text)
-    LIST_OF_PUBLIC_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Scheme == `internet-facing`].[LoadBalancerName,DNSName]' --output text)
+    LIST_OF_PUBLIC_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[?Scheme == `internet-facing`].[LoadBalancerName,DNSName]' --output text 2>&1)
+    if [[ $(echo "$LIST_OF_PUBLIC_ELBS" | grep AccessDenied) ]]; then
+      textFail "$regx: Access Denied Trying to describe load balancers" "$regx"
+      continue
+    fi
+    LIST_OF_PUBLIC_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Scheme == `internet-facing`].[LoadBalancerName,DNSName]' --output text 2>&1)
+    if [[ $(echo "$LIST_OF_PUBLIC_ELBSV2" | grep AccessDenied) ]]; then
+      textFail "$regx: Access Denied Trying to describe load balancers" "$regx"
+      continue
+    fi
     LIST_OF_ALL_ELBS=$( echo $LIST_OF_PUBLIC_ELBS; echo $LIST_OF_PUBLIC_ELBSV2)
     LIST_OF_ALL_ELBS_PER_LINE=$( echo $LIST_OF_ALL_ELBS| xargs -n2 )
     if [[ $LIST_OF_ALL_ELBS ]];then

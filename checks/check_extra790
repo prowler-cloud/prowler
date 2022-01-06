@@ -32,8 +32,11 @@ extra790(){
                                 ${PROFILE_OPT} \
                                 --query "ServiceDetails[?Owner=='${ACCOUNT_NUM}'].ServiceId" \
                                 --region ${regx} \
-                                --output text | xargs
-                                )
+                                --output text | xargs 2>&1)
+    if [[ $(echo "$ENDPOINT_SERVICES_IDS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textFail "$regx: Access Denied trying to describe VPC endpoint services" "$regx"
+        continue
+    fi
 
         for ENDPOINT_SERVICE_ID in ${ENDPOINT_SERVICES_IDS}; do
             ENDPOINT_PERMISSIONS_LIST=$(${AWSCLI} ec2 describe-vpc-endpoint-service-permissions \

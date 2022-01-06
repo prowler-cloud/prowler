@@ -27,7 +27,11 @@ CHECK_CAF_EPIC_extra728='Data Protection'
 
 extra728(){
   for regx in $REGIONS; do
-    LIST_SQS=$($AWSCLI sqs list-queues $PROFILE_OPT --region $regx --query QueueUrls --output text |grep -v ^None)
+    LIST_SQS=$($AWSCLI sqs list-queues $PROFILE_OPT --region $regx --query QueueUrls --output text 2>&1|grep -v ^None )
+    if [[ $(echo "$LIST_SQS" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
+        textFail "$regx: Access Denied trying to list queues" "$regx"
+        continue
+    fi 
     if [[ $LIST_SQS ]]; then
       for queue in $LIST_SQS; do
         # check if the policy has KmsMasterKeyId therefore SSE enabled

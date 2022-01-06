@@ -25,7 +25,11 @@ CHECK_CAF_EPIC_extra715='Logging and Monitoring'
 
 extra715(){
   for regx in $REGIONS; do
-    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text)
+    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text 2>&1)
+    if [[ $(echo "$LIST_OF_DOMAINS" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
+        textFail "$regx: Access Denied trying to list domain names" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_DOMAINS ]]; then
       for domain in $LIST_OF_DOMAINS;do
         SEARCH_SLOWLOG_ENABLED=$($AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.LogPublishingOptions.Options.SEARCH_SLOW_LOGS.Enabled --output text |grep -v ^None|grep -v ^False)

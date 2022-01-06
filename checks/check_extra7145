@@ -26,7 +26,11 @@ CHECK_CAF_EPIC_extra7145='IAM'
 extra7145(){
   # "Check if lambda functions have policies which allow access to every aws account (Not Scored) (Not part of CIS benchmark)"
   for regx in $REGIONS; do
-  LIST_OF_LAMBDA_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --query Functions[*].FunctionName --output text)
+  LIST_OF_LAMBDA_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --query Functions[*].FunctionName --output text 2>&1)
+  if [[ $(echo "$LIST_OF_LAMBDA_FUNCTIONS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+      textFail "$regx: Access Denied trying to list functions" "$regx"
+      continue
+  fi
   if [[ $LIST_OF_LAMBDA_FUNCTIONS ]]; then
     for lambdaFunction in $LIST_OF_LAMBDA_FUNCTIONS;do
       FUNCTION_POLICY_STATEMENTS=$($AWSCLI lambda $PROFILE_OPT get-policy --region $regx --function-name $lambdaFunction --output json --query Policy 2>&1)
