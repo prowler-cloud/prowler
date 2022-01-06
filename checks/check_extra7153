@@ -20,7 +20,7 @@
 
 
 CHECK_ID_extra7153="7.153"
-CHECK_TITLE_extra7153="[extra7153] Enable Transfer Lock for a Route53 Domain"
+CHECK_TITLE_extra7153="[extra7153] Enable Transfer Lock for a Route53 Domain (us-east-1 only)"
 CHECK_SCORED_extra7153="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7153="EXTRA"
 CHECK_SEVERITY_extra7153="Medium"
@@ -41,12 +41,12 @@ extra7153(){
         DOMAIN_DETAIL=$($AWSCLI route53domains get-domain-detail $PROFILE_OPT --region us-east-1 --query 'StatusList' --domain-name $domain_name)
         HAS_TRANSFER_LOCK=$( grep -o 'clientTransferProhibited' <<< $DOMAIN_DETAIL)
         if [[ $HAS_TRANSFER_LOCK ]]; then
-          textPass "$regx: clientTransferProhibited found for: $domain_name" "$regx" "$domain_name"
+          textPass "us-east-1: clientTransferProhibited found for: $domain_name" "us-east-1" "$domain_name"
           else
-          textFail "$regx: clientTransferProhibited not found for: $domain_name" "$regx" "$domain_name"
+          textFail "us-east-1: clientTransferProhibited not found for: $domain_name" "us-east-1" "$domain_name"
         fi
       done
       else
-      textInfo "$regx: No Domain Names found" "$regx"
+      textInfo "us-east-1: No Domain Names found" "us-east-1"
     fi
 }
