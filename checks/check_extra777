@@ -15,7 +15,7 @@
 # Reference: https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html
 
 CHECK_ID_extra777="7.77"
-CHECK_TITLE_extra777="[extra777] Find VPC security groups with many ingress or egress rules "
+CHECK_TITLE_extra777="[extra777] Find VPC security groups with more than 50 ingress or egress rules "
 CHECK_SCORED_extra777="NOT_SCORED"
 CHECK_CIS_LEVEL_extra777="EXTRA"
 CHECK_SEVERITY_extra777="Medium"
@@ -35,8 +35,11 @@ extra777(){
                              ${PROFILE_OPT} \
                              --region ${regx} \
                              --query 'SecurityGroups[*].GroupId' \
-                             --output text | xargs
-                             )
+                             --output text 2>&1| xargs )
+        if [[ $(echo "$SECURITY_GROUP_IDS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textFail "$regx: Access Denied trying to describe security groups" "$regx"
+            continue
+        fi
 
         for SECURITY_GROUP in ${SECURITY_GROUP_IDS}; do
 
@@ -58,6 +61,8 @@ extra777(){
 
             if [[ (${INGRESS_TOTAL} -ge ${THRESHOLD}) || (${EGRESS_TOTAL} -ge ${THRESHOLD}) ]]; then
                 textFail "${regx}: ${SECURITY_GROUP} has ${INGRESS_TOTAL} inbound rules and ${EGRESS_TOTAL} outbound rules" "${regx}" "${SECURITY_GROUP}"
+            else
+                textPass "${regx}: ${SECURITY_GROUP} has ${INGRESS_TOTAL} inbound rules and ${EGRESS_TOTAL} outbound rules" "${regx}" "${SECURITY_GROUP}"
             fi
         done
     done
