@@ -10,13 +10,7 @@
 # Contact the author at https://blyx.com/contact
 # and open issues or ask questions at https://github.com/toniblyx/prowler
 
-
-# All CIS based checks in checks folder are licensed under a Creative Commons
-# Attribution-NonCommercial-ShareAlike 4.0 International Public License.
-# The link to the license terms can be found at
-# https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
-#
-# Any other piece of code is licensed as Apache License 2.0 as specified in
+# Code is licensed as Apache License 2.0 as specified in
 # each file. You may obtain a copy of the License at
 # http://www.apache.org/licenses/LICENSE-2.0
 
@@ -32,7 +26,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.7.0-1December2021
+PROWLER_VERSION=2.7.0-6January2022
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
