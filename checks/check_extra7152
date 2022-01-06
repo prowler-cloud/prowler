@@ -36,7 +36,7 @@ CHECK_DOC_extra7152='https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/d
 CHECK_CAF_EPIC_extra7152='Data Protection'
 
 extra7152(){
-    echo "Route53 is a global service, looking for domains in US-EAST-1"
+    # echo "Route53 is a global service, looking for domains in US-EAST-1"
     DOMAIN_NAMES=$($AWSCLI route53domains list-domains $PROFILE_OPT --region us-east-1 --query 'Domains[*].DomainName' --output text )
     if [[ $DOMAIN_NAMES ]];then
       for domain_name in $DOMAIN_NAMES;do
@@ -48,6 +48,6 @@ extra7152(){
         fi
       done
       else
-      textPass "$regx: No Domain Names found" "$regx"
+      textInfo "$regx: No Domain Names found" "$regx"
     fi
 }

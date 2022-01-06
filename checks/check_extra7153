@@ -34,6 +34,7 @@ CHECK_CAF_EPIC_extra7153='Data Protection'
 
 extra7153(){
     # Route53 is a global service, looking for domains in US-EAST-1
+    # this is also valid for GovCloud https://docs.aws.amazon.com/govcloud-us/latest/UserGuide/setting-up-route53.html
     DOMAIN_NAMES=$($AWSCLI route53domains list-domains $PROFILE_OPT --region us-east-1 --query 'Domains[*].DomainName' --output text )
     if [[ $DOMAIN_NAMES ]];then
       for domain_name in $DOMAIN_NAMES;do
@@ -46,6 +47,6 @@ extra7153(){
         fi
       done
       else
-      textPass "$regx: No Domain Names found" "$regx"
+      textInfo "$regx: No Domain Names found" "$regx"
     fi
 }
