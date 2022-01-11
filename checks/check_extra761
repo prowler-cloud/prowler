@@ -34,10 +34,12 @@ extra761(){
       textFail "$regx: Prowler needs ec2:GetEbsEncryptionByDefault permission for this check" "$regx"
       continue
     fi
+    shopt -s nocasematch
     if [[ $EBS_DEFAULT_ENCRYPTION == "true" ]];then
       textPass "$regx: EBS Default Encryption is activated" "$regx"
     else
       textFail "$regx: EBS Default Encryption is not activated" "$regx"
     fi
+    shopt -u nocasematch
     done
 }
