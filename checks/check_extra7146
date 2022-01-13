@@ -26,7 +26,11 @@ CHECK_CAF_EPIC_extra7146='Infrastructure Security'
 extra7146(){
   # "Check if there is any unassigned elastic ip (Not Scored) (Not part of CIS benchmark)"
   for regx in $REGIONS; do
-    ELASTIC_IP_ADDRESSES=$($AWSCLI ec2 describe-addresses $PROFILE_OPT --region $regx --query Addresses --output json)
+    ELASTIC_IP_ADDRESSES=$($AWSCLI ec2 describe-addresses $PROFILE_OPT --region $regx --query Addresses --output json 2>&1)
+    if [[ $(echo "$ELASTIC_IP_ADDRESSES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textFail "$regx: Access Denied trying to describe addresses" "$regx"
+        continue
+    fi
     if [[ $ELASTIC_IP_ADDRESSES != [] ]]; then
       LIST_OF_ASSOCIATED_IPS=$(echo $ELASTIC_IP_ADDRESSES | jq -r '.[] | select(.AssociationId!=null) | .PublicIp')
       LIST_OF_UNASSOCIATED_IPS=$(echo $ELASTIC_IP_ADDRESSES | jq -r '.[] | select(.AssociationId==null) | .PublicIp')

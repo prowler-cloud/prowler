@@ -40,7 +40,11 @@ CHECK_CAF_EPIC_extra7163="Data Protection"
 extra7163(){
     # "Check if Secrets Manager key rotation is enabled"
     for regx in $REGIONS; do
-      LIST_OF_SECRETS=$($AWSCLI secretsmanager list-secrets $PROFILE_OPT --region $regx --query 'SecretList[*].Name' --output text)
+      LIST_OF_SECRETS=$($AWSCLI secretsmanager list-secrets $PROFILE_OPT --region $regx --query 'SecretList[*].Name' --output text 2>&1)
+      if [[ $(echo "$LIST_OF_SECRETS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+          textFail "$regx: Access Denied trying to list secrets" "$regx"
+          continue
+      fi
       if [[ $LIST_OF_SECRETS ]]; then
         for secret in $LIST_OF_SECRETS; do
           KEY_ROTATION_ENABLED=$($AWSCLI secretsmanager describe-secret $PROFILE_OPT --region $regx --secret-id $secret --output json | jq '.RotationEnabled')

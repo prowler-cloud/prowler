@@ -36,10 +36,14 @@ CHECK_CAF_EPIC_extra7164="Data Protection"
 extra7164(){
     # "Check if Cloudwatch log groups are associated with AWS KMS"
     for regx in $REGIONS; do
-      LIST_OF_LOGGROUPS=$($AWSCLI logs describe-log-groups $PROFILE_OPT --region $regx --output json | jq '.logGroups[]')
+      LIST_OF_LOGGROUPS=$($AWSCLI logs describe-log-groups $PROFILE_OPT --region $regx --output json 2>&1 )
+      if [[ $(echo "$LIST_OF_LOGGROUPS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+          textFail "$regx: Access Denied trying to describe log groups" "$regx"
+          continue
+      fi
       if [[ $LIST_OF_LOGGROUPS ]]; then
-        LIST_OF_LOGGROUPS_WITHOUT_KMS=$(echo "${LIST_OF_LOGGROUPS}" |  jq '. | select( has("kmsKeyId") == false )' | jq -r '.logGroupName')
-        LIST_OF_LOGGROUPS_WITH_KMS=$(echo "${LIST_OF_LOGGROUPS}" |  jq '. | select( has("kmsKeyId") == true )' | jq -r '.logGroupName')
+        LIST_OF_LOGGROUPS_WITHOUT_KMS=$(echo "${LIST_OF_LOGGROUPS}" | jq '.logGroups[]' |  jq '. | select( has("kmsKeyId") == false )' | jq -r '.logGroupName')
+        LIST_OF_LOGGROUPS_WITH_KMS=$(echo "${LIST_OF_LOGGROUPS}" | jq '.logGroups[]' |  jq '. | select( has("kmsKeyId") == true )' | jq -r '.logGroupName')
       if [[ $LIST_OF_LOGGROUPS_WITHOUT_KMS ]]; then
         for loggroup in $LIST_OF_LOGGROUPS_WITHOUT_KMS; do
           textFail "$regx: ${loggroup} does not have AWS KMS keys associated." "$regx" "${loggroup}"

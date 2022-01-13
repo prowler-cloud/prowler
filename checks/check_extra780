@@ -25,7 +25,11 @@ CHECK_CAF_EPIC_extra780='IAM'
 
 extra780(){
   for regx in $REGIONS; do
-    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text)
+    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text 2>&1)
+    if [[ $(echo "$LIST_OF_DOMAINS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textFail "$regx: Access Denied trying to list domain names" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_DOMAINS ]]; then
       for domain in $LIST_OF_DOMAINS;do
         CHECK_IF_COGNITO_ENABLED=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.CognitoOptions.Enabled' --output text|grep -i true)

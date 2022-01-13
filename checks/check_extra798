@@ -26,7 +26,11 @@ CHECK_CAF_EPIC_extra798='Infrastructure Security'
 
 extra798(){
   for regx in $REGIONS; do
-    LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --output text --query 'Functions[*].FunctionName')
+    LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --output text --query 'Functions[*].FunctionName' 2>&1)
+    if [[ $(echo "$LIST_OF_FUNCTIONS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textFail "$regx: Access Denied trying to list functions" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_FUNCTIONS ]]; then
       for lambdafunction in $LIST_OF_FUNCTIONS; do
         # get the policy per function

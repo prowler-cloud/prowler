@@ -26,7 +26,11 @@ CHECK_CAF_EPIC_extra7161='Data Protection'
 extra7161(){
   # "Check if EFS has encryption at rest enabled (Not Scored) (Proposed requirement for 1.5 CIS benchmark)"
   for regx in $REGIONS; do
-  LIST_OF_EFS_IDS=$($AWSCLI efs describe-file-systems $PROFILE_OPT --region $regx --query 'FileSystems[*].FileSystemId' --output text | xargs -n1)
+  LIST_OF_EFS_IDS=$($AWSCLI efs describe-file-systems $PROFILE_OPT --region $regx --query 'FileSystems[*].FileSystemId' --output text 2>&1| xargs -n1 )
+  if [[ $(echo "$LIST_OF_EFS_IDS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+      textFail "$regx: Access Denied trying to describe file systems" "$regx"
+      continue
+  fi
   if [[ $LIST_OF_EFS_IDS ]]; then
     for efsId in $LIST_OF_EFS_IDS;do
       EFS_ENCRYPTION_CHECK=$($AWSCLI efs $PROFILE_OPT describe-file-systems --region $regx --file-system-id $efsId --output json --query 'FileSystems[*].Encrypted' --output text)

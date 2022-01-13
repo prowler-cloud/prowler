@@ -26,7 +26,11 @@ CHECK_CAF_EPIC_extra7138='Infrastructure Security'
 
 extra7138(){
   for regx in $REGIONS; do
-    NACL_LIST=$($AWSCLI ec2 describe-network-acls --query 'NetworkAcls[?Entries[?((!PortRange) && (CidrBlock == `0.0.0.0/0`) && (Egress == `false`) && (RuleAction == `allow`))]].{NetworkAclId:NetworkAclId}' $PROFILE_OPT --region $regx --output text)
+    NACL_LIST=$($AWSCLI ec2 describe-network-acls --query 'NetworkAcls[?Entries[?((!PortRange) && (CidrBlock == `0.0.0.0/0`) && (Egress == `false`) && (RuleAction == `allow`))]].{NetworkAclId:NetworkAclId}' $PROFILE_OPT --region $regx --output text 2>&1)
+    if [[ $(echo "$NACL_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textFail "$regx: Access Denied trying to describe network acls" "$regx"
+        continue
+    fi
     if [[ $NACL_LIST ]];then
       for NACL in $NACL_LIST;do
         textInfo "$regx: Found Network ACL: $NACL open to 0.0.0.0/0 for any port" "$regx" "$NACL"

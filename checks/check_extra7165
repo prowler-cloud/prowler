@@ -40,9 +40,15 @@ extra7165(){
   # "Check if DynamoDB: DAX Clusters are encrypted at rest"
   for regx in $REGIONS; do
     LIST_OF_DAX_CLUSTERS=$($AWSCLI dax describe-clusters $PROFILE_OPT --region $regx --query 'Clusters[*]' --output json 2>&1)
-    if  [[ "$(echo "$LIST_OF_DAX_CLUSTERS" | grep "Could not connect\|Access Denied" )" ]]; then
-      textInfo "$regx: DynamoDB: DAX Clusters do not exist in this region." "$regx"
-    elif [[ $LIST_OF_DAX_CLUSTERS && $LIST_OF_DAX_CLUSTERS != '[]' ]]; then
+    if [[ $(echo "$LIST_OF_DAX_CLUSTERS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+      textFail "$regx: Access Denied trying to describe clusters" "$regx"
+      continue
+    fi
+    if [[ $(echo "$LIST_OF_DAX_CLUSTERS" | grep -E 'Could not connect') ]]; then
+      textInfo "$regx: Service not available in this region" "$regx"
+      continue
+    fi
+    if [[ $LIST_OF_DAX_CLUSTERS && $LIST_OF_DAX_CLUSTERS != '[]' ]]; then
       LIST_OF_CLUSTERS_WITH_ENCRYPTION=$(echo "${LIST_OF_DAX_CLUSTERS}" | jq '.[] | select(.SSEDescription.Status=="ENABLED") | {ClusterName}' | jq -r '.ClusterName')
       LIST_OF_CLUSTERS_WITHOUT_ENCRYPTION=$(echo "${LIST_OF_DAX_CLUSTERS}" | jq '.[] | select(.SSEDescription.Status=="DISABLED") | {ClusterName}' | jq -r '.ClusterName')
       if [[ $LIST_OF_CLUSTERS_WITHOUT_ENCRYPTION ]]; then

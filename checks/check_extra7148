@@ -25,7 +25,11 @@ CHECK_CAF_EPIC_extra7148='Data Protection'
 
 extra7148() {
   for regx in $REGIONS; do
-    LIST_OF_EFS_SYSTEMS=$($AWSCLI efs describe-file-systems $PROFILE_OPT --region $regx --query 'FileSystems[*].FileSystemId' --output text)
+    LIST_OF_EFS_SYSTEMS=$($AWSCLI efs describe-file-systems $PROFILE_OPT --region $regx --query 'FileSystems[*].FileSystemId' --output text 2>&1)
+    if [[ $(echo "$LIST_OF_EFS_SYSTEMS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textFail "$regx: Access Denied trying to describe file systems" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_EFS_SYSTEMS ]]; then
       for filesystem in $LIST_OF_EFS_SYSTEMS; do
         # if retention is 0 then is disabled

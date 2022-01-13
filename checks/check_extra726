@@ -31,6 +31,10 @@ extra726(){
     textInfo "$REGION: Trusted Advisor requires AWS Premium Support Subscription" "$REGION"
     return
   fi
+  if [[ $(echo "$TA_CHECKS_ID" | grep "Could not connect") ]]; then
+    textInfo "$REGION: Trusted Advisor not available in this region" "$REGION"
+    return
+  fi
 
   for checkid in $TA_CHECKS_ID; do
     TA_CHECKS_NAME=$($AWSCLI support describe-trusted-advisor-checks --language en $PROFILE_OPT --region $REGION --query "checks[?id==\`$checkid\`].{name:name}[*]" --output text)

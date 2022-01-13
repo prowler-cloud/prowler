@@ -25,7 +25,11 @@ CHECK_CAF_EPIC_extra7158='Data Protection'
 
 extra7158(){
   for regx in $REGIONS; do
-    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers --query 'LoadBalancers[*].LoadBalancerArn' $PROFILE_OPT --region $regx --output text)
+    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers --query 'LoadBalancers[*].LoadBalancerArn' $PROFILE_OPT --region $regx --output text 2>&1)
+    if [[ $(echo "$LIST_OF_ELBSV2" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textFail "$regx: Access Denied trying to describe load balancers" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_ELBSV2 ]]; then
       for elb in $LIST_OF_ELBSV2; do
         LIST_OF_LISTENERS=$($AWSCLI elbv2 describe-listeners $PROFILE_OPT --region $regx --load-balancer-arn $elb --query 'Listeners[*]' --output text)

@@ -30,9 +30,13 @@ extra768(){
   fi
   for regx in $REGIONS; do
     # Get a list of all task definition families first:
-    FAMILIES=$($AWSCLI ecs list-task-definition-families $PROFILE_OPT --region $regx --status ACTIVE | jq -r .families[])
-    if [[ $FAMILIES ]]; then
-      for FAMILY in $FAMILIES;do
+    FAMILIES=$($AWSCLI ecs list-task-definition-families $PROFILE_OPT --region $regx --status ACTIVE 2>&1 )
+    if [[ $(echo "$FAMILIES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textFail "$regx: Access Denied trying to list task definition families" "$regx"
+        continue
+    fi 
+    if [[ $(echo $FAMILIES | jq -r .families[]) ]]; then
+      for FAMILY in $(echo $FAMILIES | jq -r .families[]);do
         # Get the full task definition arn:
         TASK_DEFINITION_TEMP=$($AWSCLI ecs list-task-definitions $PROFILE_OPT --region $regx --family-prefix $FAMILY --sort DESC --max-items 1 | jq -r .taskDefinitionArns[0])
         # We only care about the task definition name:

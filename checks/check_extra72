@@ -28,7 +28,11 @@ CHECK_CAF_EPIC_extra72='Data Protection'
 extra72(){
   # "Ensure there are no EBS Snapshots set as Public "
   for regx in $REGIONS; do
-    LIST_OF_EBS_SNAPSHOTS=$($AWSCLI ec2 describe-snapshots $PROFILE_OPT --region $regx --owner-ids $ACCOUNT_NUM --output text --query 'Snapshots[*].{ID:SnapshotId}' --max-items $MAXITEMS | grep -v None 2> /dev/null)
+    LIST_OF_EBS_SNAPSHOTS=$($AWSCLI ec2 describe-snapshots $PROFILE_OPT --region $regx --owner-ids $ACCOUNT_NUM --output text --query 'Snapshots[*].{ID:SnapshotId}' --max-items $MAXITEMS 2>&1 | grep -v None )
+    if [[ $(echo "$LIST_OF_EBS_SNAPSHOTS" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
+        textFail "$regx: Access Denied trying to describe snapshot" "$regx"
+        continue
+    fi
     for snapshot in $LIST_OF_EBS_SNAPSHOTS; do
       SNAPSHOT_IS_PUBLIC=$($AWSCLI ec2 describe-snapshot-attribute $PROFILE_OPT --region $regx --output text --snapshot-id $snapshot --attribute createVolumePermission --query "CreateVolumePermissions[?Group=='all']")
       if [[ $SNAPSHOT_IS_PUBLIC ]];then

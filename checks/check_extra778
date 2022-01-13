@@ -48,8 +48,11 @@ extra778(){
                         --filter "Name=group-id,Values=${SECURITY_GROUP}" \
                         --query "SecurityGroups[*].${DIRECTION_FILTER}[*].IpRanges[*].CidrIp" \
                         --region ${REGION} \
-                        --output text | xargs
-                        )
+                        --output text 2>&1| xargs )
+        if [[ $(echo "$CIDR_IP_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textFail "$regx: Access Denied trying to describe security groups" "$regx"
+            continue
+        fi
 
         for CIDR_IP in ${CIDR_IP_LIST}; do
             if [[ ! ${CIDR_IP} =~ ${RFC1918_REGEX} ]]; then
@@ -58,6 +61,8 @@ extra778(){
                 # Edge case "0.0.0.0/0" for RDP and SSH are checked already by check41 and check42
                 if [[ ${CIDR} < ${CIDR_THRESHOLD} && 0 < ${CIDR} ]]; then
                     textFail "${REGION}: ${SECURITY_GROUP} has potential wide-open non-RFC1918 address ${CIDR_IP} in ${DIRECTION} rule" "${REGION}" "${SECURITY_GROUP}"
+                else
+                    textPass "${REGION}: ${SECURITY_GROUP} has no potential wide-open non-RFC1918 address" "${REGION}" "${SECURITY_GROUP}"
                 fi
             fi
         done
@@ -68,8 +73,11 @@ extra778(){
                               ${PROFILE_OPT} \
                               --region ${regx} \
                               --query 'SecurityGroups[*].GroupId' \
-                              --output text | xargs
-                              )
+                              --output text 2>&1| xargs )
+        if [[ $(echo "$SECURITY_GROUP_IDS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textFail "$regx: Access Denied trying to describe security groups" "$regx"
+            continue
+        fi
         for SECURITY_GROUP in ${SECURITY_GROUP_IDS}; do
             check_cidr "${SECURITY_GROUP}" "inbound" "${regx}"
             check_cidr "${SECURITY_GROUP}" "outbound" "${regx}"

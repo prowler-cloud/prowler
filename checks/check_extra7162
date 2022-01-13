@@ -27,7 +27,11 @@ extra7162() {
     # "Check if CloudWatch Log Groups have a retention policy of 365 days"
     declare -i LOG_GROUP_RETENTION_PERIOD_DAYS=365
     for regx in $REGIONS; do
-        LIST_OF_365_RETENTION_LOG_GROUPS=$($AWSCLI logs describe-log-groups $PROFILE_OPT --region $regx --query 'logGroups[?retentionInDays=="${LOG_GROUP_RETENTION_PERIOD_DAYS}"].[logGroupName]' --output text)
+        LIST_OF_365_RETENTION_LOG_GROUPS=$($AWSCLI logs describe-log-groups $PROFILE_OPT --region $regx --query 'logGroups[?retentionInDays=="${LOG_GROUP_RETENTION_PERIOD_DAYS}"].[logGroupName]' --output text 2>&1)
+        if [[ $(echo "$LIST_OF_365_RETENTION_LOG_GROUPS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textFail "$regx: Access Denied trying to describe log groups" "$regx"
+            continue
+        fi
         if [[ $LIST_OF_365_RETENTION_LOG_GROUPS ]]; then
             for log in $LIST_OF_365_RETENTION_LOG_GROUPS; do
                 textPass "$regx: $log Log Group has 365 days retention period!" "$regx" "$log"

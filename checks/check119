@@ -27,9 +27,14 @@ CHECK_CAF_EPIC_check119='IAM'
 
 check119(){
   for regx in $REGIONS; do
-    EC2_DATA=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query 'Reservations[].Instances[].[InstanceId, IamInstanceProfile.Arn, State.Name]' --output json)
-    EC2_DATA=$(echo $EC2_DATA | jq '.[]|{InstanceId: .[0], ProfileArn: .[1], StateName: .[2]}')
-    INSTANCE_LIST=$(echo $EC2_DATA | jq -r '.InstanceId')
+    EC2_DATA=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query 'Reservations[].Instances[].[InstanceId, IamInstanceProfile.Arn, State.Name]' --output json 2>&1)
+    if [[ $(echo "$EC2_DATA" | grep UnauthorizedOperation) ]]; then
+      textInfo "$regx: Unauthorized Operation error trying to describe instances" "$regx"
+      continue
+    else
+      EC2_DATA=$(echo $EC2_DATA | jq '.[]|{InstanceId: .[0], ProfileArn: .[1], StateName: .[2]}')
+      INSTANCE_LIST=$(echo $EC2_DATA | jq -r '.InstanceId')
+    fi
     if [[ $INSTANCE_LIST ]]; then
       for instance in $INSTANCE_LIST; do
         STATE_NAME=$(echo $EC2_DATA | jq -r --arg i "$instance" 'select(.InstanceId==$i)|.StateName')

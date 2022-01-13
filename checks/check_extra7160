@@ -25,7 +25,11 @@ CHECK_CAF_EPIC_extra7160='Infrastructure Security'
 
 extra7160(){
   for regx in $REGIONS; do
-    LIST_OF_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --query 'Clusters[*].ClusterIdentifier' --region $regx --output text)
+    LIST_OF_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --query 'Clusters[*].ClusterIdentifier' --region $regx --output text 2>&1)
+    if [[ $(echo "$LIST_OF_CLUSTERS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textFail "$regx: Access Denied trying to describe clusters" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_CLUSTERS ]]; then
       for cluster in $LIST_OF_CLUSTERS; do
         AUTO_UPGRADE_ENABLED=$($AWSCLI redshift describe-clusters $PROFILE_OPT --cluster-identifier $cluster --query 'Clusters[*].AllowVersionUpgrade' --region $regx --output text)

@@ -44,7 +44,7 @@ extra713(){
       fi
       else 
       # if list-detectors return any error 
-      textInfo "$regx: GuardDuty not checked" "$regx"
+      textInfo "$regx: GuardDuty not checked or Access Denied trying to get detector" "$regx"
     fi 
   done
 }
