@@ -38,7 +38,7 @@ extra7102(){
     for regx in $REGIONS; do
       LIST_OF_EIP=$($AWSCLI $PROFILE_OPT --region $regx ec2 describe-network-interfaces --query 'NetworkInterfaces[*].Association.PublicIp' --output text 2>&1)
       if [[ $(echo "$LIST_OF_EIP" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-          textFail "$regx: Access Denied trying to describe network interfaces" "$regx"
+          textInfo "$regx: Access Denied trying to describe network interfaces" "$regx"
           continue
       fi
       if [[ $LIST_OF_EIP ]]; then

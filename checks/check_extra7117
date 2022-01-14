@@ -27,7 +27,7 @@ extra7117(){
   for regx in $REGIONS; do
     CONNECTION_LIST=$($AWSCLI glue get-connections $PROFILE_OPT --region $regx  --output text --query 'ConnectionList[*]' 2>&1)
     if [[ $(echo "$CONNECTION_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to get connections" "$regx"
+        textInfo "$regx: Access Denied trying to get connections" "$regx"
         continue
     fi
     if [[ ! -z $CONNECTION_LIST ]]; then

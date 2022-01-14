@@ -27,7 +27,7 @@ extra7116(){
   for regx in $REGIONS; do
     TABLE_LIST=$($AWSCLI glue search-tables --max-results 1 $PROFILE_OPT --region $regx  --output text --query 'TableList[*]' 2>&1)
     if [[ $(echo "$TABLE_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to search tables" "$regx"
+        textInfo "$regx: Access Denied trying to search tables" "$regx"
         continue
     fi
     if [[ ! -z $TABLE_LIST ]]; then

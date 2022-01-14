@@ -29,7 +29,7 @@ check45(){
   for regx in $REGIONS; do
     NACL_LIST=$($AWSCLI ec2 describe-network-acls --query 'NetworkAcls[?Entries[?(((!PortRange) || (PortRange.From<=`22` && PortRange.To>=`22`)) && ((CidrBlock == `0.0.0.0/0`) && (Egress == `false`) && (RuleAction == `allow`)))]].{NetworkAclId:NetworkAclId}' $PROFILE_OPT --region $regx --output text 2>&1)
     if [[ $(echo "$NACL_LIST" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
-        textFail "$regx: Access Denied trying to describe vpc network acls" "$regx"
+        textInfo "$regx: Access Denied trying to describe vpc network acls" "$regx"
         continue
     fi
     if [[ $NACL_LIST ]];then

@@ -42,7 +42,7 @@ extra7163(){
     for regx in $REGIONS; do
       LIST_OF_SECRETS=$($AWSCLI secretsmanager list-secrets $PROFILE_OPT --region $regx --query 'SecretList[*].Name' --output text 2>&1)
       if [[ $(echo "$LIST_OF_SECRETS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-          textFail "$regx: Access Denied trying to list secrets" "$regx"
+          textInfo "$regx: Access Denied trying to list secrets" "$regx"
           continue
       fi
       if [[ $LIST_OF_SECRETS ]]; then

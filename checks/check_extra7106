@@ -28,7 +28,7 @@ extra7106(){
     for regx in ${REGIONS}; do
         LIST_SM_NB_MODELS=$($AWSCLI $PROFILE_OPT --region $regx sagemaker list-models --query 'Models[*].ModelName' --output text 2>&1)
         if [[ $(echo "$LIST_SM_NB_MODELS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-            textFail "$regx: Access Denied trying to list models" "$regx"
+            textInfo "$regx: Access Denied trying to list models" "$regx"
             continue
         fi
         if [[ $LIST_SM_NB_MODELS ]];then 

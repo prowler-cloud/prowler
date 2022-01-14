@@ -41,7 +41,7 @@ extra7165(){
   for regx in $REGIONS; do
     LIST_OF_DAX_CLUSTERS=$($AWSCLI dax describe-clusters $PROFILE_OPT --region $regx --query 'Clusters[*]' --output json 2>&1)
     if [[ $(echo "$LIST_OF_DAX_CLUSTERS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-      textFail "$regx: Access Denied trying to describe clusters" "$regx"
+      textInfo "$regx: Access Denied trying to describe clusters" "$regx"
       continue
     fi
     if [[ $(echo "$LIST_OF_DAX_CLUSTERS" | grep -E 'Could not connect') ]]; then

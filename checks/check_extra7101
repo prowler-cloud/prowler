@@ -28,7 +28,7 @@ extra7101(){
   for regx in $REGIONS; do
     LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text 2>&1)
     if [[ $(echo "$LIST_OF_DOMAINS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to list domain names" "$regx"
+        textInfo "$regx: Access Denied trying to list domain names" "$regx"
         continue
     fi
     if [[ $LIST_OF_DOMAINS ]]; then

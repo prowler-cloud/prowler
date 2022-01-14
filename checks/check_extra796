@@ -27,7 +27,7 @@ extra796(){
   for regx in $REGIONS; do
     CLUSTERS=$($AWSCLI eks list-clusters $PROFILE_OPT --region $regx --query 'clusters[]' --output text 2>&1)
     if [[ $(echo "$CLUSTERS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to list EKS clusters" "$regx"
+        textInfo "$regx: Access Denied trying to list EKS clusters" "$regx"
         continue
     fi
     if [[ $CLUSTERS ]]; then

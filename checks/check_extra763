@@ -30,7 +30,7 @@ extra763(){
     for bucket in $LIST_OF_BUCKETS;do
       BUCKET_VERSIONING_ENABLED=$($AWSCLI s3api get-bucket-versioning --bucket $bucket $PROFILE_OPT --query Status --output text 2>&1)
       if [[ $(echo "$BUCKET_VERSIONING_ENABLED" | grep AccessDenied) ]]; then
-        textFail "Access Denied Trying to Get Bucket Versioning for $bucket"
+        textInfo "Access Denied Trying to Get Bucket Versioning for $bucket"
         continue
       fi
       if [[ $(echo "$BUCKET_VERSIONING_ENABLED" | grep "^Enabled$") ]]; then

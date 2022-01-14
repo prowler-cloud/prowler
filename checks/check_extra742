@@ -33,7 +33,7 @@ extra742(){
   for regx in $REGIONS; do
     CFN_STACKS=$($AWSCLI cloudformation describe-stacks $PROFILE_OPT --region $regx --output json 2>&1)
     if [[ $(echo "$CFN_STACKS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to describe stacks" "$regx"
+        textInfo "$regx: Access Denied trying to describe stacks" "$regx"
         continue
     fi 
     LIST_OF_CFN_STACKS=$(echo $CFN_STACKS | jq -r '.Stacks[].StackName')

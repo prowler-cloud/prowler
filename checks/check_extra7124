@@ -29,7 +29,7 @@ extra7124(){
     # Filters running instances only 
     LIST_EC2_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --query 'Reservations[*].Instances[*].[InstanceId]' --filters Name=instance-state-name,Values=running --region $regx --output text 2>&1)
     if [[ $(echo "$LIST_EC2_INSTANCES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to describe instances" "$regx"
+        textInfo "$regx: Access Denied trying to describe instances" "$regx"
         continue
     fi
     if [[ $LIST_EC2_INSTANCES ]]; then

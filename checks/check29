@@ -31,13 +31,13 @@ check29(){
   for regx in $REGIONS; do
     AVAILABLE_VPC=$($AWSCLI ec2 describe-vpcs $PROFILE_OPT --region $regx --query 'Vpcs[?State==`available`].VpcId' --output text 2>&1)
     if [[ $(echo "$AVAILABLE_VPC" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
-      textFail "$regx: Access Denied trying to describe VPCs" "$regx" "$vpcx"
+      textInfo "$regx: Access Denied trying to describe VPCs" "$regx" "$vpcx"
       continue
     fi
     for vpcx in $AVAILABLE_VPC; do
       CHECK_FL=$($AWSCLI ec2 describe-flow-logs $PROFILE_OPT --region $regx --filter Name="resource-id",Values="${vpcx}" --query 'FlowLogs[?FlowLogStatus==`ACTIVE`].FlowLogId' --output text 2>&1)
       if [[ $(echo "$CHECK_FL" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
-        textFail "$regx: VPC $vpcx Access Denied trying to describe flow logs" "$regx" "$vpcx"
+        textInfo "$regx: Access Denied trying to describe flow logs in VPC $vpcx" "$regx" "$vpcx"
         continue
       fi
       if [[ $CHECK_FL ]]; then

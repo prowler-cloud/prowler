@@ -27,7 +27,7 @@ extra7147(){
   for regx in $REGIONS; do
   LIST_OF_VAULTS=$($AWSCLI glacier list-vaults $PROFILE_OPT --region $regx --account-id $ACCOUNT_NUM --query VaultList[*].VaultName --output text 2>&1|xargs -n1)
   if [[ $(echo "$LIST_OF_VAULTS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-      textFail "$regx: Access Denied trying to list vaults" "$regx"
+      textInfo "$regx: Access Denied trying to list vaults" "$regx"
       continue
   fi
   if [[ $LIST_OF_VAULTS ]]; then

@@ -32,7 +32,7 @@ check21(){
   for regx in $REGIONS; do
     TRAILS_AND_REGIONS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].{Name:TrailARN, HomeRegion:HomeRegion}' --output text 2>&1 | tr "	" ',')
     if [[ $(echo "$TRAILS_AND_REGIONS" | grep AccessDenied) ]]; then
-      textFail "$regx: Access Denied trying to describe trails" "$regx" "$trail"
+      textInfo "$regx: Access Denied trying to describe trails" "$regx" "$trail"
       continue
     fi
     if [[ $TRAILS_AND_REGIONS ]]; then

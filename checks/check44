@@ -30,7 +30,7 @@ check44(){
   for regx in $REGIONS; do
     LIST_OF_VPCS_PEERING_CONNECTIONS=$($AWSCLI ec2 describe-vpc-peering-connections --output text $PROFILE_OPT --region $regx --query 'VpcPeeringConnections[*].VpcPeeringConnectionId' 2>&1| sort | paste -s -d" " - )
     if [[ $(echo "$LIST_OF_VPCS_PEERING_CONNECTIONS" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
-        textFail "$regx: Access Denied trying to describe vpc peering connections" "$regx"
+        textInfo "$regx: Access Denied trying to describe vpc peering connections" "$regx"
         continue
     fi
     if [[ $LIST_OF_VPCS_PEERING_CONNECTIONS ]];then

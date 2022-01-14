@@ -28,7 +28,7 @@ extra7128(){
   for regx in $REGIONS; do
     DDB_TABLES_LIST=$($AWSCLI dynamodb list-tables $PROFILE_OPT --region $regx --output text --query TableNames 2>&1)
     if [[ $(echo "$DDB_TABLES_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to list tables" "$regx"
+        textInfo "$regx: Access Denied trying to list tables" "$regx"
         continue
     fi
     if [[ $DDB_TABLES_LIST ]]; then

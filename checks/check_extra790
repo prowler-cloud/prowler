@@ -34,7 +34,7 @@ extra790(){
                                 --region ${regx} \
                                 --output text | xargs 2>&1)
     if [[ $(echo "$ENDPOINT_SERVICES_IDS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to describe VPC endpoint services" "$regx"
+        textInfo "$regx: Access Denied trying to describe VPC endpoint services" "$regx"
         continue
     fi
 

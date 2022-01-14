@@ -30,7 +30,7 @@ extra734(){
     for bucket in $LIST_OF_BUCKETS;do
       BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location $PROFILE_OPT --region $REGION --bucket $bucket --output text 2>&1)
       if [[ $(echo "$BUCKET_LOCATION" | grep AccessDenied) ]]; then
-        textFail "$BUCKET_LOCATION Access Denied Trying to Get Bucket Location for $bucket" "$BUCKET_LOCATION" "$bucket"
+        textInfo "$BUCKET_LOCATION: Access Denied Trying to Get Bucket Location for $bucket" "$BUCKET_LOCATION" "$bucket"
         continue
       fi
       if [[ $BUCKET_LOCATION == "None" ]]; then
@@ -46,7 +46,7 @@ extra734(){
       # query to get if has encryption enabled or not
       RESULT=$($AWSCLI s3api get-bucket-encryption $PROFILE_OPT --region $BUCKET_LOCATION --bucket $bucket --query ServerSideEncryptionConfiguration.Rules[].ApplyServerSideEncryptionByDefault[].SSEAlgorithm --output text 2>&1)
       if [[ $(echo "$RESULT" | grep AccessDenied) ]]; then
-        textFail "$BUCKET_LOCATION: Access Denied Trying to Get Encryption for $bucket" "$BUCKET_LOCATION" "$bucket"
+        textInfo "$BUCKET_LOCATION: Access Denied Trying to Get Encryption for $bucket" "$BUCKET_LOCATION" "$bucket"
         continue
       fi
 
@@ -61,7 +61,7 @@ extra734(){
       # get bucket policy
       $AWSCLI s3api get-bucket-policy $PROFILE_OPT --bucket $bucket --region $BUCKET_LOCATION --output text --query Policy > $TEMP_SSE_POLICY_FILE 2>&1
       if [[ $(grep AccessDenied $TEMP_SSE_POLICY_FILE) ]]; then
-        textFail "$BUCKET_LOCATION: Access Denied Trying to Get Bucket Policy for $bucket" "$BUCKET_LOCATION" "$bucket"
+        textInfo "$BUCKET_LOCATION: Access Denied Trying to Get Bucket Policy for $bucket" "$BUCKET_LOCATION" "$bucket"
         rm -f $TEMP_SSE_POLICY_FILE
         continue
       fi

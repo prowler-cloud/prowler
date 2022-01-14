@@ -28,7 +28,7 @@ extra757(){
   for regx in $REGIONS; do
     EC2_RUNNING=$($AWSCLI ec2 describe-instances --query "Reservations[*].Instances[*].[InstanceId]" $PROFILE_OPT --region $regx --output text 2>&1)
     if [[ $(echo "$EC2_RUNNING" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to describe instances" "$regx"
+        textInfo "$regx: Access Denied trying to describe instances" "$regx"
         continue
     fi 
     if [[ $EC2_RUNNING ]]; then
