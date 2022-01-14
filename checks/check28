@@ -30,7 +30,7 @@ check28(){
   for regx in $REGIONS; do
     CHECK_KMS_KEYLIST=$($AWSCLI kms list-keys $PROFILE_OPT --region $regx --output text --query 'Keys[*].KeyId' --output text 2>&1)
     if [[ $(echo "$CHECK_KMS_KEYLIST" | grep AccessDenied) ]]; then
-      textFail "$regx: Access Denied trying to list keys" "$regx" "$key"
+      textInfo "$regx: Access Denied trying to list keys" "$regx" "$key"
       continue
     fi
     if [[ $CHECK_KMS_KEYLIST ]]; then
@@ -38,7 +38,7 @@ check28(){
       for key in $CHECK_KMS_KEYLIST; do
         KMSDETAILS=$($AWSCLI kms describe-key --key-id $key $PROFILE_OPT --region $regx --query 'KeyMetadata.{key:KeyId,man:KeyManager,origin:Origin,spec:CustomerMasterKeySpec,state:KeyState}' --output text 2>&1 | grep SYMMETRIC)
         if [[ $(echo "$KMSDETAILS" | grep AccessDenied) ]]; then
-           textFail "$regx: Key $key Access Denied describing key" "$regx" "$key"
+           textInfo "$regx: Access Denied describing key $key" "$regx" "$key"
            continue
         fi
 
@@ -60,7 +60,7 @@ check28(){
         else
           CHECK_KMS_KEY_ROTATION=$($AWSCLI kms get-key-rotation-status --key-id $key $PROFILE_OPT --region $regx --output text 2>&1)
           if [[ $(echo "$CHECK_KMS_KEY_ROTATION" | grep AccessDenied) ]]; then
-            textFail "$regx: Key $key Access Denied getting key rotation status" "$regx" "$key"
+            textInfo "$regx: Access Denied getting key rotation status for $key " "$regx" "$key"
             continue
           fi
           if [[ "$CHECK_KMS_KEY_ROTATION" == "True" ]];then

@@ -28,7 +28,7 @@ extra7103(){
     for regx in ${REGIONS}; do
         LIST_SM_NB_INSTANCES=$($AWSCLI $PROFILE_OPT --region $regx sagemaker list-notebook-instances --query 'NotebookInstances[*].NotebookInstanceName' --output text 2>&1)
         if [[ $(echo "$LIST_SM_NB_INSTANCES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-            textFail "$regx: Access Denied trying to list notebook instances" "$regx"
+            textInfo "$regx: Access Denied trying to list notebook instances" "$regx"
             continue
         fi
         if [[ $LIST_SM_NB_INSTANCES ]];then 

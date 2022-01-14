@@ -33,7 +33,7 @@ extra7141(){
   for regx in $REGIONS; do
     SSM_DOCS=$($AWSCLI $PROFILE_OPT --region $regx ssm list-documents --filters Key=Owner,Values=Self --query DocumentIdentifiers[].Name --output text 2>&1)
     if [[ $(echo "$SSM_DOCS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to list documents" "$regx"
+        textInfo "$regx: Access Denied trying to list documents" "$regx"
         continue
     fi  
     if [[ $SSM_DOCS ]];then

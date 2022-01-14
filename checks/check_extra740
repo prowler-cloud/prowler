@@ -34,7 +34,7 @@ extra740(){
     --query 'Snapshots[?Encrypted==`false`]|[*].{Id:SnapshotId}' 2>&1 \
      | grep -v None )
     if [[ $(echo "$UNENCRYPTED_SNAPSHOTS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to describe snapshots" "$regx"
+        textInfo "$regx: Access Denied trying to describe snapshots" "$regx"
         continue
     fi 
      
@@ -43,7 +43,7 @@ extra740(){
     --query 'Snapshots[?Encrypted==`true`]|[*].{Id:SnapshotId}' 2>&1 \
      | grep -v None )
     if [[ $(echo "$ENCRYPTED_SNAPSHOTS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to describe snapshots" "$regx"
+        textInfo "$regx: Access Denied trying to describe snapshots" "$regx"
         continue
     fi 
     typeset -i unencrypted

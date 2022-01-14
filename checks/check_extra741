@@ -33,7 +33,7 @@ extra741(){
   for regx in $REGIONS; do
     LIST_OF_EC2_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query Reservations[*].Instances[*].InstanceId --output text --max-items $MAXITEMS 2>&1| grep -v None)
     if [[ $(echo "$LIST_OF_EC2_INSTANCES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to describe instances" "$regx"
+        textInfo "$regx: Access Denied trying to describe instances" "$regx"
         continue
     fi 
     if [[ $LIST_OF_EC2_INSTANCES ]];then

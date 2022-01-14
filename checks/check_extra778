@@ -50,7 +50,7 @@ extra778(){
                         --region ${REGION} \
                         --output text 2>&1| xargs )
         if [[ $(echo "$CIDR_IP_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-            textFail "$regx: Access Denied trying to describe security groups" "$regx"
+            textInfo "$regx: Access Denied trying to describe security groups" "$regx"
             continue
         fi
 
@@ -75,7 +75,7 @@ extra778(){
                               --query 'SecurityGroups[*].GroupId' \
                               --output text 2>&1| xargs )
         if [[ $(echo "$SECURITY_GROUP_IDS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-            textFail "$regx: Access Denied trying to describe security groups" "$regx"
+            textInfo "$regx: Access Denied trying to describe security groups" "$regx"
             continue
         fi
         for SECURITY_GROUP in ${SECURITY_GROUP_IDS}; do

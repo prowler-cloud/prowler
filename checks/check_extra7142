@@ -29,7 +29,7 @@ extra7142(){
   for regx in $REGIONS; do
     LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Type == `application`].[LoadBalancerArn]' --output text 2>&1)
     if [[ $(echo "$LIST_OF_ELBSV2" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to describe load balancers" "$regx"
+        textInfo "$regx: Access Denied trying to describe load balancers" "$regx"
         continue
     fi
     if [[ $LIST_OF_ELBSV2 ]];then

@@ -39,7 +39,7 @@ extra7113(){
   for regx in $REGIONS; do
     LIST_OF_RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query "DBInstances[?Engine != 'docdb'].DBInstanceIdentifier" --output text 2>&1)
     if [[ $(echo "$LIST_OF_RDS_INSTANCES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to describe DB instances" "$regx"
+        textInfo "$regx: Access Denied trying to describe DB instances" "$regx"
         continue
     fi
     if [[ $LIST_OF_RDS_INSTANCES ]];then

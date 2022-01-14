@@ -28,7 +28,7 @@ extra731(){
   for regx in $REGIONS; do
     LIST_SNS=$($AWSCLI sns list-topics $PROFILE_OPT --region $regx --query Topics --output text 2>&1|grep -v ^None )
     if [[ $(echo "$LIST_SNS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to list topics" "$regx"
+        textInfo "$regx: Access Denied trying to list topics" "$regx"
         continue
     fi 
     if [[ $LIST_SNS ]]; then

@@ -30,11 +30,11 @@ extra77(){
   for regx in $REGIONS; do
     LIST_ECR_REPOS=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $regx --query "repositories[*].[repositoryName]" --output text 2>&1)
     if [[ $(echo "$LIST_ECR_REPOS" | grep AccessDenied) ]]; then
-      textFail "$regx: Access Denied Trying to describe ECR repositories" "$regx" "$repo"
+      textInfo "$regx: Access Denied Trying to describe ECR repositories" "$regx" "$repo"
       continue
     fi
     if [[ $(echo "$LIST_ECR_REPOS" | grep SubscriptionRequiredException) ]]; then
-      textFail "$regx: Subscription Required Exception trying to describe ECR repositories" "$regx" "$repo"
+      textInfo "$regx: Subscription Required Exception trying to describe ECR repositories" "$regx" "$repo"
       continue
     fi
     if [[ ! -z "$LIST_ECR_REPOS" ]]; then
@@ -42,7 +42,7 @@ extra77(){
         TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-ecr-repo.policy.XXXXXXXXXX)
         $AWSCLI ecr get-repository-policy $PROFILE_OPT --region $regx --repository-name $repo --query "policyText" --output text > $TEMP_POLICY_FILE 2>&1
         if [[ $(grep AccessDenied $TEMP_POLICY_FILE) ]]; then
-          textFail "$regx: $repo Access Denied for get-repository-policy" "$regx" "$repo"
+          textInfo "$regx: Access Denied to get repository policy for repo $repo" "$regx" "$repo"
           rm -f $TEMP_POLICY_FILE
           continue
         fi

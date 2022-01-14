@@ -33,7 +33,7 @@ extra759(){
   for regx in $REGIONS; do
     LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --query Functions[*].FunctionName --output text 2>&1)
     if [[ $(echo "$LIST_OF_FUNCTIONS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to list functions" "$regx"
+        textInfo "$regx: Access Denied trying to list functions" "$regx"
         continue
     fi 
     if [[ $LIST_OF_FUNCTIONS ]]; then

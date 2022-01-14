@@ -27,7 +27,7 @@ extra7135(){
   for regx in $REGIONS; do
     SG_LIST=$($AWSCLI ec2 describe-security-groups --query 'SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort==`9092` && ToPort==`9092`)) && (contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}' $PROFILE_OPT --region $regx --output text 2>&1)
     if [[ $(echo "$SG_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to describe security groups" "$regx"
+        textInfo "$regx: Access Denied trying to describe security groups" "$regx"
         continue
     fi
     if [[ $SG_LIST ]];then

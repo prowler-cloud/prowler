@@ -30,7 +30,7 @@ extra7156(){
     for regx in $REGIONS; do
         LIST_OF_API_GW=$($AWSCLI apigatewayv2 get-apis $PROFILE_OPT --region $regx --query Items[*].ApiId --output text 2>&1)
         if [[ $(echo "$LIST_OF_API_GW" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-            textFail "$regx: Access Denied trying to get APIs" "$regx"
+            textInfo "$regx: Access Denied trying to get APIs" "$regx"
             continue
         fi
         if [[ $LIST_OF_API_GW ]];then

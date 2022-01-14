@@ -38,7 +38,7 @@ extra7164(){
     for regx in $REGIONS; do
       LIST_OF_LOGGROUPS=$($AWSCLI logs describe-log-groups $PROFILE_OPT --region $regx --output json 2>&1 )
       if [[ $(echo "$LIST_OF_LOGGROUPS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-          textFail "$regx: Access Denied trying to describe log groups" "$regx"
+          textInfo "$regx: Access Denied trying to describe log groups" "$regx"
           continue
       fi
       if [[ $LIST_OF_LOGGROUPS ]]; then

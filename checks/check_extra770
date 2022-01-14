@@ -28,7 +28,7 @@ extra770(){
   for regx in $REGIONS; do
     LIST_OF_PUBLIC_INSTANCES_WITH_INSTANCE_PROFILES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query 'Reservations[*].Instances[?((IamInstanceProfile!=`null` && PublicIpAddress!=`null`))].[InstanceId,PublicIpAddress,IamInstanceProfile.Arn]' --output text 2>&1)
     if [[ $(echo "$LIST_OF_PUBLIC_INSTANCES_WITH_INSTANCE_PROFILES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to describe instances" "$regx"
+        textInfo "$regx: Access Denied trying to describe instances" "$regx"
         continue
     fi 
     if [[ $LIST_OF_PUBLIC_INSTANCES_WITH_INSTANCE_PROFILES ]];then

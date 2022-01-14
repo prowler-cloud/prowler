@@ -29,7 +29,7 @@ extra7127(){
   for regx in $REGIONS; do
     NON_COMPLIANT_SSM_MANAGED_INSTANCES=$($AWSCLI ssm list-resource-compliance-summaries $PROFILE_OPT --region $regx --filters Key=Status,Values=NON_COMPLIANT --query ResourceComplianceSummaryItems[].ResourceId --output text 2>&1)
     if [[ $(echo "$NON_COMPLIANT_SSM_MANAGED_INSTANCES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to list resource compliance summaries" "$regx"
+        textInfo "$regx: Access Denied trying to list resource compliance summaries" "$regx"
         continue
     fi
     COMPLIANT_SSM_MANAGED_INSTANCES=$($AWSCLI ssm list-resource-compliance-summaries $PROFILE_OPT --region $regx --filters Key=Status,Values=COMPLIANT --query ResourceComplianceSummaryItems[].ResourceId --output text)

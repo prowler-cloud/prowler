@@ -28,7 +28,7 @@ extra7110(){
     for regx in ${REGIONS}; do
         LIST_SM_NB_JOBS=$($AWSCLI $PROFILE_OPT --region $regx sagemaker list-training-jobs --query 'TrainingJobSummaries[*].TrainingJobName' --output text 2>&1)
         if [[ $(echo "$LIST_SM_NB_JOBS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-            textFail "$regx: Access Denied trying to list training jobs" "$regx"
+            textInfo "$regx: Access Denied trying to list training jobs" "$regx"
             continue
         fi
         if [[ $LIST_SM_NB_JOBS ]];then 

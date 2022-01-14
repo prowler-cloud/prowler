@@ -32,7 +32,7 @@ extra768(){
     # Get a list of all task definition families first:
     FAMILIES=$($AWSCLI ecs list-task-definition-families $PROFILE_OPT --region $regx --status ACTIVE 2>&1 )
     if [[ $(echo "$FAMILIES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textFail "$regx: Access Denied trying to list task definition families" "$regx"
+        textInfo "$regx: Access Denied trying to list task definition families" "$regx"
         continue
     fi 
     if [[ $(echo $FAMILIES | jq -r .families[]) ]]; then

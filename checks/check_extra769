@@ -31,7 +31,7 @@ extra769(){
       continue
     fi
     if [[ $(echo "$LIST_OF_ACCESS_ANALYZERS" | grep -i "AccessDeniedException") ]]; then
-      textFail "$regx: Access Denied trying to list-analyzers" "$regx"
+      textInfo "$regx: Access Denied trying to list-analyzers" "$regx"
       continue
     fi
     if [[ $LIST_OF_ACCESS_ANALYZERS ]]; then
