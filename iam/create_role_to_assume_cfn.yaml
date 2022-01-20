@@ -62,6 +62,9 @@ Resources:
                 - 'tag:GetTagKeys'
                 - 'lambda:GetFunction'
                 - 'glue:GetConnections'
-                - 's3:GetAccountPublicAccessBlock',
+                - 'glue:GetSecurityConfiguration'
+                - 'glue:SearchTables'
+                - 's3:GetAccountPublicAccessBlock'
                 - 'shield:GetSubscriptionState'
+                - 'shield:DescribeProtection'
               Resource: '*'
