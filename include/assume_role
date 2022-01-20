@@ -14,7 +14,11 @@
 assume_role(){
 
     PROFILE_OPT=$PROFILE_OPT_BAK
-
+    if [[ "${PROFILE_OPT}" = "" ]]; then
+        # If profile is not defined, restore original credentials from environment variables, if they exists!
+        restoreInitialAWSCredentials
+    fi
+    
     # Both variables are mandatory to be set together
     if [[ -z $ROLE_TO_ASSUME || -z $ACCOUNT_TO_ASSUME ]]; then
         echo "$OPTRED ERROR!$OPTNORMAL - Both Account ID (-A) and IAM Role to assume (-R) must be set"
