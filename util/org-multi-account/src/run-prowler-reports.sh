@@ -7,7 +7,7 @@ cd /home/ec2-user || exit
 
 # Show Prowler Version, and Download Prowler, if it doesn't already exist
 if ! ./prowler/prowler -V 2>/dev/null; then
-    git clone https://github.com/toniblyx/prowler.git
+    git clone https://github.com/prowler-cloud/prowler.git
     ./prowler/prowler -V
 fi
 

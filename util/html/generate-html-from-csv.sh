@@ -31,8 +31,8 @@ OUTPUT_FILE_NAME="report-unified-csv"
 EXTENSION_HTML="html"
 INPUT=$1
 IFS=',' # used inside the while loop for csv delimiter 
-HTML_LOGO_URL="https://github.com/toniblyx/prowler/"
-HTML_LOGO_IMG="https://raw.githubusercontent.com/toniblyx/prowler/master/util/html/prowler-logo.png"
+HTML_LOGO_URL="https://github.com/prowler-cloud/prowler/"
+HTML_LOGO_IMG="https://raw.githubusercontent.com/prowler-cloud/prowler/master/util/html/prowler-logo-new.png"
 
 
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }

@@ -8,7 +8,7 @@
 # https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
 
 # Contact the author at https://blyx.com/contact
-# and open issues or ask questions at https://github.com/toniblyx/prowler
+# and open issues or ask questions at https://github.com/prowler-cloud/prowler
 
 # Code is licensed as Apache License 2.0 as specified in
 # each file. You may obtain a copy of the License at
@@ -344,7 +344,7 @@ get_regions() {
   REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' --output text $PROFILE_OPT --region $REGION_FOR_STS --region-names $FILTERREGION 2>&1)
   ret=$?
   if [[ $ret -ne 0 ]]; then
-    echo "$OPTRED Access Denied trying to describe regions! Review permissions as described here: https://github.com/toniblyx/prowler/#requirements-and-installation $OPTNORMAL"
+    echo "$OPTRED Access Denied trying to describe regions! Review permissions as described here: https://github.com/prowler-cloud/prowler/#requirements-and-installation $OPTNORMAL"
     EXITCODE=1
     exit $EXITCODE
   fi
