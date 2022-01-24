@@ -26,7 +26,11 @@ CHECK_CAF_EPIC_extra7131='Infrastructure Security'
 extra7131(){
   for regx in $REGIONS; do
     # LIST_OF_RDS_PUBLIC_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[?PubliclyAccessible==`true` && DBInstanceStatus==`"available"`].[DBInstanceIdentifier,Endpoint.Address]' --output text)
-    LIST_OF_RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[*].[DBInstanceIdentifier,AutoMinorVersionUpgrade]'  --output text)
+    LIST_OF_RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[*].[DBInstanceIdentifier,AutoMinorVersionUpgrade]'  --output text 2>&1)
+    if [[ $(echo "$LIST_OF_RDS_INSTANCES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe DB instances" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_RDS_INSTANCES ]];then
       while read -r rds_instance;do
         RDS_NAME=$(echo $rds_instance | awk '{ print $1; }')

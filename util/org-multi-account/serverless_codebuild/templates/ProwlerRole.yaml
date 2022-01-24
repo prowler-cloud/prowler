@@ -83,6 +83,7 @@ Resources:
                   - dax:ListTables
                   - ds:ListAuthorizedApplications
                   - ds:DescribeRoles
+                  - ec2:GetEbsEncryptionByDefault
                   - ecr:Describe*
                   - lambda:GetAccountSettings
                   - lambda:GetFunctionConfiguration
@@ -96,6 +97,8 @@ Resources:
                   - states:ListActivities
                   - support:Describe*
                   - tag:GetTagKeys
+                  - shield:GetSubscriptionState
+                  - shield:DescribeProtection
         - PolicyName: Prowler-S3-Reports
           PolicyDocument:
             Version: 2012-10-17

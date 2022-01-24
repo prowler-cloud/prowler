@@ -8,10 +8,13 @@
                 "ecr:Describe*",
                 "support:Describe*",
                 "tag:GetTagKeys",
-		        "lambda:GetFunction",
+                "lambda:GetFunction",
                 "glue:GetConnections",
+                "glue:GetSecurityConfiguration",
                 "glue:SearchTables",
-                "s3:GetAccountPublicAccessBlock"
+                "s3:GetAccountPublicAccessBlock",
+                "shield:GetSubscriptionState",
+                "shield:DescribeProtection"
             ],
             "Resource": "*",
             "Effect": "Allow",

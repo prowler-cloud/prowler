@@ -30,14 +30,14 @@ check29(){
   # "Ensure VPC Flow Logging is Enabled in all VPCs (Scored)"
   for regx in $REGIONS; do
     AVAILABLE_VPC=$($AWSCLI ec2 describe-vpcs $PROFILE_OPT --region $regx --query 'Vpcs[?State==`available`].VpcId' --output text 2>&1)
-    if [[ $(echo "$AVAILABLE_VPC" | grep AccessDenied) ]]; then
-      textFail "$regx: Access Denied trying to describe VPCs" "$regx" "$vpcx"
+    if [[ $(echo "$AVAILABLE_VPC" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
+      textInfo "$regx: Access Denied trying to describe VPCs" "$regx" "$vpcx"
       continue
     fi
     for vpcx in $AVAILABLE_VPC; do
       CHECK_FL=$($AWSCLI ec2 describe-flow-logs $PROFILE_OPT --region $regx --filter Name="resource-id",Values="${vpcx}" --query 'FlowLogs[?FlowLogStatus==`ACTIVE`].FlowLogId' --output text 2>&1)
-      if [[ $(echo "$CHECK_FL" | grep AccessDenied) ]]; then
-        textFail "$regx: VPC $vpcx Access Denied trying to describe flow logs" "$regx" "$vpcx"
+      if [[ $(echo "$CHECK_FL" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
+        textInfo "$regx: Access Denied trying to describe flow logs in VPC $vpcx" "$regx" "$vpcx"
         continue
       fi
       if [[ $CHECK_FL ]]; then

@@ -26,7 +26,11 @@ CHECK_CAF_EPIC_extra7114='Data Protection'
 
 extra7114(){
   for regx in $REGIONS; do
-    LIST_EP_SC=$($AWSCLI glue get-dev-endpoints $PROFILE_OPT --region $regx --query 'DevEndpoints[*].{Name:EndpointName,Security:SecurityConfiguration}' --output json)
+    LIST_EP_SC=$($AWSCLI glue get-dev-endpoints $PROFILE_OPT --region $regx --query 'DevEndpoints[*].{Name:EndpointName,Security:SecurityConfiguration}' --output json 2>&1)
+    if [[ $(echo "$LIST_EP_SC" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to get dev endpoints" "$regx"
+        continue
+    fi
     if [[ $LIST_EP_SC != '[]' ]]; then
       for ep in $(echo "${LIST_EP_SC}"| jq -r '.[] | @base64');do
         ENDPOINT_NAME=$(echo $ep | base64 --decode | jq -r '.Name')

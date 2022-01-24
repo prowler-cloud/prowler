@@ -26,7 +26,11 @@ CHECK_CAF_EPIC_extra711='Data Protection'
 extra711(){
   # "Check for Publicly Accessible Redshift Clusters "
   for regx in $REGIONS; do
-    LIST_OF_PUBLIC_REDSHIFT_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --region $regx --query 'Clusters[?PubliclyAccessible == `true`].[ClusterIdentifier,Endpoint.Address]' --output text)
+    LIST_OF_PUBLIC_REDSHIFT_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --region $regx --query 'Clusters[?PubliclyAccessible == `true`].[ClusterIdentifier,Endpoint.Address]' --output text 2>&1)
+    if [[ $(echo "$LIST_OF_PUBLIC_REDSHIFT_CLUSTERS" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
+        textInfo "$regx: Access Denied trying to describe clusters" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_PUBLIC_REDSHIFT_CLUSTERS ]];then
       while read -r cluster;do
         CLUSTER_ID=$(echo $cluster | awk '{ print $1; }')

@@ -25,7 +25,11 @@ CHECK_CAF_EPIC_extra797='Data Protection'
 
 extra797(){
   for regx in $REGIONS; do
-    CLUSTERS=$($AWSCLI eks list-clusters $PROFILE_OPT --region $regx --query 'clusters[]' --output text)
+    CLUSTERS=$($AWSCLI eks list-clusters $PROFILE_OPT --region $regx --query 'clusters[]' --output text 2>&1)
+    if [[ $(echo "$CLUSTERS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to list EKS clusters" "$regx"
+        continue
+    fi
     if [[ $CLUSTERS ]]; then
       for CLUSTER in $CLUSTERS;do
         ENC_CONFIG=$($AWSCLI eks describe-cluster $PROFILE_OPT --region $regx --name $CLUSTER --query 'cluster.encryptionConfig')

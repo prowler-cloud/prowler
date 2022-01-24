@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Remediation
+#
+#   https://docs.aws.amazon.com/cli/latest/reference/dax/create-cluster.html
+#
+#   create-cluster
+#       --cluster-name <value>
+#       --node-type <value>
+#       --replication-factor <value>
+#       --iam-role-arn <value>
+#       --sse-specification Enabled=true
+
+
+CHECK_ID_extra7165="7.165"
+CHECK_TITLE_extra7165="[extra7165] Check if DynamoDB: DAX Clusters are encrypted at rest"
+CHECK_SCORED_extra7165="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7165="EXTRA"
+CHECK_SEVERITY_extra7165="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7165="AwsDaxCluster"
+CHECK_ALTERNATE_check7165="extra7165"
+CHECK_SERVICENAME_extra7165="dynamodb"
+CHECK_RISK_extra7165="Encryption at rest provides an additional layer of data protection by securing your data from unauthorized access to the underlying storage."
+CHECK_REMEDIATION_extra7165="Re-create the cluster to enable encryption at rest if it was not enabled at creation."
+CHECK_DOC_extra7165="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DAXEncryptionAtRest.html"
+CHECK_CAF_EPIC_extra7165="Data Protection"
+
+extra7165(){
+  # "Check if DynamoDB: DAX Clusters are encrypted at rest"
+  for regx in $REGIONS; do
+    LIST_OF_DAX_CLUSTERS=$($AWSCLI dax describe-clusters $PROFILE_OPT --region $regx --query 'Clusters[*]' --output json 2>&1)
+    if [[ $(echo "$LIST_OF_DAX_CLUSTERS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+      textInfo "$regx: Access Denied trying to describe clusters" "$regx"
+      continue
+    fi
+    if [[ $(echo "$LIST_OF_DAX_CLUSTERS" | grep -E 'Could not connect') ]]; then
+      textInfo "$regx: Service not available in this region" "$regx"
+      continue
+    fi
+    if [[ $LIST_OF_DAX_CLUSTERS && $LIST_OF_DAX_CLUSTERS != '[]' ]]; then
+      LIST_OF_CLUSTERS_WITH_ENCRYPTION=$(echo "${LIST_OF_DAX_CLUSTERS}" | jq '.[] | select(.SSEDescription.Status=="ENABLED") | {ClusterName}' | jq -r '.ClusterName')
+      LIST_OF_CLUSTERS_WITHOUT_ENCRYPTION=$(echo "${LIST_OF_DAX_CLUSTERS}" | jq '.[] | select(.SSEDescription.Status=="DISABLED") | {ClusterName}' | jq -r '.ClusterName')
+      if [[ $LIST_OF_CLUSTERS_WITHOUT_ENCRYPTION ]]; then
+        for cluster in $LIST_OF_CLUSTERS_WITHOUT_ENCRYPTION; do
+          textFail "$regx: ${cluster} does not have encryption at rest enabled." "$regx" "${cluster}"
+        done
+      fi
+      if [[ $LIST_OF_CLUSTERS_WITH_ENCRYPTION ]]; then
+        for cluster in $LIST_OF_CLUSTERS_WITH_ENCRYPTION; do
+          textPass "$regx: ${cluster} has encryption at rest enabled." "$regx" "${cluster}"
+        done
+      fi
+    else
+      textInfo "$regx: No DynamoDB: DAX Clusters found." "$regx"
+    fi
+  done
+}

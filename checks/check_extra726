@@ -31,6 +31,10 @@ extra726(){
     textInfo "$REGION: Trusted Advisor requires AWS Premium Support Subscription" "$REGION"
     return
   fi
+  if [[ $(echo "$TA_CHECKS_ID" | grep "Could not connect") ]]; then
+    textInfo "$REGION: Trusted Advisor not available in this region" "$REGION"
+    return
+  fi
 
   for checkid in $TA_CHECKS_ID; do
     TA_CHECKS_NAME=$($AWSCLI support describe-trusted-advisor-checks --language en $PROFILE_OPT --region $REGION --query "checks[?id==\`$checkid\`].{name:name}[*]" --output text)
@@ -38,19 +42,19 @@ extra726(){
     # Possible results - https://docs.aws.amazon.com/cli/latest/reference/support/describe-trusted-advisor-check-result.html
     case "$QUERY_TA_CHECK_RESULT" in
       "ok")
-        textPass "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in ok state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
+        textPass "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
         ;;
       "error")
-        textFail "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in error state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
+        textFail "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
         ;;
       "warning")
-        textInfo "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in warning state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
+        textInfo "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
         ;;
       "not_available")
-        textInfo "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in not_available state $QUERY_TA_CHECK_RESULT" "u$REGION" "$TA_CHECKS_NAME"
+        textInfo "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
         ;;
       "*")
-        textFail "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in unknown state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
+        textFail "$REGION: Trusted Advisor check $TA_CHECKS_NAME is in state $QUERY_TA_CHECK_RESULT" "$REGION" "$TA_CHECKS_NAME"
         ;;
     esac
   done

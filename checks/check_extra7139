@@ -25,7 +25,11 @@ extra7139(){
   
   for regx in $REGIONS; do
     DETECTORS_LIST=""
-    DETECTORS_LIST=$($AWSCLI guardduty list-detectors --query DetectorIds $PROFILE_OPT --region $regx --output text)
+    DETECTORS_LIST=$($AWSCLI guardduty list-detectors --query DetectorIds $PROFILE_OPT --region $regx --output text 2>&1)
+    if [[ $(echo "$DETECTORS_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to list detectors" "$regx"
+        continue
+    fi
     if [[ $DETECTORS_LIST ]];then
       for DETECTOR in $DETECTORS_LIST;do
         FINDINGS_COUNT=""

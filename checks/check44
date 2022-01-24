@@ -28,7 +28,11 @@ CHECK_CAF_EPIC_check44='Infrastructure Security'
 check44(){
   # "Ensure routing tables for VPC peering are \"least access\" (Not Scored)"
   for regx in $REGIONS; do
-    LIST_OF_VPCS_PEERING_CONNECTIONS=$($AWSCLI ec2 describe-vpc-peering-connections --output text $PROFILE_OPT --region $regx --query 'VpcPeeringConnections[*].VpcPeeringConnectionId'| sort | paste -s -d" " -)
+    LIST_OF_VPCS_PEERING_CONNECTIONS=$($AWSCLI ec2 describe-vpc-peering-connections --output text $PROFILE_OPT --region $regx --query 'VpcPeeringConnections[*].VpcPeeringConnectionId' 2>&1| sort | paste -s -d" " - )
+    if [[ $(echo "$LIST_OF_VPCS_PEERING_CONNECTIONS" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
+        textInfo "$regx: Access Denied trying to describe vpc peering connections" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_VPCS_PEERING_CONNECTIONS ]];then
       textInfo "$regx: $LIST_OF_VPCS_PEERING_CONNECTIONS - review routing tables" "$regx" "$LIST_OF_VPCS_PEERING_CONNECTIONS"
       #LIST_OF_VPCS=$($AWSCLI ec2 describe-vpcs $PROFILE_OPT --region $regx --query 'Vpcs[*].VpcId' --output text)

@@ -25,7 +25,11 @@ CHECK_CAF_EPIC_extra7118='Data Protection'
 
 extra7118(){
   for regx in $REGIONS; do
-    JOB_LIST=$($AWSCLI glue get-jobs $PROFILE_OPT --region $regx --output json --query 'Jobs[*].{Name:Name,SecurityConfiguration:SecurityConfiguration,JobEncryption:DefaultArguments."--encryption-type"}')
+    JOB_LIST=$($AWSCLI glue get-jobs $PROFILE_OPT --region $regx --output json --query 'Jobs[*].{Name:Name,SecurityConfiguration:SecurityConfiguration,JobEncryption:DefaultArguments."--encryption-type"}' 2>&1)
+    if [[ $(echo "$JOB_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to get jobs" "$regx"
+        continue
+    fi
     if [[ $JOB_LIST != '[]' ]]; then
       for job in $(echo "${JOB_LIST}" | jq -r '.[] | @base64'); do
           JOB_NAME=$(echo $job | base64 --decode | jq -r '.Name')

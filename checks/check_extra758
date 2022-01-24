@@ -26,7 +26,11 @@ CHECK_CAF_EPIC_extra758='Infrastructure Security'
 extra758(){
   OLDAGE="$(get_date_previous_than_months 12)"
   for regx in $REGIONS; do
-    EC2_RUNNING="$($AWSCLI ec2 describe-instances --query "Reservations[*].Instances[*].[InstanceId]" $PROFILE_OPT --region $regx --output text)"
+    EC2_RUNNING=$($AWSCLI ec2 describe-instances --query "Reservations[*].Instances[*].[InstanceId]" $PROFILE_OPT --region $regx --output text 2>&1)
+    if [[ $(echo "$EC2_RUNNING" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe instances" "$regx"
+        continue
+    fi 
     if [[ $EC2_RUNNING ]]; then
       INSTACES_OLD_THAN_AGE=$($AWSCLI ec2 describe-instances --query "Reservations[].Instances[?LaunchTime<='$OLDAGE'][].{id: InstanceId, launched: LaunchTime}" $PROFILE_OPT --region $regx --output text)
       if [[ $INSTACES_OLD_THAN_AGE ]]; then

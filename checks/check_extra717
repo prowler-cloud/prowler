@@ -26,12 +26,20 @@ CHECK_CAF_EPIC_extra717='Logging and Monitoring'
 extra717(){
   # "Check if Elastic Load Balancers have logging enabled "
   for regx in $REGIONS; do
-    LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].LoadBalancerName' --output text|xargs -n1)
-    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].LoadBalancerArn' --output text|xargs -n1)
+    LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].LoadBalancerName' --output text 2>&1 |xargs -n1)
+    if [[ $(echo "$LIST_OF_ELBS" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
+        textInfo "$regx: Access Denied trying to list load balancers v1" "$regx"
+        continue
+    fi 
+    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].LoadBalancerArn' --output text 2>&1 |xargs -n1)
+    if [[ $(echo "$LIST_OF_ELBSV2" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
+        textInfo "$regx: Access Denied trying to list load balancers v2" "$regx"
+        continue
+    fi 
     if [[ $LIST_OF_ELBS || $LIST_OF_ELBSV2 ]]; then
       if [[ $LIST_OF_ELBS ]]; then
         for elb in $LIST_OF_ELBS; do
-          CHECK_ELBS_LOG_ENABLED=$($AWSCLI elb describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-name $elb --query 'LoadBalancerAttributes.AccessLog.Enabled'|grep "^true")
+          CHECK_ELBS_LOG_ENABLED=$($AWSCLI elb describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-name $elb --query 'LoadBalancerAttributes.AccessLog.Enabled' |grep "^true")
           if [[ $CHECK_ELBS_LOG_ENABLED ]]; then
             textPass "$regx: $elb has access logs to S3 configured" "$regx" "$elb"
           else
@@ -41,7 +49,7 @@ extra717(){
       fi
       if [[ $LIST_OF_ELBSV2 ]]; then
         for elbarn in $LIST_OF_ELBSV2; do
-          CHECK_ELBSV2_LOG_ENABLED=$($AWSCLI elbv2 describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-arn $elbarn --query Attributes[*] --output text|grep "^access_logs.s3.enabled"|cut -f2|grep true)
+          CHECK_ELBSV2_LOG_ENABLED=$($AWSCLI elbv2 describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-arn $elbarn --query Attributes[*] --output text |grep "^access_logs.s3.enabled"|cut -f2|grep true)
           ELBV2_NAME=$(echo $elbarn|cut -d\/ -f3)
           if [[ $CHECK_ELBSV2_LOG_ENABLED ]]; then
             textPass "$regx: $ELBV2_NAME has access logs to S3 configured" "$regx" "$elb"

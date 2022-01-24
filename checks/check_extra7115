@@ -25,7 +25,11 @@ CHECK_CAF_EPIC_extra7115='Data Protection'
 
 extra7115(){
   for regx in $REGIONS; do
-    CONNECTION_LIST=$($AWSCLI glue get-connections $PROFILE_OPT --region $regx  --output json --query 'ConnectionList[*].{Name:Name,SSL:ConnectionProperties.JDBC_ENFORCE_SSL}')
+    CONNECTION_LIST=$($AWSCLI glue get-connections $PROFILE_OPT --region $regx  --output json --query 'ConnectionList[*].{Name:Name,SSL:ConnectionProperties.JDBC_ENFORCE_SSL}' 2>&1)
+    if [[ $(echo "$CONNECTION_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to get connections" "$regx"
+        continue
+    fi
     if [[ $CONNECTION_LIST != '[]' ]]; then
       for connection in $(echo "${CONNECTION_LIST}" | jq -r '.[] | @base64'); do
           CONNECTION_NAME=$(echo $connection | base64 --decode   | jq -r '.Name' )

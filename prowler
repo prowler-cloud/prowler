@@ -10,13 +10,7 @@
 # Contact the author at https://blyx.com/contact
 # and open issues or ask questions at https://github.com/toniblyx/prowler
 
-
-# All CIS based checks in checks folder are licensed under a Creative Commons
-# Attribution-NonCommercial-ShareAlike 4.0 International Public License.
-# The link to the license terms can be found at
-# https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
-#
-# Any other piece of code is licensed as Apache License 2.0 as specified in
+# Code is licensed as Apache License 2.0 as specified in
 # each file. You may obtain a copy of the License at
 # http://www.apache.org/licenses/LICENSE-2.0
 
@@ -32,7 +26,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.6.1-15November2021
+PROWLER_VERSION=2.7.0-24January2022
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""
@@ -67,57 +61,62 @@ usage(){
 USAGE:
       `basename $0` [ -p <profile> -r <region>  -h ]
   Options:
-      -p <profile>        specify your AWS profile to use (i.e.: default)
-      -r <region>         specify an AWS region to direct API requests to
-                            (i.e.: us-east-1), all regions are checked anyway if the check requires it
-      -c <check_id>       specify one or multiple check ids separated by commas, to see all available checks use "-l" option
+      -p <profile>        Specify your AWS profile to use.
+                            (i.e.: default)
+      -r <region>         Specify an AWS region to direct API requests to.
+                            (i.e.: us-east-1), all regions are checked anyway if the check requires it.
+      -c <check_id>       Specify one or multiple check ids separated by commas, to see all available checks use "-l" option.
                             (i.e.: "check11" for check 1.1 or "extra71,extra72" for extra check 71 and extra check 72)
       -C                  Checklist file. See checklist.txt for reference and format.
                             (i.e.: checklist.txt)
-      -g <group_id>       specify a group of checks by id, to see all available group of checks use "-L"
+      -g <group_id>       Specify a group of checks by id, to see all available group of checks use "-L".
                             (i.e.: "group3" for entire section 3, "cislevel1" for CIS Level 1 Profile Definitions or "forensics-ready")
-      -f <filterregion>   specify an AWS region to run checks against
+      -f <filterregion>   Specify an AWS region to run checks against.
                             (i.e.: us-west-1 or for multiple regions use single quote like 'us-west-1 us-west-2')
-      -m <maxitems>       specify the maximum number of items to return for long-running requests (default: 100)
-      -M <mode>           output mode: text (default), mono, html, json, json-asff, junit-xml, csv. They can be used combined comma separated.
-                            (separator is ","; data is on stdout; progress on stderr).
-      -k                  keep the credential report
-      -n                  show check numbers to sort easier
+      -m <maxitems>       Specify the maximum number of items to return for long-running requests (default: 100).
+      -M <mode>           Output or report mode: text (default), mono, html, json, json-asff, junit-xml, csv. They can be used combined comma separated.
+                            (i.e.: "html,json"; files created in background; progress on stdout)
+      -k                  Keep the credential report for debugging.
+      -n                  Show check numbers to sort easier.
                             (i.e.: 1.01 instead of 1.1)
-      -l                  list all available checks only (does not perform any check). Add -g <group_id> to only list checks within the specified group
-      -L                  list all groups (does not perform any check)
-      -e                  exclude group extras
-      -E                  execute all tests except a list of specified checks separated by comma (i.e. check21,check31)
-      -b                  do not print Prowler banner
-      -s                  show scoring report
-      -S                  send check output to AWS Security Hub - only valid when the output mode is json-asff (i.e. "-M json-asff -S")
-      -x                  specify external directory with custom checks (i.e. /my/own/checks, files must start by "check")
-      -q                  get only FAIL findings, will show WARNINGS when a resource is excluded
-      -A                  account id for the account where to assume a role, requires -R and -T
+      -l                  List all available checks only (does not perform any check). Add -g <group_id> to only list checks within the specified group.
+      -L                  List all groups (does not perform any check).
+      -e                  Exclude group extras.
+      -E                  Execute all tests except a list of specified checks separated by comma. 
+                            (i.e. check21,check31)
+      -b                  Do not print Prowler banner.
+      -s                  Show scoring report (it is included by default in the html report).
+      -S                  Send check output to AWS Security Hub. Only valid when the output mode is json-asff 
+                            (i.e. "-M json-asff -S").
+      -x                  Specify external directory with custom checks 
+                            (i.e. /my/own/checks, files must start by "check").
+      -q                  Get only FAIL findings, will show WARNINGS when a resource is excluded.
+      -A                  Account id for the account where to assume a role, requires -R.
                             (i.e.: 123456789012)
-      -R                  role name or role arn to assume in the account, requires -A and -T
+      -R                  Role name or role arn to assume in the account, requires -A.
                             (i.e.: ProwlerRole)
-      -T                  session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, requires -R and -T
+      -T                  Session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, optional with -R and -A.
                             (i.e.: 43200)
-      -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R
-      -w                  whitelist file. See whitelist_sample.txt for reference and format
+      -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R.
+      -w                  Whitelist file. See whitelist_sample.txt for reference and format.
                             (i.e.: whitelist_sample.txt)
       -N <shodan_api_key> Shodan API key used by check extra7102.
-      -o                  Custom output directory, if not specified will use default prowler/output, requires -M <mode>
+      -o                  Custom output directory, if not specified will use default prowler/output, requires -M <mode>.
                             (i.e.: -M csv -o /tmp/reports/)
       -B                  Custom output bucket, requires -M <mode> and it can work also with -o flag.
                             (i.e.: -M csv -B my-bucket or -M csv -B my-bucket/folder/)
-      -F                  Custom output report name, if not specified will use default output/prowler-output-ACCOUNT_NUM-OUTPUT_DATE
-      -z                  Failed Checks do not trigger exit code 3
+      -D                  Same as -B but do not use the assumed role credentials to put objects to the bucket, instead uses the initial credentials.
+      -F                  Custom output report name, if not specified will use default output/prowler-output-ACCOUNT_NUM-OUTPUT_DATE.format.
+      -z                  Failed checks do not trigger exit code 3.
       -Z                  Specify one or multiple check ids separated by commas that will trigger exit code 3 if they fail. Unspecified checks will not trigger exit code 3. This will override "-z".
-                            (i.e.: "-Z check11,check12" will cause check11 and/or check12 to trigger exit code 3
-      -V                  show version number & exit
-      -h                  this help
+                            (i.e.: "-Z check11,check12" will cause check11 and/or check12 to trigger exit code 3)
+      -V                  Show version number & exit.
+      -h                  This help.
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:zZ:" OPTION; do
+while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -135,6 +134,7 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:zZ:" OPTION; do
         ;;
      p )
         PROFILE=$OPTARG
+        AWS_PROFILE=$OPTARG
         ;;
      r )
         REGION_OPT=$OPTARG
@@ -209,6 +209,10 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:F:zZ:" OPTION; do
         ;;
      B )
         OUTPUT_BUCKET=$OPTARG
+        ;;
+     D )
+        OUTPUT_BUCKET=$OPTARG
+        OUTPUT_BUCKET_NOASSUME=1
         ;;
      F )
         OUTPUT_FILE_NAME=$OPTARG
@@ -392,13 +396,16 @@ show_group_title() {
 # Function to execute the check
 execute_check() {
 
-  if [[ $ACCOUNT_TO_ASSUME ]]; then
+  if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
+    # echo ******* I am here again to check on my role *******
     # Following logic looks for time remaining in the session and review it
     # if it is less than 600 seconds, 10 minutes.
     CURRENT_TIMESTAMP=$(date -u "+%s")
     SESSION_TIME_REMAINING=$(expr $AWS_SESSION_EXPIRATION - $CURRENT_TIMESTAMP)
-    MINIMUM_REMAINING_TIME_ALLOWED="600"
-    if [[ $MINIMUM_REMAINING_TIME_ALLOWED > $SESSION_TIME_REMAINING ]]; then
+    # echo SESSION TIME REMAINING IN SECONDS: $SESSION_TIME_REMAINING
+    MINIMUM_REMAINING_TIME_ALLOWED=600
+    if (( $MINIMUM_REMAINING_TIME_ALLOWED > $SESSION_TIME_REMAINING )); then
+      # echo LESS THAN 10 MIN LEFT: RE-ASSUMING...
       unset AWS_ACCESS_KEY_ID
       unset AWS_SECRET_ACCESS_KEY
       unset AWS_SESSION_TOKEN
@@ -497,7 +504,7 @@ execute_check() {
       fi
 
     else
-      textFail "ERROR! Use a valid check name (i.e. check41 or extra71)";
+      textFail "Check ${CHECK_ID} does not exist. Use a valid check name (i.e. check41 or extra71)";
       exit $EXITCODE
     fi
   fi
@@ -565,7 +572,7 @@ show_all_titles() {
         fi
       done
     else
-      textFail "Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
+      textFail "Group ${GROUP_ID_READ} does not exist. Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
       show_all_group_titles
       exit $EXITCODE
     fi
@@ -639,7 +646,8 @@ fi
 
 # Gather account data / test aws cli connectivity
 getWhoami
-if [[ $ACCOUNT_TO_ASSUME ]]; then
+if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
+  backupInitialAWSCredentials
   assume_role
 fi
 
@@ -656,10 +664,13 @@ if [[ $GROUP_ID_READ ]];then
     fi
     cleanTemp
     scoring
+    if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
+      restoreInitialAWSCredentials
+    fi
     copyToS3
     exit $EXITCODE
   else
-    textFail "Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
+    textFail "Group ${GROUP_ID_READ} does not exist. Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
     show_all_group_titles
     exit $EXITCODE
   fi
@@ -684,6 +695,9 @@ if [[ $CHECK_ID ]];then
   if [[ "${MODES[@]}" =~ "html" ]]; then
     addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
+  if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
+    restoreInitialAWSCredentials
+  fi
   copyToS3
   scoring
   cleanTemp
@@ -698,13 +712,9 @@ fi
 
 scoring
 cleanTemp
-copyToS3
-
-if [[ $ACCOUNT_TO_ASSUME ]]; then
-  # unset env variables with assumed role credentials
-  unset AWS_ACCESS_KEY_ID
-  unset AWS_SECRET_ACCESS_KEY
-  unset AWS_SESSION_TOKEN
+if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
+  restoreInitialAWSCredentials
 fi
+copyToS3
 
 exit $EXITCODE

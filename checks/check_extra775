@@ -30,7 +30,11 @@ extra775(){
   fi 
 
   for regx in $REGIONS; do
-    LIST_OF_EC2_AUTOSCALING=$($AWSCLI autoscaling describe-launch-configurations $PROFILE_OPT --region $regx --query LaunchConfigurations[*].LaunchConfigurationName --output text --max-items $MAXITEMS | grep -v None)
+    LIST_OF_EC2_AUTOSCALING=$($AWSCLI autoscaling describe-launch-configurations $PROFILE_OPT --region $regx --query LaunchConfigurations[*].LaunchConfigurationName --output text --max-items $MAXITEMS 2>&1 | grep -v None )
+    if [[ $(echo "$LIST_OF_EC2_AUTOSCALING" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe launch configurations" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_EC2_AUTOSCALING ]];then
       for autoscaling_configuration in $LIST_OF_EC2_AUTOSCALING; do
         EC2_AUTOSCALING_USERDATA_FILE="$SECRETS_TEMP_FOLDER/extra775-$autoscaling_configuration-userData.decoded"

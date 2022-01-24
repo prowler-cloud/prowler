@@ -26,7 +26,11 @@ CHECK_CAF_EPIC_extra7150='Data Protection'
 extra7150(){
   # "Check if Elastic Load Balancers have delete protection enabled."
   for regx in $REGIONS; do
-    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].LoadBalancerArn' --output text|xargs -n1)
+    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].LoadBalancerArn' --output text 2>&1|xargs -n1 )
+    if [[ $(echo "$LIST_OF_ELBSV2" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe load balancers" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_ELBSV2 ]]; then
       for elb in $LIST_OF_ELBSV2; do
         CHECK_DELETION_PROTECTION_ENABLED=$($AWSCLI elbv2 describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-arn $elb --query Attributes[*] --output text|grep "deletion_protection.enabled"|grep true )

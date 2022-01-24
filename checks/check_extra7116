@@ -25,7 +25,11 @@ CHECK_CAF_EPIC_extra7116='Data Protection'
 
 extra7116(){
   for regx in $REGIONS; do
-    TABLE_LIST=$($AWSCLI glue search-tables --max-results 1 $PROFILE_OPT --region $regx  --output text --query 'TableList[*]' )
+    TABLE_LIST=$($AWSCLI glue search-tables --max-results 1 $PROFILE_OPT --region $regx  --output text --query 'TableList[*]' 2>&1)
+    if [[ $(echo "$TABLE_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to search tables" "$regx"
+        continue
+    fi
     if [[ ! -z $TABLE_LIST ]]; then
       METADATA_ENCRYPTED=$($AWSCLI glue get-data-catalog-encryption-settings $PROFILE_OPT --region $regx --output text --query "DataCatalogEncryptionSettings.EncryptionAtRest.CatalogEncryptionMode")
       if [[ "$METADATA_ENCRYPTED" == "DISABLED" ]]; then

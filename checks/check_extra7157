@@ -25,7 +25,11 @@ CHECK_CAF_EPIC_extra7157='IAM'
 
 extra7157(){
   for regx in $REGIONS; do
-    LIST_OF_API_GW=$($AWSCLI apigatewayv2 get-apis $PROFILE_OPT --region $regx --query "Items[*].ApiId" --output text)
+    LIST_OF_API_GW=$($AWSCLI apigatewayv2 get-apis $PROFILE_OPT --region $regx --query "Items[*].ApiId" --output text 2>&1)
+    if [[ $(echo "$LIST_OF_API_GW" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to get APIs" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_API_GW ]];then
       for api in $LIST_OF_API_GW; do
         API_GW_NAME=$($AWSCLI apigatewayv2 get-apis $PROFILE_OPT --region $regx --query "Items[?ApiId==\`$api\`].Name" --output text)

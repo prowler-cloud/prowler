@@ -123,8 +123,12 @@ Resources:
               runtime-versions:
                 python: 3.8
               commands:
-                - echo "Updating yum..."
+                - echo "Updating yum ..."
                 - yum -y update
+                - echo "Updating pip ..."
+                - python -m pip install --upgrade pip
+                - echo "Installing requirements ..."
+                - pip install "git+https://github.com/ibm/detect-secrets.git@master#egg=detect-secrets"
             build:
               commands:
                 - echo "Running Prowler with script"

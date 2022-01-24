@@ -28,7 +28,11 @@ extra786(){
     TEMP_EXTRA786_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-es-domain.EXTRA786.XXXXXXXXXX)
     $AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx \
       --query 'Reservations[*].Instances[*].{HttpTokens:MetadataOptions.HttpTokens,HttpEndpoint:MetadataOptions.HttpEndpoint,InstanceId:InstanceId}' \
-      --output text --max-items $MAXITEMS > $TEMP_EXTRA786_FILE
+      --output text --max-items $MAXITEMS > $TEMP_EXTRA786_FILE 2>&1
+    if [[ $(cat $TEMP_EXTRA786_FILE | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe instances" "$regx"
+        continue
+    fi
     # if the file contains data, there are instances in that region
     if [[ -s "$TEMP_EXTRA786_FILE" ]];then
       # here we read content from the file fields instanceid httptokens_status httpendpoint

@@ -24,7 +24,11 @@ CHECK_CAF_EPIC_extra7140='Data Protection'
 extra7140(){
   
   for regx in $REGIONS; do
-    SSM_DOCS=$($AWSCLI $PROFILE_OPT --region $regx ssm list-documents --filters Key=Owner,Values=Self --query DocumentIdentifiers[].Name --output text) 
+    SSM_DOCS=$($AWSCLI $PROFILE_OPT --region $regx ssm list-documents --filters Key=Owner,Values=Self --query DocumentIdentifiers[].Name --output text 2>&1)
+    if [[ $(echo "$SSM_DOCS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to list documents" "$regx"
+        continue
+    fi 
     if [[ $SSM_DOCS ]];then
       for ssmdoc in $SSM_DOCS; do 
         SSM_DOC_SHARED_ALL=$($AWSCLI $PROFILE_OPT --region $regx ssm describe-document-permission --name "$ssmdoc" --permission-type "Share" --query AccountIds[] --output text | grep all)

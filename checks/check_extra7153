@@ -20,32 +20,33 @@
 
 
 CHECK_ID_extra7153="7.153"
-CHECK_TITLE_extra7153="[extra7153] Enable Transfer Lock for a Route53 Domain"
+CHECK_TITLE_extra7153="[extra7153] Enable Transfer Lock for a Route53 Domain (us-east-1 only)"
 CHECK_SCORED_extra7153="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7153="EXTRA"
 CHECK_SEVERITY_extra7153="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7153="AwsRoute53Domain"
 CHECK_ALTERNATE_check7153="extra7153"
 CHECK_SERVICENAME_extra7153="route53"
-CHECK_RISK_extra7153='Without transfer lock enabled, a domain name could be incorrectly moved to a new registrar'
+CHECK_RISK_extra7153='Without transfer lock enabled; a domain name could be incorrectly moved to a new registrar'
 CHECK_REMEDIATION_extra7153='Ensure transfer lock is enabled'
 CHECK_DOC_extra7153='https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-lock.html'
 CHECK_CAF_EPIC_extra7153='Data Protection'
 
 extra7153(){
     # Route53 is a global service, looking for domains in US-EAST-1
+    # this is also valid for GovCloud https://docs.aws.amazon.com/govcloud-us/latest/UserGuide/setting-up-route53.html
     DOMAIN_NAMES=$($AWSCLI route53domains list-domains $PROFILE_OPT --region us-east-1 --query 'Domains[*].DomainName' --output text )
     if [[ $DOMAIN_NAMES ]];then
       for domain_name in $DOMAIN_NAMES;do
         DOMAIN_DETAIL=$($AWSCLI route53domains get-domain-detail $PROFILE_OPT --region us-east-1 --query 'StatusList' --domain-name $domain_name)
         HAS_TRANSFER_LOCK=$( grep -o 'clientTransferProhibited' <<< $DOMAIN_DETAIL)
         if [[ $HAS_TRANSFER_LOCK ]]; then
-          textPass "$regx: clientTransferProhibited found for: $domain_name" "$regx" "$domain_name"
+          textPass "us-east-1: clientTransferProhibited found for: $domain_name" "us-east-1" "$domain_name"
           else
-          textFail "$regx: clientTransferProhibited not found for: $domain_name" "$regx" "$domain_name"
+          textFail "us-east-1: clientTransferProhibited not found for: $domain_name" "us-east-1" "$domain_name"
         fi
       done
       else
-      textPass "$regx: No Domain Names found" "$regx"
+      textInfo "us-east-1: No Domain Names found" "us-east-1"
     fi
 }

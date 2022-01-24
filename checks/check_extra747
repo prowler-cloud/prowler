@@ -25,7 +25,11 @@ CHECK_CAF_EPIC_extra747='Logging and Monitoring'
 
 extra747(){
   for regx in $REGIONS; do
-    LIST_OF_RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[*].DBInstanceIdentifier' --output text)
+    LIST_OF_RDS_INSTANCES=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --query 'DBInstances[*].DBInstanceIdentifier' --output text 2>&1)
+    if [[ $(echo "$LIST_OF_RDS_INSTANCES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to get rest APIs" "$regx"
+        continue
+    fi 
     if [[ $LIST_OF_RDS_INSTANCES ]];then
       for rdsinstance in $LIST_OF_RDS_INSTANCES; do
         # if retention is 0 then is disabled

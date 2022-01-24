@@ -27,7 +27,11 @@ CHECK_CAF_EPIC_extra7151='Data Protection'
 extra7151(){
   # "Check if DynamoDB tables point-in-time recovery (PITR) is enabled"
   for regx in $REGIONS; do
-    LIST_OF_DYNAMODB_TABLES=$($AWSCLI dynamodb list-tables $PROFILE_OPT --region $regx --query 'TableNames[*]' --output text)
+    LIST_OF_DYNAMODB_TABLES=$($AWSCLI dynamodb list-tables $PROFILE_OPT --region $regx --query 'TableNames[*]' --output text 2>&1)
+    if [[ $(echo "$LIST_OF_DYNAMODB_TABLES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to list tables" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_DYNAMODB_TABLES ]]; then
       for dynamodb_table in $LIST_OF_DYNAMODB_TABLES; do
         POINT_IN_TIME_RECOVERY_ENABLED=$($AWSCLI dynamodb describe-continuous-backups $PROFILE_OPT --region $regx --table-name $dynamodb_table | jq '.[].PointInTimeRecoveryDescription | select(.PointInTimeRecoveryStatus=="ENABLED") | .PointInTimeRecoveryStatus')

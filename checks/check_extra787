@@ -34,7 +34,11 @@ extra787(){
   for regx in $REGIONS; do
     # create a list of SG open to the world with port $ES_API_PORT or $ES_DATA_PORT or $ES_KIBANA_PORT
     SG_LIST=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --output text \
-      --query "SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort<=\`$ES_API_PORT\` && ToPort>=\`$ES_API_PORT\`) || (FromPort<=\`$ES_DATA_PORT\` && ToPort>=\`$ES_DATA_PORT\`) || (FromPort<=\`$ES_KIBANA_PORT\` && ToPort>=\`$ES_KIBANA_PORT\`)) && (contains(IpRanges[].CidrIp, \`0.0.0.0/0\`) || contains(Ipv6Ranges[].CidrIpv6, \`::/0\`))]) > \`0\`].{GroupId:GroupId}")
+      --query "SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort<=\`$ES_API_PORT\` && ToPort>=\`$ES_API_PORT\`) || (FromPort<=\`$ES_DATA_PORT\` && ToPort>=\`$ES_DATA_PORT\`) || (FromPort<=\`$ES_KIBANA_PORT\` && ToPort>=\`$ES_KIBANA_PORT\`)) && (contains(IpRanges[].CidrIp, \`0.0.0.0/0\`) || contains(Ipv6Ranges[].CidrIpv6, \`::/0\`))]) > \`0\`].{GroupId:GroupId}" 2>&1)
+    if [[ $(echo "$SG_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe security groups" "$regx"
+        continue
+    fi
     # in case of open security groups goes through each one
     if [[ $SG_LIST ]];then
       for sg in $SG_LIST;do

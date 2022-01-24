@@ -26,7 +26,11 @@ CHECK_CAF_EPIC_extra731='Infrastructure Security'
 
 extra731(){
   for regx in $REGIONS; do
-    LIST_SNS=$($AWSCLI sns list-topics $PROFILE_OPT --region $regx --query Topics --output text |grep -v ^None)
+    LIST_SNS=$($AWSCLI sns list-topics $PROFILE_OPT --region $regx --query Topics --output text 2>&1|grep -v ^None )
+    if [[ $(echo "$LIST_SNS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to list topics" "$regx"
+        continue
+    fi 
     if [[ $LIST_SNS ]]; then
       for topic in $LIST_SNS; do
         SHORT_TOPIC=$(echo $topic| cut -d: -f6)
@@ -39,7 +43,7 @@ extra731(){
           if [[ $SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION ]]; then
             SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS=$(echo $SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION \
               | jq '"[Principal: " + (.Principal|tostring) + " Action: " + (.Action|tostring) + "]"' )
-            textFail "$regx: SNS topic $SHORT_TOPIC's policy with public access: $SNS_POLICY_ALLOW_ALL_WITHOUT_CONDITION_DETAILS" "$regx" "$SHORT_TOPIC"
+            textFail "$regx: SNS topic $SHORT_TOPIC's policy with public access" "$regx" "$SHORT_TOPIC"
           else
             textPass "$regx: SNS topic $SHORT_TOPIC's policy with public access but has a Condition" "$regx" "$SHORT_TOPIC"
           fi

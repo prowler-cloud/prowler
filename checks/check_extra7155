@@ -33,7 +33,11 @@ CHECK_CAF_EPIC_extra7155='Data Protection'
 
 extra7155() {
   for regx in $REGIONS; do
-    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Type == `application`].[LoadBalancerArn]' --output text)
+    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Type == `application`].[LoadBalancerArn]' --output text 2>&1)
+    if [[ $(echo "$LIST_OF_ELBSV2" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe load balancers" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_ELBSV2 ]];then
       for alb in $LIST_OF_ELBSV2;do
         CHECK_DESYNC_MITIGATION_MODE=$($AWSCLI elbv2 describe-load-balancer-attributes $PROFILE_OPT --region $regx --load-balancer-arn $alb --query 'Attributes[8]' --output json | jq -r '.Value')

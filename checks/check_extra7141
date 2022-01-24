@@ -31,7 +31,11 @@ extra7141(){
   fi
 
   for regx in $REGIONS; do
-    SSM_DOCS=$($AWSCLI $PROFILE_OPT --region $regx ssm list-documents --filters Key=Owner,Values=Self --query DocumentIdentifiers[].Name --output text) 
+    SSM_DOCS=$($AWSCLI $PROFILE_OPT --region $regx ssm list-documents --filters Key=Owner,Values=Self --query DocumentIdentifiers[].Name --output text 2>&1)
+    if [[ $(echo "$SSM_DOCS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to list documents" "$regx"
+        continue
+    fi  
     if [[ $SSM_DOCS ]];then
       for ssmdoc in $SSM_DOCS; do 
         SSM_DOC_FILE="$SECRETS_TEMP_FOLDER/extra7141-$ssmdoc-$regx-content.txt"

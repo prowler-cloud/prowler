@@ -27,8 +27,16 @@ CHECK_CAF_EPIC_extra793='Data Protection'
 extra793(){
   # "Check if Elastic Load Balancers have encrypted listeners "
   for regx in $REGIONS; do
-    LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].LoadBalancerName' --output text|xargs -n1)
-    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?(Type == `application`)].LoadBalancerArn' --output text|xargs -n1)
+    LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].LoadBalancerName' --output text 2>&1|xargs -n1)
+    if [[ $(echo "$LIST_OF_ELBS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe load balancers" "$regx"
+        continue
+    fi
+    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].LoadBalancerArn' --output text 2>&1|xargs -n1)
+    if [[ $(echo "$LIST_OF_ELBS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe load balancers" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_ELBS || $LIST_OF_ELBSV2 ]]; then
       if [[ $LIST_OF_ELBS ]]; then
         ENCRYPTEDPROTOCOLS=("HTTPS" "SSL") 

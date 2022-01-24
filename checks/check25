@@ -31,7 +31,7 @@ check25(){
     CHECK_AWSCONFIG_RECORDING=$($AWSCLI configservice describe-configuration-recorder-status $PROFILE_OPT --region $regx --query 'ConfigurationRecordersStatus[*].recording' --output text 2>&1)
     CHECK_AWSCONFIG_STATUS=$($AWSCLI configservice describe-configuration-recorder-status $PROFILE_OPT --region $regx --query 'ConfigurationRecordersStatus[*].lastStatus' --output text 2>&1)
     if [[ $(echo "$CHECK_AWSCONFIG_STATUS" | grep AccessDenied) ]]; then
-      textFail "$regx: Access Denied trying to describe configuration recorder status" "$regx" "recorder"
+      textInfo "$regx: Access Denied trying to describe configuration recorder status" "$regx" "recorder"
       continue
     fi
     if [[ $CHECK_AWSCONFIG_RECORDING == "True" ]]; then

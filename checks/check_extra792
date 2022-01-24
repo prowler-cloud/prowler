@@ -27,8 +27,16 @@ CHECK_CAF_EPIC_extra792='Data Protection'
 extra792(){
   # "Check if Elastic Load Balancers have insecure SSL ciphers "
   for regx in $REGIONS; do
-    LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].LoadBalancerName' --output text|xargs -n1)
-    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].LoadBalancerArn' --output text|xargs -n1)
+    LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[*].LoadBalancerName' --output text 2>&1|xargs -n1 )
+    if [[ $(echo "$LIST_OF_ELBS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe load balancers" "$regx"
+        continue
+    fi
+    LIST_OF_ELBSV2=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[*].LoadBalancerArn' --output text 2>&1|xargs -n1 )
+    if [[ $(echo "$LIST_OF_ELBS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe load balancers" "$regx"
+        continue
+    fi
     if [[ $LIST_OF_ELBS || $LIST_OF_ELBSV2 ]]; then
       if [[ $LIST_OF_ELBS ]]; then
         # https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-ssl-security-policy.html#ssl-ciphers
@@ -37,7 +45,7 @@ extra792(){
         ELBSECURECIPHERS=("Protocol-TLSv1.2" "Protocol-TLSv1.1" "Protocol-TLSv1" "ECDHE-ECDSA-AES128-GCM-SHA256" "ECDHE-RSA-AES128-GCM-SHA256" "ECDHE-ECDSA-AES128-SHA256" "ECDHE-RSA-AES128-SHA256" "ECDHE-ECDSA-AES128-SHA" "ECDHE-RSA-AES128-SHA" "ECDHE-ECDSA-AES256-GCM-SHA384" "ECDHE-RSA-AES256-GCM-SHA384" "ECDHE-ECDSA-AES256-SHA384" "ECDHE-RSA-AES256-SHA384" "ECDHE-RSA-AES256-SHA" "ECDHE-ECDSA-AES256-SHA" "AES128-GCM-SHA256" "AES128-SHA256" "AES128-SHA" "AES256-GCM-SHA384" "AES256-SHA256" "AES256-SHA" "Server-Defined-Cipher-Order")
 
         for elb in $LIST_OF_ELBS; do
-          ELB_LISTENERS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --load-balancer-name $elb --query "LoadBalancerDescriptions[0]")
+          ELB_LISTENERS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --load-balancer-name $elb --query "LoadBalancerDescriptions[0]" --output json)
 
           ELB_PROTOCOLS=$(echo $ELB_LISTENERS | jq -r '.ListenerDescriptions[].Listener.Protocol')
           if [[ $(echo $ELB_PROTOCOLS | grep HTTPS) || $(echo $ELB_PROTOCOLS | grep SSL) ]]; then
@@ -90,7 +98,7 @@ extra792(){
             elbname=$elbarn
           fi
 
-          ELBV2_LISTENERS=$($AWSCLI elbv2 describe-listeners $PROFILE_OPT --region $regx --load-balancer-arn $elbarn --query "Listeners[*]")
+          ELBV2_LISTENERS=$($AWSCLI elbv2 describe-listeners $PROFILE_OPT --region $regx --load-balancer-arn $elbarn --query "Listeners[*]" --output json)
 
           ELBV2_PROTOCOLS=$(echo $ELBV2_LISTENERS | jq -r '.[].Protocol')
 

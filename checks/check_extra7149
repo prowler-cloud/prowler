@@ -26,12 +26,16 @@ CHECK_CAF_EPIC_extra7149='Data Protection'
 extra7149() {
     # "Check if Redshift cluster has audit logging enabled "
     for regx in $REGIONS; do
-        LIST_OF_REDSHIFT_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --region $regx --query 'Clusters[*].ClusterIdentifier' --output text)
+        LIST_OF_REDSHIFT_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --region $regx --query 'Clusters[*].ClusterIdentifier' --output text 2>&1)
+        if [[ $(echo "$LIST_OF_REDSHIFT_CLUSTERS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textInfo "$regx: Access Denied trying to describe clusters" "$regx"
+            continue
+        fi
         if [[ $LIST_OF_REDSHIFT_CLUSTERS ]]; then
             for redshiftcluster in $LIST_OF_REDSHIFT_CLUSTERS; do
                 REDSHIFT_SNAPSHOT_ENABLED=$($AWSCLI redshift describe-cluster-snapshots $PROFILE_OPT --region $regx --cluster-identifier $redshiftcluster --snapshot-type automated)
                 if [[ $REDSHIFT_SNAPSHOT_ENABLED ]]; then
-                    textPass "$regx: Redshift cluster $redshiftcluster has automated snapshots $REDSHIFT_SNAPSHOT_ENABLED" "$regx" "$redshiftcluster"
+                    textPass "$regx: Redshift cluster $redshiftcluster has automated snapshots." "$regx" "$redshiftcluster"
                 else
                     textFail "$regx: Redshift cluster $redshiftcluster has automated snapshots disabled!" "$regx" "$redshiftcluster"
                 fi

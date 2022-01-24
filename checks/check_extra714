@@ -28,8 +28,9 @@ extra714(){
   LIST_OF_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions $PROFILE_OPT --query 'DistributionList.Items[].Id' --output text | grep -v "^None")
   if [[ $LIST_OF_DISTRIBUTIONS ]]; then
     for dist in $LIST_OF_DISTRIBUTIONS; do
-      LOG_ENABLED=$($AWSCLI cloudfront get-distribution $PROFILE_OPT --id "$dist" --query 'Distribution.DistributionConfig.Logging.Enabled' | grep true)
-      if [[ $LOG_ENABLED ]]; then
+      LOG_ENABLED=$($AWSCLI cloudfront get-distribution $PROFILE_OPT --id "$dist" --query 'Distribution.DistributionConfig.Logging.Enabled' --output text | grep True)
+      LOG_ENABLED_REALTIME=$($AWSCLI cloudfront get-distribution $PROFILE_OPT --id "$dist" --query 'Distribution.DistributionConfig.DefaultCacheBehavior.RealtimeLogConfigArn' --output text | grep -i arn)
+      if [[ $LOG_ENABLED || $LOG_ENABLED_REALTIME ]]; then
         textPass "$REGION: CloudFront distribution $dist has logging enabled" "$REGION" "$dist"
       else
         textFail "$REGION: CloudFront distribution $dist has logging disabled" "$REGION" "$dist" 

@@ -25,16 +25,16 @@ CHECK_CAF_EPIC_extra761='Data Protection'
 
 extra761(){
   for regx in $REGIONS; do
-    EBS_DEFAULT_ENCRYPTION=$($AWSCLI ec2 get-ebs-encryption-by-default $PROFILE_OPT --region $regx --query 'EbsEncryptionByDefault' 2>&1)
+    EBS_DEFAULT_ENCRYPTION=$($AWSCLI ec2 get-ebs-encryption-by-default $PROFILE_OPT --region $regx --query 'EbsEncryptionByDefault' --output text 2>&1)
     if [[ $(echo "$EBS_DEFAULT_ENCRYPTION" | grep "argument operation: Invalid choice") ]]; then
-      textFail "$regx: Newer aws cli needed for get-ebs-encryption-by-default" "$regx"
+      textInfo "$regx: Newer aws cli needed for get-ebs-encryption-by-default" "$regx"
       continue
     fi
     if [[ $(echo "$EBS_DEFAULT_ENCRYPTION" | grep UnauthorizedOperation) ]]; then
-      textFail "$regx: Prowler needs ec2:GetEbsEncryptionByDefault permission for this check" "$regx"
+      textInfo "$regx: Prowler needs ec2:GetEbsEncryptionByDefault permission for this check" "$regx"
       continue
     fi
-    if [[ $EBS_DEFAULT_ENCRYPTION == "true" ]];then
+    if [[ $EBS_DEFAULT_ENCRYPTION == "True" ]];then
       textPass "$regx: EBS Default Encryption is activated" "$regx"
     else
       textFail "$regx: EBS Default Encryption is not activated" "$regx"
