@@ -28,7 +28,7 @@ infoReferenceLong(){
   # Report review note:
   echo -e ""
   echo -e "For more information on the Prowler, feedback and issue reporting:"
-  echo -e "https://github.com/toniblyx/prowler"
+  echo -e "https://github.com/prowler-cloud/prowler"
   echo -e ""
   echo -e "For more information on the CIS benchmark:"
   echo -e "https://benchmarks.cisecurity.org/tools2/amazon/CIS_Amazon_Web_Services_Foundations_Benchmark_v1.1.0.pdf"

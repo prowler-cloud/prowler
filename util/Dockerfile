@@ -3,7 +3,7 @@
 
 FROM public.ecr.aws/amazonlinux/amazonlinux:latest
 
-LABEL maintainer="https://github.com/toniblyx/prowler"
+LABEL maintainer="https://github.com/prowler-cloud/prowler"
 
 ARG USERNAME=prowler
 ARG USERID=34000
