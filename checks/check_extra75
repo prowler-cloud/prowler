@@ -37,12 +37,13 @@ extra75(){
     if [[ $SECURITYGROUPS == "null" ]]; then
       continue
     fi
-    LIST_OF_SECURITYGROUPS=$(echo $SECURITYGROUPS | jq '.SecurityGroups|map({(.GroupId): (.GroupName)})|add' |jq -r 'to_entries|sort_by(.key)|.[]|.key')
+    SECURITYGROUP_NAMES=$(echo $SECURITYGROUPS | jq '.SecurityGroups|map({(.GroupId): (.GroupName)})|add')
+    LIST_OF_SECURITYGROUPS=$(echo $SECURITYGROUP_NAMES | jq -r 'to_entries|sort_by(.key)|.[]|.key')
     for SG_ID in $LIST_OF_SECURITYGROUPS; do
       SG_NOT_USED=$($AWSCLI ec2 describe-network-interfaces $PROFILE_OPT --region $regx --filters "Name=group-id,Values=$SG_ID" --query "length(NetworkInterfaces)" --output text)
       # Default security groups can not be deleted, so draw attention to them
       if [[ $SG_NOT_USED -eq 0 ]];then
-        GROUP_NAME=$(echo $SECURITYGROUPS | jq -r --arg id $SG_ID '.[$id]')
+        GROUP_NAME=$(echo $SECURITYGROUP_NAMES | jq -r --arg id $SG_ID '.[$id]')
         if [[ $GROUP_NAME != "default" ]];
         then
           textFail "$regx: $SG_ID is not being used!" "$regx" "$SG_ID"
