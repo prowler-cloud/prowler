@@ -4,9 +4,9 @@ Langage: [Korean](README_kr.md)
 
 This project is created to apply prowler in a multi-account environment within AWS Organizations.
 CloudWatch triggers CodeBuild every fixed time.
-CodeBuild executes the script which clones the latest prowler from [here](https://github.com/toniblyx/prowler) and performs security assessment on all the accounts in AWS Organizations. The assessment reports are sent to S3 bucket in Log Archive Account.
+CodeBuild executes the script which clones the latest prowler from [here](https://github.com/prowler-cloud/prowler) and performs security assessment on all the accounts in AWS Organizations. The assessment reports are sent to S3 bucket in Log Archive Account.
 
-For more information on how to use prowler, see [here](https://github.com/toniblyx/prowler#usage).
+For more information on how to use prowler, see [here](https://github.com/prowler-cloud/prowler#usage).
 
 ![Untitled](docs/images/prowler_org_architecture.png)
 

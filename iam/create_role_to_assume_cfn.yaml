@@ -37,7 +37,7 @@ Resources:
             Principal:
               AWS: !Sub ${AuthorisedARN}
             Action: 'sts:AssumeRole'
-            ## In case MFA is required uncomment lines below and read https://github.com/toniblyx/prowler#run-prowler-with-mfa-protected-credentials
+            ## In case MFA is required uncomment lines below and read https://github.com/prowler-cloud/prowler#run-prowler-with-mfa-protected-credentials
             # Condition:
             #   Bool:
             #     'aws:MultiFactorAuthPresent': true

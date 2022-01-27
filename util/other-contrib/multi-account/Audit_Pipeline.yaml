@@ -102,7 +102,7 @@ Parameters:
      - 'rds'
   pCustomProwlerRepo:
     Type: String
-    Default: 'https://github.com/toniblyx/prowler.git'
+    Default: 'https://github.com/prowler-cloud/prowler.git'
     MinLength: 10
   pCustomProwlerCloneArgs:
     Type: String

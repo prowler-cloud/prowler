@@ -4,9 +4,9 @@ Langage: [English](README.md)
 
 이 문서는 AWS Organization 내의 multi account 환경에서 prowler 를 적용하기 위해 작성된 문서입니다.
 일정 시간마다 CloudWatch는 CodeBuild 를 트리거합니다.
-CodeBuild 는 최신의 [prowler](https://github.com/toniblyx/prowler) 소스를 클론받고, 
+CodeBuild 는 최신의 [prowler](https://github.com/prowler-cloud/prowler) 소스를 클론받고, 
 Organization 내의 모든 Account 에 대해 security assessment 를 수행합니다.
-prowler 의 자세한 사용방법은 [이 곳](https://github.com/toniblyx/prowler#usagee) 을 참고합니다.
+prowler 의 자세한 사용방법은 [이 곳](https://github.com/prowler-cloud/prowler#usagee) 을 참고합니다.
 
 ![Untitled](docs/images/prowler_org_architecture.png)
 

@@ -39,8 +39,8 @@ if [ -z ${OUTPUT_FILE_NAME+x} ]; then
 else
   OUTPUT_FILE_NAME="${OUTPUT_DIR}/$OUTPUT_FILE_NAME"
 fi
-HTML_LOGO_URL="https://github.com/toniblyx/prowler/"
-HTML_LOGO_IMG="https://github.com/toniblyx/prowler/raw/2.4/util/html/prowler-logo-new.png"
+HTML_LOGO_URL="https://github.com/prowler-cloud/prowler/"
+HTML_LOGO_IMG="https://github.com/prowler-cloud/prowler/raw/master/util/html/prowler-logo-new.png"
 TIMESTAMP=$(get_iso8601_timestamp)
 PROWLER_PARAMETERS=$@
 

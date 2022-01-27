@@ -1,6 +1,6 @@
 # Example Solution:  Organizational Prowler Deployment
 
-Deploys [Prowler](https://github.com/toniblyx/prowler) to assess all Accounts in an AWS Organization on a schedule, creates assessment reports in HTML, and stores them in an S3 bucket.
+Deploys [Prowler](https://github.com/prowler-cloud/prowler) to assess all Accounts in an AWS Organization on a schedule, creates assessment reports in HTML, and stores them in an S3 bucket.
 
 ---
 
@@ -32,7 +32,7 @@ Deploys [Prowler](https://github.com/toniblyx/prowler) to assess all Accounts in
 1. [ProwlerRole.yaml](ProwlerRole.yaml)
     - Creates Cross-Account Role for Prowler to assess accounts in AWS Organization
     - Allows Role to be assumed by the Prowler EC2 instance role in the AWS account where Prowler EC2 resides (preferably the Audit/Security account).
-    - Role has [permissions](https://github.com/toniblyx/prowler#custom-iam-policy) needed for Prowler to assess accounts.
+    - Role has [permissions](https://github.com/prowler-cloud/prowler#custom-iam-policy) needed for Prowler to assess accounts.
     - Role has rights to Prowler S3 from Component #1.
 1. [ProwlerEC2.yaml](ProwlerEC2.yaml)
     - Creates Prowler EC2 instance
@@ -40,7 +40,7 @@ Deploys [Prowler](https://github.com/toniblyx/prowler) to assess all Accounts in
       - Uses ```t2.micro``` Instance Type
       - Encrypts Root Volume with AWS Managed Key "aws/ebs"
     - Uses [cfn-init](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-init.html) for prepping the Prowler EC2
-      - Installs necessary [packages](https://github.com/toniblyx/prowler#requirements-and-installation) for Prowler
+      - Installs necessary [packages](https://github.com/prowler-cloud/prowler#requirements-and-installation) for Prowler
       - Downloads [run-prowler-reports.sh](src/run-prowler-reports.sh) script from Prowler S3 from Component #1.
       - Creates ```/home/ec2-user/.awsvariables```, to store CloudFormation data as variables to be used in script.
       - Creates cron job for Prowler to run on a schedule.
@@ -72,7 +72,7 @@ Deploys [Prowler](https://github.com/toniblyx/prowler) to assess all Accounts in
         ```
 
     - In summary:
-      - Download latest version of [Prowler](https://github.com/toniblyx/prowler)
+      - Download latest version of [Prowler](https://github.com/prowler-cloud/prowler)
       - Find AWS Master Account
       - Lookup All Accounts in AWS Organization
       - Run Prowler against All Accounts in AWS Organization
@@ -130,7 +130,7 @@ Deploys [Prowler](https://github.com/toniblyx/prowler) to assess all Accounts in
       cat .awsvariables
       ```
 
-1. Run Prowler interactively. See [Usage Examples](https://github.com/toniblyx/prowler#usage)
+1. Run Prowler interactively. See [Usage Examples](https://github.com/prowler-cloud/prowler#usage)
 
       ```bash
       cd /home/ec2-user
@@ -147,5 +147,5 @@ Deploys [Prowler](https://github.com/toniblyx/prowler) to assess all Accounts in
     ```bash
     cd /home/ec2-user
     rm -rf prowler
-    git clone https://github.com/toniblyx/prowler.git
+    git clone https://github.com/prowler-cloud/prowler.git
     ```
