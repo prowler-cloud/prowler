@@ -239,15 +239,15 @@ Prowler has two parameters related to regions: `-r` that is used query AWS servi
 
 ### Save your reports
 
-1. If you want to save your report for later analysis thare are different ways, natively (supported text, mono, csv, json, json-asff, junit-xml and html, see note below for more info):
+1. If you want to save your report for later analysis there are different ways, natively (supported text, mono, csv, json, json-asff, junit-xml and html, see note below for more info):
 
     ```sh
     ./prowler -M csv
-    ```
+    ```eachg 
 
     or with multiple formats at the same time:
 
-    ```sh
+    ```eachg sh
     ./prowler -M csv,json,json-asff,html
     ```
 
@@ -314,7 +314,7 @@ Prowler has two parameters related to regions: `-r` that is used query AWS servi
 
 ### Assume Role:
 
-Prowler uses the AWS CLI underneath so it uses the same authentication methods. However, there are few ways to run Prowler against multiple accounts using IAM Assume Role feature depending on eachg use case. You can just set up your custom profile inside `~/.aws/config` with all needed information about the role to assume then call it with `./prowler -p your-custom-profile`. Additionally you can use `-A 123456789012` and `-R RemoteRoleToAssume` and Prowler will get those temporary credentials using `aws sts assume-role`, set them up as environment variables and run against that given account. To create a role to assume in multiple accounts easier eather as CFN Stack or StackSet, look at [this CloudFormation template](iam/create_role_to_assume_cfn.yaml) and adapt it.
+Prowler uses the AWS CLI underneath so it uses the same authentication methods. However, there are few ways to run Prowler against multiple accounts using IAM Assume Role feature depending on each use case. You can just set up your custom profile inside `~/.aws/config` with all needed information about the role to assume then call it with `./prowler -p your-custom-profile`. Additionally you can use `-A 123456789012` and `-R RemoteRoleToAssume` and Prowler will get those temporary credentials using `aws sts assume-role`, set them up as environment variables and run against that given account. To create a role to assume in multiple accounts easier either as CFN Stack or StackSet, look at [this CloudFormation template](iam/create_role_to_assume_cfn.yaml) and adapt it.
 
 ```sh
 ./prowler -A 123456789012 -R ProwlerRole
@@ -350,7 +350,7 @@ Then run Prowler to assume a role (same in all members) per each account, in thi
 ```
 for accountId in $ACCOUNTS_IN_ORGS; do ./prowler -A $accountId -R RemoteRoleToAssume -c extra79; done
 ```
-Usig the same for loop it can be scanned a list of accounts with a variable like `ACCOUNTS_LIST='11111111111 2222222222 333333333'`
+Using the same for loop it can be scanned a list of accounts with a variable like `ACCOUNTS_LIST='11111111111 2222222222 333333333'`
 
 ### GovCloud
 
@@ -395,7 +395,7 @@ Since October 30th 2020 (version v2.3RC5), Prowler supports natively and as **of
 Before sending findings to Prowler, you need to perform next steps:
 1. Since Security Hub is a region based service, enable it in the region or regions you require. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions: 
     - `aws securityhub enable-security-hub --region <region>`.
-2. Enable Prowler as partner integration integration. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions: 
+2. Enable Prowler as partner integration. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions: 
     - `aws securityhub enable-import-findings-for-product --region <region> --product-arn arn:aws:securityhub:<region>::product/prowler/prowler` (change region also inside the ARN).
     - Using the AWS Management Console:
     ![Screenshot 2020-10-29 at 10 26 02 PM](https://user-images.githubusercontent.com/3985464/97634660-5ade3400-1a36-11eb-9a92-4a45cc98c158.png)
@@ -413,7 +413,7 @@ or for only one filtered region like eu-west-1:
 ```
 > Note 1: It is recommended to send only fails to Security Hub and that is possible adding `-q` to the command. 
 
-> Note 2: Since Prowler perform checks to all regions by defaults you may need to filter by region when runing Security Hub integration, as shown in the example above. Remember to enable Security Hub in the region or regions you need by calling `aws securityhub enable-security-hub --region <region>` and run Prowler with the option `-f <region>` (if no region is used it will try to push findings in all regions hubs).
+> Note 2: Since Prowler perform checks to all regions by defaults you may need to filter by region when running Security Hub integration, as shown in the example above. Remember to enable Security Hub in the region or regions you need by calling `aws securityhub enable-security-hub --region <region>` and run Prowler with the option `-f <region>` (if no region is used it will try to push findings in all regions hubs).
 
 > Note 3: to have updated findings in Security Hub you have to run Prowler periodically. Once a day or every certain amount of hours.
 
@@ -437,7 +437,7 @@ To use Prowler and Security Hub integration in China regions there is an additio
 
 ## CodeBuild deployment
 
-Either to run Prowler once or based on a schedule this template makes it pretty straight forward. This template will create a CodeBuild environment and run Prowler directly leaving all reports in a bucket and creating a report also inside CodeBuild basedon the JUnit output from Prowler. Scheduling can be cron based like `cron(0 22 * * ? *)` or rate based like `rate(5 hours)` since CloudWatch Event rules (or Eventbridge) is used here.
+Either to run Prowler once or based on a schedule this template makes it pretty straight forward. This template will create a CodeBuild environment and run Prowler directly leaving all reports in a bucket and creating a report also inside CodeBuild based on the JUnit output from Prowler. Scheduling can be cron based like `cron(0 22 * * ? *)` or rate based like `rate(5 hours)` since CloudWatch Event rules (or Eventbridge) is used here.
 
 The Cloud Formation template that helps you doing that is [here](https://github.com/toniblyx/prowler/blob/master/util/codebuild/codebuild-prowler-audit-account-cfn.yaml). 
 
@@ -471,7 +471,7 @@ To fix it, please renew your token by authenticating again to the AWS API, see n
 
 ### Run Prowler with MFA protected credentials
 
-To run Prowler using a profile that requires MFA you just need to get the session token before hand. Just make sure you use this command:
+To run Prowler using a profile that requires MFA you just need to get the session token beforehand. Just make sure you use this command:
 
 ```sh
 aws --profile <YOUR_AWS_PROFILE> sts get-session-token --duration 129600 --serial-number <ARN_OF_MFA> --token-code <MFA_TOKEN_CODE> --output text
@@ -488,7 +488,7 @@ export AWS_ACCESS_KEY_ID=YOUR_KEY
 
 or set manually up your `~/.aws/credentials` file properly.
 
-There are some helpfull tools to save time in this process like [aws-mfa-script](https://github.com/asagage/aws-mfa-script) or [aws-cli-mfa](https://github.com/sweharris/aws-cli-mfa).
+There are some helpful tools to save time in this process like [aws-mfa-script](https://github.com/asagage/aws-mfa-script) or [aws-cli-mfa](https://github.com/sweharris/aws-cli-mfa).
 
 ### AWS Managed IAM Policies
 
@@ -599,7 +599,7 @@ With this group of checks, Prowler shows result of checks related to the AWS Fou
 
 [groups/group25_ftr](groups/group25_FTR)
 
-The `ftr` group of checks uses existing and extra checks. To get a AWS FTR report, run this command:
+The `ftr` group of checks uses existing and extra checks. To get an AWS FTR report, run this command:
 
 ```sh
 ./prowler -g ftr
@@ -637,7 +637,7 @@ The term "trust boundary" is originating from the threat modelling process and t
 
 AWS is made to be flexible for service links within and between different AWS accounts, we all know that.
 
-This group of checks helps to analyse a particular AWS account (subject) on existing links to other AWS accounts across various AWS services, in order to identify untrusted links.
+This group of checks helps to analyze a particular AWS account (subject) on existing links to other AWS accounts across various AWS services, in order to identify untrusted links.
 
 ### Run
 To give it a quick shot just call:
@@ -670,7 +670,7 @@ Every circle represents one AWS account.
 The dashed line represents the trust boundary, that separates trust and untrusted AWS accounts.
 The arrow simply describes the direction of the trust, however the data can potentially flow in both directions.
 
-Single Account environment assumes that only the AWS account subject to this analysis is trusted. However, there is a chance that two VPCs are existing within that one AWS account which are still trusted as a self reference.
+Single Account environment assumes that only the AWS account subject to this analysis is trusted. However, there is a chance that two VPCs are existing within that one AWS account which are still trusted as a self-reference.
 ![single-account-environment](/docs/images/prowler-single-account-environment.png)
 
 Multi Account environments assumes a minimum of two trusted or known accounts. For this particular example all trusted and known accounts will be tested. Therefore `GROUP_TRUSTBOUNDARIES_TRUSTED_ACCOUNT_IDS` variable in [groups/group16_trustboundaries](groups/group16_trustboundaries) should include all trusted accounts Account #A, Account #B, Account #C, and Account #D in order to finally raise Account #E and Account #F for being untrusted or unknown.
@@ -688,7 +688,7 @@ In order to add any new check feel free to create a new extra check in the extra
 ## Add Custom Groups
 
 1. Follow structure in file `groups/groupN_sample`
-1. Name your group with a non existing number
+1. Name your group with a non-existing number
 1. Save changes and run it as `./prowler -g extraNN`
 1. Send me a pull request! :)
 
