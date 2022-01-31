@@ -124,7 +124,7 @@ Resources:
                 python: 3.8
               commands:
                 - echo "Updating yum ..."
-                - yum -y update
+                - yum -y update --skip-broken
                 - echo "Updating pip ..."
                 - python -m pip install --upgrade pip
                 - echo "Installing requirements ..."
