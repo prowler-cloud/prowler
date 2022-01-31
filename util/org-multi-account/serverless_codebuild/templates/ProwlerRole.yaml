@@ -8,7 +8,7 @@ Metadata:
           default: CodeBuild Settings
         Parameters:
           - ProwlerCodeBuildAccount
-          - ProwlerCodeBulidRole
+          - ProwlerCodeBuildRole
       - Label:
           default: S3 Settings
         Parameters:
@@ -30,7 +30,7 @@ Parameters:
     AllowedPattern: ^\d{12}$
     ConstraintDescription: An AWS Account Number must be a 12 digit numeric string.
     Default: 411267690458
-  ProwlerCodeBulidRole:
+  ProwlerCodeBuildRole:
     Type: String
     Description: Enter Instance Role that will be given to the Prowler CodeBuild (needed to grant sts:AssumeRole rights).
     AllowedPattern: ^[\w+=,.@-]{1,64}$
@@ -63,7 +63,7 @@ Resources:
               - sts:AssumeRole
             Condition:
               StringLike:
-                aws:PrincipalArn: !Sub arn:${AWS::Partition}:iam::${ProwlerCodeBuildAccount}:role/${ProwlerCodeBulidRole}
+                aws:PrincipalArn: !Sub arn:${AWS::Partition}:iam::${ProwlerCodeBuildAccount}:role/${ProwlerCodeBuildRole}
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/SecurityAudit
         - !Sub arn:${AWS::Partition}:iam::aws:policy/job-function/ViewOnlyAccess

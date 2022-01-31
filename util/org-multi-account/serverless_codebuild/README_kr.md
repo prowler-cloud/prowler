@@ -23,7 +23,7 @@ prowler 의 자세한 사용방법은 [이 곳](https://github.com/prowler-cloud
       [ProwlerRole.yaml](templates/ProwlerRole.yaml)
 
       - ProwlerCodeBuildAccount : CodeBuild 가 있는 Audit Acccount ID
-      - ProwlerCodeBulidRole : CodeBuild의 생성될 Role 이름
+      - ProwlerCodeBuildRole : CodeBuild의 생성될 Role 이름
       - ProwlerCrossAccountRole : Cross account 용 Assume할 Role 이름
       - ProwlerS3 : report 가 저장될 S3 bucket 명
    2. 아래 템플릿을 이용하여 CloudFormation **StackSet**을 생성하여, Organazation에 포함된 account 대상으로도 아래 템플릿을 배포합니다.
@@ -31,7 +31,7 @@ prowler 의 자세한 사용방법은 [이 곳](https://github.com/prowler-cloud
       [ProwlerRole.yaml](templates/ProwlerRole.yaml)
 
       - ProwlerCodeBuildAccount : CodeBuild 가 있는 Audit Acccount
-      - ProwlerCodeBulidRole : CodeBuild에서 사용할 Role 이름
+      - ProwlerCodeBuildRole : CodeBuild에서 사용할 Role 이름
       - ProwlerCrossAccountRole : Cross account 용 Assume할 Role 이름
       - ProwlerS3 : report 가 저장될 S3 bucket 명
       - Permission : Service-managed permissions

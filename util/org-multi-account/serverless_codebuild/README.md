@@ -19,12 +19,12 @@ For more information on how to use prowler, see [here](https://github.com/prowle
    1. Deploy [ProwlerRole.yaml](templates/ProwlerRole.yaml) stack to CloudFormation in a bid to create resources to master account itself.
       (The template will be also deployed for other member accounts as a StackSet)
       - ProwlerCodeBuildAccount :  Audit Acccount ID where CodeBuild resides. (preferably Audit/Security account)
-      - ProwlerCodeBulidRole : Role name to use in CodeBuild service
+      - ProwlerCodeBuildRole : Role name to use in CodeBuild service
       - ProwlerCrossAccountRole : Role name to assume for Cross account
       - ProwlerS3 : The S3 bucket name where reports will be put
    1. Create **StackSet** with [ProwlerRole.yaml](templates/ProwlerRole.yaml) to deploy Role into member accounts in AWS Organizations.
       - ProwlerCodeBuildAccount :  Audit Acccount ID where CodeBuild resides. (preferably Audit/Security account)
-      - ProwlerCodeBulidRole : Role name to use in CodeBuild service
+      - ProwlerCodeBuildRole : Role name to use in CodeBuild service
       - ProwlerCrossAccountRole : Role name to assume for Cross account
       - ProwlerS3 : The S3 bucket name where reports will be put
       - Permission : Service-managed permissions
