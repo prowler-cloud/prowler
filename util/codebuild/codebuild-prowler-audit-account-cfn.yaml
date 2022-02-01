@@ -184,15 +184,16 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Action:
-                  - s3:GetAccountPublicAccessBlock
-                  - glue:GetConnections
-                  - glue:SearchTables
                   - ds:ListAuthorizedApplications
                   - ec2:GetEbsEncryptionByDefault
                   - ecr:Describe*
                   - support:Describe*
                   - tag:GetTagKeys
                   - lambda:GetFunction
+                  - glue:GetConnections
+                  - glue:GetSecurityConfiguration
+                  - glue:SearchTables
+                  - s3:GetAccountPublicAccessBlock
                   - shield:GetSubscriptionState
                   - shield:DescribeProtection
                 Effect: Allow
@@ -246,7 +247,7 @@ Resources:
                 - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
                 - unzip awscliv2.zip
                 - ./aws/install
-                - git clone https://github.com/toniblyx/prowler
+                - git clone https://github.com/prowler-cloud/prowler
             build:
               commands:
                 - echo "Running Prowler as ./prowler $PROWLER_OPTIONS"

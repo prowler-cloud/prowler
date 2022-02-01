@@ -15,7 +15,7 @@ mkdir ${account}-results
 
 # Prowler
 cd ~
-git clone https://github.com/toniblyx/prowler
+git clone https://github.com/prowler-cloud/prowler
 pip3 install detect-secrets --user
 cd prowler 
 screen -dmS prowler sh -c "./prowler -M csv,html;cd ~;zip -r ${account}-results/prowler-${account}.zip /home/cloudshell-user/prowler/output"
