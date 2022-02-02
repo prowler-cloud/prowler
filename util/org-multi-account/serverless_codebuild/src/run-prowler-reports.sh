@@ -93,7 +93,7 @@ for accountId in $ACCOUNTS_IN_ORGS; do
         # Run Prowler
         echo -e "Assessing AWS Account: $accountId, using Role: $ROLE on $(date)"
         # remove -g cislevel for a full report and add other formats if needed
-        ./prowler/prowler -R "$ROLE" -A "$accountId" -g cislevel1 -M $FORMAT || true
+        ./prowler/prowler -R "$ROLE" -A "$accountId" -g cislevel1 -M $FORMAT -z
         echo "Report stored locally at: prowler/output/ directory"
         TOTAL_SEC=$((SECONDS - START_TIME))
         echo -e "Completed AWS Account: $accountId, using Role: $ROLE on $(date)"
