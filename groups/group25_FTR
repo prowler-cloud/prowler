@@ -13,7 +13,7 @@
 
 GROUP_ID[25]='ftr'
 GROUP_NUMBER[25]='25.0'
-GROUP_TITLE[25]='Amazon FTR related security checks - [ftr] ******************'
+GROUP_TITLE[25]='Amazon FTR related security checks - [ftr] ********************'
 GROUP_RUN_BY_DEFAULT[25]='N' # run it when execute_all is called
 GROUP_CHECKS[25]='check11,check12,check13,check14,check15,check16,check17,check18,check19,check110,check111,check111,check112,check113,check117,check118,check122,check21,check22,extra759,extra760,extra768,extra775,extra797,extra7141,extra73'
 
