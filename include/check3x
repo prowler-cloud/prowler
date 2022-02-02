@@ -39,11 +39,12 @@ check3x(){
       if [ "$CLOUDWATCH_LOGGROUP_ACCOUNT" == "$CURRENT_ACCOUNT_ID" ];then
         # Filter control and whitespace from .metricFilters[*].filterPattern for easier matching later
         METRICFILTER_CACHE=$($AWSCLI logs describe-metric-filters --log-group-name "$CLOUDWATCH_LOGGROUP_NAME" $PROFILE_OPT --region "$CLOUDWATCH_LOGGROUP_REGION"|jq '.metricFilters|=map(.filterPattern|=gsub("[[:space:]]+"; " "))')
-        METRICFILTER_SET=$(echo $METRICFILTER_CACHE | jq -r --arg re "$grep_filter" '.metricFilters[]|select(.filterPattern|test($re))|.filterName')
+        METRICFILTER_SET=$(echo $METRICFILTER_CACHE | jq -r --arg re "$grep_filter" '.metricFilters[]|select(.filterPattern|test($re))|.filterName|@base64')
       fi
       if [[ $METRICFILTER_SET ]];then
         for metric in $METRICFILTER_SET; do
-          metric_name=$(echo $METRICFILTER_CACHE | jq -r --arg name $metric '.metricFilters[]|select(.filterName==$name)|.metricTransformations[0].metricName')
+          metric_decode=$(echo $metric | base64 -d)
+          metric_name=$(echo $METRICFILTER_CACHE | jq -r --arg name "${metric_decode}" '.metricFilters[]|select(.filterName==$name)|.metricTransformations[0].metricName')
           HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region "$CLOUDWATCH_LOGGROUP_REGION" --query 'MetricAlarms[?MetricName==`'"$metric_name"'`]' --output text)
           if [[ $HAS_ALARM_ASSOCIATED ]];then
             CHECK_OK="$CHECK_OK $CLOUDWATCH_LOGGROUP_NAME:$metric"
@@ -61,7 +62,7 @@ check3x(){
 
     if [[ $CHECK_OK ]]; then
       for group in $CHECK_OK; do
-        metric=${group#*:}
+        metric=$(echo ${group#*:} | base64 -d)
         group=${group%:*}
         textPass "$REGION: CloudWatch group $group found with metric filter $metric and alarms set" "$REGION" "$group"
       done
@@ -69,7 +70,7 @@ check3x(){
     if [[ $CHECK_WARN ]]; then
       for group in $CHECK_WARN; do
         case $group in
-           *:*) metric=${group#*:}
+           *:*) metric=$(echo ${group#*:} | base64 -d)
                 group=${group%:*}
                 if [[ $pass_count == 0 ]]; then
                   textFail "$REGION: CloudWatch group $group found with metric filter $metric but no alarms associated" "$REGION" "$group"
