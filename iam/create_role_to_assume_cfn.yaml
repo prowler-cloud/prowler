@@ -67,4 +67,5 @@ Resources:
                 - 's3:GetAccountPublicAccessBlock'
                 - 'shield:GetSubscriptionState'
                 - 'shield:DescribeProtection'
+                - 'elasticfilesystem:DescribeBackupPolicy'
               Resource: '*'

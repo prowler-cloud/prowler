@@ -99,6 +99,7 @@ Resources:
                   - tag:GetTagKeys
                   - shield:GetSubscriptionState
                   - shield:DescribeProtection
+                  - elasticfilesystem:DescribeBackupPolicy
         - PolicyName: Prowler-S3-Reports
           PolicyDocument:
             Version: 2012-10-17
