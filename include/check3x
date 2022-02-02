@@ -39,12 +39,12 @@ check3x(){
       if [ "$CLOUDWATCH_LOGGROUP_ACCOUNT" == "$CURRENT_ACCOUNT_ID" ];then
         # Filter control and whitespace from .metricFilters[*].filterPattern for easier matching later
         METRICFILTER_CACHE=$($AWSCLI logs describe-metric-filters --log-group-name "$CLOUDWATCH_LOGGROUP_NAME" $PROFILE_OPT --region "$CLOUDWATCH_LOGGROUP_REGION"|jq '.metricFilters|=map(.filterPattern|=gsub("[[:space:]]+"; " "))')
-        METRICFILTER_SET=$(echo $METRICFILTER_CACHE | jq -r --arg re "$grep_filter" '.metricFilters[]|select(.filterPattern|test($re))|.filterName|@base64')
+        METRICFILTER_SET=$(echo "${METRICFILTER_CACHE}" | jq -r --arg re "${grep_filter}" '.metricFilters[]|select(.filterPattern|test($re))|.filterName|@base64')
       fi
       if [[ $METRICFILTER_SET ]];then
         for metric in $METRICFILTER_SET; do
           metric_decode=$(base64 -d <<< "${metric}")
-          metric_name=$(echo $METRICFILTER_CACHE | jq -r --arg name "${metric_decode}" '.metricFilters[]|select(.filterName==$name)|.metricTransformations[0].metricName')
+          metric_name=$(echo "${METRICFILTER_CACHE}" | jq -r --arg name "${metric_decode}" '.metricFilters[]|select(.filterName==$name)|.metricTransformations[0].metricName')
           HAS_ALARM_ASSOCIATED=$($AWSCLI cloudwatch describe-alarms $PROFILE_OPT --region "$CLOUDWATCH_LOGGROUP_REGION" --query 'MetricAlarms[?MetricName==`'"$metric_name"'`]' --output text)
           if [[ $HAS_ALARM_ASSOCIATED ]];then
             CHECK_OK="$CHECK_OK $CLOUDWATCH_LOGGROUP_NAME:$metric"
