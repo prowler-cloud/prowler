@@ -24,7 +24,7 @@ CHECK_DOC_extra768='https://docs.aws.amazon.com/AmazonECS/latest/developerguide/
 CHECK_CAF_EPIC_extra768='Logging and Monitoring'
 
 extra768(){
-  SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM-$PROWLER_START_TIME"
+  SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"
   if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then
     mkdir $SECRETS_TEMP_FOLDER
   fi

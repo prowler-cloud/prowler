@@ -24,7 +24,7 @@ CHECK_DOC_extra742='https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGui
 CHECK_CAF_EPIC_extra742='IAM'
 
 extra742(){
-  SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM-$PROWLER_START_TIME"
+  SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"
   if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then
     # this folder is deleted once this check is finished
     mkdir $SECRETS_TEMP_FOLDER
