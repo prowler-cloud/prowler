@@ -35,11 +35,15 @@ extra7141(){
     if [[ $(echo "$SSM_DOCS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
         textInfo "$regx: Access Denied trying to list documents" "$regx"
         continue
-    fi  
+    fi
     if [[ $SSM_DOCS ]];then
       for ssmdoc in $SSM_DOCS; do 
         SSM_DOC_FILE="$SECRETS_TEMP_FOLDER/extra7141-$ssmdoc-$regx-content.txt"
-        $AWSCLI $PROFILE_OPT --region $regx ssm get-document --name $ssmdoc --output text --document-format JSON > $SSM_DOC_FILE
+        $AWSCLI $PROFILE_OPT --region $regx ssm get-document --name $ssmdoc --output text --document-format JSON > $SSM_DOC_FILE 2>&1
+        if [[ $(grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' "$SSM_DOC_FILE") ]]; then
+            textInfo "$regx: Access Denied trying to get document" "$regx"
+            continue
+        fi
         FINDINGS=$(secretsDetector file $SSM_DOC_FILE)
         if [[ $FINDINGS -eq 0 ]]; then
           textPass "$regx: No secrets found in SSM Document $ssmdoc" "$regx" "$ssmdoc"
