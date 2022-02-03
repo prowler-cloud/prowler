@@ -24,23 +24,34 @@ CHECK_DOC_extra771='https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_p
 CHECK_CAF_EPIC_extra771='IAM'
 
 extra771(){
-  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --region $REGION --query Buckets[*].Name --output text|xargs -n1)
+  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --region $REGION --query "sort_by(Buckets, &Name)[].Name" --output text 2>&1)
+  if [[ $(echo "$LIST_OF_BUCKETS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+      textInfo "$REGION: Access Denied trying to list buckets" "$REGION"
+      return
+  fi
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
       BUCKET_POLICY_STATEMENTS=$($AWSCLI s3api $PROFILE_OPT get-bucket-policy --region $REGION --bucket $bucket --output json --query Policy 2>&1)
-      if [[ $BUCKET_POLICY_STATEMENTS == *GetBucketPolicy* ]]; then
-        textInfo "Bucket policy does not exist for bucket $bucket"
+      if [[ $(echo "$BUCKET_POLICY_STATEMENTS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+          textInfo "$REGION: Access Denied trying to get bucket policy for $bucket" "$REGION"
+          continue
+      fi
+      if [[ $(echo "$BUCKET_POLICY_STATEMENTS" | grep 'NoSuchBucketPolicy') ]]; then
+        textInfo "$REGION: Bucket policy does not exist for bucket $bucket" "$REGION"
       else
         BUCKET_POLICY_BAD_STATEMENTS=$(echo $BUCKET_POLICY_STATEMENTS | jq --arg arn "arn:${AWS_PARTITION}:s3:::$bucket" 'fromjson | .Statement[]|select(.Effect=="Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and (.Action|startswith("s3:Put") or startswith("s3:*")) and .Condition == null)')
+        # Used to test FAIL
+        #BUCKET_POLICY_BAD_STATEMENTS=$(echo $BUCKET_POLICY_STATEMENTS | jq --compact-output --arg arn "arn:${AWS_PARTITION}:s3:::$bucket" 'fromjson | .Statement[]|select(.Effect=="Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")))')
+        BUCKET_POLICY_BAD_STATEMENTS=$(echo "${BUCKET_POLICY_BAD_STATEMENTS}" | sed 's|,|[comma]|g')
         if [[ $BUCKET_POLICY_BAD_STATEMENTS != "" ]]; then
-          textFail "Bucket $bucket allows public write: $BUCKET_POLICY_BAD_STATEMENTS" "us-east-1" "$bucket"
+          textFail "$REGION: Bucket $bucket allows public write: $BUCKET_POLICY_BAD_STATEMENTS" "$REGION" "$bucket"
         else
-          textPass "Bucket $bucket has S3 bucket policy which does not allow public write access" "us-east-1" "$bucket"
+          textPass "$REGION: Bucket $bucket has S3 bucket policy which does not allow public write access" "$REGION" "$bucket"
         fi
       fi
     done
 
   else
-    textInfo "No S3 Buckets found"
+    textInfo "$REGION: No S3 Buckets found"
   fi
 }
