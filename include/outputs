@@ -167,10 +167,10 @@ textFail(){
   ## ignore whitelists for current check
   level="FAIL"
   colorcode="$BAD"
-  while read -r i; do
-    ignore_check_name="${i%%:*}" # Check name is everything up to the first :
+  while read -r excluded_item; do
+    ignore_check_name="${excluded_item%%:*}" # Check name is everything up to the first :
     # Resource value is the second field of line included in whitelist divided by :
-    resource_value=$(awk -F ":" '{print $2}' <<< $i)
+    resource_value=$(awk -F ":" '{print $2}' <<< $excluded_item)
     # Checked value is the second field of log message divided by spaces
     checked_value=$(awk '{print $2}' <<< $1)
     echo 
