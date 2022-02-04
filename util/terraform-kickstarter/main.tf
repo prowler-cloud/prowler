@@ -314,6 +314,7 @@ resource "aws_iam_policy" "prowler_kickstarter_iam_policy" {
                   "ds:ListAuthorizedApplications",
                   "ec2:GetEbsEncryptionByDefault",
                   "ecr:Describe*",
+                  "elasticfilesystem:DescribeBackupPolicy",
                   "glue:GetConnections",
                   "glue:GetSecurityConfiguration",
                   "glue:SearchTables",

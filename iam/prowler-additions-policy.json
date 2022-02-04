@@ -6,6 +6,7 @@
                 "ds:ListAuthorizedApplications",
                 "ec2:GetEbsEncryptionByDefault",
                 "ecr:Describe*",
+                "elasticfilesystem:DescribeBackupPolicy",
                 "glue:GetConnections",
                 "glue:GetSecurityConfiguration",
                 "glue:SearchTables",
