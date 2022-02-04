@@ -25,12 +25,11 @@ CHECK_CAF_EPIC_extra7172='Logging and Monitoring'
 
 extra7172(){
   # "Check if S3 buckets have server access logging enabled "
-  ACCESS_CHECK=$($AWSCLI s3api list-buckets $PROFILE_OPT --output text 2>&1)
-  if [[ $(echo "$ACCESS_CHECK" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text 2>&1)
+  if [[ $(echo "$LIST_OF_BUCKETS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
     textInfo "$REGION: Access Denied Trying to list buckets" "$REGION"
     exit
   fi
-  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text|xargs -n1 2>&1)
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
       BUCKET_ACLS_DISABLED=$($AWSCLI s3api get-bucket-ownership-controls --bucket $bucket $PROFILE_OPT --output text 2>&1)
