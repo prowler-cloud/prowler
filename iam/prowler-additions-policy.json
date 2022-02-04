@@ -14,7 +14,8 @@
                 "glue:SearchTables",
                 "s3:GetAccountPublicAccessBlock",
                 "shield:GetSubscriptionState",
-                "shield:DescribeProtection"
+                "shield:DescribeProtection",
+                "elasticfilesystem:DescribeBackupPolicy"
             ],
             "Resource": "*",
             "Effect": "Allow",

@@ -196,6 +196,7 @@ Resources:
                   - s3:GetAccountPublicAccessBlock
                   - shield:GetSubscriptionState
                   - shield:DescribeProtection
+                  - elasticfilesystem:DescribeBackupPolicy
                 Effect: Allow
                 Resource: !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:catalog'
         - PolicyName: CodeBuild
