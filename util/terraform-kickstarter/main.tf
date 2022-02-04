@@ -322,7 +322,8 @@ resource "aws_iam_policy" "prowler_kickstarter_iam_policy" {
                   "glue:SearchTables",
                   "s3:GetAccountPublicAccessBlock",
                   "shield:GetSubscriptionState",
-                  "shield:DescribeProtection"
+                  "shield:DescribeProtection",
+                  "elasticfilesystem:DescribeBackupPolicy"
                   ]
         Effect   = "Allow"
         Resource = "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog"
