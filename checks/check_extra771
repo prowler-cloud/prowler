@@ -39,10 +39,22 @@ extra771(){
       if [[ $(echo "$BUCKET_POLICY_STATEMENTS" | grep 'NoSuchBucketPolicy') ]]; then
         textInfo "$REGION: Bucket policy does not exist for bucket $bucket" "$REGION"
       else
-        BUCKET_POLICY_BAD_STATEMENTS=$(echo $BUCKET_POLICY_STATEMENTS | jq --arg arn "arn:${AWS_PARTITION}:s3:::$bucket" 'fromjson | .Statement[]|select(.Effect=="Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and (.Action|startswith("s3:Put") or startswith("s3:*")) and .Condition == null)')
-        # Used to test FAIL
-        #BUCKET_POLICY_BAD_STATEMENTS=$(echo $BUCKET_POLICY_STATEMENTS | jq --compact-output --arg arn "arn:${AWS_PARTITION}:s3:::$bucket" 'fromjson | .Statement[]|select(.Effect=="Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")))')
-        BUCKET_POLICY_BAD_STATEMENTS=$(echo "${BUCKET_POLICY_BAD_STATEMENTS}" | sed 's|,|[comma]|g')
+        BUCKET_POLICY_BAD_STATEMENTS=$(echo $BUCKET_POLICY_STATEMENTS | jq --compact-output --arg arn "arn:${AWS_PARTITION}:s3:::$bucket" 'fromjson | .Statement[]|select(
+                                                                                                                                                                            .Effect=="Allow" and
+                                                                                                                                                                            (
+                                                                                                                                                                                ( (.Principal|type == "object") and (.Principal.AWS == "*") ) or
+                                                                                                                                                                                ( (.Principal|type == "string") and (.Principal == "*") )
+                                                                                                                                                                            ) and
+                                                                                                                                                                            (
+                                                                                                                                                                                ( (.Action|type == "string") and (.Action|startswith("s3:Put")) ) or
+                                                                                                                                                                                ( (.Action|type == "string") and (.Action|startswith("s3:*")) ) or
+                                                                                                                                                                                ( (.Action|type == "array") and (.Action[]|startswith("s3:Put")) ) or
+                                                                                                                                                                                ( (.Action|type == "array") and (.Action[]|startswith("s3:*")) )
+                                                                                                                                                                            ) and
+                                                                                                                                                                            .Condition == null
+                                                                                                                                                                          )' | tr '\n' ' ')
+        # Waiting comment on issue #1019
+        #BUCKET_POLICY_BAD_STATEMENTS=$(echo "${BUCKET_POLICY_BAD_STATEMENTS}" | sed 's|,|[comma]|g')
         if [[ $BUCKET_POLICY_BAD_STATEMENTS != "" ]]; then
           textFail "$REGION: Bucket $bucket allows public write: $BUCKET_POLICY_BAD_STATEMENTS" "$REGION" "$bucket"
         else
