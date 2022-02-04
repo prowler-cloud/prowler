@@ -198,7 +198,7 @@ Resources:
                   - shield:DescribeProtection
                   - elasticfilesystem:DescribeBackupPolicy
                 Effect: Allow
-                Resource: !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:catalog'
+                Resource: '*'
         - PolicyName: CodeBuild
           PolicyDocument:
             Version: '2012-10-17'
