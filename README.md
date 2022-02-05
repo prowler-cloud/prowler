@@ -243,11 +243,11 @@ Prowler has two parameters related to regions: `-r` that is used query AWS servi
 
     ```sh
     ./prowler -M csv
-    ```eachg 
+    ```
 
     or with multiple formats at the same time:
 
-    ```eachg sh
+    ```sh
     ./prowler -M csv,json,json-asff,html
     ```
 
