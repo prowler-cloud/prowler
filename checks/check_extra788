@@ -43,11 +43,9 @@ extra788(){
           textInfo "$regx: Access Denied trying to get domain $domain" "$regx"
           continue
         fi
-        read ES_DOMAIN_ENDPOINT ES_DOMAIN_ENDPOINTS ES_DOMAIN_VPC <<< "$ES_DOMAIN_INFO" && {
-          [[ "${ES_DOMAIN_ENDPOINT}" == "None" ]] && ES_DOMAIN_ENDPOINT="${ES_DOMAIN_ENDPOINTS}"
-        }
+        read ES_DOMAIN_ENDPOINT ES_DOMAIN_ENDPOINT_VPC ES_DOMAIN_VPC <<< "$ES_DOMAIN_INFO" &&
         # If the endpoint starts with "vpc-" it is in a VPC then it is fine.
-        if [[ "${ES_DOMAIN_ENDPOINT:0:3}" == "vpc" ]]; then
+        if [[ "${ES_DOMAIN_ENDPOINT_VPC:0:3}" == "vpc" ]]; then
           textInfo "$regx: Amazon ES domain $domain is in VPC $ES_DOMAIN_VPC run extra779 to make sure it is not exposed using custom proxy" "$regx"
         else
           $AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainConfig.AccessPolicies.Options' --output text > $TEMP_POLICY_FILE 2>&1

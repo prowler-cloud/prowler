@@ -32,7 +32,7 @@ extra715(){
     fi
     if [[ $LIST_OF_DOMAINS ]]; then
       for domain in $LIST_OF_DOMAINS;do
-        SLOWLOG_ENABLED=$($AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query "DomainConfig.LogPublishingOptions.Options.[SEARCH_SLOW_LOGS.Enabled, INDEX_SLOW_LOGS.Enabled]" --output text 2>&1)
+        SLOWLOG_ENABLED=$($AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainConfig.LogPublishingOptions.Options.[SEARCH_SLOW_LOGS.Enabled, INDEX_SLOW_LOGS.Enabled]' --output text 2>&1)
         if [[ $(echo "$SLOWLOG_ENABLED" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
             textInfo "$regx: Access Denied trying to get ES domain config for $domain" "$regx"
             continue

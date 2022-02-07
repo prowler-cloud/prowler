@@ -34,7 +34,7 @@ extra782(){
       for domain in $LIST_OF_DOMAINS;do
         CHECK_IF_NODETOENCR_ENABLED=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.NodeToNodeEncryptionOptions.Enabled' --output text 2>&1)
         if [[ $(echo "$CHECK_IF_NODETOENCR_ENABLED" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-            textInfo "$regx: Access Denied trying to get ES domain" "$regx"
+            textInfo "$regx: Access Denied trying to get ES domain $domain" "$regx"
             continue
         fi
         if [[ $(echo "$CHECK_IF_NODETOENCR_ENABLED" | grep -i true) ]];then
