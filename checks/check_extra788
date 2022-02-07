@@ -29,22 +29,32 @@ extra788(){
 
   # "Check if Elasticsearch Service domains allow open access "
   for regx in $REGIONS; do
-    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text 2>&1)
+    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query 'DomainNames[].DomainName' --output text 2>&1)
     if [[ $(echo "$LIST_OF_DOMAINS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textInfo "$regx: Access Denied trying to list domain names" "$regx"
-        continue
+      textInfo "$regx: Access Denied trying to list domain names" "$regx"
+      continue
     fi
     if [[ $LIST_OF_DOMAINS ]]; then
+      TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-es-domain.policy.XXXXXXXXXX)
       for domain in $LIST_OF_DOMAINS;do
-        TEMP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-es-domain.policy.XXXXXXXXXX)
         # get endpoint or vpc endpoints
-        ES_DOMAIN_ENDPOINT=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.[Endpoint || Endpoints]' --output text)
+        ES_DOMAIN_INFO=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.[Endpoint, Endpoints.vpc, VPCOptions.VPCId]' --output text 2>&1)
+        if [[ $(echo "$ES_DOMAIN_INFO" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+          textInfo "$regx: Access Denied trying to get domain $domain" "$regx"
+          continue
+        fi
+        read ES_DOMAIN_ENDPOINT ES_DOMAIN_ENDPOINTS ES_DOMAIN_VPC <<< "$ES_DOMAIN_INFO" && {
+          [[ "${ES_DOMAIN_ENDPOINT}" == "None" ]] && ES_DOMAIN_ENDPOINT="${ES_DOMAIN_ENDPOINTS}"
+        }
         # If the endpoint starts with "vpc-" it is in a VPC then it is fine.
-        if [[ "$ES_DOMAIN_ENDPOINT" =~ ^vpc-* ]];then
-          ES_DOMAIN_VPC=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.VPCOptions.VPCId' --output text)
+        if [[ "${ES_DOMAIN_ENDPOINT:0:3}" == "vpc" ]]; then
           textInfo "$regx: Amazon ES domain $domain is in VPC $ES_DOMAIN_VPC run extra779 to make sure it is not exposed using custom proxy" "$regx"
         else
-          $AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query DomainConfig.AccessPolicies.Options --output text > $TEMP_POLICY_FILE 2> /dev/null
+          $AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainConfig.AccessPolicies.Options' --output text > $TEMP_POLICY_FILE 2>&1
+          if [[ $(grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' $TEMP_POLICY_FILE) ]]; then
+            textInfo "$regx: Access Denied trying to get domain config for $domain" "$regx"
+            continue
+          fi
           CHECK_ES_DOMAIN_POLICY_OPEN=$(cat $TEMP_POLICY_FILE | jq -r '. | .Statement[] | select(.Effect == "Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and select(has("Condition") | not))')
           CHECK_ES_DOMAIN_POLICY_HAS_CONDITION=$(cat $TEMP_POLICY_FILE | jq -r '. | .Statement[] | select(.Effect == "Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")) and select(has("Condition")))' )
           if [[ $CHECK_ES_DOMAIN_POLICY_HAS_CONDITION ]]; then
@@ -93,9 +103,9 @@ extra788(){
               textPass "$regx: Amazon ES domain $domain does not allow Anonymous cross account access" "$regx" "$domain"
             fi
           fi
-          rm -f $TEMP_POLICY_FILE
         fi
       done
+      [[ -f "${TEMP_POLICY_FILE}" ]] && rm -f $TEMP_POLICY_FILE
     else
       textInfo "$regx: No Amazon ES domain found" "$regx"
     fi

@@ -25,7 +25,7 @@ CHECK_CAF_EPIC_extra716='Infrastructure Security'
 
 extra716(){
   for regx in $REGIONS; do
-    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text 2>&1)
+    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query 'DomainNames[].DomainName' --output text 2>&1)
     if [[ $(echo "$LIST_OF_DOMAINS" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
         textInfo "$regx: Access Denied trying to list domain names" "$regx"
         continue
