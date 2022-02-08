@@ -172,13 +172,13 @@ textFail(){
     # Resource value is the second field of line included in whitelist divided by :
     resource_value=$(awk -F ":" '{print $2}' <<< $excluded_item)
     # Checked value is the second field of log message divided by spaces
-    checked_value=$(awk '{print $2}' <<< $1)
+    checked_value=$1
     if [[ "${ignore_check_name}" != "${CHECK_NAME}" ]]; then
       # not for this check
       continue
     fi
     # To set WARNING flag both values must be exactly the same
-    if [[ "${checked_value}" == "${resource_value}" ]]; then
+    if [[ "${checked_value}" == *"${resource_value}"* ]]; then
       level="WARNING"
       colorcode="${WARNING}"
       break
