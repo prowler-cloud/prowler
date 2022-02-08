@@ -171,7 +171,7 @@ textFail(){
     ignore_check_name="${excluded_item%%:*}" # Check name is everything up to the first :
     # Resource value is the second field of line included in whitelist divided by :
     resource_value=$(awk -F ":" '{print $2}' <<< $excluded_item)
-    # Checked value is the second field of log message divided by spaces
+    # Checked value is the whole log message that comes as argument
     checked_value=$1
     if [[ "${ignore_check_name}" != "${CHECK_NAME}" ]]; then
       # not for this check
