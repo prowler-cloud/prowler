@@ -36,20 +36,42 @@
 # CHECK_DOC_checkN=""
 # CHECK_CAF_EPIC_checkN=""
 
+# General comments
+# ----------------
+# Do not add double quotes (") arround variable ${PROFILE_OPT}
+# Always check for AccessDenied|UnauthorizedOperation|AuthorizationError after AWS CLI command, using "2>&1" at the end
+# Avoid execute the same AWS CLI command again to check different attribute:
+#  - Return all attributes on "--query"
+#  - Use "read -r" to get all individual attributes
+#  - Use "here-string" (<<<) when is necessary to interate through AWS CLI output with multiple attributes on the same line
+#    - Here-string variable must be enclosed with double quotes, like "${LIST_OF_PUBLIC_INSTANCES}"
+#  - See "Example of regional resource" below about how to do it
+# When an attribute doesn't exist, AWS CLI "--query" always return "none" if output is json or "None" if output is text
+# Use bash features to handle variable:
+#  - ${var:N}      : Return string from position 'N'
+#  - ${var:N:len}  : Return 'len' characters from position 'N'
+#  - ${var^^}      : Convert to upper-case all characters
+#  - ${var,,}      : Convert to lower-case all characters
+# Check code with ShellCheck for best practices:
+#  - https://www.shellcheck.net/
+#  - https://github.com/koalaman/shellcheck#user-content-in-your-editor
+
 # Example of regional resource
 # extraN(){
 #   # "Description "
 #   textInfo "Looking for instances in all regions...  "
-#   for regx in $REGIONS; do
-#     LIST_OF_PUBLIC_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query 'Reservations[*].Instances[?PublicIpAddress].[InstanceId,PublicIpAddress]' --output text)
-#     if [[ $LIST_OF_PUBLIC_INSTANCES ]];then
-#       while read -r instance;do
-#         INSTANCE_ID=$(echo $instance | awk '{ print $1; }')
-#         PUBLIC_IP=$(echo $instance | awk '{ print $2; }')
-#         textFail "$regx: Instance: $INSTANCE_ID at IP: $PUBLIC_IP is internet-facing!" "$regx" "$INSTANCE_ID"
-#       done <<< "$LIST_OF_PUBLIC_INSTANCES"
+#   for regx in ${REGIONS}; do
+#     LIST_OF_PUBLIC_INSTANCES=$("${AWSCLI}" ec2 describe-instances ${PROFILE_OPT} --region "${regx}" --query 'Reservations[*].Instances[?PublicIpAddress].[InstanceId,PublicIpAddress]' --output text 2>&1)
+#     if [[ $(echo "${LIST_OF_PUBLIC_INSTANCES}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+#       textInfo "${regx}: Access Denied trying to list EC2 Instances" "${regx}"
+#       continue
+#     fi
+#     if [[ "${LIST_OF_PUBLIC_INSTANCES}" != "" && "${LIST_OF_PUBLIC_INSTANCES,,}" != "none" ]]; then
+#       while read -r INSTANCE_ID PUBLIC_IP; do
+#         textFail "${regx}: Instance: ${INSTANCE_ID} at IP: ${PUBLIC_IP} is internet-facing!" "${regx}" "${INSTANCE_ID}"
+#       done <<< "${LIST_OF_PUBLIC_INSTANCES}"
 #       else
-#         textPass "$regx: no Internet Facing EC2 Instances found" "$regx"
+#         textPass "${regx}: no Internet Facing EC2 Instances found" "${regx}"
 #     fi
 #   done
 # }
@@ -57,17 +79,25 @@
 # Example of global resource
 # extraN(){
 #   # "Description "
-#   LIST_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions $PROFILE_OPT --query 'DistributionList.Items[*].Id' --output text |grep -v ^None)
-#   if [[ $LIST_DISTRIBUTIONS ]]; then
-#     for dist in $LIST_DISTRIBUTIONS; do
-#       GEO_ENABLED=$($AWSCLI cloudfront get-distribution-config $PROFILE_OPT --id $dist --query DistributionConfig.Restrictions.GeoRestriction.RestrictionType --output text)
-#       if [[ $GEO_ENABLED == "none" ]]; then
-#         textFail "$REGION: CloudFront distribution $dist has not Geo restrictions" "$REGION" "$dist"
+#   LIST_DISTRIBUTIONS=$("${AWSCLI}" cloudfront list-distributions ${PROFILE_OPT} --query 'DistributionList.Items[*].Id' --output text 2>&1)
+#   if [[ $(echo "${LIST_DISTRIBUTIONS}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+#     textInfo "${REGION}: Access Denied trying to list distributions" "${REGION}"
+#     return
+#   fi
+#   if [[ "${LIST_DISTRIBUTIONS}" != "" && "${LIST_DISTRIBUTIONS,,}" != "none" ]]; then
+#     for dist in ${LIST_DISTRIBUTIONS}; do
+#       GEO_ENABLED=$("${AWSCLI}" cloudfront get-distribution-config $PROFILE_OPT --id "${dist}" --query 'DistributionConfig.Restrictions.GeoRestriction.RestrictionType' --output text 2>&1)
+#       if [[ $(echo "${GEO_ENABLED}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+#         textInfo "${REGION}: Access Denied trying to get distribution config for ${dist}" "${REGION}"
+#         continue
+#       fi
+#       if [[ "${GEO_ENABLED,,}" == "none" ]]; then
+#         textFail "${REGION}: CloudFront distribution ${dist} has not Geo restrictions" "${REGION}" "${dist}"
 #       else
-#         textPass "$REGION: CloudFront distribution $dist has Geo restrictions enabled" "$REGION" "$dist"
+#         textPass "${REGION}: CloudFront distribution ${dist} has Geo restrictions enabled" "${REGION}" "${dist}"
 #       fi
 #     done
 #   else
-#     textInfo "$REGION: No CloudFront distributions found"
+#     textInfo "${REGION}: No CloudFront distributions found"
 #   fi
 # }
