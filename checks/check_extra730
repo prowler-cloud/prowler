@@ -27,24 +27,34 @@ CHECK_DOC_extra730='https://docs.aws.amazon.com/config/latest/developerguide/acm
 CHECK_CAF_EPIC_extra730='Data Protection'
 
 extra730(){
+  # Only RSA key types, needed to recover Amazon Issued, Imported and Private PKIs
+  local ACM_KEY_TYPES="RSA_1024,RSA_2048,RSA_3072,RSA_4096"
+  local ACM_CERTIFICATE_STATUSES="ISSUED"
+
   # "Check if ACM Certificates are about to expire in $DAYS_TO_EXPIRE_THRESHOLD days or less"
   for regx in $REGIONS; do
-    LIST_OF_ACM_CERTS=$($AWSCLI acm list-certificates $PROFILE_OPT --region $regx --query 'CertificateSummaryList[].CertificateArn' --output text)
-    if [[ $LIST_OF_ACM_CERTS ]];then
+    LIST_OF_ACM_CERTS=$("${AWSCLI}" acm list-certificates ${PROFILE_OPT} --region "${regx}" --include keyTypes="${ACM_KEY_TYPES}" --certificate-statuses "${ACM_CERTIFICATE_STATUSES}" --query 'CertificateSummaryList[].CertificateArn' --output text)
+    if [[ $LIST_OF_ACM_CERTS ]]; then
       for cert in $LIST_OF_ACM_CERTS; do
-        CERT_DATA=$($AWSCLI acm describe-certificate $PROFILE_OPT --region $regx --certificate-arn $cert --query 'Certificate.[DomainName,NotAfter]' --output text)
-        echo "$CERT_DATA" | while read FQDN NOTAFTER; do
-          EXPIRES_DATE=$(timestamp_to_date $NOTAFTER)
-          COUNTER_DAYS=$(how_many_days_from_today $EXPIRES_DATE)
-          if [[ $COUNTER_DAYS -le $DAYS_TO_EXPIRE_THRESHOLD ]]; then
-            textFail "$regx: Certificate for $FQDN is about to expire in $COUNTER_DAYS days!" "$regx" "$FQDN"
+        CERT_DATA=$("${AWSCLI}" acm describe-certificate ${PROFILE_OPT} --region "${regx}" --certificate-arn "${cert}" --query 'Certificate.[DomainName,NotAfter]' --output text)
+        # Format: domain.test.com YYYY-MM-DDTHH:MM:SS
+        echo "$CERT_DATA" | while read -r FQDN NOTAFTER; do
+          EXPIRES_DATE=$(timestamp_to_date "${NOTAFTER}")
+          if [[ "${EXPIRES_DATE}" == "" ]]
+          then
+            textInfo "${regx}: Certificate for ${FQDN} has an incorrect timestamp format: ${NOTAFTER}" "${regx}" "${FQDN}"
           else
-            textPass "$regx: Certificate for $FQDN expires in $COUNTER_DAYS days" "$regx" "$FQDN"
+            COUNTER_DAYS=$(how_many_days_from_today "${EXPIRES_DATE}")
+            if [[ $COUNTER_DAYS -le $DAYS_TO_EXPIRE_THRESHOLD ]]; then
+              textFail "${regx}: Certificate for ${FQDN} is about to expire in ${COUNTER_DAYS} days!" "${regx}" "${FQDN}"
+            else
+              textPass "${regx}: Certificate for ${FQDN} expires in ${COUNTER_DAYS} days" "${regx}" "{$FQDN}"
+            fi
           fi
         done
       done
     else
-      textInfo "$regx: No certificates found" "$regx"
+      textInfo "${regx}: No certificates found" "${regx}"
     fi
   done
 }
