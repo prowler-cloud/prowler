@@ -30,10 +30,31 @@ extra75(){
       continue
     fi
     LIST_OF_SECURITYGROUPS=$(echo $SECURITYGROUPS|jq -r 'to_entries|sort_by(.key)|.[]|.key')
+
+    # a security group could be part of launch template that isnt used right now but will be
+    TEMPLATE_SGS=()
+    TEMPLATES=$($AWSCLI ec2 describe-launch-templates $PROFILE_OPT --region $regx --query "LaunchTemplates[*].LaunchTemplateId" --output text)
+
+    for TEMPLATE in $TEMPLATES; do
+        TEMPLATE_SG=$($AWSCLI ec2 describe-launch-template-versions $PROFILE_OPT --region $regx --launch-template-id $TEMPLATE --query "LaunchTemplateVersions[*].LaunchTemplateData.SecurityGroupIds" --output text)
+        TEMPLATE_SGS+=( $TEMPLATE_SG )
+    done
+
     for SG_ID in $LIST_OF_SECURITYGROUPS; do
       SG_NOT_USED=$($AWSCLI ec2 describe-network-interfaces $PROFILE_OPT --region $regx --filters "Name=group-id,Values=$SG_ID" --query "length(NetworkInterfaces)" --output text)
+      USED_BY_TEMPLATE=1
+      
+      if [[ $TEMPLATE_SGS != "" ]]; then 
+        for i in "${TEMPLATE_SGS[@]}"
+        do
+          if [ "$i" == "$SG_ID" ] ; then
+            USED_BY_TEMPLATE=0
+          fi
+        done
+      fi
+
       # Default security groups can not be deleted, so draw attention to them
-      if [[ $SG_NOT_USED -eq 0 ]];then
+      if [[ $SG_NOT_USED -eq 0 ]] && [[ $USED_BY_TEMPLATE != 0 ]];then
         GROUP_NAME=$(echo $SECURITYGROUPS | jq -r --arg id $SG_ID '.[$id]')
         if [[ $GROUP_NAME != "default" ]];
         then
