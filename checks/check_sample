@@ -70,8 +70,8 @@
 #       while read -r INSTANCE_ID PUBLIC_IP; do
 #         textFail "${regx}: Instance: ${INSTANCE_ID} at IP: ${PUBLIC_IP} is internet-facing!" "${regx}" "${INSTANCE_ID}"
 #       done <<< "${LIST_OF_PUBLIC_INSTANCES}"
-#       else
-#         textPass "${regx}: no Internet Facing EC2 Instances found" "${regx}"
+#     else
+#       textPass "${regx}: no Internet Facing EC2 Instances found" "${regx}"
 #     fi
 #   done
 # }
