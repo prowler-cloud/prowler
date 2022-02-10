@@ -38,7 +38,7 @@
 
 # General comments
 # ----------------
-# Do not add double quotes (") arround variable ${PROFILE_OPT}
+# Do not add double quotes (") arround variable ${PROFILE_OPT} because this variable holds "--profile <profile-name>" and we need to read it as it is
 # Always check for AccessDenied|UnauthorizedOperation|AuthorizationError after AWS CLI command, using "2>&1" at the end
 # Avoid execute the same AWS CLI command again to check different attribute:
 #  - Return all attributes on "--query"
@@ -52,6 +52,7 @@
 #  - ${var:N:len}  : Return 'len' characters from position 'N'
 #  - ${var^^}      : Convert to upper-case all characters
 #  - ${var,,}      : Convert to lower-case all characters
+#  - For more examples and how to use it please refer to https://www.gnu.org/software/bash/manual/bash.html#Shell-Parameter-Expansion
 # Check code with ShellCheck for best practices:
 #  - https://www.shellcheck.net/
 #  - https://github.com/koalaman/shellcheck#user-content-in-your-editor
