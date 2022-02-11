@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Gets account details with a given ACCOUNT_ID.
+# Prowler requires organizations:ListAccounts* and organizations:ListTagsForResource
+# Below requires organizations:ListTagsForResource
+# tags are in json format with comman, in order to avoid breaking the CSV or JSON
+# in order to use them, a post-processor is needed.
+
+get_orgs_account_details(){
+    ACCOUNTS_DETAILS=$($AWSCLI $PROFILE_OPT -r $REGION organizations list-accounts --output json 2>&1)
+    if [[ $(echo "$ACCOUNTS_DETAILS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to list AWS Organization accounts. Prowler requires organizations:ListAccounts* and organizations:ListTagsForResource" "$regx"
+        continue
+    fi
+    # Prowler gets only ACTIVE accounts details
+    ACCOUNT_DETAILS_EMAIL=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID "$1" '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $1) | "\(.Email)"')
+    ACCOUNT_DETAILS_NAME=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID "$1" '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $1) | "\(.Name)"')
+    ACCOUNT_DETAILS_ARN=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID "$1" '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $1) | "\(.Arn)"')
+    ACCOUNT_DETAILS_ORG=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID "$1" '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $1) | "\(.Arn)"'| awk -F/ '{ print $2 }')
+    ACCOUNT_DETAILS_TAGS=$($AWSCLI $PROFILE_OPT -r $REGION aws organizations list-tags-for-resource --resource-id $1 --output json | jq -c '. | @base64' 2>&1)
+}
+
+get_orgs_account_details_logic(){
+    if [[ ${MANAGEMENT_ACCOUNT_ID} ]];then 
+        if [[ ${MANAGEMENT_ACCOUNT_ID} == ${ACCOUNT_ID} ]];then 
+            echo "Prowler is running in the AWS Organizations Management Account"
+            get_orgs_account_details ${ACCOUNT_ID}
+        elif [[ ${MANAGEMENT_ACCOUNT_ID} == ${ACCOUNT_TO_ASSUME} ]];then 
+            echo "Prowler is assuming role in the AWS Organizations Management Account"
+            get_orgs_account_details ${ACCOUNT_TO_ASSUME}
+        fi 
+    else
+        ACCOUNT_DETAILS_EMAIL="use -O option. Prowler requires organizations:ListAccounts* and organizations:ListTagsForResource"
+        ACCOUNT_DETAILS_NAME="${ACCOUNT_DETAILS_EMAIL}"
+        ACCOUNT_DETAILS_ARN="${ACCOUNT_DETAILS_EMAIL}"
+        ACCOUNT_DETAILS_ORG="${ACCOUNT_DETAILS_EMAIL}"
+    fi
+}

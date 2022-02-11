@@ -110,13 +110,15 @@ USAGE:
       -z                  Failed checks do not trigger exit code 3.
       -Z                  Specify one or multiple check ids separated by commas that will trigger exit code 3 if they fail. Unspecified checks will not trigger exit code 3. This will override "-z".
                             (i.e.: "-Z check11,check12" will cause check11 and/or check12 to trigger exit code 3)
+      -O <mgmnt acct ID>   Specify AWS Organizations management account ID. Used to get account details.
+                            (requires organizations:ListAccounts* and organizations:ListTagsForResource)
       -V                  Show version number & exit.
       -h                  This help.
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:" OPTION; do
+while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -223,6 +225,10 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:" OPTION; 
      Z )
         FAILED_CHECK_FAILED_SCAN_LIST=$OPTARG
         ;;
+     O )
+        MANAGEMENT_ACCOUNT_ID=$OPTARG
+        ;;
+
      : )
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL  -$OPTARG requires an argument"
@@ -287,6 +293,7 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/connection_tests
 . $PROWLER_DIR/include/securityhub_integration
 . $PROWLER_DIR/include/junit_integration
+. $PROWLER_DIR/include/organizations_metadata
 
 # Parses the check file into CHECK_ID's.
 if [[ -n "$CHECK_FILE" ]]; then
@@ -650,6 +657,7 @@ if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
   backupInitialAWSCredentials
   assume_role
 fi
+get_orgs_account_details $ACCOUNT_ID
 
 # List regions
 get_regions
