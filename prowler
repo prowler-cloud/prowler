@@ -110,7 +110,7 @@ USAGE:
       -z                  Failed checks do not trigger exit code 3.
       -Z                  Specify one or multiple check ids separated by commas that will trigger exit code 3 if they fail. Unspecified checks will not trigger exit code 3. This will override "-z".
                             (i.e.: "-Z check11,check12" will cause check11 and/or check12 to trigger exit code 3)
-      -O <mgmnt acct ID>   Specify AWS Organizations management account ID. Used to get account details.
+      -O <mgmnt acct ID>  Specify AWS Organizations management account ID. Used to get account details.
                             (requires organizations:ListAccounts* and organizations:ListTagsForResource)
       -V                  Show version number & exit.
       -h                  This help.
@@ -654,10 +654,17 @@ fi
 # Gather account data / test aws cli connectivity
 getWhoami
 if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
+  get_orgs_account_details_logic $MANAGEMENT_ACCOUNT_ID
+  textInfo " asumiendo rol---- valor de account to assume: $ACCOUNT_TO_ASSUME"
   backupInitialAWSCredentials
   assume_role
+
+# else
+#   textInfo "sin asumir ---- valor en el if de account id $ACCOUNT_NUM "
+#   get_orgs_account_details_logic $ACCOUNT_NUM
 fi
-get_orgs_account_details $ACCOUNT_ID
+
+# get_orgs_account_details_logic $ACCOUNT_NUM
 
 # List regions
 get_regions

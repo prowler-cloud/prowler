@@ -13,37 +13,101 @@
 
 # Gets account details with a given ACCOUNT_ID.
 # Prowler requires organizations:ListAccounts* and organizations:ListTagsForResource
-# Below requires organizations:ListTagsForResource
-# tags are in json format with comman, in order to avoid breaking the CSV or JSON
-# in order to use them, a post-processor is needed.
+# in the management account in order to get that data. SecurityAudit managed policy includes them.
+
+# Account Tags are in json format with comma, however they are converted to Base64 
+# in order to avoid breaking the CSV or JSON. To use them a post-processor is needed.
+
+assume_role_management_account(){
+    # temporary file where to store credentials
+    TEMP_ORG_STS_ASSUMED_FILE=$(mktemp -t prowler.org_sts_assumed-XXXXXX)
+    TEMP_ORG_STS_ASSUMED_ERROR=$(mktemp -t prowler.org_sts_assumed-XXXXXX)
+
+    # check if role arn or role name
+    if [[ $ROLE_TO_ASSUME == arn:* ]]; then
+        PROWLER_ROLE=$ROLE_TO_ASSUME
+    else
+        PROWLER_ROLE=arn:${AWS_PARTITION}:iam::$ACCOUNT_TO_ASSUME:role/$ROLE_TO_ASSUME
+    fi
+
+    # Check if external ID has bee provided if so execute with external ID if not ignore
+    ROLE_EXTERNAL_ID_OPTION=""
+    if [[ -n "${ROLE_EXTERNAL_ID}" ]]; then
+        ROLE_EXTERNAL_ID_OPTION="--external-id ${ROLE_EXTERNAL_ID}"
+    fi
+
+    # Assume role
+    if ! $AWSCLI $PROFILE_OPT sts assume-role --role-arn $PROWLER_ROLE \
+        --role-session-name ProwlerAssessmentSession \
+        --duration-seconds $SESSION_DURATION_TO_ASSUME \
+        --region $REGION_FOR_STS \
+        "${ROLE_EXTERNAL_ID_OPTION}" > $TEMP_STS_ASSUMED_FILE 2>"${TEMP_STS_ASSUMED_ERROR}"
+    then
+        STS_ERROR="$(cat ${TEMP_STS_ASSUMED_ERROR} | tr '\n' ' ')"
+        textFail "${STS_ERROR}"
+        EXITCODE=1
+        exit $EXITCODE
+    fi
+    
+    # echo FILE WITH TEMP CREDS: $TEMP_STS_ASSUMED_FILE
+    
+    # The profile shouldn't be used for CLI
+    PROFILE=""
+    PROFILE_OPT=""   
+
+    # Set AWS environment variables with assumed role credentials
+    ASSUME_AWS_ACCESS_KEY_ID=$(jq -r '.Credentials.AccessKeyId' "${TEMP_STS_ASSUMED_FILE}")
+    export AWS_ACCESS_KEY_ID=$ASSUME_AWS_ACCESS_KEY_ID
+    ASSUME_AWS_SECRET_ACCESS_KEY=$(jq -r '.Credentials.SecretAccessKey'  "${TEMP_STS_ASSUMED_FILE}")
+    export AWS_SECRET_ACCESS_KEY=$ASSUME_AWS_SECRET_ACCESS_KEY
+    ASSUME_AWS_SESSION_TOKEN=$(jq -r '.Credentials.SessionToken'  "${TEMP_STS_ASSUMED_FILE}")
+    export AWS_SESSION_TOKEN=$ASSUME_AWS_SESSION_TOKEN
+    ASSUME_AWS_SESSION_EXPIRATION=$(jq -r '.Credentials.Expiration | sub("\\+00:00";"Z") | fromdateiso8601'  "${TEMP_STS_ASSUMED_FILE}")
+    export AWS_SESSION_EXPIRATION=$ASSUME_AWS_SESSION_EXPIRATION
+    # echo TEMP AWS_ACCESS_KEY_ID: $ASSUME_AWS_ACCESS_KEY_ID
+    # echo TEMP AWS_SECRET_ACCESS_KEY: $ASSUME_AWS_SECRET_ACCESS_KEY
+    # echo TEMP AWS_SESSION_TOKEN: $ASSUME_AWS_SESSION_TOKEN
+    # echo EXPIRATION EPOCH TIME: $ASSUME_AWS_SESSION_EXPIRATION
+
+}
 
 get_orgs_account_details(){
-    ACCOUNTS_DETAILS=$($AWSCLI $PROFILE_OPT -r $REGION organizations list-accounts --output json 2>&1)
+    # -O to get info from Orgs management account needs also (-A) and (-R)
+    if [[ $MANAGEMENT_ACCOUNT_ID ]];then
+        if [[ -z $ROLE_TO_ASSUME || -z $ACCOUNT_TO_ASSUME ]]; then
+            echo "$OPTRED ERROR!$OPTNORMAL - Both Account ID (-A) and IAM Role to assume (-R) must be set with -O"
+            exit 1
+        fi
+        assume_role_management_account $MANAGEMENT_ACCOUNT_ID
+    fi 
+    
+    # Below requires organizations:ListTagsForResource
+    ACCOUNTS_DETAILS=$($AWSCLI $PROFILE_OPT --region $REGION organizations list-accounts --output json 2>&1)
     if [[ $(echo "$ACCOUNTS_DETAILS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textInfo "$regx: Access Denied trying to list AWS Organization accounts. Prowler requires organizations:ListAccounts* and organizations:ListTagsForResource" "$regx"
-        continue
+        textInfo "$regx: Access Denied trying to list AWS Organization accounts. Prowler requires organizations:List*" "$regx"
+    else 
+        # Prowler gets only ACTIVE accounts details
+        ACCOUNT_DETAILS_EMAIL=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID $2 '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $ACCOUNT_ID) | "\(.Email)"')
+        ACCOUNT_DETAILS_NAME=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID $2 '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $ACCOUNT_ID) | "\(.Name)"')
+        ACCOUNT_DETAILS_ARN=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID $2 '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $ACCOUNT_ID) | "\(.Arn)"')
+        ACCOUNT_DETAILS_ORG=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID $2 '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $ACCOUNT_ID) | "\(.Arn)"'| awk -F/ '{ print $2 }')
+        ACCOUNT_DETAILS_TAGS=$($AWSCLI $PROFILE_OPT --region $REGION organizations list-tags-for-resource --resource-id $1 --output json | jq -c '. | @base64' 2>&1)
+        if [[ $(echo "$ACCOUNTS_DETAILS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textInfo "$regx: Access Denied trying to list AWS Organization accounts. Prowler requires organizations:List*" "$regx"
+        fi
     fi
-    # Prowler gets only ACTIVE accounts details
-    ACCOUNT_DETAILS_EMAIL=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID "$1" '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $1) | "\(.Email)"')
-    ACCOUNT_DETAILS_NAME=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID "$1" '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $1) | "\(.Name)"')
-    ACCOUNT_DETAILS_ARN=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID "$1" '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $1) | "\(.Arn)"')
-    ACCOUNT_DETAILS_ORG=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID "$1" '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $1) | "\(.Arn)"'| awk -F/ '{ print $2 }')
-    ACCOUNT_DETAILS_TAGS=$($AWSCLI $PROFILE_OPT -r $REGION aws organizations list-tags-for-resource --resource-id $1 --output json | jq -c '. | @base64' 2>&1)
 }
 
 get_orgs_account_details_logic(){
     if [[ ${MANAGEMENT_ACCOUNT_ID} ]];then 
-        if [[ ${MANAGEMENT_ACCOUNT_ID} == ${ACCOUNT_ID} ]];then 
-            echo "Prowler is running in the AWS Organizations Management Account"
-            get_orgs_account_details ${ACCOUNT_ID}
-        elif [[ ${MANAGEMENT_ACCOUNT_ID} == ${ACCOUNT_TO_ASSUME} ]];then 
-            echo "Prowler is assuming role in the AWS Organizations Management Account"
-            get_orgs_account_details ${ACCOUNT_TO_ASSUME}
-        fi 
-    else
-        ACCOUNT_DETAILS_EMAIL="use -O option. Prowler requires organizations:ListAccounts* and organizations:ListTagsForResource"
-        ACCOUNT_DETAILS_NAME="${ACCOUNT_DETAILS_EMAIL}"
-        ACCOUNT_DETAILS_ARN="${ACCOUNT_DETAILS_EMAIL}"
-        ACCOUNT_DETAILS_ORG="${ACCOUNT_DETAILS_EMAIL}"
-    fi
+        echo "Prowler is getting details from the AWS Organizations Management Account: $1..."
+        get_orgs_account_details ${MANAGEMENT_ACCOUNT_ID} ${ACCOUNT_NUM}
+    fi 
+    # else
+    #     ACCOUNT_DETAILS_EMAIL="Use -O <mgmnt acct ID>"
+    #     ACCOUNT_DETAILS_NAME="${ACCOUNT_DETAILS_EMAIL}"
+    #     ACCOUNT_DETAILS_ARN="${ACCOUNT_DETAILS_EMAIL}"
+    #     ACCOUNT_DETAILS_ORG="${ACCOUNT_DETAILS_EMAIL}"
+    #     ACCOUNT_DETAILS_TAGS="${ACCOUNT_DETAILS_EMAIL}"
+    # fi
 }
