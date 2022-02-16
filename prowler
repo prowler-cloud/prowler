@@ -244,7 +244,7 @@ clean_up() {
   rm -f /tmp/prowler*.policy.*
   # in case html output is used, make sure it closes html file properly
   if [[ "${MODES[@]}" =~ "html" ]]; then
-    addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    addHtmlFooter >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
   fi
   # puts the AWS_DEFAULT_OUTPUT back to what it was at the start
   if [ -z "$ORIGINAL_OUTPUT"]; then
@@ -660,7 +660,7 @@ if [[ $GROUP_ID_READ ]];then
 
     execute_group_by_id ${GROUP_ID_READ} ${EXCLUDE_CHECK_ID}
     if [[ "${MODES[@]}" =~ "html" ]]; then
-      addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+      addHtmlFooter >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
     fi
     cleanTemp
     scoring
@@ -693,7 +693,7 @@ if [[ $CHECK_ID ]];then
     execute_check $CHECK
   done
   if [[ "${MODES[@]}" =~ "html" ]]; then
-    addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    addHtmlFooter >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
   fi
   if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
     restoreInitialAWSCredentials
@@ -707,7 +707,7 @@ fi
 execute_all
 
 if [[ "${MODES[@]}" =~ "html" ]]; then
-  addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  addHtmlFooter >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
 fi
 
 scoring
