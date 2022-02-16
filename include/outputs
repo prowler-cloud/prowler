@@ -69,7 +69,7 @@ PROWLER_PARAMETERS=$@
 if [[ $MODE ]];then
   mkdir -p "${OUTPUT_DIR}"
   if [[ "${MODES[@]}" =~ "html" ]]; then
-    addHtmlHeader > ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+    addHtmlHeader > '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
     HTML_REPORT_INIT="1"
   fi
   if [[ "${MODES[@]}" =~ "csv" ]]; then
@@ -412,22 +412,22 @@ generateHtmlOutput(){
   
   local CHECK_SEVERITY="$(echo $CHECK_SEVERITY | sed 's/[][]//g')"
 
-  echo '<tr class="'$ROW_CLASS'">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td>'$status'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td>'$CHECK_SEVERITY'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td>'$CHECK_ASFF_COMPLIANCE_TYPE'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td>'$CHECK_SERVICENAME'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td>'$message'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td>'$ITEM_CIS_LEVEL'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td>'$CHECK_CAF_EPIC'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td><a class="read-more" href="'$CHECK_DOC'"><i class="fas fa-external-link-alt"></i></a></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td>'$CHECK_RESOURCE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '<tr class="'$ROW_CLASS'">' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '  <td>'$status'</td>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '  <td>'$CHECK_SEVERITY'</td>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '  <td>'$ACCOUNT_NUM'</td>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '  <td>'$REPREGION'</td>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '  <td>'$CHECK_ASFF_COMPLIANCE_TYPE'</td>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '  <td>'$CHECK_SERVICENAME'</td>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '  <td>'$TITLE_ID'</td>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '  <td>'$TITLE_TEXT'</td>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '  <td>'$message'</td>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '  <td>'$ITEM_CIS_LEVEL'</td>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '  <td>'$CHECK_CAF_EPIC'</td>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '  <td><p class="show-read-more">'$CHECK_RISK'</p></td>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '  <td><p class="show-read-more">'$CHECK_REMEDIATION'</p></td>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '  <td><a class="read-more" href="'$CHECK_DOC'"><i class="fas fa-external-link-alt"></i></a></td>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '  <td>'$CHECK_RESOURCE_ID'</td>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '</tr>' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
+  echo '' >> '${OUTPUT_FILE_NAME}.$EXTENSION_HTML'
 }
