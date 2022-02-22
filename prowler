@@ -655,7 +655,6 @@ fi
 getWhoami
 if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
   get_orgs_account_details_logic $MANAGEMENT_ACCOUNT_ID
-  textInfo " asumiendo rol---- valor de account to assume: $ACCOUNT_TO_ASSUME"
   backupInitialAWSCredentials
   assume_role
 
