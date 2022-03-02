@@ -53,8 +53,8 @@ extra771(){
                                                                                                                                                                             ) and
                                                                                                                                                                             .Condition == null
                                                                                                                                                                           )' | tr '\n' ' ')
-        # Waiting comment on issue #1019
-        #BUCKET_POLICY_BAD_STATEMENTS=$(echo "${BUCKET_POLICY_BAD_STATEMENTS}" | sed 's|,|[comma]|g')
+        # Make sure JSON comma characted will not break CSV output. Replace "," by word "[comma]"
+        BUCKET_POLICY_BAD_STATEMENTS="${BUCKET_POLICY_BAD_STATEMENTS//,/[comma]}"
         if [[ "${BUCKET_POLICY_BAD_STATEMENTS}" != "" ]]; then
           textFail "${REGION}: Bucket ${bucket} allows public write: ${BUCKET_POLICY_BAD_STATEMENTS}" "${REGION}" "${bucket}"
         else
