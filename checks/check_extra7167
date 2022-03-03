@@ -27,7 +27,7 @@ CHECK_CAF_EPIC_extra7167='Infrastructure security'
 extra7167() {
   if [[ "$($AWSCLI $PROFILE_OPT shield get-subscription-state --output text)" == "ACTIVE" ]]; then
     LIST_OF_CLOUDFRONT_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions $PROFILE_OPT --query 'DistributionList.Items[*].[Id,ARN]' --output text)
-    if [[ $LIST_OF_CLOUDFRONT_DISTRIBUTIONS ]]; then
+    if [[ $LIST_OF_CLOUDFRONT_DISTRIBUTIONS != "None"]]; then
       while read -r distribution; do
         DISTRIBUTION_ID=$(echo $distribution | awk '{ print $1; }')
         DISTRIBUTION_ARN=$(echo $distribution | awk '{ print $2; }')
