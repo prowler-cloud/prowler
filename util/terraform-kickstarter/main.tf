@@ -314,15 +314,17 @@ resource "aws_iam_policy" "prowler_kickstarter_iam_policy" {
                   "ds:ListAuthorizedApplications",
                   "ec2:GetEbsEncryptionByDefault",
                   "ecr:Describe*",
-                  "support:Describe*",
-                  "tag:GetTagKeys",
-                  "lambda:GetFunction",
+                  "elasticfilesystem:DescribeBackupPolicy",
                   "glue:GetConnections",
                   "glue:GetSecurityConfiguration",
                   "glue:SearchTables",
+                  "lambda:GetFunction",
                   "s3:GetAccountPublicAccessBlock",
+                  "shield:DescribeProtection",
                   "shield:GetSubscriptionState",
-                  "shield:DescribeProtection"
+                  "ssm:GetDocument",
+                  "support:Describe*",
+                  "tag:GetTagKeys"
                   ]
         Effect   = "Allow"
         Resource = "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog"

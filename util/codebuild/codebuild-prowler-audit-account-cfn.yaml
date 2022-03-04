@@ -141,7 +141,7 @@ Resources:
           - id: W28
             reason: "Explicit name is required for this resource to avoid circular dependencies."
     Properties:
-      RoleName: !Sub 'prowler-codebuild-role'
+      RoleName: 'prowler-codebuild-role'
       Path: '/service-role/'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/job-function/SupportUser'
@@ -187,17 +187,19 @@ Resources:
                   - ds:ListAuthorizedApplications
                   - ec2:GetEbsEncryptionByDefault
                   - ecr:Describe*
-                  - support:Describe*
-                  - tag:GetTagKeys
-                  - lambda:GetFunction
+                  - elasticfilesystem:DescribeBackupPolicy
                   - glue:GetConnections
                   - glue:GetSecurityConfiguration
                   - glue:SearchTables
+                  - lambda:GetFunction
                   - s3:GetAccountPublicAccessBlock
-                  - shield:GetSubscriptionState
                   - shield:DescribeProtection
+                  - shield:GetSubscriptionState
+                  - ssm:GetDocument
+                  - support:Describe*
+                  - tag:GetTagKeys
                 Effect: Allow
-                Resource: !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:catalog'
+                Resource: '*'
         - PolicyName: CodeBuild
           PolicyDocument:
             Version: '2012-10-17'

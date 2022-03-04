@@ -42,7 +42,7 @@ extra776(){
   for region in $REGIONS; do
     LIST_ECR_REPOS=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $region --query "repositories[*].[repositoryName]" --output text 2>&1)
     if [[ $(echo "$LIST_ECR_REPOS" | grep AccessDenied) ]]; then
-      textInfo "$region: Access Denied trying to describe ECR repositories"
+      textInfo "$region: Access Denied trying to describe ECR repositories" "$region"
       continue
     fi
     if [[ ! -z "$LIST_ECR_REPOS" ]]; then

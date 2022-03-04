@@ -19,7 +19,9 @@ RUN yum install -y shadow-utils && \
   curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip && \
   unzip awscliv2.zip && \
   aws/install && \
-  rm -rf aws awscliv2.zip /var/cache/yum
+  rm -rf aws awscliv2.zip /var/cache/yum && \
+  rm /usr/bin/python && \
+  ln -s /usr/bin/python3 /usr/bin/python
 
 WORKDIR /prowler
 

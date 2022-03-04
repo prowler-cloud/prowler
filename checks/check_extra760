@@ -24,8 +24,13 @@ CHECK_DOC_extra760='https://docs.aws.amazon.com/secretsmanager/latest/userguide/
 CHECK_CAF_EPIC_extra760='IAM'
 
 extra760(){
+<<<<<<< HEAD
   SECRETS_TEMP_FOLDER="${PROWLER_DIR}/secrets-${ACCOUNT_NUM}"
   if [[ ! -d "${SECRETS_TEMP_FOLDER}" ]]; then
+=======
+  SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM-$PROWLER_START_TIME"
+  if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then
+>>>>>>> master
     # this folder is deleted once this check is finished
     mkdir "${SECRETS_TEMP_FOLDER}"
   fi
