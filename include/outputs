@@ -169,16 +169,17 @@ textFail(){
   colorcode="$BAD"
   while read -r excluded_item; do
     ignore_check_name="${excluded_item%%:*}" # Check name is everything up to the first :
-    # Resource value is the second field of line included in whitelist divided by :
-    resource_value=$(awk -F ":" '{print $2}' <<< $excluded_item)
+    # Resource value is what it comes after CHECK_NAME: :
+    resource_value=$(awk -F "$CHECK_NAME:" '{print $2}' <<< "${excluded_item}")
     # Checked value is the whole log message that comes as argument
     checked_value=$1
     if [[ "${ignore_check_name}" != "${CHECK_NAME}" ]]; then
       # not for this check
       continue
     fi
-    # To set WARNING flag both values must be exactly the same
-    if [[ "${checked_value}" == *"${resource_value}"* ]]; then
+    # To set WARNING flag checked_value have to include value of resource_value
+    # If it is treated as only expanse (*[]*) will not detect regex like [:alpha:]
+    if [[ "${checked_value}" =~ ${resource_value} ]]; then
       level="WARNING"
       colorcode="${WARNING}"
       break
