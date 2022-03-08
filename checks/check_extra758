@@ -24,6 +24,7 @@ CHECK_DOC_extra758='https://docs.aws.amazon.com/systems-manager/latest/userguide
 CHECK_CAF_EPIC_extra758='Infrastructure Security'
 
 extra758(){
+  # OLDAGE has the following format: YYYY-MM-DD
   OLDAGE="$(get_date_previous_than_months 12)"
   for regx in ${REGIONS}; do
     INSTACES_OLD_THAN_AGE=$("${AWSCLI}" ec2 describe-instances --query "Reservations[].Instances[?LaunchTime<='${OLDAGE}'][].[InstanceId, LaunchTime, State.Name]" ${PROFILE_OPT} --region "${regx}" --output text 2>&1)
