@@ -168,7 +168,8 @@ textFail(){
   level="FAIL"
   colorcode="$BAD"
   while read -r excluded_item; do
-    ignore_check_name="${excluded_item%%:*}" # Check name is everything up to the first :
+    # ignore_check_name is the check with resources whitelisted
+    ignore_check_name=$(awk -F ":" '{print $1}' <<< "${excluded_item}")
     # Resource value is what it comes after CHECK_NAME: :
     resource_value=$(awk -F "$CHECK_NAME:" '{print $2}' <<< "${excluded_item}")
     # Checked value is the whole log message that comes as argument
