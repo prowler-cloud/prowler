@@ -52,6 +52,8 @@
 #  - ${var:N:len}  : Return 'len' characters from position 'N'
 #  - ${var^^}      : Convert to upper-case all characters
 #  - ${var,,}      : Convert to lower-case all characters
+#  - ATTENTION: macOS original bash version "GNU bash, version 3.2.57(1)-release (x86_64-apple-darwin19)" doesn't support some variable expansion above.
+#               Please make sure to test it.
 #  - For more examples and how to use it please refer to https://www.gnu.org/software/bash/manual/bash.html#Shell-Parameter-Expansion
 # Check code with ShellCheck for best practices:
 #  - https://www.shellcheck.net/

@@ -25,27 +25,27 @@ CHECK_DOC_extra7101='https://docs.aws.amazon.com/elasticsearch-service/latest/de
 CHECK_CAF_EPIC_extra7101='Logging and Monitoring'
 
 extra7101(){
-  for regx in $REGIONS; do
-    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query 'DomainNames[].DomainName' --output text 2>&1)
-    if [[ $(echo "$LIST_OF_DOMAINS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textInfo "$regx: Access Denied trying to list domain names" "$regx"
+  for regx in ${REGIONS}; do
+    LIST_OF_DOMAINS=$("${AWSCLI}" es list-domain-names ${PROFILE_OPT} --region "${regx}" --query 'DomainNames[].DomainName' --output text 2>&1)
+    if [[ $(echo "${LIST_OF_DOMAINS}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "${regx}: Access Denied trying to list domain names" "${regx}"
         continue
     fi
-    if [[ $LIST_OF_DOMAINS ]]; then
-      for domain in $LIST_OF_DOMAINS;do
-        AUDIT_LOGS_ENABLED=$($AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainConfig.LogPublishingOptions.Options.AUDIT_LOGS.Enabled' --output text 2>&1)
-        if [[ $(echo "$AUDIT_LOGS_ENABLED" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-            textInfo "$regx: Access Denied trying to get ES domain config for $domain" "$regx"
+    if [[ "${LIST_OF_DOMAINS}" ]]; then
+      for domain in ${LIST_OF_DOMAINS}; do
+        AUDIT_LOGS_ENABLED=$("${AWSCLI}" es describe-elasticsearch-domain-config --domain-name "${domain}" ${PROFILE_OPT} --region "${regx}" --query 'DomainConfig.LogPublishingOptions.Options.AUDIT_LOGS.Enabled' --output text 2>&1)
+        if [[ $(echo "${AUDIT_LOGS_ENABLED}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textInfo "${regx}: Access Denied trying to get ES domain config for ${domain}" "${regx}"
             continue
         fi
-        if [[ "${AUDIT_LOGS_ENABLED,,}" == "true" ]];then
-          textPass "$regx: Amazon ES domain $domain AUDIT_LOGS enabled" "$regx" "$domain"
+        if [[ $(echo "${AUDIT_LOGS_ENABLED}" | tr '[:upper:]' '[:lower:]') == "true" ]]; then
+          textPass "${regx}: Amazon ES domain ${domain} AUDIT_LOGS enabled" "${regx}" "${domain}"
         else
-          textFail "$regx: Amazon ES domain $domain AUDIT_LOGS disabled!" "$regx" "$domain"
+          textFail "${regx}: Amazon ES domain ${domain} AUDIT_LOGS disabled!" "${regx}" "${domain}"
         fi
       done
     else
-      textInfo "$regx: No Amazon ES domain found" "$regx"
+      textInfo "${regx}: No Amazon ES domain found" "${regx}"
     fi
   done
 }

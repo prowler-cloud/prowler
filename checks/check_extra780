@@ -24,27 +24,27 @@ CHECK_DOC_extra780='https://docs.aws.amazon.com/elasticsearch-service/latest/dev
 CHECK_CAF_EPIC_extra780='IAM'
 
 extra780(){
-  for regx in $REGIONS; do
-    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query 'DomainNames[].DomainName' --output text 2>&1)
-    if [[ $(echo "$LIST_OF_DOMAINS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textInfo "$regx: Access Denied trying to list domain names" "$regx"
+  for regx in ${REGIONS}; do
+    LIST_OF_DOMAINS=$("${AWSCLI}" es list-domain-names ${PROFILE_OPT} --region "${regx}" --query 'DomainNames[].DomainName' --output text 2>&1)
+    if [[ $(echo "${LIST_OF_DOMAINS}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "${regx}: Access Denied trying to list domain names" "${regx}"
         continue
     fi
-    if [[ $LIST_OF_DOMAINS ]]; then
-      for domain in $LIST_OF_DOMAINS;do
-        CHECK_IF_COGNITO_ENABLED=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.CognitoOptions.Enabled' --output text 2>&1)
-        if [[ $(echo "$CHECK_IF_COGNITO_ENABLED" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-            textInfo "$regx: Access Denied trying to get ES domain $domain" "$regx"
+    if [[ "${LIST_OF_DOMAINS}" ]]; then
+      for domain in ${LIST_OF_DOMAINS}; do
+        CHECK_IF_COGNITO_ENABLED=$("${AWSCLI}" es describe-elasticsearch-domain --domain-name "${domain}" ${PROFILE_OPT} --region "${regx}" --query 'DomainStatus.CognitoOptions.Enabled' --output text 2>&1)
+        if [[ $(echo "${CHECK_IF_COGNITO_ENABLED}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textInfo "${regx}: Access Denied trying to get ES domain ${domain}" "${regx}"
             continue
         fi
-        if [[ "${CHECK_IF_COGNITO_ENABLED,,}" == "true" ]];then
-          textPass "$regx: Amazon ES domain $domain has Amazon Cognito authentication for Kibana enabled" "$regx" "$domain"
+        if [[ $(echo "${CHECK_IF_COGNITO_ENABLED}" | tr '[:upper:]' '[:lower:]') == "true" ]]; then
+          textPass "${regx}: Amazon ES domain ${domain} has Amazon Cognito authentication for Kibana enabled" "${regx}" "${domain}"
         else
-          textFail "$regx: Amazon ES domain $domain does not have Amazon Cognito authentication for Kibana enabled" "$regx" "$domain"
+          textFail "${regx}: Amazon ES domain ${domain} does not have Amazon Cognito authentication for Kibana enabled" "${regx}" "${domain}"
         fi
       done
     else
-      textInfo "$regx: No Amazon ES domain found" "$regx"
+      textInfo "${regx}: No Amazon ES domain found" "${regx}"
     fi
   done
 }

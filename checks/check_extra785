@@ -29,28 +29,28 @@ CHECK_CAF_EPIC_extra785='Infrastructure Security'
 # I have to investigate further
 
 extra785(){
-  for regx in $REGIONS; do
-    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query 'DomainNames[].DomainName' --output text 2>&1)
-    if [[ $(echo "$LIST_OF_DOMAINS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textInfo "$regx: Access Denied trying to list domain names" "$regx"
+  for regx in ${REGIONS}; do
+    LIST_OF_DOMAINS=$("${AWSCLI}" es list-domain-names ${PROFILE_OPT} --region "${regx}" --query 'DomainNames[].DomainName' --output text 2>&1)
+    if [[ $(echo "${LIST_OF_DOMAINS}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "${regx}: Access Denied trying to list domain names" "${regx}"
         continue
     fi
-    if [[ $LIST_OF_DOMAINS ]]; then
-      for domain in $LIST_OF_DOMAINS;do
-        CHECK_IF_UPDATE_AVAILABLE_AND_VERSION=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.[ServiceSoftwareOptions.UpdateAvailable,ElasticsearchVersion]' --output text 2>&1)
-        if [[ $(echo "$CHECK_IF_UPDATE_AVAILABLE_AND_VERSION" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-            textInfo "$regx: Access Denied trying to get ES domain $domain" "$regx"
+    if [[ "${LIST_OF_DOMAINS}" ]]; then
+      for domain in ${LIST_OF_DOMAINS}; do
+        CHECK_IF_UPDATE_AVAILABLE_AND_VERSION=$("${AWSCLI}" es describe-elasticsearch-domain --domain-name "${domain}" ${PROFILE_OPT} --region "${regx}" --query 'DomainStatus.[ServiceSoftwareOptions.UpdateAvailable,ElasticsearchVersion]' --output text 2>&1)
+        if [[ $(echo "${CHECK_IF_UPDATE_AVAILABLE_AND_VERSION}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textInfo "${regx}: Access Denied trying to get ES domain ${domain}" "${regx}"
             continue
         fi
-        read update_status es_version <<< "$CHECK_IF_UPDATE_AVAILABLE_AND_VERSION" &&
-        if [[ ${update_status,,} != "false" ]];then
-          textInfo "$regx: Amazon ES domain $domain v$es_version has updates available" "$regx" "$domain"
+        read -r update_status es_version <<< "${CHECK_IF_UPDATE_AVAILABLE_AND_VERSION}" &&
+        if [[ $(echo "${update_status}" | tr '[:upper:]' '[:lower:]') != "false" ]]; then
+          textInfo "${regx}: Amazon ES domain ${domain} v${es_version} has updates available" "${regx}" "${domain}"
         else
-          textPass "$regx: Amazon ES domain $domain v$es_version does not have have updates available" "$regx" "$domain"
+          textPass "${regx}: Amazon ES domain ${domain} v${es_version} does not have have updates available" "${regx}" "${domain}"
         fi
       done
     else
-      textInfo "$regx: No Amazon ES domain found" "$regx"
+      textInfo "${regx}: No Amazon ES domain found" "${regx}"
     fi
   done
 }
