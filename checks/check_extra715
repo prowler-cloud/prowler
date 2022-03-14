@@ -37,14 +37,14 @@ extra715(){
             textInfo "${regx}: Access Denied trying to get ES domain config for ${domain}" "${regx}"
             continue
         fi
-        read -r SEARCH_SLOWLOG_ENABLED INDEX_SLOWLOG_ENABLED <<< "$SLOWLOG_ENABLED" && {
-          if [[ $(echo "${SEARCH_SLOWLOG_ENABLED}" | tr '[:upper:]' '[:lower:]') == "true" ]]; then
+        read -r SEARCH_SLOWLOG_ENABLED INDEX_SLOWLOG_ENABLED <<< "${SLOWLOG_ENABLED}" && {
+          if [[ $(tr '[:upper:]' '[:lower:]' <<< "${SEARCH_SLOWLOG_ENABLED}") == "true" ]]; then
             textPass "${regx}: Amazon ES domain ${domain} SEARCH_SLOW_LOGS enabled" "${regx}" "${domain}"
           else
             textFail "${regx}: Amazon ES domain ${domain} SEARCH_SLOW_LOGS disabled!" "${regx}" "${domain}"
           fi
 
-          if [[ $(echo "${INDEX_SLOWLOG_ENABLED}" | tr '[:upper:]' '[:lower:]') == "true" ]]; then
+          if [[ $(tr '[:upper:]' '[:lower:]' <<< "${INDEX_SLOWLOG_ENABLED}") == "true" ]]; then
             textPass "${regx}: Amazon ES domain ${domain} INDEX_SLOW_LOGS enabled" "${regx}" "${domain}"
           else
             textFail "${regx}: Amazon ES domain ${domain} INDEX_SLOW_LOGS disabled!" "${regx}" "${domain}"

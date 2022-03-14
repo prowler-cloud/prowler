@@ -43,7 +43,7 @@ extra785(){
             continue
         fi
         read -r update_status es_version <<< "${CHECK_IF_UPDATE_AVAILABLE_AND_VERSION}" &&
-        if [[ $(echo "${update_status}" | tr '[:upper:]' '[:lower:]') != "false" ]]; then
+        if [[ $(tr '[:upper:]' '[:lower:]' <<< "${update_status}") != "false" ]]; then
           textInfo "${regx}: Amazon ES domain ${domain} v${es_version} has updates available" "${regx}" "${domain}"
         else
           textPass "${regx}: Amazon ES domain ${domain} v${es_version} does not have have updates available" "${regx}" "${domain}"

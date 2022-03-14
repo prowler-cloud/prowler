@@ -38,7 +38,7 @@ extra7101(){
             textInfo "${regx}: Access Denied trying to get ES domain config for ${domain}" "${regx}"
             continue
         fi
-        if [[ $(echo "${AUDIT_LOGS_ENABLED}" | tr '[:upper:]' '[:lower:]') == "true" ]]; then
+        if [[ $(tr '[:upper:]' '[:lower:]' <<< "${AUDIT_LOGS_ENABLED}") == "true" ]]; then
           textPass "${regx}: Amazon ES domain ${domain} AUDIT_LOGS enabled" "${regx}" "${domain}"
         else
           textFail "${regx}: Amazon ES domain ${domain} AUDIT_LOGS disabled!" "${regx}" "${domain}"
