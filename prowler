@@ -294,6 +294,7 @@ TOTAL_CHECKS=($(echo "${TOTAL_CHECKS[*]}" | tr ' ' '\n' | awk '!seen[$0]++' | so
 # Function to get all regions
 get_regions() {
   # Get list of regions based on include/whoami
+  FILTERREGION.replace(",", " ")
   REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' --output text $PROFILE_OPT --region $REGION_FOR_STS --region-names $FILTERREGION 2>&1)
   if [[ $(echo "$REGIONS" | grep 'AccessDenied\|UnauthorizedOperation') ]]; then
     echo "$OPTRED Access Denied trying to describe regions! Review permissions as described here: https://github.com/toniblyx/prowler/#requirements-and-installation $OPTNORMAL"
