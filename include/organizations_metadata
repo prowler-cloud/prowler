@@ -18,46 +18,6 @@
 # Account Tags are in json format with comma, however they are converted to Base64 
 # in order to avoid breaking the CSV or JSON. To use them a post-processor is needed.
 
-assume_role_management_account(){
-    # temporary file where to store credentials
-    TEMP_ORG_STS_ASSUMED_FILE=$(mktemp -t prowler.org_sts_assumed-XXXXXX)
-    TEMP_ORG_STS_ASSUMED_ERROR=$(mktemp -t prowler.org_sts_assumed-XXXXXX)
-
-    PROWLER_MANAGEMENT_ACCOUNT_ROLE=arn:${AWS_PARTITION}:iam::${1}:role/$ROLE_TO_ASSUME
-
-    # Check if external ID has bee provided if so execute with external ID if not ignore
-    ROLE_EXTERNAL_ID_OPTION=""
-    if [[ -n "${ROLE_EXTERNAL_ID}" ]]; then
-        ROLE_EXTERNAL_ID_OPTION="--external-id ${ROLE_EXTERNAL_ID}"
-    fi
-
-    # Assume role
-    if ! $AWSCLI $PROFILE_OPT sts assume-role --role-arn $PROWLER_MANAGEMENT_ACCOUNT_ROLE \
-        --role-session-name ProwlerAssessmentSession \
-        --region $REGION_FOR_STS \
-        "${ROLE_EXTERNAL_ID_OPTION}" > $TEMP_ORG_STS_ASSUMED_FILE 2>"${TEMP_ORG_STS_ASSUMED_ERROR}"
-    then
-        STS_ERROR="$(cat ${TEMP_STS_ASSUMED_ERROR} | tr '\n' ' ')"
-        textFail "${STS_ERROR}"
-        EXITCODE=1
-        exit $EXITCODE
-    fi
-        
-    # The profile shouldn't be used for CLI
-    PROFILE=""
-    PROFILE_OPT=""   
-
-    # Set AWS environment variables with assumed role credentials
-    ASSUME_AWS_ACCESS_KEY_ID=$(jq -r '.Credentials.AccessKeyId' "${TEMP_ORG_STS_ASSUMED_FILE}")
-    export AWS_ACCESS_KEY_ID=$ASSUME_AWS_ACCESS_KEY_ID
-    ASSUME_AWS_SECRET_ACCESS_KEY=$(jq -r '.Credentials.SecretAccessKey'  "${TEMP_ORG_STS_ASSUMED_FILE}")
-    export AWS_SECRET_ACCESS_KEY=$ASSUME_AWS_SECRET_ACCESS_KEY
-    ASSUME_AWS_SESSION_TOKEN=$(jq -r '.Credentials.SessionToken'  "${TEMP_ORG_STS_ASSUMED_FILE}")
-    export AWS_SESSION_TOKEN=$ASSUME_AWS_SESSION_TOKEN
-    ASSUME_AWS_SESSION_EXPIRATION=$(jq -r '.Credentials.Expiration | sub("\\+00:00";"Z") | fromdateiso8601'  "${TEMP_ORG_STS_ASSUMED_FILE}")
-    export AWS_SESSION_EXPIRATION=$ASSUME_AWS_SESSION_EXPIRATION
-}
-
 get_orgs_account_details(){
     # -O to get info from Orgs management account needs also (-A) and (-R)
     if [[ $MANAGEMENT_ACCOUNT_ID ]];then
@@ -65,7 +25,7 @@ get_orgs_account_details(){
             echo "$OPTRED ERROR!$OPTNORMAL - Both Account ID (-A) and IAM Role to assume (-R) must be set with -O"
             exit 1
         fi
-        assume_role_management_account $MANAGEMENT_ACCOUNT_ID
+        assume_role
     fi 
     
     # Below requires organizations:ListTagsForResource
