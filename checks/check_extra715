@@ -24,34 +24,35 @@ CHECK_DOC_extra715='https://docs.aws.amazon.com/elasticsearch-service/latest/dev
 CHECK_CAF_EPIC_extra715='Logging and Monitoring'
 
 extra715(){
-  for regx in $REGIONS; do
-    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query 'DomainNames[].DomainName' --output text 2>&1)
-    if [[ $(echo "$LIST_OF_DOMAINS" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
-        textInfo "$regx: Access Denied trying to list domain names" "$regx"
+  for regx in ${REGIONS}; do
+    LIST_OF_DOMAINS=$("${AWSCLI}" es list-domain-names ${PROFILE_OPT} --region "${regx}" --query 'DomainNames[].DomainName' --output text 2>&1)
+    if [[ $(echo "${LIST_OF_DOMAINS}" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
+        textInfo "${regx}: Access Denied trying to list domain names" "${regx}"
         continue
     fi
-    if [[ $LIST_OF_DOMAINS ]]; then
-      for domain in $LIST_OF_DOMAINS;do
-        SLOWLOG_ENABLED=$($AWSCLI es describe-elasticsearch-domain-config --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainConfig.LogPublishingOptions.Options.[SEARCH_SLOW_LOGS.Enabled, INDEX_SLOW_LOGS.Enabled]' --output text 2>&1)
-        if [[ $(echo "$SLOWLOG_ENABLED" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-            textInfo "$regx: Access Denied trying to get ES domain config for $domain" "$regx"
+    if [[ "${LIST_OF_DOMAINS}" ]]; then
+      for domain in ${LIST_OF_DOMAINS}; do
+        SLOWLOG_ENABLED=$("${AWSCLI}" es describe-elasticsearch-domain-config --domain-name "${domain}" ${PROFILE_OPT} --region "${regx}" --query 'DomainConfig.LogPublishingOptions.Options.[SEARCH_SLOW_LOGS.Enabled, INDEX_SLOW_LOGS.Enabled]' --output text 2>&1)
+        if [[ $(echo "${SLOWLOG_ENABLED}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textInfo "${regx}: Access Denied trying to get ES domain config for ${domain}" "${regx}"
             continue
         fi
-        read SEARCH_SLOWLOG_ENABLED INDEX_SLOWLOG_ENABLED <<< "$SLOWLOG_ENABLED" && {
-          if [[ "${SEARCH_SLOWLOG_ENABLED,,}" == "true" ]];then
-            textPass "$regx: Amazon ES domain $domain SEARCH_SLOW_LOGS enabled" "$regx" "$domain"
+        read -r SEARCH_SLOWLOG_ENABLED INDEX_SLOWLOG_ENABLED <<< "${SLOWLOG_ENABLED}" && {
+          if [[ $(tr '[:upper:]' '[:lower:]' <<< "${SEARCH_SLOWLOG_ENABLED}") == "true" ]]; then
+            textPass "${regx}: Amazon ES domain ${domain} SEARCH_SLOW_LOGS enabled" "${regx}" "${domain}"
           else
-            textFail "$regx: Amazon ES domain $domain SEARCH_SLOW_LOGS disabled!" "$regx" "$domain"
+            textFail "${regx}: Amazon ES domain ${domain} SEARCH_SLOW_LOGS disabled!" "${regx}" "${domain}"
           fi
-          if [[ "${INDEX_SLOWLOG_ENABLED,,}" == "true" ]];then
-            textPass "$regx: Amazon ES domain $domain INDEX_SLOW_LOGS enabled" "$regx" "$domain"
+
+          if [[ $(tr '[:upper:]' '[:lower:]' <<< "${INDEX_SLOWLOG_ENABLED}") == "true" ]]; then
+            textPass "${regx}: Amazon ES domain ${domain} INDEX_SLOW_LOGS enabled" "${regx}" "${domain}"
           else
-            textFail "$regx: Amazon ES domain $domain INDEX_SLOW_LOGS disabled!" "$regx" "$domain"
+            textFail "${regx}: Amazon ES domain ${domain} INDEX_SLOW_LOGS disabled!" "${regx}" "${domain}"
           fi
         }
       done
     else
-      textInfo "$regx: No Amazon ES domain found" "$regx"
+      textInfo "${regx}: No Amazon ES domain found" "${regx}"
     fi
   done
 }
