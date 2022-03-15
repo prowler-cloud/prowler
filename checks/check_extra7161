@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra7161="7.161"
-CHECK_TITLE_extra7161="[extra7161] Check if EFS have protects sensative data with encryption at rest"
+CHECK_TITLE_extra7161="[extra7161] Check if EFS protects sensitive data with encryption at rest"
 CHECK_SCORED_extra7161="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7161="EXTRA"
 CHECK_SEVERITY_extra7161="Medium"
