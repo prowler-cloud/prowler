@@ -651,19 +651,27 @@ if is_junit_output_enabled; then
   prepare_junit_output
 fi
 
-# Backing up credentials
-backupInitialAWSCredentials
-#Backing up account to assume
-INI_ACCOUNT_TO_ASSUME="${ACCOUNT_TO_ASSUME}"
-if [[ -n "${MANAGEMENT_ACCOUNT_ID}" || -n "${ROLE_TO_ASSUME}" ]]; then
-  ACCOUNT_TO_ASSUME="${MANAGEMENT_ACCOUNT_ID}"
-  get_orgs_account_details_logic $MANAGEMENT_ACCOUNT_ID
-fi
-#Setting account to assume to -A field after getting account metadata
-ACCOUNT_TO_ASSUME="${INI_ACCOUNT_TO_ASSUME}"
+# First, check AWS Organizations Metadata
+if [[ -n "${MANAGEMENT_ACCOUNT_ID}" && -n "${ROLE_TO_ASSUME}" ]]
+then
+  # Backing up initial credentials
+  backupInitialAWSCredentials
 
-#Restoring credentials
-restoreInitialAWSCredentials
+  # Backing up initial account to assume
+  INITIAL_ACCOUNT_TO_ASSUME="${ACCOUNT_TO_ASSUME}"
+
+  # Set the new account to assume to recover AWS Organizations Metadata
+  ACCOUNT_TO_ASSUME="${MANAGEMENT_ACCOUNT_ID}"
+
+  # Recover AWS Organizations Metadata
+  get_orgs_account_details
+
+  # Restoring account to assume to -A field after getting account metadata
+  ACCOUNT_TO_ASSUME="${INITIAL_ACCOUNT_TO_ASSUME}"
+
+  # Restoring initial credentials
+  restoreInitialAWSCredentials
+fi
 
 # Gather account data / test aws cli connectivity
 getWhoami

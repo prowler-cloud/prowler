@@ -19,40 +19,23 @@
 # in order to avoid breaking the CSV or JSON. To use them a post-processor is needed.
 
 get_orgs_account_details(){
-    # -O to get info from Orgs management account needs also (-A) and (-R)
-    if [[ $MANAGEMENT_ACCOUNT_ID ]];then
-        if [[ -z $ROLE_TO_ASSUME || -z $ACCOUNT_TO_ASSUME ]]; then
-            echo "$OPTRED ERROR!$OPTNORMAL - Both Account ID (-A) and IAM Role to assume (-R) must be set with -O"
-            exit 1
-        fi
-        assume_role
-    fi 
-    
-    # Below requires organizations:ListTagsForResource
-    ACCOUNTS_DETAILS=$($AWSCLI $PROFILE_OPT --region $REGION organizations list-accounts --output json 2>&1)
-    if [[ $(echo "$ACCOUNTS_DETAILS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textInfo "$regx: Access Denied trying to list AWS Organization accounts. Prowler requires organizations:List*" "$regx"
-    else 
-        # Prowler gets only ACTIVE accounts details
-        ACCOUNT_DETAILS_EMAIL=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID $2 '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $ACCOUNT_ID) | "\(.Email)"')
-        ACCOUNT_DETAILS_NAME=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID $2 '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $ACCOUNT_ID) | "\(.Name)"')
-        ACCOUNT_DETAILS_ARN=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID $2 '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $ACCOUNT_ID) | "\(.Arn)"')
-        ACCOUNT_DETAILS_ORG=$(echo $ACCOUNTS_DETAILS | jq -r --arg ACCOUNT_ID $2 '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $ACCOUNT_ID) | "\(.Arn)"'| awk -F/ '{ print $2 }')
-        ACCOUNT_DETAILS_TAGS=$($AWSCLI $PROFILE_OPT --region $REGION organizations list-tags-for-resource --resource-id $1 --output json | jq -c '. | @base64' 2>&1)
-        if [[ $(echo "$ACCOUNTS_DETAILS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-            textInfo "$regx: Access Denied trying to list AWS Organization accounts. Prowler requires organizations:List*" "$regx"
-        fi
-    fi
-}
+    echo " Prowler is getting details from the AWS Organizations Management Account: ${MANAGEMENT_ACCOUNT_ID}..."
+    # Assume role to recover AWS Organizations metadata
+    assume_role
 
-get_orgs_account_details_logic(){
-    backupInitialAWSCredentials
-    
-    if [[ ${MANAGEMENT_ACCOUNT_ID} ]];then 
-        echo " Prowler is getting details from the AWS Organizations Management Account: $1..."
-        get_orgs_account_details ${MANAGEMENT_ACCOUNT_ID} ${ACCOUNT_NUM}
-    fi 
-    restoreInitialAWSCredentials
-    rm -fr "${TEMP_ORG_STS_ASSUMED_FILE}"
-    rm -fr "${TEMP_ORG_STS_ASSUMED_ERROR}"
+    # The following code requires organizations:ListTagsForResource
+    ACCOUNTS_DETAILS=$($AWSCLI $PROFILE_OPT --region "${REGION}" organizations list-accounts --output json 2>&1)
+    if ! grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${ACCOUNTS_DETAILS}"
+    then
+        # Prowler gets only ACTIVE accounts details
+        ACCOUNT_DETAILS_EMAIL=$(jq -r --arg ACCOUNT_ID "${ACCOUNT_NUM}" '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $ACCOUNT_ID) | "\(.Email)"' <<< "${ACCOUNTS_DETAILS}")
+        ACCOUNT_DETAILS_NAME=$(jq -r --arg ACCOUNT_ID "${ACCOUNT_NUM}" '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $ACCOUNT_ID) | "\(.Name)"' <<< "${ACCOUNTS_DETAILS}")
+        ACCOUNT_DETAILS_ARN=$(jq -r --arg ACCOUNT_ID "${ACCOUNT_NUM}" '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $ACCOUNT_ID) | "\(.Arn)"' <<< "${ACCOUNTS_DETAILS}")
+        ACCOUNT_DETAILS_ORG=$(jq -r --arg ACCOUNT_ID "${ACCOUNT_NUM}" '.Accounts[] | select(.Status == "ACTIVE") | select(.Id == $ACCOUNT_ID) | "\(.Arn)"' <<< "${ACCOUNTS_DETAILS}" | awk -F/ '{ print $2 }')
+        ACCOUNT_DETAILS_TAGS=$($AWSCLI $PROFILE_OPT --region "${REGION}" organizations list-tags-for-resource --resource-id "${MANAGEMENT_ACCOUNT_ID}" --output json | jq -c '. | @base64' 2>&1)
+    else 
+        # textFail "${regx}: Access Denied trying to list AWS Organization accounts. Prowler requires organizations:List*" "$regx"
+        textInfo "Access Denied trying to list AWS Organization accounts. Prowler requires organizations:List*"
+        exit 1
+    fi
 }

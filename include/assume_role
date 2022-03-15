@@ -92,7 +92,6 @@ cleanSTSAssumeFile() {
 }
 
 backupInitialAWSCredentials() {
-
     if [[ $(printenv AWS_ACCESS_KEY_ID) && $(printenv AWS_SECRET_ACCESS_KEY) && $(printenv AWS_SESSION_TOKEN) ]]; then 
         INITIAL_AWS_ACCESS_KEY_ID=$(printenv AWS_ACCESS_KEY_ID)
         INITIAL_AWS_SECRET_ACCESS_KEY=$(printenv AWS_SECRET_ACCESS_KEY)
