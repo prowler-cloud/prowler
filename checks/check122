@@ -30,8 +30,8 @@ check122(){
   LIST_CUSTOM_POLICIES=$($AWSCLI iam list-policies --output text $PROFILE_OPT --region $REGION --scope Local --query 'Policies[*].[Arn,DefaultVersionId]' | grep -v -e '^None$' | awk -F '\t' '{print $1","$2"\n"}')
   if [[ $LIST_CUSTOM_POLICIES ]]; then
     for policy in $LIST_CUSTOM_POLICIES; do
-      POLICY_ARN=$(echo $policy | awk 'BEGIN{FS=OFS=","}{NF--; print}')
-      POLICY_VERSION=$(echo $policy | awk -F ',' '{print $(NF)}')
+      POLICY_ARN=$(awk 'BEGIN{FS=OFS=","}{NF--; print}' <<< "${policy}")
+      POLICY_VERSION=$(awk -F ',' '{print $(NF)}' <<< "${policy}")
       POLICY_WITH_FULL=$($AWSCLI iam get-policy-version --output text --policy-arn $POLICY_ARN --version-id $POLICY_VERSION --query "[PolicyVersion.Document.Statement] | [] | [?Action!=null] | [?Effect == 'Allow' && Resource == '*' && Action == '*']" $PROFILE_OPT --region $REGION)
       if [[ $POLICY_WITH_FULL ]]; then
         POLICIES_ALLOW_LIST="$POLICIES_ALLOW_LIST $POLICY_ARN"
@@ -39,7 +39,7 @@ check122(){
     done
     if [[ $POLICIES_ALLOW_LIST ]]; then
       for policy in $POLICIES_ALLOW_LIST; do
-        textFail "$REGION: Policy $policy allows \"*:*\"" "$REGION" "$policy"
+        textFail "$REGION: Policy ${policy//,/[comma]} allows \"*:*\"" "$REGION" "$policy"
       done
     else
         textPass "$REGION: No custom policy found that allow full \"*:*\" administrative privileges" "$REGION"
