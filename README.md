@@ -363,7 +363,7 @@ Then run Prowler to assume a role (same in all members) per each account, in thi
 ```
 for accountId in $ACCOUNTS_IN_ORGS; do ./prowler -A $accountId -R RemoteRoleToAssume -c extra79; done
 ```
-Usig the same for loop it can be scanned a list of accounts with a variable like `ACCOUNTS_LIST='11111111111 2222222222 333333333'`
+Using the same for loop it can be scanned a list of accounts with a variable like `ACCOUNTS_LIST='11111111111 2222222222 333333333'`
 
 ### Get AWS Account details from your AWS Organization:
 
