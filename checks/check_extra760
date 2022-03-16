@@ -58,7 +58,7 @@ extra760(){
           fi
           continue
         fi
-        if grep -q 'Zip archive data' <(file "${LAMBDA_FUNCTION_FOLDER}/${LAMBDA_FUNCTION_FILE}"); then
+        if ! grep -q 'Zip archive data' <(file "${LAMBDA_FUNCTION_FOLDER}/${LAMBDA_FUNCTION_FILE}"); then
           textInfo "${regx}: Error trying to get Lambda function code for ${lambdafunction}. File is not a Zip" "${regx}" "${lambdafunction}"
           # delete files to not leave trace, user must look at the function
           if [[ -d "${LAMBDA_FUNCTION_FOLDER}" ]]; then
