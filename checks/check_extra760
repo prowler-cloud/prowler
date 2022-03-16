@@ -32,7 +32,7 @@ extra760(){
 
   for regx in ${REGIONS}; do
     LIST_OF_FUNCTIONS=$("${AWSCLI}" lambda list-functions ${PROFILE_OPT} --region "${regx}" --query 'Functions[*].FunctionName' --output text 2>&1)
-    if [[ $(echo "${LIST_OF_FUNCTIONS}" | grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_FUNCTIONS}"; then
       textInfo "${regx}: Access Denied trying to list Lambda functions" "${regx}"
       continue
     fi
@@ -41,7 +41,7 @@ extra760(){
         LAMBDA_FUNCTION_FOLDER="${SECRETS_TEMP_FOLDER}/extra760-${lambdafunction}-${regx}"
         LAMBDA_FUNCTION_FILE="${lambdafunction}-code.zip"
         LAMBDA_CODE_LOCATION=$("${AWSCLI}" lambda get-function ${PROFILE_OPT} --region "${regx}" --function-name "${lambdafunction}" --query 'Code.Location' --output text 2>&1)
-        if [[ $(echo "${LAMBDA_CODE_LOCATION}" | grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LAMBDA_CODE_LOCATION}"; then
           textInfo "${regx}: Access Denied trying to get Lambda functions" "${regx}" "${lambdafunction}"
           continue
         fi
@@ -58,8 +58,7 @@ extra760(){
           fi
           continue
         fi
-        IS_ZIP_FILE=$(file "${LAMBDA_FUNCTION_FOLDER}/${LAMBDA_FUNCTION_FILE}" | grep -q 'Zip archive data')
-        if [[ -z "${IS_ZIP_FILE}" ]]; then
+        if grep -q 'Zip archive data' <(file "${LAMBDA_FUNCTION_FOLDER}/${LAMBDA_FUNCTION_FILE}"); then
           textInfo "${regx}: Error trying to get Lambda function code for ${lambdafunction}. File is not a Zip" "${regx}" "${lambdafunction}"
           # delete files to not leave trace, user must look at the function
           if [[ -d "${LAMBDA_FUNCTION_FOLDER}" ]]; then
