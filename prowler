@@ -110,7 +110,7 @@ USAGE:
       -z                  Failed checks do not trigger exit code 3.
       -Z                  Specify one or multiple check ids separated by commas that will trigger exit code 3 if they fail. Unspecified checks will not trigger exit code 3. This will override "-z".
                             (i.e.: "-Z check11,check12" will cause check11 and/or check12 to trigger exit code 3)
-      -O <mgmnt acct ID>  Specify AWS Organizations management account ID. Used to get account details.
+      -O <mgmnt acct ID>  Specify AWS Organizations management account ID. Used to get account details, requires -R.
                             (requires organizations:ListAccounts* and organizations:ListTagsForResource)
       -V                  Show version number & exit.
       -h                  This help.
