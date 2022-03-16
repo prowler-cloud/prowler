@@ -36,7 +36,7 @@ extra760(){
       textInfo "${regx}: Access Denied trying to list Lambda functions" "${regx}"
       continue
     fi
-    if [[ -n "${LIST_OF_FUNCTIONS}" && "${LIST_OF_FUNCTIONS,,}" != "none" ]]; then
+    if [[ -n "${LIST_OF_FUNCTIONS}" && $(tr '[:upper:]' '[:lower:]' <<< "${LIST_OF_FUNCTIONS}") != "none" ]]; then
       for lambdafunction in ${LIST_OF_FUNCTIONS}; do
         LAMBDA_FUNCTION_FOLDER="${SECRETS_TEMP_FOLDER}/extra760-${lambdafunction}-${regx}"
         LAMBDA_FUNCTION_FILE="${lambdafunction}-code.zip"
