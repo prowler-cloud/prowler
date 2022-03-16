@@ -365,6 +365,30 @@ for accountId in $ACCOUNTS_IN_ORGS; do ./prowler -A $accountId -R RemoteRoleToAs
 ```
 Usig the same for loop it can be scanned a list of accounts with a variable like `ACCOUNTS_LIST='11111111111 2222222222 333333333'`
 
+### Get AWS Account details from your AWS Organization:
+
+From Prowler v2.8, you can get additional information of the scanned account in CSV and JSON outputs. When scanning a single account you get the Account ID as part of the output. Now, if you have AWS Organizations and are scanning multiple accounts using the assume role functionality, Prowler can get your account details like Account Name, Email, ARN, Organization ID and Tags and you will have them next to every finding in the CSV and JSON outputs.
+In order to do that you can use the new option `-O <management account id>`, requires `-R <role to assume>` and also needs permissions `organizations:ListAccounts*` and `organizations:ListTagsForResource`. See the following sample command:
+```
+./prowler -R ProwlerScanRole -A 111111111111 -O 222222222222 -M json,csv
+```
+In that command Prowler will scan the account `111111111111` assuming the role `ProwlerScanRole` and getting the account details from the AWS Organizatiosn management account `222222222222` assuming the same role `ProwlerScanRole` for that and creating two reports with those details in JSON and CSV.
+
+In the JSON output below (redacted) you can see tags coded in base64 to prevent breaking CSV or JSON due to its format:
+
+```json
+  "Account Email": "my-prod-account@domain.com",
+  "Account Name": "my-prod-account",
+  "Account ARN": "arn:aws:organizations::222222222222:account/o-abcde1234/111111111111",
+  "Account Organization": "o-abcde1234",
+  "Account tags": "\"eyJUYWdzIjpasf0=\""
+```
+The additional fields in CSV header output are as follow:
+
+```csv
+ACCOUNT_DETAILS_EMAIL,ACCOUNT_DETAILS_NAME,ACCOUNT_DETAILS_ARN,ACCOUNT_DETAILS_ORG,ACCOUNT_DETAILS_TAGS
+```
+
 ### GovCloud
 
 Prowler runs in GovCloud regions as well. To make sure it points to the right API endpoint use `-r` to either `us-gov-west-1` or `us-gov-east-1`. If not filter region is used it will look for resources in both GovCloud regions by default:
