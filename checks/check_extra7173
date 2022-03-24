@@ -23,18 +23,18 @@
 #     --filter-pattern '{ ($.eventName = CreateTrail) || ($.eventName = UpdateTrail) || ($.eventName = DeleteTrail) || ($.eventName = StartLogging) || ($.eventName = StopLogging) }' \
 #     --metric-transformations metricName=CloudTrailEventCount,metricNamespace=CloudTrailMetrics,metricValue=1
 
-CHECK_ID_checkN="7.173"
-CHECK_TITLE_checkN="[check7173] SGs created by Wizard "
-CHECK_SCORED_checkN="NOT_SCORED"
-CHECK_CIS_LEVEL_checkN="EXTRA"
-CHECK_SEVERITY_checkNN="Medium"
-CHECK_ASFF_RESOURCE_TYPE_checkN="AwsAccount" # Choose appropriate value from https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
-CHECK_ALTERNATE_checkN="extra7173"
-CHECK_SERVICENAME_checkN="service" # get service short name from `curl -s https://api.regional-table.region-services.aws.a2z.com/index.json | jq -r '.prices[] | .id' | awk -F: '{ print $1 }' | sort -u`
-CHECK_RISK_checkN="NA"
-CHECK_REMEDIATION_checkN="NA"
-CHECK_DOC_checkN="NA"
-CHECK_CAF_EPIC_checkN="NA"
+CHECK_ID_extra7173="7.173"
+CHECK_TITLE_extra7173="[check7173] SGs created by Wizard "
+CHECK_SCORED_extra7173="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7173="EXTRA"
+CHECK_SEVERITY_extra7173="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7173="AwsAccount" # Choose appropriate value from https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
+CHECK_ALTERNATE_extra7173="extra7173"
+CHECK_SERVICENAME_extra7173="service" # get service short name from `curl -s https://api.regional-table.region-services.aws.a2z.com/index.json | jq -r '.prices[] | .id' | awk -F: '{ print $1 }' | sort -u`
+CHECK_RISK_cextra7173="NA"
+CHECK_REMEDIATION_extra7173="NA"
+CHECK_DOC_extra7173="NA"
+CHECK_CAF_EPIC_extra7173="NA"
 
 # General comments
 # ----------------
