@@ -25,7 +25,7 @@ CHECK_DOC_extra7173="CHECK_DOC_extra7173='https://docs.aws.amazon.com/eks/latest
 CHECK_CAF_EPIC_extra7173="Infrastructure Security"
 
 extra7173(){
-  # "Ensure the default security group of every VPC restricts all traffic (Scored)"
+  # "Ensure no security groups are created using Console EC2 Wizard"
 
   for regx in $REGIONS; do
     CHECK_SGDEFAULT_IDS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --filters Name=group-name,Values='*wizard*' --query 'SecurityGroups[*].GroupId[]' --output text 2>&1)
@@ -33,7 +33,7 @@ extra7173(){
         textInfo "$regx: Access Denied trying to describe security groups" "$regx"
         continue
     fi
-    if [[ $CHECK_SGDEFAULT_IDS ]]
+    if [[ $CHECK_SGDEFAULT_IDS ]]; then
       for CHECK_SGDEFAULT_ID in $CHECK_SGDEFAULT_IDS; do
           textFail "$regx: Security Group ($CHECK_SGDEFAULT_ID) created using the Wizard" "$regx" "$CHECK_SGDEFAULT_ID"
       done
