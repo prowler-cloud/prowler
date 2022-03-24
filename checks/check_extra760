@@ -31,58 +31,63 @@ extra760(){
   fi
 
   for regx in ${REGIONS}; do
-    LIST_OF_FUNCTIONS=$("${AWSCLI}" lambda list-functions ${PROFILE_OPT} --region "${regx}" --query 'Functions[*].FunctionName' --output text 2>&1)
-    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_FUNCTIONS}"; then
-      textInfo "${regx}: Access Denied trying to list Lambda functions" "${regx}"
-      continue
-    fi
-    if [[ -n "${LIST_OF_FUNCTIONS}" && $(tr '[:upper:]' '[:lower:]' <<< "${LIST_OF_FUNCTIONS}") != "none" ]]; then
-      for lambdafunction in ${LIST_OF_FUNCTIONS}; do
-        LAMBDA_FUNCTION_FOLDER="${SECRETS_TEMP_FOLDER}/extra760-${lambdafunction}-${regx}"
-        LAMBDA_FUNCTION_FILE="${lambdafunction}-code.zip"
-        LAMBDA_CODE_LOCATION=$("${AWSCLI}" lambda get-function ${PROFILE_OPT} --region "${regx}" --function-name "${lambdafunction}" --query 'Code.Location' --output text 2>&1)
-        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LAMBDA_CODE_LOCATION}"; then
-          textInfo "${regx}: Access Denied trying to get Lambda functions" "${regx}" "${lambdafunction}"
-          continue
-        fi
-        
-        mkdir "${LAMBDA_FUNCTION_FOLDER}"
-        
-        # DOWNLOAD the code in a zip file
-        CURL_ERROR=$(curl -s --show-error "${LAMBDA_CODE_LOCATION}" -o "${LAMBDA_FUNCTION_FOLDER}/${LAMBDA_FUNCTION_FILE}" 2>&1)
-        if [[ -n "${CURL_ERROR}" ]]; then
-          textInfo "${regx}: Error trying to get Lambda function code for ${lambdafunction} - ${CURL_ERROR}" "${regx}" "${lambdafunction}"
-          # delete files to not leave trace, user must look at the function
-          if [[ -d "${LAMBDA_FUNCTION_FOLDER}" ]]; then
-            rm -fr "${LAMBDA_FUNCTION_FOLDER}"
-          fi
-          continue
-        fi
-        if ! grep -q 'Zip archive data' <(file "${LAMBDA_FUNCTION_FOLDER}/${LAMBDA_FUNCTION_FILE}"); then
-          textInfo "${regx}: Error trying to get Lambda function code for ${lambdafunction}. File is not a Zip" "${regx}" "${lambdafunction}"
-          # delete files to not leave trace, user must look at the function
-          if [[ -d "${LAMBDA_FUNCTION_FOLDER}" ]]; then
-            rm -fr "${LAMBDA_FUNCTION_FOLDER}"
-          fi
-          continue
-        fi
-
-        unzip -qq "${LAMBDA_FUNCTION_FOLDER}/${LAMBDA_FUNCTION_FILE}" -d "${LAMBDA_FUNCTION_FOLDER}" && {
-          FINDINGS=$(secretsDetector folder "${LAMBDA_FUNCTION_FOLDER}")
-          if [[ ${FINDINGS} -eq 0 ]]; then
-            textPass "${regx}: No secrets found in Lambda function ${lambdafunction} code" "${regx}" "${lambdafunction}"
-          else
-            textFail "${regx}: Potential secret found in Lambda function ${lambdafunction} code" "${regx}" "${lambdafunction}"
-          fi
-        }
-
-        # delete files to not leave trace, user must look at the function
-        if [[ -d "${LAMBDA_FUNCTION_FOLDER}" ]]; then
-          rm -fr "${LAMBDA_FUNCTION_FOLDER}"
-        fi
-      done
+    CHECK_DETECT_SECRETS_INSTALLATION=$(secretsDetector)
+    if [[ $? -eq 241 ]]; then
+      textInfo "$regx: python library detect-secrets not found. Make sure it is installed correctly." "$regx"
     else
-      textInfo "${regx}: No Lambda functions found" "${regx}"
+      LIST_OF_FUNCTIONS=$("${AWSCLI}" lambda list-functions ${PROFILE_OPT} --region "${regx}" --query 'Functions[*].FunctionName' --output text 2>&1)
+      if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_FUNCTIONS}"; then
+        textInfo "${regx}: Access Denied trying to list Lambda functions" "${regx}"
+        continue
+      fi
+      if [[ -n "${LIST_OF_FUNCTIONS}" && $(tr '[:upper:]' '[:lower:]' <<< "${LIST_OF_FUNCTIONS}") != "none" ]]; then
+        for lambdafunction in ${LIST_OF_FUNCTIONS}; do
+          LAMBDA_FUNCTION_FOLDER="${SECRETS_TEMP_FOLDER}/extra760-${lambdafunction}-${regx}"
+          LAMBDA_FUNCTION_FILE="${lambdafunction}-code.zip"
+          LAMBDA_CODE_LOCATION=$("${AWSCLI}" lambda get-function ${PROFILE_OPT} --region "${regx}" --function-name "${lambdafunction}" --query 'Code.Location' --output text 2>&1)
+          if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LAMBDA_CODE_LOCATION}"; then
+            textInfo "${regx}: Access Denied trying to get Lambda functions" "${regx}" "${lambdafunction}"
+            continue
+          fi
+          
+          mkdir "${LAMBDA_FUNCTION_FOLDER}"
+          
+          # DOWNLOAD the code in a zip file
+          CURL_ERROR=$(curl -s --show-error "${LAMBDA_CODE_LOCATION}" -o "${LAMBDA_FUNCTION_FOLDER}/${LAMBDA_FUNCTION_FILE}" 2>&1)
+          if [[ -n "${CURL_ERROR}" ]]; then
+            textInfo "${regx}: Error trying to get Lambda function code for ${lambdafunction} - ${CURL_ERROR}" "${regx}" "${lambdafunction}"
+            # delete files to not leave trace, user must look at the function
+            if [[ -d "${LAMBDA_FUNCTION_FOLDER}" ]]; then
+              rm -fr "${LAMBDA_FUNCTION_FOLDER}"
+            fi
+            continue
+          fi
+          if ! grep -q 'Zip archive data' <(file "${LAMBDA_FUNCTION_FOLDER}/${LAMBDA_FUNCTION_FILE}"); then
+            textInfo "${regx}: Error trying to get Lambda function code for ${lambdafunction}. File is not a Zip" "${regx}" "${lambdafunction}"
+            # delete files to not leave trace, user must look at the function
+            if [[ -d "${LAMBDA_FUNCTION_FOLDER}" ]]; then
+              rm -fr "${LAMBDA_FUNCTION_FOLDER}"
+            fi
+            continue
+          fi
+
+          unzip -qq "${LAMBDA_FUNCTION_FOLDER}/${LAMBDA_FUNCTION_FILE}" -d "${LAMBDA_FUNCTION_FOLDER}" && {
+            FINDINGS=$(secretsDetector folder "${LAMBDA_FUNCTION_FOLDER}")
+            if [[ ${FINDINGS} -eq 0 ]]; then
+              textPass "${regx}: No secrets found in Lambda function ${lambdafunction} code" "${regx}" "${lambdafunction}"
+            else
+              textFail "${regx}: Potential secret found in Lambda function ${lambdafunction} code" "${regx}" "${lambdafunction}"
+            fi
+          }
+
+          # delete files to not leave trace, user must look at the function
+          if [[ -d "${LAMBDA_FUNCTION_FOLDER}" ]]; then
+            rm -fr "${LAMBDA_FUNCTION_FOLDER}"
+          fi
+        done
+      else
+        textInfo "${regx}: No Lambda functions found" "${regx}"
+      fi
     fi
   done
 

@@ -31,34 +31,39 @@ extra742(){
   fi
 
   for regx in $REGIONS; do
-    CFN_STACKS=$("${AWSCLI}" cloudformation describe-stacks $PROFILE_OPT --region "${regx}" --output json 2>&1)
-    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "$CFN_STACKS" ; then
-        textInfo "$regx: Access Denied trying to describe stacks" "$regx"
-        continue
-    fi
-    LIST_OF_CFN_STACKS=$(jq -r '.Stacks[].StackName' <<< "${CFN_STACKS}")
-    if [[ $LIST_OF_CFN_STACKS ]];then
-      for stackName in $LIST_OF_CFN_STACKS; do
-        CFN_OUTPUTS_FILE="$SECRETS_TEMP_FOLDER/extra742-${stackName}-${regx}-outputs.txt"
-        # OutputKey and OutputValue are separated by a colon because secrets-detector needs a way to link both values
-        jq --arg stackName "$stackName" -r '.Stacks[] | select( .StackName == $stackName ) | .Outputs[]? | "\(.OutputKey):\(.OutputValue)"' <<< "${CFN_STACKS}" > "${CFN_OUTPUTS_FILE}"
-        if [ -s "${CFN_OUTPUTS_FILE}" ];then
-          FINDINGS=$(secretsDetector file "${CFN_OUTPUTS_FILE}")
-            if [[ $FINDINGS -eq 0 ]]; then
-              textPass "$regx: No secrets found in stack ${stackName} Outputs" "$regx" "${stackName}"
-              # Delete file if nothing interesting is there
-              rm -f "${CFN_OUTPUTS_FILE}"
-            else
-              textFail "$regx: Potential secret found in stack ${stackName} Outputs" "$regx" "${stackName}"
-              # Delete file to not leave trace, user must look at the CFN Stack
-              rm -f "${CFN_OUTPUTS_FILE}"
-            fi
-        else
-          textInfo "$regx: CloudFormation stack ${stackName} has no Outputs" "$regx"
-        fi
-      done
+    CHECK_DETECT_SECRETS_INSTALLATION=$(secretsDetector)
+    if [[ $? -eq 241 ]]; then
+      textInfo "$regx: python library detect-secrets not found. Make sure it is installed correctly." "$regx"
     else
-      textInfo "$regx: No CloudFormation stacks found" "$regx"
+      CFN_STACKS=$("${AWSCLI}" cloudformation describe-stacks $PROFILE_OPT --region "${regx}" --output json 2>&1)
+      if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "$CFN_STACKS" ; then
+          textInfo "$regx: Access Denied trying to describe stacks" "$regx"
+          continue
+      fi
+      LIST_OF_CFN_STACKS=$(jq -r '.Stacks[].StackName' <<< "${CFN_STACKS}")
+      if [[ $LIST_OF_CFN_STACKS ]];then
+        for stackName in $LIST_OF_CFN_STACKS; do
+          CFN_OUTPUTS_FILE="$SECRETS_TEMP_FOLDER/extra742-${stackName}-${regx}-outputs.txt"
+          # OutputKey and OutputValue are separated by a colon because secrets-detector needs a way to link both values
+          jq --arg stackName "$stackName" -r '.Stacks[] | select( .StackName == $stackName ) | .Outputs[]? | "\(.OutputKey):\(.OutputValue)"' <<< "${CFN_STACKS}" > "${CFN_OUTPUTS_FILE}"
+          if [ -s "${CFN_OUTPUTS_FILE}" ];then
+            FINDINGS=$(secretsDetector file "${CFN_OUTPUTS_FILE}")
+              if [[ $FINDINGS -eq 0 ]]; then
+                textPass "$regx: No secrets found in stack ${stackName} Outputs" "$regx" "${stackName}"
+                # Delete file if nothing interesting is there
+                rm -f "${CFN_OUTPUTS_FILE}"
+              else
+                textFail "$regx: Potential secret found in stack ${stackName} Outputs" "$regx" "${stackName}"
+                # Delete file to not leave trace, user must look at the CFN Stack
+                rm -f "${CFN_OUTPUTS_FILE}"
+              fi
+          else
+            textInfo "$regx: CloudFormation stack ${stackName} has no Outputs" "$regx"
+          fi
+        done
+      else
+        textInfo "$regx: No CloudFormation stacks found" "$regx"
+      fi
     fi
   done
 
