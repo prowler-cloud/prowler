@@ -24,17 +24,17 @@
 #     --metric-transformations metricName=CloudTrailEventCount,metricNamespace=CloudTrailMetrics,metricValue=1
 
 CHECK_ID_extra7173="7.173"
-CHECK_TITLE_extra7173="[check7173] SGs created by Wizard "
+CHECK_TITLE_extra7173="[check7173] SGs created by Wizard"
 CHECK_SCORED_extra7173="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7173="EXTRA"
 CHECK_SEVERITY_extra7173="Medium"
-CHECK_ASFF_RESOURCE_TYPE_extra7173="AwsAccount" # Choose appropriate value from https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
+CHECK_ASFF_RESOURCE_TYPE_extra7173="AwsEc2SecurityGroup" # Choose appropriate value from https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
 CHECK_ALTERNATE_extra7173="extra7173"
-CHECK_SERVICENAME_extra7173="service" # get service short name from `curl -s https://api.regional-table.region-services.aws.a2z.com/index.json | jq -r '.prices[] | .id' | awk -F: '{ print $1 }' | sort -u`
-CHECK_RISK_cextra7173="NA"
-CHECK_REMEDIATION_extra7173="NA"
-CHECK_DOC_extra7173="NA"
-CHECK_CAF_EPIC_extra7173="NA"
+CHECK_SERVICENAME_extra7173="ec2" # get service short name from `curl -s https://api.regional-table.region-services.aws.a2z.com/index.json | jq -r '.prices[] | .id' | awk -F: '{ print $1 }' | sort -u`
+CHECK_RISK_cextra7173="Security Groups Crated on the AWS Console using the EC2 wizard may allow port 22 from 0.0.0.0/0"
+CHECK_REMEDIATION_extra7173="Apply Zero Trust approach. Implement a process to scan and remediate security groups created by the EC2 Wizard. Recommended best practices is to use an authorized security group.'"
+CHECK_DOC_extra7173="CHECK_DOC_check41='https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html'"
+CHECK_CAF_EPIC_extra7173="Infrastructure Security"
 
 # General comments
 # ----------------
@@ -61,21 +61,6 @@ CHECK_CAF_EPIC_extra7173="NA"
 
 extra7173(){
   # "Ensure the default security group of every VPC restricts all traffic (Scored)"
-   for regx in $REGIONS; do
-    SG_LIST=$($AWSCLI ec2 describe-security-groups --query 'SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort==`0` && ToPort==`65535`)) && (contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}' $PROFILE_OPT --region $regx --output text 2>&1)
-    if [[ $(echo "$SG_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textInfo "$regx: Access Denied trying to describe security groups" "$regx"
-        continue
-    fi 
-    if [[ $SG_LIST ]];then
-      for SG in $SG_LIST;do
-        textFail "$regx: Found Security Group: $SG open to 0.0.0.0/0" "$regx" "$SG"
-      done
-    else
-      textPass "$regx: No Security Groups found with any port open to 0.0.0.0/0" "$regx"
-    fi
-  done
-}
 
   for regx in $REGIONS; do
     CHECK_SGDEFAULT_IDS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --filters Name=group-name,Values='*wizard*' --query 'SecurityGroups[*].GroupId[]' --output text 2>&1)
@@ -83,8 +68,12 @@ extra7173(){
         textInfo "$regx: Access Denied trying to describe security groups" "$regx"
         continue
     fi
-    for CHECK_SGDEFAULT_ID in $CHECK_SGDEFAULT_IDS; do
-        textPass "$regx: Security Group ($CHECK_SGDEFAULT_ID) created using the Wizard" "$regx" "$CHECK_SGDEFAULT_ID"
-    done
+    if [[ $CHECK_SGDEFAULT_IDS ]]
+      for CHECK_SGDEFAULT_ID in $CHECK_SGDEFAULT_IDS; do
+          textFail "$regx: Security Group ($CHECK_SGDEFAULT_ID) created using the Wizard" "$regx" "$CHECK_SGDEFAULT_ID"
+      done
+    else
+      textPass "$regx: No Security Groups found that were created using the Wizard" "$regx" "$CHECK_SGDEFAULT_ID"  
+    fi
   done
 }
