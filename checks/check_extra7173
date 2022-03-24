@@ -28,14 +28,15 @@ extra7173(){
   # "Ensure no security groups are created using Console EC2 Wizard"
 
   for regx in $REGIONS; do
-    CHECK_SGDEFAULT_IDS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --filters Name=group-name,Values='*wizard*' --query 'SecurityGroups[*].GroupId[]' --output text 2>&1)
+    CHECK_SGDEFAULT_IDS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --filters Name=group-name,Values='launch-wizard-*' --query 'SecurityGroups[*].GroupId[]' --output text 2>&1)
     if [[ $(echo "$CHECK_SGDEFAULT_IDS" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
         textInfo "$regx: Access Denied trying to describe security groups" "$regx"
         continue
     fi
     if [[ $CHECK_SGDEFAULT_IDS ]]; then
       for CHECK_SGDEFAULT_ID in $CHECK_SGDEFAULT_IDS; do
-          textFail "$regx: Security Group ($CHECK_SGDEFAULT_ID) created using the Wizard" "$regx" "$CHECK_SGDEFAULT_ID"
+          EXTENDED_RESULTS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --group-ids $CHECK_SGDEFAULT_ID --query 'SecurityGroups[*].Description[]' --output text 2>&1)
+          textFail "$regx: Security Group ($CHECK_SGDEFAULT_ID) desciption is: $EXTENDED_RESULTS" "$regx" "$CHECK_SGDEFAULT_ID"
       done
     else
       textPass "$regx: No Security Groups found that were created using the Wizard" "$regx" "$CHECK_SGDEFAULT_ID"  
