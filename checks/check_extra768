@@ -29,38 +29,43 @@ extra768(){
     mkdir $SECRETS_TEMP_FOLDER
   fi
   for regx in $REGIONS; do
-    # Get a list of all task definition families first:
-    FAMILIES=$($AWSCLI ecs list-task-definition-families $PROFILE_OPT --region $regx --status ACTIVE 2>&1 )
-    if [[ $(echo "$FAMILIES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textInfo "$regx: Access Denied trying to list task definition families" "$regx"
-        continue
-    fi 
-    if [[ $(echo $FAMILIES | jq -r .families[]) ]]; then
-      for FAMILY in $(echo $FAMILIES | jq -r .families[]);do
-        # Get the full task definition arn:
-        TASK_DEFINITION_TEMP=$($AWSCLI ecs list-task-definitions $PROFILE_OPT --region $regx --family-prefix $FAMILY --sort DESC --max-items 1 | jq -r .taskDefinitionArns[0])
-        # We only care about the task definition name:
-        IFS='/' read -r -a splitArn <<< "$TASK_DEFINITION_TEMP"
-        TASK_DEFINITION=${splitArn[1]}
-        TASK_DEFINITION_ENV_VARIABLES_FILE="$SECRETS_TEMP_FOLDER/extra768-$TASK_DEFINITION-$regx-variables.txt"
-        TASK_DEFINITION_ENV_VARIABLES=$($AWSCLI ecs $PROFILE_OPT --region $regx describe-task-definition --task-definition $TASK_DEFINITION --query 'taskDefinition.containerDefinitions[*].environment' --output text > $TASK_DEFINITION_ENV_VARIABLES_FILE)
-        if [ -s $TASK_DEFINITION_ENV_VARIABLES_FILE ];then
-          # Implementation using https://github.com/Yelp/detect-secrets
-          FINDINGS=$(secretsDetector file $TASK_DEFINITION_ENV_VARIABLES_FILE)
-          if [[ $FINDINGS -eq 0 ]]; then
-            textPass "$regx: No secrets found in ECS task definition $TASK_DEFINITION variables" "$regx" "$TASK_DEFINITION"
-            # delete file if nothing interesting is there
-            rm -f $TASK_DEFINITION_ENV_VARIABLES_FILE
-          else
-            textFail "$regx: Potential secret found in ECS task definition $TASK_DEFINITION variables" "$regx" "$TASK_DEFINITION"
-          fi
-        else
-          textInfo "$regx: ECS task definition $TASK_DEFINITION has no variables" "$regx" "$TASK_DEFINITION"
-          rm -f $TASK_DEFINITION_ENV_VARIABLES_FILE
-        fi
-      done
+    CHECK_DETECT_SECRETS_INSTALLATION=$(secretsDetector)
+    if [[ $? -eq 241 ]]; then
+      textInfo "$regx: python library detect-secrets not found. Make sure it is installed correctly." "$regx"
     else
-      textInfo "$regx: No ECS task definitions found" "$regx"
+      # Get a list of all task definition families first:
+      FAMILIES=$($AWSCLI ecs list-task-definition-families $PROFILE_OPT --region $regx --status ACTIVE 2>&1 )
+      if [[ $(echo "$FAMILIES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+          textInfo "$regx: Access Denied trying to list task definition families" "$regx"
+          continue
+      fi 
+      if [[ $(echo $FAMILIES | jq -r .families[]) ]]; then
+        for FAMILY in $(echo $FAMILIES | jq -r .families[]);do
+          # Get the full task definition arn:
+          TASK_DEFINITION_TEMP=$($AWSCLI ecs list-task-definitions $PROFILE_OPT --region $regx --family-prefix $FAMILY --sort DESC --max-items 1 | jq -r .taskDefinitionArns[0])
+          # We only care about the task definition name:
+          IFS='/' read -r -a splitArn <<< "$TASK_DEFINITION_TEMP"
+          TASK_DEFINITION=${splitArn[1]}
+          TASK_DEFINITION_ENV_VARIABLES_FILE="$SECRETS_TEMP_FOLDER/extra768-$TASK_DEFINITION-$regx-variables.txt"
+          TASK_DEFINITION_ENV_VARIABLES=$($AWSCLI ecs $PROFILE_OPT --region $regx describe-task-definition --task-definition $TASK_DEFINITION --query 'taskDefinition.containerDefinitions[*].environment' --output text > $TASK_DEFINITION_ENV_VARIABLES_FILE)
+          if [ -s $TASK_DEFINITION_ENV_VARIABLES_FILE ];then
+            # Implementation using https://github.com/Yelp/detect-secrets
+            FINDINGS=$(secretsDetector file $TASK_DEFINITION_ENV_VARIABLES_FILE)
+            if [[ $FINDINGS -eq 0 ]]; then
+              textPass "$regx: No secrets found in ECS task definition $TASK_DEFINITION variables" "$regx" "$TASK_DEFINITION"
+              # delete file if nothing interesting is there
+              rm -f $TASK_DEFINITION_ENV_VARIABLES_FILE
+            else
+              textFail "$regx: Potential secret found in ECS task definition $TASK_DEFINITION variables" "$regx" "$TASK_DEFINITION"
+            fi
+          else
+            textInfo "$regx: ECS task definition $TASK_DEFINITION has no variables" "$regx" "$TASK_DEFINITION"
+            rm -f $TASK_DEFINITION_ENV_VARIABLES_FILE
+          fi
+        done
+      else
+        textInfo "$regx: No ECS task definitions found" "$regx"
+      fi
     fi
   done
 }
