@@ -20,7 +20,7 @@ CHECK_ALTERNATE_check740="extra740"
 CHECK_ASFF_COMPLIANCE_TYPE_extra740="ens-mp.info.3.aws.ebs.3"
 CHECK_SERVICENAME_extra740="ec2"
 CHECK_RISK_extra740='Data encryption at rest prevents data visibility in the event of its unauthorized access or theft.'
-CHECK_REMEDIATION_extra740='Encrypt al EBS Snapshot and Enable Encryption by default. You can configure your AWS account to enforce the encryption of the new EBS volumes and snapshot copies that you create. For example; Amazon EBS encrypts the EBS volumes created when you launch an instance and the snapshots that you copy from an unencrypted snapshot.'
+CHECK_REMEDIATION_extra740='Encrypt all EBS Snapshot and Enable Encryption by default. You can configure your AWS account to enforce the encryption of the new EBS volumes and snapshot copies that you create. For example; Amazon EBS encrypts the EBS volumes created when you launch an instance and the snapshots that you copy from an unencrypted snapshot.'
 CHECK_DOC_extra740='https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html#encryption-by-default'
 CHECK_CAF_EPIC_extra740='Data Protection'
 
