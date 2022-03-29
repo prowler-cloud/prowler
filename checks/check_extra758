@@ -24,27 +24,21 @@ CHECK_DOC_extra758='https://docs.aws.amazon.com/systems-manager/latest/userguide
 CHECK_CAF_EPIC_extra758='Infrastructure Security'
 
 extra758(){
+  # OLDAGE has the following format: YYYY-MM-DD
   OLDAGE="$(get_date_previous_than_months 12)"
-  for regx in $REGIONS; do
-    EC2_RUNNING=$($AWSCLI ec2 describe-instances --query "Reservations[*].Instances[*].[InstanceId]" $PROFILE_OPT --region $regx --output text 2>&1)
-    if [[ $(echo "$EC2_RUNNING" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textInfo "$regx: Access Denied trying to describe instances" "$regx"
+  for regx in ${REGIONS}; do
+    INSTACES_OLD_THAN_AGE=$("${AWSCLI}" ec2 describe-instances --query "Reservations[].Instances[?LaunchTime<='${OLDAGE}'][].[InstanceId, LaunchTime, State.Name]" ${PROFILE_OPT} --region "${regx}" --output text 2>&1)
+    if [[ $(echo "${INSTACES_OLD_THAN_AGE}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "${regx}: Access Denied trying to describe instances" "${regx}"
         continue
     fi 
-    if [[ $EC2_RUNNING ]]; then
-      INSTACES_OLD_THAN_AGE=$($AWSCLI ec2 describe-instances --query "Reservations[].Instances[?LaunchTime<='$OLDAGE'][].{id: InstanceId, launched: LaunchTime}" $PROFILE_OPT --region $regx --output text)
-      if [[ $INSTACES_OLD_THAN_AGE ]]; then
-        while IFS= read -r ec2_instace
-        do
-          EC2_ID=$(echo "$ec2_instace" | awk '{print $1}')
-          LAUNCH_DATE=$(echo "$ec2_instace" | awk '{print $2}')
-          textFail "$regx: EC2 Instance $EC2_ID running before than $OLDAGE" "$regx" "$EC2_ID"
-        done <<< "$INSTACES_OLD_THAN_AGE"
-      else
-        textPass "$regx: All Instances newer than 12 months" "$regx"
-      fi
+    if [[ "${INSTACES_OLD_THAN_AGE}" ]]; then
+      while read -r EC2_ID LAUNCH_DATE STATE
+      do
+        textFail "${regx}: EC2 Instance ${EC2_ID} launched before than ${OLDAGE}. Launch date: ${LAUNCH_DATE} - State: ${STATE}" "${regx}" "${EC2_ID}"
+      done <<< "${INSTACES_OLD_THAN_AGE}"
     else
-      textInfo "$regx: No EC2 Instances Found" "$regx"
+      textPass "${regx}: No EC2 Instances found older than 12 months" "${regx}"
     fi
   done
 }

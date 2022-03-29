@@ -26,15 +26,19 @@ CHECK_CAF_EPIC_extra781='Data Protection'
 
 extra781(){
   for regx in $REGIONS; do
-    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query DomainNames --output text 2>&1)
+    LIST_OF_DOMAINS=$($AWSCLI es list-domain-names $PROFILE_OPT --region $regx --query 'DomainNames[].DomainName' --output text 2>&1)
     if [[ $(echo "$LIST_OF_DOMAINS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
         textInfo "$regx: Access Denied trying to list domain names" "$regx"
         continue
     fi
     if [[ $LIST_OF_DOMAINS ]]; then
       for domain in $LIST_OF_DOMAINS;do
-        CHECK_IF_ENCREST_ENABLED=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.EncryptionAtRestOptions.Enabled' --output text|grep -i true)
-        if [[ $CHECK_IF_ENCREST_ENABLED ]];then
+        CHECK_IF_ENCREST_ENABLED=$($AWSCLI es describe-elasticsearch-domain --domain-name $domain $PROFILE_OPT --region $regx --query 'DomainStatus.EncryptionAtRestOptions.Enabled' --output text 2>&1)
+        if [[ $(echo "$CHECK_IF_ENCREST_ENABLED" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textInfo "$regx: Access Denied trying to get ES domain $domain" "$regx"
+            continue
+        fi
+        if [[ $(echo "$CHECK_IF_ENCREST_ENABLED" | grep -i true) ]];then
           textPass "$regx: Amazon ES domain $domain has encryption at-rest enabled" "$regx" "$domain"
         else
           textFail "$regx: Amazon ES domain $domain does not have encryption at-rest enabled" "$regx" "$domain"

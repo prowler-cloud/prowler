@@ -24,39 +24,44 @@ CHECK_DOC_extra7141='https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGu
 CHECK_CAF_EPIC_extra7141='IAM'
 
 extra7141(){
-  SECRETS_TEMP_FOLDER="${PROWLER_DIR}/secrets-${ACCOUNT_NUM}"
+  SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM-$PROWLER_START_TIME"
   if [[ ! -d "${SECRETS_TEMP_FOLDER}" ]]; then
     # this folder is deleted once this check is finished
     mkdir "${SECRETS_TEMP_FOLDER}"
   fi
 
   for regx in ${REGIONS}; do
-    SSM_DOCS=$("${AWSCLI}" ${PROFILE_OPT} --region "${regx}" ssm list-documents --filters 'Key=Owner,Values=Self' --query 'DocumentIdentifiers[].Name' --output text 2>&1)
-    if [[ $(echo "${SSM_DOCS}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textInfo "${regx}: Access Denied trying to list documents" "${regx}"
-        continue
-    fi
-    if [[ ${SSM_DOCS} ]];then
-      for ssmdoc in ${SSM_DOCS}; do 
-        SSM_DOC_FILE="${SECRETS_TEMP_FOLDER}/extra7141-${ssmdoc}-${regx}-content.txt"
-        "${AWSCLI}" ${PROFILE_OPT} --region "${regx}" ssm get-document --name "${ssmdoc}" --output text --document-format JSON > "${SSM_DOC_FILE}" 2>&1
-        if [[ $(grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' "${SSM_DOC_FILE}") ]]; then
-            textInfo "${regx}: Access Denied trying to get document" "${regx}"
-            continue
-        fi
-        FINDINGS=$(secretsDetector file "${SSM_DOC_FILE}")
-        if [[ "${FINDINGS}" -eq 0 ]]; then
-          textPass "${regx}: No secrets found in SSM Document ${ssmdoc}" "${regx}" "${ssmdoc}"
-          # delete file if nothing interesting is there
-          rm -f "${SSM_DOC_FILE}"
-        else
-          textFail "${regx}: Potential secret found SSM Document ${ssmdoc}" "${regx}" "${ssmdoc}"
-          # delete file to not leave trace, user must look at the CFN Stack
-          rm -f "${SSM_DOC_FILE}"
-        fi
-      done
+    CHECK_DETECT_SECRETS_INSTALLATION=$(secretsDetector)
+    if [[ $? -eq 241 ]]; then
+      textInfo "$regx: python library detect-secrets not found. Make sure it is installed correctly." "$regx"
     else
-      textInfo "${regx}: No SSM Document found." "${regx}"
+      SSM_DOCS=$("${AWSCLI}" ${PROFILE_OPT} --region "${regx}" ssm list-documents --filters 'Key=Owner,Values=Self' --query 'DocumentIdentifiers[].Name' --output text 2>&1)
+      if [[ $(echo "${SSM_DOCS}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+          textInfo "${regx}: Access Denied trying to list documents" "${regx}"
+          continue
+      fi
+      if [[ ${SSM_DOCS} ]];then
+        for ssmdoc in ${SSM_DOCS}; do 
+          SSM_DOC_FILE="${SECRETS_TEMP_FOLDER}/extra7141-${ssmdoc}-${regx}-content.txt"
+          "${AWSCLI}" ${PROFILE_OPT} --region "${regx}" ssm get-document --name "${ssmdoc}" --output text --document-format JSON > "${SSM_DOC_FILE}" 2>&1
+          if [[ $(grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' "${SSM_DOC_FILE}") ]]; then
+              textInfo "${regx}: Access Denied trying to get document" "${regx}"
+              continue
+          fi
+          FINDINGS=$(secretsDetector file "${SSM_DOC_FILE}")
+          if [[ "${FINDINGS}" -eq 0 ]]; then
+            textPass "${regx}: No secrets found in SSM Document ${ssmdoc}" "${regx}" "${ssmdoc}"
+            # delete file if nothing interesting is there
+            rm -f "${SSM_DOC_FILE}"
+          else
+            textFail "${regx}: Potential secret found SSM Document ${ssmdoc}" "${regx}" "${ssmdoc}"
+            # delete file to not leave trace, user must look at the CFN Stack
+            rm -f "${SSM_DOC_FILE}"
+          fi
+        done
+      else
+        textInfo "${regx}: No SSM Document found." "${regx}"
+      fi
     fi
   done
   rm -rf "${SECRETS_TEMP_FOLDER}"

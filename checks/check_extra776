@@ -26,7 +26,7 @@
 #     --image-id imageTag=<value>
 
 CHECK_ID_extra776="7.76"
-CHECK_TITLE_extra776="[extra776] Check if ECR image scan found vulnerabilities in the newest image version "
+CHECK_TITLE_extra776="[extra776] Check if ECR image scan found vulnerabilities in the newest image version"
 CHECK_SCORED_extra776="NOT_SCORED"
 CHECK_CIS_LEVEL_extra776="EXTRA"
 CHECK_SEVERITY_extra776="Medium"
@@ -39,68 +39,76 @@ CHECK_DOC_extra776='https://docs.aws.amazon.com/AmazonECR/latest/userguide/image
 CHECK_CAF_EPIC_extra776='Logging and Monitoring'
 
 extra776(){
-  for region in $REGIONS; do
-    LIST_ECR_REPOS=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $region --query "repositories[*].[repositoryName]" --output text 2>&1)
-    if [[ $(echo "$LIST_ECR_REPOS" | grep AccessDenied) ]]; then
-      textInfo "$region: Access Denied trying to describe ECR repositories"
+  for region in ${REGIONS}; do
+    # List ECR repositories
+    LIST_ECR_REPOS=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region "${region}" --query "repositories[*].[repositoryName]" --output text 2>&1)
+    # Handle authorization errors
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "$LIST_ECR_REPOS"; then
+      textInfo "$region: Access Denied trying to describe ECR repositories" "$region"
       continue
     fi
-    if [[ ! -z "$LIST_ECR_REPOS" ]]; then
+    if [[ -n "$LIST_ECR_REPOS" ]]; then
       for repo in $LIST_ECR_REPOS; do
-        SCAN_ENABLED=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $region --query "repositories[?repositoryName==\`$repo\`].[imageScanningConfiguration.scanOnPush]" --output text 2>&1)
-        if [[ "$SCAN_ENABLED" == "True" ]]; then
-          IMAGE_DIGEST=$($AWSCLI ecr describe-images $PROFILE_OPT --region $region --repository-name "$repo" --query "sort_by(imageDetails,& imagePushedAt)[-1].imageDigest" --output text | head -n 1 2>&1)
-          if [[ $IMAGE_DIGEST != *"None"* ]]; then
-            IMAGE_TAG=$($AWSCLI ecr describe-images $PROFILE_OPT --region $region --repository-name "$repo" --query "sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]" --output text 2>&1)
-            if [[ ! -z "$LIST_ECR_REPOS" ]]; then
-              IMAGE_SCAN_STATUS=$($AWSCLI ecr describe-image-scan-findings $PROFILE_OPT --region $region --repository-name "$repo" --image-id imageDigest="$IMAGE_DIGEST" --query "imageScanStatus.status" 2>&1)
-              if [[ $IMAGE_SCAN_STATUS == *"ScanNotFoundException"* ]]; then
-                textFail "$region: ECR repository $repo has imageTag $IMAGE_TAG without a scan" "$region" "$repo"
+        # Check if the repository has scanOnPush enabled
+        SCAN_ENABLED=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region "${region}" --query "repositories[?repositoryName=='${repo}'].[imageScanningConfiguration.scanOnPush]" --output text 2>&1)
+        if [[ "${SCAN_ENABLED}" == "True" ]]; then
+          # Recover newest image digest
+          NEWEST_IMAGE_DIGEST=$($AWSCLI ecr describe-images $PROFILE_OPT --region "${region}" --repository-name "${repo}" --query "sort_by(imageDetails,& imagePushedAt)[-1].imageDigest" --output text | head -n 1 2>&1)
+          if [[ "${NEWEST_IMAGE_DIGEST}" != *"None"* ]]; then
+            # Recover newest image tag
+            NEWEST_IMAGE_TAG=$($AWSCLI ecr describe-images $PROFILE_OPT --region "${region}" --repository-name "${repo}" --query "sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]" --output text | head -n 1 2>&1)
+            if [[ -n "${LIST_ECR_REPOS}" ]]; then
+              # For this newest digest, recover the last scan status
+              IMAGE_SCAN_STATUS=$($AWSCLI ecr describe-image-scan-findings $PROFILE_OPT --region "${region}" --repository-name "${repo}" --image-id imageDigest="${NEWEST_IMAGE_DIGEST}" --query "imageScanStatus.status" --output text 2>&1)
+              if [[ "${IMAGE_SCAN_STATUS}" == *"ScanNotFoundException"* ]]; then
+                textFail "${region}: ECR repository ${repo} has imageTag ${NEWEST_IMAGE_TAG} without a scan" "${region}" "${repo}"
               else
-                if [[ $IMAGE_SCAN_STATUS == *"FAILED"* ]]; then
-                  textFail "$region: ECR repository $repo has imageTag $IMAGE_TAG with scan status $IMAGE_SCAN_STATUS" "$region" "$repo"
+                if [[ "${IMAGE_SCAN_STATUS}" == *"FAILED"* ]]; then
+                  textFail "${region}: ECR repository ${repo} has imageTag ${NEWEST_IMAGE_TAG} with scan status ${IMAGE_SCAN_STATUS}" "${region}" "${repo}"
                 else
-                  FINDINGS_COUNT=$($AWSCLI ecr describe-image-scan-findings $PROFILE_OPT --region $region --repository-name "$repo" --image-id imageDigest="$IMAGE_DIGEST" --query "imageScanFindings.findingSeverityCounts" 2>&1)
-                  if [[ ! -z "$FINDINGS_COUNT" ]]; then
-                      SEVERITY_CRITICAL=$(echo "$FINDINGS_COUNT" | jq -r '.CRITICAL' )
-                      if [[ "$SEVERITY_CRITICAL" != "null" ]]; then
-                        textFail "$region: ECR repository $repo has imageTag $IMAGE_TAG with CRITICAL ($SEVERITY_CRITICAL) findings" "$region" "$repo"
+                  # For this newest digest, recover the number of findings found
+                  # This search needs a JSON response to match against severity
+                  FINDINGS_COUNT=$($AWSCLI ecr describe-image-scan-findings $PROFILE_OPT --region "${region}" --repository-name "${repo}" --image-id imageDigest="${NEWEST_IMAGE_DIGEST}" --query "imageScanFindings.findingSeverityCounts" --output json 2>&1)
+                  if [[ -n "${FINDINGS_COUNT}" ]]; then
+                      SEVERITY_CRITICAL=$(jq -r '.CRITICAL' <<< "${FINDINGS_COUNT}")
+                      if [[ "${SEVERITY_CRITICAL}" != "null" ]]; then
+                        textFail "${region}: ECR repository ${repo} has imageTag ${NEWEST_IMAGE_TAG} with CRITICAL ($SEVERITY_CRITICAL) findings" "${region}" "${repo}"
                       fi
-                      SEVERITY_HIGH=$(echo "$FINDINGS_COUNT" | jq -r '.HIGH' )
-                      if [[ "$SEVERITY_HIGH" != "null" ]]; then
-                        textFail "$region: ECR repository $repo has imageTag $IMAGE_TAG with HIGH ($SEVERITY_HIGH) findings" "$region" "$repo"
+                      SEVERITY_HIGH=$(jq -r '.HIGH' <<< "${FINDINGS_COUNT}")
+                      if [[ "${SEVERITY_HIGH}" != "null" ]]; then
+                        textFail "${region}: ECR repository ${repo} has imageTag ${NEWEST_IMAGE_TAG} with HIGH ($SEVERITY_HIGH) findings" "${region}" "${repo}"
                       fi
-                      SEVERITY_MEDIUM=$(echo "$FINDINGS_COUNT" | jq -r '.MEDIUM' )
-                      if [[ "$SEVERITY_MEDIUM" != "null" ]]; then
-                        textFail "$region: ECR repository $repo has imageTag $IMAGE_TAG with MEDIUM ($SEVERITY_MEDIUM) findings" "$region" "$repo"
+                      SEVERITY_MEDIUM=$(jq -r '.MEDIUM' <<< "${FINDINGS_COUNT}")
+                      if [[ "${SEVERITY_MEDIUM}" != "null" ]]; then
+                        textFail "${region}: ECR repository ${repo} has imageTag ${NEWEST_IMAGE_TAG} with MEDIUM ($SEVERITY_MEDIUM) findings" "${region}" "${repo}"
                       fi
-                      SEVERITY_LOW=$(echo "$FINDINGS_COUNT" | jq -r '.LOW' )
-                      if [[ "$SEVERITY_LOW" != "null" ]]; then
-                        textInfo "$region: ECR repository $repo has imageTag $IMAGE_TAG with LOW ($SEVERITY_LOW) findings" "$region" "$repo"
+                      SEVERITY_LOW=$(jq -r '.LOW' <<< "${FINDINGS_COUNT}")
+                      if [[ "${SEVERITY_LOW}" != "null" ]]; then
+                        textInfo "${region}: ECR repository ${repo} has imageTag ${NEWEST_IMAGE_TAG} with LOW ($SEVERITY_LOW) findings" "${region}" "${repo}"
                       fi
-                      SEVERITY_INFORMATIONAL=$(echo "$FINDINGS_COUNT" | jq -r '.INFORMATIONAL' )
-                      if [[ "$SEVERITY_INFORMATIONAL" != "null" ]]; then
-                        textInfo "$region: ECR repository $repo has imageTag $IMAGE_TAG with INFORMATIONAL ($SEVERITY_INFORMATIONAL) findings" "$region" "$repo"
+                      SEVERITY_INFORMATIONAL=$(jq -r '.INFORMATIONAL' <<< "${FINDINGS_COUNT}")
+                      if [[ "${SEVERITY_INFORMATIONAL}" != "null" ]]; then
+                        textInfo "${region}: ECR repository ${repo} has imageTag ${NEWEST_IMAGE_TAG} with INFORMATIONAL ($SEVERITY_INFORMATIONAL) findings" "${region}" "${repo}"
                       fi
-                      SEVERITY_UNDEFINED=$(echo "$FINDINGS_COUNT" | jq -r '.UNDEFINED' )
-                      if [[ "$SEVERITY_UNDEFINED" != "null" ]]; then
-                        textInfo "$region: ECR repository $repo has imageTag $IMAGE_TAG with UNDEFINED ($SEVERITY_UNDEFINED) findings" "$region" "$repo"
+                      SEVERITY_UNDEFINED=$(jq -r '.UNDEFINED' <<< "${FINDINGS_COUNT}")
+                      if [[ "${SEVERITY_UNDEFINED}" != "null" ]]; then
+                        textInfo "${region}: ECR repository ${repo} has imageTag ${NEWEST_IMAGE_TAG} with UNDEFINED ($SEVERITY_UNDEFINED) findings" "${region}" "${repo}"
                       fi
                   else
-                    textPass "$region: ECR repository $repo has imageTag $IMAGE_TAG without findings" "$region" "$repo"
+                    textPass "${region}: ECR repository ${repo} has imageTag ${NEWEST_IMAGE_TAG} without findings" "${region}" "${repo}"
                   fi
                 fi
               fi
             fi
           else
-            textInfo "$region: ECR repository $repo has no images" "$region"
+            textInfo "${region}: ECR repository ${repo} has no images" "${region}"
           fi
         else
-          textInfo "$region: ECR repository $repo has scanOnPush not enabled" "$region" "$repo"
+          textInfo "${region}: ECR repository ${repo} has scanOnPush disabled" "${region}" "${repo}"
         fi
       done
     else
-      textInfo "$region: No ECR repositories found" "$region"
+      textInfo "${region}: No ECR repositories found" "${region}"
     fi
   done
 }

@@ -64,6 +64,11 @@ PROWLER_PARAMETERS=$@
 # $CHECK_REMEDIATION text about remediation
 # $CHECK_DOC link to related documentation
 # $CHECK_CAF_EPIC it can be Logging and Monitoring, IAM, Data Protection, Infrastructure Security. Incident Response is not included since CAF has not specific checks on it logs enablement are part of Logging and Monitoring.
+# $ACCOUNT_DETAILS_EMAIL
+# $ACCOUNT_DETAILS_NAME
+# $ACCOUNT_DETAILS_ARN
+# $ACCOUNT_DETAILS_ORG
+# $ACCOUNT_DETAILS_TAGS
 
 # Ensure that output directory always exists when -M is used
 if [[ $MODE ]];then
@@ -102,7 +107,7 @@ textPass(){
     REPREGION=$REGION
   fi
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_CIS_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID${SEP}$PROWLER_START_TIME" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_CIS_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID${SEP}$PROWLER_START_TIME${SEP}$ACCOUNT_DETAILS_EMAIL${SEP}$ACCOUNT_DETAILS_NAME${SEP}$ACCOUNT_DETAILS_ARN${SEP}$ACCOUNT_DETAILS_ORG${SEP}$ACCOUNT_DETAILS_TAGS" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
     generateJsonOutput "$1" "Pass" "$CHECK_RESOURCE_ID" >> ${OUTPUT_FILE_NAME}.$EXTENSION_JSON
@@ -144,7 +149,7 @@ textInfo(){
     REPREGION=$REGION
   fi
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_CIS_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID${SEP}$PROWLER_START_TIME" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_CIS_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID${SEP}$PROWLER_START_TIME${SEP}$ACCOUNT_DETAILS_EMAIL${SEP}$ACCOUNT_DETAILS_NAME${SEP}$ACCOUNT_DETAILS_ARN${SEP}$ACCOUNT_DETAILS_ORG${SEP}$ACCOUNT_DETAILS_TAGS" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
     generateJsonOutput "$1" "Info" "$CHECK_RESOURCE_ID" >> ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
@@ -168,17 +173,19 @@ textFail(){
   level="FAIL"
   colorcode="$BAD"
   while read -r excluded_item; do
-    ignore_check_name="${excluded_item%%:*}" # Check name is everything up to the first :
-    # Resource value is the second field of line included in whitelist divided by :
-    resource_value=$(awk -F ":" '{print $2}' <<< $excluded_item)
-    # Checked value is the second field of log message divided by spaces
-    checked_value=$(awk '{print $2}' <<< $1)
+    # ignore_check_name is the check with resources whitelisted
+    ignore_check_name=$(awk -F ":" '{print $1}' <<< "${excluded_item}")
+    # Resource value is what it comes after CHECK_NAME: :
+    resource_value=$(awk -F "$CHECK_NAME:" '{print $2}' <<< "${excluded_item}")
+    # Checked value is the whole log message that comes as argument
+    checked_value=$1
     if [[ "${ignore_check_name}" != "${CHECK_NAME}" ]]; then
       # not for this check
       continue
     fi
-    # To set WARNING flag both values must be exactly the same
-    if [[ "${checked_value}" == "${resource_value}" ]]; then
+    # To set WARNING flag checked_value have to include value of resource_value
+    # If it is treated as only expanse (*[]*) will not detect regex like [:alpha:]
+    if [[ "${checked_value}" =~ ${resource_value} ]]; then
       level="WARNING"
       colorcode="${WARNING}"
       break
@@ -207,7 +214,7 @@ textFail(){
   fi
 
   if [[ "${MODES[@]}" =~ "csv" ]]; then
-    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_CIS_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID${SEP}$PROWLER_START_TIME" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
+    echo "$PROFILE${SEP}$ACCOUNT_NUM${SEP}$REPREGION${SEP}$TITLE_ID${SEP}$CHECK_RESULT${SEP}$ITEM_SCORED${SEP}$ITEM_CIS_LEVEL${SEP}$TITLE_TEXT${SEP}$CHECK_RESULT_EXTENDED${SEP}$CHECK_ASFF_COMPLIANCE_TYPE${SEP}$CHECK_SEVERITY${SEP}$CHECK_SERVICENAME${SEP}$CHECK_ASFF_RESOURCE_TYPE${SEP}$CHECK_ASFF_TYPE${SEP}$CHECK_RISK${SEP}$CHECK_REMEDIATION${SEP}$CHECK_DOC${SEP}$CHECK_CAF_EPIC${SEP}$CHECK_RESOURCE_ID${SEP}$PROWLER_START_TIME${SEP}$ACCOUNT_DETAILS_EMAIL${SEP}$ACCOUNT_DETAILS_NAME${SEP}$ACCOUNT_DETAILS_ARN${SEP}$ACCOUNT_DETAILS_ORG${SEP}$ACCOUNT_DETAILS_TAGS" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
     generateJsonOutput "$1" "${level}" "$CHECK_RESOURCE_ID">> ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
@@ -299,6 +306,11 @@ generateJsonOutput(){
   --arg CHECK_REMEDIATION "$CHECK_REMEDIATION" \
   --arg CHECK_DOC "$CHECK_DOC" \
   --arg CHECK_RESOURCE_ID "$resource_id" \
+  --arg ACCOUNT_DETAILS_EMAIL "$ACCOUNT_DETAILS_EMAIL" \
+  --arg ACCOUNT_DETAILS_NAME "$ACCOUNT_DETAILS_NAME" \
+  --arg ACCOUNT_DETAILS_ARN "$ACCOUNT_DETAILS_ARN" \
+  --arg ACCOUNT_DETAILS_ORG "$ACCOUNT_DETAILS_ORG" \
+  --arg ACCOUNT_DETAILS_TAGS "$ACCOUNT_DETAILS_TAGS" \
   -n '{
     "Profile": $PROFILE,
     "Account Number": $ACCOUNT_NUM,
@@ -317,7 +329,12 @@ generateJsonOutput(){
     "Risk": $CHECK_RISK,
     "Remediation": $CHECK_REMEDIATION,
     "Doc link": $CHECK_DOC,
-    "Resource ID": $CHECK_RESOURCE_ID
+    "Resource ID": $CHECK_RESOURCE_ID,
+    "Account Email": $ACCOUNT_DETAILS_EMAIL,
+    "Account Name": $ACCOUNT_DETAILS_NAME,
+    "Account ARN": $ACCOUNT_DETAILS_ARN,
+    "Account Organization": $ACCOUNT_DETAILS_ORG,
+    "Account tags": $ACCOUNT_DETAILS_TAGS
   }'
 }
 

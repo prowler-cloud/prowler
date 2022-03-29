@@ -31,39 +31,44 @@ extra741(){
   fi
 
   for regx in $REGIONS; do
-    LIST_OF_EC2_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query Reservations[*].Instances[*].InstanceId --output text --max-items $MAXITEMS 2>&1| grep -v None)
-    if [[ $(echo "$LIST_OF_EC2_INSTANCES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textInfo "$regx: Access Denied trying to describe instances" "$regx"
-        continue
-    fi 
-    if [[ $LIST_OF_EC2_INSTANCES ]];then
-      for instance in $LIST_OF_EC2_INSTANCES; do
-        EC2_USERDATA_FILE="$SECRETS_TEMP_FOLDER/extra741-$instance-userData.decoded"
-        EC2_USERDATA=$($AWSCLI ec2 describe-instance-attribute --attribute userData $PROFILE_OPT --region $regx --instance-id $instance --query UserData.Value --output text| grep -v ^None | decode_report > $EC2_USERDATA_FILE)
-        if [ -s "$EC2_USERDATA_FILE" ];then
-          # This finds ftp or http URLs with credentials and common keywords
-          # FINDINGS=$(egrep -i '[[:alpha:]]*://[[:alnum:]]*:[[:alnum:]]*@.*/|key|secret|token|pass' $EC2_USERDATA_FILE |wc -l|tr -d '\ ')
-          # New implementation using https://github.com/Yelp/detect-secrets
-          # Test if user data is a valid GZIP file, if so gunzip first
-          if gunzip -t "$EC2_USERDATA_FILE" > /dev/null 2>&1; then
-            mv "$EC2_USERDATA_FILE" "$EC2_USERDATA_FILE.gz" ; gunzip "$EC2_USERDATA_FILE.gz"
-          fi
-          FINDINGS=$(secretsDetector file "$EC2_USERDATA_FILE")
-          if [[ $FINDINGS -eq 0 ]]; then
-            textPass "$regx: No secrets found in $instance User Data" "$regx" "$instance"
-            # delete file if nothing interesting is there
-            rm -f "$EC2_USERDATA_FILE"
-          else
-            textFail "$regx: Potential secret found in $instance User Data" "$regx" "$instance"
-            # delete file to not leave trace, user must look at the instance User Data
-            rm -f "$EC2_USERDATA_FILE"
-          fi
-        else
-          textPass "$regx: No secrets found in $instance User Data or it is empty" "$regx" "$instance"
-        fi
-      done
+    CHECK_DETECT_SECRETS_INSTALLATION=$(secretsDetector)
+    if [[ $? -eq 241 ]]; then
+      textInfo "$regx: python library detect-secrets not found. Make sure it is installed correctly." "$regx"
     else
-      textInfo "$regx: No EC2 instances found" "$regx"
+      LIST_OF_EC2_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query Reservations[*].Instances[*].InstanceId --output text --max-items $MAXITEMS 2>&1| grep -v None)
+      if [[ $(echo "$LIST_OF_EC2_INSTANCES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+          textInfo "$regx: Access Denied trying to describe instances" "$regx"
+          continue
+      fi 
+      if [[ $LIST_OF_EC2_INSTANCES ]];then
+        for instance in $LIST_OF_EC2_INSTANCES; do
+          EC2_USERDATA_FILE="$SECRETS_TEMP_FOLDER/extra741-$instance-userData.decoded"
+          EC2_USERDATA=$($AWSCLI ec2 describe-instance-attribute --attribute userData $PROFILE_OPT --region $regx --instance-id $instance --query UserData.Value --output text| grep -v ^None | decode_report > $EC2_USERDATA_FILE)
+          if [ -s "$EC2_USERDATA_FILE" ];then
+            # This finds ftp or http URLs with credentials and common keywords
+            # FINDINGS=$(egrep -i '[[:alpha:]]*://[[:alnum:]]*:[[:alnum:]]*@.*/|key|secret|token|pass' $EC2_USERDATA_FILE |wc -l|tr -d '\ ')
+            # New implementation using https://github.com/Yelp/detect-secrets
+            # Test if user data is a valid GZIP file, if so gunzip first
+            if gunzip -t "$EC2_USERDATA_FILE" > /dev/null 2>&1; then
+              mv "$EC2_USERDATA_FILE" "$EC2_USERDATA_FILE.gz" ; gunzip "$EC2_USERDATA_FILE.gz"
+            fi
+            FINDINGS=$(secretsDetector file "$EC2_USERDATA_FILE")
+            if [[ $FINDINGS -eq 0 ]]; then
+              textPass "$regx: No secrets found in $instance User Data" "$regx" "$instance"
+              # delete file if nothing interesting is there
+              rm -f "$EC2_USERDATA_FILE"
+            else
+              textFail "$regx: Potential secret found in $instance User Data" "$regx" "$instance"
+              # delete file to not leave trace, user must look at the instance User Data
+              rm -f "$EC2_USERDATA_FILE"
+            fi
+          else
+            textPass "$regx: No secrets found in $instance User Data or it is empty" "$regx" "$instance"
+          fi
+        done
+      else
+        textInfo "$regx: No EC2 instances found" "$regx"
+      fi
     fi
   done
   rm -rf $SECRETS_TEMP_FOLDER
