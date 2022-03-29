@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra7173="7.173"
+CHECK_TITLE_extra7173="[check7173] Security Groups created by EC2 Launch Wizard"
+CHECK_SCORED_extra7173="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7173="EXTRA"
+CHECK_SEVERITY_extra7173="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7173="AwsEc2SecurityGroup"
+CHECK_ALTERNATE_extra7173="extra7173"
+CHECK_SERVICENAME_extra7173="ec2"
+CHECK_RISK_cextra7173="Security Groups Created on the AWS Console using the EC2 wizard may allow port 22 from 0.0.0.0/0"
+CHECK_REMEDIATION_extra7173="Apply Zero Trust approach. Implement a process to scan and remediate security groups created by the EC2 Wizard. Recommended best practices is to use an authorized security group."
+CHECK_DOC_extra7173="CHECK_DOC_extra7173='https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html'"
+CHECK_CAF_EPIC_extra7173="Infrastructure Security"
+
+extra7173(){
+  # Ensure no security groups are created using Console EC2 Wizard
+  for regx in $REGIONS; do
+    CHECK_SGDEFAULT_IDS=$("${AWSCLI}" ec2 describe-security-groups ${PROFILE_OPT} --region "${regx}" --filters Name=group-name,Values='launch-wizard-*' --query 'SecurityGroups[*].GroupId[]' --output text 2>&1)
+    if grep -q -E 'AccessDenied|UnauthorizedOperation' <<< "${CHECK_SGDEFAULT_IDS}"; then
+        textInfo "${regx}: Access Denied trying to describe security groups" "${regx}"
+        continue
+    fi
+    if [[ ${CHECK_SGDEFAULT_IDS} ]]; then
+      for CHECK_SGDEFAULT_ID in ${CHECK_SGDEFAULT_IDS}; do
+          SECURITY_GROUP_NAME=$(${AWSCLI} ec2 describe-security-groups ${PROFILE_OPT} --region "${regx}" --group-ids "${CHECK_SGDEFAULT_ID}" --query 'SecurityGroups[*].GroupName[]' --output text 2>&1)
+          textFail "${regx}: Security Group ${SECURITY_GROUP_NAME} (ID: ${CHECK_SGDEFAULT_ID}) was created using the EC2 Launch Wizard" "${regx}" "${CHECK_SGDEFAULT_ID}"
+      done
+    else
+      textPass "${regx}: No Security Groups found that were created using the Wizard" "${regx}" "${CHECK_SGDEFAULT_ID}"  
+    fi
+  done
+}
