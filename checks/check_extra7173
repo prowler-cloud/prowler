@@ -25,7 +25,6 @@ CHECK_DOC_extra7173="CHECK_DOC_extra7173='https://docs.aws.amazon.com/eks/latest
 CHECK_CAF_EPIC_extra7173="Infrastructure Security"
 
 extra7173(){
-
   # "Ensure no security groups are created using Console EC2 Wizard"
   for regx in $REGIONS; do
     CHECK_SGDEFAULT_IDS=$("${AWSCLI}" ec2 describe-security-groups ${PROFILE_OPT} --region "${regx}" --filters Name=group-name,Values='launch-wizard-*' --query 'SecurityGroups[*].GroupId[]' --output text 2>&1)
