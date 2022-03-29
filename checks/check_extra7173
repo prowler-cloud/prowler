@@ -25,21 +25,21 @@ CHECK_DOC_extra7173="CHECK_DOC_extra7173='https://docs.aws.amazon.com/eks/latest
 CHECK_CAF_EPIC_extra7173="Infrastructure Security"
 
 extra7173(){
-  # "Ensure no security groups are created using Console EC2 Wizard"
 
+  # "Ensure no security groups are created using Console EC2 Wizard"
   for regx in $REGIONS; do
-    CHECK_SGDEFAULT_IDS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --filters Name=group-name,Values='launch-wizard-*' --query 'SecurityGroups[*].GroupId[]' --output text 2>&1)
-    if [[ $(echo "$CHECK_SGDEFAULT_IDS" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
-        textInfo "$regx: Access Denied trying to describe security groups" "$regx"
+    CHECK_SGDEFAULT_IDS=$("${AWSCLI}" ec2 describe-security-groups ${PROFILE_OPT} --region "${regx}" --filters Name=group-name,Values='launch-wizard-*' --query 'SecurityGroups[*].GroupId[]' --output text 2>&1)
+    if grep -q -E 'AccessDenied|UnauthorizedOperation' <<< "${CHECK_SGDEFAULT_IDS}"; then
+        textInfo "${regx}: Access Denied trying to describe security groups" "${regx}"
         continue
     fi
-    if [[ $CHECK_SGDEFAULT_IDS ]]; then
-      for CHECK_SGDEFAULT_ID in $CHECK_SGDEFAULT_IDS; do
-          EXTENDED_RESULTS=$($AWSCLI ec2 describe-security-groups $PROFILE_OPT --region $regx --group-ids $CHECK_SGDEFAULT_ID --query 'SecurityGroups[*].Description[]' --output text 2>&1)
-          textFail "$regx: Security Group ($CHECK_SGDEFAULT_ID) desciption is: $EXTENDED_RESULTS" "$regx" "$CHECK_SGDEFAULT_ID"
+    if [[ ${CHECK_SGDEFAULT_IDS} ]]; then
+      for CHECK_SGDEFAULT_ID in ${CHECK_SGDEFAULT_IDS}; do
+          SECURITY_GROUP_NAME=$(${AWSCLI} ec2 describe-security-groups ${PROFILE_OPT} --region "${regx}" --group-ids "${CHECK_SGDEFAULT_ID}" --query 'SecurityGroups[*].GroupName[]' --output text 2>&1)
+          textFail "${regx}: Security Group ${SECURITY_GROUP_NAME} (ID: ${CHECK_SGDEFAULT_ID}) was created using the EC2 Launch Wizard" "${regx}" "${CHECK_SGDEFAULT_ID}"
       done
     else
-      textPass "$regx: No Security Groups found that were created using the Wizard" "$regx" "$CHECK_SGDEFAULT_ID"  
+      textPass "${regx}: No Security Groups found that were created using the Wizard" "${regx}" "${CHECK_SGDEFAULT_ID}"  
     fi
   done
 }
