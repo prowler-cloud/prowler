@@ -34,7 +34,7 @@ extra736(){
       # Second, we need to check for Customer Managed KMS keys, with or without a configured alias
       for keyID in ${LIST_OF_KMS_KEYS}
       do
-        KMS_KEY_MANAGER=$($AWSCLI kms describe-key --region "${regx}" --key-id "${keyID}" --query "KeyMetadata.KeyManager" --output text)
+        KMS_KEY_MANAGER=$($AWSCLI kms describe-key $PROFILE_OPT --region "${regx}" --key-id "${keyID}" --query "KeyMetadata.KeyManager" --output text)
         if [[ "${KMS_KEY_MANAGER}" == "CUSTOMER" ]]
         then 
           CUSTOMER_MANAGED_KMS_KEYS+=( "${keyID}" )
