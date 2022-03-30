@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+allowlist(){
+  # check if the file is an S3 URI
+  if grep -q -E "^s3://([^/]+)/(.*?([^/]+))$" <<< "$ALLOWLIST_FILE"; then
+    # download s3 object
+    echo -e "$NOTICE Downloading allowlist from S3 URI "$ALLOWLIST_FILE" ..."  
+    if ! $AWSCLI s3 cp $ALLOWLIST_FILE allowlist_s3_file.txt $PROFILE_OPT > /dev/null 2>&1; then
+      echo "$BAD FAIL! Access Denied trying to download allowlist from the S3 URI, please make sure it is correct and/or you have permissions to get the S3 object."
+      EXITCODE=1
+      exit $EXITCODE
+    fi
+    echo -e "$OK Success! Allowlist was downloaded, starting Prowler..."
+    ALLOWLIST_FILE=allowlist_s3_file.txt
+    # ignore lines starting with # (comments)
+    # ignore inline comments: check1:foo # inline comment
+    ALLOWLIST=$(awk '!/^[[:space:]]*#/{print }' <(cat "$ALLOWLIST_FILE") | sed 's/[[:space:]]*#.*$//g')
+    # remove temporary file
+    rm -f "$ALLOWLIST_FILE"
+  else
+    # Check if input allowlist file exists
+    if [[ -f "$ALLOWLIST_FILE" ]]; then
+      # ignore lines starting with # (comments)
+      # ignore inline comments: check1:foo # inline comment
+      ALLOWLIST=$(awk '!/^[[:space:]]*#/{print }' <(cat "$ALLOWLIST_FILE") | sed 's/[[:space:]]*#.*$//g')
+    else
+      echo "$BAD FAIL! $ALLOWLIST_FILE does not exist, please input a valid allowlist file."
+      EXITCODE=1
+      exit $EXITCODE
+    fi
+  fi
+}
