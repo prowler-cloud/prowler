@@ -11,27 +11,25 @@ Installing Prowler with Terraform is simple and can be completed in under 1 minu
 - Start AWS CloudShell
 - Run the following commands to install Terraform and clone the Prowler git repo
   ```
-  git clone https://github.com/singergs/prowler.git
-  git fetch
+  git clone https://github.com/prowler-cloud/prowler.git
   cd prowler
-  git checkout -t origin/terraform-kickstarter
   sudo yum install -y yum-utils
   sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
   sudo yum -y install terraform
   cd util/terraform-kickstarter
   ```
 - Issue a `terraform init`
-  
+
 - Issue a `terraform apply`
 
   ![Prowler Install](https://prowler-docs.s3.amazonaws.com/Prowler-Terraform-Install.gif)
-  
-   - It is likely an error will return related to the SecurityHub subscription.  This appears to be Terraform related and you can validate the configuration by navigating to the SecurityHub console.  Click Integreations and search for Prowler. Take noe of the green check where it says *Accepting findings*
-  
+
+   - It is likely an error will return related to the SecurityHub subscription.  This appears to be Terraform related and you can validate the configuration by navigating to the SecurityHub console.  Click Integreations and search for Prowler. Take note of the green check where it says *Accepting findings*
+
   ![Prowler Subscription](https://prowler-docs.s3.amazonaws.com/Validate-Prowler-Subscription.gif)
 
 
-Thats it!  Install is now complete.  The resources included a Cloudwatch event that will trigger the AWS Codebuild to run daily at 00:00 GMT.  If you'd like to run an assessment after the deployment then simply navigate to the Codebuild console and start the job manually.
+Thats it!  Install is now complete.  The resources include a Cloudwatch event that will trigger the AWS Codebuild to run daily at 00:00 GMT.  If you'd like to run an assessment after the deployment then simply navigate to the Codebuild console and start the job manually.
 
 ## Terraform Resources
 
@@ -92,5 +90,4 @@ No modules.
 
 ## Kickoff Prowler Assessment From Install to Assessment Demo (Link to YouTube)
 
- 
   [![Prowler Install](https://img.youtube.com/vi/ShhzIArO8X0/0.jpg)](https://www.youtube.com/watch?v=ShhzIArO8X0 "Prowler Install")
