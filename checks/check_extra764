@@ -34,6 +34,9 @@ extra764(){
       if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${BUCKET_LOCATION}"; then
         textInfo "Access Denied Trying to Get Bucket Location for ${bucket}"
         continue
+      elif grep -E 'NoSuchBucket' <<< "${BUCKET_LOCATION}"; then
+        textInfo "NoSuchBucket error Bucket ${bucket} does not exist"
+        continue
       fi
       if [[ "${BUCKET_LOCATION}" == "None" ]]; then
         BUCKET_LOCATION="us-east-1"
@@ -65,7 +68,7 @@ extra764(){
           textFail "Bucket ${bucket} allows requests over insecure transport" "${BUCKET_LOCATION}" "${bucket}"
         fi
       else
-          textInfo "Unknown Error occurred: ${TEMP_STP_POLICY_FILE}"
+          textInfo "Bucket ${bucket} returned an unknown error"
       fi
       rm -fr "${TEMP_STP_POLICY_FILE}"
     done
