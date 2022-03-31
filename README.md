@@ -292,11 +292,12 @@ Prowler has two parameters related to regions: `-r` that is used query AWS servi
 
     >Note about output formats to use with `-M`: "text" is the default one with colors, "mono" is like default one but monochrome, "csv" is comma separated values, "json" plain basic json (without comma between lines) and "json-asff" is also json with Amazon Security Finding Format that you can ship to Security Hub using `-S`.
 
-    or save your report in an S3 bucket (this only works for text or mono. For csv, json or json-asff it has to be copied afterwards):
+    To save your report in an S3 bucket, use `-B` to define a custom output bucket along with `-M` to defiine the output format that is going to be updated to S3:
 
     ```sh
-    ./prowler -M mono | aws s3 cp - s3://bucket-name/prowler-report.txt
+    ./prowler -M csv -B my-bucket/folder/
     ```
+    >In the case you do not want to use the assumed role credentials but the initial credentials to put the reports into the S3 bucket, use `-D` instead of `-B`.
 
     When generating multiple formats and running using Docker, to retrieve the reports, bind a local directory to the container, e.g.:
 
@@ -399,7 +400,9 @@ Prowler runs in GovCloud regions as well. To make sure it points to the right AP
 
 ### Custom folder for custom checks
 
-Flag `-x /my/own/checks` will include any check in that particular directory. To see how to write checks see [Add Custom Checks](#add-custom-checks) section.
+Flag `-x /my/own/checks` will include any check in that particular directory (files must start by check). To see how to write checks see [Add Custom Checks](#add-custom-checks) section.
+
+S3 URIs are also supported as custom folders for custom checks, e.g. `s3://bucket/prefix/checks`
 
 ### Show or log only FAILs
 
@@ -487,6 +490,8 @@ Sometimes you may find resources that are intentionally configured in a certain 
 ```
 ./prowler -w whitelist_sample.txt
 ```
+
+S3 URIs are also supported as allowlist file, e.g. `s3://bucket/prefix/allowlist_sample.txt`
 
 Whitelist option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format except for `json-asff`.
 
