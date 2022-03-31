@@ -68,7 +68,7 @@ extra764(){
           textFail "Bucket ${bucket} allows requests over insecure transport" "${BUCKET_LOCATION}" "${bucket}"
         fi
       else
-          textInfo "Bucket ${bucket} returned an unknown error"
+          textInfo "Bucket ${bucket} returned an unknown error" "${REGION}" "${bucket}"
       fi
       rm -fr "${TEMP_STP_POLICY_FILE}"
     done
