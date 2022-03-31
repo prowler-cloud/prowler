@@ -35,7 +35,7 @@ extra764(){
         textInfo "Access Denied Trying to Get Bucket Location for ${bucket}"
         continue
       elif grep -E 'NoSuchBucket' <<< "${BUCKET_LOCATION}"; then
-        textInfo "NoSuchBucket error Bucket ${bucket} does not exist"
+        textInfo "NoSuchBucket error Bucket ${bucket} does not exist" "${REGION}" "${bucket}"
         continue
       fi
       if [[ "${BUCKET_LOCATION}" == "None" ]]; then
