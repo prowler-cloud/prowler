@@ -297,7 +297,7 @@ Prowler has two parameters related to regions: `-r` that is used query AWS servi
     ```sh
     ./prowler -M csv -B my-bucket/folder/
     ```
-    >In the case you do not want to use the assumed role credentials but the initial credentials to put the reports into the S3 bucket, use `-D` instead of `-B`.
+    >In the case you do not want to use the assumed role credentials but the initial credentials to put the reports into the S3 bucket, use `-D` instead of `-B`. Make sure that the used credentials have s3:PutObject permissions in the S3 path where the reports are going to be uploaded.
 
     When generating multiple formats and running using Docker, to retrieve the reports, bind a local directory to the container, e.g.:
 
