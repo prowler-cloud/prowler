@@ -292,7 +292,7 @@ Prowler has two parameters related to regions: `-r` that is used query AWS servi
 
     >Note about output formats to use with `-M`: "text" is the default one with colors, "mono" is like default one but monochrome, "csv" is comma separated values, "json" plain basic json (without comma between lines) and "json-asff" is also json with Amazon Security Finding Format that you can ship to Security Hub using `-S`.
 
-    To save your report in an S3 bucket, use `-B` to define a custom output bucket along with `-M` to defiine the output format that is going to be updated to S3:
+    To save your report in an S3 bucket, use `-B` to define a custom output bucket along with `-M` to define the output format that is going to be uploaded to S3:
 
     ```sh
     ./prowler -M csv -B my-bucket/folder/
