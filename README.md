@@ -404,6 +404,8 @@ Flag `-x /my/own/checks` will include any check in that particular directory (fi
 
 S3 URIs are also supported as custom folders for custom checks, e.g. `s3://bucket/prefix/checks`. Prowler will download the folder locally and run the checks as they are called with default execution,`-c` or `-g`.
 
+>Make sure that the used credentials have s3:GetObject permissions in the S3 path where the custom checks are located.
+
 ### Show or log only FAILs
 
 In order to remove noise and get only FAIL findings there is a `-q` flag that makes Prowler to show and log only FAILs. 
@@ -492,6 +494,7 @@ Sometimes you may find resources that are intentionally configured in a certain 
 ```
 
 S3 URIs are also supported as allowlist file, e.g. `s3://bucket/prefix/allowlist_sample.txt`
+>Make sure that the used credentials have s3:GetObject permissions in the S3 path where the whitelist file is located.
 
 Whitelist option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format except for `json-asff`.
 
