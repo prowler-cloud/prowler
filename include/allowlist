@@ -15,19 +15,19 @@ allowlist(){
   # check if the file is an S3 URI
   if grep -q -E "^s3://([^/]+)/(.*?([^/]+))$" <<< "$ALLOWLIST_FILE"; then
     # download s3 object
-    echo -e "$NOTICE Downloading allowlist from S3 URI "$ALLOWLIST_FILE" ..."  
-    if ! $AWSCLI s3 cp $ALLOWLIST_FILE allowlist_s3_file.txt $PROFILE_OPT > /dev/null 2>&1; then
-      echo "$BAD FAIL! Access Denied trying to download allowlist from the S3 URI, please make sure it is correct and/or you have permissions to get the S3 object."
+    local S3_ALLOWLIST_FILE=allowlist_s3_file.txt
+    echo -e "$NOTICE Downloading allowlist from S3 URI $ALLOWLIST_FILE ..."  
+    if ! $AWSCLI s3 cp $ALLOWLIST_FILE $S3_ALLOWLIST_FILE $PROFILE_OPT > /dev/null 2>&1; then
+      echo "$BAD FAIL! Access Denied trying to download allowlist from the S3 URI, please make sure it is correct and/or you have permissions to get the S3 object.$NORMAL"
       EXITCODE=1
       exit $EXITCODE
     fi
-    echo -e "$OK Success! Allowlist was downloaded, starting Prowler..."
-    ALLOWLIST_FILE=allowlist_s3_file.txt
+    echo -e "$OK Success! Allowlist was downloaded, starting Prowler...$NORMAL"
     # ignore lines starting with # (comments)
     # ignore inline comments: check1:foo # inline comment
-    ALLOWLIST=$(awk '!/^[[:space:]]*#/{print }' <(cat "$ALLOWLIST_FILE") | sed 's/[[:space:]]*#.*$//g')
+    ALLOWLIST=$(awk '!/^[[:space:]]*#/{print }' <(cat "$S3_ALLOWLIST_FILE") | sed 's/[[:space:]]*#.*$//g')
     # remove temporary file
-    rm -f "$ALLOWLIST_FILE"
+    rm -f "$S3_ALLOWLIST_FILE"
   else
     # Check if input allowlist file exists
     if [[ -f "$ALLOWLIST_FILE" ]]; then
@@ -35,7 +35,7 @@ allowlist(){
       # ignore inline comments: check1:foo # inline comment
       ALLOWLIST=$(awk '!/^[[:space:]]*#/{print }' <(cat "$ALLOWLIST_FILE") | sed 's/[[:space:]]*#.*$//g')
     else
-      echo "$BAD FAIL! $ALLOWLIST_FILE does not exist, please input a valid allowlist file."
+      echo "$BAD FAIL! $ALLOWLIST_FILE does not exist, please input a valid allowlist file.$NORMAL"
       EXITCODE=1
       exit $EXITCODE
     fi

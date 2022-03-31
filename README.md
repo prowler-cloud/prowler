@@ -402,7 +402,7 @@ Prowler runs in GovCloud regions as well. To make sure it points to the right AP
 
 Flag `-x /my/own/checks` will include any check in that particular directory (files must start by check). To see how to write checks see [Add Custom Checks](#add-custom-checks) section.
 
-S3 URIs are also supported as custom folders for custom checks, e.g. `s3://bucket/prefix/checks`
+S3 URIs are also supported as custom folders for custom checks, e.g. `s3://bucket/prefix/checks`. Prowler will download the folder locally and run the checks as they are called with default execution,`-c` or `-g`.
 
 ### Show or log only FAILs
 
