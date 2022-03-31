@@ -26,7 +26,7 @@ OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
 
 # Set the defaults variables
-PROWLER_VERSION=2.8.0-16March2022
+PROWLER_VERSION=2.8.1-25March2022
 PROWLER_DIR=$(dirname "$0")
 
 REGION=""

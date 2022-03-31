@@ -31,33 +31,38 @@ extra759(){
   fi
 
   for regx in $REGIONS; do
-    LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --query Functions[*].FunctionName --output text 2>&1)
-    if [[ $(echo "$LIST_OF_FUNCTIONS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textInfo "$regx: Access Denied trying to list functions" "$regx"
-        continue
-    fi 
-    if [[ $LIST_OF_FUNCTIONS ]]; then
-      for lambdafunction in $LIST_OF_FUNCTIONS;do
-        LAMBDA_FUNCTION_VARIABLES_FILE="$SECRETS_TEMP_FOLDER/extra759-$lambdafunction-$regx-variables.txt"
-        LAMBDA_FUNCTION_VARIABLES=$($AWSCLI lambda $PROFILE_OPT --region $regx get-function-configuration --function-name $lambdafunction --query 'Environment.Variables' --output json > $LAMBDA_FUNCTION_VARIABLES_FILE)
-        if [ -s $LAMBDA_FUNCTION_VARIABLES_FILE ];then
-        # Implementation using https://github.com/Yelp/detect-secrets
-        FINDINGS=$(secretsDetector file $LAMBDA_FUNCTION_VARIABLES_FILE)
-          if [[ $FINDINGS -eq 0 ]]; then
-            textPass "$regx: No secrets found in Lambda function $lambdafunction variables" "$regx" "$lambdafunction"
-            # delete file if nothing interesting is there
-            rm -f $LAMBDA_FUNCTION_VARIABLES_FILE
-          else
-            textFail "$regx: Potential secret found in Lambda function $lambdafunction variables" "$regx" "$lambdafunction"
-            # delete file to not leave trace, user must look at the function
-            rm -f $LAMBDA_FUNCTION_VARIABLES_FILE
-          fi
-        else
-          textInfo "$regx: Lambda function $stalambdafunction has not variables" "$regx"
-        fi
-      done
+    CHECK_DETECT_SECRETS_INSTALLATION=$(secretsDetector)
+    if [[ $? -eq 241 ]]; then
+      textInfo "$regx: python library detect-secrets not found. Make sure it is installed correctly." "$regx"
     else
-      textInfo "$regx: No Lambda functions found" "$regx"
+      LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --query Functions[*].FunctionName --output text 2>&1)
+      if [[ $(echo "$LIST_OF_FUNCTIONS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+          textInfo "$regx: Access Denied trying to list functions" "$regx"
+          continue
+      fi 
+      if [[ $LIST_OF_FUNCTIONS ]]; then
+        for lambdafunction in $LIST_OF_FUNCTIONS;do
+          LAMBDA_FUNCTION_VARIABLES_FILE="$SECRETS_TEMP_FOLDER/extra759-$lambdafunction-$regx-variables.txt"
+          LAMBDA_FUNCTION_VARIABLES=$($AWSCLI lambda $PROFILE_OPT --region $regx get-function-configuration --function-name $lambdafunction --query 'Environment.Variables' --output json > $LAMBDA_FUNCTION_VARIABLES_FILE)
+          if [ -s $LAMBDA_FUNCTION_VARIABLES_FILE ];then
+          # Implementation using https://github.com/Yelp/detect-secrets
+          FINDINGS=$(secretsDetector file $LAMBDA_FUNCTION_VARIABLES_FILE)
+            if [[ $FINDINGS -eq 0 ]]; then
+              textPass "$regx: No secrets found in Lambda function $lambdafunction variables" "$regx" "$lambdafunction"
+              # delete file if nothing interesting is there
+              rm -f $LAMBDA_FUNCTION_VARIABLES_FILE
+            else
+              textFail "$regx: Potential secret found in Lambda function $lambdafunction variables" "$regx" "$lambdafunction"
+              # delete file to not leave trace, user must look at the function
+              rm -f $LAMBDA_FUNCTION_VARIABLES_FILE
+            fi
+          else
+            textInfo "$regx: Lambda function $stalambdafunction has not variables" "$regx"
+          fi
+        done
+      else
+        textInfo "$regx: No Lambda functions found" "$regx"
+      fi
     fi
   done
   rm -rf $SECRETS_TEMP_FOLDER

@@ -31,7 +31,10 @@ extra764(){
     for bucket in $LIST_OF_BUCKETS;do
       BUCKET_LOCATION=$(${AWSCLI} s3api get-bucket-location ${PROFILE_OPT} --region ${REGION} --bucket ${bucket} --output text 2>&1)
       if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${BUCKET_LOCATION}"; then
-        textInfo "Access Denied Trying to Get Bucket Location for ${bucket}"
+        textInfo "Access Denied Trying to Get Bucket Location for ${bucket}" "${REGION}" "${bucket}"
+        continue
+      elif grep -E 'NoSuchBucket' <<< "${BUCKET_LOCATION}"; then
+        textInfo "NoSuchBucket error Bucket ${bucket} does not exist" "${REGION}" "${bucket}"
         continue
       fi
       if [[ "${BUCKET_LOCATION}" == "None" ]]; then
@@ -43,7 +46,7 @@ extra764(){
       # get bucket policy
       TEMP_STP_POLICY_FILE=$(${AWSCLI} s3api get-bucket-policy ${PROFILE_OPT} --bucket ${bucket} --output text --query Policy --region ${BUCKET_LOCATION} 2>&1)
       if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${TEMP_STP_POLICY_FILE}"; then
-        textInfo "Access Denied Trying to Get Bucket Policy for ${bucket}"
+        textInfo "Access Denied Trying to Get Bucket Policy for ${bucket}" "${REGION}" "${bucket}"
         continue
       fi
       if grep -q "NoSuchBucketPolicy" <<< $TEMP_STP_POLICY_FILE ; then
@@ -62,7 +65,7 @@ extra764(){
           textFail "Bucket ${bucket} allows requests over insecure transport" "${BUCKET_LOCATION}" "${bucket}"
         fi
       else
-          textInfo "Unknown Error occurred: ${TEMP_STP_POLICY_FILE}"
+          textInfo "Bucket ${bucket} returned an unknown error" "${REGION}" "${bucket}"
       fi
     done
 
