@@ -32,7 +32,7 @@ extra764(){
       TEMP_STP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
       BUCKET_LOCATION=$(${AWSCLI} s3api get-bucket-location ${PROFILE_OPT} --region ${REGION} --bucket ${bucket} --output text 2>&1)
       if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${BUCKET_LOCATION}"; then
-        textInfo "Access Denied Trying to Get Bucket Location for ${bucket}"
+        textInfo "Access Denied Trying to Get Bucket Location for ${bucket}" "${REGION}" "${bucket}"
         continue
       elif grep -E 'NoSuchBucket' <<< "${BUCKET_LOCATION}"; then
         textInfo "NoSuchBucket error Bucket ${bucket} does not exist" "${REGION}" "${bucket}"
