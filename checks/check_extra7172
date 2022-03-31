@@ -36,6 +36,9 @@ extra7172(){
       if [[ $(echo "$BUCKET_ACLS_DISABLED" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
         textInfo "$REGION: Access Denied Trying to Get Bucket Ownership Controls for $bucket" "$REGION" "$bucket"
         continue
+      elif [[ $(echo "$BUCKET_ACLS_DISABLED" | grep -E 'IllegalLocationConstraintException') ]]; then
+        textInfo "$REGION: Location Constraint Trying to Get Bucket Ownership Controls for $bucket" "$REGION" "$bucket"
+        continue
       fi
       if [[ $(echo "$BUCKET_ACLS_DISABLED" | grep "BucketOwnerEnforced") ]]; then
         textPass "$REGION: Bucket $bucket has bucket ACLs disabled!" "$REGION" "$bucket"
@@ -44,7 +47,7 @@ extra7172(){
       elif [[ $(echo "$BUCKET_ACLS_DISABLED" | grep "OwnershipControlsNotFoundError") ]]; then
         textFail "$REGION: Bucket $bucket has bucket ACLs enabled!" "$REGION" "$bucket"
       else
-        textFail "$REGION: Bucket $bucket returned an unknown error" $BUCKET_ACLS_DISABLED
+        textFail "$REGION: Bucket $bucket returned an unknown error" "$REGION" "$bucket"
       fi
     done
   else
