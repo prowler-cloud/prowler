@@ -37,6 +37,10 @@ extra75(){
     if [[ $SECURITYGROUPS == "null" ]]; then
       continue
     fi
+    if [[ $(echo "$SECURITYGROUPS" | jq '."SecurityGroups" | length') -eq 0 ]]; then
+      textInfo "$regx: No Security Groups found in $regx"
+      continue
+    fi
     SECURITYGROUP_NAMES=$(echo $SECURITYGROUPS | jq '.SecurityGroups|map({(.GroupId): (.GroupName)})|add')
     LIST_OF_SECURITYGROUPS=$(echo $SECURITYGROUP_NAMES | jq -r 'to_entries|sort_by(.key)|.[]|.key')
     for SG_ID in $LIST_OF_SECURITYGROUPS; do
