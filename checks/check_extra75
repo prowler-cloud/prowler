@@ -35,7 +35,7 @@ extra75(){
         continue
     fi
     if [[ $(echo "$SECURITYGROUPS" | jq '."SecurityGroups" | length') -eq 0 ]]; then
-      textInfo "$regx: No Security Groups found in $regx"
+      textInfo "$regx: No Security Groups found in $regx" "$regx"
       continue
     fi
     SECURITYGROUP_NAMES=$(echo $SECURITYGROUPS | jq '.SecurityGroups|map({(.GroupId): (.GroupName)})|add')
