@@ -43,7 +43,7 @@ FAILED_CHECK_FAILED_SCAN=1
 PROWLER_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
 TITLE_ID=""
 TITLE_TEXT="CALLER ERROR - UNSET TITLE"
-WHITELIST_FILE=""
+ALLOWLIST_FILE=""
 TOTAL_CHECKS=()
 
 # Ensures command output will always be set to JSON.
@@ -88,8 +88,8 @@ USAGE:
       -s                  Show scoring report (it is included by default in the html report).
       -S                  Send check output to AWS Security Hub. Only valid when the output mode is json-asff 
                             (i.e. "-M json-asff -S").
-      -x                  Specify external directory with custom checks 
-                            (i.e. /my/own/checks, files must start by "check").
+      -x                  Specify external directory with custom checks. S3 URI is supported.
+                            (i.e. /my/own/checks or s3://bucket/prefix/checks, files must start by "check").
       -q                  Get only FAIL findings, will show WARNINGS when a resource is excluded.
       -A                  Account id for the account where to assume a role, requires -R.
                             (i.e.: 123456789012)
@@ -98,8 +98,8 @@ USAGE:
       -T                  Session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, optional with -R and -A.
                             (i.e.: 43200)
       -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R.
-      -w                  Whitelist file. See whitelist_sample.txt for reference and format.
-                            (i.e.: whitelist_sample.txt)
+      -w                  Allowlist file. See allowlist_sample.txt for reference and format. S3 URI is supported.
+                            (i.e.: allowlist_sample.txt or s3://bucket/prefix/allowlist_sample.txt)
       -N <shodan_api_key> Shodan API key used by check extra7102.
       -o                  Custom output directory, if not specified will use default prowler/output, requires -M <mode>.
                             (i.e.: -M csv -o /tmp/reports/)
@@ -201,7 +201,7 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:" OPTION
         SESSION_DURATION_TO_ASSUME=$OPTARG
         ;;
      w )
-        WHITELIST_FILE=$OPTARG
+        ALLOWLIST_FILE=$OPTARG
         ;;
      N )
         SHODAN_API_KEY=$OPTARG
@@ -294,6 +294,8 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/securityhub_integration
 . $PROWLER_DIR/include/junit_integration
 . $PROWLER_DIR/include/organizations_metadata
+. $PROWLER_DIR/include/custom_checks
+. $PROWLER_DIR/include/allowlist
 
 # Parses the check file into CHECK_ID's.
 if [[ -n "$CHECK_FILE" ]]; then
@@ -308,11 +310,9 @@ if [[ -n "$CHECK_FILE" ]]; then
   fi
 fi
 
-# Pre-process whitelist file if supplied
-if [[ -n "$WHITELIST_FILE" ]]; then
-  # ignore lines starting with # (comments)
-  # ignore inline comments: check1:foo # inline comment
-  WHITELIST="$(awk '!/^[[:space:]]*#/{print }' <(cat "$WHITELIST_FILE") | sed 's/[[:space:]]*#.*$//g')"
+# Pre-process allowlist file if supplied
+if [[ -n "$ALLOWLIST_FILE" ]]; then
+  allowlist
 fi
 
 # Load all of the groups of checks inside groups folder named as "groupNumber*"
@@ -328,9 +328,7 @@ done
 
 # include checks if external folder is specified
 if [[ $EXTERNAL_CHECKS_PATH ]]; then
-  for checks in $(ls $EXTERNAL_CHECKS_PATH/check*); do
-	. "$checks"
-  done
+  custom_checks
 fi
 
 # Get a list of total checks available by ID
@@ -462,7 +460,7 @@ execute_check() {
   # Generate the credential report, only if it is group1 related which checks we
   # run so that the checks can safely assume it's available
   # set the custom ignores list for this check
-  ignores="$(awk "/${1}/{print}" <(echo "${WHITELIST}"))"
+  ignores="$(awk "/${1}/{print}" <(echo "${ALLOWLIST}"))"
 
   if [ ${alternate_name} ];then
     if [[ ${alternate_name} == check1* || ${alternate_name} == extra71 || ${alternate_name} == extra774 || ${alternate_name} == extra7123 ]];then
