@@ -34,7 +34,8 @@ extra75(){
         textInfo "$regx: Access Denied trying to describe security groups" "$regx"
         continue
     fi
-    if [[ $SECURITYGROUPS == "null" ]]; then
+    if [[ $(echo "$SECURITYGROUPS" | jq '."SecurityGroups" | length') -eq 0 ]]; then
+      textInfo "$regx: No Security Groups found in $regx"
       continue
     fi
     SECURITYGROUP_NAMES=$(echo $SECURITYGROUPS | jq '.SecurityGroups|map({(.GroupId): (.GroupName)})|add')
