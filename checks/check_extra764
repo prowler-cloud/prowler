@@ -29,7 +29,6 @@ extra764(){
   LIST_OF_BUCKETS=$(${AWSCLI} s3api list-buckets ${PROFILE_OPT} --query Buckets[*].Name --output text --region ${REGION}|xargs -n1)
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
-      TEMP_STP_POLICY_FILE=$(mktemp -t prowler-${ACCOUNT_NUM}-${bucket}.policy.XXXXXXXXXX)
       BUCKET_LOCATION=$(${AWSCLI} s3api get-bucket-location ${PROFILE_OPT} --region ${REGION} --bucket ${bucket} --output text 2>&1)
       if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${BUCKET_LOCATION}"; then
         textInfo "Access Denied Trying to Get Bucket Location for ${bucket}" "${REGION}" "${bucket}"
@@ -48,12 +47,10 @@ extra764(){
       TEMP_STP_POLICY_FILE=$(${AWSCLI} s3api get-bucket-policy ${PROFILE_OPT} --bucket ${bucket} --output text --query Policy --region ${BUCKET_LOCATION} 2>&1)
       if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${TEMP_STP_POLICY_FILE}"; then
         textInfo "Access Denied Trying to Get Bucket Policy for ${bucket}" "${REGION}" "${bucket}"
-        rm -f "${TEMP_STP_POLICY_FILE}"
         continue
       fi
       if grep -q "NoSuchBucketPolicy" <<< $TEMP_STP_POLICY_FILE ; then
         textFail "No bucket policy for ${bucket}" "${BUCKET_LOCATION}" "${bucket}"
-        rm -f "${TEMP_STP_POLICY_FILE}"
         continue
       fi
 
@@ -70,7 +67,6 @@ extra764(){
       else
           textInfo "Bucket ${bucket} returned an unknown error" "${REGION}" "${bucket}"
       fi
-      rm -fr "${TEMP_STP_POLICY_FILE}"
     done
 
   else

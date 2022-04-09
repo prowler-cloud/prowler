@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+custom_checks(){
+  # check if the path is an S3 URI
+  if grep -q -E "^s3://([^/]+)/?(.*?([^/]+)/?)?$" <<< "$EXTERNAL_CHECKS_PATH"; then
+    if grep -q "check*" <<< "$("${AWSCLI}" s3 ls "${EXTERNAL_CHECKS_PATH}" $PROFILE_OPT)"; then
+      # download s3 object
+      echo -e "$NOTICE Downloading custom checks from S3 URI $EXTERNAL_CHECKS_PATH...$NORMAL"
+      S3_CHECKS_TEMP_FOLDER="$PROWLER_DIR/s3-custom-checks"
+      mkdir "${S3_CHECKS_TEMP_FOLDER}"
+      $AWSCLI s3 sync "$EXTERNAL_CHECKS_PATH" "${S3_CHECKS_TEMP_FOLDER}" $PROFILE_OPT > /dev/null
+      # verify if there are checks
+      for checks in "${S3_CHECKS_TEMP_FOLDER}"/check*; do
+        . "$checks"
+        echo -e "$OK Check $(basename "$checks") was included!$NORMAL"
+      done
+    echo -e "$OK Success! Custom checks were downloaded and included, starting Prowler...$NORMAL"
+    # remove temporary dir
+    rm -rf "${S3_CHECKS_TEMP_FOLDER}"
+    else
+      echo "$BAD FAIL! Access Denied trying to download custom checks or $EXTERNAL_CHECKS_PATH does not contain any checks, please make sure it is correct and/or you have permissions to get the S3 objects.$NORMAL"
+      EXITCODE=1
+      # remove temporary dir
+      rm -rf "${S3_CHECKS_TEMP_FOLDER}"
+      exit $EXITCODE
+    fi
+  else
+    # verify if input directory exists with checks
+    if ls "${EXTERNAL_CHECKS_PATH}"/check* > /dev/null 2>&1; then
+      for checks in "${EXTERNAL_CHECKS_PATH}"/check*; do
+        . "$checks"
+        echo -e "$OK Check $(basename "$checks") was included!$NORMAL"
+      done
+      echo -e "$OK Success! Custom checks were included, starting Prowler...$NORMAL"
+    else
+      echo "$BAD FAIL! $EXTERNAL_CHECKS_PATH does not exist or not contain checks, please input a valid custom checks path.$NORMAL"
+      EXITCODE=1
+      exit $EXITCODE
+    fi
+  fi
+}
