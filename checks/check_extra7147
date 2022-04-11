@@ -25,27 +25,32 @@ CHECK_CAF_EPIC_extra7147='Data Protection'
 
 extra7147(){
   for regx in $REGIONS; do
-  LIST_OF_VAULTS=$($AWSCLI glacier list-vaults $PROFILE_OPT --region $regx --account-id $ACCOUNT_NUM --query VaultList[*].VaultName --output text 2>&1|xargs -n1)
-  if [[ $(echo "$LIST_OF_VAULTS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-      textInfo "$regx: Access Denied trying to list vaults" "$regx"
+  LIST_OF_VAULTS=$($AWSCLI glacier list-vaults ${PROFILE_OPT} --region "${regx}" --account-id "${ACCOUNT_NUM}" --query VaultList[*].VaultName --output text 2>&1|xargs -n1)
+  if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "$LIST_OF_VAULTS"; then
+      textInfo "$regx: Access Denied trying to list vaults" "${regx}"
+      continue
+  fi
+  # Check for unsupported regions
+  if grep -q -E 'error' <<< "${LIST_OF_VAULTS}"; then
+      textInfo "$regx: An error occurred when calling the ListVaults operation - check if this region is supported" "${regx}"
       continue
   fi
   if [[ $LIST_OF_VAULTS ]]; then
     for vault in $LIST_OF_VAULTS;do
-      VAULT_POLICY_STATEMENTS=$($AWSCLI glacier $PROFILE_OPT get-vault-access-policy --region $regx --account-id $ACCOUNT_NUM --vault-name $vault --output json --query policy.Policy 2>&1)
+      VAULT_POLICY_STATEMENTS=$($AWSCLI glacier ${PROFILE_OPT} get-vault-access-policy --region "${regx}" --account-id "${ACCOUNT_NUM}" --vault-name "${vault}" --output json --query policy.Policy 2>&1)
       if [[ $VAULT_POLICY_STATEMENTS == *GetVaultAccessPolicy* ]]; then
-        textInfo "$regx: Vault $vault doesn't have any policy" "$regx" "$vault"
+        textInfo "${regx}: Vault $vault doesn't have any policy" "${regx}" "$vault"
       else
-        VAULT_POLICY_BAD_STATEMENTS=$(echo $VAULT_POLICY_STATEMENTS | jq '. | fromjson' | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*")')
+        VAULT_POLICY_BAD_STATEMENTS=$(jq '. | fromjson' <<< "${VAULT_POLICY_STATEMENTS}" | jq '.Statement[] | select(.Effect=="Allow") | select(.Principal=="*" or .Principal.AWS=="*" or .Principal.CanonicalUser=="*")')
         if [[ $VAULT_POLICY_BAD_STATEMENTS != "" ]]; then
-          textFail "$regx: Vault $vault has policy which allows access to everyone" "$regx" "$vault"
+          textFail "${regx}: Vault $vault has policy which allows access to everyone" "${regx}" "$vault"
         else
-          textPass "$regx: Vault $vault has policy which does not allow access to everyone" "$regx" "$vault"
+          textPass "${regx}: Vault $vault has policy which does not allow access to everyone" "${regx}" "$vault"
         fi
       fi
     done
   else
-    textInfo "$regx: No Glacier vaults found" "$regx"
+    textInfo "${regx}: No Glacier vaults found" "${regx}"
   fi
  done
 }
