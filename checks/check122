@@ -35,14 +35,14 @@ check122(){
       POLICY_WITH_FULL=$($AWSCLI iam get-policy-version --output text --policy-arn $POLICY_ARN --version-id $POLICY_VERSION --query "[PolicyVersion.Document.Statement] | [] | [?Action!=null] | [?Effect == 'Allow' && Resource == '*' && Action == '*']" $PROFILE_OPT --region $REGION)
       if [[ $POLICY_WITH_FULL ]]; then
         POLICIES_ALLOW_LIST="$POLICIES_ALLOW_LIST $POLICY_ARN"
+      else
+        textPass "$REGION: Policy ${policy//,/[comma]} that does not allow full \"*:*\" administrative privileges" "${REGION}" "${policy}"
       fi
     done
     if [[ $POLICIES_ALLOW_LIST ]]; then
       for policy in $POLICIES_ALLOW_LIST; do
-        textFail "$REGION: Policy ${policy//,/[comma]} allows \"*:*\"" "$REGION" "$policy"
+        textFail "$REGION: Policy ${policy//,/[comma]} allows \"*:*\"" "${REGION}" "${policy}"
       done
-    else
-        textPass "$REGION: No custom policy found that allow full \"*:*\" administrative privileges" "$REGION"
     fi
   else
     textPass "$REGION: No custom policies found" "$REGION"
