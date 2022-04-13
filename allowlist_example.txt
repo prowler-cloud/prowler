@@ -16,12 +16,12 @@ check26:myignoredbucket
 #<checkid2>:<resource to ignore 1>
 
 # REGEXES
-# This whitelist works with regexes (ERE, the same style of regex as grep -E and bash's =~ use)
+# This allowlist works with regexes (ERE, the same style of regex as grep -E and bash's =~ use)
 # therefore:
 # extra718:[[:alnum:]]+-logs # will ignore all buckets containing the terms ci-logs, qa-logs, etc.
 
 # EXAMPLE: CONTROL TOWER
-# When using Control Tower, guardrails prevent access to certain protected resources. The whitelist
+# When using Control Tower, guardrails prevent access to certain protected resources. The allowlist
 # below ensures that warnings instead of errors are reported for the affected resources.
 #extra734:aws-controltower-logs-[[:digit:]]+-[[:alpha:]\-]+
 #extra734:aws-controltower-s3-access-logs-[[:digit:]]+-[[:alpha:]\-]+

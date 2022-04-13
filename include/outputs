@@ -50,7 +50,7 @@ PROWLER_PARAMETERS=$@
 # $ACCOUNT_NUM AWS Account ID
 # $REPREGION AWS region scanned
 # $TITLE_ID Numeric identifier of each check (1.2, 2.3, etc), originally based on CIS checks.
-# $CHECK_RESULT values can be PASS, FAIL, INFO or WARNING if whitelisted
+# $CHECK_RESULT values can be PASS, FAIL, INFO or WARNING if allowlisted
 # $ITEM_SCORED corresponds to CHECK_SCORED, values can be Scored/Not Scored. This is CIS only, will be deprecated in Prowler.
 # $ITEM_CIS_LEVEL corresponds to CHECK_TYPE_ currently only for CIS Level 1, CIS Level 2 and Extras (all checks not part of CIS)
 # $TITLE_TEXT corresponds to CHECK_TITLE_ shows title of each check
@@ -173,11 +173,11 @@ textInfo(){
 }
 
 textFail(){
-  ## ignore whitelists for current check
+  ## ignore allowlists for current check
   level="FAIL"
   colorcode="$BAD"
   while read -r excluded_item; do
-    # ignore_check_name is the check with resources whitelisted
+    # ignore_check_name is the check with resources allowlisted
     ignore_check_name=$(awk -F ":" '{print $1}' <<< "${excluded_item}")
     # Resource value is what it comes after CHECK_NAME: :
     resource_value=$(awk -F "$CHECK_NAME:" '{print $2}' <<< "${excluded_item}")
@@ -349,7 +349,7 @@ generateJsonAsffOutput(){
   local message=$1
   local status=$2
   
-  #Checks to determine if the rule passes in a resource name that prowler uses to track the AWS Resource for whitelisting purposes
+  #Checks to determine if the rule passes in a resource name that prowler uses to track the AWS Resource for allowlisting purposes
   if [[ -z $3 ]]; then
     local resource_id="NONE_PROVIDED"
   else

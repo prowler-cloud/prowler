@@ -33,7 +33,7 @@
 - [Advanced Usage](#advanced-usage)
 - [Security Hub integration](#security-hub-integration)
 - [CodeBuild deployment](#codebuild-deployment)
-- [Whitelist/allowlist or remove FAIL from resources](#whitelist-or-allowlist-or-remove-a-fail-from-resources)
+- [Allowlist or remove FAIL from resources](#allowlist-or-allowlist-or-remove-a-fail-from-resources)
 - [Fix](#how-to-fix-every-fail)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
@@ -484,18 +484,18 @@ The Cloud Formation template that helps you doing that is [here](https://github.
 
 > This is a simple solution to monitor one account. For multiples accounts see [Multi Account and Continuous Monitoring](util/org-multi-account/README.md).
 
-## Whitelist or allowlist or remove a fail from resources
+## Allowlist or remove a fail from resources
 
-Sometimes you may find resources that are intentionally configured in a certain way that may be a bad practice but it is all right with it, for example an S3 bucket open to the internet hosting a web site, or a security group with an open port needed in your use case. Now you can use `-w whitelist_sample.txt` and add your resources as `checkID:resourcename` as in this command:
+Sometimes you may find resources that are intentionally configured in a certain way that may be a bad practice but it is all right with it, for example an S3 bucket open to the internet hosting a web site, or a security group with an open port needed in your use case. Now you can use `-w allowlist_sample.txt` and add your resources as `checkID:resourcename` as in this command:
 
 ```
-./prowler -w whitelist_sample.txt
+./prowler -w allowlist_sample.txt
 ```
 
 S3 URIs are also supported as allowlist file, e.g. `s3://bucket/prefix/allowlist_sample.txt`
->Make sure that the used credentials have s3:GetObject permissions in the S3 path where the whitelist file is located.
+>Make sure that the used credentials have s3:GetObject permissions in the S3 path where the allowlist file is located.
 
-Whitelist option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format except for `json-asff`.
+Allowlist option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format except for `json-asff`.
 
 ## How to fix every FAIL
 
@@ -703,7 +703,7 @@ Current coverage of Amazon Web Service (AWS) taken from [here](https://docs.aws.
 | Topic                           | Service    | Trust Boundary                                                            |
 |---------------------------------|------------|---------------------------------------------------------------------------|
 | Networking and Content Delivery | Amazon VPC | VPC endpoints connections ([extra786](checks/check_extra786))             |
-|                                 |            | VPC endpoints whitelisted principals ([extra787](checks/check_extra787))  |
+|                                 |            | VPC endpoints allowlisted principals ([extra787](checks/check_extra787))  |
 
 All ideas or recommendations to extend this group are very welcome [here](https://github.com/prowler-cloud/prowler/issues/new/choose).
 
