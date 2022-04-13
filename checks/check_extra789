@@ -54,7 +54,7 @@ extra789(){
                         # Algorithm:
                         # Remove all trusted ACCOUNT_IDs from ENDPOINT_CONNECTION_LIST.
                         # As a result, the ENDPOINT_CONNECTION_LIST finally contains only unknown/untrusted account ids.
-                        ENDPOINT_CONNECTION_LIST=("${ENDPOINT_CONNECTION_LIST[@]/$ENDPOINT_CONNECTION}") # remove hit from whitelist
+                        ENDPOINT_CONNECTION_LIST=("${ENDPOINT_CONNECTION_LIST[@]/$ENDPOINT_CONNECTION}") # remove hit from allowlist
                     fi
                 done
             done
