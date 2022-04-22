@@ -60,14 +60,15 @@ The logs that are generated and sent to Cloudwatch are error logs, and assessmen
  1. Create a Private ECR Repository in the account that will host the Prowler container. The Audit account is recommended, but any account can be used. 
  2.  Configure the .awsvariables file. Note the ROLE name chosen as it will be the CrossAccountRole.
  3. Follow the steps from "View Push Commands" to build and upload the container image. You need to have Docker and AWS CLI installed, and use the cli to login to the account first.  After upload note the Image URI, as it is required for the CF-Prowler-ECS template.
- 4. Deploy **CF-Prowler-CrossAccountRole.yml** in the Master Account as a single stack. You will have to choose the CrossAccountRole name (ProwlerXA-Role by default) and the ProwlerTaskRoleName (ProwlerECSTask-Role by default)
- 5. Deploy **CF-Prowler-CrossAccountRole.yml** in every Member Account as a StackSet. Choose the same CrossAccountName and ProwlerTaskRoleName as the previous step.
- 6. Deploy **CF-Prowler-IAM.yml** in the account that will host the Prowler container (the same from step 1).  The following template parameters must be provided:
+ 4.  Make sure SecurityHub is enabled in every account in AWS Organizations, and that the SecurityHub integration is enabled as explained in [Prowler - Security Hub Integration](https://github.com/prowler-cloud/prowler#security-hub-integration) 
+ 5. Deploy **CF-Prowler-CrossAccountRole.yml** in the Master Account as a single stack. You will have to choose the CrossAccountRole name (ProwlerXA-Role by default) and the ProwlerTaskRoleName (ProwlerECSTask-Role by default)
+ 6. Deploy **CF-Prowler-CrossAccountRole.yml** in every Member Account as a StackSet. Choose the same CrossAccountName and ProwlerTaskRoleName as the previous step.
+ 7. Deploy **CF-Prowler-IAM.yml** in the account that will host the Prowler container (the same from step 1).  The following template parameters must be provided:
     - **ProwlerCrossAccountRoleName**: Name of the from CF-Prowler-CrossAccountRole (default ProwlerXA-Role).
     - **ECSExecutionRoleName**: Name for the ECS Task Execution Role (default ECSTaskExecution-Role).
     - **ProwlerTaskRoleName**: Name for the ECS Prowler Task Role (default ProwlerECSTask-Role).
     - **ECSEventRoleName**: Name for the Eventbridge Task Role (default ProwlerEvents-Role).
- 7. Deploy **CF-Prowler-ECS.yml** in the account that will host the Prowler container (the same from step 1).  The following template parameters must be provided:
+ 8. Deploy **CF-Prowler-ECS.yml** in the account that will host the Prowler container (the same from step 1).  The following template parameters must be provided:
 	- **ProwlerClusterName**: Name for the ECS Cluster (default ProwlerCluster)
 	- **ProwlerContainerName**: Name for the Prowler container (default prowler)
 	- **ProwlerContainerInfo**: ECR URI from step 1. 
@@ -78,7 +79,7 @@ The logs that are generated and sent to Cloudwatch are error logs, and assessmen
 	- **ProwlerTaskRole**: Prowler ECS Task Role ARN from CF-Prowler-IAM outputs.
 	- **ECSEventRole**: Eventbridge Task Role ARN from CF-Prowler-IAM outputs.
 	- **CronExpression**: Valid Cron Expression for the scheduling of the Task Definition.
- 8. Verify that Prowler runs correctly by checking the CloudWatch logs after the scheduled task is executed.
+ 9. Verify that Prowler runs correctly by checking the CloudWatch logs after the scheduled task is executed.
 
 ---
 ## Upgrading Prowler
