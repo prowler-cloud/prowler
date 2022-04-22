@@ -1,0 +1,2 @@
+export ROLE=ProwlerXA-Role
+export PARALLEL_ACCOUNTS=1
