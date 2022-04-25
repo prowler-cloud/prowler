@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_check262="26.1"
+CHECK_TITLE_check262="[check262] CodeBuild Project with user controlled buildspec"
+CHECK_SCORED_check262="NOT_SCORED"
+CHECK_CIS_LEVEL_check262="LEVEL1"
+CHECK_SEVERITY_check262="High"
+CHECK_ASFF_TYPE_check262="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ALTERNATE_check101="check262"
+CHECK_SERVICENAME_check262="codebuild"
+CHECK_RISK_check262='The CodeBuild projects with user controlled buildspec'
+CHECK_REMEDIATION_check262=''
+CHECK_DOC_check262=''
+CHECK_CAF_EPIC_check262='CODEBUILD'
+
+check262(){
+    textInfo "Looking for all build projects with user controlled buildspec files"
+    for regx in ${REGIONS}; do
+        LIST_OF_PROJECTS=$("${AWSCLI}" codebuild list-projects --region "${regx}" --query 'projects[*]' --output text 2>&1)
+        if [[ $(echo "${LIST_OF_PROJECTS}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textInfo "${regx}: Access Denied trying to list Codebuild projects" "${regx}"
+            continue
+        fi
+        for project in ${LIST_OF_PROJECTS}; do
+            buildspec_file=$("${AWSCLI}" codebuild batch-get-projects --name "${project}" --query 'projects[0].source.buildspec' --region "${regx}" --output text 2>&1)
+            if [[ $(echo "${project_id}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+                textInfo "${regx}: Access Denied trying to Id for Codebuild project ${project} in" "${regx}"
+                continue
+            fi
+            if [[ $buildspec_file == *.yml ]];then
+                textFail "${regx}: Codebuild project ${project} uses a user controlled buildspec at ${buildspec_file}"
+            fi
+        done
+    done
+}
