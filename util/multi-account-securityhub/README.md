@@ -51,6 +51,7 @@ The .awsvariables file is used to pass required configuration to the script:
 
  1. **ROLE**: The cross account Role to be assumed for the Prowler assessments.
  2. **PARALLEL_ACCOUNTS**: The number of accounts to be scanned in parallel.
+ 3. **REGION**: Region where Prowler will run its assessments.
 
 ### run-prowler-securityhub.sh
 The script gets the list of accounts in AWS Organizations, and then executes Prowler as a job for each account, up to PARALLEL_ACCOUNT accounts at the same time.
