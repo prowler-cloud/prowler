@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+ #!/usr/bin/env bash
 
 # Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
 #
@@ -14,12 +14,12 @@
 
 IFS=',' read -ra MODES <<< "${MODE}"
 for MODE in "${MODES[@]}"; do
-  if [[ "$MODE" != "mono" && "$MODE" != "text" && "$MODE" != "csv" && "$MODE" != "json" && "$MODE" != "json-asff" && "$MODE" != "junit-xml" && "$MODE" != "html" ]]; then
-    echo -e "${OPTRED}ERROR!$OPTNORMAL Invalid output mode.  Choose text, mono, csv, json, json-asff, junit-xml or html. ./prowler -h for help"
+  if [[ "$MODE" != "mono" && "$MODE" != "text" && "$MODE" != "csv" && "$MODE" != "json" && "$MODE" != "json-asff" && "$MODE" != "junit-xml" && "$MODE" != "html" && "$MODE" != "json-csnf" ]]; then
+    echo -e "${OPTRED}ERROR!$OPTNORMAL Invalid output mode.  Choose text, mono, csv, json, json-asff, json-csnf, junit-xml or html. ./prowler -h for help"
     EXITCODE=1
     exit $EXITCODE
   fi
-  if [[ "$MODE" == "mono" || "$MODE" == "csv" || "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
+  if [[ "$MODE" == "mono" ]]; then
     MONOCHROME=1
   fi
 done

@@ -74,7 +74,7 @@ USAGE:
       -f <filterregion>   Specify an AWS region to run checks against.
                             (i.e.: us-west-1 or for multiple regions use single quote like 'us-west-1 us-west-2')
       -m <maxitems>       Specify the maximum number of items to return for long-running requests (default: 100).
-      -M <mode>           Output or report mode: text (default), mono, html, json, json-asff, junit-xml, csv. They can be used combined comma separated.
+      -M <mode>           Output or report mode: text (default), mono, html, json, json-asff, json-csnf, junit-xml, csv. They can be used combined comma separated.
                             (i.e.: "html,json"; files created in background; progress on stdout)
       -k                  Keep the credential report for debugging.
       -n                  Show check numbers to sort easier.
@@ -637,7 +637,7 @@ if [[ $PRINTGROUPSONLY == "1" ]]; then
 fi
 
 # Check that jq is installed for JSON outputs
-if [[ " ${MODES[@]} " =~ " json " || " ${MODES[@]} " =~ " json-asff " ]]; then
+if [[ " ${MODES[@]} " =~ " json " || " ${MODES[@]} " =~ " json-asff " || " ${MODES[@]} " =~ " json-csnf " ]]; then
   . $PROWLER_DIR/include/jq_detector
 fi
 

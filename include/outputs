@@ -234,7 +234,7 @@ textFail(){
   if [[ "${MODES[@]}" =~ "json-csnf" ]]; then
     generateJsonCSNFOutput "$1" "${level}" "$CHECK_RESOURCE_ID" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSNF
   fi
-  if [[ "${MODES[@]}" =~ "json-asff" ]]; then
+  if [[ "${MODES[@]}" =~ " json-asff " ]]; then
     JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "${level}" "$CHECK_RESOURCE_ID")
     echo "${JSON_ASFF_OUTPUT}" >> ${OUTPUT_FILE_NAME}.${EXTENSION_ASFF}
     if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
@@ -470,13 +470,13 @@ generateJsonCSNFOutput(){
   local resource_id=$3
   jq -M -c \
   --arg PROFILE "$PROFILE" \
+  --arg PROWLER_VERSION "$PROWLER_VERSION" \
   --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
   --arg TITLE_TEXT "$TITLE_TEXT" \
   --arg MESSAGE "$(echo -e "${message}" | sed -e 's/^[[:space:]]*//')" \
   --arg STATUS "$status" \
+  --arg UNIQUE_ID "$(LC_ALL=C echo -e -n "${message}" | tr -cs '[:alnum:]._~-' '_')" \
   --arg SEVERITY "$(echo $CHECK_SEVERITY | sed 's/[][]//g')" \
-  --arg SCORED "$ITEM_SCORED" \
-  --arg ITEM_CIS_LEVEL "$ITEM_CIS_LEVEL" \
   --arg TITLE_ID "$TITLE_ID" \
   --arg REPREGION "$REPREGION" \
   --arg TYPE "$CHECK_ASFF_COMPLIANCE_TYPE" \
@@ -487,34 +487,39 @@ generateJsonCSNFOutput(){
   --arg CHECK_REMEDIATION "$CHECK_REMEDIATION" \
   --arg CHECK_DOC "$CHECK_DOC" \
   --arg CHECK_RESOURCE_ID "$resource_id" \
-  --arg ACCOUNT_DETAILS_EMAIL "$ACCOUNT_DETAILS_EMAIL" \
   --arg ACCOUNT_DETAILS_NAME "$ACCOUNT_DETAILS_NAME" \
-  --arg ACCOUNT_DETAILS_ARN "$ACCOUNT_DETAILS_ARN" \
-  --arg ACCOUNT_DETAILS_ORG "$ACCOUNT_DETAILS_ORG" \
-  --arg ACCOUNT_DETAILS_TAGS "$ACCOUNT_DETAILS_TAGS" \
   -n '{
-    "Profile": $PROFILE,
-    "Account Number": $ACCOUNT_NUM,
-    "Control": $TITLE_TEXT,
-    "Message": $MESSAGE,
-    "Severity": $SEVERITY,
-    "Status": $STATUS,
-    "Scored": $SCORED,
-    "Level": $ITEM_CIS_LEVEL,
-    "Control ID": $TITLE_ID,
-    "Region": $REPREGION,
-    "Timestamp": $TIMESTAMP,
-    "Compliance": $TYPE,
-    "Service": $SERVICENAME,
-    "CAF Epic": $CHECK_CAF_EPIC,
-    "Risk": $CHECK_RISK,
-    "Remediation": $CHECK_REMEDIATION,
-    "Doc link": $CHECK_DOC,
-    "Resource ID": $CHECK_RESOURCE_ID,
-    "Account Email": $ACCOUNT_DETAILS_EMAIL,
-    "Account Name": $ACCOUNT_DETAILS_NAME,
-    "Account ARN": $ACCOUNT_DETAILS_ARN,
-    "Account Organization": $ACCOUNT_DETAILS_ORG,
-    "Account tags": $ACCOUNT_DETAILS_TAGS
+    "eventType" : "prowler_prowlerpro_finding",
+    "cloudEventsVersion" : $PROWLER_VERSION,
+    "eventTypeVersion" : "1.0",
+    "source" : "Prowler_ProwlerPro_Scanner",
+    "eventTime" : $TIMESTAMP,
+    "contentType" : "application/json",
+    "data" : {
+      "compartmentId" : $ACCOUNT_NUM,
+      "compartmentName" : $ACCOUNT_DETAILS_NAME,
+      "resourceName" : $CHECK_RESOURCE_ID,
+      "resourceId" : $CHECK_RESOURCE_ID,
+      "additionalDetails" : {
+        "status" : $STATUS,
+        "reason" : $MESSAGE,
+        "problemName" : $TITLE_TEXT,
+        "riskLevel" : $SEVERITY,
+        "problemType" : $TYPE,
+        "resourceName" : $CHECK_RESOURCE_ID,
+        "resourceId" : $CHECK_RESOURCE_ID,
+        "resourceType" : $SERVICENAME,
+        "labels" : $CHECK_CAF_EPIC,
+        "firstDetected" : $TIMESTAMP,
+        "lastDetected" : $TIMESTAMP,
+        "region" : $REPREGION,
+        "problemDescription" : $CHECK_RISK,
+        "problemRecommendation" : $CHECK_REMEDIATION
+      }
+    },
+    "eventID" : "prowler-\($TITLE_ID)-\($ACCOUNT_NUM)-\($REPREGION)-\($UNIQUE_ID)",
+      "extensions" : {
+        "compartmentId" : $ACCOUNT_NUM
+        }
   }'
 }
