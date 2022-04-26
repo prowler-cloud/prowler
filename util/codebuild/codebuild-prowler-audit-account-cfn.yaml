@@ -81,6 +81,8 @@ Resources:
               except Exception as ex:
                   print(ex.response['Error']['Message'])
                   cfnresponse.send(event, context, cfnresponse.FAILED, ex.response)
+            else:
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
 
   CodeBuildStartLogGroup:
     Type: 'AWS::Logs::LogGroup'
