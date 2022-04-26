@@ -83,6 +83,11 @@ The logs that are generated and sent to Cloudwatch are error logs, and assessmen
  9. Verify that Prowler runs correctly by checking the CloudWatch logs after the scheduled task is executed.
 
 ---
+## Troubleshooting
+
+If you permission find errors in the CloudWatch logs, the culprit might be a [Service Control Policy (SCP)](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html). You will need to exclude the Prowler Cross Account Role from those SCPs.
+
+---
 ## Upgrading Prowler
 
 Prowler version is controlled by the PROWLERVER argument in the Dockerfile, change it to the desired version and follow the ECR Push Commands to update the container image. 
