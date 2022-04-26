@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_check7174="7.174"
+CHECK_TITLE_check7174="[check7174] CodeBuild Project last invoked greater then 90 days"
+CHECK_SCORED_check7174="NOT_SCORED"
+CHECK_CIS_LEVEL_check7174="EXTRA"
+CHECK_SEVERITY_check7174="High"
+CHECK_ASFF_TYPE_check7174="AwsCodebuildProject"
+CHECK_ALTERNATE_check101="check7174"
+CHECK_SERVICENAME_check7174="codebuild"
+CHECK_RISK_check7174='The CodeBuild projects are very old and can be checked if they are being used currently'
+CHECK_REMEDIATION_check7174='Check if the projects are really in use and remove the stale ones'
+CHECK_DOC_check7174='https://docs.aws.amazon.com/codebuild/latest/userguide/delete-project.html'
+CHECK_CAF_EPIC_check7174='CODEBUILD'
+
+check7174(){
+    echo "Looking for all build projects with last build invocation greater then 30 days in all regions"
+    for regx in ${REGIONS}; do
+        LIST_OF_PROJECTS=$("${AWSCLI}" codebuild list-projects --region "${regx}" --query 'projects[*]' --output text 2>&1)
+        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_PROJECTS}"; then
+            textInfo "${regx}: Access Denied trying to list Codebuild projects" "${regx}"
+            continue
+        fi
+        for project in ${LIST_OF_PROJECTS}; do
+            project_id=$("${AWSCLI}" codebuild list-builds-for-project --project-name "${project}" --query 'ids[0]' --region "${regx}" --output text | head -n 1 2>&1)
+            if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${project_id}"; then
+                textInfo "${regx}: Access Denied trying to Id for Codebuild project ${project} in" "${regx}"
+                continue
+            fi
+            last_invoked_time=$("${AWSCLI}" codebuild batch-get-builds --ids ${project_id} --region "${regx}" --query 'builds[0].endTime' --output text 2>&1)
+            if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${last_invoked_time}"; then
+                textInfo "${regx}: Access Denied trying to get build details for Codebuild project ID ${project_id} in" "${regx}"
+            else
+                integer_time=${last_invoked_time%.*}
+                current_time=$(date +%s)
+                if [[ $(($current_time - $integer_time)) -ge $((90*60*60)) ]]; then
+                    textFail "${regx}: CodeBuild project: ${project} was last invoked greater then 30 days"
+                else
+		    textPass "${regx}: Codebuild project: ${project} passed the check"
+		fi
+            fi
+        done
+    done
+}
