@@ -20,7 +20,7 @@ CHECK_ASFF_TYPE_check7174="AwsCodebuildProject"
 CHECK_ALTERNATE_check101="check7174"
 CHECK_SERVICENAME_check7174="codebuild"
 CHECK_RISK_check7174='The CodeBuild projects are very old and can be checked if they are being used currently'
-CHECK_REMEDIATION_check7174='Check if the projects are really in use and remove the stale ones'
+CHECK_REMEDIATION_check7174='Check if CodeBuild project are really in use and remove the stale ones'
 CHECK_DOC_check7174='https://docs.aws.amazon.com/codebuild/latest/userguide/delete-project.html'
 CHECK_CAF_EPIC_check7174='CODEBUILD'
 
