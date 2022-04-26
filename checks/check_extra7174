@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_check7174="7.174"
-CHECK_TITLE_check7174="[check7174] CodeBuild Project last invoked greater then 90 days"
+CHECK_TITLE_check7174="[check7174] CodeBuild Project last invoked greater than 90 days"
 CHECK_SCORED_check7174="NOT_SCORED"
 CHECK_CIS_LEVEL_check7174="EXTRA"
 CHECK_SEVERITY_check7174="High"
