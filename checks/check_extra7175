@@ -17,29 +17,29 @@ CHECK_SCORED_check7175="NOT_SCORED"
 CHECK_CIS_LEVEL_check7175="EXTRA"
 CHECK_SEVERITY_check7175="High"
 CHECK_ASFF_TYPE_check7175="AwsCodebuildProject"
-CHECK_ALTERNATE_check7174="extra7175"
+CHECK_ALTERNATE_check7175="extra7175"
 CHECK_SERVICENAME_check7175="codebuild"
 CHECK_RISK_check7175='The CodeBuild projects with user controlled buildspec'
 CHECK_REMEDIATION_check7175='Use buildspec.yml from a trusted source which user cant interfere with'
 CHECK_DOC_check7175='https://docs.aws.amazon.com/codebuild/latest/userguide/security.html'
-CHECK_CAF_EPIC_check7175='CODEBUILD'
+CHECK_CAF_EPIC_check7175='Infrastructure Security'
 
 check7175(){
-    echo "Looking for all build projects with user controlled buildspec files"
+    #echo "Looking for all build projects with user controlled buildspec files"
     for regx in ${REGIONS}; do
         LIST_OF_PROJECTS=$("${AWSCLI}" codebuild list-projects --region "${regx}" --query 'projects[*]' --output text 2>&1)
         if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_PROJECTS}"; then
-            textInfo "${regx}: Access Denied trying to list Codebuild projects" "${regx}"
+            textInfo "${regx}: Access Denied trying to list Codebuild projects"
             continue
         fi
         for project in ${LIST_OF_PROJECTS}; do
             buildspec_file=$("${AWSCLI}" codebuild batch-get-projects --name "${project}" --query 'projects[0].source.buildspec' --region "${regx}" --output text 2>&1)
             if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${project_id}"; then
-                textInfo "${regx}: Access Denied trying to Id for Codebuild project ${project} in" "${regx}"
+                textInfo "${regx}: Access Denied trying to Id for Codebuild project ${project}"
                 continue
             fi
             if [[ $buildspec_file == *.yml ]];then
-                textFail "${regx}: Codebuild project ${project} uses a user controlled buildspec at ${buildspec_file}"
+                textFail "${regx}: Codebuild project ${project} uses a user controlled buildspec"
             else
 		textPass "${regx}: Codebuild project ${project} doesn't use user controlled buildspec"
 	    fi

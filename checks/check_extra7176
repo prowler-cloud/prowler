@@ -12,30 +12,30 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_check7176="7.1761"
-CHECK_TITLE_check7176="[check7176] Public EMR Cluster"
+CHECK_TITLE_check7176="[extra7176] Public EMR Cluster"
 CHECK_SCORED_check7176="NOT_SCORED"
 CHECK_CIS_LEVEL_check7176="EXTRA"
 CHECK_SEVERITY_check7176="High"
 CHECK_ASFF_TYPE_check7176="AwsEMR"
-CHECK_ALTERNATE_check101="check7176"
+CHECK_ALTERNATE_check101="extra7176"
 CHECK_SERVICENAME_check7176="emr"
 CHECK_RISK_check7176='EMR Cluster should not be public'
 CHECK_REMEDIATION_check7176='Only make acceptable EMR clusters public'
-CHECK_DOC_check7176=''
-CHECK_CAF_EPIC_check7176='EMR'
+CHECK_DOC_check7176='https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html'
+CHECK_CAF_EPIC_check7176='Infrastructure Security'
 
 check7176(){
-    echo "Looking for all public EMR clusters"
+    #echo "Looking for all public EMR clusters"
     for regx in ${REGIONS}; do
         LIST_OF_CLUSTERS=$("${AWSCLI}" emr list-clusters --region ${regx} --query 'Clusters[*].Id' --output text 2>&1)
         if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_CLUSTERS}"; then
-            textInfo "${regx}: Access Denied trying to list clusters of emr" "${regx}"
+            textInfo "${regx}: Access Denied trying to list clusters of emr"
             continue
         fi
         for cluster_id in ${LIST_OF_CLUSTERS}; do
             dns_val=$("${AWSCLI}" emr describe-cluster --cluster-id "${cluster_id}" --query 'Cluster.MasterPublicDnsName' --region "${regx}" --output text 2>&1)
             if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${dns_val}"; then
-                textInfo "${regx}: Access Denied trying to describe emr cluster ${cluster_id} in" "${regx}"
+                textInfo "${regx}: Access Denied trying to describe emr cluster ${cluster_id} in"
                 continue
             fi
             if [[ $dns_val != None && $dns_val != *.internal ]];then
