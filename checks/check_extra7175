@@ -42,6 +42,7 @@ check7175(){
                 textFail "${regx}: Codebuild project ${project} uses a user controlled buildspec at ${buildspec_file}"
             else
 		textPass "${regx}: Codebuild project ${project} doesn't use user controlled buildspec"
+	    fi
         done
     done
 }

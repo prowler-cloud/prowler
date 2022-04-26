@@ -25,7 +25,7 @@ CHECK_DOC_check7174='https://docs.aws.amazon.com/codebuild/latest/userguide/dele
 CHECK_CAF_EPIC_check7174='CODEBUILD'
 
 check7174(){
-    echo "Looking for all build projects with last build invocation greater then 30 days in all regions"
+    echo "Looking for all build projects with last build invocation greater then 90 days in all regions"
     for regx in ${REGIONS}; do
         LIST_OF_PROJECTS=$("${AWSCLI}" codebuild list-projects --region "${regx}" --query 'projects[*]' --output text 2>&1)
         if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_PROJECTS}"; then
@@ -45,7 +45,7 @@ check7174(){
                 integer_time=${last_invoked_time%.*}
                 current_time=$(date +%s)
                 if [[ $(($current_time - $integer_time)) -ge $((90*60*60)) ]]; then
-                    textFail "${regx}: CodeBuild project: ${project} was last invoked greater then 30 days"
+                    textFail "${regx}: CodeBuild project: ${project} was last invoked greater then 90 days"
                 else
 		    textPass "${regx}: Codebuild project: ${project} passed the check"
 		fi

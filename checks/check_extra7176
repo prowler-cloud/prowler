@@ -25,7 +25,7 @@ CHECK_DOC_check7176=''
 CHECK_CAF_EPIC_check7176='EMR'
 
 check7176(){
-    echo "Looking for all build projects with user controlled buildspec files"
+    echo "Looking for all public EMR clusters"
     for regx in ${REGIONS}; do
         LIST_OF_CLUSTERS=$("${AWSCLI}" emr list-clusters --region ${regx} --query 'Clusters[*].Id' --output text 2>&1)
         if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_CLUSTERS}"; then
@@ -40,7 +40,9 @@ check7176(){
             fi
             if [[ $dns_val != None && $dns_val != *.internal ]];then
                 textFail "${regx}: EMR Cluster ${cluster_id} public"
-            fi
+            else
+		textPass "${regx}: EMR Cluster ${cluster_id} not public"
+	    fi
         done
     done
 }
