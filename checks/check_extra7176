@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-CHECK_ID_check7176="7.1761"
+CHECK_ID_check7176="7.176"
 CHECK_TITLE_check7176="[extra7176] Public EMR Cluster"
 CHECK_SCORED_check7176="NOT_SCORED"
 CHECK_CIS_LEVEL_check7176="EXTRA"
