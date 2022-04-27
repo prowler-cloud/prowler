@@ -11,18 +11,18 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-CHECK_ID_check7174="7.174"
-CHECK_TITLE_check7174="[extra7174] CodeBuild Project last invoked greater than 90 days"
-CHECK_SCORED_check7174="NOT_SCORED"
-CHECK_CIS_LEVEL_check7174="EXTRA"
-CHECK_SEVERITY_check7174="High"
-CHECK_ASFF_TYPE_check7174="AwsCodebuildProject"
+CHECK_ID_extra7174="7.174"
+CHECK_TITLE_extra7174="[extra7174] CodeBuild Project last invoked greater than 90 days"
+CHECK_SCORED_extra7174="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7174="EXTRA"
+CHECK_SEVERITY_extra7174="High"
+CHECK_ASFF_TYPE_extra7174="AwsCodebuildProject"
 CHECK_ALTERNATE_check7174="extra7174"
-CHECK_SERVICENAME_check7174="codebuild"
-CHECK_RISK_check7174='Older CodeBuild projects can be checked to see if they are currently in use'
-CHECK_REMEDIATION_check7174='Check if CodeBuild project are really in use and remove the stale ones'
-CHECK_DOC_check7174='https://docs.aws.amazon.com/codebuild/latest/userguide/delete-project.html'
-CHECK_CAF_EPIC_check7174='Infrastructure Security'
+CHECK_SERVICENAME_extra7174="codebuild"
+CHECK_RISK_extra7174='Older CodeBuild projects can be checked to see if they are currently in use'
+CHECK_REMEDIATION_extra7174='Check if CodeBuild project are really in use and remove the stale ones'
+CHECK_DOC_extra7174='https://docs.aws.amazon.com/codebuild/latest/userguide/delete-project.html'
+CHECK_CAF_EPIC_extra7174='Infrastructure Security'
 
 extra7174(){
     # "Looking for all build projects with last build invocation greater then 90 days in all regions"
