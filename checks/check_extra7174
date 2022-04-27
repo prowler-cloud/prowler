@@ -24,7 +24,7 @@ CHECK_REMEDIATION_check7174='Check if CodeBuild project are really in use and re
 CHECK_DOC_check7174='https://docs.aws.amazon.com/codebuild/latest/userguide/delete-project.html'
 CHECK_CAF_EPIC_check7174='Infrastructure Security'
 
-check7174(){
+extra7174(){
     # "Looking for all build projects with last build invocation greater then 90 days in all regions"
     for regx in ${REGIONS}; do
         LIST_OF_PROJECTS=$("${AWSCLI}" codebuild list-projects --region "${regx}" --query 'projects[*]' --output text 2>&1)
