@@ -29,19 +29,19 @@ check7176(){
     for regx in ${REGIONS}; do
         LIST_OF_CLUSTERS=$("${AWSCLI}" emr list-clusters --region ${regx} --query 'Clusters[*].Id' --output text 2>&1)
         if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_CLUSTERS}"; then
-            textInfo "${regx}: Access Denied trying to list clusters of emr"
+            textInfo "Access Denied trying to list clusters of emr" "${regx}"
             continue
         fi
         for cluster_id in ${LIST_OF_CLUSTERS}; do
             dns_val=$("${AWSCLI}" emr describe-cluster --cluster-id "${cluster_id}" --query 'Cluster.MasterPublicDnsName' --region "${regx}" --output text 2>&1)
             if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${dns_val}"; then
-                textInfo "${regx}: Access Denied trying to describe emr cluster ${cluster_id} in"
+                textInfo "Access Denied trying to describe emr cluster" "${regx}" "${cluster_id}"
                 continue
             fi
             if [[ $dns_val != None && $dns_val != *.internal ]];then
-                textFail "${regx}: EMR Cluster ${cluster_id} public"
+                textFail "EMR Cluster public" "${regx}" "${cluster_id}"
             else
-		textPass "${regx}: EMR Cluster ${cluster_id} not public"
+		textPass "EMR Cluster passed the check" "${regx}" "${cluster_id}"
 	    fi
         done
     done
