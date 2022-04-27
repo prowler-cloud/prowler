@@ -33,7 +33,7 @@ extra7175(){
             continue
         fi
         for project in ${LIST_OF_PROJECTS}; do
-            buildspec_file=$("${AWSCLI}" codebuild batch-get-projects --name "${project}" --query 'projects[0].source.buildspec' --region "${regx}" --output text 2>&1)
+            buildspec_file=$("${AWSCLI}" codebuild batch-get-projects $PROFILE_OPT --name "${project}" --query 'projects[0].source.buildspec' --region "${regx}" --output text 2>&1)
             if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${project_id}"; then
                 textInfo "${regx}: Access Denied trying to fetch Id for Codebuild project" "${regx}" "${project}"
                 continue
