@@ -33,7 +33,7 @@ extra7176(){
             continue
         fi
         for cluster_id in ${LIST_OF_CLUSTERS}; do
-            dns_val=$("${AWSCLI}" emr describe-cluster --cluster-id "${cluster_id}" --query 'Cluster.MasterPublicDnsName' --region "${regx}" --output text 2>&1)
+            dns_val=$("${AWSCLI}" emr describe-cluster $PROFILE_OPT --cluster-id "${cluster_id}" --query 'Cluster.MasterPublicDnsName' --region "${regx}" --output text 2>&1)
             if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${dns_val}"; then
                 textInfo "${regx}: Access Denied trying to describe emr cluster" "${regx}" "${cluster_id}"
                 continue
