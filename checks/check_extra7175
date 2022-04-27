@@ -11,18 +11,18 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-CHECK_ID_check7175="7.175"
-CHECK_TITLE_check7175="[extra7175] CodeBuild Project with an user controlled buildspec"
-CHECK_SCORED_check7175="NOT_SCORED"
-CHECK_CIS_LEVEL_check7175="EXTRA"
-CHECK_SEVERITY_check7175="High"
-CHECK_ASFF_TYPE_check7175="AwsCodebuildProject"
+CHECK_ID_extra7175="7.175"
+CHECK_TITLE_extra7175="[extra7175] CodeBuild Project with an user controlled buildspec"
+CHECK_SCORED_extra7175="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7175="EXTRA"
+CHECK_SEVERITY_extra7175="High"
+CHECK_ASFF_TYPE_extra7175="AwsCodebuildProject"
 CHECK_ALTERNATE_check7175="extra7175"
-CHECK_SERVICENAME_check7175="codebuild"
-CHECK_RISK_check7175='The CodeBuild projects with user controlled buildspec'
-CHECK_REMEDIATION_check7175='Use buildspec.yml from a trusted source which user cant interfere with'
-CHECK_DOC_check7175='https://docs.aws.amazon.com/codebuild/latest/userguide/security.html'
-CHECK_CAF_EPIC_check7175='Infrastructure Security'
+CHECK_SERVICENAME_extra7175="codebuild"
+CHECK_RISK_extra7175='The CodeBuild projects with user controlled buildspec'
+CHECK_REMEDIATION_extra7175='Use buildspec.yml from a trusted source which user cant interfere with'
+CHECK_DOC_extra7175='https://docs.aws.amazon.com/codebuild/latest/userguide/security.html'
+CHECK_CAF_EPIC_extra7175='Infrastructure Security'
 
 extra7175(){
     #echo "Looking for all build projects with user controlled buildspec files"
