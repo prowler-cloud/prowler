@@ -29,25 +29,25 @@ check7174(){
     for regx in ${REGIONS}; do
         LIST_OF_PROJECTS=$("${AWSCLI}" codebuild list-projects --region "${regx}" --query 'projects[*]' --output text 2>&1)
         if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_PROJECTS}"; then
-            textInfo "Access Denied trying to list Codebuild projects" "${regx}"
+            textInfo "${regx}: Access Denied trying to list Codebuild projects" "${regx}"
             continue
         fi
         for project in ${LIST_OF_PROJECTS}; do
             project_id=$("${AWSCLI}" codebuild list-builds-for-project --project-name "${project}" --query 'ids[0]' --region "${regx}" --output text | head -n 1 2>&1)
             if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${project_id}"; then
-                textInfo "Access Denied trying to fetch Id for Codebuild project" "${regx}" "${project}"
+                textInfo "${regx}: Access Denied trying to fetch Id for Codebuild project" "${regx}" "${project}"
                 continue
             fi
             last_invoked_time=$("${AWSCLI}" codebuild batch-get-builds --ids ${project_id} --region "${regx}" --query 'builds[0].endTime' --output text 2>&1)
             if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${last_invoked_time}"; then
-                textInfo "Access Denied trying to get build details for Codebuild project ID" "${regx}" "${project_id}"
+                textInfo "${regx}: Access Denied trying to get build details for Codebuild project ID" "${regx}" "${project}"
             else
                 integer_time=${last_invoked_time%.*}
                 current_time=$(date +%s)
                 if [[ $(($current_time - $integer_time)) -ge $((90*60*60)) ]]; then
-                    textFail "CodeBuild project was last invoked greater then 90 days" "${regx}" "${project}"
+                    textFail "${regx}: CodeBuild project was last invoked greater then 90 days" "${regx}" "${project}"
                 else
-		    textPass "Codebuild project passed the check" "${regx}" "${project}"
+		    textPass "${regx}: Codebuild project passed the check" "${regx}" "${project}"
 		fi
             fi
         done

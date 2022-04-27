@@ -29,19 +29,19 @@ check7175(){
     for regx in ${REGIONS}; do
         LIST_OF_PROJECTS=$("${AWSCLI}" codebuild list-projects --region "${regx}" --query 'projects[*]' --output text 2>&1)
         if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_PROJECTS}"; then
-            textInfo "Access Denied trying to list Codebuild projects" "${regx}"
+            textInfo "${regx}: Access Denied trying to list Codebuild projects" "${regx}"
             continue
         fi
         for project in ${LIST_OF_PROJECTS}; do
             buildspec_file=$("${AWSCLI}" codebuild batch-get-projects --name "${project}" --query 'projects[0].source.buildspec' --region "${regx}" --output text 2>&1)
             if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${project_id}"; then
-                textInfo "Access Denied trying to fetch Id for Codebuild project" "${regx}" "${project}"
+                textInfo "${regx}: Access Denied trying to fetch Id for Codebuild project" "${regx}" "${project}"
                 continue
             fi
             if [[ $buildspec_file == *.yml ]];then
-                textFail "Codebuild project uses a user controlled buildspec" "${regx}" "${project}"
+                textFail "${regx}: Codebuild project uses a user controlled buildspec" "${regx}" "${project}"
             else
-		textPass "Codebuild project passed the check" "${regx}" "${project}"
+		textPass "${regx}: Codebuild project passed the check" "${regx}" "${project}"
 	    fi
         done
     done
