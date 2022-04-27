@@ -27,7 +27,7 @@ CHECK_CAF_EPIC_extra7175='Infrastructure Security'
 extra7175(){
     #echo "Looking for all build projects with user controlled buildspec files"
     for regx in ${REGIONS}; do
-        LIST_OF_PROJECTS=$("${AWSCLI}" codebuild list-projects --region "${regx}" --query 'projects[*]' --output text 2>&1)
+        LIST_OF_PROJECTS=$("${AWSCLI}" codebuild list-projects $PROFILE_OPT --region "${regx}" --query 'projects[*]' --output text 2>&1)
         if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_PROJECTS}"; then
             textInfo "${regx}: Access Denied trying to list Codebuild projects" "${regx}"
             continue
