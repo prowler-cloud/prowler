@@ -24,7 +24,7 @@ CHECK_REMEDIATION_check7176='Only make acceptable EMR clusters public'
 CHECK_DOC_check7176='https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html'
 CHECK_CAF_EPIC_check7176='Infrastructure Security'
 
-check7176(){
+extra7176(){
     #echo "Looking for all public EMR clusters"
     for regx in ${REGIONS}; do
         LIST_OF_CLUSTERS=$("${AWSCLI}" emr list-clusters --region ${regx} --query 'Clusters[*].Id' --output text 2>&1)
