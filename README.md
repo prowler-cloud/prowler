@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://prowler.pro"><img align="center" src="https://user-images.githubusercontent.com/38561120/165706715-1da422d1-3321-461c-96f2-3254652ce928.png" alt="Prowler Pro Logo" width="130" height="33"></a>
+  <a href="https://prowler.pro"><img align="center" src="https://user-images.githubusercontent.com/38561120/165706715-1da422d1-3321-461c-96f2-3254652ce928.png" alt="Prowler Pro Logo" width="15%" height="15%"></a>
   <b><i>&nbsp&nbsp&nbspExplore the Pro version of Prowler at <a href="https://prowler.pro">prowler.pro</a></i></b>
 </p>
 <hr>
