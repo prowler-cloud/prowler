@@ -1,12 +1,12 @@
 <p align="center">
-  <a href="https://prowler.pro"><img align="center" src="https://user-images.githubusercontent.com/38561120/165706715-1da422d1-3321-461c-96f2-3254652ce928.png" alt="Prowler Pro Logo" width="15%" height="15%"></a>
+  <img align="center" src="docs/images/prowler-pro-dark.png#gh-dark-mode-only" width="15%" height="15%">
+  <img align="center" src="docs/images/prowler-pro-light.png#gh-light-mode-only" width="15%" height="15%">
   <b><i>&nbsp&nbsp&nbspExplore the Pro version of Prowler at <a href="https://prowler.pro">prowler.pro</a></i></b>
 </p>
 <hr>
 <p align="center">
   <img src="https://user-images.githubusercontent.com/3985464/113734260-7ba06900-96fb-11eb-82bc-d4f68a1e2710.png" />
 </p>
-
 <p align="center">
   <a href="https://discord.gg/UjSMCVnxSB"><img alt="Discord Shield" src="https://img.shields.io/discord/807208614288818196"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/toniblyx/prowler"></a>
