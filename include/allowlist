@@ -45,7 +45,7 @@ allowlist_DynamoDB() {
   echo -e "${NOTICE} Getting allowlist from DynamoDB table ${ALLOWLIST_FILE} ...${NORMAL}"
   DYNAMO_REGION=$(cut -d ":" -f 4 <<< "${ALLOWLIST_FILE}")
   DYNAMO_TABLE=$(cut -d "/" -f 2 <<< "${ALLOWLIST_FILE}")
-  DYNAMO_ITEMS=$(${AWSCLI} dynamodb execute-statement --statement "SELECT resource_id FROM ${DYNAMO_TABLE} WHERE account_id=""'""${ACCOUNT_NUM}""'"" or account_id='*'" ${PROFILE_OPT} --region ${DYNAMO_REGION} --output json 2>&1 )
+  DYNAMO_ITEMS=$(${AWSCLI} dynamodb execute-statement --statement "SELECT rule FROM ${DYNAMO_TABLE} WHERE account_id=""'""${ACCOUNT_NUM}""'"" or account_id='*'" ${PROFILE_OPT} --region ${DYNAMO_REGION} --output json 2>&1 )
   if grep -q -E 'AccessDenied|UnauthorizedOperation|ResourceNotFoundException' <<< "${DYNAMO_ITEMS}"; then
     echo "${BAD} FAIL! Access Denied trying to get allowlist from the DynamoDB, please make sure it is correct and/or you have permissions to scan the table ${DYNAMO_TABLE}.${NORMAL}"
     EXITCODE=1
@@ -55,7 +55,7 @@ allowlist_DynamoDB() {
     echo "${NOTICE} No allowed resources were found for account ${ACCOUNT_NUM}, starting Prowler...${NORMAL}"
   else
     # Convert elements to allowlist file
-    ALLOWLIST=$(jq -r '.Items[].resource_id.S' <<< "${DYNAMO_ITEMS}")
+    ALLOWLIST=$(jq -r '.Items[].rule.S' <<< "${DYNAMO_ITEMS}")
     if grep -q "null" <<< "${ALLOWLIST}"; then
       echo "${BAD} FAIL! No rule key found in DynamoDB table, please make sure the table has rule as a sort key and account_id as the partition key...${NORMAL}"
       EXITCODE=1
