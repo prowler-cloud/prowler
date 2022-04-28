@@ -26,6 +26,7 @@ CHECK_CAF_EPIC_extra7176='Infrastructure Security'
 
 extra7176(){
     #echo "Looking for all public EMR clusters"
+    # Public EMR cluster have their DNS ending with .amazonaws.com while private ones have format of ip-xxx-xx-xx.us-east-1.compute.internal.
     for regx in ${REGIONS}; do
         LIST_OF_CLUSTERS=$("${AWSCLI}" emr list-clusters $PROFILE_OPT --region "${regx}" --query 'Clusters[*].Id' --output text 2>&1)
         if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_CLUSTERS}"; then
