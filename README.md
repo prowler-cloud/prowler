@@ -1,3 +1,7 @@
+<p align="center">Try the enterprise version of Prowler at <a href="https://prowler.pro">prowler.pro</a>!</p>
+<p align="center">
+<a href="https://prowler.pro"><img align="center" src="https://user-images.githubusercontent.com/38561120/165706715-1da422d1-3321-461c-96f2-3254652ce928.png" alt="Prowler Pro Logo" width="125" height="28" /></a></p>
+<hr>
 <p align="center">
   <img src="https://user-images.githubusercontent.com/3985464/113734260-7ba06900-96fb-11eb-82bc-d4f68a1e2710.png" />
 </p>
@@ -33,7 +37,7 @@
 - [Advanced Usage](#advanced-usage)
 - [Security Hub integration](#security-hub-integration)
 - [CodeBuild deployment](#codebuild-deployment)
-- [Allowlist or remove FAIL from resources](#allowlist-or-allowlist-or-remove-a-fail-from-resources)
+- [Allowlist](#allowlist-or-remove-a-fail-from-resources)
 - [Fix](#how-to-fix-every-fail)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
