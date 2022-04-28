@@ -495,6 +495,9 @@ Sometimes you may find resources that are intentionally configured in a certain 
 S3 URIs are also supported as allowlist file, e.g. `s3://bucket/prefix/allowlist_sample.txt`
 >Make sure that the used credentials have s3:GetObject permissions in the S3 path where the allowlist file is located.
 
+DynamoDB table ARNs are also supported as allowlist file, e.g. `arn:aws:dynamodb:us-east-1:111111222222:table/allowlist`
+>Make sure that the table has `account_id` as partition key and `rule` as sort key, and that the used credentials have dynamodb:Scan permissions in the table. PONER FOTO
+
 Allowlist option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format except for `json-asff`.
 
 ## How to fix every FAIL
