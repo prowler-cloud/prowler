@@ -33,7 +33,7 @@
 - [Advanced Usage](#advanced-usage)
 - [Security Hub integration](#security-hub-integration)
 - [CodeBuild deployment](#codebuild-deployment)
-- [Allowlist or remove FAIL from resources](#allowlist-or-allowlist-or-remove-a-fail-from-resources)
+- [Allowlist](#allowlist-or-remove-a-fail-from-resources)
 - [Fix](#how-to-fix-every-fail)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
@@ -496,7 +496,13 @@ S3 URIs are also supported as allowlist file, e.g. `s3://bucket/prefix/allowlist
 >Make sure that the used credentials have s3:GetObject permissions in the S3 path where the allowlist file is located.
 
 DynamoDB table ARNs are also supported as allowlist file, e.g. `arn:aws:dynamodb:us-east-1:111111222222:table/allowlist`
->Make sure that the table has `account_id` as partition key and `rule` as sort key, and that the used credentials have dynamodb:Scan permissions in the table. PONER FOTO
+>Make sure that the table has `account_id` as partition key and `rule` as sort key, and that the used credentials have dynamodb:Scan permissions in the table.
+><p align="left"><img src="https://user-images.githubusercontent.com/38561120/165769502-296f9075-7cc8-445e-8158-4b21804bfe7e.png" alt="image" width="397" height="252" /></p>
+
+>The field `account_id` can contains either an account ID or an `*` (which applies to all the accounts that use this table as a whitelist). As in the traditional allowlist file, the `rule` field must contain `checkID:resourcename` pattern.
+><p><img src="https://user-images.githubusercontent.com/38561120/165770610-ed5c2764-7538-44c2-9195-bcfdecc4ef9b.png" alt="image" width="394" /></p>
+
+
 
 Allowlist option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format except for `json-asff`.
 
