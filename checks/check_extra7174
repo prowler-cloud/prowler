@@ -45,9 +45,9 @@ extra7174(){
                 integer_time=${last_invoked_time%.*}
                 current_time=$(date +%s)
                 if [[ $(($current_time - $integer_time)) -ge $((90*60*60)) ]]; then
-                    textFail "${regx}: CodeBuild project was last invoked greater then 90 days" "${regx}" "${project}"
+                    textFail "${regx}: CodeBuild project ${project} was last invoked greater then 90 days " "${regx}" "${project}"
                 else
-		    textPass "${regx}: Codebuild project passed the check" "${regx}" "${project}"
+		    textPass "${regx}: Codebuild project ${project} passed the check" "${regx}" "${project}"
 		fi
             fi
         done

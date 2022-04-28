@@ -39,9 +39,9 @@ extra7175(){
                 continue
             fi
             if [[ $buildspec_file == *.yml ]];then
-                textFail "${regx}: Codebuild project uses a user controlled buildspec" "${regx}" "${project}"
+                textFail "${regx}: Codebuild project ${project} uses a user controlled buildspec" "${regx}" "${project}"
             else
-		textPass "${regx}: Codebuild project passed the check" "${regx}" "${project}"
+		textPass "${regx}: Codebuild project ${project} passed the check" "${regx}" "${project}"
 	    fi
         done
     done

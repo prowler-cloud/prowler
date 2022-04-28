@@ -11,18 +11,18 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-CHECK_ID_check7176="7.176"
-CHECK_TITLE_check7176="[extra7176] Public EMR Cluster"
-CHECK_SCORED_check7176="NOT_SCORED"
-CHECK_CIS_LEVEL_check7176="EXTRA"
-CHECK_SEVERITY_check7176="High"
-CHECK_ASFF_TYPE_check7176="AwsEMR"
-CHECK_ALTERNATE_check7176="extra7176"
+CHECK_ID_extra7176="7.176"
+CHECK_TITLE_extra7176="[extra7176] Public EMR Cluster"
+CHECK_SCORED_extra7176="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7176="EXTRA"
+CHECK_SEVERITY_extra7176="Medium"
+CHECK_ASFF_TYPE_extra7176="AwsEMR"
+CHECK_ALTERNATE_extra7176="extra7176"
 CHECK_SERVICENAME_check7176="emr"
-CHECK_RISK_check7176='EMR Cluster should not be public'
-CHECK_REMEDIATION_check7176='Only make acceptable EMR clusters public'
+CHECK_RISK_extra7176='EMR Cluster should not be public'
+CHECK_REMEDIATION_extra7176='Only make acceptable EMR clusters public'
 CHECK_DOC_check7176='https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html'
-CHECK_CAF_EPIC_check7176='Infrastructure Security'
+CHECK_CAF_EPIC_extra7176='Infrastructure Security'
 
 extra7176(){
     #echo "Looking for all public EMR clusters"
@@ -39,9 +39,9 @@ extra7176(){
                 continue
             fi
             if [[ $dns_val != None && $dns_val != *.internal ]];then
-                textFail "${regx}: EMR Cluster public" "${regx}" "${cluster_id}"
+                textFail "${regx}: EMR Cluster public ${cluster_id}" "${regx}" "${cluster_id}"
             else
-		textPass "${regx}: EMR Cluster passed the check" "${regx}" "${cluster_id}"
+        		textPass "${regx}: EMR Cluster passed the check ${cluster_id}" "${regx}" "${cluster_id}"
 	    fi
         done
     done
