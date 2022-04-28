@@ -1,5 +1,6 @@
 <p align="center">
-  <a href="https://prowler.pro"><img align="center" src="https://user-images.githubusercontent.com/38561120/165706715-1da422d1-3321-461c-96f2-3254652ce928.png" alt="Prowler Pro Logo" width="130" height="33" /></a><b><i>&nbsp&nbsp&nbspExplore the Pro version of Prowler at <a href="https://prowler.pro">prowler.pro</a></i></b>
+  <a href="https://prowler.pro"><img align="center" src="https://user-images.githubusercontent.com/38561120/165706715-1da422d1-3321-461c-96f2-3254652ce928.png" alt="Prowler Pro Logo" width="130" height="33"></a>
+  <b><i>&nbsp&nbsp&nbspExplore the Pro version of Prowler at <a href="https://prowler.pro">prowler.pro</a></i></b>
 </p>
 <hr>
 <p align="center">
@@ -11,7 +12,7 @@
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/toniblyx/prowler"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/cloud/build/toniblyx/prowler"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/image-size/toniblyx/prowler"></a>
-  <a href="https://gallery.ecr.aws/o4g1s5r6/prowler"><img width="18%" height="18%" alt="AWS ECR Gallery" src="https://user-images.githubusercontent.com/3985464/151531396-b6535a68-c907-44eb-95a1-a09508178616.png"></a>
+  <a href="https://gallery.ecr.aws/o4g1s5r6/prowler"><img width="120" height="21" alt="AWS ECR Gallery" style="border-radius: 2px" src="https://user-images.githubusercontent.com/3985464/151531396-b6535a68-c907-44eb-95a1-a09508178616.png"></a>
   <a href="https://github.com/prowler-cloud/prowler"><img alt="Repo size" src="https://img.shields.io/github/repo-size/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler"><img alt="Lines" src="https://img.shields.io/tokei/lines/github/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler/issues"><img alt="Issues" src="https://img.shields.io/github/issues/prowler-cloud/prowler"></a>
