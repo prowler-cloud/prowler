@@ -36,7 +36,7 @@
 - [Advanced Usage](#advanced-usage)
 - [Security Hub integration](#security-hub-integration)
 - [CodeBuild deployment](#codebuild-deployment)
-- [Allowlist](#allowlist-or-remove-a-fail-from-resources)
+- [Allowlist or remove FAIL from resources](#allowlist-or-allowlist-or-remove-a-fail-from-resources)
 - [Fix](#how-to-fix-every-fail)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
