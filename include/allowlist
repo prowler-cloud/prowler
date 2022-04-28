@@ -67,11 +67,13 @@ allowlist_DynamoDB() {
 }
 
 allowlist_Textfile() {
+  echo -e "${NOTICE} Getting allowlist from input file ${ALLOWLIST_FILE} ...${NORMAL}"
   # Check if input allowlist file exists
   if [[ -f "${ALLOWLIST_FILE}" ]]; then
     # ignore lines starting with # (comments)
     # ignore inline comments: check1:foo # inline comment
     ALLOWLIST=$(awk '!/^[[:space:]]*#/{print }' <(cat "${ALLOWLIST_FILE}") | sed 's/[[:space:]]*#.*$//g')
+    echo -e "${OK} Success! Allowlist was downloaded, starting Prowler...${NORMAL}"
   else
     echo "${BAD} FAIL! ${ALLOWLIST_FILE} does not exist, please input a valid allowlist file.${NORMAL}"
     EXITCODE=1
