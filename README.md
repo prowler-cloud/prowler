@@ -1,6 +1,6 @@
-<p align="center">Try the enterprise version of Prowler at <a href="https://prowler.pro">prowler.pro</a>!</p>
 <p align="center">
-<a href="https://prowler.pro"><img align="center" src="https://user-images.githubusercontent.com/38561120/165706715-1da422d1-3321-461c-96f2-3254652ce928.png" alt="Prowler Pro Logo" width="125" height="28" /></a></p>
+<a href="https://prowler.pro"><img align="center" src="https://user-images.githubusercontent.com/38561120/165706715-1da422d1-3321-461c-96f2-3254652ce928.png" alt="Prowler Pro Logo" width="130" height="33" /></a></p>
+<p align="center"><i>Explore the Pro version of Prowler at <a href="https://prowler.pro">prowler.pro</a></i></p>
 <hr>
 <p align="center">
   <img src="https://user-images.githubusercontent.com/3985464/113734260-7ba06900-96fb-11eb-82bc-d4f68a1e2710.png" />
