@@ -1,13 +1,18 @@
 <p align="center">
+  <img align="center" src="docs/images/prowler-pro-dark.png#gh-dark-mode-only" width="15%" height="15%">
+  <img align="center" src="docs/images/prowler-pro-light.png#gh-light-mode-only" width="15%" height="15%">
+  <b><i>&nbsp&nbsp&nbspExplore the Pro version of Prowler at <a href="https://prowler.pro">prowler.pro</a></i></b>
+</p>
+<hr>
+<p align="center">
   <img src="https://user-images.githubusercontent.com/3985464/113734260-7ba06900-96fb-11eb-82bc-d4f68a1e2710.png" />
 </p>
-
 <p align="center">
   <a href="https://discord.gg/UjSMCVnxSB"><img alt="Discord Shield" src="https://img.shields.io/discord/807208614288818196"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/toniblyx/prowler"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/cloud/build/toniblyx/prowler"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/image-size/toniblyx/prowler"></a>
-  <a href="https://gallery.ecr.aws/o4g1s5r6/prowler"><img width="18%" height="18%" alt="AWS ECR Gallery" src="https://user-images.githubusercontent.com/3985464/151531396-b6535a68-c907-44eb-95a1-a09508178616.png"></a>
+  <a href="https://gallery.ecr.aws/o4g1s5r6/prowler"><img width="120" height="21" alt="AWS ECR Gallery" style="border-radius: 2px" src="https://user-images.githubusercontent.com/3985464/151531396-b6535a68-c907-44eb-95a1-a09508178616.png"></a>
   <a href="https://github.com/prowler-cloud/prowler"><img alt="Repo size" src="https://img.shields.io/github/repo-size/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler"><img alt="Lines" src="https://img.shields.io/tokei/lines/github/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler/issues"><img alt="Issues" src="https://img.shields.io/github/issues/prowler-cloud/prowler"></a>
