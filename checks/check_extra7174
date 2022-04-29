@@ -27,33 +27,37 @@ CHECK_CAF_EPIC_extra7174='Infrastructure Security'
 extra7174(){
     # "Looking for all build projects with last build invocation greater then 90 days in all regions"
     for regx in ${REGIONS}; do
-        LIST_OF_PROJECTS=$("${AWSCLI}" codebuild list-projects $PROFILE_OPT --region "${regx}" --query 'projects[*]' --output text 2>&1)
+        LIST_OF_PROJECTS=$("${AWSCLI}" codebuild list-projects ${PROFILE_OPT} --region "${regx}" --query 'projects[*]' --output text 2>&1)
         if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_PROJECTS}"; then
             textInfo "${regx}: Access Denied trying to list Codebuild projects" "${regx}"
             continue
         fi
-        for project in ${LIST_OF_PROJECTS}; do
-            project_id=$("${AWSCLI}" codebuild list-builds-for-project $PROFILE_OPT --project-name "${project}" --query 'ids[0]' --region "${regx}" --output text | head -n 1 2>&1)
-            if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${project_id}"; then
-                textInfo "${regx}: Access Denied trying to fetch Id for Codebuild project" "${regx}" "${project}"
-                continue
-            elif grep -q -E 'None' <<< "${project_id}"; then
-                textInfo "${regx}: Codebuild project ${project} has been never build" "${regx}" "${project}"
-                continue
-            fi
-            last_invoked_time=$("${AWSCLI}" codebuild batch-get-builds $PROFILE_OPT --ids "${project_id}" --region "${regx}" --query 'builds[0].endTime' --output text 2>&1)
-            if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${last_invoked_time}"; then
-                textInfo "${regx}: Access Denied trying to get build details for Codebuild project ID" "${regx}" "${project}"
-            elif grep -q -E 'None' <<< "${last_invoked_time}"; then
-                textInfo "${regx}: Codebuild project ${project} has been never build" "${regx}" "${project}"
-            else
-                HOWOLDER=$(how_older_from_today $last_invoked_time)
-                if [ $HOWOLDER -ge 90 ]; then
-                    textFail "${regx}: CodeBuild project ${project} was last invoked greater then 90 days " "${regx}" "${project}"
+        if [[ "${LIST_OF_PROJECTS}" ]]; then
+            for project in ${LIST_OF_PROJECTS}; do
+                project_id=$("${AWSCLI}" codebuild list-builds-for-project ${PROFILE_OPT} --project-name "${project}" --query 'ids[0]' --region "${regx}" --output text | head -n 1 2>&1)
+                if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${project_id}"; then
+                    textInfo "${regx}: Access Denied trying to fetch Id for Codebuild project" "${regx}" "${project}"
+                    continue
+                elif grep -q -E 'None' <<< "${project_id}"; then
+                    textInfo "${regx}: Codebuild project ${project} has been never build" "${regx}" "${project}"
+                    continue
+                fi
+                last_invoked_time=$("${AWSCLI}" codebuild batch-get-builds ${PROFILE_OPT} --ids "${project_id}" --region "${regx}" --query 'builds[0].endTime' --output text 2>&1)
+                if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${last_invoked_time}"; then
+                    textInfo "${regx}: Access Denied trying to get build details for Codebuild project ID" "${regx}" "${project}"
+                elif grep -q -E 'None' <<< "${last_invoked_time}"; then
+                    textInfo "${regx}: Codebuild project ${project} has been never build" "${regx}" "${project}"
                 else
-		    textPass "${regx}: Codebuild project ${project} passed the check" "${regx}" "${project}"
-		fi
-            fi
-        done
+                    HOWOLDER=$(how_older_from_today "${last_invoked_time}")
+                    if [ "${HOWOLDER}" -ge 90 ]; then
+                        textFail "${regx}: CodeBuild project ${project} was last invoked greater then 90 days" "${regx}" "${project}"
+                    else
+                        textPass "${regx}: Codebuild project ${project} was last invoked in the past 90 days" "${regx}" "${project}"
+                    fi
+                fi
+            done
+        else 
+            textInfo "${regx}: No CodeBuild Projects found" "${regx}"
+        fi
     done
 }
