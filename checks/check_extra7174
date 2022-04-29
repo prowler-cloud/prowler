@@ -47,9 +47,8 @@ extra7174(){
             elif grep -q -E 'None' <<< "${last_invoked_time}"; then
                 textInfo "${regx}: Codebuild project ${project} has been never build" "${regx}" "${project}"
             else
-                integer_time=${last_invoked_time%.*}
-                current_time=$(date +%s)
-                if [[ $(($current_time - $integer_time)) -ge $((90*60*60)) ]]; then
+                HOWOLDER=$(how_older_from_today $last_invoked_time)
+                if [ $HOWOLDER -ge 90 ]; then
                     textFail "${regx}: CodeBuild project ${project} was last invoked greater then 90 days " "${regx}" "${project}"
                 else
 		    textPass "${regx}: Codebuild project ${project} passed the check" "${regx}" "${project}"
