@@ -37,6 +37,9 @@ extra7174(){
             if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${project_id}"; then
                 textInfo "${regx}: Access Denied trying to fetch Id for Codebuild project" "${regx}" "${project}"
                 continue
+            elif grep -q -E 'None' <<< "${project_id}"; then
+                textInfo "${regx}: Codebuild project ${project} has been never build" "${regx}" "${project}"
+                continue
             fi
             last_invoked_time=$("${AWSCLI}" codebuild batch-get-builds $PROFILE_OPT --ids "${project_id}" --region "${regx}" --query 'builds[0].endTime' --output text 2>&1)
             if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${last_invoked_time}"; then
