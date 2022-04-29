@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra7176="7.176"
+CHECK_TITLE_extra7176="[extra7176] EMR Cluster without Public IP"
+CHECK_SCORED_extra7176="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7176="EXTRA"
+CHECK_SEVERITY_extra7176="Medium"
+CHECK_ASFF_TYPE_extra7176="AwsEMR"
+CHECK_ALTERNATE_check7176="extra7176"
+CHECK_SERVICENAME_extra7176="emr"
+CHECK_RISK_extra7176='EMR Cluster should not have Public IP'
+CHECK_REMEDIATION_extra7176='Only make acceptable EMR clusters public'
+CHECK_DOC_extra7176='https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html'
+CHECK_CAF_EPIC_extra7176='Infrastructure Security'
+
+extra7176(){
+    # Public EMR cluster have their DNS ending with .amazonaws.com while private ones have format of ip-xxx-xx-xx.us-east-1.compute.internal.
+    for regx in ${REGIONS}; do
+        # List only EMR clusters with the following states: STARTING, BOOTSTRAPPING, RUNNING, WAITING, TERMINATING 
+        # [NOT TERMINATED AND TERMINATED_WITH_ERRORS]
+        LIST_OF_CLUSTERS=$("${AWSCLI}" emr list-clusters ${PROFILE_OPT} --region "${regx}" --query 'Clusters[?(Status.State!=`TERMINATED` && Status.State!=`TERMINATED_WITH_ERRORS`)].Id' --output text 2>&1)
+        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_CLUSTERS}"; then
+            textInfo "${regx}: Access Denied trying to list clusters of emr" "${regx}"
+            continue
+        fi
+        if [[ "${LIST_OF_CLUSTERS}" ]]
+        then
+            for cluster_id in ${LIST_OF_CLUSTERS}; do
+                master_public_dns=$("${AWSCLI}" emr describe-cluster ${PROFILE_OPT} --cluster-id "${cluster_id}" --query 'Cluster.MasterPublicDnsName' --region "${regx}" --output text 2>&1)
+                if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${master_public_dns}"; then
+                    textInfo "${regx}: Access Denied trying to describe emr cluster" "${regx}" "${cluster_id}"
+                    continue
+                fi
+                if [[ $master_public_dns != None && $master_public_dns != *.internal ]];then
+                    textFail "${regx}: EMR Cluster ${cluster_id} has a Public IP" "${regx}" "${cluster_id}"
+                else
+                    textPass "${regx}: EMR Cluster ${cluster_id} has not a Public IP" "${regx}" "${cluster_id}"
+            fi
+            done
+        else
+            textInfo "${regx}: No EMR Clusters found" "${regx}"
+        fi
+    done
+}
