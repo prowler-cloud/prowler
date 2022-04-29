@@ -24,14 +24,6 @@ CHECK_REMEDIATION_extra7174='Check if CodeBuild project are really in use and re
 CHECK_DOC_extra7174='https://docs.aws.amazon.com/codebuild/latest/userguide/delete-project.html'
 CHECK_CAF_EPIC_extra7174='Infrastructure Security'
 
-how_older_from_today(){
-    t1=$1
-    t1_int=${t1%.*}
-    t2_int=$(date +%s)
-    days_diff=$(($((t2_int-t1_int))/$((60*60))))
-    echo $days_diff
-}
-
 extra7174(){
     # "Looking for all build projects with last build invocation greater then 90 days in all regions"
     for regx in ${REGIONS}; do
