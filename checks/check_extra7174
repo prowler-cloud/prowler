@@ -44,6 +44,8 @@ extra7174(){
             last_invoked_time=$("${AWSCLI}" codebuild batch-get-builds $PROFILE_OPT --ids "${project_id}" --region "${regx}" --query 'builds[0].endTime' --output text 2>&1)
             if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${last_invoked_time}"; then
                 textInfo "${regx}: Access Denied trying to get build details for Codebuild project ID" "${regx}" "${project}"
+            elif grep -q -E 'None' <<< "${last_invoked_time}"; then
+                textInfo "${regx}: Codebuild project ${project} has been never build" "${regx}" "${project}"
             else
                 integer_time=${last_invoked_time%.*}
                 current_time=$(date +%s)
