@@ -56,6 +56,15 @@ Resources:
 
   CodeBuildStartBuildLambda:
     Type: 'AWS::Lambda::Function'
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W58
+            reason: 'This Lambda has permissions to write Logs'
+          - id: W89
+            reason: 'VPC is not needed'
+          - id: W92
+            reason: 'ReservedConcurrentExecutions not needed'
     Properties:
       Handler: index.lambda_handler
       MemorySize: 128
@@ -88,6 +97,11 @@ Resources:
     Type: 'AWS::Logs::LogGroup'
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W84
+            reason: 'KMS encryption is not needed.'
     Properties:
       LogGroupName: !Sub '/aws/lambda/${CodeBuildStartBuildLambda}'
       RetentionInDays: !Ref LogsRetentionInDays
@@ -109,6 +123,11 @@ Resources:
 
   ArtifactBucket:
     Type: AWS::S3::Bucket
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W35
+            reason: 'S3 Access Logging is not needed'
     Properties:
       Tags:
         - Key: Name
@@ -154,6 +173,11 @@ Resources:
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: 'Role complies with the least privilege principle.'
     Properties:
       Description: !Sub 'DO NOT DELETE - Used by CodeBuild. Created by CloudFormation Stack ${AWS::StackId}'
       ManagedPolicyArns:
@@ -251,6 +275,11 @@ Resources:
 
   ProwlerCodeBuild:
     Type: AWS::CodeBuild::Project
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W32
+            reason: 'KMS encryption is not needed.'
     Properties:
       Artifacts:
         Type: NO_ARTIFACTS
@@ -308,6 +337,11 @@ Resources:
     Type: 'AWS::Logs::LogGroup'
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W84
+            reason: 'KMS encryption is not needed.'
     Properties:
       LogGroupName: !Sub '/aws/codebuild/${ProwlerCodeBuild}'
       RetentionInDays: !Ref LogsRetentionInDays
