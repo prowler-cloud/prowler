@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+
+CHECK_ID_extra7178="7.178"
+CHECK_TITLE_extra7178="[extra7178] EMR Account Public Access Block enabled"
+CHECK_SCORED_extra7178="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7178="EXTRA"
+CHECK_SEVERITY_extra7178="High"
+CHECK_ASFF_TYPE_extra7178="AwsEMR"
+CHECK_ALTERNATE_check7178="extra7178"
+CHECK_SERVICENAME_extra7178="emr"
+CHECK_RISK_extra7178='EMR Clusters must have Account Public Access Block enabled'
+CHECK_REMEDIATION_extra7178='Enable EMR Account Public Access Block'
+CHECK_DOC_extra7178='https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html'
+CHECK_CAF_EPIC_extra7178='Infrastructure Security'
+
+extra7178(){
+    for regx in ${REGIONS}; do
+        block_public_access=$("${AWSCLI}" emr get-block-public-access-configuration ${PROFILE_OPT} --region "${regx}" --query 'BlockPublicAccessConfiguration.BlockPublicSecurityGroupRules' --output json 2>&1)
+        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${block_public_access}"; then
+            textInfo "${regx}: Access Denied trying to get block public access configuration for EMR clusters" "${regx}"
+            continue
+        fi
+        if [[ "${block_public_access}" == "true"  ]]; then
+            textPass "${regx}: EMR Account has Block Public Access enabled" "${regx}"
+        else
+            textFail "${regx}: EMR Account has Block Public Access disabled" "${regx}"
+        fi
+    done
+}
