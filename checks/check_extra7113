@@ -52,7 +52,7 @@ extra7113(){
         fi
       done
     else
-      textInfo "$regx: No RDS instances found" "$regx" "$rdsinstance"
+      textInfo "$regx: No RDS instances found" "$regx" 
     fi
   done
 }
