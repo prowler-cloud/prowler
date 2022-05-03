@@ -1,6 +1,8 @@
 <p align="center">
-  <img align="center" src="docs/images/prowler-pro-dark.png#gh-dark-mode-only" width="15%" height="15%">
+  <img align="center" src="docs/images/prowler-pro-dark.png#gh-dark-mode-only" width="150" height="36">
   <img align="center" src="docs/images/prowler-pro-light.png#gh-light-mode-only" width="15%" height="15%">
+</p>
+<p align="center">
   <b><i>&nbsp&nbsp&nbspExplore the Pro version of Prowler at <a href="https://prowler.pro">prowler.pro</a></i></b>
 </p>
 <hr>
