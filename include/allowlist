@@ -16,7 +16,7 @@ allowlist(){
   if grep -q -E "^s3://([^/]+)/(.*?([^/]+))$" <<< "${ALLOWLIST_FILE}"; then
     allowlist_S3
   # Check if the file is a DynamoDB ARN
-  elif grep -q -E "^arn:aws:dynamodb:\w+(?:-\w+)+:\d{12}:table\/[-._A-Za-z0-9]+$" <<< "${ALLOWLIST_FILE}"; then
+  elif grep -q -E "^arn:[^\n]*:dynamodb:[^\n]*:[0-9]{12}:table\/[-._A-Za-z0-9]+$" <<< "${ALLOWLIST_FILE}"; then
     allowlist_DynamoDB
   else
     # Check if the file is a DynamoDB ARN
