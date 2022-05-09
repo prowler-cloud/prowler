@@ -33,47 +33,41 @@ if [[ $OUTPUT_BUCKET ]]; then
   fi 
 fi
 
-copyToS3(){
+copyToS3() {
   # Prowler will copy each format to its own folder in S3, that is for better handling 
   # and processing by Quicksight or others.
   # Also, check if -F was introduced
-  if [ -z ${OUTPUT_FILE_NAME+x} ]; then
-    if [[ $OUTPUT_BUCKET ]]; then
-      if [[ "${MODES[@]}" =~ "csv" ]]; then
-        $AWSCLI $PROFILE_OPT s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_CSV \
-        s3://$OUTPUT_BUCKET/csv/ --acl bucket-owner-full-control
-      fi 
-      if [[ "${MODES[@]}" =~ "html" ]]; then
-        $AWSCLI $PROFILE_OPT s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_HTML \
-        s3://$OUTPUT_BUCKET/html/ --acl bucket-owner-full-control
-      fi 
-      if [[ "${MODES[@]}" =~ "json" ]]; then
-        $AWSCLI $PROFILE_OPT s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_JSON \
-        s3://$OUTPUT_BUCKET/json/ --acl bucket-owner-full-control
-      fi
-      if [[ "${MODES[@]}" =~ "json-asff" ]]; then
-        $AWSCLI $PROFILE_OPT s3 cp $OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}.$EXTENSION_ASFF \
-        s3://$OUTPUT_BUCKET/json-asff/ --acl bucket-owner-full-control
-      fi
-    fi
+  if [ -n "${OUTPUT_FILE_NAME+x}" ]; then
+    OUTPUT_PATH="${OUTPUT_FILE_NAME}"
   else
-    if [[ $OUTPUT_BUCKET ]]; then
-      if [[ "${MODES[@]}" =~ "csv" ]]; then
-        $AWSCLI $PROFILE_OPT s3 cp $OUTPUT_FILE_NAME.$EXTENSION_CSV \
-        s3://$OUTPUT_BUCKET/csv/ --acl bucket-owner-full-control
-      fi 
-      if [[ "${MODES[@]}" =~ "html" ]]; then
-        $AWSCLI $PROFILE_OPT s3 cp $OUTPUT_FILE_NAME.$EXTENSION_HTML \
-        s3://$OUTPUT_BUCKET/html/ --acl bucket-owner-full-control
-      fi 
-      if [[ "${MODES[@]}" =~ "json" ]]; then
-        $AWSCLI $PROFILE_OPT s3 cp $OUTPUT_FILE_NAME.$EXTENSION_JSON \
-        s3://$OUTPUT_BUCKET/json/ --acl bucket-owner-full-control
-      fi
-      if [[ "${MODES[@]}" =~ "json-asff" ]]; then
-        $AWSCLI $PROFILE_OPT s3 cp $OUTPUT_FILE_NAME.$EXTENSION_ASFF \
-        s3://$OUTPUT_BUCKET/json-asff/ --acl bucket-owner-full-control
-      fi
-    fi
+    OUTPUT_PATH="$OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
   fi
+
+  for output_format in "${MODES[@]}";
+  do
+    case ${output_format} in
+      csv)
+        s3cp "${OUTPUT_PATH}" "${EXTENSION_CSV}"
+      ;;
+      html)
+        s3cp "${OUTPUT_PATH}" "${EXTENSION_HTML}"
+      ;;
+      json)
+        s3cp "${OUTPUT_PATH}" "${EXTENSION_JSON}"
+      ;;
+      json-asff)
+        s3cp "${OUTPUT_PATH}" "${EXTENSION_ASFF}"
+      ;;
+      *)
+        echo "$OPTRED ERROR!$OPTNORMAL - Invalid output format copying to S3. Use -h for help."
+        exit 1
+      ;;
+    esac
+  done
+}
+
+s3cp(){
+  OUTPUT_PATH="${1}"
+  EXTENSION="${2}"
+  "${AWSCLI}" ${PROFILE_OPT} s3 cp "${OUTPUT_PATH}.${EXTENSION}" s3://"${OUTPUT_BUCKET}"/${EXTENSION}/ --acl bucket-owner-full-control
 }
