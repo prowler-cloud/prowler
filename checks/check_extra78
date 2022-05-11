@@ -21,7 +21,7 @@ CHECK_ALTERNATE_check78="extra78"
 CHECK_ALTERNATE_check708="extra78"
 CHECK_SERVICENAME_extra78="rds"
 CHECK_RISK_extra78='Publicly accessible databases could expose sensitive data to bad actors.'
-CHECK_REMEDIATION_extra78='Using an AWS Config rule check for RDS public instances periodically and check there is a business reason for it.'
+CHECK_REMEDIATION_extra78='Use an AWS Config rule check for RDS public instances periodically and check that there is a business need for it.'
 CHECK_DOC_extra78='https://docs.amazonaws.cn/en_us/config/latest/developerguide/rds-instance-public-access-check.html'
 CHECK_CAF_EPIC_extra78='Data Protection'
 

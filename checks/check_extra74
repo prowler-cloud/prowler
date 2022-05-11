@@ -21,8 +21,8 @@ CHECK_ALTERNATE_check74="extra74"
 CHECK_ALTERNATE_check704="extra74"
 CHECK_ASFF_COMPLIANCE_TYPE_extra74="ens-mp.com.4.aws.sg.2"
 CHECK_SERVICENAME_extra74="ec2"
-CHECK_RISK_extra74='If Security groups are not filtering traffic appropriately the attack surface is increased.'
-CHECK_REMEDIATION_extra74=' You can grant access to a specific CIDR range; or to another security group in your VPC or in a peer VPC.'
+CHECK_RISK_extra74='If security groups are not filtering traffic appropriately, the attack surface is increased.'
+CHECK_REMEDIATION_extra74=' You can grant access to a specific CIDR range, to another security group in your VPC, or in a peer VPC.'
 CHECK_DOC_extra74='https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html'
 CHECK_CAF_EPIC_extra74='Infrastructure Security'
 
