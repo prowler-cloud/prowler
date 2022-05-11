@@ -6,11 +6,22 @@ on:
       - 'master'
     paths-ignore:
       - '.github/**'
+  release:
+    types: [published]
+
+env:
+  DockerHubRepoName: toniblyx
+  PublicECRRepoName: o4g1s5r6
+  PublicECRRegion: us-east-1
+  ImageName: prowler
 
 jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -24,8 +35,29 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
-        name: Build and push
-        uses: docker/build-push-action@v3
+        name: Login to Public ECR
+        uses: docker/login-action@v2
+        with:
+          registry: public.ecr.aws
+          username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
+        env:
+          AWS_REGION: ${{ env.PublicECRRegion }}
+      -
+        # Push to master branch - push "latest" tag
+        name: Build and Push (latest)
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v2
         with:
           push: true
-          tags: toniblyx/prowler:latest
+          tags: ${{ env.DockerHubRepoName }}/${{ env.ImageName }}:latest, ${{ env.PublicECRRepoName }}/${{ env.ImageName }}:latest
+          file: util/Dockerfile
+      -
+        # Push the new release
+        name: Build and Push New Release
+        if: github.event_name == 'release'
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ${{ env.DockerHubRepoName }}/${{ env.ImageName }}:${{ github.event.release.tag_name }}, ${{ env.PublicECRRepoName }}/${{ env.ImageName }}:${{ github.event.release.tag_name }}
+          file: util/Dockerfile
