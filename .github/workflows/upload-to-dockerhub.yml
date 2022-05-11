@@ -10,10 +10,12 @@ on:
     types: [published]
 
 env:
-  DockerHubRepoName: toniblyx
-  PublicECRRepoName: o4g1s5r6
-  PublicECRRegion: us-east-1
-  ImageName: prowler
+  DOCKER_HUB_REPOSITORY: ${{ secrets.DOCKER_HUB_REPOSITORY }}
+  PUBLIC_ECR_REPOSITORY: ${{ secrets.PUBLIC_ECR_REPOSITORY }}
+  PRO_ECR_REPOSITORY: ${{ secrets.PRO_ECR_REPOSITORY }}
+  STG_ECR_REPOSITORY: ${{ secrets.STG_ECR_REPOSITORY }}
+  AWS_REGION: us-east-1
+  IMAGE_NAME: prowler
 
 jobs:
   docker:
@@ -42,7 +44,7 @@ jobs:
           username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
           password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
         env:
-          AWS_REGION: ${{ env.PublicECRRegion }}
+          AWS_REGION: ${{ env.AWS_REGION }}
       -
         # Push to master branch - push "latest" tag
         name: Build and Push (latest)
@@ -50,7 +52,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ${{ env.DockerHubRepoName }}/${{ env.ImageName }}:latest, ${{ env.PublicECRRepoName }}/${{ env.ImageName }}:latest
+          tags: ${{ env.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:latest, ${{ env.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:latest, ${{ env.PRO_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}, ${{ env.STG_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
           file: util/Dockerfile
       -
         # Push the new release
@@ -59,5 +61,5 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ${{ env.DockerHubRepoName }}/${{ env.ImageName }}:${{ github.event.release.tag_name }}, ${{ env.PublicECRRepoName }}/${{ env.ImageName }}:${{ github.event.release.tag_name }}
+          tags: ${{ env.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}, ${{ env.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}, ${{ env.PRO_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}, ${{ env.STG_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
           file: util/Dockerfile
