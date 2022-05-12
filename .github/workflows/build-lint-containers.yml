@@ -1,0 +1,179 @@
+name: build-lint-containers
+
+on:
+  push:
+    branches:
+      - 'master'
+    paths-ignore:
+      - '.github/**'
+  release:
+    types: [published]
+
+env:
+  AWS_REGION: us-east-1
+  IMAGE_NAME: prowler
+  LATEST_TAG: latest
+  TEMPORARY_TAG: temporary
+  DOCKERFILE_PATH: util/Dockerfile
+
+jobs:
+  # Lint Dockerfile using Hadolint
+  # dockefile-linter:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     -
+  #       name: Checkout
+  #       uses: actions/checkout@v2    
+  #     - 
+  #       name: Install Hadolint
+  #       run: |
+  #         VERSION=$(curl --silent "https://api.github.com/repos/hadolint/hadolint/releases/latest" | \
+  #           grep '"tag_name":' | \
+  #           sed -E 's/.*"v([^"]+)".*/\1/' \
+  #           ) && curl -L -o /tmp/hadolint https://github.com/hadolint/hadolint/releases/download/v${VERSION}/hadolint-Linux-x86_64 \
+  #           && chmod +x /tmp/hadolint
+  #     - 
+  #       name: Run Hadolint
+  #       run: |
+  #         /tmp/hadolint util/Dockerfile
+
+  # Build Prowler OSS container
+  container-build:
+    # needs: dockefile-linter
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - 
+        name: Build
+        uses: docker/build-push-action@v2
+        with:
+          # Without pushing to registries
+          push: false
+          tags: ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }}
+          file: ${{ env.DOCKERFILE_PATH }}
+          outputs: type=docker,dest=/tmp/${{ env.IMAGE_NAME }}.tar
+      - 
+        name: Share image between jobs
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.IMAGE_NAME }}.tar
+          path: /tmp/${{ env.IMAGE_NAME }}.tar
+
+  # Lint Prowler OSS container using Dockle
+  # container-linter:
+  #   needs: container-build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     -
+  #       name: Get container image from shared
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: ${{ env.IMAGE_NAME }}.tar
+  #         path: /tmp
+  #     -
+  #       name: Load Docker image
+  #       run: |
+  #         docker load --input /tmp/${{ env.IMAGE_NAME }}.tar
+  #         docker image ls -a
+  #     - 
+  #       name: Install Dockle
+  #       run: |
+  #         VERSION=$(curl --silent "https://api.github.com/repos/goodwithtech/dockle/releases/latest" | \
+  #           grep '"tag_name":' | \
+  #           sed -E 's/.*"v([^"]+)".*/\1/' \
+  #           ) && curl -L -o dockle.deb https://github.com/goodwithtech/dockle/releases/download/v${VERSION}/dockle_${VERSION}_Linux-64bit.deb \
+  #           && sudo dpkg -i dockle.deb && rm dockle.deb
+  #     - 
+  #       name: Run Dockle
+  #       run: dockle ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }}
+
+  # Push Prowler OSS container to registries
+  container-push:
+    # needs: container-linter
+    needs: container-build
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Get container image from shared
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.IMAGE_NAME }}.tar
+          path: /tmp
+      -
+        name: Load Docker image
+        run: |
+          docker load --input /tmp/${{ env.IMAGE_NAME }}.tar
+          docker image ls -a
+      -
+        name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Login to Public ECR
+        uses: docker/login-action@v2
+        with:
+          registry: public.ecr.aws
+          username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+      -
+        name: Configure AWS Credentials -- STG
+        if: github.event_name == 'push'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: $${{ secrets.STG_IAM_ROLE_ARN }}
+          role-session-name: build-lint-containers-stg
+      -
+        name: Login to ECR -- STG
+        if: github.event_name == 'push'
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.STG_ECR }}
+      -
+        name: Configure AWS Credentials -- PRO
+        if: github.event_name == 'release'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: $${{ secrets.PRO_IAM_ROLE_ARN }}
+          role-session-name: build-lint-containers-pro
+      -
+        name: Login to ECR -- PRO
+        if: github.event_name == 'release'
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.PRO_ECR }}
+      -
+        # Push to master branch - push "latest" tag
+        name: Build and Push (latest)
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
+            ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
+            ${{ secrets.STG_ECR }}/${{ secrets.STG_ECR_REPOSITORY }}:${{ env.LATEST_TAG }}
+          file: util/Dockerfile
+      -
+        # Push the new release
+        name: Build and Push New Release
+        if: github.event_name == 'release'
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+            ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+            ${{ secrets.PRO_ECR }}/${{ secrets.PRO_ECR_REPOSITORY }}:${{ github.event.release.tag_name }}
+          file: util/Dockerfile
