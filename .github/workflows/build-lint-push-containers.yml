@@ -16,10 +16,6 @@ env:
   TEMPORARY_TAG: temporary
   DOCKERFILE_PATH: util/Dockerfile
 
-permissions:
-  id-token: write
-  contents: read    # This is required for actions/checkout
-
 jobs:
   # Lint Dockerfile using Hadolint
   # dockerfile-linter:
@@ -27,7 +23,7 @@ jobs:
   #   steps:
   #     -
   #       name: Checkout
-  #       uses: actions/checkout@v2
+  #       uses: actions/checkout@v3
   #     -
   #       name: Install Hadolint
   #       run: |
@@ -101,6 +97,9 @@ jobs:
     # needs: container-linter
     needs: container-build
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read    # This is required for actions/checkout
     steps:
       -
         name: Get container image from shared
@@ -134,7 +133,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: $${{ secrets.STG_IAM_ROLE_ARN }}
+          role-to-assume: ${{ secrets.STG_IAM_ROLE_ARN }}
           role-session-name: build-lint-containers-stg
       -
         name: Login to ECR -- STG
@@ -148,7 +147,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: $${{ secrets.PRO_IAM_ROLE_ARN }}
+          role-to-assume: ${{ secrets.PRO_IAM_ROLE_ARN }}
           role-session-name: build-lint-containers-pro
       -
         name: Login to ECR -- PRO
