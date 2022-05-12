@@ -23,8 +23,8 @@ jobs:
   #   steps:
   #     -
   #       name: Checkout
-  #       uses: actions/checkout@v2    
-  #     - 
+  #       uses: actions/checkout@v2
+  #     -
   #       name: Install Hadolint
   #       run: |
   #         VERSION=$(curl --silent "https://api.github.com/repos/hadolint/hadolint/releases/latest" | \
@@ -32,7 +32,7 @@ jobs:
   #           sed -E 's/.*"v([^"]+)".*/\1/' \
   #           ) && curl -L -o /tmp/hadolint https://github.com/hadolint/hadolint/releases/download/v${VERSION}/hadolint-Linux-x86_64 \
   #           && chmod +x /tmp/hadolint
-  #     - 
+  #     -
   #       name: Run Hadolint
   #       run: |
   #         /tmp/hadolint util/Dockerfile
@@ -48,7 +48,7 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      - 
+      -
         name: Build
         uses: docker/build-push-action@v2
         with:
@@ -57,7 +57,7 @@ jobs:
           tags: ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }}
           file: ${{ env.DOCKERFILE_PATH }}
           outputs: type=docker,dest=/tmp/${{ env.IMAGE_NAME }}.tar
-      - 
+      -
         name: Share image between jobs
         uses: actions/upload-artifact@v2
         with:
@@ -80,7 +80,7 @@ jobs:
   #       run: |
   #         docker load --input /tmp/${{ env.IMAGE_NAME }}.tar
   #         docker image ls -a
-  #     - 
+  #     -
   #       name: Install Dockle
   #       run: |
   #         VERSION=$(curl --silent "https://api.github.com/repos/goodwithtech/dockle/releases/latest" | \
@@ -88,7 +88,7 @@ jobs:
   #           sed -E 's/.*"v([^"]+)".*/\1/' \
   #           ) && curl -L -o dockle.deb https://github.com/goodwithtech/dockle/releases/download/v${VERSION}/dockle_${VERSION}_Linux-64bit.deb \
   #           && sudo dpkg -i dockle.deb && rm dockle.deb
-  #     - 
+  #     -
   #       name: Run Dockle
   #       run: dockle ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }}
 
