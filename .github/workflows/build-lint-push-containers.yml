@@ -1,4 +1,4 @@
-name: build-lint-containers
+name: build-lint-push-containers
 
 on:
   push:
@@ -16,9 +16,13 @@ env:
   TEMPORARY_TAG: temporary
   DOCKERFILE_PATH: util/Dockerfile
 
+permissions:
+  id-token: write
+  contents: read    # This is required for actions/checkout
+
 jobs:
   # Lint Dockerfile using Hadolint
-  # dockefile-linter:
+  # dockerfile-linter:
   #   runs-on: ubuntu-latest
   #   steps:
   #     -
@@ -39,7 +43,7 @@ jobs:
 
   # Build Prowler OSS container
   container-build:
-    # needs: dockefile-linter
+    # needs: dockerfile-linter
     runs-on: ubuntu-latest
     steps:
       -
