@@ -694,7 +694,9 @@ if [[ $GROUP_ID_READ ]];then
     if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
       restoreInitialAWSCredentials
     fi
-    copyToS3
+    if [[ $OUTPUT_BUCKET ]]; then
+      copyToS3
+    fi
     exit $EXITCODE
   else
     textFail "Group ${GROUP_ID_READ} does not exist. Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
@@ -725,7 +727,9 @@ if [[ $CHECK_ID ]];then
   if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
     restoreInitialAWSCredentials
   fi
-  copyToS3
+  if [[ $OUTPUT_BUCKET ]]; then
+    copyToS3
+  fi
   scoring
   cleanTemp
   exit $EXITCODE
@@ -742,6 +746,8 @@ cleanTemp
 if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
   restoreInitialAWSCredentials
 fi
-copyToS3
+if [[ $OUTPUT_BUCKET ]]; then
+  copyToS3
+fi
 
 exit $EXITCODE
