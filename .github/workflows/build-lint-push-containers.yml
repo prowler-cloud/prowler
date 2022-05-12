@@ -133,7 +133,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: $${{ secrets.STG_IAM_ROLE_ARN }}
+          role-to-assume: ${{ secrets.STG_IAM_ROLE_ARN }}
           role-session-name: build-lint-containers-stg
       -
         name: Login to ECR -- STG
@@ -147,7 +147,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: $${{ secrets.PRO_IAM_ROLE_ARN }}
+          role-to-assume: ${{ secrets.PRO_IAM_ROLE_ARN }}
           role-session-name: build-lint-containers-pro
       -
         name: Login to ECR -- PRO
