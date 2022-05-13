@@ -158,26 +158,39 @@ jobs:
           registry: ${{ secrets.PRO_ECR }}
       -
         # Push to master branch - push "latest" tag
-        name: Build and Push (latest)
+        name: Tag (latest)
         if: github.event_name == 'push'
-        uses: docker/build-push-action@v2
-        with:
-          push: true
-          tags: |
-            ${{ secrets.STG_ECR }}/${{ secrets.STG_ECR_REPOSITORY }}:${{ env.LATEST_TAG }}
-            ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
-            ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
-          file: util/Dockerfile
+        run: |
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.STG_ECR }}/${{ secrets.STG_ECR_REPOSITORY }}:${{ env.LATEST_TAG }}
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
+      -
+        # Push to master branch - push "latest" tag
+        name: Push (latest)
+        if: github.event_name == 'push'
+        run: |
+          docker push ${{ secrets.STG_ECR }}/${{ secrets.STG_ECR_REPOSITORY }}:${{ env.LATEST_TAG }}
+          docker push ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
+          docker push ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
       -
         # Push the new release
-        name: Build and Push New Release
+        name: Tag (release)
         if: github.event_name == 'release'
-        uses: docker/build-push-action@v2
+        run: |
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PRO_ECR }}/${{ secrets.PRO_ECR }}:${{ github.event.release.tag_name }}
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+      -
+        # Push the new release
+        name: Push (release)
+        if: github.event_name == 'release'
+        run: |
+          docker push ${{ secrets.PRO_ECR }}/${{ secrets.PRO_ECR }}:${{ github.event.release.tag_name }}
+          docker push ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+          docker push ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+      -
+        name: Delete artifacts
+        if: always()
+        uses: geekyeggo/delete-artifact@v1
         with:
-          context: .
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
-            ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
-            ${{ secrets.PRO_ECR }}/${{ secrets.PRO_ECR_REPOSITORY }}:${{ github.event.release.tag_name }}
-          file: util/Dockerfile
+          name: ${{ env.IMAGE_NAME }}.tar
