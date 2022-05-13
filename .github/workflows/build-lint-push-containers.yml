@@ -10,7 +10,8 @@ on:
     types: [published]
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION_STG: eu-west-1
+  AWS_REGION_PRO: us-east-1
   IMAGE_NAME: prowler
   LATEST_TAG: latest
   TEMPORARY_TAG: temporary
@@ -126,13 +127,13 @@ jobs:
           username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
           password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
         env:
-          AWS_REGION: ${{ env.AWS_REGION }}
+          AWS_REGION: ${{ env.AWS_REGION_PRO }}
       -
         name: Configure AWS Credentials -- STG
         if: github.event_name == 'push'
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION_STG }}
           role-to-assume: ${{ secrets.STG_IAM_ROLE_ARN }}
           role-session-name: build-lint-containers-stg
       -
@@ -146,7 +147,7 @@ jobs:
         if: github.event_name == 'release'
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION_PRO }}
           role-to-assume: ${{ secrets.PRO_IAM_ROLE_ARN }}
           role-session-name: build-lint-containers-pro
       -
@@ -163,9 +164,9 @@ jobs:
         with:
           push: true
           tags: |
+            ${{ secrets.STG_ECR }}/${{ secrets.STG_ECR_REPOSITORY }}:${{ env.LATEST_TAG }}
             ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
             ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
-            ${{ secrets.STG_ECR }}/${{ secrets.STG_ECR_REPOSITORY }}:${{ env.LATEST_TAG }}
           file: util/Dockerfile
       -
         # Push the new release
