@@ -131,7 +131,7 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub '${ServiceName}-${AWS::AccountId}-S3-Prower-${AWS::StackName}'
+          Value: !Sub '${ServiceName}-${AWS::AccountId}-S3-Prowler-${AWS::StackName}'
       BucketName: !Sub '${ServiceName}-reports-${AWS::Region}-prowler-${AWS::AccountId}'
       AccessControl: LogDeliveryWrite
       VersioningConfiguration:
