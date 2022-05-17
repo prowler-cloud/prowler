@@ -6,6 +6,8 @@ on:
       - 'master'
     paths-ignore:
       - '.github/**'
+      - 'README.md'
+      
   release:
     types: [published]
 
