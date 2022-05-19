@@ -36,7 +36,7 @@ gnu_timestamp_to_date() {
   
   # remove fractions of a second
   TIMESTAMP_TO_CONVERT=$(cut -f1 -d"." <<<  "${1}")
-  OUTPUT_DATE=$("${DATE_CMD}" -d @"${TIMESTAMP_TO_CONVERT}" +'%Y-%m-%d')
+  OUTPUT_DATE=$("${DATE_CMD}" -d "${TIMESTAMP_TO_CONVERT}" +'%Y-%m-%d')
   echo "${OUTPUT_DATE}"
 }
 bsd_timestamp_to_date() {
