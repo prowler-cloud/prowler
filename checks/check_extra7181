@@ -26,6 +26,22 @@ CHECK_REMEDIATION_extra7181='Grant usage permission on a per-resource basis and 
 CHECK_DOC_extra7181='https://docs.aws.amazon.com/IAM/latest/APIReference/API_CreateAccessKey.html'
 CHECK_CAF_EPIC_extra7181='IAM'
 
+ # que pasa si la política tiene como resource una lista ["*"] --> se podria quitar esto Resource == '*'
+                    # Does the tool analyze both users and roles, or just one or the other? --> AttachmentCount
+                    # Does the tool take a principal-centric or policy-centric approach? --> misma revision para las inlines en otro check
+                    # Does the tool handle resource constraints?
+                    # Does the tool consider the permissions of service roles?
+                    # Does the tool handle transitive privesc paths (i.e., attack chains)?
+
+                    # Does the tool handle the DENY effect as expected?
+                    # Does the tool handle NotAction as expected?
+                    # Does the tool handle Condition constraints?
+                                        # Does the tool handle service control policy (SCP) restrictions? --> esto nada, es otro servicio
+
+
+                    # --query "PolicyVersion.Document.Statement[?(not_null(Action) && Effect == 'Allow' && Resource == '*')].Action[]" \
+                    # "PolicyVersion.Document.Statement[?(not_null(Action) && Effect == 'Allow')].Action[]"
+
 extra7181() {
     # Incluir como un recurso consultable para la remediación y la doc
     local PRIVILEGE_ESCALATION_IAM_ACTIONS="iam:AddUserToGroup|iam:AttachRolePolicy|iam:AttachUserPolicy|iam:CreateAccessKey|iam:CreatePolicyVersion|iam:CreateLoginProfile|iam:PassRole|iam:PutGroupPolicy|iam:PutRolePolicy|iam:PutUserPolicy|iam:SetDefaultPolicyVersion|iam:UpdateAssumeRolePolicy|iam:UpdateLoginProfile|sts:AssumeRole|ec2:RunInstances|lambda:CreateEventSourceMapping|lambda:CreateFunction|lambda:InvokeFunction|lambda:UpdateFunctionCode|dynamodb:CreateTable|dynamodb:PutItem|glue:CreateDevEndpoint|glue:UpdateDevEndpoint|cloudformation:CreateStack|datapipeline:CreatePipeline"
@@ -35,8 +51,9 @@ extra7181() {
     LIST_CUSTOM_POLICIES=$(${AWSCLI} iam list-policies ${PROFILE_OPT} \
     --region "${REGION}" \
     --scope Local \
-    --query 'Policies[?AttachmentCount > `0`].[Arn,DefaultVersionId]' \
+    --query 'Policies[*].[Arn,DefaultVersionId]' \
     --output text)
+    # --query 'Policies[?AttachmentCount > `0`].[Arn,DefaultVersionId]' \
     # Check errors
     if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_CUSTOM_POLICIES}"; then
         textInfo "${REGION}: Access Denied trying to list IAM policies" "${REGION}"
@@ -49,20 +66,22 @@ extra7181() {
                     --policy-arn "${POLICY_ARN}" \
                     --version-id "${POLICY_DEFAULT_VERSION}" \
                     --region "${REGION}" \
-                    --query "PolicyVersion.Document.Statement[?(not_null(Action) && Effect == 'Allow' && Resource == '*')].Action[]" \
-                    --output text)
-                    # que pasa si la política tiene como resource una lista ["*"]
-                    # Does the tool analyze both users and roles, or just one or the other?
-                    # Does the tool take a principal-centric or policy-centric approach?
-                    # Does the tool handle resource constraints?
-                    # Does the tool consider the permissions of service roles?
-                    # Does the tool handle transitive privesc paths (i.e., attack chains)?
-                    # Does the tool handle the DENY effect as expected?
-                    # Does the tool handle NotAction as expected?
-                    # Does the tool handle Condition constraints?
-                    # Does the tool handle service control policy (SCP) restrictions?
+                    --query "PolicyVersion.Document.Statement[?(not_null(Action) || not_null(NotAction))]" \
+                    --output json)
+                    # --query "PolicyVersion.Document.Statement[?(not_null(Action) && (Effect == 'Allow' && Effect == 'Deny'))].Action[]" \
+                    # --output json)
 
-                POLICY_PRIVILEGE_ESCALATION_ACTIONS=$(grep -o -E "${PRIVILEGE_ESCALATION_IAM_ACTIONS}" <<< "${POLICY_PRIVILEGED_ACTIONS}")
+                    # (not_null(Action) && (Effect == 'Allow' && Effect == 'Deny') no aplica ya
+
+                # que pasa si action es un objeto en vez de una lista
+                ACTIONS=$(jq -r '.[] | select(.Action != null) | .Action | .[]' <<< ${POLICY_PRIVILEGED_ACTIONS})
+                # echo $ACTIONS
+                NOT_ACTIONS=$(jq -r '.[] | select(.NotAction != null) | .NotAction | .[]' <<< ${POLICY_PRIVILEGED_ACTIONS})
+                # echo $NOT_ACTIONS
+                PRIVILEGED_ACTIONS=$(echo "${ACTIONS//'"'/} ${NOT_ACTIONS//'"'/}" | xargs -n1 | sort -u | xargs)
+                # echo $PRIVILEGED_ACTIONS
+
+                POLICY_PRIVILEGE_ESCALATION_ACTIONS=$(grep -o -E "${PRIVILEGE_ESCALATION_IAM_ACTIONS}" <<< "${PRIVILEGED_ACTIONS}")
                 if [[ -n "${POLICY_PRIVILEGE_ESCALATION_ACTIONS}" ]]; then
                     textFail "${REGION}: ${POLICY_ARN} allows for privilige escalation using the following actions: ${POLICY_PRIVILEGE_ESCALATION_ACTIONS//$'\n'/ }" "$REGION" "${POLICY_NAME}"
                 else
