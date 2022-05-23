@@ -18,8 +18,8 @@ CHECK_SEVERITY_extra7144="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7144="AwsCloudWatch"
 CHECK_ALTERNATE_check7144="extra7144"
 CHECK_SERVICENAME_extra7144="cloudwatch"
-CHECK_RISK_extra7144=''
-CHECK_REMEDIATION_extra7144=''
+CHECK_RISK_extra7144='Cross-Account access to CloudWatch could increase the risk of compromising information between accounts'
+CHECK_REMEDIATION_extra7144='Grant usage permission on a per-resource basis to enforce least privilege and Zero Trust principles'
 CHECK_DOC_extra7144='https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Cross-Account-Cross-Region.html'
 CHECK_CAF_EPIC_extra7144='Logging and Monitoring'
 
