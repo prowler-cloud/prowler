@@ -25,21 +25,32 @@ CHECK_CAF_EPIC_extra718='Logging and Monitoring'
 
 extra718(){
   # "Check if S3 buckets have server access logging enabled "
-  LIST_OF_BUCKETS=$($AWSCLI s3api list-buckets $PROFILE_OPT --query Buckets[*].Name --output text|xargs -n1)
+  LIST_OF_BUCKETS=$("${AWSCLI}" s3api list-buckets ${PROFILE_OPT} --query Buckets[*].Name --output text|xargs -n1)
   if [[ $LIST_OF_BUCKETS ]]; then
     for bucket in $LIST_OF_BUCKETS;do
-      BUCKET_SERVER_LOG_ENABLED=$($AWSCLI s3api get-bucket-logging --bucket $bucket $PROFILE_OPT --query [LoggingEnabled] --output text 2>&1)
-      if [[ $(echo "$BUCKET_SERVER_LOG_ENABLED" | grep AccessDenied) ]]; then
-        textInfo "$REGION: Access Denied Trying to Get Bucket Logging for $bucket" "$REGION" "$bucket"
+      # Recover Bucket region
+      BUCKET_REGION=$("${AWSCLI}" ${PROFILE_OPT} s3api get-bucket-location --bucket "${bucket}" --region "${REGION}" --query LocationConstraint --output text)
+      if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${BUCKET_REGION}"; then
+          textInfo "${REGION}: Access Denied trying to get bucket location for ${bucket}" "${REGION}"
+          continue
+      fi
+      # If None use default region
+      if [[ "${BUCKET_REGION}" == "None" ]]; then
+        BUCKET_REGION="${REGION}"
+      fi
+
+      BUCKET_SERVER_LOG_ENABLED=$("${AWSCLI}" s3api get-bucket-logging --bucket "${bucket}" ${PROFILE_OPT} --region "${BUCKET_REGION}" --query [LoggingEnabled] --output text 2>&1)
+      if grep -q AccessDenied <<< "${BUCKET_SERVER_LOG_ENABLED}"; then
+        textInfo "${BUCKET_REGION}: Access Denied Trying to Get Bucket Logging for ${bucket}" "${BUCKET_REGION}" "${bucket}"
         continue
       fi
-      if [[ $(echo "$BUCKET_SERVER_LOG_ENABLED" | grep "^None$") ]]; then
-        textFail "$REGION: Bucket $bucket has server access logging disabled!" "$REGION" "$bucket"
+      if grep -q "^None$" <<< "${BUCKET_SERVER_LOG_ENABLED}"; then
+        textFail "${BUCKET_REGION}: Bucket ${bucket} has server access logging disabled!" "${BUCKET_REGION}" "${bucket}"
       else
-        textPass "$REGION: Bucket $bucket has server access logging enabled" "$REGION" "$bucket"
+        textPass "${BUCKET_REGION}: Bucket ${bucket} has server access logging enabled" "${BUCKET_REGION}" "${bucket}"
       fi
     done
   else
-    textInfo "$REGION: No S3 Buckets found" "$REGION" "$bucket"
+    textInfo "${REGION}: No S3 Buckets found" "${REGION}" "${bucket}"
   fi
 }
