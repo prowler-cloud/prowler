@@ -33,7 +33,7 @@ CHECK_ASFF_RESOURCE_TYPE_extra7163="AwsSecretsManagerSecret"
 CHECK_ALTERNATE_extra7163="extra7163"
 CHECK_SERVICENAME_extra7163="secretsmanager"
 CHECK_RISK_extra7163="Rotating secrets minimizes exposure to attacks using stolen keys."
-CHECK_REMEDITATION_extra7163="Enable key rotation on Secrets Manager key."
+CHECK_REMEDIATION_extra7163="Enable key rotation on Secrets Manager key."
 CHECK_DOC_extra7163="https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotating-secrets_strategies.html"
 CHECK_CAF_EPIC_extra7163="Data Protection"
 
