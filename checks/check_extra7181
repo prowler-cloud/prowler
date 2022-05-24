@@ -36,7 +36,7 @@ CHECK_CAF_EPIC_extra7181='IAM'
 
 
 extra7181() {
-    local PRIVILEGE_ESCALATION_IAM_ACTIONS="iam:AddUserToGroup|iam:AttachRolePolicy|iam:AttachUserPolicy|iam:CreateAccessKey|iam:CreatePolicyVersion|iam:CreateLoginProfile|iam:PassRole|iam:PutGroupPolicy|iam:PutRolePolicy|iam:PutUserPolicy|iam:SetDefaultPolicyVersion|iam:UpdateAssumeRolePolicy|iam:UpdateLoginProfile|sts:AssumeRole|ec2:RunInstances|lambda:CreateEventSourceMapping|lambda:CreateFunction|lambda:InvokeFunction|lambda:UpdateFunctionCode|dynamodb:CreateTable|dynamodb:PutItem|glue:CreateDevEndpoint|glue:UpdateDevEndpoint|cloudformation:CreateStack|datapipeline:CreatePipeline"
+    local PRIVILEGE_ESCALATION_IAM_ACTIONS="iam:AttachGroupPolicy|iam:SetDefaultPolicyVersion2|iam:AddUserToGroup|iam:AttachRolePolicy|iam:AttachUserPolicy|iam:CreateAccessKey|iam:CreatePolicyVersion|iam:CreateLoginProfile|iam:PassRole|iam:PutGroupPolicy|iam:PutRolePolicy|iam:PutUserPolicy|iam:SetDefaultPolicyVersion|iam:UpdateAssumeRolePolicy|iam:UpdateLoginProfile|sts:AssumeRole|ec2:RunInstances|lambda:CreateEventSourceMapping|lambda:CreateFunction|lambda:InvokeFunction|lambda:UpdateFunctionCode|dynamodb:CreateTable|dynamodb:PutItem|glue:CreateDevEndpoint|glue:GetDevEndpoint|glue:GetDevEndpoints|glue:UpdateDevEndpoint|cloudformation:CreateStack|cloudformation:DescribeStacks|datapipeline:CreatePipeline|datapipeline:PutPipelineDefinition|datapipeline:ActivatePipeline"
 
     # Use --scope Local to list only Customer Managed Policies
     # Query 'Policies[?AttachmentCount > `0`]'  to check if this policy is in use, so attached to any user, group or role
