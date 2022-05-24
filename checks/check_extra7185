@@ -71,7 +71,6 @@ extra7181() {
 
                 # First, we need to perform a left join with ALLOWED_ACTIONS and DENIED_ACTIONS
                 LEFT_ACTIONS=$(diff <(echo "${ALLOWED_ACTIONS}") <(echo "${DENIED_ACTIONS}") | grep "^<" | sed 's/< //;s/"//g')
-                # I love (and hate) process substitution in bash
                 # Then, we need to find the DENIED_NOT_ACTIONS in LEFT_ACTIONS
                 PRIVILEGED_ACTIONS=$(comm -1 -2  <(sort <<< "${DENIED_NOT_ACTIONS}") <(sort <<< "${LEFT_ACTIONS}"))
                 # Finally, check if there is a privilege escalation action within this policy
