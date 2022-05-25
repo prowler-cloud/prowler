@@ -25,16 +25,20 @@ CHECK_DOC_check114='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-use
 CHECK_CAF_EPIC_check114='IAM'
 
 check114(){
-  # "Ensure hardware MFA is enabled for the root account (Scored)"
-  COMMAND113=$($AWSCLI iam get-account-summary $PROFILE_OPT --region $REGION --output json --query 'SummaryMap.AccountMFAEnabled')
-  if [ "$COMMAND113" == "1" ]; then
-    COMMAND114=$($AWSCLI iam list-virtual-mfa-devices $PROFILE_OPT --region $REGION --output text --assignment-status Assigned --query 'VirtualMFADevices[*].[SerialNumber]' | grep "^arn:${AWS_PARTITION}:iam::[0-9]\{12\}:mfa/root-account-mfa-device$")
-    if [[ "$COMMAND114" ]]; then
-      textFail "$REGION: Only Virtual MFA is enabled for root" "$REGION" "MFA"
-    else
-      textPass "$REGION: Hardware MFA is enabled for root" "$REGION" "MFA"
-    fi
+  if [[ "${REGION}" == "us-gov-west-1" || "${REGION}" == "us-gov-east-1" ]]; then
+    textInfo "${REGION}: This is an AWS GovCloud account and there is no root account to perform checks."
   else
-    textFail "$REGION: MFA is not ENABLED for root account" "$REGION" "MFA"
+    # "Ensure hardware MFA is enabled for the root account (Scored)"
+    COMMAND113=$($AWSCLI iam get-account-summary $PROFILE_OPT --region $REGION --output json --query 'SummaryMap.AccountMFAEnabled')
+    if [ "$COMMAND113" == "1" ]; then
+      COMMAND114=$($AWSCLI iam list-virtual-mfa-devices $PROFILE_OPT --region $REGION --output text --assignment-status Assigned --query 'VirtualMFADevices[*].[SerialNumber]' | grep "^arn:${AWS_PARTITION}:iam::[0-9]\{12\}:mfa/root-account-mfa-device$")
+      if [[ "$COMMAND114" ]]; then
+        textFail "$REGION: Only Virtual MFA is enabled for root" "$REGION" "MFA"
+      else
+        textPass "$REGION: Hardware MFA is enabled for root" "$REGION" "MFA"
+      fi
+    else
+      textFail "$REGION: MFA is not ENABLED for root account" "$REGION" "MFA"
+    fi
   fi
 }

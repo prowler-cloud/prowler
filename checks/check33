@@ -52,5 +52,9 @@ CHECK_DOC_check33='https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cl
 CHECK_CAF_EPIC_check33='Logging and Monitoring'
 
 check33(){
-  check3x '\$\.userIdentity\.type\s*=\s*"Root".+\$\.userIdentity\.invokedBy NOT EXISTS.+\$\.eventType\s*!=\s*"AwsServiceEvent"'
+  if [[ "${REGION}" == "us-gov-west-1" || "${REGION}" == "us-gov-east-1" ]]; then
+    textInfo "${REGION}: This is an AWS GovCloud account and there is no root account to perform checks."
+  else
+    check3x '\$\.userIdentity\.type\s*=\s*"Root".+\$\.userIdentity\.invokedBy NOT EXISTS.+\$\.eventType\s*!=\s*"AwsServiceEvent"'
+  fi
 }
