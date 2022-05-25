@@ -179,7 +179,7 @@ jobs:
         name: Tag (release)
         if: github.event_name == 'release'
         run: |
-          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PRO_ECR }}/${{ secrets.PRO_ECR }}:${{ github.event.release.tag_name }}
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PRO_ECR }}/${{ secrets.PRO_ECR_REPOSITORY }}:${{ github.event.release.tag_name }}
           docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
           docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
       -
@@ -187,7 +187,7 @@ jobs:
         name: Push (release)
         if: github.event_name == 'release'
         run: |
-          docker push ${{ secrets.PRO_ECR }}/${{ secrets.PRO_ECR }}:${{ github.event.release.tag_name }}
+          docker push ${{ secrets.PRO_ECR }}/${{ secrets.PRO_ECR_REPOSITORY }}:${{ github.event.release.tag_name }}
           docker push ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
           docker push ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
       -
