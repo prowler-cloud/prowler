@@ -42,7 +42,7 @@
 - [HIPAA Checks](#hipaa-checks)
 - [Trust Boundaries Checks](#trust-boundaries-checks)
 - [Multi Account and Continuous Monitoring](util/org-multi-account/README.md)
-- [Add Custom Checks](#add-custom-checks)
+- [Custom Checks](#custom-checks)
 - [Third Party Integrations](#third-party-integrations)
 - [Full list of checks and groups](/LIST_OF_CHECKS_AND_GROUPS.md)
 - [License](#license)
@@ -723,8 +723,12 @@ Multi Account environments assumes a minimum of two trusted or known accounts. F
 ## Custom Checks
 Using  `./prowler -c extra9999 -a` you can build your own on-the-fly custom check by specifying the AWS CLI command to execute. 
 > Omit the "aws" command and only use its parameters within quotes and do not nest quotes in the aws parameter, --output text is already included in the check.
+> 
 Here is an example of a check to find SGs with inbound port 80:
-> ./prowler -c extra9999 -a 'ec2 describe-security-groups --filters Name=ip-permission.to-port,Values=80 --query SecurityGroups[*].GroupId[]]'
+
+```sh
+./prowler -c extra9999 -a 'ec2 describe-security-groups --filters Name=ip-permission.to-port,Values=80 --query SecurityGroups[*].GroupId[]]'
+```
 
 In order to add any new check feel free to create a new extra check in the extras group or other group. To do so, you will need to follow these steps:
 
