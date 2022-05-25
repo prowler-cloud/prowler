@@ -25,6 +25,10 @@ CHECK_DOC_check115='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credenti
 CHECK_CAF_EPIC_check115='IAM'
 
 check115(){
-  # "Ensure security questions are registered in the AWS account (Not Scored)"
-  textInfo "No command available for check 1.15. Login to the AWS Console as root & click on the Account. Name -> My Account -> Configure Security Challenge Questions."
+  if [[ "${REGION}" == "us-gov-west-1" || "${REGION}" == "us-gov-east-1" ]]; then
+    textInfo "${REGION}: This is an AWS GovCloud account and there is no root account to perform checks."
+  else
+    # "Ensure security questions are registered in the AWS account (Not Scored)"
+    textInfo "${REGION}: No command available for check 1.15. Login to the AWS Console as root & click on the Account. Name -> My Account -> Configure Security Challenge Questions."
+  fi
 }

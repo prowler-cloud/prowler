@@ -25,11 +25,15 @@ CHECK_DOC_check113='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-use
 CHECK_CAF_EPIC_check113='IAM'
 
 check113(){
-  # "Ensure MFA is enabled for the root account (Scored)"
-  COMMAND113=$($AWSCLI iam get-account-summary $PROFILE_OPT --region $REGION --output json --query 'SummaryMap.AccountMFAEnabled')
-  if [ "$COMMAND113" == "1" ]; then
-    textPass "$REGION: Virtual MFA is enabled for root" "$REGION" "MFA"
+  if [[ "${REGION}" == "us-gov-west-1" || "${REGION}" == "us-gov-east-1" ]]; then
+    textInfo "${REGION}: This is an AWS GovCloud account and there is no root account to perform checks."
   else
-    textFail "$REGION: MFA is not ENABLED for root account" "$REGION" "MFA"
+    # "Ensure MFA is enabled for the root account (Scored)"
+    COMMAND113=$($AWSCLI iam get-account-summary $PROFILE_OPT --region $REGION --output json --query 'SummaryMap.AccountMFAEnabled')
+    if [ "$COMMAND113" == "1" ]; then
+      textPass "$REGION: Virtual MFA is enabled for root" "$REGION" "MFA"
+    else
+      textFail "$REGION: MFA is not ENABLED for root account" "$REGION" "MFA"
+    fi
   fi
 }
