@@ -720,7 +720,11 @@ Single Account environment assumes that only the AWS account subject to this ana
 Multi Account environments assumes a minimum of two trusted or known accounts. For this particular example all trusted and known accounts will be tested. Therefore `GROUP_TRUSTBOUNDARIES_TRUSTED_ACCOUNT_IDS` variable in [groups/group16_trustboundaries](groups/group16_trustboundaries) should include all trusted accounts Account #A, Account #B, Account #C, and Account #D in order to finally raise Account #E and Account #F for being untrusted or unknown.
 ![multi-account-environment](/docs/images/prowler-multi-account-environment.png)
 
-## Add Custom Checks
+## Custom Checks
+Using  `./prowler -c extra9999 -a` you can build your own on-the-fly custom check by specifying the AWS CLI command to execute. 
+> Omit the "aws" command and only use its parameters within quotes and do not nest quotes in the aws parameter, --output text is already included in the check.
+Here is an example of a check to find SGs with inbound port 80:
+> ./prowler -c extra9999 -a 'ec2 describe-security-groups --filters Name=ip-permission.to-port,Values=80 --query SecurityGroups[*].GroupId[]]'
 
 In order to add any new check feel free to create a new extra check in the extras group or other group. To do so, you will need to follow these steps:
 
