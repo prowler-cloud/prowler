@@ -156,7 +156,7 @@ GROUP_CHECKS[18]='check11,check110,check111,check112,check113,check114,check115,
 #136	A.13 Communications Security	A.13.1	Network Security Management	extra778	Find VPC security groups with wide-open public IPv4 CIDR ranges (non-RFC1918)
 #137	A.13 Communications Security	A.13.1	Network Security Management	extra789	Find trust boundaries in VPC endpoint services connections
 #138	A.13 Communications Security	A.13.1	Network Security Management	extra79	Check for internet facing Elastic Load Balancers
-#139	A.13 Communications Security	A.13.1	Network Security Management	extra790	Find trust boundaries in VPC endpoint services whitelisted principles
+#139	A.13 Communications Security	A.13.1	Network Security Management	extra790	Find trust boundaries in VPC endpoint services allowlisted principles
 #140	A.13 Communications Security	A.13.1	Network Security Management	extra78	Ensure there are no Public Accessible RDS instances
 #141    A.14 System acquisition, dev & maintenance A.14.2 Security in Dev & Support	extra731 Check if SNS topics have policy set as Public
 #142    A.14 System acquisition, dev & maintenance A.14.2 Security in Dev & Support	extra741 Find secrets in EC2 User Data

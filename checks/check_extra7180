@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7180="7.180"
+CHECK_TITLE_extra7180="[extra7180] Check Lambda Function URL CORS configuration"
+CHECK_SCORED_extra7180="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7180="EXTRA"
+CHECK_SEVERITY_extra7180="Critical"
+CHECK_ASFF_RESOURCE_TYPE_extra7180="AwsLambdaFunction"
+CHECK_ALTERNATE_check7180="extra7180"
+CHECK_SERVICENAME_extra7180="lambda"
+CHECK_RISK_extra7180='Publicly accessible services could expose sensitive data to bad actors.'
+CHECK_REMEDIATION_extra7180='Grant usage permission on a per-resource basis and applying least privilege principle.'
+CHECK_DOC_extra7180='https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html'
+CHECK_CAF_EPIC_extra7180='Infrastructure Security'
+
+extra7180(){
+    for regx in ${REGIONS}; do
+        LIST_OF_FUNCTIONS=$("${AWSCLI}" lambda list-functions ${PROFILE_OPT} \
+            --region "${regx}" \
+            --query 'Functions[*].FunctionName' \
+            --output text 2>&1)
+        # Check errors
+        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_FUNCTIONS}"; then
+            textInfo "${regx}: Access Denied trying to list Lambda functions" "${regx}"
+            continue
+        fi
+        if [[ -n "${LIST_OF_FUNCTIONS}" && $(tr '[:upper:]' '[:lower:]' <<< "${LIST_OF_FUNCTIONS}") != "none" ]]; then
+            for lambda_function in ${LIST_OF_FUNCTIONS}; do
+                # Check if Lambda function has an URL
+                LAMBDA_FUNCTION_URL=$("${AWSCLI}" lambda list-function-url-configs ${PROFILE_OPT} \
+                    --function-name "${lambda_function}" \
+                    --region "${regx}" \
+                    --query 'FunctionUrlConfigs[0].[FunctionUrl]' \
+                    --output text)
+                # Check errors
+                if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${AUTH_TYPE}"; then
+                    textInfo "${regx}: Access Denied trying to get Lambda functions URLs" "${regx}"
+                    continue
+                fi
+
+                if [[ "${LAMBDA_FUNCTION_URL}" != "None" ]]; then
+                    # Check CORS configuration
+                    CORS_ALLOW_ORIGINS=$("${AWSCLI}" lambda get-function-url-config ${PROFILE_OPT} \
+                    --function-name "${lambda_function}" \
+                    --region "${regx}" \
+                    --query 'Cors.AllowOrigins' \
+                    --output text)
+                    # Check errors
+                    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${AUTH_TYPE}"; then
+                        textInfo "${regx}: Access Denied trying to get Lambda functions URLs configuration" "${regx}"
+                        continue
+                    fi
+
+                    # The * is on purpose to check allowed origins
+                    if [[ "${CORS_ALLOW_ORIGINS}" =~ "*" ]]; then
+                        textFail "$regx: Lambda function ${lambda_function} URL has a wide CORS configuration" "${regx}" "${lambda_function}"
+                    elif [[ "${CORS_ALLOW_ORIGINS}" == "None" ]]; then
+                        textFail "${regx}: Lambda function ${lambda_function} URL has not CORS configured" "${regx}" "${lambda_function}"
+                    else
+                        textPass "${regx}: Lambda function ${lambda_function} has not a wide CORS configuration" "${regx}" "${lambda_function}"
+                    fi
+
+                else
+                    textInfo "${regx}: Lambda function ${lambda_function} has not a function URL" "${regx}" "${lambda_function}"
+                fi
+            done
+        else
+            textInfo "${regx}: No Lambda functions found" "${regx}"
+        fi
+    done
+}

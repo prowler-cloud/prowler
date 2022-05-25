@@ -18,7 +18,7 @@
 #       --log-group-name <value>
 #       --kms-key-id <value>
 #       [--cli-input-json <value>]
-#       [--generate-cli-skeleton <value>]  
+#       [--generate-cli-skeleton <value>]
 
 CHECK_ID_extra7164="7.164"
 CHECK_TITLE_extra7164="[extra7164] Check if CloudWatch log groups are protected by AWS KMS "
@@ -29,7 +29,7 @@ CHECK_ASFF_RESOURCE_TYPE_extra7164="Logs"
 CHECK_ALTERNATE_extra7164="extra7164"
 CHECK_SERVICENAME_extra7164="logs"
 CHECK_RISK_extra7164="Using customer managed KMS to encrypt CloudWatch log group provide additional confidentiality and control over the log data"
-CHECK_REMEDITATION_extra7164="Associate KMS Key with Cloudwatch log group."
+CHECK_REMEDIATION_extra7164="Associate KMS Key with Cloudwatch log group."
 CHECK_DOC_extra7164="https://docs.aws.amazon.com/cli/latest/reference/logs/associate-kms-key.html"
 CHECK_CAF_EPIC_extra7164="Data Protection"
 

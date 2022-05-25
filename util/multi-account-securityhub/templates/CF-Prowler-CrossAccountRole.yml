@@ -1,52 +1,40 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Create the Cross-Account IAM Prowler Role
-
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: EC2 Settings
+          default: ECS Settings
         Parameters:
-          - ProwlerEc2Account
-          - ProwlerEc2Role
-      - Label:
-          default: S3 Settings
-        Parameters:
-          - ProwlerS3
+          - ProwlerEcsAccount
+          - ProwlerTaskRoleName
       - Label:
           default: CrossAccount Role
         Parameters:
           - ProwlerCrossAccountRole
-
 Parameters:
-  ProwlerS3:
+  ProwlerEcsAccount:
     Type: String
-    Description: Enter S3 Bucket for Prowler Reports.  prefix-awsaccount-awsregion
-    AllowedPattern: ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$
-    Default: prowler-123456789012-us-east-1
-  ProwlerEc2Account:
-    Type: String
-    Description: Enter AWS Account Number where Prowler EC2 Instance will reside.
+    Description: Enter AWS Account Number where Prowler ECS Task will reside.
     AllowedPattern: ^\d{12}$
     ConstraintDescription: An AWS Account Number must be a 12 digit numeric string.
-  ProwlerEc2Role:
+  ProwlerTaskRoleName:
     Type: String
-    Description: Enter Instance Role that will be given to the Prowler EC2 Instance (needed to grant sts:AssumeRole rights).
+    Description: Enter Instance Role that will be given to the Prowler ECS Instance (needed to grant sts:AssumeRole rights).
     AllowedPattern: ^[\w+=,.@-]{1,64}$
     ConstraintDescription: Max 64 alphanumeric characters. Also special characters supported [+, =, ., @, -]
-    Default: ProwlerEC2-Role
+    Default: ProwlerECSTask-Role
   ProwlerCrossAccountRole:
     Type: String
     Description: Enter Name for CrossAccount Role to be created for Prowler to assess all Accounts in the AWS Organization.
     AllowedPattern: ^[\w+=,.@-]{1,64}$
     ConstraintDescription: Max 64 alphanumeric characters. Also special characters supported [+, =, ., @, -]
     Default: ProwlerXA-Role
-
 Resources:
   ProwlerRole:
     Type: AWS::IAM::Role
     Properties:
-      Description: Provides Prowler EC2 instance permissions to assess security of Accounts in AWS Organization
+      Description: Provides Prowler ECS tasks permissions to assess security of Accounts in AWS Organization
       RoleName: !Ref ProwlerCrossAccountRole
       Tags:
         - Key: App
@@ -57,12 +45,9 @@ Resources:
           - Effect: Allow
             Principal:
               AWS:
-                - !Sub arn:${AWS::Partition}:iam::${ProwlerEc2Account}:root
+                - !Sub arn:${AWS::Partition}:iam::${ProwlerEcsAccount}:role/${ProwlerTaskRoleName}
             Action:
               - sts:AssumeRole
-            Condition:
-              StringLike:
-                aws:PrincipalArn: !Sub arn:${AWS::Partition}:iam::${ProwlerEc2Account}:role/${ProwlerEc2Role}
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/SecurityAudit
         - !Sub arn:${AWS::Partition}:iam::aws:policy/job-function/ViewOnlyAccess
@@ -89,19 +74,16 @@ Resources:
                   - ssm:GetDocument
                   - support:Describe*
                   - tag:GetTagKeys
-        - PolicyName: Prowler-S3-Reports
+        - PolicyName: Prowler-Security-Hub
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              - Sid: AllowGetPutListObject
+              - Sid: AllowProwlerSecurityHub
                 Effect: Allow
-                Resource:
-                  - !Sub arn:${AWS::Partition}:s3:::${ProwlerS3}
-                  - !Sub arn:${AWS::Partition}:s3:::${ProwlerS3}/*
+                Resource: "*"
                 Action:
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:ListBucket
+                  - securityhub:BatchImportFindings
+                  - securityhub:GetFindings
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -109,7 +91,6 @@ Resources:
             reason: "Prowler requires these rights to perform its Security Assessment."
           - id: W28
             reason: "Using a defined Role Name."
-
 Outputs:
   ProwlerCrossAccountRole:
     Description: CrossAccount Role to be used by Prowler to assess AWS Accounts in the AWS Organization.

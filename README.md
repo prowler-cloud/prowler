@@ -1,13 +1,20 @@
 <p align="center">
+  <img align="center" src="docs/images/prowler-pro-dark.png#gh-dark-mode-only" width="150" height="36">
+  <img align="center" src="docs/images/prowler-pro-light.png#gh-light-mode-only" width="15%" height="15%">
+</p>
+<p align="center">
+  <b><i>&nbsp&nbsp&nbspExplore the Pro version of Prowler at <a href="https://prowler.pro">prowler.pro</a></i></b>
+</p>
+<hr>
+<p align="center">
   <img src="https://user-images.githubusercontent.com/3985464/113734260-7ba06900-96fb-11eb-82bc-d4f68a1e2710.png" />
 </p>
-
 <p align="center">
   <a href="https://discord.gg/UjSMCVnxSB"><img alt="Discord Shield" src="https://img.shields.io/discord/807208614288818196"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/toniblyx/prowler"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/cloud/build/toniblyx/prowler"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/image-size/toniblyx/prowler"></a>
-  <a href="https://gallery.ecr.aws/o4g1s5r6/prowler"><img width="18%" height="18%" alt="AWS ECR Gallery" src="https://user-images.githubusercontent.com/3985464/151531396-b6535a68-c907-44eb-95a1-a09508178616.png"></a>
+  <a href="https://gallery.ecr.aws/o4g1s5r6/prowler"><img width="120" height=19" alt="AWS ECR Gallery" src="https://user-images.githubusercontent.com/3985464/151531396-b6535a68-c907-44eb-95a1-a09508178616.png"></a>
   <a href="https://github.com/prowler-cloud/prowler"><img alt="Repo size" src="https://img.shields.io/github/repo-size/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler"><img alt="Lines" src="https://img.shields.io/tokei/lines/github/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler/issues"><img alt="Issues" src="https://img.shields.io/github/issues/prowler-cloud/prowler"></a>
@@ -33,7 +40,7 @@
 - [Advanced Usage](#advanced-usage)
 - [Security Hub integration](#security-hub-integration)
 - [CodeBuild deployment](#codebuild-deployment)
-- [Whitelist/allowlist or remove FAIL from resources](#whitelist-or-allowlist-or-remove-a-fail-from-resources)
+- [Allowlist](#allowlist-or-remove-a-fail-from-resources)
 - [Fix](#how-to-fix-every-fail)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
@@ -484,18 +491,27 @@ The Cloud Formation template that helps you doing that is [here](https://github.
 
 > This is a simple solution to monitor one account. For multiples accounts see [Multi Account and Continuous Monitoring](util/org-multi-account/README.md).
 
-## Whitelist or allowlist or remove a fail from resources
+## Allowlist or remove a fail from resources
 
-Sometimes you may find resources that are intentionally configured in a certain way that may be a bad practice but it is all right with it, for example an S3 bucket open to the internet hosting a web site, or a security group with an open port needed in your use case. Now you can use `-w whitelist_sample.txt` and add your resources as `checkID:resourcename` as in this command:
+Sometimes you may find resources that are intentionally configured in a certain way that may be a bad practice but it is all right with it, for example an S3 bucket open to the internet hosting a web site, or a security group with an open port needed in your use case. Now you can use `-w allowlist_sample.txt` and add your resources as `checkID:resourcename` as in this command:
 
 ```
-./prowler -w whitelist_sample.txt
+./prowler -w allowlist_sample.txt
 ```
 
 S3 URIs are also supported as allowlist file, e.g. `s3://bucket/prefix/allowlist_sample.txt`
->Make sure that the used credentials have s3:GetObject permissions in the S3 path where the whitelist file is located.
+>Make sure that the used credentials have s3:GetObject permissions in the S3 path where the allowlist file is located.
 
-Whitelist option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format except for `json-asff`.
+DynamoDB table ARNs are also supported as allowlist file, e.g. `arn:aws:dynamodb:us-east-1:111111222222:table/allowlist`
+>Make sure that the table has `account_id` as partition key and `rule` as sort key, and that the used credentials have `dynamodb:PartiQLSelect` permissions in the table.
+><p align="left"><img src="https://user-images.githubusercontent.com/38561120/165769502-296f9075-7cc8-445e-8158-4b21804bfe7e.png" alt="image" width="397" height="252" /></p>
+
+>The field `account_id` can contains either an account ID or an `*` (which applies to all the accounts that use this table as a whitelist). As in the traditional allowlist file, the `rule` field must contain `checkID:resourcename` pattern.
+><p><img src="https://user-images.githubusercontent.com/38561120/165770610-ed5c2764-7538-44c2-9195-bcfdecc4ef9b.png" alt="image" width="394" /></p>
+
+
+
+Allowlist option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format except for `json-asff`.
 
 ## How to fix every FAIL
 
@@ -703,7 +719,7 @@ Current coverage of Amazon Web Service (AWS) taken from [here](https://docs.aws.
 | Topic                           | Service    | Trust Boundary                                                            |
 |---------------------------------|------------|---------------------------------------------------------------------------|
 | Networking and Content Delivery | Amazon VPC | VPC endpoints connections ([extra786](checks/check_extra786))             |
-|                                 |            | VPC endpoints whitelisted principals ([extra787](checks/check_extra787))  |
+|                                 |            | VPC endpoints allowlisted principals ([extra787](checks/check_extra787))  |
 
 All ideas or recommendations to extend this group are very welcome [here](https://github.com/prowler-cloud/prowler/issues/new/choose).
 

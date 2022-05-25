@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+
+CHECK_ID_extra7177="7.177"
+CHECK_TITLE_extra7177="[extra7177] Publicly accessible EMR Cluster"
+CHECK_SCORED_extra7177="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7177="EXTRA"
+CHECK_SEVERITY_extra7177="High"
+CHECK_ASFF_TYPE_extra7177="AwsEMR"
+CHECK_ALTERNATE_check7177="extra7177"
+CHECK_SERVICENAME_extra7177="emr"
+CHECK_RISK_extra7177='EMR Clusters should not be publicly accessible'
+CHECK_REMEDIATION_extra7177='Only make acceptable EMR clusters public'
+CHECK_DOC_extra7177='https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html'
+CHECK_CAF_EPIC_extra7177='Infrastructure Security'
+
+extra7177(){
+    for regx in ${REGIONS}; do
+        # List only EMR clusters with the following states: STARTING, BOOTSTRAPPING, RUNNING, WAITING, TERMINATING 
+        # [NOT TERMINATED AND TERMINATED_WITH_ERRORS]
+        LIST_OF_CLUSTERS=$("${AWSCLI}" emr list-clusters ${PROFILE_OPT} --region "${regx}" --query 'Clusters[?(Status.State!=`TERMINATED` && Status.State!=`TERMINATED_WITH_ERRORS`)].Id' --output text 2>&1)
+        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_CLUSTERS}"; then
+            textInfo "${regx}: Access Denied trying to list EMR clusters" "${regx}"
+            continue
+        fi
+        if [[ "${LIST_OF_CLUSTERS}" ]]
+        then
+            for cluster_id in ${LIST_OF_CLUSTERS}; do
+                master_public_dns=$("${AWSCLI}" emr describe-cluster ${PROFILE_OPT} --cluster-id "${cluster_id}" --query 'Cluster.MasterPublicDnsName' --region "${regx}" --output text 2>&1)
+                if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${master_public_dns}"; then
+                    textInfo "${regx}: Access Denied trying to describe EMR cluster" "${regx}" "${cluster_id}"
+                    continue
+                fi
+                if [[ $master_public_dns != None && $master_public_dns != *.internal ]];then
+                    # If EMR cluster is Public, it is required to check their Security Groups for the Master, the Slaves and the additional ones
+
+                    # Retrive EMR Master Node Security Groups rules
+                    master_node_sg=$("${AWSCLI}" emr describe-cluster --cluster-id "${cluster_id}" ${PROFILE_OPT} --region "${regx}" --query 'Cluster.Ec2InstanceAttributes.EmrManagedMasterSecurityGroup' --output text 2>&1)
+                    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${master_node_sg}"; then
+                        textInfo "${regx}: Access Denied trying to describe EMR cluster" "${regx}" "${cluster_id}"
+                        continue
+                    fi
+                    master_node_sg_internet_open=$("${AWSCLI}" ec2 describe-security-groups --group-ids "${master_node_sg}" --query 'SecurityGroups[?length(IpPermissions[?(contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}' ${PROFILE_OPT} --region "${regx}" --output text 2>&1)
+                    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${master_node_sg_internet_open}"; then
+                        textInfo "$regx: Access Denied trying to describe security groups" "$regx"
+                        continue
+                    fi
+
+                    # Retrive EMR Slave Node Security Groups rules
+                    slave_node_sg=$("${AWSCLI}" emr describe-cluster --cluster-id "${cluster_id}" ${PROFILE_OPT} --region "${regx}" --query 'Cluster.Ec2InstanceAttributes.EmrManagedSlaveSecurityGroup' --output text 2>&1)
+                    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${slave_node_sg}"; then
+                        textInfo "${regx}: Access Denied trying to describe EMR cluster" "${regx}" "${cluster_id}"
+                        continue
+                    fi
+                    slave_node_sg_internet_open=$("${AWSCLI}" ec2 describe-security-groups --group-ids "${slave_node_sg}" --query 'SecurityGroups[?length(IpPermissions[?(contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}' ${PROFILE_OPT} --region "${regx}" --output text 2>&1)
+                    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${slave_node_sg_internet_open}"; then
+                        textInfo "$regx: Access Denied trying to describe security groups" "$regx"
+                        continue
+                    fi
+
+                    # Retrive EMR Additional Master node Security Groups rules
+                    additional_master_node_sg_list=$("${AWSCLI}" emr describe-cluster --cluster-id "${cluster_id}" ${PROFILE_OPT} --region "${regx}" --query 'Cluster.Ec2InstanceAttributes.AdditionalMasterSecurityGroups' --output text 2>&1)
+                    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${slave_node_sg}"; then
+                        textInfo "${regx}: Access Denied trying to describe EMR cluster" "${regx}" "${cluster_id}"
+                        continue
+                    fi
+                    local additional_master_node_sg_internet_open_list
+                    if [[ "${additional_master_node_sg_list}" != "None" ]]; then
+                        for additional_master_node_sg in ${additional_master_node_sg_list}; do
+                            additional_master_node_sg_internet_open=$("${AWSCLI}" ec2 describe-security-groups --group-ids "${additional_master_node_sg}" --query 'SecurityGroups[?length(IpPermissions[?(contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}' ${PROFILE_OPT} --region "${regx}" --output text 2>&1)
+                            if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${slave_node_sg_internet_open}"; then
+                                textInfo "$regx: Access Denied trying to describe security groups" "$regx"
+                                continue
+                            fi
+                            # Store additional master node security groups that allows access from the internet
+                            additional_master_node_sg_internet_open_list+=( "${additional_master_node_sg_internet_open}" )
+                        done
+                    fi
+
+                    # Retrive EMR Additional Slave node Security Groups rules
+                    additional_slave_node_sg_list=$("${AWSCLI}" emr describe-cluster --cluster-id "${cluster_id}" ${PROFILE_OPT} --region "${regx}" --query 'Cluster.Ec2InstanceAttributes.AdditionalSlaveSecurityGroups' --output text 2>&1)
+                    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${slave_node_sg}"; then
+                        textInfo "${regx}: Access Denied trying to describe EMR cluster" "${regx}" "${cluster_id}"
+                        continue
+                    fi
+                    local additional_slave_node_sg_internet_open_list
+                    if [[ "${additional_slave_node_sg_list}" != "None" ]]; then
+                        for additional_slave_node_sg in ${additional_master_node_sg_list}; do
+                            additional_slave_node_sg_internet_open=$("${AWSCLI}" ec2 describe-security-groups --group-ids "${additional_slave_node_sg}" --query 'SecurityGroups[?length(IpPermissions[?(contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}' ${PROFILE_OPT} --region "${regx}" --output text 2>&1)
+                            if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${additional_slave_node_sg_internet_open}"; then
+                                textInfo "$regx: Access Denied trying to describe security groups" "$regx"
+                                continue
+                            fi
+                            # Store additional slave node security groups that allows access from the internet
+                            additional_slave_node_sg_internet_open_list+=( "${additional_slave_node_sg_internet_open}" )
+                        done
+                    fi
+
+                    # Check if EMR Cluster is publicly accessible through a Security Group
+                    if [[ -n "${master_node_sg_internet_open}" || -n "${slave_node_sg_internet_open}" || "${#additional_master_node_sg_internet_open_list[@]}" -ne 0 || "${#additional_slave_node_sg_internet_open_list[@]}" -ne 0 ]]; then
+                        textFail "${regx}: EMR Cluster ${cluster_id} is publicly accessible through the following Security Groups: Master Node ${master_node_sg_internet_open} ${additional_master_node_sg_internet_open_list[*]} -- Slaves Nodes ${slave_node_sg_internet_open} ${additional_slave_node_sg_internet_open_list[*]}" "${regx}" "${cluster_id}"
+                    else 
+                        textPass "${regx}: EMR Cluster ${cluster_id} is not publicly accessible" "${regx}" "${cluster_id}"
+                    fi
+                else
+                    textPass "${regx}: EMR Cluster ${cluster_id} is not publicly accessible" "${regx}" "${cluster_id}"
+                fi
+            done
+        else
+            textInfo "${regx}: No EMR Clusters found" "${regx}"
+        fi
+    done
+}

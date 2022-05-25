@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra790="7.90"
-CHECK_TITLE_extra790="[extra790] Find trust boundaries in VPC endpoint services whitelisted principles"
+CHECK_TITLE_extra790="[extra790] Find trust boundaries in VPC endpoint services allowlisted principles"
 CHECK_SCORED_extra790="NOT_SCORED"
 CHECK_CIS_LEVEL_extra790="EXTRA"
 CHECK_SEVERITY_extra790="Medium"

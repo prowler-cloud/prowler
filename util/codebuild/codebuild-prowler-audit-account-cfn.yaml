@@ -28,12 +28,12 @@ Parameters:
 Resources:
   CodeBuildStartBuild:
     Type: 'Custom::CodeBuildStartBuild'
+    DependsOn:
+      - CodeBuildLogPolicy
+      - CodeBuildStartLogPolicy
     Properties:
       Build: !Ref ProwlerCodeBuild
-      ServiceToken:
-        'Fn::GetAtt':
-          - CodeBuildStartBuildLambda
-          - Arn
+      ServiceToken: !GetAtt CodeBuildStartBuildLambda.Arn
 
   CodeBuildStartBuildLambdaRole:
     Type: 'AWS::IAM::Role'
@@ -43,29 +43,34 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: lambda.amazonaws.com
-            Action:
-              - 'sts:AssumeRole'
-      Path: /
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+              Service: !Sub lambda.${AWS::URLSuffix}
+            Action: 'sts:AssumeRole'
+      Description: !Sub 'DO NOT DELETE - Used by Lambda. Created by CloudFormation Stack ${AWS::StackId}'
       Policies:
         - PolicyName: StartBuildInline
           PolicyDocument:
             Statement:
               - Effect: Allow
-                Action:
-                  - 'codebuild:StartBuild'
-                Resource: '*'
+                Action: 'codebuild:StartBuild'
+                Resource: !GetAtt ProwlerCodeBuild.Arn
 
   CodeBuildStartBuildLambda:
     Type: 'AWS::Lambda::Function'
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W58
+            reason: 'This Lambda has permissions to write Logs'
+          - id: W89
+            reason: 'VPC is not needed'
+          - id: W92
+            reason: 'ReservedConcurrentExecutions not needed'
     Properties:
       Handler: index.lambda_handler
       MemorySize: 128
       Role: !Sub ${CodeBuildStartBuildLambdaRole.Arn}
       Timeout: 120
-      Runtime: python3.6
+      Runtime: python3.9
       Code:
         ZipFile: |
           import boto3
@@ -74,24 +79,59 @@ Resources:
 
           def lambda_handler(event,context):
             props = event['ResourceProperties']
-            codebuil_client = boto3.client('codebuild')
+            codebuild_client = boto3.client('codebuild')
 
             if (event['RequestType'] == 'Create' or event['RequestType'] == 'Update'):
               try:
-                  response = codebuil_client.start_build(projectName=props['Build'])
+                  response = codebuild_client.start_build(projectName=props['Build'])
                   print(response)
                   print("Respond: SUCCESS")
                   cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
               except Exception as ex:
                   print(ex.response['Error']['Message'])
                   cfnresponse.send(event, context, cfnresponse.FAILED, ex.response)
+            else:
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+
+  CodeBuildStartLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W84
+            reason: 'KMS encryption is not needed.'
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${CodeBuildStartBuildLambda}'
+      RetentionInDays: !Ref LogsRetentionInDays
+
+  CodeBuildStartLogPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Effect: Allow
+            Resource: !GetAtt CodeBuildStartLogGroup.Arn
+      PolicyName: LogGroup
+      Roles:
+        - !Ref CodeBuildStartBuildLambdaRole
 
   ArtifactBucket:
     Type: AWS::S3::Bucket
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W35
+            reason: 'S3 Access Logging is not needed'
     Properties:
       Tags:
         - Key: Name
-          Value: !Join ['-', [!Ref 'ServiceName', !Ref 'AWS::AccountId', 'S3', 'Prowler', !Ref 'AWS::StackName']]
+          Value: !Sub '${ServiceName}-${AWS::AccountId}-S3-Prowler-${AWS::StackName}'
       BucketName: !Sub '${ServiceName}-reports-${AWS::Region}-prowler-${AWS::AccountId}'
       AccessControl: LogDeliveryWrite
       VersioningConfiguration:
@@ -109,7 +149,7 @@ Resources:
   ArtifactBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Ref 'ArtifactBucket'
+      Bucket: !Ref ArtifactBucket
       PolicyDocument:
         Id: Content
         Version: '2012-10-17'
@@ -117,20 +157,18 @@ Resources:
           - Action: '*'
             Condition:
               Bool:
-                aws:SecureTransport: 'false'
+                aws:SecureTransport: false
             Effect: Deny
             Principal: '*'
-            Resource:
-              - !Join ['', ['arn:aws:s3:::', !Ref 'ArtifactBucket', '/*']]
+            Resource: !Sub '${ArtifactBucket.Arn}/*'
             Sid: S3ForceSSL
           - Action: 's3:PutObject'
             Condition:
               'Null':
-                s3:x-amz-server-side-encryption: 'true'
+                s3:x-amz-server-side-encryption: true
             Effect: Deny
             Principal: '*'
-            Resource:
-              - !Join ['', ['arn:aws:s3:::', !Ref 'ArtifactBucket', '/*']]
+            Resource: !Sub '${ArtifactBucket.Arn}/*'
             Sid: DenyUnEncryptedObjectUploads
 
   CodeBuildServiceRole:
@@ -138,35 +176,22 @@ Resources:
     Metadata:
       cfn_nag:
         rules_to_suppress:
-          - id: W28
-            reason: "Explicit name is required for this resource to avoid circular dependencies."
+          - id: W11
+            reason: 'Role complies with the least privilege principle.'
     Properties:
-      RoleName: 'prowler-codebuild-role'
-      Path: '/service-role/'
+      Description: !Sub 'DO NOT DELETE - Used by CodeBuild. Created by CloudFormation Stack ${AWS::StackId}'
       ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/job-function/SupportUser'
-        - 'arn:aws:iam::aws:policy/job-function/ViewOnlyAccess'
-        - 'arn:aws:iam::aws:policy/SecurityAudit'
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/job-function/SupportUser'
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/job-function/ViewOnlyAccess'
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/SecurityAudit'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-          -
-            Action: 'sts:AssumeRole'
+          - Action: 'sts:AssumeRole'
             Effect: Allow
             Principal:
-              Service:
-                - codebuild.amazonaws.com
+              Service: !Sub codebuild.${AWS::URLSuffix}
       Policies:
-        - PolicyName: LogGroup
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Effect: Allow
-                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*'
         - PolicyName: S3
           PolicyDocument:
             Version: '2012-10-17'
@@ -178,7 +203,7 @@ Resources:
                   - s3:GetBucketAcl
                   - s3:GetBucketLocation
                 Effect: Allow
-                Resource: !Sub 'arn:aws:s3:::${ArtifactBucket}/*'
+                Resource: !Sub '${ArtifactBucket.Arn}/*'
         - PolicyName: ProwlerAdditions
           PolicyDocument:
             Version: '2012-10-17'
@@ -211,49 +236,71 @@ Resources:
                   - codebuild:BatchPutTestCases
                   - codebuild:BatchPutCodeCoverages
                 Effect: Allow
-                Resource: !Sub 'arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*'
+                Resource: !Sub 'arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*'
         - PolicyName: SecurityHubBatchImportFindings
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
-              - Action:
-                  - securityhub:BatchImportFindings
+              - Action: securityhub:BatchImportFindings
                 Effect: Allow
-                Resource: !Sub 'arn:aws:securityhub:${AWS::Region}::product/prowler/prowler'
-        - PolicyName: AssumeRole
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Action:
-                  - sts:AssumeRole
-                Effect: Allow
-                Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/service-role/prowler-codebuild-role'
+                Resource: !Sub 'arn:${AWS::Partition}:securityhub:${AWS::Region}::product/prowler/prowler'
+
+  CodeBuildLogPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Effect: Allow
+            Resource: !GetAtt ProwlerLogGroup.Arn
+      PolicyName: LogGroup
+      Roles:
+        - !Ref CodeBuildServiceRole
+
+  CodeBuildAssumePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Resource: !GetAtt CodeBuildServiceRole.Arn
+      PolicyName: AssumeRole
+      Roles:
+        - !Ref CodeBuildServiceRole
 
   ProwlerCodeBuild:
     Type: AWS::CodeBuild::Project
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W32
+            reason: 'KMS encryption is not needed.'
     Properties:
       Artifacts:
         Type: NO_ARTIFACTS
+      ConcurrentBuildLimit: 1
       Source:
-        Type: NO_SOURCE
+        GitCloneDepth: 1
+        Location: https://github.com/prowler-cloud/prowler
+        Type: GITHUB
+        ReportBuildStatus: false
         BuildSpec: |
           version: 0.2
           phases:
             install:
               runtime-versions:
-                python: 3.8
+                python: 3.9
               commands:
                 - echo "Installing Prowler and dependencies..."
                 - pip3 install detect-secrets 
-                - yum -y install jq
-                - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-                - unzip awscliv2.zip
-                - ./aws/install
-                - git clone https://github.com/prowler-cloud/prowler
             build:
               commands:
                 - echo "Running Prowler as ./prowler $PROWLER_OPTIONS"
-                - cd prowler
                 - ./prowler $PROWLER_OPTIONS 
             post_build:
               commands:
@@ -264,7 +311,7 @@ Resources:
             prowler:
               files:
                 - '**/*'
-              base-directory: 'prowler/junit-reports'
+              base-directory: 'junit-reports'
               file-format: JunitXml
       Environment:
         # AWS CodeBuild free tier includes 100 build minutes of BUILD_GENERAL1_SMALL per month.
@@ -277,73 +324,60 @@ Resources:
         Type: "LINUX_CONTAINER"
         EnvironmentVariables:
           - Name: BUCKET_REPORT
-            Value: !Ref 'ArtifactBucket'
+            Value: !Ref ArtifactBucket
             Type: PLAINTEXT
           - Name: PROWLER_OPTIONS
-            Value: !Ref 'ProwlerOptions'
+            Value: !Ref ProwlerOptions
             Type: PLAINTEXT
       Description: Run Prowler assessment
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       TimeoutInMinutes: 300
 
-  ProwlerCodeBuildReportGroup:
-    Type: AWS::CodeBuild::ReportGroup
-    Properties:
-      Name: !Sub 'prowler-report-group-${ServiceName}-${AWS::StackName}'
-      Type: TEST
-      ExportConfig:
-        ExportConfigType: NO_EXPORT
-
   ProwlerLogGroup:
     Type: 'AWS::Logs::LogGroup'
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W84
+            reason: 'KMS encryption is not needed.'
     Properties:
       LogGroupName: !Sub '/aws/codebuild/${ProwlerCodeBuild}'
       RetentionInDays: !Ref LogsRetentionInDays
 
-  ProwlerSchedule:
-    Type: "AWS::Events::Rule"
+  EventBridgeServiceRole:
+    Type: AWS::IAM::Role
     Properties:
-      Description: >
-        A schedule for the Lambda function that triggers Prowler in CodeBuild..
+      Description: !Sub 'DO NOT DELETE - Used by EventBridge. Created by CloudFormation Stack ${AWS::StackId}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: !Sub events.${AWS::URLSuffix}
+      Policies:
+        - PolicyName: CodeBuild
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 'codebuild:StartBuild'
+                Resource: !GetAtt ProwlerCodeBuild.Arn
+
+  ProwlerSchedule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Description: A schedule to trigger Prowler in CodeBuild
       ScheduleExpression: !Ref ProwlerScheduler
       State: ENABLED
       Targets:
-        - Arn: !Sub ${ProwlerScheduleLambdaFunction.Arn}
+        - Arn: !GetAtt ProwlerCodeBuild.Arn
           Id: ProwlerSchedule
-  
-  ProwlerSchedulePermission:
-    Type: "AWS::Lambda::Permission"
-    Properties:
-      Action: 'lambda:InvokeFunction'
-      FunctionName: !Sub ${ProwlerScheduleLambdaFunction.Arn}
-      Principal: 'events.amazonaws.com'
-      SourceArn: !Sub ${ProwlerSchedule.Arn}
-
-  ProwlerScheduleLambdaFunction:
-    Type: "AWS::Lambda::Function"
-    Properties:
-      Handler: index.lambda_handler
-      MemorySize: 128
-      Role: !Sub ${CodeBuildStartBuildLambdaRole.Arn}
-      Timeout: 120
-      Runtime: python3.6
-      Environment:
-        Variables:
-          buildName: !Ref ProwlerCodeBuild
-      Code:
-        ZipFile: |
-          import boto3
-          import os
-
-          def lambda_handler(event,context):
-            codebuild_client = boto3.client('codebuild')
-            print("Running Prowler scheduled!: " + os.environ['buildName'])
-            project_name = os.environ['buildName']
-            response = codebuild_client.start_build(projectName=project_name)
-            print(response)
-            print("Respond: SUCCESS")
+          RoleArn: !GetAtt EventBridgeServiceRole.Arn
 
 Outputs:
   ArtifactBucketName:
     Description: Artifact Bucket Name
-    Value: !Ref 'ArtifactBucket'
+    Value: !Ref ArtifactBucket

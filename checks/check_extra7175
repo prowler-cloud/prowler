@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra7175="7.175"
+CHECK_TITLE_extra7175="[extra7175] CodeBuild Project with an user controlled buildspec"
+CHECK_SCORED_extra7175="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7175="EXTRA"
+CHECK_SEVERITY_extra7175="High"
+CHECK_ASFF_TYPE_extra7175="AwsCodebuildProject"
+CHECK_ALTERNATE_check7175="extra7175"
+CHECK_SERVICENAME_extra7175="codebuild"
+CHECK_RISK_extra7175='The CodeBuild projects with user controlled buildspec'
+CHECK_REMEDIATION_extra7175='Use buildspec.yml from a trusted source which user cant interfere with'
+CHECK_DOC_extra7175='https://docs.aws.amazon.com/codebuild/latest/userguide/security.html'
+CHECK_CAF_EPIC_extra7175='Infrastructure Security'
+
+extra7175(){
+    # "Looking for all build projects with user controlled buildspec files"
+    for regx in ${REGIONS}; do
+        LIST_OF_PROJECTS=$("${AWSCLI}" codebuild list-projects ${PROFILE_OPT} --region "${regx}" --query 'projects[*]' --output text 2>&1)
+        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_PROJECTS}"; then
+            textInfo "${regx}: Access Denied trying to list Codebuild projects" "${regx}"
+            continue
+        fi
+        if [[ "${LIST_OF_PROJECTS}" ]]; then
+            for project in ${LIST_OF_PROJECTS}; do
+                buildspec_file=$("${AWSCLI}" codebuild batch-get-projects ${PROFILE_OPT} --name "${project}" --query 'projects[0].source.buildspec' --region "${regx}" --output text 2>&1)
+                if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${buildspec_file}"; then
+                    textInfo "${regx}: Access Denied trying to fetch Id for Codebuild project" "${regx}" "${project}"
+                    continue
+                fi
+                if [[ $buildspec_file == *.yml ]];then
+                    textFail "${regx}: Codebuild project ${project} uses a user controlled buildspec" "${regx}" "${project}"
+                else
+                    textPass "${regx}: Codebuild project ${project} not uses a user controlled buildspec" "${regx}" "${project}"
+                fi
+            done
+        else 
+            textInfo "${regx}: No CodeBuild Projects found" "${regx}"
+        fi
+    done
+}

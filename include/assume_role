@@ -55,7 +55,7 @@ assume_role(){
         --role-session-name ProwlerAssessmentSession \
         --duration-seconds $SESSION_DURATION_TO_ASSUME \
         --region $REGION_FOR_STS \
-        "${ROLE_EXTERNAL_ID_OPTION}" > $TEMP_STS_ASSUMED_FILE 2>"${TEMP_STS_ASSUMED_ERROR}"
+        ${ROLE_EXTERNAL_ID_OPTION} > $TEMP_STS_ASSUMED_FILE 2>"${TEMP_STS_ASSUMED_ERROR}"
     then
         STS_ERROR="$(cat ${TEMP_STS_ASSUMED_ERROR} | tr '\n' ' ')"
         textFail "${STS_ERROR}"
