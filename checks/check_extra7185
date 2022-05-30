@@ -41,7 +41,6 @@ extra7181() {
     # Use --scope Local to list only Customer Managed Policies
     # Query 'Policies[?AttachmentCount > `0`]'  to check if this policy is in use, so attached to any user, group or role
     LIST_CUSTOM_POLICIES=$(${AWSCLI} iam list-policies ${PROFILE_OPT} \
-    --region "${REGION}" \
     --scope Local \
     --query 'Policies[*].[Arn,DefaultVersionId]' \
     --output text)
