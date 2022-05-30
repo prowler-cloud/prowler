@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+
+CHECK_ID_extra7183="7.183"
+CHECK_TITLE_extra7183="[extra7183] Directory Service LDAP Certificates expiration"
+CHECK_SCORED_extra7183="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7183="EXTRA"
+CHECK_SEVERITY_extra7183="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7183="AwsDirectoryService"
+CHECK_ALTERNATE_check7183="extra7183"
+CHECK_SERVICENAME_extra7183="ds"
+CHECK_RISK_cextra7183="Expired certificates can impact service availability."
+CHECK_REMEDIATION_extra7183="Monitor certificate expiration and take automated action to alarm responsible team for taking care of the replacement or remove."
+CHECK_DOC_extra7183="https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_ldap.html"
+CHECK_CAF_EPIC_extra7183="Data Protection"
+
+extra7183(){
+    local DAYS_TO_EXPIRE_THRESHOLD=90
+    for regx in $REGIONS; do
+        DIRECTORY_SERVICE_IDS=$("${AWSCLI}" ds describe-directories ${PROFILE_OPT} --region "${regx}" --query 'DirectoryDescriptions[*].DirectoryId[]' --output text 2>&1)
+        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${DIRECTORY_SERVICE_IDS}"; then
+            textInfo "${regx}: Access Denied trying to describe directories" "${regx}"
+            continue
+        fi
+
+        if [[ ${DIRECTORY_SERVICE_IDS} ]]; then
+            for DIRECTORY_ID in ${DIRECTORY_SERVICE_IDS}; do
+                CERT_DATA=$("${AWSCLI}" ds list-certificates ${PROFILE_OPT} --region "${regx}" --directory-id "${DIRECTORY_ID}" --query 'CertificatesInfo[*].[CertificateId,ExpiryDateTime]' --output text 2>&1)
+                if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${CERT_DATA}"; then
+                    textInfo "${regx}: Access Denied trying to list certificates" "${regx}"
+                    continue
+                fi
+                if [[ ${CERT_DATA} ]]; then
+                    echo "${CERT_DATA}" | while read -r CERTIFICATE_ID NOTAFTER; do
+                        EXPIRES_DATE=$(timestamp_to_date "${NOTAFTER}")
+                        if [[ ${EXPIRES_DATE} == "" ]] 
+                        then
+                            textInfo "${regx}: LDAP Certificate ${CERTIFICATE_ID} has an incorrect timestamp format: ${NOTAFTER}" "${regx}" "${CERTIFICATE_ID}"
+                        else
+                            COUNTER_DAYS=$(how_many_days_from_today "${EXPIRES_DATE}")
+                            if [[ "${COUNTER_DAYS}" -le "${DAYS_TO_EXPIRE_THRESHOLD}" ]]; then
+                                textFail "${regx}: LDAP Certificate ${CERTIFICATE_ID} configured at ${DIRECTORY_ID} is about to expire in ${COUNTER_DAYS} days!" "${regx}" "${CERTIFICATE_ID}"
+                            else
+                                textPass "${regx}: LDAP Certificate ${CERTIFICATE_ID} configured at ${DIRECTORY_ID} expires in ${COUNTER_DAYS} days" "${regx}" "${CERTIFICATE_ID}"
+                            fi
+                        fi
+                    done
+                else
+                    textFail "${regx}: Directory Service ${DIRECTORY_ID} does not have a LDAP Certificate configured" "${regx}" "${DIRECTORY_ID}"    
+                fi
+            done
+        else
+            textInfo "${regx}: No Directory Service found" "${regx}"
+        fi
+    done
+}
