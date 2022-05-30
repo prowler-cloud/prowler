@@ -15,34 +15,34 @@ CHECK_ID_extra7182="7.182"
 CHECK_TITLE_extra7182="[extra7182] Directory Service SNS Notifications"
 CHECK_SCORED_extra7182="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7182="EXTRA"
-CHECK_SEVERITY_extra7182="High"
+CHECK_SEVERITY_extra7182="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra7182="AwsDirectoryService"
-CHECK_ALTERNATE_extra7182="extra7182"
+CHECK_ALTERNATE_check7182="extra7182"
 CHECK_SERVICENAME_extra7182="ds"
-CHECK_RISK_cextra7182="As a best practice, monitor status of Directory Service. This helps to avoid late actions to fix Directory Service issues."
-CHECK_REMEDIATION_extra7182="It is recommended set up SNS messaging"
-CHECK_DOC_extra7182="CHECK_DOC_extra7182='https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_enable_notifications.html'"
+CHECK_RISK_cextra7182="As a best practice, monitor status of Directory Service. This helps to avoid late actions to fix Directory Service issues"
+CHECK_REMEDIATION_extra7182="It is recommended set up SNS messaging to send email or text messages when the status of your directory changes"
+CHECK_DOC_extra7182="https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_enable_notifications.html"
 CHECK_CAF_EPIC_extra7182="Infrastructure Security"
 
 extra7182(){
   for regx in $REGIONS; do
-    CHECK_DS_IDS=$($AWSCLI ds describe-directories $PROFILE_OPT --region $regx --query 'DirectoryDescriptions[*].DirectoryId[]' --output text 2>&1)
-    if [[ $(echo "$CHECK_DS_IDS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textInfo "$regx: Access Denied trying to describe directories" "$regx"
+    DIRECTORY_SERVICE_IDS=$("${AWSCLI}" ds describe-directories ${PROFILE_OPT} --region "${regx}" --query 'DirectoryDescriptions[*].DirectoryId[]' --output text 2>&1)
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${DIRECTORY_SERVICE_IDS}"; then
+        textInfo "${regx}: Access Denied trying to describe directories" "${regx}"
         continue
     fi
     
     if [[ ${CHECK_DS_IDS} ]]; then
-      for CHECK_DS_ID in ${CHECK_DS_IDS}; do
-          DS_MONITORING=$($AWSCLI ds describe-event-topics $PROFILE_OPT --region $regx --directory-id "${CHECK_DS_ID}" --query 'EventTopics' --output text 2>&1)
-            if [[ ${DS_MONITORING} ]]; then
-              textPass "${regx}: Directory Service ${CHECK_DS_ID} have SNS messaging" "${regx}" "${CHECK_DS_ID}"
-           else 
-              textFail "${regx}: Directory Service ${CHECK_DS_ID} does not have SNS messaging" "${regx}" "${CHECK_DS_ID}"     
+        for DIRECTORY_ID in ${DIRECTORY_SERVICE_IDS}; do
+            DIRECTORY_SERVICE_MONITORING=$("${AWSCLI}" ds describe-event-topics ${PROFILE_OPT} --region "${regx}" --directory-id "${DIRECTORY_ID}" --query 'EventTopics' --output text 2>&1)
+            if [[ "${DIRECTORY_SERVICE_MONITORING}" ]]; then
+                textPass "${regx}: Directory Service ${DIRECTORY_ID} have SNS messaging enabled" "${regx}" "${DIRECTORY_ID}"
+            else 
+                textFail "${regx}: Directory Service ${DIRECTORY_ID} does not have SNS messaging enabled" "${regx}" "${DIRECTORY_ID}"     
             fi
-      done
+        done
     else
-      textPass "${regx}: No Directory Service found" "${regx}" "${CHECK_DS_ID}"  
+        textPass "${regx}: No Directory Service found" "${regx}"
     fi
   done
 }
