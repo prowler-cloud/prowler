@@ -35,6 +35,10 @@ extra7182(){
     if [[ ${DIRECTORY_SERVICE_IDS} ]]; then
         for DIRECTORY_ID in ${DIRECTORY_SERVICE_IDS}; do
             DIRECTORY_SERVICE_MONITORING=$("${AWSCLI}" ds describe-event-topics ${PROFILE_OPT} --region "${regx}" --directory-id "${DIRECTORY_ID}" --query 'EventTopics' --output text 2>&1)
+            if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${DIRECTORY_SERVICE_MONITORING}"; then
+                textInfo "${regx}: Access Denied trying to describe Directory Service event topics" "${regx}"
+                continue
+            fi
             if [[ "${DIRECTORY_SERVICE_MONITORING}" ]]; then
                 textPass "${regx}: Directory Service ${DIRECTORY_ID} have SNS messaging enabled" "${regx}" "${DIRECTORY_ID}"
             else 
@@ -42,7 +46,7 @@ extra7182(){
             fi
         done
     else
-        textPass "${regx}: No Directory Service found" "${regx}"
+        textInfo "${regx}: No Directory Service found" "${regx}"
     fi
   done
 }
