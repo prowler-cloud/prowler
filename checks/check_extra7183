@@ -37,7 +37,7 @@ extra7183(){
         if [[ ${DIRECTORY_SERVICE_IDS} ]]; then
             for DIRECTORY_ID in ${DIRECTORY_SERVICE_IDS}; do
                 CERT_DATA=$("${AWSCLI}" ds list-certificates ${PROFILE_OPT} --region "${regx}" --directory-id "${DIRECTORY_ID}" --query 'CertificatesInfo[*].[CertificateId,ExpiryDateTime]' --output text 2>&1)
-                if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${DIRECTORY_SERVICE_IDS}"; then
+                if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${CERT_DATA}"; then
                     textInfo "${regx}: Access Denied trying to list certificates" "${regx}"
                     continue
                 fi
@@ -49,7 +49,7 @@ extra7183(){
                             textInfo "${regx}: LDAP Certificate ${CERTIFICATE_ID} has an incorrect timestamp format: ${NOTAFTER}" "${regx}" "${CERTIFICATE_ID}"
                         else
                             COUNTER_DAYS=$(how_many_days_from_today "${EXPIRES_DATE}")
-                            if [[ $COUNTER_DAYS -le $DAYS_TO_EXPIRE_THRESHOLD ]]; then
+                            if [[ "${COUNTER_DAYS}" -le "${DAYS_TO_EXPIRE_THRESHOLD}" ]]; then
                                 textFail "${regx}: LDAP Certificate ${CERTIFICATE_ID} configured at ${DIRECTORY_ID} is about to expire in ${COUNTER_DAYS} days!" "${regx}" "${CERTIFICATE_ID}"
                             else
                                 textPass "${regx}: LDAP Certificate ${CERTIFICATE_ID} configured at ${DIRECTORY_ID} expires in ${COUNTER_DAYS} days" "${regx}" "${CERTIFICATE_ID}"
