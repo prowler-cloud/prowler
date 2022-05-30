@@ -32,7 +32,7 @@ extra7182(){
         continue
     fi
     
-    if [[ ${CHECK_DS_IDS} ]]; then
+    if [[ ${DIRECTORY_SERVICE_IDS} ]]; then
         for DIRECTORY_ID in ${DIRECTORY_SERVICE_IDS}; do
             DIRECTORY_SERVICE_MONITORING=$("${AWSCLI}" ds describe-event-topics ${PROFILE_OPT} --region "${regx}" --directory-id "${DIRECTORY_ID}" --query 'EventTopics' --output text 2>&1)
             if [[ "${DIRECTORY_SERVICE_MONITORING}" ]]; then
