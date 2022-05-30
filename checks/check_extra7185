@@ -11,18 +11,18 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-CHECK_ID_extra7181="7.181"
-CHECK_TITLE_extra7181="[extra7181] Ensure no custom IAM policies allow actions that may lead into Privilege Escalation"
-CHECK_SCORED_extra7181="NOT_SCORED"
-CHECK_CIS_LEVEL_extra7181="EXTRA"
-CHECK_SEVERITY_extra7181="Medium"
-CHECK_ASFF_RESOURCE_TYPE_extra7181="AwsIamPolicy"
-CHECK_ALTERNATE_check7181="extra7181"
-CHECK_SERVICENAME_extra7181="iam"
-CHECK_RISK_extra7181='Users with some IAM permissions are allowed to elevate their privileges up to administrator rights.'
-CHECK_REMEDIATION_extra7181='Grant usage permission on a per-resource basis and applying least privilege principle.'
-CHECK_DOC_extra7181='https://docs.aws.amazon.com/IAM/latest/APIReference/API_CreateAccessKey.html'
-CHECK_CAF_EPIC_extra7181='IAM'
+CHECK_ID_extra7185="7.185"
+CHECK_TITLE_extra7185="[extra7185] Ensure no custom IAM policies allow actions that may lead into Privilege Escalation"
+CHECK_SCORED_extra7185="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7185="EXTRA"
+CHECK_SEVERITY_extra7185="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7185="AwsIamPolicy"
+CHECK_ALTERNATE_check7185="extra7185"
+CHECK_SERVICENAME_extra7185="iam"
+CHECK_RISK_extra7185='Users with some IAM permissions are allowed to elevate their privileges up to administrator rights.'
+CHECK_REMEDIATION_extra7185='Grant usage permission on a per-resource basis and applying least privilege principle.'
+CHECK_DOC_extra7185='https://docs.aws.amazon.com/IAM/latest/APIReference/API_CreateAccessKey.html'
+CHECK_CAF_EPIC_extra7185='IAM'
 
 # Does the tool analyze both users and roles, or just one or the other? --> Everything using AttachementCount.
 # Does the tool take a principal-centric or policy-centric approach? --> Policy-centric approach.
@@ -35,7 +35,7 @@ CHECK_CAF_EPIC_extra7181='IAM'
 # Does the tool handle service control policy (SCP) restrictions? --> No, SCP are within Organizations AWS API.
 
 
-extra7181() {
+extra7185() {
     local PRIVILEGE_ESCALATION_IAM_ACTIONS="iam:AttachGroupPolicy|iam:SetDefaultPolicyVersion2|iam:AddUserToGroup|iam:AttachRolePolicy|iam:AttachUserPolicy|iam:CreateAccessKey|iam:CreatePolicyVersion|iam:CreateLoginProfile|iam:PassRole|iam:PutGroupPolicy|iam:PutRolePolicy|iam:PutUserPolicy|iam:SetDefaultPolicyVersion|iam:UpdateAssumeRolePolicy|iam:UpdateLoginProfile|sts:AssumeRole|ec2:RunInstances|lambda:CreateEventSourceMapping|lambda:CreateFunction|lambda:InvokeFunction|lambda:UpdateFunctionCode|dynamodb:CreateTable|dynamodb:PutItem|glue:CreateDevEndpoint|glue:GetDevEndpoint|glue:GetDevEndpoints|glue:UpdateDevEndpoint|cloudformation:CreateStack|cloudformation:DescribeStacks|datapipeline:CreatePipeline|datapipeline:PutPipelineDefinition|datapipeline:ActivatePipeline"
 
     # Use --scope Local to list only Customer Managed Policies
