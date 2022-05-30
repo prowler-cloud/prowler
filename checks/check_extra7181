@@ -28,7 +28,7 @@ extra7181(){
   for regx in $REGIONS; do
     DIRECTORY_SERVICE_IDS=$("${AWSCLI}" ds describe-directories $PROFILE_OPT --region "${regx}" --query 'DirectoryDescriptions[*].DirectoryId[]' --output text 2>&1)
     if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${DIRECTORY_SERVICE_IDS}"; then
-        textInfo "$regx: Access Denied trying to describe directories" "$regx"
+        textInfo "${regx}: Access Denied trying to describe directories" "${regx}"
         continue
     fi
 
@@ -36,7 +36,7 @@ extra7181(){
         for DIRECTORY_ID in ${DIRECTORY_SERVICE_IDS}; do
             DIRECTORY_SERVICE_MONITORING=$("${AWSCLI}" ds list-log-subscriptions ${PROFILE_OPT} --region "${regx}" --directory-id "${DIRECTORY_ID}" --query 'LogSubscriptions' --output text 2>&1)
             if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${CHECK_DS_IDS}"; then
-                textInfo "$regx: Access Denied trying to list Directory Service log subscriptions" "$regx"
+                textInfo "${regx}: Access Denied trying to list Directory Service log subscriptions" "${regx}"
                 continue
             fi
             if [[ "${DIRECTORY_SERVICE_MONITORING}" ]]; then
