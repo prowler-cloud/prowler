@@ -52,10 +52,8 @@ extra7181() {
         if [[ $LIST_CUSTOM_POLICIES ]]; then
             while read -r POLICY_ARN POLICY_DEFAULT_VERSION; do
                 POLICY_PRIVILEGED_ACTIONS=$($AWSCLI iam get-policy-version ${PROFILE_OPT} \
-                    --output json \
                     --policy-arn "${POLICY_ARN}" \
                     --version-id "${POLICY_DEFAULT_VERSION}" \
-                    --region "${REGION}" \
                     --query "PolicyVersion.Document.Statement[]" \
                     --output json)
 
