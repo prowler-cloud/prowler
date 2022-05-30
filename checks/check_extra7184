@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-THRESHOLD="2"
+
 
 CHECK_ID_extra7184="7.184"
 CHECK_TITLE_extra7184="[extra7184] Directory Service Manual Snapshot Limit"
@@ -19,41 +19,45 @@ CHECK_SCORED_extra7184="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7184="EXTRA"
 CHECK_SEVERITY_extra7184="Low"
 CHECK_ASFF_RESOURCE_TYPE_extra7184="AwsDirectoryService"
-CHECK_ALTERNATE_extra7184="extra7184"
+CHECK_ALTERNATE_check7184="extra7184"
 CHECK_SERVICENAME_extra7184="ds"
-CHECK_RISK_cextra7184="A limit reached can bring unwanted results. The maximum number of manual snapshots is a hard limit"
+CHECK_RISK_extra7184="A limit reached can bring unwanted results. The maximum number of manual snapshots is a hard limit"
 CHECK_REMEDIATION_extra7184="Monitor manual snapshots limit to ensure capacity when you need it."
-CHECK_DOC_extra7184="CHECK_DOC_extra7184='https://docs.aws.amazon.com/general/latest/gr/ds_region.html'"
+CHECK_DOC_extra7184="https://docs.aws.amazon.com/general/latest/gr/ds_region.html"
 CHECK_CAF_EPIC_extra7184="Infrastructure Security"
 
 extra7184(){
-  for regx in $REGIONS; do
-    CHECK_DS_IDS=$($AWSCLI ds describe-directories $PROFILE_OPT --region $regx --query 'DirectoryDescriptions[*].DirectoryId[]' --output text 2>&1)
-    if [[ $(echo "$CHECK_DS_IDS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-        textInfo "$regx: Access Denied trying to describe directories" "$regx"
-        continue
-    fi
-    
-    if [[ ${CHECK_DS_IDS} ]]; then
-      for CHECK_DS_ID in ${CHECK_DS_IDS}; do
-          LIMIT_DATA=$($AWSCLI ds get-snapshot-limits $PROFILE_OPT --region $regx --directory-id "${CHECK_DS_ID}" --query 'SnapshotLimits' --output text 2>&1)
-            echo "$LIMIT_DATA" | while read -r SNAPCURRENT SNAPLIMIT SNAPLIMITHIT; do
-            LIMIT_REMAIN=""
-            if [[ ${SNAPLIMITHIT} == "true" ]] 
-            then
-              textFail "${regx}: Directory Service ${CHECK_DS_ID} reached Snapshot Limit ${SNAPLIMIT}" "${regx}" "${CHECK_DS_ID}"
-            else 
-              LIMIT_REMAIN=$(expr "${SNAPLIMIT}" - "${SNAPCURRENT}")
-              if [[ $LIMIT_REMAIN -le $THRESHOLD ]]; then
-                textFail "${regx}: Directory Service ${CHECK_DS_ID} is about to reach Snapshot Limit ${SNAPLIMIT}" "${regx}" "${CHECK_DS_ID}"
-              else
-                textPass "${regx}: Directory Service ${CHECK_DS_ID} use ${SNAPCURRENT} of Snapshot Limit ${SNAPLIMIT}" "${regx}" "{$CHECK_DS_ID}"
-              fi
-            fi
-          done
-        done
-    else
-      textPass "${regx}: No Directory Service found" "${regx}" "${CHECK_DS_ID}"  
-    fi
-  done
+    local THRESHOLD="2"
+    for regx in ${REGIONS}; do
+        DIRECTORY_SERVICE_IDS=$("${AWSCLI}" ds describe-directories ${PROFILE_OPT} --region "${regx}" --query 'DirectoryDescriptions[*].DirectoryId[]' --output text 2>&1)
+        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${DIRECTORY_SERVICE_IDS}"; then
+            textInfo "${regx}: Access Denied trying to describe directories" "${regx}"
+            continue
+        fi
+
+        if [[ ${DIRECTORY_SERVICE_IDS} ]]; then
+            for DIRECTORY_ID in ${DIRECTORY_SERVICE_IDS}; do
+                LIMIT_DATA=$("${AWSCLI}" ds get-snapshot-limits ${PROFILE_OPT} --region "${regx}" --directory-id "${DIRECTORY_ID}" --query 'SnapshotLimits' --output text 2>&1)
+                if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIMIT_DATA}"; then
+                    textInfo "${regx}: Access Denied trying to get Directiory Service snapshot limits" "${regx}"
+                    continue
+                fi
+                echo "${LIMIT_DATA}" | while read -r CURRENT_SNAPSHOTS_COUNT SNAPSHOTS_LIMIT SNAPSHOTS_LIMIT_REACHED; do
+                    if [[ ${SNAPSHOTS_LIMIT_REACHED} == "true" ]] 
+                    then
+                        textFail "${regx}: Directory Service ${DIRECTORY_ID} reached ${SNAPSHOTS_LIMIT} Snapshots Limit" "${regx}" "${DIRECTORY_ID}"
+                    else 
+                        LIMIT_REMAIN=$(("${SNAPSHOTS_LIMIT}" - "${CURRENT_SNAPSHOTS_COUNT}"))
+                        if [[ "${LIMIT_REMAIN}" -le "${THRESHOLD}" ]]; then
+                            textFail "${regx}: Directory Service ${DIRECTORY_ID} is about to reach ${SNAPSHOTS_LIMIT} snapshots which is the limit" "${regx}" "${DIRECTORY_ID}"
+                        else
+                            textPass "${regx}: Directory Service ${DIRECTORY_ID} is using ${CURRENT_SNAPSHOTS_COUNT} out of ${SNAPSHOTS_LIMIT} from the Snapshot Limit" "${regx}" "{$DIRECTORY_ID}"
+                        fi
+                    fi
+                done
+            done
+        else
+            textInfo "${regx}: No Directory Service found" "${regx}"
+        fi
+    done
 }
