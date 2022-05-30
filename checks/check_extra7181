@@ -25,10 +25,9 @@ CHECK_DOC_extra7181="CHECK_DOC_extra7181='https://docs.aws.amazon.com/directorys
 CHECK_CAF_EPIC_extra7181="Infrastructure Security"
 
 extra7181(){
-
   for regx in $REGIONS; do
     DIRECTORY_SERVICE_IDS=$("${AWSCLI}" ds describe-directories $PROFILE_OPT --region "${regx}" --query 'DirectoryDescriptions[*].DirectoryId[]' --output text 2>&1)
-    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${CHECK_DS_IDS}"; then
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${DIRECTORY_SERVICE_IDS}"; then
         textInfo "$regx: Access Denied trying to describe directories" "$regx"
         continue
     fi
