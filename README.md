@@ -340,7 +340,8 @@ Jump into the section for the database provider you want to use and follow the r
     - Mac -> `brew install libpq`
     - Ubuntu -> `sudo apt-get install postgresql-client `
     - RHEL/Centos -> `sudo yum install postgresql10`
-- Configure a `.pgpass` file into the root folder of the user that is going to launch Prowler -> [pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)
+- Configure a `.pgpass` file into the root folder of the user that is going to launch Prowler ([pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)), including an extra field at the end of the line to name the table, for instance:  
+  `localhost:5432:postgres:postgres:mypassword:prowler_findings`
 - Create a table in your PostgreSQL database to store the prowler's data. You can use the following SQL statemente to create the table:
 ```
 CREATE TABLE  IF NOT EXISTS prowler (

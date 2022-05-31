@@ -117,7 +117,7 @@ USAGE:
                             i,e. -a 'ec2 describe-security-groups --filters Name=ip-permission.to-port,Values=80 --query SecurityGroups[*].GroupId[]]'                
       -V                  Show version number & exit.
       -h                  This help.
-      -d                  Send output to database through database connectors supported, currently only PostgreSQL. Prowler will get the credentials from your ~/.pgpass file.
+      -d                  Send output to database through database connectors supported, currently only PostgreSQL. Prowler will get the credentials and table name from your ~/.pgpass file.
   "
   exit
 }
@@ -339,7 +339,11 @@ then
     # check if database is reachable            
     elif ! pg_isready -q  -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -p "${PSQL_PORT}"
     then
-        db_exit_abnormally "postgresql" "Database listening on host ${PSQL_HOSTNAME} on port ${PSQL_PORT} connected as user ${PSQL_USER} is unreachable - EXITING!"  
+        db_exit_abnormally "postgresql" "Database listening on host ${PSQL_HOSTNAME} on port ${PSQL_PORT} connected as user ${PSQL_USER} is unreachable - EXITING!"
+    # Check if table field is included into .pgpass file
+    elif [ -z "${PSQL_TABLE}"]
+    then
+        db_exit_abnormally "postgresql" "Table field must be included into pgpass file - EXITING!"
     fi
 fi
 
