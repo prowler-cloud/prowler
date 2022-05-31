@@ -344,7 +344,7 @@ Jump into the section for the database provider you want to use and follow the r
   `localhost:5432:postgres:postgres:mypassword:prowler_findings`
 - Create a table in your PostgreSQL database to store the prowler's data. You can use the following SQL statemente to create the table:
 ```
-CREATE TABLE  IF NOT EXISTS prowler (
+CREATE TABLE  IF NOT EXISTS prowler_findings (
 profile TEXT,
 account_number TEXT, 
 region TEXT, 
