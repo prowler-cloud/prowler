@@ -21,27 +21,15 @@
 SUPPORTED_DB_PROVIDERS="postgresql"
 
 # Connectors for different databases
-#POSTGRESQL
+#POSTGRESQL variables
+PSQL_USER=$(awk -F ':' '{print $4}' ~/.pgpass)
+PSQL_HOSTNAME=$(awk -F ':' '{print $1}' ~/.pgpass)
+PSQL_PORT=$(awk -F ':' '{print $2}' ~/.pgpass)
+
+#POSTGRESQL connector
 postgresql_connector () {
-
-    PSQL_USER=$(awk -F ':' '{print $4}' ~/.pgpass)
-    PSQL_HOSTNAME=$(awk -F ':' '{print $1}' ~/.pgpass)
-    PSQL_PORT=$(awk -F ':' '{print $2}' ~/.pgpass)
     CSV_REGISTRY="${1}"
-
-    # Previous checks after sending data to db
-    # psql is installed and in path
-    if ! command -v "psql" > /dev/null 2>&1
-    then
-        db_exit_abnormally "postgresql" "psql tool not installed or not found"
-    # database is reachable            
-    elif ! pg_isready -q  -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -p "${PSQL_PORT}"
-    then
-        db_exit_abnormally "postgresql" "Database listening on host ${PSQL_HOSTNAME} on port ${PSQL_PORT} connected with user ${PSQL_USER} is unreachable"     
-    fi
-    
     psql -q -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -c "copy prowler from stdin with null as E'\'\'' delimiter ','" <<< "${CSV_REGISTRY}"
-    
 }
 
 db_exit_abnormally() {

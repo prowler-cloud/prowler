@@ -328,12 +328,18 @@ fi
 # Check database providers
 if [[ ${DATABASE_PROVIDER} ]]
 then
+    # Check if input provider is supported
     if ! grep -q "${DATABASE_PROVIDER}" <<< "${SUPPORTED_DB_PROVIDERS}"
     then
-        echo "Database provider: ${DATABASE_PROVIDER}"
-        echo "ERROR DB provider not supported - EXITING!"
-        echo "DATABASE PROVIDERS SUPPORTED: ${SUPPORTED_DB_PROVIDERS}"
-        exit 2
+        db_exit_abnormally "${DATABASE_PROVIDER}" "DB provider not supported, providers supported: ${SUPPORTED_DB_PROVIDERS} - EXITING!"
+    # check if psql command is installed and in path
+    elif ! command -v "psql" > /dev/null 2>&1
+    then
+        db_exit_abnormally "postgresql" "psql tool not installed or not found - EXITING!"
+    # check if database is reachable            
+    elif ! pg_isready -q  -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -p "${PSQL_PORT}"
+    then
+        db_exit_abnormally "postgresql" "Database listening on host ${PSQL_HOSTNAME} on port ${PSQL_PORT} connected as user ${PSQL_USER} is unreachable - EXITING!"  
     fi
 fi
 
