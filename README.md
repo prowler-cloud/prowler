@@ -332,14 +332,16 @@ Prowler has two parameters related to regions: `-r` that is used query AWS servi
     ```
 ## Database providers connector
 
-You can send the Prowler's output to different databases (right now only PostgreSQL is supported). Follow these steps to configure the database provider you want to use. 
-### Postgresql 
+You can send the Prowler's output to different databases (right now only PostgreSQL is supported). 
+
+Jump into the section for the database provider you want to use and follow the required steps to configure it. 
+### PostgreSQL 
 - Install psql
     - Mac -> `brew install libpq`
     - Ubuntu -> `sudo apt-get install postgresql-client `
     - RHEL/Centos -> `sudo yum install postgresql10`
 - Configure a `.pgpass` file into the root folder of the user that is going to launch Prowler -> [pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)
-- Create a table in your postgresql database to store the prowler's data, for example:
+- Create a table in your PostgreSQL database to store the prowler's data. You can use the following SQL statemente to create the table:
 ```
 CREATE TABLE  IF NOT EXISTS prowler (
 profile TEXT,
@@ -371,6 +373,7 @@ account_details_tags  TEXT
 ```
 - Execute prowler with `-d` flag, for example:  
     `./prowler -M csv -d postgres`
+    > *Note*: This command creates a `csv` output file and stores the Prowler output in the configured PostgreSQL DB. It's an example, `-d` flag **does not** require `-M` to run.
 
 ## Advanced Usage
 
