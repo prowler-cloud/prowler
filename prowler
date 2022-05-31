@@ -477,8 +477,6 @@ execute_check() {
   local caf_epic_var=CHECK_CAF_EPIC_$1
   CHECK_CAF_EPIC="${!caf_epic_var}"
 
-  local SUPPORTED_DB_PROVIDERS=$SUPPORTED_DB_PROVIDERS
-
   SECURITYHUB_NEW_FINDINGS_IDS=()
 
   # Generate the credential report, only if it is group1 related which checks we
