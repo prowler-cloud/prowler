@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7186="7.186"
+CHECK_TITLE_extra7186="[extra7186] Check S3 Account Level Public Access Block"
+CHECK_SCORED_extra7186="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7186="EXTRA"
+CHECK_SEVERITY_extra7186="High"
+CHECK_ASFF_RESOURCE_TYPE_extra7186="AwsS3Bucket"
+CHECK_ALTERNATE_check7186="extra7186"
+CHECK_SERVICENAME_extra7186="s3"
+CHECK_RISK_extra7186='Public access policies may be applied to sensitive data buckets'
+CHECK_REMEDIATION_extra7186='You can enable Public Access Block at the account level to prevent the exposure of your data stored in S3'
+CHECK_DOC_extra7186='https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html'
+CHECK_CAF_EPIC_extra7186='Data Protection'
+
+extra7186(){
+    S3_PUBLIC_ACCESS_BLOCK=$("${AWSCLI}" ${PROFILE_OPT} s3control get-public-access-block \
+                                --account-id "${ACCOUNT_NUM}" \
+                                --region "${REGION}" \
+                                --query 'PublicAccessBlockConfiguration.[IgnorePublicAcls,RestrictPublicBuckets]' \
+                                --output text 2>&1)
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${S3_PUBLIC_ACCESS_BLOCK}"; then
+        textInfo "${REGION}: Access Denied trying to recover AWS account ID" "${REGION}"
+        exit
+    fi
+
+    if grep -q -E 'False|NoSuchPublicAccessBlockConfiguration' <<< "${S3_PUBLIC_ACCESS_BLOCK}"; then
+        textFail "${REGION}: Block Public Access is not configured for the account ${ACCOUNT_NUM}" "${REGION}" "${ACCOUNT_NUM}"
+    else
+        textPass "${REGION}: Block Public Access is configured for the account ${ACCOUNT_NUM}" "${REGION}" "${ACCOUNT_NUM}"
+    fi
+}
