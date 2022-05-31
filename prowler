@@ -117,11 +117,12 @@ USAGE:
                             i,e. -a 'ec2 describe-security-groups --filters Name=ip-permission.to-port,Values=80 --query SecurityGroups[*].GroupId[]]'                
       -V                  Show version number & exit.
       -h                  This help.
+      -d                  Send output to database through database connectors supported, currenly only postgres
   "
   exit
 }
 
-while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:" OPTION; do
+while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -234,6 +235,9 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:" OPTI
      a )
         CUSTOM_CMD=$OPTARG
         ;;
+     d )
+        DATABASE_PROVIDER=$OPTARG
+        ;;
      : )
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL  -$OPTARG requires an argument"
@@ -301,6 +305,7 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/organizations_metadata
 . $PROWLER_DIR/include/custom_checks
 . $PROWLER_DIR/include/allowlist
+. $PROWLER_DIR/include/db_connector
 
 # Parses the check file into CHECK_ID's.
 if [[ -n "$CHECK_FILE" ]]; then
@@ -318,6 +323,18 @@ fi
 # Pre-process allowlist file if supplied
 if [[ -n "$ALLOWLIST_FILE" ]]; then
   allowlist
+fi
+
+# Check database providers
+if [[ ${DATABASE_PROVIDER} ]]
+then
+    if ! grep -q "${DATABASE_PROVIDER}" <<< "${SUPPORTED_DB_PROVIDERS}"
+    then
+        echo "Database provider: ${DATABASE_PROVIDER}"
+        echo "ERROR DB provider not supported - EXITING!"
+        echo "DATABASE PROVIDERS SUPPORTED: ${SUPPORTED_DB_PROVIDERS}"
+        exit 2
+    fi
 fi
 
 # Load all of the groups of checks inside groups folder named as "groupNumber*"
@@ -459,6 +476,8 @@ execute_check() {
 
   local caf_epic_var=CHECK_CAF_EPIC_$1
   CHECK_CAF_EPIC="${!caf_epic_var}"
+
+  local SUPPORTED_DB_PROVIDERS=$SUPPORTED_DB_PROVIDERS
 
   SECURITYHUB_NEW_FINDINGS_IDS=()
 
