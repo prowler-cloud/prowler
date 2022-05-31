@@ -332,7 +332,7 @@ Prowler has two parameters related to regions: `-r` that is used query AWS servi
     ```
 ## Database providers connector
 
-You can send the prowler's output to different databases (right now only postgresql is supported). Follow the steps to configure the database provider you want to use. 
+You can send the Prowler's output to different databases (right now only PostgreSQL is supported). Follow these steps to configure the database provider you want to use. 
 ### Postgresql 
 - Install psql
     - Mac -> `brew install libpq`
