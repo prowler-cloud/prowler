@@ -338,7 +338,7 @@ You can send the Prowler's output to different databases (right now only Postgre
     - Mac -> `brew install libpq`
     - Ubuntu -> `sudo apt-get install postgresql-client `
     - RHEL/Centos -> `sudo yum install postgresql10`
-- Configure a `.pgpass` file into the root folder of the user that is going to launch prowler -> [pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)
+- Configure a `.pgpass` file into the root folder of the user that is going to launch Prowler -> [pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)
 - Create a table in your postgresql database to store the prowler's data, for example:
 ```
 CREATE TABLE  IF NOT EXISTS prowler (
