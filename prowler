@@ -117,7 +117,7 @@ USAGE:
                             i,e. -a 'ec2 describe-security-groups --filters Name=ip-permission.to-port,Values=80 --query SecurityGroups[*].GroupId[]]'                
       -V                  Show version number & exit.
       -h                  This help.
-      -d                  Send output to database through database connectors supported, currently only postgres. Prowler will get the credentials from your .pgpass file.
+      -d                  Send output to database through database connectors supported, currently only PostgreSQL. Prowler will get the credentials from your ~/.pgpass file.
   "
   exit
 }
