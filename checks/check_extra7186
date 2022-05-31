@@ -34,7 +34,7 @@ extra7186(){
         exit
     fi
 
-    if grep -q -E 'False' <<< "${S3_PUBLIC_ACCESS_BLOCK}"; then
+    if grep -q -E 'False|NoSuchPublicAccessBlockConfiguration' <<< "${S3_PUBLIC_ACCESS_BLOCK}"; then
         textFail "${REGION}: Block Public Access is not configured for the account ${ACCOUNT_NUM}" "${REGION}" "${ACCOUNT_NUM}"
     else
         textPass "${REGION}: Block Public Access is configured for the account ${ACCOUNT_NUM}" "${REGION}" "${ACCOUNT_NUM}"
