@@ -12,8 +12,16 @@
 # specific language governing permissions and limitations under the License.
 
 # DB connectors
-# Supported connectors list -> format "postgres|oracle|mysql|etc"
+# Supported connectors list is stored in SUPPORTED_DB_PROVIDERS
+# Once the logic of the connector is added it is needed to add it to the list also
+# Example: adding oracle to the list
+# SUPPORTED_DB_PROVIDERS="postgresql|oracle"
+# oracle_connector() { ... }
+
 SUPPORTED_DB_PROVIDERS="postgresql"
+
+# Connectors for different databases
+#POSTGRESQL
 postgresql_connector () {
     PSQL_USER=$(awk -F ':' '{print $4}' ~/.pgpass)
     PSQL_HOSTNAME=$(awk -F ':' '{print $1}' ~/.pgpass)
