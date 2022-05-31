@@ -341,7 +341,7 @@ You can send the Prowler's output to different databases (right now only Postgre
 - Configure a `.pgpass` file into the root folder of the user that is going to launch prowler -> [pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)
 - Create a table in your postgresql database to store the prowler's data, for example:
 ```
-CREATE TABLE  prowler (
+CREATE TABLE  IF NOT EXISTS prowler (
 profile TEXT,
 account_number TEXT, 
 region TEXT, 
