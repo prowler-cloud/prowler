@@ -330,6 +330,47 @@ Prowler has two parameters related to regions: `-r` that is used query AWS servi
     ```
     ./prowler -h
     ```
+## Database providers connector
+
+You can send the prowler's output to different databases (right now only postgresql is supported). Follow the steps to configure the database provider you want to use. 
+### Postgresql 
+- Install psql
+    - Mac -> `brew install libpq`
+    - Ubuntu -> `sudo apt-get install postgresql-client `
+    - RHEL/Centos -> `sudo yum install postgresql10`
+- Configure a `.pgpass` file into the root folder of the user that is going to launch prowler -> [pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)
+- Create a table in your postgresql database to store the prowler's data, for example:
+```
+CREATE TABLE  prowler (
+profile VARCHAR(20),
+account_number VARCHAR(12), 
+region VARCHAR(20), 
+check_id VARCHAR(10), 
+result VARCHAR(4), 
+item_scored VARCHAR(20), 
+item_level VARCHAR(30), 
+check_title VARCHAR(300),
+result_extended VARCHAR(250), 
+check_asff_compliance_type VARCHAR(300), 
+severity VARCHAR(20), 
+service_name VARCHAR(50), 
+check_asff_resource_type VARCHAR(100), 
+check_asff_type VARCHAR(300), 
+risk VARCHAR(2000), 
+remediation VARCHAR(2000),  
+documentation VARCHAR(200), 
+check_caf_epic VARCHAR(50), 
+resource_id VARCHAR(200), 
+prowler_start_time VARCHAR(25), 
+account_details_email VARCHAR(30), 
+account_details_name VARCHAR(30), 
+account_details_arn VARCHAR(200),  
+account_details_org VARCHAR(20), 
+account_details_tags  VARCHAR(2000) 
+);
+```
+- Execute prowler with `-d` flag, for example:  
+    `./prowler -M csv -d postgres`
 
 ## Advanced Usage
 
@@ -490,7 +531,6 @@ Either to run Prowler once or based on a schedule this template makes it pretty 
 The Cloud Formation template that helps you doing that is [here](https://github.com/prowler-cloud/prowler/blob/master/util/codebuild/codebuild-prowler-audit-account-cfn.yaml). 
 
 > This is a simple solution to monitor one account. For multiples accounts see [Multi Account and Continuous Monitoring](util/org-multi-account/README.md).
-
 ## Allowlist or remove a fail from resources
 
 Sometimes you may find resources that are intentionally configured in a certain way that may be a bad practice but it is all right with it, for example an S3 bucket open to the internet hosting a web site, or a security group with an open port needed in your use case. Now you can use `-w allowlist_sample.txt` and add your resources as `checkID:resourcename` as in this command:
