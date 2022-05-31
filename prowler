@@ -329,7 +329,7 @@ fi
 if [[ ${DATABASE_PROVIDER} ]]
 then
     # Check if input provider is supported
-    if ! grep -q "${DATABASE_PROVIDER}" <<< "${SUPPORTED_DB_PROVIDERS}"
+    if ! grep -q -E "${DATABASE_PROVIDER}" <<< "${SUPPORTED_DB_PROVIDERS}"
     then
         db_exit_abnormally "${DATABASE_PROVIDER}" "DB provider not supported, providers supported: ${SUPPORTED_DB_PROVIDERS} - EXITING!"
     # check if psql command is installed and in path
