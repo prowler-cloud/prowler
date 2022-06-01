@@ -79,7 +79,7 @@ extra7185() {
                 fi
             done<<<"${LIST_CUSTOM_POLICIES}"
         else
-            textInfo "${REGION}: No Customer Managed Policies attached found" "${REGION}"
+            textInfo "${REGION}: No Customer Managed IAM policies found" "${REGION}"
         fi
     fi
 }
