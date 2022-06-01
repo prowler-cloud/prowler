@@ -18,13 +18,6 @@ EXTENSION_JSON="json"
 EXTENSION_ASFF="asff.json"
 EXTENSION_TEXT="txt"
 EXTENSION_HTML="html"
-OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
-
-if [ -z ${OUTPUT_FILE_NAME+x} ]; then
-  OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
-else
-  OUTPUT_FILE_NAME="${OUTPUT_DIR}/$OUTPUT_FILE_NAME"
-fi
 HTML_LOGO_URL="https://github.com/prowler-cloud/prowler/"
 HTML_LOGO_IMG="https://github.com/prowler-cloud/prowler/raw/master/util/html/prowler-logo-new.png"
 TIMESTAMP=$(get_iso8601_timestamp)
@@ -58,15 +51,20 @@ PROWLER_PARAMETERS=$@
 # $ACCOUNT_DETAILS_TAGS
 
 
-if [ "${MODE}" != 'text' ] ;then
-  if [[ "${MODES[@]}" =~ "html" ]]; then
-    addHtmlHeader > ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-    HTML_REPORT_INIT="1"
-  fi
-  if [[ "${MODES[@]}" =~ "csv" ]]; then
-    printCsvHeader
-  fi
-fi
+for MODE in "${MODES[@]}"; 
+do
+    echo "$MODE"
+    if  [ "${MODE}" == 'html' ] 
+    then
+        addHtmlHeader > ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+        HTML_REPORT_INIT="1"
+    fi
+    if [ "${MODE}" == 'csv' ]
+    then
+        printCsvHeader
+    fi
+done
+
 
 # textInfo "HTML report will be saved: ${OUTPUT_FILE_NAME}.$EXTENSION_HTML"
 # textInfo "JSON ASFF report will be saved: ${OUTPUT_FILE_NAME}.$EXTENSION_ASFF"
