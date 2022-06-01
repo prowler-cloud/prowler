@@ -35,9 +35,15 @@ extra728(){
     if [[ $LIST_SQS ]]; then
       for queue in $LIST_SQS; do
         # check if the policy has KmsMasterKeyId therefore SSE enabled
-        SSE_KMS_ENABLED_QUEUE=$("$AWSCLI" sqs get-queue-attributes --queue-url "$queue" $PROFILE_OPT --region "$regx" --attribute-names All --query Attributes.KmsMasterKeyId --output text|grep -v ^None)
-        SSE_SQS_ENABLED_QUEUE=$("$AWSCLI" sqs get-queue-attributes --queue-url "$queue" $PROFILE_OPT --region "$regx" --attribute-names All --query Attributes.SqsManagedSseEnabled --output text|grep -v ^None)
-        if [[ "$SSE_KMS_ENABLED_QUEUE" ]]; then
+        SSE_KMS_ENABLED_QUEUE=$("$AWSCLI" sqs get-queue-attributes --queue-url "$queue" $PROFILE_OPT --region "$regx" --attribute-names All --query Attributes.KmsMasterKeyId --output text)
+        SSE_SQS_ENABLED_QUEUE=$("$AWSCLI" sqs get-queue-attributes --queue-url "$queue" $PROFILE_OPT --region "$regx" --attribute-names All --query Attributes.SqsManagedSseEnabled --output text)
+        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${SSE_SQS_ENABLED_QUEUE}"; then
+          textInfo "$regx: Access Denied trying to list queues" "$regx"
+          continue
+        elif grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${SSE_KMS_ENABLED_QUEUE}"; then
+          textInfo "$regx: Access Denied trying to list queues" "$regx"
+          continue
+        elif [[ "$SSE_KMS_ENABLED_QUEUE" != 'None' ]]; then
           textPass "$regx: SQS queue $queue is using KMS Server Side Encryption" "$regx" "$queue"
         elif [[ "$SSE_SQS_ENABLED_QUEUE" == 'true' ]]; then
           textPass "$regx: SQS queue $queue is using SQS Server Side Encryption" "$regx" "$queue"
