@@ -28,7 +28,7 @@ CHECK_CAF_EPIC_extra728='Data Protection'
 extra728(){
   for regx in $REGIONS; do
     LIST_SQS=$("$AWSCLI" sqs list-queues $PROFILE_OPT --region "$regx" --query QueueUrls --output text 2>&1|grep -v ^None )
-    if grep -q -E 'AccessDenied|UnauthorizedOperation' <<< "${LIST_SQS}"; then
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_SQS}"; then
         textInfo "$regx: Access Denied trying to list queues" "$regx"
         continue
     fi 
