@@ -335,9 +335,12 @@ then
     # check if psql command is installed and in path
     elif ! command -v "psql" > /dev/null 2>&1
     then
-        db_exit_abnormally "postgresql" "psql tool not installed or not found - EXITING!"
+        db_exit_abnormally "postgresql" "psql tool not installed or not found- EXITING!"
+    elif  [  ! -e "$HOME/.pgpass" ] || [[ $(find  $HOME/.pgpass -perm 600) != "$HOME/.pgpass" ]]
+    then 
+         db_exit_abnormally  "postgresql" ".pgpass file not found at $HOME/.pgpass or .pgpass file permissions not matching 600" 
     # check if database is reachable
-    elif ! pg_isready -q  -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -p "${PSQL_PORT}"
+    elif ! pg_isready -q  -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -p "${PSQL_PORT}" 
     then
         db_exit_abnormally "postgresql" "Database listening on host ${PSQL_HOSTNAME} on port ${PSQL_PORT} connected as user ${PSQL_USER} is unreachable - EXITING!"
     # Check if table field is included into .pgpass file
