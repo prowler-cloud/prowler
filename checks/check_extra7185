@@ -73,7 +73,7 @@ extra7185() {
                 # Finally, check if there is a privilege escalation action within this policy
                 POLICY_PRIVILEGE_ESCALATION_ACTIONS=$(grep -o -E "${PRIVILEGE_ESCALATION_IAM_ACTIONS}" <<< "${PRIVILEGED_ACTIONS}")
                 if [[ -n "${POLICY_PRIVILEGE_ESCALATION_ACTIONS}" ]]; then
-                    textFail "${REGION}: Customer Managed Policy ${POLICY_ARN} allows for privilege escalation using the following actions: ${POLICY_PRIVILEGE_ESCALATION_ACTIONS//$'\n'/ }" "${REGION}" "${POLICY_NAME}"
+                    textFail "${REGION}: Customer Managed IAM Policy ${POLICY_ARN} allows for privilege escalation using the following actions: ${POLICY_PRIVILEGE_ESCALATION_ACTIONS//$'\n'/ }" "${REGION}" "${POLICY_NAME}"
                 else
                     textPass "${REGION}: Customer Managed Policy ${POLICY_ARN} not allows privilege escalation" "${REGION}" "${POLICY_NAME}"
                 fi
