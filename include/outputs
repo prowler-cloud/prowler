@@ -50,6 +50,22 @@ PROWLER_PARAMETERS=$@
 # $ACCOUNT_DETAILS_ORG
 # $ACCOUNT_DETAILS_TAGS
 
+# Add header to certain output files readed from mode
+output_files_init() {
+  for MODE in "${MODES[@]}"; 
+  do
+    if  [ "${MODE}" == 'html' ] 
+    then
+        addHtmlHeader > "${OUTPUT_FILE_NAME}"."${EXTENSION_HTML}"
+        HTML_REPORT_INIT="1"
+    fi
+    if [ "${MODE}" == 'csv' ]
+    then
+        printCsvHeader
+    fi
+  done
+}
+
 allowlist_check() {
   # Checked value is the whole log message that comes as argument
   CHECKED_VALUE=${1}
@@ -159,23 +175,6 @@ general_output() {
         postgresql_connector "${CSV_LINE}"
   fi
 }
-
-
-
-
-for MODE in "${MODES[@]}"; 
-do
-    if  [ "${MODE}" == 'html' ] 
-    then
-        addHtmlHeader > "${OUTPUT_FILE_NAME}"."${EXTENSION_HTML}"
-        HTML_REPORT_INIT="1"
-    fi
-    if [ "${MODE}" == 'csv' ]
-    then
-        printCsvHeader
-    fi
-done
-
 
 # textInfo "HTML report will be saved: ${OUTPUT_FILE_NAME}.$EXTENSION_HTML"
 # textInfo "JSON ASFF report will be saved: ${OUTPUT_FILE_NAME}.$EXTENSION_ASFF"

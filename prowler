@@ -332,14 +332,6 @@ then
         fi
  fi
 
-# Check for custom output_file_name
-if [ -n "${OUTPUT_FILE_NAME}" ]
-then
-  OUTPUT_FILE_NAME="${OUTPUT_DIR}/$OUTPUT_FILE_NAME"
-else
-  OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
-fi
-
 # End of input parameters tests 
 
 clean_up() {
@@ -398,6 +390,19 @@ unset AWS_DEFAULT_OUTPUT
 if [[ -n "$ALLOWLIST_FILE" ]]; then
   allowlist
 fi
+
+# Create output file name
+if [ -n "${OUTPUT_FILE_NAME}" ]
+then
+  OUTPUT_FILE_NAME="${OUTPUT_DIR}/$OUTPUT_FILE_NAME"
+else
+  OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
+fi
+
+# Add headers to certain output files
+output_files_init
+
+
 
 # Load all of the groups of checks inside groups folder named as "groupNumber*"
 for group in $(ls $PROWLER_DIR/groups/group[0-9]*|grep -v groupN_sample); do
