@@ -10,22 +10,9 @@
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-
-# Output formatting functions
-
-EXTENSION_CSV="csv"
-EXTENSION_JSON="json"
-EXTENSION_ASFF="asff.json"
-EXTENSION_TEXT="txt"
-EXTENSION_HTML="html"
-HTML_LOGO_URL="https://github.com/prowler-cloud/prowler/"
-HTML_LOGO_IMG="https://github.com/prowler-cloud/prowler/raw/master/util/html/prowler-logo-new.png"
-TIMESTAMP=$(get_iso8601_timestamp)
-PROWLER_PARAMETERS=$@
-
-
 # Available parameters for outputs formats (implemented this in CSV from v2.4):
 
+# Output format
 # $PROFILE profile used to run Prowler (--profile in AWS CLI)
 # $ACCOUNT_NUM AWS Account ID
 # $REPREGION AWS region scanned
@@ -50,6 +37,30 @@ PROWLER_PARAMETERS=$@
 # $ACCOUNT_DETAILS_ORG
 # $ACCOUNT_DETAILS_TAGS
 
+
+EXTENSION_CSV="csv"
+EXTENSION_JSON="json"
+EXTENSION_ASFF="asff.json"
+EXTENSION_TEXT="txt"
+EXTENSION_HTML="html"
+HTML_LOGO_URL="https://github.com/prowler-cloud/prowler/"
+HTML_LOGO_IMG="https://github.com/prowler-cloud/prowler/raw/master/util/html/prowler-logo-new.png"
+TIMESTAMP=$(get_iso8601_timestamp)
+PROWLER_PARAMETERS=$@
+
+
+# Set exitcode for codebuild/jenkins-like integrations
+set_exitcode () {
+  if [ "$FAILED_CHECK_FAILED_SCAN" == 1 ] && [ -z "$FAILED_CHECK_FAILED_SCAN_LIST" ]
+  then
+      EXITCODE=3
+  fi
+  if [[ "${FAILED_CHECK_FAILED_SCAN_LIST[@]}" =~ "$CHECK_NAME" ]]
+  then
+      EXITCODE=3
+  fi
+}
+
 # Add header to certain output files readed from mode
 output_files_init() {
   for MODE in "${MODES[@]}"; 
@@ -66,6 +77,7 @@ output_files_init() {
   done
 }
 
+# Check if resource checked is allowlisted
 allowlist_check() {
   # Checked value is the whole log message that comes as argument
   CHECKED_VALUE=${1}
@@ -176,15 +188,6 @@ general_output() {
   fi
 }
 
-# textInfo "HTML report will be saved: ${OUTPUT_FILE_NAME}.$EXTENSION_HTML"
-# textInfo "JSON ASFF report will be saved: ${OUTPUT_FILE_NAME}.$EXTENSION_ASFF"
-# textInfo "CSV report will be saved: ${OUTPUT_FILE_NAME}.$EXTENSION_CSV"
-# textInfo "JSON report will be saved: ${OUTPUT_FILE_NAME}.$EXTENSION_JSON"
-
-# if [[ $PROFILE == "" ]];then
-#   PROFILE="ENV"
-# fi
-
 textPass(){
   CHECK_RESULT="PASS"
   CHECK_RESULT_EXTENDED="${1}"
@@ -195,16 +198,14 @@ textPass(){
   then
     return
   fi
-
-  PASS_COUNTER=$((PASS_COUNTER+1))
   
   general_output "${CHECK_RESULT}" "${CHECK_RESULT_EXTENDED}" "${CHECK_RESOURCE_ID}" "${CHECK_REGION}"
 }
 
 textInfo(){
   CHECK_RESULT="INFO"
-  CHECK_RESULT_EXTENDED="$1"
-  CHECK_RESOURCE_ID="$3"
+  CHECK_RESULT_EXTENDED="${1}"
+  CHECK_RESOURCE_ID="${3}"
   CHECK_REGION="${2}"
 
   if is_quiet "${QUIET}"
@@ -218,29 +219,24 @@ textInfo(){
 textFail(){
   
   CHECK_RESULT='FAIL'
-  CHECK_RESULT_EXTENDED="$1"
-  CHECK_RESOURCE_ID="$3"
+  CHECK_RESULT_EXTENDED="${1}"
+  CHECK_RESOURCE_ID="${3}"
   CHECK_REGION="${2}"
 
   # Check if resources are whitelisted
   CHECK_RESULT=$(allowlist_check "${CHECK_RESULT_EXTENDED}")
   
   # only set non-0 exit code on FAIL mode, WARN is ok
-  if [[ "$level" == "FAIL" ]]; then
-    FAIL_COUNTER=$((FAIL_COUNTER+1))
-    if [ "$FAILED_CHECK_FAILED_SCAN" == 1 ] && [ -z "$FAILED_CHECK_FAILED_SCAN_LIST" ] ; then
-      EXITCODE=3
-    fi
-    if [[ "${FAILED_CHECK_FAILED_SCAN_LIST[@]}" =~ "$CHECK_NAME" ]]; then
-      EXITCODE=3
-    fi
+  if [[ "${CHECK_RESULT}" == "FAIL" ]]
+  then
+    set_exitcode
   fi
 
   general_output "${CHECK_RESULT}" "${CHECK_RESULT_EXTENDED}" "${CHECK_RESOURCE_ID}" "${CHECK_REGION}"
 }
 
 textTitle(){
-  CHECKS_COUNTER=$((CHECKS_COUNTER+1))
+  
   TITLE_ID="$1"
   if [[ $NUMERAL ]]; then
     # Left-pad the check ID with zeros to simplify sorting, e.g. 1.1 -> 1.01
@@ -260,22 +256,8 @@ textTitle(){
   esac
 
   local group_ids
-  # if [[ -n "$4" ]]; then
-    group_ids="$CYAN[$5]$NORMAL"
-  # fi
-
-  # if [[ "${MODES[@]}" =~ "csv" ]]; then
-  #   >&2 echo "$TITLE_ID $TITLE_TEXT" >> ${OUTPUT_FILE_NAME}.${EXTENSION_CSV}
-  # elif [[ "${MODES[@]}" =~ "json" || "${MODES[@]}" =~ "json-asff" ]]; then
-  #   :
-  # else
-  #   # if [[ "$ITEM_SCORED" == "Scored" ]]; then
-  #      echo -e "$TITLE_ID $CHECK_SERVICENAME $TITLE_TEXT $CHECK_SEVERITY $group_ids "
-        echo -e "$TITLE_ID $TITLE_TEXT - $CHECK_SERVICENAME $CHECK_SEVERITY"
-  #   # else
-  #   #   echo -e "\n$PURPLE $TITLE_ID $TITLE_TEXT $6 $NORMAL $group_ids "
-  #   # fi
-  # fi
+  group_ids="$CYAN[$5]$NORMAL"
+  echo -e "$TITLE_ID $TITLE_TEXT - $CHECK_SERVICENAME $CHECK_SEVERITY"
 }
 
 generateJsonOutput(){
