@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra7185="7.185"
-CHECK_TITLE_extra7185="[extra7185] Ensure no custom IAM policies allow actions that may lead into Privilege Escalation"
+CHECK_TITLE_extra7185="[extra7185] Ensure no Customer Managed IAM policies allow actions that may lead into Privilege Escalation"
 CHECK_SCORED_extra7185="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7185="EXTRA"
 CHECK_SEVERITY_extra7185="Medium"
