@@ -50,13 +50,98 @@ PROWLER_PARAMETERS=$@
 # $ACCOUNT_DETAILS_ORG
 # $ACCOUNT_DETAILS_TAGS
 
+is_quiet() {
+  IS_QUIET="${1}"
+  if [ "${IS_QUIET}" -eq 1 ]
+  then
+      return 0
+  else
+      return 1
+  fi
+}
+
+general_output() {
+  CHECK_RESULT="${1}"
+  CHECK_RESULT_EXTENDED="${2}"
+  CHECK_RESOURCE_ID="${3}"
+  REPREGION="${4}"
+  CSV_LINE="${PROFILE/,/--}${SEP}${ACCOUNT_NUM/,/--}${SEP}${REPREGION/,/--}${SEP}${TITLE_ID/,/--}${SEP}${CHECK_RESULT/,/--}${SEP}${ITEM_SCORED/,/--}${SEP}${ITEM_CIS_LEVEL/,/--}${SEP}${TITLE_TEXT/,/--}${SEP}${CHECK_RESULT_EXTENDED/,/--}${SEP}${CHECK_ASFF_COMPLIANCE_TYPE/,/--}${SEP}${CHECK_SEVERITY/,/--}${SEP}${CHECK_SERVICENAME/,/--}${SEP}${CHECK_ASFF_RESOURCE_TYPE/,/--}${SEP}${CHECK_ASFF_TYPE/,/--}${SEP}${CHECK_RISK/,/--}${SEP}${CHECK_REMEDIATION/,/--}${SEP}${CHECK_DOC/,/--}${SEP}${CHECK_CAF_EPIC/,/--}${SEP}${CHECK_RESOURCE_ID/,/--}${SEP}${PROWLER_START_TIME/,/--}${SEP}${ACCOUNT_DETAILS_EMAIL/,/--}${SEP}${ACCOUNT_DETAILS_NAME/,/--}${SEP}${ACCOUNT_DETAILS_ARN/,/--}${SEP}${ACCOUNT_DETAILS_ORG/,/--}${SEP}${ACCOUNT_DETAILS_TAGS/,/--}"
+  COLOR_CODE="$OK"
+
+  # Check if color is different than normal (pass)
+  if [ "${CHECK_RESULT}" == 'INFO' ]
+  then
+      COLOR_CODE="${NOTICE}"
+  elif [ "${CHECK_RESULT}" == 'FAIL' ]
+  then
+      COLOR_CODE="${BAD}"
+  elif [ "${CHECK_RESULT}" == 'WARNING' ]
+  then
+      COLOR_CODE="${WARNING}"
+  fi
+  # Check if region is passed
+  if [ -z "${REPREGION}" ]
+  then
+      REPREGION=$REGION
+  fi
+  # Iterating over input modes
+  for MODE in "${MODES[@]}"; 
+  do
+    if  [ "${MODE}" == 'html' ] 
+    then
+        generateHtmlOutput "${CHECK_RESULT_EXTENDED}" "${CHECK_RESULT}"
+    elif [ "${MODE}" == 'csv' ]
+    then
+        echo "${CSV_LINE}" >> "${OUTPUT_FILE_NAME}"."${EXTENSION_CSV}"
+    elif [ "${MODE}" == 'json' ]
+    then
+        generateJsonOutput "${CHECK_RESULT_EXTENDED}" "${CHECK_RESULT}" "$CHECK_RESOURCE_ID" >> "${OUTPUT_FILE_NAME}"."${EXTENSION_JSON}"
+    elif [ "${MODE}" == 'json-asff' ]
+    then
+        JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "${CHECK_RESULT_EXTENDED}" "PASSED" "$CHECK_RESOURCE_ID")
+        echo "${JSON_ASFF_OUTPUT}" >> "${OUTPUT_FILE_NAME}"."${EXTENSION_ASFF}"
+        if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
+            sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REPREGION}" 
+        fi
+    elif is_junit_output_enabled
+    then
+        if [ "${CHECK_RESULT}" == 'PASS' ]
+        then
+            output_junit_success "${CHECK_RESULT_EXTENDED}"
+        elif [ "${CHECK_RESULT}" == 'INFO' ]
+        then 
+            output_junit_info "${CHECK_RESULT_EXTENDED}"
+        elif [ "${CHECK_RESULT}" == 'FAIL' ]
+        then
+            output_junit_failure "${CHECK_RESULT_EXTENDED}"
+        elif [ "${CHECK_RESULT}" == 'WARNING' ]
+        then
+            output_junit_skipped "${CHECK_RESULT_EXTENDED}"
+        fi
+    elif [ "${MODE}" == 'mono' ]
+    then
+       echo  "      $COLOR_CODE ${CHECK_RESULT}! $NORMAL ${CHECK_RESULT_EXTENDED}">> "${OUTPUT_FILE_NAME}"."${EXTENSION_TEXT}"
+    fi
+  done
+
+  # Print in screen
+  echo "      $COLOR_CODE ${CHECK_RESULT}!$NORMAL ${CHECK_RESULT_EXTENDED}"
+
+  #checking database provider
+  if [[ ${DATABASE_PROVIDER} == 'postgresql' ]]
+  then
+        postgresql_connector "${CSV_LINE}"
+  fi
+}
+
+
+
 
 for MODE in "${MODES[@]}"; 
 do
-    echo "$MODE"
     if  [ "${MODE}" == 'html' ] 
     then
-        addHtmlHeader > ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+        addHtmlHeader > "${OUTPUT_FILE_NAME}"."${EXTENSION_HTML}"
         HTML_REPORT_INIT="1"
     fi
     if [ "${MODE}" == 'csv' ]
@@ -77,106 +162,42 @@ done
 
 textPass(){
   CHECK_RESULT="PASS"
-  CHECK_RESULT_EXTENDED="$1"
-  CHECK_RESOURCE_ID="$3"
+  CHECK_RESULT_EXTENDED="${1}"
+  CHECK_RESOURCE_ID="${3}"
+  CHECK_REGION="${2}"
 
-  if [[ "$QUIET" == 1 ]]; then
+  if is_quiet "${QUIET}"
+  then
     return
   fi
 
   PASS_COUNTER=$((PASS_COUNTER+1))
-  if [[ $2 ]]; then
-    REPREGION=$2
-  else
-    REPREGION=$REGION
-  fi
-
-  CSV_LINE="${PROFILE/,/--}${SEP}${ACCOUNT_NUM/,/--}${SEP}${REPREGION/,/--}${SEP}${TITLE_ID/,/--}${SEP}${CHECK_RESULT/,/--}${SEP}${ITEM_SCORED/,/--}${SEP}${ITEM_CIS_LEVEL/,/--}${SEP}${TITLE_TEXT/,/--}${SEP}${CHECK_RESULT_EXTENDED/,/--}${SEP}${CHECK_ASFF_COMPLIANCE_TYPE/,/--}${SEP}${CHECK_SEVERITY/,/--}${SEP}${CHECK_SERVICENAME/,/--}${SEP}${CHECK_ASFF_RESOURCE_TYPE/,/--}${SEP}${CHECK_ASFF_TYPE/,/--}${SEP}${CHECK_RISK/,/--}${SEP}${CHECK_REMEDIATION/,/--}${SEP}${CHECK_DOC/,/--}${SEP}${CHECK_CAF_EPIC/,/--}${SEP}${CHECK_RESOURCE_ID/,/--}${SEP}${PROWLER_START_TIME/,/--}${SEP}${ACCOUNT_DETAILS_EMAIL/,/--}${SEP}${ACCOUNT_DETAILS_NAME/,/--}${SEP}${ACCOUNT_DETAILS_ARN/,/--}${SEP}${ACCOUNT_DETAILS_ORG/,/--}${SEP}${ACCOUNT_DETAILS_TAGS/,/--}"
-
-  if [[ "${MODES[@]}" =~ "csv" ]]; then
-    # Writting csv file replacing commas
-    echo "${CSV_LINE}" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
-  fi
-  if [[ "${MODES[@]}" =~ "json" ]]; then
-    generateJsonOutput "$1" "Pass" "$CHECK_RESOURCE_ID" >> ${OUTPUT_FILE_NAME}.$EXTENSION_JSON
-  fi
-  if [[ "${MODES[@]}" =~ "json-asff" ]]; then
-    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "PASSED" "$CHECK_RESOURCE_ID")
-    echo "${JSON_ASFF_OUTPUT}" >> $OUTPUT_FILE_NAME.$EXTENSION_ASFF
-    if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
-      sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REPREGION}" 
-    fi
-  fi
-  if is_junit_output_enabled; then
-    output_junit_success "$1"
-  fi
-  if [[ "${MODES[@]}" =~ "mono" ]]; then
-    echo "      $OK PASS!$NORMAL $1" >> ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
-  fi
-  # if [[ "${MODES[@]}" =~ "text" || "${MODES[@]}" =~ "mono" ]]; then
-    # runs showing console output no mater what output is selected
-    echo "      $OK PASS!$NORMAL $1"
-  # fi
-  if [[ "${MODES[@]}" =~ "html" ]]; then
-    generateHtmlOutput "$1" "PASS"
-  fi
-
-  #checking database provider
-  if [[ ${DATABASE_PROVIDER} == 'postgresql' ]]
-  then
-        postgresql_connector "${CSV_LINE}"
-  fi
   
+  general_output "${CHECK_RESULT}" "${CHECK_RESULT_EXTENDED}" "${CHECK_RESOURCE_ID}" "${CHECK_REGION}"
 }
 
 textInfo(){
   CHECK_RESULT="INFO"
   CHECK_RESULT_EXTENDED="$1"
   CHECK_RESOURCE_ID="$3"
+  CHECK_REGION="${2}"
 
-  if [[ "$QUIET" == 1 ]]; then
+  if is_quiet "${QUIET}"
+  then
     return
   fi
 
-  if [[ $2 ]]; then
-    REPREGION=$2
-  else
-    REPREGION=$REGION
-  fi
-  
-  CSV_LINE="${PROFILE/,/--}${SEP}${ACCOUNT_NUM/,/--}${SEP}${REPREGION/,/--}${SEP}${TITLE_ID/,/--}${SEP}${CHECK_RESULT/,/--}${SEP}${ITEM_SCORED/,/--}${SEP}${ITEM_CIS_LEVEL/,/--}${SEP}${TITLE_TEXT/,/--}${SEP}${CHECK_RESULT_EXTENDED/,/--}${SEP}${CHECK_ASFF_COMPLIANCE_TYPE/,/--}${SEP}${CHECK_SEVERITY/,/--}${SEP}${CHECK_SERVICENAME/,/--}${SEP}${CHECK_ASFF_RESOURCE_TYPE/,/--}${SEP}${CHECK_ASFF_TYPE/,/--}${SEP}${CHECK_RISK/,/--}${SEP}${CHECK_REMEDIATION/,/--}${SEP}${CHECK_DOC/,/--}${SEP}${CHECK_CAF_EPIC/,/--}${SEP}${CHECK_RESOURCE_ID/,/--}${SEP}${PROWLER_START_TIME/,/--}${SEP}${ACCOUNT_DETAILS_EMAIL/,/--}${SEP}${ACCOUNT_DETAILS_NAME/,/--}${SEP}${ACCOUNT_DETAILS_ARN/,/--}${SEP}${ACCOUNT_DETAILS_ORG/,/--}${SEP}${ACCOUNT_DETAILS_TAGS/,/--}"
-
-  if [[ "${MODES[@]}" =~ "csv" ]]; then
-    # Writing csv file replacing commas
-    echo "${CSV_LINE}" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
-  fi
-  if [[ "${MODES[@]}" =~ "json" ]]; then
-    generateJsonOutput "$1" "Info" "$CHECK_RESOURCE_ID" >> ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
-  fi
-  if is_junit_output_enabled; then
-    output_junit_info "$1"
-  fi
-  if [[ "${MODES[@]}" =~ "mono" ]]; then
-    echo "      $NOTICE INFO! $1 $NORMAL" >> ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
-  fi
-  # if [[ "${MODES[@]}" =~ "text" ]]; then
-    echo "      $NOTICE INFO! $1 $NORMAL"
-  # fi
-  if [[ "${MODES[@]}" =~ "html" ]]; then
-    generateHtmlOutput "$1" "INFO" "$CHECK_RESOURCE_ID"
-  fi
-
-  #checking database provider
-  if [[ ${DATABASE_PROVIDER} == 'postgresql' ]]
-  then
-        postgresql_connector "${CSV_LINE}"
-  fi
+  general_output "${CHECK_RESULT}" "${CHECK_RESULT_EXTENDED}" "${CHECK_RESOURCE_ID}" "${CHECK_REGION}"
 }
 
 textFail(){
+  
+  CHECK_RESULT='FAIL'
+  CHECK_RESULT_EXTENDED="$1"
+  CHECK_RESOURCE_ID="$3"
+  CHECK_REGION="${2}"
+
   ## ignore allowlists for current check
-  level="FAIL"
-  colorcode="$BAD"
   while read -r excluded_item; do
     # ignore_check_name is the check with resources allowlisted
     ignore_check_name=$(awk -F ":" '{print $1}' <<< "${excluded_item}")
@@ -191,8 +212,7 @@ textFail(){
     # To set WARNING flag checked_value have to include value of resource_value
     # If it is treated as only expanse (*[]*) will not detect regex like [:alpha:]
     if [[ "${checked_value}" =~ ${resource_value} ]]; then
-      level="WARNING"
-      colorcode="${WARNING}"
+      CHECK_RESULT="WARNING"
       break
     fi
   done <<< "$IGNORES"
@@ -208,54 +228,7 @@ textFail(){
     fi
   fi
 
-  CHECK_RESULT=$level
-  CHECK_RESULT_EXTENDED="$1"
-  CHECK_RESOURCE_ID="$3"
-
-  if [[ $2 ]]; then
-    REPREGION=$2
-  else
-    REPREGION=$REGION
-  fi
-
-  CSV_LINE="${PROFILE/,/--}${SEP}${ACCOUNT_NUM/,/--}${SEP}${REPREGION/,/--}${SEP}${TITLE_ID/,/--}${SEP}${CHECK_RESULT/,/--}${SEP}${ITEM_SCORED/,/--}${SEP}${ITEM_CIS_LEVEL/,/--}${SEP}${TITLE_TEXT/,/--}${SEP}${CHECK_RESULT_EXTENDED/,/--}${SEP}${CHECK_ASFF_COMPLIANCE_TYPE/,/--}${SEP}${CHECK_SEVERITY/,/--}${SEP}${CHECK_SERVICENAME/,/--}${SEP}${CHECK_ASFF_RESOURCE_TYPE/,/--}${SEP}${CHECK_ASFF_TYPE/,/--}${SEP}${CHECK_RISK/,/--}${SEP}${CHECK_REMEDIATION/,/--}${SEP}${CHECK_DOC/,/--}${SEP}${CHECK_CAF_EPIC/,/--}${SEP}${CHECK_RESOURCE_ID/,/--}${SEP}${PROWLER_START_TIME/,/--}${SEP}${ACCOUNT_DETAILS_EMAIL/,/--}${SEP}${ACCOUNT_DETAILS_NAME/,/--}${SEP}${ACCOUNT_DETAILS_ARN/,/--}${SEP}${ACCOUNT_DETAILS_ORG/,/--}${SEP}${ACCOUNT_DETAILS_TAGS/,/--}"
-
-  if [[ "${MODES[@]}" =~ "csv" ]]; then
-    # Writing csv file replacing commas
-    echo "${CSV_LINE}" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
-  fi
-  if [[ "${MODES[@]}" =~ "json" ]]; then
-    generateJsonOutput "$1" "${level}" "$CHECK_RESOURCE_ID">> ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
-  fi
-  if [[ "${MODES[@]}" =~ "json-asff" ]]; then
-    JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "$1" "${level}" "$CHECK_RESOURCE_ID")
-    echo "${JSON_ASFF_OUTPUT}" >> ${OUTPUT_FILE_NAME}.${EXTENSION_ASFF}
-    if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
-      sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REPREGION}"
-    fi
-  fi
-  if is_junit_output_enabled; then
-    if [[ "${level}" == "FAIL" ]]; then
-      output_junit_failure "$1"
-    elif [[ "${level}" == "WARNING" ]]; then
-      output_junit_skipped "$1"
-    fi
-  fi
-  if [[ "${MODES[@]}" =~ "mono" ]]; then
-    echo "      $colorcode ${level}! $1 $NORMAL" >> ${OUTPUT_FILE_NAME}.$EXTENSION_TEXT
-  fi
-  # if [[ "${MODES[@]}" =~ "text" ]]; then
-    echo "      $colorcode ${level}! $1 $NORMAL"
-  # fi
-  if [[ "${MODES[@]}" =~ "html" ]]; then
-    generateHtmlOutput "$1" "${level}" "$CHECK_RESOURCE_ID"
-  fi
-
-  #checking database provider
-  if [[ ${DATABASE_PROVIDER} == 'postgresql' ]]
-  then
-        postgresql_connector "${CSV_LINE}"
-  fi
+  general_output "${CHECK_RESULT}" "${CHECK_RESULT_EXTENDED}" "${CHECK_RESOURCE_ID}" "${CHECK_REGION}"
 }
 
 textTitle(){

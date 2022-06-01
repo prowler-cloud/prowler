@@ -270,11 +270,6 @@ if [[ -n "$CHECK_FILE" ]]; then
   fi
 fi
 
-# Pre-process allowlist file if supplied
-if [[ -n "$ALLOWLIST_FILE" ]]; then
-  allowlist
-fi
-
 # Check database providers
 if [[ ${DATABASE_PROVIDER} ]]
 then
@@ -399,6 +394,10 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/allowlist
 . $PROWLER_DIR/include/db_connector
 
+# Pre-process allowlist file if supplied
+if [[ -n "$ALLOWLIST_FILE" ]]; then
+  allowlist
+fi
 
 # Load all of the groups of checks inside groups folder named as "groupNumber*"
 for group in $(ls $PROWLER_DIR/groups/group[0-9]*|grep -v groupN_sample); do
