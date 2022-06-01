@@ -71,9 +71,9 @@ done
 # textInfo "CSV report will be saved: ${OUTPUT_FILE_NAME}.$EXTENSION_CSV"
 # textInfo "JSON report will be saved: ${OUTPUT_FILE_NAME}.$EXTENSION_JSON"
 
-if [[ $PROFILE == "" ]];then
-  PROFILE="ENV"
-fi
+# if [[ $PROFILE == "" ]];then
+#   PROFILE="ENV"
+# fi
 
 textPass(){
   CHECK_RESULT="PASS"
