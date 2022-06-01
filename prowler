@@ -82,11 +82,11 @@ USAGE:
       -l                  List all available checks only (does not perform any check). Add -g <group_id> to only list checks within the specified group.
       -L                  List all groups (does not perform any check).
       -e                  Exclude group extras.
-      -E                  Execute all tests except a list of specified checks separated by comma. 
+      -E                  Execute all tests except a list of specified checks separated by comma.
                             (i.e. check21,check31)
       -b                  Do not print Prowler banner.
       -s                  Show scoring report (it is included by default in the html report).
-      -S                  Send check output to AWS Security Hub. Only valid when the output mode is json-asff 
+      -S                  Send check output to AWS Security Hub. Only valid when the output mode is json-asff
                             (i.e. "-M json-asff -S").
       -x                  Specify external directory with custom checks. S3 URI is supported.
                             (i.e. /my/own/checks or s3://bucket/prefix/checks, files must start by "check").
@@ -112,9 +112,9 @@ USAGE:
                             (i.e.: "-Z check11,check12" will cause check11 and/or check12 to trigger exit code 3)
       -O <mgmnt acct ID>  Specify AWS Organizations management account ID. Used to get account details, requires -R.
                             (requires organizations:ListAccounts* and organizations:ListTagsForResource)
-      -a <aws_cli_cmd>    Build your own on-the-fly custom check by specifying the AWS CLI command to execute. Requires "-c extra9999". Omit the "aws" command and only use its parameters within quotes. 
+      -a <aws_cli_cmd>    Build your own on-the-fly custom check by specifying the AWS CLI command to execute. Requires "-c extra9999". Omit the "aws" command and only use its parameters within quotes.
                           Do not nest quotes in the aws parameter. Note that --output text is already included in the check.
-                            i,e. -a 'ec2 describe-security-groups --filters Name=ip-permission.to-port,Values=80 --query SecurityGroups[*].GroupId[]]'                
+                            i,e. -a 'ec2 describe-security-groups --filters Name=ip-permission.to-port,Values=80 --query SecurityGroups[*].GroupId[]]'
       -V                  Show version number & exit.
       -h                  This help.
       -d                  Send output to database through database connectors supported, currently only PostgreSQL. Prowler will get the credentials and table name from your ~/.pgpass file.
@@ -329,19 +329,19 @@ fi
 if [[ ${DATABASE_PROVIDER} ]]
 then
     # Check if input provider is supported
-    if ! grep -q -E "${DATABASE_PROVIDER}" <<< "${SUPPORTED_DB_PROVIDERS}"
+    if ! grep -w -q -E "${DATABASE_PROVIDER}" <<< "${SUPPORTED_DB_PROVIDERS}"
     then
         db_exit_abnormally "${DATABASE_PROVIDER}" "DB provider not supported, providers supported: ${SUPPORTED_DB_PROVIDERS} - EXITING!"
     # check if psql command is installed and in path
     elif ! command -v "psql" > /dev/null 2>&1
     then
         db_exit_abnormally "postgresql" "psql tool not installed or not found - EXITING!"
-    # check if database is reachable            
+    # check if database is reachable
     elif ! pg_isready -q  -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -p "${PSQL_PORT}"
     then
         db_exit_abnormally "postgresql" "Database listening on host ${PSQL_HOSTNAME} on port ${PSQL_PORT} connected as user ${PSQL_USER} is unreachable - EXITING!"
     # Check if table field is included into .pgpass file
-    elif [ -z "${PSQL_TABLE}"]
+    elif [ -z "${PSQL_TABLE}" ]
     then
         db_exit_abnormally "postgresql" "Table field must be included into pgpass file - EXITING!"
     fi
