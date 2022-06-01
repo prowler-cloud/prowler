@@ -23,6 +23,15 @@
             "Resource": "*",
             "Effect": "Allow",
             "Sid": "AllowMoreReadForProwler"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "apigateway:GET"
+            ],
+            "Resource": [
+                "arn:aws:apigateway:*::/restapis/*"
+            ]
         }
     ]
 }
