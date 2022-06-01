@@ -12,58 +12,25 @@
 # specific language governing permissions and limitations under the License.
 
 
-IFS=',' read -ra MODES <<< "${MODE}"
-for MODE in "${MODES[@]}"; do
-  if [[ "$MODE" != "mono" && "$MODE" != "text" && "$MODE" != "csv" && "$MODE" != "json" && "$MODE" != "json-asff" && "$MODE" != "junit-xml" && "$MODE" != "html" ]]; then
-    echo -e "${OPTRED}ERROR!$OPTNORMAL Invalid output mode.  Choose text, mono, csv, json, json-asff, junit-xml or html. ./prowler -h for help"
-    EXITCODE=1
-    exit $EXITCODE
-  fi
-  if [[ "$MODE" == "mono" || "$MODE" == "csv" || "$MODE" == "json" || "$MODE" == "json-asff" ]]; then
-    MONOCHROME=1
-  fi
-done
-
-if [[ $MONOCHROME -eq 1 ]]; then
-  # Colors
-  NORMAL=''
-  WARNING=''          # Bad (red)
-  SECTION=''          # Section (yellow)
-  NOTICE=''           # Notice (yellow)
-  OK=''               # Ok (green)
-  BAD=''              # Bad (red)
-  CYAN=''
-  BLUE=''
-  BROWN=''
-  DARKGRAY=''
-  GRAY=''
-  GREEN=''
-  MAGENTA=''
-  PURPLE=''
-  RED=''
-  YELLOW=''
-  WHITE=''
-else
-  # Colors
-  # NOTE: Your editor may NOT show the 0x1b / escape character left of the '['
-  NORMAL="[0;39m"
-  WARNING="[0;33m"          # Warning (brown)
-  SECTION="[1;33m"          # Section (yellow)
-  NOTICE="[1;33m"           # Notice (yellow)
-  OK="[1;32m"               # Ok (green)
-  BAD="[1;31m"              # Bad (red)
-  CYAN="[0;36m"
-  BLUE="[0;34m"
-  BROWN="[0;33m"
-  DARKGRAY="[0;30m"
-  GRAY="[0;37m"
-  GREEN="[1;32m"
-  MAGENTA="[1;35m"
-  PURPLE="[0;35m"
-  RED="[1;31m"
-  YELLOW="[1;33m"
-  WHITE="[1;37m"
-fi
+# Colors
+# NOTE: Your editor may NOT show the 0x1b / escape character left of the '['
+NORMAL="[0;39m"
+WARNING="[0;33m"          # Warning (brown)
+SECTION="[1;33m"          # Section (yellow)
+NOTICE="[1;33m"           # Notice (yellow)
+OK="[1;32m"               # Ok (green)
+BAD="[1;31m"              # Bad (red)
+CYAN="[0;36m"
+BLUE="[0;34m"
+BROWN="[0;33m"
+DARKGRAY="[0;30m"
+GRAY="[0;37m"
+GREEN="[1;32m"
+MAGENTA="[1;35m"
+PURPLE="[0;35m"
+RED="[1;31m"
+YELLOW="[1;33m"
+WHITE="[1;37m"
 
 printColorsCode(){
   if [[ $MONOCHROME -eq 0 ]]; then

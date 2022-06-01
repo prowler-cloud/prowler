@@ -255,6 +255,89 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OP
    esac
 done
 
+#Parsing input options
+# Parses the check file into CHECK_ID's.
+if [[ -n "$CHECK_FILE" ]]; then
+  if [[ -f $CHECK_FILE ]]; then
+    # Parses the file, converting it to a comma seperated list. Ignores all # comments and removes extra blank spaces
+    CHECK_ID="$(awk '!/^[[:space:]]*#/{print }' <(cat $CHECK_FILE | sed 's/[[:space:]]*#.*$//g;/^$/d' | sed 'H;1h;$!d;x;y/\n/,/' | tr -d ' '))"
+  else
+    # If the file doesn't exist, exits Prowler
+    echo "$CHECK_FILE does not exist"
+    EXITCODE=1
+    exit $EXITCODE
+  fi
+fi
+
+# Pre-process allowlist file if supplied
+if [[ -n "$ALLOWLIST_FILE" ]]; then
+  allowlist
+fi
+
+# Check database providers
+if [[ ${DATABASE_PROVIDER} ]]
+then
+    # Check if input provider is supported
+    if ! grep -q -E "${DATABASE_PROVIDER}" <<< "${SUPPORTED_DB_PROVIDERS}"
+    then
+        db_exit_abnormally "${DATABASE_PROVIDER}" "DB provider not supported, providers supported: ${SUPPORTED_DB_PROVIDERS} - EXITING!"
+    # check if psql command is installed and in path
+    elif ! command -v "psql" > /dev/null 2>&1
+    then
+        db_exit_abnormally "postgresql" "psql tool not installed or not found - EXITING!"
+    # check if database is reachable            
+    elif ! pg_isready -q  -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -p "${PSQL_PORT}"
+    then
+        db_exit_abnormally "postgresql" "Database listening on host ${PSQL_HOSTNAME} on port ${PSQL_PORT} connected as user ${PSQL_USER} is unreachable - EXITING!"
+    # Check if table field is included into .pgpass file
+    elif [ -z "${PSQL_TABLE}" ]
+    then
+        db_exit_abnormally "postgresql" "Table field must be included into pgpass file - EXITING!"
+    fi
+fi
+
+# Check modes
+if [[ ${MODE} ]]
+then
+  IFS=',' read -ra MODES <<< "${MODE}"
+  for MODE in "${MODES[@]}"; do
+    if [[ "$MODE" != "mono" && "$MODE" != "text" && "$MODE" != "csv" && "$MODE" != "json" && "$MODE" != "json-asff" && "$MODE" != "junit-xml" && "$MODE" != "html" ]]; then
+      echo -e "${OPTRED}ERROR!$OPTNORMAL Invalid output mode.  Choose text, mono, csv, json, json-asff, junit-xml or html. ./prowler -h for help"
+      EXITCODE=1
+      exit $EXITCODE
+    fi
+  done
+fi
+
+#Check output dir custom
+if [ -n "${OUTPUT_DIR_CUSTOM}" ]
+then
+    # If dir custom, mode has to be enabled (if you provide a custom directory it's because you want to store something)
+    if [  "${MODE}" != 'text' ]
+    then
+        # Check if custom folder exists
+        if [ ! -d $OUTPUT_DIR_CUSTOM ]
+        then
+            echo "$OPTRED ERROR!$OPTNORMAL directory \"$OUTPUT_DIR_CUSTOM\" does not exist."
+            exit 1
+        else
+            OUTPUT_DIR=$OUTPUT_DIR_CUSTOM
+        fi
+    else 
+        echo "$OPTRED ERROR!$OPTNORMAL - When using custom directory output Mode (-M) has to be set as well. Use -h for help."
+        exit 1
+    fi   
+ # If custom output dir is not provided output dir -> default
+ else 
+        OUTPUT_DIR="${PROWLER_DIR}/output"
+        if [ ! -d "${OUTPUT_DIR}" ]
+        then
+            mkdir -p "${OUTPUT_DIR}"
+        fi
+ fi
+
+# End of input parameters tests 
+
 clean_up() {
   rm -f /tmp/prowler*.policy.*
   # in case html output is used, make sure it closes html file properly
@@ -307,45 +390,6 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/allowlist
 . $PROWLER_DIR/include/db_connector
 
-# Parses the check file into CHECK_ID's.
-if [[ -n "$CHECK_FILE" ]]; then
-  if [[ -f $CHECK_FILE ]]; then
-    # Parses the file, converting it to a comma seperated list. Ignores all # comments and removes extra blank spaces
-    CHECK_ID="$(awk '!/^[[:space:]]*#/{print }' <(cat $CHECK_FILE | sed 's/[[:space:]]*#.*$//g;/^$/d' | sed 'H;1h;$!d;x;y/\n/,/' | tr -d ' '))"
-  else
-    # If the file doesn't exist, exits Prowler
-    echo "$CHECK_FILE does not exist"
-    EXITCODE=1
-    exit $EXITCODE
-  fi
-fi
-
-# Pre-process allowlist file if supplied
-if [[ -n "$ALLOWLIST_FILE" ]]; then
-  allowlist
-fi
-
-# Check database providers
-if [[ ${DATABASE_PROVIDER} ]]
-then
-    # Check if input provider is supported
-    if ! grep -q -E "${DATABASE_PROVIDER}" <<< "${SUPPORTED_DB_PROVIDERS}"
-    then
-        db_exit_abnormally "${DATABASE_PROVIDER}" "DB provider not supported, providers supported: ${SUPPORTED_DB_PROVIDERS} - EXITING!"
-    # check if psql command is installed and in path
-    elif ! command -v "psql" > /dev/null 2>&1
-    then
-        db_exit_abnormally "postgresql" "psql tool not installed or not found - EXITING!"
-    # check if database is reachable            
-    elif ! pg_isready -q  -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -p "${PSQL_PORT}"
-    then
-        db_exit_abnormally "postgresql" "Database listening on host ${PSQL_HOSTNAME} on port ${PSQL_PORT} connected as user ${PSQL_USER} is unreachable - EXITING!"
-    # Check if table field is included into .pgpass file
-    elif [ -z "${PSQL_TABLE}"]
-    then
-        db_exit_abnormally "postgresql" "Table field must be included into pgpass file - EXITING!"
-    fi
-fi
 
 # Load all of the groups of checks inside groups folder named as "groupNumber*"
 for group in $(ls $PROWLER_DIR/groups/group[0-9]*|grep -v groupN_sample); do
