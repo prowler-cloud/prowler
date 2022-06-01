@@ -75,7 +75,7 @@ extra7185() {
                 if [[ -n "${POLICY_PRIVILEGE_ESCALATION_ACTIONS}" ]]; then
                     textFail "${REGION}: Customer Managed IAM Policy ${POLICY_ARN} allows for privilege escalation using the following actions: ${POLICY_PRIVILEGE_ESCALATION_ACTIONS//$'\n'/ }" "${REGION}" "${POLICY_NAME}"
                 else
-                    textPass "${REGION}: Customer Managed Policy ${POLICY_ARN} not allows privilege escalation" "${REGION}" "${POLICY_NAME}"
+                    textPass "${REGION}: Customer Managed IAM Policy ${POLICY_ARN} not allows for privilege escalation" "${REGION}" "${POLICY_NAME}"
                 fi
             done<<<"${LIST_CUSTOM_POLICIES}"
         else
