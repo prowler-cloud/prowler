@@ -50,6 +50,32 @@ PROWLER_PARAMETERS=$@
 # $ACCOUNT_DETAILS_ORG
 # $ACCOUNT_DETAILS_TAGS
 
+allowlist_check() {
+  # Checked value is the whole log message that comes as argument
+  CHECKED_VALUE=${1}
+  # Default value of result is Fail
+  CHECK_RESULT='FAIL'
+  ## ignore allowlists for current check
+  while read -r excluded_item; do
+    # ignore_check_name is the check with resources allowlisted
+    IGNORE_CHECK_NAME=$(awk -F ":" '{print $1}' <<< "${excluded_item}")
+    # Resource value is what it comes after CHECK_NAME: :
+    RESOURCE_VALUE=$(awk -F "$CHECK_NAME:" '{print $2}' <<< "${excluded_item}")
+    
+    if [[ "${IGNORE_CHECK_NAME}" != "${CHECK_NAME}" ]]; then
+      # not for this check
+      continue
+    fi
+    # To set WARNING flag checked_value have to include value of resource_value
+    # If it is treated as only expanse (*[]*) will not detect regex like [:alpha:]
+    if [[ "${CHECKED_VALUE}" =~ ${RESOURCE_VALUE} ]]; then
+      CHECK_RESULT="WARNING"
+      break
+    fi
+  done <<< "$IGNORES"
+  echo "${CHECK_RESULT}"
+}
+
 is_quiet() {
   IS_QUIET="${1}"
   if [ "${IS_QUIET}" -eq 1 ]
@@ -197,26 +223,9 @@ textFail(){
   CHECK_RESOURCE_ID="$3"
   CHECK_REGION="${2}"
 
-  ## ignore allowlists for current check
-  while read -r excluded_item; do
-    # ignore_check_name is the check with resources allowlisted
-    ignore_check_name=$(awk -F ":" '{print $1}' <<< "${excluded_item}")
-    # Resource value is what it comes after CHECK_NAME: :
-    resource_value=$(awk -F "$CHECK_NAME:" '{print $2}' <<< "${excluded_item}")
-    # Checked value is the whole log message that comes as argument
-    checked_value=$1
-    if [[ "${ignore_check_name}" != "${CHECK_NAME}" ]]; then
-      # not for this check
-      continue
-    fi
-    # To set WARNING flag checked_value have to include value of resource_value
-    # If it is treated as only expanse (*[]*) will not detect regex like [:alpha:]
-    if [[ "${checked_value}" =~ ${resource_value} ]]; then
-      CHECK_RESULT="WARNING"
-      break
-    fi
-  done <<< "$IGNORES"
-
+  # Check if resources are whitelisted
+  CHECK_RESULT=$(allowlist_check "${CHECK_RESULT_EXTENDED}")
+  
   # only set non-0 exit code on FAIL mode, WARN is ok
   if [[ "$level" == "FAIL" ]]; then
     FAIL_COUNTER=$((FAIL_COUNTER+1))
