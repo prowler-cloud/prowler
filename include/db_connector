@@ -37,7 +37,6 @@ db_exit_abnormally() {
      DB_PROVIDER="${1}"
      MESSAGE=${2}
 
-     echo "${OPTRED}ERROR!$OPTNORMAL Database connector for ${DB_PROVIDER} failed"
-     echo "${MESSAGE}"
+     echo "${OPTRED}ERROR!$OPTNORMAL Database connector for '${DB_PROVIDER}' failed. ${MESSAGE}"
      exit 2
 }
