@@ -11,3 +11,8 @@ repos:
       - id: no-commit-to-branch
       - id: pretty-format-json
         args: ['--autofix']
+
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.8.0
+    hooks:
+    -   id: shellcheck
