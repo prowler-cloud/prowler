@@ -18,8 +18,8 @@ CHECK_SEVERITY_extra745="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra745="AwsApiGatewayRestApi"
 CHECK_ALTERNATE_check745="extra745"
 CHECK_SERVICENAME_extra745="apigateway"
-CHECK_RISK_extra745='If accessible from internet without restrictions opens up attack / abuse surface for any malicious user.'
-CHECK_REMEDIATION_extra745='Verify that any public Api Gateway is protected and audited. Detective controls for common risks should be implemented.'
+CHECK_RISK_extra745='If accessible from internet opens up attack / abuse surface for any malicious user.'
+CHECK_REMEDIATION_extra745='Make Api Gateway private if a public endpoint is not necessary. Detective controls for common risks should be implemented.'
 CHECK_DOC_extra745='https://d1.awsstatic.com/whitepapers/api-gateway-security.pdf?svrd_sip6'
 CHECK_CAF_EPIC_extra745='Infrastructure Security'
 
