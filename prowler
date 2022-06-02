@@ -45,6 +45,13 @@ TITLE_ID=""
 TITLE_TEXT="CALLER ERROR - UNSET TITLE"
 ALLOWLIST_FILE=""
 TOTAL_CHECKS=()
+TOP_PID=$$
+
+
+PSQL_USER=""
+PSQL_HOSTNAME=""
+PSQL_PORT=""
+PSQL_TABLE=""
 
 # Ensures command output will always be set to JSON.
 # If the default value is already set, ORIGINAL_OUTPUT will be used to store it and reset it at cleanup
@@ -262,7 +269,7 @@ clean_up() {
     addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
   # puts the AWS_DEFAULT_OUTPUT back to what it was at the start
-  if [ -z "$ORIGINAL_OUTPUT"]; then
+  if [ -z "$ORIGINAL_OUTPUT" ]; then
     export AWS_DEFAULT_OUTPUT="$ORIGINAL_OUTPUT"
   else
     unset AWS_DEFAULT_OUTPUT
@@ -307,6 +314,9 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/allowlist
 . $PROWLER_DIR/include/db_connector
 
+
+
+
 # Parses the check file into CHECK_ID's.
 if [[ -n "$CHECK_FILE" ]]; then
   if [[ -f $CHECK_FILE ]]; then
@@ -320,11 +330,6 @@ if [[ -n "$CHECK_FILE" ]]; then
   fi
 fi
 
-# Pre-process allowlist file if supplied
-if [[ -n "$ALLOWLIST_FILE" ]]; then
-  allowlist
-fi
-
 # Check database providers
 if [[ ${DATABASE_PROVIDER} ]]
 then
@@ -332,22 +337,37 @@ then
     if ! grep -w -q -E "${DATABASE_PROVIDER}" <<< "${SUPPORTED_DB_PROVIDERS}"
     then
         db_exit_abnormally "${DATABASE_PROVIDER}" "DB provider not supported, providers supported: ${SUPPORTED_DB_PROVIDERS} - EXITING!"
-    # check if psql command is installed and in path
     elif ! command -v "psql" > /dev/null 2>&1
     then
         db_exit_abnormally "postgresql" "psql tool not installed or not found- EXITING!"
-    elif  [  ! -e "$HOME/.pgpass" ] || [[ $(find  $HOME/.pgpass -perm 600) != "$HOME/.pgpass" ]]
+    elif  [[ $(find "${HOME}/.pgpass" -perm 600 2>/dev/null) != "$HOME/.pgpass" ]] 
     then 
-         db_exit_abnormally  "postgresql" ".pgpass file not found at $HOME/.pgpass or .pgpass file permissions not matching 600" 
-    # check if database is reachable
-    elif ! pg_isready -q  -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -p "${PSQL_PORT}" 
-    then
-        db_exit_abnormally "postgresql" "Database listening on host ${PSQL_HOSTNAME} on port ${PSQL_PORT} connected as user ${PSQL_USER} is unreachable - EXITING!"
-    # Check if table field is included into .pgpass file
-    elif [ -z "${PSQL_TABLE}" ]
+          db_exit_abnormally  "postgresql" ".pgpass file not found at $HOME/.pgpass or .pgpass file permissions not matching 600 - EXITING!" 
+    elif [[ -z "$(awk -F ":" '{print $6}' "${HOME}"/.pgpass)" ]]
     then
         db_exit_abnormally "postgresql" "Table field must be included into pgpass file - EXITING!"
+    else
+        PSQL_USER=$(awk -F ':' '{print $4}' "${HOME}"/.pgpass)
+        PSQL_HOSTNAME=$(awk -F ':' '{print $1}' "${HOME}"/.pgpass)
+        PSQL_PORT=$(awk -F ':' '{print $2}' "${HOME}"/.pgpass)
+        PSQL_TABLE=$(awk -F ':' '{print $6}' "${HOME}"/.pgpass)
+
+        export PSQL_USER
+        export PSQL_HOSTNAME
+        export PSQL_PORT
+        export PSQL_TABLE
+
+        # Once all the variables are defined and exported test if database is reachable 
+        if ! pg_isready -q  -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -p "${PSQL_PORT}" 
+        then
+            db_exit_abnormally "postgresql" "Database listening on host ${PSQL_HOSTNAME} on port ${PSQL_PORT} connected as user ${PSQL_USER} is unreachable - EXITING!"
+        fi
     fi
+fi
+
+# Pre-process allowlist file if supplied
+if [[ -n "$ALLOWLIST_FILE" ]]; then
+  allowlist
 fi
 
 # Load all of the groups of checks inside groups folder named as "groupNumber*"
