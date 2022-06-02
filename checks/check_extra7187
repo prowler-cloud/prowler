@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7187="7.187"
+CHECK_TITLE_extra7187="[extra7187] Ensure that your Amazon WorkSpaces storage volumes are encrypted in order to meet security and compliance requirements"
+CHECK_SCORED_extra7187="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7187="EXTRA"
+CHECK_SEVERITY_extra7187="High"
+CHECK_ASFF_RESOURCE_TYPE_extra7187="AwsWorkspaces"
+CHECK_ALTERNATE_check7187="extra7187"
+CHECK_SERVICENAME_extra7187="workspaces"
+CHECK_RISK_extra7187='If the value listed in the Volume Encryption column is Disabled, the selected AWS WorkSpaces instance volumes (root and user volumes) are not encrypted, therefore your data-at-rest is not protected from unauthorized access and does not meet the compliance requirements regarding data encryption.'
+CHECK_REMEDIATION_extra7187='WorkSpaces is integrated with the AWS Key Management Service (AWS KMS). This enables you to encrypt storage volumes of WorkSpaces using AWS KMS Key. When you launch a WorkSpace, you can encrypt the root volume (for Microsoft Windows, the C drive; for Linux, /) and the user volume (for Windows, the D drive; for Linux, /home). Doing so ensures that the data stored at rest, disk I/O to the volume, and snapshots created from the volumes are all encrypted'
+CHECK_DOC_extra7187='https://docs.aws.amazon.com/workspaces/latest/adminguide/encrypt-workspaces.html'
+CHECK_CAF_EPIC_extra7187='Infrastructure Security'
+
+extra7187(){
+  for regx in $REGIONS; do
+    RT_VOL_UNENCRYPTED_WORKSPACES_ID_LIST=$($AWSCLI workspaces describe-workspaces --query "Workspaces[?RootVolumeEncryptionEnabled!=\`true\`].WorkspaceId" ${PROFILE_OPT} --region "${regx}" --output text 2>&1)
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|Could not connect to the endpoint URL|AuthorizationError'  <<< "$RT_VOL_UNENCRYPTED_WORKSPACES_ID_LIST"; then
+        textInfo "$regx: Access Denied trying to describe workspaces" "$regx"
+        continue
+    fi
+    USERVOL_UNENCRYPTED_WORKSPACES_ID_LIST=$($AWSCLI workspaces describe-workspaces --query "Workspaces[?UserVolumeEncryptionEnabled!=\`true\`].WorkspaceId" ${PROFILE_OPT} --region "${regx}" --output text 2>&1)
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|Could not connect to the endpoint URL|AuthorizationError'  <<< "$USERVOL_UNENCRYPTED_WORKSPACES_ID_LIST"; then
+        textInfo "$regx: Access Denied trying to describe workspaces" "$regx"
+        continue
+    fi
+    if [[ $RT_VOL_UNENCRYPTED_WORKSPACES_ID_LIST ]];then
+      for RTVL in $RT_VOL_UNENCRYPTED_WORKSPACES_ID_LIST;do
+        textFail "$regx: Found WorkSpaces: $RTVL with root volume unencrypted" "$regx" "$RTVL"
+      done
+    else
+      textPass "$regx: No Workspaces with unencrypted root volume found" "$regx" "$RTVL"
+    fi
+    if [[ $USERVOL_UNENCRYPTED_WORKSPACES_ID_LIST ]];then
+      for UVL in $USERVOL_UNENCRYPTED_WORKSPACES_ID_LIST;do
+        textFail "$regx: Found WorkSpaces: $UVL with user volume unencrypted" "$regx" "$UVL"
+      done
+    else
+      textPass "$regx: No Workspaces with unencrypted user volume found" "$regx" "$UVL"
+    fi
+  done
+}

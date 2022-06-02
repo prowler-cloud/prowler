@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra7181="7.181"
+CHECK_TITLE_extra7181="[extra7181] Directory Service monitoring with CloudWatch logs"
+CHECK_SCORED_extra7181="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7181="EXTRA"
+CHECK_SEVERITY_extra7181="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7181="AwsDirectoryService"
+CHECK_ALTERNATE_extra7181="extra7181"
+CHECK_SERVICENAME_extra7181="ds"
+CHECK_RISK_cextra7181="As a best practice, monitor your organization to ensure that changes are logged. This helps you to ensure that any unexpected change can be investigated and unwanted changes can be rolled back."
+CHECK_REMEDIATION_extra7181="It is recommended that that the export of logs is enabled"
+CHECK_DOC_extra7181="CHECK_DOC_extra7181='https://docs.aws.amazon.com/directoryservice/latest/admin-guide/incident-response.html'"
+CHECK_CAF_EPIC_extra7181="Infrastructure Security"
+
+extra7181(){
+  for regx in $REGIONS; do
+    DIRECTORY_SERVICE_IDS=$("${AWSCLI}" ds describe-directories $PROFILE_OPT --region "${regx}" --query 'DirectoryDescriptions[*].DirectoryId[]' --output text 2>&1)
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${DIRECTORY_SERVICE_IDS}"; then
+        textInfo "${regx}: Access Denied trying to describe directories" "${regx}"
+        continue
+    fi
+
+    if [[ ${DIRECTORY_SERVICE_IDS} ]]; then
+        for DIRECTORY_ID in ${DIRECTORY_SERVICE_IDS}; do
+            DIRECTORY_SERVICE_MONITORING=$("${AWSCLI}" ds list-log-subscriptions ${PROFILE_OPT} --region "${regx}" --directory-id "${DIRECTORY_ID}" --query 'LogSubscriptions' --output text 2>&1)
+            if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${DIRECTORY_SERVICE_MONITORING}"; then
+                textInfo "${regx}: Access Denied trying to list Directory Service log subscriptions" "${regx}"
+                continue
+            fi
+            if [[ "${DIRECTORY_SERVICE_MONITORING}" ]]; then
+              textPass "${regx}: Directory Service ${DIRECTORY_ID} have log forwarding to CloudWatch enabled" "${regx}" "${DIRECTORY_ID}"
+            else 
+              textFail "${regx}: Directory Service ${DIRECTORY_ID} does not have log forwarding to CloudWatch enabled" "${regx}" "${DIRECTORY_ID}"     
+            fi
+      done
+    else
+      textInfo "${regx}: No Directory Service found" "${regx}" 
+    fi
+  done
+}

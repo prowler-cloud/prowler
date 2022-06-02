@@ -27,17 +27,26 @@ CHECK_CAF_EPIC_extra728='Data Protection'
 
 extra728(){
   for regx in $REGIONS; do
-    LIST_SQS=$($AWSCLI sqs list-queues $PROFILE_OPT --region $regx --query QueueUrls --output text 2>&1|grep -v ^None )
-    if [[ $(echo "$LIST_SQS" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
+    LIST_SQS=$("$AWSCLI" sqs list-queues $PROFILE_OPT --region "$regx" --query QueueUrls --output text 2>&1|grep -v ^None )
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_SQS}"; then
         textInfo "$regx: Access Denied trying to list queues" "$regx"
         continue
     fi 
     if [[ $LIST_SQS ]]; then
       for queue in $LIST_SQS; do
         # check if the policy has KmsMasterKeyId therefore SSE enabled
-        SSE_ENABLED_QUEUE=$($AWSCLI sqs get-queue-attributes --queue-url $queue $PROFILE_OPT --region $regx --attribute-names All --query Attributes.KmsMasterKeyId --output text|grep -v ^None)
-        if [[ $SSE_ENABLED_QUEUE ]]; then
-          textPass "$regx: SQS queue $queue is using Server Side Encryption" "$regx" "$queue"
+        SSE_KMS_ENABLED_QUEUE=$("$AWSCLI" sqs get-queue-attributes --queue-url "$queue" $PROFILE_OPT --region "$regx" --attribute-names All --query Attributes.KmsMasterKeyId --output text)
+        SSE_SQS_ENABLED_QUEUE=$("$AWSCLI" sqs get-queue-attributes --queue-url "$queue" $PROFILE_OPT --region "$regx" --attribute-names All --query Attributes.SqsManagedSseEnabled --output text)
+        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${SSE_SQS_ENABLED_QUEUE}"; then
+          textInfo "$regx: Access Denied trying to list queues" "$regx"
+          continue
+        elif grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${SSE_KMS_ENABLED_QUEUE}"; then
+          textInfo "$regx: Access Denied trying to list queues" "$regx"
+          continue
+        elif [[ "$SSE_KMS_ENABLED_QUEUE" != 'None' ]]; then
+          textPass "$regx: SQS queue $queue is using KMS Server Side Encryption" "$regx" "$queue"
+        elif [[ "$SSE_SQS_ENABLED_QUEUE" == 'true' ]]; then
+          textPass "$regx: SQS queue $queue is using SQS Server Side Encryption" "$regx" "$queue"
         else
           textFail "$regx: SQS queue $queue is not using Server Side Encryption" "$regx" "$queue"
         fi

@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra7185="7.185"
+CHECK_TITLE_extra7185="[extra7185] Ensure no Customer Managed IAM policies allow actions that may lead into Privilege Escalation"
+CHECK_SCORED_extra7185="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7185="EXTRA"
+CHECK_SEVERITY_extra7185="High"
+CHECK_ASFF_RESOURCE_TYPE_extra7185="AwsIamPolicy"
+CHECK_ALTERNATE_check7185="extra7185"
+CHECK_SERVICENAME_extra7185="iam"
+CHECK_RISK_extra7185='Users with some IAM permissions are allowed to elevate their privileges up to administrator rights.'
+CHECK_REMEDIATION_extra7185='Grant usage permission on a per-resource basis and applying least privilege principle.'
+CHECK_DOC_extra7185='https://docs.aws.amazon.com/IAM/latest/APIReference/API_CreateAccessKey.html'
+CHECK_CAF_EPIC_extra7185='IAM'
+
+# Does the tool analyze both users and roles, or just one or the other? --> Everything using AttachementCount.
+# Does the tool take a principal-centric or policy-centric approach? --> Policy-centric approach.
+# Does the tool handle resource constraints? --> We don't check if the policy affects all resources or not, we check everything.
+# Does the tool consider the permissions of service roles? --> Just checks policies.
+# Does the tool handle transitive privesc paths (i.e., attack chains)? --> Not yet.
+# Does the tool handle the DENY effect as expected? --> Yes, it checks DENY's statements with Action and NotAction.
+# Does the tool handle NotAction as expected? --> Yes
+# Does the tool handle Condition constraints? --> Not yet.
+# Does the tool handle service control policy (SCP) restrictions? --> No, SCP are within Organizations AWS API.
+
+
+extra7185() {
+    local PRIVILEGE_ESCALATION_IAM_ACTIONS="iam:AttachGroupPolicy|iam:SetDefaultPolicyVersion2|iam:AddUserToGroup|iam:AttachRolePolicy|iam:AttachUserPolicy|iam:CreateAccessKey|iam:CreatePolicyVersion|iam:CreateLoginProfile|iam:PassRole|iam:PutGroupPolicy|iam:PutRolePolicy|iam:PutUserPolicy|iam:SetDefaultPolicyVersion|iam:UpdateAssumeRolePolicy|iam:UpdateLoginProfile|sts:AssumeRole|ec2:RunInstances|lambda:CreateEventSourceMapping|lambda:CreateFunction|lambda:InvokeFunction|lambda:UpdateFunctionCode|dynamodb:CreateTable|dynamodb:PutItem|glue:CreateDevEndpoint|glue:GetDevEndpoint|glue:GetDevEndpoints|glue:UpdateDevEndpoint|cloudformation:CreateStack|cloudformation:DescribeStacks|datapipeline:CreatePipeline|datapipeline:PutPipelineDefinition|datapipeline:ActivatePipeline"
+
+    # Use --scope Local to list only Customer Managed Policies
+    # Query 'Policies[?AttachmentCount > `0`]'  to check if this policy is in use, so attached to any user, group or role
+    LIST_CUSTOM_POLICIES=$(${AWSCLI} iam list-policies ${PROFILE_OPT} \
+    --scope Local \
+    --query 'Policies[*].[Arn,DefaultVersionId]' \
+    --output text)
+
+    # Check errors
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_CUSTOM_POLICIES}"; then
+        textInfo "${REGION}: Access Denied trying to list IAM policies" "${REGION}"
+    else
+        if [[ $LIST_CUSTOM_POLICIES ]]; then
+            while read -r POLICY_ARN POLICY_DEFAULT_VERSION; do
+                POLICY_PRIVILEGED_ACTIONS=$($AWSCLI iam get-policy-version ${PROFILE_OPT} \
+                    --policy-arn "${POLICY_ARN}" \
+                    --version-id "${POLICY_DEFAULT_VERSION}" \
+                    --query "PolicyVersion.Document.Statement[]" \
+                    --output json)
+
+                if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${POLICY_PRIVILEGED_ACTIONS}"; then
+                    textInfo "${REGION}: Access Denied trying to get policy version" "${REGION}"
+                    continue
+                fi
+
+                ALLOWED_ACTIONS=$(jq -r '.[] | select(."Effect" == "Allow") | .Action // empty' <<< "${POLICY_PRIVILEGED_ACTIONS}" | sed 's/\[//;s/\]//;s/,/ /;s/ //g;/^$/d')
+                DENIED_ACTIONS=$(jq -r '.[] | select(."Effect" == "Deny") | .Action // empty' <<< "${POLICY_PRIVILEGED_ACTIONS}" | sed 's/\[//;s/\]//;s/,/ /;s/ //g;/^$/d')
+                DENIED_NOT_ACTIONS=$(jq -r '.[] | select(."Effect" == "Deny") | .NotAction // empty' <<< "${POLICY_PRIVILEGED_ACTIONS}" | sed 's/\[//;s/\]//;s/,/ /;s/ //g;/^$/d')
+
+                # First, we need to perform a left join with ALLOWED_ACTIONS and DENIED_ACTIONS
+                LEFT_ACTIONS=$(diff <(echo "${ALLOWED_ACTIONS}") <(echo "${DENIED_ACTIONS}") | grep "^<" | sed 's/< //;s/"//g')
+                # Then, we need to find the DENIED_NOT_ACTIONS in LEFT_ACTIONS
+                PRIVILEGED_ACTIONS=$(comm -1 -2  <(sort <<< "${DENIED_NOT_ACTIONS}") <(sort <<< "${LEFT_ACTIONS}"))
+                # Finally, check if there is a privilege escalation action within this policy
+                POLICY_PRIVILEGE_ESCALATION_ACTIONS=$(grep -o -E "${PRIVILEGE_ESCALATION_IAM_ACTIONS}" <<< "${PRIVILEGED_ACTIONS}")
+                if [[ -n "${POLICY_PRIVILEGE_ESCALATION_ACTIONS}" ]]; then
+                    textFail "${REGION}: Customer Managed IAM Policy ${POLICY_ARN} allows for privilege escalation using the following actions: ${POLICY_PRIVILEGE_ESCALATION_ACTIONS//$'\n'/ }" "${REGION}" "${POLICY_NAME}"
+                else
+                    textPass "${REGION}: Customer Managed IAM Policy ${POLICY_ARN} not allows for privilege escalation" "${REGION}" "${POLICY_NAME}"
+                fi
+            done<<<"${LIST_CUSTOM_POLICIES}"
+        else
+            textInfo "${REGION}: No Customer Managed IAM policies found" "${REGION}"
+        fi
+    fi
+}

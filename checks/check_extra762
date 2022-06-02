@@ -27,24 +27,22 @@ extra762(){
 
   # regex to match OBSOLETE runtimes in string functionName%runtime
   # https://docs.aws.amazon.com/lambda/latest/dg/runtime-support-policy.html
-  OBSOLETE='%(nodejs4.3|nodejs4.3-edge|nodejs6.10|nodejs8.10|dotnetcore1.0|dotnetcore2.0)'
+  OBSOLETE='nodejs4.3|nodejs4.3-edge|nodejs6.10|nodejs8.10|dotnetcore1.0|dotnetcore2.0|dotnetcore2.1|python3.6|python2.7|ruby2.5|nodejs10.x|nodejs'
 
   for regx in $REGIONS; do
-    LIST_OF_FUNCTIONS=$($AWSCLI lambda list-functions $PROFILE_OPT --region $regx --output text --query 'Functions[*].{R:Runtime,N:FunctionName}' 2>&1| tr "\t" "%" )
-    if [[ $(echo "$LIST_OF_FUNCTIONS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+    LIST_OF_FUNCTIONS=$("$AWSCLI" lambda list-functions $PROFILE_OPT --region "$regx" --query 'Functions[*].[Runtime,FunctionName]' --output text 2>&1)
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "$LIST_OF_FUNCTIONS"; then
         textInfo "$regx: Access Denied trying to list functions" "$regx"
         continue
     fi 
     if [[ $LIST_OF_FUNCTIONS ]]; then
-      for lambdafunction in $LIST_OF_FUNCTIONS;do
-        fname=$(echo "$lambdafunction" | cut -d'%' -f1)
-        runtime=$(echo "$lambdafunction" | cut -d'%' -f2)
-        if echo "$lambdafunction" | grep -Eq $OBSOLETE  ; then
-          textFail "$regx: Obsolete runtime: ${runtime} used by: ${fname}" "$regx" "${fname}"
+      while read -r FUNCTION_RUNTIME FUNCTION_NAME; do
+        if grep -wEq $OBSOLETE <<< "${FUNCTION_RUNTIME}" ; then
+          textFail "$regx: Obsolete runtime: ${FUNCTION_RUNTIME} used by: ${FUNCTION_NAME}" "$regx" "${FUNCTION_NAME}"
         else
-          textPass "$regx: Supported runtime: ${runtime} used by: ${fname}" "$regx" "${fname}"
+          textPass "$regx: Supported runtime: ${FUNCTION_RUNTIME} used by: ${FUNCTION_NAME}" "$regx" "${FUNCTION_NAME}"
         fi
-      done
+      done<<<"${LIST_OF_FUNCTIONS}"
     else
       textInfo "$regx: No Lambda functions found" "$regx"
     fi

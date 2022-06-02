@@ -19,16 +19,13 @@
 # oracle_connector() { ... }
 
 SUPPORTED_DB_PROVIDERS="postgresql"
+export SUPPORTED_DB_PROVIDERS
 
 # Connectors for different databases
-#POSTGRESQL variables
-PSQL_USER=$(awk -F ':' '{print $4}' ~/.pgpass)
-PSQL_HOSTNAME=$(awk -F ':' '{print $1}' ~/.pgpass)
-PSQL_PORT=$(awk -F ':' '{print $2}' ~/.pgpass)
-PSQL_TABLE=$(awk -F ':' '{print $6}' ~/.pgpass)
 
 #POSTGRESQL connector
 postgresql_connector () {
+    
     CSV_REGISTRY="${1}"
     psql -q -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -c "copy ${PSQL_TABLE} from stdin with null as E'\'\'' delimiter ','" <<< "${CSV_REGISTRY}"
 }
@@ -37,7 +34,6 @@ db_exit_abnormally() {
      DB_PROVIDER="${1}"
      MESSAGE=${2}
 
-     echo "${OPTRED}ERROR!$OPTNORMAL Database connector for ${DB_PROVIDER} failed"
-     echo "${MESSAGE}"
+     echo "${OPTRED}ERROR!$OPTNORMAL Database connector for '${DB_PROVIDER}' failed. ${MESSAGE}"
      exit 2
 }
