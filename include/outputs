@@ -237,26 +237,26 @@ textFail(){
 
 textTitle(){
   
-  TITLE_ID="$1"
+  TITLE_ID="${1}"
+  TITLE_TEXT="${2}"
+  CHECK_ASFF_COMP_TYPE="${6}" 
+
   if [[ $NUMERAL ]]; then
     # Left-pad the check ID with zeros to simplify sorting, e.g. 1.1 -> 1.01
     TITLE_ID=$(awk -F'.' '{ printf "%d.%02d", $1, $2 }' <<< "$TITLE_ID")
   fi
 
-  TITLE_TEXT=$2
   local CHECK_SERVICENAME="$MAGENTA$3$NORMAL"
   local CHECK_SEVERITY="$BROWN[$4]$NORMAL"
 
-  case "$6" in
+  case "${CHECK_ASFF_COMP_TYPE}" in
     LEVEL1)  ITEM_CIS_LEVEL="CIS Level 1";;
     LEVEL2)  ITEM_CIS_LEVEL="CIS Level 2";;
     EXTRA)   ITEM_CIS_LEVEL="Extra";;
     SUPPORT) ITEM_CIS_LEVEL="Support";;
     *)       ITEM_CIS_LEVEL="Unspecified or Invalid";;
   esac
-
-  local group_ids
-  group_ids="$CYAN[$5]$NORMAL"
+  
   echo -e "$TITLE_ID $TITLE_TEXT - $CHECK_SERVICENAME $CHECK_SEVERITY"
 }
 
