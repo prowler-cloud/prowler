@@ -48,11 +48,6 @@ TOTAL_CHECKS=()
 TOP_PID=$$
 
 
-PSQL_USER=""
-PSQL_HOSTNAME=""
-PSQL_PORT=""
-PSQL_TABLE=""
-
 # Ensures command output will always be set to JSON.
 # If the default value is already set, ORIGINAL_OUTPUT will be used to store it and reset it at cleanup
 if [[ -z "${AWS_DEFAULT_OUTPUT}" ]]; then
@@ -354,7 +349,6 @@ then
 
         export PSQL_USER
         export PSQL_HOSTNAME
-        export PSQL_PORT
         export PSQL_TABLE
 
         # Once all the variables are defined and exported test if database is reachable 
