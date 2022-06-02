@@ -29,7 +29,7 @@ assume_role(){
     if [[ -z $SESSION_DURATION_TO_ASSUME ]]; then
         SESSION_DURATION_TO_ASSUME="3600"
     elif [[ "${SESSION_DURATION_TO_ASSUME}" -gt "43200" ]] || [[ "${SESSION_DURATION_TO_ASSUME}" -lt "900" ]]; then
-        echo "$OPTRED ERROR!$OPTNORMAL - Role session duration must be more than 900 seconds and less than 4300 seconds"
+        echo "$OPTRED ERROR!$OPTNORMAL - Role session duration must be more than 900 seconds and less than 43200 seconds"
         exit 1
     fi
 
