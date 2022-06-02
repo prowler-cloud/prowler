@@ -256,6 +256,59 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OP
    esac
 done
 
+clean_up() {
+  rm -f /tmp/prowler*.policy.*
+  # in case html output is used, make sure it closes html file properly
+  if [[ "${MODES[@]}" =~ "html" ]]; then
+    addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  fi
+  # puts the AWS_DEFAULT_OUTPUT back to what it was at the start
+  if [ -z "$ORIGINAL_OUTPUT" ]; then
+    export AWS_DEFAULT_OUTPUT="$ORIGINAL_OUTPUT"
+  else
+    unset AWS_DEFAULT_OUTPUT
+  fi
+}
+
+handle_ctrl_c() {
+  clean_up
+  exit $EXITCODE
+}
+
+# Clean up any temp files when prowler quits unexpectedly
+trap clean_up EXIT
+# Clean up and exit if Ctrl-C occurs. Required to allow Ctrl-C to stop Prowler when running in Docker
+trap handle_ctrl_c INT
+
+# Environment variable takes precedence over command line
+unset AWS_DEFAULT_OUTPUT
+
+. $PROWLER_DIR/include/colors
+. $PROWLER_DIR/include/os_detector
+. $PROWLER_DIR/include/aws_profile_loader
+. $PROWLER_DIR/include/awscli_detector
+. $PROWLER_DIR/include/whoami
+. $PROWLER_DIR/include/assume_role
+. $PROWLER_DIR/include/csv_header
+. $PROWLER_DIR/include/banner
+. $PROWLER_DIR/include/html_report
+. $PROWLER_DIR/include/outputs_bucket
+. $PROWLER_DIR/include/outputs
+. $PROWLER_DIR/include/credentials_report
+. $PROWLER_DIR/include/scoring
+. $PROWLER_DIR/include/python_detector
+. $PROWLER_DIR/include/secrets_detector
+. $PROWLER_DIR/include/check_creds_last_used
+. $PROWLER_DIR/include/check3x
+. $PROWLER_DIR/include/connection_tests
+. $PROWLER_DIR/include/securityhub_integration
+. $PROWLER_DIR/include/junit_integration
+. $PROWLER_DIR/include/organizations_metadata
+. $PROWLER_DIR/include/custom_checks
+. $PROWLER_DIR/include/allowlist
+. $PROWLER_DIR/include/db_connector
+
+
 #Parsing input options
 # Parses the check file into CHECK_ID's.
 if [[ -n "$CHECK_FILE" ]]; then
@@ -332,60 +385,8 @@ then
         fi
  fi
 
-# End of input parameters tests 
-
-clean_up() {
-  rm -f /tmp/prowler*.policy.*
-  # in case html output is used, make sure it closes html file properly
-  if [[ "${MODES[@]}" =~ "html" ]]; then
-    addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  fi
-  # puts the AWS_DEFAULT_OUTPUT back to what it was at the start
-  if [ -z "$ORIGINAL_OUTPUT" ]; then
-    export AWS_DEFAULT_OUTPUT="$ORIGINAL_OUTPUT"
-  else
-    unset AWS_DEFAULT_OUTPUT
-  fi
-}
-
-handle_ctrl_c() {
-  clean_up
-  exit $EXITCODE
-}
-
-# Clean up any temp files when prowler quits unexpectedly
-trap clean_up EXIT
-# Clean up and exit if Ctrl-C occurs. Required to allow Ctrl-C to stop Prowler when running in Docker
-trap handle_ctrl_c INT
-
-# Environment variable takes precedence over command line
-unset AWS_DEFAULT_OUTPUT
-
-. $PROWLER_DIR/include/colors
-. $PROWLER_DIR/include/os_detector
-. $PROWLER_DIR/include/aws_profile_loader
-. $PROWLER_DIR/include/awscli_detector
-. $PROWLER_DIR/include/whoami
-. $PROWLER_DIR/include/assume_role
-. $PROWLER_DIR/include/csv_header
-. $PROWLER_DIR/include/banner
-. $PROWLER_DIR/include/html_report
-. $PROWLER_DIR/include/outputs_bucket
-. $PROWLER_DIR/include/outputs
-. $PROWLER_DIR/include/credentials_report
-. $PROWLER_DIR/include/scoring
-. $PROWLER_DIR/include/python_detector
-. $PROWLER_DIR/include/secrets_detector
-. $PROWLER_DIR/include/check_creds_last_used
-. $PROWLER_DIR/include/check3x
-. $PROWLER_DIR/include/connection_tests
-. $PROWLER_DIR/include/securityhub_integration
-. $PROWLER_DIR/include/junit_integration
-. $PROWLER_DIR/include/organizations_metadata
-. $PROWLER_DIR/include/custom_checks
-. $PROWLER_DIR/include/allowlist
-. $PROWLER_DIR/include/db_connector
-
+ # End of input parameters tests 
+ 
 # Pre-process allowlist file if supplied
 if [[ -n "$ALLOWLIST_FILE" ]]; then
   allowlist
