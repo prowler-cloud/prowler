@@ -22,7 +22,6 @@ SUPPORTED_DB_PROVIDERS="postgresql"
 export SUPPORTED_DB_PROVIDERS
 
 # Connectors for different databases
-#POSTGRESQL variables
 
 #POSTGRESQL connector
 postgresql_connector () {

@@ -45,7 +45,6 @@ TITLE_ID=""
 TITLE_TEXT="CALLER ERROR - UNSET TITLE"
 ALLOWLIST_FILE=""
 TOTAL_CHECKS=()
-TOP_PID=$$
 
 
 # Ensures command output will always be set to JSON.
