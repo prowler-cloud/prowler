@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# DB connectors
+# Supported connectors list is stored in SUPPORTED_DB_PROVIDERS
+# Once the logic of the connector is added it is needed to add it to the list also
+# Example: adding oracle to the list
+# SUPPORTED_DB_PROVIDERS="postgresql|oracle"
+# oracle_connector() { ... }
+
+SUPPORTED_DB_PROVIDERS="postgresql"
+export SUPPORTED_DB_PROVIDERS
+
+# Connectors for different databases
+
+#POSTGRESQL connector
+postgresql_connector () {
+    
+    CSV_REGISTRY="${1}"
+    psql -q -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -c "copy ${PSQL_TABLE} from stdin with null as E'\'\'' delimiter ','" <<< "${CSV_REGISTRY}"
+
+}
+
+db_exit_abnormally() {
+     DB_PROVIDER="${1}"
+     MESSAGE=${2}
+
+     echo "${OPTRED}ERROR!$OPTNORMAL Database connector for '${DB_PROVIDER}' failed. ${MESSAGE}"
+     exit 2
+}

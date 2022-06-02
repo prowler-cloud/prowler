@@ -44,6 +44,7 @@ HTML_LOGO_IMG="https://github.com/prowler-cloud/prowler/raw/master/util/html/pro
 TIMESTAMP=$(get_iso8601_timestamp)
 PROWLER_PARAMETERS=$@
 
+
 # Available parameters for outputs formats (implemented this in CSV from v2.4):
 
 # $PROFILE profile used to run Prowler (--profile in AWS CLI)
@@ -69,6 +70,8 @@ PROWLER_PARAMETERS=$@
 # $ACCOUNT_DETAILS_ARN
 # $ACCOUNT_DETAILS_ORG
 # $ACCOUNT_DETAILS_TAGS
+
+
 
 # Ensure that output directory always exists when -M is used
 if [[ $MODE ]];then
@@ -107,9 +110,11 @@ textPass(){
     REPREGION=$REGION
   fi
 
+  CSV_LINE="${PROFILE/,/--}${SEP}${ACCOUNT_NUM/,/--}${SEP}${REPREGION/,/--}${SEP}${TITLE_ID/,/--}${SEP}${CHECK_RESULT/,/--}${SEP}${ITEM_SCORED/,/--}${SEP}${ITEM_CIS_LEVEL/,/--}${SEP}${TITLE_TEXT/,/--}${SEP}${CHECK_RESULT_EXTENDED/,/--}${SEP}${CHECK_ASFF_COMPLIANCE_TYPE/,/--}${SEP}${CHECK_SEVERITY/,/--}${SEP}${CHECK_SERVICENAME/,/--}${SEP}${CHECK_ASFF_RESOURCE_TYPE/,/--}${SEP}${CHECK_ASFF_TYPE/,/--}${SEP}${CHECK_RISK/,/--}${SEP}${CHECK_REMEDIATION/,/--}${SEP}${CHECK_DOC/,/--}${SEP}${CHECK_CAF_EPIC/,/--}${SEP}${CHECK_RESOURCE_ID/,/--}${SEP}${PROWLER_START_TIME/,/--}${SEP}${ACCOUNT_DETAILS_EMAIL/,/--}${SEP}${ACCOUNT_DETAILS_NAME/,/--}${SEP}${ACCOUNT_DETAILS_ARN/,/--}${SEP}${ACCOUNT_DETAILS_ORG/,/--}${SEP}${ACCOUNT_DETAILS_TAGS/,/--}"
+
   if [[ "${MODES[@]}" =~ "csv" ]]; then
     # Writting csv file replacing commas
-    echo "${PROFILE/,/--}${SEP}${ACCOUNT_NUM/,/--}${SEP}${REPREGION/,/--}${SEP}${TITLE_ID/,/--}${SEP}${CHECK_RESULT/,/--}${SEP}${ITEM_SCORED/,/--}${SEP}${ITEM_CIS_LEVEL/,/--}${SEP}${TITLE_TEXT/,/--}${SEP}${CHECK_RESULT_EXTENDED/,/--}${SEP}${CHECK_ASFF_COMPLIANCE_TYPE/,/--}${SEP}${CHECK_SEVERITY/,/--}${SEP}${CHECK_SERVICENAME/,/--}${SEP}${CHECK_ASFF_RESOURCE_TYPE/,/--}${SEP}${CHECK_ASFF_TYPE/,/--}${SEP}${CHECK_RISK/,/--}${SEP}${CHECK_REMEDIATION/,/--}${SEP}${CHECK_DOC/,/--}${SEP}${CHECK_CAF_EPIC/,/--}${SEP}${CHECK_RESOURCE_ID/,/--}${SEP}${PROWLER_START_TIME/,/--}${SEP}${ACCOUNT_DETAILS_EMAIL/,/--}${SEP}${ACCOUNT_DETAILS_NAME/,/--}${SEP}${ACCOUNT_DETAILS_ARN/,/--}${SEP}${ACCOUNT_DETAILS_ORG/,/--}${SEP}${ACCOUNT_DETAILS_TAGS/,/--}" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
+    echo "${CSV_LINE}" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
     generateJsonOutput "$1" "Pass" "$CHECK_RESOURCE_ID" >> ${OUTPUT_FILE_NAME}.$EXTENSION_JSON
@@ -134,6 +139,13 @@ textPass(){
   if [[ "${MODES[@]}" =~ "html" ]]; then
     generateHtmlOutput "$1" "PASS"
   fi
+
+  #checking database provider
+  if [[ ${DATABASE_PROVIDER} == 'postgresql' ]]
+  then
+        postgresql_connector "${CSV_LINE}"
+  fi
+  
 }
 
 textInfo(){
@@ -151,9 +163,11 @@ textInfo(){
     REPREGION=$REGION
   fi
   
+  CSV_LINE="${PROFILE/,/--}${SEP}${ACCOUNT_NUM/,/--}${SEP}${REPREGION/,/--}${SEP}${TITLE_ID/,/--}${SEP}${CHECK_RESULT/,/--}${SEP}${ITEM_SCORED/,/--}${SEP}${ITEM_CIS_LEVEL/,/--}${SEP}${TITLE_TEXT/,/--}${SEP}${CHECK_RESULT_EXTENDED/,/--}${SEP}${CHECK_ASFF_COMPLIANCE_TYPE/,/--}${SEP}${CHECK_SEVERITY/,/--}${SEP}${CHECK_SERVICENAME/,/--}${SEP}${CHECK_ASFF_RESOURCE_TYPE/,/--}${SEP}${CHECK_ASFF_TYPE/,/--}${SEP}${CHECK_RISK/,/--}${SEP}${CHECK_REMEDIATION/,/--}${SEP}${CHECK_DOC/,/--}${SEP}${CHECK_CAF_EPIC/,/--}${SEP}${CHECK_RESOURCE_ID/,/--}${SEP}${PROWLER_START_TIME/,/--}${SEP}${ACCOUNT_DETAILS_EMAIL/,/--}${SEP}${ACCOUNT_DETAILS_NAME/,/--}${SEP}${ACCOUNT_DETAILS_ARN/,/--}${SEP}${ACCOUNT_DETAILS_ORG/,/--}${SEP}${ACCOUNT_DETAILS_TAGS/,/--}"
+
   if [[ "${MODES[@]}" =~ "csv" ]]; then
     # Writing csv file replacing commas
-    echo "${PROFILE/,/--}${SEP}${ACCOUNT_NUM/,/--}${SEP}${REPREGION/,/--}${SEP}${TITLE_ID/,/--}${SEP}${CHECK_RESULT/,/--}${SEP}${ITEM_SCORED/,/--}${SEP}${ITEM_CIS_LEVEL/,/--}${SEP}${TITLE_TEXT/,/--}${SEP}${CHECK_RESULT_EXTENDED/,/--}${SEP}${CHECK_ASFF_COMPLIANCE_TYPE/,/--}${SEP}${CHECK_SEVERITY/,/--}${SEP}${CHECK_SERVICENAME/,/--}${SEP}${CHECK_ASFF_RESOURCE_TYPE/,/--}${SEP}${CHECK_ASFF_TYPE/,/--}${SEP}${CHECK_RISK/,/--}${SEP}${CHECK_REMEDIATION/,/--}${SEP}${CHECK_DOC/,/--}${SEP}${CHECK_CAF_EPIC/,/--}${SEP}${CHECK_RESOURCE_ID/,/--}${SEP}${PROWLER_START_TIME/,/--}${SEP}${ACCOUNT_DETAILS_EMAIL/,/--}${SEP}${ACCOUNT_DETAILS_NAME/,/--}${SEP}${ACCOUNT_DETAILS_ARN/,/--}${SEP}${ACCOUNT_DETAILS_ORG/,/--}${SEP}${ACCOUNT_DETAILS_TAGS/,/--}" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
+    echo "${CSV_LINE}" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
     generateJsonOutput "$1" "Info" "$CHECK_RESOURCE_ID" >> ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
@@ -169,6 +183,12 @@ textInfo(){
   # fi
   if [[ "${MODES[@]}" =~ "html" ]]; then
     generateHtmlOutput "$1" "INFO" "$CHECK_RESOURCE_ID"
+  fi
+
+  #checking database provider
+  if [[ ${DATABASE_PROVIDER} == 'postgresql' ]]
+  then
+        postgresql_connector "${CSV_LINE}"
   fi
 }
 
@@ -217,9 +237,11 @@ textFail(){
     REPREGION=$REGION
   fi
 
+  CSV_LINE="${PROFILE/,/--}${SEP}${ACCOUNT_NUM/,/--}${SEP}${REPREGION/,/--}${SEP}${TITLE_ID/,/--}${SEP}${CHECK_RESULT/,/--}${SEP}${ITEM_SCORED/,/--}${SEP}${ITEM_CIS_LEVEL/,/--}${SEP}${TITLE_TEXT/,/--}${SEP}${CHECK_RESULT_EXTENDED/,/--}${SEP}${CHECK_ASFF_COMPLIANCE_TYPE/,/--}${SEP}${CHECK_SEVERITY/,/--}${SEP}${CHECK_SERVICENAME/,/--}${SEP}${CHECK_ASFF_RESOURCE_TYPE/,/--}${SEP}${CHECK_ASFF_TYPE/,/--}${SEP}${CHECK_RISK/,/--}${SEP}${CHECK_REMEDIATION/,/--}${SEP}${CHECK_DOC/,/--}${SEP}${CHECK_CAF_EPIC/,/--}${SEP}${CHECK_RESOURCE_ID/,/--}${SEP}${PROWLER_START_TIME/,/--}${SEP}${ACCOUNT_DETAILS_EMAIL/,/--}${SEP}${ACCOUNT_DETAILS_NAME/,/--}${SEP}${ACCOUNT_DETAILS_ARN/,/--}${SEP}${ACCOUNT_DETAILS_ORG/,/--}${SEP}${ACCOUNT_DETAILS_TAGS/,/--}"
+
   if [[ "${MODES[@]}" =~ "csv" ]]; then
     # Writing csv file replacing commas
-    echo "${PROFILE/,/--}${SEP}${ACCOUNT_NUM/,/--}${SEP}${REPREGION/,/--}${SEP}${TITLE_ID/,/--}${SEP}${CHECK_RESULT/,/--}${SEP}${ITEM_SCORED/,/--}${SEP}${ITEM_CIS_LEVEL/,/--}${SEP}${TITLE_TEXT/,/--}${SEP}${CHECK_RESULT_EXTENDED/,/--}${SEP}${CHECK_ASFF_COMPLIANCE_TYPE/,/--}${SEP}${CHECK_SEVERITY/,/--}${SEP}${CHECK_SERVICENAME/,/--}${SEP}${CHECK_ASFF_RESOURCE_TYPE/,/--}${SEP}${CHECK_ASFF_TYPE/,/--}${SEP}${CHECK_RISK/,/--}${SEP}${CHECK_REMEDIATION/,/--}${SEP}${CHECK_DOC/,/--}${SEP}${CHECK_CAF_EPIC/,/--}${SEP}${CHECK_RESOURCE_ID/,/--}${SEP}${PROWLER_START_TIME/,/--}${SEP}${ACCOUNT_DETAILS_EMAIL/,/--}${SEP}${ACCOUNT_DETAILS_NAME/,/--}${SEP}${ACCOUNT_DETAILS_ARN/,/--}${SEP}${ACCOUNT_DETAILS_ORG/,/--}${SEP}${ACCOUNT_DETAILS_TAGS/,/--}" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
+    echo "${CSV_LINE}" >> ${OUTPUT_FILE_NAME}.$EXTENSION_CSV
   fi
   if [[ "${MODES[@]}" =~ "json" ]]; then
     generateJsonOutput "$1" "${level}" "$CHECK_RESOURCE_ID">> ${OUTPUT_FILE_NAME}.${EXTENSION_JSON}
@@ -246,6 +268,12 @@ textFail(){
   # fi
   if [[ "${MODES[@]}" =~ "html" ]]; then
     generateHtmlOutput "$1" "${level}" "$CHECK_RESOURCE_ID"
+  fi
+
+  #checking database provider
+  if [[ ${DATABASE_PROVIDER} == 'postgresql' ]]
+  then
+        postgresql_connector "${CSV_LINE}"
   fi
 }
 

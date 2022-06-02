@@ -330,6 +330,51 @@ Prowler has two parameters related to regions: `-r` that is used query AWS servi
     ```
     ./prowler -h
     ```
+## Database providers connector
+
+You can send the Prowler's output to different databases (right now only PostgreSQL is supported). 
+
+Jump into the section for the database provider you want to use and follow the required steps to configure it. 
+### PostgreSQL 
+- Install psql
+    - Mac -> `brew install libpq`
+    - Ubuntu -> `sudo apt-get install postgresql-client `
+    - RHEL/Centos -> `sudo yum install postgresql10`
+- Configure a `~/.pgpass` file into the root folder of the user that is going to launch Prowler ([pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)), including an extra field at the end of the line, separated by `:`, to name the table, for instance:  
+  `hostname:port:database:username:password:prowler_findings`
+- Create a table in your PostgreSQL database to store the Prowler's data. You can use the following SQL statement to create the table:
+```
+CREATE TABLE  IF NOT EXISTS prowler_findings (
+profile TEXT,
+account_number TEXT, 
+region TEXT, 
+check_id TEXT, 
+result TEXT, 
+item_scored TEXT, 
+item_level TEXT, 
+check_title TEXT,
+result_extended TEXT, 
+check_asff_compliance_type TEXT, 
+severity TEXT, 
+service_name TEXT, 
+check_asff_resource_type TEXT, 
+check_asff_type TEXT, 
+risk TEXT, 
+remediation TEXT,  
+documentation TEXT, 
+check_caf_epic TEXT, 
+resource_id TEXT, 
+prowler_start_time TEXT, 
+account_details_email TEXT, 
+account_details_name TEXT, 
+account_details_arn TEXT,  
+account_details_org TEXT, 
+account_details_tags  TEXT 
+);
+```
+- Execute Prowler with `-d` flag, for example:  
+    `./prowler -M csv -d postgres`
+    > *Note*: This command creates a `csv` output file and stores the Prowler output in the configured PostgreSQL DB. It's an example, `-d` flag **does not** require `-M` to run.
 
 ## Advanced Usage
 
@@ -490,7 +535,6 @@ Either to run Prowler once or based on a schedule this template makes it pretty 
 The Cloud Formation template that helps you doing that is [here](https://github.com/prowler-cloud/prowler/blob/master/util/codebuild/codebuild-prowler-audit-account-cfn.yaml). 
 
 > This is a simple solution to monitor one account. For multiples accounts see [Multi Account and Continuous Monitoring](util/org-multi-account/README.md).
-
 ## Allowlist or remove a fail from resources
 
 Sometimes you may find resources that are intentionally configured in a certain way that may be a bad practice but it is all right with it, for example an S3 bucket open to the internet hosting a web site, or a security group with an open port needed in your use case. Now you can use `-w allowlist_sample.txt` and add your resources as `checkID:resourcename` as in this command:
