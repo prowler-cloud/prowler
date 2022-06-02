@@ -337,12 +337,12 @@ then
     elif  [[ $(find "${HOME}/.pgpass" -perm 600 2>/dev/null) != "$HOME/.pgpass" ]] 
     then 
           db_exit_abnormally  "postgresql" ".pgpass file not found at $HOME/.pgpass or .pgpass file permissions not matching 600 - EXITING!" 
-    elif [[ -z "$(awk -F ":" '{print $6}' "${HOME}"/.pgpass)" ]]
-    then
-        db_exit_abnormally "postgresql" "Table field must be included into pgpass file - EXITING!"
     else
         IFS=':' read -r PSQL_HOSTNAME PSQL_PORT PSQL_DATABASE PSQL_USER PSQL_PASSWORD PSQL_TABLE < "$HOME/.pgpass"
-  
+        if [[ ! ${PSQL_HOSTNAME} ]] || [[ ! ${PSQL_PORT} ]] || [[ ! ${PSQL_DATABASE} ]] || [[ ! ${PSQL_USER} ]] || [[ ! ${PSQL_PASSWORD} ]] || [[ ! ${PSQL_TABLE} ]]
+        then
+             db_exit_abnormally "postgresql" "Empty field into ${HOME}/.pgpass file, all fields must be filled. Please check Prowler README about .pgpass file format - EXITING!"
+        fi
         export PSQL_USER
         export PSQL_HOSTNAME
         export PSQL_TABLE
