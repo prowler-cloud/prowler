@@ -459,7 +459,6 @@ show_group_title() {
 
 # Function to execute the check
 execute_check() {
-
   if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
     # echo ******* I am here again to check on my role *******
     # Following logic looks for time remaining in the session and review it
