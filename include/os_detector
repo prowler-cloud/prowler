@@ -33,7 +33,7 @@ bsd_how_older_from_today() {
 # output date format %Y-%m-%d
 gnu_timestamp_to_date() {
   # if date comes from cli v2 in format like 2020-04-29T10:13:09.191000-04:00, which is ISO8601
-  
+
   # remove fractions of a second
   TIMESTAMP_TO_CONVERT=$(cut -f1 -d"." <<<  "${1}")
   if ! "${DATE_CMD}" -d "${TIMESTAMP_TO_CONVERT}" +%s > /dev/null  2>&1;
@@ -48,7 +48,7 @@ gnu_timestamp_to_date() {
 }
 bsd_timestamp_to_date() {
   # if date comes from cli v2 in format like 2020-04-29T10:13:09.191000-04:00, which is ISO8601
-  
+
   # remove fractions of a second
   TIMESTAMP_TO_CONVERT=$(cut -f1 -d"." <<<  "${1}")
   OUTPUT_DATE=$("${DATE_CMD}" -jf %Y-%m-%d "${TIMESTAMP_TO_CONVERT}" +%F 2>/dev/null)
@@ -111,12 +111,12 @@ gnu_convert_date_to_timestamp() {
   # if [ "$OSTYPE" == "linux-musl" ]; then
   #   date -D "%Y-%m-%dT%H:%M:%SZ" -d "$1" +%s
   # else
-    date -u -d "$1" +%s
+    "$DATE_CMD" -u -d "$1" +%s
   # fi
 }
 
 bsd_convert_date_to_timestamp() {
-  echo $(date -u -j -f %Y-%m-%dT%H:%M:%S "$1" +%s)
+  "$DATE_CMD" -u -j -f %Y-%m-%dT%H:%M:%S "$1" +%s
   #date -j -f "%Y-%m-%dT%H:%M:%S" "$1" "+%s"
 }
 
