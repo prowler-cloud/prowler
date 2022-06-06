@@ -334,9 +334,9 @@ then
     elif ! command -v "psql" > /dev/null 2>&1
     then
         db_exit_abnormally "postgresql" "psql tool not installed or not found- EXITING!"
-    elif  [[ $(find "${HOME}/.pgpass" -perm 600 2>/dev/null) != "$HOME/.pgpass" ]] 
-    then 
-          db_exit_abnormally  "postgresql" ".pgpass file not found at $HOME/.pgpass or .pgpass file permissions not matching 600 - EXITING!" 
+    elif  [[ $(find "${HOME}/.pgpass" -perm 600 2>/dev/null) != "$HOME/.pgpass" ]]
+    then
+          db_exit_abnormally  "postgresql" ".pgpass file not found at $HOME/.pgpass or .pgpass file permissions not matching 600 - EXITING!"
     else
         IFS=':' read -r PSQL_HOSTNAME PSQL_PORT PSQL_DATABASE PSQL_USER PSQL_PASSWORD PSQL_TABLE < "$HOME/.pgpass"
         if [[ ! ${PSQL_HOSTNAME} ]] || [[ ! ${PSQL_PORT} ]] || [[ ! ${PSQL_DATABASE} ]] || [[ ! ${PSQL_USER} ]] || [[ ! ${PSQL_PASSWORD} ]] || [[ ! ${PSQL_TABLE} ]]
@@ -347,8 +347,8 @@ then
         export PSQL_HOSTNAME
         export PSQL_TABLE
 
-        # Once all the variables are defined and exported test if database instance is reachable 
-        if ! pg_isready -q  -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -p "${PSQL_PORT}" 
+        # Once all the variables are defined and exported test if database instance is reachable
+        if ! pg_isready -q  -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -p "${PSQL_PORT}"
         then
             db_exit_abnormally "postgresql" "Database listening on host ${PSQL_HOSTNAME} on port ${PSQL_PORT} connected as user ${PSQL_USER} is unreachable - EXITING!"
         # If database instance is ready time to check credentials
@@ -364,8 +364,8 @@ then
         then
              db_exit_abnormally "postgresql" "Table ${PSQL_TABLE} not exists, please check ${HOME}/.pgpass file - EXITING!"
         fi
-        
-        
+
+
     fi
 fi
 
@@ -396,12 +396,12 @@ then
         else
             OUTPUT_DIR=$OUTPUT_DIR_CUSTOM
         fi
-    else 
+    else
         echo "$OPTRED ERROR!$OPTNORMAL - When using custom directory output Mode (-M) has to be set as well. Use -h for help."
         exit 1
-    fi   
+    fi
  # If custom output dir is not provided output dir -> default
- else 
+ else
         OUTPUT_DIR="${PROWLER_DIR}/output"
         if [ ! -d "${OUTPUT_DIR}" ]
         then
@@ -409,8 +409,8 @@ then
         fi
  fi
 
- # End of input parameters tests 
- 
+ # End of input parameters tests
+
 # Pre-process allowlist file if supplied
 if [[ -n "$ALLOWLIST_FILE" ]]; then
   allowlist
@@ -754,6 +754,8 @@ if [[ " ${MODES[@]} " =~ " json " || " ${MODES[@]} " =~ " json-asff " ]]; then
   . $PROWLER_DIR/include/jq_detector
 fi
 
+# Check AWS CLI
+aws_cli_detector
 # aws_profile_loader
 aws_profile_loader
 
