@@ -298,7 +298,6 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/outputs
 . $PROWLER_DIR/include/credentials_report
 . $PROWLER_DIR/include/scoring
-. $PROWLER_DIR/include/python_detector
 . $PROWLER_DIR/include/secrets_detector
 . $PROWLER_DIR/include/check_creds_last_used
 . $PROWLER_DIR/include/check3x
