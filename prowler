@@ -754,6 +754,9 @@ if [[ " ${MODES[@]} " =~ " json " || " ${MODES[@]} " =~ " json-asff " ]]; then
   . $PROWLER_DIR/include/jq_detector
 fi
 
+# aws_profile_loader
+aws_profile_loader
+
 if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
   checkSecurityHubCompatibility
 fi
