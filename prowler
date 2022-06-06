@@ -309,6 +309,9 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/allowlist
 . $PROWLER_DIR/include/db_connector
 
+
+
+
 # Check OS
 os_detector
 
@@ -811,6 +814,33 @@ if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
   backupInitialAWSCredentials
   assume_role
 fi
+
+
+case "$REGION" in
+  me-south-1|eu-south-1|ap-east-1|af-south-1)
+    REGION_FOR_STS="us-east-1"
+  ;;
+  *)
+    REGION_FOR_STS=$REGION
+  ;;
+esac
+
+if ! $AWSCLI sts get-caller-identity $PROFILE_OPT --output json --region $REGION_FOR_STS > /dev/null 2>&1
+then
+    echo -e "$RED ERROR Getting credentials to run Prowler - EXITING! $NORMAL"
+    EXITCODE=2
+    exit $EXITCODE
+fi
+
+if [[ $ACCOUNT_TO_ASSUME ]]; then
+  ACCOUNT_NUM=$ACCOUNT_TO_ASSUME
+else
+  ACCOUNT_NUM=$(echo $GETCALLER | jq -r '.Account' 2>&1)
+fi
+
+CALLER_ARN=$(echo $GETCALLER | jq -r '.Arn' 2>&1)
+USER_ID=$(echo $GETCALLER | jq -r '.UserId' 2>&1)
+AWS_PARTITION=$(echo $CALLER_ARN| cut -d: -f2)
 
 # List regions
 get_regions

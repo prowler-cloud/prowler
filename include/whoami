@@ -20,37 +20,7 @@
 # this if will filter them out (Africa (Cape Town), Asia Pacific (Hong Kong), Europe (Milan) and Middle East (Bahrain) ):
 
 
-case "$REGION" in
-  me-south-1|eu-south-1|ap-east-1|af-south-1)
-    REGION_FOR_STS="us-east-1"
-  ;;
-  *)
-    REGION_FOR_STS=$REGION
-  ;;
-esac
 
-GETCALLER=$($AWSCLI sts get-caller-identity $PROFILE_OPT --output json --region $REGION_FOR_STS 2>&1)
-ret=$?
-if [[ $ret -ne 0 ]]; then
-  if [[ $PRINTCHECKSONLY || $PRINTGROUPSONLY ]]; then
-    echo Listing... 
-  else
-    # Failed to get own identity ... exit
-    echo -e "$RED ERROR Getting credentials to run Prowler - EXITING! $NORMAL"
-    EXITCODE=2
-    exit $EXITCODE
-  fi
-fi 
-
-if [[ $ACCOUNT_TO_ASSUME ]]; then
-  ACCOUNT_NUM=$ACCOUNT_TO_ASSUME
-else
-  ACCOUNT_NUM=$(echo $GETCALLER | jq -r '.Account' 2>&1)
-fi
-
-CALLER_ARN=$(echo $GETCALLER | jq -r '.Arn' 2>&1)
-USER_ID=$(echo $GETCALLER | jq -r '.UserId' 2>&1)
-AWS_PARTITION=$(echo $CALLER_ARN| cut -d: -f2)
 
 getWhoami(){
   if [[ "$MODE" == "csv" ]]; then
