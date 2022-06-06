@@ -427,6 +427,20 @@ else
   OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
 fi
 
+# Output bucket parsing input checking
+if [[ $OUTPUT_BUCKET ]]; then
+  # output mode has to be set to other than text
+  if [[ "${MODES[*]}" =~ "text" ]]; then     
+    echo "$OPTRED ERROR!$OPTNORMAL - Mode (-M) can't be text when using custom output bucket. Use -h for help."
+    exit 1
+  else
+    # need to make sure last / is not set to avoid // in S3
+    if [[ $OUTPUT_BUCKET == *"/" ]]; then 
+      OUTPUT_BUCKET=${OUTPUT_BUCKET::-1}
+    fi
+  fi 
+fi
+
 # Add headers to certain output files
 output_files_init
 
