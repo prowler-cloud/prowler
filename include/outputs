@@ -16,7 +16,7 @@
 # Output format
 # $PROFILE profile used to run Prowler (--profile in AWS CLI)
 # $ACCOUNT_NUM AWS Account ID
-# $REPREGION AWS region scanned
+# $REGION_FROM_CHECK AWS region scanned
 # $TITLE_ID Numeric identifier of each check (1.2, 2.3, etc), originally based on CIS checks.
 # $CHECK_RESULT values can be PASS, FAIL, INFO or WARNING if allowlisted
 # $ITEM_SCORED corresponds to CHECK_SCORED, values can be Scored/Not Scored. This is CIS only, will be deprecated in Prowler.
@@ -119,8 +119,8 @@ general_output() {
   CHECK_RESULT="${1}"
   CHECK_RESULT_EXTENDED="${2}"
   CHECK_RESOURCE_ID="${3}"
-  REPREGION="${4}"
-  CSV_LINE="${PROFILE/,/--}${SEP}${ACCOUNT_NUM/,/--}${SEP}${REPREGION/,/--}${SEP}${TITLE_ID/,/--}${SEP}${CHECK_RESULT/,/--}${SEP}${ITEM_SCORED/,/--}${SEP}${ITEM_CIS_LEVEL/,/--}${SEP}${TITLE_TEXT/,/--}${SEP}${CHECK_RESULT_EXTENDED/,/--}${SEP}${CHECK_ASFF_COMPLIANCE_TYPE/,/--}${SEP}${CHECK_SEVERITY/,/--}${SEP}${CHECK_SERVICENAME/,/--}${SEP}${CHECK_ASFF_RESOURCE_TYPE/,/--}${SEP}${CHECK_ASFF_TYPE/,/--}${SEP}${CHECK_RISK/,/--}${SEP}${CHECK_REMEDIATION/,/--}${SEP}${CHECK_DOC/,/--}${SEP}${CHECK_CAF_EPIC/,/--}${SEP}${CHECK_RESOURCE_ID/,/--}${SEP}${PROWLER_START_TIME/,/--}${SEP}${ACCOUNT_DETAILS_EMAIL/,/--}${SEP}${ACCOUNT_DETAILS_NAME/,/--}${SEP}${ACCOUNT_DETAILS_ARN/,/--}${SEP}${ACCOUNT_DETAILS_ORG/,/--}${SEP}${ACCOUNT_DETAILS_TAGS/,/--}"
+  REGION_FROM_CHECK="${4}"
+  CSV_LINE="${PROFILE/,/--}${SEP}${ACCOUNT_NUM/,/--}${SEP}${REGION_FROM_CHECK/,/--}${SEP}${TITLE_ID/,/--}${SEP}${CHECK_RESULT/,/--}${SEP}${ITEM_SCORED/,/--}${SEP}${ITEM_CIS_LEVEL/,/--}${SEP}${TITLE_TEXT/,/--}${SEP}${CHECK_RESULT_EXTENDED/,/--}${SEP}${CHECK_ASFF_COMPLIANCE_TYPE/,/--}${SEP}${CHECK_SEVERITY/,/--}${SEP}${CHECK_SERVICENAME/,/--}${SEP}${CHECK_ASFF_RESOURCE_TYPE/,/--}${SEP}${CHECK_ASFF_TYPE/,/--}${SEP}${CHECK_RISK/,/--}${SEP}${CHECK_REMEDIATION/,/--}${SEP}${CHECK_DOC/,/--}${SEP}${CHECK_CAF_EPIC/,/--}${SEP}${CHECK_RESOURCE_ID/,/--}${SEP}${PROWLER_START_TIME/,/--}${SEP}${ACCOUNT_DETAILS_EMAIL/,/--}${SEP}${ACCOUNT_DETAILS_NAME/,/--}${SEP}${ACCOUNT_DETAILS_ARN/,/--}${SEP}${ACCOUNT_DETAILS_ORG/,/--}${SEP}${ACCOUNT_DETAILS_TAGS/,/--}"
   COLOR_CODE="$OK"
 
   # Check if color is different than normal (pass)
@@ -135,9 +135,9 @@ general_output() {
       COLOR_CODE="${WARNING}"
   fi
   # Check if region is passed
-  if [ -z "${REPREGION}" ]
+  if [ -z "${REGION_FROM_CHECK}" ]
   then
-      REPREGION=$REGION
+      REGION_FROM_CHECK=$REGION
   fi
   # Iterating over input modes
   for MODE in "${MODES[@]}"; 
@@ -156,7 +156,7 @@ general_output() {
         JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "${CHECK_RESULT_EXTENDED}" "PASSED" "$CHECK_RESOURCE_ID")
         echo "${JSON_ASFF_OUTPUT}" >> "${OUTPUT_FILE_NAME}"."${EXTENSION_ASFF}"
         if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
-            sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REPREGION}" 
+            sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REGION_FROM_CHECK}" 
         fi
     elif is_junit_output_enabled
     then
@@ -275,7 +275,7 @@ generateJsonOutput(){
   --arg SCORED "$ITEM_SCORED" \
   --arg ITEM_CIS_LEVEL "$ITEM_CIS_LEVEL" \
   --arg TITLE_ID "$TITLE_ID" \
-  --arg REPREGION "$REPREGION" \
+  --arg REGION_FROM_CHECK "$REGION_FROM_CHECK" \
   --arg TYPE "$CHECK_ASFF_COMPLIANCE_TYPE" \
   --arg TIMESTAMP "$(get_iso8601_timestamp)" \
   --arg SERVICENAME "$CHECK_SERVICENAME" \
@@ -299,7 +299,7 @@ generateJsonOutput(){
     "Scored": $SCORED,
     "Level": $ITEM_CIS_LEVEL,
     "Control ID": $TITLE_ID,
-    "Region": $REPREGION,
+    "Region": $REGION_FROM_CHECK,
     "Timestamp": $TIMESTAMP,
     "Compliance": $TYPE,
     "Service": $SERVICENAME,
@@ -344,15 +344,15 @@ generateJsonAsffOutput(){
   --arg TYPE "$CHECK_ASFF_COMPLIANCE_TYPE" \
   --arg COMPLIANCE_RELATED_REQUIREMENTS "$CHECK_ASFF_COMPLIANCE_TYPE" \
   --arg RESOURCE_TYPE "$CHECK_ASFF_RESOURCE_TYPE" \
-  --arg REPREGION "$REPREGION" \
+  --arg REGION_FROM_CHECK "$REGION_FROM_CHECK" \
   --arg TIMESTAMP "$(get_iso8601_timestamp)" \
   --arg PROWLER_VERSION "$PROWLER_VERSION" \
   --arg AWS_PARTITION "$AWS_PARTITION" \
   --arg CHECK_RESOURCE_ID "$resource_id" \
   -n '{
       "SchemaVersion": "2018-10-08",
-      "Id": "prowler-\($TITLE_ID)-\($ACCOUNT_NUM)-\($REPREGION)-\($UNIQUE_ID)",
-      "ProductArn": "arn:\($AWS_PARTITION):securityhub:\($REPREGION)::product/prowler/prowler",
+      "Id": "prowler-\($TITLE_ID)-\($ACCOUNT_NUM)-\($REGION_FROM_CHECK)-\($UNIQUE_ID)",
+      "ProductArn": "arn:\($AWS_PARTITION):securityhub:\($REGION_FROM_CHECK)::product/prowler/prowler",
       "RecordState": "ACTIVE",
       "ProductFields": {
           "ProviderName": "Prowler",
@@ -377,7 +377,7 @@ generateJsonAsffOutput(){
               "Type": $RESOURCE_TYPE,
               "Id": $CHECK_RESOURCE_ID,
               "Partition": $AWS_PARTITION,
-              "Region": $REPREGION
+              "Region": $REGION_FROM_CHECK
           }
       ],
       "Compliance": {
@@ -411,7 +411,7 @@ generateHtmlOutput(){
   echo '  <td>'$status'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   echo '  <td>'$CHECK_SEVERITY'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   echo '  <td>'$ACCOUNT_NUM'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  echo '  <td>'$REPREGION'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
+  echo '  <td>'$REGION_FROM_CHECK'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   echo '  <td>'$CHECK_ASFF_COMPLIANCE_TYPE'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   echo '  <td>'$CHECK_SERVICENAME'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   echo '  <td>'$TITLE_ID'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
