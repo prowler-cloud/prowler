@@ -90,18 +90,17 @@ allowlist_check() {
   while read -r excluded_item; do
     # IGNORE_CHECK_NAME is the check with resources allowlisted
     # RESOURCE_VALUE is what it comes after 'CHECK_NAME:'
-    IFS=':' read -r IGNORE_CHECK_NAME RESOURCE_VALUE <<< "${excluded_item}"
+    IGNORE_CHECK_NAME=$(awk -F ":" '{print $1}' <<< "${excluded_item}")
+    RESOURCE_VALUE=$(awk -F "${CHECK_NAME}:" '{print $2}' <<< "${excluded_item}") 
+    if [[ "${IGNORE_CHECK_NAME}" == "${CHECK_NAME}" ]]
+    then
+      if [[ "${CHECKED_VALUE}" =~ ${RESOURCE_VALUE} ]]
+      then
+          CHECK_RESULT="WARNING"
+          break
+      fi
+    fi
     
-    if [[ "${IGNORE_CHECK_NAME}" != "${CHECK_NAME}" ]]; then
-      # not for this check
-      continue
-    fi
-    # To set WARNING flag checked_value have to include value of resource_value
-    # If it is treated as only expanse (*[]*) will not detect regex like [:alpha:]
-    if [[ "${CHECKED_VALUE}" =~ ${RESOURCE_VALUE} ]]; then
-      CHECK_RESULT="WARNING"
-      break
-    fi
   done <<< "$IGNORES"
   echo "${CHECK_RESULT}"
 }
