@@ -310,6 +310,8 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/allowlist
 . $PROWLER_DIR/include/db_connector
 
+# Check OS
+os_detector
 
 #Parsing input options
 # Parses the check file into CHECK_ID's.
