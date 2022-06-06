@@ -12,9 +12,11 @@
 # specific language governing permissions and limitations under the License.
 
 # AWS-CLI detector variable
-JQ=$(which jq)
-if [ -z "${JQ}" ]; then
-  echo -e "\n$RED ERROR!$NORMAL jq not found. Make sure it is installed correctly and in your \$PATH\n"
-  EXITCODE=1
-  exit $EXITCODE
-fi
+jq_detector() {
+  JQ=$(which jq)
+  if [ -z "${JQ}" ]; then
+    echo -e "\n$RED ERROR!$NORMAL jq not found. Make sure it is installed correctly and in your \$PATH\n"
+    EXITCODE=1
+    exit $EXITCODE
+  fi
+}

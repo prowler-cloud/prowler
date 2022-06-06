@@ -293,6 +293,7 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/csv_header
 . $PROWLER_DIR/include/banner
 . $PROWLER_DIR/include/html_report
+. $PROWLER_DIR/include/jq_detector
 . $PROWLER_DIR/include/outputs_bucket
 . $PROWLER_DIR/include/outputs
 . $PROWLER_DIR/include/credentials_report
@@ -751,7 +752,7 @@ fi
 
 # Check that jq is installed for JSON outputs
 if [[ " ${MODES[@]} " =~ " json " || " ${MODES[@]} " =~ " json-asff " ]]; then
-  . $PROWLER_DIR/include/jq_detector
+  jq_detector
 fi
 
 # Check AWS CLI
