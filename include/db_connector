@@ -28,7 +28,6 @@ postgresql_connector () {
     
     CSV_REGISTRY="${1}"
     psql -q -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -c "copy ${PSQL_TABLE} from stdin with null as E'\'\'' delimiter ','" <<< "${CSV_REGISTRY}"
-
 }
 
 db_exit_abnormally() {

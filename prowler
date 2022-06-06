@@ -41,6 +41,7 @@ EXITCODE=0
 SEND_TO_SECURITY_HUB=0
 FAILED_CHECK_FAILED_SCAN=1
 PROWLER_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
+OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
 TITLE_ID=""
 TITLE_TEXT="CALLER ERROR - UNSET TITLE"
 ALLOWLIST_FILE=""
@@ -309,8 +310,7 @@ unset AWS_DEFAULT_OUTPUT
 . $PROWLER_DIR/include/db_connector
 
 
-
-
+#Parsing input options
 # Parses the check file into CHECK_ID's.
 if [[ -n "$CHECK_FILE" ]]; then
   if [[ -f $CHECK_FILE ]]; then
@@ -369,10 +369,65 @@ then
     fi
 fi
 
+# Check modes
+if [ -n "${MODE}" ]
+then
+  IFS=',' read -ra MODES <<< "${MODE}"
+  for MODE in "${MODES[@]}"; do
+    if [[ "$MODE" != "mono" && "$MODE" != "text" && "$MODE" != "csv" && "$MODE" != "json" && "$MODE" != "json-asff" && "$MODE" != "junit-xml" && "$MODE" != "html" ]]; then
+      echo -e "${OPTRED}ERROR!$OPTNORMAL Invalid output mode.  Choose text, mono, csv, json, json-asff, junit-xml or html. ./prowler -h for help"
+      EXITCODE=1
+      exit $EXITCODE
+    fi
+  done
+fi
+
+#Check output dir custom
+if [ -n "${OUTPUT_DIR_CUSTOM}" ]
+then
+    # If dir custom, mode has to be enabled (if you provide a custom directory it's because you want to store something)
+    if [  "${MODE}" != 'text' ]
+    then
+        # Check if custom folder exists
+        if [ ! -d "${OUTPUT_DIR_CUSTOM}" ]
+        then
+            echo "$OPTRED ERROR!$OPTNORMAL directory \"$OUTPUT_DIR_CUSTOM\" does not exist."
+            exit 1
+        else
+            OUTPUT_DIR=$OUTPUT_DIR_CUSTOM
+        fi
+    else 
+        echo "$OPTRED ERROR!$OPTNORMAL - When using custom directory output Mode (-M) has to be set as well. Use -h for help."
+        exit 1
+    fi   
+ # If custom output dir is not provided output dir -> default
+ else 
+        OUTPUT_DIR="${PROWLER_DIR}/output"
+        if [ ! -d "${OUTPUT_DIR}" ]
+        then
+            mkdir -p "${OUTPUT_DIR}"
+        fi
+ fi
+
+ # End of input parameters tests 
+ 
 # Pre-process allowlist file if supplied
 if [[ -n "$ALLOWLIST_FILE" ]]; then
   allowlist
 fi
+
+# Create output file name
+if [ -n "${OUTPUT_FILE_NAME}" ]
+then
+  OUTPUT_FILE_NAME="${OUTPUT_DIR}/$OUTPUT_FILE_NAME"
+else
+  OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
+fi
+
+# Add headers to certain output files
+output_files_init
+
+
 
 # Load all of the groups of checks inside groups folder named as "groupNumber*"
 for group in $(ls $PROWLER_DIR/groups/group[0-9]*|grep -v groupN_sample); do
