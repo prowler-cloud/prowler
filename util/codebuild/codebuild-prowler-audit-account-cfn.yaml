@@ -243,7 +243,7 @@ Resources:
             Statement:
               - Action: securityhub:BatchImportFindings
                 Effect: Allow
-                Resource: !Sub 'arn:${AWS::Partition}:securityhub:${AWS::Region}::product/prowler/prowler'
+                Resource: !Sub 'arn:${AWS::Partition}:securityhub:*::product/prowler/prowler'
 
   CodeBuildLogPolicy:
     Type: AWS::IAM::Policy
@@ -298,6 +298,12 @@ Resources:
               commands:
                 - echo "Installing Prowler and dependencies..."
                 - pip3 install detect-secrets 
+                # uninstall awscli version 1
+                - pip3 uninstall -y awscli
+                # install awscli version 2
+                - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                - unzip awscliv2.zip
+                - ./aws/install
             build:
               commands:
                 - echo "Running Prowler as ./prowler $PROWLER_OPTIONS"
