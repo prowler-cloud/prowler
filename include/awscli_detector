@@ -23,3 +23,14 @@ aws_cli_detector() {
     exit $EXITCODE
   fi
 }
+
+set_aws_default_output() {
+  # Ensures command output will always be set to JSON.
+  # If the default value is already set, ORIGINAL_OUTPUT will be used to store it and reset it at cleanup
+  if [[ -z "${AWS_DEFAULT_OUTPUT}" ]]; then
+    ORIGINAL_OUTPUT=$AWS_DEFAULT_OUTPUT
+    export AWS_DEFAULT_OUTPUT="json"
+  else
+    export AWS_DEFAULT_OUTPUT="json"
+  fi
+}

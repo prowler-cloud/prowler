@@ -22,42 +22,37 @@
 # All there legs and lashes
 # I've just got to find my way...
 
-OPTRED="[1;31m"
-OPTNORMAL="[0;39m"
-
 # Set the defaults variables
 PROWLER_VERSION=2.10.0-25May2022
 PROWLER_DIR=$(dirname "$0")
 
-REGION=""
-FILTERREGION=""
-MAXITEMS=100
-MONOCHROME=0
-MODE="text"
-QUIET=0
-SEP=','
-KEEPCREDREPORT=0
-EXITCODE=0
-SEND_TO_SECURITY_HUB=0
-FAILED_CHECK_FAILED_SCAN=1
-PROWLER_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
-OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
-TITLE_ID=""
-TITLE_TEXT="CALLER ERROR - UNSET TITLE"
-ALLOWLIST_FILE=""
-TOTAL_CHECKS=()
+# DEPENDENCIES
+. $PROWLER_DIR/include/colors
+. $PROWLER_DIR/include/os_detector
+. $PROWLER_DIR/include/aws_profile_loader
+. $PROWLER_DIR/include/awscli_detector
+. $PROWLER_DIR/include/whoami
+. $PROWLER_DIR/include/assume_role
+. $PROWLER_DIR/include/csv_header
+. $PROWLER_DIR/include/banner
+. $PROWLER_DIR/include/html_report
+. $PROWLER_DIR/include/jq_detector
+. $PROWLER_DIR/include/outputs_bucket
+. $PROWLER_DIR/include/outputs
+. $PROWLER_DIR/include/credentials_report
+. $PROWLER_DIR/include/scoring
+. $PROWLER_DIR/include/secrets_detector
+. $PROWLER_DIR/include/check_creds_last_used
+. $PROWLER_DIR/include/check3x
+. $PROWLER_DIR/include/connection_tests
+. $PROWLER_DIR/include/securityhub_integration
+. $PROWLER_DIR/include/junit_integration
+. $PROWLER_DIR/include/organizations_metadata
+. $PROWLER_DIR/include/custom_checks
+. $PROWLER_DIR/include/allowlist
+. $PROWLER_DIR/include/db_connector
 
-
-# Ensures command output will always be set to JSON.
-# If the default value is already set, ORIGINAL_OUTPUT will be used to store it and reset it at cleanup
-if [[ -z "${AWS_DEFAULT_OUTPUT}" ]]; then
-  ORIGINAL_OUTPUT=$AWS_DEFAULT_OUTPUT
-  export AWS_DEFAULT_OUTPUT="json"
-else
-  export AWS_DEFAULT_OUTPUT="json"
-fi
-
-# Command usage menu
+# USAGE
 usage(){
   echo "
 USAGE:
@@ -124,6 +119,153 @@ USAGE:
   exit
 }
 
+OPTRED="[1;31m"
+OPTNORMAL="[0;39m"
+REGION=""
+FILTERREGION=""
+MAXITEMS=100
+MONOCHROME=0
+MODE="text"
+QUIET=0
+SEP=','
+KEEPCREDREPORT=0
+EXITCODE=0
+SEND_TO_SECURITY_HUB=0
+FAILED_CHECK_FAILED_SCAN=1
+PROWLER_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
+OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
+TITLE_ID=""
+TITLE_TEXT="CALLER ERROR - UNSET TITLE"
+ALLOWLIST_FILE=""
+TOTAL_CHECKS=()
+
+# This function comes from include/awscli_detector
+# REVIEW
+set_aws_default_output
+
+############################################################################################
+# REVIEW
+# Function to show the title of a group, by numeric id
+show_group_title() {
+	# when csv mode is used, no group title is shown
+  # if [[ "$MODE" != "csv" ]]; then
+      textTitle "${GROUP_NUMBER[$1]}" "${GROUP_TITLE[$1]}"
+  # fi
+}
+
+# REVIEW
+show_all_group_titles() {
+  local group_index
+  for group_index in "${!GROUP_TITLE[@]}"; do
+    show_group_title "$group_index"
+  done
+}
+
+############################################################################################
+
+load_groups() {
+  # Load all of the groups of checks inside groups folder named as "groupNumber*"
+for group in $(ls $PROWLER_DIR/groups/group[0-9]*|grep -v groupN_sample); do
+	. "$group"
+done
+}
+
+load_checks() {
+# Load all of the checks inside checks folder named as "check*"
+# this includes also extra checks since they are "check_extraNN"
+for CHECK in $(ls $PROWLER_DIR/checks/check*|grep -v check_sample); do
+	CHECK_NAME=$(basename ${CHECK})
+  # Relative path required to load every check
+  TOTAL_CHECKS+=("${CHECK_NAME//check_/}")
+	. "${CHECK}"
+done
+}
+
+# GROUP_ID[1]='group1'
+# GROUP_NUMBER[1]='1.0'
+# GROUP_TITLE[1]='Identity and Access Management - CIS only - [group1] ***********'
+# GROUP_RUN_BY_DEFAULT[1]='Y' # run it when execute_all is called
+# GROUP_CHECKS[1]='check11,check12,check13,check14,check15,check16,check17,check18,check19,check110,check111,check112,check113,check114,check115,check116,check117,check118,check119,check120,check121,check122'
+
+############################################################################################
+
+load_groups
+load_checks
+
+############################################################################################
+
+is_check_in_group() {
+  CHECK_ID="${1}"
+  GROUP_ID="${2}"
+  # la variable que almacena todos los checks contenidos es esta lista GROUP_CHECKS[N]
+}
+
+# Function to show the titles of either all checks or only those in the specified group
+show_all_check_titles() {
+  local CHECK_LIST_BY_GROUP
+  local check_id
+  local group_index
+
+  # If '-g <group_id>' has been specified, only show the titles of checks within the specified group
+  # reading groups from GROUP_ID_READ
+  # Now we can read groups comma or space splitted
+  if [[ "${GROUP_ID_READ}" ]]
+  then
+    # Iterate over every group removing echar comma
+    for GROUP_IDENTIFIER in ${GROUP_ID_READ//,/ }
+    do
+      # Iterate over every GroupID to find the belongin checks
+      for I in "${!GROUP_ID[@]}"
+      do
+        if [[ "${GROUP_ID[I]}" == "${GROUP_IDENTIFIER}" ]]
+        then
+          # shellcheck disable=SC2068
+          for CHECK_IDENTIFIER in ${GROUP_CHECKS[I]//,/ }
+          do
+            # Include every check if not present
+            if [[ ! "${CHECK_LIST_BY_GROUP[*]}" =~ ${CHECK_IDENTIFIER} ]]
+            then
+              CHECK_LIST_BY_GROUP+=("${CHECK_IDENTIFIER}")
+            fi
+          done
+        fi
+      done
+
+    done
+    TOTAL_CHECKS=("${CHECK_LIST_BY_GROUP[@]}")
+  fi
+
+  for CHECK_ID in "${TOTAL_CHECKS[@]}"
+  do
+    show_check_title "${CHECK_ID}"
+  done
+
+  exit
+
+}
+
+# Function to show the title of the check, and optionally which group(s) it belongs to
+# using this way instead of arrays to keep bash3 (osx) and bash4(linux) compatibility
+show_check_title() {
+  local check_id=CHECK_ID_$1
+  local check_title=CHECK_TITLE_$1
+  local check_scored=CHECK_SCORED_$1
+  local check_cis_level=CHECK_CIS_LEVEL_$1
+  local check_asff_compliance_type=CHECK_ASFF_COMPLIANCE_TYPE_$1
+  local check_severity=CHECK_SEVERITY_$1
+  local check_servicename=CHECK_SERVICENAME_$1
+  local group_ids
+  local group_index
+
+  # This shows ASFF_COMPLIANCE_TYPE if group used is ens, this si used to show ENS compliance ID control, can be used for other compliance groups as well.
+  if [[ ${GROUP_ID_READ} == "ens" ]];then
+    textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_cis_level}" "$group_ids" "(${!check_asff_compliance_type})"
+  else
+    textTitle "${!check_id}" "${!check_title}" "${!check_servicename}" "${!check_severity}" "$group_ids" "${!check_cis_level}"
+  fi
+}
+
+############################################################################################
 while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OPTION; do
    case $OPTION in
      h )
@@ -132,10 +274,10 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OP
         exit $EXITCODE
         ;;
      l )
-        PRINTCHECKSONLY=1
+        LIST_CHECKS=1
         ;;
      L )
-        PRINTGROUPSONLY=1
+        LIST_GROUPS=1
         ;;
      k )
         KEEPCREDREPORT=1
@@ -257,6 +399,14 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OP
    esac
 done
 
+if [[ ${LIST_CHECKS} -eq 1 ]]; then
+  show_all_check_titles
+fi
+
+if [[ ${LIST_GROUPS} -eq 1 ]]; then
+  show_all_group_titles
+fi
+
 clean_up() {
   rm -f /tmp/prowler*.policy.*
   # in case html output is used, make sure it closes html file properly
@@ -284,36 +434,9 @@ trap handle_ctrl_c INT
 # Environment variable takes precedence over command line
 unset AWS_DEFAULT_OUTPUT
 
-. $PROWLER_DIR/include/colors
-. $PROWLER_DIR/include/os_detector
-. $PROWLER_DIR/include/aws_profile_loader
-. $PROWLER_DIR/include/awscli_detector
-. $PROWLER_DIR/include/whoami
-. $PROWLER_DIR/include/assume_role
-. $PROWLER_DIR/include/csv_header
-. $PROWLER_DIR/include/banner
-. $PROWLER_DIR/include/html_report
-. $PROWLER_DIR/include/jq_detector
-. $PROWLER_DIR/include/outputs_bucket
-. $PROWLER_DIR/include/outputs
-. $PROWLER_DIR/include/credentials_report
-. $PROWLER_DIR/include/scoring
-. $PROWLER_DIR/include/secrets_detector
-. $PROWLER_DIR/include/check_creds_last_used
-. $PROWLER_DIR/include/check3x
-. $PROWLER_DIR/include/connection_tests
-. $PROWLER_DIR/include/securityhub_integration
-. $PROWLER_DIR/include/junit_integration
-. $PROWLER_DIR/include/organizations_metadata
-. $PROWLER_DIR/include/custom_checks
-. $PROWLER_DIR/include/allowlist
-. $PROWLER_DIR/include/db_connector
-
-
-
-
 # Check OS
 os_detector
+TIMESTAMP=$(get_iso8601_timestamp)
 
 #Parsing input options
 # Parses the check file into CHECK_ID's.
@@ -377,6 +500,7 @@ fi
 # Check modes
 if [ -n "${MODE}" ]
 then
+# REVIEW LOGIC HERE
   IFS=',' read -ra MODES <<< "${MODE}"
   for MODE in "${MODES[@]}"; do
     if [[ "$MODE" != "mono" && "$MODE" != "text" && "$MODE" != "csv" && "$MODE" != "json" && "$MODE" != "json-asff" && "$MODE" != "junit-xml" && "$MODE" != "html" ]]; then
@@ -432,15 +556,15 @@ fi
 # Output bucket parsing input checking
 if [[ $OUTPUT_BUCKET ]]; then
   # output mode has to be set to other than text
-  if [[ "${MODES[*]}" =~ "text" ]]; then     
+  if [[ "${MODES[*]}" =~ "text" ]]; then
     echo "$OPTRED ERROR!$OPTNORMAL - Mode (-M) can't be text when using custom output bucket. Use -h for help."
     exit 1
   else
     # need to make sure last / is not set to avoid // in S3
-    if [[ $OUTPUT_BUCKET == *"/" ]]; then 
+    if [[ $OUTPUT_BUCKET == *"/" ]]; then
       OUTPUT_BUCKET=${OUTPUT_BUCKET::-1}
     fi
-  fi 
+  fi
 fi
 
 # Add headers to certain output files
@@ -448,22 +572,14 @@ output_files_init
 
 
 
-# Load all of the groups of checks inside groups folder named as "groupNumber*"
-for group in $(ls $PROWLER_DIR/groups/group[0-9]*|grep -v groupN_sample); do
-	. "$group"
-done
-
-# Load all of the checks inside checks folder named as "check*"
-# this includes also extra checks since they are "check_extraNN"
-for checks in $(ls $PROWLER_DIR/checks/check*|grep -v check_sample); do
-	. "$checks"
-done
 
 # include checks if external folder is specified
 if [[ $EXTERNAL_CHECKS_PATH ]]; then
   custom_checks
 fi
 
+
+# REVIEW THIS WITH THE FUNCTIONS WE HAVE
 # Get a list of total checks available by ID
 for i in "${!GROUP_TITLE[@]}"; do
   IFS=',' read -ra CHECKS <<< "${GROUP_CHECKS[$i]}"
@@ -471,6 +587,7 @@ for i in "${!GROUP_TITLE[@]}"; do
     TOTAL_CHECKS+=("$CHECK_ID_$j")
   done
 done
+echo $TOTAL_CHECKS
 # Remove duplicates, sort checks numerically, and store the result as an array
 # Note: the sort mechanism relies on the fact that the check ID prefixes 'check' and 'extra' are both 5 characters long.
 #       6th character is the section number, 7th character onwards is the individual ID (e.g. check110 = check 1 10)
@@ -488,48 +605,7 @@ get_regions() {
   fi
 }
 
-# Function to show the title of the check, and optionally which group(s) it belongs to
-# using this way instead of arrays to keep bash3 (osx) and bash4(linux) compatibility
-show_check_title() {
-  local check_id=CHECK_ID_$1
-  local check_title=CHECK_TITLE_$1
-  local check_scored=CHECK_SCORED_$1
-  local check_cis_level=CHECK_CIS_LEVEL_$1
-  local check_asff_compliance_type=CHECK_ASFF_COMPLIANCE_TYPE_$1
-  local check_severity=CHECK_SEVERITY_$1
-  local check_servicename=CHECK_SERVICENAME_$1
-  local group_ids
-  local group_index
-  local check_name
-  # If requested ($2 is any non-null value) iterate all GROUP_CHECKS and produce a comma-separated list of all
-  # the GROUP_IDs that include this particular check
-  if [[ -n "$2" ]]; then
-    for group_index in "${!GROUP_ID[@]}"; do
-      for check_name in $(echo "${GROUP_CHECKS[$group_index]}" | sed "s/,/ /g");do
-        if [[ "$check_name" == "$1" ]]; then
-          if [[ -n "$group_ids" ]]; then
-            group_ids+=", "
-          fi
-          group_ids+="${GROUP_ID[$group_index]}"
-        fi
-      done
-    done
-  fi
-  # This shows ASFF_COMPLIANCE_TYPE if group used is ens, this si used to show ENS compliance ID control, can be used for other compliance groups as well.
-  if [[ ${GROUP_ID_READ} == "ens" ]];then
-    textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_cis_level}" "$group_ids" "(${!check_asff_compliance_type})"
-  else
-    textTitle "${!check_id}" "${!check_title}" "${!check_servicename}" "${!check_severity}" "$group_ids" "${!check_cis_level}"
-  fi
-}
 
-# Function to show the title of a group, by numeric id
-show_group_title() {
-	# when csv mode is used, no group title is shown
-  if [[ "$MODE" != "csv" ]]; then
-      textTitle "${GROUP_NUMBER[$1]}" "${GROUP_TITLE[$1]}"
-  fi
-}
 
 # Function to execute the check
 execute_check() {
@@ -691,42 +767,7 @@ execute_all() {
   done
 }
 
-# Function to show the titles of either all checks or only those in the specified group
-show_all_titles() {
-  local checks
-  local check_id
-  local group_index
-  # If '-g <group_id>' has been specified, only show the titles of checks within the specified group
-  if [[ $GROUP_ID_READ ]];then
-    if [[ " ${GROUP_ID[@]} " =~ " ${GROUP_ID_READ} " ]]; then
-      for group_index in "${!GROUP_ID[@]}"; do
-        if [ "${GROUP_ID[$group_index]}" == "${GROUP_ID_READ}" ]; then
-          show_group_title "$group_index"
-          IFS=',' read -ra checks <<< "${GROUP_CHECKS[$group_index]}"
-          for check_id in ${checks[@]}; do
-            show_check_title "$check_id"
-          done
-        fi
-      done
-    else
-      textFail "Group ${GROUP_ID_READ} does not exist. Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
-      show_all_group_titles
-      exit $EXITCODE
-    fi
-  else
-    for check_id in "${TOTAL_CHECKS[@]}"; do
-      # Pass 1 so that the group IDs that this check belongs to are printed
-      show_check_title "$check_id" 1
-    done
-  fi
-}
 
-show_all_group_titles() {
-  local group_index
-  for group_index in "${!GROUP_TITLE[@]}"; do
-    show_group_title "$group_index"
-  done
-}
 
 # Function to execute all checks but exclude some of them
 get_all_checks_without_exclusion() {
@@ -751,22 +792,13 @@ get_all_checks_without_exclusion() {
   done
 }
 
-### All functions defined above ... run the workflow
-#if [[ " ${MODES[@]} " =~ " mono " || " ${MODES[@]} " =~ " text " ]]; then
-  prowlerBanner
-#fi
+# REVIEW MOVER
+prowlerBanner
 
-# List only check tittles
-if [[ $PRINTCHECKSONLY == "1" ]]; then
-  show_all_titles
-  exit $EXITCODE
-fi
 
-# List only group tittles
-if [[ $PRINTGROUPSONLY == "1" ]]; then
-  show_all_group_titles
-  exit $EXITCODE
-fi
+
+
+
 
 # Check that jq is installed for JSON outputs
 if [[ " ${MODES[@]} " =~ " json " || " ${MODES[@]} " =~ " json-asff " ]]; then
@@ -808,8 +840,6 @@ then
   restoreInitialAWSCredentials
 fi
 
-# Gather account data / test aws cli connectivity
-getWhoami
 if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
   backupInitialAWSCredentials
   assume_role
@@ -825,7 +855,7 @@ case "$REGION" in
   ;;
 esac
 
-if ! $AWSCLI sts get-caller-identity $PROFILE_OPT --output json --region $REGION_FOR_STS > /dev/null 2>&1
+if ! GETCALLER=$("${AWSCLI}" sts get-caller-identity ${PROFILE_OPT} --output json --region "${REGION_FOR_STS}")
 then
     echo -e "$RED ERROR Getting credentials to run Prowler - EXITING! $NORMAL"
     EXITCODE=2
@@ -841,6 +871,12 @@ fi
 CALLER_ARN=$(echo $GETCALLER | jq -r '.Arn' 2>&1)
 USER_ID=$(echo $GETCALLER | jq -r '.UserId' 2>&1)
 AWS_PARTITION=$(echo $CALLER_ARN| cut -d: -f2)
+echo $CALLER_ARN
+echo $USER_ID
+echo $AWS_PARTITION
+
+# Gather account data / test aws cli connectivity
+getWhoami
 
 # List regions
 get_regions
@@ -850,14 +886,19 @@ if [[ $GROUP_ID_READ ]];then
   if [[ " ${GROUP_ID[@]} " =~ " ${GROUP_ID_READ} " ]]; then
 
     execute_group_by_id ${GROUP_ID_READ} ${EXCLUDE_CHECK_ID}
+
+    #### ESTO SE PUEDE QUITAR SI SE HACE GLOBALMENT AL FINAL
     if [[ "${MODES[@]}" =~ "html" ]]; then
       addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     fi
+    #### ESTO SE PUEDE QUITAR SI SE HACE GLOBALMENT AL FINAL
     cleanTemp
     scoring
+    #### ESTO SE PUEDE QUITAR SI SE HACE GLOBALMENT AL FINAL
     if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
       restoreInitialAWSCredentials
     fi
+    #### ESTO SE PUEDE QUITAR SI SE HACE GLOBALMENT AL FINAL
     if [[ $OUTPUT_BUCKET ]]; then
       copyToS3
     fi
@@ -885,15 +926,20 @@ if [[ $CHECK_ID ]];then
   for CHECK in "${CHECKS[@]}"; do
     execute_check $CHECK
   done
+
+  #### ESTO SE PUEDE QUITAR SI SE HACE GLOBALMENT AL FINAL
   if [[ "${MODES[@]}" =~ "html" ]]; then
     addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
+  #### ESTO SE PUEDE QUITAR SI SE HACE GLOBALMENT AL FINAL
   if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
     restoreInitialAWSCredentials
   fi
+  #### ESTO SE PUEDE QUITAR SI SE HACE GLOBALMENT AL FINAL
   if [[ $OUTPUT_BUCKET ]]; then
     copyToS3
   fi
+  #### ESTO SE PUEDE QUITAR SI SE HACE GLOBALMENT AL FINAL
   scoring
   cleanTemp
   exit $EXITCODE

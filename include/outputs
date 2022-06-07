@@ -45,7 +45,6 @@ EXTENSION_TEXT="txt"
 EXTENSION_HTML="html"
 HTML_LOGO_URL="https://github.com/prowler-cloud/prowler/"
 HTML_LOGO_IMG="https://github.com/prowler-cloud/prowler/raw/master/util/html/prowler-logo-new.png"
-TIMESTAMP=$(get_iso8601_timestamp)
 PROWLER_PARAMETERS=$@
 
 
@@ -65,9 +64,9 @@ set_exitcode () {
 
 # Add header to certain output files readed from mode
 output_files_init() {
-  for MODE in "${MODES[@]}"; 
+  for MODE in "${MODES[@]}";
   do
-    if  [ "${MODE}" == 'html' ] 
+    if  [ "${MODE}" == 'html' ]
     then
         addHtmlHeader
         HTML_REPORT_INIT="1"
@@ -91,7 +90,7 @@ allowlist_check() {
     # IGNORE_CHECK_NAME is the check with resources allowlisted
     # RESOURCE_VALUE is what it comes after 'CHECK_NAME:'
     IGNORE_CHECK_NAME=$(awk -F ":" '{print $1}' <<< "${excluded_item}")
-    RESOURCE_VALUE=$(awk -F "${CHECK_NAME}:" '{print $2}' <<< "${excluded_item}") 
+    RESOURCE_VALUE=$(awk -F "${CHECK_NAME}:" '{print $2}' <<< "${excluded_item}")
     if [[ "${IGNORE_CHECK_NAME}" == "${CHECK_NAME}" ]]
     then
       if [[ "${CHECKED_VALUE}" =~ ${RESOURCE_VALUE} ]]
@@ -100,7 +99,7 @@ allowlist_check() {
           break
       fi
     fi
-    
+
   done <<< "$IGNORES"
   echo "${CHECK_RESULT}"
 }
@@ -140,9 +139,9 @@ general_output() {
       REGION_FROM_CHECK=$REGION
   fi
   # Iterating over input modes
-  for MODE in "${MODES[@]}"; 
+  for MODE in "${MODES[@]}";
   do
-    if  [ "${MODE}" == 'html' ] 
+    if  [ "${MODE}" == 'html' ]
     then
         generateHtmlOutput "${CHECK_RESULT_EXTENDED}" "${CHECK_RESULT}"
     elif [ "${MODE}" == 'csv' ]
@@ -156,7 +155,7 @@ general_output() {
         JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "${CHECK_RESULT_EXTENDED}" "PASSED" "$CHECK_RESOURCE_ID")
         echo "${JSON_ASFF_OUTPUT}" >> "${OUTPUT_FILE_NAME}"."${EXTENSION_ASFF}"
         if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
-            sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REGION_FROM_CHECK}" 
+            sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REGION_FROM_CHECK}"
         fi
     elif is_junit_output_enabled
     then
@@ -164,7 +163,7 @@ general_output() {
         then
             output_junit_success "${CHECK_RESULT_EXTENDED}"
         elif [ "${CHECK_RESULT}" == 'INFO' ]
-        then 
+        then
             output_junit_info "${CHECK_RESULT_EXTENDED}"
         elif [ "${CHECK_RESULT}" == 'FAIL' ]
         then
@@ -199,7 +198,7 @@ textPass(){
   then
     return
   fi
-  
+
   general_output "${CHECK_RESULT}" "${CHECK_RESULT_EXTENDED}" "${CHECK_RESOURCE_ID}" "${CHECK_REGION}"
 }
 
@@ -218,7 +217,7 @@ textInfo(){
 }
 
 textFail(){
-  
+
   CHECK_RESULT='FAIL'
   CHECK_RESULT_EXTENDED="${1}"
   CHECK_RESOURCE_ID="${3}"
@@ -226,7 +225,7 @@ textFail(){
 
   # Check if resources are whitelisted
   CHECK_RESULT=$(allowlist_check "${CHECK_RESULT_EXTENDED}")
-  
+
   # only set non-0 exit code on FAIL mode, WARN is ok
   if [[ "${CHECK_RESULT}" == "FAIL" ]]
   then
@@ -237,10 +236,10 @@ textFail(){
 }
 
 textTitle(){
-  
+
   TITLE_ID="${1}"
   TITLE_TEXT="${2}"
-  CHECK_ASFF_COMP_TYPE="${6}" 
+  CHECK_ASFF_COMP_TYPE="${6}"
 
   if [[ $NUMERAL ]]; then
     # Left-pad the check ID with zeros to simplify sorting, e.g. 1.1 -> 1.01
@@ -257,7 +256,7 @@ textTitle(){
     SUPPORT) ITEM_CIS_LEVEL="Support";;
     *)       ITEM_CIS_LEVEL="Unspecified or Invalid";;
   esac
-  
+
   echo -e "$TITLE_ID $TITLE_TEXT - $CHECK_SERVICENAME $CHECK_SEVERITY"
 }
 
@@ -321,14 +320,14 @@ generateJsonAsffOutput(){
   # Replace any successive non-conforming characters with a single underscore
   local message=$1
   local status=$2
-  
+
   #Checks to determine if the rule passes in a resource name that prowler uses to track the AWS Resource for allowlisting purposes
   if [[ -z $3 ]]; then
     local resource_id="NONE_PROVIDED"
   else
     local resource_id=$3
   fi
-  
+
   if [[ "$status" == "FAIL" ]]; then
     status="FAILED"
   fi
@@ -384,7 +383,7 @@ generateJsonAsffOutput(){
           "Status": $STATUS,
           "RelatedRequirements": [ $COMPLIANCE_RELATED_REQUIREMENTS ]
       }
-      
+
   }'
 }
 
@@ -404,7 +403,7 @@ generateHtmlOutput(){
   if [[ $status == "WARN" ]];then
     local ROW_CLASS='table-warning'
   fi
-  
+
   local CHECK_SEVERITY="$(echo $CHECK_SEVERITY | sed 's/[][]//g')"
 
   echo '<tr class="'$ROW_CLASS'">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
