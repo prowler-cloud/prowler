@@ -11,12 +11,31 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-# AWS-CLI detector variable
-jq_detector() {
-  JQ=$(which jq)
-  if [ -z "${JQ}" ]; then
-    echo -e "\n$RED ERROR!$NORMAL jq not found. Make sure it is installed correctly and in your \$PATH\n"
-    EXITCODE=1
-    exit $EXITCODE
-  fi
-}
+# Output Colors
+OPTRED="[1;31m"
+OPTNORMAL="[0;39m"
+MONOCHROME=0
+
+# AWS Region
+REGION=""
+FILTERREGION=""
+
+# Max AWS CLI items
+MAXITEMS=100
+
+# Default output mode
+MODE="text"
+
+# Security Hub
+SEND_TO_SECURITY_HUB=0
+
+# Date & Time
+PROWLER_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
+OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
+
+# Default Prowler Options
+QUIET=0
+SEP=','
+KEEPCREDREPORT=0
+EXITCODE=0
+FAILED_CHECK_FAILED_SCAN=1

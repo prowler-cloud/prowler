@@ -58,3 +58,18 @@ aws_profile_loader() {
         REGION="us-east-1"
     fi
 }
+
+# Function to get all regions
+get_regions() {
+  # Get list of regions based on include/whoami
+  if ! REGIONS=$($AWSCLI ec2 describe-regions \
+            --query 'Regions[].RegionName' \
+            --output text ${PROFILE_OPT} \
+            --region "${REGION_FOR_STS}" \
+            --region-names ${FILTERREGION//[,]/ } 2>&1)
+  then
+    echo "$OPTRED Access Denied trying to describe regions! Review permissions as described here: https://github.com/prowler-cloud/prowler/#requirements-and-installation $OPTNORMAL"
+    EXITCODE=1
+    exit $EXITCODE
+  fi
+}

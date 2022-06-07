@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+
+# Copyright 2018 Toni de la Fuente
+
+# Prowler is a tool that provides automate auditing and hardening guidance of an
+# AWS account. It is based on AWS-CLI commands. It follows some guidelines
+# present in the CIS Amazon Web Services Foundations Benchmark at:
+# https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
+
+# Contact the author at https://blyx.com/contact
+# and open issues or ask questions at https://github.com/prowler-cloud/prowler
+
+# Code is licensed as Apache License 2.0 as specified in
+# each file. You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Load all of the groups of checks inside groups folder named as "groupNumber*"
+load_groups() {
+for group in $(ls $PROWLER_DIR/groups/group[0-9]*|grep -v groupN_sample); do
+	. "$group"
+done
+}
+
+# Load a single check
+load_check(){
+    CHECK=${1}
+    . "$PROWLER_DIR/checks/${CHECK}"
+}
+
+get_checks() {
+    # Parses the check file into CHECK_ID's.
+    if [[ -n "$CHECK_FILE" ]]
+    then
+    if [[ -f $CHECK_FILE ]]
+    then
+        # Parses the file, converting it to a comma seperated list. Ignores all # comments and removes extra blank spaces
+        # REVIEW THIS OPTION -C
+        TOTAL_CHECKS="$(awk '!/^[[:space:]]*#/{print }' <(cat ${CHECK_FILE} | sed 's/[[:space:]]*#.*$//g;/^$/d' | sed 'H;1h;$!d;x;y/\n/,/' | tr -d ' '))"
+    else
+        # If the file doesn't exist, exits Prowler
+        echo "$CHECK_FILE does not exist"
+        EXITCODE=1
+        exit $EXITCODE
+    fi
+    # If '-g <group_id>' has been specified, only show the titles of checks within the specified group
+    # reading groups from GROUP_ID_READ
+    elif [[ "${GROUP_ID_READ}" ]]
+    then
+    for GROUP in "${GROUP_ID[@]}"
+    do
+        if [[ "${GROUP}" == "${GROUP_ID_READ}" ]]
+        then
+        IS_GROUP=1
+        fi
+    done
+    if [[ IS_GROUP -eq 0 ]]
+    then
+        textFail "Group ${GROUP_ID_READ} does not exist. Valid check groups are: ${GROUP_ID[*]}"
+        exit $EXITCODE
+    fi
+    # Iterate over every group removing echar comma
+    for GROUP_IDENTIFIER in ${GROUP_ID_READ//,/ }
+    do
+        # Iterate over every GroupID to find the belongin checks
+        for I in "${!GROUP_ID[@]}"
+        do
+        if [[ "${EXTRAS}" -eq 1 && "${GROUP_ID[I]}" == "extras" ]]
+        then
+            continue
+        else
+            if [[ "${GROUP_ID[I]}" == "${GROUP_IDENTIFIER}" ]]
+            then
+            # shellcheck disable=SC2068
+            for CHECK_IDENTIFIER in ${GROUP_CHECKS[I]//,/ }
+            do
+                # Include every check if not present
+                if [[ ! "${CHECK_LIST_BY_GROUP[*]}" =~ ${CHECK_IDENTIFIER} ]] && ! grep -E -w -q "${EXCLUDE_CHECK_ID//,/|}" <<< "${CHECK_IDENTIFIER}"
+                then
+                CHECK_LIST_BY_GROUP+=("${CHECK_IDENTIFIER}")
+                fi
+            done
+            fi
+        fi
+        done
+    done
+    TOTAL_CHECKS=("${CHECK_LIST_BY_GROUP[@]}")
+    elif [ -n "${CHECK_ID}" ]
+    then
+        IFS=',' read -ra TOTAL_CHECKS <<< "${CHECK_ID}"
+    else
+    # if -e is passed we dont want extra checks
+    if [[ "${EXTRAS}" -eq 1 ]]
+        then
+        EXCLUDE_CHECK_ID=("${EXCLUDE_CHECK_ID[@]}" "${GROUP_CHECKS[7]}")
+    fi
+    for CHECK in $(ls $PROWLER_DIR/checks/check*|grep -v check_sample); do
+        # Relative path required to load every check
+        CHECK_DIR_NAME=$(basename "${CHECK}")
+        # Name of the check
+        CHECK_NAME=${CHECK_DIR_NAME//check_/}
+        # If a group identifier is passed
+
+        if ! grep -E -w -q "${EXCLUDE_CHECK_ID//,/|}" <<< "${CHECK_NAME}"
+        then
+        TOTAL_CHECKS+=("${CHECK_NAME}")
+        fi
+
+    done
+    fi
+
+    # Iterate over the final list of checks after being parsed all the input options to load the selected checks
+    for LOAD_PATH_CHECK in ${TOTAL_CHECKS[*]}
+    do
+        # If the check is extra, the path needs to add check_ after the check name
+        if [[ "${LOAD_PATH_CHECK}" =~ 'extra' ]]
+        then
+            LOAD_PATH_CHECK=${LOAD_PATH_CHECK/#/check_}
+        fi
+        load_check "${LOAD_PATH_CHECK}"
+    done
+}

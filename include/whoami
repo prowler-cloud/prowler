@@ -63,3 +63,32 @@ getWhoami(){
     fi
   fi
 }
+
+get_aws_credentials() {
+  case "$REGION" in
+    me-south-1|eu-south-1|ap-east-1|af-south-1)
+      REGION_FOR_STS="us-east-1"
+    ;;
+    *)
+      REGION_FOR_STS=$REGION
+    ;;
+  esac
+
+  if ! GETCALLER=$("${AWSCLI}" sts get-caller-identity \
+                    ${PROFILE_OPT} \
+                  --output text \
+                  --region "${REGION_FOR_STS}" \
+                  --query '[Arn,UserId,Account]')
+  then
+      echo -e "$RED ERROR Getting credentials to run Prowler - EXITING! $NORMAL"
+      EXITCODE=2
+      exit $EXITCODE
+  fi
+  read -r CALLER_ARN USER_ID ACCOUNT_NUM <<< "${GETCALLER}"
+
+  if [[ $ACCOUNT_TO_ASSUME ]]
+  then
+    ACCOUNT_NUM=$ACCOUNT_TO_ASSUME
+  fi
+  AWS_PARTITION=$(cut -d: -f2 <<< "${CALLER_ARN}")
+}

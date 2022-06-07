@@ -13,6 +13,5 @@
 
 GROUP_ID[26]='ds'
 GROUP_NUMBER[26]='26.0'
-GROUP_TITLE[26]='Amazon Directory Service related security checks - [ds] ******************'
-GROUP_RUN_BY_DEFAULT[26]='N' # run it when execute_all is called
+GROUP_TITLE[26]='Amazon Directory Service related security checks - [ds] *******'
 GROUP_CHECKS[26]='extra7181,extra7182,extra7183,extra7184'

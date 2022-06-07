@@ -14,7 +14,6 @@
 GROUP_ID[18]='iso27001'
 GROUP_NUMBER[18]='18.0'
 GROUP_TITLE[18]='ISO 27001:2013 Readiness - ONLY AS REFERENCE - [iso27001] *****'
-GROUP_RUN_BY_DEFAULT[18]='N' # run it when execute_all is called
 GROUP_CHECKS[18]='check11,check110,check111,check112,check113,check114,check115,check116,check119,check12,check122,check13,check14,check15,check16,check17,check18,check19,check21,check22,check23,check24,check25,check26,check27,check28,check29,check31,check310,check311,check312,check313,check314,check32,check33,check34,check35,check36,check37,check38,check39,check41,check42,check43,check44,extra71,extra710,extra7100,extra711,extra7113,extra7123,extra7125,extra7126,extra7128,extra7129,extra713,extra714,extra7130,extra718,extra719,extra72,extra720,extra721,extra722,extra723,extra724,extra725,extra726,extra727,extra728,extra729,extra731,extra73,extra731,extra735,extra739,extra74,extra741,extra747,extra748,extra75,extra757,extra758,extra759,extra76,extra760,extra761,extra762,extra763,extra764,extra765,extra767,extra768,extra769,extra77,extra771,extra772,extra774,extra776,extra777,extra778,extra78,extra789,extra79,extra790,extra792,extra793,extra794,extra795,extra796,extra798'
 
 # #	Category	Objective ID	Objective Name	Prowler check ID	Check Summary
@@ -103,7 +102,7 @@ GROUP_CHECKS[18]='check11,check110,check111,check112,check113,check114,check115,
 # 83	A.12 Operations Security	A.12.4	Logging and Monitoring	check39	Ensure a log metric filter and alarm exist for AWS Config configuration changes
 # 84	A.12 Operations Security	A.12.4	Logging and Monitoring	check39	Check if CloudFront distributions have logging enabled
 # 85	A.12 Operations Security	A.12.4	Logging and Monitoring	extra719	Check if Route53 public hosted zones are logging queries to CloudWatch Logs
-# 86	A.12 Operations Security	A.12.4	Logging and Monitoring	extra720	 Check if Lambda functions invoke API operations are being recorded by CloudTrail 
+# 86	A.12 Operations Security	A.12.4	Logging and Monitoring	extra720	 Check if Lambda functions invoke API operations are being recorded by CloudTrail
 # 87	A.12 Operations Security	A.12.4	Logging and Monitoring	extra722	 Check if API Gateway has logging enabled
 # 88	A.12 Operations Security	A.12.4	Logging and Monitoring	check38	Ensure a log metric filter and alarm exist for S3 bucket policy changes
 # 89	A.12 Operations Security	A.12.4	Logging and Monitoring	check37	Ensure a log metric filter and alarm exist for disabling or scheduled deletion of customer created CMKs
@@ -136,7 +135,7 @@ GROUP_CHECKS[18]='check11,check110,check111,check112,check113,check114,check115,
 #116	A.12 Operations Security	A.12.6	Technical Vulnerability Management	check23	Ensure the S3 bucket CloudTrail logs to is not publicly accessible
 #117	A.12 Operations Security	A.12.6	Technical Vulnerability Management	extra713	Check if GuardDuty is enabled
 #118	A.12 Operations Security	A.12.6	Technical Vulnerability Management	extra726	Check Trusted Advisor for errors and warnings
-#119	A.12 Operations Security	A.12.6	Technical Vulnerability Management	extra776	Check if ECR image scan found vulnerabilities in the newest image version 
+#119	A.12 Operations Security	A.12.6	Technical Vulnerability Management	extra776	Check if ECR image scan found vulnerabilities in the newest image version
 #120	A.13 Communications Security	A.13.1	Network Security Management	check43	Ensure the default security group of every VPC restricts all traffic
 #121	A.13 Communications Security	A.13.1	Network Security Management	check42	Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389
 #122	A.13 Communications Security	A.13.1	Network Security Management	check41	Ensure no security groups allow ingress from 0.0.0.0/0 to port 22

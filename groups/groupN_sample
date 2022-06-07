@@ -14,5 +14,4 @@
 GROUP_ID[9]='my-custom-group'
 GROUP_NUMBER[9]='9.0'
 GROUP_TITLE[9]='My Custom Group - [my-custom-group] ****************************'
-GROUP_RUN_BY_DEFAULT[9]='N' # run it when execute_all is called
 GROUP_CHECKS[9]='checkNN,checkMM'
