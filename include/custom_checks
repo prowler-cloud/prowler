@@ -22,7 +22,7 @@ custom_checks(){
       $AWSCLI s3 sync "$EXTERNAL_CHECKS_PATH" "${S3_CHECKS_TEMP_FOLDER}" $PROFILE_OPT > /dev/null
       # verify if there are checks
       for checks in "${S3_CHECKS_TEMP_FOLDER}"/check*; do
-        . "$checks"
+        . $checks
         echo -e "$OK Check $(basename "$checks") was included!$NORMAL"
       done
     echo -e "$OK Success! Custom checks were downloaded and included, starting Prowler...$NORMAL"
