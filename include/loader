@@ -17,7 +17,7 @@
 # Load all of the groups of checks inside groups folder named as "groupNumber*"
 load_groups() {
 for group in $(ls $PROWLER_DIR/groups/group[0-9]*|grep -v groupN_sample); do
-	. "$group"
+	. "${group}"
 done
 }
 
@@ -31,12 +31,12 @@ get_checks() {
     # Parses the check file into CHECK_ID's.
     if [[ -n "$CHECK_FILE" ]]
     then
-    if [[ -f $CHECK_FILE ]]
-    then
-        # Parses the file, converting it to a comma seperated list. Ignores all # comments and removes extra blank spaces
-        # REVIEW THIS OPTION -C
-        TOTAL_CHECKS="$(awk '!/^[[:space:]]*#/{print }' <(cat ${CHECK_FILE} | sed 's/[[:space:]]*#.*$//g;/^$/d' | sed 'H;1h;$!d;x;y/\n/,/' | tr -d ' '))"
-    else
+        if [[ -f $CHECK_FILE ]]
+        then
+            # Parses the file, converting it to a comma seperated list. Ignores all # comments and removes extra blank spaces
+            # REVIEW THIS OPTION -C
+            TOTAL_CHECKS="$(awk '!/^[[:space:]]*#/{print }' <(cat ${CHECK_FILE} | sed 's/[[:space:]]*#.*$//g;/^$/d' | sed 'H;1h;$!d;x;y/\n/,/' | tr -d ' '))"
+        else
         # If the file doesn't exist, exits Prowler
         echo "$CHECK_FILE does not exist"
         EXITCODE=1

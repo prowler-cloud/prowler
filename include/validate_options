@@ -11,21 +11,31 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
+validate_custom_checks() {  
+    if [[ $EXTERNAL_CHECKS_PATH ]] 
+    then
+        custom_checks
+    fi
+}
+
 validate_allowlist() {
     # Pre-process allowlist file if supplied
-    if [[ -n "$ALLOWLIST_FILE" ]]; then
+    if [[ -n "$ALLOWLIST_FILE" ]]
+    then
         allowlist
     fi
 }
 
 validate_list_checks() {
-    if [[ ${LIST_CHECKS} -eq 1 ]]; then
+    if [[ ${LIST_CHECKS} -eq 1 ]]
+    then
         show_all_check_titles
     fi
 }
 
 validate_list_groups() {
-    if [[ ${LIST_GROUPS} -eq 1 ]]; then
+    if [[ ${LIST_GROUPS} -eq 1 ]]
+    then
         show_all_group_titles
     fi
 }
@@ -75,14 +85,17 @@ validate_security_hub() {
 
 validate_output_bucket() {
     # Output bucket parsing input checking
-    if [[ $OUTPUT_BUCKET ]]; then
+    if [[ $OUTPUT_BUCKET ]]
+    then
     # output mode has to be set to other than text
-    if [[ "${MODES[*]}" =~ "text" ]]; then
+    if [[ "${MODES[*]}" =~ "text" ]]
+    then
         echo "$OPTRED ERROR!$OPTNORMAL - Mode (-M) can't be text when using custom output bucket. Use -h for help."
         exit 1
     else
         # need to make sure last / is not set to avoid // in S3
-        if [[ $OUTPUT_BUCKET == *"/" ]]; then
+        if [[ $OUTPUT_BUCKET == *"/" ]]
+        then
         OUTPUT_BUCKET=${OUTPUT_BUCKET::-1}
         fi
     fi

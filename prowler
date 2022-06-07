@@ -297,19 +297,14 @@ validate_output_bucket
 validate_security_hub
 validate_organizations
 validate_allowlist
+validate_custom_checks
 
 # Add headers to certain output files
 output_files_init
 
-# include checks if external folder is specified
-# REVIEW
-if [[ $EXTERNAL_CHECKS_PATH ]]; then
-  custom_checks
-fi
-
 # Check AWS CLI
 aws_cli_detector
-# aws_profile_loader
+# load AWS profile
 aws_profile_loader
 
 # Gather account data / test aws cli connectivity
@@ -322,7 +317,7 @@ get_regions
 # Execute checks
 for CHECK in "${TOTAL_CHECKS[@]}"
 do
-  execute_check $CHECK
+  execute_check "${CHECK}"
 done
 
 # Close, save and clean files
