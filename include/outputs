@@ -79,6 +79,13 @@ output_files_init() {
   done
 }
 
+# Close HTML output file
+output_files_end() {
+  if [[ "${MODES[*]}" =~ "html" ]]; then
+    addHtmlFooter >> "${OUTPUT_FILE_NAME}.${EXTENSION_HTML}"
+  fi
+}
+
 # Check if resource checked is allowlisted
 allowlist_check() {
   # Checked value is the whole log message that comes as argument

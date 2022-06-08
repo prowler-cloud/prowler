@@ -26,6 +26,7 @@
 PROWLER_VERSION=2.10.0-25May2022
 PROWLER_DIR=$(dirname "$0")
 
+############################################################
 # DEPENDENCIES
 . $PROWLER_DIR/include/default_variables
 . $PROWLER_DIR/include/colors
@@ -57,11 +58,13 @@ PROWLER_DIR=$(dirname "$0")
 . $PROWLER_DIR/include/execute_check
 . $PROWLER_DIR/include/validate_options
 . $PROWLER_DIR/include/traps
+############################################################
 
 # Check external tools
 jq_detector
 curl_detector
 
+############################################################
 # USAGE
 usage(){
   echo "
@@ -129,6 +132,7 @@ USAGE:
   exit
 }
 
+############################################################
 # This function comes from include/awscli_detector
 set_aws_default_output
 
@@ -265,6 +269,8 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OP
         ;;
    esac
 done
+############################################################
+# PROWLER MAIN
 
 # Show Prowler Banner
 prowlerBanner
@@ -320,16 +326,17 @@ do
   execute_check "${CHECK}"
 done
 
-# Close, save and clean files
-if [[ "${MODES[@]}" =~ "html" ]]; then
-  addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-fi
-if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
-  restoreInitialAWSCredentials
-fi
-if [[ $OUTPUT_BUCKET ]]; then
-  copyToS3
-fi
+# Add bottom to certain output files
+output_files_end
+
+# Validate output bucket without assuming role
+validate_copy_to_s3_no_assume
+# Copy Prowler Findings to S3 if required
+copy_to_s3_assume
+
+# Score if required
 scoring
+
+# Clean temporary files
 cleanTemp
 exit $EXITCODE

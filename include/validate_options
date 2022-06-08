@@ -11,6 +11,20 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
+# Copy to S3 without assuming role with -D
+validate_copy_to_s3_no_assume() {
+    if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
+        restoreInitialAWSCredentials
+    fi
+}
+
+# Copy to S3 assuming role with -B
+copy_to_s3_assume() {
+    if [[ $OUTPUT_BUCKET ]]; then
+        copyToS3
+    fi
+}
+
 # Validate custom checks with -x
 validate_custom_checks() {
     if [[ $EXTERNAL_CHECKS_PATH ]]
