@@ -11,13 +11,15 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-validate_custom_checks() {  
-    if [[ $EXTERNAL_CHECKS_PATH ]] 
+# Validate custom checks with -x
+validate_custom_checks() {
+    if [[ $EXTERNAL_CHECKS_PATH ]]
     then
         custom_checks
     fi
 }
 
+# AllowList option input with -w
 validate_allowlist() {
     # Pre-process allowlist file if supplied
     if [[ -n "$ALLOWLIST_FILE" ]]
@@ -26,6 +28,7 @@ validate_allowlist() {
     fi
 }
 
+# List checks input with -l
 validate_list_checks() {
     if [[ ${LIST_CHECKS} -eq 1 ]]
     then
@@ -33,6 +36,7 @@ validate_list_checks() {
     fi
 }
 
+# List groups input with -g
 validate_list_groups() {
     if [[ ${LIST_GROUPS} -eq 1 ]]
     then
@@ -40,6 +44,7 @@ validate_list_groups() {
     fi
 }
 
+# Extract organizations information with -O
 validate_organizations() {
   # First, check AWS Organizations Metadata
   if [[ -n "${MANAGEMENT_ACCOUNT_ID}" && -n "${ROLE_TO_ASSUME}" ]]
@@ -70,12 +75,15 @@ validate_organizations() {
   fi
 }
 
+# JUnit output if -M junit-xml
 validate_junit_output() {
     if is_junit_output_enabled
     then
         prepare_junit_output
     fi
 }
+
+# Validate Security Hub with -S
 validate_security_hub() {
     if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]
     then
@@ -83,6 +91,7 @@ validate_security_hub() {
     fi
 }
 
+# Validate output bucket with -B
 validate_output_bucket() {
     # Output bucket parsing input checking
     if [[ $OUTPUT_BUCKET ]]
@@ -101,6 +110,8 @@ validate_output_bucket() {
     fi
     fi
 }
+
+# Validate custom output filename with -F
 validate_custom_output_filename() {
     # Create output file name
     if [ -n "${OUTPUT_FILE_NAME}" ]
@@ -111,6 +122,7 @@ validate_custom_output_filename() {
     fi
 }
 
+# Validate custom output directory with -o
 validate_custom_output_directory() {
     # Check output dir custom
     if [ -n "${OUTPUT_DIR_CUSTOM}" ]
@@ -139,6 +151,8 @@ validate_custom_output_directory() {
             fi
     fi
 }
+
+# Validate output modes with -M
 validate_modes() {
     if [ -n "${MODE}" ]
     then
@@ -154,6 +168,8 @@ validate_modes() {
     done
     fi
 }
+
+# Validate database with -d
 validate_database() {
   # Check database providers
 if [[ ${DATABASE_PROVIDER} ]]
@@ -195,8 +211,6 @@ then
         then
              db_exit_abnormally "postgresql" "Table ${PSQL_TABLE} not exists, please check ${HOME}/.pgpass file - EXITING!"
         fi
-
-
     fi
   fi
 }
