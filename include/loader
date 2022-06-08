@@ -44,6 +44,7 @@ get_checks() {
             EXITCODE=1
             exit $EXITCODE
         fi
+
     # If '-g <group_id>' has been specified, only show the titles of checks within the specified group
     # reading groups from GROUP_ID_READ
     elif [[ "${GROUP_ID_READ}" ]]
@@ -86,9 +87,13 @@ get_checks() {
             done
         done
         TOTAL_CHECKS=("${CHECK_LIST_BY_GROUP[@]}")
+
+    # If -c option is set with checks
     elif [ -n "${CHECK_ID}" ]
     then
         IFS=',' read -ra TOTAL_CHECKS <<< "${CHECK_ID}"
+
+    # If no option input to include/exclude checks
     else
         # if -e is passed we dont want extra checks
         if [[ "${EXTRAS}" -eq 1 ]]
