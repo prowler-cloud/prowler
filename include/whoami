@@ -40,7 +40,7 @@ get_aws_credentials() {
                     ${PROFILE_OPT} \
                   --output text \
                   --region "${REGION_FOR_STS}" \
-                  --query '[Arn,UserId,Account]')
+                  --query '[Arn,UserId,Account]' 2>&1)
   then
     echo -e "$RED ERROR Getting credentials to run Prowler - EXITING! $NORMAL"
     EXITCODE=2
