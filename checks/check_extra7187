@@ -18,8 +18,8 @@ CHECK_SEVERITY_extra7187="High"
 CHECK_ASFF_RESOURCE_TYPE_extra7187="AwsWorkspaces"
 CHECK_ALTERNATE_check7187="extra7187"
 CHECK_SERVICENAME_extra7187="workspaces"
-CHECK_RISK_extra7187='If the value listed in the Volume Encryption column is Disabled, the selected AWS WorkSpaces instance volumes (root and user volumes) are not encrypted, therefore your data-at-rest is not protected from unauthorized access and does not meet the compliance requirements regarding data encryption.'
-CHECK_REMEDIATION_extra7187='WorkSpaces is integrated with the AWS Key Management Service (AWS KMS). This enables you to encrypt storage volumes of WorkSpaces using AWS KMS Key. When you launch a WorkSpace, you can encrypt the root volume (for Microsoft Windows, the C drive; for Linux, /) and the user volume (for Windows, the D drive; for Linux, /home). Doing so ensures that the data stored at rest, disk I/O to the volume, and snapshots created from the volumes are all encrypted'
+CHECK_RISK_extra7187='If the value listed in the Volume Encryption column is Disabled the selected AWS WorkSpaces instance volumes (root and user volumes) are not encrypted. Therefore your data-at-rest is not protected from unauthorized access and does not meet the compliance requirements regarding data encryption.'
+CHECK_REMEDIATION_extra7187='WorkSpaces is integrated with the AWS Key Management Service (AWS KMS). This enables you to encrypt storage volumes of WorkSpaces using AWS KMS Key. When you launch a WorkSpace you can encrypt the root volume (for Microsoft Windows - the C drive; for Linux - /) and the user volume (for Windows - the D drive; for Linux - /home). Doing so ensures that the data stored at rest - disk I/O to the volume - and snapshots created from the volumes are all encrypted'
 CHECK_DOC_extra7187='https://docs.aws.amazon.com/workspaces/latest/adminguide/encrypt-workspaces.html'
 CHECK_CAF_EPIC_extra7187='Infrastructure Security'
 
