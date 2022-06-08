@@ -14,7 +14,6 @@
 # Output Colors
 OPTRED="[1;31m"
 OPTNORMAL="[0;39m"
-MONOCHROME=0
 
 # AWS Region
 REGION=""

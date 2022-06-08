@@ -170,16 +170,16 @@ validate_custom_output_directory() {
 validate_modes() {
     if [ -n "${MODE}" ]
     then
-    AVAILABLE_OUTPUT_MODES="mono|text|csv|json|json-asff|junit-xml|html"
-    IFS=',' read -ra MODES <<< "${MODE}"
-    for MODE in "${MODES[@]}"; do
-        if ! grep -w -q -E "${AVAILABLE_OUTPUT_MODES}" <<< "${MODE}"
-        then
-        echo -e "${OPTRED}ERROR!$OPTNORMAL Invalid output mode. Choose text, mono, csv, json, json-asff, junit-xml or html. ./prowler -h for help"
-        EXITCODE=1
-        exit $EXITCODE
-        fi
-    done
+        AVAILABLE_OUTPUT_MODES="mono|text|csv|json|json-asff|junit-xml|html"
+        IFS=',' read -ra MODES <<< "${MODE}"
+        for MODE in "${MODES[@]}"; do
+            if ! grep -w -q -E "${AVAILABLE_OUTPUT_MODES}" <<< "${MODE}"
+            then
+                echo -e "${OPTRED}ERROR!$OPTNORMAL Invalid output mode. Choose text, mono, csv, json, json-asff, junit-xml or html. ./prowler -h for help"
+                EXITCODE=1
+                exit $EXITCODE
+            fi
+        done
     fi
 }
 

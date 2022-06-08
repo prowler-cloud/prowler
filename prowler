@@ -272,6 +272,9 @@ done
 ############################################################
 # PROWLER MAIN
 
+# Set Prowler Colors
+set_colors
+
 # Show Prowler Banner
 prowlerBanner
 
@@ -316,6 +319,7 @@ aws_profile_loader
 # Gather account data / test aws cli connectivity
 get_aws_credentials
 getWhoami
+exit
 
 # List regions
 get_regions
