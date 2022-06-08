@@ -69,23 +69,23 @@ curl_detector
 usage(){
   echo "
 USAGE:
-      `basename $0` [ -p <profile> -r <region>  -h ]
+      $(basename "${0}") [ -p <profile> -r <region>  -h ]
   Options:
       -p <profile>        Specify your AWS profile to use.
                             (i.e.: default)
       -r <region>         Specify an AWS region to direct API requests to.
                             (i.e.: us-east-1), all regions are checked anyway if the check requires it.
-      -c <check_id>       Specify one or multiple check ids separated by commas, to see all available checks use "-l" option.
-                            (i.e.: "check11" for check 1.1 or "extra71,extra72" for extra check 71 and extra check 72)
+      -c <check_id>       Specify one or multiple check ids separated by commas, to see all available checks use \"-l\" option.
+                            (i.e.: \"check11\" for check 1.1 or \"extra71,extra72\" for extra check 71 and extra check 72)
       -C                  Checklist file. See checklist.txt for reference and format.
                             (i.e.: checklist.txt)
-      -g <group_id>       Specify a group of checks by id, to see all available group of checks use "-L".
-                            (i.e.: "group3" for entire section 3, "cislevel1" for CIS Level 1 Profile Definitions or "forensics-ready")
+      -g <group_id>       Specify a group of checks by id, to see all available group of checks use \"-L\".
+                            (i.e.: \"group3\" for entire section 3, \"cislevel1\" for CIS Level 1 Profile Definitions or \"forensics-ready\")
       -f <filterregion>   Specify an AWS region to run checks against.
                             (i.e.: us-west-1 or for multiple regions use single quote like 'us-west-1 us-west-2')
       -m <maxitems>       Specify the maximum number of items to return for long-running requests (default: 100).
       -M <mode>           Output or report mode: text (default), mono, html, json, json-asff, junit-xml, csv. They can be used combined comma separated.
-                            (i.e.: "html,json"; files created in background; progress on stdout)
+                            (i.e.: \"html,json\"; files created in background; progress on stdout)
       -k                  Keep the credential report for debugging.
       -n                  Show check numbers to sort easier.
                             (i.e.: 1.01 instead of 1.1)
@@ -97,9 +97,9 @@ USAGE:
       -b                  Do not print Prowler banner.
       -s                  Show scoring report (it is included by default in the html report).
       -S                  Send check output to AWS Security Hub. Only valid when the output mode is json-asff
-                            (i.e. "-M json-asff -S").
+                            (i.e. \"-M json-asff -S\").
       -x                  Specify external directory with custom checks. S3 URI is supported.
-                            (i.e. /my/own/checks or s3://bucket/prefix/checks, files must start by "check").
+                            (i.e. /my/own/checks or s3://bucket/prefix/checks, files must start by \"check\").
       -q                  Get only FAIL findings, will show WARNINGS when a resource is excluded.
       -A                  Account id for the account where to assume a role, requires -R.
                             (i.e.: 123456789012)
@@ -118,11 +118,11 @@ USAGE:
       -D                  Same as -B but do not use the assumed role credentials to put objects to the bucket, instead uses the initial credentials.
       -F                  Custom output report name, if not specified will use default output/prowler-output-ACCOUNT_NUM-OUTPUT_DATE.format.
       -z                  Failed checks do not trigger exit code 3.
-      -Z                  Specify one or multiple check ids separated by commas that will trigger exit code 3 if they fail. Unspecified checks will not trigger exit code 3. This will override "-z".
-                            (i.e.: "-Z check11,check12" will cause check11 and/or check12 to trigger exit code 3)
+      -Z                  Specify one or multiple check ids separated by commas that will trigger exit code 3 if they fail. Unspecified checks will not trigger exit code 3. This will override \"-z\".
+                            (i.e.: \"-Z check11,check12\" will cause check11 and/or check12 to trigger exit code 3)
       -O <mgmnt acct ID>  Specify AWS Organizations management account ID. Used to get account details, requires -R.
                             (requires organizations:ListAccounts* and organizations:ListTagsForResource)
-      -a <aws_cli_cmd>    Build your own on-the-fly custom check by specifying the AWS CLI command to execute. Requires "-c extra9999". Omit the "aws" command and only use its parameters within quotes.
+      -a <aws_cli_cmd>    Build your own on-the-fly custom check by specifying the AWS CLI command to execute. Requires \"-c extra9999\". Omit the \"aws\" command and only use its parameters within quotes.
                           Do not nest quotes in the aws parameter. Note that --output text is already included in the check.
                             i,e. -a 'ec2 describe-security-groups --filters Name=ip-permission.to-port,Values=80 --query SecurityGroups[*].GroupId[]]'
       -V                  Show version number & exit.
@@ -173,7 +173,7 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OP
         FILTERREGION=$OPTARG
         ;;
      m )
-        MAXITEMS=$OPTARG
+        export MAXITEMS=$OPTARG
         ;;
      M )
         MODE=$OPTARG
@@ -223,7 +223,7 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OP
         ALLOWLIST_FILE=$OPTARG
         ;;
      N )
-        SHODAN_API_KEY=$OPTARG
+        export SHODAN_API_KEY=$OPTARG
         ;;
      o )
         OUTPUT_DIR_CUSTOM=$OPTARG
@@ -248,7 +248,7 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OP
         MANAGEMENT_ACCOUNT_ID=$OPTARG
         ;;
      a )
-        CUSTOM_CMD=$OPTARG
+        export CUSTOM_CMD=$OPTARG
         ;;
      d )
         DATABASE_PROVIDER=$OPTARG
