@@ -21,7 +21,7 @@ JUNIT_SKIPPED_COUNT="0"
 JUNIT_ERRORS_COUNT="0"
 
 is_junit_output_enabled() {
-  if [[ " ${MODES[@]} " =~ " junit-xml " ]]; then
+  if [[ " ${MODE} " =~ "junit-xml" ]]; then
     true
   else
     false

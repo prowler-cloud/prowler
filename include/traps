@@ -17,7 +17,7 @@
 clean_up() {
   rm -f /tmp/prowler*.policy.*
   # in case html output is used, make sure it closes html file properly
-  if [[ "${MODES[@]}" =~ "html" ]]; then
+  if [[ "${MODE}" =~ "html" ]]; then
     addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
   # puts the AWS_DEFAULT_OUTPUT back to what it was at the start

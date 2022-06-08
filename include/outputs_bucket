@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 copyToS3() {
-  # Prowler will copy each format to its own folder in S3, that is for better handling 
+  # Prowler will copy each format to its own folder in S3, that is for better handling
   # and processing by Quicksight or others.
   # Also, check if -F was introduced
   if [ -n "${OUTPUT_FILE_NAME+x}" ]; then
@@ -21,9 +21,11 @@ copyToS3() {
     OUTPUT_PATH="$OUTPUT_DIR/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
   fi
 
-  for output_format in "${MODES[@]}";
+  OIFS="${IFS}"
+  IFS=','
+  for MODE_TYPE in ${MODE}
   do
-    case ${output_format} in
+    case ${MODE_TYPE} in
       csv)
         s3cp "${OUTPUT_PATH}" "${EXTENSION_CSV}"
       ;;
@@ -42,6 +44,7 @@ copyToS3() {
       ;;
     esac
   done
+  IFS="${OIFS}"
 }
 
 s3cp(){

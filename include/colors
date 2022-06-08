@@ -14,7 +14,7 @@
 # Colors
 # NOTE: Your editor may NOT show the 0x1b / escape character left of the '['
 set_colors() {
-  if [[ "$MODE" =~ "mono" ]]
+  if [[ "${MODE}" =~ "mono" ]]
   then
     NORMAL=""
     WARNING=""
@@ -43,7 +43,8 @@ set_colors() {
 }
 
 printColorsCode(){
-  if [[ $MONOCHROME -eq 0 ]]; then
+  if [[ "$MODE" =~ "mono" ]]
+  then
     echo -e "\n$NORMAL Color code for results: "
     echo -e " - $NOTICE INFO (Information)$NORMAL"
     echo -e " - $OK PASS (Recommended value)$NORMAL"

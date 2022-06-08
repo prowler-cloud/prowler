@@ -54,8 +54,8 @@ scoring(){
     echo -e "$BLUE------------------------------------------------------------------ $NORMAL"
     echo -e " * the higher the better (0 to 100)$NORMAL"
     echo -e " Prowler scoring uses any check, including CIS not scored checks$NORMAL"
-  fi 
-  if [[ "${MODES[@]}" =~ "html" ]]; then
+  fi
+  if [[ "${MODE}" =~ "html" ]]; then
     replace_sed 's/PROWLER_SCORE/'$PROWLER_SCORE'/g' ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     replace_sed 's/PASS_COUNTER/'$PASS_COUNTER'/g' ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     replace_sed 's/TOTAL_RESOURCES/'$TOTAL_RESOURCES'/g' ${OUTPUT_FILE_NAME}.$EXTENSION_HTML

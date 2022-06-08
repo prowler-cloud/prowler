@@ -111,7 +111,7 @@ validate_output_bucket() {
     if [[ $OUTPUT_BUCKET ]]
     then
     # output mode has to be set to other than text
-    if [[ "${MODES[*]}" =~ "text" ]]
+    if [[ "${MODE}" =~ "text" ]]
     then
         echo "$OPTRED ERROR!$OPTNORMAL - Mode (-M) can't be text when using custom output bucket. Use -h for help."
         exit 1
@@ -142,7 +142,7 @@ validate_custom_output_directory() {
     if [ -n "${OUTPUT_DIR_CUSTOM}" ]
     then
         # If dir custom, mode has to be enabled (if you provide a custom directory it's because you want to store something)
-        if [  "${MODE}" != 'text' ]
+        if [[ ! "${MODE}" =~ 'text' ]]
         then
             # Check if custom folder exists
             if [ ! -d "${OUTPUT_DIR_CUSTOM}" ]
@@ -171,15 +171,18 @@ validate_modes() {
     if [ -n "${MODE}" ]
     then
         AVAILABLE_OUTPUT_MODES="mono|text|csv|json|json-asff|junit-xml|html"
-        IFS=',' read -ra MODES <<< "${MODE}"
-        for MODE in "${MODES[@]}"; do
-            if ! grep -w -q -E "${AVAILABLE_OUTPUT_MODES}" <<< "${MODE}"
+        OIFS="${IFS}"
+        IFS=','
+        for MODE_TYPE in ${MODE}
+        do
+            if ! grep -w -q -E "${AVAILABLE_OUTPUT_MODES}" <<< "${MODE_TYPE}"
             then
                 echo -e "${OPTRED}ERROR!$OPTNORMAL Invalid output mode. Choose text, mono, csv, json, json-asff, junit-xml or html. ./prowler -h for help"
                 EXITCODE=1
                 exit $EXITCODE
             fi
         done
+        IFS="${OIFS}"
     fi
 }
 

@@ -318,8 +318,7 @@ aws_profile_loader
 
 # Gather account data / test aws cli connectivity
 get_aws_credentials
-getWhoami
-exit
+print_whoami
 
 # List regions
 get_regions

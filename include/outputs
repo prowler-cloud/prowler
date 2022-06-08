@@ -64,24 +64,27 @@ set_exitcode () {
 
 # Add header to certain output files readed from mode
 output_files_init() {
-  for MODE in "${MODES[@]}";
+  OIFS="${IFS}"
+  IFS=','
+  for MODE_TYPE in ${MODE}
   do
-    if  [ "${MODE}" == 'html' ]
+    if  [ "${MODE_TYPE}" == 'html' ]
     then
         addHtmlHeader
         HTML_REPORT_INIT="1"
         export HTML_REPORT_INIT
     fi
-    if [ "${MODE}" == 'csv' ]
+    if [ "${MODE_TYPE}" == 'csv' ]
     then
         printCsvHeader
     fi
   done
+  IFS="${OIFS}"
 }
 
 # Close HTML output file
 output_files_end() {
-  if [[ "${MODES[*]}" =~ "html" ]]; then
+  if [[ "${MODE}" =~ "html" ]]; then
     addHtmlFooter >> "${OUTPUT_FILE_NAME}.${EXTENSION_HTML}"
   fi
 }
@@ -146,18 +149,20 @@ general_output() {
       REGION_FROM_CHECK=$REGION
   fi
   # Iterating over input modes
-  for MODE in "${MODES[@]}";
+  OIFS="${IFS}"
+  IFS=','
+  for MODE_TYPE in ${MODE}
   do
-    if  [ "${MODE}" == 'html' ]
+    if  [ "${MODE_TYPE}" == 'html' ]
     then
         generateHtmlOutput "${CHECK_RESULT_EXTENDED}" "${CHECK_RESULT}"
-    elif [ "${MODE}" == 'csv' ]
+    elif [ "${MODE_TYPE}" == 'csv' ]
     then
         echo "${CSV_LINE}" >> "${OUTPUT_FILE_NAME}"."${EXTENSION_CSV}"
-    elif [ "${MODE}" == 'json' ]
+    elif [ "${MODE_TYPE}" == 'json' ]
     then
         generateJsonOutput "${CHECK_RESULT_EXTENDED}" "${CHECK_RESULT}" "$CHECK_RESOURCE_ID" >> "${OUTPUT_FILE_NAME}"."${EXTENSION_JSON}"
-    elif [ "${MODE}" == 'json-asff' ]
+    elif [ "${MODE_TYPE}" == 'json-asff' ]
     then
         JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "${CHECK_RESULT_EXTENDED}" "PASSED" "$CHECK_RESOURCE_ID")
         echo "${JSON_ASFF_OUTPUT}" >> "${OUTPUT_FILE_NAME}"."${EXTENSION_ASFF}"
@@ -179,11 +184,12 @@ general_output() {
         then
             output_junit_skipped "${CHECK_RESULT_EXTENDED}"
         fi
-    elif [ "${MODE}" == 'mono' ]
+    elif [ "${MODE_TYPE}" == 'mono' ]
     then
        echo  "      $COLOR_CODE ${CHECK_RESULT}! $NORMAL ${CHECK_RESULT_EXTENDED}">> "${OUTPUT_FILE_NAME}"."${EXTENSION_TEXT}"
     fi
   done
+  IFS="${OIFS}"
 
   # Print in screen
   echo "      $COLOR_CODE ${CHECK_RESULT}!$NORMAL ${CHECK_RESULT_EXTENDED}"
