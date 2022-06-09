@@ -207,6 +207,8 @@ textPass(){
   CHECK_RESOURCE_ID="${3}"
   CHECK_REGION="${2}"
 
+  PASS_COUNTER=$((PASS_COUNTER+1))
+  
   if is_quiet "${QUIET}"
   then
     return
@@ -236,6 +238,8 @@ textFail(){
   CHECK_RESOURCE_ID="${3}"
   CHECK_REGION="${2}"
 
+  FAIL_COUNTER=$((FAIL_COUNTER+1))
+
   # Check if resources are whitelisted
   CHECK_RESULT=$(allowlist_check "${CHECK_RESULT_EXTENDED}")
 
@@ -254,6 +258,8 @@ textTitle(){
   TITLE_TEXT="${2}"
   CHECK_ASFF_COMP_TYPE="${6}"
 
+  CHECKS_COUNTER=$((CHECKS_COUNTER+1))
+  
   if [[ $NUMERAL ]]; then
     # Left-pad the check ID with zeros to simplify sorting, e.g. 1.1 -> 1.01
     TITLE_ID=$(awk -F'.' '{ printf "%d.%02d", $1, $2 }' <<< "$TITLE_ID")
