@@ -295,21 +295,11 @@ unset AWS_DEFAULT_OUTPUT
 os_detector
 TIMESTAMP=$(get_iso8601_timestamp)
 
-# Validate command line options
+# Validate command line options that not requires AWS
 validate_list_checks
 validate_list_groups
 validate_database
 validate_modes
-validate_custom_output_directory
-validate_custom_output_filename
-validate_output_bucket
-validate_security_hub
-validate_organizations
-validate_allowlist
-validate_custom_checks
-
-# Add headers to certain output files
-output_files_init
 
 # Check AWS CLI
 aws_cli_detector
@@ -322,6 +312,18 @@ print_whoami
 
 # List regions
 get_regions
+
+# Validate command line options that requires AWS
+validate_custom_output_directory
+validate_custom_output_filename
+validate_output_bucket
+validate_security_hub
+validate_organizations
+validate_allowlist
+validate_custom_checks
+
+# Add headers to certain output files
+output_files_init
 
 # Execute checks
 for CHECK in "${TOTAL_CHECKS[@]}"
@@ -340,6 +342,4 @@ copy_to_s3_assume
 # Score if required
 scoring
 
-# Clean temporary files
-cleanTemp
 exit $EXITCODE
