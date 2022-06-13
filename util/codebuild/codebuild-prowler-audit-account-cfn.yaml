@@ -337,7 +337,7 @@ Resources:
             Type: PLAINTEXT
       Description: Run Prowler assessment
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
-      TimeoutInMinutes: 300
+      TimeoutInMinutes: 480
 
   ProwlerLogGroup:
     Type: 'AWS::Logs::LogGroup'
