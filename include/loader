@@ -99,7 +99,12 @@ get_checks() {
         # if -e is passed we dont want extra checks
         if [[ "${EXTRAS}" -eq 1 ]]
             then
-            EXCLUDE_CHECK_ID="${EXCLUDE_CHECK_ID},${GROUP_CHECKS[7]}"
+            if [[ -n "$EXCLUDE_CHECK_ID" ]]
+            then
+                EXCLUDE_CHECK_ID="${EXCLUDE_CHECK_ID},${GROUP_CHECKS[7]}"
+            else
+                EXCLUDE_CHECK_ID="${GROUP_CHECKS[7]}"
+            fi
         fi
         # Always ignore the following checks if not supplied with -C
         IGNORED_CHECKS="sample,extra9999"
