@@ -14,7 +14,6 @@
 GROUP_ID[23]='ens'
 GROUP_NUMBER[23]='23.0'
 GROUP_TITLE[23]='ENS Esquema Nacional de Seguridad security checks - [ens] *****'
-GROUP_RUN_BY_DEFAULT[23]='N' # run it when execute_all is called
 GROUP_CHECKS[23]='extra733,extra7123,check13,check14,check121,extra7100,check120,check116,extra7124,check12,extra7125,check14,check13,check21,check25,extra7127,check35,check24,check31,check36,check32,check33,check34,check22,extra71,check23,check23,check27,check37,extra736,check28,extra713,check21,check29,extra793,extra792,extra764,extra738,check43,extra74,extra710,extra75,check41,check42,extra749,extra750,extra751,extra752,extra753,extra754,extra755,extra7128,extra729,extra761,extra740,extra735,extra734,extra728,extra781,extra773,extra744,extra7126,extra7129'
 
 # ENS Control ID for AWS;Prowler checks that apply

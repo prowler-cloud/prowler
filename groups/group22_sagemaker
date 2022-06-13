@@ -14,6 +14,4 @@
 GROUP_ID[22]='sagemaker'
 GROUP_NUMBER[22]='22.0'
 GROUP_TITLE[22]='Amazon SageMaker related security checks - [sagemaker] ********'
-GROUP_RUN_BY_DEFAULT[22]='N' # run it when execute_all is called
 GROUP_CHECKS[22]='extra7103,extra7104,extra7111,extra7112,extra7105,extra7106,extra7107,extra7108,extra7109,extra7110'
-

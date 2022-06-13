@@ -16,7 +16,7 @@
 checkSecurityHubCompatibility(){
 
   local regx
-  if [[ "${MODE}" != "json-asff" ]]; then
+  if [[ ! "${MODE}" =~ "json-asff" ]]; then
     echo -e "\n$RED ERROR!$NORMAL Output can only be sent to Security Hub when the output mode is json-asff, i.e. -M json-asff -S\n"
     EXITCODE=1
     exit $EXITCODE
@@ -71,7 +71,7 @@ resolveSecurityHubPreviousFails(){
     if [[ $SECURITY_HUB_PREVIOUS_FINDINGS != "[]" ]]; then
       FINDINGS_COUNT=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq '. | length')
       for i in $(seq 0 50 $FINDINGS_COUNT);
-      do 
+      do
         BATCH_FINDINGS=$(echo $SECURITY_HUB_PREVIOUS_FINDINGS | jq -c '.['"$i:$i+50"']')
         BATCH_FINDINGS_COUNT=$(echo $BATCH_FINDINGS | jq '. | length')
         if [ "$BATCH_FINDINGS_COUNT" -gt 0 ]; then
@@ -94,7 +94,6 @@ sendToSecurityHub(){
   local finding_id=$(echo ${findings} | jq -r .Id )
   SECURITYHUB_NEW_FINDINGS_IDS+=( "$finding_id" )
   BATCH_IMPORT_RESULT=$($AWSCLI securityhub --region "$region" $PROFILE_OPT batch-import-findings --findings "${findings}" 2>&1)
-  
   # Check for success if imported
   if [[ -z "${BATCH_IMPORT_RESULT}" ]] || ! jq -e '.SuccessCount == 1' <<< "${BATCH_IMPORT_RESULT}" > /dev/null 2>&1; then
     echo "${BAD} ERROR! Failed to send check output to AWS Security Hub.${NORMAL}"

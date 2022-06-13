@@ -14,5 +14,4 @@
 GROUP_ID[24]='glue'
 GROUP_NUMBER[24]='24.0'
 GROUP_TITLE[24]='Amazon Glue related security checks - [glue] ******************'
-GROUP_RUN_BY_DEFAULT[24]='N' # run it when execute_all is called
 GROUP_CHECKS[24]='extra7114,extra7115,extra7116,extra7117,extra7118,extra7119,extra7120,extra7121,extra7122'

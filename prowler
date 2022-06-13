@@ -22,62 +22,70 @@
 # All there legs and lashes
 # I've just got to find my way...
 
-OPTRED="[1;31m"
-OPTNORMAL="[0;39m"
-
 # Set the defaults variables
 PROWLER_VERSION=2.10.0-25May2022
 PROWLER_DIR=$(dirname "$0")
 
-REGION=""
-FILTERREGION=""
-MAXITEMS=100
-MONOCHROME=0
-MODE="text"
-QUIET=0
-SEP=','
-KEEPCREDREPORT=0
-EXITCODE=0
-SEND_TO_SECURITY_HUB=0
-FAILED_CHECK_FAILED_SCAN=1
-PROWLER_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
-OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
-TITLE_ID=""
-TITLE_TEXT="CALLER ERROR - UNSET TITLE"
-ALLOWLIST_FILE=""
-TOTAL_CHECKS=()
+############################################################
+# DEPENDENCIES
+. $PROWLER_DIR/include/default_variables
+. $PROWLER_DIR/include/colors
+. $PROWLER_DIR/include/os_detector
+. $PROWLER_DIR/include/aws_profile_loader
+. $PROWLER_DIR/include/awscli_detector
+. $PROWLER_DIR/include/whoami
+. $PROWLER_DIR/include/assume_role
+. $PROWLER_DIR/include/csv_header
+. $PROWLER_DIR/include/banner
+. $PROWLER_DIR/include/html_report
+. $PROWLER_DIR/include/tools_detector
+. $PROWLER_DIR/include/outputs_bucket
+. $PROWLER_DIR/include/outputs
+. $PROWLER_DIR/include/credentials_report
+. $PROWLER_DIR/include/scoring
+. $PROWLER_DIR/include/secrets_detector
+. $PROWLER_DIR/include/check_creds_last_used
+. $PROWLER_DIR/include/check3x
+. $PROWLER_DIR/include/connection_tests
+. $PROWLER_DIR/include/securityhub_integration
+. $PROWLER_DIR/include/junit_integration
+. $PROWLER_DIR/include/organizations_metadata
+. $PROWLER_DIR/include/custom_checks
+. $PROWLER_DIR/include/allowlist
+. $PROWLER_DIR/include/db_connector
+. $PROWLER_DIR/include/show_titles
+. $PROWLER_DIR/include/loader
+. $PROWLER_DIR/include/execute_check
+. $PROWLER_DIR/include/validate_options
+. $PROWLER_DIR/include/traps
+############################################################
 
+# Check external tools
+jq_detector
+curl_detector
 
-# Ensures command output will always be set to JSON.
-# If the default value is already set, ORIGINAL_OUTPUT will be used to store it and reset it at cleanup
-if [[ -z "${AWS_DEFAULT_OUTPUT}" ]]; then
-  ORIGINAL_OUTPUT=$AWS_DEFAULT_OUTPUT
-  export AWS_DEFAULT_OUTPUT="json"
-else
-  export AWS_DEFAULT_OUTPUT="json"
-fi
-
-# Command usage menu
+############################################################
+# USAGE
 usage(){
   echo "
 USAGE:
-      `basename $0` [ -p <profile> -r <region>  -h ]
+      $(basename "${0}") [ -p <profile> -r <region>  -h ]
   Options:
       -p <profile>        Specify your AWS profile to use.
                             (i.e.: default)
       -r <region>         Specify an AWS region to direct API requests to.
                             (i.e.: us-east-1), all regions are checked anyway if the check requires it.
-      -c <check_id>       Specify one or multiple check ids separated by commas, to see all available checks use "-l" option.
-                            (i.e.: "check11" for check 1.1 or "extra71,extra72" for extra check 71 and extra check 72)
+      -c <check_id>       Specify one or multiple check ids separated by commas, to see all available checks use \"-l\" option.
+                            (i.e.: \"check11\" for check 1.1 or \"extra71,extra72\" for extra check 71 and extra check 72)
       -C                  Checklist file. See checklist.txt for reference and format.
                             (i.e.: checklist.txt)
-      -g <group_id>       Specify a group of checks by id, to see all available group of checks use "-L".
-                            (i.e.: "group3" for entire section 3, "cislevel1" for CIS Level 1 Profile Definitions or "forensics-ready")
+      -g <group_id>       Specify a group of checks by id, to see all available group of checks use \"-L\".
+                            (i.e.: \"group3\" for entire section 3, \"cislevel1\" for CIS Level 1 Profile Definitions or \"forensics-ready\")
       -f <filterregion>   Specify an AWS region to run checks against.
                             (i.e.: us-west-1 or for multiple regions use single quote like 'us-west-1 us-west-2')
       -m <maxitems>       Specify the maximum number of items to return for long-running requests (default: 100).
       -M <mode>           Output or report mode: text (default), mono, html, json, json-asff, junit-xml, csv. They can be used combined comma separated.
-                            (i.e.: "html,json"; files created in background; progress on stdout)
+                            (i.e.: \"html,json\"; files created in background; progress on stdout)
       -k                  Keep the credential report for debugging.
       -n                  Show check numbers to sort easier.
                             (i.e.: 1.01 instead of 1.1)
@@ -89,9 +97,9 @@ USAGE:
       -b                  Do not print Prowler banner.
       -s                  Show scoring report (it is included by default in the html report).
       -S                  Send check output to AWS Security Hub. Only valid when the output mode is json-asff
-                            (i.e. "-M json-asff -S").
+                            (i.e. \"-M json-asff -S\").
       -x                  Specify external directory with custom checks. S3 URI is supported.
-                            (i.e. /my/own/checks or s3://bucket/prefix/checks, files must start by "check").
+                            (i.e. /my/own/checks or s3://bucket/prefix/checks, files must start by \"check\").
       -q                  Get only FAIL findings, will show WARNINGS when a resource is excluded.
       -A                  Account id for the account where to assume a role, requires -R.
                             (i.e.: 123456789012)
@@ -100,8 +108,8 @@ USAGE:
       -T                  Session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, optional with -R and -A.
                             (i.e.: 43200)
       -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R.
-      -w                  Allowlist file. See allowlist_sample.txt for reference and format. S3 URI is supported.
-                            (i.e.: allowlist_sample.txt or s3://bucket/prefix/allowlist_sample.txt)
+      -w                  Allowlist file. See allowlist_sample.txt for reference and format. S3 URI and DynamoDB table ARNs are also supported as allowlist file. 
+                            (i.e.: allowlist_sample.txt or s3://bucket/prefix/allowlist_sample.txt or arn:aws:dynamodb:us-east-1:111111222222:table/allowlist)
       -N <shodan_api_key> Shodan API key used by check extra7102.
       -o                  Custom output directory, if not specified will use default prowler/output, requires -M <mode>.
                             (i.e.: -M csv -o /tmp/reports/)
@@ -110,11 +118,11 @@ USAGE:
       -D                  Same as -B but do not use the assumed role credentials to put objects to the bucket, instead uses the initial credentials.
       -F                  Custom output report name, if not specified will use default output/prowler-output-ACCOUNT_NUM-OUTPUT_DATE.format.
       -z                  Failed checks do not trigger exit code 3.
-      -Z                  Specify one or multiple check ids separated by commas that will trigger exit code 3 if they fail. Unspecified checks will not trigger exit code 3. This will override "-z".
-                            (i.e.: "-Z check11,check12" will cause check11 and/or check12 to trigger exit code 3)
+      -Z                  Specify one or multiple check ids separated by commas that will trigger exit code 3 if they fail. Unspecified checks will not trigger exit code 3. This will override \"-z\".
+                            (i.e.: \"-Z check11,check12\" will cause check11 and/or check12 to trigger exit code 3)
       -O <mgmnt acct ID>  Specify AWS Organizations management account ID. Used to get account details, requires -R.
                             (requires organizations:ListAccounts* and organizations:ListTagsForResource)
-      -a <aws_cli_cmd>    Build your own on-the-fly custom check by specifying the AWS CLI command to execute. Requires "-c extra9999". Omit the "aws" command and only use its parameters within quotes.
+      -a <aws_cli_cmd>    Build your own on-the-fly custom check by specifying the AWS CLI command to execute. Requires \"-c extra9999\". Omit the \"aws\" command and only use its parameters within quotes.
                           Do not nest quotes in the aws parameter. Note that --output text is already included in the check.
                             i,e. -a 'ec2 describe-security-groups --filters Name=ip-permission.to-port,Values=80 --query SecurityGroups[*].GroupId[]]'
       -V                  Show version number & exit.
@@ -124,6 +132,11 @@ USAGE:
   exit
 }
 
+############################################################
+# This function comes from include/awscli_detector
+set_aws_default_output
+
+# Parse Prowler command line options
 while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OPTION; do
    case $OPTION in
      h )
@@ -132,10 +145,10 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OP
         exit $EXITCODE
         ;;
      l )
-        PRINTCHECKSONLY=1
+        LIST_CHECKS=1
         ;;
      L )
-        PRINTGROUPSONLY=1
+        LIST_GROUPS=1
         ;;
      k )
         KEEPCREDREPORT=1
@@ -160,7 +173,7 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OP
         FILTERREGION=$OPTARG
         ;;
      m )
-        MAXITEMS=$OPTARG
+        export MAXITEMS=$OPTARG
         ;;
      M )
         MODE=$OPTARG
@@ -210,7 +223,7 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OP
         ALLOWLIST_FILE=$OPTARG
         ;;
      N )
-        SHODAN_API_KEY=$OPTARG
+        export SHODAN_API_KEY=$OPTARG
         ;;
      o )
         OUTPUT_DIR_CUSTOM=$OPTARG
@@ -235,7 +248,7 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OP
         MANAGEMENT_ACCOUNT_ID=$OPTARG
         ;;
      a )
-        CUSTOM_CMD=$OPTARG
+        export CUSTOM_CMD=$OPTARG
         ;;
      d )
         DATABASE_PROVIDER=$OPTARG
@@ -256,25 +269,19 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OP
         ;;
    esac
 done
+############################################################
+# PROWLER MAIN
 
-clean_up() {
-  rm -f /tmp/prowler*.policy.*
-  # in case html output is used, make sure it closes html file properly
-  if [[ "${MODES[@]}" =~ "html" ]]; then
-    addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  fi
-  # puts the AWS_DEFAULT_OUTPUT back to what it was at the start
-  if [ -z "$ORIGINAL_OUTPUT" ]; then
-    export AWS_DEFAULT_OUTPUT="$ORIGINAL_OUTPUT"
-  else
-    unset AWS_DEFAULT_OUTPUT
-  fi
-}
+# Set Prowler Colors
+set_colors
 
-handle_ctrl_c() {
-  clean_up
-  exit $EXITCODE
-}
+# Show Prowler Banner
+prowlerBanner
+
+# Load Prowler Groups
+load_groups
+# Load Prowler Checks
+get_checks
 
 # Clean up any temp files when prowler quits unexpectedly
 trap clean_up EXIT
@@ -284,583 +291,55 @@ trap handle_ctrl_c INT
 # Environment variable takes precedence over command line
 unset AWS_DEFAULT_OUTPUT
 
-. $PROWLER_DIR/include/colors
-. $PROWLER_DIR/include/os_detector
-. $PROWLER_DIR/include/aws_profile_loader
-. $PROWLER_DIR/include/awscli_detector
-. $PROWLER_DIR/include/whoami
-. $PROWLER_DIR/include/assume_role
-. $PROWLER_DIR/include/csv_header
-. $PROWLER_DIR/include/banner
-. $PROWLER_DIR/include/html_report
-. $PROWLER_DIR/include/outputs_bucket
-. $PROWLER_DIR/include/outputs
-. $PROWLER_DIR/include/credentials_report
-. $PROWLER_DIR/include/scoring
-. $PROWLER_DIR/include/python_detector
-. $PROWLER_DIR/include/secrets_detector
-. $PROWLER_DIR/include/check_creds_last_used
-. $PROWLER_DIR/include/check3x
-. $PROWLER_DIR/include/connection_tests
-. $PROWLER_DIR/include/securityhub_integration
-. $PROWLER_DIR/include/junit_integration
-. $PROWLER_DIR/include/organizations_metadata
-. $PROWLER_DIR/include/custom_checks
-. $PROWLER_DIR/include/allowlist
-. $PROWLER_DIR/include/db_connector
+# Check OS
+os_detector
+TIMESTAMP=$(get_iso8601_timestamp)
 
+# Validate command line options that not requires AWS
+validate_list_checks
+validate_list_groups
+validate_database
+validate_modes
+validate_output_bucket
 
-#Parsing input options
-# Parses the check file into CHECK_ID's.
-if [[ -n "$CHECK_FILE" ]]; then
-  if [[ -f $CHECK_FILE ]]; then
-    # Parses the file, converting it to a comma seperated list. Ignores all # comments and removes extra blank spaces
-    CHECK_ID="$(awk '!/^[[:space:]]*#/{print }' <(cat $CHECK_FILE | sed 's/[[:space:]]*#.*$//g;/^$/d' | sed 'H;1h;$!d;x;y/\n/,/' | tr -d ' '))"
-  else
-    # If the file doesn't exist, exits Prowler
-    echo "$CHECK_FILE does not exist"
-    EXITCODE=1
-    exit $EXITCODE
-  fi
-fi
-
-# Check database providers
-if [[ ${DATABASE_PROVIDER} ]]
-then
-    # Check if input provider is supported
-    if ! grep -w -q -E "${DATABASE_PROVIDER}" <<< "${SUPPORTED_DB_PROVIDERS}"
-    then
-        db_exit_abnormally "${DATABASE_PROVIDER}" "DB provider not supported, providers supported: ${SUPPORTED_DB_PROVIDERS} - EXITING!"
-    elif ! command -v "psql" > /dev/null 2>&1
-    then
-        db_exit_abnormally "postgresql" "psql tool not installed or not found- EXITING!"
-    elif  [[ $(find "${HOME}/.pgpass" -perm 600 2>/dev/null) != "$HOME/.pgpass" ]] 
-    then 
-          db_exit_abnormally  "postgresql" ".pgpass file not found at $HOME/.pgpass or .pgpass file permissions not matching 600 - EXITING!" 
-    else
-        IFS=':' read -r PSQL_HOSTNAME PSQL_PORT PSQL_DATABASE PSQL_USER PSQL_PASSWORD PSQL_TABLE < "$HOME/.pgpass"
-        if [[ ! ${PSQL_HOSTNAME} ]] || [[ ! ${PSQL_PORT} ]] || [[ ! ${PSQL_DATABASE} ]] || [[ ! ${PSQL_USER} ]] || [[ ! ${PSQL_PASSWORD} ]] || [[ ! ${PSQL_TABLE} ]]
-        then
-             db_exit_abnormally "postgresql" "Empty field into ${HOME}/.pgpass file, all fields must be filled. Please check Prowler README about .pgpass file format - EXITING!"
-        fi
-        export PSQL_USER
-        export PSQL_HOSTNAME
-        export PSQL_TABLE
-
-        # Once all the variables are defined and exported test if database instance is reachable 
-        if ! pg_isready -q  -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -p "${PSQL_PORT}" 
-        then
-            db_exit_abnormally "postgresql" "Database listening on host ${PSQL_HOSTNAME} on port ${PSQL_PORT} connected as user ${PSQL_USER} is unreachable - EXITING!"
-        # If database instance is ready time to check credentials
-        elif ! PGPASSWORD="${PSQL_PASSWORD}" psql -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -c "\q" > /dev/null  2>&1
-        then
-            db_exit_abnormally "postgresql" "User ${PSQL_USER} invalid or invalid credentials, please check ${HOME}/.pgpass file - EXITING!"
-        # If credentials are ok -> database exists?
-        elif ! PGPASSWORD="${PSQL_PASSWORD}" psql -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" "${PSQL_DATABASE}" -c "\q" > /dev/null  2>&1
-        then
-            db_exit_abnormally "postgresql" "Database not exists, please check ${HOME}/.pgpass file - EXITING!"
-        # and finally, if database exists -> table exists ?
-        elif ! PGPASSWORD="${PSQL_PASSWORD}" psql -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" "${PSQL_DATABASE}"  -c "SELECT * FROM ${PSQL_TABLE};" > /dev/null  2>&1
-        then
-             db_exit_abnormally "postgresql" "Table ${PSQL_TABLE} not exists, please check ${HOME}/.pgpass file - EXITING!"
-        fi
-        
-        
-    fi
-fi
-
-# Check modes
-if [ -n "${MODE}" ]
-then
-  IFS=',' read -ra MODES <<< "${MODE}"
-  for MODE in "${MODES[@]}"; do
-    if [[ "$MODE" != "mono" && "$MODE" != "text" && "$MODE" != "csv" && "$MODE" != "json" && "$MODE" != "json-asff" && "$MODE" != "junit-xml" && "$MODE" != "html" ]]; then
-      echo -e "${OPTRED}ERROR!$OPTNORMAL Invalid output mode.  Choose text, mono, csv, json, json-asff, junit-xml or html. ./prowler -h for help"
-      EXITCODE=1
-      exit $EXITCODE
-    fi
-  done
-fi
-
-#Check output dir custom
-if [ -n "${OUTPUT_DIR_CUSTOM}" ]
-then
-    # If dir custom, mode has to be enabled (if you provide a custom directory it's because you want to store something)
-    if [  "${MODE}" != 'text' ]
-    then
-        # Check if custom folder exists
-        if [ ! -d "${OUTPUT_DIR_CUSTOM}" ]
-        then
-            echo "$OPTRED ERROR!$OPTNORMAL directory \"$OUTPUT_DIR_CUSTOM\" does not exist."
-            exit 1
-        else
-            OUTPUT_DIR=$OUTPUT_DIR_CUSTOM
-        fi
-    else 
-        echo "$OPTRED ERROR!$OPTNORMAL - When using custom directory output Mode (-M) has to be set as well. Use -h for help."
-        exit 1
-    fi   
- # If custom output dir is not provided output dir -> default
- else 
-        OUTPUT_DIR="${PROWLER_DIR}/output"
-        if [ ! -d "${OUTPUT_DIR}" ]
-        then
-            mkdir -p "${OUTPUT_DIR}"
-        fi
- fi
-
- # End of input parameters tests 
- 
-# Pre-process allowlist file if supplied
-if [[ -n "$ALLOWLIST_FILE" ]]; then
-  allowlist
-fi
-
-# Create output file name
-if [ -n "${OUTPUT_FILE_NAME}" ]
-then
-  OUTPUT_FILE_NAME="${OUTPUT_DIR}/$OUTPUT_FILE_NAME"
-else
-  OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
-fi
-
-# Add headers to certain output files
-output_files_init
-
-
-
-# Load all of the groups of checks inside groups folder named as "groupNumber*"
-for group in $(ls $PROWLER_DIR/groups/group[0-9]*|grep -v groupN_sample); do
-	. "$group"
-done
-
-# Load all of the checks inside checks folder named as "check*"
-# this includes also extra checks since they are "check_extraNN"
-for checks in $(ls $PROWLER_DIR/checks/check*|grep -v check_sample); do
-	. "$checks"
-done
-
-# include checks if external folder is specified
-if [[ $EXTERNAL_CHECKS_PATH ]]; then
-  custom_checks
-fi
-
-# Get a list of total checks available by ID
-for i in "${!GROUP_TITLE[@]}"; do
-  IFS=',' read -ra CHECKS <<< "${GROUP_CHECKS[$i]}"
-  for j in "${CHECKS[@]}"; do
-    TOTAL_CHECKS+=("$CHECK_ID_$j")
-  done
-done
-# Remove duplicates, sort checks numerically, and store the result as an array
-# Note: the sort mechanism relies on the fact that the check ID prefixes 'check' and 'extra' are both 5 characters long.
-#       6th character is the section number, 7th character onwards is the individual ID (e.g. check110 = check 1 10)
-TOTAL_CHECKS=($(echo "${TOTAL_CHECKS[*]}" | tr ' ' '\n' | awk '!seen[$0]++' | sort -k 1.6,1.6n -k 1.7n))
-
-# Function to get all regions
-get_regions() {
-  # Get list of regions based on include/whoami
-  REGIONS=$($AWSCLI ec2 describe-regions --query 'Regions[].RegionName' --output text $PROFILE_OPT --region $REGION_FOR_STS --region-names ${FILTERREGION//[,]/ } 2>&1)
-  ret=$?
-  if [[ $ret -ne 0 ]]; then
-    echo "$OPTRED Access Denied trying to describe regions! Review permissions as described here: https://github.com/prowler-cloud/prowler/#requirements-and-installation $OPTNORMAL"
-    EXITCODE=1
-    exit $EXITCODE
-  fi
-}
-
-# Function to show the title of the check, and optionally which group(s) it belongs to
-# using this way instead of arrays to keep bash3 (osx) and bash4(linux) compatibility
-show_check_title() {
-  local check_id=CHECK_ID_$1
-  local check_title=CHECK_TITLE_$1
-  local check_scored=CHECK_SCORED_$1
-  local check_cis_level=CHECK_CIS_LEVEL_$1
-  local check_asff_compliance_type=CHECK_ASFF_COMPLIANCE_TYPE_$1
-  local check_severity=CHECK_SEVERITY_$1
-  local check_servicename=CHECK_SERVICENAME_$1
-  local group_ids
-  local group_index
-  local check_name
-  # If requested ($2 is any non-null value) iterate all GROUP_CHECKS and produce a comma-separated list of all
-  # the GROUP_IDs that include this particular check
-  if [[ -n "$2" ]]; then
-    for group_index in "${!GROUP_ID[@]}"; do
-      for check_name in $(echo "${GROUP_CHECKS[$group_index]}" | sed "s/,/ /g");do
-        if [[ "$check_name" == "$1" ]]; then
-          if [[ -n "$group_ids" ]]; then
-            group_ids+=", "
-          fi
-          group_ids+="${GROUP_ID[$group_index]}"
-        fi
-      done
-    done
-  fi
-  # This shows ASFF_COMPLIANCE_TYPE if group used is ens, this si used to show ENS compliance ID control, can be used for other compliance groups as well.
-  if [[ ${GROUP_ID_READ} == "ens" ]];then
-    textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_cis_level}" "$group_ids" "(${!check_asff_compliance_type})"
-  else
-    textTitle "${!check_id}" "${!check_title}" "${!check_servicename}" "${!check_severity}" "$group_ids" "${!check_cis_level}"
-  fi
-}
-
-# Function to show the title of a group, by numeric id
-show_group_title() {
-	# when csv mode is used, no group title is shown
-  if [[ "$MODE" != "csv" ]]; then
-      textTitle "${GROUP_NUMBER[$1]}" "${GROUP_TITLE[$1]}"
-  fi
-}
-
-# Function to execute the check
-execute_check() {
-  if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
-    # echo ******* I am here again to check on my role *******
-    # Following logic looks for time remaining in the session and review it
-    # if it is less than 600 seconds, 10 minutes.
-    CURRENT_TIMESTAMP=$(date -u "+%s")
-    SESSION_TIME_REMAINING=$(expr $AWS_SESSION_EXPIRATION - $CURRENT_TIMESTAMP)
-    # echo SESSION TIME REMAINING IN SECONDS: $SESSION_TIME_REMAINING
-    MINIMUM_REMAINING_TIME_ALLOWED=600
-    if (( $MINIMUM_REMAINING_TIME_ALLOWED > $SESSION_TIME_REMAINING )); then
-      # echo LESS THAN 10 MIN LEFT: RE-ASSUMING...
-      unset AWS_ACCESS_KEY_ID
-      unset AWS_SECRET_ACCESS_KEY
-      unset AWS_SESSION_TOKEN
-      assume_role
-    fi
-  fi
-
-  CHECK_ID="$1"
-
-  # See if this is an alternate name for a check
-  # for example, we might have been passed 1.01 which is another name for 1.1
-  local alternate_name_var=CHECK_ALTERNATE_$1
-  local alternate_name=${!alternate_name_var}
-  # See if this check defines an ASFF Type, if so, use this, falling back to a sane default
-  # For a list of Types Taxonomy, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-type-taxonomy.html
-  local asff_type_var=CHECK_ASFF_TYPE_$1
-  CHECK_ASFF_TYPE="${!asff_type_var:-Software and Configuration Checks}"
-
-  local asff_compliance_type_var=CHECK_ASFF_COMPLIANCE_TYPE_$1
-  CHECK_ASFF_COMPLIANCE_TYPE="${!asff_compliance_type_var:-Software and Configuration Checks}"
-
-  # See if this check defines an ASFF Resource Type, if so, use this, falling back to a sane default
-  # For a list of Resource Types, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
-  local asff_resource_type_var=CHECK_ASFF_RESOURCE_TYPE_$1
-  CHECK_ASFF_RESOURCE_TYPE="${!asff_resource_type_var:-AwsAccount}"
-
-  local severity_var=CHECK_SEVERITY_$1
-  CHECK_SEVERITY="${!severity_var}"
-
-  local servicename_var=CHECK_SERVICENAME_$1
-  CHECK_SERVICENAME="${!servicename_var}"
-
-  local risk_var=CHECK_RISK_$1
-  CHECK_RISK="${!risk_var}"
-
-  local remediation_var=CHECK_REMEDIATION_$1
-  CHECK_REMEDIATION="${!remediation_var}"
-
-  local doc_var=CHECK_DOC_$1
-  CHECK_DOC="${!doc_var}"
-
-  local caf_epic_var=CHECK_CAF_EPIC_$1
-  CHECK_CAF_EPIC="${!caf_epic_var}"
-
-  SECURITYHUB_NEW_FINDINGS_IDS=()
-
-  # Generate the credential report, only if it is group1 related which checks we
-  # run so that the checks can safely assume it's available
-  # set the custom ignores list for this check
-  ignores="$(awk "/${1}/{print}" <(echo "${ALLOWLIST}"))"
-
-  if [ ${alternate_name} ];then
-    if [[ ${alternate_name} == check1* || ${alternate_name} == extra71 || ${alternate_name} == extra774 || ${alternate_name} == extra7123 ]];then
-      if [ ! -s $TEMP_REPORT_FILE ];then
-        genCredReport
-        saveReport
-      fi
-    fi
-    show_check_title ${alternate_name}
-    if is_junit_output_enabled; then
-      prepare_junit_check_output "$1"
-    fi
-    # Execute the check
-    IGNORES="${ignores}" CHECK_NAME="$1" ${alternate_name}
-    if is_junit_output_enabled; then
-      finalise_junit_check_output "$1"
-    fi
-
-    if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
-      resolveSecurityHubPreviousFails "$1"
-    fi
-  else
-    # Check to see if this is a real check
-    local check_id_var=CHECK_ID_$1
-    local check_id=${!check_id_var}
-    if [ ${check_id} ]; then
-      if [[ ${check_id} == 1* || ${check_id} == 7.1 || ${check_id} == 7.74 || ${check_id} == 7.123 ]];then
-        if [ ! -s $TEMP_REPORT_FILE ];then
-          genCredReport
-          saveReport
-        fi
-      fi
-      show_check_title "$1"
-      if is_junit_output_enabled; then
-        prepare_junit_check_output "$1"
-      fi
-      # Execute the check
-      IGNORES="${ignores}" CHECK_NAME="$1" $1
-
-      if is_junit_output_enabled; then
-        finalise_junit_check_output "$1"
-      fi
-
-      if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
-        resolveSecurityHubPreviousFails "$1"
-      fi
-
-    else
-      textFail "Check ${CHECK_ID} does not exist. Use a valid check name (i.e. check41 or extra71)";
-      exit $EXITCODE
-    fi
-  fi
-}
-
-# Function to execute all checks in a group
-execute_group() {
-    show_group_title $1
-    # run the checks in the group
-    IFS=',' read -ra CHECKS <<< ${GROUP_CHECKS[$1]}
-
-    # Exclude any checks specified
-    if [[ -n ${2} ]]; then
-        EXCLUDED_CHECKS=()
-        NEW_CHECKS=()
-        IFS=',' read -ra EXCLUDED_CHECKS <<< "${2},"
-        for exc in ${EXCLUDED_CHECKS[@]} ; do
-            for i in ${!CHECKS[@]} ; do
-                [[ ${CHECKS[i]} = ${exc} ]] && unset CHECKS[i]
-            done
-        done
-        unset EXCLUDED_CHECKS
-    fi
-    for i in ${CHECKS[@]}; do
-        execute_check ${i}
-    done
-}
-
-# Function to execute group by name
-execute_group_by_id() {
-  	for i in "${!GROUP_ID[@]}"; do
-		if [ "${GROUP_ID[$i]}" == "$1" ]; then
-			execute_group ${i} $2
-		fi
-	done
-}
-
-# Function to execute all checks in all groups except extras if -e is invoked
-execute_all() {
-  for i in "${!GROUP_TITLE[@]}"; do
-    if [[ $EXTRAS ]]; then
-      GROUP_RUN_BY_DEFAULT[7]='N'
-    fi
-    if [ "${GROUP_RUN_BY_DEFAULT[$i]}" == "Y" ]; then
-      execute_group $i
-    fi
-  done
-}
-
-# Function to show the titles of either all checks or only those in the specified group
-show_all_titles() {
-  local checks
-  local check_id
-  local group_index
-  # If '-g <group_id>' has been specified, only show the titles of checks within the specified group
-  if [[ $GROUP_ID_READ ]];then
-    if [[ " ${GROUP_ID[@]} " =~ " ${GROUP_ID_READ} " ]]; then
-      for group_index in "${!GROUP_ID[@]}"; do
-        if [ "${GROUP_ID[$group_index]}" == "${GROUP_ID_READ}" ]; then
-          show_group_title "$group_index"
-          IFS=',' read -ra checks <<< "${GROUP_CHECKS[$group_index]}"
-          for check_id in ${checks[@]}; do
-            show_check_title "$check_id"
-          done
-        fi
-      done
-    else
-      textFail "Group ${GROUP_ID_READ} does not exist. Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
-      show_all_group_titles
-      exit $EXITCODE
-    fi
-  else
-    for check_id in "${TOTAL_CHECKS[@]}"; do
-      # Pass 1 so that the group IDs that this check belongs to are printed
-      show_check_title "$check_id" 1
-    done
-  fi
-}
-
-show_all_group_titles() {
-  local group_index
-  for group_index in "${!GROUP_TITLE[@]}"; do
-    show_group_title "$group_index"
-  done
-}
-
-# Function to execute all checks but exclude some of them
-get_all_checks_without_exclusion() {
-  CHECKS_EXCLUDED=()
-  local CHECKS_TO_EXCLUDE=()
-  # Get a list of checks to exclude
-  IFS=',' read -ra E_CHECKS <<< "$1"
-  for E_CHECK in "${E_CHECKS[@]}"; do
-    CHECKS_TO_EXCLUDE+=($E_CHECK)
-  done
-  # Create a list that contains all checks but excluded ones
-  for i in "${TOTAL_CHECKS[@]}"; do
-    local COINCIDENCE=false
-    for x in "${CHECKS_TO_EXCLUDE[@]}"; do
-      if [[ "$i" == "$x" ]]; then
-        COINCIDENCE=true
-      fi
-    done
-    if [[ "$COINCIDENCE" = false ]]; then
-      CHECKS_EXCLUDED+=($i)
-    fi
-  done
-}
-
-### All functions defined above ... run the workflow
-#if [[ " ${MODES[@]} " =~ " mono " || " ${MODES[@]} " =~ " text " ]]; then
-  prowlerBanner
-#fi
-
-# List only check tittles
-if [[ $PRINTCHECKSONLY == "1" ]]; then
-  show_all_titles
-  exit $EXITCODE
-fi
-
-# List only group tittles
-if [[ $PRINTGROUPSONLY == "1" ]]; then
-  show_all_group_titles
-  exit $EXITCODE
-fi
-
-# Check that jq is installed for JSON outputs
-if [[ " ${MODES[@]} " =~ " json " || " ${MODES[@]} " =~ " json-asff " ]]; then
-  . $PROWLER_DIR/include/jq_detector
-fi
-
-if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
-  checkSecurityHubCompatibility
-fi
-
-if is_junit_output_enabled; then
-  prepare_junit_output
-fi
-
-# First, check AWS Organizations Metadata
-if [[ -n "${MANAGEMENT_ACCOUNT_ID}" && -n "${ROLE_TO_ASSUME}" ]]
-then
-  # Backing up initial credentials
-  backupInitialAWSCredentials
-
-  # Backing up initial account to assume
-  INITIAL_ACCOUNT_TO_ASSUME="${ACCOUNT_TO_ASSUME}"
-
-  # Set the new account to assume to recover AWS Organizations Metadata
-  ACCOUNT_TO_ASSUME="${MANAGEMENT_ACCOUNT_ID}"
-
-  # Recover AWS Organizations Metadata
-  get_orgs_account_details
-
-  # Restoring account to assume to -A field after getting account metadata
-  ACCOUNT_TO_ASSUME="${INITIAL_ACCOUNT_TO_ASSUME}"
-
-  # Restoring initial credentials
-  restoreInitialAWSCredentials
-fi
+# Check AWS CLI
+aws_cli_detector
+# load AWS profile
+aws_profile_loader
 
 # Gather account data / test aws cli connectivity
-getWhoami
-if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
-  backupInitialAWSCredentials
-  assume_role
-fi
+get_aws_credentials
+print_whoami
 
 # List regions
 get_regions
 
-# Execute group of checks if called with -g
-if [[ $GROUP_ID_READ ]];then
-  if [[ " ${GROUP_ID[@]} " =~ " ${GROUP_ID_READ} " ]]; then
+# Validate command line options that requires AWS
+validate_custom_output_directory
+validate_custom_output_filename
+validate_security_hub
+validate_organizations
+validate_allowlist
+validate_custom_checks
 
-    execute_group_by_id ${GROUP_ID_READ} ${EXCLUDE_CHECK_ID}
-    if [[ "${MODES[@]}" =~ "html" ]]; then
-      addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-    fi
-    cleanTemp
-    scoring
-    if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
-      restoreInitialAWSCredentials
-    fi
-    if [[ $OUTPUT_BUCKET ]]; then
-      copyToS3
-    fi
-    exit $EXITCODE
-  else
-    textFail "Group ${GROUP_ID_READ} does not exist. Use a valid check group ID i.e.: group1, extras, forensics-ready, etc."
-    show_all_group_titles
-    exit $EXITCODE
-  fi
-fi
+# Add headers to certain output files
+output_files_init
 
-# Get a list of total checks excluding a list provided by the user and overwrite CHECK_ID with the result
-# if the list provided by the user contains an invalid check, this will be discarded.
-# if the list provided by the user contains  just one argument and is invalid, then it will be discarded and all tests will be executed
-if [[ ${EXCLUDE_CHECK_ID} ]];then
-  get_all_checks_without_exclusion ${EXCLUDE_CHECK_ID}
-  function join { local IFS="$1"; shift; echo "$*"; }
-  CHECKS_EXCLUDED=$(join , "${CHECKS_EXCLUDED[@]}")
-  CHECK_ID=${CHECKS_EXCLUDED}
-fi
+# Execute checks
+for CHECK in "${TOTAL_CHECKS[@]}"
+do
+  execute_check "${CHECK}"
+done
 
-# Execute single check if called with -c
-if [[ $CHECK_ID ]];then
-  IFS=',' read -ra CHECKS <<< "$CHECK_ID"
-  for CHECK in "${CHECKS[@]}"; do
-    execute_check $CHECK
-  done
-  if [[ "${MODES[@]}" =~ "html" ]]; then
-    addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  fi
-  if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
-    restoreInitialAWSCredentials
-  fi
-  if [[ $OUTPUT_BUCKET ]]; then
-    copyToS3
-  fi
-  scoring
-  cleanTemp
-  exit $EXITCODE
-fi
+# Add bottom to certain output files
+output_files_end
 
-execute_all
+# Validate output bucket without assuming role
+validate_copy_to_s3_no_assume
+# Copy Prowler Findings to S3 if required
+copy_to_s3_assume
 
-if [[ "${MODES[@]}" =~ "html" ]]; then
-  addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-fi
-
+# Score if required
 scoring
-cleanTemp
-if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
-  restoreInitialAWSCredentials
-fi
-if [[ $OUTPUT_BUCKET ]]; then
-  copyToS3
-fi
 
 exit $EXITCODE

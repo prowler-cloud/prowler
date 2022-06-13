@@ -1,0 +1,233 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Copy to S3 without assuming role with -D
+validate_copy_to_s3_no_assume() {
+    if [[ $OUTPUT_BUCKET_NOASSUME ]]; then
+        restoreInitialAWSCredentials
+    fi
+}
+
+# Copy to S3 assuming role with -B
+copy_to_s3_assume() {
+    if [[ $OUTPUT_BUCKET ]]; then
+        copyToS3
+    fi
+}
+
+# Validate custom checks with -x
+validate_custom_checks() {
+    if [[ $EXTERNAL_CHECKS_PATH ]]
+    then
+        custom_checks
+    fi
+}
+
+# AllowList option input with -w
+validate_allowlist() {
+    # Pre-process allowlist file if supplied
+    if [[ -n "$ALLOWLIST_FILE" ]]
+    then
+        allowlist
+    fi
+}
+
+# List checks input with -l
+validate_list_checks() {
+    if [[ ${LIST_CHECKS} -eq 1 ]]
+    then
+        show_all_check_titles
+    fi
+}
+
+# List groups input with -g
+validate_list_groups() {
+    if [[ ${LIST_GROUPS} -eq 1 ]]
+    then
+        show_all_group_titles
+    fi
+}
+
+# Extract organizations information with -O
+validate_organizations() {
+  # First, check AWS Organizations Metadata
+  if [[ -n "${MANAGEMENT_ACCOUNT_ID}" && -n "${ROLE_TO_ASSUME}" ]]
+  then
+    # Backing up initial credentials
+    backupInitialAWSCredentials
+
+    # Backing up initial account to assume
+    INITIAL_ACCOUNT_TO_ASSUME="${ACCOUNT_TO_ASSUME}"
+
+    # Set the new account to assume to recover AWS Organizations Metadata
+    ACCOUNT_TO_ASSUME="${MANAGEMENT_ACCOUNT_ID}"
+
+    # Recover AWS Organizations Metadata
+    get_orgs_account_details
+
+    # Restoring account to assume to -A field after getting account metadata
+    ACCOUNT_TO_ASSUME="${INITIAL_ACCOUNT_TO_ASSUME}"
+
+    # Restoring initial credentials
+    restoreInitialAWSCredentials
+  fi
+
+  if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]
+  then
+    backupInitialAWSCredentials
+    assume_role
+  fi
+}
+
+# JUnit output if -M junit-xml
+validate_junit_output() {
+    if is_junit_output_enabled
+    then
+        prepare_junit_output
+    fi
+}
+
+# Validate Security Hub with -S
+validate_security_hub() {
+    if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]
+    then
+        checkSecurityHubCompatibility
+    fi
+}
+
+# Validate output bucket with -B
+validate_output_bucket() {
+    # Output bucket parsing input checking
+    if [[ $OUTPUT_BUCKET ]]
+    then
+    # output mode has to be set to other than text
+    if [[ "${MODE}" =~ "text" ]]
+    then
+        echo "$OPTRED ERROR!$OPTNORMAL - Mode (-M) can't be text when using custom output bucket. Use -h for help."
+        exit 1
+    else
+        # need to make sure last / is not set to avoid // in S3
+        if [[ $OUTPUT_BUCKET == *"/" ]]
+        then
+        OUTPUT_BUCKET=${OUTPUT_BUCKET::-1}
+        fi
+    fi
+    fi
+}
+
+# Validate custom output filename with -F
+validate_custom_output_filename() {
+    # Create output file name
+    if [ -n "${OUTPUT_FILE_NAME}" ]
+    then
+        OUTPUT_FILE_NAME="${OUTPUT_DIR}/$OUTPUT_FILE_NAME"
+    else
+        OUTPUT_FILE_NAME="${OUTPUT_DIR}/prowler-output-${ACCOUNT_NUM}-${OUTPUT_DATE}"
+    fi
+}
+
+# Validate custom output directory with -o
+validate_custom_output_directory() {
+    # Check output dir custom
+    if [ -n "${OUTPUT_DIR_CUSTOM}" ]
+    then
+        # If dir custom, mode has to be enabled (if you provide a custom directory it's because you want to store something)
+        if [[ ! "${MODE}" =~ 'text' ]]
+        then
+            # Check if custom folder exists
+            if [ ! -d "${OUTPUT_DIR_CUSTOM}" ]
+            then
+                echo "$OPTRED ERROR!$OPTNORMAL directory \"$OUTPUT_DIR_CUSTOM\" does not exist."
+                exit 1
+            else
+                OUTPUT_DIR=$OUTPUT_DIR_CUSTOM
+            fi
+        else
+            echo "$OPTRED ERROR!$OPTNORMAL - When using custom directory output Mode (-M) has to be set as well. Use -h for help."
+            exit 1
+        fi
+    # If custom output dir is not provided output dir -> default
+    else
+            OUTPUT_DIR="${PROWLER_DIR}/output"
+            if [ ! -d "${OUTPUT_DIR}" ]
+            then
+                mkdir -p "${OUTPUT_DIR}"
+            fi
+    fi
+}
+
+# Validate output modes with -M
+validate_modes() {
+    if [ -n "${MODE}" ]
+    then
+        AVAILABLE_OUTPUT_MODES="mono|text|csv|json|json-asff|junit-xml|html"
+        OIFS="${IFS}"
+        IFS=','
+        for MODE_TYPE in ${MODE}
+        do
+            if ! grep -w -q -E "${AVAILABLE_OUTPUT_MODES}" <<< "${MODE_TYPE}"
+            then
+                echo -e "${OPTRED}ERROR!$OPTNORMAL Invalid output mode. Choose text, mono, csv, json, json-asff, junit-xml or html. ./prowler -h for help"
+                EXITCODE=1
+                exit $EXITCODE
+            fi
+        done
+        IFS="${OIFS}"
+    fi
+}
+
+# Validate database with -d
+validate_database() {
+  # Check database providers
+if [[ ${DATABASE_PROVIDER} ]]
+then
+    # Check if input provider is supported
+    if ! grep -w -q -E "${DATABASE_PROVIDER}" <<< "${SUPPORTED_DB_PROVIDERS}"
+    then
+        db_exit_abnormally "${DATABASE_PROVIDER}" "DB provider not supported, providers supported: ${SUPPORTED_DB_PROVIDERS} - EXITING!"
+    elif ! command -v "psql" > /dev/null 2>&1
+    then
+        db_exit_abnormally "postgresql" "psql tool not installed or not found- EXITING!"
+    elif  [[ $(find "${HOME}/.pgpass" -perm 600 2>/dev/null) != "$HOME/.pgpass" ]]
+    then
+          db_exit_abnormally  "postgresql" ".pgpass file not found at $HOME/.pgpass or .pgpass file permissions not matching 600 - EXITING!"
+    else
+        IFS=':' read -r PSQL_HOSTNAME PSQL_PORT PSQL_DATABASE PSQL_USER PSQL_PASSWORD PSQL_TABLE < "$HOME/.pgpass"
+        if [[ ! ${PSQL_HOSTNAME} ]] || [[ ! ${PSQL_PORT} ]] || [[ ! ${PSQL_DATABASE} ]] || [[ ! ${PSQL_USER} ]] || [[ ! ${PSQL_PASSWORD} ]] || [[ ! ${PSQL_TABLE} ]]
+        then
+             db_exit_abnormally "postgresql" "Empty field into ${HOME}/.pgpass file, all fields must be filled. Please check Prowler README about .pgpass file format - EXITING!"
+        fi
+        export PSQL_USER
+        export PSQL_HOSTNAME
+        export PSQL_TABLE
+
+        # Once all the variables are defined and exported test if database instance is reachable
+        if ! pg_isready -q  -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -p "${PSQL_PORT}"
+        then
+            db_exit_abnormally "postgresql" "Database listening on host ${PSQL_HOSTNAME} on port ${PSQL_PORT} connected as user ${PSQL_USER} is unreachable - EXITING!"
+        # If database instance is ready time to check credentials
+        elif ! PGPASSWORD="${PSQL_PASSWORD}" psql -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -c "\q" > /dev/null  2>&1
+        then
+            db_exit_abnormally "postgresql" "User ${PSQL_USER} invalid or invalid credentials, please check ${HOME}/.pgpass file - EXITING!"
+        # If credentials are ok -> database exists?
+        elif ! PGPASSWORD="${PSQL_PASSWORD}" psql -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" "${PSQL_DATABASE}" -c "\q" > /dev/null  2>&1
+        then
+            db_exit_abnormally "postgresql" "Database not exists, please check ${HOME}/.pgpass file - EXITING!"
+        # and finally, if database exists -> table exists ?
+        elif ! PGPASSWORD="${PSQL_PASSWORD}" psql -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" "${PSQL_DATABASE}"  -c "SELECT * FROM ${PSQL_TABLE};" > /dev/null  2>&1
+        then
+             db_exit_abnormally "postgresql" "Table ${PSQL_TABLE} not exists, please check ${HOME}/.pgpass file - EXITING!"
+        fi
+    fi
+  fi
+}

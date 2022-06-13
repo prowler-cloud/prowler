@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+
+# Copyright 2018 Toni de la Fuente
+
+# Prowler is a tool that provides automate auditing and hardening guidance of an
+# AWS account. It is based on AWS-CLI commands. It follows some guidelines
+# present in the CIS Amazon Web Services Foundations Benchmark at:
+# https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
+
+# Contact the author at https://blyx.com/contact
+# and open issues or ask questions at https://github.com/prowler-cloud/prowler
+
+# Code is licensed as Apache License 2.0 as specified in
+# each file. You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Function to execute the check
+execute_check() {
+  if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]; then
+    # echo ******* I am here again to check on my role *******
+    # Following logic looks for time remaining in the session and review it
+    # if it is less than 600 seconds, 10 minutes.
+    CURRENT_TIMESTAMP=$(date -u "+%s")
+    SESSION_TIME_REMAINING=$(expr $AWS_SESSION_EXPIRATION - $CURRENT_TIMESTAMP)
+    # echo SESSION TIME REMAINING IN SECONDS: $SESSION_TIME_REMAINING
+    MINIMUM_REMAINING_TIME_ALLOWED=600
+    if (( $MINIMUM_REMAINING_TIME_ALLOWED > $SESSION_TIME_REMAINING )); then
+      # echo LESS THAN 10 MIN LEFT: RE-ASSUMING...
+      unset AWS_ACCESS_KEY_ID
+      unset AWS_SECRET_ACCESS_KEY
+      unset AWS_SESSION_TOKEN
+      assume_role
+    fi
+  fi
+
+  CHECK_ID="$1"
+
+  # See if this is an alternate name for a check
+  # for example, we might have been passed 1.01 which is another name for 1.1
+  local alternate_name_var=CHECK_ALTERNATE_$1
+  local alternate_name=${!alternate_name_var}
+  # See if this check defines an ASFF Type, if so, use this, falling back to a sane default
+  # For a list of Types Taxonomy, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-type-taxonomy.html
+  local asff_type_var=CHECK_ASFF_TYPE_$1
+  CHECK_ASFF_TYPE="${!asff_type_var:-Software and Configuration Checks}"
+
+  local asff_compliance_type_var=CHECK_ASFF_COMPLIANCE_TYPE_$1
+  CHECK_ASFF_COMPLIANCE_TYPE="${!asff_compliance_type_var:-Software and Configuration Checks}"
+
+  # See if this check defines an ASFF Resource Type, if so, use this, falling back to a sane default
+  # For a list of Resource Types, see: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
+  local asff_resource_type_var=CHECK_ASFF_RESOURCE_TYPE_$1
+  CHECK_ASFF_RESOURCE_TYPE="${!asff_resource_type_var:-AwsAccount}"
+
+  local severity_var=CHECK_SEVERITY_$1
+  CHECK_SEVERITY="${!severity_var}"
+
+  local servicename_var=CHECK_SERVICENAME_$1
+  CHECK_SERVICENAME="${!servicename_var}"
+
+  local risk_var=CHECK_RISK_$1
+  CHECK_RISK="${!risk_var}"
+
+  local remediation_var=CHECK_REMEDIATION_$1
+  CHECK_REMEDIATION="${!remediation_var}"
+
+  local doc_var=CHECK_DOC_$1
+  CHECK_DOC="${!doc_var}"
+
+  local caf_epic_var=CHECK_CAF_EPIC_$1
+  CHECK_CAF_EPIC="${!caf_epic_var}"
+
+  SECURITYHUB_NEW_FINDINGS_IDS=()
+
+  # Generate the credential report, only if it is group1 related which checks we
+  # run so that the checks can safely assume it's available
+  # set the custom ignores list for this check
+  ignores="$(awk "/${1}/{print}" <(echo "${ALLOWLIST}"))"
+
+  if [ ${alternate_name} ];then
+    if [[ ${alternate_name} == check1* || ${alternate_name} == extra71 || ${alternate_name} == extra774 || ${alternate_name} == extra7123 ]];then
+      if [ ! -s $TEMP_REPORT_FILE ];then
+        genCredReport
+        saveReport
+      fi
+    fi
+    show_check_title ${alternate_name}
+    if is_junit_output_enabled; then
+      prepare_junit_check_output "$1"
+    fi
+    # Execute the check
+    IGNORES="${ignores}" CHECK_NAME="$1" ${alternate_name}
+    if is_junit_output_enabled; then
+      finalise_junit_check_output "$1"
+    fi
+
+    if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
+      resolveSecurityHubPreviousFails "$1"
+    fi
+  else
+    # Check to see if this is a real check
+    local check_id_var=CHECK_ID_$1
+    local check_id=${!check_id_var}
+    if [ ${check_id} ]; then
+      if [[ ${check_id} == 1* || ${check_id} == 7.1 || ${check_id} == 7.74 || ${check_id} == 7.123 ]];then
+        if [ ! -s $TEMP_REPORT_FILE ];then
+          genCredReport
+          saveReport
+        fi
+      fi
+      show_check_title "$1"
+      if is_junit_output_enabled; then
+        prepare_junit_check_output "$1"
+      fi
+      # Execute the check
+      IGNORES="${ignores}" CHECK_NAME="$1" $1
+
+      if is_junit_output_enabled; then
+        finalise_junit_check_output "$1"
+      fi
+
+      if [[ "$SEND_TO_SECURITY_HUB" -eq 1 ]]; then
+        resolveSecurityHubPreviousFails "$1"
+      fi
+
+    else
+      textFail "Check ${CHECK_ID} does not exist. Use a valid check name (i.e. check41 or extra71)";
+      exit $EXITCODE
+    fi
+  fi
+}

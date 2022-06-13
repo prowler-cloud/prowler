@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+# Copyright 2018 Toni de la Fuente
+
+# Prowler is a tool that provides automate auditing and hardening guidance of an
+# AWS account. It is based on AWS-CLI commands. It follows some guidelines
+# present in the CIS Amazon Web Services Foundations Benchmark at:
+# https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
+
+# Contact the author at https://blyx.com/contact
+# and open issues or ask questions at https://github.com/prowler-cloud/prowler
+
+# Code is licensed as Apache License 2.0 as specified in
+# each file. You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
+
+clean_up() {
+  rm -f /tmp/prowler*.policy.*
+  # puts the AWS_DEFAULT_OUTPUT back to what it was at the start
+  if [ -z "$ORIGINAL_OUTPUT" ]; then
+    export AWS_DEFAULT_OUTPUT="$ORIGINAL_OUTPUT"
+  else
+    unset AWS_DEFAULT_OUTPUT
+  fi
+  # Delete temporary report file
+
+  if [[ $KEEPCREDREPORT -ne 1 ]]; then
+    rm -fr $TEMP_REPORT_FILE
+  fi
+  cleanSTSAssumeFile
+}
+
+handle_ctrl_c() {
+  clean_up
+  scoring
+  exit $EXITCODE
+}

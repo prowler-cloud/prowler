@@ -19,7 +19,7 @@ prowlerBanner() {
     echo -e " | |_) | | | (_) \ V  V /| |  __/ |"
     echo -e " | .__/|_|  \___/ \_/\_/ |_|\___|_|v$PROWLER_VERSION"
     echo -e " |_|$NORMAL$BLUE the handy cloud security tool$NORMAL\n"
-    echo -e "$YELLOW Date: $(date)"
+    echo -e "$YELLOW Date: $(date)$NORMAL"
     printColorsCode
   fi
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy
@@ -11,10 +11,30 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-GROUP_ID[11]='secrets'
-GROUP_NUMBER[11]='11.0'
-GROUP_TITLE[11]='Look for keys secrets or passwords around resources - [secrets]'
-GROUP_CHECKS[11]='extra741,extra742,extra759,extra760,extra768,extra775,extra7141'
+# Output Colors
+OPTRED="[1;31m"
+OPTNORMAL="[0;39m"
 
-# requires https://github.com/Yelp/detect-secrets
-# `pip install detect-secrets`
+# AWS Region
+REGION=""
+FILTERREGION=""
+
+# Max AWS CLI items
+MAXITEMS=100
+
+# Default output mode
+MODE="text"
+
+# Security Hub
+SEND_TO_SECURITY_HUB=0
+
+# Date & Time
+PROWLER_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
+OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
+
+# Default Prowler Options
+QUIET=0
+SEP=','
+KEEPCREDREPORT=0
+EXITCODE=0
+FAILED_CHECK_FAILED_SCAN=1

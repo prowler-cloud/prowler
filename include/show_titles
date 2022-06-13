@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+# Copyright 2018 Toni de la Fuente
+
+# Prowler is a tool that provides automate auditing and hardening guidance of an
+# AWS account. It is based on AWS-CLI commands. It follows some guidelines
+# present in the CIS Amazon Web Services Foundations Benchmark at:
+# https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf
+
+# Contact the author at https://blyx.com/contact
+# and open issues or ask questions at https://github.com/prowler-cloud/prowler
+
+# Code is licensed as Apache License 2.0 as specified in
+# each file. You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
+
+
+# Show the title of a group, by their numerical id
+show_group_title() {
+  textTitle "${GROUP_NUMBER[$1]}" "${GROUP_TITLE[$1]}"
+}
+
+# Show al group titles
+show_all_group_titles() {
+  local group_index
+  for group_index in "${!GROUP_TITLE[@]}"; do
+    show_group_title "$group_index"
+  done
+  exit 0
+}
+
+# Show the titles of either all checks or only those in the specified group
+show_all_check_titles() {
+  for CHECK_ID in ${TOTAL_CHECKS[*]}
+  do
+    show_check_title "${CHECK_ID}"
+  done
+  exit 0
+}
+
+# Function to show the title of the check, and optionally which group(s) it belongs to
+# using this way instead of arrays to keep bash3 (osx) and bash4(linux) compatibility
+show_check_title() {
+  local check_id=CHECK_ID_$1
+  local check_title=CHECK_TITLE_$1
+  local check_scored=CHECK_SCORED_$1
+  local check_cis_level=CHECK_CIS_LEVEL_$1
+  local check_asff_compliance_type=CHECK_ASFF_COMPLIANCE_TYPE_$1
+  local check_severity=CHECK_SEVERITY_$1
+  local check_servicename=CHECK_SERVICENAME_$1
+  local group_ids
+  local group_index
+
+  # This shows ASFF_COMPLIANCE_TYPE if group used is ens, this si used to show ENS compliance ID control, can be used for other compliance groups as well.
+  if [[ ${GROUP_ID_READ} == "ens" ]];then
+    textTitle "${!check_id}" "${!check_title}" "${!check_scored}" "${!check_cis_level}" "$group_ids" "(${!check_asff_compliance_type})"
+  else
+    textTitle "${!check_id}" "${!check_title}" "${!check_servicename}" "${!check_severity}" "$group_ids" "${!check_cis_level}"
+  fi
+}

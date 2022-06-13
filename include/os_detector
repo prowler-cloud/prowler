@@ -145,64 +145,20 @@ bsd_replace_sed(){
   sed -i '' $1 $2
 }
 
-# Functions to manage dates depending on OS
-if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
-  TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
-  # function to compare in days, usage how_older_from_today date
-  # date format %Y-%m-%d
-  how_older_from_today() {
-    gnu_how_older_from_today "$1"
-  }
-  timestamp_to_date() {
-    gnu_timestamp_to_date "$1"
-  }
-  decode_report() {
-    gnu_decode_report
-  }
-  how_many_days_from_today() {
-    gnu_how_many_days_from_today "$1"
-  }
-  get_date_previous_than_months() {
-    gnu_get_date_previous_than_months "$1"
-  }
-  get_time_in_milliseconds() {
-    gnu_get_time_in_milliseconds
-  }
-  get_iso8601_timestamp() {
-    gnu_get_iso8601_timestamp
-  }
-  test_tcp_connectivity() {
-    gnu_test_tcp_connectivity "$1" "$2" "$3"
-  }
-  convert_date_to_timestamp() {
-    gnu_convert_date_to_timestamp "$1"
-  }
-  replace_sed() {
-    gnu_replace_sed $1 $2
-  }
-
-elif [[ "$OSTYPE" == "darwin"* ]] || [[ "$OSTYPE" == "freebsd"* ]]; then
-  # BSD/OSX commands compatibility
-  TEMP_REPORT_FILE=$(mktemp -t prowler.cred_report-XXXXXX)
-  # It is possible that the user has installed GNU coreutils on OS X. By default, this will make GNU commands
-  # available with a 'g' prefix, e.g. 'gdate'. Test if this is present, and use it if so, as it supports more features.
-  # The user also may have replaced the default Mac OS X BSD tools with the GNU coreutils equivalents.
-  # Only GNU date/base64 allows --version as a valid argument, so use the validity of this argument
-  # as a means to detect that coreutils is installed and is overriding the default tools
-  GDATE=$(which gdate)
-  if [ -n "${GDATE}" ]; then
-    DATE_CMD="gdate"
-  fi
-  GBASE64=$(which gbase64)
-  if [ -n "${GBASE64}" ]; then
-    BASE64_CMD="gbase64"
-  fi
-  if "$DATE_CMD" --version >/dev/null 2>&1 ; then
+os_detector() {
+  # Functions to manage dates depending on OS
+  if [ "$OSTYPE" == "linux-gnu" ] || [ "$OSTYPE" == "linux-musl" ]; then
+    TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
+    # function to compare in days, usage how_older_from_today date
+    # date format %Y-%m-%d
     how_older_from_today() {
       gnu_how_older_from_today "$1"
     }
     timestamp_to_date() {
       gnu_timestamp_to_date "$1"
+    }
+    decode_report() {
+      gnu_decode_report
     }
     how_many_days_from_today() {
       gnu_how_many_days_from_today "$1"
@@ -216,83 +172,129 @@ elif [[ "$OSTYPE" == "darwin"* ]] || [[ "$OSTYPE" == "freebsd"* ]]; then
     get_iso8601_timestamp() {
       gnu_get_iso8601_timestamp
     }
+    test_tcp_connectivity() {
+      gnu_test_tcp_connectivity "$1" "$2" "$3"
+    }
     convert_date_to_timestamp() {
       gnu_convert_date_to_timestamp "$1"
     }
-  else
+    replace_sed() {
+      gnu_replace_sed $1 $2
+    }
+
+  elif [[ "$OSTYPE" == "darwin"* ]] || [[ "$OSTYPE" == "freebsd"* ]]; then
+    # BSD/OSX commands compatibility
+    TEMP_REPORT_FILE=$(mktemp -t prowler.cred_report-XXXXXX)
+    # It is possible that the user has installed GNU coreutils on OS X. By default, this will make GNU commands
+    # available with a 'g' prefix, e.g. 'gdate'. Test if this is present, and use it if so, as it supports more features.
+    # The user also may have replaced the default Mac OS X BSD tools with the GNU coreutils equivalents.
+    # Only GNU date/base64 allows --version as a valid argument, so use the validity of this argument
+    # as a means to detect that coreutils is installed and is overriding the default tools
+    GDATE=$(which gdate)
+    if [ -n "${GDATE}" ]; then
+      DATE_CMD="gdate"
+    fi
+    GBASE64=$(which gbase64)
+    if [ -n "${GBASE64}" ]; then
+      BASE64_CMD="gbase64"
+    fi
+    if "$DATE_CMD" --version >/dev/null 2>&1 ; then
+      how_older_from_today() {
+        gnu_how_older_from_today "$1"
+      }
+      timestamp_to_date() {
+        gnu_timestamp_to_date "$1"
+      }
+      how_many_days_from_today() {
+        gnu_how_many_days_from_today "$1"
+      }
+      get_date_previous_than_months() {
+        gnu_get_date_previous_than_months "$1"
+      }
+      get_time_in_milliseconds() {
+        gnu_get_time_in_milliseconds
+      }
+      get_iso8601_timestamp() {
+        gnu_get_iso8601_timestamp
+      }
+      convert_date_to_timestamp() {
+        gnu_convert_date_to_timestamp "$1"
+      }
+    else
+      how_older_from_today() {
+        bsd_how_older_from_today "$1"
+      }
+      timestamp_to_date() {
+        bsd_timestamp_to_date "$1"
+      }
+      how_many_days_from_today() {
+        bsd_how_many_days_from_today "$1"
+      }
+      get_date_previous_than_months() {
+        bsd_get_date_previous_than_months "$1"
+      }
+      get_time_in_milliseconds() {
+        bsd_get_time_in_milliseconds
+      }
+      get_iso8601_timestamp() {
+        bsd_get_iso8601_timestamp
+      }
+      convert_date_to_timestamp() {
+        bsd_convert_date_to_timestamp "$1"
+      }
+    fi
+    if "$BASE64_CMD" --version >/dev/null 2>&1 ; then
+      decode_report() {
+        gnu_decode_report
+      }
+    else
+      decode_report() {
+        bsd_decode_report
+      }
+    fi
+    test_tcp_connectivity() {
+      bsd_test_tcp_connectivity "$1" "$2" "$3"
+    }
+    replace_sed() {
+      bsd_replace_sed $1 $2
+    }
+  elif [[ "$OSTYPE" == "cygwin" ]]; then
+    # POSIX compatibility layer and Linux environment emulation for Windows
+    TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
     how_older_from_today() {
-      bsd_how_older_from_today "$1"
+      gnu_how_older_from_today "$1"
     }
     timestamp_to_date() {
-      bsd_timestamp_to_date "$1"
+      gnu_timestamp_to_date "$1"
     }
-    how_many_days_from_today() {
-      bsd_how_many_days_from_today "$1"
-    }
-    get_date_previous_than_months() {
-      bsd_get_date_previous_than_months "$1"
-    }
-    get_time_in_milliseconds() {
-      bsd_get_time_in_milliseconds
-    }
-    get_iso8601_timestamp() {
-      bsd_get_iso8601_timestamp
-    }
-    convert_date_to_timestamp() {
-      bsd_convert_date_to_timestamp "$1"
-    }
-  fi
-  if "$BASE64_CMD" --version >/dev/null 2>&1 ; then
     decode_report() {
       gnu_decode_report
     }
-  else
-    decode_report() {
-      bsd_decode_report
+    how_many_days_from_today() {
+      gnu_how_many_days_from_today "$1"
     }
+    get_date_previous_than_months() {
+      gnu_get_date_previous_than_months "$1"
+    }
+    get_time_in_milliseconds() {
+      gnu_get_time_in_milliseconds
+    }
+    get_iso8601_timestamp() {
+      gnu_get_iso8601_timestamp
+    }
+    test_tcp_connectivity() {
+      gnu_test_tcp_connectivity "$1" "$2" "$3"
+    }
+    convert_date_to_timestamp() {
+      gnu_convert_date_to_timestamp "$1"
+    }
+    replace_sed() {
+      gnu_replace_sed $1 $2
+    }
+  else
+    echo "Unknown Operating System! Valid \$OSTYPE: linux-gnu, linux-musl, darwin* or cygwin"
+    echo "Found: $OSTYPE"
+    EXITCODE=1
+    exit $EXITCODE
   fi
-  test_tcp_connectivity() {
-    bsd_test_tcp_connectivity "$1" "$2" "$3"
-  }
-  replace_sed() {
-    bsd_replace_sed $1 $2
-  }
-elif [[ "$OSTYPE" == "cygwin" ]]; then
-  # POSIX compatibility layer and Linux environment emulation for Windows
-  TEMP_REPORT_FILE=$(mktemp -t -p /tmp prowler.cred_report-XXXXXX)
-  how_older_from_today() {
-    gnu_how_older_from_today "$1"
-  }
-  timestamp_to_date() {
-    gnu_timestamp_to_date "$1"
-  }
-  decode_report() {
-    gnu_decode_report
-  }
-  how_many_days_from_today() {
-    gnu_how_many_days_from_today "$1"
-  }
-  get_date_previous_than_months() {
-    gnu_get_date_previous_than_months "$1"
-  }
-  get_time_in_milliseconds() {
-    gnu_get_time_in_milliseconds
-  }
-  get_iso8601_timestamp() {
-    gnu_get_iso8601_timestamp
-  }
-  test_tcp_connectivity() {
-    gnu_test_tcp_connectivity "$1" "$2" "$3"
-  }
-  convert_date_to_timestamp() {
-    gnu_convert_date_to_timestamp "$1"
-  }
-  replace_sed() {
-    gnu_replace_sed $1 $2
-  }
-else
-  echo "Unknown Operating System! Valid \$OSTYPE: linux-gnu, linux-musl, darwin* or cygwin"
-  echo "Found: $OSTYPE"
-  EXITCODE=1
-  exit $EXITCODE
-fi
+}

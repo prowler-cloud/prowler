@@ -14,5 +14,4 @@
 GROUP_ID[13]='rds'
 GROUP_NUMBER[13]='13.0'
 GROUP_TITLE[13]='RDS security checks - [rds] ***********************************'
-GROUP_RUN_BY_DEFAULT[13]='N' # run it when execute_all is called
 GROUP_CHECKS[13]='extra78,extra723,extra735,extra739,extra747,extra7113,extra7131,extra7132,extra7133'

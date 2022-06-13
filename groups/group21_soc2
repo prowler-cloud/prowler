@@ -14,7 +14,6 @@
 GROUP_ID[21]='soc2'
 GROUP_NUMBER[21]='21.0'
 GROUP_TITLE[21]='SOC2 Readiness - ONLY AS REFERENCE - [soc2] *******************'
-GROUP_RUN_BY_DEFAULT[21]='N' # run it when execute_all is called
 GROUP_CHECKS[21]='check110,check111,check113,check12,check122,check13,check15,check16,check17,check18,check19,check21,check31,check310,check32,check33,check34,check35,check36,check37,check38,check39,check41,check42,check43,extra711,extra72,extra723,extra729,extra731,extra734,extra735,extra739,extra76,extra78,extra792'
 
 # References:
