@@ -108,8 +108,8 @@ USAGE:
       -T                  Session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, optional with -R and -A.
                             (i.e.: 43200)
       -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R.
-      -w                  Allowlist file. See allowlist_sample.txt for reference and format. S3 URI is supported.
-                            (i.e.: allowlist_sample.txt or s3://bucket/prefix/allowlist_sample.txt)
+      -w                  Allowlist file. See allowlist_sample.txt for reference and format. S3 URI and DynamoDB table ARNs are also supported as allowlist file. 
+                            (i.e.: allowlist_sample.txt or s3://bucket/prefix/allowlist_sample.txt or arn:aws:dynamodb:us-east-1:111111222222:table/allowlist)
       -N <shodan_api_key> Shodan API key used by check extra7102.
       -o                  Custom output directory, if not specified will use default prowler/output, requires -M <mode>.
                             (i.e.: -M csv -o /tmp/reports/)
