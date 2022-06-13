@@ -43,7 +43,7 @@ set_colors() {
 }
 
 printColorsCode(){
-  if [[ "$MODE" =~ "mono" ]]
+  if [[ ! "$MODE" =~ "mono" ]]
   then
     echo -e "\n$NORMAL Color code for results: "
     echo -e " - $NOTICE INFO (Information)$NORMAL"
