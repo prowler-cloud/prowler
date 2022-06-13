@@ -153,6 +153,7 @@ general_output() {
   IFS=','
   for MODE_TYPE in ${MODE}
   do
+    IFS="${OIFS}"
     if  [ "${MODE_TYPE}" == 'html' ]
     then
         generateHtmlOutput "${CHECK_RESULT_EXTENDED}" "${CHECK_RESULT}"
@@ -189,7 +190,6 @@ general_output() {
        echo  "      $COLOR_CODE ${CHECK_RESULT}! $NORMAL ${CHECK_RESULT_EXTENDED}">> "${OUTPUT_FILE_NAME}"."${EXTENSION_TEXT}"
     fi
   done
-  IFS="${OIFS}"
 
   # Print in screen
   echo "      $COLOR_CODE ${CHECK_RESULT}!$NORMAL ${CHECK_RESULT_EXTENDED}"

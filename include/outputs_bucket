@@ -25,6 +25,7 @@ copyToS3() {
   IFS=','
   for MODE_TYPE in ${MODE}
   do
+    IFS="${OIFS}"
     case ${MODE_TYPE} in
       csv)
         s3cp "${OUTPUT_PATH}" "${EXTENSION_CSV}"
@@ -44,7 +45,6 @@ copyToS3() {
       ;;
     esac
   done
-  IFS="${OIFS}"
 }
 
 s3cp(){
