@@ -37,7 +37,8 @@ get_checks() {
         then
             # Parses the file, converting it to a comma seperated list. Ignores all # comments and removes extra blank spaces
             # REVIEW THIS OPTION -C
-            TOTAL_CHECKS="$(awk '!/^[[:space:]]*#/{print }' <(cat ${CHECK_FILE} | sed 's/[[:space:]]*#.*$//g;/^$/d' | sed 'H;1h;$!d;x;y/\n/,/' | tr -d ' '))"
+            CHECKS_FROM_FILE="$(awk '!/^[[:space:]]*#/{print }' <(cat ${CHECK_FILE} | sed 's/[[:space:]]*#.*$//g;/^$/d' | sed 'H;1h;$!d;x;y/\n/,/' | tr -d ' '))"
+            IFS=',' read -ra TOTAL_CHECKS <<< "${CHECKS_FROM_FILE}"
         else
             # If the file doesn't exist, exits Prowler
             echo "$CHECK_FILE does not exist"
