@@ -300,6 +300,7 @@ validate_list_checks
 validate_list_groups
 validate_database
 validate_modes
+validate_output_bucket
 
 # Check AWS CLI
 aws_cli_detector
@@ -316,7 +317,6 @@ get_regions
 # Validate command line options that requires AWS
 validate_custom_output_directory
 validate_custom_output_filename
-validate_output_bucket
 validate_security_hub
 validate_organizations
 validate_allowlist
