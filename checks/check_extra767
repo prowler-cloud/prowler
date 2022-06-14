@@ -27,11 +27,16 @@ extra767(){
     LIST_OF_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions --query 'DistributionList.Items[*].Id' $PROFILE_OPT --output text|grep -v ^None)
     if [[ $LIST_OF_DISTRIBUTIONS ]];then
       for dist in $LIST_OF_DISTRIBUTIONS; do
-        CHECK_FLE=$($AWSCLI cloudfront get-distribution --id $dist --query Distribution.DistributionConfig.DefaultCacheBehavior.FieldLevelEncryptionId $PROFILE_OPT --output text)
-        if [[ $CHECK_FLE ]]; then
-          textPass "CloudFront distribution $dist has Field Level Encryption enabled" "$regx" "$dist"
+        CHECK_ALLOWED_METHODS=$($AWSCLI cloudfront get-distribution --id $dist --query Distribution.DistributionConfig.DefaultCacheBehavior.DefaultCacheBehavior.AllowedMethods.Items $PROFILE_OPT --output text)
+        if [[ "$CHECK_ALLOWED_METHODS" == *"POST"* ]]; then
+            CHECK_FLE=$($AWSCLI cloudfront get-distribution --id $dist --query Distribution.DistributionConfig.DefaultCacheBehavior.FieldLevelEncryptionId $PROFILE_OPT --output text)
+            if [[ $CHECK_FLE ]]; then
+                textPass "CloudFront distribution $dist has Field Level Encryption enabled" "$regx" "$dist"
+            else
+                textFail "CloudFront distribution $dist has Field Level Encryption disabled!" "$regx" "$dist"
+            fi
         else
-          textFail "CloudFront distribution $dist has Field Level Encryption disabled!" "$regx" "$dist"
+            textInfo "CloudFront distribution $dist does not support POST requests"
         fi
       done
     else
