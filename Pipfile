@@ -1,13 +1,13 @@
 [[source]]
-name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
+name = "pypi"
+
+[packages]
+colorama = "*"
+boto3 = "*"
 
 [dev-packages]
 
-[packages]
-boto3 = ">=1.9.188"
-detect-secrets = "==1.0.3"
-
 [requires]
-python_version = "3.7"
+python_version = "3.9"
