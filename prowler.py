@@ -2,44 +2,17 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import importlib
-import pkgutil
 
 from lib.banner import print_banner, print_version
+from lib.check import import_check, load_checks_to_execute, run_check
 from lib.logger import logger, logging_levels
-from lib.outputs import report
 from providers.aws.aws_provider import provider_set_profile
 
-
-def run_check(check):
-    print(f"\nCheck Name: {check.CheckName}")
-    findings = check.execute()
-    report(findings)
-
-
-def import_check(check_path):
-    lib = importlib.import_module(f"{check_path}")
-    return lib
-
-
-def recover_modules_from_provider(provider):
-    modules = []
-    for module_name in pkgutil.walk_packages(
-        importlib.import_module(f"providers.{provider}.services").__path__,
-        importlib.import_module(f"providers.{provider}.services").__name__ + ".",
-    ):
-        if module_name.name.count(".") == 5:
-            modules.append(module_name.name)
-    return modules
-
-
 if __name__ == "__main__":
-    # start_time = time.time()
+    # CLI Arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("provider", help="Specify Provider: AWS")
-    parser.add_argument(
-        "-c", "--checks", nargs="*", help="Comma separated list of checks"
-    )
+    parser.add_argument("provider", choices=["aws"], help="Specify Provider")
+    parser.add_argument("-c", "--checks", nargs="+", help="List of checks")
     parser.add_argument(
         "-b", "--no-banner", action="store_false", help="Hide Prowler Banner"
     )
@@ -49,7 +22,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default="CRITICAL",
+        default="ERROR",
         help="Select Log Level",
     )
     parser.add_argument(
@@ -64,6 +37,8 @@ if __name__ == "__main__":
     provider = args.provider
     checks = args.checks
     profile = args.profile
+    # Set Logger
+    logger.setLevel(logging_levels.get(args.log_level))
 
     if args.version:
         print_version()
@@ -72,44 +47,31 @@ if __name__ == "__main__":
     if args.no_banner:
         print_banner()
 
-    # Set Logger
-    logger.setLevel(logging_levels.get(args.log_level))
-
-    logger.info("Test info")
-    logger.debug("Test debug")
-
     # Setting profile
     provider_set_profile(profile)
 
-    # libreria para generar la lista de checks
-    checks_to_execute = set()
-
-    # LOADER
-    # Handle if there are checks passed using -c/--checks
-    if checks:
-        for check_name in checks:
-            checks_to_execute.add(check_name)
-
-    # If there are no checks passed as argument
-    else:
-        # Get all check modules to run with the specifie provider
-        modules = recover_modules_from_provider(provider)
-        for check_module in modules:
-            # Recover check name from import path (last part)
-            check_name = check_module.split(".")[5]
-            checks_to_execute.add(check_name)
+    # Load checks to execute
+    logger.debug("Loading checks")
+    checks_to_execute = load_checks_to_execute(checks, provider)
 
     # Execute checks
     for check_name in checks_to_execute:
         # Recover service from check name
         service = check_name.split("_")[0]
-        # Import check module
-        # Validate check in service and provider
-        lib = import_check(
-            f"providers.{provider}.services.{service}.{check_name}.{check_name}"
-        )
-        # Recover functions from check
-        check_to_execute = getattr(lib, check_name)
-        c = check_to_execute()
-        # Run check
-        run_check(c)
+        try:
+            # Import check module
+            check_module_path = (
+                f"providers.{provider}.services.{service}.{check_name}.{check_name}"
+            )
+            lib = import_check(check_module_path)
+            # Recover functions from check
+            check_to_execute = getattr(lib, check_name)
+            c = check_to_execute()
+            # Run check
+            run_check(c)
+
+        # If check does not exists in the provider or is from another provider
+        except ModuleNotFoundError:
+            logger.error(
+                f"Check '{check_name}' was not found for the {provider.upper()} provider"
+            )

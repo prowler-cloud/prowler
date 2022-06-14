@@ -14,7 +14,7 @@ logging_levels = {
 # https://docs.python.org/3/library/logging.html#logrecord-attributes
 logging.basicConfig(
     stream=sys.stdout,
-    format="%(asctime)s [File: %(filename)s] \t[Module: %(module)s]\t %(levelname)s: %(message)s",
+    format=f"%(asctime)s [File: %(filename)s:%(lineno)d] \t[Module: %(module)s]\t %(levelname)s: %(message)s",
     datefmt="%m/%d/%Y %I:%M:%S %p",
 )
 

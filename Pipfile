@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 colorama = "*"
 boto3 = "*"
+botocore = "*"
 
 [dev-packages]
 
