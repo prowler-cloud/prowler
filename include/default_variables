@@ -13,28 +13,42 @@
 
 # Output Colors
 OPTRED="[1;31m"
+export OPTRED
 OPTNORMAL="[0;39m"
+export OPTNORMAL
 
 # AWS Region
 REGION=""
+export REGION
 FILTERREGION=""
+export FILTERREGION
 
 # Max AWS CLI items
 MAXITEMS=100
+export MAXITEMS
 
 # Default output mode
 MODE="text"
+export MODE
 
 # Security Hub
 SEND_TO_SECURITY_HUB=0
+export SEND_TO_SECURITY_HUB
 
 # Date & Time
 PROWLER_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
+export PROWLER_START_TIME
 OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
+export OUTPUT_DATE
 
 # Default Prowler Options
 QUIET=0
+export QUIET
 SEP=','
+export SEP
 KEEPCREDREPORT=0
+export KEEPCREDREPORT
 EXITCODE=0
+export EXITCODE
 FAILED_CHECK_FAILED_SCAN=1
+export FAILED_CHECK_FAILED_SCAN
