@@ -1,6 +1,9 @@
+exclude: 'template\.((json)|(yaml))$'
+
 repos:
+## GENERAL
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.3.0
+    rev: v4.2.0
     hooks:
       - id: check-merge-conflict
       - id: check-yaml
@@ -8,6 +11,33 @@ repos:
       - id: check-json
       - id: end-of-file-fixer
       - id: trailing-whitespace
-      - id: no-commit-to-branch
+      # - id: no-commit-to-branch
       - id: pretty-format-json
         args: ['--autofix']
+
+## PYTHON
+  - repo: https://github.com/myint/autoflake
+    rev: v1.4
+    hooks:
+      - id: autoflake
+        args: ['--in-place', '--remove-all-unused-imports', '--remove-unused-variable']
+        exclude: 'template\.((json)|(yaml))$'
+
+  - repo: https://github.com/timothycrosley/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+        exclude: 'template\.((json)|(yaml))$'
+
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+        exclude: template_capture, 'template\.((json)|(yaml))$'
+
+  - repo: https://github.com/haizaar/check-pipfile-lock
+    rev: v0.0.5
+    hooks:
+      - id: check-pipfile-lock
+        exclude: 'template\.((json)|(yaml))$'

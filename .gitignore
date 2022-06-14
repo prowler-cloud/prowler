@@ -5,6 +5,10 @@
 [._]ss[a-gi-z]
 [._]sw[a-p]
 
+# Python code
+__pycache__
+venv/
+
 # Session
 Session.vim
 Sessionx.vim

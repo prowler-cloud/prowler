@@ -414,7 +414,7 @@ S3 URIs are also supported as custom folders for custom checks, e.g. `s3://bucke
 
 ### Show or log only FAILs
 
-In order to remove noise and get only FAIL findings there is a `-q` flag that makes Prowler to show and log only FAILs. 
+In order to remove noise and get only FAIL findings there is a `-q` flag that makes Prowler to show and log only FAILs.
 It can be combined with any other option.
 Will show WARNINGS when a resource is excluded, just to take into consideration.
 
@@ -438,12 +438,12 @@ An easy way to run Prowler to scan your account is using AWS CloudShell. Read mo
 
 ## Security Hub integration
 
-Since October 30th 2020 (version v2.3RC5), Prowler supports natively and as **official integration** sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows Prowler to import its findings to AWS Security Hub. With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions and from Prowler for free. 
+Since October 30th 2020 (version v2.3RC5), Prowler supports natively and as **official integration** sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows Prowler to import its findings to AWS Security Hub. With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions and from Prowler for free.
 
 Before sending findings to Prowler, you need to perform next steps:
-1. Since Security Hub is a region based service, enable it in the region or regions you require. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions: 
+1. Since Security Hub is a region based service, enable it in the region or regions you require. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions:
     - `aws securityhub enable-security-hub --region <region>`.
-2. Enable Prowler as partner integration integration. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions: 
+2. Enable Prowler as partner integration integration. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions:
     - `aws securityhub enable-import-findings-for-product --region <region> --product-arn arn:aws:securityhub:<region>::product/prowler/prowler` (change region also inside the ARN).
     - Using the AWS Management Console:
     ![Screenshot 2020-10-29 at 10 26 02 PM](https://user-images.githubusercontent.com/3985464/97634660-5ade3400-1a36-11eb-9a92-4a45cc98c158.png)
@@ -459,7 +459,7 @@ or for only one filtered region like eu-west-1:
 ```sh
 ./prowler -M json-asff -q -S -f eu-west-1
 ```
-> Note 1: It is recommended to send only fails to Security Hub and that is possible adding `-q` to the command. 
+> Note 1: It is recommended to send only fails to Security Hub and that is possible adding `-q` to the command.
 
 > Note 2: Since Prowler perform checks to all regions by defaults you may need to filter by region when runing Security Hub integration, as shown in the example above. Remember to enable Security Hub in the region or regions you need by calling `aws securityhub enable-security-hub --region <region>` and run Prowler with the option `-f <region>` (if no region is used it will try to push findings in all regions hubs).
 
@@ -487,7 +487,7 @@ To use Prowler and Security Hub integration in China regions there is an additio
 
 Either to run Prowler once or based on a schedule this template makes it pretty straight forward. This template will create a CodeBuild environment and run Prowler directly leaving all reports in a bucket and creating a report also inside CodeBuild basedon the JUnit output from Prowler. Scheduling can be cron based like `cron(0 22 * * ? *)` or rate based like `rate(5 hours)` since CloudWatch Event rules (or Eventbridge) is used here.
 
-The Cloud Formation template that helps you doing that is [here](https://github.com/prowler-cloud/prowler/blob/master/util/codebuild/codebuild-prowler-audit-account-cfn.yaml). 
+The Cloud Formation template that helps you doing that is [here](https://github.com/prowler-cloud/prowler/blob/master/util/codebuild/codebuild-prowler-audit-account-cfn.yaml).
 
 > This is a simple solution to monitor one account. For multiples accounts see [Multi Account and Continuous Monitoring](util/org-multi-account/README.md).
 
@@ -737,9 +737,9 @@ Multi Account environments assumes a minimum of two trusted or known accounts. F
 ![multi-account-environment](/docs/images/prowler-multi-account-environment.png)
 
 ## Custom Checks
-Using  `./prowler -c extra9999 -a` you can build your own on-the-fly custom check by specifying the AWS CLI command to execute. 
+Using  `./prowler -c extra9999 -a` you can build your own on-the-fly custom check by specifying the AWS CLI command to execute.
 > Omit the "aws" command and only use its parameters within quotes and do not nest quotes in the aws parameter, --output text is already included in the check.
-> 
+>
 Here is an example of a check to find SGs with inbound port 80:
 
 ```sh
@@ -780,3 +780,23 @@ Prowler is licensed as Apache License 2.0 as specified in each file. You may obt
 **I'm not related anyhow with CIS organization, I just write and maintain Prowler to help companies over the world to make their cloud infrastructure more secure.**
 
 If you want to contact me visit <https://blyx.com/contact> or follow me on Twitter <https://twitter.com/prowler-cloud> my DMs are open.
+
+
+## Prowler 3.0
+### Project Structure
+```
+.
+├── README.md
+├── check
+│   └── check.py
+├── poc.py
+└── providers
+    └── aws
+        ├── aws_provider.py
+        └── services
+            └── iam
+                ├── iam_disable_30_days_credentials
+                │   ├── iam_disable_30_days_credentials.metadata.json
+                │   └── iam_disable_30_days_credentials.py
+                └── iam_service.py
+```
