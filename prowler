@@ -28,36 +28,36 @@ PROWLER_DIR=$(dirname "$0")
 
 ############################################################
 # DEPENDENCIES
-. $PROWLER_DIR/include/default_variables
-. $PROWLER_DIR/include/colors
-. $PROWLER_DIR/include/os_detector
-. $PROWLER_DIR/include/aws_profile_loader
-. $PROWLER_DIR/include/awscli_detector
-. $PROWLER_DIR/include/whoami
-. $PROWLER_DIR/include/assume_role
-. $PROWLER_DIR/include/csv_header
-. $PROWLER_DIR/include/banner
-. $PROWLER_DIR/include/html_report
-. $PROWLER_DIR/include/tools_detector
-. $PROWLER_DIR/include/outputs_bucket
-. $PROWLER_DIR/include/outputs
-. $PROWLER_DIR/include/credentials_report
-. $PROWLER_DIR/include/scoring
-. $PROWLER_DIR/include/secrets_detector
-. $PROWLER_DIR/include/check_creds_last_used
-. $PROWLER_DIR/include/check3x
-. $PROWLER_DIR/include/connection_tests
-. $PROWLER_DIR/include/securityhub_integration
-. $PROWLER_DIR/include/junit_integration
-. $PROWLER_DIR/include/organizations_metadata
-. $PROWLER_DIR/include/custom_checks
-. $PROWLER_DIR/include/allowlist
-. $PROWLER_DIR/include/db_connector
-. $PROWLER_DIR/include/show_titles
-. $PROWLER_DIR/include/loader
-. $PROWLER_DIR/include/execute_check
-. $PROWLER_DIR/include/validate_options
-. $PROWLER_DIR/include/traps
+. "${PROWLER_DIR}"/include/default_variables
+. "${PROWLER_DIR}"/include/colors
+. "${PROWLER_DIR}"/include/os_detector
+. "${PROWLER_DIR}"/include/aws_profile_loader
+. "${PROWLER_DIR}"/include/awscli_detector
+. "${PROWLER_DIR}"/include/whoami
+. "${PROWLER_DIR}"/include/assume_role
+. "${PROWLER_DIR}"/include/csv_header
+. "${PROWLER_DIR}"/include/banner
+. "${PROWLER_DIR}"/include/html_report
+. "${PROWLER_DIR}"/include/tools_detector
+. "${PROWLER_DIR}"/include/outputs_bucket
+. "${PROWLER_DIR}"/include/outputs
+. "${PROWLER_DIR}"/include/credentials_report
+. "${PROWLER_DIR}"/include/scoring
+. "${PROWLER_DIR}"/include/secrets_detector
+. "${PROWLER_DIR}"/include/check_creds_last_used
+. "${PROWLER_DIR}"/include/check3x
+. "${PROWLER_DIR}"/include/connection_tests
+. "${PROWLER_DIR}"/include/securityhub_integration
+. "${PROWLER_DIR}"/include/junit_integration
+. "${PROWLER_DIR}"/include/organizations_metadata
+. "${PROWLER_DIR}"/include/custom_checks
+. "${PROWLER_DIR}"/include/allowlist
+. "${PROWLER_DIR}"/include/db_connector
+. "${PROWLER_DIR}"/include/show_titles
+. "${PROWLER_DIR}"/include/loader
+. "${PROWLER_DIR}"/include/execute_check
+. "${PROWLER_DIR}"/include/validate_options
+. "${PROWLER_DIR}"/include/traps
 ############################################################
 
 # Check external tools
@@ -108,7 +108,7 @@ USAGE:
       -T                  Session duration given to that role credentials in seconds, default 1h (3600) recommended 12h, optional with -R and -A.
                             (i.e.: 43200)
       -I                  External ID to be used when assuming roles (not mandatory), requires -A and -R.
-      -w                  Allowlist file. See allowlist_sample.txt for reference and format. S3 URI and DynamoDB table ARNs are also supported as allowlist file. 
+      -w                  Allowlist file. See allowlist_sample.txt for reference and format. S3 URI and DynamoDB table ARNs are also supported as allowlist file.
                             (i.e.: allowlist_sample.txt or s3://bucket/prefix/allowlist_sample.txt or arn:aws:dynamodb:us-east-1:111111222222:table/allowlist)
       -N <shodan_api_key> Shodan API key used by check extra7102.
       -o                  Custom output directory, if not specified will use default prowler/output, requires -M <mode>.
