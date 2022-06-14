@@ -18,7 +18,7 @@ assume_role(){
         # If profile is not defined, restore original credentials from environment variables, if they exists!
         restoreInitialAWSCredentials
     fi
-    
+
     # Both variables are mandatory to be set together
     if [[ -z $ROLE_TO_ASSUME || -z $ACCOUNT_TO_ASSUME ]]; then
         echo "$OPTRED ERROR!$OPTNORMAL - Both Account ID (-A) and IAM Role to assume (-R) must be set"
@@ -62,12 +62,12 @@ assume_role(){
         EXITCODE=1
         exit $EXITCODE
     fi
-    
+
     # echo FILE WITH TEMP CREDS: $TEMP_STS_ASSUMED_FILE
-    
+
     # The profile shouldn't be used for CLI
     PROFILE=""
-    PROFILE_OPT=""   
+    PROFILE_OPT=""
 
     # Set AWS environment variables with assumed role credentials
     ASSUME_AWS_ACCESS_KEY_ID=$(jq -r '.Credentials.AccessKeyId' "${TEMP_STS_ASSUMED_FILE}")
@@ -76,7 +76,7 @@ assume_role(){
     export AWS_SECRET_ACCESS_KEY=$ASSUME_AWS_SECRET_ACCESS_KEY
     ASSUME_AWS_SESSION_TOKEN=$(jq -r '.Credentials.SessionToken'  "${TEMP_STS_ASSUMED_FILE}")
     export AWS_SESSION_TOKEN=$ASSUME_AWS_SESSION_TOKEN
-    ASSUME_AWS_SESSION_EXPIRATION=$(convert_date_to_timestamp "$(jq -r '.Credentials.Expiration' "${TEMP_STS_ASSUMED_FILE}")")
+    ASSUME_AWS_SESSION_EXPIRATION=$(jq -r '.Credentials.Expiration | sub("\\+00:00";"Z") | fromdateiso8601'  "${TEMP_STS_ASSUMED_FILE}")
     export AWS_SESSION_EXPIRATION=$ASSUME_AWS_SESSION_EXPIRATION
 
     cleanSTSAssumeFile
@@ -88,11 +88,11 @@ cleanSTSAssumeFile() {
 }
 
 backupInitialAWSCredentials() {
-    if [[ $(printenv AWS_ACCESS_KEY_ID) && $(printenv AWS_SECRET_ACCESS_KEY) && $(printenv AWS_SESSION_TOKEN) ]]; then 
+    if [[ $(printenv AWS_ACCESS_KEY_ID) && $(printenv AWS_SECRET_ACCESS_KEY) && $(printenv AWS_SESSION_TOKEN) ]]; then
         INITIAL_AWS_ACCESS_KEY_ID=$(printenv AWS_ACCESS_KEY_ID)
         INITIAL_AWS_SECRET_ACCESS_KEY=$(printenv AWS_SECRET_ACCESS_KEY)
         INITIAL_AWS_SESSION_TOKEN=$(printenv AWS_SESSION_TOKEN)
-    fi    
+    fi
 }
 
 restoreInitialAWSCredentials() {

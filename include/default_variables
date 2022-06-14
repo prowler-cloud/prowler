@@ -29,6 +29,8 @@ MODE="text"
 SEND_TO_SECURITY_HUB=0
 
 # Date & Time
+TZ=UTC
+export TZ
 PROWLER_START_TIME=$( date -u +"%Y-%m-%dT%H:%M:%S%z" )
 OUTPUT_DATE=$(date -u +"%Y%m%d%H%M%S")
 
