@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra713="7.13"
+CHECK_TITLE_extra713="[extra713] Check if GuardDuty is enabled"
+CHECK_SCORED_extra713="NOT_SCORED"
+CHECK_CIS_LEVEL_extra713="EXTRA"
+CHECK_SEVERITY_extra713="High"
+CHECK_ALTERNATE_check713="extra713"
+CHECK_ASFF_COMPLIANCE_TYPE_extra713="ens-op.mon.1.aws.duty.1"
+CHECK_ASFF_RESOURCE_TYPE_extra713="AwsGuardDutyDetector"
+CHECK_SERVICENAME_extra713="guardduty"
+CHECK_RISK_extra713='Amazon GuardDuty is a continuous security monitoring service that analyzes and processes several datasources.'
+CHECK_REMEDIATION_extra713='Enable GuardDuty and analyze its findings.'
+CHECK_DOC_extra713='https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_settingup.html'
+CHECK_CAF_EPIC_extra713='Data Protection'
+
+extra713(){
+  # "Check if GuardDuty is enabled "
+  for regx in $REGIONS; do
+    LIST_OF_GUARDDUTY_DETECTORS=$($AWSCLI guardduty list-detectors $PROFILE_OPT --region $regx --output text --query DetectorIds[*] 2> /dev/null)
+    RESULT=$?
+    if [ $RESULT -eq 0 ];then
+      if [[ $LIST_OF_GUARDDUTY_DETECTORS ]];then
+        while read -r detector;do
+          DETECTOR_ENABLED=$($AWSCLI guardduty get-detector --detector-id $detector $PROFILE_OPT --region $regx --query "Status" --output text|grep ENABLED)
+          if [[ $DETECTOR_ENABLED ]]; then
+            textPass "$regx: GuardDuty detector $detector enabled" "$regx" "$detector"
+          else
+            textFail "$regx: GuardDuty detector $detector configured but suspended" "$regx" "$detector"
+          fi
+        done <<< "$LIST_OF_GUARDDUTY_DETECTORS"
+        else
+          textFail "$regx: GuardDuty detector not configured!" "$regx"
+      fi
+      else
+      # if list-detectors return any error
+      textInfo "$regx: GuardDuty not checked or Access Denied trying to get detector" "$regx"
+    fi
+  done
+}

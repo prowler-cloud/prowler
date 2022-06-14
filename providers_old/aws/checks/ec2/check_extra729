@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra729="7.29"
+CHECK_TITLE_extra729="[extra729] Ensure there are no EBS Volumes unencrypted"
+CHECK_SCORED_extra729="NOT_SCORED"
+CHECK_CIS_LEVEL_extra729="EXTRA"
+CHECK_SEVERITY_extra729="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra729="AwsEc2Volume"
+CHECK_ALTERNATE_check729="extra729"
+CHECK_ASFF_COMPLIANCE_TYPE_extra729="ens-mp.info.3.aws.ebs.1"
+CHECK_SERVICENAME_extra729="ec2"
+CHECK_RISK_extra729='Data encryption at rest prevents data visibility in the event of its unauthorized access or theft.'
+CHECK_REMEDIATION_extra729='Encrypt all EBS volumes and Enable Encryption by default You can configure your AWS account to enforce the encryption of the new EBS volumes and snapshot copies that you create. For example; Amazon EBS encrypts the EBS volumes created when you launch an instance and the snapshots that you copy from an unencrypted snapshot.'
+CHECK_DOC_extra729='https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html'
+CHECK_CAF_EPIC_extra729='Data Protection'
+
+extra729(){
+  # "Ensure there are no EBS Volumes unencrypted "
+  for regx in $REGIONS; do
+    LIST_OF_EBS_NON_ENC_VOLUMES=$($AWSCLI ec2 describe-volumes $PROFILE_OPT --region $regx --query 'Volumes[?Encrypted==`false`].VolumeId' --output text 2>&1)
+    if [[ $(echo "$LIST_OF_EBS_NON_ENC_VOLUMES" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
+        textInfo "$regx: Access Denied trying to describe volumes" "$regx"
+        continue
+    fi
+    if [[ $LIST_OF_EBS_NON_ENC_VOLUMES ]];then
+      for volume in $LIST_OF_EBS_NON_ENC_VOLUMES; do
+        textFail "$regx: $volume is not encrypted!" "$regx" "$volume"
+      done
+    fi
+    LIST_OF_EBS_ENC_VOLUMES=$($AWSCLI ec2 describe-volumes $PROFILE_OPT --region $regx --query 'Volumes[?Encrypted==`true`].VolumeId' --output text)
+    if [[ $LIST_OF_EBS_ENC_VOLUMES ]];then
+      for volume in $LIST_OF_EBS_ENC_VOLUMES; do
+        textPass "$regx: $volume is encrypted" "$regx" "$volume"
+      done
+    fi
+  done
+}

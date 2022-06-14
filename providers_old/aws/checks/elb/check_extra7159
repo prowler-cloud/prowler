@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7159="7.159"
+CHECK_TITLE_extra7159="[extra7159] Check if ELB has listeners underneath"
+CHECK_SCORED_extra7159="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7159="EXTRA"
+CHECK_SEVERITY_extra7159="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7159="AwsElbLoadBalancer"
+CHECK_ALTERNATE_check7159="extra7159"
+CHECK_SERVICENAME_extra7159="elb"
+CHECK_RISK_extra7159='The rules that are defined for a listener determine how the load balancer routes requests to its registered targets.'
+CHECK_REMEDIATION_extra7159='Add listeners to Elastic Load Balancers.'
+CHECK_DOC_extra7159='https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-listener-config.html'
+CHECK_CAF_EPIC_extra7159='Data Protection'
+
+extra7159(){
+  for regx in $REGIONS; do
+    LIST_OF_ELBS=$($AWSCLI elb describe-load-balancers --query 'LoadBalancerDescriptions[*].LoadBalancerName' $PROFILE_OPT --region $regx --output text 2>&1)
+    if [[ $(echo "$LIST_OF_ELBS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe load balancers" "$regx"
+        continue
+    fi
+    if [[ $LIST_OF_ELBS ]]; then
+      for elb in $LIST_OF_ELBS; do
+        LIST_OF_LISTENERS=$($AWSCLI elb describe-load-balancers --load-balancer-name $elb --query 'LoadBalancerDescriptions[*].ListenerDescriptions' $PROFILE_OPT --region $regx --output text)
+        if [[ $LIST_OF_LISTENERS ]]; then
+            textPass "$regx: $elb has listeners underneath" "$regx" "$elb"
+        else
+            textFail "$regx: $elb has no listeners underneath" "$regx" "$elb"
+        fi
+      done
+    else
+      textInfo "$regx: No ELBs found" "$regx"
+    fi
+  done
+}

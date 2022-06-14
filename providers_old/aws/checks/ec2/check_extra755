@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra755="7.55"
+CHECK_TITLE_extra755="[extra755] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Memcached port 11211"
+CHECK_SCORED_extra755="NOT_SCORED"
+CHECK_CIS_LEVEL_extra755="EXTRA"
+CHECK_SEVERITY_extra755="High"
+CHECK_ASFF_RESOURCE_TYPE_extra755="AwsEc2SecurityGroup"
+CHECK_ALTERNATE_check755="extra755"
+CHECK_ASFF_COMPLIANCE_TYPE_extra755="ens-mp.com.4.aws.sg.12"
+CHECK_SERVICENAME_extra755="ec2"
+CHECK_RISK_extra755='If Security groups are not properly configured the attack surface is increased. '
+CHECK_REMEDIATION_extra755='Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.'
+CHECK_DOC_extra755='https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html'
+CHECK_CAF_EPIC_extra755='Infrastructure Security'
+
+extra755(){
+  for regx in $REGIONS; do
+    SG_LIST=$($AWSCLI ec2 describe-security-groups --query 'SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort<=`11211` && ToPort>=`11211`)) && (contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}' $PROFILE_OPT --region $regx --output text 2>&1)
+    if [[ $(echo "$SG_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe security groups" "$regx"
+        continue
+    fi
+    if [[ $SG_LIST ]];then
+      for SG in $SG_LIST;do
+        textFail "$regx: Found Security Group: $SG open to 0.0.0.0/0 for Memcached port" "$regx" "$SG"
+      done
+    else
+      textPass "$regx: No Security Groups found open to 0.0.0.0/0 for Memcached port" "$regx"
+    fi
+  done
+}

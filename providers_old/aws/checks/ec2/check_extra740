@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra740="7.40"
+CHECK_TITLE_extra740="[extra740] Check if EBS snapshots are encrypted"
+CHECK_SCORED_extra740="NOT_SCORED"
+CHECK_CIS_LEVEL_extra740="EXTRA"
+CHECK_SEVERITY_extra740="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra740="AwsEc2Snapshot"
+CHECK_ALTERNATE_check740="extra740"
+CHECK_ASFF_COMPLIANCE_TYPE_extra740="ens-mp.info.3.aws.ebs.3"
+CHECK_SERVICENAME_extra740="ec2"
+CHECK_RISK_extra740='Data encryption at rest prevents data visibility in the event of its unauthorized access or theft.'
+CHECK_REMEDIATION_extra740='Encrypt all EBS Snapshot and Enable Encryption by default. You can configure your AWS account to enforce the encryption of the new EBS volumes and snapshot copies that you create. For example; Amazon EBS encrypts the EBS volumes created when you launch an instance and the snapshots that you copy from an unencrypted snapshot.'
+CHECK_DOC_extra740='https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html#encryption-by-default'
+CHECK_CAF_EPIC_extra740='Data Protection'
+
+extra740(){
+  # This does NOT use max-items, which would limit the number of items
+  # considered. It considers all snapshots, but only reports at most
+  # max-items passing and max-items failing.
+  for regx in ${REGIONS}; do
+    UNENCRYPTED_SNAPSHOTS=$(${AWSCLI} ec2 describe-snapshots ${PROFILE_OPT} \
+    --region ${regx} --owner-ids ${ACCOUNT_NUM} --output text \
+    --query 'Snapshots[?Encrypted==`false`]|[*].{Id:SnapshotId}' 2>&1 \
+     | grep -v None )
+    if [[ $(echo "$UNENCRYPTED_SNAPSHOTS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe snapshots" "$regx"
+        continue
+    fi
+
+    ENCRYPTED_SNAPSHOTS=$(${AWSCLI} ec2 describe-snapshots ${PROFILE_OPT} \
+    --region ${regx} --owner-ids ${ACCOUNT_NUM} --output text \
+    --query 'Snapshots[?Encrypted==`true`]|[*].{Id:SnapshotId}' 2>&1 \
+     | grep -v None )
+    if [[ $(echo "$ENCRYPTED_SNAPSHOTS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe snapshots" "$regx"
+        continue
+    fi
+    typeset -i unencrypted
+    typeset -i encrypted
+    unencrypted=0
+    encrypted=0
+
+    if [[ ${UNENCRYPTED_SNAPSHOTS} ]]; then
+      for snapshot in ${UNENCRYPTED_SNAPSHOTS}; do
+          unencrypted=${unencrypted}+1
+          if [ "${unencrypted}" -le "${MAXITEMS}" ]; then
+            textFail "${regx}: ${snapshot} is not encrypted!" "${regx}" "${snapshot}"
+          fi
+      done
+    fi
+    if [[ ${ENCRYPTED_SNAPSHOTS} ]]; then
+      for snapshot in ${ENCRYPTED_SNAPSHOTS}; do
+          encrypted=${encrypted}+1
+          if [ "${encrypted}" -le "${MAXITEMS}" ]; then
+            textPass "${regx}: ${snapshot} is encrypted." "${regx}" "${snapshot}"
+          fi
+      done
+    fi
+    if [[ "${encrypted}" = "0" ]] && [[ "${unencrypted}" = "0" ]] ; then
+      textInfo "${regx}: No EBS volume snapshots" "${regx}"
+    else
+      typeset -i total
+      total=${encrypted}+${unencrypted}
+      if [[ "${unencrypted}" -ge "${MAXITEMS}" ]]; then
+        textFail "${unencrypted} unencrypted snapshots out of ${total} snapshots found. Only the first ${MAXITEMS} unencrypted snapshots are reported!"
+      fi
+      if [[ "${encrypted}" -ge "${MAXITEMS}" ]]; then
+        textPass "${encrypted} encrypted snapshots out of ${total} snapshots found. Only the first ${MAXITEMS} encrypted snapshots are reported."
+      fi
+      # Bit of 'bc' magic to print something like 10.42% or 0.85% or similar. 'bc' has a
+      # bug where it will never print leading zeros. So 0.5 is output as ".5". This has a
+      # little extra clause to print a 0 if 0 < x < 1.
+      ratio=$(echo "scale=2; p=(100*${encrypted}/(${encrypted}+${unencrypted})); if(p<1 && p>0) print 0;print p, \"%\";" | bc 2>/dev/null)
+      exit=$?
+
+      # maybe 'bc' doesn't exist, or it exits with an error
+      if [[ "${exit}" = "0" ]]
+      then
+        textInfo "${regx}: ${ratio} encrypted EBS volumes (${encrypted} out of ${total})" "${regx}"
+      else
+        textInfo "${regx}: ${unencrypted} unencrypted EBS volume snapshots out of ${total} total snapshots" "${regx}"
+      fi
+    fi
+  done
+}

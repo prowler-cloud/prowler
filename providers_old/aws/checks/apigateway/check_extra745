@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra745="7.45"
+CHECK_TITLE_extra745="[extra745] Check if API Gateway endpoint is public or private"
+CHECK_SCORED_extra745="NOT_SCORED"
+CHECK_CIS_LEVEL_extra745="EXTRA"
+CHECK_SEVERITY_extra745="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra745="AwsApiGatewayRestApi"
+CHECK_ALTERNATE_check745="extra745"
+CHECK_SERVICENAME_extra745="apigateway"
+CHECK_RISK_extra745='If accessible from internet without restrictions opens up attack / abuse surface for any malicious user.'
+CHECK_REMEDIATION_extra745='Verify that any public Api Gateway is protected and audited. Detective controls for common risks should be implemented.'
+CHECK_DOC_extra745='https://d1.awsstatic.com/whitepapers/api-gateway-security.pdf?svrd_sip6'
+CHECK_CAF_EPIC_extra745='Infrastructure Security'
+
+extra745(){
+  for regx in $REGIONS; do
+    LIST_OF_REST_APIS=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-rest-apis --query 'items[*].id' --output text 2>&1)
+    if [[ $(echo "$LIST_OF_REST_APIS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to get rest APIs" "$regx"
+        continue
+    fi
+    if [[ $LIST_OF_REST_APIS ]];then
+      for api in $LIST_OF_REST_APIS; do
+        API_GW_NAME=$($AWSCLI apigateway get-rest-apis $PROFILE_OPT --region $regx --query "items[?id==\`$api\`].name" --output text)
+        ENDPOINT_CONFIG_TYPE=$($AWSCLI $PROFILE_OPT --region $regx apigateway get-rest-api --rest-api-id $api --query endpointConfiguration.types --output text)
+        if [[ $ENDPOINT_CONFIG_TYPE ]]; then
+          case $ENDPOINT_CONFIG_TYPE in
+            PRIVATE )
+              textPass "$regx: API Gateway $API_GW_NAME ID $api is set as $ENDPOINT_CONFIG_TYPE" "$regx" "$API_GW_NAME"
+            ;;
+            REGIONAL )
+              textFail "$regx: API Gateway $API_GW_NAME ID $api is internet accesible as $ENDPOINT_CONFIG_TYPE" "$regx" "$API_GW_NAME"
+            ;;
+            EDGE )
+              textFail "$regx: API Gateway $API_GW_NAME ID $api is internet accesible as $ENDPOINT_CONFIG_TYPE" "$regx" "$API_GW_NAME"
+          esac
+        fi
+      done
+    else
+      textInfo "$regx: No API Gateways found" "$regx"
+    fi
+  done
+}

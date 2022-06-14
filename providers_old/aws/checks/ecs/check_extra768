@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra768="7.68"
+CHECK_TITLE_extra768="[extra768] Find secrets in ECS task definitions environment variables "
+CHECK_SCORED_extra768="NOT_SCORED"
+CHECK_CIS_LEVEL_extra768="EXTRA"
+CHECK_SEVERITY_extra768="Critical"
+CHECK_ASFF_RESOURCE_TYPE_extra768="AwsEcsTaskDefinition"
+CHECK_ALTERNATE_check768="extra768"
+CHECK_SERVICENAME_extra768="ecs"
+CHECK_RISK_extra768='The use of a hard-coded password increases the possibility of password guessing. If hard-coded passwords are used; it is possible that malicious users gain access through the account in question.'
+CHECK_REMEDIATION_extra768='Use Secrets Manager or Parameter Store to securely provide credentials to containers without hardcoding the secrets in code or passing them through environment variables.'
+CHECK_DOC_extra768='https://docs.aws.amazon.com/AmazonECS/latest/developerguide/specifying-sensitive-data.html'
+CHECK_CAF_EPIC_extra768='Logging and Monitoring'
+
+extra768(){
+  SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM-$PROWLER_START_TIME"
+  if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then
+    mkdir $SECRETS_TEMP_FOLDER
+  fi
+  for regx in $REGIONS; do
+    CHECK_DETECT_SECRETS_INSTALLATION=$(secretsDetector)
+    if [[ $? -eq 241 ]]; then
+      textInfo "$regx: python library detect-secrets not found. Make sure it is installed correctly." "$regx"
+    else
+      # Get a list of all task definition families first:
+      FAMILIES=$($AWSCLI ecs list-task-definition-families $PROFILE_OPT --region $regx --status ACTIVE 2>&1 )
+      if [[ $(echo "$FAMILIES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+          textInfo "$regx: Access Denied trying to list task definition families" "$regx"
+          continue
+      fi
+      if [[ $(echo $FAMILIES | jq -r .families[]) ]]; then
+        for FAMILY in $(echo $FAMILIES | jq -r .families[]);do
+          # Get the full task definition arn:
+          TASK_DEFINITION_TEMP=$($AWSCLI ecs list-task-definitions $PROFILE_OPT --region $regx --family-prefix $FAMILY --sort DESC --max-items 1 | jq -r .taskDefinitionArns[0])
+          # We only care about the task definition name:
+          IFS='/' read -r -a splitArn <<< "$TASK_DEFINITION_TEMP"
+          TASK_DEFINITION=${splitArn[1]}
+          TASK_DEFINITION_ENV_VARIABLES_FILE="$SECRETS_TEMP_FOLDER/extra768-$TASK_DEFINITION-$regx-variables.txt"
+          TASK_DEFINITION_ENV_VARIABLES=$($AWSCLI ecs $PROFILE_OPT --region $regx describe-task-definition --task-definition $TASK_DEFINITION --query 'taskDefinition.containerDefinitions[*].environment' --output text > $TASK_DEFINITION_ENV_VARIABLES_FILE)
+          if [ -s $TASK_DEFINITION_ENV_VARIABLES_FILE ];then
+            # Implementation using https://github.com/Yelp/detect-secrets
+            FINDINGS=$(secretsDetector file $TASK_DEFINITION_ENV_VARIABLES_FILE)
+            if [[ $FINDINGS -eq 0 ]]; then
+              textPass "$regx: No secrets found in ECS task definition $TASK_DEFINITION variables" "$regx" "$TASK_DEFINITION"
+              # delete file if nothing interesting is there
+              rm -f $TASK_DEFINITION_ENV_VARIABLES_FILE
+            else
+              textFail "$regx: Potential secret found in ECS task definition $TASK_DEFINITION variables" "$regx" "$TASK_DEFINITION"
+            fi
+          else
+            textInfo "$regx: ECS task definition $TASK_DEFINITION has no variables" "$regx" "$TASK_DEFINITION"
+            rm -f $TASK_DEFINITION_ENV_VARIABLES_FILE
+          fi
+        done
+      else
+        textInfo "$regx: No ECS task definitions found" "$regx"
+      fi
+    fi
+  done
+}

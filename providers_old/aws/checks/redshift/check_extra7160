@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2021) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra7160="7.160"
+CHECK_TITLE_extra7160="[extra7160] Check if Redshift has automatic upgrades enabled"
+CHECK_SCORED_extra7160="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7160="EXTRA"
+CHECK_SEVERITY_extra7160="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra7160="AwsRedshift"
+CHECK_ALTERNATE_check7160="extra7160"
+CHECK_SERVICENAME_extra7160="redshift"
+CHECK_RISK_extra7160='Without automatic version upgrade enabled; a critical Redshift Cluster version can become severly out of date.'
+CHECK_REMEDIATION_extra7160='Enabled AutomaticVersionUpgrade on Redshift Cluster'
+CHECK_DOC_extra7160='https://docs.aws.amazon.com/redshift/latest/mgmt/managing-cluster-operations.html'
+CHECK_CAF_EPIC_extra7160='Infrastructure Security'
+
+extra7160(){
+  for regx in $REGIONS; do
+    LIST_OF_CLUSTERS=$($AWSCLI redshift describe-clusters $PROFILE_OPT --query 'Clusters[*].ClusterIdentifier' --region $regx --output text 2>&1)
+    if [[ $(echo "$LIST_OF_CLUSTERS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        textInfo "$regx: Access Denied trying to describe clusters" "$regx"
+        continue
+    fi
+    if [[ $LIST_OF_CLUSTERS ]]; then
+      for cluster in $LIST_OF_CLUSTERS; do
+        AUTO_UPGRADE_ENABLED=$($AWSCLI redshift describe-clusters $PROFILE_OPT --cluster-identifier $cluster --query 'Clusters[*].AllowVersionUpgrade' --region $regx --output text)
+        if [[ $AUTO_UPGRADE_ENABLED == "True" ]]; then
+            textPass "$regx: $cluster has AllowVersionUpgrade enabled" "$regx" "$cluster"
+        else
+            textFail "$regx: $cluster has AllowVersionUpgrade disabled" "$regx" "$cluster"
+        fi
+      done
+    else
+      textInfo "$regx: No Redshift Clusters found" "$regx"
+    fi
+  done
+}

@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2018) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra714="7.14"
+CHECK_TITLE_extra714="[extra714] Check if CloudFront distributions have logging enabled"
+CHECK_SCORED_extra714="NOT_SCORED"
+CHECK_CIS_LEVEL_extra714="EXTRA"
+CHECK_SEVERITY_extra714="Medium"
+CHECK_ASFF_RESOURCE_TYPE_extra714="AwsCloudFrontDistribution"
+CHECK_ALTERNATE_check714="extra714"
+CHECK_SERVICENAME_extra714="cloudfront"
+CHECK_RISK_extra714='If not enabled monitoring of service use is not possible.'
+CHECK_REMEDIATION_extra714='Real-time monitoring can be achieved by directing CloudTrail Logs to CloudWatch Logs and establishing corresponding metric filters and alarms. Enable logging for services with defined log rotation. This logs are useful for Incident Response and forensics investigation among other use cases.'
+CHECK_DOC_extra714='https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html'
+CHECK_CAF_EPIC_extra714='Logging and Monitoring'
+
+extra714(){
+  # "Check if CloudFront distributions have logging enabled "
+  LIST_OF_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions $PROFILE_OPT --query 'DistributionList.Items[].Id' --output text | grep -v "^None")
+  if [[ $LIST_OF_DISTRIBUTIONS ]]; then
+    for dist in $LIST_OF_DISTRIBUTIONS; do
+      LOG_ENABLED=$($AWSCLI cloudfront get-distribution $PROFILE_OPT --id "$dist" --query 'Distribution.DistributionConfig.Logging.Enabled' --output text | grep True)
+      LOG_ENABLED_REALTIME=$($AWSCLI cloudfront get-distribution $PROFILE_OPT --id "$dist" --query 'Distribution.DistributionConfig.DefaultCacheBehavior.RealtimeLogConfigArn' --output text | grep -i arn)
+      if [[ $LOG_ENABLED || $LOG_ENABLED_REALTIME ]]; then
+        textPass "$REGION: CloudFront distribution $dist has logging enabled" "$REGION" "$dist"
+      else
+        textFail "$REGION: CloudFront distribution $dist has logging disabled" "$REGION" "$dist"
+      fi
+    done
+  else
+    textInfo "$REGION: No CloudFront distributions found" "$REGION" "$dist"
+  fi
+}

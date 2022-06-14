@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+CHECK_ID_extra741="7.41"
+CHECK_TITLE_extra741="[extra741] Find secrets in EC2 User Data"
+CHECK_SCORED_extra741="NOT_SCORED"
+CHECK_CIS_LEVEL_extra741="EXTRA"
+CHECK_SEVERITY_extra741="Critical"
+CHECK_ASFF_RESOURCE_TYPE_extra741="AwsEc2Instance"
+CHECK_ALTERNATE_check741="extra741"
+CHECK_SERVICENAME_extra741="ec2"
+CHECK_RISK_extra741='Secrets hardcoded into instance user data can be used by malware and bad actors to gain lateral access to other services.'
+CHECK_REMEDIATION_extra741='Implement automated detective control (e.g. using tools like Prowler ) to scan accounts for passwords and secrets. Use secrets manager service to store and retrieve passwords and secrets. '
+CHECK_DOC_extra741='https://docs.aws.amazon.com/secretsmanager/latest/userguide/tutorials_basic.html'
+CHECK_CAF_EPIC_extra741='IAM'
+
+extra741(){
+  SECRETS_TEMP_FOLDER="$PROWLER_DIR/secrets-$ACCOUNT_NUM"
+  if [[ ! -d $SECRETS_TEMP_FOLDER ]]; then
+    # this folder is deleted once this check is finished
+    mkdir $SECRETS_TEMP_FOLDER
+  fi
+
+  for regx in $REGIONS; do
+    CHECK_DETECT_SECRETS_INSTALLATION=$(secretsDetector)
+    if [[ $? -eq 241 ]]; then
+      textInfo "$regx: python library detect-secrets not found. Make sure it is installed correctly." "$regx"
+    else
+      LIST_OF_EC2_INSTANCES=$($AWSCLI ec2 describe-instances $PROFILE_OPT --region $regx --query Reservations[*].Instances[*].InstanceId --output text --max-items $MAXITEMS 2>&1| grep -v None)
+      if [[ $(echo "$LIST_OF_EC2_INSTANCES" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+          textInfo "$regx: Access Denied trying to describe instances" "$regx"
+          continue
+      fi
+      if [[ $LIST_OF_EC2_INSTANCES ]];then
+        for instance in $LIST_OF_EC2_INSTANCES; do
+          EC2_USERDATA_FILE="$SECRETS_TEMP_FOLDER/extra741-$instance-userData.decoded"
+          EC2_USERDATA=$($AWSCLI ec2 describe-instance-attribute --attribute userData $PROFILE_OPT --region $regx --instance-id $instance --query UserData.Value --output text| grep -v ^None | decode_report > $EC2_USERDATA_FILE)
+          if [ -s "$EC2_USERDATA_FILE" ];then
+            # This finds ftp or http URLs with credentials and common keywords
+            # FINDINGS=$(egrep -i '[[:alpha:]]*://[[:alnum:]]*:[[:alnum:]]*@.*/|key|secret|token|pass' $EC2_USERDATA_FILE |wc -l|tr -d '\ ')
+            # New implementation using https://github.com/Yelp/detect-secrets
+            # Test if user data is a valid GZIP file, if so gunzip first
+            if gunzip -t "$EC2_USERDATA_FILE" > /dev/null 2>&1; then
+              mv "$EC2_USERDATA_FILE" "$EC2_USERDATA_FILE.gz" ; gunzip "$EC2_USERDATA_FILE.gz"
+            fi
+            FINDINGS=$(secretsDetector file "$EC2_USERDATA_FILE")
+            if [[ $FINDINGS -eq 0 ]]; then
+              textPass "$regx: No secrets found in $instance User Data" "$regx" "$instance"
+              # delete file if nothing interesting is there
+              rm -f "$EC2_USERDATA_FILE"
+            else
+              textFail "$regx: Potential secret found in $instance User Data" "$regx" "$instance"
+              # delete file to not leave trace, user must look at the instance User Data
+              rm -f "$EC2_USERDATA_FILE"
+            fi
+          else
+            textPass "$regx: No secrets found in $instance User Data or it is empty" "$regx" "$instance"
+          fi
+        done
+      else
+        textInfo "$regx: No EC2 instances found" "$regx"
+      fi
+    fi
+  done
+  rm -rf $SECRETS_TEMP_FOLDER
+}
