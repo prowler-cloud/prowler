@@ -4,8 +4,10 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-colorama = "*"
-boto3 = "*"
+colorama = "0.4.4"
+boto3 = "1.24.8"
+arnparse = "0.0.2"
+botocore = "1.27.8"
 
 [dev-packages]
 

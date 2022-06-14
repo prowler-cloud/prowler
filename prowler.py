@@ -8,7 +8,7 @@ import pkgutil
 from lib.banner import print_banner, print_version
 from lib.logger import logger, logging_levels
 from lib.outputs import report
-from providers.aws.aws_provider import provider_set_profile
+from providers.aws.aws_provider import provider_set_session, Input_Data
 
 
 def run_check(check):
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("provider", help="Specify Provider: AWS")
     parser.add_argument(
-        "-c", "--checks", nargs="*", help="Comma separated list of checks"
+        "-c", "--checks", nargs="+", help="Comma separated list of checks"
     )
     parser.add_argument(
         "-b", "--no-banner", action="store_false", help="Hide Prowler Banner"
@@ -51,19 +51,47 @@ if __name__ == "__main__":
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         default="CRITICAL",
         help="Select Log Level",
+       
     )
     parser.add_argument(
-        "-p",
-        "--profile",
-        nargs="?",
-        const="default",
-        help="AWS profile to launch prowler with",
+        "-p", "--profile", nargs="?", default = None, help="AWS profile to launch prowler with"
+    )
+    parser.add_argument(
+        "-R", "--role", nargs="?", default = None, help="Role name to be assumed in account passed with -A"
+    )
+    parser.add_argument(
+        "-A", "--account", nargs="?", default = None, help="AWS account id where the role passed by -R is assumed"
+    )
+    parser.add_argument(
+        "-T", "--session-duration", nargs="?", default = 3600, type = int,  help="Assumed role session duration in seconds, by default 3600"
+    )
+    parser.add_argument(
+        "-I", "--external-id", nargs="?",  default = None ,  help="External ID to be passed when assuming role"
     )
     # Parse Arguments
     args = parser.parse_args()
+
     provider = args.provider
     checks = args.checks
-    profile = args.profile
+    if args.role or args.account:
+        if  not args.account:
+            logger.error("It is needed to input an Account Id to assume the role (-A option) when a role is provided with -R")
+            quit()
+        elif not args.role:
+            logger.error("It is needed to input an role name (-R option) when an account is provided with -A")
+            quit()
+
+    session_info = Input_Data(
+                            profile = args.profile,
+                            role_name = args.role,
+                            account_to_assume = args.account,
+                            session_duration = args.session_duration,
+                            external_id = args.external_id
+                            )
+    
+
+     # Set Logger
+    logger.setLevel(logging_levels.get(args.log_level))
 
     if args.version:
         print_version()
@@ -72,44 +100,37 @@ if __name__ == "__main__":
     if args.no_banner:
         print_banner()
 
-    # Set Logger
-    logger.setLevel(logging_levels.get(args.log_level))
 
-    logger.info("Test info")
-    logger.debug("Test debug")
-
-    # Setting profile
-    provider_set_profile(profile)
+    # Setting profile 
+    provider_set_session(session_info)
 
     # libreria para generar la lista de checks
-    checks_to_execute = set()
-
-    # LOADER
-    # Handle if there are checks passed using -c/--checks
     if checks:
-        for check_name in checks:
-            checks_to_execute.add(check_name)
+        for check in checks:
+            # Recover service from check name
+            service = check.split("_")[0]
+            # Import check module
+            lib = import_check(
+                f"providers.{provider}.services.{service}.{check}.{check}"
+            )
+            # Recover functions from check
+            check_to_execute = getattr(lib, check)
+            c = check_to_execute()
+            # Run check
+            run_check(c)
 
-    # If there are no checks passed as argument
     else:
-        # Get all check modules to run with the specifie provider
+        # Get all check modules to run
         modules = recover_modules_from_provider(provider)
+        # Run checks
         for check_module in modules:
-            # Recover check name from import path (last part)
+            print(check_module)
+            # Import check module
+            lib = import_check(check_module)
+            # Recover module from check name
             check_name = check_module.split(".")[5]
-            checks_to_execute.add(check_name)
-
-    # Execute checks
-    for check_name in checks_to_execute:
-        # Recover service from check name
-        service = check_name.split("_")[0]
-        # Import check module
-        # Validate check in service and provider
-        lib = import_check(
-            f"providers.{provider}.services.{service}.{check_name}.{check_name}"
-        )
-        # Recover functions from check
-        check_to_execute = getattr(lib, check_name)
-        c = check_to_execute()
-        # Run check
-        run_check(c)
+            # Recover functions from check
+            check_to_execute = getattr(lib, check_name)
+            c = check_to_execute()
+            # Run check
+            run_check(c)

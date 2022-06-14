@@ -1,7 +1,7 @@
 import botocore
 from boto3 import session
 
-from providers.aws.aws_provider import session
+from providers.aws.aws_provider import aws_session
 
 
 ################## IAM
@@ -90,4 +90,4 @@ class IAM:
             return users
 
 
-iam_client = IAM(session)
+iam_client = IAM(aws_session)
