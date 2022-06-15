@@ -67,6 +67,7 @@ if __name__ == "__main__":
     # Load checks to execute
     logger.debug("Loading checks")
     checks_to_execute = load_checks_to_execute(checks_file, checks, provider)
+    # Exclude checks if -e
     if excluded_checks:
         checks_to_execute = exclude_checks_to_run(checks_to_execute, excluded_checks)
 
