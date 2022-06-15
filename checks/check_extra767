@@ -25,7 +25,7 @@ CHECK_CAF_EPIC_extra767='Data Protection'
 
 extra767(){
     LIST_OF_DISTRIBUTIONS=$("${AWSCLI}" cloudfront list-distributions --query 'DistributionList.Items[*].Id' ${PROFILE_OPT} --output text | grep -v ^None)
-    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "$LIST_OF_BUCKETS"; then
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_DISTRIBUTIONS}"; then
         textInfo "${REGION}: Access Denied Trying to list CloudFront distributions" "${REGION}"
         exit
     fi
@@ -39,7 +39,7 @@ extra767(){
         
         if [[ "$CHECK_ALLOWED_METHODS" =~ "POST" ]]; then
             CHECK_FIELD_LEVEL_ENCRYPTION=$("${AWSCLI}" cloudfront get-distribution --id "${distribution}" --query Distribution.DistributionConfig.DefaultCacheBehavior.FieldLevelEncryptionId ${PROFILE_OPT} --output text)
-            if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${CHECK_ALLOWED_METHODS}"; then
+            if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${CHECK_FIELD_LEVEL_ENCRYPTION}"; then
                 textInfo "${REGION}: Access Denied Trying to get CloudFront distributions" "${REGION}"
                 continue
             fi
