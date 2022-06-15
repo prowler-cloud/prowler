@@ -8,6 +8,13 @@ from lib.logger import logger
 from lib.outputs import report
 
 
+# Exclude checks to run
+def exclude_checks_to_run(checks_to_execute, excluded_checks):
+    for check in excluded_checks:
+        checks_to_execute.discard(check)
+    return checks_to_execute
+
+
 # Parse checks from file
 def parse_checks_from_file(checks_file):
     checks_to_execute = set()
@@ -25,9 +32,10 @@ def parse_checks_from_file(checks_file):
     return checks_to_execute
 
 
+# Generate the list of checks to execute
 def load_checks_to_execute(checks_file, check_list, provider):
     checks_to_execute = set()
-    # LOADER
+
     # Handle if there are checks passed using -c/--checks
     if check_list:
         for check_name in check_list:
@@ -35,11 +43,8 @@ def load_checks_to_execute(checks_file, check_list, provider):
 
     # Handle if there are checks passed using -C/--checks-file
     elif checks_file:
-        # check if file exists or path
-        # check permissions to read
         try:
             checks_to_execute = parse_checks_from_file(checks_file)
-
         except Exception as e:
             logger.error(f"{checks_file}: {e.__class__.__name__}")
 
@@ -52,7 +57,7 @@ def load_checks_to_execute(checks_file, check_list, provider):
             # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
             check_name = check_module.split(".")[-1]
             checks_to_execute.add(check_name)
-    print(checks_to_execute)
+
     return checks_to_execute
 
 
