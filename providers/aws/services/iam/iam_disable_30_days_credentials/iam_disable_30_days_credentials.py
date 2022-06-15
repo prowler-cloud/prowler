@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from lib.check import Check, Check_Report
+from lib.check.check import Check, Check_Report
 from providers.aws.services.iam.iam_service import iam_client
 
 maximum_expiration_days = 30
