@@ -24,17 +24,36 @@ CHECK_DOC_extra767='https://docs.aws.amazon.com/AmazonCloudFront/latest/Develope
 CHECK_CAF_EPIC_extra767='Data Protection'
 
 extra767(){
-    LIST_OF_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions --query 'DistributionList.Items[*].Id' $PROFILE_OPT --output text|grep -v ^None)
+    LIST_OF_DISTRIBUTIONS=$("${AWSCLI}" cloudfront list-distributions --query 'DistributionList.Items[*].Id' ${PROFILE_OPT} --output text | grep -v ^None)
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_DISTRIBUTIONS}"; then
+        textInfo "${REGION}: Access Denied Trying to list CloudFront distributions" "${REGION}"
+        exit
+    fi
     if [[ $LIST_OF_DISTRIBUTIONS ]];then
-      for dist in $LIST_OF_DISTRIBUTIONS; do
-        CHECK_FLE=$($AWSCLI cloudfront get-distribution --id $dist --query Distribution.DistributionConfig.DefaultCacheBehavior.FieldLevelEncryptionId $PROFILE_OPT --output text)
-        if [[ $CHECK_FLE ]]; then
-          textPass "CloudFront distribution $dist has Field Level Encryption enabled" "$regx" "$dist"
+      for distribution in $LIST_OF_DISTRIBUTIONS; do
+        CHECK_ALLOWED_METHODS=$("${AWSCLI}" cloudfront get-distribution --id "${distribution}" --query Distribution.DistributionConfig.DefaultCacheBehavior.AllowedMethods.Items ${PROFILE_OPT} --output text)
+        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${CHECK_ALLOWED_METHODS}"; then
+            textInfo "${REGION}: Access Denied Trying to get CloudFront distributions" "${REGION}"
+            continue
+        fi
+        
+        if [[ "$CHECK_ALLOWED_METHODS" =~ "POST" ]]; then
+            CHECK_FIELD_LEVEL_ENCRYPTION=$("${AWSCLI}" cloudfront get-distribution --id "${distribution}" --query Distribution.DistributionConfig.DefaultCacheBehavior.FieldLevelEncryptionId ${PROFILE_OPT} --output text)
+            if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${CHECK_FIELD_LEVEL_ENCRYPTION}"; then
+                textInfo "${REGION}: Access Denied Trying to get CloudFront distributions" "${REGION}"
+                continue
+            fi
+            
+            if [[ $CHECK_FIELD_LEVEL_ENCRYPTION ]]; then
+                textPass "CloudFront distribution ${distribution} has Field Level Encryption enabled" "${REGION}" "${distribution}"
+            else
+                textFail "CloudFront distribution ${distribution} has Field Level Encryption disabled!" "${REGION}" "${distribution}"
+            fi
         else
-          textFail "CloudFront distribution $dist has Field Level Encryption disabled!" "$regx" "$dist"
+            textPass "CloudFront distribution ${distribution} does not support POST requests"
         fi
       done
     else
-      textInfo "No CloudFront distributions found" "$regx"
+      textPass "No CloudFront distributions found" "${REGION}"
     fi
 }
