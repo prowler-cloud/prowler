@@ -65,10 +65,12 @@ def validate_credentials(validate_session):
 
     try:
         validate_credentials_client = validate_session.client("sts")
-        validate_credentials_client.get_caller_identity()
+        caller_identity = validate_credentials_client.get_caller_identity()
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")
         quit()
+    else:
+        return caller_identity
 
 
 def provider_set_session(session_input):
@@ -86,12 +88,19 @@ def provider_set_session(session_input):
     )
 
     original_session = AWS_Provider(session_info).get_session()
-    validate_credentials(original_session)
+    logger.info("Validating credentials ...")
+    caller_identity = validate_credentials(original_session)
+    logger.info("Credentials validated")
+    logger.info(f"Original caller identity UserId : {caller_identity['UserId']}")
+    logger.info(f"Original caller identity ARN : {caller_identity['Arn']}")
 
     if session_input.role_name and session_input.account_to_assume:
-        logger.info("Assuming role ...")
+        logger.info(
+            f"Assuming role {role_info.role_name} in account {role_info.account_to_assume}"
+        )
         role_info.sts_session = original_session
-        assumed_role_response = assume_role(role_info)
+        assumed_role_response = assume_role(role_info, caller_identity)
+        logger.info("Role assumed")
         session_info.credentials.assumed_access_key_id = assumed_role_response[
             "Credentials"
         ]["AccessKeyId"]
@@ -105,11 +114,10 @@ def provider_set_session(session_input):
     aws_session = AWS_Provider(session_info).get_session()
 
 
-def assume_role(role_info):
+def assume_role(role_info, caller_identity):
 
     try:
         sts_client = role_info.sts_session.client("sts")
-        caller_identity = sts_client.get_caller_identity()
         arn_caller_identity = arnparse(caller_identity["Arn"])
         role_arn = f"arn:{arn_caller_identity.partition}:iam::{role_info.account_to_assume}:role/{role_info.role_name}"
         if role_info.external_id:
@@ -129,4 +137,5 @@ def assume_role(role_info):
         logger.critical(f"{error.__class__.__name__} -- {error}")
         quit()
 
-    return assumed_credentials
+    else:
+        return assumed_credentials
