@@ -36,10 +36,10 @@ extra767(){
                 textFail "CloudFront distribution ${distribution} has Field Level Encryption disabled!" "${REGION}" "${distribution}"
             fi
         else
-            textInfo "CloudFront distribution ${distribution} does not support POST requests"
+            textPass "CloudFront distribution ${distribution} does not support POST requests"
         fi
       done
     else
-      textInfo "No CloudFront distributions found" "${REGION}"
+      textPass "No CloudFront distributions found" "${REGION}"
     fi
 }
