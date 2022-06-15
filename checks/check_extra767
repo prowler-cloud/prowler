@@ -24,12 +24,26 @@ CHECK_DOC_extra767='https://docs.aws.amazon.com/AmazonCloudFront/latest/Develope
 CHECK_CAF_EPIC_extra767='Data Protection'
 
 extra767(){
-    LIST_OF_DISTRIBUTIONS=$($AWSCLI cloudfront list-distributions --query 'DistributionList.Items[*].Id' ${PROFILE_OPT} --output text | grep -v ^None)
+    LIST_OF_DISTRIBUTIONS=$("${AWSCLI}" cloudfront list-distributions --query 'DistributionList.Items[*].Id' ${PROFILE_OPT} --output text | grep -v ^None)
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "$LIST_OF_BUCKETS"; then
+        textInfo "${REGION}: Access Denied Trying to list CloudFront distributions" "${REGION}"
+        exit
+    fi
     if [[ $LIST_OF_DISTRIBUTIONS ]];then
       for distribution in $LIST_OF_DISTRIBUTIONS; do
-        CHECK_ALLOWED_METHODS=$($AWSCLI cloudfront get-distribution --id "${distribution}" --query Distribution.DistributionConfig.DefaultCacheBehavior.AllowedMethods.Items ${PROFILE_OPT} --output text)
+        CHECK_ALLOWED_METHODS=$("${AWSCLI}" cloudfront get-distribution --id "${distribution}" --query Distribution.DistributionConfig.DefaultCacheBehavior.AllowedMethods.Items ${PROFILE_OPT} --output text)
+        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${CHECK_ALLOWED_METHODS}"; then
+            textInfo "${REGION}: Access Denied Trying to get CloudFront distributions" "${REGION}"
+            continue
+        fi
+        
         if [[ "$CHECK_ALLOWED_METHODS" =~ "POST" ]]; then
-            CHECK_FIELD_LEVEL_ENCRYPTION=$($AWSCLI cloudfront get-distribution --id "${distribution}" --query Distribution.DistributionConfig.DefaultCacheBehavior.FieldLevelEncryptionId ${PROFILE_OPT} --output text)
+            CHECK_FIELD_LEVEL_ENCRYPTION=$("${AWSCLI}" cloudfront get-distribution --id "${distribution}" --query Distribution.DistributionConfig.DefaultCacheBehavior.FieldLevelEncryptionId ${PROFILE_OPT} --output text)
+            if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${CHECK_ALLOWED_METHODS}"; then
+                textInfo "${REGION}: Access Denied Trying to get CloudFront distributions" "${REGION}"
+                continue
+            fi
+            
             if [[ $CHECK_FIELD_LEVEL_ENCRYPTION ]]; then
                 textPass "CloudFront distribution ${distribution} has Field Level Encryption enabled" "${REGION}" "${distribution}"
             else
