@@ -4,7 +4,7 @@
 import argparse
 
 from lib.banner import print_banner, print_version
-from lib.check import import_check, load_checks_to_execute, run_check
+from lib.check.check import import_check, load_checks_to_execute, run_check
 from lib.logger import logger, logging_levels
 from providers.aws.aws_provider import provider_set_profile
 
@@ -12,7 +12,13 @@ if __name__ == "__main__":
     # CLI Arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("provider", choices=["aws"], help="Specify Provider")
-    parser.add_argument("-c", "--checks", nargs="+", help="List of checks")
+
+    # Arguments to set checks to run
+    # -c can't be used with -C
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-c", "--checks", nargs="+", help="List of checks")
+    group.add_argument("-C", "--checks-file", nargs="?", help="List of checks")
+
     parser.add_argument(
         "-b", "--no-banner", action="store_false", help="Hide Prowler Banner"
     )
@@ -36,6 +42,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     provider = args.provider
     checks = args.checks
+    checks_file = args.checks_file
     profile = args.profile
     # Set Logger
     logger.setLevel(logging_levels.get(args.log_level))
@@ -52,7 +59,7 @@ if __name__ == "__main__":
 
     # Load checks to execute
     logger.debug("Loading checks")
-    checks_to_execute = load_checks_to_execute(checks, provider)
+    checks_to_execute = load_checks_to_execute(checks_file, checks, provider)
 
     # Execute checks
     for check_name in checks_to_execute:
