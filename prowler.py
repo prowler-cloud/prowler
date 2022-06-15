@@ -75,6 +75,12 @@ if __name__ == "__main__":
         default=None,
         help="External ID to be passed when assuming role",
     )
+    parser.add_argument(
+        "-f",
+        "--filter-region",
+        nargs="+",
+        help="AWS region names to run Prowler against",
+    )
     # Parse Arguments
     args = parser.parse_args()
 
@@ -84,6 +90,7 @@ if __name__ == "__main__":
     services = args.services
     groups = args.groups
     checks_file = args.checks_file
+    regions = args.filter_region
     
     # Role assumption input options tests
     if args.role or args.account:
@@ -112,6 +119,9 @@ if __name__ == "__main__":
         session_duration=args.session_duration,
         external_id=args.external_id,
     )
+
+    # Setting profile
+    # set_provider(profile,regions)
     
     # Set Logger
     logger.setLevel(logging_levels.get(args.log_level))

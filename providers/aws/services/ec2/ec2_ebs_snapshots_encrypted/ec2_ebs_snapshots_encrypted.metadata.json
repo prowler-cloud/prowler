@@ -1,0 +1,58 @@
+{
+  "Categories": [
+    "cat1",
+    "cat2"
+  ],
+  "CheckAlias": "extra740",
+  "CheckID": "ec2_ebs_snapshots_encrypted",
+  "CheckName": "ec2_ebs_snapshots_encrypted",
+  "CheckTitle": "Check if EBS snapshots are encrypted",
+  "CheckType": "Data Protection",
+  "Compliance": [
+    {
+      "Control": [
+        "4.4"
+      ],
+      "Framework": "CIS-AWS",
+      "Group": [
+        "level1",
+        "level2"
+      ],
+      "Version": "1.4"
+    }
+  ],
+  "DependsOn": [
+    "othercheck1",
+    "othercheck2"
+  ],
+  "Description": "If Security groups are not properly configured the attack surface is increased.",
+  "Notes": "additional information",
+  "Provider": "aws",
+  "RelatedTo": [
+    "othercheck3",
+    "othercheck4"
+  ],
+  "RelatedUrl": "https://serviceofficialsiteorpageforthissubject",
+  "Remediation": {
+    "Code": {
+      "NativeIaC": "code or URL to the code location.",
+      "Terraform": "code or URL to the code location.",
+      "cli": "cli command or URL to the cli command location.",
+      "other": "cli command or URL to the cli command location."
+    },
+    "Recommendation": {
+      "Text": "Run sudo yum update and cross your fingers and toes.",
+      "Url": "https://myfp.com/recommendations/dangerous_things_and_how_to_fix_them.html"
+    }
+  },
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceType": "AwsIamAccessAnalyzer",
+  "Risk": "Risk associated.",
+  "ServiceName": "iam",
+  "Severity": "low",
+  "SubServiceName": "accessanalyzer",
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  }
+}

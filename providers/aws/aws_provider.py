@@ -43,6 +43,39 @@ class AWS_Session_Info:
     role_info: AWS_Assume_Role
 
 
+# ################## AWS PROVIDER
+# # class AWS_Provider:
+#     def __init__(self, profile, aws_regions):
+#         self.aws_session = session.Session(profile_name=profile)
+#         self.regions = aws_regions
+#         self.account = self.aws_session.client('sts').get_caller_identity()["Account"]
+#         self.caller = self.aws_session.client('sts').get_caller_identity()["Arn"]
+#         self.partition = self.aws_session.client('sts').get_caller_identity()["Arn"].split(":")[1]
+
+#     def get_session(self):
+#         return self.aws_session
+
+#     def get_regions(self):
+#         return self.regions
+
+#     def get_account(self):
+#         return self.account
+
+#     def get_caller(self):
+#         return self.caller
+
+#     def get_partition(self):
+#         return self.partition
+
+# def set_provider(profile,aws_regions):
+#     global session
+#     global regions
+#     global account
+#     provider = AWS_Provider(profile,aws_regions)
+#     regions = provider.get_regions()
+#     session = provider.get_session()
+#     account = provider.get_account()
+
 ################## AWS PROVIDER
 class AWS_Provider:
     def __init__(self, session_info):
