@@ -1,6 +1,4 @@
-import botocore
-from boto3 import session
-
+from lib.logger import logger
 from providers.aws.aws_provider import aws_session
 
 
@@ -25,8 +23,9 @@ class IAM:
     def __get_roles__(self):
         try:
             get_roles_paginator = self.client.get_paginator("list_roles")
-        except botocore.exceptions.ClientError as error:
-            raise error
+        except Exception as error:
+            logger.critical(f"{error.__class__.__name__} -- {error}")
+            quit()
         else:
             roles = []
             for page in get_roles_paginator.paginate():
@@ -40,8 +39,9 @@ class IAM:
         while not report_is_completed:
             try:
                 report_status = self.client.generate_credential_report()
-            except botocore.exceptions.ClientError as error:
-                raise error
+            except Exception as error:
+                logger.critical(f"{error.__class__.__name__} -- {error}")
+                quit()
             else:
                 if report_status["State"] == "COMPLETE":
                     report_is_completed = True
@@ -51,8 +51,9 @@ class IAM:
     def __get_groups__(self):
         try:
             get_groups_paginator = self.client.get_paginator("list_groups")
-        except botocore.exceptions.ClientError as error:
-            raise error
+        except Exception as error:
+            logger.critical(f"{error.__class__.__name__} -- {error}")
+            quit()
         else:
             groups = []
             for page in get_groups_paginator.paginate():
@@ -66,8 +67,9 @@ class IAM:
             get_customer_managed_policies_paginator = self.client.get_paginator(
                 "list_policies"
             )
-        except botocore.exceptions.ClientError as error:
-            raise error
+        except Exception as error:
+            logger.critical(f"{error.__class__.__name__} -- {error}")
+            quit()
         else:
             customer_managed_policies = []
             for page in get_customer_managed_policies_paginator.paginate(Scope="Local"):
@@ -79,8 +81,9 @@ class IAM:
     def __get_users__(self):
         try:
             get_users_paginator = self.client.get_paginator("list_users")
-        except botocore.exceptions.ClientError as error:
-            raise error
+        except Exception as error:
+            logger.critical(f"{error.__class__.__name__} -- {error}")
+            quit()
         else:
             users = []
             for page in get_users_paginator.paginate():
@@ -90,4 +93,8 @@ class IAM:
             return users
 
 
-iam_client = IAM(aws_session)
+try:
+    iam_client = IAM(aws_session)
+except Exception as error:
+    logger.critical(f"{error.__class__.__name__} -- {error}")
+    quit()

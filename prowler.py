@@ -8,7 +8,7 @@ import pkgutil
 from lib.banner import print_banner, print_version
 from lib.logger import logger, logging_levels
 from lib.outputs import report
-from providers.aws.aws_provider import provider_set_session, Input_Data
+from providers.aws.aws_provider import Input_Data, provider_set_session
 
 
 def run_check(check):
@@ -51,22 +51,42 @@ if __name__ == "__main__":
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         default="CRITICAL",
         help="Select Log Level",
-       
     )
     parser.add_argument(
-        "-p", "--profile", nargs="?", default = None, help="AWS profile to launch prowler with"
+        "-p",
+        "--profile",
+        nargs="?",
+        default=None,
+        help="AWS profile to launch prowler with",
     )
     parser.add_argument(
-        "-R", "--role", nargs="?", default = None, help="Role name to be assumed in account passed with -A"
+        "-R",
+        "--role",
+        nargs="?",
+        default=None,
+        help="Role name to be assumed in account passed with -A",
     )
     parser.add_argument(
-        "-A", "--account", nargs="?", default = None, help="AWS account id where the role passed by -R is assumed"
+        "-A",
+        "--account",
+        nargs="?",
+        default=None,
+        help="AWS account id where the role passed by -R is assumed",
     )
     parser.add_argument(
-        "-T", "--session-duration", nargs="?", default = 3600, type = int,  help="Assumed role session duration in seconds, by default 3600"
+        "-T",
+        "--session-duration",
+        nargs="?",
+        default=3600,
+        type=int,
+        help="Assumed role session duration in seconds, by default 3600",
     )
     parser.add_argument(
-        "-I", "--external-id", nargs="?",  default = None ,  help="External ID to be passed when assuming role"
+        "-I",
+        "--external-id",
+        nargs="?",
+        default=None,
+        help="External ID to be passed when assuming role",
     )
     # Parse Arguments
     args = parser.parse_args()
@@ -74,23 +94,26 @@ if __name__ == "__main__":
     provider = args.provider
     checks = args.checks
     if args.role or args.account:
-        if  not args.account:
-            logger.error("It is needed to input an Account Id to assume the role (-A option) when a role is provided with -R")
+        if not args.account:
+            logger.error(
+                "It is needed to input an Account Id to assume the role (-A option) when a role is provided with -R"
+            )
             quit()
         elif not args.role:
-            logger.error("It is needed to input an role name (-R option) when an account is provided with -A")
+            logger.error(
+                "It is needed to input an role name (-R option) when an account is provided with -A"
+            )
             quit()
 
-    session_info = Input_Data(
-                            profile = args.profile,
-                            role_name = args.role,
-                            account_to_assume = args.account,
-                            session_duration = args.session_duration,
-                            external_id = args.external_id
-                            )
-    
+    session_input = Input_Data(
+        profile=args.profile,
+        role_name=args.role,
+        account_to_assume=args.account,
+        session_duration=args.session_duration,
+        external_id=args.external_id,
+    )
 
-     # Set Logger
+    # Set Logger
     logger.setLevel(logging_levels.get(args.log_level))
 
     if args.version:
@@ -100,9 +123,8 @@ if __name__ == "__main__":
     if args.no_banner:
         print_banner()
 
-
-    # Setting profile 
-    provider_set_session(session_info)
+    # Setting session
+    provider_set_session(session_input)
 
     # libreria para generar la lista de checks
     if checks:
