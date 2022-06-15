@@ -45,12 +45,12 @@ class AWS_Session_Info:
 
 # ################## AWS PROVIDER
 # # class AWS_Provider:
-#     def __init__(self, profile, aws_regions):
-#         self.aws_session = session.Session(profile_name=profile)
-#         self.regions = aws_regions
-#         self.account = self.aws_session.client('sts').get_caller_identity()["Account"]
-#         self.caller = self.aws_session.client('sts').get_caller_identity()["Arn"]
-#         self.partition = self.aws_session.client('sts').get_caller_identity()["Arn"].split(":")[1]
+#      def __init__(self, profile, aws_regions):
+        # self.aws_session = session.Session(profile_name=profile)
+        # self.regions = aws_regions
+        # self.account = self.aws_session.client('sts').get_caller_identity()["Account"]
+        # self.caller = self.aws_session.client('sts').get_caller_identity()["Arn"]
+        # self.partition = self.aws_session.client('sts').get_caller_identity()["Arn"].split(":")[1]
 
 #     def get_session(self):
 #         return self.aws_session
@@ -75,6 +75,16 @@ class AWS_Session_Info:
 #     regions = provider.get_regions()
 #     session = provider.get_session()
 #     account = provider.get_account()
+
+#  global session
+#     global regions
+#     global account
+#     global partition
+#     provider = AWS_Provider(profile,aws_regions)
+#     regions = provider.get_regions()
+#     session = provider.get_session()
+#     account = provider.get_account()
+#     partition = provider.get_partition()
 
 ################## AWS PROVIDER
 class AWS_Provider:
