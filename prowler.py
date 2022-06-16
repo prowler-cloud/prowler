@@ -98,12 +98,12 @@ if __name__ == "__main__":
     if args.role or args.account:
         if not args.account:
             logger.error(
-                "It is needed to input an Account Id to assume the role (-A option) when a role is provided with -R"
+                "It is needed to input an Account Id to assume the role (-A option) when an IAM Role is provided with -R"
             )
             quit()
         elif not args.role:
             logger.error(
-                "It is needed to input an role name (-R option) when an account is provided with -A"
+                "It is needed to input an IAM Role name (-R option) when an Account Id is provided with -A"
             )
             quit()
     if args.session_duration not in range(900, 43200):
