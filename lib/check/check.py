@@ -30,9 +30,9 @@ def parse_checks_from_file(input_file: str, provider: str) -> set:
 
 
 # Load checks from groups.json
-def parse_groups_from_file(input_file: str, group_list: list, provider: str) -> set:
+def parse_groups_from_file(group_list: list, provider: str) -> set:
     checks_to_execute = set()
-    f = open_file(input_file)
+    f = open_file(groups_file)
     available_groups = parse_json_file(f)
 
     for group in group_list:
@@ -83,9 +83,7 @@ def load_checks_to_execute(
     # Handle if there are groups passed using -g/--groups
     elif group_list:
         try:
-            checks_to_execute = parse_groups_from_file(
-                groups_file, group_list, provider
-            )
+            checks_to_execute = parse_groups_from_file(group_list, provider)
         except Exception as e:
             logger.error(f"{e.__class__.__name__} -- {e}")
 
