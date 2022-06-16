@@ -16,6 +16,7 @@ def exclude_checks_to_run(checks_to_execute: set, excluded_checks: list) -> set:
         checks_to_execute.discard(check)
     return checks_to_execute
 
+
 # Load checks from checklist.json
 def parse_checks_from_file(input_file: str, provider: str) -> set:
     checks_to_execute = set()
@@ -38,6 +39,10 @@ def parse_groups_from_file(group_list: list, provider: str) -> set:
         if group in available_groups[provider]:
             for check_name in available_groups[provider][group]:
                 checks_to_execute.add(check_name)
+        else:
+            logger.error(
+                f"Group '{group}' was not found for the {provider.upper()} provider"
+            )
     return checks_to_execute
 
 
