@@ -60,23 +60,15 @@ class AWS_Session_Info:
 
 #     def get_account(self):
 #         return self.account
-
+    
 #     def get_caller(self):
 #         return self.caller
-
+    
 #     def get_partition(self):
 #         return self.partition
 
 # def set_provider(profile,aws_regions):
 #     global session
-#     global regions
-#     global account
-#     provider = AWS_Provider(profile,aws_regions)
-#     regions = provider.get_regions()
-#     session = provider.get_session()
-#     account = provider.get_account()
-
-#  global session
 #     global regions
 #     global account
 #     global partition
