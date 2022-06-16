@@ -91,7 +91,7 @@ if __name__ == "__main__":
     groups = args.groups
     checks_file = args.checks_file
     regions = args.filter_region
-    
+
     # Role assumption input options tests
     if args.role or args.account:
         if not args.account:
@@ -112,17 +112,6 @@ if __name__ == "__main__":
             logger.critical("To use -I/-T options both -A and -R options are needed")
             quit()
 
-    session_input = Input_Data(
-        profile=args.profile,
-        role_name=args.role,
-        account_to_assume=args.account,
-        session_duration=args.session_duration,
-        external_id=args.external_id,
-    )
-
-    # Setting profile
-    # set_provider(profile,regions)
-    
     # Set Logger
     logger.setLevel(logging_levels.get(args.log_level))
 
@@ -134,6 +123,15 @@ if __name__ == "__main__":
         print_banner()
 
     # Setting session
+    session_input = Input_Data(
+        profile=args.profile,
+        role_name=args.role,
+        account_to_assume=args.account,
+        session_duration=args.session_duration,
+        external_id=args.external_id,
+        regions=args.filter_region,
+    )
+
     provider_set_session(session_input)
 
     # Load checks to execute

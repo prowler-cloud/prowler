@@ -1,5 +1,6 @@
 from lib.logger import logger
 from providers.aws.aws_provider import aws_session
+from botocore.exceptions import ClientError
 
 
 ################## IAM
@@ -23,7 +24,7 @@ class IAM:
     def __get_roles__(self):
         try:
             get_roles_paginator = self.client.get_paginator("list_roles")
-        except botocore.exceptions.ClientError as error:
+        except ClientError as error:
             logger.error(
                 f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
             )
@@ -43,7 +44,7 @@ class IAM:
         while not report_is_completed:
             try:
                 report_status = self.client.generate_credential_report()
-            except botocore.exceptions.ClientError as error:
+            except ClientError as error:
                 logger.error(
                     f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
                 )
@@ -59,7 +60,7 @@ class IAM:
     def __get_groups__(self):
         try:
             get_groups_paginator = self.client.get_paginator("list_groups")
-        except botocore.exceptions.ClientError as error:
+        except ClientError as error:
             logger.error(
                 f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
             )
@@ -79,7 +80,7 @@ class IAM:
             get_customer_managed_policies_paginator = self.client.get_paginator(
                 "list_policies"
             )
-        except botocore.exceptions.ClientError as error:
+        except ClientError as error:
             logger.error(
                 f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
             )
@@ -97,7 +98,7 @@ class IAM:
     def __get_users__(self):
         try:
             get_users_paginator = self.client.get_paginator("list_users")
-        except botocore.exceptions.ClientError as error:
+        except ClientError as error:
             logger.error(
                 f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
             )
