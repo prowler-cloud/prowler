@@ -105,6 +105,11 @@ if __name__ == "__main__":
             )
             quit()
 
+    if args.session_duration or args.external_id:
+        if not args.account or not args.role:
+            logger.error("To use -I/-T options both -A and -R options are needed")
+            quit()
+
     session_input = Input_Data(
         profile=args.profile,
         role_name=args.role,
