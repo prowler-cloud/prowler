@@ -97,21 +97,21 @@ if __name__ == "__main__":
     # Role assumption input options tests
     if args.role or args.account:
         if not args.account:
-            logger.error(
+            logger.critical(
                 "It is needed to input an Account Id to assume the role (-A option) when an IAM Role is provided with -R"
             )
             quit()
         elif not args.role:
-            logger.error(
+            logger.critical(
                 "It is needed to input an IAM Role name (-R option) when an Account Id is provided with -A"
             )
             quit()
     if args.session_duration not in range(900, 43200):
-        logger.error("Value for -T option must be between 900 and 43200")
+        logger.critical("Value for -T option must be between 900 and 43200")
         quit()
-    if args.session_duration or args.external_id:
+    if args.session_duration != 3600 or args.external_id:
         if not args.account or not args.role:
-            logger.error("To use -I/-T options both -A and -R options are needed")
+            logger.critical("To use -I/-T options both -A and -R options are needed")
             quit()
 
     session_input = Input_Data(
