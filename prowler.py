@@ -4,7 +4,12 @@
 import argparse
 
 from lib.banner import print_banner, print_version
-from lib.check.check import import_check, load_checks_to_execute, run_check
+from lib.check.check import (
+    exclude_checks_to_run,
+    import_check,
+    load_checks_to_execute,
+    run_check,
+)
 from lib.logger import logger, logging_levels
 from providers.aws.aws_provider import Input_Data, provider_set_session
 
@@ -19,6 +24,7 @@ if __name__ == "__main__":
     group.add_argument("-c", "--checks", nargs="+", help="List of checks")
     group.add_argument("-C", "--checks-file", nargs="?", help="List of checks")
 
+    parser.add_argument("-e", "--excluded-checks", nargs="+", help="Checks to exclude")
     parser.add_argument(
         "-b", "--no-banner", action="store_false", help="Hide Prowler Banner"
     )
@@ -72,6 +78,7 @@ if __name__ == "__main__":
 
     provider = args.provider
     checks = args.checks
+    excluded_checks = args.excluded_checks
     checks_file = args.checks_file
     
     # Role assumption input options tests
@@ -118,6 +125,11 @@ if __name__ == "__main__":
     # Load checks to execute
     logger.debug("Loading checks")
     checks_to_execute = load_checks_to_execute(checks_file, checks, provider)
+
+    # Exclude checks if -e
+    if excluded_checks:
+        checks_to_execute = exclude_checks_to_run(checks_to_execute, excluded_checks)
+
 
     # Execute checks
     for check_name in checks_to_execute:
