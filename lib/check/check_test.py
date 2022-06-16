@@ -1,6 +1,10 @@
 import os
 
-from lib.check.check import exclude_checks_to_run, parse_checks_from_file
+from lib.check.check import (
+    exclude_checks_to_run,
+    parse_checks_from_file,
+    parse_groups_from_file,
+)
 
 
 class Test_Check:
@@ -18,23 +22,29 @@ class Test_Check:
     def test_parse_checks_from_file(self):
         test_cases = [
             {
-                "input": f"{os.path.dirname(os.path.realpath(__file__))}/fixtures/checklistA.txt",
-                "expected": {"check12", "check11", "extra72", "check13"},
-            },
-            {
-                "input": f"{os.path.dirname(os.path.realpath(__file__))}/fixtures/checklistB.txt",
-                "expected": {
-                    "extra72",
-                    "check13",
-                    "check11",
-                    "check12",
-                    "check56",
-                    "check2423",
+                "input": {
+                    "path": f"{os.path.dirname(os.path.realpath(__file__))}/fixtures/checklistA.json",
+                    "provider": "aws",
                 },
-            },
+                "expected": {"check11", "check12", "check7777"},
+            }
         ]
         for test in test_cases:
-            assert parse_checks_from_file(test["input"]) == test["expected"]
+            check_file = test["input"]["path"]
+            provider = test["input"]["provider"]
+            assert parse_checks_from_file(check_file, provider) == test["expected"]
+
+    def test_parse_groups_from_file(self):
+        test_cases = [
+            {
+                "input": {"groups": ["gdpr"], "provider": "aws"},
+                "expected": {"check11", "check12"},
+            }
+        ]
+        for test in test_cases:
+            provider = test["input"]["provider"]
+            groups = test["input"]["groups"]
+            assert parse_groups_from_file(groups, provider) == test["expected"]
 
     def test_exclude_checks_to_run(self):
         test_cases = [
