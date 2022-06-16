@@ -23,6 +23,10 @@ class IAM:
     def __get_roles__(self):
         try:
             get_roles_paginator = self.client.get_paginator("list_roles")
+        except botocore.exceptions.ClientError as error:
+            logger.error(
+                f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
+            )
         except Exception as error:
             logger.critical(f"{error.__class__.__name__} -- {error}")
             quit()
@@ -39,6 +43,10 @@ class IAM:
         while not report_is_completed:
             try:
                 report_status = self.client.generate_credential_report()
+            except botocore.exceptions.ClientError as error:
+                logger.error(
+                    f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
+                )
             except Exception as error:
                 logger.critical(f"{error.__class__.__name__} -- {error}")
                 quit()
@@ -51,6 +59,10 @@ class IAM:
     def __get_groups__(self):
         try:
             get_groups_paginator = self.client.get_paginator("list_groups")
+        except botocore.exceptions.ClientError as error:
+            logger.error(
+                f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
+            )
         except Exception as error:
             logger.critical(f"{error.__class__.__name__} -- {error}")
             quit()
@@ -67,6 +79,10 @@ class IAM:
             get_customer_managed_policies_paginator = self.client.get_paginator(
                 "list_policies"
             )
+        except botocore.exceptions.ClientError as error:
+            logger.error(
+                f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
+            )
         except Exception as error:
             logger.critical(f"{error.__class__.__name__} -- {error}")
             quit()
@@ -81,6 +97,10 @@ class IAM:
     def __get_users__(self):
         try:
             get_users_paginator = self.client.get_paginator("list_users")
+        except botocore.exceptions.ClientError as error:
+            logger.error(
+                f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
+            )
         except Exception as error:
             logger.critical(f"{error.__class__.__name__} -- {error}")
             quit()
