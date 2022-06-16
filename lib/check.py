@@ -1,6 +1,56 @@
+import importlib
 import json
+import pkgutil
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+
+from lib.logger import logger
+from lib.outputs import report
+
+
+def load_checks_to_execute(check_list, provider):
+    checks_to_execute = set()
+    # LOADER
+    # Handle if there are checks passed using -c/--checks
+    if check_list:
+        for check_name in check_list:
+            checks_to_execute.add(check_name)
+
+    # If there are no checks passed as argument
+    else:
+        # Get all check modules to run with the specific provider
+        modules = recover_modules_from_provider(provider)
+        for check_module in modules:
+            # Recover check name from import path (last part)
+            # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
+            check_name = check_module.split(".")[-1]
+            checks_to_execute.add(check_name)
+
+    return checks_to_execute
+
+
+def recover_modules_from_provider(provider):
+    modules = []
+    for module_name in pkgutil.walk_packages(
+        importlib.import_module(f"providers.{provider}.services").__path__,
+        importlib.import_module(f"providers.{provider}.services").__name__ + ".",
+    ):
+        # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
+        if module_name.name.count(".") == 5:
+            modules.append(module_name.name)
+    return modules
+
+
+def run_check(check):
+    print(f"\nCheck Name: {check.CheckName}")
+    logger.debug(f"Executing check: {check.CheckName}")
+    findings = check.execute()
+    report(findings)
+
+
+def import_check(check_path):
+    lib = importlib.import_module(f"{check_path}")
+    return lib
 
 
 @dataclass
@@ -8,6 +58,11 @@ class Check_Report:
     status: str
     region: str
     result_extended: str
+
+    def __init__(self):
+        self.status = ""
+        self.region = ""
+        self.result_extended = ""
 
 
 class Check(ABC):
