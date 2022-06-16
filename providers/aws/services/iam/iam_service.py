@@ -1,7 +1,5 @@
-import botocore
-from boto3 import session
-
-from providers.aws.aws_provider import session
+from lib.logger import logger
+from providers.aws.aws_provider import aws_session
 
 
 ################## IAM
@@ -26,7 +24,12 @@ class IAM:
         try:
             get_roles_paginator = self.client.get_paginator("list_roles")
         except botocore.exceptions.ClientError as error:
-            raise error
+            logger.error(
+                f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
+            )
+        except Exception as error:
+            logger.critical(f"{error.__class__.__name__} -- {error}")
+            quit()
         else:
             roles = []
             for page in get_roles_paginator.paginate():
@@ -41,7 +44,12 @@ class IAM:
             try:
                 report_status = self.client.generate_credential_report()
             except botocore.exceptions.ClientError as error:
-                raise error
+                logger.error(
+                    f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
+                )
+            except Exception as error:
+                logger.critical(f"{error.__class__.__name__} -- {error}")
+                quit()
             else:
                 if report_status["State"] == "COMPLETE":
                     report_is_completed = True
@@ -52,7 +60,12 @@ class IAM:
         try:
             get_groups_paginator = self.client.get_paginator("list_groups")
         except botocore.exceptions.ClientError as error:
-            raise error
+            logger.error(
+                f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
+            )
+        except Exception as error:
+            logger.critical(f"{error.__class__.__name__} -- {error}")
+            quit()
         else:
             groups = []
             for page in get_groups_paginator.paginate():
@@ -67,7 +80,12 @@ class IAM:
                 "list_policies"
             )
         except botocore.exceptions.ClientError as error:
-            raise error
+            logger.error(
+                f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
+            )
+        except Exception as error:
+            logger.critical(f"{error.__class__.__name__} -- {error}")
+            quit()
         else:
             customer_managed_policies = []
             for page in get_customer_managed_policies_paginator.paginate(Scope="Local"):
@@ -80,7 +98,12 @@ class IAM:
         try:
             get_users_paginator = self.client.get_paginator("list_users")
         except botocore.exceptions.ClientError as error:
-            raise error
+            logger.error(
+                f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
+            )
+        except Exception as error:
+            logger.critical(f"{error.__class__.__name__} -- {error}")
+            quit()
         else:
             users = []
             for page in get_users_paginator.paginate():
@@ -90,4 +113,8 @@ class IAM:
             return users
 
 
-iam_client = IAM(session)
+try:
+    iam_client = IAM(aws_session)
+except Exception as error:
+    logger.critical(f"{error.__class__.__name__} -- {error}")
+    quit()

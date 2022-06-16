@@ -11,7 +11,7 @@ from lib.check.check import (
     run_check,
 )
 from lib.logger import logger, logging_levels
-from providers.aws.aws_provider import provider_set_profile
+from providers.aws.aws_provider import Input_Data, provider_set_session
 
 if __name__ == "__main__":
     # CLI Arguments
@@ -41,16 +41,74 @@ if __name__ == "__main__":
         "-p",
         "--profile",
         nargs="?",
-        const="default",
+        default=None,
         help="AWS profile to launch prowler with",
+    )
+    parser.add_argument(
+        "-R",
+        "--role",
+        nargs="?",
+        default=None,
+        help="Role name to be assumed in account passed with -A",
+    )
+    parser.add_argument(
+        "-A",
+        "--account",
+        nargs="?",
+        default=None,
+        help="AWS account id where the role passed by -R is assumed",
+    )
+    parser.add_argument(
+        "-T",
+        "--session-duration",
+        nargs="?",
+        default=3600,
+        type=int,
+        help="Assumed role session duration in seconds, by default 3600",
+    )
+    parser.add_argument(
+        "-I",
+        "--external-id",
+        nargs="?",
+        default=None,
+        help="External ID to be passed when assuming role",
     )
     # Parse Arguments
     args = parser.parse_args()
+
     provider = args.provider
     checks = args.checks
     excluded_checks = args.excluded_checks
     checks_file = args.checks_file
-    profile = args.profile
+    
+    # Role assumption input options tests
+    if args.role or args.account:
+        if not args.account:
+            logger.critical(
+                "It is needed to input an Account Id to assume the role (-A option) when an IAM Role is provided with -R"
+            )
+            quit()
+        elif not args.role:
+            logger.critical(
+                "It is needed to input an IAM Role name (-R option) when an Account Id is provided with -A"
+            )
+            quit()
+    if args.session_duration not in range(900, 43200):
+        logger.critical("Value for -T option must be between 900 and 43200")
+        quit()
+    if args.session_duration != 3600 or args.external_id:
+        if not args.account or not args.role:
+            logger.critical("To use -I/-T options both -A and -R options are needed")
+            quit()
+
+    session_input = Input_Data(
+        profile=args.profile,
+        role_name=args.role,
+        account_to_assume=args.account,
+        session_duration=args.session_duration,
+        external_id=args.external_id,
+    )
+    
     # Set Logger
     logger.setLevel(logging_levels.get(args.log_level))
 
@@ -61,15 +119,17 @@ if __name__ == "__main__":
     if args.no_banner:
         print_banner()
 
-    # Setting profile
-    provider_set_profile(profile)
+    # Setting session
+    provider_set_session(session_input)
 
     # Load checks to execute
     logger.debug("Loading checks")
     checks_to_execute = load_checks_to_execute(checks_file, checks, provider)
+
     # Exclude checks if -e
     if excluded_checks:
         checks_to_execute = exclude_checks_to_run(checks_to_execute, excluded_checks)
+
 
     # Execute checks
     for check_name in checks_to_execute:

@@ -14,7 +14,6 @@ def exclude_checks_to_run(checks_to_execute, excluded_checks):
         checks_to_execute.discard(check)
     return checks_to_execute
 
-
 # Parse checks from file
 def parse_checks_from_file(checks_file):
     checks_to_execute = set()
@@ -32,7 +31,6 @@ def parse_checks_from_file(checks_file):
     return checks_to_execute
 
 
-# Generate the list of checks to execute
 def load_checks_to_execute(checks_file, check_list, provider):
     checks_to_execute = set()
 
