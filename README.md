@@ -210,7 +210,7 @@ Prowler has been written in bash using AWS-CLI underneath and it works in Linux,
     or all checks but some of them:
 
     ```sh
-    ./prowler -E check42,check43
+    ./prowler -e check42,check43
     ```
 
     or for custom profile and region:
@@ -228,7 +228,7 @@ Prowler has been written in bash using AWS-CLI underneath and it works in Linux,
     or exclude some checks in the group:
 
     ```sh
-    ./prowler -g group4 -E check42,check43
+    ./prowler -g group4 -e check42,check43
     ```
 
     Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 and 3.10 is check310
