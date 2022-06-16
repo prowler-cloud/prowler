@@ -55,7 +55,11 @@ class AWS_Provider:
     def set_session(self, session_info):
         try:
             if session_info.credentials:
+                # If we receive a credentials object filled is coming form an assumed role, so renewal is needed
                 logger.info("Creating session for assumed role ...")
+                # From botocore we can use RefreshableCredentials class, which has an attribute (refresh_using)
+                # that needs to be a method without arguments that retrieves a new set of fresh credentials
+                # asuming the role again. -> https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L395
                 assumed_refreshable_credentials = RefreshableCredentials(
                     access_key=session_info.credentials.aws_access_key_id,
                     secret_key=session_info.credentials.aws_secret_access_key,
@@ -64,6 +68,7 @@ class AWS_Provider:
                     refresh_using=self.refresh,
                     method="sts-assume-role",
                 )
+                # Here we need the botocore session since it needs to use refreshable credentials
                 assumed_botocore_session = get_session()
                 assumed_botocore_session._credentials = assumed_refreshable_credentials
                 assumed_botocore_session.set_config_variable("region", "us-east-1")
@@ -72,6 +77,7 @@ class AWS_Provider:
                     profile_name=session_info.profile,
                     botocore_session=assumed_botocore_session,
                 )
+            # If we do not receive credentials start the session using the profile
             else:
                 logger.info("Creating session for not assumed identity ...")
                 return session.Session(profile_name=session_info.profile)
@@ -79,11 +85,16 @@ class AWS_Provider:
             logger.critical(f"{error.__class__.__name__} -- {error}")
             quit()
 
+    # Refresh credentials method using assume role
+    # This method is called "adding ()" to the name, so it cannot accept arguments
+    # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L570
     def refresh(self):
         logger.info("Refreshing assumed credentials...")
 
         response = assume_role(self.role_info)
         refreshed_credentials = dict(
+            # Keys of the dict has to be the same as those that are being searched in the parent class
+            # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L609
             access_key=response["Credentials"]["AccessKeyId"],
             secret_key=response["Credentials"]["SecretAccessKey"],
             token=response["Credentials"]["SessionToken"],
