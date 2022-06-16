@@ -1,6 +1,6 @@
 from colorama import Fore, Style
 
-from lib.config import prowler_version, timestamp
+from config.config import prowler_version, timestamp
 
 
 def print_version():

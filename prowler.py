@@ -19,10 +19,12 @@ if __name__ == "__main__":
     parser.add_argument("provider", choices=["aws"], help="Specify Provider")
 
     # Arguments to set checks to run
-    # -c can't be used with -C
+    # The following arguments needs to be set exclusivelly
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-c", "--checks", nargs="+", help="List of checks")
     group.add_argument("-C", "--checks-file", nargs="?", help="List of checks")
+    group.add_argument("-s", "--services", nargs="+", help="List of services")
+    group.add_argument("-g", "--groups", nargs="+", help="List of groups")
 
     parser.add_argument("-e", "--excluded-checks", nargs="+", help="Checks to exclude")
     parser.add_argument(
@@ -49,6 +51,8 @@ if __name__ == "__main__":
     provider = args.provider
     checks = args.checks
     excluded_checks = args.excluded_checks
+    services = args.services
+    groups = args.groups
     checks_file = args.checks_file
     profile = args.profile
     # Set Logger
@@ -66,29 +70,32 @@ if __name__ == "__main__":
 
     # Load checks to execute
     logger.debug("Loading checks")
-    checks_to_execute = load_checks_to_execute(checks_file, checks, provider)
+    checks_to_execute = load_checks_to_execute(
+        checks_file, checks, services, groups, provider
+    )
     # Exclude checks if -e
     if excluded_checks:
         checks_to_execute = exclude_checks_to_run(checks_to_execute, excluded_checks)
 
     # Execute checks
-    for check_name in checks_to_execute:
-        # Recover service from check name
-        service = check_name.split("_")[0]
-        try:
-            # Import check module
-            check_module_path = (
-                f"providers.{provider}.services.{service}.{check_name}.{check_name}"
-            )
-            lib = import_check(check_module_path)
-            # Recover functions from check
-            check_to_execute = getattr(lib, check_name)
-            c = check_to_execute()
-            # Run check
-            run_check(c)
+    if len(checks_to_execute):
+        for check_name in checks_to_execute:
+            # Recover service from check name
+            service = check_name.split("_")[0]
+            try:
+                # Import check module
+                check_module_path = (
+                    f"providers.{provider}.services.{service}.{check_name}.{check_name}"
+                )
+                lib = import_check(check_module_path)
+                # Recover functions from check
+                check_to_execute = getattr(lib, check_name)
+                c = check_to_execute()
+                # Run check
+                run_check(c)
 
-        # If check does not exists in the provider or is from another provider
-        except ModuleNotFoundError:
-            logger.error(
-                f"Check '{check_name}' was not found for the {provider.upper()} provider"
-            )
+            # If check does not exists in the provider or is from another provider
+            except ModuleNotFoundError:
+                logger.error(
+                    f"Check '{check_name}' was not found for the {provider.upper()} provider"
+                )
