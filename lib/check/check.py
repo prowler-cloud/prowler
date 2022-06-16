@@ -8,13 +8,40 @@ from lib.logger import logger
 from lib.outputs import report
 
 
-def load_checks_to_execute(check_list, provider):
+# Parse checks from file
+def parse_checks_from_file(checks_file):
+    checks_to_execute = set()
+    with open(checks_file) as f:
+        for line in f:
+            # Remove comments from file
+            line = line.partition("#")[0].strip()
+            # If file contains several checks comma-separated
+            if "," in line:
+                for check in line.split(","):
+                    checks_to_execute.add(check.strip())
+            # If line is not empty
+            elif len(line):
+                checks_to_execute.add(line)
+    return checks_to_execute
+
+
+def load_checks_to_execute(checks_file, check_list, provider):
     checks_to_execute = set()
     # LOADER
     # Handle if there are checks passed using -c/--checks
     if check_list:
         for check_name in check_list:
             checks_to_execute.add(check_name)
+
+    # Handle if there are checks passed using -C/--checks-file
+    elif checks_file:
+        # check if file exists or path
+        # check permissions to read
+        try:
+            checks_to_execute = parse_checks_from_file(checks_file)
+
+        except Exception as e:
+            logger.error(f"{checks_file}: {e.__class__.__name__}")
 
     # If there are no checks passed as argument
     else:
@@ -25,7 +52,7 @@ def load_checks_to_execute(check_list, provider):
             # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
             check_name = check_module.split(".")[-1]
             checks_to_execute.add(check_name)
-
+    print(checks_to_execute)
     return checks_to_execute
 
 

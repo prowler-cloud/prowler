@@ -1,0 +1,6 @@
+# You can add a comma seperated list of checks like this:
+check11,check12
+extra72 # You can also use newlines for each check
+check13 # This way allows you to add inline comments
+# Both of these can be combined if you have a standard list and want to add
+# inline comments for other checks.
