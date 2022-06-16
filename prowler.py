@@ -93,6 +93,8 @@ if __name__ == "__main__":
 
     provider = args.provider
     checks = args.checks
+
+    # Role assumption input options tests
     if args.role or args.account:
         if not args.account:
             logger.error(
@@ -104,7 +106,9 @@ if __name__ == "__main__":
                 "It is needed to input an role name (-R option) when an account is provided with -A"
             )
             quit()
-
+    if args.session_duration not in range(900, 43200):
+        logger.error("Value for -T option must be between 900 and 43200")
+        quit()
     if args.session_duration or args.external_id:
         if not args.account or not args.role:
             logger.error("To use -I/-T options both -A and -R options are needed")
