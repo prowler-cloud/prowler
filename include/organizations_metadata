@@ -20,9 +20,6 @@
 
 get_orgs_account_details(){
     echo " Prowler is getting details from the AWS Organizations Management Account: ${MANAGEMENT_ACCOUNT_ID}..."
-    # Assume role to recover AWS Organizations metadata
-    assume_role
-
     # The following code requires organizations:ListTagsForResource
     ACCOUNTS_DETAILS=$($AWSCLI $PROFILE_OPT --region "${REGION}" organizations list-accounts --output json 2>&1)
     if ! grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${ACCOUNTS_DETAILS}"

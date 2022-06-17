@@ -21,7 +21,7 @@
 # See the ladies flashing
 # All there legs and lashes
 # I've just got to find my way...
-
+set -x
 # Set the defaults variables
 PROWLER_VERSION=2.10.0-25May2022
 PROWLER_DIR=$(dirname "$0")
@@ -308,8 +308,15 @@ aws_cli_detector
 aws_profile_loader
 
 # Gather account data / test aws cli connectivity
-get_aws_credentials
+get_caller_identity
 print_whoami
+
+validate_allowlist
+
+
+validate_organizations
+# Check Assume Role
+validate_assume_role
 
 # List regions
 get_regions
@@ -318,8 +325,7 @@ get_regions
 validate_custom_output_directory
 validate_custom_output_filename
 validate_security_hub
-validate_organizations
-validate_allowlist
+
 validate_custom_checks
 
 # Add headers to certain output files
