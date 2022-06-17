@@ -6,6 +6,7 @@ from boto3 import session
 from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
 
+from lib.arn import arn_parsing
 from lib.logger import logger
 
 
@@ -20,8 +21,7 @@ class AWS_Credentials:
 @dataclass
 class Input_Data:
     profile: str
-    role_name: str
-    account_to_assume: str
+    role_arn: str
     session_duration: int
     external_id: str
     regions: list
@@ -29,8 +29,7 @@ class Input_Data:
 
 @dataclass
 class AWS_Assume_Role:
-    role_name: str
-    account_to_assume: str
+    role_arn: str
     session_duration: int
     external_id: str
     sts_session: session
@@ -150,19 +149,25 @@ def provider_set_session(session_input):
     audited_account = caller_identity["Account"]
     audited_partition = arnparse(caller_identity["Arn"]).partition
 
-    if session_input.role_name and session_input.account_to_assume:
+    if session_input.role_arn:
+        # Check  if role arn is valid
+        try:
+            # this returns the arn already parsed, calls arnparse, into a dict to be used when it is needed to access its fields
+            role_arn_parsed = arn_parsing(session_input.role_arn)
+
+        except Exception as error:
+            logger.critical(f"{error.__class__.__name__} -- {error}")
+            quit()
+
         # Set info for role assumption if needed
         role_info = AWS_Assume_Role(
-            session_input.role_name,
-            session_input.account_to_assume,
+            session_input.role_arn,
             session_input.session_duration,
             session_input.external_id,
             original_session,
             audited_partition,
         )
-        logger.info(
-            f"Assuming role {role_info.role_name} in account {role_info.account_to_assume}"
-        )
+        logger.info(f"Assuming role {role_info.role_arn}")
         # Assume the role
         assumed_role_response = assume_role(role_info)
         logger.info("Role assumed")
@@ -183,9 +188,8 @@ def provider_set_session(session_input):
 
     if assumed_session:
         aws_session = assumed_session
-        assumed_caller_identity = validate_credentials(original_session)
-        audited_account = assumed_caller_identity["Account"]
-        audited_partition = arnparse(assumed_caller_identity["Arn"]).partition
+        audited_account = role_arn_parsed.account_id
+        audited_partition = role_arn_parsed.partition
     else:
         aws_session = original_session
 
@@ -195,11 +199,10 @@ def assume_role(role_info):
     try:
         # set the info to assume the role from the partition, account and role name
         sts_client = role_info.sts_session.client("sts")
-        role_arn = f"arn:{role_info.partition}:iam::{role_info.account_to_assume}:role/{role_info.role_name}"
         # If external id, set it to the assume role api call
         if role_info.external_id:
             assumed_credentials = sts_client.assume_role(
-                RoleArn=role_arn,
+                RoleArn=role_info.role_arn,
                 RoleSessionName="ProwlerProSession",
                 DurationSeconds=role_info.session_duration,
                 ExternalId=role_info.external_id,
@@ -207,7 +210,7 @@ def assume_role(role_info):
         # else assume the role without the external id
         else:
             assumed_credentials = sts_client.assume_role(
-                RoleArn=role_arn,
+                RoleArn=role_info.role_arn,
                 RoleSessionName="ProwlerProSession",
                 DurationSeconds=role_info.session_duration,
             )

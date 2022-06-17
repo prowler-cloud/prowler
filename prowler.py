@@ -51,14 +51,7 @@ if __name__ == "__main__":
         "--role",
         nargs="?",
         default=None,
-        help="Role name to be assumed in account passed with -A",
-    )
-    parser.add_argument(
-        "-A",
-        "--account",
-        nargs="?",
-        default=None,
-        help="AWS account id where the role passed by -R is assumed",
+        help="ARN of the role to be assumed",
     )
     parser.add_argument(
         "-T",
@@ -90,26 +83,14 @@ if __name__ == "__main__":
     services = args.services
     groups = args.groups
     checks_file = args.checks_file
-    regions = args.filter_region
 
     # Role assumption input options tests
-    if args.role or args.account:
-        if not args.account:
-            logger.critical(
-                "It is needed to input an Account Id to assume the role (-A option) when an IAM Role is provided with -R"
-            )
-            quit()
-        elif not args.role:
-            logger.critical(
-                "It is needed to input an IAM Role name (-R option) when an Account Id is provided with -A"
-            )
-            quit()
     if args.session_duration not in range(900, 43200):
         logger.critical("Value for -T option must be between 900 and 43200")
         quit()
     if args.session_duration != 3600 or args.external_id:
-        if not args.account or not args.role:
-            logger.critical("To use -I/-T options both -A and -R options are needed")
+        if not args.role:
+            logger.critical("To use -I/-T options -R option is needed")
             quit()
 
     # Set Logger
@@ -125,8 +106,7 @@ if __name__ == "__main__":
     # Setting session
     session_input = Input_Data(
         profile=args.profile,
-        role_name=args.role,
-        account_to_assume=args.account,
+        role_arn=args.role,
         session_duration=args.session_duration,
         external_id=args.external_id,
         regions=args.filter_region,
