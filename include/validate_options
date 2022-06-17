@@ -72,6 +72,9 @@ validate_organizations() {
     # Set the new account to assume to recover AWS Organizations Metadata
     ACCOUNT_TO_ASSUME="${MANAGEMENT_ACCOUNT_ID}"
 
+    # Assume role to recover AWS Organizations metadata
+    assume_role
+
     # Recover AWS Organizations Metadata
     get_orgs_account_details
 
@@ -81,12 +84,14 @@ validate_organizations() {
     # Restoring initial credentials
     restoreInitialAWSCredentials
   fi
+}
 
-  if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]
-  then
-    backupInitialAWSCredentials
-    assume_role
-  fi
+validate_assume_role() {
+    if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" ]]
+    then
+        backupInitialAWSCredentials
+        assume_role
+    fi
 }
 
 # JUnit output if -M junit-xml
