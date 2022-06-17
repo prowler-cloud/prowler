@@ -27,20 +27,31 @@ aws_profile_loader() {
     elif [[ $AWS_ACCESS_KEY_ID && $AWS_SECRET_ACCESS_KEY || $AWS_SESSION_TOKEN || $AWS_PROFILE ]];then
         PROFILE="$AWS_PROFILE"
         PROFILE_OPT=""
-    elif [[ -n $AWS_CONTAINER_CREDENTIALS_RELATIVE_URI ]] && [[ -z $INSTANCE_PROFILE ]]; then
+    elif [[ -n $AWS_CONTAINER_CREDENTIALS_RELATIVE_URI ]] && [[ -z $INSTANCE_PROFILE ]]
+    then
         PROFILE="INSTANCE-PROFILE"
-        AWS_ACCESS_KEY_ID=$(curl -s 169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI | grep AccessKeyId | cut -d':' -f2 | sed 's/[^0-9A-Z]*//g')
-        AWS_SECRET_ACCESS_KEY_ID=$(curl -s 169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI | grep SecretAccessKey | cut -d':' -f2 | sed 's/[^0-9A-Za-z/+=]*//g')
-        AWS_SESSION_TOKEN=$(curl -s 169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI  grep Token| cut -d':' -f2 | sed 's/[^0-9A-Za-z/+=]*//g')
+        CONTAINER_METADATA=$(curl -s 169.254.170.2"${AWS_CONTAINER_CREDENTIALS_RELATIVE_URI}")
+        AWS_ACCESS_KEY_ID=$(jq -r '.AccessKeyId' <<< "${CONTAINER_METADATA}")
+        export AWS_ACCESS_KEY_ID
+        AWS_SECRET_ACCESS_KEY=$(jq -r '.SecretAccessKey' <<< "${CONTAINER_METADATA}")
+        export AWS_SECRET_ACCESS_KEY
+        AWS_SESSION_TOKEN=$(jq -r '.Token' <<< "${CONTAINER_METADATA}")
+        export AWS_SESSION_TOKEN
     elif [[ $AWS_WEB_IDENTITY_TOKEN_FILE ]]; then
         PROFILE=""
         PROFILE_OPT=""
-    elif [[ $INSTANCE_PROFILE ]]; then
+    elif [[ $INSTANCE_PROFILE ]]
+    then
         PROFILE="INSTANCE-PROFILE"
-        AWS_ACCESS_KEY_ID=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${INSTANCE_PROFILE} | grep AccessKeyId | cut -d':' -f2 | sed 's/[^0-9A-Z]*//g')
-        AWS_SECRET_ACCESS_KEY_ID=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${INSTANCE_PROFILE} | grep SecretAccessKey | cut -d':' -f2 | sed 's/[^0-9A-Za-z/+=]*//g')
-        AWS_SESSION_TOKEN=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${INSTANCE_PROFILE}  grep Token| cut -d':' -f2 | sed 's/[^0-9A-Za-z/+=]*//g')
-    elif [[ $AWS_EXECUTION_ENV == "CloudShell" ]]; then
+        INSTANCE_METADATA=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/"${INSTANCE_PROFILE}")
+        AWS_ACCESS_KEY_ID=$(jq '.AccessKeyId' <<< "${INSTANCE_METADATA}")
+        export AWS_ACCESS_KEY_ID
+        AWS_SECRET_ACCESS_KEY=$(jq '.SecretAccessKey' <<< "${INSTANCE_METADATA}")
+        export AWS_SECRET_ACCESS_KEY
+        AWS_SESSION_TOKEN=$(jq '.Token' <<< "${INSTANCE_METADATA}")
+        export AWS_SESSION_TOKEN
+    elif [[ $AWS_EXECUTION_ENV == "CloudShell" ]]
+    then
         PROFILE_OPT=""
     else
         PROFILE="default"

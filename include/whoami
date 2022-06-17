@@ -26,7 +26,7 @@ print_whoami(){
     echo -e " Caller Identity ARN: ${NOTICE}[${CALLER_ARN}]${NORMAL}\n"
 }
 
-get_aws_credentials() {
+get_caller_identity() {
   case "$REGION" in
     me-south-1|eu-south-1|ap-east-1|af-south-1)
       REGION_FOR_STS="us-east-1"

@@ -21,7 +21,7 @@ execute_check() {
     # Following logic looks for time remaining in the session and review it
     # if it is less than 600 seconds, 10 minutes.
     CURRENT_TIMESTAMP=$(date -u "+%s")
-    SESSION_TIME_REMAINING=$(("${AWS_SESSION_EXPIRATION}" - "${CURRENT_TIMESTAMP}"))
+    SESSION_TIME_REMAINING=$(expr "${AWS_SESSION_EXPIRATION}" - "${CURRENT_TIMESTAMP}")
     MINIMUM_REMAINING_TIME_ALLOWED=600
     if (( "${MINIMUM_REMAINING_TIME_ALLOWED}" > "${SESSION_TIME_REMAINING}" )); then
       # echo LESS THAN 10 MIN LEFT: RE-ASSUMING...
