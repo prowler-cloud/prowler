@@ -6,7 +6,7 @@ from boto3 import session
 from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
 
-from lib.arn import arn_parsing
+from lib.arn.arn import arn_parsing
 from lib.logger import logger
 
 

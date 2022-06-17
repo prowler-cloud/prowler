@@ -3,6 +3,7 @@ import pkgutil
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from types import ModuleType
+from colorama import Fore, Style
 
 from config.config import groups_file
 from lib.logger import logger
@@ -126,7 +127,7 @@ def recover_modules_from_provider(provider: str, service: str = None) -> list:
 
 
 def run_check(check):
-    print(f"\nCheck Name: {check.CheckName}")
+    print(f"\nCheck Name: {check.CheckName} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW}[{check.Severity}]{Style.RESET_ALL}")
     logger.debug(f"Executing check: {check.CheckName}")
     findings = check.execute()
     report(findings)

@@ -33,7 +33,7 @@ class iam_disable_90_days_credentials(Check):
                 else:
                     report.status = "PASS"
                     report.result_extended = (
-                        f"User {user['UserName']} has not console password"
+                        f"User {user['UserName']} has not a console password or is unused."
                     )
                     report.region = "us-east-1"
 
