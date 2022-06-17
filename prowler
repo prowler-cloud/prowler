@@ -21,7 +21,7 @@
 # See the ladies flashing
 # All there legs and lashes
 # I've just got to find my way...
-set -x
+
 # Set the defaults variables
 PROWLER_VERSION=2.10.0-25May2022
 PROWLER_DIR=$(dirname "$0")
