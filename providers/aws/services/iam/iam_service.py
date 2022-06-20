@@ -1,6 +1,5 @@
 from lib.logger import logger
 from providers.aws.aws_provider import aws_session
-from botocore.exceptions import ClientError
 
 
 ################## IAM
@@ -24,13 +23,8 @@ class IAM:
     def __get_roles__(self):
         try:
             get_roles_paginator = self.client.get_paginator("list_roles")
-        except ClientError as error:
-            logger.error(
-                f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
-            )
         except Exception as error:
-            logger.critical(f"{error.__class__.__name__} -- {error}")
-            quit()
+            logger.error(f"{error.__class__.__name__} -- {error}")
         else:
             roles = []
             for page in get_roles_paginator.paginate():
@@ -44,13 +38,8 @@ class IAM:
         while not report_is_completed:
             try:
                 report_status = self.client.generate_credential_report()
-            except ClientError as error:
-                logger.error(
-                    f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
-                )
             except Exception as error:
-                logger.critical(f"{error.__class__.__name__} -- {error}")
-                quit()
+                logger.error(f"{error.__class__.__name__} -- {error}")
             else:
                 if report_status["State"] == "COMPLETE":
                     report_is_completed = True
@@ -60,13 +49,8 @@ class IAM:
     def __get_groups__(self):
         try:
             get_groups_paginator = self.client.get_paginator("list_groups")
-        except ClientError as error:
-            logger.error(
-                f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
-            )
         except Exception as error:
-            logger.critical(f"{error.__class__.__name__} -- {error}")
-            quit()
+            logger.error(f"{error.__class__.__name__} -- {error}")
         else:
             groups = []
             for page in get_groups_paginator.paginate():
@@ -80,13 +64,8 @@ class IAM:
             get_customer_managed_policies_paginator = self.client.get_paginator(
                 "list_policies"
             )
-        except ClientError as error:
-            logger.error(
-                f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
-            )
         except Exception as error:
-            logger.critical(f"{error.__class__.__name__} -- {error}")
-            quit()
+            logger.error(f"{error.__class__.__name__} -- {error}")
         else:
             customer_managed_policies = []
             for page in get_customer_managed_policies_paginator.paginate(Scope="Local"):
@@ -98,13 +77,8 @@ class IAM:
     def __get_users__(self):
         try:
             get_users_paginator = self.client.get_paginator("list_users")
-        except ClientError as error:
-            logger.error(
-                f"{error.response['Error']['Code']} -- {error.response['Error']['Message']}"
-            )
         except Exception as error:
-            logger.critical(f"{error.__class__.__name__} -- {error}")
-            quit()
+            logger.error(f"{error.__class__.__name__} -- {error}")
         else:
             users = []
             for page in get_users_paginator.paginate():

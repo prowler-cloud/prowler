@@ -84,6 +84,9 @@ if __name__ == "__main__":
     groups = args.groups
     checks_file = args.checks_file
 
+    # Set Logger
+    logger.setLevel(logging_levels.get(args.log_level))
+
     # Role assumption input options tests
     if args.session_duration not in range(900, 43200):
         logger.critical("Value for -T option must be between 900 and 43200")
@@ -92,9 +95,6 @@ if __name__ == "__main__":
         if not args.role:
             logger.critical("To use -I/-T options -R option is needed")
             quit()
-
-    # Set Logger
-    logger.setLevel(logging_levels.get(args.log_level))
 
     if args.version:
         print_version()
