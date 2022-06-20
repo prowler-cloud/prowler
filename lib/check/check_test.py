@@ -4,6 +4,7 @@ from lib.check.check import (
     exclude_checks_to_run,
     exclude_groups_to_run,
     exclude_services_to_run,
+    load_checks_to_execute_from_groups,
     parse_checks_from_file,
     parse_groups_from_file,
 )
@@ -19,7 +20,35 @@ class Test_Check:
     #         }
     #     ]
     #     for test in test_cases:
-    #         assert importlib.import_module(test["input"]).__name__ == test["expected"]
+    #         assert importlib.import_module(test["input"]).__name__ == test["expected"
+
+    def test_parse_groups_from_file(self):
+        test_cases = [
+            {
+                "input": {
+                    "path": f"{os.path.dirname(os.path.realpath(__file__))}/fixtures/groupsA.json",
+                    "provider": "aws",
+                },
+                "expected": {
+                    "aws": {
+                        "gdpr": {
+                            "description": "GDPR Readiness",
+                            "checks": ["check11", "check12"],
+                        },
+                        "iam": {
+                            "description": "Identity and Access Management",
+                            "checks": [
+                                "iam_disable_30_days_credentials",
+                                "iam_disable_90_days_credentials",
+                            ],
+                        },
+                    }
+                },
+            }
+        ]
+        for test in test_cases:
+            check_file = test["input"]["path"]
+            assert parse_groups_from_file(check_file) == test["expected"]
 
     def test_parse_checks_from_file(self):
         test_cases = [
@@ -36,23 +65,40 @@ class Test_Check:
             provider = test["input"]["provider"]
             assert parse_checks_from_file(check_file, provider) == test["expected"]
 
-    def test_parse_groups_from_file(self):
+    def test_load_checks_to_execute_from_groups(self):
         test_cases = [
             {
                 "input": {
-                    "groups": ["gdpr"],
+                    "groups_json": {
+                        "aws": {
+                            "gdpr": {
+                                "description": "GDPR Readiness",
+                                "checks": ["check11", "check12"],
+                            },
+                            "iam": {
+                                "description": "Identity and Access Management",
+                                "checks": [
+                                    "iam_disable_30_days_credentials",
+                                    "iam_disable_90_days_credentials",
+                                ],
+                            },
+                        }
+                    },
                     "provider": "aws",
-                    "group_file": f"{os.path.dirname(os.path.realpath(__name__))}/groups.json",
+                    "groups": ["gdpr"],
                 },
                 "expected": {"check11", "check12"},
             }
         ]
+
         for test in test_cases:
             provider = test["input"]["provider"]
             groups = test["input"]["groups"]
-            group_file = test["input"]["group_file"]
+            group_file = test["input"]["groups_json"]
+
             assert (
-                parse_groups_from_file(group_file, groups, provider) == test["expected"]
+                load_checks_to_execute_from_groups(group_file, groups, provider)
+                == test["expected"]
             )
 
     def test_exclude_checks_to_run(self):

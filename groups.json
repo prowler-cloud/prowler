@@ -1,12 +1,18 @@
 {
   "aws": {
-    "gdpr": [
-      "check11",
-      "check12"
-    ],
-    "iam": [
-      "iam_disable_30_days_credentials",
-      "iam_disable_90_days_credentials"
-    ]
+    "gdpr": {
+      "checks": [
+        "check11",
+        "check12"
+      ],
+      "description": "GDPR Readiness"
+    },
+    "iam": {
+      "checks": [
+        "iam_disable_30_days_credentials",
+        "iam_disable_90_days_credentials"
+      ],
+      "description": "Identity and Access Management"
+    }
   }
 }

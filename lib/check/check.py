@@ -25,8 +25,10 @@ def exclude_groups_to_run(
     checks_to_execute: set, excluded_groups: list, provider: str
 ) -> set:
     # Recover checks from the input groups
-
-    checks_from_groups = parse_groups_from_file(groups_file, excluded_groups, provider)
+    available_groups = parse_groups_from_file(groups_file)
+    checks_from_groups = load_checks_to_execute_from_groups(
+        available_groups, excluded_groups, provider
+    )
     for check_name in checks_from_groups:
         checks_to_execute.discard(check_name)
     return checks_to_execute
@@ -62,6 +64,16 @@ def parse_checks_from_file(input_file: str, provider: str) -> set:
     return checks_to_execute
 
 
+# List available groups
+def list_groups(provider: str) -> list:
+    groups = parse_groups_from_file(groups_file)
+    print(f"Available Groups:")
+
+    for group, value in groups[provider].items():
+        group_description = value["description"]
+        print(f"\t - {group_description} -- [{group}] ")
+
+
 # Parse groups from groups.json
 def parse_groups_from_file(group_file: str) -> Any:
     f = open_file(group_file)
@@ -77,7 +89,7 @@ def load_checks_to_execute_from_groups(
 
     for group in group_list:
         if group in available_groups[provider]:
-            for check_name in available_groups[provider][group]:
+            for check_name in available_groups[provider][group]["checks"]:
                 checks_to_execute.add(check_name)
         else:
             logger.error(
