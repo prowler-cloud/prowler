@@ -17,7 +17,7 @@ env:
   IMAGE_NAME: prowler
   LATEST_TAG: latest
   TEMPORARY_TAG: temporary
-  DOCKERFILE_PATH: util/Dockerfile
+  DOCKERFILE_PATH: ./Dockerfile
 
 jobs:
   # Lint Dockerfile using Hadolint
