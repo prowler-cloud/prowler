@@ -112,7 +112,7 @@ def provider_set_session(
 
     logger.info("Checking if role assumption is needed ...")
     if current_audit_info.assumed_role_info.role_arn:
-        # Check  if role arn is valid
+        # Check if role arn is valid
         try:
             # this returns the arn already parsed, calls arnparse, into a dict to be used when it is needed to access its fields
             role_arn_parsed = arn_parsing(current_audit_info.assumed_role_info.role_arn)
@@ -121,20 +121,23 @@ def provider_set_session(
             logger.critical(f"{error.__class__.__name__} -- {error}")
             quit()
 
-        logger.info(f"Assuming role {current_audit_info.assumed_role_info.role_arn}")
-        # Assume the role
-        assumed_role_response = assume_role()
-        logger.info("Role assumed")
-        # Set the info needed to create a session with an assumed role
-        current_audit_info.credentials = AWS_Credentials(
-            aws_access_key_id=assumed_role_response["Credentials"]["AccessKeyId"],
-            aws_session_token=assumed_role_response["Credentials"]["SessionToken"],
-            aws_secret_access_key=assumed_role_response["Credentials"][
-                "SecretAccessKey"
-            ],
-            expiration=assumed_role_response["Credentials"]["Expiration"],
-        )
-        assumed_session = AWS_Provider(current_audit_info).get_session()
+        else:
+            logger.info(
+                f"Assuming role {current_audit_info.assumed_role_info.role_arn}"
+            )
+            # Assume the role
+            assumed_role_response = assume_role()
+            logger.info("Role assumed")
+            # Set the info needed to create a session with an assumed role
+            current_audit_info.credentials = AWS_Credentials(
+                aws_access_key_id=assumed_role_response["Credentials"]["AccessKeyId"],
+                aws_session_token=assumed_role_response["Credentials"]["SessionToken"],
+                aws_secret_access_key=assumed_role_response["Credentials"][
+                    "SecretAccessKey"
+                ],
+                expiration=assumed_role_response["Credentials"]["Expiration"],
+            )
+            assumed_session = AWS_Provider(current_audit_info).get_session()
 
     if assumed_session:
         logger.info("Audit session is the new session created assuming role")
