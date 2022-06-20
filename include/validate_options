@@ -96,7 +96,7 @@ validate_assume_role() {
 
 # JUnit output if -M junit-xml
 validate_junit_output() {
-    if is_junit_output_enabled
+    if [[ " ${MODE} " =~ "junit-xml" ]];
     then
         prepare_junit_output
     fi

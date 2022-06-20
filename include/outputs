@@ -170,7 +170,7 @@ general_output() {
         if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
             sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REGION_FROM_CHECK}"
         fi
-    elif is_junit_output_enabled
+    elif [[ "${MODE_TYPE}" == "junit-xml" ]]
     then
         if [ "${CHECK_RESULT}" == 'PASS' ]
         then
