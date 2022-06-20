@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra7189="7.189"
+CHECK_TITLE_extra7189="[extra7189] Ensure Multi-Factor Authentication (MFA) using Radius Server is enabled in DS"
+CHECK_SCORED_extra7189="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7189="EXTRA"
+CHECK_SEVERITY_extra7189="Medium"
+CHECK_ASFF_TYPE_extra7189="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_extra7189="AwsDirectoryService"
+CHECK_ALTERNATE_check7189="extra7189"
+CHECK_SERVICENAME_extra7189="ds"
+CHECK_RISK_extra7189="Multi-Factor Authentication (MFA) adds an extra layer of authentication assurance beyond traditional username and password."
+CHECK_REMEDIATION_extra7189="Enabling MFA provides increased security to a user name and password as it requires the user to possess a solution that displays a time-sensitive authentication code."
+CHECK_DOC_extra7189='https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_mfa.html'
+CHECK_CAF_EPIC_extra7189="Infrastructure Security"
+
+extra7189(){
+  for regx in $REGIONS; do
+    LIST_OF_DIRECTORIES=$("${AWSCLI}" ds describe-directories $PROFILE_OPT --region "${regx}" --query 'DirectoryDescriptions[*]' --output json 2>&1)
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError|Could not connect to the endpoint URL' <<< "${LIST_OF_DIRECTORIES}"; then
+        textInfo "${regx}: Access Denied trying to describe directories" "${regx}"
+        continue
+    fi
+
+    if [[ $LIST_OF_DIRECTORIES && $LIST_OF_DIRECTORIES != '[]' ]]; then
+      LIST_OF_DIRECTORIES_WITHOUT_RADIUS=$(echo "${LIST_OF_DIRECTORIES}" | jq '.[] | select(.RadiusSettings == null) | {DirectoryId}' | jq -r '.DirectoryId')
+      LIST_OF_DIRECTORIES_WITH_RADIUS=$(echo "${LIST_OF_DIRECTORIES}" | jq '.[] | select(.RadiusSettings)')
+      LIST_OF_DIRECTORIES_WITH_RADIUS_MFA_COMPLETED=$(echo "${LIST_OF_DIRECTORIES_WITH_RADIUS}" | jq 'select(.RadiusStatus=="Completed") | {DirectoryId}' | jq -r '.DirectoryId')
+      LIST_OF_DIRECTORIES_WITHOUT_RADIUS_MFA_COMPLETED=$(echo "${LIST_OF_DIRECTORIES_WITH_RADIUS}" | jq 'select(.RadiusStatus!="Completed") | {DirectoryId}' | jq -r '.DirectoryId')
+      if [[ $LIST_OF_DIRECTORIES_WITHOUT_RADIUS_MFA_COMPLETED ]]; then
+        for directory in $LIST_OF_DIRECTORIES_WITHOUT_RADIUS_MFA_COMPLETED; do
+          textFail "$regx: Directory: ${directory} does not have Radius MFA enabled successfully" "$regx" "${directory}"
+        done
+      fi
+      if [[ $LIST_OF_DIRECTORIES_WITH_RADIUS_MFA_COMPLETED ]]; then
+        for directory in $LIST_OF_DIRECTORIES_WITH_RADIUS_MFA_COMPLETED; do
+          textPass "$regx: Directory: ${directory} has Radius MFA enabled" "$regx" "${directory}"
+        done
+      fi
+      if [[ $LIST_OF_DIRECTORIES_WITHOUT_RADIUS ]]; then
+        for directory in $LIST_OF_DIRECTORIES_WITHOUT_RADIUS; do
+          textPass "${regx}: Directory ${directory} does not have Radius Server configured" "${regx}" "${directory}"
+        done
+      fi
+    else
+      textPass "${regx}: No Directory Service directories found" "${regx}"
+    fi
+  done
+}
