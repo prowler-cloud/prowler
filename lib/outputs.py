@@ -2,6 +2,7 @@ from colorama import Fore, Style
 
 
 def report(check_findings):
+    check_findings.sort(key=lambda x: x.region)
     for finding in check_findings:
         color = set_report_color(finding.status)
         print(
