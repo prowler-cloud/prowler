@@ -84,12 +84,12 @@ execute_check() {
       fi
     fi
     show_check_title ${alternate_name}
-    if is_junit_output_enabled; then
+    if [[ " ${MODE} " =~ "junit-xml" ]]; then
       prepare_junit_check_output "$1"
     fi
     # Execute the check
     IGNORES="${ignores}" CHECK_NAME="$1" ${alternate_name}
-    if is_junit_output_enabled; then
+    if [[ " ${MODE} " =~ "junit-xml" ]]; then
       finalise_junit_check_output "$1"
     fi
 
@@ -108,13 +108,13 @@ execute_check() {
         fi
       fi
       show_check_title "$1"
-      if is_junit_output_enabled; then
+      if [[ " ${MODE} " =~ "junit-xml" ]]; then
         prepare_junit_check_output "$1"
       fi
       # Execute the check
       IGNORES="${ignores}" CHECK_NAME="$1" $1
 
-      if is_junit_output_enabled; then
+      if [[ " ${MODE} " =~ "junit-xml" ]]; then
         finalise_junit_check_output "$1"
       fi
 

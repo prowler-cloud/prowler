@@ -20,14 +20,6 @@ JUNIT_FAILURES_COUNT="0"
 JUNIT_SKIPPED_COUNT="0"
 JUNIT_ERRORS_COUNT="0"
 
-is_junit_output_enabled() {
-  if [[ " ${MODE} " =~ "junit-xml" ]]; then
-    true
-  else
-    false
-  fi
-}
-
 xml_escape() {
   sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/\"/\&quot;/g; s/'"'"'/\&#39;/g' <<< "$1"
 }
