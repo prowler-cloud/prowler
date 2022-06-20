@@ -22,18 +22,18 @@ class iam_disable_30_days_credentials(Check):
                         )
                         if time_since_insertion.days > maximum_expiration_days:
                             report.status = "FAIL"
-                            report.result_extended = f"User {user['UserName']} has not logged into the console in the past 90 days"
+                            report.result_extended = f"User {user['UserName']} has not logged into the console in the past 30 days"
                             report.region = "us-east-1"
                         else:
                             report.status = "PASS"
-                            report.result_extended = f"User {user['UserName']} has logged into the console in the past 90 days"
+                            report.result_extended = f"User {user['UserName']} has logged into the console in the past 30 days"
                             report.region = "us-east-1"
                     except KeyError:
                         pass
                 else:
                     report.status = "PASS"
                     report.result_extended = (
-                        f"User {user['UserName']} has not console password"
+                        f"User {user['UserName']} has not a console password or is unused."
                     )
                     report.region = "us-east-1"
 
