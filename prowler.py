@@ -11,7 +11,7 @@ from lib.check.check import (
     run_check,
 )
 from lib.logger import logger, logging_levels
-from providers.aws.aws_provider import Input_Data, provider_set_session
+from providers.aws.aws_provider import provider_set_session
 
 if __name__ == "__main__":
     # CLI Arguments
@@ -103,16 +103,14 @@ if __name__ == "__main__":
     if args.no_banner:
         print_banner()
 
-    # Setting session
-    session_input = Input_Data(
-        profile=args.profile,
-        role_arn=args.role,
-        session_duration=args.session_duration,
-        external_id=args.external_id,
-        regions=args.filter_region,
+    # Set global session
+    provider_set_session(
+        args.profile,
+        args.role,
+        args.session_duration,
+        args.external_id,
+        args.filter_region,
     )
-
-    provider_set_session(session_input)
 
     # Load checks to execute
     logger.debug("Loading checks")

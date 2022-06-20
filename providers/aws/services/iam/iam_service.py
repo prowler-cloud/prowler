@@ -1,13 +1,13 @@
 from lib.logger import logger
-from providers.aws.aws_provider import aws_session
+from providers.aws.aws_provider import current_audit_info
 
 
 ################## IAM
 class IAM:
-    def __init__(self, session):
+    def __init__(self, audit_info):
         self.service = "iam"
-        self.session = session
-        self.client = session.client(self.service)
+        self.session = audit_info.original_session
+        self.client = self.session.client(self.service)
         self.users = self.__get_users__()
         self.roles = self.__get_roles__()
         self.customer_managed_policies = self.__get_customer_managed_policies__()
@@ -89,7 +89,7 @@ class IAM:
 
 
 try:
-    iam_client = IAM(aws_session)
+    iam_client = IAM(current_audit_info)
 except Exception as error:
     logger.critical(f"{error.__class__.__name__} -- {error}")
     quit()
