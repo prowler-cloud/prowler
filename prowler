@@ -313,7 +313,6 @@ print_whoami
 
 validate_allowlist
 
-
 validate_organizations
 # Check Assume Role
 validate_assume_role
