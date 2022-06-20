@@ -6,7 +6,7 @@ from providers.aws.aws_provider import current_audit_info
 class IAM:
     def __init__(self, audit_info):
         self.service = "iam"
-        self.session = audit_info.original_session
+        self.session = audit_info.audit_session
         self.client = self.session.client(self.service)
         self.users = self.__get_users__()
         self.roles = self.__get_roles__()
