@@ -313,7 +313,6 @@ print_whoami
 
 validate_allowlist
 
-
 validate_organizations
 # Check Assume Role
 validate_assume_role
@@ -330,6 +329,7 @@ validate_custom_checks
 
 # Add headers to certain output files
 output_files_init
+validate_junit_output
 
 # Execute checks
 for CHECK in "${TOTAL_CHECKS[@]}"
