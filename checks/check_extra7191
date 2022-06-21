@@ -12,14 +12,14 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra7191="7.191"
-CHECK_TITLE_extra7191="[extra7191] CIS EUC 4.4 Ensure session disconnect timeout is set to 5 minutes or less."
+CHECK_TITLE_extra7191="[extra7191] Ensure session disconnect timeout is set to 5 minutes or less."
 CHECK_SCORED_extra7191="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7191="EXTRA"
 CHECK_SEVERITY_extra7191="Medium"
 CHECK_ASFF_TYPE_extra7191="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_extra7191="AmazonAppStream"
-CHECK_ALTERNATE_check7189="extra7191"
-CHECK_SERVICENAME_extra7191="as"
+CHECK_ALTERNATE_check7191="extra7191"
+CHECK_SERVICENAME_extra7191="appstream"
 CHECK_RISK_extra7191="Disconnect timeout in minutes, is the amount of of time that a streaming session remains active after users disconnect."
 CHECK_REMEDIATION_extra7191="Change the Disconnect timeout to 5 minutes or less for the AppStream Fleet"
 CHECK_DOC_extra7191='https://docs.aws.amazon.com/appstream2/latest/developerguide/set-up-stacks-fleets.html'

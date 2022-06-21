@@ -12,14 +12,14 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra7192="7.192"
-CHECK_TITLE_extra7192="[extra7192] CIS EUC 4.5 Ensure session idle disconnect timeout is set to 10 minutes or less."
+CHECK_TITLE_extra7192="[extra7192] Ensure session idle disconnect timeout is set to 10 minutes or less."
 CHECK_SCORED_extra7192="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7192="EXTRA"
 CHECK_SEVERITY_extra7192="Medium"
 CHECK_ASFF_TYPE_extra7192="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_extra7192="AmazonAppStream"
-CHECK_ALTERNATE_check7189="extra7192"
-CHECK_SERVICENAME_extra7192="as"
+CHECK_ALTERNATE_check7192="extra7192"
+CHECK_SERVICENAME_extra7192="appstream"
 CHECK_RISK_extra7192="Idle disconnect timeout in minutes is the amount of time that users can be inactive before they are disconnected from their streaming session and the Disconnect timeout in minutes time begins."
 CHECK_REMEDIATION_extra7192="Change the session idle timeout to 10 minutes or less for the AppStream Fleet."
 CHECK_DOC_extra7192='https://docs.aws.amazon.com/appstream2/latest/developerguide/set-up-stacks-fleets.html'

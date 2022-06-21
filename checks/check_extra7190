@@ -12,14 +12,14 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra7190="7.190"
-CHECK_TITLE_extra7190="[extra7190] CIS EUC 4.3 Ensure maximum session duration is no longer than 10 hours."
+CHECK_TITLE_extra7190="[extra7190] Ensure user maximum session duration is no longer than 10 hours."
 CHECK_SCORED_extra7190="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7190="EXTRA"
 CHECK_SEVERITY_extra7190="Medium"
 CHECK_ASFF_TYPE_extra7190="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
 CHECK_ASFF_RESOURCE_TYPE_extra7190="AmazonAppStream"
-CHECK_ALTERNATE_check7189="extra7190"
-CHECK_SERVICENAME_extra7190="as"
+CHECK_ALTERNATE_check7190="extra7190"
+CHECK_SERVICENAME_extra7190="appstream"
 CHECK_RISK_extra7190="Having a session duration lasting longer than 10 hours should not be necessary and if running for any malicious reasons provides a greater time for usage than should be allowed."
 CHECK_REMEDIATION_extra7190="Change the Maximum session duration is set to 600 minutes or less for the AppStream Fleet"
 CHECK_DOC_extra7190='https://docs.aws.amazon.com/appstream2/latest/developerguide/set-up-stacks-fleets.html'
