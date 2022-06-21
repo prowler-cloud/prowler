@@ -5,15 +5,16 @@ import argparse
 
 from lib.banner import print_banner, print_version
 from lib.check.check import (
+    bulk_load_checks_metadata,
     exclude_checks_to_run,
     exclude_groups_to_run,
     exclude_services_to_run,
     import_check,
     list_groups,
-    load_checks_to_execute,
     run_check,
     set_output_options,
 )
+from lib.check.checks_loader import load_checks_to_execute
 from lib.logger import logger, logging_levels
 from providers.aws.aws_provider import provider_set_session
 
@@ -35,6 +36,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "-S", "--excluded-services", nargs="+", help="Services to exclude"
     )
+
+    parser.add_argument("-l", "--list-checks", action="store_true", help="List checks")
 
     parser.add_argument(
         "-b", "--no-banner", action="store_false", help="Hide Prowler Banner"
@@ -121,22 +124,13 @@ if __name__ == "__main__":
         list_groups(provider)
         quit()
 
-    # Setting output options
-    set_output_options(args.quiet)
-    
-    # Set global session
-    provider_set_session(
-        args.profile,
-        args.role,
-        args.session_duration,
-        args.external_id,
-        args.filter_region
-    )
+    # Load checks metadata
+    logger.debug("Loading checks metadata from .metadata.json files")
+    bulk_checks_metadata = bulk_load_checks_metadata(provider)
 
     # Load checks to execute
-    logger.debug("Loading checks")
     checks_to_execute = load_checks_to_execute(
-        checks_file, checks, services, groups, provider
+        bulk_checks_metadata, checks_file, checks, services, groups, provider
     )
     # Exclude checks if -e/--excluded-checks
     if excluded_checks:
@@ -153,6 +147,32 @@ if __name__ == "__main__":
         checks_to_execute = exclude_services_to_run(
             checks_to_execute, excluded_services, provider
         )
+
+    # If -l/--list-checks passed as argument, print checks to execute and quit
+    if args.list_checks:
+        for check in checks_to_execute:
+            try:
+                print(
+                    f"[{bulk_checks_metadata[check].CheckID}] {bulk_checks_metadata[check].CheckTitle} - {bulk_checks_metadata[check].ServiceName} [{bulk_checks_metadata[check].Severity}] "
+                )
+            except KeyError as error:
+                logger.error(
+                    f"Check {error} was not found for the {provider.upper()} provider"
+                )
+        quit()
+
+    # Setting output options
+    set_output_options(args.quiet)
+    
+    # Set global session
+    provider_set_session(
+        args.profile,
+        args.role,
+        args.session_duration,
+        args.external_id,
+        args.filter_region,
+    )
+    
 
     # Execute checks
     if len(checks_to_execute):

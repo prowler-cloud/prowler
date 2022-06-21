@@ -19,12 +19,24 @@ class Check_Report:
         self.result_extended = ""
 
 
+# Testing Pending
+def load_check_metadata(metadata_file: str) -> dict:
+    try:
+        check_metadata = Check_Metadata_Model.parse_file(metadata_file)
+    except ValidationError as error:
+        logger.critical(f"Metadata from {metadata_file} is not valid: {error}")
+        quit()
+    else:
+        return check_metadata
+
+
+# Check all values
 class Check_Metadata_Model(BaseModel):
     Provider: str
     CheckID: str
     CheckName: str
     CheckTitle: str
-    CheckAlias: str
+    # CheckAlias: str
     CheckType: str
     ServiceName: str
     SubServiceName: str
@@ -45,37 +57,32 @@ class Check_Metadata_Model(BaseModel):
 
 class Check(ABC):
     def __init__(self):
+        # Load metadata from check
         check_name = self.__class__.__module__.replace(".", "/")
         metadata_file = f"{check_name}.metadata.json"
-        try:
-            self.__check_metadata__ = Check_Metadata_Model.parse_file(metadata_file)
-        except ValidationError as error:
-            logger.critical(
-                f"Metadata from check {check_name}.py is not valid: {error}"
-            )
-            quit()
-        else:
-            self.__Provider__ = self.__check_metadata__.Provider
-            self.__CheckID__ = self.__check_metadata__.CheckID
-            self.__CheckName__ = self.__check_metadata__.CheckName
-            self.__CheckTitle__ = self.__check_metadata__.CheckTitle
-            self.__CheckAlias__ = self.__check_metadata__.CheckAlias
-            self.__CheckType__ = self.__check_metadata__.CheckType
-            self.__ServiceName__ = self.__check_metadata__.ServiceName
-            self.__SubServiceName__ = self.__check_metadata__.SubServiceName
-            self.__ResourceIdTemplate__ = self.__check_metadata__.ResourceIdTemplate
-            self.__Severity__ = self.__check_metadata__.Severity
-            self.__ResourceType__ = self.__check_metadata__.ResourceType
-            self.__Description__ = self.__check_metadata__.Description
-            self.__Risk__ = self.__check_metadata__.Risk
-            self.__RelatedUrl__ = self.__check_metadata__.RelatedUrl
-            self.__Remediation__ = self.__check_metadata__.Remediation
-            self.__Categories__ = self.__check_metadata__.Categories
-            self.__Tags__ = self.__check_metadata__.Tags
-            self.__DependsOn__ = self.__check_metadata__.DependsOn
-            self.__RelatedTo__ = self.__check_metadata__.RelatedTo
-            self.__Notes__ = self.__check_metadata__.Notes
-            self.__Compliance__ = self.__check_metadata__.Compliance
+        self.__check_metadata__ = load_check_metadata(metadata_file)
+        # Assign metadata values
+        self.__Provider__ = self.__check_metadata__.Provider
+        self.__CheckID__ = self.__check_metadata__.CheckID
+        self.__CheckName__ = self.__check_metadata__.CheckName
+        self.__CheckTitle__ = self.__check_metadata__.CheckTitle
+        # self.__CheckAlias__ = self.__check_metadata__.CheckAlias
+        self.__CheckType__ = self.__check_metadata__.CheckType
+        self.__ServiceName__ = self.__check_metadata__.ServiceName
+        self.__SubServiceName__ = self.__check_metadata__.SubServiceName
+        self.__ResourceIdTemplate__ = self.__check_metadata__.ResourceIdTemplate
+        self.__Severity__ = self.__check_metadata__.Severity
+        self.__ResourceType__ = self.__check_metadata__.ResourceType
+        self.__Description__ = self.__check_metadata__.Description
+        self.__Risk__ = self.__check_metadata__.Risk
+        self.__RelatedUrl__ = self.__check_metadata__.RelatedUrl
+        self.__Remediation__ = self.__check_metadata__.Remediation
+        self.__Categories__ = self.__check_metadata__.Categories
+        self.__Tags__ = self.__check_metadata__.Tags
+        self.__DependsOn__ = self.__check_metadata__.DependsOn
+        self.__RelatedTo__ = self.__check_metadata__.RelatedTo
+        self.__Notes__ = self.__check_metadata__.Notes
+        self.__Compliance__ = self.__check_metadata__.Compliance
 
     @property
     def provider(self):
@@ -93,9 +100,9 @@ class Check(ABC):
     def checkTitle(self):
         return self.__CheckTitle__
 
-    @property
-    def checkAlias(self):
-        return self.__CheckAlias__
+    # @property
+    # def checkAlias(self):
+    #     return self.__CheckAlias__
 
     @property
     def checkType(self):
