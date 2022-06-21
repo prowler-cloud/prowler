@@ -109,14 +109,7 @@ if __name__ == "__main__":
         if not args.role:
             logger.critical("To use -I/-T options -R option is needed")
             quit()
-    
-    if args.version:
-        print_version()
-        quit()
 
-    if args.no_banner:
-        print_banner()
-        
     if args.version:
         print_version()
         quit()

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from lib.check.check import Check, Check_Report
+from lib.check.models import Check, Check_Report
 from providers.aws.services.iam.iam_service import iam_client
 
 maximum_expiration_days = 90
@@ -32,9 +32,7 @@ class iam_disable_90_days_credentials(Check):
                         pass
                 else:
                     report.status = "PASS"
-                    report.result_extended = (
-                        f"User {user['UserName']} has not a console password or is unused."
-                    )
+                    report.result_extended = f"User {user['UserName']} has not a console password or is unused."
                     report.region = "us-east-1"
 
                 # Append report

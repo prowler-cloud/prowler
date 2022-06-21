@@ -1,4 +1,4 @@
-from lib.check.check import Check, Check_Report
+from lib.check.models import Check, Check_Report
 from providers.aws.services.ec2.ec2_service import ec2_client
 
 
