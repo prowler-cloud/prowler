@@ -27,6 +27,7 @@ aws_profile_loader() {
     elif [[ $AWS_ACCESS_KEY_ID && $AWS_SECRET_ACCESS_KEY || $AWS_SESSION_TOKEN || $AWS_PROFILE ]];then
         PROFILE="$AWS_PROFILE"
         PROFILE_OPT=""
+    # AWS_CONTAINER_CREDENTIALS_RELATIVE_URI is set by default https://docs.aws.amazon.com/sdkref/latest/guide/feature-container-credentials.html
     elif [[ -n $AWS_CONTAINER_CREDENTIALS_RELATIVE_URI ]] && [[ -z $INSTANCE_PROFILE ]]
     then
         PROFILE="INSTANCE-PROFILE"
@@ -44,11 +45,11 @@ aws_profile_loader() {
     then
         PROFILE="INSTANCE-PROFILE"
         INSTANCE_METADATA=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/"${INSTANCE_PROFILE}")
-        AWS_ACCESS_KEY_ID=$(jq '.AccessKeyId' <<< "${INSTANCE_METADATA}")
+        AWS_ACCESS_KEY_ID=$(jq -r '.AccessKeyId' <<< "${INSTANCE_METADATA}")
         export AWS_ACCESS_KEY_ID
-        AWS_SECRET_ACCESS_KEY=$(jq '.SecretAccessKey' <<< "${INSTANCE_METADATA}")
+        AWS_SECRET_ACCESS_KEY=$(jq -r '.SecretAccessKey' <<< "${INSTANCE_METADATA}")
         export AWS_SECRET_ACCESS_KEY
-        AWS_SESSION_TOKEN=$(jq '.Token' <<< "${INSTANCE_METADATA}")
+        AWS_SESSION_TOKEN=$(jq -r '.Token' <<< "${INSTANCE_METADATA}")
         export AWS_SESSION_TOKEN
     elif [[ $AWS_EXECUTION_ENV == "CloudShell" ]]
     then
