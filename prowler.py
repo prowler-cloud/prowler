@@ -13,7 +13,7 @@ from lib.check.check import (
     run_check,
 )
 from lib.logger import logger, logging_levels
-from providers.aws.aws_provider import Input_Data, provider_set_session
+from providers.aws.aws_provider import provider_set_session
 
 if __name__ == "__main__":
     # CLI Arguments
@@ -104,18 +104,6 @@ if __name__ == "__main__":
         if not args.role:
             logger.critical("To use -I/-T options -R option is needed")
             quit()
-
-    # Setting session
-    session_input = Input_Data(
-        profile=args.profile,
-        role_arn=args.role,
-        session_duration=args.session_duration,
-        external_id=args.external_id,
-        regions=args.filter_region,
-    )
-
-    provider_set_session(session_input)
-
     
     if args.version:
         print_version()
@@ -124,6 +112,22 @@ if __name__ == "__main__":
     if args.no_banner:
         print_banner()
         
+    if args.version:
+        print_version()
+        quit()
+
+    if args.no_banner:
+        print_banner()
+
+    # Set global session
+    provider_set_session(
+        args.profile,
+        args.role,
+        args.session_duration,
+        args.external_id,
+        args.filter_region,
+    )
+
     # Load checks to execute
     logger.debug("Loading checks")
     checks_to_execute = load_checks_to_execute(
