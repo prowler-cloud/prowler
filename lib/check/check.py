@@ -7,7 +7,7 @@ from typing import Any
 from colorama import Fore, Style
 
 from config.config import groups_file
-from lib.check.models import load_check_metadata
+from lib.check.models import Output_From_Options, load_check_metadata
 from lib.logger import logger
 from lib.outputs import report
 from lib.utils.utils import open_file, parse_json_file
@@ -42,7 +42,10 @@ def exclude_groups_to_run(
     checks_to_execute: set, excluded_groups: list, provider: str
 ) -> set:
     # Recover checks from the input groups
-    checks_from_groups = parse_groups_from_file(groups_file, excluded_groups, provider)
+    available_groups = parse_groups_from_file(groups_file)
+    checks_from_groups = load_checks_to_execute_from_groups(
+        available_groups, excluded_groups, provider
+    )
     for check_name in checks_from_groups:
         checks_to_execute.discard(check_name)
     return checks_to_execute

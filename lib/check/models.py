@@ -19,6 +19,11 @@ class Check_Report:
         self.result_extended = ""
 
 
+@dataclass
+class Output_From_Options:
+    is_quiet: bool
+
+
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> dict:
     try:
