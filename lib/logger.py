@@ -41,7 +41,6 @@ def set_logging_config(log_file: str = None, log_level: str = "ERROR"):
     logging.basicConfig(
         level=logging_levels.get(log_level),
         handlers=logging_handlers,
-        format="%(asctime)s [File: %(filename)s:%(lineno)d] \t[Module: %(module)s]\t %(levelname)s: %(message)s",
         datefmt="%m/%d/%Y %I:%M:%S %p",
     )
 
