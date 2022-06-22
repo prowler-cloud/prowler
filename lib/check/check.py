@@ -180,13 +180,22 @@ def recover_modules_from_provider(provider: str, service: str = None) -> list:
     return modules
 
 
+def set_output_options(quiet):
+    global output_options
+    output_options = Output_From_Options(
+        is_quiet=quiet
+        # set input options here
+    )
+    return output_options
+
+
 def run_check(check):
     print(
         f"\nCheck Name: {check.CheckName} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW}[{check.Severity}]{Style.RESET_ALL}"
     )
     logger.debug(f"Executing check: {check.CheckName}")
     findings = check.execute()
-    report(findings)
+    report(findings, output_options)
 
 
 def import_check(check_path: str) -> ModuleType:
@@ -204,6 +213,11 @@ class Check_Report:
         self.status = ""
         self.region = ""
         self.result_extended = ""
+
+
+@dataclass
+class Output_From_Options:
+    is_quiet: bool
 
 
 class Check(ABC):
