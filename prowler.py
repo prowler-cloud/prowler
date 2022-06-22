@@ -11,6 +11,7 @@ from lib.check.check import (
     import_check,
     load_checks_to_execute,
     run_check,
+    set_output_options,
 )
 from lib.logger import logger, logging_levels
 from providers.aws.aws_provider import provider_set_session
@@ -39,6 +40,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-v", "--version", action="store_true", help="Show Prowler version"
+    )
+    parser.add_argument(
+        "-q", "--quiet", action="store_true", help="Show only Prowler failed findings"
     )
     parser.add_argument(
         "--log-level",
@@ -119,13 +123,16 @@ if __name__ == "__main__":
     if args.no_banner:
         print_banner()
 
+    # Setting output options
+    set_output_options(args.quiet)
+    
     # Set global session
     provider_set_session(
         args.profile,
         args.role,
         args.session_duration,
         args.external_id,
-        args.filter_region,
+        args.filter_region
     )
 
     # Load checks to execute
