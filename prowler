@@ -17,7 +17,7 @@ from lib.check.check import (
     set_output_options,
 )
 from lib.check.checks_loader import load_checks_to_execute
-from lib.logger import logger, logging_levels
+from lib.logger import logger, set_logging_config
 from providers.aws.aws_provider import provider_set_session
 
 if __name__ == "__main__":
@@ -50,12 +50,20 @@ if __name__ == "__main__":
     parser.add_argument(
         "-q", "--quiet", action="store_true", help="Show only Prowler failed findings"
     )
+    # Both options can be combined to only report to file some log level
+    # If --log-file is set without --log-level the default --log-level is DEBUG
     parser.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         default="ERROR",
         help="Select Log Level",
     )
+    parser.add_argument(
+        "--log-file",
+        nargs="?",
+        help="Set log file name",
+    )
+
     parser.add_argument(
         "-p",
         "--profile",
@@ -103,8 +111,8 @@ if __name__ == "__main__":
     groups = args.groups
     checks_file = args.checks_file
 
-    # Set Logger
-    logger.setLevel(logging_levels.get(args.log_level))
+    # Set Logger configuration
+    set_logging_config(args.log_file, args.log_level)
 
     # Role assumption input options tests
     if args.session_duration not in range(900, 43200):
@@ -165,7 +173,7 @@ if __name__ == "__main__":
 
     # Setting output options
     set_output_options(args.quiet)
-    
+
     # Set global session
     provider_set_session(
         args.profile,
@@ -174,7 +182,6 @@ if __name__ == "__main__":
         args.external_id,
         args.filter_region,
     )
-    
 
     # Execute checks
     if len(checks_to_execute):

@@ -1,5 +1,4 @@
 import logging
-import sys
 
 # Logging levels
 logging_levels = {
@@ -10,14 +9,28 @@ logging_levels = {
     "DEBUG": logging.DEBUG,
 }
 
-# Initialize you log configuration using the base class
-# https://docs.python.org/3/library/logging.html#logrecord-attributes
-logging.basicConfig(
-    stream=sys.stdout,
-    format="%(asctime)s [File: %(filename)s:%(lineno)d] \t[Module: %(module)s]\t %(levelname)s: %(message)s",
-    datefmt="%m/%d/%Y %I:%M:%S %p",
-)
+
+def set_logging_config(log_file: str = None, log_level: str = "ERROR"):
+    # Where to put logs
+    logging_handlers = []
+    # Include stdout by default
+    logging_handlers.append(logging.StreamHandler())
+
+    # When logging to file the log level is DEBUG to store every log
+    if log_file:
+        # Set log to file handler
+        logging_handlers.append(logging.FileHandler(log_file))
+
+    # Configure Logger
+    # Initialize you log configuration using the base class
+    # https://docs.python.org/3/library/logging.html#logrecord-attributes
+    logging.basicConfig(
+        level=logging_levels.get(log_level),
+        handlers=logging_handlers,
+        format="%(asctime)s [File: %(filename)s:%(lineno)d] \t[Module: %(module)s]\t %(levelname)s: %(message)s",
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+    )
+
 
 # Retrieve the logger instance
 logger = logging.getLogger()
-logger.setLevel(logging.ERROR)
