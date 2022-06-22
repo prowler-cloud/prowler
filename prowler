@@ -35,12 +35,19 @@ if __name__ == "__main__":
     group.add_argument("-C", "--checks-file", nargs="?", help="List of checks")
     group.add_argument("-s", "--services", nargs="+", help="List of services")
     group.add_argument("-g", "--groups", nargs="+", help="List of groups")
+    group.add_argument(
+        "--severity",
+        nargs="+",
+        help="List of severities [informational, low, medium, high, critical]",
+    )
+    # Exclude checks options
     parser.add_argument("-e", "--excluded-checks", nargs="+", help="Checks to exclude")
     parser.add_argument("-E", "--excluded-groups", nargs="+", help="Groups to exclude")
     parser.add_argument(
         "-S", "--excluded-services", nargs="+", help="Services to exclude"
     )
 
+    # List checks options
     list_group = parser.add_mutually_exclusive_group()
     list_group.add_argument(
         "-L", "--list-groups", action="store_true", help="List groups"
@@ -121,6 +128,7 @@ if __name__ == "__main__":
     services = args.services
     groups = args.groups
     checks_file = args.checks_file
+    severities = args.severity
 
     # Set Logger configuration
     set_logging_config(args.log_file, args.log_level)
@@ -155,7 +163,13 @@ if __name__ == "__main__":
 
     # Load checks to execute
     checks_to_execute = load_checks_to_execute(
-        bulk_checks_metadata, checks_file, checks, services, groups, provider
+        bulk_checks_metadata,
+        checks_file,
+        checks,
+        services,
+        groups,
+        severities,
+        provider,
     )
     # Exclude checks if -e/--excluded-checks
     if excluded_checks:
