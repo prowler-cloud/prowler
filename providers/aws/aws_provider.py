@@ -1,3 +1,5 @@
+import sys
+
 from arnparse import arnparse
 from boto3 import session
 from botocore.credentials import RefreshableCredentials
@@ -49,7 +51,7 @@ class AWS_Provider:
                 return session.Session(profile_name=audit_info.profile)
         except Exception as error:
             logger.critical(f"{error.__class__.__name__} -- {error}")
-            quit()
+            sys.exit()
 
     # Refresh credentials method using assume role
     # This method is called "adding ()" to the name, so it cannot accept arguments
@@ -119,7 +121,7 @@ def provider_set_session(
 
         except Exception as error:
             logger.critical(f"{error.__class__.__name__} -- {error}")
-            quit()
+            sys.exit()
 
         else:
             logger.info(
@@ -155,7 +157,7 @@ def validate_credentials(validate_session):
         caller_identity = validate_credentials_client.get_caller_identity()
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")
-        quit()
+        sys.exit()
     else:
         return caller_identity
 
@@ -182,7 +184,7 @@ def assume_role():
             )
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")
-        quit()
+        sys.exit()
 
     else:
         return assumed_credentials

@@ -1,3 +1,5 @@
+import sys
+
 from lib.logger import logger
 from providers.aws.aws_provider import current_audit_info
 
@@ -92,4 +94,4 @@ try:
     iam_client = IAM(current_audit_info)
 except Exception as error:
     logger.critical(f"{error.__class__.__name__} -- {error}")
-    quit()
+    sys.exit()

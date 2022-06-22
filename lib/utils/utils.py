@@ -1,4 +1,5 @@
 import json
+import sys
 from io import TextIOWrapper
 from typing import Any
 
@@ -11,7 +12,7 @@ def open_file(input_file: str) -> TextIOWrapper:
         f = open(input_file)
     except Exception as e:
         logger.critical(f"{input_file}: {e.__class__.__name__}")
-        quit()
+        sys.exit()
     else:
         return f
 
@@ -22,6 +23,6 @@ def parse_json_file(input_file: TextIOWrapper) -> Any:
         json_file = json.load(input_file)
     except Exception as e:
         logger.critical(f"{input_file.name}: {e.__class__.__name__}")
-        quit()
+        sys.exit()
     else:
         return json_file
