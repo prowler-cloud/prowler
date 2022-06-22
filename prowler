@@ -50,8 +50,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "-q", "--quiet", action="store_true", help="Show only Prowler failed findings"
     )
+
     # Both options can be combined to only report to file some log level
-    # If --log-file is set without --log-level the default --log-level is DEBUG
     parser.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
