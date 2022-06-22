@@ -82,8 +82,24 @@ def parse_checks_from_file(input_file: str, provider: str) -> set:
     return checks_to_execute
 
 
+def list_services(provider: str) -> set:
+    available_services = set()
+    checks = recover_checks_from_provider(provider)
+    for check_name in checks:
+        # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
+        service_name = check_name.split(".")[3]
+        available_services.add(service_name)
+    return available_services
+
+
+def print_services(service_list: set):
+    print(f"Available Services:")
+    for service in service_list:
+        print(f"- {service}")
+
+
 # List available groups
-def list_groups(provider: str) -> list:
+def list_groups(provider: str):
     groups = parse_groups_from_file(groups_file)
     print(f"Available Groups:")
 
