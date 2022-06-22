@@ -58,8 +58,8 @@ class Check_Metadata_Model(BaseModel):
 class Check(ABC):
     def __init__(self):
         # Load metadata from check
-        check_name = self.__class__.__module__.replace(".", "/")
-        metadata_file = f"{check_name}.metadata.json"
+        check_path_name = self.__class__.__module__.replace(".", "/")
+        metadata_file = f"{check_path_name}.metadata.json"
         self.__check_metadata__ = load_check_metadata(metadata_file)
         # Assign metadata values
         self.__Provider__ = self.__check_metadata__.Provider
