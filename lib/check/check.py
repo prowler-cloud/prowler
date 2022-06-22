@@ -15,7 +15,6 @@ from lib.utils.utils import open_file, parse_json_file
 
 # Load all checks metadata
 def bulk_load_checks_metadata(provider: str) -> dict:
-    # start_time = time.time()
     bulk_check_metadata = {}
     checks = recover_checks_from_provider(provider)
     # Build list of check's metadata files
@@ -28,7 +27,6 @@ def bulk_load_checks_metadata(provider: str) -> dict:
         check_metadata = load_check_metadata(metadata_file)
         bulk_check_metadata[check_metadata.CheckID] = check_metadata
 
-    # print("--- %s seconds ---" % (time.time() - start_time))
     return bulk_check_metadata
 
 
@@ -122,7 +120,7 @@ def recover_checks_from_provider(provider: str, service: str = None) -> list:
     for module_name in modules:
         # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
         check_name = module_name.name
-        if module_name.name.count(".") == 5:
+        if check_name.count(".") == 5:
             checks.append(check_name)
     return checks
 
