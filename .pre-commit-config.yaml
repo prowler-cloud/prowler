@@ -39,3 +39,9 @@ repos:
     rev: v0.0.5
     hooks:
       - id: check-pipfile-lock
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: pytest-check
+        entry: bash -c 'pytest'
+        language: system

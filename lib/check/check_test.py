@@ -8,6 +8,7 @@ from lib.check.check import (
     parse_checks_from_file,
     parse_groups_from_file,
 )
+from lib.check.models import load_check_metadata
 
 
 class Test_Check:
@@ -49,6 +50,28 @@ class Test_Check:
         for test in test_cases:
             check_file = test["input"]["path"]
             assert parse_groups_from_file(check_file) == test["expected"]
+
+    def test_load_check_metadata(self):
+        test_cases = [
+            {
+                "input": {
+                    "metadata_path": f"{os.path.dirname(os.path.realpath(__file__))}/fixtures/metadata.json",
+                },
+                "expected": {
+                    "CheckID": "iam_disable_30_days_credentials",
+                    "CheckTitle": "Ensure credentials unused for 30 days or greater are disabled",
+                    "ServiceName": "iam",
+                    "Severity": "low",
+                },
+            }
+        ]
+        for test in test_cases:
+            metadata_path = test["input"]["metadata_path"]
+            check_metadata = load_check_metadata(metadata_path)
+            assert check_metadata.CheckID == test["expected"]["CheckID"]
+            assert check_metadata.CheckTitle == test["expected"]["CheckTitle"]
+            assert check_metadata.ServiceName == test["expected"]["ServiceName"]
+            assert check_metadata.Severity == test["expected"]["Severity"]
 
     def test_parse_checks_from_file(self):
         test_cases = [
