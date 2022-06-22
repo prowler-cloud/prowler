@@ -165,7 +165,7 @@ general_output() {
         generateJsonOutput "${CHECK_RESULT_EXTENDED}" "${CHECK_RESULT}" "$CHECK_RESOURCE_ID" >> "${OUTPUT_FILE_NAME}"."${EXTENSION_JSON}"
     elif [ "${MODE_TYPE}" == 'json-asff' ]
     then
-        JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "${CHECK_RESULT_EXTENDED}" "PASSED" "$CHECK_RESOURCE_ID")
+        JSON_ASFF_OUTPUT=$(generateJsonAsffOutput "${CHECK_RESULT_EXTENDED}" "${CHECK_RESULT}" "$CHECK_RESOURCE_ID")
         echo "${JSON_ASFF_OUTPUT}" >> "${OUTPUT_FILE_NAME}"."${EXTENSION_ASFF}"
         if [[ "${SEND_TO_SECURITY_HUB}" -eq 1 ]]; then
             sendToSecurityHub "${JSON_ASFF_OUTPUT}" "${REGION_FROM_CHECK}"
@@ -208,7 +208,7 @@ textPass(){
   CHECK_REGION="${2}"
 
   PASS_COUNTER=$((PASS_COUNTER+1))
-  
+
   if is_quiet "${QUIET}"
   then
     return
@@ -259,7 +259,7 @@ textTitle(){
   CHECK_ASFF_COMP_TYPE="${6}"
 
   CHECKS_COUNTER=$((CHECKS_COUNTER+1))
-  
+
   if [[ $NUMERAL ]]; then
     # Left-pad the check ID with zeros to simplify sorting, e.g. 1.1 -> 1.01
     TITLE_ID=$(awk -F'.' '{ printf "%d.%02d", $1, $2 }' <<< "$TITLE_ID")
@@ -349,6 +349,8 @@ generateJsonAsffOutput(){
 
   if [[ "$status" == "FAIL" ]]; then
     status="FAILED"
+  elif [[ "$status" == "PASS" ]]; then
+    status="PASSED"
   fi
   jq -M -c \
   --arg ACCOUNT_NUM "$ACCOUNT_NUM" \
