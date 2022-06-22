@@ -3,6 +3,10 @@
     "gdpr": [
       "check11",
       "check12"
+    ],
+    "iam": [
+      "iam_disable_30_days_credentials",
+      "iam_disable_90_days_credentials"
     ]
   }
 }

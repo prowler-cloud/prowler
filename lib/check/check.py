@@ -19,6 +19,36 @@ def exclude_checks_to_run(checks_to_execute: set, excluded_checks: list) -> set:
     return checks_to_execute
 
 
+# Exclude groups to run
+def exclude_groups_to_run(
+    checks_to_execute: set, excluded_groups: list, provider: str
+) -> set:
+    # Recover checks from the input groups
+
+    checks_from_groups = parse_groups_from_file(groups_file, excluded_groups, provider)
+    for check_name in checks_from_groups:
+        checks_to_execute.discard(check_name)
+    return checks_to_execute
+
+
+def exclude_services_to_run(
+    checks_to_execute: set, excluded_services: list, provider: str
+) -> set:
+    # Recover checks from the input services
+    for service in excluded_services:
+        modules = recover_modules_from_provider(provider, service)
+        if not modules:
+            logger.error(f"Service '{service}' was not found for the AWS provider")
+        else:
+            for check_module in modules:
+                # Recover check name and module name from import path
+                # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
+                check_name = check_module.split(".")[-1]
+                # Exclude checks from the input services
+                checks_to_execute.discard(check_name)
+    return checks_to_execute
+
+
 # Load checks from checklist.json
 def parse_checks_from_file(input_file: str, provider: str) -> set:
     checks_to_execute = set()
@@ -32,9 +62,9 @@ def parse_checks_from_file(input_file: str, provider: str) -> set:
 
 
 # Load checks from groups.json
-def parse_groups_from_file(group_list: list, provider: str) -> set:
+def parse_groups_from_file(group_file: str, group_list: list, provider: str) -> set:
     checks_to_execute = set()
-    f = open_file(groups_file)
+    f = open_file(group_file)
     available_groups = parse_json_file(f)
 
     for group in group_list:
@@ -90,7 +120,9 @@ def load_checks_to_execute(
     # Handle if there are groups passed using -g/--groups
     elif group_list:
         try:
-            checks_to_execute = parse_groups_from_file(group_list, provider)
+            checks_to_execute = parse_groups_from_file(
+                groups_file, group_list, provider
+            )
         except Exception as e:
             logger.error(f"{e.__class__.__name__} -- {e}")
 

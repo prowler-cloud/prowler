@@ -6,13 +6,15 @@ import argparse
 from lib.banner import print_banner, print_version
 from lib.check.check import (
     exclude_checks_to_run,
+    exclude_groups_to_run,
+    exclude_services_to_run,
     import_check,
     load_checks_to_execute,
     run_check,
     set_output_options,
 )
 from lib.logger import logger, logging_levels
-from providers.aws.aws_provider import Input_Data, provider_set_session
+from providers.aws.aws_provider import provider_set_session
 
 if __name__ == "__main__":
     # CLI Arguments
@@ -28,6 +30,11 @@ if __name__ == "__main__":
     group.add_argument("-g", "--groups", nargs="+", help="List of groups")
 
     parser.add_argument("-e", "--excluded-checks", nargs="+", help="Checks to exclude")
+    parser.add_argument("-E", "--excluded-groups", nargs="+", help="Groups to exclude")
+    parser.add_argument(
+        "-S", "--excluded-services", nargs="+", help="Services to exclude"
+    )
+
     parser.add_argument(
         "-b", "--no-banner", action="store_false", help="Hide Prowler Banner"
     )
@@ -84,6 +91,8 @@ if __name__ == "__main__":
     provider = args.provider
     checks = args.checks
     excluded_checks = args.excluded_checks
+    excluded_groups = args.excluded_groups
+    excluded_services = args.excluded_services
     services = args.services
     groups = args.groups
     checks_file = args.checks_file
@@ -99,7 +108,14 @@ if __name__ == "__main__":
         if not args.role:
             logger.critical("To use -I/-T options -R option is needed")
             quit()
+    
+    if args.version:
+        print_version()
+        quit()
 
+    if args.no_banner:
+        print_banner()
+        
     if args.version:
         print_version()
         quit()
@@ -109,26 +125,36 @@ if __name__ == "__main__":
 
     # Setting output options
     set_output_options(args.quiet)
-
-    # Setting session
-    session_input = Input_Data(
-        profile=args.profile,
-        role_arn=args.role,
-        session_duration=args.session_duration,
-        external_id=args.external_id,
-        regions=args.filter_region,
+    
+    # Set global session
+    provider_set_session(
+        args.profile,
+        args.role,
+        args.session_duration,
+        args.external_id,
+        args.filter_region
     )
-
-    provider_set_session(session_input)
 
     # Load checks to execute
     logger.debug("Loading checks")
     checks_to_execute = load_checks_to_execute(
         checks_file, checks, services, groups, provider
     )
-    # Exclude checks if -e
+    # Exclude checks if -e/--excluded-checks
     if excluded_checks:
         checks_to_execute = exclude_checks_to_run(checks_to_execute, excluded_checks)
+
+    # Exclude groups if -g/--excluded-groups
+    if excluded_groups:
+        checks_to_execute = exclude_groups_to_run(
+            checks_to_execute, excluded_groups, provider
+        )
+
+    # Exclude services if -s/--excluded-services
+    if excluded_services:
+        checks_to_execute = exclude_services_to_run(
+            checks_to_execute, excluded_services, provider
+        )
 
     # Execute checks
     if len(checks_to_execute):
@@ -152,3 +178,7 @@ if __name__ == "__main__":
                 logger.error(
                     f"Check '{check_name}' was not found for the {provider.upper()} provider"
                 )
+    else:
+        logger.error(
+            "There are no checks to execute. Please, check your input arguments"
+        )
