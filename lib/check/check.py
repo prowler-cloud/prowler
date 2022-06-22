@@ -3,6 +3,7 @@ import pkgutil
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from types import ModuleType
+from typing import Any
 
 from colorama import Fore, Style
 
@@ -24,8 +25,10 @@ def exclude_groups_to_run(
     checks_to_execute: set, excluded_groups: list, provider: str
 ) -> set:
     # Recover checks from the input groups
-
-    checks_from_groups = parse_groups_from_file(groups_file, excluded_groups, provider)
+    available_groups = parse_groups_from_file(groups_file)
+    checks_from_groups = load_checks_to_execute_from_groups(
+        available_groups, excluded_groups, provider
+    )
     for check_name in checks_from_groups:
         checks_to_execute.discard(check_name)
     return checks_to_execute
@@ -61,15 +64,32 @@ def parse_checks_from_file(input_file: str, provider: str) -> set:
     return checks_to_execute
 
 
-# Load checks from groups.json
-def parse_groups_from_file(group_file: str, group_list: list, provider: str) -> set:
-    checks_to_execute = set()
+# List available groups
+def list_groups(provider: str) -> list:
+    groups = parse_groups_from_file(groups_file)
+    print(f"Available Groups:")
+
+    for group, value in groups[provider].items():
+        group_description = value["description"]
+        print(f"\t - {group_description} -- [{group}] ")
+
+
+# Parse groups from groups.json
+def parse_groups_from_file(group_file: str) -> Any:
     f = open_file(group_file)
     available_groups = parse_json_file(f)
+    return available_groups
+
+
+# Parse checks from groups to execute
+def load_checks_to_execute_from_groups(
+    available_groups: Any, group_list: list, provider: str
+) -> set:
+    checks_to_execute = set()
 
     for group in group_list:
         if group in available_groups[provider]:
-            for check_name in available_groups[provider][group]:
+            for check_name in available_groups[provider][group]["checks"]:
                 checks_to_execute.add(check_name)
         else:
             logger.error(
@@ -120,8 +140,9 @@ def load_checks_to_execute(
     # Handle if there are groups passed using -g/--groups
     elif group_list:
         try:
-            checks_to_execute = parse_groups_from_file(
-                groups_file, group_list, provider
+            available_groups = parse_groups_from_file(groups_file)
+            checks_to_execute = load_checks_to_execute_from_groups(
+                available_groups, group_list, provider
             )
         except Exception as e:
             logger.error(f"{e.__class__.__name__} -- {e}")

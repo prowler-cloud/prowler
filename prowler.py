@@ -9,6 +9,7 @@ from lib.check.check import (
     exclude_groups_to_run,
     exclude_services_to_run,
     import_check,
+    list_groups,
     load_checks_to_execute,
     run_check,
     set_output_options,
@@ -28,7 +29,7 @@ if __name__ == "__main__":
     group.add_argument("-C", "--checks-file", nargs="?", help="List of checks")
     group.add_argument("-s", "--services", nargs="+", help="List of services")
     group.add_argument("-g", "--groups", nargs="+", help="List of groups")
-
+    group.add_argument("-L", "--list-groups", action="store_true", help="List groups")
     parser.add_argument("-e", "--excluded-checks", nargs="+", help="Checks to exclude")
     parser.add_argument("-E", "--excluded-groups", nargs="+", help="Groups to exclude")
     parser.add_argument(
@@ -122,6 +123,10 @@ if __name__ == "__main__":
 
     if args.no_banner:
         print_banner()
+
+    if args.list_groups:
+        list_groups(provider)
+        quit()
 
     # Setting output options
     set_output_options(args.quiet)
