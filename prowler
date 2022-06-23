@@ -4,8 +4,6 @@
 import argparse
 import sys
 
-from colorama import Fore, Style
-
 from lib.banner import print_banner, print_version
 from lib.check.check import (
     bulk_load_checks_metadata,
@@ -15,6 +13,7 @@ from lib.check.check import (
     import_check,
     list_groups,
     list_services,
+    print_checks,
     print_services,
     run_check,
     set_output_options,
@@ -46,7 +45,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "-S", "--excluded-services", nargs="+", help="Services to exclude"
     )
-
     # List checks options
     list_group = parser.add_mutually_exclusive_group()
     list_group.add_argument(
@@ -189,15 +187,7 @@ if __name__ == "__main__":
 
     # If -l/--list-checks passed as argument, print checks to execute and quit
     if args.list_checks:
-        for check in checks_to_execute:
-            try:
-                print(
-                    f"[{bulk_checks_metadata[check].CheckID}] {bulk_checks_metadata[check].CheckTitle} - {Fore.MAGENTA}{bulk_checks_metadata[check].ServiceName} {Fore.YELLOW}[{bulk_checks_metadata[check].Severity}]{Style.RESET_ALL}"
-                )
-            except KeyError as error:
-                logger.error(
-                    f"Check {error} was not found for the {provider.upper()} provider"
-                )
+        print_checks(provider, checks_to_execute, bulk_checks_metadata)
         sys.exit()
 
     # Setting output options

@@ -98,6 +98,18 @@ def print_services(service_list: set):
         print(f"- {service}")
 
 
+def print_checks(provider: str, check_list: set, bulk_checks_metadata: dict):
+    for check in check_list:
+        try:
+            print(
+                f"[{bulk_checks_metadata[check].CheckID}] {bulk_checks_metadata[check].CheckTitle} - {Fore.MAGENTA}{bulk_checks_metadata[check].ServiceName} {Fore.YELLOW}[{bulk_checks_metadata[check].Severity}]{Style.RESET_ALL}"
+            )
+        except KeyError as error:
+            logger.error(
+                f"Check {error} was not found for the {provider.upper()} provider"
+            )
+
+
 # List available groups
 def list_groups(provider: str):
     groups = parse_groups_from_file(groups_file)
