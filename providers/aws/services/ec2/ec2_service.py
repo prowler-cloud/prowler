@@ -69,7 +69,9 @@ class EC2:
                 for snapshot in page["Snapshots"]:
                     snapshots.append(snapshot)
         except Exception as error:
-            logger.error(f"{error.__class__.__name__} -- {error}")
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+            )
         else:
             regional_client.snapshots = snapshots
 
