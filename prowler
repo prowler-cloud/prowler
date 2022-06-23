@@ -38,6 +38,7 @@ if __name__ == "__main__":
         "--severity",
         nargs="+",
         help="List of severities [informational, low, medium, high, critical]",
+        choices=["informational","low","medium","high","critical"]
     )
     # Exclude checks options
     parser.add_argument("-e", "--excluded-checks", nargs="+", help="Checks to exclude")
