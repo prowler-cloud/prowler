@@ -14,6 +14,8 @@ from lib.check.check import (
     exclude_services_to_run,
     import_check,
     list_groups,
+    list_services,
+    print_services,
     run_check,
     set_output_options,
 )
@@ -33,14 +35,22 @@ if __name__ == "__main__":
     group.add_argument("-C", "--checks-file", nargs="?", help="List of checks")
     group.add_argument("-s", "--services", nargs="+", help="List of services")
     group.add_argument("-g", "--groups", nargs="+", help="List of groups")
-    group.add_argument("-L", "--list-groups", action="store_true", help="List groups")
     parser.add_argument("-e", "--excluded-checks", nargs="+", help="Checks to exclude")
     parser.add_argument("-E", "--excluded-groups", nargs="+", help="Groups to exclude")
     parser.add_argument(
         "-S", "--excluded-services", nargs="+", help="Services to exclude"
     )
 
-    parser.add_argument("-l", "--list-checks", action="store_true", help="List checks")
+    list_group = parser.add_mutually_exclusive_group()
+    list_group.add_argument(
+        "-L", "--list-groups", action="store_true", help="List groups"
+    )
+    list_group.add_argument(
+        "-l", "--list-checks", action="store_true", help="List checks"
+    )
+    list_group.add_argument(
+        "--list-services", action="store_true", help="List services"
+    )
 
     parser.add_argument(
         "-b", "--no-banner", action="store_false", help="Hide Prowler Banner"
@@ -133,6 +143,10 @@ if __name__ == "__main__":
 
     if args.list_groups:
         list_groups(provider)
+        sys.exit()
+
+    if args.list_services:
+        print_services(list_services(provider))
         sys.exit()
 
     # Load checks metadata
