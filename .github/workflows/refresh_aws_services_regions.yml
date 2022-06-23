@@ -4,7 +4,7 @@ name: Refresh regions of AWS services
 
 on:
   schedule:
-    - cron: "10 9 * * *" #runs at 09:00 UTC everyday
+    - cron: "0 9 * * *" #runs at 09:00 UTC everyday
 
 env:
   GITHUB_BRANCH: "prowler-3.0-dev"
