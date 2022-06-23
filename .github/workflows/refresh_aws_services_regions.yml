@@ -40,4 +40,11 @@ jobs:
           branch: "aws-services-regions-updated"
           labels: "status/waiting-for-revision, severity/low"
           title: "feat(regions_update): Changes in regions for AWS services."
-          body: "This PR updates the regions for AWS services."
+          body: |
+            ### Description
+
+            This PR updates the regions for AWS services.
+            
+            ### License
+
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
