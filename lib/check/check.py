@@ -156,7 +156,7 @@ def set_output_options(quiet):
 
 def run_check(check):
     print(
-        f"\nCheck Name: {check.checkName} - {Fore.MAGENTA}{check.serviceName}{Fore.YELLOW}[{check.severity}]{Style.RESET_ALL}"
+        f"\nCheck Name: {check.checkName} - {Fore.MAGENTA}{check.serviceName}{Fore.YELLOW} [{check.severity}]{Style.RESET_ALL}"
     )
     logger.debug(f"Executing check: {check.checkName}")
     findings = check.execute()
