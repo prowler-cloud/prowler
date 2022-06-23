@@ -37,9 +37,19 @@ class Check_Output:
     NOTES: str
     COMPLIANCE: list
     ASSESSMENT_TIME: str
-    ORGANIZATIONS_INFO: Organizations_Info
+    ACCOUNT_DETAILS_EMAIL: str
+    ACCOUNT_DETAILS_NAME: str
+    ACCOUNT_DETAILS_ARN: str
+    ACCOUNT_DETAILS_ORG: str
+    ACCOUNT_DETAILS_TAGS: str
 
-    def __init__(self, account: str, profile: str, report: Check_Report):
+    def __init__(
+        self,
+        account: str,
+        profile: str,
+        report: Check_Report,
+        organizations: Organizations_Info,
+    ):
         self.STATUS = report.status
         self.REGION = report.region
         self.RESULT_EXTENDED = report.result_extended
@@ -85,7 +95,11 @@ class Check_Output:
         self.NOTES = report.check_metadata.Notes
         self.COMPLIANCE = self.__unroll_compliance__(report.check_metadata.Compliance)
         self.ASSESSMENT_TIME = timestamp.isoformat()
-        self.ORGANIZATIONS_INFO = Organizations_Info()
+        self.ACCOUNT_DETAILS_EMAIL = organizations.account_details_email
+        self.ACCOUNT_DETAILS_NAME = organizations.account_details_name
+        self.ACCOUNT_DETAILS_ARN = organizations.account_details_arn
+        self.ACCOUNT_DETAILS_ORG = organizations.account_details_org
+        self.ACCOUNT_DETAILS_TAGS = organizations.account_details_tags
 
     def __unroll_list__(self, listed_items: list):
         unrolled_items = ""
@@ -114,10 +128,29 @@ class Check_Output:
         unrolled_compliance = ""
         unrolled_compliance_framework_items = ""
         item_separator = ","
+        groups = ""
+        controls = ""
         framework_separator = "|"
+        generic_separator = "/"
         # iterate over items on framework list (each one is a dict)
         for framework in compliance:
             for key, value in framework.items():
+                if key == "Group":
+                    for group in value:
+                        if not groups:
+                            groups = f"{group}"
+                        else:
+                            groups = f"{groups}{generic_separator}{group}"
+                    value = groups
+                    groups = ""
+                elif key == "Control":
+                    for control in value:
+                        if not controls:
+                            controls = f"{control}"
+                        else:
+                            controls = f"{controls}{generic_separator}{control}"
+                    value = controls
+                    controls = ""
                 # fill values coming from a single framework
                 if not unrolled_compliance_framework_items:
                     unrolled_compliance_framework_items = f"{key}:{value}"

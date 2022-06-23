@@ -179,9 +179,9 @@ class Check_Report:
     check_metadata: dict
 
     def __init__(self, metadata):
-        self.status = ""
-        self.region = ""
-        self.result_extended = ""
+        # self.status = ""
+        # self.region = ""
+        # self.result_extended = ""
         self.check_metadata = metadata
 
 
@@ -191,11 +191,11 @@ class Organizations_Info:
     account_details_name: str
     account_details_arn: str
     account_details_org: str
-    account_details_tag: str
+    account_details_tags: str
 
-    def __init__(self):
-        self.account_details_email = ""
-        self.account_details_name = ""
-        self.account_details_arn = ""
-        self.account_details_org = ""
-        self.account_details_tag = ""
+    # def __init__(self):
+    #     self.account_details_email = ""
+    #     self.account_details_name = ""
+    #     self.account_details_arn = ""
+    #     self.account_details_org = ""
+    #     self.account_details_tags = ""

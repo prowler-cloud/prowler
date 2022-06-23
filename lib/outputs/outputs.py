@@ -7,7 +7,7 @@ from lib.outputs.models import Check_Output
 from lib.utils.utils import file_exists, open_file
 
 
-def report(check_findings, output_options, audit_info):
+def report(check_findings, output_options, audit_info, organizations_info):
     check_findings.sort(key=lambda x: x.region)
     format_timestamp = timestamp.strftime("%Y%m%d%H%M%S")
     # check output options
@@ -39,7 +39,7 @@ def report(check_findings, output_options, audit_info):
     for finding in check_findings:
         # printing the finding ...
         finding_output = Check_Output(
-            audit_info.audited_account, audit_info.profile, finding
+            audit_info.audited_account, audit_info.profile, finding, organizations_info
         )
         color = set_report_color(finding.status)
         if output_options.is_quiet and "FAIL" in finding.status:

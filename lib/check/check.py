@@ -7,7 +7,11 @@ from typing import Any
 from colorama import Fore, Style
 
 from config.config import groups_file
-from lib.check.models import Output_From_Options, load_check_metadata
+from lib.check.models import (
+    Organizations_Info,
+    Output_From_Options,
+    load_check_metadata,
+)
 from lib.logger import logger
 from lib.outputs.outputs import report
 from lib.utils.utils import open_file, parse_json_file
@@ -161,7 +165,14 @@ def run_check(check, audit_info, output_options):
     )
     logger.debug(f"Executing check: {check.checkName}")
     findings = check.execute()
-    report(findings, output_options, audit_info)
+    organizations_info = Organizations_Info(
+        account_details_email="test@verica.io",
+        account_details_name="washemen",
+        account_details_arn="arn:aws:iam::account:test/test",
+        account_details_org="ou-washemen",
+        account_details_tags="tag1:likisomawei",
+    )
+    report(findings, output_options, audit_info, organizations_info)
 
 
 def import_check(check_path: str) -> ModuleType:
