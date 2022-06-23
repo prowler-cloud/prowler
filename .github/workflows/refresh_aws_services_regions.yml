@@ -3,14 +3,11 @@
 name: Refresh regions of AWS services
 
 on:
-  push:
-    branches:
-      - "PRWLR-609-services-parse-aws-services-json-and-add-to-github-actions"
   schedule:
-    - cron: "0 0 * * *" #runs at 00:00 UTC everyday
+    - cron: "0 9 * * *" #runs at 09:00 UTC everyday
 
 env:
-  GITHUB_BRANCH: "PRWLR-609-services-parse-aws-services-json-and-add-to-github-actions"
+  GITHUB_BRANCH: "prowler-3.0-dev"
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
