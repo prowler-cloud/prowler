@@ -98,6 +98,7 @@ def print_services(service_list: set):
         print(f"- {service}")
 
 
+
 def print_checks(provider: str, check_list: set, bulk_checks_metadata: dict):
     for check in check_list:
         try:
@@ -108,6 +109,7 @@ def print_checks(provider: str, check_list: set, bulk_checks_metadata: dict):
             logger.error(
                 f"Check {error} was not found for the {provider.upper()} provider"
             )
+
 
 
 # List available groups
@@ -184,7 +186,7 @@ def set_output_options(quiet):
 
 def run_check(check):
     print(
-        f"\nCheck Name: {check.checkName} - {Fore.MAGENTA}{check.serviceName}{Fore.YELLOW}[{check.severity}]{Style.RESET_ALL}"
+        f"\nCheck Name: {check.checkName} - {Fore.MAGENTA}{check.serviceName}{Fore.YELLOW} [{check.severity}]{Style.RESET_ALL}"
     )
     logger.debug(f"Executing check: {check.checkName}")
     findings = check.execute()
