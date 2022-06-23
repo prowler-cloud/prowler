@@ -10,6 +10,7 @@ class IAM:
         self.service = "iam"
         self.session = audit_info.audit_session
         self.client = self.session.client(self.service)
+        self.region = audit_info.profile_region
         self.users = self.__get_users__()
         self.roles = self.__get_roles__()
         self.customer_managed_policies = self.__get_customer_managed_policies__()
@@ -26,7 +27,7 @@ class IAM:
         try:
             get_roles_paginator = self.client.get_paginator("list_roles")
         except Exception as error:
-            logger.error(f"{error.__class__.__name__} -- {error}")
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
         else:
             roles = []
             for page in get_roles_paginator.paginate():
@@ -41,7 +42,7 @@ class IAM:
             try:
                 report_status = self.client.generate_credential_report()
             except Exception as error:
-                logger.error(f"{error.__class__.__name__} -- {error}")
+                logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
             else:
                 if report_status["State"] == "COMPLETE":
                     report_is_completed = True
@@ -52,7 +53,7 @@ class IAM:
         try:
             get_groups_paginator = self.client.get_paginator("list_groups")
         except Exception as error:
-            logger.error(f"{error.__class__.__name__} -- {error}")
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
         else:
             groups = []
             for page in get_groups_paginator.paginate():
@@ -67,7 +68,7 @@ class IAM:
                 "list_policies"
             )
         except Exception as error:
-            logger.error(f"{error.__class__.__name__} -- {error}")
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
         else:
             customer_managed_policies = []
             for page in get_customer_managed_policies_paginator.paginate(Scope="Local"):
@@ -80,7 +81,7 @@ class IAM:
         try:
             get_users_paginator = self.client.get_paginator("list_users")
         except Exception as error:
-            logger.error(f"{error.__class__.__name__} -- {error}")
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
         else:
             users = []
             for page in get_users_paginator.paginate():
@@ -93,5 +94,5 @@ class IAM:
 try:
     iam_client = IAM(current_audit_info)
 except Exception as error:
-    logger.critical(f"{error.__class__.__name__} -- {error}")
+    logger.critical(f"{error.__class__.__name__} --  {error}")
     sys.exit()

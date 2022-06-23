@@ -26,6 +26,7 @@ class AWS_Audit_Info:
     audited_account: int
     audited_partition: str
     profile: str
+    profile_region: str
     credentials: AWS_Credentials
     assumed_role_info: AWS_Assume_Role
     audited_regions: list

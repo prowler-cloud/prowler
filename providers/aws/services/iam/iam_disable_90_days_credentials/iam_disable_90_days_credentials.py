@@ -23,17 +23,17 @@ class iam_disable_90_days_credentials(Check):
                         if time_since_insertion.days > maximum_expiration_days:
                             report.status = "FAIL"
                             report.result_extended = f"User {user['UserName']} has not logged into the console in the past 90 days"
-                            report.region = "us-east-1"
+                            report.region = iam_client.region
                         else:
                             report.status = "PASS"
                             report.result_extended = f"User {user['UserName']} has logged into the console in the past 90 days"
-                            report.region = "us-east-1"
+                            report.region = iam_client.region
                     except KeyError:
                         pass
                 else:
                     report.status = "PASS"
                     report.result_extended = f"User {user['UserName']} has not a console password or is unused."
-                    report.region = "us-east-1"
+                    report.region = iam_client.region
 
                 # Append report
                 findings.append(report)
@@ -41,6 +41,6 @@ class iam_disable_90_days_credentials(Check):
             report = Check_Report()
             report.status = "PASS"
             report.result_extended = "There is no IAM users"
-            report.region = "us-east-1"
+            report.region = iam_client.region
 
         return findings
