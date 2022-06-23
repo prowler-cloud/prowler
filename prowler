@@ -59,7 +59,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "-b", "--no-banner", action="store_false", help="Hide Prowler Banner"
+        "-b", "--no-banner", action="store_false", help="Hide Prowler banner"
     )
     parser.add_argument(
         "-v", "--version", action="store_true", help="Show Prowler version"
