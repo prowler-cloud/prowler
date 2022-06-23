@@ -91,6 +91,14 @@ if __name__ == "__main__":
         nargs="+",
         help="AWS region names to run Prowler against",
     )
+    parser.add_argument(
+        "-M",
+        "--output-modes",
+        nargs="+",
+        help="Output mode, by default csv",
+        choices=["csv"],  # , "json", "html", "json-asff", "junit-xml"]
+        default=["csv"],
+    )
     # Parse Arguments
     args = parser.parse_args()
 
@@ -164,17 +172,16 @@ if __name__ == "__main__":
         quit()
 
     # Setting output options
-    set_output_options(args.quiet)
-    
+    audit_output_options = set_output_options(args.quiet, args.output_modes)
+
     # Set global session
-    provider_set_session(
+    audit_info = provider_set_session(
         args.profile,
         args.role,
         args.session_duration,
         args.external_id,
         args.filter_region,
     )
-    
 
     # Execute checks
     if len(checks_to_execute):
@@ -191,7 +198,7 @@ if __name__ == "__main__":
                 check_to_execute = getattr(lib, check_name)
                 c = check_to_execute()
                 # Run check
-                run_check(c)
+                run_check(c, audit_info, audit_output_options)
 
             # If check does not exists in the provider or is from another provider
             except ModuleNotFoundError:

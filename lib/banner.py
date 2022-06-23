@@ -14,6 +14,6 @@ def print_banner():
 | |_) | | | (_) \ V  V /| |  __/ |
 | .__/|_|  \___/ \_/\_/ |_|\___|_|v{prowler_version}
 |_|{Fore.BLUE} the handy cloud security tool
-{Fore.YELLOW} Date: {timestamp}{Style.RESET_ALL}
+{Fore.YELLOW} Date: {timestamp.strftime("%Y-%m-%d %H:%M:%S")}{Style.RESET_ALL}
 """
     print(banner)

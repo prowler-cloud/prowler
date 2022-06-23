@@ -13,7 +13,7 @@ class iam_disable_30_days_credentials(Check):
 
         if response:
             for user in response:
-                report = Check_Report()
+                report = Check_Report(self.metadata)
                 if "PasswordLastUsed" in user and user["PasswordLastUsed"] != "":
                     try:
                         time_since_insertion = (
@@ -38,7 +38,7 @@ class iam_disable_30_days_credentials(Check):
                 # Append report
                 findings.append(report)
         else:
-            report = Check_Report()
+            report = Check_Report(self.metadata)
             report.status = "PASS"
             report.result_extended = "There is no IAM users"
             report.region = "us-east-1"

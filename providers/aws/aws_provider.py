@@ -148,6 +148,8 @@ def provider_set_session(
         logger.info("Audit session is the original one")
         current_audit_info.audit_session = current_audit_info.original_session
 
+    return current_audit_info
+
 
 def validate_credentials(validate_session):
     try:
