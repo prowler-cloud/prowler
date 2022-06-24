@@ -166,11 +166,11 @@ def run_check(check, audit_info, output_options):
     logger.debug(f"Executing check: {check.checkName}")
     findings = check.execute()
     organizations_info = Organizations_Info(
-        account_details_email="test@verica.io",
-        account_details_name="washemen",
-        account_details_arn="arn:aws:iam::account:test/test",
-        account_details_org="ou-washemen",
-        account_details_tags="tag1:likisomawei",
+        account_details_email="",
+        account_details_name="",
+        account_details_arn="",
+        account_details_org="",
+        account_details_tags="",
     )
     report(findings, output_options, audit_info, organizations_info)
 
