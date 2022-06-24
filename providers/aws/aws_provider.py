@@ -128,7 +128,7 @@ def provider_set_session(
                 f"Assuming role {current_audit_info.assumed_role_info.role_arn}"
             )
             # Assume the role
-            assumed_role_response = assume_role()
+            assumed_role_response = assume_role(current_audit_info)
             logger.info("Role assumed")
             # Set the info needed to create a session with an assumed role
             current_audit_info.credentials = AWS_Credentials(

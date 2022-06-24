@@ -1,3 +1,5 @@
+import sure  # noqa
+
 from lib.arn.arn import arn_parsing
 
 ACCOUNT_ID = "123456789012"
