@@ -5,6 +5,14 @@ from lib.check.models import Check_Report, Organizations_Info
 
 
 @dataclass
+class Compliance_Framework:
+    Framework: str
+    Version: str
+    Group: list
+    Control: list
+
+
+@dataclass
 class Check_Output:
     STATUS: str
     REGION: str
@@ -125,43 +133,38 @@ class Check_Output:
         return unrolled_items
 
     def __unroll_compliance__(self, compliance: list):
+        compliance_frameworks = []
+        # fill list of dataclasses
+        for item in compliance:
+            compliance_framework = Compliance_Framework(
+                Framework=item["Framework"],
+                Version=item["Version"],
+                Group=item["Group"],
+                Control=item["Control"],
+            )
+            compliance_frameworks.append(compliance_framework)
+        # iterate over list of dataclasses to output info
         unrolled_compliance = ""
-        unrolled_compliance_framework_items = ""
-        item_separator = ","
         groups = ""
         controls = ""
+        item_separator = ","
         framework_separator = "|"
         generic_separator = "/"
-        # iterate over items on framework list (each one is a dict)
-        for framework in compliance:
-            for key, value in framework.items():
-                if key == "Group":
-                    for group in value:
-                        if not groups:
-                            groups = f"{group}"
-                        else:
-                            groups = f"{groups}{generic_separator}{group}"
-                    value = groups
-                    groups = ""
-                elif key == "Control":
-                    for control in value:
-                        if not controls:
-                            controls = f"{control}"
-                        else:
-                            controls = f"{controls}{generic_separator}{control}"
-                    value = controls
-                    controls = ""
-                # fill values coming from a single framework
-                if not unrolled_compliance_framework_items:
-                    unrolled_compliance_framework_items = f"{key}:{value}"
-                else:
-                    unrolled_compliance_framework_items = f"{unrolled_compliance_framework_items}{item_separator}{key}:{value}"
-            # fill list of frameworks
-            if not unrolled_compliance:
-                unrolled_compliance = f"{unrolled_compliance_framework_items}"
-            else:
-                unrolled_compliance = f"{unrolled_compliance}{framework_separator}{unrolled_compliance_framework_items}"
-            # empty var for next framework occurrences
-            unrolled_compliance_framework_items = ""
+        for framework in compliance_frameworks:
+            for group in framework.Group:
+                if groups:
+                    groups = f"{groups}{generic_separator}"
+                groups = f"{groups}{group}"
+            for control in framework.Control:
+                if controls:
+                    controls = f"{controls}{generic_separator}"
+                controls = f"{controls}{control}"
+
+            if unrolled_compliance:
+                unrolled_compliance = f"{unrolled_compliance}{framework_separator}"
+            unrolled_compliance = f"{unrolled_compliance}{framework.Framework}{item_separator}{framework.Version}{item_separator}{groups}{item_separator}{controls}"
+            # unset groups and controls for next framework
+            controls = ""
+            groups = ""
 
         return unrolled_compliance
