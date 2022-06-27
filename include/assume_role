@@ -93,9 +93,6 @@ backupInitialAWSCredentials() {
         INITIAL_AWS_ACCESS_KEY_ID=$(printenv AWS_ACCESS_KEY_ID)
         INITIAL_AWS_SECRET_ACCESS_KEY=$(printenv AWS_SECRET_ACCESS_KEY)
         INITIAL_AWS_SESSION_TOKEN=$(printenv AWS_SESSION_TOKEN)
-    else
-        echo -e "$RED ERROR Can't Backup Initial AWS Credentials $NORMAL"
-        exit 1
     fi
 }
 
