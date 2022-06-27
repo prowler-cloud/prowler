@@ -240,15 +240,15 @@ validate_database() {
         then
             db_exit_abnormally "postgresql" "Database listening on host ${POSTGRES_HOST} on port ${POSTGRES_PORT} connected as user ${POSTGRES_USER} is unreachable - EXITING!"
         # If database instance is ready time to check credentials
-        elif ! PGPASSWORD="${POSTGRES_PASSWORD}" psql -U "${POSTGRES_USER}" -h "${POSTGRES_HOST}" -c "\q" > /dev/null  2>&1
+        elif ! psql -U "${POSTGRES_USER}" -h "${POSTGRES_HOST}" -c "\q" > /dev/null  2>&1
         then
             db_exit_abnormally "postgresql" "User ${POSTGRES_USER} invalid or invalid credentials, please check ${HOME}/.pgpass file - EXITING!"
         # If credentials are ok -> database exists?
-        elif ! PGPASSWORD="${POSTGRES_PASSWORD}" psql -U "${POSTGRES_USER}" -h "${POSTGRES_HOST}" "${POSTGRES_DB}" -c "\q" > /dev/null  2>&1
+        elif ! psql -U "${POSTGRES_USER}" -h "${POSTGRES_HOST}" "${POSTGRES_DB}" -c "\q" > /dev/null  2>&1
         then
             db_exit_abnormally "postgresql" "Database not exists, please check ${HOME}/.pgpass file - EXITING!"
         # and finally, if database exists -> table exists ?
-        elif ! PGPASSWORD="${POSTGRES_PASSWORD}" psql -U "${POSTGRES_USER}" -h "${POSTGRES_HOST}" "${POSTGRES_DB}"  -c "SELECT * FROM ${POSTGRES_TABLE};" > /dev/null  2>&1
+        elif ! psql -U "${POSTGRES_USER}" -h "${POSTGRES_HOST}" "${POSTGRES_DB}"  -c "SELECT * FROM ${POSTGRES_TABLE};" > /dev/null  2>&1
         then
             db_exit_abnormally "postgresql" "Table ${POSTGRES_TABLE} not exists, please check ${HOME}/.pgpass file - EXITING!"
         fi
