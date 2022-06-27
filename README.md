@@ -387,7 +387,7 @@ account_details_tags  TEXT
 ```
 
 - Execute Prowler with `-d` flag, for example:
-    `./prowler -M csv -d postgres`
+    `./prowler -M csv -d postgresql`
     > *Note*: This command creates a `csv` output file and stores the Prowler output in the configured PostgreSQL DB. It's an example, `-d` flag **does not** require `-M` to run.
 
 ## Advanced Usage
