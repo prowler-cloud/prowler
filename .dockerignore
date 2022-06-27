@@ -1,5 +1,16 @@
+# Ignore git files
 .git/
 .github/
+
+# Ignore Dodckerfile
+Dockerfile
+
+# Ignore hidden files
+.pre-commit-config.yaml
+.dockerignore
+.gitignore
+.pytest*
+.DS_Store
 
 # Ignore output directories
 output/
