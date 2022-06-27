@@ -193,46 +193,64 @@ validate_modes() {
 
 # Validate database with -d
 validate_database() {
-  # Check database providers
-if [[ ${DATABASE_PROVIDER} ]]
-then
-    # Check if input provider is supported
-    if ! grep -w -q -E "${DATABASE_PROVIDER}" <<< "${SUPPORTED_DB_PROVIDERS}"
+    # Check database providers
+    if [[ ${DATABASE_PROVIDER} ]]
     then
-        db_exit_abnormally "${DATABASE_PROVIDER}" "DB provider not supported, providers supported: ${SUPPORTED_DB_PROVIDERS} - EXITING!"
-    elif ! command -v "psql" > /dev/null 2>&1
-    then
-        db_exit_abnormally "postgresql" "psql tool not installed or not found- EXITING!"
-    elif  [[ $(find "${HOME}/.pgpass" -perm 600 2>/dev/null) != "$HOME/.pgpass" ]]
-    then
-          db_exit_abnormally  "postgresql" ".pgpass file not found at $HOME/.pgpass or .pgpass file permissions not matching 600 - EXITING!"
-    else
-        IFS=':' read -r PSQL_HOSTNAME PSQL_PORT PSQL_DATABASE PSQL_USER PSQL_PASSWORD PSQL_TABLE < "$HOME/.pgpass"
-        if [[ ! ${PSQL_HOSTNAME} ]] || [[ ! ${PSQL_PORT} ]] || [[ ! ${PSQL_DATABASE} ]] || [[ ! ${PSQL_USER} ]] || [[ ! ${PSQL_PASSWORD} ]] || [[ ! ${PSQL_TABLE} ]]
+        # Check if input provider is supported
+        if ! grep -w -q -E "${DATABASE_PROVIDER}" <<< "${SUPPORTED_DB_PROVIDERS}"
         then
-             db_exit_abnormally "postgresql" "Empty field into ${HOME}/.pgpass file, all fields must be filled. Please check Prowler README about .pgpass file format - EXITING!"
+            db_exit_abnormally "${DATABASE_PROVIDER}" "DB provider not supported, providers supported: ${SUPPORTED_DB_PROVIDERS} - EXITING!"
         fi
-        export PSQL_USER
-        export PSQL_HOSTNAME
-        export PSQL_TABLE
+        # Check psql command
+        if ! command -v "psql" > /dev/null 2>&1
+        then
+            db_exit_abnormally "postgresql" "psql tool not installed or not found- EXITING!"
+        fi
+
+        # Check credentials
+        if [[ -z "${POSTGRES_HOST}" ||  -z "${POSTGRES_PORT}" ||  -z "${POSTGRES_USER}" ||  -z "${POSTGRES_PASSWORD}" ||  -z "${POSTGRES_DB}" ]]
+        then
+            # echo "${OPTRED}ERROR!$OPTNORMAL Database connector for '${DATABASE_PROVIDER}' failed. Required environment variables for PostgreSQL were not found. Checking .pgpass file"
+            # If no environment variable present check the "$HOME/.pgpass" file
+            if [[ $(find "${HOME}/.pgpass" -perm 600 2>/dev/null) != "$HOME/.pgpass" ]]
+            then
+                db_exit_abnormally  "postgresql" ".pgpass file not found at $HOME/.pgpass or .pgpass file permissions not matching 600 - EXITING!"
+            else
+                # Store credentials if file is present
+                IFS=':' read -r POSTGRES_HOST POSTGRES_PORT POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD POSTGRES_TABLE < "$HOME/.pgpass"
+                # Check for emtpy values
+                if [[ ! ${POSTGRES_HOST} ]] || [[ ! ${POSTGRES_PORT} ]] || [[ ! ${POSTGRES_DB} ]] || [[ ! ${POSTGRES_USER} ]] || [[ ! ${POSTGRES_PASSWORD} ]] || [[ ! ${POSTGRES_TABLE} ]]
+                then
+                    db_exit_abnormally "postgresql" "Empty field into ${HOME}/.pgpass file, all fields must be filled. Please check Prowler README about .pgpass file format - EXITING!"
+                fi
+            fi
+        else
+            # Save the environment variables in the "$HOME/.pgpass" file
+            echo "${POSTGRES_HOST}:${POSTGRES_PORT}:${POSTGRES_DB}:${POSTGRES_USER}:${POSTGRES_PASSWORD}:${POSTGRES_TABLE}" > "$HOME/.pgpass"
+            chmod 600 "$HOME/.pgpass"
+        fi
+
+        # Save environment variables in the .pgpass file
+        export POSTGRES_USER
+        export POSTGRES_HOST
+        export POSTGRES_TABLE
 
         # Once all the variables are defined and exported test if database instance is reachable
-        if ! pg_isready -q  -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -p "${PSQL_PORT}"
+        if ! pg_isready -q  -U "${POSTGRES_USER}" -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}"
         then
-            db_exit_abnormally "postgresql" "Database listening on host ${PSQL_HOSTNAME} on port ${PSQL_PORT} connected as user ${PSQL_USER} is unreachable - EXITING!"
+            db_exit_abnormally "postgresql" "Database listening on host ${POSTGRES_HOST} on port ${POSTGRES_PORT} connected as user ${POSTGRES_USER} is unreachable - EXITING!"
         # If database instance is ready time to check credentials
-        elif ! PGPASSWORD="${PSQL_PASSWORD}" psql -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" -c "\q" > /dev/null  2>&1
+        elif ! PGPASSWORD="${POSTGRES_PASSWORD}" psql -U "${POSTGRES_USER}" -h "${POSTGRES_HOST}" -c "\q" > /dev/null  2>&1
         then
-            db_exit_abnormally "postgresql" "User ${PSQL_USER} invalid or invalid credentials, please check ${HOME}/.pgpass file - EXITING!"
+            db_exit_abnormally "postgresql" "User ${POSTGRES_USER} invalid or invalid credentials, please check ${HOME}/.pgpass file - EXITING!"
         # If credentials are ok -> database exists?
-        elif ! PGPASSWORD="${PSQL_PASSWORD}" psql -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" "${PSQL_DATABASE}" -c "\q" > /dev/null  2>&1
+        elif ! PGPASSWORD="${POSTGRES_PASSWORD}" psql -U "${POSTGRES_USER}" -h "${POSTGRES_HOST}" "${POSTGRES_DB}" -c "\q" > /dev/null  2>&1
         then
             db_exit_abnormally "postgresql" "Database not exists, please check ${HOME}/.pgpass file - EXITING!"
         # and finally, if database exists -> table exists ?
-        elif ! PGPASSWORD="${PSQL_PASSWORD}" psql -U "${PSQL_USER}" -h "${PSQL_HOSTNAME}" "${PSQL_DATABASE}"  -c "SELECT * FROM ${PSQL_TABLE};" > /dev/null  2>&1
+        elif ! PGPASSWORD="${POSTGRES_PASSWORD}" psql -U "${POSTGRES_USER}" -h "${POSTGRES_HOST}" "${POSTGRES_DB}"  -c "SELECT * FROM ${POSTGRES_TABLE};" > /dev/null  2>&1
         then
-             db_exit_abnormally "postgresql" "Table ${PSQL_TABLE} not exists, please check ${HOME}/.pgpass file - EXITING!"
+            db_exit_abnormally "postgresql" "Table ${POSTGRES_TABLE} not exists, please check ${HOME}/.pgpass file - EXITING!"
         fi
     fi
-  fi
 }
