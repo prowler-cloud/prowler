@@ -15,9 +15,13 @@ USER 0
 # hadolint ignore=DL3006,DL3013,DL3033
 RUN yum check-update && \
   yum upgrade -y  && \
-  yum install -y python3 bash curl jq coreutils py3-pip which unzip postgresql shadow-utils && \
+  yum install -y python3 bash curl jq coreutils py3-pip which unzip shadow-utils && \
   yum clean all && \
   rm -rf /var/cache/yum
+
+RUN amazon-linux-extras install -y epel postgresql14 && \
+    yum clean all && \
+    rm -rf /var/cache/yum
 
 # Create non-root user
 RUN  useradd -l -s /bin/bash -U -u ${USERID} ${USERNAME}
@@ -26,8 +30,8 @@ USER ${USERNAME}
 
 # Python dependencies
 # hadolint ignore=DL3006,DL3013,DL3042
-RUN pip3 install --user --upgrade pip && \
-  pip3 install --user --no-cache-dir boto3 detect-secrets==1.0.3 && \
+RUN pip3 install --upgrade pip && \
+  pip3 install --no-cache-dir boto3 detect-secrets==1.0.3 && \
   pip3 cache purge
 
 USER 0
