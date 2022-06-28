@@ -37,6 +37,17 @@ extra7162() {
                 textPass "${regx}: ${log} Log Group has at least 365 days retention period!" "${regx}" "${log}"
             done
         fi
+
+        LIST_OF_NEVER_EXPIRE_RETENTION_LOG_GROUPS=$("${AWSCLI}" logs describe-log-groups ${PROFILE_OPT} --region "${regx}" --query "logGroups[?retentionInDays==null].[logGroupName]" --output text 2>&1)
+        if grep -E -q 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_NEVER_EXPIRE_RETENTION_LOG_GROUPS}"; then
+            textInfo "${regx}: Access Denied trying to describe log groups" "${regx}"
+            continue
+        fi
+        if [[ ${LIST_OF_NEVER_EXPIRE_RETENTION_LOG_GROUPS} ]]; then
+            for log in ${LIST_OF_NEVER_EXPIRE_RETENTION_LOG_GROUPS}; do
+                textPass "${regx}: ${log} Log Group retention period never expires!" "${regx}" "${log}"
+            done
+        fi
         LIST_OF_NON_365_RETENTION_LOG_GROUPS=$("${AWSCLI}" logs describe-log-groups ${PROFILE_OPT} --region "${regx}" --query "logGroups[?retentionInDays<\`${LOG_GROUP_RETENTION_PERIOD_DAYS}\`].[logGroupName]" --output text 2>&1)
         if grep -E -q 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_NON_365_RETENTION_LOG_GROUPS}"; then
             textInfo "${regx}: Access Denied trying to describe log groups" "${regx}"
