@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+CHECK_ID_extra7193="7.193"
+CHECK_TITLE_extra7193="[extra7193] Ensure default Internet Access from your Amazon AppStream fleet streaming instances should remain unchecked."
+CHECK_SCORED_extra7193="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7193="EXTRA"
+CHECK_SEVERITY_extra7193="Medium"
+CHECK_ASFF_TYPE_extra7193="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+CHECK_ASFF_RESOURCE_TYPE_extra7193="AmazonAppStream"
+CHECK_ALTERNATE_check7193="extra7193"
+CHECK_SERVICENAME_extra7193="appstream"
+CHECK_RISK_extra7193="Default Internet Access from your fleet streaming instances should be controlled using a NAT gateway in the VPC."
+CHECK_REMEDIATION_extra7193="Uncheck the default internet access for the AppStream Fleet."
+CHECK_DOC_extra7193='https://docs.aws.amazon.com/appstream2/latest/developerguide/set-up-stacks-fleets.html'
+CHECK_CAF_EPIC_extra7193="Infrastructure Security"
+
+extra7193(){
+  for regx in $REGIONS; do
+    LIST_OF_FLEETS_WITH_DEFAULT_INTERNET_ACCESS_ENABLED=$("${AWSCLI}" appstream describe-fleets $PROFILE_OPT --region "${regx}" --query 'Fleets[?EnableDefaultInternetAccess==`true`].Arn' --output text 2>&1)
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError|Could not connect to the endpoint URL' <<< "${LIST_OF_FLEETS_WITH_DEFAULT_INTERNET_ACCESS_ENABLED}"; then
+        textInfo "${regx}: Access Denied trying to describe appstream fleet(s)" "${regx}"
+        continue
+    fi
+
+    if [[ $LIST_OF_FLEETS_WITH_DEFAULT_INTERNET_ACCESS_ENABLED && $LIST_OF_FLEETS_WITH_DEFAULT_INTERNET_ACCESS_ENABLED != '[]' ]]; then
+      for Arn in $LIST_OF_FLEETS_WITH_DEFAULT_INTERNET_ACCESS_ENABLED; do
+        textFail "$regx: Fleet: ${Arn} has default internet access enabled." "$regx" "${Arn}"
+      done
+    else
+      textPass "${regx}: No AppStream Fleets have default internet access enabled." "${regx}"
+    fi
+
+  done
+}
