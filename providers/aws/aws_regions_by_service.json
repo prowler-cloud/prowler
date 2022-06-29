@@ -269,7 +269,8 @@
           "eu-west-2",
           "us-west-2",
           "ap-southeast-2",
-          "us-east-1"
+          "us-east-1",
+          "us-east-2"
         ],
         "cn": {},
         "gov": [
