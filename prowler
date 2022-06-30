@@ -329,18 +329,18 @@ get_regions
 validate_custom_output_directory
 validate_custom_output_filename
 validate_security_hub
-
+echo $OUTPUT_DIR
 validate_custom_checks
+
+# Add headers to certain output files
+output_files_init
+validate_junit_output
 
 # run quick inventory logic
 if [[ $QUICK_INVENTORY ]];then
     quick_inventory
     exit
 fi
-
-# Add headers to certain output files
-output_files_init
-validate_junit_output
 
 # Execute checks
 for CHECK in "${TOTAL_CHECKS[@]}"

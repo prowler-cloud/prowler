@@ -28,14 +28,15 @@
 # resource-groups:Get*
 # resource-groups:GroupResources
 
-# Create a temporary file to store all resources arn 
-TEMP_INVENTORY_FILE=$(mktemp -t prowler-inventory-${ACCOUNT_NUM}.XXXXXXXXXX)
-INVENTORY_FILE="${OUTPUT_DIR}/prowler-inventory-${ACCOUNT_NUM}-${OUTPUT_DATE}.csv"
 
 # Quick inventory part
 quick_inventory(){
+    # Create a temporary file to store all resources arn 
+    TEMP_INVENTORY_FILE=$(mktemp -t prowler-inventory-${ACCOUNT_NUM}.XXXXXXXXXX)
+    INVENTORY_FILE="$OUTPUT_DIR/prowler-inventory-${ACCOUNT_NUM}-${OUTPUT_DATE}.csv"
+
     echo "-=- Running the inventory for AWS Account ${OK}${ACCOUNT_NUM}${NORMAL} -=-"
-    echo -e "\n  # Counting resources by region:"
+    echo -e "\n # Counting resources by region:"
     # get all resources per region and getting only their ARN
     for region in $REGIONS; do
         echo -ne " - $region: "
