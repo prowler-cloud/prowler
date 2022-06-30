@@ -332,50 +332,62 @@ Prowler has two parameters related to regions: `-r` that is used query AWS servi
     ```
 ## Database providers connector
 
-You can send the Prowler's output to different databases (right now only PostgreSQL is supported). 
+You can send the Prowler's output to different databases (right now only PostgreSQL is supported).
 
-Jump into the section for the database provider you want to use and follow the required steps to configure it. 
-### PostgreSQL 
+Jump into the section for the database provider you want to use and follow the required steps to configure it.
+### PostgreSQL
 - Install psql
     - Mac -> `brew install libpq`
     - Ubuntu -> `sudo apt-get install postgresql-client `
     - RHEL/Centos -> `sudo yum install postgresql10`
 
-- Configure a `~/.pgpass` file into the root folder of the user that is going to launch Prowler ([pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)), including an extra field at the end of the line, separated by `:`, to name the table, for instance:  
-  `hostname:port:database:username:password:prowler_findings`
+#### Credentials
+There are two options to pass the PostgreSQL credentials to Prowler:
+##### Using a .pgpass file
+Configure a `~/.pgpass` file into the root folder of the user that is going to launch Prowler ([pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)), including an extra field at the end of the line, separated by `:`, to name the table, for instance:
+        `hostname:port:database:username:password:prowler_findings`
+##### Using environment variables
+Configure the following environment variables:
+    - `POSTGRES_HOST`
+    - `POSTGRES_PORT`
+    - `POSTGRES_USER`
+    - `POSTGRES_PASSWORD`
+    - `POSTGRES_DB`
+
+
 - Create a table in your PostgreSQL database to store the Prowler's data. You can use the following SQL statement to create the table:
 ```
 CREATE TABLE  IF NOT EXISTS prowler_findings (
 profile TEXT,
-account_number TEXT, 
-region TEXT, 
-check_id TEXT, 
-result TEXT, 
-item_scored TEXT, 
-item_level TEXT, 
+account_number TEXT,
+region TEXT,
+check_id TEXT,
+result TEXT,
+item_scored TEXT,
+item_level TEXT,
 check_title TEXT,
-result_extended TEXT, 
-check_asff_compliance_type TEXT, 
-severity TEXT, 
-service_name TEXT, 
-check_asff_resource_type TEXT, 
-check_asff_type TEXT, 
-risk TEXT, 
-remediation TEXT,  
-documentation TEXT, 
-check_caf_epic TEXT, 
-resource_id TEXT, 
-prowler_start_time TEXT, 
-account_details_email TEXT, 
-account_details_name TEXT, 
-account_details_arn TEXT,  
-account_details_org TEXT, 
-account_details_tags  TEXT 
+result_extended TEXT,
+check_asff_compliance_type TEXT,
+severity TEXT,
+service_name TEXT,
+check_asff_resource_type TEXT,
+check_asff_type TEXT,
+risk TEXT,
+remediation TEXT,
+documentation TEXT,
+check_caf_epic TEXT,
+resource_id TEXT,
+prowler_start_time TEXT,
+account_details_email TEXT,
+account_details_name TEXT,
+account_details_arn TEXT,
+account_details_org TEXT,
+account_details_tags  TEXT
 );
 ```
 
-- Execute Prowler with `-d` flag, for example:  
-    `./prowler -M csv -d postgres`
+- Execute Prowler with `-d` flag, for example:
+    `./prowler -M csv -d postgresql`
     > *Note*: This command creates a `csv` output file and stores the Prowler output in the configured PostgreSQL DB. It's an example, `-d` flag **does not** require `-M` to run.
 
 ## Advanced Usage
@@ -461,7 +473,7 @@ S3 URIs are also supported as custom folders for custom checks, e.g. `s3://bucke
 
 ### Show or log only FAILs
 
-In order to remove noise and get only FAIL findings there is a `-q` flag that makes Prowler to show and log only FAILs. 
+In order to remove noise and get only FAIL findings there is a `-q` flag that makes Prowler to show and log only FAILs.
 It can be combined with any other option.
 Will show WARNINGS when a resource is excluded, just to take into consideration.
 
@@ -485,12 +497,12 @@ An easy way to run Prowler to scan your account is using AWS CloudShell. Read mo
 
 ## Security Hub integration
 
-Since October 30th 2020 (version v2.3RC5), Prowler supports natively and as **official integration** sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows Prowler to import its findings to AWS Security Hub. With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions and from Prowler for free. 
+Since October 30th 2020 (version v2.3RC5), Prowler supports natively and as **official integration** sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows Prowler to import its findings to AWS Security Hub. With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions and from Prowler for free.
 
 Before sending findings to Prowler, you need to perform next steps:
-1. Since Security Hub is a region based service, enable it in the region or regions you require. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions: 
+1. Since Security Hub is a region based service, enable it in the region or regions you require. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions:
     - `aws securityhub enable-security-hub --region <region>`.
-2. Enable Prowler as partner integration integration. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions: 
+2. Enable Prowler as partner integration integration. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions:
     - `aws securityhub enable-import-findings-for-product --region <region> --product-arn arn:aws:securityhub:<region>::product/prowler/prowler` (change region also inside the ARN).
     - Using the AWS Management Console:
     ![Screenshot 2020-10-29 at 10 26 02 PM](https://user-images.githubusercontent.com/3985464/97634660-5ade3400-1a36-11eb-9a92-4a45cc98c158.png)
@@ -506,7 +518,7 @@ or for only one filtered region like eu-west-1:
 ```sh
 ./prowler -M json-asff -q -S -f eu-west-1
 ```
-> Note 1: It is recommended to send only fails to Security Hub and that is possible adding `-q` to the command. 
+> Note 1: It is recommended to send only fails to Security Hub and that is possible adding `-q` to the command.
 
 > Note 2: Since Prowler perform checks to all regions by defaults you may need to filter by region when runing Security Hub integration, as shown in the example above. Remember to enable Security Hub in the region or regions you need by calling `aws securityhub enable-security-hub --region <region>` and run Prowler with the option `-f <region>` (if no region is used it will try to push findings in all regions hubs).
 
@@ -534,7 +546,7 @@ To use Prowler and Security Hub integration in China regions there is an additio
 
 Either to run Prowler once or based on a schedule this template makes it pretty straight forward. This template will create a CodeBuild environment and run Prowler directly leaving all reports in a bucket and creating a report also inside CodeBuild basedon the JUnit output from Prowler. Scheduling can be cron based like `cron(0 22 * * ? *)` or rate based like `rate(5 hours)` since CloudWatch Event rules (or Eventbridge) is used here.
 
-The Cloud Formation template that helps you doing that is [here](https://github.com/prowler-cloud/prowler/blob/master/util/codebuild/codebuild-prowler-audit-account-cfn.yaml). 
+The Cloud Formation template that helps you doing that is [here](https://github.com/prowler-cloud/prowler/blob/master/util/codebuild/codebuild-prowler-audit-account-cfn.yaml).
 
 > This is a simple solution to monitor one account. For multiples accounts see [Multi Account and Continuous Monitoring](util/org-multi-account/README.md).
 ## Allowlist or remove a fail from resources
@@ -783,9 +795,9 @@ Multi Account environments assumes a minimum of two trusted or known accounts. F
 ![multi-account-environment](/docs/images/prowler-multi-account-environment.png)
 
 ## Custom Checks
-Using  `./prowler -c extra9999 -a` you can build your own on-the-fly custom check by specifying the AWS CLI command to execute. 
+Using  `./prowler -c extra9999 -a` you can build your own on-the-fly custom check by specifying the AWS CLI command to execute.
 > Omit the "aws" command and only use its parameters within quotes and do not nest quotes in the aws parameter, --output text is already included in the check.
-> 
+>
 Here is an example of a check to find SGs with inbound port 80:
 
 ```sh
