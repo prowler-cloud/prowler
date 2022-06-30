@@ -58,6 +58,7 @@ PROWLER_DIR=$(dirname "$0")
 . "${PROWLER_DIR}"/include/execute_check
 . "${PROWLER_DIR}"/include/validate_options
 . "${PROWLER_DIR}"/include/traps
+. "${PROWLER_DIR}"/include/quick_inventory
 ############################################################
 
 # Check external tools
@@ -128,6 +129,7 @@ USAGE:
       -V                  Show version number & exit.
       -h                  This help.
       -d <provider>       Send output to database through database connectors supported, currently only PostgreSQL. Prowler will get the credentials and table name from your ~/.pgpass file.
+      -i                  Run Prowler Quick Inventory.
   "
   exit
 }
@@ -137,7 +139,7 @@ USAGE:
 set_aws_default_output
 
 # Parse Prowler command line options
-while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OPTION; do
+while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:i" OPTION; do
    case $OPTION in
      h )
         usage
@@ -253,6 +255,9 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:" OP
      d )
         DATABASE_PROVIDER=$OPTARG
         ;;
+     i )
+        QUICK_INVENTORY=1
+        ;;
      : )
         echo ""
         echo "$OPTRED ERROR!$OPTNORMAL  -$OPTARG requires an argument"
@@ -326,6 +331,12 @@ validate_custom_output_filename
 validate_security_hub
 
 validate_custom_checks
+
+# run quick inventory logic
+if [[ $QUICK_INVENTORY ]];then
+    quick_inventory
+    exit
+fi
 
 # Add headers to certain output files
 output_files_init

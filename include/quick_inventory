@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2021) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+###############################################################################
+
+# Probably the easier and quickest way to get a resouce inventory in AWS.
+
+# Lists (almost) all resources in all regions based on:
+# https://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/API_GetResources.html
+
+# this list is not accurate https://docs.aws.amazon.com/ARG/latest/userguide/supported-resources.html
+# don't fully trust that list column "Tag-based Groups". 
+# as far as I can see it doesn't include:
+# CodeBuild build projects like arn:aws:codebuild:eu-west-1:123456789012:build/Abcdefg
+# despite the supported-resources documentation page
+
+# Requires IAM permissions:
+# resource-groups:Get*
+# resource-groups:GroupResources
+
+# Create a temporary file to store all resources arn 
+TEMP_INVENTORY_FILE=$(mktemp -t prowler-inventory-${ACCOUNT_NUM}.XXXXXXXXXX)
+
+# Quick inventory part
+quick_inventory(){
+    echo "-=- Running the inventory for AWS Account ${ACCOUNT_NUM} -=-"
+    # get all resources per region and getting only their ARN
+    for region in $REGIONS; do
+        echo "- Looking for resources in $region... "
+        AWS_RESOURCES=$($AWSCLI resourcegroupstaggingapi get-resources \
+            $PROFILE_OPT \
+            --region $region \
+            --query ResourceTagMappingList[].ResourceARN \
+            --output json 2>&1)
+        if [[ $(echo "$AWS_RESOURCES" | grep -E 'service control policy') ]]; then
+            echo "${BAD}blocked by SCP${NORMAL}"
+            continue
+        fi
+        echo $AWS_RESOURCES | jq -r '.[]' >> ${TEMP_INVENTORY_FILE} 
+        TOTAL_RESOURCES_FOUND_REGION=$(grep $region ${TEMP_INVENTORY_FILE} | wc -l |xargs)
+        echo "found ${OK}${TOTAL_RESOURCES_FOUND_REGION}${NORMAL} resources!"
+        TOTAL_RESOURCES_FOUND=$(($TOTAL_RESOURCES_FOUND+$TOTAL_RESOURCES_FOUND_REGION))
+    done
+    echo -e "Total resources found: ${OK}$TOTAL_RESOURCES_FOUND${NORMAL}"
+
+    # Generate file in CSV format
+    # send header first
+    echo "aws_partition,aws_service,aws_region,aws_account_id,subservice_resource" > prowler-inventory-${ACCOUNT_NUM}.csv
+    
+    while IFS=: read -r arn aws_partition aws_service aws_region aws_account_id subservice_resource; do
+        echo "$aws_partition,$aws_service,$aws_region,$aws_account_id,$subservice_resource"
+    done < ${TEMP_INVENTORY_FILE} >> prowler-inventory-${ACCOUNT_NUM}.csv
+
+    # Show resources per service
+    LIST_OF_DETECTED_SERVICES=$(cat prowler-inventory-${ACCOUNT_NUM}.csv | grep -v subservice_resource | awk -F',' '{ print $2 }'| sort -u )
+    for aws_service in $LIST_OF_DETECTED_SERVICES;do
+        echo "-=- ${YELLOW}$aws_service${NORMAL} inventory for AWS Account ${ACCOUNT_NUM} -=-"
+        if [[ $aws_service == 's3' ]];then
+            TOTAL_S3_BUCKETS=$(cat prowler-inventory-${ACCOUNT_NUM}.csv | grep ,$aws_service, | awk -F',' '{ print $5 }' | awk -F'/' '{ print $1 }' | awk -F':' '{ print $1 }'| wc -l|xargs)
+            echo "$TOTAL_S3_BUCKETS bucket"
+        else
+            TOTAL_RESOUCE_SERVICE=$(cat prowler-inventory-${ACCOUNT_NUM}.csv | grep ,$aws_service, | awk -F',' '{ print $5 }' | awk -F'/' '{ print $1 }' | awk -F':' '{ print $1 }'| sort | uniq -c|xargs)
+            echo "$TOTAL_RESOUCE_SERVICE"
+        fi
+    done
+    echo -e "More details in file: prowler-inventory-${ACCOUNT_NUM}.csv"
+    # Clean temp file
+    rm -fr ${TEMP_INVENTORY_FILE}
+}
