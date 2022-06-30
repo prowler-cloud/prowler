@@ -344,8 +344,8 @@ Install psql
 #### Credentials
 There are two options to pass the PostgreSQL credentials to Prowler:
 ##### Using a .pgpass file
-Configure a `~/.pgpass` file into the root folder of the user that is going to launch Prowler ([pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)), including an extra field at the end of the line, separated by `:`, to name the table, for instance:
-        `hostname:port:database:username:password:prowler_findings`
+Configure a `~/.pgpass` file into the root folder of the user that is going to launch Prowler ([pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)), including an extra field at the end of the line, separated by `:`, to name the table, using the following format:
+        `hostname:port:database:username:password:table`
 ##### Using environment variables
 - Configure the following environment variables:  
     - `POSTGRES_HOST`  
@@ -354,7 +354,7 @@ Configure a `~/.pgpass` file into the root folder of the user that is going to l
     - `POSTGRES_PASSWORD`  
     - `POSTGRES_DB`  
     - `POSTGRES_TABLE`  
-
+> *Note*: If you are using a schema different than postgres please include it at the beggining of the `POSTGRES_TABLE` variable, like: `export POSTGRES_TABLE=prowler.findings`
 
 Create a table in your PostgreSQL database to store the Prowler's data. You can use the following SQL statement to create the table:
 ```
