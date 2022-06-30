@@ -30,50 +30,63 @@
 
 # Create a temporary file to store all resources arn 
 TEMP_INVENTORY_FILE=$(mktemp -t prowler-inventory-${ACCOUNT_NUM}.XXXXXXXXXX)
+INVENTORY_FILE="${OUTPUT_DIR}/prowler-inventory-${ACCOUNT_NUM}-${OUTPUT_DATE}.csv"
 
 # Quick inventory part
 quick_inventory(){
-    echo "-=- Running the inventory for AWS Account ${ACCOUNT_NUM} -=-"
+    echo "-=- Running the inventory for AWS Account ${OK}${ACCOUNT_NUM}${NORMAL} -=-"
+    echo -e "\n  # Counting resources by region:"
     # get all resources per region and getting only their ARN
     for region in $REGIONS; do
-        echo "- Looking for resources in $region... "
+        echo -ne " - $region: "
         AWS_RESOURCES=$($AWSCLI resourcegroupstaggingapi get-resources \
             $PROFILE_OPT \
             --region $region \
             --query ResourceTagMappingList[].ResourceARN \
             --output json 2>&1)
         if [[ $(echo "$AWS_RESOURCES" | grep -E 'service control policy') ]]; then
-            echo "${BAD}blocked by SCP${NORMAL}"
+            echo -e "${BAD}blocked by a SCP${NORMAL}"
             continue
         fi
-        echo $AWS_RESOURCES | jq -r '.[]' >> ${TEMP_INVENTORY_FILE} 
-        TOTAL_RESOURCES_FOUND_REGION=$(grep $region ${TEMP_INVENTORY_FILE} | wc -l |xargs)
-        echo "found ${OK}${TOTAL_RESOURCES_FOUND_REGION}${NORMAL} resources!"
-        TOTAL_RESOURCES_FOUND=$(($TOTAL_RESOURCES_FOUND+$TOTAL_RESOURCES_FOUND_REGION))
+
+        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "$AWS_RESOURCES"; then
+            echo "${BAD}Access Denied trying to get AWS Resources${NORMAL}"
+            continue
+        fi
+        jq -r '.[]' <<< "${AWS_RESOURCES}" >> "${TEMP_INVENTORY_FILE}" 
+        TOTAL_RESOURCES_FOUND_REGION=$(grep -c "${region}" "${TEMP_INVENTORY_FILE}")
+
+        echo -e "${OK}${TOTAL_RESOURCES_FOUND_REGION}${NORMAL} resources!"
+        
+        TOTAL_RESOURCES_FOUND=$(("${TOTAL_RESOURCES_FOUND}"+"${TOTAL_RESOURCES_FOUND_REGION}"))
     done
-    echo -e "Total resources found: ${OK}$TOTAL_RESOURCES_FOUND${NORMAL}"
+    echo -e "Total resources found: ${OK}$TOTAL_RESOURCES_FOUND${NORMAL}\n"
 
     # Generate file in CSV format
     # send header first
-    echo "aws_partition,aws_service,aws_region,aws_account_id,subservice_resource" > prowler-inventory-${ACCOUNT_NUM}.csv
+    echo "aws_partition,aws_service,aws_region,aws_account_id,subservice_resource,arn" > "${INVENTORY_FILE}"
     
     while IFS=: read -r arn aws_partition aws_service aws_region aws_account_id subservice_resource; do
-        echo "$aws_partition,$aws_service,$aws_region,$aws_account_id,$subservice_resource"
-    done < ${TEMP_INVENTORY_FILE} >> prowler-inventory-${ACCOUNT_NUM}.csv
+        echo "$aws_partition,$aws_service,$aws_region,$aws_account_id,$subservice_resource,$aws_partition:$aws_service:$aws_region:$aws_account_id:$subservice_resource"
+    done < "${TEMP_INVENTORY_FILE}" >> "${INVENTORY_FILE}"
 
-    # Show resources per service
-    LIST_OF_DETECTED_SERVICES=$(cat prowler-inventory-${ACCOUNT_NUM}.csv | grep -v subservice_resource | awk -F',' '{ print $2 }'| sort -u )
+    # Show resources found per service
+    LIST_OF_DETECTED_SERVICES=$(grep -v subservice_resource < "${INVENTORY_FILE}" | awk -F',' '{ print $2 }' | sort -u )
     for aws_service in $LIST_OF_DETECTED_SERVICES;do
         echo "-=- ${YELLOW}$aws_service${NORMAL} inventory for AWS Account ${ACCOUNT_NUM} -=-"
         if [[ $aws_service == 's3' ]];then
-            TOTAL_S3_BUCKETS=$(cat prowler-inventory-${ACCOUNT_NUM}.csv | grep ,$aws_service, | awk -F',' '{ print $5 }' | awk -F'/' '{ print $1 }' | awk -F':' '{ print $1 }'| wc -l|xargs)
-            echo "$TOTAL_S3_BUCKETS bucket"
+            TOTAL_S3_BUCKETS=$(grep ",$aws_service," < "${INVENTORY_FILE}" | awk -F',' '{ print $5 }' | wc -l | xargs)
+            echo "$TOTAL_S3_BUCKETS buckets"
         else
-            TOTAL_RESOUCE_SERVICE=$(cat prowler-inventory-${ACCOUNT_NUM}.csv | grep ,$aws_service, | awk -F',' '{ print $5 }' | awk -F'/' '{ print $1 }' | awk -F':' '{ print $1 }'| sort | uniq -c|xargs)
-            echo "$TOTAL_RESOUCE_SERVICE"
+            TOTAL_RESOURCE_SERVICE=$(grep ",$aws_service," < "${INVENTORY_FILE}" | awk -F',' '{ print $5 }' | awk -F'/' '{ print $1 }' | awk -F':' '{ print $1 }' | sort | uniq -c)
+            echo "$TOTAL_RESOURCE_SERVICE"
         fi
     done
-    echo -e "More details in file: prowler-inventory-${ACCOUNT_NUM}.csv"
+    echo -e "More details in file: ${INVENTORY_FILE}"
     # Clean temp file
-    rm -fr ${TEMP_INVENTORY_FILE}
+    cleanInventoryTemporaryFiles
+}
+
+cleanInventoryTemporaryFiles() {
+    rm -fr "${TEMP_INVENTORY_FILE}"
 }
