@@ -336,10 +336,10 @@ You can send the Prowler's output to different databases (right now only Postgre
 
 Jump into the section for the database provider you want to use and follow the required steps to configure it.
 ### PostgreSQL
-- Install psql
-    - Mac -> `brew install libpq`
-    - Ubuntu -> `sudo apt-get install postgresql-client `
-    - RHEL/Centos -> `sudo yum install postgresql10`
+Install psql
+- Mac -> `brew install libpq`
+- Ubuntu -> `sudo apt-get install postgresql-client `
+- RHEL/Centos -> `sudo yum install postgresql10`
 
 #### Credentials
 There are two options to pass the PostgreSQL credentials to Prowler:
@@ -347,15 +347,16 @@ There are two options to pass the PostgreSQL credentials to Prowler:
 Configure a `~/.pgpass` file into the root folder of the user that is going to launch Prowler ([pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)), including an extra field at the end of the line, separated by `:`, to name the table, for instance:
         `hostname:port:database:username:password:prowler_findings`
 ##### Using environment variables
-Configure the following environment variables:
-    - `POSTGRES_HOST`
-    - `POSTGRES_PORT`
-    - `POSTGRES_USER`
-    - `POSTGRES_PASSWORD`
-    - `POSTGRES_DB`
+- Configure the following environment variables:  
+    - `POSTGRES_HOST`  
+    - `POSTGRES_PORT`  
+    - `POSTGRES_USER`  
+    - `POSTGRES_PASSWORD`  
+    - `POSTGRES_DB`  
+    - `POSTGRES_TABLE`  
 
 
-- Create a table in your PostgreSQL database to store the Prowler's data. You can use the following SQL statement to create the table:
+Create a table in your PostgreSQL database to store the Prowler's data. You can use the following SQL statement to create the table:
 ```
 CREATE TABLE  IF NOT EXISTS prowler_findings (
 profile TEXT,

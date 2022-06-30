@@ -208,7 +208,7 @@ validate_database() {
         fi
 
         # Check credentials
-        if [[ -z "${POSTGRES_HOST}" ||  -z "${POSTGRES_PORT}" ||  -z "${POSTGRES_USER}" ||  -z "${POSTGRES_PASSWORD}" ||  -z "${POSTGRES_DB}" ]]
+        if [[ -z "${POSTGRES_HOST}" ||  -z "${POSTGRES_PORT}" ||  -z "${POSTGRES_USER}" ||  -z "${POSTGRES_PASSWORD}" ||  -z "${POSTGRES_DB}" ||  -z "${POSTGRES_TABLE}" ]]
         then
             # echo "${OPTRED}ERROR!$OPTNORMAL Database connector for '${DATABASE_PROVIDER}' failed. Required environment variables for PostgreSQL were not found. Checking .pgpass file"
             # If no environment variable present check the "$HOME/.pgpass" file
