@@ -329,7 +329,6 @@ get_regions
 validate_custom_output_directory
 validate_custom_output_filename
 validate_security_hub
-echo $OUTPUT_DIR
 validate_custom_checks
 
 # Add headers to certain output files
