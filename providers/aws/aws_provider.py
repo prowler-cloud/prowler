@@ -1,3 +1,5 @@
+import sys
+
 from arnparse import arnparse
 from boto3 import session
 from botocore.credentials import RefreshableCredentials
@@ -37,7 +39,9 @@ class AWS_Provider:
                 # Here we need the botocore session since it needs to use refreshable credentials
                 assumed_botocore_session = get_session()
                 assumed_botocore_session._credentials = assumed_refreshable_credentials
-                assumed_botocore_session.set_config_variable("region", "us-east-1")
+                assumed_botocore_session.set_config_variable(
+                    "region", audit_info.profile_region
+                )
 
                 return session.Session(
                     profile_name=audit_info.profile,
@@ -49,7 +53,7 @@ class AWS_Provider:
                 return session.Session(profile_name=audit_info.profile)
         except Exception as error:
             logger.critical(f"{error.__class__.__name__} -- {error}")
-            quit()
+            sys.exit()
 
     # Refresh credentials method using assume role
     # This method is called "adding ()" to the name, so it cannot accept arguments
@@ -87,6 +91,7 @@ def provider_set_session(
         audited_account=None,
         audited_partition=None,
         profile=input_profile,
+        profile_region=None,
         credentials=None,
         assumed_role_info=AWS_Assume_Role(
             role_arn=input_role,
@@ -119,7 +124,7 @@ def provider_set_session(
 
         except Exception as error:
             logger.critical(f"{error.__class__.__name__} -- {error}")
-            quit()
+            sys.exit()
 
         else:
             logger.info(
@@ -148,7 +153,15 @@ def provider_set_session(
         logger.info("Audit session is the original one")
         current_audit_info.audit_session = current_audit_info.original_session
 
+
+    # Setting default region of session
+    if current_audit_info.audit_session.region_name:
+        current_audit_info.profile_region = current_audit_info.audit_session.region_name
+    else:
+        current_audit_info.profile_region = "us-east-1"
+    
     return current_audit_info
+
 
 
 def validate_credentials(validate_session):
@@ -157,7 +170,7 @@ def validate_credentials(validate_session):
         caller_identity = validate_credentials_client.get_caller_identity()
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")
-        quit()
+        sys.exit()
     else:
         return caller_identity
 
@@ -184,7 +197,7 @@ def assume_role():
             )
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")
-        quit()
+        sys.exit()
 
     else:
         return assumed_credentials

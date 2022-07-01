@@ -29,18 +29,20 @@ class iam_disable_30_days_credentials(Check):
                         else:
                             report.status = "PASS"
                             report.status_extended = f"User {user['UserName']} has logged into the console in the past 30 days"
+
                     except KeyError:
                         pass
                 else:
                     report.status = "PASS"
                     report.status_extended = f"User {user['UserName']} has not a console password or is unused."
+
                 # Append report
                 findings.append(report)
         else:
             report = Check_Report(self.metadata)
             report.status = "PASS"
             report.result_extended = "There is no IAM users"
-            report.region = "us-east-1"
+            report.region = iam_client.region
             findings.append(report)
 
         return findings

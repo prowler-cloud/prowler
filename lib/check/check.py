@@ -82,8 +82,38 @@ def parse_checks_from_file(input_file: str, provider: str) -> set:
     return checks_to_execute
 
 
+def list_services(provider: str) -> set:
+    available_services = set()
+    checks = recover_checks_from_provider(provider)
+    for check_name in checks:
+        # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
+        service_name = check_name.split(".")[3]
+        available_services.add(service_name)
+    return available_services
+
+
+def print_services(service_list: set):
+    print(f"Available Services:")
+    for service in service_list:
+        print(f"- {service}")
+
+
+
+def print_checks(provider: str, check_list: set, bulk_checks_metadata: dict):
+    for check in check_list:
+        try:
+            print(
+                f"[{bulk_checks_metadata[check].CheckID}] {bulk_checks_metadata[check].CheckTitle} - {Fore.MAGENTA}{bulk_checks_metadata[check].ServiceName} {Fore.YELLOW}[{bulk_checks_metadata[check].Severity}]{Style.RESET_ALL}"
+            )
+        except KeyError as error:
+            logger.error(
+                f"Check {error} was not found for the {provider.upper()} provider"
+            )
+
+
+
 # List available groups
-def list_groups(provider: str) -> list:
+def list_groups(provider: str):
     groups = parse_groups_from_file(groups_file)
     print(f"Available Groups:")
 
@@ -158,7 +188,7 @@ def set_output_options(quiet: bool, output_modes: list, input_output_directory: 
 
 def run_check(check, audit_info, output_options):
     print(
-        f"\nCheck Name: {check.checkName} - {Fore.MAGENTA}{check.serviceName}{Fore.YELLOW}[{check.severity}]{Style.RESET_ALL}"
+        f"\nCheck Name: {check.checkName} - {Fore.MAGENTA}{check.serviceName}{Fore.YELLOW} [{check.severity}]{Style.RESET_ALL}"
     )
     logger.debug(f"Executing check: {check.checkName}")
     findings = check.execute()

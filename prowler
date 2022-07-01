@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-from os.path import isdir
 
+from os.path import isdir
 from colorama import Fore, Style
+
+import sys
 
 from config.config import default_output_directory
 from lib.banner import print_banner, print_version
@@ -15,11 +17,14 @@ from lib.check.check import (
     exclude_services_to_run,
     import_check,
     list_groups,
+    list_services,
+    print_checks,
+    print_services,
     run_check,
     set_output_options,
 )
 from lib.check.checks_loader import load_checks_to_execute
-from lib.logger import logger, logging_levels
+from lib.logger import logger, set_logging_config
 from providers.aws.aws_provider import provider_set_session
 
 if __name__ == "__main__":
@@ -34,17 +39,32 @@ if __name__ == "__main__":
     group.add_argument("-C", "--checks-file", nargs="?", help="List of checks")
     group.add_argument("-s", "--services", nargs="+", help="List of services")
     group.add_argument("-g", "--groups", nargs="+", help="List of groups")
-    group.add_argument("-L", "--list-groups", action="store_true", help="List groups")
+    group.add_argument(
+        "--severity",
+        nargs="+",
+        help="List of severities [informational, low, medium, high, critical]",
+        choices=["informational","low","medium","high","critical"]
+    )
+    # Exclude checks options
     parser.add_argument("-e", "--excluded-checks", nargs="+", help="Checks to exclude")
     parser.add_argument("-E", "--excluded-groups", nargs="+", help="Groups to exclude")
     parser.add_argument(
         "-S", "--excluded-services", nargs="+", help="Services to exclude"
     )
-
-    parser.add_argument("-l", "--list-checks", action="store_true", help="List checks")
+    # List checks options
+    list_group = parser.add_mutually_exclusive_group()
+    list_group.add_argument(
+        "-L", "--list-groups", action="store_true", help="List groups"
+    )
+    list_group.add_argument(
+        "-l", "--list-checks", action="store_true", help="List checks"
+    )
+    list_group.add_argument(
+        "--list-services", action="store_true", help="List services"
+    )
 
     parser.add_argument(
-        "-b", "--no-banner", action="store_false", help="Hide Prowler Banner"
+        "-b", "--no-banner", action="store_false", help="Hide Prowler banner"
     )
     parser.add_argument(
         "-v", "--version", action="store_true", help="Show Prowler version"
@@ -52,12 +72,20 @@ if __name__ == "__main__":
     parser.add_argument(
         "-q", "--quiet", action="store_true", help="Show only Prowler failed findings"
     )
+
+    # Both options can be combined to only report to file some log level
     parser.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         default="ERROR",
         help="Select Log Level",
     )
+    parser.add_argument(
+        "--log-file",
+        nargs="?",
+        help="Set log file name",
+    )
+
     parser.add_argument(
         "-p",
         "--profile",
@@ -121,34 +149,40 @@ if __name__ == "__main__":
     groups = args.groups
     checks_file = args.checks_file
     output_directory = args.custom_output_directory
+    severities = args.severity
 
-    # Set Logger
-    logger.setLevel(logging_levels.get(args.log_level))
+
+    # Set Logger configuration
+    set_logging_config(args.log_file, args.log_level)
 
     # Role assumption input options tests
     if args.session_duration not in range(900, 43200):
         logger.critical("Value for -T option must be between 900 and 43200")
-        quit()
+        sys.exit()
     if args.session_duration != 3600 or args.external_id:
         if not args.role:
             logger.critical("To use -I/-T options -R option is needed")
-            quit()
+            sys.exit()
 
     if output_directory:
         if not isdir(output_directory):
             logger.critical("Output directory does not exists")
-            quit()
+            sys.exit()
 
     if args.version:
         print_version()
-        quit()
+        sys.exit()
 
     if args.no_banner:
         print_banner()
 
     if args.list_groups:
         list_groups(provider)
-        quit()
+        sys.exit()
+
+    if args.list_services:
+        print_services(list_services(provider))
+        sys.exit()
 
     # Load checks metadata
     logger.debug("Loading checks metadata from .metadata.json files")
@@ -156,7 +190,13 @@ if __name__ == "__main__":
 
     # Load checks to execute
     checks_to_execute = load_checks_to_execute(
-        bulk_checks_metadata, checks_file, checks, services, groups, provider
+        bulk_checks_metadata,
+        checks_file,
+        checks,
+        services,
+        groups,
+        severities,
+        provider,
     )
     # Exclude checks if -e/--excluded-checks
     if excluded_checks:
@@ -176,16 +216,8 @@ if __name__ == "__main__":
 
     # If -l/--list-checks passed as argument, print checks to execute and quit
     if args.list_checks:
-        for check in checks_to_execute:
-            try:
-                print(
-                    f"[{bulk_checks_metadata[check].CheckID}] {bulk_checks_metadata[check].CheckTitle} - {Fore.MAGENTA}{bulk_checks_metadata[check].ServiceName} {Fore.YELLOW}[{bulk_checks_metadata[check].Severity}]{Style.RESET_ALL}"
-                )
-            except KeyError as error:
-                logger.error(
-                    f"Check {error} was not found for the {provider.upper()} provider"
-                )
-        quit()
+        print_checks(provider, checks_to_execute, bulk_checks_metadata)
+        sys.exit()
 
     # Setting output options
     audit_output_options = set_output_options(

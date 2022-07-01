@@ -1,3 +1,4 @@
+import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List
@@ -20,7 +21,7 @@ def load_check_metadata(metadata_file: str) -> dict:
         check_metadata = Check_Metadata_Model.parse_file(metadata_file)
     except ValidationError as error:
         logger.critical(f"Metadata from {metadata_file} is not valid: {error}")
-        quit()
+        sys.exit()
     else:
         return check_metadata
 

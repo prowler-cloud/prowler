@@ -29,10 +29,12 @@ class iam_disable_90_days_credentials(Check):
                         else:
                             report.status = "PASS"
                             report.status_extended = f"User {user['UserName']} has logged into the console in the past 90 days"
+
                     except KeyError:
                         pass
                 else:
                     report.status = "PASS"
+
                     report.status_extended = f"User {user['UserName']} has not a console password or is unused."
                 # Append report
                 findings.append(report)
