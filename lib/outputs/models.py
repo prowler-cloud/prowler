@@ -13,7 +13,7 @@ class Compliance_Framework:
 
 
 @dataclass
-class Check_Output:
+class Check_Output_CSV:
     assessment_start_time: str
     finding_unique_id: str
     provider: str

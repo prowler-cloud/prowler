@@ -4,7 +4,7 @@ from colorama import Fore, Style
 
 from config.config import csv_file_suffix
 from lib.check.models import Organizations_Info
-from lib.outputs.models import Check_Output
+from lib.outputs.models import Check_Output_CSV
 from lib.utils.utils import file_exists, open_file
 
 
@@ -22,7 +22,7 @@ def report(check_findings, output_options, audit_info, organizations_info):
 
     for finding in check_findings:
         # printing the finding ...
-        finding_output = Check_Output(
+        finding_output = Check_Output_CSV(
             audit_info.audited_account, audit_info.profile, finding, organizations_info
         )
         color = set_report_color(finding.status)
@@ -92,7 +92,7 @@ def set_report_color(status):
 
 def generate_csv_fields():
     csv_fields = []
-    for field in Check_Output.__dict__["__annotations__"].keys():
+    for field in Check_Output_CSV.__dict__["__annotations__"].keys():
         csv_fields.append(field)
     return csv_fields
 
