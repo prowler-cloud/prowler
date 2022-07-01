@@ -11,6 +11,7 @@ from lib.logger import logger
 class Output_From_Options:
     is_quiet: bool
     output_modes: list
+    output_directory: str
 
 
 # Testing Pending

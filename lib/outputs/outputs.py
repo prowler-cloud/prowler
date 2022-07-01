@@ -2,7 +2,8 @@ from csv import DictWriter
 
 from colorama import Fore, Style
 
-from config.config import csv_extension, timestamp
+from config.config import csv_file_suffix
+from lib.check.models import Organizations_Info
 from lib.outputs.models import Check_Output
 from lib.utils.utils import file_exists, open_file
 
@@ -10,9 +11,13 @@ from lib.utils.utils import file_exists, open_file
 def report(check_findings, output_options, audit_info, organizations_info):
     check_findings.sort(key=lambda x: x.region)
 
+    csv_fields = generate_csv_fields()
     # check output options
     file_descriptors = fill_file_descriptors(
-        output_options.output_modes, audit_info.audited_account
+        output_options.output_modes,
+        audit_info.audited_account,
+        output_options.output_directory,
+        csv_fields,
     )
 
     for finding in check_findings:
@@ -33,7 +38,7 @@ def report(check_findings, output_options, audit_info, organizations_info):
         if "csv" in file_descriptors:
 
             csv_writer = DictWriter(
-                file_descriptors["csv"], fieldnames=generate_csv_fields(), delimiter=";"
+                file_descriptors["csv"], fieldnames=csv_fields, delimiter=";"
             )
             # csv_line = [audit_info.profile,audit_info.audited_account,finding.region,finding.check_metadata.CheckID,finding.status,finding.check_metadata.CheckTitle,finding.result_extended]
             csv_writer.writerow(finding_output.__dict__)
@@ -43,27 +48,24 @@ def report(check_findings, output_options, audit_info, organizations_info):
         file_descriptors.get(file_descriptor).close()
 
 
-def fill_file_descriptors(output_modes, audited_account):
+def fill_file_descriptors(output_modes, audited_account, output_directory, csv_fields):
     file_descriptors = {}
-    format_timestamp = timestamp.strftime("%Y%m%d%H%M%S")
     for output_mode in output_modes:
         if output_mode == "csv":
             filename = (
-                f"prowler-output-{audited_account}-{format_timestamp}{csv_extension}"
+                f"{output_directory}/prowler-output-{audited_account}-{csv_file_suffix}"
             )
             if file_exists(filename):
                 file_descriptor = open_file(
-                    f"prowler-output-{audited_account}-{format_timestamp}{csv_extension}",
+                    filename,
                     "a",
                 )
             else:
                 file_descriptor = open_file(
-                    f"prowler-output-{audited_account}-{format_timestamp}{csv_extension}",
+                    filename,
                     "a",
                 )
-                # csv_writer = writer(file_descriptor, delimiter=';')
-                # csv_writer.writerow(csv_header)
-                csv_header = [x.upper() for x in generate_csv_fields()]
+                csv_header = [x.upper() for x in csv_fields]
                 csv_writer = DictWriter(
                     file_descriptor, fieldnames=csv_header, delimiter=";"
                 )
@@ -93,3 +95,14 @@ def generate_csv_fields():
     for field in Check_Output.__dict__["__annotations__"].keys():
         csv_fields.append(field)
     return csv_fields
+
+
+def get_orgs_info():
+    organizations_info = Organizations_Info(
+        account_details_email="",
+        account_details_name="",
+        account_details_arn="",
+        account_details_org="",
+        account_details_tags="",
+    )
+    return organizations_info

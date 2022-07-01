@@ -18,7 +18,6 @@ def open_file(input_file: str, mode: str = "r") -> TextIOWrapper:
 
 # Parse checks from file
 def parse_json_file(input_file: TextIOWrapper) -> Any:
-    # First recover the available groups in groups.json
     try:
         json_file = json.load(input_file)
     except Exception as e:
@@ -36,4 +35,7 @@ def file_exists(filename: str):
         logger.critical(f"{exists_filename.name}: {e.__class__.__name__}")
         quit()
     else:
-        return exists_filename
+        if exists_filename:
+            return True
+        else:
+            return False

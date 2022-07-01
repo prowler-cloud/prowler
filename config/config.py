@@ -1,4 +1,5 @@
 from datetime import datetime
+from os import getcwd
 
 timestamp = datetime.today()
 prowler_version = "3.0-alfa"
@@ -12,5 +13,6 @@ aws_services_json_url = (
 )
 aws_services_json_file = "providers/aws/aws_regions_services.json"
 
+default_output_directory = getcwd() + "/output"
 
-csv_extension = ".csv"
+csv_file_suffix = timestamp.strftime("%Y%m%d%H%M%S") + ".csv"

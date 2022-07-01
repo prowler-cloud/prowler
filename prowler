@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+from os.path import isdir
 
 from colorama import Fore, Style
 
+from config.config import default_output_directory
 from lib.banner import print_banner, print_version
 from lib.check.check import (
     bulk_load_checks_metadata,
@@ -99,6 +101,14 @@ if __name__ == "__main__":
         choices=["csv"],
         default=["csv"],
     )
+    parser.add_argument(
+        "-o",
+        "--custom-output-directory",
+        nargs="?",
+        help="Custom output directory, by default the folder where Prowler is stored",
+        default=default_output_directory,
+    )
+
     # Parse Arguments
     args = parser.parse_args()
 
@@ -110,6 +120,7 @@ if __name__ == "__main__":
     services = args.services
     groups = args.groups
     checks_file = args.checks_file
+    output_directory = args.custom_output_directory
 
     # Set Logger
     logger.setLevel(logging_levels.get(args.log_level))
@@ -121,6 +132,11 @@ if __name__ == "__main__":
     if args.session_duration != 3600 or args.external_id:
         if not args.role:
             logger.critical("To use -I/-T options -R option is needed")
+            quit()
+
+    if output_directory:
+        if not isdir(output_directory):
+            logger.critical("Output directory does not exists")
             quit()
 
     if args.version:
@@ -172,7 +188,9 @@ if __name__ == "__main__":
         quit()
 
     # Setting output options
-    audit_output_options = set_output_options(args.quiet, args.output_modes)
+    audit_output_options = set_output_options(
+        args.quiet, args.output_modes, output_directory
+    )
 
     # Set global session
     audit_info = provider_set_session(
