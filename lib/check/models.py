@@ -175,11 +175,21 @@ class Check(ABC):
 class Check_Report:
     status: str
     region: str
-    result_extended: str
+    status_extended: str
     check_metadata: dict
+    status_extended: str
+    resource_id: str
+    resource_details: str
+    resource_tags: str
+    resource_arn: str
 
     def __init__(self, metadata):
         self.check_metadata = metadata
+        self.status_extended = ""
+        self.resource_details = ""
+        self.resource_tags = []
+        self.resource_id = ""
+        self.resource_arn = ""
 
 
 @dataclass

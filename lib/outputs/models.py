@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 from config.config import timestamp
 from lib.check.models import Check_Report, Organizations_Info
@@ -14,42 +14,51 @@ class Compliance_Framework:
 
 @dataclass
 class Check_Output:
-    STATUS: str
-    REGION: str
-    RESULT_EXTENDED: str
-    PROFILE: str
-    ACCOUNT_ID: int
-    PROVIDER: str
-    CHECKID: str
-    CHECKNAME: str
-    CHECKTITLE: str
-    CHECKTYPE: str
-    SERVICENAME: str
-    SUBSERVICENAME: str
-    RESOURCEIDTEMPLATE: str
-    SEVERITY: str
-    RESPOURCETYPE: str
-    DESCRIPTION: str
-    RISK: str
-    RELATED_URL: str
-    REMEDIATION_RECOMMENDATION_TEXT: str
-    REMEDIATION_RECOMMENDATION_URL: str
-    REMEDIATION_RECOMMENDATION_CODE_NATIVEIAC: str
-    REMEDIATION_RECOMMENDATION_CODE_TERRAFORM: str
-    REMEDIATION_RECOMMENDATION_CODE_CLI: str
-    REMEDIATION_RECOMMENDATION_CODE_OTHER: str
-    CATEGORIES: list
-    TAGS: dict
-    DEPENDS_ON: list
-    RELATED_TO: list
-    NOTES: str
-    COMPLIANCE: list
-    ASSESSMENT_TIME: str
-    ACCOUNT_DETAILS_EMAIL: str
-    ACCOUNT_DETAILS_NAME: str
-    ACCOUNT_DETAILS_ARN: str
-    ACCOUNT_DETAILS_ORG: str
-    ACCOUNT_DETAILS_TAGS: str
+    assessment_start_time: str
+    finding_unique_id: str
+    provider: str
+    profile: str
+    account_id: int
+    account_name: str
+    account_email: str
+    account_arn: str
+    account_org: str
+    account_tags: str
+    region: str
+    check_id: str
+    check_name: str
+    check_title: str
+    check_type: str
+    status: str
+    status_extended: str
+    service_name: str
+    subservice_name: str
+    severity: str
+    resource_id: str
+    resource_arn: str
+    resource_type: str
+    resource_details: str
+    resource_tags: list
+    description: dict
+    risk: list
+    related_url: list
+    remediation_recommendation_text: str
+    remediation_recommendation_url: list
+    remediation_recommendation_code_nativeiac: str
+    remediation_recommendation_code_terraform: str
+    remediation_recommendation_code_cli: str
+    remediation_recommendation_code_other: str
+    categories: str
+    depends_on: str
+    related_to: str
+    notes: str
+    compliance: str
+
+    def get_csv_header(self):
+        csv_header = []
+        for key in asdict(self):
+            csv_header = csv_header.append(key)
+        return csv_header
 
     def __init__(
         self,
@@ -58,56 +67,60 @@ class Check_Output:
         report: Check_Report,
         organizations: Organizations_Info,
     ):
-        self.STATUS = report.status
-        self.REGION = report.region
-        self.RESULT_EXTENDED = report.result_extended
-        self.ACCOUNT_ID = account
-        self.PROFILE = profile
-        self.PROVIDER = report.check_metadata.Provider
-        self.CHECKID = report.check_metadata.CheckID
-        self.CHECKNAME = report.check_metadata.CheckID
-        self.CHECKTITLE = report.check_metadata.CheckTitle
-        self.CHECKTYPE = report.check_metadata.CheckType
-        self.SERVICENAME = report.check_metadata.ServiceName
-        self.SUBSERVICENAME = report.check_metadata.SubServiceName
-        self.RESOURCEIDTEMPLATE = report.check_metadata.ResourceIdTemplate
-        self.SEVERITY = report.check_metadata.Severity
-        self.RESPOURCETYPE = report.check_metadata.ResourceType
-        self.DESCRIPTION = report.check_metadata.Description
-        self.RISK = report.check_metadata.Risk
-        self.RELATED_URL = report.check_metadata.RelatedUrl
-        self.REMEDIATION_RECOMMENDATION_TEXT = report.check_metadata.Remediation[
+        self.assessment_start_time = timestamp.isoformat()
+        self.finding_unique_id = ""
+        self.provider = report.check_metadata.Provider
+        self.profile = profile
+        self.account_id = account
+        self.account_name = organizations.account_details_name
+        self.account_email = organizations.account_details_email
+        self.account_arn = organizations.account_details_arn
+        self.account_org = organizations.account_details_org
+        self.account_tags = organizations.account_details_tags
+        self.region = report.region
+        self.check_id = report.check_metadata.CheckID
+        self.check_name = report.check_metadata.CheckName
+        self.check_title = report.check_metadata.CheckTitle
+        self.check_type = report.check_metadata.CheckType
+        self.status = report.status
+        self.status_extended = report.status_extended
+        self.service_name = report.check_metadata.ServiceName
+        self.subservice_name = report.check_metadata.SubServiceName
+        self.severity = report.check_metadata.Severity
+        self.resource_id = report.resource_id
+        self.resource_arn = report.resource_arn
+        self.resource_type = report.check_metadata.ResourceType
+        self.resource_details = report.resource_details
+        self.resource_tags = report.resource_tags
+        self.description = report.check_metadata.Description
+        self.risk = report.check_metadata.Risk
+        self.related_url = report.check_metadata.RelatedUrl
+        self.remediation_recommendation_text = report.check_metadata.Remediation[
             "Recommendation"
         ]["Text"]
-        self.REMEDIATION_RECOMMENDATION_URL = report.check_metadata.Remediation[
+        self.remediation_recommendation_url = report.check_metadata.Remediation[
             "Recommendation"
         ]["Url"]
-        self.REMEDIATION_RECOMMENDATION_CODE_NATIVEIAC = (
+        self.remediation_recommendation_code_nativeiac = (
             report.check_metadata.Remediation["Code"]["NativeIaC"]
         )
-        self.REMEDIATION_RECOMMENDATION_CODE_TERRAFORM = (
+        self.remediation_recommendation_code_terraform = (
             report.check_metadata.Remediation["Code"]["Terraform"]
         )
-        self.REMEDIATION_RECOMMENDATION_CODE_CLI = report.check_metadata.Remediation[
+        self.remediation_recommendation_code_cli = report.check_metadata.Remediation[
             "Code"
         ]["cli"]
-        self.REMEDIATION_RECOMMENDATION_CODE_OTHER = report.check_metadata.Remediation[
+        self.remediation_recommendation_code_cli = report.check_metadata.Remediation[
+            "Code"
+        ]["cli"]
+        self.remediation_recommendation_code_other = report.check_metadata.Remediation[
             "Code"
         ]["other"]
-        self.CATEGORIES = self.__unroll_list__(
-            report.check_metadata.Categories
-        )  # report.check_metadata.Categories
-        self.TAGS = self.__unroll_dict__(report.check_metadata.Tags)
-        self.DEPENDS_ON = self.__unroll_list__(report.check_metadata.DependsOn)
-        self.RELATED_TO = self.__unroll_list__(report.check_metadata.RelatedTo)
-        self.NOTES = report.check_metadata.Notes
-        self.COMPLIANCE = self.__unroll_compliance__(report.check_metadata.Compliance)
-        self.ASSESSMENT_TIME = timestamp.isoformat()
-        self.ACCOUNT_DETAILS_EMAIL = organizations.account_details_email
-        self.ACCOUNT_DETAILS_NAME = organizations.account_details_name
-        self.ACCOUNT_DETAILS_ARN = organizations.account_details_arn
-        self.ACCOUNT_DETAILS_ORG = organizations.account_details_org
-        self.ACCOUNT_DETAILS_TAGS = organizations.account_details_tags
+        self.categories = self.__unroll_list__(report.check_metadata.Categories)
+        self.depends_on = self.__unroll_list__(report.check_metadata.DependsOn)
+        self.related_to = self.__unroll_list__(report.check_metadata.RelatedTo)
+        self.notes = report.check_metadata.Notes
+        self.compliance = self.__unroll_compliance__(report.check_metadata.Compliance)
 
     def __unroll_list__(self, listed_items: list):
         unrolled_items = ""
@@ -168,3 +181,9 @@ class Check_Output:
             groups = ""
 
         return unrolled_compliance
+
+    def get_csv_header(self):
+        csv_header = []
+        for key in asdict(self):
+            csv_header = csv_header.append(key)
+        return csv_header

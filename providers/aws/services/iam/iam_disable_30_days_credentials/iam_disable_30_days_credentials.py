@@ -24,10 +24,14 @@ class iam_disable_30_days_credentials(Check):
                             report.status = "FAIL"
                             report.result_extended = f"User {user['UserName']} has not logged into the console in the past 30 days"
                             report.region = "us-east-1"
+                            report.resource_id = user["UserName"]
+                            report.resource_arn = user["Arn"]
                         else:
                             report.status = "PASS"
                             report.result_extended = f"User {user['UserName']} has logged into the console in the past 30 days"
                             report.region = "us-east-1"
+                            report.resource_id = user["UserName"]
+                            report.resource_arn = user["Arn"]
                     except KeyError:
                         pass
                 else:
