@@ -33,6 +33,6 @@ extra7123(){
       textFail "User $user has 2 active access keys" "$REGION" "$user"
     done
   else
-    textPass "No users with 2 active access keys"
+    textPass "No users with 2 active access keys" "$REGION"
   fi
 }

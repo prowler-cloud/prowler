@@ -36,6 +36,6 @@ extra732(){
       fi
     done
   else
-    textInfo "$REGION: No CloudFront distributions found"
+    textInfo "$REGION: No CloudFront distributions found" "$REGION" "$ACCOUNT_NUM"
   fi
 }

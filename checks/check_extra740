@@ -26,7 +26,7 @@ CHECK_CAF_EPIC_extra740='Data Protection'
 
 extra740(){
   # This does NOT use max-items, which would limit the number of items
-  # considered. It considers all snapshots, but only reports at most 
+  # considered. It considers all snapshots, but only reports at most
   # max-items passing and max-items failing.
   for regx in ${REGIONS}; do
     UNENCRYPTED_SNAPSHOTS=$(${AWSCLI} ec2 describe-snapshots ${PROFILE_OPT} \
@@ -36,8 +36,8 @@ extra740(){
     if [[ $(echo "$UNENCRYPTED_SNAPSHOTS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
         textInfo "$regx: Access Denied trying to describe snapshots" "$regx"
         continue
-    fi 
-     
+    fi
+
     ENCRYPTED_SNAPSHOTS=$(${AWSCLI} ec2 describe-snapshots ${PROFILE_OPT} \
     --region ${regx} --owner-ids ${ACCOUNT_NUM} --output text \
     --query 'Snapshots[?Encrypted==`true`]|[*].{Id:SnapshotId}' 2>&1 \
@@ -45,7 +45,7 @@ extra740(){
     if [[ $(echo "$ENCRYPTED_SNAPSHOTS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
         textInfo "$regx: Access Denied trying to describe snapshots" "$regx"
         continue
-    fi 
+    fi
     typeset -i unencrypted
     typeset -i encrypted
     unencrypted=0
@@ -73,10 +73,10 @@ extra740(){
       typeset -i total
       total=${encrypted}+${unencrypted}
       if [[ "${unencrypted}" -ge "${MAXITEMS}" ]]; then
-        textFail "${unencrypted} unencrypted snapshots out of ${total} snapshots found. Only the first ${MAXITEMS} unencrypted snapshots are reported!"
+        textFail "${unencrypted} unencrypted snapshots out of ${total} snapshots found. Only the first ${MAXITEMS} unencrypted snapshots are reported!" "${regx}"
       fi
       if [[ "${encrypted}" -ge "${MAXITEMS}" ]]; then
-        textPass "${encrypted} encrypted snapshots out of ${total} snapshots found. Only the first ${MAXITEMS} encrypted snapshots are reported."
+        textPass "${encrypted} encrypted snapshots out of ${total} snapshots found. Only the first ${MAXITEMS} encrypted snapshots are reported." "${regx}"
       fi
       # Bit of 'bc' magic to print something like 10.42% or 0.85% or similar. 'bc' has a
       # bug where it will never print leading zeros. So 0.5 is output as ".5". This has a

@@ -45,6 +45,6 @@ extra7166() {
       fi
     done
   else
-    textInfo "No AWS Shield Advanced subscription found. Skipping check."
+    textInfo "$regx: no AWS Shield Advanced subscription found. Skipping check" "$regx"
   fi
 }
