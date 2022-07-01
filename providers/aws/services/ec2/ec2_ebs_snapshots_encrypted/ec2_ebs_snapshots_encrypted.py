@@ -10,24 +10,24 @@ class ec2_ebs_snapshots_encrypted(Check):
             if hasattr(regional_client, "snapshots"):
                 if regional_client.snapshots:
                     for snapshot in regional_client.snapshots:
+                        report = Check_Report(self.metadata)
+                        report.region = region
                         if snapshot["Encrypted"]:
-                            report = Check_Report(self.metadata)
                             report.status = "PASS"
-                            report.result_extended = (
+                            report.status_extended = (
                                 f"EBS Snapshot {snapshot['SnapshotId']} is encrypted"
                             )
-                            report.region = region
+                            report.resource_id = snapshot["SnapshotId"]
                         else:
-                            report = Check_Report(self.metadata)
                             report.status = "FAIL"
-                            report.result_extended = (
+                            report.status_extended = (
                                 f"EBS Snapshot {snapshot['SnapshotId']} is unencrypted"
                             )
-                            report.region = region
+                            report.resource_id = snapshot["SnapshotId"]
                 else:
                     report = Check_Report(self.metadata)
                     report.status = "PASS"
-                    report.result_extended = "There are no EC2 EBS snapshots"
+                    report.status_extended = "There are no EC2 EBS snapshots"
                     report.region = region
 
                 findings.append(report)

@@ -23,11 +23,11 @@ def report(check_findings, output_options, audit_info, organizations_info):
         color = set_report_color(finding.status)
         if output_options.is_quiet and "FAIL" in finding.status:
             print(
-                f"{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.result_extended}"
+                f"{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
             )
         elif not output_options.is_quiet:
             print(
-                f"{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.result_extended}"
+                f"{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
             )
         # sending the finding to input options
         if "csv" in file_descriptors:

@@ -14,6 +14,9 @@ class iam_disable_30_days_credentials(Check):
         if response:
             for user in response:
                 report = Check_Report(self.metadata)
+                report.resource_id = user["UserName"]
+                report.resource_arn = user["Arn"]
+                report.region = "us-east-1"
                 if "PasswordLastUsed" in user and user["PasswordLastUsed"] != "":
                     try:
                         time_since_insertion = (
@@ -22,23 +25,15 @@ class iam_disable_30_days_credentials(Check):
                         )
                         if time_since_insertion.days > maximum_expiration_days:
                             report.status = "FAIL"
-                            report.result_extended = f"User {user['UserName']} has not logged into the console in the past 30 days"
-                            report.region = "us-east-1"
-                            report.resource_id = user["UserName"]
-                            report.resource_arn = user["Arn"]
+                            report.status_extended = f"User {user['UserName']} has not logged into the console in the past 30 days"
                         else:
                             report.status = "PASS"
-                            report.result_extended = f"User {user['UserName']} has logged into the console in the past 30 days"
-                            report.region = "us-east-1"
-                            report.resource_id = user["UserName"]
-                            report.resource_arn = user["Arn"]
+                            report.status_extended = f"User {user['UserName']} has logged into the console in the past 30 days"
                     except KeyError:
                         pass
                 else:
                     report.status = "PASS"
-                    report.result_extended = f"User {user['UserName']} has not a console password or is unused."
-                    report.region = "us-east-1"
-
+                    report.status_extended = f"User {user['UserName']} has not a console password or is unused."
                 # Append report
                 findings.append(report)
         else:

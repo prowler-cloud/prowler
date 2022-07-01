@@ -96,7 +96,7 @@ if __name__ == "__main__":
         "--output-modes",
         nargs="+",
         help="Output mode, by default csv",
-        choices=["csv"],  # , "json", "html", "json-asff", "junit-xml"]
+        choices=["csv"],
         default=["csv"],
     )
     # Parse Arguments
