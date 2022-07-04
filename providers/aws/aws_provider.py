@@ -6,6 +6,7 @@ from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
 
 from lib.arn.arn import arn_parsing
+from lib.check.models import Organizations_Info
 from lib.logger import logger
 from providers.aws.models import AWS_Assume_Role, AWS_Audit_Info, AWS_Credentials
 
@@ -76,7 +77,12 @@ class AWS_Provider:
 
 
 def provider_set_session(
-    input_profile, input_role, input_session_duration, input_external_id, input_regions
+    input_profile,
+    input_role,
+    input_session_duration,
+    input_external_id,
+    input_regions,
+    organizations_role_arn,
 ):
 
     # Mark variable that stores all the info about the audit as global
@@ -99,6 +105,7 @@ def provider_set_session(
             external_id=input_external_id,
         ),
         audited_regions=input_regions,
+        organizations_metadata=None,
     )
 
     logger.info("Generating original session ...")
@@ -153,15 +160,23 @@ def provider_set_session(
         logger.info("Audit session is the original one")
         current_audit_info.audit_session = current_audit_info.original_session
 
+    logger.info("Checking if organizations metadata is needed ...")
+    if organizations_role_arn:
+        logger.info(
+            f"Getting organizations metadata for account {organizations_role_arn}"
+        )
+        current_audit_info.organizations_metadata = get_organizations_metadata(
+            organizations_role_arn
+        )
+        logger.info(f"Organizations metadata retrieved")
 
     # Setting default region of session
     if current_audit_info.audit_session.region_name:
         current_audit_info.profile_region = current_audit_info.audit_session.region_name
     else:
         current_audit_info.profile_region = "us-east-1"
-    
-    return current_audit_info
 
+    return current_audit_info
 
 
 def validate_credentials(validate_session):
@@ -200,3 +215,37 @@ def assume_role(audit_info: AWS_Audit_Info) -> dict:
 
     else:
         return assumed_credentials
+
+
+def get_organizations_metadata(organizations_role_arn):
+    try:
+        sts_client = current_audit_info.original_session.client("sts")
+        assumed_credentials = sts_client.assume_role(
+            RoleArn=organizations_role_arn,
+            RoleSessionName="ProwlerProOrganizationsSession",
+        )
+        organizations_client = assumed_credentials.client("organizations")
+        organizations_metadata = organizations_client.describe_account(
+            AccountId=current_audit_info.audited_account
+        )
+        account_details_tags = organizations_client.list_tags_for_resource(
+            ResourceId=current_audit_info.audited_account
+        )
+        # Convert Tags dictionary to String
+        account_details_tags = ""
+        for tag in account_details_tags["Tags"]:
+            account_details_tags = (
+                account_details_tags + tag["Key"] + ":" + tag["Value"] + ","
+            )
+        current_audit_info = Organizations_Info(
+            account_details_email=organizations_metadata["Account"]["Email"],
+            account_details_name=organizations_metadata["Account"]["Name"],
+            account_details_arn=organizations_metadata["Account"]["Arn"],
+            account_details_org=organizations_metadata["Account"]["Arn"].split(":")[4],
+            account_details_tags=account_details_tags,
+        )
+    except Exception as error:
+        logger.critical(f"{error.__class__.__name__} -- {error}")
+        sys.exit()
+    else:
+        return organizations_metadata
