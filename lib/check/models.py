@@ -9,20 +9,10 @@ from lib.logger import logger
 
 
 @dataclass
-class Check_Report:
-    status: str
-    region: str
-    result_extended: str
-
-    def __init__(self):
-        self.status = ""
-        self.region = ""
-        self.result_extended = ""
-
-
-@dataclass
 class Output_From_Options:
     is_quiet: bool
+    output_modes: list
+    output_directory: str
 
 
 # Testing Pending
@@ -174,6 +164,40 @@ class Check(ABC):
     def compliance(self):
         return self.__Compliance__
 
+    @property
+    def metadata(self):
+        return self.__check_metadata__
+
     @abstractmethod
     def execute(self):
         pass
+
+
+@dataclass
+class Check_Report:
+    status: str
+    region: str
+    status_extended: str
+    check_metadata: dict
+    status_extended: str
+    resource_id: str
+    resource_details: str
+    resource_tags: str
+    resource_arn: str
+
+    def __init__(self, metadata):
+        self.check_metadata = metadata
+        self.status_extended = ""
+        self.resource_details = ""
+        self.resource_tags = []
+        self.resource_id = ""
+        self.resource_arn = ""
+
+
+@dataclass
+class Organizations_Info:
+    account_details_email: str
+    account_details_name: str
+    account_details_arn: str
+    account_details_org: str
+    account_details_tags: str

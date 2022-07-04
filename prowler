@@ -3,7 +3,10 @@
 
 import argparse
 import sys
+from os import mkdir
+from os.path import isdir
 
+from config.config import default_output_directory
 from lib.banner import print_banner, print_version
 from lib.check.check import (
     bulk_load_checks_metadata,
@@ -38,7 +41,7 @@ if __name__ == "__main__":
         "--severity",
         nargs="+",
         help="List of severities [informational, low, medium, high, critical]",
-        choices=["informational","low","medium","high","critical"]
+        choices=["informational", "low", "medium", "high", "critical"],
     )
     # Exclude checks options
     parser.add_argument("-e", "--excluded-checks", nargs="+", help="Checks to exclude")
@@ -116,6 +119,21 @@ if __name__ == "__main__":
         nargs="+",
         help="AWS region names to run Prowler against",
     )
+    parser.add_argument(
+        "-M",
+        "--output-modes",
+        nargs="+",
+        help="Output mode, by default csv",
+        choices=["csv"],
+    )
+    parser.add_argument(
+        "-o",
+        "--custom-output-directory",
+        nargs="?",
+        help="Custom output directory, by default the folder where Prowler is stored",
+        default=default_output_directory,
+    )
+
     # Parse Arguments
     args = parser.parse_args()
 
@@ -127,7 +145,9 @@ if __name__ == "__main__":
     services = args.services
     groups = args.groups
     checks_file = args.checks_file
+    output_directory = args.custom_output_directory
     severities = args.severity
+    output_modes = args.output_modes
 
     # Set Logger configuration
     set_logging_config(args.log_file, args.log_level)
@@ -140,6 +160,17 @@ if __name__ == "__main__":
         if not args.role:
             logger.critical("To use -I/-T options -R option is needed")
             sys.exit()
+
+    # Check output directory, if it is default and not created -> create it
+    # If is custom and not created -> error
+    if output_directory:
+        if not isdir(output_directory):
+            if output_directory == default_output_directory:
+                if output_modes:
+                    mkdir(default_output_directory)
+            else:
+                logger.critical("Output directory does not exist")
+                sys.exit()
 
     if args.version:
         print_version()
@@ -192,10 +223,12 @@ if __name__ == "__main__":
         sys.exit()
 
     # Setting output options
-    set_output_options(args.quiet)
+    audit_output_options = set_output_options(
+        args.quiet, output_modes, output_directory
+    )
 
     # Set global session
-    provider_set_session(
+    audit_info = provider_set_session(
         args.profile,
         args.role,
         args.session_duration,
@@ -218,7 +251,7 @@ if __name__ == "__main__":
                 check_to_execute = getattr(lib, check_name)
                 c = check_to_execute()
                 # Run check
-                run_check(c)
+                run_check(c, audit_info, audit_output_options)
 
             # If check does not exists in the provider or is from another provider
             except ModuleNotFoundError:

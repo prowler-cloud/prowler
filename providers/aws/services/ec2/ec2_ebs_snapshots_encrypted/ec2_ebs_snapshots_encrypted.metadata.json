@@ -19,6 +19,17 @@
         "level2"
       ],
       "Version": "1.4"
+    },
+    {
+      "Control": [
+        "4.4"
+      ],
+      "Framework": "PCI-DSS",
+      "Group": [
+        "level1",
+        "level2"
+      ],
+      "Version": "1.4"
     }
   ],
   "DependsOn": [

@@ -9,7 +9,7 @@ from colorama import Fore, Style
 from config.config import groups_file
 from lib.check.models import Output_From_Options, load_check_metadata
 from lib.logger import logger
-from lib.outputs import report
+from lib.outputs.outputs import get_orgs_info, report
 from lib.utils.utils import open_file, parse_json_file
 
 
@@ -175,22 +175,28 @@ def import_check(check_path: str) -> ModuleType:
     return lib
 
 
-def set_output_options(quiet):
+def set_output_options(quiet: bool, output_modes: list, input_output_directory: str):
     global output_options
     output_options = Output_From_Options(
-        is_quiet=quiet
+        is_quiet=quiet,
+        output_modes=output_modes,
+        output_directory=input_output_directory
         # set input options here
     )
     return output_options
 
 
-def run_check(check):
+def run_check(check, audit_info, output_options):
     print(
         f"\nCheck Name: {check.checkName} - {Fore.MAGENTA}{check.serviceName}{Fore.YELLOW} [{check.severity}]{Style.RESET_ALL}"
     )
     logger.debug(f"Executing check: {check.checkName}")
     findings = check.execute()
-    report(findings, output_options)
+
+    # Call to get orgs, need to check if input option is passed in output options
+    # right now it is not checked and is called straight to generate the fields to be passed to the csv
+    organizations_info = get_orgs_info()
+    report(findings, output_options, audit_info, organizations_info)
 
 
 def import_check(check_path: str) -> ModuleType:

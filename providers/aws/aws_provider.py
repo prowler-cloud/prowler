@@ -153,11 +153,15 @@ def provider_set_session(
         logger.info("Audit session is the original one")
         current_audit_info.audit_session = current_audit_info.original_session
 
+
     # Setting default region of session
     if current_audit_info.audit_session.region_name:
         current_audit_info.profile_region = current_audit_info.audit_session.region_name
     else:
         current_audit_info.profile_region = "us-east-1"
+    
+    return current_audit_info
+
 
 
 def validate_credentials(validate_session):
