@@ -26,10 +26,10 @@ CHECK_CAF_EPIC_check118='IAM'
 
 check118(){
   if [[ "${REGION}" == "us-gov-west-1" || "${REGION}" == "us-gov-east-1" ]]; then
-    textInfo "${REGION}: This is an AWS GovCloud account and there is no root account to perform checks." "$REGION" "$ACCOUNT_NUM"
+    textInfo "${REGION}: This is an AWS GovCloud account and there is no root account to perform checks." "$REGION" "root"
   else
     # "Ensure security contact information is registered (Scored)"
     # No command available
-    textInfo "No command available for check 1.18. See section 1.18 on the CIS Benchmark guide for details." "$REGION" "$ACCOUNT_NUM"
+    textInfo "No command available for check 1.18. See section 1.18 on the CIS Benchmark guide for details." "$REGION" "root"
   fi
 }
