@@ -15,6 +15,7 @@ def load_checks_to_execute(
     check_list: list,
     service_list: list,
     group_list: list,
+    severities: list,
     provider: str,
 ) -> set:
 
@@ -25,10 +26,13 @@ def load_checks_to_execute(
         for check_name in check_list:
             checks_to_execute.add(check_name)
 
-    # elif severity_list:
-    # using bulk_checks_metadata
-    # elif compliance_list:
-    # using bulk_checks_metadata
+    # Handle if there are some severities passed using --severity
+    elif severities:
+        for check in bulk_checks_metadata:
+            # Check check's severity
+            if bulk_checks_metadata[check].Severity in severities:
+                checks_to_execute.add(check)
+
     # Handle if there are checks passed using -C/--checks-file
     elif checks_file:
         try:

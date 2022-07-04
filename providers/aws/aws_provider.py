@@ -39,7 +39,9 @@ class AWS_Provider:
                 # Here we need the botocore session since it needs to use refreshable credentials
                 assumed_botocore_session = get_session()
                 assumed_botocore_session._credentials = assumed_refreshable_credentials
-                assumed_botocore_session.set_config_variable("region", "us-east-1")
+                assumed_botocore_session.set_config_variable(
+                    "region", audit_info.profile_region
+                )
 
                 return session.Session(
                     profile_name=audit_info.profile,
@@ -89,6 +91,7 @@ def provider_set_session(
         audited_account=None,
         audited_partition=None,
         profile=input_profile,
+        profile_region=None,
         credentials=None,
         assumed_role_info=AWS_Assume_Role(
             role_arn=input_role,
@@ -149,6 +152,16 @@ def provider_set_session(
     else:
         logger.info("Audit session is the original one")
         current_audit_info.audit_session = current_audit_info.original_session
+
+
+    # Setting default region of session
+    if current_audit_info.audit_session.region_name:
+        current_audit_info.profile_region = current_audit_info.audit_session.region_name
+    else:
+        current_audit_info.profile_region = "us-east-1"
+    
+    return current_audit_info
+
 
 
 def validate_credentials(validate_session):

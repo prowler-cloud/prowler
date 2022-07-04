@@ -15,6 +15,7 @@ bandit = "1.7.4"
 safety = "1.10.3"
 vulture = "2.4"
 coverage = "6.4.1"
+pytest = "7.1.2"
 
 [dev-packages]
 
