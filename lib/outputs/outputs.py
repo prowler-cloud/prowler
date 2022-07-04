@@ -3,12 +3,11 @@ from csv import DictWriter
 from colorama import Fore, Style
 
 from config.config import csv_file_suffix
-from lib.check.models import Organizations_Info
 from lib.outputs.models import Check_Output_CSV
 from lib.utils.utils import file_exists, open_file
 
 
-def report(check_findings, output_options, audit_info, organizations_info):
+def report(check_findings, output_options, audit_info):
     check_findings.sort(key=lambda x: x.region)
 
     csv_fields = []
@@ -16,7 +15,7 @@ def report(check_findings, output_options, audit_info, organizations_info):
     file_descriptors = {}
     if output_options.output_modes:
         if "csv" in output_options.output_modes:
-            csv_fields = generate_csv_fields()
+            csv_fields = generate_csv_fields(audit_info.organizations_metadata)
 
         file_descriptors = fill_file_descriptors(
             output_options.output_modes,
@@ -45,9 +44,8 @@ def report(check_findings, output_options, audit_info, organizations_info):
                     audit_info.audited_account,
                     audit_info.profile,
                     finding,
-                    organizations_info,
+                    audit_info.organizations_metadata,
                 )
-
                 csv_writer = DictWriter(
                     file_descriptors["csv"], fieldnames=csv_fields, delimiter=";"
                 )
@@ -101,19 +99,15 @@ def set_report_color(status):
     return color
 
 
-def generate_csv_fields():
+def generate_csv_fields(organizations_metadata):
     csv_fields = []
+    organizations_fields = [
+        "account_email",
+        "account_arn",
+        "account_org",
+        "account_tags",
+    ]
     for field in Check_Output_CSV.__dict__["__annotations__"].keys():
-        csv_fields.append(field)
+        if not (not organizations_metadata and field in organizations_fields):
+            csv_fields.append(field)
     return csv_fields
-
-
-def get_orgs_info():
-    organizations_info = Organizations_Info(
-        account_details_email="",
-        account_details_name="",
-        account_details_arn="",
-        account_details_org="",
-        account_details_tags="",
-    )
-    return organizations_info

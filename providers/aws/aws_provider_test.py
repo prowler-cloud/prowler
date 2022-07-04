@@ -66,6 +66,7 @@ class Test_AWS_Provider:
             audited_account=None,
             audited_partition=None,
             profile=None,
+            profile_region=None,
             credentials=None,
             assumed_role_info=AWS_Assume_Role(
                 role_arn=role_arn,
@@ -73,6 +74,7 @@ class Test_AWS_Provider:
                 external_id=None,
             ),
             audited_regions=audited_regions,
+            organizations_metadata=None,
         )
 
         # Call assume_role

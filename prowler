@@ -154,7 +154,6 @@ if __name__ == "__main__":
     output_directory = args.custom_output_directory
     severities = args.severity
     output_modes = args.output_modes
-    organizations_role_arn = args.organizations_role_arn
 
     # Set Logger configuration
     set_logging_config(args.log_file, args.log_level)
@@ -241,7 +240,7 @@ if __name__ == "__main__":
         args.session_duration,
         args.external_id,
         args.filter_region,
-        args.organizations_role_arn,
+        args.organizations_role,
     )
 
     # Execute checks

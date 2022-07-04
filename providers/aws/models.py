@@ -3,8 +3,6 @@ from datetime import datetime
 
 from boto3 import session
 
-from lib.check.models import Organizations_Info
-
 
 @dataclass
 class AWS_Credentials:
@@ -19,6 +17,15 @@ class AWS_Assume_Role:
     role_arn: str
     session_duration: int
     external_id: str
+
+
+@dataclass
+class Organizations_Info:
+    account_details_email: str
+    account_details_name: str
+    account_details_arn: str
+    account_details_org: str
+    account_details_tags: str
 
 
 @dataclass

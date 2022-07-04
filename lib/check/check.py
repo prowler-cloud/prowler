@@ -9,7 +9,7 @@ from colorama import Fore, Style
 from config.config import groups_file
 from lib.check.models import Output_From_Options, load_check_metadata
 from lib.logger import logger
-from lib.outputs.outputs import get_orgs_info, report
+from lib.outputs.outputs import report
 from lib.utils.utils import open_file, parse_json_file
 
 
@@ -98,7 +98,6 @@ def print_services(service_list: set):
         print(f"- {service}")
 
 
-
 def print_checks(provider: str, check_list: set, bulk_checks_metadata: dict):
     for check in check_list:
         try:
@@ -109,7 +108,6 @@ def print_checks(provider: str, check_list: set, bulk_checks_metadata: dict):
             logger.error(
                 f"Check {error} was not found for the {provider.upper()} provider"
             )
-
 
 
 # List available groups
@@ -193,10 +191,7 @@ def run_check(check, audit_info, output_options):
     logger.debug(f"Executing check: {check.checkName}")
     findings = check.execute()
 
-    # Call to get orgs, need to check if input option is passed in output options
-    # right now it is not checked and is called straight to generate the fields to be passed to the csv
-    organizations_info = get_orgs_info()
-    report(findings, output_options, audit_info, organizations_info)
+    report(findings, output_options, audit_info)
 
 
 def import_check(check_path: str) -> ModuleType:

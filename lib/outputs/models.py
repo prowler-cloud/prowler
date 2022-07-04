@@ -1,7 +1,8 @@
 from dataclasses import asdict, dataclass
 
 from config.config import timestamp
-from lib.check.models import Check_Report, Organizations_Info
+from lib.check.models import Check_Report
+from providers.aws.models import Organizations_Info
 
 
 @dataclass
@@ -72,11 +73,12 @@ class Check_Output_CSV:
         self.provider = report.check_metadata.Provider
         self.profile = profile
         self.account_id = account
-        self.account_name = organizations.account_details_name
-        self.account_email = organizations.account_details_email
-        self.account_arn = organizations.account_details_arn
-        self.account_org = organizations.account_details_org
-        self.account_tags = organizations.account_details_tags
+        if organizations:
+            self.account_name = organizations.account_details_name
+            self.account_email = organizations.account_details_email
+            self.account_arn = organizations.account_details_arn
+            self.account_org = organizations.account_details_org
+            self.account_tags = organizations.account_details_tags
         self.region = report.region
         self.check_id = report.check_metadata.CheckID
         self.check_name = report.check_metadata.CheckName
@@ -181,9 +183,3 @@ class Check_Output_CSV:
             groups = ""
 
         return unrolled_compliance
-
-    def get_csv_header(self):
-        csv_header = []
-        for key in asdict(self):
-            csv_header = csv_header.append(key)
-        return csv_header

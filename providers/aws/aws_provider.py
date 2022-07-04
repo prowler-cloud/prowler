@@ -1,14 +1,18 @@
 import sys
 
 from arnparse import arnparse
-from boto3 import session
+from boto3 import client, session
 from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
 
 from lib.arn.arn import arn_parsing
-from lib.check.models import Organizations_Info
 from lib.logger import logger
-from providers.aws.models import AWS_Assume_Role, AWS_Audit_Info, AWS_Credentials
+from providers.aws.models import (
+    AWS_Assume_Role,
+    AWS_Audit_Info,
+    AWS_Credentials,
+    Organizations_Info,
+)
 
 
 ################## AWS PROVIDER
@@ -100,9 +104,9 @@ def provider_set_session(
         profile_region=None,
         credentials=None,
         assumed_role_info=AWS_Assume_Role(
-            role_arn=input_role,
-            session_duration=input_session_duration,
-            external_id=input_external_id,
+            role_arn=None,
+            session_duration=None,
+            external_id=None,
         ),
         audited_regions=input_regions,
         organizations_metadata=None,
@@ -122,11 +126,40 @@ def provider_set_session(
     current_audit_info.audited_account = caller_identity["Account"]
     current_audit_info.audited_partition = arnparse(caller_identity["Arn"]).partition
 
-    logger.info("Checking if role assumption is needed ...")
-    if current_audit_info.assumed_role_info.role_arn:
+    logger.info("Checking if organizations role assumption is needed ...")
+    if organizations_role_arn:
+        current_audit_info.assumed_role_info.role_arn = organizations_role_arn
+        current_audit_info.assumed_role_info.session_duration = input_session_duration
+
         # Check if role arn is valid
         try:
             # this returns the arn already parsed, calls arnparse, into a dict to be used when it is needed to access its fields
+            role_arn_parsed = arn_parsing(current_audit_info.assumed_role_info.role_arn)
+
+        except Exception as error:
+            logger.critical(f"{error.__class__.__name__} -- {error}")
+            sys.exit()
+
+        else:
+            logger.info(
+                f"Getting organizations metadata for account {organizations_role_arn}"
+            )
+            assumed_credentials = assume_role(current_audit_info)
+            current_audit_info.organizations_metadata = get_organizations_metadata(
+                assumed_credentials
+            )
+            logger.info(f"Organizations metadata retrieved")
+
+    logger.info("Checking if role assumption is needed ...")
+    if input_role:
+        current_audit_info.assumed_role_info.role_arn = input_role
+        current_audit_info.assumed_role_info.session_duration = input_session_duration
+        current_audit_info.assumed_role_info.external_id = input_external_id
+
+        # Check if role arn is valid
+        try:
+            # this returns the arn already parsed, calls arnparse, into a dict to be used when it is needed to access its fields
+            print(current_audit_info.assumed_role_info)
             role_arn_parsed = arn_parsing(current_audit_info.assumed_role_info.role_arn)
 
         except Exception as error:
@@ -161,15 +194,6 @@ def provider_set_session(
         current_audit_info.audit_session = current_audit_info.original_session
 
     logger.info("Checking if organizations metadata is needed ...")
-    if organizations_role_arn:
-        logger.info(
-            f"Getting organizations metadata for account {organizations_role_arn}"
-        )
-        current_audit_info.organizations_metadata = get_organizations_metadata(
-            organizations_role_arn
-        )
-        logger.info(f"Organizations metadata retrieved")
-
     # Setting default region of session
     if current_audit_info.audit_session.region_name:
         current_audit_info.profile_region = current_audit_info.audit_session.region_name
@@ -217,35 +241,35 @@ def assume_role(audit_info: AWS_Audit_Info) -> dict:
         return assumed_credentials
 
 
-def get_organizations_metadata(organizations_role_arn):
+def get_organizations_metadata(assumed_credentials):
     try:
-        sts_client = current_audit_info.original_session.client("sts")
-        assumed_credentials = sts_client.assume_role(
-            RoleArn=organizations_role_arn,
-            RoleSessionName="ProwlerProOrganizationsSession",
+        organizations_client = client(
+            "organizations",
+            aws_access_key_id=assumed_credentials["Credentials"]["AccessKeyId"],
+            aws_secret_access_key=assumed_credentials["Credentials"]["SecretAccessKey"],
+            aws_session_token=assumed_credentials["Credentials"]["SessionToken"],
         )
-        organizations_client = assumed_credentials.client("organizations")
         organizations_metadata = organizations_client.describe_account(
             AccountId=current_audit_info.audited_account
         )
-        account_details_tags = organizations_client.list_tags_for_resource(
+        list_tags_for_resource = organizations_client.list_tags_for_resource(
             ResourceId=current_audit_info.audited_account
         )
         # Convert Tags dictionary to String
         account_details_tags = ""
-        for tag in account_details_tags["Tags"]:
+        for tag in list_tags_for_resource["Tags"]:
             account_details_tags = (
                 account_details_tags + tag["Key"] + ":" + tag["Value"] + ","
             )
-        current_audit_info = Organizations_Info(
+        organizations_info = Organizations_Info(
             account_details_email=organizations_metadata["Account"]["Email"],
             account_details_name=organizations_metadata["Account"]["Name"],
             account_details_arn=organizations_metadata["Account"]["Arn"],
-            account_details_org=organizations_metadata["Account"]["Arn"].split(":")[4],
+            account_details_org=organizations_metadata["Account"]["Arn"].split("/")[1],
             account_details_tags=account_details_tags,
         )
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")
         sys.exit()
     else:
-        return organizations_metadata
+        return organizations_info
