@@ -46,13 +46,13 @@ check23(){
 
         CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $TRAIL_REGION --query 'trailList[*].[S3BucketName]' --output text --trail-name-list $trail)
         if [[ -z $CLOUDTRAILBUCKET ]]; then
-          textFail "Trail $trail in $TRAIL_REGION does not publish to S3"
+          textFail "Trail $trail in $TRAIL_REGION does not publish to S3" "$regx" "$trail"
           continue
         fi
 
         CLOUDTRAIL_ACCOUNT_ID=$(echo $trail | awk -F: '{ print $5 }')
         if [ "$CLOUDTRAIL_ACCOUNT_ID" != "$ACCOUNT_NUM" ]; then
-          textInfo "Trail $trail in $TRAIL_REGION S3 logging bucket $CLOUDTRAILBUCKET is not in current account"
+          textInfo "Trail $trail in $TRAIL_REGION S3 logging bucket $CLOUDTRAILBUCKET is not in current account" "$regx" "$trail"
           continue
         fi
 
@@ -63,7 +63,7 @@ check23(){
         #
         BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location $PROFILE_OPT --region $regx --bucket $CLOUDTRAILBUCKET --output text 2>&1)
         if [[ $(echo "$BUCKET_LOCATION" | grep AccessDenied) ]]; then
-          textInfo "Trail $trail in $TRAIL_REGION Access Denied getting bucket location for $CLOUDTRAILBUCKET"
+          textInfo "Trail $trail in $TRAIL_REGION Access Denied getting bucket location for $CLOUDTRAILBUCKET" "$regx" "$trail"
           continue
         fi
         if [[ $BUCKET_LOCATION == "None" ]]; then
@@ -75,14 +75,14 @@ check23(){
 
         CLOUDTRAILBUCKET_HASALLPERMISIONS=$($AWSCLI s3api get-bucket-acl --bucket $CLOUDTRAILBUCKET $PROFILE_OPT --region $BUCKET_LOCATION --query 'Grants[?Grantee.URI==`http://acs.amazonaws.com/groups/global/AllUsers`]' --output text 2>&1)
         if [[ $(echo "$CLOUDTRAILBUCKET_HASALLPERMISIONS" | grep AccessDenied) ]]; then
-          textInfo "Trail $trail in $TRAIL_REGION Access Denied getting bucket acl for $CLOUDTRAILBUCKET"
+          textInfo "Trail $trail in $TRAIL_REGION Access Denied getting bucket acl for $CLOUDTRAILBUCKET" "$regx" "$trail"
           continue
         fi
 
         if [[ -z $CLOUDTRAILBUCKET_HASALLPERMISIONS ]]; then
-          textPass "Trail $trail in $TRAIL_REGION S3 logging bucket $CLOUDTRAILBUCKET is not publicly accessible"
+          textPass "Trail $trail in $TRAIL_REGION S3 logging bucket $CLOUDTRAILBUCKET is not publicly accessible" "$regx" "$trail"
         else
-          textFail "Trail $trail in $TRAIL_REGION S3 logging bucket $CLOUDTRAILBUCKET is publicly accessible"
+          textFail "Trail $trail in $TRAIL_REGION S3 logging bucket $CLOUDTRAILBUCKET is publicly accessible" "$regx" "$trail"
         fi
 
       done
