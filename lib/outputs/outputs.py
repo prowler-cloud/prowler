@@ -40,7 +40,6 @@ def report(check_findings, output_options, audit_info, organizations_info):
             csv_writer = DictWriter(
                 file_descriptors["csv"], fieldnames=csv_fields, delimiter=";"
             )
-            # csv_line = [audit_info.profile,audit_info.audited_account,finding.region,finding.check_metadata.CheckID,finding.status,finding.check_metadata.CheckTitle,finding.result_extended]
             csv_writer.writerow(finding_output.__dict__)
 
     # Close all file descriptors
