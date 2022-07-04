@@ -131,7 +131,7 @@ def provider_set_session(
                 f"Assuming role {current_audit_info.assumed_role_info.role_arn}"
             )
             # Assume the role
-            assumed_role_response = assume_role()
+            assumed_role_response = assume_role(current_audit_info)
             logger.info("Role assumed")
             # Set the info needed to create a session with an assumed role
             current_audit_info.credentials = AWS_Credentials(
@@ -175,25 +175,24 @@ def validate_credentials(validate_session):
         return caller_identity
 
 
-def assume_role():
-
+def assume_role(audit_info: AWS_Audit_Info) -> dict:
     try:
         # set the info to assume the role from the partition, account and role name
-        sts_client = current_audit_info.original_session.client("sts")
+        sts_client = audit_info.original_session.client("sts")
         # If external id, set it to the assume role api call
-        if current_audit_info.assumed_role_info.external_id:
+        if audit_info.assumed_role_info.external_id:
             assumed_credentials = sts_client.assume_role(
-                RoleArn=current_audit_info.assumed_role_info.role_arn,
+                RoleArn=audit_info.assumed_role_info.role_arn,
                 RoleSessionName="ProwlerProAsessmentSession",
-                DurationSeconds=current_audit_info.assumed_role_info.session_duration,
-                ExternalId=current_audit_info.assumed_role_info.external_id,
+                DurationSeconds=audit_info.assumed_role_info.session_duration,
+                ExternalId=audit_info.assumed_role_info.external_id,
             )
         # else assume the role without the external id
         else:
             assumed_credentials = sts_client.assume_role(
-                RoleArn=current_audit_info.assumed_role_info.role_arn,
+                RoleArn=audit_info.assumed_role_info.role_arn,
                 RoleSessionName="ProwlerProAsessmentSession",
-                DurationSeconds=current_audit_info.assumed_role_info.session_duration,
+                DurationSeconds=audit_info.assumed_role_info.session_duration,
             )
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")

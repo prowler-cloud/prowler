@@ -1,7 +1,7 @@
 repos:
 ## GENERAL
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.2.0
+    rev: v4.3.0
     hooks:
       - id: check-merge-conflict
       - id: check-yaml
@@ -39,9 +39,28 @@ repos:
     rev: v0.0.5
     hooks:
       - id: check-pipfile-lock
+
   - repo: local
     hooks:
       - id: pytest-check
         name: pytest-check
         entry: bash -c 'pytest'
+        language: system
+
+      - id: bandit
+        name: bandit
+        description: 'Bandit is a tool for finding common security issues in Python code'
+        entry: bash -c 'bandit -q -lll -x '*_test.py,./contrib/' -r .'
+        language: system
+
+      - id: safety
+        name: bandit
+        description: 'Safety is a tool that checks your installed dependencies for known security vulnerabilities'
+        entry: bash -c 'safety check'
+        language: system
+
+      - id: vulture
+        name: vulture
+        description: 'Vulture finds unused code in Python programs.'
+        entry: bash -c 'vulture --exclude "contrib" --min-confidence 100 .'
         language: system

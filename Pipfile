@@ -9,6 +9,12 @@ boto3 = "1.24.8"
 arnparse = "0.0.2"
 botocore = "1.27.8"
 pydantic = "1.9.1"
+moto = {extras = ["iam"], version = "3.1.14"}
+sure = "2.0.0"
+bandit = "1.7.4"
+safety = "1.10.3"
+vulture = "2.4"
+coverage = "6.4.1"
 pytest = "7.1.2"
 
 [dev-packages]
