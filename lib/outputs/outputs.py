@@ -11,20 +11,23 @@ from lib.utils.utils import file_exists, open_file
 def report(check_findings, output_options, audit_info, organizations_info):
     check_findings.sort(key=lambda x: x.region)
 
-    csv_fields = generate_csv_fields()
+    csv_fields = []
     # check output options
-    file_descriptors = fill_file_descriptors(
-        output_options.output_modes,
-        audit_info.audited_account,
-        output_options.output_directory,
-        csv_fields,
-    )
+    file_descriptors = {}
+    if output_options.output_modes:
+        if "csv" in output_options.output_modes:
+            csv_fields = generate_csv_fields()
+
+        file_descriptors = fill_file_descriptors(
+            output_options.output_modes,
+            audit_info.audited_account,
+            output_options.output_directory,
+            csv_fields,
+        )
 
     for finding in check_findings:
         # printing the finding ...
-        finding_output = Check_Output_CSV(
-            audit_info.audited_account, audit_info.profile, finding, organizations_info
-        )
+
         color = set_report_color(finding.status)
         if output_options.is_quiet and "FAIL" in finding.status:
             print(
@@ -34,17 +37,26 @@ def report(check_findings, output_options, audit_info, organizations_info):
             print(
                 f"{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
             )
-        # sending the finding to input options
-        if "csv" in file_descriptors:
+        if file_descriptors:
 
-            csv_writer = DictWriter(
-                file_descriptors["csv"], fieldnames=csv_fields, delimiter=";"
-            )
-            csv_writer.writerow(finding_output.__dict__)
+            # sending the finding to input options
+            if "csv" in file_descriptors:
+                finding_output = Check_Output_CSV(
+                    audit_info.audited_account,
+                    audit_info.profile,
+                    finding,
+                    organizations_info,
+                )
 
-    # Close all file descriptors
-    for file_descriptor in file_descriptors:
-        file_descriptors.get(file_descriptor).close()
+                csv_writer = DictWriter(
+                    file_descriptors["csv"], fieldnames=csv_fields, delimiter=";"
+                )
+                csv_writer.writerow(finding_output.__dict__)
+
+    if file_descriptors:
+        # Close all file descriptors
+        for file_descriptor in file_descriptors:
+            file_descriptors.get(file_descriptor).close()
 
 
 def fill_file_descriptors(output_modes, audited_account, output_directory, csv_fields):

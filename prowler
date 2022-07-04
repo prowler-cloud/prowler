@@ -125,7 +125,6 @@ if __name__ == "__main__":
         nargs="+",
         help="Output mode, by default csv",
         choices=["csv"],
-        default=["csv"],
     )
     parser.add_argument(
         "-o",
@@ -148,6 +147,7 @@ if __name__ == "__main__":
     checks_file = args.checks_file
     output_directory = args.custom_output_directory
     severities = args.severity
+    output_modes = args.output_modes
 
     # Set Logger configuration
     set_logging_config(args.log_file, args.log_level)
@@ -166,7 +166,8 @@ if __name__ == "__main__":
     if output_directory:
         if not isdir(output_directory):
             if output_directory == default_output_directory:
-                mkdir(default_output_directory)
+                if output_modes:
+                    mkdir(default_output_directory)
             else:
                 logger.critical("Output directory does not exist")
                 sys.exit()
@@ -223,7 +224,7 @@ if __name__ == "__main__":
 
     # Setting output options
     audit_output_options = set_output_options(
-        args.quiet, args.output_modes, output_directory
+        args.quiet, output_modes, output_directory
     )
 
     # Set global session
