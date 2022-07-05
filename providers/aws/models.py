@@ -20,7 +20,7 @@ class AWS_Assume_Role:
 
 
 @dataclass
-class Organizations_Info:
+class AWS_Organizations_Info:
     account_details_email: str
     account_details_name: str
     account_details_arn: str
@@ -39,4 +39,4 @@ class AWS_Audit_Info:
     credentials: AWS_Credentials
     assumed_role_info: AWS_Assume_Role
     audited_regions: list
-    organizations_metadata: Organizations_Info
+    organizations_metadata: AWS_Organizations_Info

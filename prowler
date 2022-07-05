@@ -137,7 +137,7 @@ if __name__ == "__main__":
         "-O",
         "--organizations-role",
         nargs="?",
-        help="Specify AWS Organizations management role ARN to be assumed.",
+        help="Specify AWS Organizations management role ARN to be assumed, to get Organization metadata",
     )
 
     # Parse Arguments

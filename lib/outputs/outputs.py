@@ -15,7 +15,7 @@ def report(check_findings, output_options, audit_info):
     file_descriptors = {}
     if output_options.output_modes:
         if "csv" in output_options.output_modes:
-            csv_fields = generate_csv_fields(audit_info.organizations_metadata)
+            csv_fields = generate_csv_fields()
 
         file_descriptors = fill_file_descriptors(
             output_options.output_modes,
@@ -99,15 +99,8 @@ def set_report_color(status):
     return color
 
 
-def generate_csv_fields(organizations_metadata):
+def generate_csv_fields():
     csv_fields = []
-    organizations_fields = [
-        "account_email",
-        "account_arn",
-        "account_org",
-        "account_tags",
-    ]
     for field in Check_Output_CSV.__dict__["__annotations__"].keys():
-        if not (not organizations_metadata and field in organizations_fields):
-            csv_fields.append(field)
+        csv_fields.append(field)
     return csv_fields
