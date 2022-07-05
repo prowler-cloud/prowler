@@ -146,7 +146,7 @@ def provider_set_session(
             )
             assumed_credentials = assume_role(current_audit_info)
             current_audit_info.organizations_metadata = get_organizations_metadata(
-                assumed_credentials
+                current_audit_info.audited_account, assumed_credentials
             )
             logger.info(f"Organizations metadata retrieved")
 
@@ -239,7 +239,9 @@ def assume_role(audit_info: AWS_Audit_Info) -> dict:
         return assumed_credentials
 
 
-def get_organizations_metadata(assumed_credentials: dict) -> AWS_Organizations_Info:
+def get_organizations_metadata(
+    metadata_account: str, assumed_credentials: dict
+) -> AWS_Organizations_Info:
     try:
         organizations_client = client(
             "organizations",
@@ -248,10 +250,10 @@ def get_organizations_metadata(assumed_credentials: dict) -> AWS_Organizations_I
             aws_session_token=assumed_credentials["Credentials"]["SessionToken"],
         )
         organizations_metadata = organizations_client.describe_account(
-            AccountId=current_audit_info.audited_account
+            AccountId=metadata_account
         )
         list_tags_for_resource = organizations_client.list_tags_for_resource(
-            ResourceId=current_audit_info.audited_account
+            ResourceId=metadata_account
         )
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")
