@@ -14,6 +14,79 @@ class Compliance_Framework:
 
 
 @dataclass
+class Check_Output_JSON:
+    assessment_start_time: str
+    finding_unique_id: str
+    provider: str
+    profile: str
+    account_id: int
+    organizations_info: dict
+    region: str
+    check_id: str
+    check_name: str
+    check_title: str
+    check_type: str
+    status: str
+    status_extended: str
+    service_name: str
+    subservice_name: str
+    severity: str
+    resource_id: str
+    resource_arn: str
+    resource_type: str
+    resource_details: str
+    resource_tags: list
+    description: dict
+    risk: list
+    related_url: list
+    remediation: dict
+    categories: list
+    depends_on: list
+    related_to: list
+    notes: str
+    compliance: list
+
+    def __init__(
+        self,
+        account: str,
+        profile: str,
+        report: Check_Report,
+        organizations: AWS_Organizations_Info,
+    ):
+        self.assessment_start_time = timestamp.isoformat()
+        self.finding_unique_id = ""
+        self.provider = report.check_metadata.Provider
+        self.profile = profile
+        self.account_id = account
+        if organizations:
+            self.organizations_info = organizations.__dict__
+        self.region = report.region
+        self.check_id = report.check_metadata.CheckID
+        self.check_name = report.check_metadata.CheckName
+        self.check_title = report.check_metadata.CheckTitle
+        self.check_type = report.check_metadata.CheckType
+        self.status = report.status
+        self.status_extended = report.status_extended
+        self.service_name = report.check_metadata.ServiceName
+        self.subservice_name = report.check_metadata.SubServiceName
+        self.severity = report.check_metadata.Severity
+        self.resource_id = report.resource_id
+        self.resource_arn = report.resource_arn
+        self.resource_type = report.check_metadata.ResourceType
+        self.resource_details = report.resource_details
+        self.resource_tags = report.resource_tags
+        self.description = report.check_metadata.Description
+        self.risk = report.check_metadata.Risk
+        self.related_url = report.check_metadata.RelatedUrl
+        self.remediation = report.check_metadata.Remediation
+        self.categories = report.check_metadata.Categories
+        self.depends_on = report.check_metadata.DependsOn
+        self.related_to = report.check_metadata.RelatedTo
+        self.notes = report.check_metadata.Notes
+        self.compliance = report.check_metadata.Compliance
+
+
+@dataclass
 class Check_Output_CSV:
     assessment_start_time: str
     finding_unique_id: str
@@ -73,11 +146,12 @@ class Check_Output_CSV:
         self.provider = report.check_metadata.Provider
         self.profile = profile
         self.account_id = account
-        self.account_name = organizations.account_details_name
-        self.account_email = organizations.account_details_email
-        self.account_arn = organizations.account_details_arn
-        self.account_org = organizations.account_details_org
-        self.account_tags = organizations.account_details_tags
+        if organizations:
+            self.account_name = organizations.account_details_name
+            self.account_email = organizations.account_details_email
+            self.account_arn = organizations.account_details_arn
+            self.account_org = organizations.account_details_org
+            self.account_tags = organizations.account_details_tags
         self.region = report.region
         self.check_id = report.check_metadata.CheckID
         self.check_name = report.check_metadata.CheckName
