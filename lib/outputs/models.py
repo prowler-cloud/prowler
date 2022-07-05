@@ -1,7 +1,8 @@
 from dataclasses import asdict, dataclass
 
 from config.config import timestamp
-from lib.check.models import Check_Report, Organizations_Info
+from lib.check.models import Check_Report
+from providers.aws.models import AWS_Organizations_Info
 
 
 @dataclass
@@ -65,7 +66,7 @@ class Check_Output_CSV:
         account: str,
         profile: str,
         report: Check_Report,
-        organizations: Organizations_Info,
+        organizations: AWS_Organizations_Info,
     ):
         self.assessment_start_time = timestamp.isoformat()
         self.finding_unique_id = ""
@@ -181,9 +182,3 @@ class Check_Output_CSV:
             groups = ""
 
         return unrolled_compliance
-
-    def get_csv_header(self):
-        csv_header = []
-        for key in asdict(self):
-            csv_header = csv_header.append(key)
-        return csv_header

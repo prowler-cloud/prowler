@@ -1,13 +1,18 @@
 import sys
 
 from arnparse import arnparse
-from boto3 import session
+from boto3 import client, session
 from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
 
 from lib.arn.arn import arn_parsing
 from lib.logger import logger
-from providers.aws.models import AWS_Assume_Role, AWS_Audit_Info, AWS_Credentials
+from providers.aws.models import (
+    AWS_Assume_Role,
+    AWS_Audit_Info,
+    AWS_Credentials,
+    AWS_Organizations_Info,
+)
 
 
 ################## AWS PROVIDER
@@ -76,7 +81,12 @@ class AWS_Provider:
 
 
 def provider_set_session(
-    input_profile, input_role, input_session_duration, input_external_id, input_regions
+    input_profile,
+    input_role,
+    input_session_duration,
+    input_external_id,
+    input_regions,
+    organizations_role_arn,
 ):
 
     # Mark variable that stores all the info about the audit as global
@@ -94,11 +104,12 @@ def provider_set_session(
         profile_region=None,
         credentials=None,
         assumed_role_info=AWS_Assume_Role(
-            role_arn=input_role,
-            session_duration=input_session_duration,
-            external_id=input_external_id,
+            role_arn=None,
+            session_duration=None,
+            external_id=None,
         ),
         audited_regions=input_regions,
+        organizations_metadata=None,
     )
 
     logger.info("Generating original session ...")
@@ -115,8 +126,36 @@ def provider_set_session(
     current_audit_info.audited_account = caller_identity["Account"]
     current_audit_info.audited_partition = arnparse(caller_identity["Arn"]).partition
 
+    logger.info("Checking if organizations role assumption is needed ...")
+    if organizations_role_arn:
+        current_audit_info.assumed_role_info.role_arn = organizations_role_arn
+        current_audit_info.assumed_role_info.session_duration = input_session_duration
+
+        # Check if role arn is valid
+        try:
+            # this returns the arn already parsed, calls arnparse, into a dict to be used when it is needed to access its fields
+            role_arn_parsed = arn_parsing(current_audit_info.assumed_role_info.role_arn)
+
+        except Exception as error:
+            logger.critical(f"{error.__class__.__name__} -- {error}")
+            sys.exit()
+
+        else:
+            logger.info(
+                f"Getting organizations metadata for account {organizations_role_arn}"
+            )
+            assumed_credentials = assume_role(current_audit_info)
+            current_audit_info.organizations_metadata = get_organizations_metadata(
+                current_audit_info.audited_account, assumed_credentials
+            )
+            logger.info(f"Organizations metadata retrieved")
+
     logger.info("Checking if role assumption is needed ...")
-    if current_audit_info.assumed_role_info.role_arn:
+    if input_role:
+        current_audit_info.assumed_role_info.role_arn = input_role
+        current_audit_info.assumed_role_info.session_duration = input_session_duration
+        current_audit_info.assumed_role_info.external_id = input_external_id
+
         # Check if role arn is valid
         try:
             # this returns the arn already parsed, calls arnparse, into a dict to be used when it is needed to access its fields
@@ -153,18 +192,16 @@ def provider_set_session(
         logger.info("Audit session is the original one")
         current_audit_info.audit_session = current_audit_info.original_session
 
-
     # Setting default region of session
     if current_audit_info.audit_session.region_name:
         current_audit_info.profile_region = current_audit_info.audit_session.region_name
     else:
         current_audit_info.profile_region = "us-east-1"
-    
+
     return current_audit_info
 
 
-
-def validate_credentials(validate_session):
+def validate_credentials(validate_session: session) -> dict:
     try:
         validate_credentials_client = validate_session.client("sts")
         caller_identity = validate_credentials_client.get_caller_identity()
@@ -200,3 +237,37 @@ def assume_role(audit_info: AWS_Audit_Info) -> dict:
 
     else:
         return assumed_credentials
+
+
+def get_organizations_metadata(
+    metadata_account: str, assumed_credentials: dict
+) -> AWS_Organizations_Info:
+    try:
+        organizations_client = client(
+            "organizations",
+            aws_access_key_id=assumed_credentials["Credentials"]["AccessKeyId"],
+            aws_secret_access_key=assumed_credentials["Credentials"]["SecretAccessKey"],
+            aws_session_token=assumed_credentials["Credentials"]["SessionToken"],
+        )
+        organizations_metadata = organizations_client.describe_account(
+            AccountId=metadata_account
+        )
+        list_tags_for_resource = organizations_client.list_tags_for_resource(
+            ResourceId=metadata_account
+        )
+    except Exception as error:
+        logger.critical(f"{error.__class__.__name__} -- {error}")
+        sys.exit()
+    else:
+        # Convert Tags dictionary to String
+        account_details_tags = ""
+        for tag in list_tags_for_resource["Tags"]:
+            account_details_tags += tag["Key"] + ":" + tag["Value"] + ","
+        organizations_info = AWS_Organizations_Info(
+            account_details_email=organizations_metadata["Account"]["Email"],
+            account_details_name=organizations_metadata["Account"]["Name"],
+            account_details_arn=organizations_metadata["Account"]["Arn"],
+            account_details_org=organizations_metadata["Account"]["Arn"].split("/")[1],
+            account_details_tags=account_details_tags,
+        )
+        return organizations_info

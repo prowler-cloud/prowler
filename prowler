@@ -133,6 +133,12 @@ if __name__ == "__main__":
         help="Custom output directory, by default the folder where Prowler is stored",
         default=default_output_directory,
     )
+    parser.add_argument(
+        "-O",
+        "--organizations-role",
+        nargs="?",
+        help="Specify AWS Organizations management role ARN to be assumed, to get Organization metadata",
+    )
 
     # Parse Arguments
     args = parser.parse_args()
@@ -234,6 +240,7 @@ if __name__ == "__main__":
         args.session_duration,
         args.external_id,
         args.filter_region,
+        args.organizations_role,
     )
 
     # Execute checks

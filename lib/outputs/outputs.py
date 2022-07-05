@@ -3,12 +3,11 @@ from csv import DictWriter
 from colorama import Fore, Style
 
 from config.config import csv_file_suffix
-from lib.check.models import Organizations_Info
 from lib.outputs.models import Check_Output_CSV
 from lib.utils.utils import file_exists, open_file
 
 
-def report(check_findings, output_options, audit_info, organizations_info):
+def report(check_findings, output_options, audit_info):
     check_findings.sort(key=lambda x: x.region)
 
     csv_fields = []
@@ -45,9 +44,8 @@ def report(check_findings, output_options, audit_info, organizations_info):
                     audit_info.audited_account,
                     audit_info.profile,
                     finding,
-                    organizations_info,
+                    audit_info.organizations_metadata,
                 )
-
                 csv_writer = DictWriter(
                     file_descriptors["csv"], fieldnames=csv_fields, delimiter=";"
                 )
@@ -106,14 +104,3 @@ def generate_csv_fields():
     for field in Check_Output_CSV.__dict__["__annotations__"].keys():
         csv_fields.append(field)
     return csv_fields
-
-
-def get_orgs_info():
-    organizations_info = Organizations_Info(
-        account_details_email="",
-        account_details_name="",
-        account_details_arn="",
-        account_details_org="",
-        account_details_tags="",
-    )
-    return organizations_info

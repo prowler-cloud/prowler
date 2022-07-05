@@ -192,12 +192,3 @@ class Check_Report:
         self.resource_tags = []
         self.resource_id = ""
         self.resource_arn = ""
-
-
-@dataclass
-class Organizations_Info:
-    account_details_email: str
-    account_details_name: str
-    account_details_arn: str
-    account_details_org: str
-    account_details_tags: str

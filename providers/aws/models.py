@@ -20,6 +20,15 @@ class AWS_Assume_Role:
 
 
 @dataclass
+class AWS_Organizations_Info:
+    account_details_email: str
+    account_details_name: str
+    account_details_arn: str
+    account_details_org: str
+    account_details_tags: str
+
+
+@dataclass
 class AWS_Audit_Info:
     original_session: session.Session
     audit_session: session.Session
@@ -30,3 +39,4 @@ class AWS_Audit_Info:
     credentials: AWS_Credentials
     assumed_role_info: AWS_Assume_Role
     audited_regions: list
+    organizations_metadata: AWS_Organizations_Info
