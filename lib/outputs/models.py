@@ -1,4 +1,7 @@
 from dataclasses import asdict, dataclass
+from typing import Optional
+
+from pydantic import BaseModel
 
 from config.config import timestamp
 from lib.check.models import Check_Report
@@ -11,6 +14,39 @@ class Compliance_Framework:
     Version: str
     Group: list
     Control: list
+
+
+class Check_Output_JSON(BaseModel):
+    AssessmentStartTime: Optional[str]
+    FindingUniqueId: Optional[str]
+    Provider: str
+    Profile: Optional[str]
+    AccountId: Optional[str]
+    OrganizationsInfo: Optional[dict]
+    Region: Optional[str]
+    CheckID: str
+    CheckName: str
+    CheckTitle: str
+    CheckType: str
+    ServiceName: str
+    SubServiceName: str
+    Status: Optional[str]
+    StatusExtended: Optional[str]
+    Severity: str
+    ResourceId: Optional[str]
+    ResourceArn: Optional[str]
+    ResourceType: str
+    ResourceDetails: Optional[str]
+    Tags: dict
+    Description: str
+    Risk: str
+    RelatedUrl: str
+    Remediation: dict
+    Categories: list
+    DependsOn: list
+    RelatedTo: list
+    Notes: str
+    Compliance: list
 
 
 @dataclass
@@ -73,11 +109,12 @@ class Check_Output_CSV:
         self.provider = report.check_metadata.Provider
         self.profile = profile
         self.account_id = account
-        self.account_name = organizations.account_details_name
-        self.account_email = organizations.account_details_email
-        self.account_arn = organizations.account_details_arn
-        self.account_org = organizations.account_details_org
-        self.account_tags = organizations.account_details_tags
+        if organizations:
+            self.account_name = organizations.account_details_name
+            self.account_email = organizations.account_details_email
+            self.account_arn = organizations.account_details_arn
+            self.account_org = organizations.account_details_org
+            self.account_tags = organizations.account_details_tags
         self.region = report.region
         self.check_id = report.check_metadata.CheckID
         self.check_name = report.check_metadata.CheckName

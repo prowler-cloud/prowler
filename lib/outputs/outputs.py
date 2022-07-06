@@ -1,9 +1,11 @@
+import json
+import os
 from csv import DictWriter
 
 from colorama import Fore, Style
 
-from config.config import csv_file_suffix
-from lib.outputs.models import Check_Output_CSV
+from config.config import csv_file_suffix, json_file_suffix, timestamp
+from lib.outputs.models import Check_Output_CSV, Check_Output_JSON
 from lib.utils.utils import file_exists, open_file
 
 
@@ -51,6 +53,13 @@ def report(check_findings, output_options, audit_info):
                 )
                 csv_writer.writerow(finding_output.__dict__)
 
+            if "json" in file_descriptors:
+                finding_output = Check_Output_JSON(**finding.check_metadata.dict())
+                fill_json(finding_output, audit_info, finding)
+
+                json.dump(finding_output.dict(), file_descriptors["json"], indent=4)
+                file_descriptors["json"].write(",")
+
     if file_descriptors:
         # Close all file descriptors
         for file_descriptor in file_descriptors:
@@ -81,6 +90,23 @@ def fill_file_descriptors(output_modes, audited_account, output_directory, csv_f
                 csv_writer.writeheader()
 
             file_descriptors.update({output_mode: file_descriptor})
+
+        if output_mode == "json":
+            filename = f"{output_directory}/prowler-output-{audited_account}-{json_file_suffix}"
+            if file_exists(filename):
+                file_descriptor = open_file(
+                    filename,
+                    "a",
+                )
+            else:
+                file_descriptor = open_file(
+                    filename,
+                    "a",
+                )
+                file_descriptor.write("[")
+
+            file_descriptors.update({output_mode: file_descriptor})
+
     return file_descriptors
 
 
@@ -104,3 +130,32 @@ def generate_csv_fields():
     for field in Check_Output_CSV.__dict__["__annotations__"].keys():
         csv_fields.append(field)
     return csv_fields
+
+
+def fill_json(finding_output, audit_info, finding):
+    finding_output.AssessmentStartTime = timestamp.isoformat()
+    finding_output.FindingUniqueId = ""
+    finding_output.Profile = audit_info.profile
+    finding_output.AccountId = audit_info.audited_account
+    if audit_info.organizations_metadata:
+        finding_output.OrganizationsInfo = audit_info.organizations_metadata.__dict__
+    finding_output.Region = finding.region
+    finding_output.Status = finding.status
+    finding_output.StatusExtended = finding.status_extended
+    finding_output.ResourceId = finding.resource_id
+    finding_output.ResourceArn = finding.resource_arn
+    finding_output.ResourceDetails = finding.resource_details
+
+    return finding_output
+
+
+def close_json(output_directory, audited_account):
+    filename = f"{output_directory}/prowler-output-{audited_account}-{json_file_suffix}"
+    file_descriptor = open_file(
+        filename,
+        "a",
+    )
+    file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
+    file_descriptor.truncate()
+    file_descriptor.write("]")
+    file_descriptor.close()

@@ -23,6 +23,7 @@ from lib.check.check import (
 )
 from lib.check.checks_loader import load_checks_to_execute
 from lib.logger import logger, set_logging_config
+from lib.outputs.outputs import close_json
 from providers.aws.aws_provider import provider_set_session
 
 if __name__ == "__main__":
@@ -124,7 +125,7 @@ if __name__ == "__main__":
         "--output-modes",
         nargs="+",
         help="Output mode, by default csv",
-        choices=["csv"],
+        choices=["csv", "json"],
     )
     parser.add_argument(
         "-o",
@@ -269,3 +270,7 @@ if __name__ == "__main__":
         logger.error(
             "There are no checks to execute. Please, check your input arguments"
         )
+
+    # Close json file if exists
+    if "json" in output_modes:
+        close_json(output_directory, audit_info.audited_account)
