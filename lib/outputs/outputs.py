@@ -4,8 +4,22 @@ from csv import DictWriter
 
 from colorama import Fore, Style
 
-from config.config import csv_file_suffix, json_file_suffix, timestamp
-from lib.outputs.models import Check_Output_CSV, Check_Output_JSON
+from config.config import (
+    csv_file_suffix,
+    json_asff_file_suffix,
+    json_file_suffix,
+    prowler_version,
+    timestamp,
+)
+from lib.outputs.models import (
+    Check_Output_CSV,
+    Check_Output_JSON,
+    Check_Output_JSON_ASFF,
+    Compliance,
+    ProductFields,
+    Resource,
+    Severity,
+)
 from lib.utils.utils import file_exists, open_file
 
 
@@ -60,6 +74,15 @@ def report(check_findings, output_options, audit_info):
                 json.dump(finding_output.dict(), file_descriptors["json"], indent=4)
                 file_descriptors["json"].write(",")
 
+            if "json-asff" in file_descriptors:
+                finding_output = Check_Output_JSON_ASFF()
+                fill_json_asff(finding_output, audit_info, finding)
+
+                json.dump(
+                    finding_output.dict(), file_descriptors["json-asff"], indent=4
+                )
+                file_descriptors["json-asff"].write(",")
+
     if file_descriptors:
         # Close all file descriptors
         for file_descriptor in file_descriptors:
@@ -93,6 +116,22 @@ def fill_file_descriptors(output_modes, audited_account, output_directory, csv_f
 
         if output_mode == "json":
             filename = f"{output_directory}/prowler-output-{audited_account}-{json_file_suffix}"
+            if file_exists(filename):
+                file_descriptor = open_file(
+                    filename,
+                    "a",
+                )
+            else:
+                file_descriptor = open_file(
+                    filename,
+                    "a",
+                )
+                file_descriptor.write("[")
+
+            file_descriptors.update({output_mode: file_descriptor})
+
+        if output_mode == "json-asff":
+            filename = f"{output_directory}/prowler-output-{audited_account}-{json_asff_file_suffix}"
             if file_exists(filename):
                 file_descriptor = open_file(
                     filename,
@@ -149,12 +188,48 @@ def fill_json(finding_output, audit_info, finding):
     return finding_output
 
 
-def close_json(output_directory, audited_account):
-    filename = f"{output_directory}/prowler-output-{audited_account}-{json_file_suffix}"
+def fill_json_asff(finding_output, audit_info, finding):
+    finding_output.Id = f"prowler-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{str(hash(finding.resource_id))}"
+    finding_output.ProductArn = f"arn:{audit_info.audited_partition}:securityhub:{finding.region}::product/prowler/prowler"
+    finding_output.ProductFields = ProductFields(
+        ProviderVersion=prowler_version, ProwlerResourceName=finding.resource_id
+    )
+    finding_output.GeneratorId = "prowler-" + finding.check_metadata.CheckID
+    finding_output.AwsAccountId = audit_info.audited_account
+    finding_output.Types = finding.check_metadata.CheckType
+    finding_output.FirstObservedAt = (
+        finding_output.UpdatedAt
+    ) = finding_output.CreatedAt = timestamp.isoformat()
+    finding_output.Severity = Severity(Label=finding.check_metadata.Severity)
+    finding_output.Title = finding.check_metadata.CheckTitle
+    finding_output.Description = finding.check_metadata.Description
+    finding_output.Resources = [
+        Resource(
+            Id=finding.resource_id,
+            Type=finding.check_metadata.ResourceType,
+            Partition=audit_info.audited_partition,
+            Region=finding.region,
+        )
+    ]
+    finding_output.Compliance = Compliance(
+        Status=finding.status, RelatedRequirements=[finding.check_metadata.CheckType]
+    )
+
+    return finding_output
+
+
+def close_json(output_directory, audited_account, mode):
+    if mode == "json":
+        filename = (
+            f"{output_directory}/prowler-output-{audited_account}-{json_file_suffix}"
+        )
+    elif mode == "json-asff":
+        filename = f"{output_directory}/prowler-output-{audited_account}-{json_asff_file_suffix}"
     file_descriptor = open_file(
         filename,
         "a",
     )
+    # Replace last comma for square bracket
     file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
     file_descriptor.truncate()
     file_descriptor.write("]")

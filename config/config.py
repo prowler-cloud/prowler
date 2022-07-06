@@ -14,3 +14,4 @@ default_output_directory = getcwd() + "/output"
 
 csv_file_suffix = timestamp.strftime("%Y%m%d%H%M%S") + ".csv"
 json_file_suffix = timestamp.strftime("%Y%m%d%H%M%S") + ".json"
+json_asff_file_suffix = timestamp.strftime("%Y%m%d%H%M%S") + "asff.json"
