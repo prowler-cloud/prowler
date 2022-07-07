@@ -47,9 +47,7 @@ if __name__ == "__main__":
     # Exclude checks options
     parser.add_argument("-e", "--excluded-checks", nargs="+", help="Checks to exclude")
     parser.add_argument("-E", "--excluded-groups", nargs="+", help="Groups to exclude")
-    parser.add_argument(
-        "-S", "--excluded-services", nargs="+", help="Services to exclude"
-    )
+    parser.add_argument("--excluded-services", nargs="+", help="Services to exclude")
     # List checks options
     list_group = parser.add_mutually_exclusive_group()
     list_group.add_argument(
@@ -140,7 +138,12 @@ if __name__ == "__main__":
         nargs="?",
         help="Specify AWS Organizations management role ARN to be assumed, to get Organization metadata",
     )
-
+    parser.add_argument(
+        "-S",
+        "--security-hub",
+        action="store_true",
+        help="Send check output to AWS Security Hub.",
+    )
     # Parse Arguments
     args = parser.parse_args()
 
@@ -229,9 +232,16 @@ if __name__ == "__main__":
         print_checks(provider, checks_to_execute, bulk_checks_metadata)
         sys.exit()
 
+    # If security hub sending enabled, it is need to create json-asff output
+    if args.security_hub:
+        if not output_modes:
+            output_modes = ["json-asff"]
+        else:
+            output_modes.append("json-asff")
+
     # Setting output options
     audit_output_options = set_output_options(
-        args.quiet, output_modes, output_directory
+        args.quiet, output_modes, output_directory, args.security_hub
     )
 
     # Set global session

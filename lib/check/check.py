@@ -173,12 +173,15 @@ def import_check(check_path: str) -> ModuleType:
     return lib
 
 
-def set_output_options(quiet: bool, output_modes: list, input_output_directory: str):
+def set_output_options(
+    quiet: bool, output_modes: list, input_output_directory: str, security_hub: bool
+):
     global output_options
     output_options = Output_From_Options(
         is_quiet=quiet,
         output_modes=output_modes,
-        output_directory=input_output_directory
+        output_directory=input_output_directory,
+        security_hub=security_hub
         # set input options here
     )
     return output_options

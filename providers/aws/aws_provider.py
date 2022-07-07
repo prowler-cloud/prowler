@@ -7,6 +7,7 @@ from botocore.session import get_session
 
 from lib.arn.arn import arn_parsing
 from lib.logger import logger
+from lib.outputs.models import Check_Output_JSON_ASFF
 from providers.aws.models import (
     AWS_Assume_Role,
     AWS_Audit_Info,
@@ -271,3 +272,35 @@ def get_organizations_metadata(
             account_details_tags=account_details_tags,
         )
         return organizations_info
+
+
+def send_to_security_hub(
+    region: str, finding_output: Check_Output_JSON_ASFF, session: session.Session
+):
+    try:
+        # Check if security hub is enabled in current region
+        security_hub_client = session.client("securityhub", region_name=region)
+        security_hub_client.describe_hub()
+
+        # Check if Prowler integration is enabled in Security Hub
+        if "prowler/prowler" not in str(
+            security_hub_client.list_enabled_products_for_import()
+        ):
+            logger.critical(
+                f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://github.com/prowler-cloud/prowler/#security-hub-integration"
+            )
+            sys.exit()
+
+        # Send finding to Security Hub
+        batch_import = security_hub_client.batch_import_findings(
+            Findings=[finding_output.dict()]
+        )
+        if batch_import["FailedCount"] > 0:
+            failed_import = batch_import["FailedFindings"][0]
+            logger.critical(
+                f"Failed to send check output to AWS Security Hub -- {failed_import['ErrorCode']} -- {failed_import['ErrorMessage']}"
+            )
+            sys.exit()
+
+    except Exception as error:
+        logger.critical(f"{error.__class__.__name__} -- {error} in region {region}")

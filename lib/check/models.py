@@ -13,6 +13,7 @@ class Output_From_Options:
     is_quiet: bool
     output_modes: list
     output_directory: str
+    security_hub: bool
 
 
 # Testing Pending
