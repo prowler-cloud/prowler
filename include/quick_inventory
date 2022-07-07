@@ -45,7 +45,7 @@ quick_inventory(){
             --region $region \
             --query ResourceTagMappingList[].ResourceARN \
             --output json 2>&1)
-        if [[ $(echo "$AWS_RESOURCES" | grep -E 'service control policy') ]]; then
+        if grep -q -E 'service control policy' <<< "${AWS_RESOURCES}"; then
             echo -e "${BAD}blocked by a SCP${NORMAL}"
             continue
         fi
