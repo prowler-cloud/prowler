@@ -226,6 +226,9 @@ def fill_json_asff(finding_output, audit_info, finding):
         Status=finding.status + "ED",
         RelatedRequirements=[finding.check_metadata.CheckType],
     )
+    finding_output.Remediation = {
+        "Recommendation": finding.check_metadata.Remediation.Recommendation
+    }
 
     return finding_output
 
