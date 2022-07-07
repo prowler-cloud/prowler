@@ -52,7 +52,7 @@ RUN rm /usr/bin/python && \
     ln -s /usr/bin/python3 /usr/bin/python
 
 # Set working directory
-WORKDIR /home/${USERNAME}
+WORKDIR /prowler
 
 # Copy all files
 COPY . ./
