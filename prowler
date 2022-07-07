@@ -246,7 +246,7 @@ if __name__ == "__main__":
 
     # Execute checks
     if len(checks_to_execute):
-        for check_name in checks_to_execute:
+        for check_name in sorted(checks_to_execute):
             # Recover service from check name
             service = check_name.split("_")[0]
             try:
