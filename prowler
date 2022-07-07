@@ -129,7 +129,7 @@ USAGE:
       -V                  Show version number & exit.
       -h                  This help.
       -d <provider>       Send output to database through database connectors supported, currently only PostgreSQL. Prowler will get the credentials and table name from your ~/.pgpass file.
-      -i                  Run Prowler Quick Inventory.
+      -i                  Run Prowler Quick Inventory. The inventory will be stored in an output csv by default.
   "
   exit
 }
