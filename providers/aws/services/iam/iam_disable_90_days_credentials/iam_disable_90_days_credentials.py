@@ -43,5 +43,6 @@ class iam_disable_90_days_credentials(Check):
             report.status = "PASS"
             report.status_extended = "There is no IAM users"
             report.region = "us-east-1"
+            findings.append(report)
 
         return findings
