@@ -35,10 +35,10 @@
   "RelatedUrl": "https://serviceofficialsiteorpageforthissubject",
   "Remediation": {
     "Code": {
+      "CLI": "cli command or URL to the cli command location.",
       "NativeIaC": "code or URL to the code location.",
-      "Terraform": "code or URL to the code location.",
-      "cli": "cli command or URL to the cli command location.",
-      "other": "cli command or URL to the cli command location."
+      "Other": "cli command or URL to the cli command location.",
+      "Terraform": "code or URL to the code location."
     },
     "Recommendation": {
       "Text": "Run sudo yum update and cross your fingers and toes.",
