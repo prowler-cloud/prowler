@@ -575,7 +575,7 @@ DynamoDB table ARNs are also supported as allowlist file, e.g. `arn:aws:dynamodb
 Allowlist option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format except for `json-asff`.
 
 ## Inventory
-With Prowler you can get an inventory of your AWS resources. To do so, run `./prowler -i` to see what AWS resources you have deployed in your infrastructure.
+With Prowler you can get an inventory of your AWS resources. To do so, run `./prowler -i` to see what AWS resources you have deployed in your AWS account. This feature lists almost all resources in all regions based on [this](https://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/API_GetResources.html) API call. Note that it does not cover 100% of resource types.
 
 The inventory will be stored in an output `csv` file by default, under common Prowler `output` folder, with the following format: `prowler-inventory-${ACCOUNT_NUM}-${OUTPUT_DATE}.csv`
 ## How to fix every FAIL
