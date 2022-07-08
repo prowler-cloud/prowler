@@ -219,12 +219,10 @@ def fill_json_asff(finding_output, audit_info, finding):
 
 
 def close_json(output_directory, audited_account, mode):
-    if mode == "json":
-        filename = (
-            f"{output_directory}/prowler-output-{audited_account}-{json_file_suffix}"
-        )
-    elif mode == "json-asff":
-        filename = f"{output_directory}/prowler-output-{audited_account}-{json_asff_file_suffix}"
+    suffix = json_file_suffix
+    if mode == "json-asff":
+        suffix = json_asff_file_suffix
+    filename = f"{output_directory}/prowler-output-{audited_account}-{suffix}"
     file_descriptor = open_file(
         filename,
         "a",

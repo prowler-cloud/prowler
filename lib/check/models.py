@@ -36,7 +36,7 @@ class ComplianceItem(BaseModel):
 class Code(BaseModel):
     NativeIaC: str
     Terraform: str
-    Cli: str
+    CLI: str
     Other: str
 
 
