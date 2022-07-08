@@ -577,7 +577,7 @@ Allowlist option works along with other options and adds a `WARNING` instead of 
 ## Inventory
 With Prowler you can get an inventory of your AWS resources. To do so, run `./prowler -i` to see what AWS resources you have deployed in your infrastructure.
 
-The inventory will be stored in an output `csv` file by default, under `/output` folder, with the following format: `prowler-inventory-${ACCOUNT_NUM}-${OUTPUT_DATE}.csv`
+The inventory will be stored in an output `csv` file by default, under common Prowler `output` folder, with the following format: `prowler-inventory-${ACCOUNT_NUM}-${OUTPUT_DATE}.csv`
 ## How to fix every FAIL
 
 Check your report and fix the issues following all specific guidelines per check in <https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf>
