@@ -83,7 +83,7 @@ quick_inventory(){
             echo "$TOTAL_RESOURCE_SERVICE"
         fi
     done
-    echo -e "More details in file: ${INVENTORY_FILE}"
+    echo -e "\nMore details in file: ${INVENTORY_FILE}\n"
     # Clean temp file
     cleanInventoryTemporaryFiles
 }
