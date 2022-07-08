@@ -26,7 +26,7 @@
 </p>
 
 <p align="center">
-  <i>Prowler</i> is an Open Source security tool to perform AWS security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains more than 200 controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custome security frameworks.
+  <i>Prowler</i> is an Open Source security tool to perform AWS security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains more than 240 controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
 </p>
 
 ## Table of Contents
@@ -41,6 +41,7 @@
 - [Security Hub integration](#security-hub-integration)
 - [CodeBuild deployment](#codebuild-deployment)
 - [Allowlist](#allowlist-or-remove-a-fail-from-resources)
+- [Inventory](#inventory)
 - [Fix](#how-to-fix-every-fail)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
@@ -58,13 +59,13 @@
 
 Prowler is a command line tool that helps you with AWS security assessment, auditing, hardening and incident response.
 
-It follows guidelines of the CIS Amazon Web Services Foundations Benchmark (49 checks) and has more than 100 additional checks including related to GDPR, HIPAA, PCI-DSS, ISO-27001, FFIEC, SOC2 and others.
+It follows guidelines of the CIS Amazon Web Services Foundations Benchmark (49 checks) and has more than 190 additional checks including related to GDPR, HIPAA, PCI-DSS, ISO-27001, FFIEC, SOC2 and others.
 
 Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-2018](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf)
 
 ## Features
 
-+200 checks covering security best practices across all AWS regions and most of AWS services and related to the next groups:
++240 checks covering security best practices across all AWS regions and most of AWS services and related to the next groups:
 
 - Identity and Access Management [group1]
 - Logging  [group2]
@@ -90,6 +91,7 @@ With Prowler you can:
 - Send findings directly to Security Hub
 - Run specific checks and groups or create your own
 - Check multiple AWS accounts in parallel or sequentially
+- Get an inventory of your AWS resources
 - And more! Read examples below
 
 ## High level architecture
@@ -572,6 +574,10 @@ DynamoDB table ARNs are also supported as allowlist file, e.g. `arn:aws:dynamodb
 
 Allowlist option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format except for `json-asff`.
 
+## Inventory
+With Prowler you can get an inventory of your AWS resources. To do so, run `./prowler -i` to see what AWS resources you have deployed in your AWS account. This feature lists almost all resources in all regions based on [this](https://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/API_GetResources.html) API call. Note that it does not cover 100% of resource types.
+
+The inventory will be stored in an output `csv` file by default, under common Prowler `output` folder, with the following format: `prowler-inventory-${ACCOUNT_NUM}-${OUTPUT_DATE}.csv`
 ## How to fix every FAIL
 
 Check your report and fix the issues following all specific guidelines per check in <https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf>
