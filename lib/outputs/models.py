@@ -1,10 +1,10 @@
 from dataclasses import asdict, dataclass
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
 from config.config import timestamp
-from lib.check.models import Check_Report
+from lib.check.models import Check_Report, ComplianceItem, Remediation
 from providers.aws.models import AWS_Organizations_Info
 
 
@@ -17,36 +17,78 @@ class Compliance_Framework:
 
 
 class Check_Output_JSON(BaseModel):
-    AssessmentStartTime: Optional[str]
-    FindingUniqueId: Optional[str]
+    AssessmentStartTime: str = ""
+    FindingUniqueId: str = ""
     Provider: str
-    Profile: Optional[str]
-    AccountId: Optional[str]
-    OrganizationsInfo: Optional[dict]
-    Region: Optional[str]
+    Profile: str = ""
+    AccountId: str = ""
+    OrganizationsInfo: Optional[AWS_Organizations_Info]
+    Region: str = ""
     CheckID: str
     CheckName: str
     CheckTitle: str
     CheckType: str
     ServiceName: str
     SubServiceName: str
-    Status: Optional[str]
-    StatusExtended: Optional[str]
+    Status: str = ""
+    StatusExtended: str = ""
     Severity: str
-    ResourceId: Optional[str]
-    ResourceArn: Optional[str]
+    ResourceId: str = ""
+    ResourceArn: str = ""
     ResourceType: str
-    ResourceDetails: Optional[str]
+    ResourceDetails: str = ""
     Tags: dict
     Description: str
     Risk: str
     RelatedUrl: str
-    Remediation: dict
-    Categories: list
-    DependsOn: list
-    RelatedTo: list
+    Remediation: Remediation
+    Categories: List[str]
+    DependsOn: List[str]
+    RelatedTo: List[str]
     Notes: str
-    Compliance: list
+    Compliance: List[ComplianceItem]
+
+
+# JSON ASFF Output
+class ProductFields(BaseModel):
+    ProviderName: str = "Prowler"
+    ProviderVersion: str
+    ProwlerResourceName: str
+
+
+class Severity(BaseModel):
+    Label: str
+
+
+class Resource(BaseModel):
+    Type: str
+    Id: str
+    Partition: str
+    Region: str
+
+
+class Compliance(BaseModel):
+    Status: str
+    RelatedRequirements: List[str]
+
+
+class Check_Output_JSON_ASFF(BaseModel):
+    SchemaVersion: str = "2018-10-08"
+    Id: str = ""
+    ProductArn: str = ""
+    RecordState: str = "ACTIVE"
+    ProductFields: ProductFields = None
+    GeneratorId: str = ""
+    AwsAccountId: str = ""
+    Types: List[str] = None
+    FirstObservedAt: str = ""
+    UpdatedAt: str = ""
+    CreatedAt: str = ""
+    Severity: Severity = None
+    Title: str = ""
+    Description: str = ""
+    Resources: List[Resource] = None
+    Compliance: Compliance = None
 
 
 @dataclass
@@ -133,27 +175,27 @@ class Check_Output_CSV:
         self.description = report.check_metadata.Description
         self.risk = report.check_metadata.Risk
         self.related_url = report.check_metadata.RelatedUrl
-        self.remediation_recommendation_text = report.check_metadata.Remediation[
-            "Recommendation"
-        ]["Text"]
-        self.remediation_recommendation_url = report.check_metadata.Remediation[
-            "Recommendation"
-        ]["Url"]
+        self.remediation_recommendation_text = (
+            report.check_metadata.Remediation.Recommendation.Text
+        )
+        self.remediation_recommendation_url = (
+            report.check_metadata.Remediation.Recommendation.Url
+        )
         self.remediation_recommendation_code_nativeiac = (
-            report.check_metadata.Remediation["Code"]["NativeIaC"]
+            report.check_metadata.Remediation.Code.NativeIaC
         )
         self.remediation_recommendation_code_terraform = (
-            report.check_metadata.Remediation["Code"]["Terraform"]
+            report.check_metadata.Remediation.Code.Terraform
         )
-        self.remediation_recommendation_code_cli = report.check_metadata.Remediation[
-            "Code"
-        ]["cli"]
-        self.remediation_recommendation_code_cli = report.check_metadata.Remediation[
-            "Code"
-        ]["cli"]
-        self.remediation_recommendation_code_other = report.check_metadata.Remediation[
-            "Code"
-        ]["other"]
+        self.remediation_recommendation_code_cli = (
+            report.check_metadata.Remediation.Code.cli
+        )
+        self.remediation_recommendation_code_cli = (
+            report.check_metadata.Remediation.Code.cli
+        )
+        self.remediation_recommendation_code_other = (
+            report.check_metadata.Remediation.Code.other
+        )
         self.categories = self.__unroll_list__(report.check_metadata.Categories)
         self.depends_on = self.__unroll_list__(report.check_metadata.DependsOn)
         self.related_to = self.__unroll_list__(report.check_metadata.RelatedTo)
@@ -188,10 +230,10 @@ class Check_Output_CSV:
         # fill list of dataclasses
         for item in compliance:
             compliance_framework = Compliance_Framework(
-                Framework=item["Framework"],
-                Version=item["Version"],
-                Group=item["Group"],
-                Control=item["Control"],
+                Framework=item.Framework,
+                Version=item.Version,
+                Group=item.Group,
+                Control=item.Control,
             )
             compliance_frameworks.append(compliance_framework)
         # iterate over list of dataclasses to output info

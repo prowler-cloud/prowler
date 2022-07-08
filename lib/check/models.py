@@ -26,7 +26,30 @@ def load_check_metadata(metadata_file: str) -> dict:
         return check_metadata
 
 
-# Check all values
+class ComplianceItem(BaseModel):
+    Control: List[str]
+    Framework: str
+    Group: List[str]
+    Version: str
+
+
+class Code(BaseModel):
+    NativeIaC: str
+    Terraform: str
+    CLI: str
+    Other: str
+
+
+class Recommendation(BaseModel):
+    Text: str
+    Url: str
+
+
+class Remediation(BaseModel):
+    Code: Code
+    Recommendation: Recommendation
+
+
 class Check_Metadata_Model(BaseModel):
     Provider: str
     CheckID: str
@@ -42,13 +65,13 @@ class Check_Metadata_Model(BaseModel):
     Description: str
     Risk: str
     RelatedUrl: str
-    Remediation: dict
+    Remediation: Remediation
     Categories: List[str]
     Tags: dict
     DependsOn: List[str]
     RelatedTo: List[str]
     Notes: str
-    Compliance: List
+    Compliance: List[ComplianceItem]
 
 
 class Check(ABC):
