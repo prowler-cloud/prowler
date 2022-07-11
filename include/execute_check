@@ -16,7 +16,7 @@
 
 # Function to execute the check
 execute_check() {
-  if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" || $PROFILE == "INSTANCE-PROFILE" ]]; then
+  if [[ -n "${ACCOUNT_TO_ASSUME}" || -n "${ROLE_TO_ASSUME}" || "${PROFILE}" == "INSTANCE-PROFILE" ]]; then
     # echo ******* I am here again to check on my role *******
     # Following logic looks for time remaining in the session and review it
     # if it is less than 600 seconds, 10 minutes.
@@ -28,8 +28,8 @@ execute_check() {
       unset AWS_ACCESS_KEY_ID
       unset AWS_SECRET_ACCESS_KEY
       unset AWS_SESSION_TOKEN
-      if [[ $PROFILE == "INSTANCE-PROFILE" ]]; then
-        if [[ -n $AWS_CONTAINER_CREDENTIALS_RELATIVE_URI ]]; then
+      if [[ "${PROFILE}" == "INSTANCE-PROFILE" ]]; then
+        if [[ -n "${AWS_CONTAINER_CREDENTIALS_RELATIVE_URI}" ]]; then
           INSTANCE_METADATA_URI="169.254.170.2${AWS_CONTAINER_CREDENTIALS_RELATIVE_URI}"
         else
           INSTANCE_METADATA_URI="http://169.254.169.254/latest/meta-data/iam/security-credentials/${INSTANCE_PROFILE}"
