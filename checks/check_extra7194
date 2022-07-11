@@ -33,24 +33,27 @@ CHECK_CAF_EPIC_extra7194=''
 extra7194(){
   for region in ${REGIONS}; do
     # List ECR repositories
-    LIST_ECR_REPOS=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region "${region}" --query "repositories[*].[repositoryName]" --output text 2>&1)
+    LIST_ECR_REPOS=$(${AWSCLI} ecr describe-repositories ${PROFILE_OPT} --region "${region}" --query "repositories[*].[repositoryName]" --output text 2>&1)
     # Handle authorization errors
-    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "$LIST_ECR_REPOS"; then
-      textInfo "$region: Access Denied trying to describe ECR repositories" "$region"
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError|Could not connect to the endpoint URL' <<< "${LIST_ECR_REPOS}"; then
+      textInfo "${region}: Access Denied trying to describe ECR repositories" "${region}"
       continue
     fi
-    if [[ -n "$LIST_ECR_REPOS" ]]; then
-      for repo in $LIST_ECR_REPOS; do
+    if [[ -n "${LIST_ECR_REPOS}" ]]; then
+      for repo in ${LIST_ECR_REPOS}; do
         # Check if a lifecycle policy exists
-        LIFECYCLE_POLICY=$($AWSCLI ecr get-lifecycle-policy $PROFILE_OPT --region "${region}" --repository-name ${repo} --query "repositoryName" --output text 2>&1)
-        if grep -q -E 'LifecyclePolicyNotFoundException' <<< "$LIFECYCLE_POLICY"; then
-           textFail "${region}: ECR repository ${repo} has no lifecycle policy" "${region}" "${repo}"
+        LIFECYCLE_POLICY=$($AWSCLI ecr get-lifecycle-policy ${PROFILE_OPT} --region "${region}" --repository-name "${repo}" --query "repositoryName" --output text 2>&1)
+        if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError|Could not connect to the endpoint URL' <<< "${LIFECYCLE_POLICY}"; then
+          textInfo "${region}: Access Denied trying to get lifecycle policy from repository: ${repo}" "${region}"
+          continue
+        elif grep -q -E 'LifecyclePolicyNotFoundException' <<< "$LIFECYCLE_POLICY"; then
+          textFail "${region}: ECR repository ${repo} has no lifecycle policy" "${region}" "${repo}"
         else
           textPass "${region}: ECR repository ${repo} has a lifecycle policy" "${region}" "${repo}"
         fi
       done
     else
-      textInfo "${region}: No ECR repositories found" "${region}"
+      textPass "${region}: No ECR repositories found" "${region}"
     fi
   done
 }
