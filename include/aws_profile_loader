@@ -31,26 +31,14 @@ aws_profile_loader() {
     elif [[ -n $AWS_CONTAINER_CREDENTIALS_RELATIVE_URI ]] && [[ -z $INSTANCE_PROFILE ]]
     then
         PROFILE="INSTANCE-PROFILE"
-        CONTAINER_METADATA=$(curl -s 169.254.170.2"${AWS_CONTAINER_CREDENTIALS_RELATIVE_URI}")
-        AWS_ACCESS_KEY_ID=$(jq -r '.AccessKeyId' <<< "${CONTAINER_METADATA}")
-        export AWS_ACCESS_KEY_ID
-        AWS_SECRET_ACCESS_KEY=$(jq -r '.SecretAccessKey' <<< "${CONTAINER_METADATA}")
-        export AWS_SECRET_ACCESS_KEY
-        AWS_SESSION_TOKEN=$(jq -r '.Token' <<< "${CONTAINER_METADATA}")
-        export AWS_SESSION_TOKEN
+        set_metadata_credentials "169.254.170.2${AWS_CONTAINER_CREDENTIALS_RELATIVE_URI}"
     elif [[ $AWS_WEB_IDENTITY_TOKEN_FILE ]]; then
         PROFILE=""
         PROFILE_OPT=""
     elif [[ $INSTANCE_PROFILE ]]
     then
         PROFILE="INSTANCE-PROFILE"
-        INSTANCE_METADATA=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/"${INSTANCE_PROFILE}")
-        AWS_ACCESS_KEY_ID=$(jq -r '.AccessKeyId' <<< "${INSTANCE_METADATA}")
-        export AWS_ACCESS_KEY_ID
-        AWS_SECRET_ACCESS_KEY=$(jq -r '.SecretAccessKey' <<< "${INSTANCE_METADATA}")
-        export AWS_SECRET_ACCESS_KEY
-        AWS_SESSION_TOKEN=$(jq -r '.Token' <<< "${INSTANCE_METADATA}")
-        export AWS_SESSION_TOKEN
+        set_metadata_credentials "http://169.254.169.254/latest/meta-data/iam/security-credentials/${INSTANCE_PROFILE}"
     elif [[ $AWS_EXECUTION_ENV == "CloudShell" ]]
     then
         PROFILE_OPT=""
@@ -84,4 +72,16 @@ get_regions() {
     EXITCODE=1
     exit $EXITCODE
   fi
+}
+
+# Function to set metadata credentials
+set_metadata_credentials() {
+    INSTANCE_METADATA_URI="${1}"
+    INSTANCE_METADATA=$(curl -s "${INSTANCE_METADATA_URI}")
+    AWS_ACCESS_KEY_ID=$(jq -r '.AccessKeyId' <<< "${INSTANCE_METADATA}")
+    export AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY=$(jq -r '.SecretAccessKey' <<< "${INSTANCE_METADATA}")
+    export AWS_SECRET_ACCESS_KEY
+    AWS_SESSION_TOKEN=$(jq -r '.Token' <<< "${INSTANCE_METADATA}")
+    export AWS_SESSION_TOKEN
 }
