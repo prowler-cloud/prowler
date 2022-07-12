@@ -24,7 +24,10 @@ from lib.check.check import (
 from lib.check.checks_loader import load_checks_to_execute
 from lib.logger import logger, set_logging_config
 from lib.outputs.outputs import close_json
-from providers.aws.aws_provider import provider_set_session
+from providers.aws.aws_provider import (
+    provider_set_session,
+    resolve_security_hub_previous_findings,
+)
 
 if __name__ == "__main__":
     # CLI Arguments
@@ -286,3 +289,7 @@ if __name__ == "__main__":
         for mode in output_modes:
             if mode == "json" or mode == "json-asff":
                 close_json(output_directory, audit_info.audited_account, mode)
+
+    # Resolve previous fails of Security Hub
+    if args.security_hub:
+        resolve_security_hub_previous_findings(output_directory, audit_info)

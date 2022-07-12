@@ -1,10 +1,14 @@
+import json
 import sys
+from itertools import groupby
+from operator import itemgetter
 
 from arnparse import arnparse
 from boto3 import client, session
 from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
 
+from config.config import json_asff_file_suffix, timestamp_utc
 from lib.arn.arn import arn_parsing
 from lib.logger import logger
 from lib.outputs.models import Check_Output_JSON_ASFF
@@ -278,6 +282,7 @@ def send_to_security_hub(
     region: str, finding_output: Check_Output_JSON_ASFF, session: session.Session
 ):
     try:
+        logger.info("Sending findings to Security Hub.")
         # Check if security hub is enabled in current region
         security_hub_client = session.client("securityhub", region_name=region)
         security_hub_client.describe_hub()
@@ -297,10 +302,80 @@ def send_to_security_hub(
         )
         if batch_import["FailedCount"] > 0:
             failed_import = batch_import["FailedFindings"][0]
-            logger.critical(
-                f"Failed to send check output to AWS Security Hub -- {failed_import['ErrorCode']} -- {failed_import['ErrorMessage']}"
+            logger.error(
+                f"Failed to send archived findings to AWS Security Hub -- {failed_import['ErrorCode']} -- {failed_import['ErrorMessage']}"
             )
             sys.exit()
 
     except Exception as error:
-        logger.critical(f"{error.__class__.__name__} -- {error} in region {region}")
+        logger.error(f"{error.__class__.__name__} -- {error} in region {region}")
+
+
+# Move previous SHub check findings to ARCHIVED (as prowler didn'tre-detect them)
+def resolve_security_hub_previous_findings(
+    output_directory: str, audit_info: AWS_Audit_Info
+) -> list:
+    logger.info("Checking previous findings in Security Hub to archive them.")
+    # Read current findings from json-asff file
+    with open(
+        f"{output_directory}/prowler-output-{audit_info.audited_account}-{json_asff_file_suffix}"
+    ) as f:
+        json_asff_file = json.load(f)
+
+    # Sort by region
+    json_asff_file = sorted(json_asff_file, key=itemgetter("ProductArn"))
+    # Group by region
+    for region, current_findings in groupby(
+        json_asff_file, key=itemgetter("ProductArn")
+    ):
+        region = region.split(":")[3]
+        try:
+            # Check if security hub is enabled in current region
+            security_hub_client = audit_info.audit_session.client(
+                "securityhub", region_name=region
+            )
+            security_hub_client.describe_hub()
+            # Get current findings IDs
+            current_findings_ids = []
+            for finding in current_findings:
+                current_findings_ids.append(finding["Id"])
+            # Get findings of that region
+            security_hub_client = audit_info.audit_session.client(
+                "securityhub", region_name=region
+            )
+            findings_filter = {
+                "ProductName": [{"Value": "Prowler", "Comparison": "EQUALS"}],
+                "RecordState": [{"Value": "ACTIVE", "Comparison": "EQUALS"}],
+                "AwsAccountId": [
+                    {"Value": audit_info.audited_account, "Comparison": "EQUALS"}
+                ],
+                "Region": [{"Value": region, "Comparison": "EQUALS"}],
+            }
+            get_findings_paginator = security_hub_client.get_paginator("get_findings")
+            findings_to_archive = []
+            for page in get_findings_paginator.paginate(Filters=findings_filter):
+                # Archive findings that have not appear in this execution
+                for finding in page["Findings"]:
+                    if finding["Id"] not in current_findings_ids:
+                        finding["RecordState"] = "ARCHIVED"
+                        finding["UpdatedAt"] = timestamp_utc.strftime(
+                            "%Y-%m-%dT%H:%M:%SZ"
+                        )
+                        findings_to_archive.append(finding)
+            logger.info(f"Archiving {len(findings_to_archive)} findings.")
+            # Send archive findings to SHub
+            list_chunked = [
+                findings_to_archive[i : i + 100]
+                for i in range(0, len(findings_to_archive), 100)
+            ]
+            for findings in list_chunked:
+                batch_import = security_hub_client.batch_import_findings(
+                    Findings=findings
+                )
+                if batch_import["FailedCount"] > 0:
+                    failed_import = batch_import["FailedFindings"][0]
+                    logger.error(
+                        f"Failed to send archived findings to AWS Security Hub -- {failed_import['ErrorCode']} -- {failed_import['ErrorMessage']}"
+                    )
+        except Exception as error:
+            logger.error(f"{error.__class__.__name__} -- {error} in region {region}")
