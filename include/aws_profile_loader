@@ -84,4 +84,6 @@ set_metadata_credentials() {
     export AWS_SECRET_ACCESS_KEY
     AWS_SESSION_TOKEN=$(jq -r '.Token' <<< "${INSTANCE_METADATA}")
     export AWS_SESSION_TOKEN
+    ASSUME_AWS_SESSION_EXPIRATION=$(jq -r '.Expiration | sub("\\+00:00";"Z") | fromdateiso8601' <<< "${INSTANCE_METADATA}")
+    export AWS_SESSION_EXPIRATION=$ASSUME_AWS_SESSION_EXPIRATION
 }
