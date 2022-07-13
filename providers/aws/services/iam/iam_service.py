@@ -1,3 +1,4 @@
+import csv
 import sys
 
 from lib.logger import logger
@@ -47,7 +48,12 @@ class IAM:
                 if report_status["State"] == "COMPLETE":
                     report_is_completed = True
 
-        return self.client.get_credential_report()
+        # Convert credential report to list of dictionaries
+        credential = self.client.get_credential_report()["Content"].decode("utf-8")
+        credential_lines = credential.split("\n")
+        csv_reader = csv.DictReader(credential_lines, delimiter=",")
+        credential_list = list(csv_reader)
+        return credential_list
 
     def __get_groups__(self):
         try:
@@ -89,6 +95,36 @@ class IAM:
                     users.append(user)
 
             return users
+
+    def list_attached_group_policies(self, group):
+        try:
+            list_attached_group_policies_paginator = self.client.get_paginator(
+                "list_attached_group_policies"
+            )
+        except Exception as error:
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+        else:
+            attached_group_policies = []
+            for page in list_attached_group_policies_paginator.paginate(
+                GroupName=group
+            ):
+                for customer_managed_policy in page["AttachedPolicies"]:
+                    attached_group_policies.append(customer_managed_policy)
+
+            return attached_group_policies
+
+    def get_group_users(self, group):
+        try:
+            get_group_paginator = self.client.get_paginator("get_group")
+        except Exception as error:
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+        else:
+            group_users = []
+            for page in get_group_paginator.paginate(GroupName=group):
+                for user in page["Users"]:
+                    group_users.append(user)
+
+            return group_users
 
 
 try:

@@ -25,10 +25,10 @@ class iam_disable_90_days_credentials(Check):
                         )
                         if time_since_insertion.days > maximum_expiration_days:
                             report.status = "FAIL"
-                            report.status_extended = f"User {user['UserName']} has not logged into the console in the past 90 days"
+                            report.status_extended = f"User {user['UserName']} has not logged into the console in the past 90 days."
                         else:
                             report.status = "PASS"
-                            report.status_extended = f"User {user['UserName']} has logged into the console in the past 90 days"
+                            report.status_extended = f"User {user['UserName']} has logged into the console in the past 90 days."
 
                     except KeyError:
                         pass
@@ -41,7 +41,7 @@ class iam_disable_90_days_credentials(Check):
         else:
             report = Check_Report(self.metadata)
             report.status = "PASS"
-            report.status_extended = "There is no IAM users"
+            report.status_extended = "There is no IAM users."
             report.region = "us-east-1"
 
         return findings
