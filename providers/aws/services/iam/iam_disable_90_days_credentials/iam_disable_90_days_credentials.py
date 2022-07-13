@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 
 from lib.check.models import Check, Check_Report
 from providers.aws.services.iam.iam_service import iam_client
@@ -20,8 +20,10 @@ class iam_disable_90_days_credentials(Check):
                 if "PasswordLastUsed" in user and user["PasswordLastUsed"] != "":
                     try:
                         time_since_insertion = (
-                            datetime.datetime.now(datetime.timezone.utc)
-                            - user["PasswordLastUsed"]
+                            datetime.datetime.now()
+                            - datetime.datetime.strptime(
+                                user["PasswordLastUsed"], "%Y-%m-%dT%H:%M:%S+00:00"
+                            )
                         )
                         if time_since_insertion.days > maximum_expiration_days:
                             report.status = "FAIL"
@@ -43,5 +45,6 @@ class iam_disable_90_days_credentials(Check):
             report.status = "PASS"
             report.status_extended = "There is no IAM users."
             report.region = "us-east-1"
+            findings.append(report)
 
         return findings
