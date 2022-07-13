@@ -33,7 +33,6 @@ class iam_rotate_access_key_90_days(Check):
                                 "%Y-%m-%dT%H:%M:%S+00:00",
                             )
                         )
-                        print(access_key_1_last_rotated.days)
                         if access_key_1_last_rotated.days > maximum_expiration_days:
                             old_access_keys = True
                             report.status = "FAIL"
@@ -46,7 +45,6 @@ class iam_rotate_access_key_90_days(Check):
                                 "%Y-%m-%dT%H:%M:%S+00:00",
                             )
                         )
-                        print(access_key_2_last_rotated.days)
                         if access_key_2_last_rotated.days > maximum_expiration_days:
                             old_access_keys = True
                             report.status = "FAIL"
