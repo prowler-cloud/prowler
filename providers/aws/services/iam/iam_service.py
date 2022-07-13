@@ -126,6 +126,19 @@ class IAM:
 
             return group_users
 
+    def list_mfa_devices(self, user):
+        try:
+            list_mfa_devices_paginator = self.client.get_paginator("list_mfa_devices")
+        except Exception as error:
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+        else:
+            mfa_devices = []
+            for page in list_mfa_devices_paginator.paginate(UserName=user):
+                for mfa_device in page["MFADevices"]:
+                    mfa_devices.append(mfa_device)
+
+            return mfa_devices
+
 
 try:
     iam_client = IAM(current_audit_info)
