@@ -3,7 +3,7 @@
   "CheckAlias": "check11",
   "CheckID": "iam_avoid_root_usage",
   "CheckName": "iam_avoid_root_usage",
-  "CheckTitle": "Ensure no root account access key exists",
+  "CheckTitle": "Avoid the use of the root accounts",
   "CheckType": "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
   "Compliance": [
     {
@@ -18,7 +18,7 @@
     }
   ],
   "DependsOn": [],
-  "Description": "Ensure no root account access key exists",
+  "Description": "Avoid the use of the root account",
   "Notes": "",
   "Provider": "aws",
   "RelatedTo": [],

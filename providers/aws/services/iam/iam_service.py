@@ -10,10 +10,13 @@ class IAM:
     def __init__(self, audit_info):
         self.service = "iam"
         self.session = audit_info.audit_session
+        self.account = audit_info.audited_account
         self.client = self.session.client(self.service)
         self.region = audit_info.profile_region
         self.users = self.__get_users__()
         self.roles = self.__get_roles__()
+        self.account_summary = self.__get_account_summary__()
+        self.virtual_mfa_devices = self.__list_virtual_mfa_devices__()
         self.customer_managed_policies = self.__get_customer_managed_policies__()
         self.credential_report = self.__get_credential_report__()
         self.groups = self.__get_groups__()
@@ -83,6 +86,15 @@ class IAM:
 
             return customer_managed_policies
 
+    def __get_account_summary__(self):
+        try:
+            account_summary = self.client.get_account_summary()
+        except Exception as error:
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+        else:
+
+            return account_summary
+
     def __get_users__(self):
         try:
             get_users_paginator = self.client.get_paginator("list_users")
@@ -95,6 +107,21 @@ class IAM:
                     users.append(user)
 
             return users
+
+    def __list_virtual_mfa_devices__(self):
+        try:
+            list_virtual_mfa_devices_paginator = self.client.get_paginator(
+                "list_virtual_mfa_devices"
+            )
+        except Exception as error:
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+        else:
+            mfa_devices = []
+            for page in list_virtual_mfa_devices_paginator.paginate():
+                for mfa_device in page["VirtualMFADevices"]:
+                    mfa_devices.append(mfa_device)
+
+            return mfa_devices
 
     def list_attached_group_policies(self, group):
         try:
