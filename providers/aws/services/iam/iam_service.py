@@ -1,5 +1,5 @@
 import csv
-import sys
+from dataclasses import dataclass
 
 from lib.logger import logger
 from providers.aws.aws_provider import current_audit_info
@@ -20,6 +20,9 @@ class IAM:
         self.customer_managed_policies = self.__get_customer_managed_policies__()
         self.credential_report = self.__get_credential_report__()
         self.groups = self.__get_groups__()
+        self.__get_group_users__()
+        self.__list_attached_group_policies__()
+        self.__list_mfa_devices__()
 
     def __get_client__(self):
         return self.client
@@ -67,7 +70,7 @@ class IAM:
             groups = []
             for page in get_groups_paginator.paginate():
                 for group in page["Groups"]:
-                    groups.append(group)
+                    groups.append(Group(group["GroupName"], group["Arn"]))
 
             return groups
 
@@ -104,7 +107,14 @@ class IAM:
             users = []
             for page in get_users_paginator.paginate():
                 for user in page["Users"]:
-                    users.append(user)
+                    if "PasswordLastUsed" not in user:
+                        users.append(User(user["UserName"], user["Arn"], None))
+                    else:
+                        users.append(
+                            User(
+                                user["UserName"], user["Arn"], user["PasswordLastUsed"]
+                            )
+                        )
 
             return users
 
@@ -123,52 +133,90 @@ class IAM:
 
             return mfa_devices
 
-    def list_attached_group_policies(self, group):
+    def __list_attached_group_policies__(self):
         try:
-            list_attached_group_policies_paginator = self.client.get_paginator(
-                "list_attached_group_policies"
-            )
+            for group in self.groups:
+                list_attached_group_policies_paginator = self.client.get_paginator(
+                    "list_attached_group_policies"
+                )
+                attached_group_policies = []
+                for page in list_attached_group_policies_paginator.paginate(
+                    GroupName=group.name
+                ):
+                    for attached_group_policy in page["AttachedPolicies"]:
+                        attached_group_policies.append(attached_group_policy)
+
+                group.attached_policies = attached_group_policies
         except Exception as error:
             logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
-        else:
-            attached_group_policies = []
-            for page in list_attached_group_policies_paginator.paginate(
-                GroupName=group
-            ):
-                for customer_managed_policy in page["AttachedPolicies"]:
-                    attached_group_policies.append(customer_managed_policy)
 
-            return attached_group_policies
-
-    def get_group_users(self, group):
+    def __get_group_users__(self):
         try:
-            get_group_paginator = self.client.get_paginator("get_group")
+            for group in self.groups:
+                get_group_paginator = self.client.get_paginator("get_group")
+                group_users = []
+                for page in get_group_paginator.paginate(GroupName=group.name):
+                    for user in page["Users"]:
+                        group_users.append(User(user["UserName"], user["Arn"]))
+                group.users = group_users
         except Exception as error:
             logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
-        else:
-            group_users = []
-            for page in get_group_paginator.paginate(GroupName=group):
-                for user in page["Users"]:
-                    group_users.append(user)
 
-            return group_users
-
-    def list_mfa_devices(self, user):
+    def __list_mfa_devices__(self):
         try:
-            list_mfa_devices_paginator = self.client.get_paginator("list_mfa_devices")
+            for user in self.users:
+                list_mfa_devices_paginator = self.client.get_paginator(
+                    "list_mfa_devices"
+                )
+                mfa_devices = []
+                for page in list_mfa_devices_paginator.paginate(UserName=user.name):
+                    for mfa_device in page["MFADevices"]:
+                        mfa_serial_number = mfa_device["SerialNumber"]
+                        mfa_type = (
+                            mfa_device["SerialNumber"].split(":")[5].split("/")[0]
+                        )
+                        mfa_devices.append(MFADevice(mfa_serial_number, mfa_type))
+                user.mfa_devices = mfa_devices
         except Exception as error:
             logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
-        else:
-            mfa_devices = []
-            for page in list_mfa_devices_paginator.paginate(UserName=user):
-                for mfa_device in page["MFADevices"]:
-                    mfa_devices.append(mfa_device)
-
-            return mfa_devices
 
 
-try:
-    iam_client = IAM(current_audit_info)
-except Exception as error:
-    logger.critical(f"{error.__class__.__name__} --  {error}")
-    sys.exit()
+@dataclass
+class MFADevice:
+    serial_number: str
+    type: str
+
+    def __init__(self, serial_number, type):
+        self.serial_number = serial_number
+        self.type = type
+
+
+@dataclass
+class User:
+    name: str
+    arn: str
+    mfa_devices: list[MFADevice]
+    password_last_used: str
+
+    def __init__(self, name, arn, password_last_used):
+        self.name = name
+        self.arn = arn
+        self.password_last_used = password_last_used
+        self.mfa_devices = []
+
+
+@dataclass
+class Group:
+    name: str
+    arn: str
+    attached_policies: list[dict]
+    users: list[User]
+
+    def __init__(self, name, arn):
+        self.name = name
+        self.arn = arn
+        self.attached_policies = []
+        self.users = []
+
+
+iam_client = IAM(current_audit_info)
