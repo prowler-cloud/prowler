@@ -1,0 +1,37 @@
+{
+  "Categories": [],
+  "CheckAlias": "extra763",
+  "CheckID": "s3_bucket_object_versioning",
+  "CheckName": "s3_bucket_object_versioning",
+  "CheckTitle": "Check if S3 buckets have object versioning enabled",
+  "CheckType": "Data Protection",
+  "Compliance": [],
+  "DependsOn": [],
+  "Description": "Check if S3 buckets have object versioning enabled",
+  "Notes": "",
+  "Provider": "aws",
+  "RelatedTo": [],
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure versioning using the Amazon console or API for buckets with sensitive information that is changing frecuently; and backup may not be enough to capture all the changes.",
+      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/dev-retired/Versioning.html"
+    }
+  },
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceType": "AwsS3Bucket",
+  "Risk": "With versioning, you can easily recover from both unintended user actions and application failures.",
+  "ServiceName": "s3",
+  "Severity": "medium",
+  "SubServiceName": "",
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  }
+}

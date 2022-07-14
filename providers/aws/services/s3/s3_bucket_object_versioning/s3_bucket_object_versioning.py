@@ -2,7 +2,7 @@ from lib.check.models import Check, Check_Report
 from providers.aws.services.s3.s3_service import s3_client
 
 
-class s3_bucket_server_access_logging_enabled(Check):
+class s3_bucket_object_versioning(Check):
     def execute(self):
         findings = []
         for regional_client in s3_client.regional_clients:
@@ -12,12 +12,16 @@ class s3_bucket_server_access_logging_enabled(Check):
                     report = Check_Report(self.metadata)
                     report.region = region
                     report.resource_id = bucket.name
-                    if bucket.logging:
+                    if bucket.versioning:
                         report.status = "PASS"
-                        report.status_extended = f"S3 Bucket {bucket.name} has server access logging enabled."
+                        report.status_extended = (
+                            f"S3 Bucket {bucket.name} has versioning enabled."
+                        )
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"S3 Bucket {bucket.name} has server access logging disabled."
+                        report.status_extended = (
+                            f"S3 Bucket {bucket.name} has versioning disabled."
+                        )
                     findings.append(report)
             else:
                 report = Check_Report(self.metadata)
