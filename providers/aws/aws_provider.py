@@ -5,8 +5,10 @@ from boto3 import client, session
 from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
 
+from config.config import aws_services_json_file
 from lib.arn.arn import arn_parsing
 from lib.logger import logger
+from lib.utils.utils import open_file, parse_json_file
 from providers.aws.models import (
     AWS_Assume_Role,
     AWS_Audit_Info,
@@ -271,3 +273,23 @@ def get_organizations_metadata(
             account_details_tags=account_details_tags,
         )
         return organizations_info
+
+
+def generate_regional_clients(service, audit_info):
+    regional_clients = []
+    # Get json locally
+    f = open_file(aws_services_json_file)
+    data = parse_json_file(f)
+    json_regions = data["services"][service]["regions"][audit_info.audited_partition]
+    if audit_info.audited_regions:  # Check for input aws audit_info.audited_regions
+        regions = list(
+            set(json_regions).intersection(audit_info.audited_regions)
+        )  # Get common regions between input and json
+    else:  # Get all regions from json of the service and partition
+        regions = json_regions
+    for region in regions:
+        regional_client = audit_info.audit_session.client(service, region_name=region)
+        regional_client.region = region
+        regional_clients.append(regional_client)
+
+    return regional_clients
