@@ -1,0 +1,37 @@
+{
+  "Categories": [],
+  "CheckAlias": "extra72",
+  "CheckID": "ec2_ebs_public_snapshot",
+  "CheckName": "ec2_ebs_public_snapshot",
+  "CheckTitle": "Ensure there are no EBS Snapshots set as Public.",
+  "CheckType": "Data Protection",
+  "Compliance": [],
+  "DependsOn": [],
+  "Description": "Ensure there are no EBS Snapshots set as Public.",
+  "Notes": "",
+  "Provider": "aws",
+  "RelatedTo": [],
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure the snapshot should be shared.",
+      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-modifying-snapshot-permissions.html"
+    }
+  },
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceType": "AwsEc2Snapshot",
+  "Risk": "When you share a snapshot, you are giving others access to all of the data on the snapshot. Share snapshots only with people with whom you want to share all of your snapshot data.",
+  "ServiceName": "ec2",
+  "Severity": "critical",
+  "SubServiceName": "",
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  }
+}

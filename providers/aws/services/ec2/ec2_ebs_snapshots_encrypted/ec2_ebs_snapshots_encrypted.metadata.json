@@ -1,67 +1,35 @@
 {
-  "Categories": [
-    "cat1",
-    "cat2"
-  ],
+  "Categories": [],
   "CheckAlias": "extra740",
   "CheckID": "ec2_ebs_snapshots_encrypted",
   "CheckName": "ec2_ebs_snapshots_encrypted",
-  "CheckTitle": "Check if EBS snapshots are encrypted",
+  "CheckTitle": "Check if EBS snapshots are encrypted.",
   "CheckType": "Data Protection",
-  "Compliance": [
-    {
-      "Control": [
-        "4.4"
-      ],
-      "Framework": "CIS-AWS",
-      "Group": [
-        "level1",
-        "level2"
-      ],
-      "Version": "1.4"
-    },
-    {
-      "Control": [
-        "4.4"
-      ],
-      "Framework": "PCI-DSS",
-      "Group": [
-        "level1",
-        "level2"
-      ],
-      "Version": "1.4"
-    }
-  ],
-  "DependsOn": [
-    "othercheck1",
-    "othercheck2"
-  ],
-  "Description": "If Security groups are not properly configured the attack surface is increased.",
-  "Notes": "additional information",
+  "Compliance": [],
+  "DependsOn": [],
+  "Description": "Check if EBS snapshots are encrypted.",
+  "Notes": "",
   "Provider": "aws",
-  "RelatedTo": [
-    "othercheck3",
-    "othercheck4"
-  ],
-  "RelatedUrl": "https://serviceofficialsiteorpageforthissubject",
+  "RelatedTo": [],
+  "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "cli command or URL to the cli command location.",
-      "NativeIaC": "code or URL to the code location.",
-      "Other": "cli command or URL to the cli command location.",
-      "Terraform": "code or URL to the code location."
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Run sudo yum update and cross your fingers and toes.",
-      "Url": "https://myfp.com/recommendations/dangerous_things_and_how_to_fix_them.html"
+      "Text": "Encrypt all EBS Snapshot and Enable Encryption by default. You can configure your AWS account to enforce the encryption of the new EBS volumes and snapshot copies that you create. For example; Amazon EBS encrypts the EBS volumes created when you launch an instance and the snapshots that you copy from an unencrypted snapshot.",
+      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html#encryption-by-default"
     }
   },
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "ResourceType": "AwsIamAccessAnalyzer",
-  "Risk": "Risk associated.",
+  "ResourceType": "AwsEc2Snapshot",
+  "Risk": "Data encryption at rest prevents data visibility in the event of its unauthorized access or theft.",
   "ServiceName": "ec2",
-  "Severity": "low",
-  "SubServiceName": "accessanalyzer",
+  "Severity": "medium",
+  "SubServiceName": "",
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"
