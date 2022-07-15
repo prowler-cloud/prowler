@@ -15,7 +15,6 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483
                     report = Check_Report(self.metadata)
                     report.region = region
                     for ingress_rule in security_group.ingress_rules:
-                        # Check if the security group is open to the internet to all protocols
                         if (
                             "0.0.0.0/0" in str(ingress_rule["IpRanges"])
                             or "::/0" in str(ingress_rule["Ipv6Ranges"])

@@ -13,6 +13,7 @@ class EC2:
         self.audited_account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.__threading_call__(self.__describe_security_groups__)
+        self.__threading_call__(self.__describe_network_acls__)
         self.__threading_call__(self.__describe_snapshots__)
         self.__threading_call__(self.__get_snapshot_public__)
 
@@ -52,6 +53,26 @@ class EC2:
             regional_client.security_groups = []
         else:
             regional_client.security_groups = security_groups
+
+    def __describe_network_acls__(self, regional_client):
+        logger.info("EC2 - Describing Security Groups...")
+        try:
+            describe_network_acls_paginator = regional_client.get_paginator(
+                "describe_network_acls"
+            )
+            network_acls = []
+            for page in describe_network_acls_paginator.paginate():
+                for nacl in page["NetworkAcls"]:
+                    network_acls.append(
+                        NetworkACL(nacl["NetworkAclId"], nacl["Entries"])
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+            )
+            regional_client.network_acls = []
+        else:
+            regional_client.network_acls = network_acls
 
     def __describe_snapshots__(self, regional_client):
         logger.info("EC2 - Describing Snapshots...")
@@ -118,6 +139,16 @@ class SecurityGroup:
         self.id = id
         self.ingress_rules = ingress_rules
         self.egress_rules = egress_rules
+
+
+@dataclass
+class NetworkACL:
+    id: str
+    entries: list[dict]
+
+    def __init__(self, id, entries):
+        self.id = id
+        self.entries = entries
 
 
 ec2_client = EC2(current_audit_info)
