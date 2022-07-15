@@ -1,0 +1,48 @@
+{
+  "Categories": [],
+  "CheckAlias": "check45",
+  "CheckID": "ec2_networkacl_allow_ingress_tcp_port_3389",
+  "CheckName": "ec2_networkacl_allow_ingress_tcp_port_3389",
+  "CheckTitle": "Ensure no Network ACLs allow ingress from 0.0.0.0/0 to Microsoft RDP port 3389",
+  "CheckType": "Infrastructure Security",
+  "Compliance": [
+    {
+      "Control": [
+        "4.6"
+      ],
+      "Framework": "CIS-AWS",
+      "Group": [
+        "level2"
+      ],
+      "Version": "1.4"
+    }
+  ],
+  "DependsOn": [],
+  "Description": "Ensure no Network ACLs allow ingress from 0.0.0.0/0 to Microsoft RDP port 3389",
+  "Notes": "",
+  "Provider": "aws",
+  "RelatedTo": [],
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Apply Zero Trust approach. Implement a process to scan and remediate unrestricted or overly permissive network acls. Recommended best practices is to narrow the definition for the minimum ports required.",
+      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html"
+    }
+  },
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceType": "AwsEc2NetworkAcl",
+  "Risk": "Even having a perimeter firewall, having network acls open allows any user or malware with vpc access to scan for well known and sensitive ports and gain access to instance.",
+  "ServiceName": "ec2",
+  "Severity": "high",
+  "SubServiceName": "",
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  }
+}

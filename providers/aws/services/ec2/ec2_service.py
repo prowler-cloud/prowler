@@ -12,6 +12,7 @@ class EC2:
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
+        self.__threading_call__(self.__describe_instances__)
         self.__threading_call__(self.__describe_security_groups__)
         self.__threading_call__(self.__describe_network_acls__)
         self.__threading_call__(self.__describe_snapshots__)
@@ -28,6 +29,53 @@ class EC2:
             t.start()
         for t in threads:
             t.join()
+
+    def __describe_instances__(self, regional_client):
+        logger.info("EC2 - Describing EC2 Instances...")
+        try:
+            describe_instances_paginator = regional_client.get_paginator(
+                "describe_instances"
+            )
+            instances = []
+            for page in describe_instances_paginator.paginate():
+                for reservation in page["Reservations"]:
+                    for instance in reservation["Instances"]:
+                        if (
+                            "PublicDnsName" in instance
+                            and "PublicIpAddress" in instance
+                        ):
+                            instances.append(
+                                Instance(
+                                    instance["InstanceId"],
+                                    instance["InstanceType"],
+                                    instance["ImageId"],
+                                    instance["LaunchTime"],
+                                    instance["PrivateDnsName"],
+                                    instance["PrivateIpAddress"],
+                                    instance["PublicDnsName"],
+                                    instance["PublicIpAddress"],
+                                )
+                            )
+                        else:
+                            instances.append(
+                                Instance(
+                                    instance["InstanceId"],
+                                    instance["InstanceType"],
+                                    instance["ImageId"],
+                                    instance["LaunchTime"],
+                                    instance["PrivateDnsName"],
+                                    instance["PrivateIpAddress"],
+                                    None,
+                                    None,
+                                )
+                            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+            )
+            regional_client.instances = []
+        else:
+            regional_client.instances = instances
 
     def __describe_security_groups__(self, regional_client):
         logger.info("EC2 - Describing Security Groups...")
@@ -113,6 +161,38 @@ class EC2:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}: {error}"
             )
+
+
+@dataclass
+class Instance:
+    id: str
+    type: str
+    image_id: str
+    launch_time: str
+    private_dns: str
+    private_ip: str
+    public_dns: str
+    public_ip: str
+
+    def __init__(
+        self,
+        id,
+        type,
+        image_id,
+        launch_time,
+        private_dns,
+        private_ip,
+        public_dns,
+        public_ip,
+    ):
+        self.id = id
+        self.type = type
+        self.image_id = image_id
+        self.launch_time = launch_time
+        self.private_dns = private_dns
+        self.private_ip = private_ip
+        self.public_dns = public_dns
+        self.public_ip = public_ip
 
 
 @dataclass
