@@ -202,10 +202,9 @@ class Check_Report:
     region: str
     status_extended: str
     check_metadata: dict
-    status_extended: str
     resource_id: str
     resource_details: str
-    resource_tags: str
+    resource_tags: list
     resource_arn: str
 
     def __init__(self, metadata):
