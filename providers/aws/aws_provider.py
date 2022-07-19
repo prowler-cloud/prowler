@@ -311,7 +311,7 @@ def send_to_security_hub(
         logger.error(f"{error.__class__.__name__} -- {error} in region {region}")
 
 
-# Move previous SHub check findings to ARCHIVED (as prowler didn'tre-detect them)
+# Move previous Security Hub check findings to ARCHIVED (as prowler didn't re-detect them)
 def resolve_security_hub_previous_findings(
     output_directory: str, audit_info: AWS_Audit_Info
 ) -> list:
