@@ -291,10 +291,9 @@ def send_to_security_hub(
         if "prowler/prowler" not in str(
             security_hub_client.list_enabled_products_for_import()
         ):
-            logger.critical(
+            logger.error(
                 f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://github.com/prowler-cloud/prowler/#security-hub-integration"
             )
-            sys.exit()
 
         # Send finding to Security Hub
         batch_import = security_hub_client.batch_import_findings(
@@ -305,7 +304,6 @@ def send_to_security_hub(
             logger.error(
                 f"Failed to send archived findings to AWS Security Hub -- {failed_import['ErrorCode']} -- {failed_import['ErrorMessage']}"
             )
-            sys.exit()
 
     except Exception as error:
         logger.error(f"{error.__class__.__name__} -- {error} in region {region}")
@@ -325,10 +323,10 @@ def resolve_security_hub_previous_findings(
     # Sort by region
     json_asff_file = sorted(json_asff_file, key=itemgetter("ProductArn"))
     # Group by region
-    for region, current_findings in groupby(
+    for product_arn, current_findings in groupby(
         json_asff_file, key=itemgetter("ProductArn")
     ):
-        region = region.split(":")[3]
+        region = product_arn.split(":")[3]
         try:
             # Check if security hub is enabled in current region
             security_hub_client = audit_info.audit_session.client(

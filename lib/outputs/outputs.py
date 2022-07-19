@@ -86,7 +86,7 @@ def report(check_findings, output_options, audit_info):
                 file_descriptors["json-asff"].write(",")
 
             # Check if it is needed to send findings to security hub
-            if output_options.security_hub:
+            if output_options.security_hub_enabled:
                 send_to_security_hub(
                     finding.region, finding_output, audit_info.audit_session
                 )
@@ -222,6 +222,7 @@ def fill_json_asff(finding_output, audit_info, finding):
             Region=finding.region,
         )
     ]
+    # Add ED to PASS or FAIL (PASSED/FAILED)
     finding_output.Compliance = Compliance(
         Status=finding.status + "ED",
         RelatedRequirements=[finding.check_metadata.CheckType],
