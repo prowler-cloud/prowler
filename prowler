@@ -145,7 +145,7 @@ if __name__ == "__main__":
         "-S",
         "--security-hub",
         action="store_true",
-        help="Send check output to AWS Security Hub.",
+        help="Send check output to AWS Security Hub",
     )
     # Parse Arguments
     args = parser.parse_args()
