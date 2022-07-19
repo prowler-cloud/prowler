@@ -47,9 +47,5 @@
   "Risk": "If Security groups are not properly configured the attack surface is increased.",
   "ServiceName": "ec2",
   "Severity": "low",
-  "SubServiceName": "",
-  "Tags": {
-    "Tag1Key": "value",
-    "Tag2Key": "value"
-  }
+  "SubServiceName": "securitygroup"
 }

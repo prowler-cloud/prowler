@@ -161,19 +161,20 @@ class Test_Check:
                 },
                 "expected": {
                     "iam_disable_30_days_credentials",
-                    "iam_disable_90_days_credentials",
                 },
             },
             {
                 "input": {
-                    "excluded_group_list": {"iam"},
+                    "excluded_group_list": {"pci"},
                     "provider": "aws",
                     "checks_to_run": {
                         "iam_disable_30_days_credentials",
                         "iam_disable_90_days_credentials",
                     },
                 },
-                "expected": set(),
+                "expected": {
+                    "iam_disable_30_days_credentials",
+                },
             },
         ]
         for test in test_cases:

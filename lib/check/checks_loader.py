@@ -1,5 +1,6 @@
 from config.config import groups_file
 from lib.check.check import (
+    load_checks_to_execute_from_groups,
     parse_checks_from_file,
     parse_groups_from_file,
     recover_checks_from_provider,
@@ -59,8 +60,9 @@ def load_checks_to_execute(
     # Handle if there are groups passed using -g/--groups
     elif group_list:
         try:
-            checks_to_execute = parse_groups_from_file(
-                groups_file, group_list, provider
+            available_groups = parse_groups_from_file(groups_file)
+            checks_to_execute = load_checks_to_execute_from_groups(
+                available_groups, group_list, provider
             )
         except Exception as e:
             logger.error(f"{e.__class__.__name__} -- {e}")
