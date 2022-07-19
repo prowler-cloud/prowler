@@ -12,7 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 CHECK_ID_extra7173="7.173"
-CHECK_TITLE_extra7173="[check7173] Security Groups created by EC2 Launch Wizard"
+CHECK_TITLE_extra7173="[extra7173] Security Groups created by EC2 Launch Wizard"
 CHECK_SCORED_extra7173="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7173="EXTRA"
 CHECK_SEVERITY_extra7173="Medium"
