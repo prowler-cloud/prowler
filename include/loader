@@ -26,7 +26,7 @@ done
 load_check(){
     CHECK=${1}
     # shellcheck source=/dev/null
-    . "$PROWLER_DIR/checks/${CHECK}"
+    . "$PROWLER_DIR/checks/${CHECK}" 2>/dev/null
 }
 
 get_checks() {
