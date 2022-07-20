@@ -33,6 +33,8 @@ USER ${USERNAME}
 RUN pip3 install --upgrade pip && \
   pip3 install --no-cache-dir boto3 detect-secrets==1.0.3 && \
   pip3 cache purge
+# Set Python PATH
+ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 
 USER 0
 

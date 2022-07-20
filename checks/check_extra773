@@ -37,6 +37,6 @@ extra773(){
       fi
     done
   else
-    textInfo "No CloudFront distributions found"
+    textInfo "No CloudFront distributions found" "us-east-1"
   fi
 }

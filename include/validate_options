@@ -208,7 +208,7 @@ validate_database() {
         fi
 
         # Check credentials
-        if [[ -z "${POSTGRES_HOST}" ||  -z "${POSTGRES_PORT}" ||  -z "${POSTGRES_USER}" ||  -z "${POSTGRES_PASSWORD}" ||  -z "${POSTGRES_DB}" ]]
+        if [[ -z "${POSTGRES_HOST}" ||  -z "${POSTGRES_PORT}" ||  -z "${POSTGRES_USER}" ||  -z "${POSTGRES_PASSWORD}" ||  -z "${POSTGRES_DB}" ||  -z "${POSTGRES_TABLE}" ]]
         then
             # echo "${OPTRED}ERROR!$OPTNORMAL Database connector for '${DATABASE_PROVIDER}' failed. Required environment variables for PostgreSQL were not found. Checking .pgpass file"
             # If no environment variable present check the "$HOME/.pgpass" file
@@ -240,7 +240,7 @@ validate_database() {
         then
             db_exit_abnormally "postgresql" "Database listening on host ${POSTGRES_HOST} on port ${POSTGRES_PORT} connected as user ${POSTGRES_USER} is unreachable - EXITING!"
         # If database instance is ready time to check credentials
-        elif ! psql -U "${POSTGRES_USER}" -h "${POSTGRES_HOST}" -c "\q" > /dev/null  2>&1
+        elif ! psql -U "${POSTGRES_USER}" -h "${POSTGRES_HOST}" -d "${POSTGRES_DB}" -c "\q" > /dev/null  2>&1
         then
             db_exit_abnormally "postgresql" "User ${POSTGRES_USER} invalid or invalid credentials, please check ${HOME}/.pgpass file - EXITING!"
         # If credentials are ok -> database exists?

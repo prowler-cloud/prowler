@@ -8,6 +8,7 @@ repos:
       - id: check-json
       - id: end-of-file-fixer
       - id: trailing-whitespace
+        exclude: 'README.md'
       - id: no-commit-to-branch
       - id: pretty-format-json
         args: ['--autofix']

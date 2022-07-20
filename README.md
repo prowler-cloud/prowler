@@ -26,7 +26,7 @@
 </p>
 
 <p align="center">
-  <i>Prowler</i> is an Open Source security tool to perform AWS security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains more than 200 controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custome security frameworks.
+  <i>Prowler</i> is an Open Source security tool to perform AWS security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains more than 240 controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
 </p>
 
 ## Table of Contents
@@ -41,6 +41,7 @@
 - [Security Hub integration](#security-hub-integration)
 - [CodeBuild deployment](#codebuild-deployment)
 - [Allowlist](#allowlist-or-remove-a-fail-from-resources)
+- [Inventory](#inventory)
 - [Fix](#how-to-fix-every-fail)
 - [Troubleshooting](#troubleshooting)
 - [Extras](#extras)
@@ -58,13 +59,13 @@
 
 Prowler is a command line tool that helps you with AWS security assessment, auditing, hardening and incident response.
 
-It follows guidelines of the CIS Amazon Web Services Foundations Benchmark (49 checks) and has more than 100 additional checks including related to GDPR, HIPAA, PCI-DSS, ISO-27001, FFIEC, SOC2 and others.
+It follows guidelines of the CIS Amazon Web Services Foundations Benchmark (49 checks) and has more than 190 additional checks including related to GDPR, HIPAA, PCI-DSS, ISO-27001, FFIEC, SOC2 and others.
 
 Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-2018](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf)
 
 ## Features
 
-+200 checks covering security best practices across all AWS regions and most of AWS services and related to the next groups:
++240 checks covering security best practices across all AWS regions and most of AWS services and related to the next groups:
 
 - Identity and Access Management [group1]
 - Logging  [group2]
@@ -90,6 +91,7 @@ With Prowler you can:
 - Send findings directly to Security Hub
 - Run specific checks and groups or create your own
 - Check multiple AWS accounts in parallel or sequentially
+- Get an inventory of your AWS resources
 - And more! Read examples below
 
 ## High level architecture
@@ -336,26 +338,27 @@ You can send the Prowler's output to different databases (right now only Postgre
 
 Jump into the section for the database provider you want to use and follow the required steps to configure it.
 ### PostgreSQL
-- Install psql
-    - Mac -> `brew install libpq`
-    - Ubuntu -> `sudo apt-get install postgresql-client `
-    - RHEL/Centos -> `sudo yum install postgresql10`
+Install psql
+- Mac -> `brew install libpq`
+- Ubuntu -> `sudo apt-get install postgresql-client `
+- RHEL/Centos -> `sudo yum install postgresql10`
 
 #### Credentials
 There are two options to pass the PostgreSQL credentials to Prowler:
 ##### Using a .pgpass file
-Configure a `~/.pgpass` file into the root folder of the user that is going to launch Prowler ([pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)), including an extra field at the end of the line, separated by `:`, to name the table, for instance:
-        `hostname:port:database:username:password:prowler_findings`
+Configure a `~/.pgpass` file into the root folder of the user that is going to launch Prowler ([pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)), including an extra field at the end of the line, separated by `:`, to name the table, using the following format:
+        `hostname:port:database:username:password:table`
 ##### Using environment variables
-Configure the following environment variables:
-    - `POSTGRES_HOST`
-    - `POSTGRES_PORT`
-    - `POSTGRES_USER`
-    - `POSTGRES_PASSWORD`
-    - `POSTGRES_DB`
+- Configure the following environment variables:  
+    - `POSTGRES_HOST`  
+    - `POSTGRES_PORT`  
+    - `POSTGRES_USER`  
+    - `POSTGRES_PASSWORD`  
+    - `POSTGRES_DB`  
+    - `POSTGRES_TABLE`  
+> *Note*: If you are using a schema different than postgres please include it at the beggining of the `POSTGRES_TABLE` variable, like: `export POSTGRES_TABLE=prowler.findings`
 
-
-- Create a table in your PostgreSQL database to store the Prowler's data. You can use the following SQL statement to create the table:
+Create a table in your PostgreSQL database to store the Prowler's data. You can use the following SQL statement to create the table:
 ```
 CREATE TABLE  IF NOT EXISTS prowler_findings (
 profile TEXT,
@@ -571,6 +574,10 @@ DynamoDB table ARNs are also supported as allowlist file, e.g. `arn:aws:dynamodb
 
 Allowlist option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format except for `json-asff`.
 
+## Inventory
+With Prowler you can get an inventory of your AWS resources. To do so, run `./prowler -i` to see what AWS resources you have deployed in your AWS account. This feature lists almost all resources in all regions based on [this](https://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/API_GetResources.html) API call. Note that it does not cover 100% of resource types.
+
+The inventory will be stored in an output `csv` file by default, under common Prowler `output` folder, with the following format: `prowler-inventory-${ACCOUNT_NUM}-${OUTPUT_DATE}.csv`
 ## How to fix every FAIL
 
 Check your report and fix the issues following all specific guidelines per check in <https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf>

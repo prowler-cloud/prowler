@@ -68,8 +68,7 @@ extra7100(){
 
     done
     if [[ $PERMISSIVE_POLICIES_LIST ]]; then
-      textInfo "STS AssumeRole Policies should only include the complete ARNs for the Roles that the user needs"
-      textInfo "Learn more: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_permissions-to-switch.html#roles-usingrole-createpolicy"
+      textInfo "STS AssumeRole Policies should only include the complete ARNs for the Roles that the user needs. Learn more: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_permissions-to-switch.html#roles-usingrole-createpolicy" "$REGION"
       for policy in $PERMISSIVE_POLICIES_LIST; do
         textFail "$REGION: Policy $policy allows permissive STS Role assumption" "$REGION" "$policy"
       done

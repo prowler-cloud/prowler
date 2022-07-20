@@ -41,7 +41,7 @@ extra763(){
 
       BUCKET_VERSIONING_ENABLED=$("${AWSCLI}" s3api get-bucket-versioning --bucket "${bucket}" ${PROFILE_OPT} --region "${BUCKET_REGION}" --query Status --output text 2>&1)
       if grep -q 'AccessDenied' <<< "${BUCKET_VERSIONING_ENABLED}"; then
-        textInfo "${BUCKET_REGION}: Access Denied Trying to Get Bucket Versioning for $bucket"
+        textInfo "${BUCKET_REGION}: Access Denied Trying to Get Bucket Versioning for $bucket" "${REGION}"
         continue
       fi
       if  grep -q "^Enabled$" <<< "${BUCKET_VERSIONING_ENABLED}"; then

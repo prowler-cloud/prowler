@@ -41,8 +41,8 @@ extra7142(){
           textFail "$regx: Application Load Balancer $alb is not dropping invalid header fields" "$regx" "$alb"
         fi
       done
-    else 
-      textInfo "$regx: no ALBs found"
+    else
+      textInfo "$regx: no ALBs found" "$regx"
     fi
   done
 }
