@@ -9,7 +9,7 @@ on:
       - 'README.md'
       
   release:
-    types: [published]
+    types: [published, edited]
 
 env:
   AWS_REGION_STG: eu-west-1
