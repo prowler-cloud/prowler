@@ -16,10 +16,10 @@ class iam_root_mfa_enabled(Check):
                     report.resource_arn = user["arn"]
                     if user["mfa_active"] == "false":
                         report.status = "FAIL"
-                        report.status_extended = f"MFA is not enabled for root account."
+                        report.status_extended = "MFA is not enabled for root account."
                     else:
                         report.status = "PASS"
-                        report.status_extended = f"MFA is enabled for root account."
+                        report.status_extended = "MFA is enabled for root account."
                     findings.append(report)
 
         return findings

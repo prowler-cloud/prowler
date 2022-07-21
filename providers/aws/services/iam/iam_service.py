@@ -157,7 +157,18 @@ class IAM:
                 group_users = []
                 for page in get_group_paginator.paginate(GroupName=group.name):
                     for user in page["Users"]:
-                        group_users.append(User(user["UserName"], user["Arn"]))
+                        if "PasswordLastUsed" not in user:
+                            group_users.append(
+                                User(user["UserName"], user["Arn"], None)
+                            )
+                        else:
+                            group_users.append(
+                                User(
+                                    user["UserName"],
+                                    user["Arn"],
+                                    user["PasswordLastUsed"],
+                                )
+                            )
                 group.users = group_users
         except Exception as error:
             logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
