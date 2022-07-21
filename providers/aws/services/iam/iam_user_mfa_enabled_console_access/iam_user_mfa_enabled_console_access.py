@@ -16,9 +16,7 @@ class iam_user_mfa_enabled_console_access(Check):
                 if user["password_enabled"] != "not_supported":
                     if user["mfa_active"] == "false":
                         report.status = "FAIL"
-                        report.status_extended = (
-                            "User {user['user']} has Password enabled but MFA disabled."
-                        )
+                        report.status_extended = f"User {user['user']} has Console Password enabled but MFA disabled."
                     else:
                         report.status = "PASS"
                         report.status_extended = f"User {user['user']} has Console Password enabled and MFA enabled."
