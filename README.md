@@ -397,7 +397,7 @@ account_details_tags  TEXT
 
 ### Assume Role:
 
-Prowler uses the AWS CLI underneath so it uses the same authentication methods. However, there are few ways to run Prowler against multiple accounts using IAM Assume Role feature depending on eachg use case. You can just set up your custom profile inside `~/.aws/config` with all needed information about the role to assume then call it with `./prowler -p your-custom-profile`. Additionally you can use `-A 123456789012` and `-R RemoteRoleToAssume` and Prowler will get those temporary credentials using `aws sts assume-role`, set them up as environment variables and run against that given account. To create a role to assume in multiple accounts easier eather as CFN Stack or StackSet, look at [this CloudFormation template](iam/create_role_to_assume_cfn.yaml) and adapt it.
+Prowler uses the AWS CLI underneath so it uses the same authentication methods. However, there are few ways to run Prowler against multiple accounts using IAM Assume Role feature depending on eachg use case. You can just set up your custom profile inside `~/.aws/config` with all needed information about the role to assume then call it with `./prowler -p your-custom-profile`. Additionally you can use `-A 123456789012` and `-R RemoteRoleToAssume` and Prowler will get those temporary credentials using `aws sts assume-role`, set them up as environment variables and run against that given account. To create a role to assume in multiple accounts easier either as CFN Stack or StackSet, look at [this CloudFormation template](iam/create_role_to_assume_cfn.yaml) and adapt it.
 
 ```sh
 ./prowler -A 123456789012 -R ProwlerRole
@@ -549,7 +549,7 @@ To use Prowler and Security Hub integration in China regions there is an additio
 
 Either to run Prowler once or based on a schedule this template makes it pretty straight forward. This template will create a CodeBuild environment and run Prowler directly leaving all reports in a bucket and creating a report also inside CodeBuild basedon the JUnit output from Prowler. Scheduling can be cron based like `cron(0 22 * * ? *)` or rate based like `rate(5 hours)` since CloudWatch Event rules (or Eventbridge) is used here.
 
-The Cloud Formation template that helps you doing that is [here](https://github.com/prowler-cloud/prowler/blob/master/util/codebuild/codebuild-prowler-audit-account-cfn.yaml).
+The Cloud Formation template that helps you to do that is [here](https://github.com/prowler-cloud/prowler/blob/master/util/codebuild/codebuild-prowler-audit-account-cfn.yaml).
 
 > This is a simple solution to monitor one account. For multiples accounts see [Multi Account and Continuous Monitoring](util/org-multi-account/README.md).
 ## Allowlist or remove a fail from resources
@@ -567,7 +567,7 @@ DynamoDB table ARNs are also supported as allowlist file, e.g. `arn:aws:dynamodb
 >Make sure that the table has `account_id` as partition key and `rule` as sort key, and that the used credentials have `dynamodb:PartiQLSelect` permissions in the table.
 ><p align="left"><img src="https://user-images.githubusercontent.com/38561120/165769502-296f9075-7cc8-445e-8158-4b21804bfe7e.png" alt="image" width="397" height="252" /></p>
 
->The field `account_id` can contains either an account ID or an `*` (which applies to all the accounts that use this table as a whitelist). As in the traditional allowlist file, the `rule` field must contain `checkID:resourcename` pattern.
+>The field `account_id` can contain either an account ID or an `*` (which applies to all the accounts that use this table as a whitelist). As in the traditional allowlist file, the `rule` field must contain `checkID:resourcename` pattern.
 ><p><img src="https://user-images.githubusercontent.com/38561120/165770610-ed5c2764-7538-44c2-9195-bcfdecc4ef9b.png" alt="image" width="394" /></p>
 
 
@@ -641,7 +641,7 @@ Allows Prowler to import its findings to [AWS Security Hub](https://aws.amazon.c
 
 ### Bootstrap Script
 
-Quick bash script to set up a "prowler" IAM user with "SecurityAudit" and "ViewOnlyAccess" group with the required permissions (including "Prowler-Additions-Policy"). To run the script below, you need user with administrative permissions; set the `AWS_DEFAULT_PROFILE` to use that account:
+Quick bash script to set up a "prowler" IAM user with "SecurityAudit" and "ViewOnlyAccess" group with the required permissions (including "Prowler-Additions-Policy"). To run the script below, you need a user with administrative permissions; set the `AWS_DEFAULT_PROFILE` to use that account:
 
 ```sh
 export AWS_DEFAULT_PROFILE=default
@@ -657,7 +657,7 @@ aws iam create-access-key --user-name prowler
 unset ACCOUNT_ID AWS_DEFAULT_PROFILE
 ```
 
-The `aws iam create-access-key` command will output the secret access key and the key id; keep these somewhere safe, and add them to `~/.aws/credentials` with an appropriate profile name to use them with Prowler. This is the only time they secret key will be shown.  If you lose it, you will need to generate a replacement.
+The `aws iam create-access-key` command will output the secret access key and the key id; keep these somewhere safe, and add them to `~/.aws/credentials` with an appropriate profile name to use them with Prowler. This is the only time the secret key will be shown.  If you lose it, you will need to generate a replacement.
 
 > [This CloudFormation template](iam/create_role_to_assume_cfn.yaml) may also help you on that task.
 
@@ -673,7 +673,7 @@ To list all existing checks in the extras group run the command below:
 ./prowler -l -g extras
 ```
 
->There are some checks not included in that list, they are experimental or checks that takes long to run like `extra759` and `extra760` (search for secrets in Lambda function variables and code).
+>There are some checks not included in that list, they are experimental or checks that take long to run like `extra759` and `extra760` (search for secrets in Lambda function variables and code).
 
 To check all extras in one command:
 
