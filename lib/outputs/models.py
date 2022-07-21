@@ -89,6 +89,7 @@ class Check_Output_JSON_ASFF(BaseModel):
     Description: str = ""
     Resources: List[Resource] = None
     Compliance: Compliance = None
+    Remediation: dict = None
 
 
 @dataclass

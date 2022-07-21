@@ -41,7 +41,7 @@ class iam_disable_30_days_credentials(Check):
         else:
             report = Check_Report(self.metadata)
             report.status = "PASS"
-            report.result_extended = "There is no IAM users"
+            report.status_extended = "There is no IAM users"
             report.region = iam_client.region
             findings.append(report)
 
