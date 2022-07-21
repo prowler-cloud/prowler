@@ -5,10 +5,9 @@ from providers.aws.services.iam.iam_service import iam_client
 class iam_root_mfa_enabled(Check):
     def execute(self) -> Check_Report:
         findings = []
-        response = iam_client.credential_report
 
-        if response:
-            for user in response:
+        if iam_client.credential_report:
+            for user in iam_client.credential_report:
                 if user["user"] == "<root_account>":
                     report = Check_Report(self.metadata)
                     report.region = "us-east-1"

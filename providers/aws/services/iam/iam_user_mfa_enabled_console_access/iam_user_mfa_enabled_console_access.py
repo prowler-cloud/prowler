@@ -21,13 +21,11 @@ class iam_user_mfa_enabled_console_access(Check):
                         )
                     else:
                         report.status = "PASS"
-                        report.status_extended = (
-                            f"User {user['user']} has Password enabled and MFA enabled."
-                        )
+                        report.status_extended = f"User {user['user']} has Console Password enabled and MFA enabled."
                 else:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"User {user['user']} has not Password enabled."
+                        f"User {user['user']} has not Console Password enabled."
                     )
                 findings.append(report)
         else:
