@@ -239,7 +239,7 @@ Prowler has been written in bash using AWS-CLI underneath and it works in Linux,
 
 By default, Prowler scans all opt-in regions available, that might take a long execution time depending on the number of resources and regions used. Same applies for GovCloud or China regions. See below Advance usage for examples.
 
-Prowler has two parameters related to regions: `-r` that is used query AWS services API endpoints (it uses `us-east-1` by default and required for GovCloud or China) and the option `-f` that is to filter those regions you only want to scan. For example if you want to scan Dublin only use `-f eu-west-1` and if you want to scan Dublin and Ohio `-f eu-west-1,us-east-1`, note the regions are separated by a comma deliminator (it can be used as before with `-f 'eu-west-1,us-east-1'`).
+Prowler has two parameters related to regions: `-r` that is used query AWS services API endpoints (it uses `us-east-1` by default and required for GovCloud or China) and the option `-f` that is to filter those regions you only want to scan. For example if you want to scan Dublin only use `-f eu-west-1` and if you want to scan Dublin and Ohio `-f eu-west-1,us-east-1`, note the regions are separated by a comma delimiter (it can be used as before with `-f 'eu-west-1,us-east-1'`).
 
 ## Screenshots
 
@@ -356,7 +356,7 @@ Configure a `~/.pgpass` file into the root folder of the user that is going to l
     - `POSTGRES_PASSWORD`  
     - `POSTGRES_DB`  
     - `POSTGRES_TABLE`  
-> *Note*: If you are using a schema different than postgres please include it at the beggining of the `POSTGRES_TABLE` variable, like: `export POSTGRES_TABLE=prowler.findings`
+> *Note*: If you are using a schema different than postgres please include it at the beginning of the `POSTGRES_TABLE` variable, like: `export POSTGRES_TABLE=prowler.findings`
 
 Create a table in your PostgreSQL database to store the Prowler's data. You can use the following SQL statement to create the table:
 ```
