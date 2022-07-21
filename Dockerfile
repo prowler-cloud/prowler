@@ -13,8 +13,7 @@ ARG USERID=34000
 USER 0
 # System dependencies
 # hadolint ignore=DL3006,DL3013,DL3033
-RUN yum check-update && \
-  yum upgrade -y  && \
+RUN yum upgrade -y  && \
   yum install -y python3 bash curl jq coreutils py3-pip which unzip shadow-utils && \
   yum clean all && \
   rm -rf /var/cache/yum
