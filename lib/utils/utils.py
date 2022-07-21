@@ -1,5 +1,6 @@
 import json
 import sys
+from hashlib import sha512
 from io import TextIOWrapper
 from os.path import exists
 from typing import Any
@@ -40,3 +41,8 @@ def file_exists(filename: str):
             return True
         else:
             return False
+
+
+# create sha512 hash for string
+def hash_sha512(string: str) -> str:
+    return sha512(string.encode("utf-8")).hexdigest()[0:9]
