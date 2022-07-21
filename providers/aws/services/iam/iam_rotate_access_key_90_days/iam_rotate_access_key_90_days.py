@@ -22,7 +22,7 @@ class iam_rotate_access_key_90_days(Check):
                     and user["access_key_2_last_rotated"] == "N/A"
                 ):
                     report.status = "PASS"
-                    report.status_extended = "User {user['user']} has not access keys."
+                    report.status_extended = f"User {user['user']} has not access keys."
                 else:
                     old_access_keys = False
                     if user["access_key_1_last_rotated"] != "N/A":
@@ -36,7 +36,7 @@ class iam_rotate_access_key_90_days(Check):
                         if access_key_1_last_rotated.days > maximum_expiration_days:
                             old_access_keys = True
                             report.status = "FAIL"
-                            report.status_extended = "User {user['user']} has not rotated access key 1 in over 90 days ({access_key_1_last_rotated.days} days)."
+                            report.status_extended = f"User {user['user']} has not rotated access key 1 in over 90 days ({access_key_1_last_rotated.days} days)."
                     if user["access_key_2_last_rotated"] != "N/A":
                         access_key_2_last_rotated = (
                             datetime.datetime.now()
@@ -48,10 +48,10 @@ class iam_rotate_access_key_90_days(Check):
                         if access_key_2_last_rotated.days > maximum_expiration_days:
                             old_access_keys = True
                             report.status = "FAIL"
-                            report.status_extended = "User {user['user']} has not rotated access key 2 in over 90 days ({access_key_2_last_rotated.days} days)."
+                            report.status_extended = f"User {user['user']} has not rotated access key 2 in over 90 days ({access_key_2_last_rotated.days} days)."
                     if not old_access_keys:
                         report.status = "PASS"
-                        report.status_extended = "User {user['user']} has access keys not older than 90 days."
+                        report.status_extended = f"User {user['user']} has access keys not older than 90 days."
                 findings.append(report)
         else:
             report = Check_Report(self.metadata)

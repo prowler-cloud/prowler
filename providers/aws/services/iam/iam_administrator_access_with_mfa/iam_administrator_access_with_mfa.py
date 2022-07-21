@@ -30,18 +30,18 @@ class iam_administrator_access_with_mfa(Check):
                                             and user["mfa_active"] == "false"
                                         ):
                                             report.status = "FAIL"
-                                            report.status_extended = "Group {group.name} provides administrator access to User {group_user.name} with MFA disabled."
+                                            report.status_extended = f"Group {group.name} provides administrator access to User {group_user.name} with MFA disabled."
                                             findings.append(report)
                                         elif (
                                             user["user"] == group_user.name
                                             and user["mfa_active"] == "true"
                                         ):
                                             report.status = "PASS"
-                                            report.status_extended = "Group {group.name} provides administrator access to User {group_user.name} with MFA enabled."
+                                            report.status_extended = f"Group {group.name} provides administrator access to User {group_user.name} with MFA enabled."
                                             findings.append(report)
                             else:
                                 report.status = "PASS"
-                                report.status_extended = "Group {group.name} provides administrative access but does not have users."
+                                report.status_extended = f"Group {group.name} provides administrative access but does not have users."
                                 findings.append(report)
                     if not admin_policy:
                         report.status = "PASS"
@@ -51,7 +51,7 @@ class iam_administrator_access_with_mfa(Check):
                         findings.append(report)
                 else:
                     report.status = "PASS"
-                    report.status_extended = "Group {group.name} has no policies."
+                    report.status_extended = f"Group {group.name} has no policies."
                     findings.append(report)
 
         else:

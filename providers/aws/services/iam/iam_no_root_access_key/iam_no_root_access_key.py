@@ -18,7 +18,7 @@ class iam_no_root_access_key(Check):
                     and user["access_key_2_active"] == "false"
                 ):
                     report.status = "PASS"
-                    report.status_extended = "User {user['user']} has not access keys."
+                    report.status_extended = f"User {user['user']} has not access keys."
                 elif (
                     user["access_key_1_active"] == "true"
                     and user["access_key_2_active"] == "true"

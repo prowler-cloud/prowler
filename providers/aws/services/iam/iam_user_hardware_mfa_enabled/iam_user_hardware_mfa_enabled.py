@@ -17,7 +17,7 @@ class iam_user_hardware_mfa_enabled(Check):
                     for mfa_device in user.mfa_devices:
                         if mfa_device.type == "mfa" or mfa_device.type == "sms-mfa":
                             report.status = "FAIL"
-                            report.status_extended = "User {user.name} has a virtual MFA instead of a hardware MFA enabled."
+                            report.status_extended = f"User {user.name} has a virtual MFA instead of a hardware MFA enabled."
                             findings.append(report)
                         else:
                             report.status = "PASS"
