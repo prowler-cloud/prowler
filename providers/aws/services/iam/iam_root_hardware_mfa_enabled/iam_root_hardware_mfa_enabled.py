@@ -17,13 +17,13 @@ class iam_root_hardware_mfa_enabled(Check):
                 if "root" in mfa["SerialNumber"]:
                     virtual_mfa = True
                     report.status = "FAIL"
-                    report.status_extended = f"Root account has a virtual MFA instead of a hardware MFA enabled."
+                    report.status_extended = "Root account has a virtual MFA instead of a hardware MFA enabled."
             if not virtual_mfa:
                 report.status = "PASS"
-                report.status_extended = f"Root account has hardware MFA enabled."
+                report.status_extended = "Root account has hardware MFA enabled."
         else:
             report.status = "FAIL"
-            report.status_extended = f"MFA is not enabled for root account."
+            report.status_extended = "MFA is not enabled for root account."
 
         findings.append(report)
 
