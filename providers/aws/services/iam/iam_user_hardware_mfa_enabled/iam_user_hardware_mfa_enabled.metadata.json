@@ -1,0 +1,37 @@
+{
+  "Categories": [],
+  "CheckAlias": "extra7125",
+  "CheckID": "iam_user_hardware_mfa_enabled",
+  "CheckName": "iam_user_hardware_mfa_enabled",
+  "CheckTitle": "Check if IAM users have Hardware MFA enabled.",
+  "CheckType": "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+  "Compliance": [],
+  "DependsOn": [],
+  "Description": "Check if IAM users have Hardware MFA enabled.",
+  "Notes": "",
+  "Provider": "aws",
+  "RelatedTo": [],
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable hardware MFA device for an IAM user from the AWS Management Console; the command line; or the IAM API.",
+      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_physical.html"
+    }
+  },
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceType": "AwsIamUser",
+  "Risk": "Hardware MFA is preferred over virtual MFA.",
+  "ServiceName": "iam",
+  "Severity": "medium",
+  "SubServiceName": "",
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  }
+}

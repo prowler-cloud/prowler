@@ -1,0 +1,37 @@
+{
+  "Categories": [],
+  "CheckAlias": "extra71",
+  "CheckID": "iam_administrator_access_with_mfa",
+  "CheckName": "iam_administrator_access_with_mfa",
+  "CheckTitle": "Ensure users of groups with AdministratorAccess policy have MFA tokens enabled",
+  "CheckType": "Infrastructure Security",
+  "Compliance": [],
+  "DependsOn": [],
+  "Description": "Ensure users of groups with AdministratorAccess policy have MFA tokens enabled",
+  "Notes": "",
+  "Provider": "aws",
+  "RelatedTo": [],
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure this repository and its contents should be publicly accessible.",
+      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html"
+    }
+  },
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceType": "AwsIamUser",
+  "Risk": "Policy may allow Anonymous users to perform actions.",
+  "ServiceName": "iam",
+  "Severity": "high",
+  "SubServiceName": "",
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  }
+}
