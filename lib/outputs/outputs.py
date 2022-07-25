@@ -10,6 +10,7 @@ from config.config import (
     json_file_suffix,
     prowler_version,
     timestamp,
+    timestamp_utc,
 )
 from lib.outputs.models import (
     Check_Output_CSV,
@@ -20,7 +21,8 @@ from lib.outputs.models import (
     Resource,
     Severity,
 )
-from lib.utils.utils import file_exists, open_file
+from lib.utils.utils import file_exists, hash_sha512, open_file
+from providers.aws.aws_provider import send_to_security_hub
 
 
 def report(check_findings, output_options, audit_info):
@@ -82,6 +84,12 @@ def report(check_findings, output_options, audit_info):
                     finding_output.dict(), file_descriptors["json-asff"], indent=4
                 )
                 file_descriptors["json-asff"].write(",")
+
+            # Check if it is needed to send findings to security hub
+            if output_options.security_hub_enabled:
+                send_to_security_hub(
+                    finding.region, finding_output, audit_info.audit_session
+                )
 
     if file_descriptors:
         # Close all file descriptors
@@ -189,18 +197,21 @@ def fill_json(finding_output, audit_info, finding):
 
 
 def fill_json_asff(finding_output, audit_info, finding):
-    finding_output.Id = f"prowler-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{str(hash(finding.resource_id))}"
+    # Check if there are no resources in the finding
+    if finding.resource_id == "":
+        finding.resource_id = "NONE_PROVIDED"
+    finding_output.Id = f"prowler-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{hash_sha512(finding.resource_id)}"
     finding_output.ProductArn = f"arn:{audit_info.audited_partition}:securityhub:{finding.region}::product/prowler/prowler"
     finding_output.ProductFields = ProductFields(
         ProviderVersion=prowler_version, ProwlerResourceName=finding.resource_id
     )
     finding_output.GeneratorId = "prowler-" + finding.check_metadata.CheckID
     finding_output.AwsAccountId = audit_info.audited_account
-    finding_output.Types = finding.check_metadata.CheckType
+    finding_output.Types = [finding.check_metadata.CheckType]
     finding_output.FirstObservedAt = (
         finding_output.UpdatedAt
-    ) = finding_output.CreatedAt = timestamp.isoformat()
-    finding_output.Severity = Severity(Label=finding.check_metadata.Severity)
+    ) = finding_output.CreatedAt = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    finding_output.Severity = Severity(Label=finding.check_metadata.Severity.upper())
     finding_output.Title = finding.check_metadata.CheckTitle
     finding_output.Description = finding.check_metadata.Description
     finding_output.Resources = [
@@ -211,9 +222,14 @@ def fill_json_asff(finding_output, audit_info, finding):
             Region=finding.region,
         )
     ]
+    # Add ED to PASS or FAIL (PASSED/FAILED)
     finding_output.Compliance = Compliance(
-        Status=finding.status, RelatedRequirements=[finding.check_metadata.CheckType]
+        Status=finding.status + "ED",
+        RelatedRequirements=[finding.check_metadata.CheckType],
     )
+    finding_output.Remediation = {
+        "Recommendation": finding.check_metadata.Remediation.Recommendation
+    }
 
     return finding_output
 

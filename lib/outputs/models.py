@@ -89,6 +89,7 @@ class Check_Output_JSON_ASFF(BaseModel):
     Description: str = ""
     Resources: List[Resource] = None
     Compliance: Compliance = None
+    Remediation: dict = None
 
 
 @dataclass
@@ -188,13 +189,10 @@ class Check_Output_CSV:
             report.check_metadata.Remediation.Code.Terraform
         )
         self.remediation_recommendation_code_cli = (
-            report.check_metadata.Remediation.Code.cli
-        )
-        self.remediation_recommendation_code_cli = (
-            report.check_metadata.Remediation.Code.cli
+            report.check_metadata.Remediation.Code.CLI
         )
         self.remediation_recommendation_code_other = (
-            report.check_metadata.Remediation.Code.other
+            report.check_metadata.Remediation.Code.Other
         )
         self.categories = self.__unroll_list__(report.check_metadata.Categories)
         self.depends_on = self.__unroll_list__(report.check_metadata.DependsOn)
