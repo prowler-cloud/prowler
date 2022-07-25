@@ -192,9 +192,9 @@ def set_output_options(
 
 def run_check(check, audit_info, output_options):
     print(
-        f"\nCheck Name: {check.checkName} - {Fore.MAGENTA}{check.serviceName}{Fore.YELLOW} [{check.severity}]{Style.RESET_ALL}"
+        f"\nCheck ID: {check.checkID} - {Fore.MAGENTA}{check.serviceName}{Fore.YELLOW} [{check.severity}]{Style.RESET_ALL}"
     )
-    logger.debug(f"Executing check: {check.checkName}")
+    logger.debug(f"Executing check: {check.checkID}")
     findings = check.execute()
 
     report(findings, output_options, audit_info)

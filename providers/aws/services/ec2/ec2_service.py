@@ -12,18 +12,22 @@ class EC2:
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
+        self.instances = []
         self.__threading_call__(self.__describe_instances__)
+        self.security_groups = []
         self.__threading_call__(self.__describe_security_groups__)
+        self.network_acls = []
         self.__threading_call__(self.__describe_network_acls__)
+        self.snapshots = []
         self.__threading_call__(self.__describe_snapshots__)
-        self.__threading_call__(self.__get_snapshot_public__)
+        self.__get_snapshot_public__()
 
     def __get_session__(self):
         return self.session
 
     def __threading_call__(self, call):
         threads = []
-        for regional_client in self.regional_clients:
+        for regional_client in self.regional_clients.values():
             threads.append(threading.Thread(target=call, args=(regional_client,)))
         for t in threads:
             t.start()
@@ -36,7 +40,6 @@ class EC2:
             describe_instances_paginator = regional_client.get_paginator(
                 "describe_instances"
             )
-            instances = []
             for page in describe_instances_paginator.paginate():
                 for reservation in page["Reservations"]:
                     for instance in reservation["Instances"]:
@@ -44,9 +47,10 @@ class EC2:
                             "PublicDnsName" in instance
                             and "PublicIpAddress" in instance
                         ):
-                            instances.append(
+                            self.instances.append(
                                 Instance(
                                     instance["InstanceId"],
+                                    regional_client.region,
                                     instance["InstanceType"],
                                     instance["ImageId"],
                                     instance["LaunchTime"],
@@ -57,9 +61,10 @@ class EC2:
                                 )
                             )
                         else:
-                            instances.append(
+                            self.instances.append(
                                 Instance(
                                     instance["InstanceId"],
+                                    regional_client.region,
                                     instance["InstanceType"],
                                     instance["ImageId"],
                                     instance["LaunchTime"],
@@ -73,9 +78,6 @@ class EC2:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}: {error}"
             )
-            regional_client.instances = []
-        else:
-            regional_client.instances = instances
 
     def __describe_security_groups__(self, regional_client):
         logger.info("EC2 - Describing Security Groups...")
@@ -83,12 +85,12 @@ class EC2:
             describe_security_groups_paginator = regional_client.get_paginator(
                 "describe_security_groups"
             )
-            security_groups = []
             for page in describe_security_groups_paginator.paginate():
                 for sg in page["SecurityGroups"]:
-                    security_groups.append(
+                    self.security_groups.append(
                         SecurityGroup(
                             sg["GroupName"],
+                            regional_client.region,
                             sg["GroupId"],
                             sg["IpPermissions"],
                             sg["IpPermissionsEgress"],
@@ -98,9 +100,6 @@ class EC2:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}: {error}"
             )
-            regional_client.security_groups = []
-        else:
-            regional_client.security_groups = security_groups
 
     def __describe_network_acls__(self, regional_client):
         logger.info("EC2 - Describing Security Groups...")
@@ -108,19 +107,19 @@ class EC2:
             describe_network_acls_paginator = regional_client.get_paginator(
                 "describe_network_acls"
             )
-            network_acls = []
             for page in describe_network_acls_paginator.paginate():
                 for nacl in page["NetworkAcls"]:
-                    network_acls.append(
-                        NetworkACL(nacl["NetworkAclId"], nacl["Entries"])
+                    self.network_acls.append(
+                        NetworkACL(
+                            nacl["NetworkAclId"],
+                            regional_client.region,
+                            nacl["Entries"],
+                        )
                     )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}: {error}"
             )
-            regional_client.network_acls = []
-        else:
-            regional_client.network_acls = network_acls
 
     def __describe_snapshots__(self, regional_client):
         logger.info("EC2 - Describing Snapshots...")
@@ -136,36 +135,36 @@ class EC2:
                 for snapshot in page["Snapshots"]:
                     if snapshot["Encrypted"]:
                         encrypted = True
-                    snapshots.append(Snapshot(snapshot["SnapshotId"], encrypted))
+                    snapshots.append(
+                        Snapshot(
+                            snapshot["SnapshotId"], regional_client.region, encrypted
+                        )
+                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}: {error}"
             )
-            regional_client.snapshots = []
-        else:
-            regional_client.snapshots = snapshots
 
-    def __get_snapshot_public__(self, regional_client):
+    def __get_snapshot_public__(self):
         logger.info("EC2 - Get snapshots encryption...")
         try:
-            if hasattr(regional_client, "snapshots"):
-                for snapshot in regional_client.snapshots:
-                    snapshot_public = regional_client.describe_snapshot_attribute(
-                        Attribute="createVolumePermission", SnapshotId=snapshot.id
-                    )
-                    for permission in snapshot_public["CreateVolumePermissions"]:
-                        if "Group" in permission:
-                            if permission["Group"] == "all":
-                                snapshot.public = True
+            for snapshot in self.snapshots:
+                regional_client = self.regional_clients[snapshot.region]
+                snapshot_public = regional_client.describe_snapshot_attribute(
+                    Attribute="createVolumePermission", SnapshotId=snapshot.id
+                )
+                for permission in snapshot_public["CreateVolumePermissions"]:
+                    if "Group" in permission:
+                        if permission["Group"] == "all":
+                            snapshot.public = True
         except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
-            )
+            logger.error(f"{error.__class__.__name__}: {error}")
 
 
 @dataclass
 class Instance:
     id: str
+    region: str
     type: str
     image_id: str
     launch_time: str
@@ -177,6 +176,7 @@ class Instance:
     def __init__(
         self,
         id,
+        region,
         type,
         image_id,
         launch_time,
@@ -186,6 +186,7 @@ class Instance:
         public_ip,
     ):
         self.id = id
+        self.region = region
         self.type = type
         self.image_id = image_id
         self.launch_time = launch_time
@@ -198,11 +199,13 @@ class Instance:
 @dataclass
 class Snapshot:
     id: str
+    region: str
     encrypted: bool
     public: bool
 
-    def __init__(self, id, encrypted):
+    def __init__(self, id, region, encrypted):
         self.id = id
+        self.region = region
         self.encrypted = encrypted
         self.public = False
 
@@ -210,12 +213,14 @@ class Snapshot:
 @dataclass
 class SecurityGroup:
     name: str
+    region: str
     id: str
     ingress_rules: list[dict]
     egress_rules: list[dict]
 
-    def __init__(self, name, id, ingress_rules, egress_rules):
+    def __init__(self, name, region, id, ingress_rules, egress_rules):
         self.name = name
+        self.region = region
         self.id = id
         self.ingress_rules = ingress_rules
         self.egress_rules = egress_rules
@@ -226,8 +231,9 @@ class NetworkACL:
     id: str
     entries: list[dict]
 
-    def __init__(self, id, entries):
+    def __init__(self, id, region, entries):
         self.id = id
+        self.region = region
         self.entries = entries
 
 

@@ -41,55 +41,59 @@ def report(check_findings, output_options, audit_info):
             output_options.output_directory,
             csv_fields,
         )
+    if check_findings:
+        for finding in check_findings:
+            # printing the finding ...
 
-    for finding in check_findings:
-        # printing the finding ...
-
-        color = set_report_color(finding.status)
-        if output_options.is_quiet and "FAIL" in finding.status:
-            print(
-                f"{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
-            )
-        elif not output_options.is_quiet:
-            print(
-                f"{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
-            )
-        if file_descriptors:
-
-            # sending the finding to input options
-            if "csv" in file_descriptors:
-                finding_output = Check_Output_CSV(
-                    audit_info.audited_account,
-                    audit_info.profile,
-                    finding,
-                    audit_info.organizations_metadata,
+            color = set_report_color(finding.status)
+            if output_options.is_quiet and "FAIL" in finding.status:
+                print(
+                    f"{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
                 )
-                csv_writer = DictWriter(
-                    file_descriptors["csv"], fieldnames=csv_fields, delimiter=";"
+            elif not output_options.is_quiet:
+                print(
+                    f"{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
                 )
-                csv_writer.writerow(finding_output.__dict__)
+            if file_descriptors:
 
-            if "json" in file_descriptors:
-                finding_output = Check_Output_JSON(**finding.check_metadata.dict())
-                fill_json(finding_output, audit_info, finding)
+                # sending the finding to input options
+                if "csv" in file_descriptors:
+                    finding_output = Check_Output_CSV(
+                        audit_info.audited_account,
+                        audit_info.profile,
+                        finding,
+                        audit_info.organizations_metadata,
+                    )
+                    csv_writer = DictWriter(
+                        file_descriptors["csv"], fieldnames=csv_fields, delimiter=";"
+                    )
+                    csv_writer.writerow(finding_output.__dict__)
 
-                json.dump(finding_output.dict(), file_descriptors["json"], indent=4)
-                file_descriptors["json"].write(",")
+                if "json" in file_descriptors:
+                    finding_output = Check_Output_JSON(**finding.check_metadata.dict())
+                    fill_json(finding_output, audit_info, finding)
 
-            if "json-asff" in file_descriptors:
-                finding_output = Check_Output_JSON_ASFF()
-                fill_json_asff(finding_output, audit_info, finding)
+                    json.dump(finding_output.dict(), file_descriptors["json"], indent=4)
+                    file_descriptors["json"].write(",")
 
-                json.dump(
-                    finding_output.dict(), file_descriptors["json-asff"], indent=4
-                )
-                file_descriptors["json-asff"].write(",")
+                if "json-asff" in file_descriptors:
+                    finding_output = Check_Output_JSON_ASFF()
+                    fill_json_asff(finding_output, audit_info, finding)
 
-            # Check if it is needed to send findings to security hub
-            if output_options.security_hub_enabled:
-                send_to_security_hub(
-                    finding.region, finding_output, audit_info.audit_session
-                )
+                    json.dump(
+                        finding_output.dict(), file_descriptors["json-asff"], indent=4
+                    )
+                    file_descriptors["json-asff"].write(",")
+
+                # Check if it is needed to send findings to security hub
+                if output_options.security_hub_enabled:
+                    send_to_security_hub(
+                        finding.region, finding_output, audit_info.audit_session
+                    )
+    else:  # No service resources in the whole account
+        color = set_report_color("PASS")
+        if not output_options.is_quiet:
+            print(f"{color}PASS{Style.RESET_ALL} There are no resources.")
 
     if file_descriptors:
         # Close all file descriptors
