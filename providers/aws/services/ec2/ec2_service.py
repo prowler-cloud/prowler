@@ -127,7 +127,6 @@ class EC2:
             describe_snapshots_paginator = regional_client.get_paginator(
                 "describe_snapshots"
             )
-            snapshots = []
             encrypted = False
             for page in describe_snapshots_paginator.paginate(
                 OwnerIds=[self.audited_account]
@@ -135,7 +134,7 @@ class EC2:
                 for snapshot in page["Snapshots"]:
                     if snapshot["Encrypted"]:
                         encrypted = True
-                    snapshots.append(
+                    self.snapshots.append(
                         Snapshot(
                             snapshot["SnapshotId"], regional_client.region, encrypted
                         )

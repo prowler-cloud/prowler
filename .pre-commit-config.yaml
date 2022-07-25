@@ -54,7 +54,7 @@ repos:
         language: system
 
       - id: safety
-        name: bandit
+        name: safety
         description: 'Safety is a tool that checks your installed dependencies for known security vulnerabilities'
         entry: bash -c 'safety check'
         language: system
