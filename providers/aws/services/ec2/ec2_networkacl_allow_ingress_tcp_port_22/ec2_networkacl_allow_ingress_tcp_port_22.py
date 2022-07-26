@@ -19,6 +19,7 @@ class ec2_networkacl_allow_ingress_tcp_port_22(Check):
                             and entry["RuleAction"] == "allow"
                             and not entry["Egress"]
                             and "PortRange" in entry
+                            and entry["Protocol"] == "6"  # 6 relates to tcp protocol
                         ):
                             if (
                                 entry["PortRange"]["From"] == check_port

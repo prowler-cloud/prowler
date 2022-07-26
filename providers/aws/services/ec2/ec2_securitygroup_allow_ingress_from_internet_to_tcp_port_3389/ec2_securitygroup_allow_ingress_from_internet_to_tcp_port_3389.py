@@ -15,11 +15,15 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389(Check):
                     report.region = region
                     for ingress_rule in security_group.ingress_rules:
                         if (
-                            "0.0.0.0/0" in str(ingress_rule["IpRanges"])
-                            or "::/0" in str(ingress_rule["Ipv6Ranges"])
-                        ) and (
-                            ingress_rule["FromPort"] == check_port
-                            and ingress_rule["ToPort"] == check_port
+                            (
+                                "0.0.0.0/0" in str(ingress_rule["IpRanges"])
+                                or "::/0" in str(ingress_rule["Ipv6Ranges"])
+                            )
+                            and (
+                                ingress_rule["FromPort"] == check_port
+                                and ingress_rule["ToPort"] == check_port
+                            )
+                            and ingress_rule["IpProtocol"] == "tcp"
                         ):
                             public = True
                             report.status = "FAIL"
