@@ -11,20 +11,23 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22(Check):
             report = Check_Report(self.metadata)
             report.region = security_group.region
             for ingress_rule in security_group.ingress_rules:
-                if (
-                    "0.0.0.0/0" in str(ingress_rule["IpRanges"])
-                    or "::/0" in str(ingress_rule["Ipv6Ranges"])
-                ) and (
-                    ingress_rule["FromPort"] == check_port
-                    and ingress_rule["ToPort"] == check_port
+                if "0.0.0.0/0" in str(ingress_rule["IpRanges"]) or "::/0" in str(
+                    ingress_rule["Ipv6Ranges"]
                 ):
-                    public = True
-                    report.status = "FAIL"
-                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) has the SSH port 22 open to the Internet."
-                    report.resource_id = security_group.id
+                    if ingress_rule["IpProtocol"] == "-1":
+                        public = True
+                    elif (
+                        ingress_rule["FromPort"] == check_port
+                        and ingress_rule["ToPort"] == check_port
+                    ):
+                        public = True
             if not public:
                 report.status = "PASS"
                 report.status_extended = f"Security group {security_group.name} ({security_group.id}) has not SSH port 22 open to the Internet."
+                report.resource_id = security_group.id
+            else:
+                report.status = "FAIL"
+                report.status_extended = f"Security group {security_group.name} ({security_group.id}) has the SSH port 22 open to the Internet."
                 report.resource_id = security_group.id
             findings.append(report)
 
