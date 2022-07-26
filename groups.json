@@ -2,17 +2,39 @@
   "aws": {
     "gdpr": {
       "checks": [
-        "check11",
-        "check12"
+        "s3_bucket_server_access_logging_enabled",
+        "s3_bucket_object_versioning",
+        "iam_avoid_root_usage",
+        "iam_user_mfa_enabled_console_access",
+        "iam_disable_90_days_credentials",
+        "iam_rotate_access_key_90_days",
+        "iam_root_mfa_enabled",
+        "iam_root_hardware_mfa_enabled",
+        "iam_no_root_access_key",
+        "iam_administrator_access_with_mfa",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_ebs_snapshots_encrypted",
+        "ec2_ebs_public_snapshot"
       ],
       "description": "GDPR Readiness"
     },
-    "iam": {
+    "pci": {
       "checks": [
-        "iam_disable_30_days_credentials",
-        "iam_disable_90_days_credentials"
+        "iam_avoid_root_usage",
+        "iam_user_mfa_enabled_console_access",
+        "iam_disable_90_days_credentials",
+        "iam_rotate_access_key_90_days",
+        "iam_root_mfa_enabled",
+        "iam_root_hardware_mfa_enabled",
+        "iam_no_root_access_key",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "ec2_ebs_snapshots_encrypted",
+        "ec2_ebs_public_snapshot",
+        "s3_bucket_server_access_logging_enabled"
       ],
-      "description": "Identity and Access Management"
+      "description": "PCI-DSS v3.2.1 Readiness"
     }
   }
 }

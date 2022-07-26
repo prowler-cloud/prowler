@@ -1,0 +1,37 @@
+{
+  "Categories": [],
+  "CheckAlias": "extra750",
+  "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+  "CheckName": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+  "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to MySQL port 3306.",
+  "CheckType": "Infrastructure Security",
+  "Compliance": [],
+  "DependsOn": [],
+  "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to MySQL port 3306.",
+  "Notes": "",
+  "Provider": "aws",
+  "RelatedTo": [],
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.",
+      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    }
+  },
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceType": "AwsEc2SecurityGroup",
+  "Risk": "If Security groups are not properly configured the attack surface is increased.",
+  "ServiceName": "ec2",
+  "Severity": "high",
+  "SubServiceName": "",
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  }
+}
