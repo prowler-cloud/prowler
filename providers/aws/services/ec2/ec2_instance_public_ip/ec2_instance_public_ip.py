@@ -5,7 +5,6 @@ from providers.aws.services.ec2.ec2_service import ec2_client
 class ec2_instance_public_ip(Check):
     def execute(self):
         findings = []
-
         for instance in ec2_client.instances:
             report = Check_Report(self.metadata)
             report.region = instance.region
