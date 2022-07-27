@@ -24,12 +24,20 @@ CHECK_DOC_extra712='https://docs.aws.amazon.com/macie/latest/user/getting-starte
 CHECK_CAF_EPIC_extra712='Data Protection'
 
  extra712(){ 
-#     "No API commands available to check if Macie is enabled," 
-#     "just looking if IAM Macie related permissions exist.  " 
-   MACIE_IAM_ROLES_CREATED=$($AWSCLI iam list-roles $PROFILE_OPT --query 'Roles[*].Arn'|grep AWSMacieServiceCustomer|wc -l) 
-   if [[ $MACIE_IAM_ROLES_CREATED -eq 2 ]];then 
-     textPass "$REGION: Macie related IAM roles exist so it might be enabled. Check it out manually" "$REGION"
-else
-     textFail "$REGION: No Macie related IAM roles found. It is most likely not to be enabled" "$REGION"
-fi
-}
+      # Macie supports get-macie-session which tells the current status, if not Disabled. 
+      #  Capturing the STDOUT can help determine when Disabled.
+     MACIE_QUERY=$($AWSCLI macie2 get-macie-session 2>&1)
+
+     if [[ $MACIE_QUERY == *"ENABLED"* ]]; then
+          textPass "$REGION: Macie is enabled." "$REGION"
+
+     elif [[ $MACIE_QUERY == *"PAUSED"* ]]; then
+          textFail "$REGION: Macie is currently in a SUSPENDED state." "$REGION"
+
+     elif [[ $MACIE_QUERY == *"Macie is not enabled"* ]]; then
+          textFail "$REGION: Macie is not enabled." "$REGION"
+
+     else
+          textFail "$REGION: Unexpected error while querying AWS Macie." "$REGION"
+     fi
+ }
