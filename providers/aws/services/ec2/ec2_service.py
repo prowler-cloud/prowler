@@ -235,5 +235,90 @@ class NetworkACL:
         self.region = region
         self.entries = entries
 
+    def __get_snapshot_public__(self, regional_client):
+        logger.info("EC2 - Get snapshots encryption...")
+        try:
+            if hasattr(regional_client, "snapshots"):
+                for snapshot in regional_client.snapshots:
+                    snapshot_public = regional_client.describe_snapshot_attribute(
+                        Attribute="createVolumePermission", SnapshotId=snapshot.id
+                    )
+                    for permission in snapshot_public["CreateVolumePermissions"]:
+                        if "Group" in permission:
+                            if permission["Group"] == "all":
+                                snapshot.public = True
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+            )
+
+
+@dataclass
+class Instance:
+    id: str
+    type: str
+    image_id: str
+    launch_time: str
+    private_dns: str
+    private_ip: str
+    public_dns: str
+    public_ip: str
+
+    def __init__(
+        self,
+        id,
+        type,
+        image_id,
+        launch_time,
+        private_dns,
+        private_ip,
+        public_dns,
+        public_ip,
+    ):
+        self.id = id
+        self.type = type
+        self.image_id = image_id
+        self.launch_time = launch_time
+        self.private_dns = private_dns
+        self.private_ip = private_ip
+        self.public_dns = public_dns
+        self.public_ip = public_ip
+
+
+@dataclass
+class Snapshot:
+    id: str
+    encrypted: bool
+    public: bool
+
+    def __init__(self, id, encrypted):
+        self.id = id
+        self.encrypted = encrypted
+        self.public = False
+
+
+@dataclass
+class SecurityGroup:
+    name: str
+    id: str
+    ingress_rules: list[dict]
+    egress_rules: list[dict]
+
+    def __init__(self, name, id, ingress_rules, egress_rules):
+        self.name = name
+        self.id = id
+        self.ingress_rules = ingress_rules
+        self.egress_rules = egress_rules
+
+
+@dataclass
+class NetworkACL:
+    id: str
+    entries: list[dict]
+
+    def __init__(self, id, entries):
+        self.id = id
+        self.entries = entries
+
 
 ec2_client = EC2(current_audit_info)
