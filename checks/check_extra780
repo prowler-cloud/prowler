@@ -11,15 +11,15 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra780="7.80"
-CHECK_TITLE_extra780="[extra780] Check if Amazon Elasticsearch Service (ES) domains has Amazon Cognito authentication for Kibana enabled"
+CHECK_TITLE_extra780="[extra780] Check if Amazon OpenSearch Service domains (formerly known as Elasticsearch or ES) has either Amazon Cognito authentication or SAML authentication for Kibana enabled"
 CHECK_SCORED_extra780="NOT_SCORED"
 CHECK_CIS_LEVEL_extra780="EXTRA"
 CHECK_SEVERITY_extra780="High"
 CHECK_ASFF_RESOURCE_TYPE_extra780="AwsElasticsearchDomain"
 CHECK_ALTERNATE_check780="extra780"
 CHECK_SERVICENAME_extra780="es"
-CHECK_RISK_extra780='Amazon Elasticsearch Service supports Amazon Cognito for Kibana authentication. '
-CHECK_REMEDIATION_extra780='If you do not configure Amazon Cognito authentication; you can still protect Kibana using an IP-based access policy and a proxy server; HTTP basic authentication; or SAML.'
+CHECK_RISK_extra780='Enable Amazon Cognito authentication or SAML authentication for Kibana, supported by Amazon OpenSearch Service (formerly known as Elasticsearch).'
+CHECK_REMEDIATION_extra780='If you do not configure Amazon Cognito or SAML authentication; you can still protect Kibana using an IP-based access policy and a proxy server; HTTP basic authentication.'
 CHECK_DOC_extra780='https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-ac.html'
 CHECK_CAF_EPIC_extra780='IAM'
 
@@ -32,15 +32,20 @@ extra780(){
     fi
     if [[ "${LIST_OF_DOMAINS}" ]]; then
       for domain in ${LIST_OF_DOMAINS}; do
-        CHECK_IF_COGNITO_ENABLED=$("${AWSCLI}" es describe-elasticsearch-domain --domain-name "${domain}" ${PROFILE_OPT} --region "${regx}" --query 'DomainStatus.CognitoOptions.Enabled' --output text 2>&1)
-        if [[ $(echo "${CHECK_IF_COGNITO_ENABLED}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        CHECK_IF_COGNITO_OR_SAML_ENABLED=$("${AWSCLI}" es describe-elasticsearch-domain --domain-name "${domain}" ${PROFILE_OPT} --region "${regx}" --query 'DomainStatus.[CognitoOptions.Enabled,AdvancedSecurityOptions.SAMLOptions.Enabled]' --output text 2>&1)
+        if [[ $(echo "${CHECK_IF_COGNITO_OR_SAML_ENABLED}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
             textInfo "${regx}: Access Denied trying to get ES domain ${domain}" "${regx}"
             continue
         fi
-        if [[ $(tr '[:upper:]' '[:lower:]' <<< "${CHECK_IF_COGNITO_ENABLED}") == "true" ]]; then
+        read -r cognito_enabled saml_enabled <<< $(tr '[:upper:]' '[:lower:]' <<< "${CHECK_IF_COGNITO_OR_SAML_ENABLED}")
+        if [[ $cognito_enabled == "true" ]]; then
           textPass "${regx}: Amazon ES domain ${domain} has Amazon Cognito authentication for Kibana enabled" "${regx}" "${domain}"
         else
-          textFail "${regx}: Amazon ES domain ${domain} does not have Amazon Cognito authentication for Kibana enabled" "${regx}" "${domain}"
+          if [[ $saml_enabled == "true" ]]; then
+            textPass "${regx}: Amazon ES domain ${domain} has SAML authentication for Kibana enabled" "${regx}" "${domain}"
+          else
+            textFail "${regx}: Amazon ES domain ${domain} has neither Amazon Cognito authentication nor SAML authentication for Kibana enabled" "${regx}" "${domain}"
+          fi
         fi
       done
     else
