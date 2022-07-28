@@ -23,13 +23,22 @@ CHECK_REMEDIATION_extra712='Enable Amazon Macie and create appropriate jobs to d
 CHECK_DOC_extra712='https://docs.aws.amazon.com/macie/latest/user/getting-started.html'
 CHECK_CAF_EPIC_extra712='Data Protection'
 
- extra712(){ 
-#     "No API commands available to check if Macie is enabled," 
-#     "just looking if IAM Macie related permissions exist.  " 
-   MACIE_IAM_ROLES_CREATED=$($AWSCLI iam list-roles $PROFILE_OPT --query 'Roles[*].Arn'|grep AWSMacieServiceCustomer|wc -l) 
-   if [[ $MACIE_IAM_ROLES_CREATED -eq 2 ]];then 
-     textPass "$REGION: Macie related IAM roles exist so it might be enabled. Check it out manually" "$REGION"
-else
-     textFail "$REGION: No Macie related IAM roles found. It is most likely not to be enabled" "$REGION"
-fi
-}
+ extra712(){
+      # Macie supports get-macie-session which tells the current status, if not Disabled.
+      #  Capturing the STDOUT can help determine when Disabled.
+     for region in $REGIONS; do
+          MACIE_STATUS=$($AWSCLI macie2 get-macie-session ${PROFILE_OPT} --region "$region" --query status --output text 2>&1)
+          if [[ "$MACIE_STATUS" == "ENABLED" ]]; then
+               textPass "$region: Macie is enabled." "$region"
+
+          elif [[ "$MACIE_STATUS" == "PAUSED" ]]; then
+               textFail "$region: Macie is currently in a SUSPENDED state." "$region"
+
+          elif grep -q -E 'Macie is not enabled' <<< "${MACIE_STATUS}"; then
+               textFail "$region: Macie is not enabled." "$region"
+
+          elif grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${MACIE_STATUS}"; then
+               textInfo "$region: Access Denied trying to get AWS Macie information." "$region"
+          fi
+     done
+     }
