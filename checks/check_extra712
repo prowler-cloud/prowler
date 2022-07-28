@@ -23,21 +23,22 @@ CHECK_REMEDIATION_extra712='Enable Amazon Macie and create appropriate jobs to d
 CHECK_DOC_extra712='https://docs.aws.amazon.com/macie/latest/user/getting-started.html'
 CHECK_CAF_EPIC_extra712='Data Protection'
 
- extra712(){ 
-      # Macie supports get-macie-session which tells the current status, if not Disabled. 
+ extra712(){
+      # Macie supports get-macie-session which tells the current status, if not Disabled.
       #  Capturing the STDOUT can help determine when Disabled.
-     MACIE_QUERY=$($AWSCLI macie2 get-macie-session 2>&1)
+     for region in $REGIONS; do
+          MACIE_STATUS=$($AWSCLI macie2 get-macie-session ${PROFILE_OPT} --region "$region" --query status --output text 2>&1)
+          if [[ "$MACIE_STATUS" == "ENABLED" ]]; then
+               textPass "$region: Macie is enabled." "$region"
 
-     if [[ $MACIE_QUERY == *"ENABLED"* ]]; then
-          textPass "$REGION: Macie is enabled." "$REGION"
+          elif [[ "$MACIE_STATUS" == "PAUSED" ]]; then
+               textFail "$region: Macie is currently in a SUSPENDED state." "$region"
 
-     elif [[ $MACIE_QUERY == *"PAUSED"* ]]; then
-          textFail "$REGION: Macie is currently in a SUSPENDED state." "$REGION"
+          elif grep -q -E 'Macie is not enabled' <<< "${MACIE_STATUS}"; then
+               textFail "$region: Macie is not enabled." "$region"
 
-     elif [[ $MACIE_QUERY == *"Macie is not enabled"* ]]; then
-          textFail "$REGION: Macie is not enabled." "$REGION"
-
-     else
-          textFail "$REGION: Unexpected error while querying AWS Macie." "$REGION"
-     fi
- }
+          elif grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${MACIE_STATUS}"; then
+               textInfo "$region: Access Denied trying to get AWS Macie information." "$region"
+          fi
+     done
+     }
