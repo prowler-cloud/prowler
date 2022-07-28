@@ -13,7 +13,7 @@
 
 CHECK_ID_check118="1.18"
 CHECK_TITLE_check118="[check118] Ensure security contact information is registered"
-CHECK_SCORED_check118="NOT_SCORED"
+CHECK_SCORED_check118="SCORED"
 CHECK_CIS_LEVEL_check118="LEVEL1"
 CHECK_SEVERITY_check118="Medium"
 CHECK_ASFF_TYPE_check118="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
@@ -29,7 +29,11 @@ check118(){
     textInfo "${REGION}: This is an AWS GovCloud account and there is no root account to perform checks." "$REGION" "root"
   else
     # "Ensure security contact information is registered (Scored)"
-    # No command available
-    textInfo "No command available for check 1.18. See section 1.18 on the CIS Benchmark guide for details." "$REGION" "root"
+    GET_SECURITY_CONTACT_DETAILS=$($AWSCLI account get-alternate-contact --alternate-contact-type SECURITY --output text $PROFILE_OPT --region $REGION 2>&1)
+    if [[ $(echo "$GET_SECURITY_CONTACT_DETAILS" | grep SECURITY) ]]; then
+      textPass "Account has security contact information. Perhaps check for freshness of these details." "$REGION" "contact info"
+    else
+      textFail "No security contact information 1.18, or unable to capture. See section 1.18 on the CIS Benchmark guide for details." "$REGION" "contact info"
+    fi
   fi
 }
