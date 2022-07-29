@@ -26,7 +26,21 @@ CHECK_DOC_extra7192='https://docs.aws.amazon.com/appstream2/latest/developerguid
 CHECK_CAF_EPIC_extra7192="Infrastructure Security"
 
 extra7192(){
-  for regx in $REGIONS; do
+
+  # Get the latest regions for AppStream. Any region that exists in both the application version and the global $REGIONS, include in the report. Skip mis-matches.
+  APP_REGIONS=`curl -s https://api.regional-table.region-services.aws.a2z.com/index.json | jq -r '.prices[].attributes|select(."aws:serviceName" == "Amazon AppStream 2.0") | ."aws:region"'`
+  
+  # Generate the list of regions to scan
+  declare -a SCAN_REGIONS=()
+  for EACH_REGION in $REGIONS
+  do
+    if [[ $APP_REGIONS == *$EACH_REGION* ]]; then
+      # adding $EACH_REGION to the queue
+      SCAN_REGIONS+=("$EACH_REGION ")
+    fi
+  done
+
+  for regx in ${SCAN_REGIONS[@]}; do
     LIST_OF_FLEETS_WITH_SESSION_IDLE_DISCONNECT_DURATION_ABOVE_RECOMMENDED=$("${AWSCLI}" appstream describe-fleets $PROFILE_OPT --region "${regx}" --query 'Fleets[?IdleDisconnectTimeoutInSeconds>`600`].Arn' --output text 2>&1)
     if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError|Could not connect to the endpoint URL' <<< "${LIST_OF_FLEETS_WITH_SESSION_IDLE_DISCONNECT_DURATION_ABOVE_RECOMMENDED}"; then
         textInfo "${regx}: Access Denied trying to describe appstream fleet(s)" "${regx}"
