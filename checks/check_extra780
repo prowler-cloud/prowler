@@ -26,18 +26,18 @@ CHECK_CAF_EPIC_extra780='IAM'
 extra780(){
   for regx in ${REGIONS}; do
     LIST_OF_DOMAINS=$("${AWSCLI}" es list-domain-names ${PROFILE_OPT} --region "${regx}" --query 'DomainNames[].DomainName' --output text 2>&1)
-    if [[ $(echo "${LIST_OF_DOMAINS}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+    if grep -E -q 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_DOMAINS}"; then
         textInfo "${regx}: Access Denied trying to list domain names" "${regx}"
         continue
     fi
     if [[ "${LIST_OF_DOMAINS}" ]]; then
       for domain in ${LIST_OF_DOMAINS}; do
         CHECK_IF_COGNITO_OR_SAML_ENABLED=$("${AWSCLI}" es describe-elasticsearch-domain --domain-name "${domain}" ${PROFILE_OPT} --region "${regx}" --query 'DomainStatus.[CognitoOptions.Enabled,AdvancedSecurityOptions.SAMLOptions.Enabled]' --output text 2>&1)
-        if [[ $(echo "${CHECK_IF_COGNITO_OR_SAML_ENABLED}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+        if grep -E -q 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${CHECK_IF_COGNITO_OR_SAML_ENABLED}"; then
             textInfo "${regx}: Access Denied trying to get ES domain ${domain}" "${regx}"
             continue
         fi
-        read -r cognito_enabled saml_enabled <<< $(tr '[:upper:]' '[:lower:]' <<< "${CHECK_IF_COGNITO_OR_SAML_ENABLED}")
+        read -r cognito_enabled saml_enabled <<< "$(tr '[:upper:]' '[:lower:]' <<< "${CHECK_IF_COGNITO_OR_SAML_ENABLED}")"
         if [[ $cognito_enabled == "true" ]]; then
           textPass "${regx}: Amazon ES domain ${domain} has Amazon Cognito authentication for Kibana enabled" "${regx}" "${domain}"
         else
@@ -49,7 +49,7 @@ extra780(){
         fi
       done
     else
-      textInfo "${regx}: No Amazon ES domain found" "${regx}"
+      textPass "${regx}: No Amazon ES domain found" "${regx}"
     fi
   done
 }
