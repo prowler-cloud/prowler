@@ -28,7 +28,7 @@ CHECK_CAF_EPIC_extra7193="Infrastructure Security"
 extra7193(){
   for regx in $REGIONS; do
     LIST_OF_FLEETS_WITH_DEFAULT_INTERNET_ACCESS_ENABLED=$("${AWSCLI}" appstream describe-fleets $PROFILE_OPT --region "${regx}" --query 'Fleets[?EnableDefaultInternetAccess==`true`].Arn' --output text 2>&1)
-    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError|Could not connect to the endpoint URL' <<< "${LIST_OF_FLEETS_WITH_DEFAULT_INTERNET_ACCESS_ENABLED}"; then
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError|Could not connect to the endpoint URL|Connect timeout on endpoint URL' <<< "${LIST_OF_FLEETS_WITH_DEFAULT_INTERNET_ACCESS_ENABLED}"; then
         textInfo "${regx}: Access Denied trying to describe appstream fleet(s)" "${regx}"
         continue
     fi

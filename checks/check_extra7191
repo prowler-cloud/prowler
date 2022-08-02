@@ -28,7 +28,7 @@ CHECK_CAF_EPIC_extra7191="Infrastructure Security"
 extra7191(){
   for regx in $REGIONS; do
     LIST_OF_FLEETS_WITH_SESSION_DISCONNECT_DURATION_ABOVE_RECOMMENDED=$("${AWSCLI}" appstream describe-fleets $PROFILE_OPT --region "${regx}" --query 'Fleets[?DisconnectTimeoutInSeconds>`300`].Arn' --output text 2>&1)
-    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError|Could not connect to the endpoint URL' <<< "${LIST_OF_FLEETS_WITH_SESSION_DISCONNECT_DURATION_ABOVE_RECOMMENDED}"; then
+    if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError|Could not connect to the endpoint URL|Connect timeout on endpoint URL' <<< "${LIST_OF_FLEETS_WITH_SESSION_DISCONNECT_DURATION_ABOVE_RECOMMENDED}"; then
         textInfo "${regx}: Access Denied trying to describe appstream fleet(s)" "${regx}"
         continue
     fi
