@@ -1,8 +1,6 @@
 {
   "Categories": [],
-  "CheckAlias": "check114",
   "CheckID": "iam_root_hardware_mfa_enabled",
-  "CheckName": "iam_root_hardware_mfa_enabled",
   "CheckTitle": "Ensure hardware MFA is enabled for the root account",
   "CheckType": "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
   "Compliance": [

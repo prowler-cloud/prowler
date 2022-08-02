@@ -1,8 +1,6 @@
 {
   "Categories": [],
-  "CheckAlias": "extra740",
   "CheckID": "ec2_ebs_snapshots_encrypted",
-  "CheckName": "ec2_ebs_snapshots_encrypted",
   "CheckTitle": "Check if EBS snapshots are encrypted.",
   "CheckType": "Data Protection",
   "Compliance": [],

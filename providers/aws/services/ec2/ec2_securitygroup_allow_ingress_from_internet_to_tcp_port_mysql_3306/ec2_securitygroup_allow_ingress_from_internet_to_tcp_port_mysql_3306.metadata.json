@@ -1,8 +1,6 @@
 {
   "Categories": [],
-  "CheckAlias": "extra750",
   "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
-  "CheckName": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
   "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to MySQL port 3306.",
   "CheckType": "Infrastructure Security",
   "Compliance": [],

@@ -1,8 +1,6 @@
 {
   "Categories": [],
-  "CheckAlias": "extra7123",
   "CheckID": "iam_user_two_active_access_key",
-  "CheckName": "iam_user_two_active_access_key",
   "CheckTitle": "Check if IAM users have two active access keys",
   "CheckType": "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
   "Compliance": [],

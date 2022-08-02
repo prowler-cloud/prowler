@@ -1,8 +1,6 @@
 {
   "Categories": [],
-  "CheckAlias": "extra750",
   "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-  "CheckName": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
   "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to SSH port 22.",
   "CheckType": "Infrastructure Security",
   "Compliance": [

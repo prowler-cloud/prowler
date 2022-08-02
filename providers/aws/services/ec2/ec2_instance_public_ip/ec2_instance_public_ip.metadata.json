@@ -1,8 +1,6 @@
 {
   "Categories": [],
-  "CheckAlias": "extra710",
   "CheckID": "ec2_instance_public_ip",
-  "CheckName": "ec2_instance_public_ip",
   "CheckTitle": "Check for EC2 Instances with Public IP.",
   "CheckType": "Infrastructure Security",
   "Compliance": [],

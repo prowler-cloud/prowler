@@ -1,8 +1,6 @@
 {
   "Categories": [],
-  "CheckAlias": "extra72",
   "CheckID": "ec2_ebs_public_snapshot",
-  "CheckName": "ec2_ebs_public_snapshot",
   "CheckTitle": "Ensure there are no EBS Snapshots set as Public.",
   "CheckType": "Data Protection",
   "Compliance": [],

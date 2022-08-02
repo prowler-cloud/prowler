@@ -1,8 +1,6 @@
 {
   "Categories": [],
-  "CheckAlias": "extra718",
   "CheckID": "s3_bucket_server_access_logging_enabled",
-  "CheckName": "s3_bucket_server_access_logging_enabled",
   "CheckTitle": "Check if S3 buckets have server access logging enabled",
   "CheckType": "Logging and Monitoring",
   "Compliance": [],

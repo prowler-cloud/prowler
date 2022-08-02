@@ -1,8 +1,6 @@
 {
   "Categories": [],
-  "CheckAlias": "check11",
   "CheckID": "iam_avoid_root_usage",
-  "CheckName": "iam_avoid_root_usage",
   "CheckTitle": "Avoid the use of the root accounts",
   "CheckType": "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
   "Compliance": [
