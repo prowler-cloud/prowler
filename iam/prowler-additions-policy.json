@@ -3,6 +3,7 @@
     "Statement": [
         {
             "Action": [
+                "account:Get*",
                 "ds:Get*",
                 "ds:Describe*",
                 "ds:List*",

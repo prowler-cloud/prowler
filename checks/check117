@@ -13,7 +13,7 @@
 
 CHECK_ID_check117="1.17"
 CHECK_TITLE_check117="[check117] Maintain current contact details"
-CHECK_SCORED_check117="NOT_SCORED"
+CHECK_SCORED_check117="SCORED"
 CHECK_CIS_LEVEL_check117="LEVEL1"
 CHECK_SEVERITY_check117="Medium"
 CHECK_ASFF_TYPE_check117="Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
@@ -26,10 +26,18 @@ CHECK_CAF_EPIC_check117='IAM'
 
 check117(){
   if [[ "${REGION}" == "us-gov-west-1" || "${REGION}" == "us-gov-east-1" ]]; then
-    textInfo "${REGION}: This is an AWS GovCloud account and there is no root account to perform checks." "$REGION" "root"
+    textInfo "${REGION}: This is an AWS GovCloud account and there is no root account to perform checks." "${REGION}" "root"
   else
     # "Maintain current contact details (Scored)"
-    # No command available
-    textInfo "No command available for check 1.17. See section 1.17 on the CIS Benchmark guide for details." "$REGION" "root"
+    GET_CONTACT_DETAILS=$($AWSCLI account get-contact-information --output text $PROFILE_OPT --region "${REGION}" 2>&1)
+    if grep -E -q 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${GET_CONTACT_DETAILS}"; then
+      textInfo "${REGION}: Access Denied trying to get account contact information" "${REGION}"
+    else
+      if [[ ${GET_CONTACT_DETAILS} ]];then
+        textPass "${REGION}: Account has contact information. Perhaps check for freshness of these details." "${REGION}" "root"
+      else
+        textFail "${REGION}: Unable to get account contact details. See section 1.17 on the CIS Benchmark guide for details." "${REGION}" "root"
+      fi
+    fi
   fi
 }
