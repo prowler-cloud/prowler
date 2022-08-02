@@ -55,6 +55,8 @@ Resources:
             Statement:
             - Effect: Allow
               Action:
+                - 'account:GetContactInformation'
+                - 'account:GetAlternateContact'
                 - 'ds:ListAuthorizedApplications'
                 - 'ec2:GetEbsEncryptionByDefault'
                 - 'ecr:Describe*'
