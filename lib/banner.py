@@ -24,11 +24,3 @@ Color code for results:
  - {Fore.RED}FAIL (Fix required){Style.RESET_ALL}
 """
     print(banner)
-    # printColorsCode
-
-
-# echo -e "\n$NORMAL Color code for results: "
-#     echo -e " - $NOTICE INFO (Information)$NORMAL"
-#     echo -e " - $OK PASS (Recommended value)$NORMAL"
-#     echo -e " - $WARNING WARNING (Ignored by allowlist)$NORMAL"
-#     echo -e " - $BAD FAIL (Fix required)$NORMAL"
