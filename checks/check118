@@ -26,14 +26,18 @@ CHECK_CAF_EPIC_check118='IAM'
 
 check118(){
   if [[ "${REGION}" == "us-gov-west-1" || "${REGION}" == "us-gov-east-1" ]]; then
-    textInfo "${REGION}: This is an AWS GovCloud account and there is no root account to perform checks." "$REGION" "root"
+    textInfo "${REGION}: This is an AWS GovCloud account and there is no root account to perform checks." "${REGION}" "root"
   else
     # "Ensure security contact information is registered (Scored)"
-    GET_SECURITY_CONTACT_DETAILS=$($AWSCLI account get-alternate-contact --alternate-contact-type SECURITY --output text $PROFILE_OPT --region $REGION 2>&1)
-    if [[ $(echo "$GET_SECURITY_CONTACT_DETAILS" | grep SECURITY) ]]; then
-      textPass "Account has security contact information. Perhaps check for freshness of these details." "$REGION" "contact info"
+    GET_SECURITY_CONTACT_DETAILS=$("${AWSCLI}" account get-alternate-contact --alternate-contact-type SECURITY --output text ${PROFILE_OPT} --region "${REGION}" 2>&1)
+    if grep -E -q 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${GET_SECURITY_CONTACT_DETAILS}"; then
+      textInfo "${REGION}: Access Denied trying to get account contact information" "${REGION}"
     else
-      textFail "No security contact information 1.18, or unable to capture. See section 1.18 on the CIS Benchmark guide for details." "$REGION" "contact info"
+      if grep "SECURITY" <<< "${GET_SECURITY_CONTACT_DETAILS}"; then
+        textPass "${REGION}: Account has security contact information. Perhaps check for freshness of these details." "${REGION}" "root"
+      else
+        textFail "${REGION}: Account has not security contact information, or it was unable to capture. See section 1.18 on the CIS Benchmark guide for details." "${REGION}" "root"
+      fi
     fi
   fi
 }
