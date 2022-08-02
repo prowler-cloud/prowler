@@ -32,7 +32,13 @@ from providers.aws.aws_provider import (
 if __name__ == "__main__":
     # CLI Arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("provider", choices=["aws"], help="Specify Provider")
+    parser.add_argument(
+        "provider",
+        choices=["aws"],
+        nargs="?",
+        default="aws",
+        help="Specify Cloud Provider",
+    )
 
     # Arguments to set checks to run
     # The following arguments needs to be set exclusivelly
