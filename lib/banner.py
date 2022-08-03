@@ -14,6 +14,13 @@ def print_banner():
 | |_) | | | (_) \ V  V /| |  __/ |
 | .__/|_|  \___/ \_/\_/ |_|\___|_|v{prowler_version}
 |_|{Fore.BLUE} the handy cloud security tool
-{Fore.YELLOW} Date: {timestamp.strftime("%Y-%m-%d %H:%M:%S")}{Style.RESET_ALL}
+
+{Fore.YELLOW}Date: {timestamp.strftime("%Y-%m-%d %H:%M:%S")}{Style.RESET_ALL}
+
+Color code for results:
+ - {Fore.YELLOW}INFO (Information){Style.RESET_ALL}
+ - {Fore.GREEN}PASS (Recommended value){Style.RESET_ALL}
+ - {Fore.YELLOW}WARNING (Ignored by allowlist){Style.RESET_ALL}
+ - {Fore.RED}FAIL (Fix required){Style.RESET_ALL}
 """
     print(banner)

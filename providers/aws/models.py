@@ -33,6 +33,8 @@ class AWS_Audit_Info:
     original_session: session.Session
     audit_session: session.Session
     audited_account: int
+    audited_identity_arn: str
+    audited_user_id: str
     audited_partition: str
     profile: str
     profile_region: str
