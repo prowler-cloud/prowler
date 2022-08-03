@@ -71,6 +71,8 @@ class Test_AWS_Provider:
             audit_session=None,
             audited_account=None,
             audited_partition=None,
+            audited_identity_arn=None,
+            audited_user_id=None,
             profile=None,
             profile_region=None,
             credentials=None,
