@@ -236,6 +236,9 @@ if __name__ == "__main__":
             checks_to_execute, excluded_services, provider
         )
 
+    # Sort final check list
+    checks_to_execute = sorted(checks_to_execute)
+
     # If -l/--list-checks passed as argument, print checks to execute and quit
     if args.list_checks:
         print_checks(provider, checks_to_execute, bulk_checks_metadata)
@@ -265,7 +268,7 @@ if __name__ == "__main__":
 
     # Execute checks
     if len(checks_to_execute):
-        for check_name in sorted(checks_to_execute):
+        for check_name in checks_to_execute:
             # Recover service from check name
             service = check_name.split("_")[0]
             try:
