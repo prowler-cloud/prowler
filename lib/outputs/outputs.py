@@ -43,16 +43,15 @@ def report(check_findings, output_options, audit_info):
         )
 
     for finding in check_findings:
-        # printing the finding ...
-
+        # Print findings by stdout
         color = set_report_color(finding.status)
         if output_options.is_quiet and "FAIL" in finding.status:
             print(
-                f"{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
+                f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
             )
         elif not output_options.is_quiet:
             print(
-                f"{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
+                f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
             )
         if file_descriptors:
 
