@@ -25,7 +25,7 @@ class Check_Output_JSON(BaseModel):
     OrganizationsInfo: Optional[AWS_Organizations_Info]
     Region: str = ""
     CheckID: str
-    CheckName: str
+    # CheckName: str
     CheckTitle: str
     CheckType: str
     ServiceName: str
@@ -106,7 +106,7 @@ class Check_Output_CSV:
     account_tags: str
     region: str
     check_id: str
-    check_name: str
+    # check_name: str
     check_title: str
     check_type: str
     status: str
@@ -160,7 +160,7 @@ class Check_Output_CSV:
             self.account_tags = organizations.account_details_tags
         self.region = report.region
         self.check_id = report.check_metadata.CheckID
-        self.check_name = report.check_metadata.CheckName
+        # self.check_name = report.check_metadata.CheckName
         self.check_title = report.check_metadata.CheckTitle
         self.check_type = report.check_metadata.CheckType
         self.status = report.status
