@@ -4,7 +4,7 @@
   "CheckTitle": "Ensure no Network ACLs allow ingress from 0.0.0.0/0 to Microsoft RDP port 3389",
   "CheckType": "Infrastructure Security",
   "ServiceName": "ec2",
-  "SubServiceName": "networkacls",
+  "SubServiceName": "networkacl",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
   "ResourceType": "AwsEc2NetworkAcl",

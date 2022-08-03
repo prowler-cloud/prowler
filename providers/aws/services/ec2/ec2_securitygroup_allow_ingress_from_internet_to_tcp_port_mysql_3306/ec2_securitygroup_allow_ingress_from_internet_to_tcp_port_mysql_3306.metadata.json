@@ -4,7 +4,7 @@
   "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to MySQL port 3306.",
   "CheckType": "Infrastructure Security",
   "ServiceName": "ec2",
-  "SubServiceName": "",
+  "SubServiceName": "securitygroups",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
