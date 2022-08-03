@@ -4,7 +4,7 @@
   "CheckTitle": "Check if EBS snapshots are encrypted.",
   "CheckType": "Data Protection",
   "ServiceName": "ec2",
-  "SubServiceName": "ebs-snapshots",
+  "SubServiceName": "snapshot",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2Snapshot",

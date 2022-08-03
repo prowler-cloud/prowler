@@ -5,7 +5,7 @@
   "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Oracle ports 1521 or 2483.",
   "CheckType": "Infrastructure Security",
   "ServiceName": "ec2",
-  "SubServiceName": "",
+  "SubServiceName": "securitygroup",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",

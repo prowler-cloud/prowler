@@ -4,7 +4,7 @@
   "CheckTitle": "Check for EC2 Instances with Public IP.",
   "CheckType": "Infrastructure Security",
   "ServiceName": "ec2",
-  "SubServiceName": "instances",
+  "SubServiceName": "instance",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2SecurityGroup",
