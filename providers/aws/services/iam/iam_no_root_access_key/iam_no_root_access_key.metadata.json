@@ -1,8 +1,6 @@
 {
   "Categories": [],
-  "CheckAlias": "check112",
   "CheckID": "iam_no_root_access_key",
-  "CheckName": "iam_no_root_access_key",
   "CheckTitle": "Ensure no root account access key exists",
   "CheckType": "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
   "Compliance": [

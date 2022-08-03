@@ -1,8 +1,6 @@
 {
   "Categories": [],
-  "CheckAlias": "check113",
   "CheckID": "iam_root_mfa_enabled",
-  "CheckName": "iam_root_mfa_enabled",
   "CheckTitle": "Ensure MFA is enabled for the root account",
   "CheckType": "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
   "Compliance": [

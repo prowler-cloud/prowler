@@ -1,8 +1,6 @@
 {
   "Categories": [],
-  "CheckAlias": "extra71",
   "CheckID": "iam_administrator_access_with_mfa",
-  "CheckName": "iam_administrator_access_with_mfa",
   "CheckTitle": "Ensure users of groups with AdministratorAccess policy have MFA tokens enabled",
   "CheckType": "Infrastructure Security",
   "Compliance": [],

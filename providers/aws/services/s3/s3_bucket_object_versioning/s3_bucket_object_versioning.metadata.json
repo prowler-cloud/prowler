@@ -1,8 +1,6 @@
 {
   "Categories": [],
-  "CheckAlias": "extra763",
   "CheckID": "s3_bucket_object_versioning",
-  "CheckName": "s3_bucket_object_versioning",
   "CheckTitle": "Check if S3 buckets have object versioning enabled",
   "CheckType": "Data Protection",
   "Compliance": [],

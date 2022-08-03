@@ -1,8 +1,6 @@
 {
   "Categories": [],
-  "CheckAlias": "check14",
   "CheckID": "iam_rotate_access_key_90_days",
-  "CheckName": "iam_rotate_access_key_90_days",
   "CheckTitle": "Ensure access keys are rotated every 90 days or less",
   "CheckType": "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
   "Compliance": [

@@ -1,8 +1,6 @@
 {
   "Categories": [],
-  "CheckAlias": "check45",
   "CheckID": "ec2_networkacl_allow_ingress_tcp_port_22",
-  "CheckName": "ec2_networkacl_allow_ingress_tcp_port_22",
   "CheckTitle": "Ensure no Network ACLs allow ingress from 0.0.0.0/0 to SSH port 22",
   "CheckType": "Infrastructure Security",
   "Compliance": [
