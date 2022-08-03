@@ -1,14 +1,15 @@
 {
-  "Categories": [],
+  "Provider": "aws",
   "CheckID": "s3_bucket_server_access_logging_enabled",
   "CheckTitle": "Check if S3 buckets have server access logging enabled",
   "CheckType": "Logging and Monitoring",
-  "Compliance": [],
-  "DependsOn": [],
+  "ServiceName": "s3",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsS3Bucket",
   "Description": "Check if S3 buckets have server access logging enabled",
-  "Notes": "",
-  "Provider": "aws",
-  "RelatedTo": [],
+  "Risk": "Server access logs can assist you in security and access audits; help you learn about your customer base; and understand your Amazon S3 bill.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -22,14 +23,13 @@
       "Url": "https://docs.aws.amazon.com/AmazonS3/latest/dev/security-best-practices.html"
     }
   },
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "ResourceType": "AwsS3Bucket",
-  "Risk": "Server access logs can assist you in security and access audits; help you learn about your customer base; and understand your Amazon S3 bill.",
-  "ServiceName": "s3",
-  "Severity": "medium",
-  "SubServiceName": "",
+  "Categories": [],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"
-  }
+  },
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "Compliance": []
 }

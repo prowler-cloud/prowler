@@ -1,14 +1,15 @@
 {
-  "Categories": [],
+  "Provider": "aws",
   "CheckID": "s3_bucket_object_versioning",
   "CheckTitle": "Check if S3 buckets have object versioning enabled",
   "CheckType": "Data Protection",
-  "Compliance": [],
-  "DependsOn": [],
+  "ServiceName": "s3",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsS3Bucket",
   "Description": "Check if S3 buckets have object versioning enabled",
-  "Notes": "",
-  "Provider": "aws",
-  "RelatedTo": [],
+  "Risk": "With versioning, you can easily recover from both unintended user actions and application failures.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -22,14 +23,13 @@
       "Url": "https://docs.aws.amazon.com/AmazonS3/latest/dev-retired/Versioning.html"
     }
   },
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "ResourceType": "AwsS3Bucket",
-  "Risk": "With versioning, you can easily recover from both unintended user actions and application failures.",
-  "ServiceName": "s3",
-  "Severity": "medium",
-  "SubServiceName": "",
+  "Categories": [],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"
-  }
+  },
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "Compliance": []
 }

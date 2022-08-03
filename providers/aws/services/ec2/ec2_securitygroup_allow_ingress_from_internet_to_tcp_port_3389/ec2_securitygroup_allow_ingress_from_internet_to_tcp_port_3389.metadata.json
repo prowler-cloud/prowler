@@ -1,25 +1,15 @@
 {
-  "Categories": [],
+  "Provider": "aws",
   "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
   "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to port 3389.",
   "CheckType": "Infrastructure Security",
-  "Compliance": [
-    {
-      "Control": [
-        "4.2"
-      ],
-      "Framework": "CIS-AWS",
-      "Group": [
-        "level2"
-      ],
-      "Version": "1.4"
-    }
-  ],
-  "DependsOn": [],
+  "ServiceName": "ec2",
+  "SubServiceName": "securitygroups",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsEc2SecurityGroup",
   "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to port 3389.",
-  "Notes": "",
-  "Provider": "aws",
-  "RelatedTo": [],
+  "Risk": "If Security groups are not properly configured the attack surface is increased.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -33,14 +23,24 @@
       "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
     }
   },
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "ResourceType": "AwsEc2SecurityGroup",
-  "Risk": "If Security groups are not properly configured the attack surface is increased.",
-  "ServiceName": "ec2",
-  "Severity": "high",
-  "SubServiceName": "",
+  "Categories": [],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"
-  }
+  },
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "Compliance": [
+    {
+      "Control": [
+        "4.2"
+      ],
+      "Framework": "CIS-AWS",
+      "Group": [
+        "level2"
+      ],
+      "Version": "1.4"
+    }
+  ]
 }
