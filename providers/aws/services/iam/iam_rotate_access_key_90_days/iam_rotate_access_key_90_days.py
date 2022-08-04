@@ -14,7 +14,7 @@ class iam_rotate_access_key_90_days(Check):
         if response:
             for user in response:
                 report = Check_Report(self.metadata)
-                report.region = "us-east-1"
+                report.region = iam_client.region
                 report.resource_id = user["user"]
                 report.resource_arn = user["arn"]
                 if (
@@ -57,7 +57,7 @@ class iam_rotate_access_key_90_days(Check):
             report = Check_Report(self.metadata)
             report.status = "PASS"
             report.status_extended = "There is no IAM users."
-            report.region = "us-east-1"
+            report.region = iam_client.region
             findings.append(report)
 
         return findings

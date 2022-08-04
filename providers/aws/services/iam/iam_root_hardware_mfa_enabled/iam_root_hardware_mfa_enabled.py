@@ -7,7 +7,7 @@ class iam_root_hardware_mfa_enabled(Check):
         findings = []
         virtual_mfa = False
         report = Check_Report(self.metadata)
-        report.region = "us-east-1"
+        report.region = iam_client.region
         report.resource_id = "root"
         report.resource_arn = f"arn:aws:iam::{iam_client.account}:root"
 

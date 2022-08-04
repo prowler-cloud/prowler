@@ -14,7 +14,7 @@ class iam_disable_90_days_credentials(Check):
         if response:
             for user in response:
                 report = Check_Report(self.metadata)
-                report.region = "us-east-1"
+                report.region = iam_client.region
                 report.resource_id = user.name
                 report.resource_arn = user.arn
                 if user.password_last_used and user.password_last_used != "":
@@ -46,7 +46,7 @@ class iam_disable_90_days_credentials(Check):
             report = Check_Report(self.metadata)
             report.status = "PASS"
             report.status_extended = "There is no IAM users."
-            report.region = "us-east-1"
+            report.region = iam_client.region
             findings.append(report)
 
         return findings

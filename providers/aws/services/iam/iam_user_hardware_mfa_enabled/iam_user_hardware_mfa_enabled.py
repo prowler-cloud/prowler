@@ -12,7 +12,7 @@ class iam_user_hardware_mfa_enabled(Check):
                 report = Check_Report(self.metadata)
                 report.resource_id = user.name
                 report.resource_arn = user.arn
-                report.region = "us-east-1"
+                report.region = iam_client.region
                 if user.mfa_devices:
                     for mfa_device in user.mfa_devices:
                         if mfa_device.type == "mfa" or mfa_device.type == "sms-mfa":
