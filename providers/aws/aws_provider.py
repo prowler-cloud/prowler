@@ -309,7 +309,7 @@ def get_organizations_metadata(
 
 
 def generate_regional_clients(service, audit_info):
-    regional_clients = []
+    regional_clients = {}
     # Get json locally
     f = open_file(aws_services_json_file)
     data = parse_json_file(f)
@@ -323,8 +323,8 @@ def generate_regional_clients(service, audit_info):
     for region in regions:
         regional_client = audit_info.audit_session.client(service, region_name=region)
         regional_client.region = region
-        regional_clients.append(regional_client)
-
+        regional_clients[region] = regional_client
+        # regional_clients.append(regional_client)
     return regional_clients
 
 
