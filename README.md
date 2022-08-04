@@ -393,6 +393,92 @@ account_details_tags  TEXT
     `./prowler -M csv -d postgresql`
     > *Note*: This command creates a `csv` output file and stores the Prowler output in the configured PostgreSQL DB. It's an example, `-d` flag **does not** require `-M` to run.
 
+## Output Formats
+
+Prowler supports natively the following output formats:
+- CSV
+- JSON
+- JSON-ASFF
+- HTML
+- JUNIT-XML
+
+Hereunder is the structure for each of them
+### CSV
+| PROFILE | ACCOUNT_NUM | REGION | TITLE_ID | CHECK_RESULT | ITEM_SCORED | ITEM_LEVEL | TITLE_TEXT | CHECK_RESULT_EXTENDED | CHECK_ASFF_COMPLIANCE_TYPE | CHECK_SEVERITY | CHECK_SERVICENAME | CHECK_ASFF_RESOURCE_TYPE | CHECK_ASFF_TYPE | CHECK_RISK | CHECK_REMEDIATION | CHECK_DOC | CHECK_CAF_EPIC | CHECK_RESOURCE_ID | PROWLER_START_TIME | ACCOUNT_DETAILS_EMAIL | ACCOUNT_DETAILS_NAME | ACCOUNT_DETAILS_ARN | ACCOUNT_DETAILS_ORG | ACCOUNT_DETAILS_TAGS |   
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+### JSON
+```
+{
+  "Profile": "ENV",
+  "Account Number": "1111111111111",
+  "Control": "[check14] Ensure access keys are rotated every 90 days or less",
+  "Message": "us-west-2: user has not rotated access key 2 in over 90 days",
+  "Severity": "Medium",
+  "Status": "FAIL",
+  "Scored": "",
+  "Level": "CIS Level 1",
+  "Control ID": "1.4",
+  "Region": "us-west-2",
+  "Timestamp": "2022-05-18T10:33:48Z",
+  "Compliance": "ens-op.acc.1.aws.iam.4 ens-op.acc.5.aws.iam.3",
+  "Service": "iam",
+  "CAF Epic": "IAM",
+  "Risk": "Access keys consist of an access key ID and secret access key which are used to sign programmatic requests that you make to AWS. AWS users need their own access keys to make programmatic calls to AWS from the AWS Command Line Interface (AWS CLI)- Tools for Windows PowerShell- the AWS SDKs- or direct HTTP calls using the APIs for individual AWS services. It is recommended that all access keys be regularly rotated.",
+  "Remediation": "Use the credential report to  ensure  access_key_X_last_rotated  is less than 90 days ago.",
+  "Doc link": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html",
+  "Resource ID": "terraform-user",
+  "Account Email": "",
+  "Account Name": "",
+  "Account ARN": "",
+  "Account Organization": "",
+  "Account tags": ""
+}
+```
+> NOTE: Each finding is a `json` object.
+
+### JSON-ASFF
+```
+{
+  "SchemaVersion": "2018-10-08",
+  "Id": "prowler-1.4-1111111111111-us-west-2-us-west-2_user_has_not_rotated_access_key_2_in_over_90_days",
+  "ProductArn": "arn:aws:securityhub:us-west-2::product/prowler/prowler",
+  "RecordState": "ACTIVE",
+  "ProductFields": {
+    "ProviderName": "Prowler",
+    "ProviderVersion": "2.9.0-13April2022",
+    "ProwlerResourceName": "user"
+  },
+  "GeneratorId": "prowler-check14",
+  "AwsAccountId": "1111111111111",
+  "Types": [
+    "ens-op.acc.1.aws.iam.4 ens-op.acc.5.aws.iam.3"
+  ],
+  "FirstObservedAt": "2022-05-18T10:33:48Z",
+  "UpdatedAt": "2022-05-18T10:33:48Z",
+  "CreatedAt": "2022-05-18T10:33:48Z",
+  "Severity": {
+    "Label": "MEDIUM"
+  },
+  "Title": "iam.[check14] Ensure access keys are rotated every 90 days or less",
+  "Description": "us-west-2: user has not rotated access key 2 in over 90 days",
+  "Resources": [
+    {
+      "Type": "AwsIamUser",
+      "Id": "user",
+      "Partition": "aws",
+      "Region": "us-west-2"
+    }
+  ],
+  "Compliance": {
+    "Status": "FAILED",
+    "RelatedRequirements": [
+      "ens-op.acc.1.aws.iam.4 ens-op.acc.5.aws.iam.3"
+    ]
+  }
+}
+```
+> NOTE: Each finding is a `json` object.
 ## Advanced Usage
 
 ### Assume Role:
