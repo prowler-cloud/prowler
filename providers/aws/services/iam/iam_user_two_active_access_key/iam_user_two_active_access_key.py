@@ -10,7 +10,7 @@ class iam_user_two_active_access_key(Check):
             report = Check_Report(self.metadata)
             report.resource_id = user["user"]
             report.resource_arn = user["arn"]
-            report.region = "us-east-1"
+            report.region = iam_client.region
             if (
                 user["access_key_1_active"] == "true"
                 and user["access_key_2_active"] == "true"
@@ -19,12 +19,11 @@ class iam_user_two_active_access_key(Check):
                 report.status_extended = (
                     f"User {user['user']} has 2 active access keys."
                 )
-                findings.append(report)
             else:
                 report.status = "PASS"
                 report.status_extended = (
                     f"User {user['user']} has not 2 active access keys."
                 )
-                findings.append(report)
+            findings.append(report)
 
         return findings

@@ -32,7 +32,13 @@ from providers.aws.aws_provider import (
 if __name__ == "__main__":
     # CLI Arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("provider", choices=["aws"], help="Specify Provider")
+    parser.add_argument(
+        "provider",
+        choices=["aws"],
+        nargs="?",
+        default="aws",
+        help="Specify Cloud Provider",
+    )
 
     # Arguments to set checks to run
     # The following arguments needs to be set exclusivelly
@@ -67,7 +73,7 @@ if __name__ == "__main__":
         "-b", "--no-banner", action="store_false", help="Hide Prowler banner"
     )
     parser.add_argument(
-        "-v", "--version", action="store_true", help="Show Prowler version"
+        "-V", "-v", "--version", action="store_true", help="Show Prowler version"
     )
     parser.add_argument(
         "-q", "--quiet", action="store_true", help="Show only Prowler failed findings"
@@ -230,6 +236,9 @@ if __name__ == "__main__":
             checks_to_execute, excluded_services, provider
         )
 
+    # Sort final check list
+    checks_to_execute = sorted(checks_to_execute)
+
     # If -l/--list-checks passed as argument, print checks to execute and quit
     if args.list_checks:
         print_checks(provider, checks_to_execute, bulk_checks_metadata)
@@ -259,7 +268,7 @@ if __name__ == "__main__":
 
     # Execute checks
     if len(checks_to_execute):
-        for check_name in sorted(checks_to_execute):
+        for check_name in checks_to_execute:
             # Recover service from check name
             service = check_name.split("_")[0]
             try:

@@ -11,13 +11,13 @@ class ec2_instance_public_ip(Check):
             if instance.public_ip:
                 report.status = "FAIL"
                 report.status_extended = f"EC2 instance {instance.id} has a Public IP: {instance.public_ip} ({instance.public_dns})."
-                report.resource_id = {instance.id}
+                report.resource_id = instance.id
             else:
                 report.status = "PASS"
                 report.status_extended = (
                     f"EC2 instance {instance.id} has not a Public IP."
                 )
-                report.resource_id = {instance.id}
+                report.resource_id = instance.id
             findings.append(report)
 
         return findings

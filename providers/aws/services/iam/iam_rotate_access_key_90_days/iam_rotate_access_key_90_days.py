@@ -13,7 +13,7 @@ class iam_rotate_access_key_90_days(Check):
 
         for user in response:
             report = Check_Report(self.metadata)
-            report.region = "us-east-1"
+            report.region = iam_client.region
             report.resource_id = user["user"]
             report.resource_arn = user["arn"]
             if (

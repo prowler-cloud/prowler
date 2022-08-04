@@ -3,7 +3,7 @@ from os import getcwd
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-prowler_version = "3.0-alfa"
+prowler_version = "3.0-alpha"
 
 # Groups
 groups_file = "groups.json"

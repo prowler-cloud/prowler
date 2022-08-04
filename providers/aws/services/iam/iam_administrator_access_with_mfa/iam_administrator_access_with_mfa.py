@@ -11,7 +11,7 @@ class iam_administrator_access_with_mfa(Check):
             report = Check_Report(self.metadata)
             report.resource_id = group.name
             report.resource_arn = group.arn
-            report.region = "us-east-1"
+            report.region = iam_client.region
             if group.attached_policies:
                 admin_policy = False
                 for group_policy in group.attached_policies:

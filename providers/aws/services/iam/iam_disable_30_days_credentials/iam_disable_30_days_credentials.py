@@ -15,13 +15,13 @@ class iam_disable_30_days_credentials(Check):
             report = Check_Report(self.metadata)
             report.resource_id = user.name
             report.resource_arn = user.arn
-            report.region = "us-east-1"
+            report.region = iam_client.region
             if user.password_last_used and user.password_last_used != "":
                 try:
                     time_since_insertion = (
                         datetime.datetime.now()
                         - datetime.datetime.strptime(
-                            user.password_last_used, "%Y-%m-%dT%H:%M:%S+00:00"
+                            str(user.password_last_used), "%Y-%m-%d %H:%M:%S+00:00"
                         )
                     )
                     if time_since_insertion.days > maximum_expiration_days:

@@ -7,6 +7,7 @@ from arnparse import arnparse
 from boto3 import client, session
 from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
+from colorama import Fore, Style
 
 from config.config import aws_services_json_file, json_asff_file_suffix, timestamp_utc
 from lib.arn.arn import arn_parsing
@@ -105,7 +106,9 @@ def provider_set_session(
         original_session=None,
         audit_session=None,
         audited_account=None,
+        audited_user_id=None,
         audited_partition=None,
+        audited_identity_arn=None,
         profile=input_profile,
         profile_region=None,
         credentials=None,
@@ -130,6 +133,8 @@ def provider_set_session(
     logger.info(f"Original caller identity ARN : {caller_identity['Arn']}")
 
     current_audit_info.audited_account = caller_identity["Account"]
+    current_audit_info.audited_identity_arn = caller_identity["Arn"]
+    current_audit_info.audited_user_id = caller_identity["UserId"]
     current_audit_info.audited_partition = arnparse(caller_identity["Arn"]).partition
 
     logger.info("Checking if organizations role assumption is needed ...")
@@ -204,7 +209,31 @@ def provider_set_session(
     else:
         current_audit_info.profile_region = "us-east-1"
 
+    print_audit_credentials(current_audit_info)
     return current_audit_info
+
+
+def print_audit_credentials(audit_info: AWS_Audit_Info):
+    # Beautify audited regions, set "all" if there is no filter region
+    regions = (
+        ", ".join(audit_info.audited_regions)
+        if audit_info.audited_regions != None
+        else "all"
+    )
+    # Beautify audited profile, set "default" if there is no profile set
+    profile = audit_info.profile if audit_info.profile != None else "default"
+
+    report = f"""
+This report is being generated using credentials below:
+
+AWS-CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} AWS API Region: {Fore.YELLOW}[{audit_info.profile_region}]{Style.RESET_ALL} AWS Filter Region: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
+AWS Account: {Fore.YELLOW}[{audit_info.audited_account}]{Style.RESET_ALL} UserId: {Fore.YELLOW}[{audit_info.audited_user_id}]{Style.RESET_ALL}
+Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESET_ALL}
+"""
+    # If -A is set, print Assumed Role ARN
+    if audit_info.assumed_role_info.role_arn != None:
+        report += f"Assumed Role ARN: {Fore.YELLOW}[{audit_info.assumed_role_info.role_arn}]{Style.RESET_ALL}"
+    print(report)
 
 
 def validate_credentials(validate_session: session) -> dict:

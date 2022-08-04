@@ -1,27 +1,15 @@
 {
-  "Categories": [],
-  "CheckAlias": "check45",
+  "Provider": "aws",
   "CheckID": "ec2_networkacl_allow_ingress_tcp_port_3389",
-  "CheckName": "ec2_networkacl_allow_ingress_tcp_port_3389",
   "CheckTitle": "Ensure no Network ACLs allow ingress from 0.0.0.0/0 to Microsoft RDP port 3389",
   "CheckType": "Infrastructure Security",
-  "Compliance": [
-    {
-      "Control": [
-        "4.6"
-      ],
-      "Framework": "CIS-AWS",
-      "Group": [
-        "level2"
-      ],
-      "Version": "1.4"
-    }
-  ],
-  "DependsOn": [],
+  "ServiceName": "ec2",
+  "SubServiceName": "networkacl",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsEc2NetworkAcl",
   "Description": "Ensure no Network ACLs allow ingress from 0.0.0.0/0 to Microsoft RDP port 3389",
-  "Notes": "",
-  "Provider": "aws",
-  "RelatedTo": [],
+  "Risk": "Even having a perimeter firewall, having network acls open allows any user or malware with vpc access to scan for well known and sensitive ports and gain access to instance.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -35,14 +23,24 @@
       "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html"
     }
   },
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "ResourceType": "AwsEc2NetworkAcl",
-  "Risk": "Even having a perimeter firewall, having network acls open allows any user or malware with vpc access to scan for well known and sensitive ports and gain access to instance.",
-  "ServiceName": "ec2",
-  "Severity": "high",
-  "SubServiceName": "",
+  "Categories": [],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"
-  }
+  },
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "Compliance": [
+    {
+      "Control": [
+        "4.6"
+      ],
+      "Framework": "CIS-AWS",
+      "Group": [
+        "level2"
+      ],
+      "Version": "1.4"
+    }
+  ]
 }

@@ -1,16 +1,15 @@
 {
-  "Categories": [],
-  "CheckAlias": "extra710",
+  "Provider": "aws",
   "CheckID": "ec2_instance_public_ip",
-  "CheckName": "ec2_instance_public_ip",
   "CheckTitle": "Check for EC2 Instances with Public IP.",
   "CheckType": "Infrastructure Security",
-  "Compliance": [],
-  "DependsOn": [],
+  "ServiceName": "ec2",
+  "SubServiceName": "instance",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2SecurityGroup",
   "Description": "Check for EC2 Instances with Public IP.",
-  "Notes": "",
-  "Provider": "aws",
-  "RelatedTo": [],
+  "Risk": "Exposing an EC2 directly to internet increases the attack surface and therefore the risk of compromise.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -24,14 +23,13 @@
       "Url": "https://aws.amazon.com/blogs/aws/aws-web-application-firewall-waf-for-application-load-balancers/"
     }
   },
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "ResourceType": "AwsEc2SecurityGroup",
-  "Risk": "Exposing an EC2 directly to internet increases the attack surface and therefore the risk of compromise.",
-  "ServiceName": "ec2",
-  "Severity": "medium",
-  "SubServiceName": "",
+  "Categories": [],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"
-  }
+  },
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "Compliance": []
 }

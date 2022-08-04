@@ -54,7 +54,7 @@ class Remediation(BaseModel):
 class Check_Metadata_Model(BaseModel):
     Provider: str
     CheckID: str
-    CheckName: str
+    # CheckName: str
     CheckTitle: str
     # CheckAlias: str
     CheckType: str
@@ -84,7 +84,7 @@ class Check(ABC):
         # Assign metadata values
         self.__Provider__ = self.__check_metadata__.Provider
         self.__CheckID__ = self.__check_metadata__.CheckID
-        self.__CheckName__ = self.__check_metadata__.CheckName
+        # self.__CheckName__ = self.__check_metadata__.CheckName
         self.__CheckTitle__ = self.__check_metadata__.CheckTitle
         # self.__CheckAlias__ = self.__check_metadata__.CheckAlias
         self.__CheckType__ = self.__check_metadata__.CheckType
@@ -112,9 +112,9 @@ class Check(ABC):
     def checkID(self):
         return self.__CheckID__
 
-    @property
-    def checkName(self):
-        return self.__CheckName__
+    # @property
+    # def checkName(self):
+    #     return self.__CheckName__
 
     @property
     def checkTitle(self):

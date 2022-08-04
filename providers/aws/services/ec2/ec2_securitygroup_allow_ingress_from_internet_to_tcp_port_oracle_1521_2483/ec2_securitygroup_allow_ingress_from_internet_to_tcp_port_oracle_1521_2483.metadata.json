@@ -1,16 +1,16 @@
 {
-  "Categories": [],
-  "CheckAlias": "extra749",
+  "Provider": "aws",
+
   "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
-  "CheckName": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
   "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Oracle ports 1521 or 2483.",
   "CheckType": "Infrastructure Security",
-  "Compliance": [],
-  "DependsOn": [],
+  "ServiceName": "ec2",
+  "SubServiceName": "securitygroup",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsEc2SecurityGroup",
   "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Oracle ports 1521 or 2483.",
-  "Notes": "",
-  "Provider": "aws",
-  "RelatedTo": [],
+  "Risk": "If Security groups are not properly configured the attack surface is increased.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -24,14 +24,13 @@
       "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
     }
   },
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "ResourceType": "AwsEc2SecurityGroup",
-  "Risk": "If Security groups are not properly configured the attack surface is increased.",
-  "ServiceName": "ec2",
-  "Severity": "high",
-  "SubServiceName": "",
+  "Categories": [],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"
-  }
+  },
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "Compliance": []
 }

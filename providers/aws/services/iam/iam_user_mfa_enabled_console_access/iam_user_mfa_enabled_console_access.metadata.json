@@ -1,16 +1,15 @@
 {
-  "Categories": [],
-  "CheckAlias": "check12",
+  "Provider": "aws",
   "CheckID": "iam_user_mfa_enabled_console_access",
-  "CheckName": "iam_user_mfa_enabled_console_access",
   "CheckTitle": "Ensure multi-factor authentication (MFA) is enabled for all IAM users that have a console password.",
   "CheckType": "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
-  "Compliance": [],
-  "DependsOn": [],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsIamUser",
   "Description": "Ensure multi-factor authentication (MFA) is enabled for all IAM users that have a console password.",
-  "Notes": "",
-  "Provider": "aws",
-  "RelatedTo": [],
+  "Risk": "Unauthorized access to this critical account if password is not secure or it is disclosed in any way.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -24,14 +23,13 @@
       "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html"
     }
   },
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "ResourceType": "AwsIamUser",
-  "Risk": "Unauthorized access to this critical account if password is not secure or it is disclosed in any way.",
-  "ServiceName": "iam",
-  "Severity": "high",
-  "SubServiceName": "",
+  "Categories": [],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"
-  }
+  },
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "Compliance": []
 }

@@ -1,34 +1,15 @@
 {
-  "Categories": [
-    "cat1",
-    "cat2"
-  ],
+  "Provider": "aws",
   "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
   "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to SSH port 22.",
   "CheckType": "Data Protection",
-  "Compliance": [
-    {
-      "Control": [
-        "4.1"
-      ],
-      "Framework": "CIS-AWS",
-      "Group": [
-        "level2"
-      ],
-      "Version": "1.4"
-    }
-  ],
-  "DependsOn": [
-    "othercheck1",
-    "othercheck2"
-  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "securitygroup",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "low",
+  "ResourceType": "AwsEc2SecurityGroup",
   "Description": "Extended Description",
-  "Notes": "additional information",
-  "Provider": "aws",
-  "RelatedTo": [
-    "othercheck3",
-    "othercheck4"
-  ],
+  "Risk": "If Security groups are not properly configured the attack surface is increased.",
   "RelatedUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
   "Remediation": {
     "Code": {
@@ -42,10 +23,33 @@
       "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-best-practices.html"
     }
   },
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "ResourceType": "AwsEc2SecurityGroup",
-  "Risk": "If Security groups are not properly configured the attack surface is increased.",
-  "ServiceName": "ec2",
-  "Severity": "low",
-  "SubServiceName": "securitygroup"
+  "Categories": [
+    "cat1",
+    "cat2"
+  ],
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  },
+  "DependsOn": [
+    "othercheck1",
+    "othercheck2"
+  ],
+  "RelatedTo": [
+    "othercheck3",
+    "othercheck4"
+  ],
+  "Notes": "additional information",
+  "Compliance": [
+    {
+      "Control": [
+        "4.1"
+      ],
+      "Framework": "CIS-AWS",
+      "Group": [
+        "level2"
+      ],
+      "Version": "1.4"
+    }
+  ]
 }
