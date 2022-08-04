@@ -12,7 +12,7 @@ class iam_user_mfa_enabled_console_access(Check):
                 report = Check_Report(self.metadata)
                 report.resource_id = user["user"]
                 report.resource_arn = user["arn"]
-                report.region = "us-east-1"
+                report.region = iam_client.region
                 if user["password_enabled"] != "not_supported":
                     if user["mfa_active"] == "false":
                         report.status = "FAIL"

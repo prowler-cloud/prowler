@@ -10,7 +10,7 @@ class iam_no_root_access_key(Check):
         for user in response:
             if user["user"] == "<root_account>":
                 report = Check_Report(self.metadata)
-                report.region = "us-east-1"
+                report.region = iam_client.region
                 report.resource_id = user["user"]
                 report.resource_arn = user["arn"]
                 if (
