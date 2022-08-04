@@ -22,7 +22,7 @@ class iam_disable_30_days_credentials(Check):
                         time_since_insertion = (
                             datetime.datetime.now()
                             - datetime.datetime.strptime(
-                                user.password_last_used, "%Y-%m-%dT%H:%M:%S+00:00"
+                                str(user.password_last_used), "%Y-%m-%d %H:%M:%S+00:00"
                             )
                         )
                         if time_since_insertion.days > maximum_expiration_days:
