@@ -3,7 +3,6 @@ from pkgutil import walk_packages
 from types import ModuleType
 from typing import Any
 
-# import time
 from colorama import Fore, Style
 
 from config.config import groups_file
@@ -195,9 +194,15 @@ def run_check(check, audit_info, output_options):
         f"\nCheck ID: {check.checkID} - {Fore.MAGENTA}{check.serviceName}{Fore.YELLOW} [{check.severity}]{Style.RESET_ALL}"
     )
     logger.debug(f"Executing check: {check.checkID}")
-    findings = check.execute()
-
-    report(findings, output_options, audit_info)
+    try:
+        findings = check.execute()
+    except Exception as error:
+        print(f"Something went wrong in {check.checkID}, please use --log-level ERROR")
+        logger.error(f"{check.checkID} -- {error.__class__.__name__}: {error}")
+    else:
+        report(findings, output_options, audit_info)
+    finally:
+        pass
 
 
 def import_check(check_path: str) -> ModuleType:
