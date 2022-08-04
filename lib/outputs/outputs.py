@@ -54,9 +54,8 @@ def report(check_findings, output_options, audit_info):
                 print(
                     f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
                 )
-            
-            if file_descriptors:
 
+            if file_descriptors:
                 # sending the finding to input options
                 if "csv" in file_descriptors:
                     finding_output = Check_Output_CSV(
@@ -92,9 +91,9 @@ def report(check_findings, output_options, audit_info):
                         finding.region, finding_output, audit_info.audit_session
                     )
     else:  # No service resources in the whole account
-        color = set_report_color("PASS")
+        color = set_report_color("WARNING")
         if not output_options.is_quiet:
-            print(f"{color}PASS{Style.RESET_ALL} There are no resources.")
+            print(f"\t{color}INFO{Style.RESET_ALL} There are no resources")
 
     if file_descriptors:
         # Close all file descriptors
