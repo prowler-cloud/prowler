@@ -1,5 +1,6 @@
 from lib.check.models import Check, Check_Report
-from providers.aws.services.ec2.ec2_service import check_network_acl, ec2_client
+from providers.aws.services.ec2.ec2_service import ec2_client
+from providers.aws.services.ec2.lib.network_acls import check_network_acl
 
 
 class ec2_networkacl_allow_ingress_tcp_port_22(Check):

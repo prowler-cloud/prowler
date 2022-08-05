@@ -1,5 +1,7 @@
 from lib.check.models import Check, Check_Report
-from providers.aws.services.ec2.ec2_service import check_security_group, ec2_client
+from providers.aws.services.ec2.ec2_service import ec2_client
+from providers.aws.services.ec2.lib.security_groups import check_security_group
+
 
 class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483(Check):
     def execute(self):
