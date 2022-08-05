@@ -22,7 +22,7 @@ from lib.outputs.models import (
     Severity,
 )
 from lib.utils.utils import file_exists, hash_sha512, open_file
-from providers.aws.aws_provider import send_to_security_hub
+from providers.aws.lib.security_hub import send_to_security_hub
 
 
 def report(check_findings, output_options, audit_info):
@@ -54,7 +54,7 @@ def report(check_findings, output_options, audit_info):
                 print(
                     f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
                 )
-            
+
             if file_descriptors:
 
                 # sending the finding to input options
