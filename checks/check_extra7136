@@ -11,7 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 CHECK_ID_extra7136="7.136"
-CHECK_TITLE_extra7136="[extra7136] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Telnet port 23 "
+CHECK_TITLE_extra7136="[extra7136] Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Telnet port 23"
 CHECK_SCORED_extra7136="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7136="EXTRA"
 CHECK_SEVERITY_extra7136="High"
@@ -25,7 +25,7 @@ CHECK_CAF_EPIC_extra7136='Infrastructure Security'
 
 extra7136(){
   for regx in $REGIONS; do
-    SG_LIST=$($AWSCLI ec2 describe-security-groups --query 'SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort==`23` && ToPort==`23`)) && (contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`))]) > `0`].{GroupId:GroupId}' $PROFILE_OPT --region $regx --output text 2>&1)
+    SG_LIST=$($AWSCLI ec2 describe-security-groups --query 'SecurityGroups[?length(IpPermissions[?((FromPort==null && ToPort==null) || (FromPort==`23` && ToPort==`23`)) && (contains(IpRanges[].CidrIp, `0.0.0.0/0`) || contains(Ipv6Ranges[].CidrIpv6, `::/0`)) && (IpProtocol==`tcp`)]) > `0`].{GroupId:GroupId}' $PROFILE_OPT --region $regx --output text 2>&1)
     if [[ $(echo "$SG_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
         textInfo "$regx: Access Denied trying to describe security groups" "$regx"
         continue
