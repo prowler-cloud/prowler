@@ -101,7 +101,7 @@ quick_inventory(){
 
         if [ "${region}" == "us-east-1" ]; then
             TOTAL_IAM_RESOURCES_FOUND=$(grep -c :"iam": "${TEMP_INVENTORY_FILE}-${region}")
-            TOTAL_RESOURCES_FOUND_REGION=$(("${TOTAL_RESOURCES_FOUND_REGION}-${region}"+${TOTAL_IAM_RESOURCES_FOUND}))
+            TOTAL_RESOURCES_FOUND_REGION=$((${TOTAL_RESOURCES_FOUND_REGION}-${region}+${TOTAL_IAM_RESOURCES_FOUND}))
         fi 
 
         echo -e "${OK}${TOTAL_RESOURCES_FOUND_REGION}${NORMAL} resources!"
