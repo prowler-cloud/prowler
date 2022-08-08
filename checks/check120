@@ -28,7 +28,7 @@ CHECK_CAF_EPIC_check120='IAM'
 
 check120(){
   # "Ensure a support role has been created to manage incidents with AWS Support (Scored)"
-  SUPPORTPOLICYARN=$($AWSCLI iam list-policies --query "Policies[?PolicyName == 'AWSSupportAccess'].Arn" $PROFILE_OPT --region $REGION --output text)
+  SUPPORTPOLICYARN=$($AWSCLI iam list-policies --query "Policies[?PolicyName == 'AWSSupportServiceRolePolicy'].Arn" $PROFILE_OPT --region $REGION --output text)
   if [[ $SUPPORTPOLICYARN ]];then
     for policyarn in $SUPPORTPOLICYARN;do
       POLICYROLES=$($AWSCLI iam list-entities-for-policy --policy-arn $policyarn $PROFILE_OPT --region $REGION --output text | awk -F$'\t' '{ print $3 }')
