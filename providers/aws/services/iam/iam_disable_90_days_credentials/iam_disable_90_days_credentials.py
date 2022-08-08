@@ -17,22 +17,18 @@ class iam_disable_90_days_credentials(Check):
             report.resource_id = user.name
             report.resource_arn = user.arn
             if user.password_last_used and user.password_last_used != "":
-                try:
-                    time_since_insertion = (
-                        datetime.datetime.now()
-                        - datetime.datetime.strptime(
-                            str(user.password_last_used), "%Y-%m-%d %H:%M:%S+00:00"
-                        )
+                time_since_insertion = (
+                    datetime.datetime.now()
+                    - datetime.datetime.strptime(
+                        str(user.password_last_used), "%Y-%m-%d %H:%M:%S+00:00"
                     )
-                    if time_since_insertion.days > maximum_expiration_days:
-                        report.status = "FAIL"
-                        report.status_extended = f"User {user.name} has not logged into the console in the past 90 days."
-                    else:
-                        report.status = "PASS"
-                        report.status_extended = f"User {user.name} has logged into the console in the past 90 days."
-
-                except KeyError:
-                    pass
+                )
+                if time_since_insertion.days > maximum_expiration_days:
+                    report.status = "FAIL"
+                    report.status_extended = f"User {user.name} has not logged into the console in the past 90 days."
+                else:
+                    report.status = "PASS"
+                    report.status_extended = f"User {user.name} has logged into the console in the past 90 days."
             else:
                 report.status = "PASS"
 
