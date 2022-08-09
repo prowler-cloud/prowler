@@ -24,6 +24,7 @@ class IAM:
         self.__get_group_users__()
         self.__list_attached_group_policies__()
         self.__list_mfa_devices__()
+        self.password_policy = self.__get_password_policy__()
 
     def __get_client__(self):
         return self.client
@@ -109,6 +110,39 @@ class IAM:
         else:
 
             return account_summary
+
+    def __get_password_policy__(self):
+        try:
+            password_policy = self.client.get_account_password_policy()[
+                "PasswordPolicy"
+            ]
+            # Check if optional keys exist or not
+            max_age = None
+            reuse_prevention = None
+            hard_expiry = None
+            if "MaxPasswordAge" in password_policy:
+                max_age = password_policy["MaxPasswordAge"]
+            if "PasswordReusePrevention" in password_policy:
+                reuse_prevention = password_policy["PasswordReusePrevention"]
+            if "HardExpiry" in password_policy:
+                hard_expiry = password_policy["HardExpiry"]
+        except Exception as error:
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            # Password policy does not exist
+            password_policy = None
+        else:
+            return PasswordPolicy(
+                password_policy["MinimumPasswordLength"],
+                password_policy["RequireSymbols"],
+                password_policy["RequireNumbers"],
+                password_policy["RequireUppercaseCharacters"],
+                password_policy["RequireLowercaseCharacters"],
+                password_policy["AllowUsersToChangePassword"],
+                password_policy["ExpirePasswords"],
+                max_age,
+                reuse_prevention,
+                hard_expiry,
+            )
 
     def __get_users__(self):
         try:
@@ -240,6 +274,44 @@ class Group:
         self.arn = arn
         self.attached_policies = []
         self.users = []
+
+
+@dataclass
+class PasswordPolicy:
+    length: int
+    symbols: bool
+    numbers: bool
+    uppercase: bool
+    lowercase: bool
+    allow_change: bool
+    expiration: bool
+    max_age: int
+    reuse_prevention: int
+    hard_expiry: bool
+
+    def __init__(
+        self,
+        length,
+        symbols,
+        numbers,
+        uppercase,
+        lowercase,
+        allow_change,
+        expiration,
+        max_age,
+        reuse_prevention,
+        hard_expiry,
+    ):
+        self.length = length
+        self.symbols = symbols
+        self.numbers = numbers
+        self.uppercase = uppercase
+        self.lowercase = lowercase
+        self.allow_change = allow_change
+        self.expiration = expiration
+        self.max_age = max_age
+        self.reuse_prevention = reuse_prevention
+        self.hard_expiry = hard_expiry
 
 
 iam_client = IAM(current_audit_info)
