@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+# Prowler - the handy cloud security tool (copyright 2019) by Toni de la Fuente
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
+# Remediation:
+#
+#   here URL to the relevand/official documentation
+#   https://docs.aws.amazon.com/codeartifact/latest/ug/package-origin-controls.html
+#   https://zego.engineering/dependency-confusion-in-aws-codeartifact-86b9ff68963d
+#   https://aws.amazon.com/blogs/devops/tighten-your-package-security-with-codeartifact-package-origin-control-toolkit/
+#   
+#
+#   here commands or steps to fix it if avalable, like:
+#   aws codeartifact put-package-origin-configuration \
+#      --package "MyPackage" \
+#      --namespace "MyNamespace" \ #You don't need namespace for npm or pypi 
+#      --domain "MyDomain" \
+#      --repository "MyRepository" \
+#      --domain-owner "MyOwnerAccount"
+#      --format "MyFormat" \ # npm/pypi/maven
+#      --restrictions 'publish=ALLOW,upstream=BLOCK'
+
+
+
+CHECK_ID_extra7195="7.195"
+CHECK_TITLE_extra7195="[check7195] CodeArtifact Dependency Confusion"
+CHECK_SCORED_extra7195="NOT_SCORED"
+CHECK_CIS_LEVEL_extra7195="EXTRA"
+CHECK_SEVERITY_extra7195="Critical"
+CHECK_ASFF_RESOURCE_TYPE_extra7195="Other" # Choose appropriate value from https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html#asff-resources
+CHECK_ALTERNATE_extra7195="extra7195"
+CHECK_SERVICENAME_extra7195="codeartifact" # get service short name from `curl -s https://api.regional-table.region-services.aws.a2z.com/index.json | jq -r '.prices[] | .id' | awk -F: '{ print $1 }' | sort -u`
+CHECK_RISK_extra7195=""
+CHECK_REMEDIATION_extra7195="https://docs.aws.amazon.com/codeartifact/latest/ug/package-origin-controls.html"
+CHECK_DOC_extra7195="https://docs.aws.amazon.com/codeartifact/latest/ug/package-origin-controls.html"
+CHECK_CAF_EPIC_extra7195=""
+
+
+# Example of regional resource
+extra7195(){
+  # Checks Code Artifact packages for Dependency Confusion
+  textInfo "Looking for codeartifact repositories in all regions...  "
+  for regx in ${REGIONS}; do
+    LIST_OF_REPOSITORIES=$("${AWSCLI}" codeartifact list-repositories ${PROFILE_OPT} --region "${regx}"  --query 'repositories[*].[name,domainName,domainOwner]' --output text 2>&1)
+    if [[ $(echo "${LIST_OF_REPOSITORIES}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError|Could not connect to the endpoint URL|ExpiredToken') ]]; then
+      textInfo "${regx}: Access Denied trying to list repositories" "${regx}"
+      continue
+    fi
+    if [[ "${LIST_OF_REPOSITORIES}" != "" && "${LIST_OF_REPOSITORIES}" != "none" ]]; then
+      while read -r REPOSITORY DOMAIN ACCOUNT; do
+        # Iterate over repositories to get packages
+        textInfo "${regx}: Found repository ${REPOSITORY}, scanning packages"
+        LIST_OF_PACKAGES=$(aws codeartifact list-packages --repository "$REPOSITORY" --domain "$DOMAIN" --domain-owner "$ACCOUNT" ${PROFILE_OPT} --region "${regx}" --query 'packages[*].[package, namespace, format, originConfiguration.restrictions.upstream]' --output text 2>&1)
+      if [[ $(echo "${LIST_OF_PACKAGES}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError|Could not connect to the endpoint URL|ExpiredToken') ]]; then
+          textError "${regx}: Access Denied trying to list packages for repository: ${REPOSITORY}"
+          continue
+      fi
+
+    if [[ "${LIST_OF_PACKAGES}" != "" && "${LIST_OF_PACKAGES}" != "none" ]]; then
+          while read -r PACKAGE NAMESPACE FORMAT UPSTREAM; do
+              # Get the latest version of the package we assume if the latest is internal the package is internal
+              # textInfo "Found package: $(if [[ "$NAMESPACE" != "" && "$NAMESPACE" != "None" ]]; then echo "${NAMESPACE}:"; fi)${PACKAGE}"
+              LATEST=$(aws codeartifact list-package-versions --package "$PACKAGE" $(if [[ "$NAMESPACE" != "" && "$NAMESPACE" != "None" ]]; then echo "--namespace $NAMESPACE"; fi) --domain "$DOMAIN" --repository "$REPOSITORY" --domain-owner "$ACCOUNT" --format "$FORMAT" ${PROFILE_OPT} --region "${regx}" --sort-by PUBLISHED_TIME --no-paginate --query 'versions[0].version' --output text 2>&1)
+              if [[ $(echo "${LATEST}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError|Could not connect to the endpoint URL|ExpiredToken') ]]; then
+                  textError "${regx}: Access Denied trying to get latest version for packages: $(if [[ "$NAMESPACE" != "" && "$NAMESPACE" != "None" ]]; then echo "${NAMESPACE}:"; fi)${PACKAGE}"
+                  continue
+              fi
+              if [[ $(echo "${LATEST}" | grep -E 'ResourceNotFoundException') ]]; then
+                  textError "${regx}: Package not found for packages: $(if [[ "$NAMESPACE" != "" && "$NAMESPACE" != "None" ]]; then echo "${NAMESPACE}:"; fi)${PACKAGE}"
+                  continue
+              fi
+              LATEST=$(head -n 1 <<< $LATEST)
+              # textInfo "Latest version: ${LATEST}"
+              # Get the origin type for the latest version
+              ORIGIN_TYPE=$(aws codeartifact describe-package-version --package "$PACKAGE" $(if [[ "$NAMESPACE" != "" && "$NAMESPACE" != "None" ]]; then echo "--namespace $NAMESPACE"; fi) --domain "$DOMAIN" --repository "$REPOSITORY" --domain-owner "$ACCOUNT" --format "$FORMAT" --package-version "$LATEST" ${PROFILE_OPT} --region "${regx}" --query 'packageVersion.origin.originType' --output text 2>&1)
+              if [[ $(echo "${LATEST}" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError|Could not connect to the endpoint URL|ExpiredToken') ]]; then
+                  textError "${regx}: Access Denied trying to get origin type of packages: $(if [[ "$NAMESPACE" != "" && "$NAMESPACE" != "None" ]]; then echo "${NAMESPACE}:"; fi)${PACKAGE}:${LATEST}"
+                  continue
+              fi
+              # echo $ORIGIN_TYPE
+              if [[ "$ORIGIN_TYPE" == "INTERNAL" ]]; then
+                  # The package is internal
+                  if [[ "$UPSTREAM" == "ALLOW" ]]; then
+                      # The package is not configured to block upstream fail check
+                      textFail "${regx}: Internal package $(if [[ "$NAMESPACE" != "" && "$NAMESPACE" != "None" ]]; then echo "${NAMESPACE}:"; fi)${PACKAGE} is vulnerable to dependency confusion in repository ${REPOSITORY}"
+                  else
+                      textPass "${regx}: Internal package $(if [[ "$NAMESPACE" != "" && "$NAMESPACE" != "None" ]]; then echo "${NAMESPACE}:"; fi)${PACKAGE} is NOT vulnerable to dependency confusion in repository ${REPOSITORY}"
+                  fi
+              fi
+          done <<< "${LIST_OF_PACKAGES}"
+      else
+          textInfo "${regx}: No packages found in ${REPOSITORY}"
+      fi
+      done <<< "${LIST_OF_REPOSITORIES}"
+    else
+      textPass "${regx}: no repositories found" "${regx}"
+    fi
+  done
+}
