@@ -46,7 +46,7 @@ export OUTPUT_DATE
 # Default Prowler Options
 QUIET=0
 export QUIET
-SEP=','
+SEP='|'
 export SEP
 KEEPCREDREPORT=0
 export KEEPCREDREPORT
