@@ -31,7 +31,7 @@ extra743(){
             if [[ $CHECK_CERTIFICATE ]]; then
                 textPass "$regx: API Gateway $API_GW_NAME ID $api in $stage has client certificate enabled" "$regx"
               else
-                textFail "$regx: API Gateway $API_GW_NAME ID $api in $stage has not client certificate enabled" "$regx"
+                textFail "$regx: API Gateway $API_GW_NAME ID $api in $stage has no client certificate enabled" "$regx"
             fi
           done
         fi
