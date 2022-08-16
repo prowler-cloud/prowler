@@ -26,7 +26,7 @@ extra739(){
         # if retention is 0 then is disabled
         BACKUP_RETENTION=$($AWSCLI rds describe-db-instances $PROFILE_OPT --region $regx --db-instance-identifier $rdsinstance --query 'DBInstances[*].BackupRetentionPeriod' --output text)
         if [[ $BACKUP_RETENTION == "0" ]]; then
-          textFail "$regx: RDS instance $rdsinstance has not backup enabled!" "$regx"
+          textFail "$regx: RDS instance $rdsinstance has no backup enabled!" "$regx"
         else
           textPass "$regx: RDS instance $rdsinstance has backup enabled with retention period $BACKUP_RETENTION days" "$regx"
         fi
