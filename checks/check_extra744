@@ -32,7 +32,7 @@ extra744(){
             if [[ $CHECK_WAFACL ]]; then
                 textPass "$regx: API Gateway $API_GW_NAME ID $api in $stage has $CHECK_WAFACL WAF ACL attached" "$regx"
               else
-                textFail "$regx: API Gateway $API_GW_NAME ID $api in $stage has not WAF ACL attached" "$regx"
+                textFail "$regx: API Gateway $API_GW_NAME ID $api in $stage has no WAF ACL attached" "$regx"
             fi
           done
         fi
