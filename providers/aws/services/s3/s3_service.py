@@ -39,7 +39,11 @@ class S3:
                     "LocationConstraint"
                 ]
                 if not bucket_region:  # If us-east-1, bucket_region is none
-                    buckets.append(Bucket(bucket["Name"], "us-east-1"))
+                    bucket_region = "us-east-1"
+                # Check if there are filter regions
+                if current_audit_info.audited_regions:
+                    if bucket_region in current_audit_info.audited_regions:
+                        buckets.append(Bucket(bucket["Name"], bucket_region))
                 else:
                     buckets.append(Bucket(bucket["Name"], bucket_region))
             return buckets
