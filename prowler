@@ -178,17 +178,6 @@ if __name__ == "__main__":
             logger.critical("To use -I/-T options -R option is needed")
             sys.exit()
 
-    # Check output directory, if it is default and not created -> create it
-    # If is custom and not created -> error
-    if output_directory:
-        if not isdir(output_directory):
-            if output_directory == default_output_directory:
-                if output_modes:
-                    mkdir(default_output_directory)
-            else:
-                logger.critical("Output directory does not exist")
-                sys.exit()
-
     if args.version:
         print_version()
         sys.exit()
@@ -253,6 +242,17 @@ if __name__ == "__main__":
     audit_output_options = set_output_options(
         args.quiet, output_modes, output_directory, args.security_hub
     )
+
+    # Check output directory, if it is default and not created -> create it
+    # If is custom and not created -> error
+    if output_directory:
+        if not isdir(output_directory):
+            if output_directory == default_output_directory:
+                if output_modes:
+                    mkdir(default_output_directory)
+            else:
+                logger.critical("Output directory does not exist")
+                sys.exit()
 
     # Set global session
     audit_info = provider_set_session(
