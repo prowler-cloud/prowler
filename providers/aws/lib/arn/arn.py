@@ -1,6 +1,6 @@
 from arnparse import arnparse
 
-from lib.arn.error import (
+from providers.aws.lib.arn.error import (
     RoleArnParsingEmptyResource,
     RoleArnParsingFailedMissingFields,
     RoleArnParsingIAMRegionNotEmpty,
