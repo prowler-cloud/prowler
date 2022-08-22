@@ -2,7 +2,7 @@ from lib.check.models import Check, Check_Report
 from providers.aws.services.iam.iam_service import iam_client
 
 
-class iam_password_policy_expires_passwords_within_15_days_or_less(Check):
+class iam_password_policy_expires_passwords_within_90_days_or_less(Check):
     def execute(self) -> Check_Report:
         findings = []
         report = Check_Report(self.metadata)
@@ -12,12 +12,12 @@ class iam_password_policy_expires_passwords_within_15_days_or_less(Check):
         if iam_client.password_policy:
             # Check if password policy expiration exists
             if iam_client.password_policy.max_age:
-                if iam_client.password_policy.max_age < 15:
+                if iam_client.password_policy.max_age < 90:
                     report.status = "PASS"
-                    report.status_extended = f"Password expiration is set lower than 15 days ({iam_client.password_policy.max_age} days)."
+                    report.status_extended = f"Password expiration is set lower than 90 days ({iam_client.password_policy.max_age} days)."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"Password expiration is set greater than 15 days ({iam_client.password_policy.max_age} days)."
+                    report.status_extended = f"Password expiration is set greater than 90 days ({iam_client.password_policy.max_age} days)."
             else:
                 report.status = "FAIL"
                 report.status_extended = "Password expiration is not set."
