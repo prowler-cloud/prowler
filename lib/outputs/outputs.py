@@ -9,7 +9,7 @@ from config.config import (
     json_asff_file_suffix,
     json_file_suffix,
     prowler_version,
-    timestamp,
+    timestamp_iso,
     timestamp_utc,
 )
 from lib.outputs.models import (
@@ -184,7 +184,7 @@ def generate_csv_fields():
 
 
 def fill_json(finding_output, audit_info, finding):
-    finding_output.AssessmentStartTime = timestamp.isoformat()
+    finding_output.AssessmentStartTime = timestamp_iso
     finding_output.FindingUniqueId = ""
     finding_output.Profile = audit_info.profile
     finding_output.AccountId = audit_info.audited_account
