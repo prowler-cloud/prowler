@@ -57,7 +57,7 @@ class Check_Metadata_Model(BaseModel):
     # CheckName: str
     CheckTitle: str
     # CheckAlias: str
-    CheckType: str
+    CheckType: List[str]
     ServiceName: str
     SubServiceName: str
     ResourceIdTemplate: str

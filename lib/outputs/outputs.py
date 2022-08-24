@@ -211,7 +211,7 @@ def fill_json_asff(finding_output, audit_info, finding):
     )
     finding_output.GeneratorId = "prowler-" + finding.check_metadata.CheckID
     finding_output.AwsAccountId = audit_info.audited_account
-    finding_output.Types = [finding.check_metadata.CheckType]
+    finding_output.Types = finding.check_metadata.CheckType
     finding_output.FirstObservedAt = (
         finding_output.UpdatedAt
     ) = finding_output.CreatedAt = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -229,7 +229,7 @@ def fill_json_asff(finding_output, audit_info, finding):
     # Add ED to PASS or FAIL (PASSED/FAILED)
     finding_output.Compliance = Compliance(
         Status=finding.status + "ED",
-        RelatedRequirements=[finding.check_metadata.CheckType],
+        RelatedRequirements=finding.check_metadata.CheckType,
     )
     finding_output.Remediation = {
         "Recommendation": finding.check_metadata.Remediation.Recommendation
