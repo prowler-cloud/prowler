@@ -23,7 +23,7 @@ from lib.check.check import (
 )
 from lib.check.checks_loader import load_checks_to_execute
 from lib.logger import logger, set_logging_config
-from lib.outputs.outputs import close_json
+from lib.outputs.outputs import close_json, send_to_s3_bucket
 from providers.aws.aws_provider import provider_set_session
 from providers.aws.lib.security_hub import resolve_security_hub_previous_findings
 
@@ -151,6 +151,13 @@ if __name__ == "__main__":
         action="store_true",
         help="Send check output to AWS Security Hub",
     )
+    parser.add_argument(
+        "-B",
+        "--output-bucket",
+        nargs="?",
+        default=None,
+        help="Custom output bucket, requires -M <mode> and it can work also with -o flag.",
+    )
     # Parse Arguments
     args = parser.parse_args()
 
@@ -247,12 +254,8 @@ if __name__ == "__main__":
     # If is custom and not created -> error
     if output_directory:
         if not isdir(output_directory):
-            if output_directory == default_output_directory:
-                if output_modes:
-                    mkdir(default_output_directory)
-            else:
-                logger.critical("Output directory does not exist")
-                sys.exit()
+            if output_modes:
+                mkdir(output_directory)
 
     # Set global session
     audit_info = provider_set_session(
@@ -291,11 +294,16 @@ if __name__ == "__main__":
             "There are no checks to execute. Please, check your input arguments"
         )
 
-    # Close json file if exists
     if output_modes:
         for mode in output_modes:
+            # Close json file if exists
             if mode == "json" or mode == "json-asff":
                 close_json(output_directory, audit_info.audited_account, mode)
+            # Send output to S3 if needed
+            if args.output_bucket:
+                send_to_s3_bucket(
+                    output_directory, mode, args.output_bucket, audit_info
+                )
 
     # Resolve previous fails of Security Hub
     if args.security_hub:

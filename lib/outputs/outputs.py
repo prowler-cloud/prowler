@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from csv import DictWriter
 
 from colorama import Fore, Style
@@ -12,6 +13,7 @@ from config.config import (
     timestamp_iso,
     timestamp_utc,
 )
+from lib.logger import logger
 from lib.outputs.models import (
     Check_Output_CSV,
     Check_Output_JSON,
@@ -252,3 +254,29 @@ def close_json(output_directory, audited_account, mode):
     file_descriptor.truncate()
     file_descriptor.write("]")
     file_descriptor.close()
+
+
+def send_to_s3_bucket(output_directory, output_mode, output_bucket, audit_info):
+    try:
+        # Get only last part of the path
+        output_directory = output_directory.split("/")[-1]
+        if output_mode == "csv":
+            filename = f"prowler-output-{audit_info.audited_account}-{csv_file_suffix}"
+        elif output_mode == "json":
+            filename = f"prowler-output-{audit_info.audited_account}-{json_file_suffix}"
+        elif output_mode == "json-asff":
+            filename = (
+                f"prowler-output-{audit_info.audited_account}-{json_asff_file_suffix}"
+            )
+        logger.info(f"Sending outputs to S3 bucket {output_bucket}")
+        # Check if security hub is enabled in current region
+        s3_client = audit_info.audit_session.client("s3")
+        s3_client.upload_file(
+            output_directory + "/" + filename,
+            output_bucket,
+            output_directory + "/" + output_mode + "/" + filename,
+        )
+
+    except Exception as error:
+        logger.critical(f"{error.__class__.__name__} -- {error}")
+        sys.exit()
