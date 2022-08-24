@@ -322,3 +322,10 @@ def generate_regional_clients(service, audit_info):
         regional_clients[region] = regional_client
         # regional_clients.append(regional_client)
     return regional_clients
+
+
+def get_region_global_service(audit_info):
+    # Check if global service to send the finding to first audited region
+    if audit_info.audited_regions:
+        return audit_info.audited_regions[0]
+    return audit_info.profile_region
