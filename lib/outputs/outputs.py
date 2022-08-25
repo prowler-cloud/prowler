@@ -269,13 +269,11 @@ def send_to_s3_bucket(output_directory, output_mode, output_bucket, audit_info):
                 f"prowler-output-{audit_info.audited_account}-{json_asff_file_suffix}"
             )
         logger.info(f"Sending outputs to S3 bucket {output_bucket}")
-        # Check if security hub is enabled in current region
+        file_name =  output_directory + "/" + filename
+        bucket_name = output_bucket
+        object_name = output_directory + "/" + output_mode + "/" + filename
         s3_client = audit_info.audit_session.client("s3")
-        s3_client.upload_file(
-            output_directory + "/" + filename,
-            output_bucket,
-            output_directory + "/" + output_mode + "/" + filename,
-        )
+        s3_client.upload_file(file_name, bucket_name, object_name)
 
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")
