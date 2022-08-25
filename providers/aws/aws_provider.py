@@ -304,7 +304,7 @@ def get_organizations_metadata(
         return organizations_info
 
 
-def generate_regional_clients(service, audit_info):
+def generate_regional_clients(service: str, audit_info: AWS_Audit_Info) -> dict:
     regional_clients = {}
     # Get json locally
     f = open_file(aws_services_json_file)
@@ -324,7 +324,7 @@ def generate_regional_clients(service, audit_info):
     return regional_clients
 
 
-def get_region_global_service(audit_info):
+def get_region_global_service(audit_info: AWS_Audit_Info) -> str:
     # Check if global service to send the finding to first audited region
     if audit_info.audited_regions:
         return audit_info.audited_regions[0]
