@@ -222,7 +222,7 @@ def print_audit_credentials(audit_info: AWS_Audit_Info):
     report = f"""
 This report is being generated using credentials below:
 
-AWS-CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} AWS API Region: {Fore.YELLOW}[{audit_info.profile_region}]{Style.RESET_ALL} AWS Filter Region: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
+AWS-CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} AWS Filter Region: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
 AWS Account: {Fore.YELLOW}[{audit_info.audited_account}]{Style.RESET_ALL} UserId: {Fore.YELLOW}[{audit_info.audited_user_id}]{Style.RESET_ALL}
 Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESET_ALL}
 """
