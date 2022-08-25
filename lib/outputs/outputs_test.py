@@ -1,3 +1,4 @@
+import os
 from os import path, remove
 
 from colorama import Fore
@@ -34,7 +35,7 @@ from providers.aws.models import AWS_Audit_Info
 class Test_Outputs:
     def test_fill_file_descriptors(self):
         audited_account = "123456789012"
-        output_directory = "."
+        output_directory = f"{os.path.dirname(os.path.realpath(__file__))}/"
         csv_fields = generate_csv_fields()
         test_output_modes = [
             ["csv"],
