@@ -6,6 +6,7 @@ from config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
+    output_file_timestamp,
     prowler_version,
     timestamp_iso,
     timestamp_utc,
@@ -42,47 +43,47 @@ class Test_Outputs:
             ["csv", "json"],
             ["csv", "json", "json-asff"],
         ]
-
+        output_filename = f"prowler-output-{audited_account}-{output_file_timestamp}"
         expected = [
             {
                 "csv": open_file(
-                    f"{output_directory}/prowler-output-{audited_account}-{csv_file_suffix}",
+                    f"{output_directory}/{output_filename}{csv_file_suffix}",
                     "a",
                 )
             },
             {
                 "json": open_file(
-                    f"{output_directory}/prowler-output-{audited_account}-{json_file_suffix}",
+                    f"{output_directory}/{output_filename}{json_file_suffix}",
                     "a",
                 )
             },
             {
                 "json-asff": open_file(
-                    f"{output_directory}/prowler-output-{audited_account}-{json_asff_file_suffix}",
+                    f"{output_directory}/{output_filename}{json_asff_file_suffix}",
                     "a",
                 )
             },
             {
                 "csv": open_file(
-                    f"{output_directory}/prowler-output-{audited_account}-{csv_file_suffix}",
+                    f"{output_directory}/{output_filename}{csv_file_suffix}",
                     "a",
                 ),
                 "json": open_file(
-                    f"{output_directory}/prowler-output-{audited_account}-{json_file_suffix}",
+                    f"{output_directory}/{output_filename}{json_file_suffix}",
                     "a",
                 ),
             },
             {
                 "csv": open_file(
-                    f"{output_directory}/prowler-output-{audited_account}-{csv_file_suffix}",
+                    f"{output_directory}/{output_filename}{csv_file_suffix}",
                     "a",
                 ),
                 "json": open_file(
-                    f"{output_directory}/prowler-output-{audited_account}-{json_file_suffix}",
+                    f"{output_directory}/{output_filename}{json_file_suffix}",
                     "a",
                 ),
                 "json-asff": open_file(
-                    f"{output_directory}/prowler-output-{audited_account}-{json_asff_file_suffix}",
+                    f"{output_directory}/{output_filename}{json_asff_file_suffix}",
                     "a",
                 ),
             },
@@ -90,7 +91,11 @@ class Test_Outputs:
 
         for index, output_mode_list in enumerate(test_output_modes):
             test_output_file_descriptors = fill_file_descriptors(
-                output_mode_list, audited_account, output_directory, csv_fields
+                output_mode_list,
+                audited_account,
+                output_directory,
+                csv_fields,
+                output_filename=None,
             )
             for output_mode in output_mode_list:
                 assert (

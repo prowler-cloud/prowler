@@ -9,6 +9,7 @@ from config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
+    output_file_timestamp,
     prowler_version,
     timestamp_iso,
     timestamp_utc,
@@ -42,6 +43,7 @@ def report(check_findings, output_options, audit_info):
             audit_info.audited_account,
             output_options.output_directory,
             csv_fields,
+            output_options.output_filename,
         )
 
     if check_findings:
@@ -103,13 +105,16 @@ def report(check_findings, output_options, audit_info):
             file_descriptors.get(file_descriptor).close()
 
 
-def fill_file_descriptors(output_modes, audited_account, output_directory, csv_fields):
+def fill_file_descriptors(
+    output_modes, audited_account, output_directory, csv_fields, output_filename
+):
     file_descriptors = {}
+    # If no input custom output filename, set default:
+    if not output_filename:
+        output_filename = f"prowler-output-{audited_account}-{output_file_timestamp}"
     for output_mode in output_modes:
         if output_mode == "csv":
-            filename = (
-                f"{output_directory}/prowler-output-{audited_account}-{csv_file_suffix}"
-            )
+            filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
             if file_exists(filename):
                 file_descriptor = open_file(
                     filename,
@@ -129,7 +134,7 @@ def fill_file_descriptors(output_modes, audited_account, output_directory, csv_f
             file_descriptors.update({output_mode: file_descriptor})
 
         if output_mode == "json":
-            filename = f"{output_directory}/prowler-output-{audited_account}-{json_file_suffix}"
+            filename = f"{output_directory}/{output_filename}{json_file_suffix}"
             if file_exists(filename):
                 file_descriptor = open_file(
                     filename,
@@ -145,7 +150,7 @@ def fill_file_descriptors(output_modes, audited_account, output_directory, csv_f
             file_descriptors.update({output_mode: file_descriptor})
 
         if output_mode == "json-asff":
-            filename = f"{output_directory}/prowler-output-{audited_account}-{json_asff_file_suffix}"
+            filename = f"{output_directory}/{output_filename}{json_asff_file_suffix}"
             if file_exists(filename):
                 file_descriptor = open_file(
                     filename,
@@ -240,11 +245,14 @@ def fill_json_asff(finding_output, audit_info, finding):
     return finding_output
 
 
-def close_json(output_directory, audited_account, mode):
+def close_json(output_filename, output_directory, audited_account, mode):
+    # If no input custom output filename, it is the default:
+    if not output_filename:
+        output_filename = f"prowler-output-{audited_account}-{output_file_timestamp}"
     suffix = json_file_suffix
     if mode == "json-asff":
         suffix = json_asff_file_suffix
-    filename = f"{output_directory}/prowler-output-{audited_account}-{suffix}"
+    filename = f"{output_directory}/{output_filename}{suffix}"
     file_descriptor = open_file(
         filename,
         "a",
@@ -256,18 +264,21 @@ def close_json(output_directory, audited_account, mode):
     file_descriptor.close()
 
 
-def send_to_s3_bucket(output_directory, output_mode, output_bucket, audit_info):
+def send_to_s3_bucket(
+    output_filename, output_directory, output_mode, output_bucket, audit_info
+):
     try:
+        # If no input custom output filename, it is the default:
+        if not output_filename:
+            output_filename = f"{output_filename}-{output_file_timestamp}"
         # Get only last part of the path
         output_directory = output_directory.split("/")[-1]
         if output_mode == "csv":
-            filename = f"prowler-output-{audit_info.audited_account}-{csv_file_suffix}"
+            filename = f"{output_filename}{csv_file_suffix}"
         elif output_mode == "json":
-            filename = f"prowler-output-{audit_info.audited_account}-{json_file_suffix}"
+            filename = f"{output_filename}{json_file_suffix}"
         elif output_mode == "json-asff":
-            filename = (
-                f"prowler-output-{audit_info.audited_account}-{json_asff_file_suffix}"
-            )
+            filename = f"{output_filename}{json_asff_file_suffix}"
         logger.info(f"Sending outputs to S3 bucket {output_bucket}")
         # Check if security hub is enabled in current region
         s3_client = audit_info.audit_session.client("s3")

@@ -133,8 +133,15 @@ if __name__ == "__main__":
         choices=["csv", "json", "json-asff"],
     )
     parser.add_argument(
+        "-F",
+        "--output-filename",
+        nargs="?",
+        default=None,
+        help="Custom output report name, if not specified will use default output/prowler-output-ACCOUNT_NUM-OUTPUT_DATE.format.",
+    )
+    parser.add_argument(
         "-o",
-        "--custom-output-directory",
+        "--output-directory",
         nargs="?",
         help="Custom output directory, by default the folder where Prowler is stored",
         default=default_output_directory,
@@ -169,7 +176,8 @@ if __name__ == "__main__":
     services = args.services
     groups = args.groups
     checks_file = args.checks_file
-    output_directory = args.custom_output_directory
+    output_directory = args.output_directory
+    output_filename = args.output_filename
     severities = args.severity
     output_modes = args.output_modes
 
@@ -247,11 +255,10 @@ if __name__ == "__main__":
 
     # Setting output options
     audit_output_options = set_output_options(
-        args.quiet, output_modes, output_directory, args.security_hub
+        args.quiet, output_modes, output_directory, args.security_hub, output_filename
     )
 
-    # Check output directory, if it is default and not created -> create it
-    # If is custom and not created -> error
+    # Check output directory, if it is not created -> create it
     if output_directory:
         if not isdir(output_directory):
             if output_modes:
@@ -298,11 +305,17 @@ if __name__ == "__main__":
         for mode in output_modes:
             # Close json file if exists
             if mode == "json" or mode == "json-asff":
-                close_json(output_directory, audit_info.audited_account, mode)
+                close_json(
+                    output_filename, output_directory, audit_info.audited_account, mode
+                )
             # Send output to S3 if needed
             if args.output_bucket:
                 send_to_s3_bucket(
-                    output_directory, mode, args.output_bucket, audit_info
+                    output_filename,
+                    output_directory,
+                    mode,
+                    args.output_bucket,
+                    audit_info,
                 )
 
     # Resolve previous fails of Security Hub
