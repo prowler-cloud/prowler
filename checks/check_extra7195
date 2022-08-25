@@ -84,8 +84,7 @@ extra7195(){
                   textInfo "${regx}: Access Denied trying to get origin type of package $(if [[ "$NAMESPACE" != "" && "$NAMESPACE" != "None" ]]; then echo "${NAMESPACE}:"; fi)${PACKAGE}:${LATEST}" "${regx}" "${PACKAGE}"
                   continue
               fi
-              # echo $ORIGIN_TYPE
-              if grep -E 'INTERNAL' <<< "${ORIGIN_TYPE}"; then
+              if grep -q -E 'INTERNAL|UNKNOWN' <<< "${ORIGIN_TYPE}"; then
                   # The package is internal
                   if [[ "$UPSTREAM" == "ALLOW" ]]; then
                       # The package is not configured to block upstream fail check
