@@ -1,6 +1,8 @@
 from os import path, remove
 
+import boto3
 from colorama import Fore
+from moto import mock_s3
 
 from config.config import (
     csv_file_suffix,
@@ -24,6 +26,7 @@ from lib.outputs.outputs import (
     fill_json,
     fill_json_asff,
     generate_csv_fields,
+    send_to_s3_bucket,
     set_report_color,
 )
 from lib.utils.utils import hash_sha512, open_file
@@ -256,3 +259,49 @@ class Test_Outputs:
         }
 
         assert fill_json_asff(input, input_audit_info, finding) == expected
+
+    @mock_s3
+    def test_send_to_s3_bucket(self):
+        # Create mock session
+        session = boto3.session.Session(
+            region_name="us-east-1",
+        )
+        # Create mock audit_info
+        input_audit_info = AWS_Audit_Info(
+            original_session=None,
+            audit_session=session,
+            audited_account="123456789012",
+            audited_identity_arn="test-arn",
+            audited_user_id="test",
+            audited_partition="aws",
+            profile="default",
+            profile_region="eu-west-1",
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=["eu-west-2", "eu-west-1"],
+            organizations_metadata=None,
+        )
+        # Creat mock bucket
+        bucket_name = "test_bucket"
+        client = boto3.client("s3")
+        client.create_bucket(Bucket=bucket_name)
+        # Create mock csv output file
+        output_directory = "."
+        output_mode = "csv"
+        filename = (
+            f"prowler-output-{input_audit_info.audited_account}-{csv_file_suffix}"
+        )
+        open_file(
+            f"{output_directory}/{filename}",
+            "a",
+        )
+        # Send mock csv file to mock S3 Bucket
+        send_to_s3_bucket(output_directory, output_mode, bucket_name, input_audit_info)
+        # Check if the file has been sent by checking its content type
+        assert (
+            client.get_object(
+                Bucket=bucket_name,
+                Key=output_directory + "/" + output_mode + "/" + filename,
+            )["ContentType"]
+            == "binary/octet-stream"
+        )
