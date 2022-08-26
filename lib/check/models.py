@@ -14,6 +14,7 @@ class Output_From_Options:
     output_modes: list
     output_directory: str
     security_hub_enabled: bool
+    output_filename: str
 
 
 # Testing Pending
