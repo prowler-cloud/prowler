@@ -9,7 +9,6 @@ from config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
-    output_file_timestamp,
     prowler_version,
     timestamp_iso,
     timestamp_utc,
@@ -40,7 +39,6 @@ def report(check_findings, output_options, audit_info):
 
         file_descriptors = fill_file_descriptors(
             output_options.output_modes,
-            audit_info.audited_account,
             output_options.output_directory,
             csv_fields,
             output_options.output_filename,
@@ -105,13 +103,8 @@ def report(check_findings, output_options, audit_info):
             file_descriptors.get(file_descriptor).close()
 
 
-def fill_file_descriptors(
-    output_modes, audited_account, output_directory, csv_fields, output_filename
-):
+def fill_file_descriptors(output_modes, output_directory, csv_fields, output_filename):
     file_descriptors = {}
-    # If no input custom output filename, set default:
-    if not output_filename:
-        output_filename = f"prowler-output-{audited_account}-{output_file_timestamp}"
     for output_mode in output_modes:
         if output_mode == "csv":
             filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
@@ -245,32 +238,30 @@ def fill_json_asff(finding_output, audit_info, finding):
     return finding_output
 
 
-def close_json(output_filename, output_directory, audited_account, mode):
-    # If no input custom output filename, it is the default:
-    if not output_filename:
-        output_filename = f"prowler-output-{audited_account}-{output_file_timestamp}"
-    suffix = json_file_suffix
-    if mode == "json-asff":
-        suffix = json_asff_file_suffix
-    filename = f"{output_directory}/{output_filename}{suffix}"
-    file_descriptor = open_file(
-        filename,
-        "a",
-    )
-    # Replace last comma for square bracket
-    file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
-    file_descriptor.truncate()
-    file_descriptor.write("]")
-    file_descriptor.close()
+def close_json(output_filename, output_directory, mode):
+    try:
+        suffix = json_file_suffix
+        if mode == "json-asff":
+            suffix = json_asff_file_suffix
+        filename = f"{output_directory}/{output_filename}{suffix}"
+        file_descriptor = open_file(
+            filename,
+            "a",
+        )
+        # Replace last comma for square bracket
+        file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
+        file_descriptor.truncate()
+        file_descriptor.write("]")
+        file_descriptor.close()
+    except Exception as error:
+        logger.critical(f"{error.__class__.__name__} -- {error}")
+        sys.exit()
 
 
 def send_to_s3_bucket(
-    output_filename, output_directory, output_mode, output_bucket, audit_info
+    output_filename, output_directory, output_mode, output_bucket, audit_session
 ):
     try:
-        # If no input custom output filename, it is the default:
-        if not output_filename:
-            output_filename = f"{output_filename}-{output_file_timestamp}"
         # Get only last part of the path
         output_directory = output_directory.split("/")[-1]
         if output_mode == "csv":
@@ -281,7 +272,7 @@ def send_to_s3_bucket(
             filename = f"{output_filename}{json_asff_file_suffix}"
         logger.info(f"Sending outputs to S3 bucket {output_bucket}")
         # Check if security hub is enabled in current region
-        s3_client = audit_info.audit_session.client("s3")
+        s3_client = audit_session.client("s3")
         s3_client.upload_file(
             output_directory + "/" + filename,
             output_bucket,

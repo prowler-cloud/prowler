@@ -6,7 +6,7 @@ import sys
 from os import mkdir
 from os.path import isdir
 
-from config.config import default_output_directory
+from config.config import default_output_directory, output_file_timestamp
 from lib.banner import print_banner, print_version
 from lib.check.check import (
     bulk_load_checks_metadata,
@@ -253,11 +253,6 @@ if __name__ == "__main__":
         else:
             output_modes.append("json-asff")
 
-    # Setting output options
-    audit_output_options = set_output_options(
-        args.quiet, output_modes, output_directory, args.security_hub, output_filename
-    )
-
     # Check output directory, if it is not created -> create it
     if output_directory:
         if not isdir(output_directory):
@@ -272,6 +267,17 @@ if __name__ == "__main__":
         args.external_id,
         args.filter_region,
         args.organizations_role,
+    )
+
+    # Check if custom output filename was input, if not, set the default
+    if not output_filename:
+        output_filename = (
+            f"prowler-output-{audit_info.audited_account}-{output_file_timestamp}"
+        )
+
+    # Setting output options
+    audit_output_options = set_output_options(
+        args.quiet, output_modes, output_directory, args.security_hub, output_filename
     )
 
     # Execute checks
@@ -305,9 +311,7 @@ if __name__ == "__main__":
         for mode in output_modes:
             # Close json file if exists
             if mode == "json" or mode == "json-asff":
-                close_json(
-                    output_filename, output_directory, audit_info.audited_account, mode
-                )
+                close_json(output_filename, output_directory, mode)
             # Send output to S3 if needed
             if args.output_bucket:
                 send_to_s3_bucket(
@@ -315,7 +319,7 @@ if __name__ == "__main__":
                     output_directory,
                     mode,
                     args.output_bucket,
-                    audit_info,
+                    audit_info.audit_session,
                 )
 
     # Resolve previous fails of Security Hub

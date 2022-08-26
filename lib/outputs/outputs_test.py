@@ -35,7 +35,7 @@ from providers.aws.models import AWS_Audit_Info
 class Test_Outputs:
     def test_fill_file_descriptors(self):
         audited_account = "123456789012"
-        output_directory = f"{os.path.dirname(os.path.realpath(__file__))}/"
+        output_directory = f"{os.path.dirname(os.path.realpath(__file__))}"
         csv_fields = generate_csv_fields()
         test_output_modes = [
             ["csv"],
@@ -93,10 +93,9 @@ class Test_Outputs:
         for index, output_mode_list in enumerate(test_output_modes):
             test_output_file_descriptors = fill_file_descriptors(
                 output_mode_list,
-                audited_account,
                 output_directory,
                 csv_fields,
-                output_filename=None,
+                output_filename,
             )
             for output_mode in output_mode_list:
                 assert (
