@@ -15,6 +15,6 @@ default_output_directory = getcwd() + "/output"
 
 output_file_timestamp = timestamp.strftime("%Y%m%d%H%M%S")
 timestamp_iso = timestamp.isoformat()
-csv_file_suffix = f"{output_file_timestamp}.csv"
-json_file_suffix = f"{output_file_timestamp}.json"
-json_asff_file_suffix = f"{output_file_timestamp}.asff.json"
+csv_file_suffix = ".csv"
+json_file_suffix = ".json"
+json_asff_file_suffix = ".asff.json"

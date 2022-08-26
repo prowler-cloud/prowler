@@ -3,7 +3,7 @@
 
   "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
   "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Oracle ports 1521 or 2483.",
-  "CheckType": "Infrastructure Security",
+  "CheckType": ["Infrastructure Security"],
   "ServiceName": "ec2",
   "SubServiceName": "securitygroup",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",

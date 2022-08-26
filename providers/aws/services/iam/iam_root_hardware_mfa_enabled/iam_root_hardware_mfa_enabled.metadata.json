@@ -2,7 +2,7 @@
   "Provider": "aws",
   "CheckID": "iam_root_hardware_mfa_enabled",
   "CheckTitle": "Ensure hardware MFA is enabled for the root account",
-  "CheckType": "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+  "CheckType": ["Software and Configuration Checks", "Industry and Regulatory Standards" ,"CIS AWS Foundations Benchmark"],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",

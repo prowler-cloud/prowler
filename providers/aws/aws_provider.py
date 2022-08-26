@@ -222,7 +222,7 @@ def print_audit_credentials(audit_info: AWS_Audit_Info):
     report = f"""
 This report is being generated using credentials below:
 
-AWS-CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} AWS API Region: {Fore.YELLOW}[{audit_info.profile_region}]{Style.RESET_ALL} AWS Filter Region: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
+AWS-CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} AWS Filter Region: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
 AWS Account: {Fore.YELLOW}[{audit_info.audited_account}]{Style.RESET_ALL} UserId: {Fore.YELLOW}[{audit_info.audited_user_id}]{Style.RESET_ALL}
 Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESET_ALL}
 """
@@ -304,7 +304,7 @@ def get_organizations_metadata(
         return organizations_info
 
 
-def generate_regional_clients(service, audit_info):
+def generate_regional_clients(service: str, audit_info: AWS_Audit_Info) -> dict:
     regional_clients = {}
     # Get json locally
     f = open_file(aws_services_json_file)
@@ -322,3 +322,10 @@ def generate_regional_clients(service, audit_info):
         regional_clients[region] = regional_client
         # regional_clients.append(regional_client)
     return regional_clients
+
+
+def get_region_global_service(audit_info: AWS_Audit_Info) -> str:
+    # Check if global service to send the finding to first audited region
+    if audit_info.audited_regions:
+        return audit_info.audited_regions[0]
+    return audit_info.profile_region

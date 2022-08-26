@@ -39,9 +39,9 @@ def report(check_findings, output_options, audit_info):
 
         file_descriptors = fill_file_descriptors(
             output_options.output_modes,
-            audit_info.audited_account,
             output_options.output_directory,
             csv_fields,
+            output_options.output_filename,
         )
 
     if check_findings:
@@ -103,13 +103,11 @@ def report(check_findings, output_options, audit_info):
             file_descriptors.get(file_descriptor).close()
 
 
-def fill_file_descriptors(output_modes, audited_account, output_directory, csv_fields):
+def fill_file_descriptors(output_modes, output_directory, csv_fields, output_filename):
     file_descriptors = {}
     for output_mode in output_modes:
         if output_mode == "csv":
-            filename = (
-                f"{output_directory}/prowler-output-{audited_account}-{csv_file_suffix}"
-            )
+            filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
             if file_exists(filename):
                 file_descriptor = open_file(
                     filename,
@@ -129,7 +127,7 @@ def fill_file_descriptors(output_modes, audited_account, output_directory, csv_f
             file_descriptors.update({output_mode: file_descriptor})
 
         if output_mode == "json":
-            filename = f"{output_directory}/prowler-output-{audited_account}-{json_file_suffix}"
+            filename = f"{output_directory}/{output_filename}{json_file_suffix}"
             if file_exists(filename):
                 file_descriptor = open_file(
                     filename,
@@ -145,7 +143,7 @@ def fill_file_descriptors(output_modes, audited_account, output_directory, csv_f
             file_descriptors.update({output_mode: file_descriptor})
 
         if output_mode == "json-asff":
-            filename = f"{output_directory}/prowler-output-{audited_account}-{json_asff_file_suffix}"
+            filename = f"{output_directory}/{output_filename}{json_asff_file_suffix}"
             if file_exists(filename):
                 file_descriptor = open_file(
                     filename,
@@ -213,7 +211,7 @@ def fill_json_asff(finding_output, audit_info, finding):
     )
     finding_output.GeneratorId = "prowler-" + finding.check_metadata.CheckID
     finding_output.AwsAccountId = audit_info.audited_account
-    finding_output.Types = [finding.check_metadata.CheckType]
+    finding_output.Types = finding.check_metadata.CheckType
     finding_output.FirstObservedAt = (
         finding_output.UpdatedAt
     ) = finding_output.CreatedAt = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -231,7 +229,7 @@ def fill_json_asff(finding_output, audit_info, finding):
     # Add ED to PASS or FAIL (PASSED/FAILED)
     finding_output.Compliance = Compliance(
         Status=finding.status + "ED",
-        RelatedRequirements=[finding.check_metadata.CheckType],
+        RelatedRequirements=finding.check_metadata.CheckType,
     )
     finding_output.Remediation = {
         "Recommendation": finding.check_metadata.Remediation.Recommendation
@@ -240,34 +238,38 @@ def fill_json_asff(finding_output, audit_info, finding):
     return finding_output
 
 
-def close_json(output_directory, audited_account, mode):
-    suffix = json_file_suffix
-    if mode == "json-asff":
-        suffix = json_asff_file_suffix
-    filename = f"{output_directory}/prowler-output-{audited_account}-{suffix}"
-    file_descriptor = open_file(
-        filename,
-        "a",
-    )
-    # Replace last comma for square bracket
-    file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
-    file_descriptor.truncate()
-    file_descriptor.write("]")
-    file_descriptor.close()
+def close_json(output_filename, output_directory, mode):
+    try:
+        suffix = json_file_suffix
+        if mode == "json-asff":
+            suffix = json_asff_file_suffix
+        filename = f"{output_directory}/{output_filename}{suffix}"
+        file_descriptor = open_file(
+            filename,
+            "a",
+        )
+        # Replace last comma for square bracket
+        file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
+        file_descriptor.truncate()
+        file_descriptor.write("]")
+        file_descriptor.close()
+    except Exception as error:
+        logger.critical(f"{error.__class__.__name__} -- {error}")
+        sys.exit()
 
 
-def send_to_s3_bucket(output_directory, output_mode, output_bucket, audit_info):
+def send_to_s3_bucket(
+    output_filename, output_directory, output_mode, output_bucket, audit_session
+):
     try:
         # Get only last part of the path
         output_directory = output_directory.split("/")[-1]
         if output_mode == "csv":
-            filename = f"prowler-output-{audit_info.audited_account}-{csv_file_suffix}"
+            filename = f"{output_filename}{csv_file_suffix}"
         elif output_mode == "json":
-            filename = f"prowler-output-{audit_info.audited_account}-{json_file_suffix}"
+            filename = f"{output_filename}{json_file_suffix}"
         elif output_mode == "json-asff":
-            filename = (
-                f"prowler-output-{audit_info.audited_account}-{json_asff_file_suffix}"
-            )
+            filename = f"{output_filename}{json_asff_file_suffix}"
         logger.info(f"Sending outputs to S3 bucket {output_bucket}")
         file_name = output_directory + "/" + filename
         bucket_name = output_bucket
