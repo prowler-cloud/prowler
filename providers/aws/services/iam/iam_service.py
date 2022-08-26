@@ -2,7 +2,7 @@ import csv
 from dataclasses import dataclass
 
 from lib.logger import logger
-from providers.aws.aws_provider import current_audit_info
+from providers.aws.aws_provider import current_audit_info, get_region_global_service
 
 
 ################## IAM
@@ -12,7 +12,7 @@ class IAM:
         self.session = audit_info.audit_session
         self.account = audit_info.audited_account
         self.client = self.session.client(self.service)
-        self.region = audit_info.profile_region
+        self.region = get_region_global_service(audit_info)
         self.users = self.__get_users__()
         self.roles = self.__get_roles__()
         self.account_summary = self.__get_account_summary__()

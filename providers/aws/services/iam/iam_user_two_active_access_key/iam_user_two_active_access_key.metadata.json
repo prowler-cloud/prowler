@@ -2,7 +2,7 @@
   "Provider": "aws",
   "CheckID": "iam_user_two_active_access_key",
   "CheckTitle": "Check if IAM users have two active access keys",
-  "CheckType": "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+  "CheckType": ["Software and Configuration Checks", "Industry and Regulatory Standards" ,"CIS AWS Foundations Benchmark"],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",

@@ -2,7 +2,7 @@
   "Provider": "aws",
   "CheckID": "ec2_networkacl_allow_ingress_tcp_port_22",
   "CheckTitle": "Ensure no Network ACLs allow ingress from 0.0.0.0/0 to SSH port 22",
-  "CheckType": "Infrastructure Security",
+  "CheckType": ["Infrastructure Security"],
   "ServiceName": "ec2",
   "SubServiceName": "networkacl",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",

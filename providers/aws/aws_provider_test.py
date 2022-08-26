@@ -7,6 +7,7 @@ from moto import mock_iam, mock_organizations, mock_sts
 from providers.aws.aws_provider import (
     assume_role,
     get_organizations_metadata,
+    get_region_global_service,
     validate_credentials,
 )
 from providers.aws.models import AWS_Assume_Role, AWS_Audit_Info
@@ -166,3 +167,25 @@ class Test_AWS_Provider:
         )
         org.account_details_org.should.equal(org_id)
         org.account_details_tags.should.equal("key:value,")
+
+    def test_get_region_global_service(self):
+        # Create mock audit_info
+        input_audit_info = AWS_Audit_Info(
+            original_session=None,
+            audit_session=None,
+            audited_account="123456789012",
+            audited_identity_arn="test-arn",
+            audited_user_id="test",
+            audited_partition="aws",
+            profile="default",
+            profile_region="eu-west-1",
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=["eu-west-2", "eu-west-1"],
+            organizations_metadata=None,
+        )
+
+        assert (
+            get_region_global_service(input_audit_info)
+            == input_audit_info.audited_regions[0]
+        )
