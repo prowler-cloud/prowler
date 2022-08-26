@@ -239,7 +239,7 @@ class Test_Outputs:
         )
         expected.GeneratorId = "prowler-" + finding.check_metadata.CheckID
         expected.AwsAccountId = "123456789012"
-        expected.Types = [finding.check_metadata.CheckType]
+        expected.Types = finding.check_metadata.CheckType
         expected.FirstObservedAt = (
             expected.UpdatedAt
         ) = expected.CreatedAt = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -257,7 +257,7 @@ class Test_Outputs:
 
         expected.Compliance = Compliance(
             Status="PASS" + "ED",
-            RelatedRequirements=[finding.check_metadata.CheckType],
+            RelatedRequirements=finding.check_metadata.CheckType,
         )
         expected.Remediation = {
             "Recommendation": finding.check_metadata.Remediation.Recommendation
@@ -294,19 +294,31 @@ class Test_Outputs:
         output_directory = "."
         output_mode = "csv"
         filename = (
-            f"prowler-output-{input_audit_info.audited_account}-{csv_file_suffix}"
+            f"prowler-output-{input_audit_info.audited_account}-{output_file_timestamp}"
         )
-        open_file(
-            f"{output_directory}/{filename}",
+        file_descriptor = open_file(
+            f"{output_directory}/{filename}{csv_file_suffix}",
             "a",
         )
         # Send mock csv file to mock S3 Bucket
-        send_to_s3_bucket(output_directory, output_mode, bucket_name, input_audit_info)
+        send_to_s3_bucket(
+            filename,
+            output_directory,
+            output_mode,
+            bucket_name,
+            input_audit_info.audit_session,
+        )
         # Check if the file has been sent by checking its content type
         assert (
             client.get_object(
                 Bucket=bucket_name,
-                Key=output_directory + "/" + output_mode + "/" + filename,
+                Key=output_directory
+                + "/"
+                + output_mode
+                + "/"
+                + filename
+                + csv_file_suffix,
             )["ContentType"]
             == "binary/octet-stream"
         )
+        remove(f"{output_directory}/{filename}{csv_file_suffix}")

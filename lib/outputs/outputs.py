@@ -274,7 +274,7 @@ def send_to_s3_bucket(
         file_name = output_directory + "/" + filename
         bucket_name = output_bucket
         object_name = output_directory + "/" + output_mode + "/" + filename
-        s3_client = audit_info.audit_session.client("s3")
+        s3_client = audit_session.client("s3")
         s3_client.upload_file(file_name, bucket_name, object_name)
 
     except Exception as error:
