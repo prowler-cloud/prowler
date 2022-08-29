@@ -10,8 +10,8 @@ from config.config import aws_services_json_file
 from lib.logger import logger
 from lib.utils.utils import open_file, parse_json_file
 from providers.aws.lib.arn.arn import arn_parsing
-from providers.aws.models import (
-    AWS_Assume_Role,
+from providers.aws.lib.audit_info.audit_info import current_audit_info
+from providers.aws.lib.audit_info.models import (
     AWS_Audit_Info,
     AWS_Credentials,
     AWS_Organizations_Info,
@@ -91,31 +91,12 @@ def provider_set_session(
     input_regions,
     organizations_role_arn,
 ):
-
-    # Mark variable that stores all the info about the audit as global
-    global current_audit_info
-
+    # Assumed AWS session
     assumed_session = None
 
     # Setting session
-    current_audit_info = AWS_Audit_Info(
-        original_session=None,
-        audit_session=None,
-        audited_account=None,
-        audited_user_id=None,
-        audited_partition=None,
-        audited_identity_arn=None,
-        profile=input_profile,
-        profile_region=None,
-        credentials=None,
-        assumed_role_info=AWS_Assume_Role(
-            role_arn=None,
-            session_duration=None,
-            external_id=None,
-        ),
-        audited_regions=input_regions,
-        organizations_metadata=None,
-    )
+    current_audit_info.profile = input_profile
+    current_audit_info.audited_regions = input_regions
 
     logger.info("Generating original session ...")
     # Create an global original session using only profile/basic credentials info

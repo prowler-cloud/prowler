@@ -32,7 +32,7 @@ from lib.outputs.outputs import (
     set_report_color,
 )
 from lib.utils.utils import hash_sha512, open_file
-from providers.aws.models import AWS_Audit_Info
+from providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
 class Test_Outputs:

@@ -7,7 +7,7 @@ from boto3 import session
 from config.config import json_asff_file_suffix, timestamp_utc
 from lib.logger import logger
 from lib.outputs.models import Check_Output_JSON_ASFF
-from providers.aws.models import AWS_Audit_Info
+from providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
 def send_to_security_hub(

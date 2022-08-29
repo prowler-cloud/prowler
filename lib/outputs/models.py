@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from config.config import timestamp
 from lib.check.models import Check_Report, ComplianceItem, Remediation
-from providers.aws.models import AWS_Organizations_Info
+from providers.aws.lib.audit_info.models import AWS_Organizations_Info
 
 
 @dataclass

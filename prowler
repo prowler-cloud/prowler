@@ -25,7 +25,9 @@ from lib.check.checks_loader import load_checks_to_execute
 from lib.logger import logger, set_logging_config
 from lib.outputs.outputs import close_json, send_to_s3_bucket
 from providers.aws.aws_provider import provider_set_session
-from providers.aws.lib.security_hub import resolve_security_hub_previous_findings
+from providers.aws.lib.security_hub.security_hub import (
+    resolve_security_hub_previous_findings,
+)
 
 if __name__ == "__main__":
     # CLI Arguments
