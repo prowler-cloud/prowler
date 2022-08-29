@@ -1,5 +1,5 @@
 from lib.check.models import Check, Check_Report
-from providers.aws.services.iam.iam_service import iam_client
+from providers.aws.services.iam.iam_client import iam_client
 
 
 class iam_root_hardware_mfa_enabled(Check):

@@ -2,7 +2,7 @@ import csv
 from dataclasses import dataclass
 
 from lib.logger import logger
-from providers.aws.aws_provider import current_audit_info, get_region_global_service
+from providers.aws.aws_provider import get_region_global_service
 
 
 ################## IAM
@@ -312,6 +312,3 @@ class PasswordPolicy:
         self.max_age = max_age
         self.reuse_prevention = reuse_prevention
         self.hard_expiry = hard_expiry
-
-
-iam_client = IAM(current_audit_info)

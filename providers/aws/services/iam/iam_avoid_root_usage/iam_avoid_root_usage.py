@@ -1,7 +1,7 @@
 import datetime
 
 from lib.check.models import Check, Check_Report
-from providers.aws.services.iam.iam_service import iam_client
+from providers.aws.services.iam.iam_client import iam_client
 
 maximum_access_days = 1
 
