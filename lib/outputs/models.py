@@ -27,7 +27,7 @@ class Check_Output_JSON(BaseModel):
     CheckID: str
     # CheckName: str
     CheckTitle: str
-    CheckType: str
+    CheckType: List[str]
     ServiceName: str
     SubServiceName: str
     Status: str = ""
