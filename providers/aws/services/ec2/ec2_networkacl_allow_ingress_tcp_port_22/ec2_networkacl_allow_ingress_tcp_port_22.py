@@ -9,20 +9,10 @@ class ec2_networkacl_allow_ingress_tcp_port_22(Check):
         tcp_protocol = "6"
         check_port = 22
         for network_acl in ec2_client.network_acls:
-            public = False
             report = Check_Report(self.metadata)
             report.region = network_acl.region
-            for entry in network_acl.entries:
-                # For IPv4
-                if "CidrBlock" in entry:
-                    public = check_network_acl(entry, tcp_protocol, check_port, "IPv4")
-                # For IPv6
-                if "Ipv6CidrBlock" in entry:
-                    public = check_network_acl(entry, tcp_protocol, check_port, "IPv6")
-                # If some entry allows it, that ACL is not securely configured
-                if public:
-                    break
-            if not public:
+            # If some entry allows it, that ACL is not securely configured
+            if not check_network_acl(network_acl.entries, tcp_protocol, check_port):
                 report.status = "PASS"
                 report.status_extended = f"Network ACL {network_acl.id} has not SSH port 22 open to the Internet."
                 report.resource_id = network_acl.id
