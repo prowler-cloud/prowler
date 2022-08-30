@@ -46,6 +46,11 @@ CHECK_CAF_EPIC_extra7195=""
 
 extra7195(){
   # Checks Code Artifact packages for Dependency Confusion
+  # Check AWS CLI version, this check requires v2.7.16 or greater
+  if [[ "2.7.16" != "$(echo -e "$(aws --version | sed -e 's/ .*//' | sed -e 's/.*\///')\n2.7.16" | sort -V | head -n1)" ]]; then
+    textInfo "This check requires AWS CLI version 2.7.16 or greater please update"
+    return 1
+  fi
   # Looking for codeartifact repositories in all regions
   for regx in ${REGIONS}; do
     LIST_OF_REPOSITORIES=$("${AWSCLI}" codeartifact list-repositories ${PROFILE_OPT} --region "${regx}"  --query 'repositories[*].[name,domainName,domainOwner]' --output text 2>&1)
