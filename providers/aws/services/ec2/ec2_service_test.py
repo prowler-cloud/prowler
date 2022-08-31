@@ -5,6 +5,7 @@ from providers.aws.lib.audit_info.models import AWS_Audit_Info, session
 from providers.aws.services.ec2.ec2_service import EC2
 
 AWS_ACCOUNT_NUMBER = 123456789012
+AWS_REGION = "us-east-1"
 
 
 class Test_EC2_Service:
@@ -66,8 +67,8 @@ class Test_EC2_Service:
     @mock_ec2
     def test__describe_instances__(self):
         # Generate EC2 Client
-        ec2_resource = resource("ec2")
-        ec2_client = client("ec2")
+        ec2_resource = resource("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION)
         # Get AMI image
         image_response = ec2_client.describe_images()
         image_id = image_response["Images"][0]["ImageId"]
@@ -88,7 +89,7 @@ class Test_EC2_Service:
     @mock_ec2
     def test__describe_security_groups__(self):
         # Generate EC2 Client
-        ec2_client = client("ec2")
+        ec2_client = client("ec2", region_name=AWS_REGION)
         # Create EC2 Security Group
         sg_id = ec2_client.create_security_group(
             Description="test-description",
@@ -103,8 +104,8 @@ class Test_EC2_Service:
     @mock_ec2
     def test__describe_network_acls__(self):
         # Generate EC2 Client
-        ec2_client = client("ec2")
-        ec2_resource = resource("ec2")
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_resource = resource("ec2", region_name=AWS_REGION)
         # Create EC2 VPC and SG
         vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
         nacl_id = ec2_resource.create_network_acl(
@@ -119,8 +120,8 @@ class Test_EC2_Service:
     @mock_ec2
     def test__describe_snapshots__(self):
         # Generate EC2 Client
-        ec2_client = client("ec2")
-        ec2_resource = resource("ec2")
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_resource = resource("ec2", region_name=AWS_REGION)
         # Create EC2 Volume and Snapshot
         volume_id = ec2_resource.create_volume(
             AvailabilityZone="us-east-1a",
@@ -139,8 +140,8 @@ class Test_EC2_Service:
     @mock_ec2
     def test__get_snapshot_public__(self):
         # Generate EC2 Client
-        ec2_client = client("ec2")
-        ec2_resource = resource("ec2")
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_resource = resource("ec2", region_name=AWS_REGION)
         # Create EC2 Volume and Snapshot
         volume_id = ec2_resource.create_volume(
             AvailabilityZone="us-east-1a",
