@@ -160,12 +160,20 @@ if __name__ == "__main__":
         action="store_true",
         help="Send check output to AWS Security Hub",
     )
-    parser.add_argument(
+    bucket = parser.add_mutually_exclusive_group()
+    bucket.add_argument(
         "-B",
         "--output-bucket",
         nargs="?",
         default=None,
         help="Custom output bucket, requires -M <mode> and it can work also with -o flag.",
+    )
+    bucket.add_argument(
+        "-D",
+        "--output-bucket-no-assume",
+        nargs="?",
+        default=None,
+        help="Same as -B but do not use the assumed role credentials to put objects to the bucket, instead uses the initial credentials.",
     )
     # Parse Arguments
     args = parser.parse_args()
@@ -314,14 +322,20 @@ if __name__ == "__main__":
             # Close json file if exists
             if mode == "json" or mode == "json-asff":
                 close_json(output_filename, output_directory, mode)
-            # Send output to S3 if needed
-            if args.output_bucket:
+            # Send output to S3 if needed (-B / -D)
+            if args.output_bucket or args.output_bucket_no_assume:
+                output_bucket = args.output_bucket
+                bucket_session = audit_info.audit_session
+                # Check if -D was input
+                if args.output_bucket_no_assume:
+                    output_bucket = args.output_bucket_no_assume
+                    bucket_session = audit_info.original_session
                 send_to_s3_bucket(
                     output_filename,
                     output_directory,
                     mode,
-                    args.output_bucket,
-                    audit_info.audit_session,
+                    output_bucket,
+                    bucket_session,
                 )
 
     # Resolve previous fails of Security Hub
