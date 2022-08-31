@@ -1,7 +1,7 @@
 .DEFAULT_GOAL:=help
 
 test:   ## Test with pytest
-	pytest -v
+	pytest -n auto -vvv -s
 
 coverage: ## Show Test Coverage
 	coverage run --skip-covered -m pytest -v && \
