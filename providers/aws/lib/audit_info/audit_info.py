@@ -1,9 +1,14 @@
+from boto3 import session
+
 from providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 
 # Default Current Audit Info
 current_audit_info = AWS_Audit_Info(
     original_session=None,
-    audit_session=None,
+    audit_session=session.Session(
+        profile_name=None,
+        botocore_session=None,
+    ),
     audited_account=None,
     audited_user_id=None,
     audited_partition=None,
