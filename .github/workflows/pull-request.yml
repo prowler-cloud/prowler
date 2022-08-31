@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10"]
+        python-version: ["3.9"]
 
     steps:
       - uses: actions/checkout@v3
@@ -27,6 +27,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install pipenv
           pipenv install
+      - name: Bandit
+        run: |
+          pipenv run bandit -q -lll -x '*_test.py,./contrib/' -r .
+      - name: Safety
+        run: |
+          pipenv run safety check
+      - name: Vulture
+        run: |
+          pipenv run vulture --exclude "contrib" --min-confidence 100 .
       - name: Test with pytest
         run: |
           pipenv run pytest -n auto
