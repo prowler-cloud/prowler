@@ -1,7 +1,7 @@
 from boto3 import client, session
 from moto import mock_s3
 
-from providers.aws.lib.audit_info.models import AWS_Audit_Info, session
+from providers.aws.lib.audit_info.models import AWS_Audit_Info
 from providers.aws.services.s3.s3_service import S3
 
 AWS_ACCOUNT_NUMBER = 123456789012

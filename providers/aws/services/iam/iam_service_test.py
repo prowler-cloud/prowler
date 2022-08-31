@@ -3,7 +3,7 @@ import json
 from boto3 import client, session
 from moto import mock_iam
 
-from providers.aws.lib.audit_info.models import AWS_Audit_Info, session
+from providers.aws.lib.audit_info.models import AWS_Audit_Info
 from providers.aws.services.iam.iam_service import IAM
 
 AWS_ACCOUNT_NUMBER = 123456789012
@@ -47,7 +47,7 @@ class Test_IAM_Service:
         iam = IAM(audit_info)
         assert iam.session.__class__.__name__ == "Session"
 
-    # Test IAM Client
+    # Test IAM Get Credential Report
     @mock_iam
     def test__get_credential_report__(self):
         # Generate IAM Client
@@ -171,7 +171,6 @@ class Test_IAM_Service:
 
         # IAM client for this test class
         audit_info = self.set_mocked_audit_info()
-        print()
         iam = IAM(audit_info)
 
         assert len(iam.customer_managed_policies) == 1
