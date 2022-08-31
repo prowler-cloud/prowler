@@ -10,7 +10,7 @@ from providers.aws.aws_provider import (
     get_region_global_service,
     validate_credentials,
 )
-from providers.aws.models import AWS_Assume_Role, AWS_Audit_Info
+from providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 
 ACCOUNT_ID = 123456789012
 

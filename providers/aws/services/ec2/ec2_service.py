@@ -2,7 +2,7 @@ import threading
 from dataclasses import dataclass
 
 from lib.logger import logger
-from providers.aws.aws_provider import current_audit_info, generate_regional_clients
+from providers.aws.aws_provider import generate_regional_clients
 
 
 ################## EC2
@@ -129,7 +129,7 @@ class EC2:
             )
             encrypted = False
             for page in describe_snapshots_paginator.paginate(
-                OwnerIds=[self.audited_account]
+                OwnerIds=[str(self.audited_account)]
             ):
                 for snapshot in page["Snapshots"]:
                     if snapshot["Encrypted"]:
@@ -234,6 +234,3 @@ class NetworkACL:
         self.id = id
         self.region = region
         self.entries = entries
-
-
-ec2_client = EC2(current_audit_info)

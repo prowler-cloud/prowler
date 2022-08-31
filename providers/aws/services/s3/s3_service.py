@@ -88,6 +88,3 @@ class Bucket:
         self.versioning = False
         self.logging = False
         self.region = region
-
-
-s3_client = S3(current_audit_info)
