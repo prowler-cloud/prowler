@@ -151,7 +151,11 @@ def recover_checks_from_provider(provider: str, service: str = None) -> list:
         # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
         check_name = module_name.name
         # We need to exclude common shared libraries in services
-        if check_name.count(".") == 5 and "lib" not in check_name:
+        if (
+            check_name.count(".") == 5
+            and "lib" not in check_name
+            and "test" not in check_name
+        ):
             checks.append(check_name)
     return checks
 
