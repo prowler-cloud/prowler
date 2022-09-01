@@ -18,3 +18,5 @@ timestamp_iso = timestamp.isoformat()
 csv_file_suffix = ".csv"
 json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
+
+shodan_api_key = None
