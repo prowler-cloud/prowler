@@ -7,9 +7,9 @@ from os import mkdir
 from os.path import isdir
 
 from config.config import (
+    change_config_var,
     default_output_directory,
     output_file_timestamp,
-    shodan_api_key,
 )
 from lib.banner import print_banner, print_version
 from lib.check.check import (
@@ -230,7 +230,7 @@ if __name__ == "__main__":
         sys.exit()
 
     if args.shodan:
-        shodan_api_key = args.shodan
+        change_config_var("shodan_api_key", args.shodan)
 
     # Load checks metadata
     logger.debug("Loading checks metadata from .metadata.json files")

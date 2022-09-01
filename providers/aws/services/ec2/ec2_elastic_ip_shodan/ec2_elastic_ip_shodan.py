@@ -1,6 +1,6 @@
 import shodan
 
-from config.config import shodan_api_key
+from config.config import get_config_var
 from lib.check.models import Check, Check_Report
 from lib.logger import logger
 from providers.aws.services.ec2.ec2_client import ec2_client
@@ -9,6 +9,7 @@ from providers.aws.services.ec2.ec2_client import ec2_client
 class ec2_elastic_ip_shodan(Check):
     def execute(self):
         findings = []
+        shodan_api_key = get_config_var("shodan_api_key")
         if shodan_api_key:
             api = shodan.Shodan(shodan_api_key)
             for eip in ec2_client.elastic_ips:
@@ -21,7 +22,7 @@ class ec2_elastic_ip_shodan(Check):
                         report.status_extended = f"Elastic IP {eip.public_ip} listed in Shodan with open ports {str(shodan_info['ports'])} and ISP {shodan_info['isp']} in {shodan_info['country_name']}. More info https://www.shodan.io/host/{eip.public_ip}"
                         report.resource_id = eip.public_ip
                     except shodan.APIError as error:
-                        if "No information available for that IP" in error:
+                        if "No information available for that IP" in error.value:
                             report.status = "PASS"
                             report.status_extended = (
                                 f"Elastic IP {eip.public_ip} is not listed in Shodan."
@@ -30,7 +31,7 @@ class ec2_elastic_ip_shodan(Check):
                             findings.append(report)
                             continue
                         else:
-                            logger.error(f"{error}")
+                            logger.error(f"{error.value}")
                 else:
                     report.status = "PASS"
                     report.status_extended = (
@@ -40,6 +41,6 @@ class ec2_elastic_ip_shodan(Check):
                 findings.append(report)
         else:
             logger.error(
-                f"ERROR: No Shodan API Key -- Please input a Shodan API Key with -N/--shodan"
+                f"ERROR: No Shodan API Key -- Please input a Shodan API Key with -N/--shodan or in config.yaml"
             )
         return findings
