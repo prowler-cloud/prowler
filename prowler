@@ -7,6 +7,7 @@ from os import mkdir
 from os.path import isdir
 
 from config.config import (
+    allowlist_yaml,
     change_config_var,
     default_output_directory,
     output_file_timestamp,
@@ -186,6 +187,13 @@ if __name__ == "__main__":
         default=None,
         help="Shodan API key used by check ec2_elastic_ip_shodan.",
     )
+    parser.add_argument(
+        "-w",
+        "--allowlist-file",
+        nargs="?",
+        default=allowlist_yaml,
+        help="Path for allowlist yaml file, by default is 'providers/aws/allowlist.yaml'. See default yaml for reference and format.",
+    )
     # Parse Arguments
     args = parser.parse_args()
 
@@ -201,6 +209,7 @@ if __name__ == "__main__":
     output_filename = args.output_filename
     severities = args.severity
     output_modes = args.output_modes
+    allowlist_file = args.allowlist_file
 
     # Set Logger configuration
     set_logging_config(args.log_file, args.log_level)
@@ -301,7 +310,12 @@ if __name__ == "__main__":
 
     # Setting output options
     audit_output_options = set_output_options(
-        args.quiet, output_modes, output_directory, args.security_hub, output_filename
+        args.quiet,
+        output_modes,
+        output_directory,
+        args.security_hub,
+        output_filename,
+        allowlist_file,
     )
 
     # Execute checks

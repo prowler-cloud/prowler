@@ -21,6 +21,7 @@ csv_file_suffix = ".csv"
 json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
 config_yaml = "providers/aws/config.yaml"
+allowlist_yaml = "providers/aws/allowlist.yaml"
 
 
 def change_config_var(variable, value):
@@ -38,3 +39,31 @@ def get_config_var(variable):
         doc = yaml.safe_load(f)
 
     return doc[variable]
+
+
+def is_allowlisted(allowlist_file, account, check, resource):
+    with open(allowlist_file) as f:
+        allowlist = yaml.safe_load(f)
+    if account in allowlist:
+        if is_allowlisted_in_check(allowlist, account, check, resource):
+            return True
+    # If there is a *, it affects to all accounts
+    if "*" in allowlist:
+        account = "*"
+        if is_allowlisted_in_check(allowlist, account, check, resource):
+            return True
+    return False
+
+
+def is_allowlisted_in_check(allowlist, account, check, resource):
+    # If there is a *, it affects to all checks
+    if "*" in allowlist[account]:
+        for elem in allowlist[account]["*"]:
+            if elem in resource:
+                return True
+    # Check if there is the specific check
+    if check in allowlist[account]:
+        for elem in allowlist[account][check]:
+            if elem in resource:
+                return True
+    return False

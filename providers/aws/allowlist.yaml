@@ -1,0 +1,5 @@
+# "Account":
+#   "Check": [ "Resource(s)" ]
+# -----Both check and/or account can be * to apply for all the cases------
+"123456789012":
+  "iam_user_hardware_mfa_enabled": [ "user-test-1" , "user-test-2" ]
