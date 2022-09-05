@@ -31,7 +31,7 @@ class ec2_elastic_ip_shodan(Check):
                             findings.append(report)
                             continue
                         else:
-                            logger.error(f"{error.value}")
+                            logger.error(f"Unknown Shodan API Error: {error.value}")
                 else:
                     report.status = "PASS"
                     report.status_extended = (
