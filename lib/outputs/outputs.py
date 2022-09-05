@@ -52,6 +52,7 @@ def report(check_findings, output_options, audit_info):
                 output_options.allowlist_file,
                 audit_info.audited_account,
                 finding.check_metadata.CheckID,
+                finding.region,
                 finding.resource_id,
             ):
                 finding.status = "WARNING"

@@ -1,5 +1,28 @@
-# "Account":
-#   "Check": [ "Resource(s)" ]
-# -----Both check and/or account can be * to apply for all the cases------
-"123456789012":
-  "iam_user_hardware_mfa_enabled": [ "user-test-1" , "user-test-2" ]
+### Account, Check and/or Region can be * to apply for all the cases
+### Resources is a list that can have either Regex or Keywords:
+###########################  ALLOWLIST EXAMPLE  ###########################
+Allowlist:
+  Accounts:
+    "123456789012":
+      Checks:
+        "iam_user_hardware_mfa_enabled":
+          Regions:
+            - "us-east-1"
+          Resources:
+            - "user-1"           # Will ignore user-2 in check iam_user_hardware_mfa_enabled
+            - "user-2"           # Will ignore user-1 in check iam_user_hardware_mfa_enabled
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "test"             # Will ignore every resource containing the string "test" in every account and region
+    "098765432109":
+      Checks:
+        "s3_bucket_object_versioning":
+          Region:
+            - "eu-west-1"
+            - "us-east-1"
+          Resources:
+            - "ci-logs"           # Will ignore bucket "ci-logs" AND ALSO bucket "ci-logs-replica" in specified check and regions
+            - "logs"              # Will ignore EVERY BUCKET containing the string "logs" in specified check and regions
+            - "[[:alnum:]]+-logs" # Will ignore all buckets containing the terms ci-logs, qa-logs, etc. in specified check and regions
