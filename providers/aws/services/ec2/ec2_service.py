@@ -169,12 +169,11 @@ class EC2:
             )
             for page in describe_network_interfaces_paginator.paginate():
                 for eip in page["NetworkInterfaces"]:
-                    # Get only public ones
+                    # Get only public attached ones
                     if "Association" in eip:
                         self.elastic_ips.append(
                             ElasticIP(
                                 eip["Association"]["PublicIp"],
-                                eip["Association"]["PublicDnsName"],
                                 eip["VpcId"],
                                 eip["SubnetId"],
                                 regional_client.region,
@@ -266,14 +265,12 @@ class NetworkACL:
 @dataclass
 class ElasticIP:
     public_ip: str
-    public_dns: str
     vpc: str
     subnet: str
     region: str
 
-    def __init__(self, public_ip, public_dns, vpc, subnet, region):
+    def __init__(self, public_ip, vpc, subnet, region):
         self.public_ip = public_ip
-        self.public_dns = public_dns
         self.vpc = vpc
         self.subnet = subnet
         self.region = region
