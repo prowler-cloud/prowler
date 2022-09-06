@@ -1,20 +1,44 @@
 import re
+import sys
 
 import yaml
 
+from lib.logger import logger
 
-def is_allowlisted(allowlist_file, account, check, region, resource):
-    with open(allowlist_file) as f:
-        allowlist = yaml.safe_load(f)["Allowlist"]
-    if account in allowlist["Accounts"]:
-        if is_allowlisted_in_check(allowlist, account, check, region, resource):
-            return True
-    # If there is a *, it affects to all accounts
-    if "*" in allowlist["Accounts"]:
-        account = "*"
-        if is_allowlisted_in_check(allowlist, account, check, region, resource):
-            return True
-    return False
+
+def parse_allowlist_file(session, allowlist_file):
+    try:
+        # Check if file is a S3 URI
+        if re.search("^s3://([^/]+)/(.*?([^/]+))$", allowlist_file):
+            bucket = allowlist_file.split("/")[2]
+            key = ("/").join(allowlist_file.split("/")[3:])
+            s3_client = session.client("s3")
+            allowlist = yaml.safe_load(
+                s3_client.get_object(Bucket=bucket, Key=key)["Body"]
+            )["Allowlist"]
+        else:
+            with open(allowlist_file) as f:
+                allowlist = yaml.safe_load(f)["Allowlist"]
+        return allowlist
+    except Exception as error:
+        logger.critical(f"{error.__class__.__name__} -- {error}")
+        sys.exit()
+
+
+def is_allowlisted(allowlist, account, check, region, resource):
+    try:
+        if account in allowlist["Accounts"]:
+            if is_allowlisted_in_check(allowlist, account, check, region, resource):
+                return True
+        # If there is a *, it affects to all accounts
+        if "*" in allowlist["Accounts"]:
+            account = "*"
+            if is_allowlisted_in_check(allowlist, account, check, region, resource):
+                return True
+        return False
+    except Exception as error:
+        logger.critical(f"{error.__class__.__name__} -- {error}")
+        sys.exit()
 
 
 def is_allowlisted_in_check(allowlist, account, check, region, resource):

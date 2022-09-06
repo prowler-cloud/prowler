@@ -30,7 +30,6 @@ from providers.aws.lib.security_hub.security_hub import send_to_security_hub
 
 def report(check_findings, output_options, audit_info):
     check_findings.sort(key=lambda x: x.region)
-
     csv_fields = []
     # check output options
     file_descriptors = {}
