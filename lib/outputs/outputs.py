@@ -7,7 +7,6 @@ from colorama import Fore, Style
 
 from config.config import (
     csv_file_suffix,
-    is_allowlisted,
     json_asff_file_suffix,
     json_file_suffix,
     prowler_version,
@@ -25,6 +24,7 @@ from lib.outputs.models import (
     Severity,
 )
 from lib.utils.utils import file_exists, hash_sha512, open_file
+from providers.aws.lib.allowlist.allowlist import is_allowlisted
 from providers.aws.lib.security_hub.security_hub import send_to_security_hub
 
 

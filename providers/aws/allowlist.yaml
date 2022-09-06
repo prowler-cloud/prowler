@@ -26,3 +26,11 @@ Allowlist:
             - "ci-logs"           # Will ignore bucket "ci-logs" AND ALSO bucket "ci-logs-replica" in specified check and regions
             - "logs"              # Will ignore EVERY BUCKET containing the string "logs" in specified check and regions
             - "[[:alnum:]]+-logs" # Will ignore all buckets containing the terms ci-logs, qa-logs, etc. in specified check and regions
+
+# EXAMPLE: CONTROL TOWER (to migrate)
+# When using Control Tower, guardrails prevent access to certain protected resources. The allowlist
+# below ensures that warnings instead of errors are reported for the affected resources.
+#extra734:aws-controltower-logs-[[:digit:]]+-[[:alpha:]\-]+
+#extra734:aws-controltower-s3-access-logs-[[:digit:]]+-[[:alpha:]\-]+
+#extra764:aws-controltower-logs-[[:digit:]]+-[[:alpha:]\-]+
+#extra764:aws-controltower-s3-access-logs-[[:digit:]]+-[[:alpha:]\-]+
