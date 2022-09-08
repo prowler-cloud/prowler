@@ -3490,7 +3490,9 @@
           "us-east-1"
         ],
         "cn": {},
-        "gov": {}
+        "gov": [
+          "us-gov-west-1"
+        ]
       }
     },
     "managedservices": {
