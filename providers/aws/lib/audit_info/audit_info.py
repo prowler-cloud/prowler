@@ -11,7 +11,7 @@ current_audit_info = AWS_Audit_Info(
     ),
     audited_account=None,
     audited_user_id=None,
-    audited_partition=None,
+    audited_partition="aws",  # commercial partition by default
     audited_identity_arn=None,
     profile=None,
     profile_region=None,
