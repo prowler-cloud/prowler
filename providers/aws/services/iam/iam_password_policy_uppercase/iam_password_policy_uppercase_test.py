@@ -1,0 +1,47 @@
+from unittest import mock
+
+from boto3 import client
+from moto import mock_iam
+
+from providers.aws.lib.audit_info.audit_info import current_audit_info
+from providers.aws.services.iam.iam_service import IAM
+
+
+class Test_iam_password_policy_uppercase:
+    @mock_iam
+    def test_iam_password_policy_no_uppercase_flag(self):
+        iam_client = client("iam")
+        # update password policy
+        iam_client.update_account_password_policy(RequireUppercaseCharacters=False)
+
+        with mock.patch(
+            "providers.aws.services.iam.iam_password_policy_uppercase.iam_password_policy_uppercase.iam_client",
+            new=IAM(current_audit_info),
+        ):
+            # Test Check
+            from providers.aws.services.iam.iam_password_policy_uppercase.iam_password_policy_uppercase import (
+                iam_password_policy_uppercase,
+            )
+
+            check = iam_password_policy_uppercase()
+            result = check.execute()
+            assert result[0].status == "FAIL"
+
+    @mock_iam
+    def test_iam_password_policy_uppercase_flag(self):
+        iam_client = client("iam")
+        # update password policy
+        iam_client.update_account_password_policy(RequireUppercaseCharacters=True)
+
+        with mock.patch(
+            "providers.aws.services.iam.iam_password_policy_uppercase.iam_password_policy_uppercase.iam_client",
+            new=IAM(current_audit_info),
+        ):
+            # Test Check
+            from providers.aws.services.iam.iam_password_policy_uppercase.iam_password_policy_uppercase import (
+                iam_password_policy_uppercase,
+            )
+
+            check = iam_password_policy_uppercase()
+            result = check.execute()
+            assert result[0].status == "PASS"
