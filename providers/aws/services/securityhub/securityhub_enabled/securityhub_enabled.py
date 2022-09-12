@@ -16,8 +16,8 @@ class securityhub_enabled(Check):
             else:
                 report.status = "FAIL"
                 report.status_extended = f"Security Hub is not enabled"
-             report.resource_id = securityhub.id
-             report.resource_arn = securityhub.arn
+            report.resource_id = securityhub.id
+            report.resource_arn = securityhub.arn
             findings.append(report)
 
         return findings

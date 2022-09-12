@@ -6,7 +6,7 @@ AWS_ACCOUNT_NUMBER = 123456789012
 AWS_REGION = "us-east-1"
 
 
-class Test_SECURITYHUB_Service:
+class Test_SecurityHub_Service:
     # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
@@ -28,7 +28,7 @@ class Test_SECURITYHUB_Service:
         )
         return audit_info
 
-    # Test SECURITYHUB Service
+    # Test SecurityHub Service
     # not covered by moto
     # more info here https://github.com/spulec/moto/blob/a2a1967ef869091d747da74ffb4f4f05bd3535cd/IMPLEMENTATION_COVERAGE.md
     # lol

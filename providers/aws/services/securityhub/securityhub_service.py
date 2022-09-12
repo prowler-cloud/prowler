@@ -5,8 +5,8 @@ from lib.logger import logger
 from providers.aws.aws_provider import generate_regional_clients
 
 
-################## SECURITYHUB
-class SECURITYHUB:
+################## SecurityHub
+class SecurityHub:
     def __init__(self, audit_info):
         self.service = "securityhub"
         self.session = audit_info.audit_session
@@ -28,7 +28,7 @@ class SECURITYHUB:
             t.join()
 
     def __list_analyzers__(self, regional_client):
-        logger.info("SECURITYHUB - Getting Standards...")
+        logger.info("SecurityHub - Getting Standards...")
         try:
             get_enabled_standards_paginator = regional_client.get_paginator(
                 "get_enabled_standards"
@@ -40,7 +40,7 @@ class SECURITYHUB:
             # Security Hub is not enabled in region
             if standards == "":
                 self.securityhubs.append(
-                    SecurityHub(
+                    SecurityHubHub(
                         "",
                         "",
                         "NOT_AVAILABLE",
@@ -53,7 +53,7 @@ class SECURITYHUB:
                 hub_arn = regional_client.describe_hub()["HubArn"]
                 hub_id = hub_arn.split("/")[1]
                 self.securityhubs.append(
-                    SecurityHub(
+                    SecurityHubHub(
                         hub_arn,
                         hub_id,
                         "ACTIVE",
@@ -69,7 +69,7 @@ class SECURITYHUB:
 
 
 @dataclass
-class SecurityHub:
+class SecurityHubHub:
     arn: str
     id: str
     status: str
