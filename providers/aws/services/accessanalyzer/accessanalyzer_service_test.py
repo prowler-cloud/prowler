@@ -1,13 +1,12 @@
-from boto3 import client, resource, session
-from moto import mock_ec2
+from boto3 import session
 
 from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.accessanalyzer.accessanalyzer_service import ACCESSANALYZER
 
 AWS_ACCOUNT_NUMBER = 123456789012
 AWS_REGION = "us-east-1"
 
-class Test_ACCESSANALYZER_Service:
+
+class Test_AccessAnalyzer_Service:
     # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
@@ -29,7 +28,7 @@ class Test_ACCESSANALYZER_Service:
         )
         return audit_info
 
-    # Test ACCESSANALYZER Service
+    # Test AccessAnalyzer Service
     # not covered by moto
     # more info here https://github.com/spulec/moto/blob/a2a1967ef869091d747da74ffb4f4f05bd3535cd/IMPLEMENTATION_COVERAGE.md
-    # lol 
+    # lol
