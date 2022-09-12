@@ -88,7 +88,6 @@ class Test_ec2_elastic_ip_shodan:
         @mock_ec2
         def test_bad_response(self):
             mock_client = mock.MagicMock()
-            mock_client.credential_report = None
             with mock.patch(
                 "providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan.ec2_client",
                 new=mock_client,
