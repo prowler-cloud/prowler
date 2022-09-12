@@ -6,7 +6,7 @@ from providers.aws.aws_provider import generate_regional_clients
 
 
 ################## ACCESSANALYZER
-class ACCESSANALYZER:
+class AccessAnalyzer:
     def __init__(self, audit_info):
         self.service = "accessanalyzer"
         self.session = audit_info.audit_session
