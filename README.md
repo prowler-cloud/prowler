@@ -343,6 +343,8 @@ Install psql
 - Ubuntu -> `sudo apt-get install postgresql-client `
 - RHEL/Centos -> `sudo yum install postgresql10`
 
+### Audit ID Field
+Prowler can add an optional `audit_id` field to identify each audit that has been made in the database. You can do this by adding the `-u audit_id` flag to the prowler command.
 #### Credentials
 There are two options to pass the PostgreSQL credentials to Prowler:
 ##### Using a .pgpass file
@@ -361,6 +363,8 @@ Configure a `~/.pgpass` file into the root folder of the user that is going to l
 Create a table in your PostgreSQL database to store the Prowler's data. You can use the following SQL statement to create the table:
 ```
 CREATE TABLE  IF NOT EXISTS prowler_findings (
+audit_id TEXT,
+finding_id TEXT,
 profile TEXT,
 account_number TEXT,
 region TEXT,
@@ -380,12 +384,12 @@ remediation TEXT,
 documentation TEXT,
 check_caf_epic TEXT,
 resource_id TEXT,
-prowler_start_time TEXT,
 account_details_email TEXT,
 account_details_name TEXT,
 account_details_arn TEXT,
 account_details_org TEXT,
-account_details_tags  TEXT
+account_details_tags TEXT,
+prowler_start_time TEXT
 );
 ```
 

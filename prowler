@@ -130,6 +130,7 @@ USAGE:
       -h                  This help.
       -d <provider>       Send output to database through database connectors supported, currently only PostgreSQL. Prowler will get the credentials and table name from your ~/.pgpass file.
       -i                  Run Prowler Quick Inventory. The inventory will be stored in an output csv by default.
+      -u <audit_id>       Add audit_id field to use with postgres connector.
   "
   exit
 }
@@ -139,7 +140,7 @@ USAGE:
 set_aws_default_output
 
 # Parse Prowler command line options
-while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:i" OPTION; do
+while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:i:u:" OPTION; do
    case $OPTION in
      h )
         usage
@@ -257,6 +258,9 @@ while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:i" O
         ;;
      i )
         QUICK_INVENTORY=1
+        ;;
+     u )
+        AUDIT_ID=$OPTARG
         ;;
      : )
         echo ""
