@@ -197,7 +197,6 @@ general_output() {
   #checking database provider
   if [[ ${DATABASE_PROVIDER} == 'postgresql' ]]
   then
-        #FINDING_ID="$(LC_ALL=C echo -e -n "${CHECK_RESULT_EXTENDED}" | tr -cs '[:alnum:]._~-' '_' | base64 | head -c 20)"
         END_STRIPPED_TITLE_TEXT=${TITLE_TEXT%%\]*}
         CHECK_ID="${END_STRIPPED_TITLE_TEXT##\[}"
         stripPostgresFields
