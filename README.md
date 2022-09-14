@@ -360,36 +360,40 @@ Configure a `~/.pgpass` file into the root folder of the user that is going to l
     - `POSTGRES_TABLE`  
 > *Note*: If you are using a schema different than postgres please include it at the beginning of the `POSTGRES_TABLE` variable, like: `export POSTGRES_TABLE=prowler.findings`
 
+Also you need to have enabled the `uuid` postgresql extension, to enable it:
+
+`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";` 
+
 Create a table in your PostgreSQL database to store the Prowler's data. You can use the following SQL statement to create the table:
 ```
 CREATE TABLE  IF NOT EXISTS prowler_findings (
-audit_id TEXT,
-finding_id TEXT,
-profile TEXT,
-account_number TEXT,
-region TEXT,
-check_id TEXT,
-result TEXT,
-item_scored TEXT,
-item_level TEXT,
-check_title TEXT,
-result_extended TEXT,
-check_asff_compliance_type TEXT,
-severity TEXT,
-service_name TEXT,
-check_asff_resource_type TEXT,
-check_asff_type TEXT,
-risk TEXT,
-remediation TEXT,
-documentation TEXT,
-check_caf_epic TEXT,
-resource_id TEXT,
-account_details_email TEXT,
-account_details_name TEXT,
-account_details_arn TEXT,
-account_details_org TEXT,
-account_details_tags TEXT,
-prowler_start_time TEXT
+id uuid,
+audit_id uuid ,
+profile text,
+account_number text,
+region text,
+check_id text,
+result text,
+item_scored text,
+item_level text,
+check_title text,
+result_extended text,
+check_asff_compliance_type text,
+severity text,
+service_name text,
+check_asff_resource_type text,
+check_asff_type text,
+risk text,
+remediation text,
+documentation text,
+check_caf_epic text,
+resource_id text,
+account_details_email text,
+account_details_name text,
+account_details_arn text,
+account_details_org text,
+account_details_tags text,
+prowler_start_time text
 );
 ```
 
