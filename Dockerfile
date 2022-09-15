@@ -1,5 +1,5 @@
 # Build command
-# docker build --platform=linux/amd64  --no-cache -t prowler:latest -f util/Dockerfile .
+# docker build --platform=linux/amd64  --no-cache -t prowler:latest -f ./Dockerfile .
 
 # hadolint ignore=DL3007
 FROM public.ecr.aws/amazonlinux/amazonlinux:latest
