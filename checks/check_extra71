@@ -30,27 +30,32 @@ extra71(){
   # "Ensure users of groups with AdministratorAccess policy have MFA tokens enabled "
   ADMIN_GROUPS=''
   AWS_GROUPS=$($AWSCLI $PROFILE_OPT iam list-groups --output text --region $REGION --query 'Groups[].GroupName')
-  for grp in $AWS_GROUPS; do
-    # aws --profile onlinetraining iam list-attached-group-policies --group-name Administrators --query 'AttachedPolicies[].PolicyArn' | grep 'arn:aws:iam::aws:policy/AdministratorAccess'
-    # list-attached-group-policies
-    CHECK_ADMIN_GROUP=$($AWSCLI $PROFILE_OPT --region $REGION iam list-attached-group-policies --group-name $grp --output json --query 'AttachedPolicies[].PolicyArn' | grep  "arn:${AWS_PARTITION}:iam::aws:policy/AdministratorAccess")
-    if [[ $CHECK_ADMIN_GROUP ]]; then
-      ADMIN_GROUPS="$ADMIN_GROUPS $grp"
-      textInfo "$REGION: $grp group provides administrative access" "$REGION" "$grp"
-      ADMIN_USERS=$($AWSCLI $PROFILE_OPT iam get-group --region $REGION --group-name $grp --output json --query 'Users[].UserName' | grep '"' | cut -d'"' -f2 )
-      for auser in $ADMIN_USERS; do
-        # users in group are Administrators
-        # users
-        # check for user MFA device in credential report
-        USER_MFA_ENABLED=$( cat $TEMP_REPORT_FILE | grep "^$auser," | cut -d',' -f8)
-        if [[ "true" == $USER_MFA_ENABLED ]]; then
-          textPass "$REGION: $auser / MFA Enabled / admin via group $grp" "$REGION" "$grp"
-        else
-          textFail "$REGION: $auser / MFA DISABLED / admin via group $grp" "$REGION" "$grp"
-        fi
-      done
-    else
-      textInfo "$REGION: $grp group provides non-administrative access" "$REGION" "$grp"
-    fi
-  done
+  if [[ ${AWS_GROUPS} ]]
+  then
+    for grp in $AWS_GROUPS; do
+      # aws --profile onlinetraining iam list-attached-group-policies --group-name Administrators --query 'AttachedPolicies[].PolicyArn' | grep 'arn:aws:iam::aws:policy/AdministratorAccess'
+      # list-attached-group-policies
+      CHECK_ADMIN_GROUP=$($AWSCLI $PROFILE_OPT --region $REGION iam list-attached-group-policies --group-name $grp --output json --query 'AttachedPolicies[].PolicyArn' | grep  "arn:${AWS_PARTITION}:iam::aws:policy/AdministratorAccess")
+      if [[ $CHECK_ADMIN_GROUP ]]; then
+        ADMIN_GROUPS="$ADMIN_GROUPS $grp"
+        textInfo "$REGION: $grp group provides administrative access" "$REGION" "$grp"
+        ADMIN_USERS=$($AWSCLI $PROFILE_OPT iam get-group --region $REGION --group-name $grp --output json --query 'Users[].UserName' | grep '"' | cut -d'"' -f2 )
+        for auser in $ADMIN_USERS; do
+          # users in group are Administrators
+          # users
+          # check for user MFA device in credential report
+          USER_MFA_ENABLED=$( cat $TEMP_REPORT_FILE | grep "^$auser," | cut -d',' -f8)
+          if [[ "true" == $USER_MFA_ENABLED ]]; then
+            textPass "$REGION: $auser / MFA Enabled / admin via group $grp" "$REGION" "$grp"
+          else
+            textFail "$REGION: $auser / MFA DISABLED / admin via group $grp" "$REGION" "$grp"
+          fi
+        done
+      else
+        textInfo "$REGION: $grp group provides non-administrative access" "$REGION" "$grp"
+      fi
+    done
+  else
+    textPass "$REGION: There is no IAM groups" "$REGION"
+  fi
 }
