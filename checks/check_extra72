@@ -33,13 +33,18 @@ extra72(){
         textInfo "$regx: Access Denied trying to describe snapshot" "$regx"
         continue
     fi
-    for snapshot in $LIST_OF_EBS_SNAPSHOTS; do
-      SNAPSHOT_IS_PUBLIC=$($AWSCLI ec2 describe-snapshot-attribute $PROFILE_OPT --region $regx --output text --snapshot-id $snapshot --attribute createVolumePermission --query "CreateVolumePermissions[?Group=='all']")
-      if [[ $SNAPSHOT_IS_PUBLIC ]];then
-        textFail "$regx: $snapshot is currently Public!" "$regx" "$snapshot"
-      else
-        textPass "$regx: $snapshot is not Public" "$regx" "$snapshot"
-      fi
-    done
+    if [[ ${LIST_OF_EBS_SNAPSHOTS} ]]
+    then
+      for snapshot in $LIST_OF_EBS_SNAPSHOTS; do
+        SNAPSHOT_IS_PUBLIC=$($AWSCLI ec2 describe-snapshot-attribute $PROFILE_OPT --region $regx --output text --snapshot-id $snapshot --attribute createVolumePermission --query "CreateVolumePermissions[?Group=='all']")
+        if [[ $SNAPSHOT_IS_PUBLIC ]];then
+          textFail "$regx: $snapshot is currently Public!" "$regx" "$snapshot"
+        else
+          textPass "$regx: $snapshot is not Public" "$regx" "$snapshot"
+        fi
+      done
+    else
+      textPass "$regx: There is no EBS Snapshots" "$regx" "No EBS Snapshots"
+    fi
   done
 }
