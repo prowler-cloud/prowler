@@ -28,21 +28,25 @@ CHECK_CAF_EPIC_extra729='Data Protection'
 extra729(){
   # "Ensure there are no EBS Volumes unencrypted "
   for regx in $REGIONS; do
-    LIST_OF_EBS_NON_ENC_VOLUMES=$($AWSCLI ec2 describe-volumes $PROFILE_OPT --region $regx --query 'Volumes[?Encrypted==`false`].VolumeId' --output text 2>&1)
-    if [[ $(echo "$LIST_OF_EBS_NON_ENC_VOLUMES" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
-        textInfo "$regx: Access Denied trying to describe volumes" "$regx"
-        continue
-    fi 
-    if [[ $LIST_OF_EBS_NON_ENC_VOLUMES ]];then
-      for volume in $LIST_OF_EBS_NON_ENC_VOLUMES; do
-        textFail "$regx: $volume is not encrypted!" "$regx" "$volume"
-      done
-    fi
-    LIST_OF_EBS_ENC_VOLUMES=$($AWSCLI ec2 describe-volumes $PROFILE_OPT --region $regx --query 'Volumes[?Encrypted==`true`].VolumeId' --output text)
-    if [[ $LIST_OF_EBS_ENC_VOLUMES ]];then
-      for volume in $LIST_OF_EBS_ENC_VOLUMES; do
-        textPass "$regx: $volume is encrypted" "$regx" "$volume"
-      done
-    fi
+      LIST_OF_EBS_NON_ENC_VOLUMES=$($AWSCLI ec2 describe-volumes $PROFILE_OPT --region $regx --query 'Volumes[?Encrypted==`false`].VolumeId' --output text 2>&1)
+      if [[ $(echo "$LIST_OF_EBS_NON_ENC_VOLUMES" | grep -E 'AccessDenied|UnauthorizedOperation') ]]; then
+          textInfo "$regx: Access Denied trying to describe volumes" "$regx"
+          continue
+      fi
+      if [[ $LIST_OF_EBS_NON_ENC_VOLUMES ]];then
+        for volume in $LIST_OF_EBS_NON_ENC_VOLUMES; do
+          textFail "$regx: $volume is not encrypted!" "$regx" "$volume"
+        done
+      fi
+      LIST_OF_EBS_ENC_VOLUMES=$($AWSCLI ec2 describe-volumes $PROFILE_OPT --region $regx --query 'Volumes[?Encrypted==`true`].VolumeId' --output text)
+      if [[ $LIST_OF_EBS_ENC_VOLUMES ]];then
+        for volume in $LIST_OF_EBS_ENC_VOLUMES; do
+          textPass "$regx: $volume is encrypted" "$regx" "$volume"
+        done
+      fi
+      if [[ ! "${LIST_OF_EBS_NON_ENC_VOLUMES}" ]] && [[ ! "${LIST_OF_EBS_ENC_VOLUMES}" ]]
+      then
+        textPass "$regx: There are no ebs volumes" "$regx" "No ebs volumes"
+      fi
   done
 }

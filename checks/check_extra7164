@@ -33,29 +33,30 @@ CHECK_REMEDIATION_extra7164="Associate KMS Key with Cloudwatch log group."
 CHECK_DOC_extra7164="https://docs.aws.amazon.com/cli/latest/reference/logs/associate-kms-key.html"
 CHECK_CAF_EPIC_extra7164="Data Protection"
 
+
 extra7164(){
-    # "Check if Cloudwatch log groups are associated with AWS KMS"
+
+  # "Check if Cloudwatch log groups are associated with AWS KMS"
     for regx in $REGIONS; do
-      LIST_OF_LOGGROUPS=$($AWSCLI logs describe-log-groups $PROFILE_OPT --region $regx --output json 2>&1 )
-      if [[ $(echo "$LIST_OF_LOGGROUPS" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+      LIST_OF_LOGGROUPS=$($AWSCLI logs describe-log-groups $PROFILE_OPT --region $regx --query 'logGroups[]' 2>&1 )
+      if  grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${LIST_OF_LOGGROUPS}"
+      then
           textInfo "$regx: Access Denied trying to describe log groups" "$regx"
           continue
       fi
-      if [[ $LIST_OF_LOGGROUPS ]]; then
-        LIST_OF_LOGGROUPS_WITHOUT_KMS=$(echo "${LIST_OF_LOGGROUPS}" | jq '.logGroups[]' |  jq '. | select( has("kmsKeyId") == false )' | jq -r '.logGroupName')
-        LIST_OF_LOGGROUPS_WITH_KMS=$(echo "${LIST_OF_LOGGROUPS}" | jq '.logGroups[]' |  jq '. | select( has("kmsKeyId") == true )' | jq -r '.logGroupName')
-      if [[ $LIST_OF_LOGGROUPS_WITHOUT_KMS ]]; then
-        for loggroup in $LIST_OF_LOGGROUPS_WITHOUT_KMS; do
-          textFail "$regx: ${loggroup} does not have AWS KMS keys associated." "$regx" "${loggroup}"
-        done
-      fi
-      if [[ $LIST_OF_LOGGROUPS_WITH_KMS ]]; then
-        for loggroup in $LIST_OF_LOGGROUPS_WITH_KMS; do
-          textPass "$regx: ${loggroup} does have AWS KMS keys associated." "$regx" "${loggroup}"
-        done
-      fi
-    else
-      textPass "$regx: No Cloudwatch log groups found." "$regx"
+      if [[ "${LIST_OF_LOGGROUPS}" != '[]' ]]
+      then
+          for LOGGROUP in $(jq -c '.[]' <<< "${LIST_OF_LOGGROUPS}"); do
+            LOGGROUP_NAME=$(jq -r '.logGroupName' <<< "${LOGGROUP}")
+            if [[ $(jq '. | select( has("kmsKeyId") == false )' <<< "${LOGGROUP}") ]]
+            then
+              textFail "$regx: ${LOGGROUP_NAME} does not have AWS KMS keys associated." "$regx" "${LOGGROUP_NAME}"
+            else
+              textPass "$regx: ${LOGGROUP_NAME} does have AWS KMS keys associated." "$regx" "${LOGGROUP_NAME}"
+            fi
+          done
+      else
+        textPass "$regx: No Cloudwatch log groups found." "$regx" "No log groups"
       fi
     done
 }
