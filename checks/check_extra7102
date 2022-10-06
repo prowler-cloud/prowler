@@ -32,31 +32,31 @@ CHECK_CAF_EPIC_extra7102='Infrastructure Security'
 # Each finding will be saved in prowler/output folder for further review.
 
 extra7102(){
-  if [[ ! $SHODAN_API_KEY ]]; then
-    textInfo "[extra7102] Requires a Shodan API key to work. Use -N <shodan_api_key>" "$REGION"
-  else
     for regx in $REGIONS; do
-      LIST_OF_EIP=$($AWSCLI $PROFILE_OPT --region $regx ec2 describe-network-interfaces --query 'NetworkInterfaces[*].Association.PublicIp' --output text 2>&1)
-      if [[ $(echo "$LIST_OF_EIP" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
-          textInfo "$regx: Access Denied trying to describe network interfaces" "$regx"
-          continue
-      fi
-      if [[ $LIST_OF_EIP ]]; then
-        for ip in $LIST_OF_EIP;do
-          SHODAN_QUERY=$(curl -ks https://api.shodan.io/shodan/host/$ip?key=$SHODAN_API_KEY)
-	  # Shodan has a request rate limit of 1 request/second.
-          sleep 1
-          if [[ $SHODAN_QUERY == *"No information available for that IP"* ]]; then
-            textPass "$regx: IP $ip is not listed in Shodan" "$regx"
-          else
-            echo $SHODAN_QUERY > $OUTPUT_DIR/shodan-output-$ip.json
-            IP_SHODAN_INFO=$(cat $OUTPUT_DIR/shodan-output-$ip.json | jq -r '. | { ports: .ports, org: .org, country: .country_name }| @text' | tr -d \"\{\}\}\]\[ | tr , '\ ' )
-            textFail "$regx: IP $ip is listed in Shodan with data $IP_SHODAN_INFO. More info https://www.shodan.io/host/$ip and $OUTPUT_DIR/shodan-output-$ip.json" "$regx" "$ip"
-          fi
-        done
+      if [[ ! $SHODAN_API_KEY ]]; then
+        textInfo "$regx: Requires a Shodan API key to work. Use -N <shodan_api_key>" "$regx"
       else
-        textInfo "$regx: No Public or Elastic IPs found" "$regx"
+        LIST_OF_EIP=$($AWSCLI $PROFILE_OPT --region $regx ec2 describe-network-interfaces --query 'NetworkInterfaces[*].Association.PublicIp' --output text 2>&1)
+        if [[ $(echo "$LIST_OF_EIP" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+            textInfo "$regx: Access Denied trying to describe network interfaces" "$regx"
+            continue
+        fi
+        if [[ $LIST_OF_EIP ]]; then
+          for ip in $LIST_OF_EIP;do
+            SHODAN_QUERY=$(curl -ks https://api.shodan.io/shodan/host/$ip?key=$SHODAN_API_KEY)
+            # Shodan has a request rate limit of 1 request/second.
+            sleep 1
+            if [[ $SHODAN_QUERY == *"No information available for that IP"* ]]; then
+              textPass "$regx: IP $ip is not listed in Shodan" "$regx"
+            else
+              echo $SHODAN_QUERY > $OUTPUT_DIR/shodan-output-$ip.json
+              IP_SHODAN_INFO=$(cat $OUTPUT_DIR/shodan-output-$ip.json | jq -r '. | { ports: .ports, org: .org, country: .country_name }| @text' | tr -d \"\{\}\}\]\[ | tr , '\ ' )
+              textFail "$regx: IP $ip is listed in Shodan with data $IP_SHODAN_INFO. More info https://www.shodan.io/host/$ip and $OUTPUT_DIR/shodan-output-$ip.json" "$regx" "$ip"
+            fi
+          done
+        else
+          textInfo "$regx: No Public or Elastic IPs found" "$regx"
+        fi
       fi
     done
-  fi
 }
