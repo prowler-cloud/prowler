@@ -34,7 +34,7 @@ extra771(){
       # Recover Bucket region
       BUCKET_REGION=$("${AWSCLI}" ${PROFILE_OPT} s3api get-bucket-location --bucket "${bucket}" --query LocationConstraint --output text)
       if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${BUCKET_POLICY_STATEMENTS}"; then
-          textInfo "${REGION}: Access Denied trying to get bucket policy for ${bucket}" "${REGION}"
+          textInfo "${REGION}: Access Denied trying to get bucket location for ${bucket}" "${REGION}"
       fi
       # If None use default region
       if [[ "${BUCKET_REGION}" == "None" ]]; then
@@ -43,11 +43,11 @@ extra771(){
       # Recover Bucket policy statements
       BUCKET_POLICY_STATEMENTS=$("${AWSCLI}" s3api ${PROFILE_OPT} get-bucket-policy --region "${BUCKET_REGION}" --bucket "${bucket}" --output json --query Policy 2>&1)
       if grep -q -E 'AccessDenied|UnauthorizedOperation|AuthorizationError' <<< "${BUCKET_POLICY_STATEMENTS}"; then
-          textInfo "${REGION}: Access Denied trying to get bucket policy for ${bucket}" "${REGION}"
+          textInfo "${BUCKET_REGION}: Access Denied trying to get bucket policy for ${bucket}" "${BUCKET_REGION}"
           continue
       fi
       if grep -q -E 'NoSuchBucketPolicy'<<< "${BUCKET_POLICY_STATEMENTS}"; then
-        textInfo "${REGION}: Bucket policy does not exist for bucket ${bucket}" "${REGION}"
+        textInfo "${BUCKET_REGION}: Bucket policy does not exist for bucket ${bucket}" "${BUCKET_REGION}"
       else
         BUCKET_POLICY_BAD_STATEMENTS=$(jq --compact-output --arg arn "arn:${AWS_PARTITION}:s3:::$bucket" 'fromjson | .Statement[]|select(
                                         .Effect=="Allow" and
@@ -66,9 +66,9 @@ extra771(){
         # Make sure JSON comma characted will not break CSV output. Replace "," by word "[comma]"
         BUCKET_POLICY_BAD_STATEMENTS="${BUCKET_POLICY_BAD_STATEMENTS//,/[comma]}"
         if [[ "${BUCKET_POLICY_BAD_STATEMENTS}" != "" ]]; then
-          textFail "${REGION}: Bucket ${bucket} allows public write: ${BUCKET_POLICY_BAD_STATEMENTS}" "${REGION}" "${bucket}"
+          textFail "${BUCKET_REGION}: Bucket ${bucket} allows public write: ${BUCKET_POLICY_BAD_STATEMENTS}" "${BUCKET_REGION}" "${bucket}"
         else
-          textPass "${REGION}: Bucket ${bucket} has S3 bucket policy which does not allow public write access" "${REGION}" "${bucket}"
+          textPass "${BUCKET_REGION}: Bucket ${bucket} has S3 bucket policy which does not allow public write access" "${BUCKET_REGION}" "${bucket}"
         fi
       fi
     done
