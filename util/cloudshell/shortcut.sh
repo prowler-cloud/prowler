@@ -15,14 +15,14 @@ mkdir ${account}-results
 
 # Prowler
 cd ~
-git clone https://github.com/prowler-cloud/prowler
+git clone --depth 1 https://github.com/prowler-cloud/prowler
 pip3 install detect-secrets --user
 cd prowler 
 screen -dmS prowler sh -c "./prowler -M csv,html;cd ~;zip -r ${account}-results/prowler-${account}.zip /home/cloudshell-user/prowler/output"
 
 # ScoutSuite
 cd ~
-git clone https://github.com/nccgroup/ScoutSuite
+git clone --depth 1 https://github.com/nccgroup/ScoutSuite
 cd ScoutSuite
 sudo yum install python-pip -y
 sudo pip install virtualenv
