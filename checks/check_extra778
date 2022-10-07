@@ -19,7 +19,7 @@ CHECK_SEVERITY_extra778="Medium"
 CHECK_ASFF_RESOURCE_TYPE_extra778="AwsEc2SecurityGroup"
 CHECK_ALTERNATE_check778="extra778"
 CHECK_SERVICENAME_extra778="ec2"
-CHECK_RISK_extra778='If Security groups are not properly configured the attack surface is increased. '
+CHECK_RISK_extra778='If Security groups are not properly configured the attack surface is increased.'
 CHECK_REMEDIATION_extra778='Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.'
 CHECK_DOC_extra778='https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html'
 CHECK_CAF_EPIC_extra778='Infrastructure Security'
@@ -54,6 +54,7 @@ extra778(){
             continue
         fi
 
+        PASS="true"
         for CIDR_IP in ${CIDR_IP_LIST}; do
             if [[ ! ${CIDR_IP} =~ ${RFC1918_REGEX} ]]; then
                 CIDR=$(echo ${CIDR_IP} | cut -d"/" -f2 | xargs)
@@ -61,11 +62,14 @@ extra778(){
                 # Edge case "0.0.0.0/0" for RDP and SSH are checked already by check41 and check42
                 if [[ ${CIDR} < ${CIDR_THRESHOLD} && 0 < ${CIDR} ]]; then
                     textFail "${REGION}: ${SECURITY_GROUP} has potential wide-open non-RFC1918 address ${CIDR_IP} in ${DIRECTION} rule" "${REGION}" "${SECURITY_GROUP}"
-                else
-                    textPass "${REGION}: ${SECURITY_GROUP} has no potential wide-open non-RFC1918 address" "${REGION}" "${SECURITY_GROUP}"
+                    PASS="false"
                 fi
             fi
         done
+        if [[ ${PASS} == "true" ]]
+        then
+            textPass "${REGION}: ${SECURITY_GROUP} has no potential ${DIRECTION} rule with a wide-open non-RFC1918 address" "${REGION}" "${SECURITY_GROUP}"
+        fi
     }
 
     for regx in ${REGIONS}; do
