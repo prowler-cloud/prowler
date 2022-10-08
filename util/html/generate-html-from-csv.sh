@@ -20,7 +20,7 @@
 
 ## First: Remove the CSV header from each output report.
 
-## Second: If you want to aggretate all csv files in you can do like this: 
+## Second: If you want to aggregate all csv files in you can do like this: 
 # find . -type f -name '*.csv' -exec cat {} + > prowler-output-unified-csv.file
 # use .file instead of .csv unless you want to get into an infinite loop ;)
 

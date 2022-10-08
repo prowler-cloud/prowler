@@ -68,12 +68,12 @@ Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-20
 +240 checks covering security best practices across all AWS regions and most of AWS services and related to the next groups:
 
 - Identity and Access Management [group1]
-- Logging  [group2]
+- Logging [group2]
 - Monitoring [group3]
 - Networking [group4]
 - CIS Level 1 [cislevel1]
 - CIS Level 2 [cislevel2]
-- Extras *see Extras section* [extras]
+- Extras _see Extras section_ [extras]
 - Forensics related group of checks [forensics-ready]
 - GDPR [gdpr] Read more [here](#gdpr-checks)
 - HIPAA [hipaa] Read more [here](#hipaa-checks)
@@ -88,7 +88,7 @@ With Prowler you can:
 
 - Get a direct colorful or monochrome report
 - A HTML, CSV, JUNIT, JSON or JSON ASFF (Security Hub) format report
-- Send findings directly to Security Hub
+- Send findings directly to the Security Hub
 - Run specific checks and groups or create your own
 - Check multiple AWS accounts in parallel or sequentially
 - Get an inventory of your AWS resources
@@ -99,6 +99,7 @@ With Prowler you can:
 You can run Prowler from your workstation, an EC2 instance, Fargate or any other container, Codebuild, CloudShell and Cloud9.
 
 ![Prowler high level architecture](https://user-images.githubusercontent.com/3985464/109143232-1488af80-7760-11eb-8d83-726790fda592.jpg)
+
 ## Requirements and Installation
 
 Prowler has been written in bash using AWS-CLI underneath and it works in Linux, Mac OS or Windows with cygwin or virtualization. Also requires `jq` and `detect-secrets` to work properly.
@@ -106,134 +107,137 @@ Prowler has been written in bash using AWS-CLI underneath and it works in Linux,
 - Make sure the latest version of AWS-CLI is installed. It works with either v1 or v2, however _latest v2 is recommended if using new regions since they require STS v2 token_, and other components needed, with Python pip already installed.
 
 - For Amazon Linux (`yum` based Linux distributions and AWS CLI v2):
-    ```
-    sudo yum update -y
-    sudo yum remove -y awscli
-    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-    unzip awscliv2.zip
-    sudo ./aws/install
-    sudo yum install -y python3 jq git
-    sudo pip3 install detect-secrets==1.0.3
-    git clone https://github.com/prowler-cloud/prowler
-    ```
+  ```
+  sudo yum update -y
+  sudo yum remove -y awscli
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  unzip awscliv2.zip
+  sudo ./aws/install
+  sudo yum install -y python3 jq git
+  sudo pip3 install detect-secrets==1.0.3
+  git clone https://github.com/prowler-cloud/prowler
+  ```
 - For Ubuntu Linux (`apt` based Linux distributions and AWS CLI v2):
-    ```
-    sudo apt update
-    sudo apt install python3 python3-pip jq git zip
-    pip install detect-secrets==1.0.3
-    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-    unzip awscliv2.zip
-    sudo ./aws/install
-    git clone https://github.com/prowler-cloud/prowler
-    ```
 
-    > NOTE: detect-secrets Yelp version is no longer supported, the one from IBM is mantained now. Use the one mentioned below or the specific Yelp version 1.0.3 to make sure it works as expected (`pip install detect-secrets==1.0.3`):
-    ```sh
-    pip install "git+https://github.com/ibm/detect-secrets.git@master#egg=detect-secrets"
-    ```
+  ```
+  sudo apt update
+  sudo apt install python3 python3-pip jq git zip
+  pip install detect-secrets==1.0.3
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  unzip awscliv2.zip
+  sudo ./aws/install
+  git clone https://github.com/prowler-cloud/prowler
+  ```
 
-    AWS-CLI can be also installed it using other methods, refer to official documentation for more details: <https://aws.amazon.com/cli/>, but `detect-secrets` has to be installed using `pip` or `pip3`.
+  > NOTE: detect-secrets Yelp version is no longer supported, the one from IBM is mantained now. Use the one mentioned below or the specific Yelp version 1.0.3 to make sure it works as expected (`pip install detect-secrets==1.0.3`):
+
+  ```sh
+  pip install "git+https://github.com/ibm/detect-secrets.git@master#egg=detect-secrets"
+  ```
+
+  AWS-CLI can be also installed it using other methods, refer to official documentation for more details: <https://aws.amazon.com/cli/>, but `detect-secrets` has to be installed using `pip` or `pip3`.
 
 - Once Prowler repository is cloned, get into the folder and you can run it:
 
-    ```sh
-    cd prowler
-    ./prowler
-    ```
+  ```sh
+  cd prowler
+  ./prowler
+  ```
 
 - Since Prowler users AWS CLI under the hood, you can follow any authentication method as described [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence). Make sure you have properly configured your AWS-CLI with a valid Access Key and Region or declare AWS variables properly (or instance profile/role):
 
-    ```sh
-    aws configure
-    ```
+  ```sh
+  aws configure
+  ```
 
-    or
+  or
 
-    ```sh
-    export AWS_ACCESS_KEY_ID="ASXXXXXXX"
-    export AWS_SECRET_ACCESS_KEY="XXXXXXXXX"
-    export AWS_SESSION_TOKEN="XXXXXXXXX"
-    ```
+  ```sh
+  export AWS_ACCESS_KEY_ID="ASXXXXXXX"
+  export AWS_SECRET_ACCESS_KEY="XXXXXXXXX"
+  export AWS_SESSION_TOKEN="XXXXXXXXX"
+  ```
 
-- Those credentials must be associated to a user or role with proper permissions to do all checks. To make sure, add the AWS managed policies, SecurityAudit and ViewOnlyAccess, to the user or role being used.  Policy ARNs are:
+- Those credentials must be associated to a user or role with proper permissions to do all checks. To make sure, add the AWS managed policies, SecurityAudit and ViewOnlyAccess, to the user or role being used. Policy ARNs are:
 
-    ```sh
-    arn:aws:iam::aws:policy/SecurityAudit
-    arn:aws:iam::aws:policy/job-function/ViewOnlyAccess
-    ```
+  ```sh
+  arn:aws:iam::aws:policy/SecurityAudit
+  arn:aws:iam::aws:policy/job-function/ViewOnlyAccess
+  ```
 
-    > Additional permissions needed: to make sure Prowler can scan all services included in the group *Extras*, make sure you attach also the custom policy [prowler-additions-policy.json](https://github.com/prowler-cloud/prowler/blob/master/iam/prowler-additions-policy.json) to the role you are using. If you want Prowler to send findings to [AWS Security Hub](https://aws.amazon.com/security-hub), make sure you also attach the custom policy [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/iam/prowler-security-hub.json).
+  > Additional permissions needed: to make sure Prowler can scan all services included in the group _Extras_, make sure you attach also the custom policy [prowler-additions-policy.json](https://github.com/prowler-cloud/prowler/blob/master/iam/prowler-additions-policy.json) to the role you are using. If you want Prowler to send findings to [AWS Security Hub](https://aws.amazon.com/security-hub), make sure you also attach the custom policy [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/iam/prowler-security-hub.json).
 
 ## Usage
 
 1. Run the `prowler` command without options (it will use your environment variable credentials if they exist or will default to using the `~/.aws/credentials` file and run checks over all regions when needed. The default region is us-east-1):
 
-    ```sh
-    ./prowler
-    ```
+   ```sh
+   ./prowler
+   ```
 
-    Use `-l` to list all available checks and the groups (sections) that reference them. To list all groups use `-L` and to list content of a group use `-l -g <groupname>`.
+   Use `-l` to list all available checks and the groups (sections) that reference them. To list all groups use `-L` and to list content of a group use `-l -g <groupname>`.
 
-    If you want to avoid installing dependencies run it using Docker:
+   If you want to avoid installing dependencies run it using Docker:
 
-    ```sh
-    docker run -ti --rm --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest
-    ```
+   ```sh
+   docker run -ti --rm --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest
+   ```
 
-    In case you want to get reports created by Prowler use docker volume option like in the example below:
-    ```sh
-    docker run -ti --rm -v /your/local/output:/prowler/output --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest -g hipaa -M csv,json,html
-    ```
+   In case you want to get reports created by Prowler use docker volume option like in the example below:
+
+   ```sh
+   docker run -ti --rm -v /your/local/output:/prowler/output --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest -g hipaa -M csv,json,html
+   ```
 
 1. For custom AWS-CLI profile and region, use the following: (it will use your custom profile and run checks over all regions when needed):
 
-    ```sh
-    ./prowler -p custom-profile -r us-east-1
-    ```
+   ```sh
+   ./prowler -p custom-profile -r us-east-1
+   ```
 
 1. For a single check use option `-c`:
 
-    ```sh
-    ./prowler -c check310
-    ```
+   ```sh
+   ./prowler -c check310
+   ```
 
-    With Docker:
+   With Docker:
 
-    ```sh
-    docker run -ti --rm --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest "-c check310"
-    ```
+   ```sh
+   docker run -ti --rm --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest "-c check310"
+   ```
 
-    or multiple checks separated by comma:
+   or multiple checks separated by comma:
 
-    ```sh
-    ./prowler -c check310,check722
-    ```
+   ```sh
+   ./prowler -c check310,check722
+   ```
 
-    or all checks but some of them:
+   or all checks but some of them:
 
-    ```sh
-    ./prowler -E check42,check43
-    ```
+   ```sh
+   ./prowler -E check42,check43
+   ```
 
-    or for custom profile and region:
+   or for custom profile and region:
 
-    ```sh
-    ./prowler -p custom-profile -r us-east-1 -c check11
-    ```
+   ```sh
+   ./prowler -p custom-profile -r us-east-1 -c check11
+   ```
 
-    or for a group of checks use group name:
+   or for a group of checks use group name:
 
-    ```sh
-    ./prowler -g group1 # for iam related checks
-    ```
+   ```sh
+   ./prowler -g group1 # for iam related checks
+   ```
 
-    or exclude some checks in the group:
+   or exclude some checks in the group:
 
-    ```sh
-    ./prowler -g group4 -E check42,check43
-    ```
+   ```sh
+   ./prowler -g group4 -E check42,check43
+   ```
 
-    Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 and 3.10 is check310
+   Valid check numbers are based on the AWS CIS Benchmark guide, so 1.1 is check11 and 3.10 is check310
 
 ### Regions
 
@@ -263,108 +267,121 @@ Prowler has two parameters related to regions: `-r` that is used query AWS servi
 
 1. If you want to save your report for later analysis thare are different ways, natively (supported text, mono, csv, json, json-asff, junit-xml and html, see note below for more info):
 
-    ```sh
-    ./prowler -M csv
-    ```
+   ```sh
+   ./prowler -M csv
+   ```
 
-    or with multiple formats at the same time:
+   or with multiple formats at the same time:
 
-    ```sh
-    ./prowler -M csv,json,json-asff,html
-    ```
+   ```sh
+   ./prowler -M csv,json,json-asff,html
+   ```
 
-    or just a group of checks in multiple formats:
+   or just a group of checks in multiple formats:
 
-    ```sh
-    ./prowler -g gdpr -M csv,json,json-asff
-    ```
+   ```sh
+   ./prowler -g gdpr -M csv,json,json-asff
+   ```
 
-    or if you want a sorted and dynamic HTML report do:
+   or if you want a sorted and dynamic HTML report do:
 
-    ```sh
-    ./prowler -M html
-    ```
+   ```sh
+   ./prowler -M html
+   ```
 
-    Now `-M` creates a file inside the prowler `output` directory named `prowler-output-AWSACCOUNTID-YYYYMMDDHHMMSS.format`. You don't have to specify anything else, no pipes, no redirects.
+   Now `-M` creates a file inside the prowler `output` directory named `prowler-output-AWSACCOUNTID-YYYYMMDDHHMMSS.format`. You don't have to specify anything else, no pipes, no redirects.
 
-    or just saving the output to a file like below:
+   or just saving the output to a file like below:
 
-    ```sh
-    ./prowler -M mono > prowler-report.txt
-    ```
+   ```sh
+   ./prowler -M mono > prowler-report.txt
+   ```
 
-    To generate JUnit report files, include the junit-xml format. This can be combined with any other format. Files are written inside a prowler root directory named `junit-reports`:
+   To generate JUnit report files, include the junit-xml format. This can be combined with any other format. Files are written inside a prowler root directory named `junit-reports`:
 
-    ```sh
-    ./prowler -M text,junit-xml
-    ```
+   ```sh
+   ./prowler -M text,junit-xml
+   ```
 
-    >Note about output formats to use with `-M`: "text" is the default one with colors, "mono" is like default one but monochrome, "csv" is comma separated values, "json" plain basic json (without comma between lines) and "json-asff" is also json with Amazon Security Finding Format that you can ship to Security Hub using `-S`.
+   > Note about output formats to use with `-M`: "text" is the default one with colors, "mono" is like default one but monochrome, "csv" is comma separated values, "json" plain basic json (without comma between lines) and "json-asff" is also json with Amazon Security Finding Format that you can ship to Security Hub using `-S`.
 
-    To save your report in an S3 bucket, use `-B` to define a custom output bucket along with `-M` to define the output format that is going to be uploaded to S3:
+   To save your report in an S3 bucket, use `-B` to define a custom output bucket along with `-M` to define the output format that is going to be uploaded to S3:
 
-    ```sh
-    ./prowler -M csv -B my-bucket/folder/
-    ```
-    >In the case you do not want to use the assumed role credentials but the initial credentials to put the reports into the S3 bucket, use `-D` instead of `-B`. Make sure that the used credentials have s3:PutObject permissions in the S3 path where the reports are going to be uploaded.
+   ```sh
+   ./prowler -M csv -B my-bucket/folder/
+   ```
 
-    When generating multiple formats and running using Docker, to retrieve the reports, bind a local directory to the container, e.g.:
+   > In the case you do not want to use the assumed role credentials but the initial credentials to put the reports into the S3 bucket, use `-D` instead of `-B`. Make sure that the used credentials have s3:PutObject permissions in the S3 path where the reports are going to be uploaded.
 
-    ```sh
-    docker run -ti --rm --name prowler --volume "$(pwd)":/prowler/output --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest -M csv,json
-    ```
+   When generating multiple formats and running using Docker, to retrieve the reports, bind a local directory to the container, e.g.:
+
+   ```sh
+   docker run -ti --rm --name prowler --volume "$(pwd)":/prowler/output --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest -M csv,json
+   ```
 
 1. To perform an assessment based on CIS Profile Definitions you can use cislevel1 or cislevel2 with `-g` flag, more information about this [here, page 8](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf):
 
-    ```sh
-    ./prowler -g cislevel1
-    ```
+   ```sh
+   ./prowler -g cislevel1
+   ```
 
 1. If you want to run Prowler to check multiple AWS accounts in parallel (runs up to 4 simultaneously `-P 4`) but you may want to read below in Advanced Usage section to do so assuming a role:
 
-    ```sh
-    grep -E '^\[([0-9A-Aa-z_-]+)\]'  ~/.aws/credentials | tr -d '][' | shuf |  \
-    xargs -n 1 -L 1 -I @ -r -P 4 ./prowler -p @ -M csv  2> /dev/null  >> all-accounts.csv
-    ```
+   ```sh
+   grep -E '^\[([0-9A-Aa-z_-]+)\]'  ~/.aws/credentials | tr -d '][' | shuf |  \
+   xargs -n 1 -L 1 -I @ -r -P 4 ./prowler -p @ -M csv  2> /dev/null  >> all-accounts.csv
+   ```
 
 1. For help about usage run:
 
-    ```
-    ./prowler -h
-    ```
+   ```
+   ./prowler -h
+   ```
+
 ## Database providers connector
 
 You can send the Prowler's output to different databases (right now only PostgreSQL is supported).
 
 Jump into the section for the database provider you want to use and follow the required steps to configure it.
+
 ### PostgreSQL
+
 Install psql
+
 - Mac -> `brew install libpq`
 - Ubuntu -> `sudo apt-get install postgresql-client `
 - RHEL/Centos -> `sudo yum install postgresql10`
 
-#### Audit ID Field  
+#### Audit ID Field
+
 Prowler can add an optional `audit_id` field to identify each audit that has been made in the database. You can do this by adding the `-u audit_id` flag to the prowler command.
+
 #### Credentials
+
 There are two options to pass the PostgreSQL credentials to Prowler:
+
 ##### Using a .pgpass file
+
 Configure a `~/.pgpass` file into the root folder of the user that is going to launch Prowler ([pgpass file doc](https://www.postgresql.org/docs/current/libpq-pgpass.html)), including an extra field at the end of the line, separated by `:`, to name the table, using the following format:
-        `hostname:port:database:username:password:table`
+`hostname:port:database:username:password:table`
+
 ##### Using environment variables
+
 - Configure the following environment variables:  
-    - `POSTGRES_HOST`  
-    - `POSTGRES_PORT`  
-    - `POSTGRES_USER`  
-    - `POSTGRES_PASSWORD`  
-    - `POSTGRES_DB`  
-    - `POSTGRES_TABLE`  
-> *Note*: If you are using a schema different than postgres please include it at the beginning of the `POSTGRES_TABLE` variable, like: `export POSTGRES_TABLE=prowler.findings`
+   - `POSTGRES_HOST`  
+   - `POSTGRES_PORT`  
+   - `POSTGRES_USER`  
+   - `POSTGRES_PASSWORD`  
+   - `POSTGRES_DB`  
+   - `POSTGRES_TABLE`
+  > _Note_: If you are using a schema different than postgres please include it at the beginning of the `POSTGRES_TABLE` variable, like: `export POSTGRES_TABLE=prowler.findings`
 
 Also you need to have enabled the `uuid` postgresql extension, to enable it:
 
-`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";` 
+`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`
 
 Create a table in your PostgreSQL database to store the Prowler's data. You can use the following SQL statement to create the table:
+
 ```
 CREATE TABLE  IF NOT EXISTS prowler_findings (
 id uuid,
@@ -398,12 +415,13 @@ prowler_start_time text
 ```
 
 - Execute Prowler with `-d` flag, for example:
-    `./prowler -M csv -d postgresql`
-    > *Note*: This command creates a `csv` output file and stores the Prowler output in the configured PostgreSQL DB. It's an example, `-d` flag **does not** require `-M` to run.
+  `./prowler -M csv -d postgresql`
+  > _Note_: This command creates a `csv` output file and stores the Prowler output in the configured PostgreSQL DB. It's an example, `-d` flag **does not** require `-M` to run.
 
 ## Output Formats
 
 Prowler supports natively the following output formats:
+
 - CSV
 - JSON
 - JSON-ASFF
@@ -411,11 +429,14 @@ Prowler supports natively the following output formats:
 - JUNIT-XML
 
 Hereunder is the structure for each of them
+
 ### CSV
-| PROFILE | ACCOUNT_NUM | REGION | TITLE_ID | CHECK_RESULT | ITEM_SCORED | ITEM_LEVEL | TITLE_TEXT | CHECK_RESULT_EXTENDED | CHECK_ASFF_COMPLIANCE_TYPE | CHECK_SEVERITY | CHECK_SERVICENAME | CHECK_ASFF_RESOURCE_TYPE | CHECK_ASFF_TYPE | CHECK_RISK | CHECK_REMEDIATION | CHECK_DOC | CHECK_CAF_EPIC | CHECK_RESOURCE_ID | PROWLER_START_TIME | ACCOUNT_DETAILS_EMAIL | ACCOUNT_DETAILS_NAME | ACCOUNT_DETAILS_ARN | ACCOUNT_DETAILS_ORG | ACCOUNT_DETAILS_TAGS |   
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+| PROFILE | ACCOUNT_NUM | REGION | TITLE_ID | CHECK_RESULT | ITEM_SCORED | ITEM_LEVEL | TITLE_TEXT | CHECK_RESULT_EXTENDED | CHECK_ASFF_COMPLIANCE_TYPE | CHECK_SEVERITY | CHECK_SERVICENAME | CHECK_ASFF_RESOURCE_TYPE | CHECK_ASFF_TYPE | CHECK_RISK | CHECK_REMEDIATION | CHECK_DOC | CHECK_CAF_EPIC | CHECK_RESOURCE_ID | PROWLER_START_TIME | ACCOUNT_DETAILS_EMAIL | ACCOUNT_DETAILS_NAME | ACCOUNT_DETAILS_ARN | ACCOUNT_DETAILS_ORG | ACCOUNT_DETAILS_TAGS |
+| ------- | ----------- | ------ | -------- | ------------ | ----------- | ---------- | ---------- | --------------------- | -------------------------- | -------------- | ----------------- | ------------------------ | --------------- | ---------- | ----------------- | --------- | -------------- | ----------------- | ------------------ | --------------------- | -------------------- | ------------------- | ------------------- | -------------------- |
 
 ### JSON
+
 ```
 {
   "Profile": "ENV",
@@ -443,9 +464,11 @@ Hereunder is the structure for each of them
   "Account tags": ""
 }
 ```
+
 > NOTE: Each finding is a `json` object.
 
 ### JSON-ASFF
+
 ```
 {
   "SchemaVersion": "2018-10-08",
@@ -486,7 +509,9 @@ Hereunder is the structure for each of them
   }
 }
 ```
+
 > NOTE: Each finding is a `json` object.
+
 ## Advanced Usage
 
 ### Assume Role:
@@ -501,16 +526,18 @@ Prowler uses the AWS CLI underneath so it uses the same authentication methods. 
 ./prowler -A 123456789012 -R ProwlerRole -I 123456
 ```
 
-> *NOTE 1 about Session Duration*: By default it gets credentials valid for 1 hour (3600 seconds). Depending on the mount of checks you run and the size of your infrastructure, Prowler may require more than 1 hour to finish. Use option `-T <seconds>`  to allow up to 12h (43200 seconds). To allow more than 1h you need to modify *"Maximum CLI/API session duration"* for that particular role, read more [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session).
+> _NOTE 1 about Session Duration_: By default it gets credentials valid for 1 hour (3600 seconds). Depending on the mount of checks you run and the size of your infrastructure, Prowler may require more than 1 hour to finish. Use option `-T <seconds>` to allow up to 12h (43200 seconds). To allow more than 1h you need to modify _"Maximum CLI/API session duration"_ for that particular role, read more [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session).
 
-> *NOTE 2 about Session Duration*: Bear in mind that if you are using roles assumed by role chaining there is a hard limit of 1 hour so consider not using role chaining if possible, read more about that, in foot note 1 below the table [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html).
+> _NOTE 2 about Session Duration_: Bear in mind that if you are using roles assumed by role chaining there is a hard limit of 1 hour so consider not using role chaining if possible, read more about that, in foot note 1 below the table [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html).
 
 For example, if you want to get only the fails in CSV format from all checks regarding RDS without banner from the AWS Account 123456789012 assuming the role RemoteRoleToAssume and set a fixed session duration of 1h:
 
 ```sh
 ./prowler -A 123456789012 -R RemoteRoleToAssume -T 3600 -b -M cvs -q -g rds
 ```
+
 or with a given External ID:
+
 ```sh
 ./prowler -A 123456789012 -R RemoteRoleToAssume -T 3600 -I 123456 -b -M cvs -q -g rds
 ```
@@ -520,22 +547,28 @@ or with a given External ID:
 If you want to run Prowler or just a check or a group across all accounts of AWS Organizations you can do this:
 
 First get a list of accounts that are not suspended:
+
 ```
 ACCOUNTS_IN_ORGS=$(aws organizations list-accounts --query Accounts[?Status==`ACTIVE`].Id --output text)
 ```
+
 Then run Prowler to assume a role (same in all members) per each account, in this example it is just running one particular check:
+
 ```
 for accountId in $ACCOUNTS_IN_ORGS; do ./prowler -A $accountId -R RemoteRoleToAssume -c extra79; done
 ```
+
 Using the same for loop it can be scanned a list of accounts with a variable like `ACCOUNTS_LIST='11111111111 2222222222 333333333'`
 
 ### Get AWS Account details from your AWS Organization:
 
 From Prowler v2.8, you can get additional information of the scanned account in CSV and JSON outputs. When scanning a single account you get the Account ID as part of the output. Now, if you have AWS Organizations and are scanning multiple accounts using the assume role functionality, Prowler can get your account details like Account Name, Email, ARN, Organization ID and Tags and you will have them next to every finding in the CSV and JSON outputs.
 In order to do that you can use the new option `-O <management account id>`, requires `-R <role to assume>` and also needs permissions `organizations:ListAccounts*` and `organizations:ListTagsForResource`. See the following sample command:
+
 ```
 ./prowler -R ProwlerScanRole -A 111111111111 -O 222222222222 -M json,csv
 ```
+
 In that command Prowler will scan the account `111111111111` assuming the role `ProwlerScanRole` and getting the account details from the AWS Organizatiosn management account `222222222222` assuming the same role `ProwlerScanRole` for that and creating two reports with those details in JSON and CSV.
 
 In the JSON output below (redacted) you can see tags coded in base64 to prevent breaking CSV or JSON due to its format:
@@ -547,6 +580,7 @@ In the JSON output below (redacted) you can see tags coded in base64 to prevent 
   "Account Organization": "o-abcde1234",
   "Account tags": "\"eyJUYWdzIjpasf0=\""
 ```
+
 The additional fields in CSV header output are as follow:
 
 ```csv
@@ -556,9 +590,11 @@ ACCOUNT_DETAILS_EMAIL,ACCOUNT_DETAILS_NAME,ACCOUNT_DETAILS_ARN,ACCOUNT_DETAILS_O
 ### GovCloud
 
 Prowler runs in GovCloud regions as well. To make sure it points to the right API endpoint use `-r` to either `us-gov-west-1` or `us-gov-east-1`. If not filter region is used it will look for resources in both GovCloud regions by default:
+
 ```sh
 ./prowler -r us-gov-west-1
 ```
+
 > For Security Hub integration see below in Security Hub section.
 
 ### Custom folder for custom checks
@@ -566,7 +602,8 @@ Prowler runs in GovCloud regions as well. To make sure it points to the right AP
 Flag `-x /my/own/checks` will include any check in that particular directory (files must start by check). To see how to write checks see [Add Custom Checks](#add-custom-checks) section.
 
 S3 URIs are also supported as custom folders for custom checks, e.g. `s3://bucket/prefix/checks`. Prowler will download the folder locally and run the checks as they are called with default execution,`-c` or `-g`.
->Make sure that the used credentials have s3:GetObject permissions in the S3 path where the custom checks are located.
+
+> Make sure that the used credentials have s3:GetObject permissions in the S3 path where the custom checks are located.
 
 ### Show or log only FAILs
 
@@ -588,6 +625,7 @@ Sets the entropy limit for high entropy hex strings from environment variable `H
 export BASE64_LIMIT=4.5
 export HEX_LIMIT=3.0
 ```
+
 ### Run Prowler using AWS CloudShell
 
 An easy way to run Prowler to scan your account is using AWS CloudShell. Read more and learn how to do it [here](util/cloudshell/README.md).
@@ -597,24 +635,28 @@ An easy way to run Prowler to scan your account is using AWS CloudShell. Read mo
 Since October 30th 2020 (version v2.3RC5), Prowler supports natively and as **official integration** sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows Prowler to import its findings to AWS Security Hub. With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions and from Prowler for free.
 
 Before sending findings to Prowler, you need to perform next steps:
+
 1. Since Security Hub is a region based service, enable it in the region or regions you require. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions:
-    - `aws securityhub enable-security-hub --region <region>`.
+   - `aws securityhub enable-security-hub --region <region>`.
 2. Enable Prowler as partner integration integration. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions:
-    - `aws securityhub enable-import-findings-for-product --region <region> --product-arn arn:aws:securityhub:<region>::product/prowler/prowler` (change region also inside the ARN).
-    - Using the AWS Management Console:
-    ![Screenshot 2020-10-29 at 10 26 02 PM](https://user-images.githubusercontent.com/3985464/97634660-5ade3400-1a36-11eb-9a92-4a45cc98c158.png)
+   - `aws securityhub enable-import-findings-for-product --region <region> --product-arn arn:aws:securityhub:<region>::product/prowler/prowler` (change region also inside the ARN).
+   - Using the AWS Management Console:
+     ![Screenshot 2020-10-29 at 10 26 02 PM](https://user-images.githubusercontent.com/3985464/97634660-5ade3400-1a36-11eb-9a92-4a45cc98c158.png)
 3. As mentioned in section "Custom IAM Policy", to allow Prowler to import its findings to AWS Security Hub you need to add the policy below to the role or user running Prowler:
-    - [iam/prowler-security-hub.json](iam/prowler-security-hub.json)
+   - [iam/prowler-security-hub.json](iam/prowler-security-hub.json)
 
 Once it is enabled, it is as simple as running the command below (for all regions):
 
 ```sh
 ./prowler -M json-asff -S
 ```
+
 or for only one filtered region like eu-west-1:
+
 ```sh
 ./prowler -M json-asff -q -S -f eu-west-1
 ```
+
 > Note 1: It is recommended to send only fails to Security Hub and that is possible adding `-q` to the command.
 
 > Note 2: Since Prowler perform checks to all regions by defaults you may need to filter by region when runing Security Hub integration, as shown in the example above. Remember to enable Security Hub in the region or regions you need by calling `aws securityhub enable-security-hub --region <region>` and run Prowler with the option `-f <region>` (if no region is used it will try to push findings in all regions hubs).
@@ -628,6 +670,7 @@ Once you run findings for first time you will be able to see Prowler findings in
 ### Security Hub in GovCloud regions
 
 To use Prowler and Security Hub integration in GovCloud there is an additional requirement, usage of `-r` is needed to point the API queries to the right API endpoint. Here is a sample command that sends only failed findings to Security Hub in region `us-gov-west-1`:
+
 ```
 ./prowler -r us-gov-west-1 -f us-gov-west-1 -S -M csv,json-asff -q
 ```
@@ -635,6 +678,7 @@ To use Prowler and Security Hub integration in GovCloud there is an additional r
 ### Security Hub in China regions
 
 To use Prowler and Security Hub integration in China regions there is an additional requirement, usage of `-r` is needed to point the API queries to the right API endpoint. Here is a sample command that sends only failed findings to Security Hub in region `cn-north-1`:
+
 ```
 ./prowler -r cn-north-1 -f cn-north-1 -q -S -M csv,json-asff
 ```
@@ -646,6 +690,7 @@ Either to run Prowler once or based on a schedule this template makes it pretty 
 The Cloud Formation template that helps you to do that is [here](https://github.com/prowler-cloud/prowler/blob/master/util/codebuild/codebuild-prowler-audit-account-cfn.yaml).
 
 > This is a simple solution to monitor one account. For multiples accounts see [Multi Account and Continuous Monitoring](util/org-multi-account/README.md).
+
 ## Allowlist or remove a fail from resources
 
 Sometimes you may find resources that are intentionally configured in a certain way that may be a bad practice but it is all right with it, for example an S3 bucket open to the internet hosting a web site, or a security group with an open port needed in your use case. Now you can use `-w allowlist_sample.txt` and add your resources as `checkID:resourcename` as in this command:
@@ -655,23 +700,27 @@ Sometimes you may find resources that are intentionally configured in a certain 
 ```
 
 S3 URIs are also supported as allowlist file, e.g. `s3://bucket/prefix/allowlist_sample.txt`
->Make sure that the used credentials have s3:GetObject permissions in the S3 path where the allowlist file is located.
+
+> Make sure that the used credentials have s3:GetObject permissions in the S3 path where the allowlist file is located.
 
 DynamoDB table ARNs are also supported as allowlist file, e.g. `arn:aws:dynamodb:us-east-1:111111222222:table/allowlist`
->Make sure that the table has `account_id` as partition key and `rule` as sort key, and that the used credentials have `dynamodb:PartiQLSelect` permissions in the table.
-><p align="left"><img src="https://user-images.githubusercontent.com/38561120/165769502-296f9075-7cc8-445e-8158-4b21804bfe7e.png" alt="image" width="397" height="252" /></p>
 
->The field `account_id` can contain either an account ID or an `*` (which applies to all the accounts that use this table as a whitelist). As in the traditional allowlist file, the `rule` field must contain `checkID:resourcename` pattern.
-><p><img src="https://user-images.githubusercontent.com/38561120/165770610-ed5c2764-7538-44c2-9195-bcfdecc4ef9b.png" alt="image" width="394" /></p>
+> Make sure that the table has `account_id` as partition key and `rule` as sort key, and that the used credentials have `dynamodb:PartiQLSelect` permissions in the table.
+>
+> <p align="left"><img src="https://user-images.githubusercontent.com/38561120/165769502-296f9075-7cc8-445e-8158-4b21804bfe7e.png" alt="image" width="397" height="252" /></p>
 
-
+> The field `account_id` can contain either an account ID or an `*` (which applies to all the accounts that use this table as a whitelist). As in the traditional allowlist file, the `rule` field must contain `checkID:resourcename` pattern.
+>
+> <p><img src="https://user-images.githubusercontent.com/38561120/165770610-ed5c2764-7538-44c2-9195-bcfdecc4ef9b.png" alt="image" width="394" /></p>
 
 Allowlist option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format except for `json-asff`.
 
 ## Inventory
+
 With Prowler you can get an inventory of your AWS resources. To do so, run `./prowler -i` to see what AWS resources you have deployed in your AWS account. This feature lists almost all resources in all regions based on [this](https://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/API_GetResources.html) API call. Note that it does not cover 100% of resource types.
 
 The inventory will be stored in an output `csv` file by default, under common Prowler `output` folder, with the following format: `prowler-inventory-${ACCOUNT_NUM}-${OUTPUT_DATE}.csv`
+
 ## How to fix every FAIL
 
 Check your report and fix the issues following all specific guidelines per check in <https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf>
@@ -712,10 +761,12 @@ There are some helpfull tools to save time in this process like [aws-mfa-script]
 ### AWS Managed IAM Policies
 
 [ViewOnlyAccess](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_job-functions.html#jf_view-only-user)
+
 - Use case: This user can view a list of AWS resources and basic metadata in the account across all services. The user cannot read resource content or metadata that goes beyond the quota and list information for resources.
-- Policy description: This policy grants List*, Describe*, Get*, View*, and Lookup* access to resources for most AWS services. To see what actions this policy includes for each service, see [ViewOnlyAccess Permissions](https://console.aws.amazon.com/iam/home#policies/arn:aws:iam::aws:policy/job-function/ViewOnlyAccess)
+- Policy description: This policy grants List*, Describe*, Get*, View*, and Lookup\* access to resources for most AWS services. To see what actions this policy includes for each service, see [ViewOnlyAccess Permissions](https://console.aws.amazon.com/iam/home#policies/arn:aws:iam::aws:policy/job-function/ViewOnlyAccess)
 
 [SecurityAudit](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_job-functions.html#jf_security-auditor)
+
 - Use case: This user monitors accounts for compliance with security requirements. This user can access logs and events to investigate potential security breaches or potential malicious activity.
 - Policy description: This policy grants permissions to view configuration data for many AWS services and to review their logs. To see what actions this policy includes for each service, see [SecurityAudit Permissions](https://console.aws.amazon.com/iam/home#policies/arn:aws:iam::aws:policy/SecurityAudit)
 
@@ -751,7 +802,7 @@ aws iam create-access-key --user-name prowler
 unset ACCOUNT_ID AWS_DEFAULT_PROFILE
 ```
 
-The `aws iam create-access-key` command will output the secret access key and the key id; keep these somewhere safe, and add them to `~/.aws/credentials` with an appropriate profile name to use them with Prowler. This is the only time the secret key will be shown.  If you lose it, you will need to generate a replacement.
+The `aws iam create-access-key` command will output the secret access key and the key id; keep these somewhere safe, and add them to `~/.aws/credentials` with an appropriate profile name to use them with Prowler. This is the only time the secret key will be shown. If you lose it, you will need to generate a replacement.
 
 > [This CloudFormation template](iam/create_role_to_assume_cfn.yaml) may also help you on that task.
 
@@ -767,7 +818,7 @@ To list all existing checks in the extras group run the command below:
 ./prowler -l -g extras
 ```
 
->There are some checks not included in that list, they are experimental or checks that take long to run like `extra759` and `extra760` (search for secrets in Lambda function variables and code).
+> There are some checks not included in that list, they are experimental or checks that take long to run like `extra759` and `extra760` (search for secrets in Lambda function variables and code).
 
 To check all extras in one command:
 
@@ -786,7 +837,6 @@ or to run multiple extras in one go:
 ```sh
 ./prowler -c extraNumber,extraNumber
 ```
-
 
 ## Forensics Ready Checks
 
@@ -859,6 +909,7 @@ AWS is made to be flexible for service links within and between different AWS ac
 This group of checks helps to analyse a particular AWS account (subject) on existing links to other AWS accounts across various AWS services, in order to identify untrusted links.
 
 ### Run
+
 To give it a quick shot just call:
 
 ```sh
@@ -875,10 +926,10 @@ Currently, this check group supports two different scenarios:
 ### Coverage
 
 Current coverage of Amazon Web Service (AWS) taken from [here](https://docs.aws.amazon.com/whitepapers/latest/aws-overview/introduction.html):
-| Topic                           | Service    | Trust Boundary                                                            |
+| Topic | Service | Trust Boundary |
 |---------------------------------|------------|---------------------------------------------------------------------------|
-| Networking and Content Delivery | Amazon VPC | VPC endpoints connections ([extra786](checks/check_extra786))             |
-|                                 |            | VPC endpoints allowlisted principals ([extra787](checks/check_extra787))  |
+| Networking and Content Delivery | Amazon VPC | VPC endpoints connections ([extra786](checks/check_extra786)) |
+| | | VPC endpoints allowlisted principals ([extra787](checks/check_extra787)) |
 
 All ideas or recommendations to extend this group are very welcome [here](https://github.com/prowler-cloud/prowler/issues/new/choose).
 
@@ -896,10 +947,12 @@ Multi Account environments assumes a minimum of two trusted or known accounts. F
 ![multi-account-environment](/docs/images/prowler-multi-account-environment.png)
 
 ## Custom Checks
-Using  `./prowler -c extra9999 -a` you can build your own on-the-fly custom check by specifying the AWS CLI command to execute.
+
+Using `./prowler -c extra9999 -a` you can build your own on-the-fly custom check by specifying the AWS CLI command to execute.
+
 > Omit the "aws" command and only use its parameters within quotes and do not nest quotes in the aws parameter, --output text is already included in the check.
 >
-Here is an example of a check to find SGs with inbound port 80:
+> Here is an example of a check to find SGs with inbound port 80:
 
 ```sh
 ./prowler -c extra9999 -a 'ec2 describe-security-groups --filters Name=ip-permission.to-port,Values=80 --query SecurityGroups[*].GroupId[]]'
