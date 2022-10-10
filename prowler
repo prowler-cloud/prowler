@@ -140,7 +140,7 @@ USAGE:
 set_aws_default_output
 
 # Parse Prowler command line options
-while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:i:u:" OPTION; do
+while getopts ":hlLkqp:r:c:C:g:f:m:M:E:x:enbVsSI:A:R:T:w:N:o:B:D:F:zZ:O:a:d:iu:" OPTION; do
    case $OPTION in
      h )
         usage
