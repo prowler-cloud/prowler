@@ -2,23 +2,58 @@ import re
 import sys
 
 import yaml
+from boto3.dynamodb.conditions import Attr
 
 from lib.logger import logger
 
 
-def parse_allowlist_file(session, allowlist_file):
+def parse_allowlist_file(audit_info, allowlist_file):
     try:
         # Check if file is a S3 URI
         if re.search("^s3://([^/]+)/(.*?([^/]+))$", allowlist_file):
             bucket = allowlist_file.split("/")[2]
             key = ("/").join(allowlist_file.split("/")[3:])
-            s3_client = session.client("s3")
+            s3_client = audit_info.audit_session.client("s3")
             allowlist = yaml.safe_load(
                 s3_client.get_object(Bucket=bucket, Key=key)["Body"]
             )["Allowlist"]
+        # Check if file is a DynamoDB ARN
+        elif re.search(
+            "^arn:[aws\|aws\-cn\|aws\-us\-gov]+:dynamodb:[a-z]{2}-[north\|south\|east\|west\|central]+-[1-9]{1}:[0-9]{12}:table\/[a-zA-Z0-9._-]+$",
+            allowlist_file,
+        ):
+            allowlist = {"Accounts": {}}
+            dynamodb_resource = audit_info.audit_session.resource("dynamodb")
+            dynamo_table = dynamodb_resource.Table(allowlist_file.split("/")[1])
+            response = dynamo_table.scan(
+                FilterExpression=Attr("Accounts").is_in(
+                    [audit_info.audited_account, "*"]
+                )
+            )
+            dynamodb_items = response["Items"]
+            # Paginate through all results
+            while "LastEvaluatedKey" in dynamodb_items:
+                response = dynamo_table.scan(
+                    ExclusiveStartKey=response["LastEvaluatedKey"],
+                    FilterExpression=Attr("Accounts").is_in(
+                        [audit_info.audited_account, "*"]
+                    ),
+                )
+                dynamodb_items.update(response["Items"])
+            for item in dynamodb_items:
+                # Create allowlist for every item
+                allowlist["Accounts"][item["Accounts"]] = {
+                    "Checks": {
+                        item["Checks"]: {
+                            "Regions": item["Regions"],
+                            "Resources": item["Resources"],
+                        }
+                    }
+                }
         else:
             with open(allowlist_file) as f:
                 allowlist = yaml.safe_load(f)["Allowlist"]
+                print(allowlist)
         return allowlist
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")

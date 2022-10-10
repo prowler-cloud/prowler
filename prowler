@@ -310,9 +310,7 @@ if __name__ == "__main__":
 
     # Parse content from Allowlist file and get it, if necessary, from S3
     if args.allowlist_file:
-        allowlist_file = parse_allowlist_file(
-            audit_info.audit_session, args.allowlist_file
-        )
+        allowlist_file = parse_allowlist_file(audit_info, args.allowlist_file)
 
     # Setting output options
     audit_output_options = set_output_options(
