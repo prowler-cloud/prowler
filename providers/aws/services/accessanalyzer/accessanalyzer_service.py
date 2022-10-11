@@ -5,7 +5,7 @@ from lib.logger import logger
 from providers.aws.aws_provider import generate_regional_clients
 
 
-################## ACCESSANALYZER
+################## AccessAnalyzer
 class AccessAnalyzer:
     def __init__(self, audit_info):
         self.service = "accessanalyzer"
@@ -29,7 +29,7 @@ class AccessAnalyzer:
             t.join()
 
     def __list_analyzers__(self, regional_client):
-        logger.info("ACCESSANALYZER - Listing Analyzers...")
+        logger.info("AccessAnalyzer - Listing Analyzers...")
         try:
             list_analyzers_paginator = regional_client.get_paginator("list_analyzers")
             analyzer_count = 0
@@ -67,7 +67,7 @@ class AccessAnalyzer:
             )
 
     def __list_findings__(self):
-        logger.info("ACCESSANALYZER - Listing Findings per Analyzer...")
+        logger.info("AccessAnalyzer - Listing Findings per Analyzer...")
         try:
             for analyzer in self.analyzers:
                 if analyzer.status != "NOT_AVAILABLE":
