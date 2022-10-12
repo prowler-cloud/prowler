@@ -23,7 +23,7 @@ CHECK_ASFF_COMPLIANCE_TYPE_check120="ens-op.acc.1.aws.iam.4"
 CHECK_SERVICENAME_check120="iam"
 CHECK_RISK_check120='AWS provides a support center that can be used for incident notification and response; as well as technical support and customer services. Create an IAM Role to allow authorized users to manage incidents with AWS Support.'
 CHECK_REMEDIATION_check120='Create an IAM role for managing incidents with AWS.'
-CHECK_DOC_check120='https://docs.aws.amazon.com/awssupport/latest/user/using-service-linked-roles-sup.html'
+CHECK_DOC_check120='https://docs.aws.amazon.com/awssupport/latest/user/accessing-support.html'
 CHECK_CAF_EPIC_check120='IAM'
 
 check120(){

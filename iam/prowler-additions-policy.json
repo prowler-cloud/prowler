@@ -3,6 +3,8 @@
     "Statement": [
         {
             "Action": [
+                "account:Get*",
+                "appstream:DescribeFleets",
                 "ds:Get*",
                 "ds:Describe*",
                 "ds:List*",

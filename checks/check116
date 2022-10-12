@@ -29,21 +29,26 @@ CHECK_CAF_EPIC_check116='IAM'
 check116(){
   # "Ensure IAM policies are attached only to groups or roles (Scored)"
   LIST_USERS=$($AWSCLI iam list-users --query 'Users[*].UserName' --output text $PROFILE_OPT --region $REGION)
-  for user in $LIST_USERS;do
-    USER_ATTACHED_POLICY=$($AWSCLI iam list-attached-user-policies --output text $PROFILE_OPT --region $REGION --user-name $user)
-    USER_INLINE_POLICY=$($AWSCLI iam list-user-policies --output text $PROFILE_OPT --region $REGION --user-name $user)
-    if [[ $USER_ATTACHED_POLICY ]] || [[ $USER_INLINE_POLICY ]]
-    then
-      if [[ $USER_ATTACHED_POLICY ]]
+  if [[ "${LIST_USERS}" ]]
+  then
+    for user in $LIST_USERS;do
+      USER_ATTACHED_POLICY=$($AWSCLI iam list-attached-user-policies --output text $PROFILE_OPT --region $REGION --user-name $user)
+      USER_INLINE_POLICY=$($AWSCLI iam list-user-policies --output text $PROFILE_OPT --region $REGION --user-name $user)
+      if [[ $USER_ATTACHED_POLICY ]] || [[ $USER_INLINE_POLICY ]]
       then
-        textFail "$REGION: $user has managed policy directly attached" "$REGION" "$user"
+        if [[ $USER_ATTACHED_POLICY ]]
+        then
+          textFail "$REGION: $user has managed policy directly attached" "$REGION" "$user"
+        fi
+        if [[ $USER_INLINE_POLICY ]]
+        then
+          textFail "$REGION: $user has inline policy directly attached" "$REGION" "$user"
+        fi
+      else
+        textPass "$REGION: No policies attached to user $user" "$REGION" "$user"
       fi
-      if [[ $USER_INLINE_POLICY ]]
-      then
-        textFail "$REGION: $user has inline policy directly attached" "$REGION" "$user"
-      fi
-    else
-      textPass "$REGION: No policies attached to user $user" "$REGION" "$user"
-    fi
-  done
+    done
+  else
+    textPass "$REGION: No users found" "$REGION" "No users found"
+  fi
 }

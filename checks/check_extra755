@@ -30,7 +30,7 @@ extra755(){
     if [[ $(echo "$SG_LIST" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
         textInfo "$regx: Access Denied trying to describe security groups" "$regx"
         continue
-    fi 
+    fi
     if [[ $SG_LIST ]];then
       for SG in $SG_LIST;do
         textFail "$regx: Found Security Group: $SG open to 0.0.0.0/0 for Memcached port" "$regx" "$SG"

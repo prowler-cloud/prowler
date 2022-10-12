@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 #  --stack-name "ProwlerExecRole" \
 #  --parameters "ParameterKey=AuthorisedARN,ParameterValue=arn:aws:iam::123456789012:root"
 #
-Description: | 
+Description: |
   This template creates an AWS IAM Role with an inline policy and two AWS managed policies
   attached. It sets the trust policy on that IAM Role to permit a named ARN in another AWS
   account to assume that role. The role name and the ARN of the trusted user can all be passed
@@ -48,14 +48,18 @@ Resources:
         - 'arn:aws:iam::aws:policy/SecurityAudit'
         - 'arn:aws:iam::aws:policy/job-function/ViewOnlyAccess'
       RoleName: !Sub ${ProwlerRoleName}
-      Policies: 
+      Policies:
         - PolicyName: ProwlerExecRoleAdditionalViewPrivileges
           PolicyDocument:
             Version : '2012-10-17'
             Statement:
             - Effect: Allow
               Action:
-                - 'ds:ListAuthorizedApplications'
+                - 'account:Get*'
+                - 'appstream:DescribeFleets'
+                - 'ds:Get*'
+                - 'ds:Describe*'
+                - 'ds:List*'
                 - 'ec2:GetEbsEncryptionByDefault'
                 - 'ecr:Describe*'
                 - 'elasticfilesystem:DescribeBackupPolicy'

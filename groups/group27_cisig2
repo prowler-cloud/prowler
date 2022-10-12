@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+GROUP_ID[27]='cisig2'
+GROUP_NUMBER[27]='27.0'
+GROUP_TITLE[27]='CIS Implementation Group 2 only - [cisig2] ********************'
+GROUP_CHECKS[27]='check113,check114,check19,check110,check12,check121,extra774,check122,check120,extra734,extra764,extra7186,extra761,extra735,extra7131,extra78,extra7161,check21,check22,check23,check24,check25,check26,check27,check28,check29,check31,check32,check33,check34,check35,check36,check37,check38,check39,check310,check311,check312,check313,check314,extra799,check41,check42,check43,check44,check45,check46'

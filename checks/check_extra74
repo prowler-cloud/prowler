@@ -34,13 +34,18 @@ extra74(){
         textInfo "$regx: Access Denied trying to describe security groups" "$regx"
         continue
     fi
-    for SG_ID in $LIST_OF_SECURITYGROUPS; do
-      SG_NO_INGRESS_FILTER=$($AWSCLI ec2 describe-network-interfaces $PROFILE_OPT --region $regx --filters "Name=group-id,Values=$SG_ID" --query "length(NetworkInterfaces)" --output text)
-      if [[ $SG_NO_INGRESS_FILTER -ne 0 ]];then
-        textFail "$regx: $SG_ID has no ingress filtering and it is being used!" "$regx" "$SG_ID"
-      else
-        textInfo "$regx: $SG_ID has no ingress filtering but it is not being used" "$regx" "$SG_ID"
-      fi
-    done
+    if [[ ${LIST_OF_SECURITYGROUPS} ]]
+    then
+      for SG_ID in $LIST_OF_SECURITYGROUPS; do
+        SG_NO_INGRESS_FILTER=$($AWSCLI ec2 describe-network-interfaces $PROFILE_OPT --region $regx --filters "Name=group-id,Values=$SG_ID" --query "length(NetworkInterfaces)" --output text)
+        if [[ $SG_NO_INGRESS_FILTER -ne 0 ]];then
+          textFail "$regx: $SG_ID has no ingress filtering and it is being used!" "$regx" "$SG_ID"
+        else
+          textInfo "$regx: $SG_ID has no ingress filtering but it is not being used" "$regx" "$SG_ID"
+        fi
+      done
+    else
+      textPass "$regx: There is no EC2 Security Groups" "$regx" "No EBS Snapshots"
+    fi
   done
 }

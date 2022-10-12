@@ -86,10 +86,14 @@ execute_check() {
   ignores="$(awk "/${1}/{print}" <(echo "${ALLOWLIST}"))"
 
   if [ ${alternate_name} ];then
-    if [[ ${alternate_name} == check1* || ${alternate_name} == extra71 || ${alternate_name} == extra774 || ${alternate_name} == extra7123 ]];then
-      if [ ! -s $TEMP_REPORT_FILE ];then
-        genCredReport
-        saveReport
+    # Credential Report is not required for checks check17 and check118
+    if [[ ${alternate_name} != check117 && ${alternate_name} != check118 ]]
+    then
+      if [[ ${alternate_name} == check1* || ${alternate_name} == extra71 || ${alternate_name} == extra774 || ${alternate_name} == extra7123 ]];then
+        if [ ! -s $TEMP_REPORT_FILE ];then
+          genCredReport
+          saveReport
+        fi
       fi
     fi
     show_check_title ${alternate_name}
