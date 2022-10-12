@@ -55,7 +55,7 @@ extra77(){
         # check if the policy has Principal as *
         CHECK_ECR_REPO_ALLUSERS_POLICY=$(cat $TEMP_POLICY_FILE | jq '.Statement[]|select(.Effect=="Allow" and (((.Principal|type == "object") and .Principal.AWS == "*") or ((.Principal|type == "string") and .Principal == "*")))')
         if [[ $CHECK_ECR_REPO_ALLUSERS_POLICY ]]; then
-          textFail "$regx: $repo policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx"
+          textFail "$regx: $repo policy \"may\" allow Anonymous users to perform actions (Principal: \"*\")" "$regx" "$repo"
         else
           textPass "$regx: $repo is not open" "$regx" "$repo"
         fi
