@@ -13,6 +13,7 @@
                 "ec2:GetEbsEncryptionByDefault",
                 "ecr:Describe*",
                 "elasticfilesystem:DescribeBackupPolicy",
+                "elasticfilesystem:DescribeFileSystems",
                 "glue:GetConnections",
                 "glue:GetSecurityConfiguration",
                 "glue:SearchTables",
