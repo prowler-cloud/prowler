@@ -25,11 +25,11 @@ CHECK_DOC_extra7171='https://docs.aws.amazon.com/waf/latest/developerguide/confi
 CHECK_CAF_EPIC_extra7171='Infrastructure security'
 
 extra7171() {
-  if [[ "$($AWSCLI $PROFILE_OPT shield get-subscription-state --output text)" == "ACTIVE" ]]; then
-    CALLER_IDENTITY=$($AWSCLI sts get-caller-identity $PROFILE_OPT --query Arn)
-    PARTITION=$(echo $CALLER_IDENTITY | cut -d: -f2)
-    ACCOUNT_ID=$(echo $CALLER_IDENTITY | cut -d: -f5)
-    for regx in $REGIONS; do
+  for regx in $REGIONS; do
+    if [[ "$($AWSCLI $PROFILE_OPT shield get-subscription-state --output text)" == "ACTIVE" ]]; then
+      CALLER_IDENTITY=$($AWSCLI sts get-caller-identity $PROFILE_OPT --query Arn)
+      PARTITION=$(echo $CALLER_IDENTITY | cut -d: -f2)
+      ACCOUNT_ID=$(echo $CALLER_IDENTITY | cut -d: -f5)
       LIST_OF_CLASSIC_LOAD_BALANCERS=$($AWSCLI elb describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancerDescriptions[?Scheme == `internet-facing`].[LoadBalancerName]' --output text |grep -v '^None$')
       if [[ $LIST_OF_CLASSIC_LOAD_BALANCERS ]]; then
         for elb in $LIST_OF_CLASSIC_LOAD_BALANCERS; do
@@ -41,10 +41,10 @@ extra7171() {
           fi
         done
       else
-        textInfo "$regx: no classic load balancers found" "$regx"
+        textInfo "$regx: No classic load balancers found" "$regx"
       fi
-    done
-  else
-    textInfo "$REGION: no AWS Shield Advanced subscription found. Skipping check." "$REGION"
-  fi
+    else
+      textInfo "$regx: No AWS Shield Advanced subscription found. Skipping check." "$regx"
+    fi
+  done
 }
