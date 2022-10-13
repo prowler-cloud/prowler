@@ -23,6 +23,8 @@ class IAM:
         self.groups = self.__get_groups__()
         self.__get_group_users__()
         self.__list_attached_group_policies__()
+        self.__list_attached_user_policies__()
+        self.__list_inline_user_policies__()
         self.__list_mfa_devices__()
         self.password_policy = self.__get_password_policy__()
 
@@ -237,6 +239,42 @@ class IAM:
         except Exception as error:
             logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
 
+    def __list_attached_user_policies__(self):
+        try:
+            for user in self.users:
+                attached_user_policies = []
+                get_user_attached_policies_paginator = self.client.get_paginator(
+                    "list_attached_user_policies"
+                )
+                for page in get_user_attached_policies_paginator.paginate(
+                    UserName=user.name
+                ):
+                    for policy in page["AttachedPolicies"]:
+                        attached_user_policies.append(policy)
+
+                user.attached_policies = attached_user_policies
+
+        except Exception as error:
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+
+    def __list_inline_user_policies__(self):
+        try:
+            for user in self.users:
+                inline_user_policies = []
+                get_user_inline_policies_paginator = self.client.get_paginator(
+                    "list_user_policies"
+                )
+                for page in get_user_inline_policies_paginator.paginate(
+                    UserName=user.name
+                ):
+                    for policy in page["PolicyNames"]:
+                        inline_user_policies.append(policy)
+
+                user.inline_policies = inline_user_policies
+
+        except Exception as error:
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+
 
 @dataclass
 class MFADevice:
@@ -252,22 +290,26 @@ class MFADevice:
 class User:
     name: str
     arn: str
-    mfa_devices: list[MFADevice]
+    mfa_devices: "list[MFADevice]"
     password_last_used: str
+    attached_policies: "list[dict]"
+    inline_policies: "list[str]"
 
     def __init__(self, name, arn, password_last_used):
         self.name = name
         self.arn = arn
         self.password_last_used = password_last_used
         self.mfa_devices = []
+        self.attached_policies = []
+        self.inline_policies = []
 
 
 @dataclass
 class Group:
     name: str
     arn: str
-    attached_policies: list[dict]
-    users: list[User]
+    attached_policies: "list[dict]"
+    users: " list[User]"
 
     def __init__(self, name, arn):
         self.name = name

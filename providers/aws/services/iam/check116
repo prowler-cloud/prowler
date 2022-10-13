@@ -23,7 +23,7 @@ CHECK_ASFF_COMPLIANCE_TYPE_check116="ens-op.acc.3.aws.iam.1"
 CHECK_SERVICENAME_check116="iam"
 CHECK_RISK_check116='By default IAM users; groups; and roles have no access to AWS resources. IAM policies are the means by which privileges are granted to users; groups; or roles. It is recommended that IAM policies be applied directly to groups and roles but not users. Assigning privileges at the group or role level reduces the complexity of access management as the number of users grow. Reducing access management complexity may in-turn reduce opportunity for a principal to inadvertently receive or retain excessive privileges.'
 CHECK_REMEDIATION_check116='Remove any policy attached directly to the user. Use groups or roles instead.'
-CHECK_DOC_check116='https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html'
+CHECK_DOC_check116=
 CHECK_CAF_EPIC_check116='IAM'
 
 check116(){
