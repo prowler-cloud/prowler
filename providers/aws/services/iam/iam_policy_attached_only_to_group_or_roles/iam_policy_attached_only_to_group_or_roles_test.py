@@ -13,9 +13,9 @@ class Test_iam_policy_attached_only_to_group_or_roles:
     @mock_iam
     def test_iam_user_attached_policy(self):
         iam_client = client("iam")
-        user = "test1"
-        policyName = "policy1"
-        policyDocument = {
+        user = "test_attached_policy"
+        policy_name = "policy1"
+        policy_document = {
             "Version": "2012-10-17",
             "Statement": [
                 {"Effect": "Allow", "Action": "logs:CreateLogGroup", "Resource": "*"},
@@ -23,12 +23,12 @@ class Test_iam_policy_attached_only_to_group_or_roles:
         }
         iam_client.create_user(UserName=user)
         policyArn = iam_client.create_policy(
-            PolicyName=policyName, PolicyDocument=dumps(policyDocument)
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
-        iam_client.attach_user_policy(UserName="test1", PolicyArn=policyArn)
+        iam_client.attach_user_policy(UserName=user, PolicyArn=policyArn)
 
         with mock.patch(
-            "providers.aws.services.iam.iam_user_two_active_access_key.iam_user_two_active_access_key.iam_client",
+            "providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles.iam_client",
             new=IAM(current_audit_info),
         ):
             from providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles import (
@@ -40,9 +40,9 @@ class Test_iam_policy_attached_only_to_group_or_roles:
             assert result[0].status == "FAIL"
 
     @mock_iam
-    def test_iam_user_inline_policy(self):
+    def test_iam_user_attached_and_inline_policy(self):
         iam_client = client("iam")
-        user = "test1"
+        user = "test_inline_policy"
         policyName = "policy1"
         policyDocument = {
             "Version": "2012-10-17",
@@ -57,7 +57,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
         policyArn = iam_client.create_policy(
             PolicyName=policyName, PolicyDocument=dumps(policyDocument)
         )["Policy"]["Arn"]
-        iam_client.attach_user_policy(UserName="test1", PolicyArn=policyArn)
+        iam_client.attach_user_policy(UserName=user, PolicyArn=policyArn)
 
         with mock.patch(
             "providers.aws.services.iam.iam_user_two_active_access_key.iam_user_two_active_access_key.iam_client",
@@ -73,15 +73,15 @@ class Test_iam_policy_attached_only_to_group_or_roles:
             assert result[0].status == "FAIL"
             assert result[1].status == "FAIL"
             assert search(
-                "User test1 has attached the following policy",
+                f"User {user} has attached the following policy",
                 result[0].status_extended,
             )
-            assert search("User test1 has inline policies", result[1].status_extended)
+            assert search(f"User {user} has inline policies", result[1].status_extended)
 
     @mock_iam
-    def test_iam_user_attached_and_inline_policy(self):
+    def test_iam_user_inline_policy(self):
         iam_client = client("iam")
-        user = "test1"
+        user = "test_attached_inline_policy"
         policyName = "policy1"
         policyDocument = {
             "Version": "2012-10-17",
@@ -109,7 +109,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
     @mock_iam
     def test_iam_user_no_policies(self):
         iam_client = client("iam")
-        user = "test1"
+        user = "test_no_policies"
         iam_client.create_user(UserName=user)
 
         with mock.patch(

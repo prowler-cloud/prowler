@@ -27,6 +27,7 @@ class IAM:
         self.__list_inline_user_policies__()
         self.__list_mfa_devices__()
         self.password_policy = self.__get_password_policy__()
+        self.support_roles = self.__get_support_roles__()
 
     def __get_client__(self):
         return self.client
@@ -274,6 +275,21 @@ class IAM:
 
         except Exception as error:
             logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+
+    def __get_support_roles__(self):
+        try:
+            support_roles = []
+            support_entry_policy_arn = (
+                "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
+            )
+            support_roles = self.client.list_entities_for_policy(
+                PolicyArn=support_entry_policy_arn, EntityFilter="Role"
+            )["PolicyRoles"]
+        except Exception as error:
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+
+        finally:
+            return support_roles
 
 
 @dataclass

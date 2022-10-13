@@ -16,7 +16,7 @@ class iam_policy_attached_only_to_group_or_roles(Check):
                             report = Check_Report(self.metadata)
                             report.region = iam_client.region
                             report.status = "FAIL"
-                            report.status_extended = f'User {user.name} has attached the following policy {policy["PolicyName"]}'
+                            report.status_extended = f"User {user.name} has attached the following policy {policy['PolicyName']}"
                             findings.append(report)
                     if user.inline_policies:
                         for policy in user.inline_policies:
@@ -30,6 +30,8 @@ class iam_policy_attached_only_to_group_or_roles(Check):
 
                 else:
                     report.status = "PASS"
-                    report.status_extended = "User has no inline or attached policies"
+                    report.status_extended = (
+                        f"User {user.name} has no inline or attached policies"
+                    )
                     findings.append(report)
         return findings
