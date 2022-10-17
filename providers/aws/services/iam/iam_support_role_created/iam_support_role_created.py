@@ -7,7 +7,8 @@ class iam_support_role_created(Check):
         findings = []
         report = Check_Report(self.metadata)
         report.region = iam_client.region
-        report.resource_id = (
+        report.resource_id = "AWSSupportServiceRolePolicy"
+        report.resource_arn = (
             "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
         )
         if iam_client.support_roles:

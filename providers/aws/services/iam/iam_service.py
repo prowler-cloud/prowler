@@ -28,6 +28,8 @@ class IAM:
         self.__list_mfa_devices__()
         self.password_policy = self.__get_password_policy__()
         self.support_roles = self.__get_support_roles__()
+        self.policies = self.__list_policies__()
+        self.list_policies_version = self.__list_policies_version__(self.policies)
 
     def __get_client__(self):
         return self.client
@@ -290,6 +292,32 @@ class IAM:
 
         finally:
             return support_roles
+
+    def __list_policies__(self):
+        try:
+            policies = []
+            list_policies_paginator = self.client.get_paginator("list_policies")
+            for page in list_policies_paginator.paginate(Scope="Local"):
+                for policy in page["Policies"]:
+                    policies.append(policy)
+        except Exception as error:
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+        finally:
+            return policies
+
+    def __list_policies_version__(self, policies):
+        try:
+            policies_version = []
+
+            for policy in policies:
+                policy_version = self.client.get_policy_version(
+                    PolicyArn=policy["Arn"], VersionId=policy["DefaultVersionId"]
+                )
+                policies_version.append(policy_version["PolicyVersion"]["Document"])
+        except Exception as error:
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+        finally:
+            return policies_version
 
 
 @dataclass

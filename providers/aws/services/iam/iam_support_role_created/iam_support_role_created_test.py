@@ -4,9 +4,6 @@ from unittest import mock
 from boto3 import client
 from moto import mock_iam
 
-from providers.aws.lib.audit_info.audit_info import current_audit_info
-from providers.aws.services.iam.iam_service import IAM
-
 
 class Test_iam_support_role_created:
     @mock_iam
@@ -30,6 +27,10 @@ class Test_iam_support_role_created:
             RoleName=role_name,
             PolicyArn="arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy",
         )
+
+        from providers.aws.lib.audit_info.audit_info import current_audit_info
+        from providers.aws.services.iam.iam_service import IAM
+
         with mock.patch(
             "providers.aws.services.iam.iam_support_role_created.iam_support_role_created.iam_client",
             new=IAM(current_audit_info),

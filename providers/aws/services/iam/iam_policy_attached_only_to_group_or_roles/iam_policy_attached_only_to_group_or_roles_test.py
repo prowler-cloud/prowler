@@ -5,13 +5,11 @@ from unittest import mock
 from boto3 import client
 from moto import mock_iam
 
-from providers.aws.lib.audit_info.audit_info import current_audit_info
-from providers.aws.services.iam.iam_service import IAM
-
 
 class Test_iam_policy_attached_only_to_group_or_roles:
     @mock_iam
     def test_iam_user_attached_policy(self):
+        result = []
         iam_client = client("iam")
         user = "test_attached_policy"
         policy_name = "policy1"
@@ -27,6 +25,9 @@ class Test_iam_policy_attached_only_to_group_or_roles:
         )["Policy"]["Arn"]
         iam_client.attach_user_policy(UserName=user, PolicyArn=policyArn)
 
+        from providers.aws.lib.audit_info.audit_info import current_audit_info
+        from providers.aws.services.iam.iam_service import IAM
+
         with mock.patch(
             "providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles.iam_client",
             new=IAM(current_audit_info),
@@ -41,6 +42,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
 
     @mock_iam
     def test_iam_user_attached_and_inline_policy(self):
+        result = []
         iam_client = client("iam")
         user = "test_inline_policy"
         policyName = "policy1"
@@ -59,8 +61,11 @@ class Test_iam_policy_attached_only_to_group_or_roles:
         )["Policy"]["Arn"]
         iam_client.attach_user_policy(UserName=user, PolicyArn=policyArn)
 
+        from providers.aws.lib.audit_info.audit_info import current_audit_info
+        from providers.aws.services.iam.iam_service import IAM
+
         with mock.patch(
-            "providers.aws.services.iam.iam_user_two_active_access_key.iam_user_two_active_access_key.iam_client",
+            "providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles.iam_client",
             new=IAM(current_audit_info),
         ):
             from providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles import (
@@ -80,6 +85,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
 
     @mock_iam
     def test_iam_user_inline_policy(self):
+        result = []
         iam_client = client("iam")
         user = "test_attached_inline_policy"
         policyName = "policy1"
@@ -94,8 +100,11 @@ class Test_iam_policy_attached_only_to_group_or_roles:
             UserName=user, PolicyName=policyName, PolicyDocument=dumps(policyDocument)
         )
 
+        from providers.aws.lib.audit_info.audit_info import current_audit_info
+        from providers.aws.services.iam.iam_service import IAM
+
         with mock.patch(
-            "providers.aws.services.iam.iam_user_two_active_access_key.iam_user_two_active_access_key.iam_client",
+            "providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles.iam_client",
             new=IAM(current_audit_info),
         ):
             from providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles import (
@@ -108,12 +117,16 @@ class Test_iam_policy_attached_only_to_group_or_roles:
 
     @mock_iam
     def test_iam_user_no_policies(self):
+        result = []
         iam_client = client("iam")
         user = "test_no_policies"
         iam_client.create_user(UserName=user)
 
+        from providers.aws.lib.audit_info.audit_info import current_audit_info
+        from providers.aws.services.iam.iam_service import IAM
+
         with mock.patch(
-            "providers.aws.services.iam.iam_user_two_active_access_key.iam_user_two_active_access_key.iam_client",
+            "providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles.iam_client",
             new=IAM(current_audit_info),
         ):
             from providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles import (
