@@ -1,0 +1,35 @@
+{
+  "Provider": "aws",
+  "CheckID": "apigateway_lambda_authorizers",
+  "CheckTitle": "Check if API Gateway has configured authorizers.",
+  "CheckType": ["IAM"],
+  "ServiceName": "apigateway",
+  "SubServiceName": "rest_api",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsApiGatewayRestApi",
+  "Description": "Check if API Gateway has configured authorizers.",
+  "Risk": "If no authorizer is enabled anyone can use the service.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Implement Amazon Cognito or a Lambda function to control access to your API.",
+      "Url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-use-lambda-authorizer.html"
+    }
+  },
+  "Categories": [],
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  },
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "Compliance": []
+}
