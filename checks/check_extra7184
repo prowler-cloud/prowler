@@ -42,11 +42,15 @@ extra7184(){
                     textInfo "${regx}: Access Denied trying to get Directiory Service snapshot limits" "${regx}"
                     continue
                 fi
+                if grep -q -E 'ClientException' <<< "${LIMIT_DATA}"; then
+                    textInfo "${regx}: Error calling the GetSnapshotLimits operation: Snapshot limits can be fetched only for VPC or Microsoft AD directories (directory id: ${DIRECTORY_ID})" "${regx}"
+                    continue
+                fi
                 echo "${LIMIT_DATA}" | while read -r CURRENT_SNAPSHOTS_COUNT SNAPSHOTS_LIMIT SNAPSHOTS_LIMIT_REACHED; do
-                    if [[ ${SNAPSHOTS_LIMIT_REACHED} == "true" ]] 
+                    if [[ ${SNAPSHOTS_LIMIT_REACHED} == "true" ]]
                     then
                         textFail "${regx}: Directory Service ${DIRECTORY_ID} reached ${SNAPSHOTS_LIMIT} Snapshots Limit" "${regx}" "${DIRECTORY_ID}"
-                    else 
+                    else
                         LIMIT_REMAIN=$(("${SNAPSHOTS_LIMIT}" - "${CURRENT_SNAPSHOTS_COUNT}"))
                         if [[ "${LIMIT_REMAIN}" -le "${THRESHOLD}" ]]; then
                             textFail "${regx}: Directory Service ${DIRECTORY_ID} is about to reach ${SNAPSHOTS_LIMIT} snapshots which is the limit" "${regx}" "${DIRECTORY_ID}"
