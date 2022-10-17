@@ -3,9 +3,6 @@ from unittest import mock
 from boto3 import client
 from moto import mock_iam
 
-from providers.aws.lib.audit_info.audit_info import current_audit_info
-from providers.aws.services.iam.iam_service import IAM
-
 
 class Test_iam_password_policy_minimum_length_14:
     @mock_iam
@@ -13,6 +10,9 @@ class Test_iam_password_policy_minimum_length_14:
         iam_client = client("iam")
         # update password policy
         iam_client.update_account_password_policy(MinimumPasswordLength=14)
+
+        from providers.aws.lib.audit_info.audit_info import current_audit_info
+        from providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "providers.aws.services.iam.iam_password_policy_minimum_length_14.iam_password_policy_minimum_length_14.iam_client",
@@ -33,6 +33,9 @@ class Test_iam_password_policy_minimum_length_14:
         # update password policy
         iam_client.update_account_password_policy(MinimumPasswordLength=20)
 
+        from providers.aws.lib.audit_info.audit_info import current_audit_info
+        from providers.aws.services.iam.iam_service import IAM
+
         with mock.patch(
             "providers.aws.services.iam.iam_password_policy_minimum_length_14.iam_password_policy_minimum_length_14.iam_client",
             new=IAM(current_audit_info),
@@ -51,6 +54,9 @@ class Test_iam_password_policy_minimum_length_14:
         iam_client = client("iam")
         # update password policy
         iam_client.update_account_password_policy(MinimumPasswordLength=10)
+
+        from providers.aws.lib.audit_info.audit_info import current_audit_info
+        from providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "providers.aws.services.iam.iam_password_policy_minimum_length_14.iam_password_policy_minimum_length_14.iam_client",
