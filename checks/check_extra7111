@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-    
+
 # Prowler - the handy cloud security tool (copyright 2020) by Toni de la Fuente
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -31,17 +31,21 @@ extra7111(){
             textInfo "$regx: Access Denied trying to list notebook instances" "$regx"
             continue
         fi
-        if [[ $LIST_SM_NB_INSTANCES ]];then 
+        if [[ $LIST_SM_NB_INSTANCES ]];then
             for nb_instance in $LIST_SM_NB_INSTANCES; do
-                SM_NB_DIRECTINET=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-notebook-instance --notebook-instance-name $nb_instance --query 'DirectInternetAccess' --output text)
+                SM_NB_DIRECTINET=$($AWSCLI $PROFILE_OPT --region $regx sagemaker describe-notebook-instance --notebook-instance-name $nb_instance --query 'DirectInternetAccess' --output text 2>&1)
+                if [[ $(echo "$SM_NB_DIRECTINET" | grep -E 'AccessDenied|UnauthorizedOperation|AuthorizationError') ]]; then
+                    textInfo "$regx: Access Denied trying to describe notebook instances" "$regx"
+                    continue
+                fi
                 if [[ "${SM_NB_DIRECTINET}" == "Enabled" ]]; then
                     textFail "${regx}: Sagemaker Notebook instance $nb_instance has direct internet access enabled" "${regx}" "$nb_instance"
                 else
                     textPass "${regx}: Sagemaker Notebook instance $nb_instance has direct internet access disabled" "${regx}" "$nb_instance"
-                fi 
+                fi
             done
-        else 
+        else
             textInfo "${regx}: No Sagemaker Notebook instances found" "${regx}"
-        fi 
+        fi
     done
 }
