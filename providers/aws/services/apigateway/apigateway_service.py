@@ -6,7 +6,7 @@ from providers.aws.aws_provider import generate_regional_clients
 
 
 ################## EC2
-class ApiGateway:
+class APIGateway:
     def __init__(self, audit_info):
         self.service = "apigateway"
         self.session = audit_info.audit_session
@@ -31,27 +31,25 @@ class ApiGateway:
             t.join()
 
     def __get_rest_apis__(self, regional_client):
-        logger.info("ApiGateway - Getting Rest APIs...")
+        logger.info("APIGateway - Getting Rest APIs...")
         try:
             get_rest_apis_paginator = regional_client.get_paginator("get_rest_apis")
             for page in get_rest_apis_paginator.paginate():
-                for items in page["items"]:
-                    for apigw in items["items"]:
-                        self.rest_apis.append(
-                            RestAPI(
-                                apigw["id"],
-                                regional_client.region,
-                                apigw["name"],
-                                apigw["description"],
-                            )
+                for apigw in page["items"]:
+                    self.rest_apis.append(
+                        RestAPI(
+                            apigw["id"],
+                            regional_client.region,
+                            apigw["name"],
                         )
+                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}: {error}"
             )
 
     def __get_authorizers__(self):
-        logger.info("ApiGateway - Getting Rest APIs authorizer...")
+        logger.info("APIGateway - Getting Rest APIs authorizer...")
         try:
             for rest_api in self.rest_apis:
                 regional_client = self.regional_clients[rest_api.region]
@@ -62,23 +60,23 @@ class ApiGateway:
             logger.error(f"{error.__class__.__name__}: {error}")
 
     def __get_rest_api__(self):
-        logger.info("ApiGateway - Describing Rest API...")
+        logger.info("APIGateway - Describing Rest API...")
         try:
             for rest_api in self.rest_apis:
                 regional_client = self.regional_clients[rest_api.region]
-                rest_api_info = regional_client.get_authorizers(restApiId=rest_api.id)
-                if rest_api_info["endpointConfiguration"] == "PRIVATE":
+                rest_api_info = regional_client.get_rest_api(restApiId=rest_api.id)
+                if rest_api_info["endpointConfiguration"]["types"] == ["PRIVATE"]:
                     rest_api.public_endpoint = False
         except Exception as error:
             logger.error(f"{error.__class__.__name__}: {error}")
 
     def __get_stages__(self):
-        logger.info("ApiGateway - Getting stages for Rest APIs...")
+        logger.info("APIGateway - Getting stages for Rest APIs...")
         try:
             for rest_api in self.rest_apis:
                 regional_client = self.regional_clients[rest_api.region]
                 stages = regional_client.get_stages(restApiId=rest_api.id)
-                for stage in stages:
+                for stage in stages["item"]:
                     waf = None
                     logging = False
                     client_certificate = False
@@ -125,7 +123,6 @@ class RestAPI:
     id: str
     region: str
     name: str
-    description: str
     authorizer: bool
     public_endpoint: bool
     stages: list[Stage]
@@ -135,11 +132,10 @@ class RestAPI:
         id,
         region,
         name,
-        description,
     ):
         self.id = id
         self.region = region
         self.name = name
-        self.description = description
         self.authorizer = False
         self.public_endpoint = True
+        self.stages = []
