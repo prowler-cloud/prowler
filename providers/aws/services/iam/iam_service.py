@@ -27,7 +27,9 @@ class IAM:
         self.__list_inline_user_policies__()
         self.__list_mfa_devices__()
         self.password_policy = self.__get_password_policy__()
-        self.support_roles = self.__get_support_roles__()
+        self.entities_attached_to_support_roles = (
+            self.__get_entities_attached_to_support_roles__()
+        )
         self.policies = self.__list_policies__()
         self.list_policies_version = self.__list_policies_version__(self.policies)
 
@@ -278,7 +280,7 @@ class IAM:
         except Exception as error:
             logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
 
-    def __get_support_roles__(self):
+    def __get_entities_attached_to_support_roles__(self):
         try:
             support_roles = []
             support_entry_policy_arn = (

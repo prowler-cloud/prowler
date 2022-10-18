@@ -377,7 +377,7 @@ class Test_IAM_Service:
         )
 
     @mock_iam
-    def test__get_support_roles__no_roles(self):
+    def test__get_entities_attached_to_support_roles__no_roles(self):
         iam_client = client("iam")
         support_roles = iam_client.list_entities_for_policy(
             PolicyArn="arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy",
@@ -386,10 +386,10 @@ class Test_IAM_Service:
 
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
-        assert len(iam.support_roles) == 0
+        assert len(iam.entities_attached_to_support_roles) == 0
 
     @mock_iam
-    def test__get_support_roles__(self):
+    def test__get_entities_attached_to_support_roles__(self):
         iam_client = client("iam")
         role_name = "test_support"
         assume_role_policy_document = {
@@ -417,8 +417,8 @@ class Test_IAM_Service:
 
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
-        assert len(iam.support_roles) == 1
-        assert iam.support_roles[0]["RoleName"] == role_name
+        assert len(iam.entities_attached_to_support_roles) == 1
+        assert iam.entities_attached_to_support_roles[0]["RoleName"] == role_name
 
     @mock_iam
     def test___list_policies__(self):

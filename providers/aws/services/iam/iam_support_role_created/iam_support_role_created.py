@@ -11,9 +11,9 @@ class iam_support_role_created(Check):
         report.resource_arn = (
             "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
         )
-        if iam_client.support_roles:
+        if iam_client.entities_attached_to_support_roles:
             report.status = "PASS"
-            report.status_extended = f"Support policy attached to role {iam_client.support_roles[0]['RoleName']}"
+            report.status_extended = f"Support policy attached to role {iam_client.entities_attached_to_support_roles[0]['RoleName']}"
         else:
             report.status = "FAIL"
             report.status_extended = f"Support policy is not attached to any role"
