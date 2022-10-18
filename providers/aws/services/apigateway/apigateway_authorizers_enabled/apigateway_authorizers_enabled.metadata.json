@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "apigateway_lambda_authorizers",
+  "CheckID": "apigateway_authorizers_enabled",
   "CheckTitle": "Check if API Gateway has configured authorizers.",
   "CheckType": ["IAM"],
   "ServiceName": "apigateway",

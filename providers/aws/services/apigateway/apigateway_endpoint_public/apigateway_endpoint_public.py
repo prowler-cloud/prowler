@@ -18,6 +18,6 @@ class apigateway_endpoint_public(Check):
                     f"API Gateway {rest_api.name} ID {rest_api.id} is private."
                 )
                 report.resource_id = rest_api.name
-                findings.append(report)
+            findings.append(report)
 
         return findings

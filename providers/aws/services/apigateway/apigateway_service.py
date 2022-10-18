@@ -5,7 +5,7 @@ from lib.logger import logger
 from providers.aws.aws_provider import generate_regional_clients
 
 
-################## EC2
+################## APIGateway
 class APIGateway:
     def __init__(self, audit_info):
         self.service = "apigateway"
@@ -53,7 +53,9 @@ class APIGateway:
         try:
             for rest_api in self.rest_apis:
                 regional_client = self.regional_clients[rest_api.region]
-                authorizers = regional_client.get_authorizers(restApiId=rest_api.id)
+                authorizers = regional_client.get_authorizers(restApiId=rest_api.id)[
+                    "items"
+                ]
                 if authorizers:
                     rest_api.authorizer = True
         except Exception as error:
@@ -80,10 +82,12 @@ class APIGateway:
                     waf = None
                     logging = False
                     client_certificate = False
+                    print(stage)
                     if "webAclArn" in stage:
                         waf = stage["webAclArn"]
                     if "methodSettings" in stage:
-                        logging = True
+                        if stage["methodSettings"]:
+                            logging = True
                     if "clientCertificateId" in stage:
                         client_certificate = True
                     rest_api.stages.append(

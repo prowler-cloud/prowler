@@ -11,11 +11,11 @@ class apigateway_logging_enabled(Check):
             for stage in rest_api.stages:
                 if stage.logging:
                     report.status = "PASS"
-                    report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} in {stage.name} has logging enabled."
+                    report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} in stage {stage.name} has logging enabled."
                     report.resource_id = rest_api.name
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} in {stage.name} has logging disabled."
+                    report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} in stage {stage.name} has logging disabled."
                     report.resource_id = rest_api.name
                 findings.append(report)
 

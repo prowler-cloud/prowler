@@ -99,7 +99,7 @@ class Test_APIGateway_Service:
         apigateway = APIGateway(audit_info)
         assert apigateway.rest_apis[0].authorizer == True
 
-    # Test APIGateway Get Authorizers
+    # Test APIGateway Get Rest API
     @mock_apigateway
     def test__get_rest_api__(self):
         # Generate APIGateway Client
@@ -113,7 +113,7 @@ class Test_APIGateway_Service:
         apigateway = APIGateway(audit_info)
         assert apigateway.rest_apis[0].public_endpoint == False
 
-    # Test APIGateway Get Authorizers
+    # Test APIGateway Get Stages
     @mock_apigateway
     def test__get_stages__(self):
         # Generate APIGateway Client
@@ -145,15 +145,20 @@ class Test_APIGateway_Service:
             integrationHttpMethod="POST",
             uri="http://test.com",
         )
-        deployment = apigateway_client.create_deployment(
+        apigateway_client.create_deployment(
             restApiId=rest_api["id"],
             stageName="test",
         )
-        apigateway_client.create_stage(
+        apigateway_client.update_stage(
             restApiId=rest_api["id"],
-            stageName="test-stage",
-            deploymentId=deployment["id"],
-            tracingEnabled=True,
+            stageName="test",
+            patchOperations=[
+                {
+                    "op": "replace",
+                    "path": "/*/*/logging/loglevel",
+                    "value": "INFO",
+                },
+            ],
         )
         audit_info = self.set_mocked_audit_info()
         apigateway = APIGateway(audit_info)
