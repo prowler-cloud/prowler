@@ -1,6 +1,7 @@
 from unittest import mock
-from mock import patch
+
 from providers.aws.services.accessanalyzer.accessanalyzer_service import Analyzer
+
 
 class Test_accessanalyzer_enabled_without_findings:
     def test_no_analyzers(self):
@@ -14,6 +15,7 @@ class Test_accessanalyzer_enabled_without_findings:
             from providers.aws.services.accessanalyzer.accessanalyzer_enabled_without_findings.accessanalyzer_enabled_without_findings import (
                 accessanalyzer_enabled_without_findings,
             )
+
             check = accessanalyzer_enabled_without_findings()
             result = check.execute()
 
@@ -22,7 +24,8 @@ class Test_accessanalyzer_enabled_without_findings:
     def test_one_analyzer_not_available(self):
         # Include analyzers to check
         accessanalyzer_client = mock.MagicMock
-        accessanalyzer_client.analyzers =  [Analyzer(
+        accessanalyzer_client.analyzers = [
+            Analyzer(
                 "",
                 "Test Analyzer",
                 "NOT_AVAILABLE",
@@ -30,11 +33,16 @@ class Test_accessanalyzer_enabled_without_findings:
                 "",
                 "",
                 "eu-west-1",
-            )]
-        with mock.patch("providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer", accessanalyzer_client):
+            )
+        ]
+        with mock.patch(
+            "providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
+            accessanalyzer_client,
+        ):
             from providers.aws.services.accessanalyzer.accessanalyzer_enabled_without_findings.accessanalyzer_enabled_without_findings import (
                 accessanalyzer_enabled_without_findings,
             )
+
             check = accessanalyzer_enabled_without_findings()
             result = check.execute()
 
@@ -42,7 +50,8 @@ class Test_accessanalyzer_enabled_without_findings:
 
     def test_two_analyzers(self):
         accessanalyzer_client = mock.MagicMock
-        accessanalyzer_client.analyzers = [Analyzer(
+        accessanalyzer_client.analyzers = [
+            Analyzer(
                 "",
                 "Test Analyzer",
                 "NOT_AVAILABLE",
@@ -52,15 +61,15 @@ class Test_accessanalyzer_enabled_without_findings:
                 "eu-west-1",
             ),
             Analyzer(
-                    "",
-                    "Test Analyzer",
-                    "ACTIVE",
-                    10,
-                    "",
-                    "",
-                    "eu-west-1",
-                )
-                ]
+                "",
+                "Test Analyzer",
+                "ACTIVE",
+                10,
+                "",
+                "",
+                "eu-west-1",
+            ),
+        ]
 
         # Patch AccessAnalyzer Client
         with mock.patch(
@@ -80,22 +89,26 @@ class Test_accessanalyzer_enabled_without_findings:
             assert result[0].status_extended == "IAM Access Analyzer is not enabled"
             assert result[0].resource_id == "Test Analyzer"
             assert result[1].status == "FAIL"
-            assert result[1].status_extended == f"IAM Access Analyzer Test Analyzer has 10 active findings"
+            assert (
+                result[1].status_extended
+                == f"IAM Access Analyzer Test Analyzer has 10 active findings"
+            )
             assert result[1].resource_id == "Test Analyzer"
 
-    
     def test_one_active_analyzer_without_findings(self):
         accessanalyzer_client = mock.MagicMock
-        accessanalyzer_client.analyzers = [Analyzer(
-            "",
+        accessanalyzer_client.analyzers = [
+            Analyzer(
+                "",
                 "Test Analyzer",
                 "ACTIVE",
                 0,
                 "",
                 "",
                 "eu-west-1",
-            )]
-        
+            )
+        ]
+
         with mock.patch(
             "providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             new=accessanalyzer_client,
@@ -110,12 +123,16 @@ class Test_accessanalyzer_enabled_without_findings:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].status_extended == f"IAM Access Analyzer Test Analyzer has no active findings"
+            assert (
+                result[0].status_extended
+                == f"IAM Access Analyzer Test Analyzer has no active findings"
+            )
             assert result[0].resource_id == "Test Analyzer"
 
     def test_one_active_analyzer_not_active(self):
         accessanalyzer_client = mock.MagicMock
-        accessanalyzer_client.analyzers = [Analyzer(
+        accessanalyzer_client.analyzers = [
+            Analyzer(
                 "",
                 "Test Analyzer",
                 "FAILED",
@@ -123,7 +140,8 @@ class Test_accessanalyzer_enabled_without_findings:
                 "",
                 "",
                 "eu-west-1",
-            )]
+            )
+        ]
         # Patch AccessAnalyzer Client
         with mock.patch(
             "providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
@@ -139,6 +157,8 @@ class Test_accessanalyzer_enabled_without_findings:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == f"IAM Access Analyzer Test Analyzer is not active"
+            assert (
+                result[0].status_extended
+                == f"IAM Access Analyzer Test Analyzer is not active"
+            )
             assert result[0].resource_id == "Test Analyzer"
-
