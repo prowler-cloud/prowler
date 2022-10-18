@@ -25,7 +25,7 @@ class accessanalyzer_enabled_without_findings(Check):
                     report.resource_arn = analyzer.arn
             elif analyzer.status == "NOT_AVAILABLE":
                 report.status = "FAIL"
-                report.status_extended = f"IAM Access Analyzer is not enabled"
+                report.status_extended = "IAM Access Analyzer is not enabled"
                 report.resource_id = analyzer.name
             else:
                 report.status = "FAIL"

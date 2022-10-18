@@ -32,6 +32,8 @@ def mock_make_api_call(self, operation_name, kwarg):
             ]
         }
     if operation_name == "ListFindings":
+        # If we only want to count the number of findings
+        # we return a list of values just to count them
         return {"findings": [0, 1, 2]}
     return make_api_call(self, operation_name, kwarg)
 
@@ -53,7 +55,6 @@ class Test_AccessAnalyzer_Service:
     # Test AccessAnalyzer Client
     def test__get_client__(self):
         access_analyzer = AccessAnalyzer(current_audit_info)
-        print(access_analyzer.regional_clients[AWS_REGION].__dict__)
         assert (
             access_analyzer.regional_clients[AWS_REGION].__class__.__name__
             == "AccessAnalyzer"
@@ -62,7 +63,6 @@ class Test_AccessAnalyzer_Service:
     # Test AccessAnalyzer Session
     def test__get_session__(self):
         access_analyzer = AccessAnalyzer(current_audit_info)
-        assert len(access_analyzer.regional_clients)
         assert access_analyzer.session.__class__.__name__ == "Session"
 
     def test__list_analyzers__(self):
