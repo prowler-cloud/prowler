@@ -25,6 +25,7 @@ class IAM:
         self.__list_attached_group_policies__()
         self.__list_mfa_devices__()
         self.password_policy = self.__get_password_policy__()
+        self.saml_providers = self.__list_saml_providers__()
 
     def __get_client__(self):
         return self.client
@@ -236,6 +237,16 @@ class IAM:
                 user.mfa_devices = mfa_devices
         except Exception as error:
             logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+
+    def __list_saml_providers__(self):
+        try:
+            saml_providers = self.client.list_saml_providers()["SAMLProviderList"]
+
+        except Exception as error:
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+
+        finally:
+            return saml_providers
 
 
 @dataclass

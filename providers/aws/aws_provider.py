@@ -290,7 +290,10 @@ def generate_regional_clients(service: str, audit_info: AWS_Audit_Info) -> dict:
     # Get json locally
     f = open_file(aws_services_json_file)
     data = parse_json_file(f)
-    if service == "apigatewayv2":
+    # Check if it is a subservice
+    if service == "accessanalyzer":
+        json_regions = data["services"]['iam']["regions"][audit_info.audited_partition]
+    elif service == "apigatewayv2":
         json_regions = data["services"]["apigateway"]["regions"][
             audit_info.audited_partition
         ]
