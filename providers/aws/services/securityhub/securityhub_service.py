@@ -13,7 +13,7 @@ class SecurityHub:
         self.audited_account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.securityhubs = []
-        self.__threading_call__(self.__list_analyzers__)
+        self.__threading_call__(self.__describe_hub__)
 
     def __get_session__(self):
         return self.session
@@ -27,8 +27,8 @@ class SecurityHub:
         for t in threads:
             t.join()
 
-    def __list_analyzers__(self, regional_client):
-        logger.info("SecurityHub - Getting Standards...")
+    def __describe_hub__(self, regional_client):
+        logger.info("SecurityHub - Describing Hub...")
         try:
             get_enabled_standards_paginator = regional_client.get_paginator(
                 "get_enabled_standards"
@@ -64,7 +64,7 @@ class SecurityHub:
 
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 

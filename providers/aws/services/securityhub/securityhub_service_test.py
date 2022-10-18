@@ -1,34 +1,69 @@
-from boto3 import session
+from unittest.mock import patch
 
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
+import botocore
 
-AWS_ACCOUNT_NUMBER = 123456789012
-AWS_REGION = "us-east-1"
+from providers.aws.lib.audit_info.audit_info import current_audit_info
+from providers.aws.services.securityhub.securityhub_service import SecurityHub
+
+# Mock Test Region
+AWS_REGION = "eu-west-1"
+
+# Mocking Access Analyzer Calls
+make_api_call = botocore.client.BaseClient._make_api_call
+
+# As you can see the operation_name has the list_analyzers snake_case form but
+# we are using the ListAnalyzers form.
+# Rationale -> https://github.com/boto/botocore/blob/develop/botocore/client.py#L810:L816
+#
+# We have to mock every AWS API call using Boto3
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "GetEnabledStandards":
+        return {
+            "StandardsSubscriptions": [
+                {
+                    "StandardsArn": "arn:aws:securityhub:::ruleset/cis-aws-foundations-benchmark/v/1.2.0",
+                    "StandardsSubscriptionArn": "arn:aws:securityhub:us-east-1:0123456789012:subscription/cis-aws-foundations-benchmark/v/1.2.0",
+                    "StandardsInput": {"string": "string"},
+                    "StandardsStatus": "READY",
+                },
+            ]
+        }
+    if operation_name == "DescribeHub":
+        return {
+            "HubArn": "arn:aws:securityhub:us-east-1:0123456789012:hub/default",
+        }
+    return make_api_call(self, operation_name, kwarg)
 
 
+# Mock generate_regional_clients()
+def mock_generate_regional_clients(service, audit_info):
+    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
+    regional_client.region = AWS_REGION
+    return {AWS_REGION: regional_client}
+
+
+# Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
+@patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+@patch(
+    "providers.aws.services.securityhub.securityhub_service.generate_regional_clients",
+    new=mock_generate_regional_clients,
+)
 class Test_SecurityHub_Service:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
+    # Test SecurityHub Client
+    def test__get_client__(self):
+        access_analyzer = SecurityHub(current_audit_info)
+        assert (
+            access_analyzer.regional_clients[AWS_REGION].__class__.__name__
+            == "SecurityHub"
         )
-        return audit_info
 
-    # Test SecurityHub Service
-    # not covered by moto
-    # more info here https://github.com/spulec/moto/blob/a2a1967ef869091d747da74ffb4f4f05bd3535cd/IMPLEMENTATION_COVERAGE.md
-    # lol
+    # Test SecurityHub Session
+    def test__get_session__(self):
+        access_analyzer = SecurityHub(current_audit_info)
+        assert access_analyzer.session.__class__.__name__ == "Session"
+
+    def test__describe_hub__(self):
+        # Set partition for the service
+        current_audit_info.audited_partition = "aws"
+        securityhub = SecurityHub(current_audit_info)
+        assert len(securityhub.securityhubs) == 1
