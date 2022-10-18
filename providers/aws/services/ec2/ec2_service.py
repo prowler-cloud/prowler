@@ -21,6 +21,8 @@ class EC2:
         self.snapshots = []
         self.__threading_call__(self.__describe_snapshots__)
         self.__get_snapshot_public__()
+        self.elastic_ips = []
+        self.__threading_call__(self.__describe_elastic_ips__)
 
     def __get_session__(self):
         return self.session
@@ -102,7 +104,7 @@ class EC2:
             )
 
     def __describe_network_acls__(self, regional_client):
-        logger.info("EC2 - Describing Security Groups...")
+        logger.info("EC2 - Describing Network ACLs...")
         try:
             describe_network_acls_paginator = regional_client.get_paginator(
                 "describe_network_acls"
@@ -158,6 +160,29 @@ class EC2:
                             snapshot.public = True
         except Exception as error:
             logger.error(f"{error.__class__.__name__}: {error}")
+
+    def __describe_elastic_ips__(self, regional_client):
+        logger.info("EC2 - Describing Security Groups...")
+        try:
+            describe_network_interfaces_paginator = regional_client.get_paginator(
+                "describe_network_interfaces"
+            )
+            for page in describe_network_interfaces_paginator.paginate():
+                for eip in page["NetworkInterfaces"]:
+                    # Get only public attached ones
+                    if "Association" in eip:
+                        self.elastic_ips.append(
+                            ElasticIP(
+                                eip["Association"]["PublicIp"],
+                                eip["VpcId"],
+                                eip["SubnetId"],
+                                regional_client.region,
+                            )
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+            )
 
 
 @dataclass
@@ -228,9 +253,24 @@ class SecurityGroup:
 @dataclass
 class NetworkACL:
     id: str
+    region: str
     entries: list[dict]
 
     def __init__(self, id, region, entries):
         self.id = id
         self.region = region
         self.entries = entries
+
+
+@dataclass
+class ElasticIP:
+    public_ip: str
+    vpc: str
+    subnet: str
+    region: str
+
+    def __init__(self, public_ip, vpc, subnet, region):
+        self.public_ip = public_ip
+        self.vpc = vpc
+        self.subnet = subnet
+        self.region = region

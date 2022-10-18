@@ -1,5 +1,7 @@
 from lib.check.models import Check, Check_Report
-from providers.aws.services.accessanalyzer.accessanalyzer_client import accessanalyzer_client
+from providers.aws.services.accessanalyzer.accessanalyzer_client import (
+    accessanalyzer_client,
+)
 
 
 class accessanalyzer_enabled_without_findings(Check):
@@ -16,16 +18,20 @@ class accessanalyzer_enabled_without_findings(Check):
                     report.resource_arn = analyzer.arn
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"IAM Access Analyzer {analyzer.name} has no active findings"
+                    report.status_extended = (
+                        f"IAM Access Analyzer {analyzer.name} has no active findings"
+                    )
                     report.resource_id = analyzer.name
                     report.resource_arn = analyzer.arn
             elif analyzer.status == "NOT_AVAILABLE":
                 report.status = "FAIL"
-                report.status_extended = f"IAM Access Analyzer is not enabled"
+                report.status_extended = "IAM Access Analyzer is not enabled"
                 report.resource_id = analyzer.name
             else:
                 report.status = "FAIL"
-                report.status_extended = f"IAM Access Analyzer {analyzer.name} is not active"
+                report.status_extended = (
+                    f"IAM Access Analyzer {analyzer.name} is not active"
+                )
                 report.resource_id = analyzer.name
                 report.resource_arn = analyzer.arn
             findings.append(report)

@@ -4,8 +4,9 @@ from dataclasses import dataclass
 from lib.logger import logger
 from providers.aws.aws_provider import generate_regional_clients
 
-################## ACCESSANALYZER
-class ACCESSANALYZER:
+
+################## AccessAnalyzer
+class AccessAnalyzer:
     def __init__(self, audit_info):
         self.service = "accessanalyzer"
         self.session = audit_info.audit_session
@@ -28,11 +29,9 @@ class ACCESSANALYZER:
             t.join()
 
     def __list_analyzers__(self, regional_client):
-        logger.info("ACCESSANALYZER - Listing Analyzers...")
+        logger.info("AccessAnalyzer - Listing Analyzers...")
         try:
-            list_analyzers_paginator = regional_client.get_paginator(
-                "list_analyzers"
-            )
+            list_analyzers_paginator = regional_client.get_paginator("list_analyzers")
             analyzer_count = 0
             for page in list_analyzers_paginator.paginate():
                 analyzer_count += len(page["analyzers"])
@@ -64,10 +63,11 @@ class ACCESSANALYZER:
 
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
     def __list_findings__(self):
-        logger.info("ACCESSANALYZER - Listing Findings per Analyzer...")
+        logger.info("AccessAnalyzer - Listing Findings per Analyzer...")
         try:
             for analyzer in self.analyzers:
                 if analyzer.status != "NOT_AVAILABLE":
@@ -76,7 +76,9 @@ class ACCESSANALYZER:
                     list_findings_paginator = regional_client.get_paginator(
                         "list_findings"
                     )
-                    for page in list_findings_paginator.paginate(analyzerArn=analyzer.arn):
+                    for page in list_findings_paginator.paginate(
+                        analyzerArn=analyzer.arn
+                    ):
                         findings_count += len(page["findings"])
                     analyzer.findings_count = findings_count
 
