@@ -14,15 +14,13 @@ class iam_password_policy_uppercase(Check):
             if iam_client.password_policy.uppercase:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Password uppercase option in password policy is set."
+                    "IAM password policy requires at least one uppercase letter."
                 )
             else:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Password uppercase option in password policy is not set."
-                )
+                report.status_extended = "IAM password policy does not require at least one uppercase letter."
         else:
             report.status = "FAIL"
-            report.status_extended = f"Password policy cannot be found"
+            report.status_extended = "There is no password policy."
         findings.append(report)
         return findings

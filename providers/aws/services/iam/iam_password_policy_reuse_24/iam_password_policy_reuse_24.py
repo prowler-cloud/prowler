@@ -17,13 +17,15 @@ class iam_password_policy_reuse_24(Check):
             ):
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Password reuse prevention in password policy is equal to 24."
+                    "IAM password policy reuse prevention is equal to 24."
                 )
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Password reuse prevention in password policy is less than 24 or not set."
+                report.status_extended = (
+                    "IAM password policy reuse prevention is less than 24 or not set."
+                )
         else:
             report.status = "FAIL"
-            report.status_extended = f"Password policy cannot be found"
+            report.status_extended = "Password policy cannot be found"
         findings.append(report)
         return findings

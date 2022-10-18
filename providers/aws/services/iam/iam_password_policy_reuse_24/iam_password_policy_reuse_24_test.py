@@ -31,7 +31,7 @@ class Test_iam_password_policy_reuse_24:
     def test_iam_password_policy_reuse_prevention_less_24(self):
         iam_client = client("iam")
         # update password policy
-        iam_client.update_account_password_policy(MinimumPasswordLength=20)
+        iam_client.update_account_password_policy(PasswordReusePrevention=20)
 
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.iam.iam_service import IAM
