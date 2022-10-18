@@ -5,7 +5,6 @@ from providers.aws.services.iam.iam_client import iam_client
 class iam_user_no_setup_initial_access_key(Check):
     def execute(self) -> Check_Report:
         findings = []
-        print(iam_client.credential_report)
         for user_record in iam_client.credential_report:
             if (
                 user_record["access_key_1_active"] == "true"
