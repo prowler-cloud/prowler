@@ -32,6 +32,7 @@ class IAM:
         )
         self.policies = self.__list_policies__()
         self.list_policies_version = self.__list_policies_version__(self.policies)
+        self.saml_providers = self.__list_saml_providers__()
 
     def __get_client__(self):
         return self.client
@@ -320,6 +321,16 @@ class IAM:
             logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
         finally:
             return policies_version
+    
+    def __list_saml_providers__(self):
+        try:
+            saml_providers = self.client.list_saml_providers()["SAMLProviderList"]
+        except Exception as error:
+            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+
+        finally:
+            return saml_providers
+
 
 
 @dataclass
