@@ -87,7 +87,6 @@ class AccessAnalyzer:
                 f"{regional_client.region} -- {error.__class__.__name__}: {error}"
             )
 
-
 @dataclass
 class Analyzer:
     arn: str
