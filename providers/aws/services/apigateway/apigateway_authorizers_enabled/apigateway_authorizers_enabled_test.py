@@ -4,6 +4,8 @@ from boto3 import client
 from moto import mock_apigateway, mock_iam, mock_lambda
 from moto.core import DEFAULT_ACCOUNT_ID as ACCOUNT_ID
 
+AWS_REGION = "us-east-1"
+
 
 class Test_apigateway_authorizers_enabled:
     @mock_apigateway
@@ -32,7 +34,7 @@ class Test_apigateway_authorizers_enabled:
     @mock_lambda
     def test_apigateway_one_rest_api_with_lambda_authorizer(self):
         # Create APIGateway Mocked Resources
-        apigateway_client = client("apigateway")
+        apigateway_client = client("apigateway", region_name=AWS_REGION)
         lambda_client = client("lambda")
         iam_client = client("iam")
         # Create APIGateway Rest API
@@ -80,7 +82,7 @@ class Test_apigateway_authorizers_enabled:
     @mock_apigateway
     def test_apigateway_one_rest_api_without_lambda_authorizer(self):
         # Create APIGateway Mocked Resources
-        apigateway_client = client("apigateway")
+        apigateway_client = client("apigateway", region_name=AWS_REGION)
         # Create APIGateway Rest API
         apigateway_client.create_rest_api(
             name="test-rest-api",

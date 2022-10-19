@@ -3,6 +3,8 @@ from unittest import mock
 from boto3 import client
 from moto import mock_apigateway
 
+AWS_REGION = "us-east-1"
+
 
 class Test_apigateway_logging_enabled:
     @mock_apigateway
@@ -29,7 +31,7 @@ class Test_apigateway_logging_enabled:
     @mock_apigateway
     def test_apigateway_one_rest_api_with_logging(self):
         # Create APIGateway Mocked Resources
-        apigateway_client = client("apigateway")
+        apigateway_client = client("apigateway", region_name=AWS_REGION)
         rest_api = apigateway_client.create_rest_api(
             name="test-rest-api",
         )
@@ -93,7 +95,7 @@ class Test_apigateway_logging_enabled:
     @mock_apigateway
     def test_apigateway_one_rest_api_without_logging(self):
         # Create APIGateway Mocked Resources
-        apigateway_client = client("apigateway")
+        apigateway_client = client("apigateway", region_name=AWS_REGION)
         # Create APIGateway Rest API
         rest_api = apigateway_client.create_rest_api(
             name="test-rest-api",

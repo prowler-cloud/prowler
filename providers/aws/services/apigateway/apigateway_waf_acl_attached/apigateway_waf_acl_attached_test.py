@@ -3,6 +3,8 @@ from unittest import mock
 from boto3 import client
 from moto import mock_apigateway, mock_wafv2
 
+AWS_REGION = "us-east-1"
+
 
 class Test_apigateway_waf_acl_attached:
     @mock_apigateway
@@ -30,7 +32,7 @@ class Test_apigateway_waf_acl_attached:
     @mock_wafv2
     def test_apigateway_one_rest_api_with_waf(self):
         # Create APIGateway Mocked Resources
-        apigateway_client = client("apigateway")
+        apigateway_client = client("apigateway", region_name=AWS_REGION)
         waf_client = client("wafv2")
         rest_api = apigateway_client.create_rest_api(
             name="test-rest-api",
@@ -99,7 +101,7 @@ class Test_apigateway_waf_acl_attached:
     @mock_apigateway
     def test_apigateway_one_rest_api_without_waf(self):
         # Create APIGateway Mocked Resources
-        apigateway_client = client("apigateway")
+        apigateway_client = client("apigateway", region_name=AWS_REGION)
         # Create APIGateway Rest API
         rest_api = apigateway_client.create_rest_api(
             name="test-rest-api",
