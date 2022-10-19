@@ -42,7 +42,7 @@ class SecurityHub:
                 self.securityhubs.append(
                     SecurityHubHub(
                         "",
-                        "",
+                        "Security Hub",
                         "NOT_AVAILABLE",
                         "",
                         regional_client.region,

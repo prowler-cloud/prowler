@@ -67,3 +67,9 @@ class Test_SecurityHub_Service:
         current_audit_info.audited_partition = "aws"
         securityhub = SecurityHub(current_audit_info)
         assert len(securityhub.securityhubs) == 1
+        assert (
+            securityhub.securityhubs[0].arn
+            == "arn:aws:securityhub:us-east-1:0123456789012:hub/default"
+        )
+        assert securityhub.securityhubs[0].id == "default"
+        assert securityhub.securityhubs[0].standards == " cis-aws-foundations-benchmark"
