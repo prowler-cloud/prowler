@@ -5,6 +5,8 @@ from boto3 import client
 from mock import patch
 from moto import mock_apigatewayv2
 
+AWS_REGION = "us-east-1"
+
 # Mocking ApiGatewayV2 Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 # Rationale -> https://github.com/boto/botocore/blob/develop/botocore/client.py#L810:L816
@@ -56,7 +58,7 @@ class Test_apigatewayv2_access_logging_enabled:
     @mock_apigatewayv2
     def test_apigateway_one_api_with_logging_in_stage(self):
         # Create ApiGatewayV2 Mocked Resources
-        apigatewayv2_client = client("apigatewayv2")
+        apigatewayv2_client = client("apigatewayv2", region_name=AWS_REGION)
         # Create ApiGatewayV2 API
         api = apigatewayv2_client.create_api(Name="test-api", ProtocolType="HTTP")
         # Get stages mock with stage with logging
