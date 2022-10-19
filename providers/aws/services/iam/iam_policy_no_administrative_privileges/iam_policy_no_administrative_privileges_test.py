@@ -1,4 +1,5 @@
 from json import dumps
+from re import search
 from unittest import mock
 
 from boto3 import client
@@ -17,7 +18,7 @@ class Test_iam_policy_no_administrative_privileges_test:
                 {"Effect": "Allow", "Action": "*", "Resource": "*"},
             ],
         }
-        iam_client.create_policy(
+        arn = iam_client.create_policy(
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
@@ -35,6 +36,9 @@ class Test_iam_policy_no_administrative_privileges_test:
             check = iam_policy_no_administrative_privileges()
             result = check.execute()
             assert result[0].status == "FAIL"
+            assert result[0].resource_arn == arn
+            assert search(f"Policy {policy_name} allows ", result[0].status_extended)
+            assert result[0].resource_id == policy_name
 
     @mock_iam
     def test_policy_non_administrative(self):
@@ -47,7 +51,7 @@ class Test_iam_policy_no_administrative_privileges_test:
                 {"Effect": "Allow", "Action": "logs:CreateLogGroup", "Resource": "*"},
             ],
         }
-        iam_client.create_policy(
+        arn = iam_client.create_policy(
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
@@ -65,6 +69,11 @@ class Test_iam_policy_no_administrative_privileges_test:
             check = iam_policy_no_administrative_privileges()
             result = check.execute()
             assert result[0].status == "PASS"
+            assert result[0].resource_arn == arn
+            assert search(
+                f"Policy {policy_name} does not allow", result[0].status_extended
+            )
+            assert result[0].resource_id == policy_name
 
     @mock_iam
     def test_policy_administrative_and_non_administrative(self):
@@ -84,11 +93,11 @@ class Test_iam_policy_no_administrative_privileges_test:
                 {"Effect": "Allow", "Action": "*", "Resource": "*"},
             ],
         }
-        iam_client.create_policy(
+        arn_non_administrative = iam_client.create_policy(
             PolicyName=policy_name_non_administrative,
             PolicyDocument=dumps(policy_document_non_administrative),
         )["Policy"]["Arn"]
-        iam_client.create_policy(
+        arn_administrative = iam_client.create_policy(
             PolicyName=policy_name_administrative,
             PolicyDocument=dumps(policy_document_administrative),
         )["Policy"]["Arn"]
@@ -108,4 +117,16 @@ class Test_iam_policy_no_administrative_privileges_test:
             result = check.execute()
             assert len(result) == 2
             assert result[0].status == "PASS"
+            assert result[0].resource_arn == arn_non_administrative
+            assert search(
+                f"Policy {policy_name_non_administrative} does not allow ",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == policy_name_non_administrative
             assert result[1].status == "FAIL"
+            assert result[1].resource_arn == arn_administrative
+            assert search(
+                f"Policy {policy_name_administrative} allows ",
+                result[1].status_extended,
+            )
+            assert result[1].resource_id == policy_name_administrative

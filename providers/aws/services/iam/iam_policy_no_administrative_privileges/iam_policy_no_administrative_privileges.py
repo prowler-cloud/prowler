@@ -11,7 +11,7 @@ class iam_policy_no_administrative_privileges(Check):
             report.resource_arn = iam_client.policies[index]["Arn"]
             report.resource_id = iam_client.policies[index]["PolicyName"]
             report.status = "PASS"
-            report.status_extended = f"Policy {iam_client.policies[index]['PolicyName']} does not allow \"*:*\" administrative privileges"
+            report.status_extended = f"Policy {iam_client.policies[index]['PolicyName']} does not allow '*:*' administrative privileges"
             # Check the statements, if one includes *:* stop iterating over the rest
             for statement in policy_document["Statement"]:
                 if (
@@ -20,7 +20,7 @@ class iam_policy_no_administrative_privileges(Check):
                     and statement["Resource"] == "*"
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"Policy {iam_client.policies[index]['PolicyName']} allows \"*:*\" administrative privileges"
+                    report.status_extended = f"Policy {iam_client.policies[index]['PolicyName']} allows '*:*' administrative privileges"
                     break
 
             findings.append(report)
