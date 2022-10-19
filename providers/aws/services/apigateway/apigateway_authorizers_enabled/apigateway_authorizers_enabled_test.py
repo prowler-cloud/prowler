@@ -35,7 +35,7 @@ class Test_apigateway_authorizers_enabled:
     def test_apigateway_one_rest_api_with_lambda_authorizer(self):
         # Create APIGateway Mocked Resources
         apigateway_client = client("apigateway", region_name=AWS_REGION)
-        lambda_client = client("lambda")
+        lambda_client = client("lambda", region_name=AWS_REGION)
         iam_client = client("iam")
         # Create APIGateway Rest API
         role_arn = iam_client.create_role(

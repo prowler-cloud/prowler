@@ -33,7 +33,7 @@ class Test_apigateway_waf_acl_attached:
     def test_apigateway_one_rest_api_with_waf(self):
         # Create APIGateway Mocked Resources
         apigateway_client = client("apigateway", region_name=AWS_REGION)
-        waf_client = client("wafv2")
+        waf_client = client("wafv2", region_name=AWS_REGION)
         rest_api = apigateway_client.create_rest_api(
             name="test-rest-api",
         )
