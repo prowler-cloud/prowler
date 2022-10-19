@@ -23,7 +23,10 @@ def parse_allowlist_file(audit_info, allowlist_file):
             allowlist_file,
         ):
             allowlist = {"Accounts": {}}
-            dynamodb_resource = audit_info.audit_session.resource("dynamodb")
+            table_region = allowlist_file.split(":")[3]
+            dynamodb_resource = audit_info.audit_session.resource(
+                "dynamodb", region_name=table_region
+            )
             dynamo_table = dynamodb_resource.Table(allowlist_file.split("/")[1])
             response = dynamo_table.scan(
                 FilterExpression=Attr("Accounts").is_in(
