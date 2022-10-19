@@ -1,14 +1,14 @@
 {
   "Provider": "aws",
   "CheckID": "securityhub_enabled",
-  "CheckTitle": "Check if Security Hub is enabled and its standard subscriptions",
+  "CheckTitle": "Check if Security Hub is enabled and its standard subscriptions.",
   "CheckType": ["Logging and Monitoring"],
   "ServiceName": "securityhub",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:securityhub:region:account-id:hub/hub-id",
   "Severity": "high",
   "ResourceType": "AwsSecurityHubHub",
-  "Description": "Check if IAM Access Analyzer is enabled without findings",
+  "Description": "Check if Security Hub is enabled and its standard subscriptions.",
   "Risk": "AWS Security Hub gives you a comprehensive view of your security alerts and security posture across your AWS accounts.",
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-standards-enable-disable.html",
   "Remediation": {

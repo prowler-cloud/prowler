@@ -5,15 +5,15 @@ from lib.logger import logger
 from providers.aws.aws_provider import generate_regional_clients
 
 
-################## SECURITYHUB
-class SECURITYHUB:
+################## SecurityHub
+class SecurityHub:
     def __init__(self, audit_info):
         self.service = "securityhub"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.securityhubs = []
-        self.__threading_call__(self.__list_analyzers__)
+        self.__threading_call__(self.__describe_hub__)
 
     def __get_session__(self):
         return self.session
@@ -27,8 +27,8 @@ class SECURITYHUB:
         for t in threads:
             t.join()
 
-    def __list_analyzers__(self, regional_client):
-        logger.info("SECURITYHUB - Getting Standards...")
+    def __describe_hub__(self, regional_client):
+        logger.info("SecurityHub - Describing Hub...")
         try:
             get_enabled_standards_paginator = regional_client.get_paginator(
                 "get_enabled_standards"
@@ -40,9 +40,9 @@ class SECURITYHUB:
             # Security Hub is not enabled in region
             if standards == "":
                 self.securityhubs.append(
-                    SecurityHub(
+                    SecurityHubHub(
                         "",
-                        "",
+                        "Security Hub",
                         "NOT_AVAILABLE",
                         "",
                         regional_client.region,
@@ -53,7 +53,7 @@ class SECURITYHUB:
                 hub_arn = regional_client.describe_hub()["HubArn"]
                 hub_id = hub_arn.split("/")[1]
                 self.securityhubs.append(
-                    SecurityHub(
+                    SecurityHubHub(
                         hub_arn,
                         hub_id,
                         "ACTIVE",
@@ -64,12 +64,12 @@ class SECURITYHUB:
 
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
 @dataclass
-class SecurityHub:
+class SecurityHubHub:
     arn: str
     id: str
     status: str

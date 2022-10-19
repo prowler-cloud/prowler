@@ -6,7 +6,11 @@ import sys
 from os import mkdir
 from os.path import isdir
 
-from config.config import default_output_directory, output_file_timestamp
+from config.config import (
+    change_config_var,
+    default_output_directory,
+    output_file_timestamp,
+)
 from lib.banner import print_banner, print_version
 from lib.check.check import (
     bulk_load_checks_metadata,
@@ -175,6 +179,13 @@ if __name__ == "__main__":
         default=None,
         help="Same as -B but do not use the assumed role credentials to put objects to the bucket, instead uses the initial credentials.",
     )
+    parser.add_argument(
+        "-N",
+        "--shodan",
+        nargs="?",
+        default=None,
+        help="Shodan API key used by check ec2_elastic_ip_shodan.",
+    )
     # Parse Arguments
     args = parser.parse_args()
 
@@ -217,6 +228,9 @@ if __name__ == "__main__":
     if args.list_services:
         print_services(list_services(provider))
         sys.exit()
+
+    if args.shodan:
+        change_config_var("shodan_api_key", args.shodan)
 
     # Load checks metadata
     logger.debug("Loading checks metadata from .metadata.json files")
