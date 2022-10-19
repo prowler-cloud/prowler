@@ -18,12 +18,12 @@ class acm_certificates_transparency_logs_enabled(Check):
             else:
                 if not certificate.transparency_logging:
                     report.status = "FAIL"
-                    report.status_extended = f"ACM Certificate for {certificate.name} has Certificate Transparency logging enabled."
+                    report.status_extended = f"ACM Certificate for {certificate.name} has Certificate Transparency logging disabled."
                     report.resource_id = certificate.name
                     report.resource_arn = certificate.arn
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"ACM Certificate for {certificate.name} has Certificate Transparency logging disabled."
+                    report.status_extended = f"ACM Certificate for {certificate.name} has Certificate Transparency logging enabled."
                     report.resource_id = certificate.name
                     report.resource_arn = certificate.arn
             findings.append(report)
