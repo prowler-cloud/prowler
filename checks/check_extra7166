@@ -25,11 +25,11 @@ CHECK_DOC_extra7166='https://docs.aws.amazon.com/waf/latest/developerguide/confi
 CHECK_CAF_EPIC_extra7166='Infrastructure security'
 
 extra7166() {
-  if [[ "$($AWSCLI $PROFILE_OPT shield get-subscription-state --output text)" == "ACTIVE" ]]; then
-    CALLER_IDENTITY=$($AWSCLI sts get-caller-identity $PROFILE_OPT --query Arn)
-    PARTITION=$(echo $CALLER_IDENTITY | cut -d: -f2)
-    ACCOUNT_ID=$(echo $CALLER_IDENTITY | cut -d: -f5)
-    for regx in $REGIONS; do
+  for regx in $REGIONS; do
+    if [[ "$($AWSCLI $PROFILE_OPT shield get-subscription-state --output text)" == "ACTIVE" ]]; then
+      CALLER_IDENTITY=$($AWSCLI sts get-caller-identity $PROFILE_OPT --query Arn)
+      PARTITION=$(echo $CALLER_IDENTITY | cut -d: -f2)
+      ACCOUNT_ID=$(echo $CALLER_IDENTITY | cut -d: -f5)
       LIST_OF_ELASTIC_IPS_WITH_ASSOCIATIONS=$($AWSCLI ec2 describe-addresses $PROFILE_OPT --region $regx --query 'Addresses[?AssociationId].AllocationId' --output text)
       if [[ $LIST_OF_ELASTIC_IPS_WITH_ASSOCIATIONS ]]; then
         for elastic_ip in $LIST_OF_ELASTIC_IPS_WITH_ASSOCIATIONS; do
@@ -41,10 +41,10 @@ extra7166() {
           fi
         done
       else
-        textInfo "$regx: no elastic IP addresses with assocations found" "$regx"
+        textInfo "$regx: No elastic IP addresses with assocations found" "$regx"
       fi
-    done
-  else
-    textInfo "$regx: no AWS Shield Advanced subscription found. Skipping check" "$regx"
-  fi
+    else
+    textInfo "$regx: No AWS Shield Advanced subscription found. Skipping check" "$regx"
+    fi
+  done
 }

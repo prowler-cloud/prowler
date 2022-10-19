@@ -52,8 +52,8 @@ check27(){
         fi
       done
     fi
+    if [[ $trail_count == 0 ]]; then
+      textFail "$regx: No CloudTrail trails were found in the account" "$regx" "$trail"
+    fi
   done
-  if [[ $trail_count == 0 ]]; then
-    textFail "$REGION: No CloudTrail trails were found in the account" "$REGION" "$trail"
-  fi
 }

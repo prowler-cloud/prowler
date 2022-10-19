@@ -41,10 +41,14 @@ extra7183(){
                     textInfo "${regx}: Access Denied trying to list certificates" "${regx}"
                     continue
                 fi
+                if grep -q -E 'UnsupportedOperationException' <<< "${CERT_DATA}"; then
+                    textInfo "${regx}: Error calling the ListCertificates operation: LDAPS operations are not supported for this Directory Type (directory id: ${DIRECTORY_ID})" "${regx}"
+                    continue
+                fi
                 if [[ ${CERT_DATA} ]]; then
                     echo "${CERT_DATA}" | while read -r CERTIFICATE_ID NOTAFTER; do
                         EXPIRES_DATE=$(timestamp_to_date "${NOTAFTER}")
-                        if [[ ${EXPIRES_DATE} == "" ]] 
+                        if [[ ${EXPIRES_DATE} == "" ]]
                         then
                             textInfo "${regx}: LDAP Certificate ${CERTIFICATE_ID} has an incorrect timestamp format: ${NOTAFTER}" "${regx}" "${CERTIFICATE_ID}"
                         else
@@ -57,7 +61,7 @@ extra7183(){
                         fi
                     done
                 else
-                    textFail "${regx}: Directory Service ${DIRECTORY_ID} does not have a LDAP Certificate configured" "${regx}" "${DIRECTORY_ID}"    
+                    textFail "${regx}: Directory Service ${DIRECTORY_ID} does not have a LDAP Certificate configured" "${regx}" "${DIRECTORY_ID}"
                 fi
             done
         else

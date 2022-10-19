@@ -30,11 +30,11 @@ extra77(){
   for regx in $REGIONS; do
     LIST_ECR_REPOS=$($AWSCLI ecr describe-repositories $PROFILE_OPT --region $regx --query "repositories[*].[repositoryName]" --output text 2>&1)
     if [[ $(echo "$LIST_ECR_REPOS" | grep AccessDenied) ]]; then
-      textInfo "$regx: Access Denied Trying to describe ECR repositories" "$regx" "$repo"
+      textInfo "$regx: Access Denied Trying to describe ECR repositories" "$regx"
       continue
     fi
     if [[ $(echo "$LIST_ECR_REPOS" | grep SubscriptionRequiredException) ]]; then
-      textInfo "$regx: Subscription Required Exception trying to describe ECR repositories" "$regx" "$repo"
+      textInfo "$regx: Subscription Required Exception trying to describe ECR repositories" "$regx"
       continue
     fi
     if [[ ! -z "$LIST_ECR_REPOS" ]]; then
@@ -62,7 +62,7 @@ extra77(){
         rm -f $TEMP_POLICY_FILE
       done
     else
-      textInfo "$regx: No ECR repositories found" "$regx" "$repo"
+      textInfo "$regx: No ECR repositories found" "$regx"
     fi
   done
 }

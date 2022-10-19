@@ -25,8 +25,8 @@ CHECK_DOC_extra7170='https://docs.aws.amazon.com/waf/latest/developerguide/confi
 CHECK_CAF_EPIC_extra7170='Infrastructure security'
 
 extra7170() {
-  if [[ "$($AWSCLI $PROFILE_OPT shield get-subscription-state --output text)" == "ACTIVE" ]]; then
-    for regx in $REGIONS; do
+  for regx in $REGIONS; do
+    if [[ "$($AWSCLI $PROFILE_OPT shield get-subscription-state --output text)" == "ACTIVE" ]]; then
       LIST_OF_APPLICATION_LOAD_BALANCERS=$($AWSCLI elbv2 describe-load-balancers $PROFILE_OPT --region $regx --query 'LoadBalancers[?Type == `application` && Scheme == `internet-facing`].[LoadBalancerName,LoadBalancerArn]' --output text)
       if [[ $LIST_OF_APPLICATION_LOAD_BALANCERS ]]; then
         while read -r alb; do
@@ -39,10 +39,10 @@ extra7170() {
           fi
         done <<<"$LIST_OF_APPLICATION_LOAD_BALANCERS"
       else
-        textInfo "$regx: no application load balancers found" "$regx"
+        textInfo "$regx: No application load balancers found" "$regx"
       fi
-    done
-  else
-    textInfo "$REGION: no AWS Shield Advanced subscription found. Skipping check." "$REGION"
-  fi
+    else
+      textInfo "$regx: No AWS Shield Advanced subscription found. Skipping check." "$regx"
+    fi
+  done
 }
