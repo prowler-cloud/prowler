@@ -1,7 +1,7 @@
 {
   "_meta": {
     "hash": {
-      "sha256": "d4863da6ae26eab0753961cb8a11513ca71ddb56f991889711a138d7c8d1fb88"
+      "sha256": "bc54826652523f831976595af4e84e6a10ab124653862291d974c956464d1eaa"
     },
     "pipfile-spec": 6,
     "requires": {
@@ -251,6 +251,14 @@
       ],
       "markers": "python_version >= '3.6'",
       "version": "==38.0.1"
+    },
+    "docker": {
+      "hashes": [
+        "sha256:19e330470af40167d293b0352578c1fa22d74b34d3edf5d4ff90ebc203bbb2f1",
+        "sha256:6e06ee8eca46cd88733df09b6b80c24a1a556bc5cb1e1ae54b2c239886d245cf"
+      ],
+      "index": "pypi",
+      "version": "==6.0.0"
     },
     "dparse": {
       "hashes": [
@@ -839,6 +847,14 @@
       ],
       "index": "pypi",
       "version": "==2.6"
+    },
+    "websocket-client": {
+      "hashes": [
+        "sha256:398909eb7e261f44b8f4bd474785b6ec5f5b499d4953342fe9755e01ef624090",
+        "sha256:f9611eb65c8241a67fb373bef040b3cf8ad377a9f6546a12b620b6511e8ea9ef"
+      ],
+      "markers": "python_version >= '3.7'",
+      "version": "==1.4.1"
     },
     "werkzeug": {
       "hashes": [
