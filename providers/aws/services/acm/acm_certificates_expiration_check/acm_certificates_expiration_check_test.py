@@ -32,10 +32,6 @@ class Test_acm_certificate_without_logging:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == "ACM Certificate for test.com expires in 364 days."
-            )
             assert result[0].resource_id == "test.com"
             assert result[0].resource_arn == certificate["CertificateArn"]
 
