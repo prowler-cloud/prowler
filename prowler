@@ -192,7 +192,6 @@ if __name__ == "__main__":
         "-w",
         "--allowlist-file",
         nargs="?",
-        default=allowlist_yaml,
         help="Path for allowlist yaml file, by default is 'providers/aws/allowlist.yaml'. See default yaml for reference and format.",
     )
     # Parse Arguments
