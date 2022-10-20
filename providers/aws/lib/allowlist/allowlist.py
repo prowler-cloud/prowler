@@ -86,7 +86,7 @@ def is_allowlisted_in_check(allowlist, audited_account, check, region, resource)
         if is_allowlisted_in_region(allowlist, audited_account, check, region, resource):
             return True
     # Check if there is the specific check
-    if check in allowlist["Accounts"][account]["Checks"]:
+    if check in allowlist["Accounts"][audited_account]["Checks"]:
         if is_allowlisted_in_region(allowlist, audited_account, check, region, resource):
             return True
     return False
