@@ -6,7 +6,7 @@ from lib.logger import logger
 from providers.aws.aws_provider import generate_regional_clients
 
 
-################## AccessAnalyzer
+################## ACM
 class ACM:
     def __init__(self, audit_info):
         self.service = "acm"

@@ -19,6 +19,8 @@ class Test_acm_certificates_transparency_logs_enabled:
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.acm.acm_service import ACM
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled.acm_client",
             new=ACM(current_audit_info),
@@ -50,6 +52,8 @@ class Test_acm_certificates_transparency_logs_enabled:
         )
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.acm.acm_service import ACM
+
+        current_audit_info.audited_partition = "aws"
 
         with mock.patch(
             "providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled.acm_client",

@@ -6,7 +6,7 @@ from moto import mock_acm
 AWS_REGION = "us-east-1"
 
 
-class Test_acm_certificate_without_logging:
+class Test_acm_certificates_expiration_check:
     @mock_acm
     def test_acm_certificate_not_expirated(self):
         # Generate ACM Client
@@ -17,6 +17,8 @@ class Test_acm_certificate_without_logging:
         )
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.acm.acm_service import ACM
+
+        current_audit_info.audited_partition = "aws"
 
         with mock.patch(
             "providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",

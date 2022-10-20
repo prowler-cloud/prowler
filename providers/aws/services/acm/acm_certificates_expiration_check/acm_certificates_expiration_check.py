@@ -10,7 +10,6 @@ class acm_certificates_expiration_check(Check):
         for certificate in acm_client.certificates:
             report = Check_Report(self.metadata)
             report.region = certificate.region
-            print(certificate)
             if certificate.expiration_days > DAYS_TO_EXPIRE_THRESHOLD:
                 report.status = "PASS"
                 report.status_extended = f"ACM Certificate for {certificate.name} expires in {certificate.expiration_days} days."

@@ -69,13 +69,14 @@ class Test_ACM_Service:
         # Generate ACM Client
         acm_client = client("acm", region_name=AWS_REGION)
         # Request ACM certificate
-        acm_client.request_certificate(
+        certificate = acm_client.request_certificate(
             DomainName="test.com",
         )
         # ACM client for this test class
         audit_info = self.set_mocked_audit_info()
         acm = ACM(audit_info)
         assert len(acm.certificates) == 1
+        assert acm.certificates[0].arn == certificate["CertificateArn"]
 
     # Test ACM Describe Certificates
     @mock_acm
@@ -83,10 +84,11 @@ class Test_ACM_Service:
         # Generate ACM Client
         acm_client = client("acm", region_name=AWS_REGION)
         # Request ACM certificate
-        acm_client.request_certificate(
+        certificate = acm_client.request_certificate(
             DomainName="test.com",
         )
         # ACM client for this test class
         audit_info = self.set_mocked_audit_info()
         acm = ACM(audit_info)
         assert acm.certificates[0].type == "AMAZON_ISSUED"
+        assert acm.certificates[0].arn == certificate["CertificateArn"]
