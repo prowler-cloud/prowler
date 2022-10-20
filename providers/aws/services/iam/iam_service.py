@@ -44,7 +44,9 @@ class IAM:
         try:
             get_roles_paginator = self.client.get_paginator("list_roles")
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         else:
             roles = []
             for page in get_roles_paginator.paginate():
@@ -59,7 +61,9 @@ class IAM:
             try:
                 report_status = self.client.generate_credential_report()
             except Exception as error:
-                logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
             else:
                 if report_status["State"] == "COMPLETE":
                     report_is_completed = True
@@ -75,7 +79,9 @@ class IAM:
         try:
             get_groups_paginator = self.client.get_paginator("list_groups")
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         else:
             groups = []
             for page in get_groups_paginator.paginate():
@@ -90,7 +96,9 @@ class IAM:
                 "list_policies"
             )
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         else:
             customer_managed_policies = []
             # Use --scope Local to list only Customer Managed Policies
@@ -108,13 +116,17 @@ class IAM:
                 )
                 policy["PolicyDocument"] = response["PolicyVersion"]["Document"]
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_account_summary__(self):
         try:
             account_summary = self.client.get_account_summary()
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         else:
 
             return account_summary
@@ -135,7 +147,9 @@ class IAM:
             if "HardExpiry" in password_policy:
                 hard_expiry = password_policy["HardExpiry"]
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
             # Password policy does not exist
             password_policy = None
         else:
@@ -156,7 +170,9 @@ class IAM:
         try:
             get_users_paginator = self.client.get_paginator("list_users")
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         else:
             users = []
             for page in get_users_paginator.paginate():
@@ -178,7 +194,9 @@ class IAM:
                 "list_virtual_mfa_devices"
             )
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         else:
             mfa_devices = []
             for page in list_virtual_mfa_devices_paginator.paginate():
@@ -202,7 +220,9 @@ class IAM:
 
                 group.attached_policies = attached_group_policies
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_group_users__(self):
         try:
@@ -225,7 +245,9 @@ class IAM:
                             )
                 group.users = group_users
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __list_mfa_devices__(self):
         try:
@@ -243,7 +265,9 @@ class IAM:
                         mfa_devices.append(MFADevice(mfa_serial_number, mfa_type))
                 user.mfa_devices = mfa_devices
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __list_attached_user_policies__(self):
         try:
@@ -261,7 +285,9 @@ class IAM:
                 user.attached_policies = attached_user_policies
 
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __list_inline_user_policies__(self):
         try:
@@ -279,7 +305,9 @@ class IAM:
                 user.inline_policies = inline_user_policies
 
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_entities_attached_to_support_roles__(self):
         try:
@@ -291,7 +319,9 @@ class IAM:
                 PolicyArn=support_entry_policy_arn, EntityFilter="Role"
             )["PolicyRoles"]
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
         finally:
             return support_roles
@@ -304,7 +334,9 @@ class IAM:
                 for policy in page["Policies"]:
                     policies.append(policy)
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         finally:
             return policies
 
@@ -318,19 +350,22 @@ class IAM:
                 )
                 policies_version.append(policy_version["PolicyVersion"]["Document"])
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         finally:
             return policies_version
-    
+
     def __list_saml_providers__(self):
         try:
             saml_providers = self.client.list_saml_providers()["SAMLProviderList"]
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
         finally:
             return saml_providers
-
 
 
 @dataclass
