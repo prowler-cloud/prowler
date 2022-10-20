@@ -61,7 +61,7 @@ class Test_apigateway_endpoint_public:
             assert result[0].status == "PASS"
 
     @mock_apigateway
-    def test_apigateway_one_prublic_rest_api(self):
+    def test_apigateway_one_public_rest_api(self):
         # Create APIGateway Mocked Resources
         apigateway_client = client("apigateway", region_name=AWS_REGION)
         # Create APIGateway Deployment Stage
