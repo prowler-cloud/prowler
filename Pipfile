@@ -18,6 +18,7 @@ coverage = "6.4.1"
 pytest = "7.1.2"
 pytest-xdist = "2.5.0"
 shodan = "1.28.0"
+datetime = "*"
 
 [dev-packages]
 
