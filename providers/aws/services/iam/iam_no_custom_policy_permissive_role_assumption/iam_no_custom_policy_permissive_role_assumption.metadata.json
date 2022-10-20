@@ -1,6 +1,6 @@
 {
     "Provider": "aws",
-    "CheckID": "iam_no_custom_policy_permissive_role_assumption_test",
+    "CheckID": "iam_no_custom_policy_permissive_role_assumption",
     "CheckTitle": "Ensure that no custom IAM policies exist which allow permissive role assumption (e.g. sts:AssumeRole on *)",
     "CheckType": ["Software and Configuration Checks"],
     "ServiceName": "iam",
