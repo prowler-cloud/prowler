@@ -10,7 +10,7 @@ Allowlist:
             - "us-east-1"
           Resources:
             - "user-1"           # Will ignore user-1 in check iam_user_hardware_mfa_enabled
-            - "user-2"           # Will ignore user-1 in check iam_user_hardware_mfa_enabled
+            - "user-2"           # Will ignore user-2 in check iam_user_hardware_mfa_enabled
         "*":
           Regions:
             - "*"
