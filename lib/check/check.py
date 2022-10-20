@@ -205,7 +205,9 @@ def run_check(check, audit_info, output_options):
         findings = check.execute()
     except Exception as error:
         print(f"Something went wrong in {check.checkID}, please use --log-level ERROR")
-        logger.error(f"{check.checkID} -- {error.__class__.__name__}: {error}")
+        logger.error(
+            f"{check.checkID} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
     else:
         report(findings, output_options, audit_info)
     finally:

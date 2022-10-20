@@ -48,7 +48,9 @@ class S3:
                     buckets.append(Bucket(bucket["Name"], bucket_region))
             return buckets
         except Exception as error:
-            logger.error(f"{bucket_region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{bucket_region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_bucket_versioning__(self, bucket):
         logger.info("S3 - Get buckets versioning...")
@@ -61,7 +63,9 @@ class S3:
                 if "Enabled" == bucket_versioning["Status"]:
                     bucket.versioning = True
         except Exception as error:
-            logger.error(f"{bucket.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_bucket_logging__(self, bucket):
         logger.info("S3 - Get buckets logging...")
@@ -72,7 +76,7 @@ class S3:
                 bucket.logging = True
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
