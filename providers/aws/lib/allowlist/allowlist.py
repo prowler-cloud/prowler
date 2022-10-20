@@ -63,15 +63,15 @@ def parse_allowlist_file(audit_info, allowlist_file):
         sys.exit()
 
 
-def is_allowlisted(allowlist, account, check, region, resource):
+def is_allowlisted(allowlist, audited_account, check, region, resource):
     try:
-        if account in allowlist["Accounts"]:
-            if is_allowlisted_in_check(allowlist, account, check, region, resource):
+        if audited_account in allowlist["Accounts"]:
+            if is_allowlisted_in_check(allowlist, audited_account, check, region, resource):
                 return True
         # If there is a *, it affects to all accounts
         if "*" in allowlist["Accounts"]:
-            account = "*"
-            if is_allowlisted_in_check(allowlist, account, check, region, resource):
+            audited_account = "*"
+            if is_allowlisted_in_check(allowlist, audited_account, check, region, resource):
                 return True
         return False
     except Exception as error:
