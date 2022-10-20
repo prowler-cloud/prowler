@@ -81,7 +81,7 @@ def is_allowlisted(allowlist, audited_account, check, region, resource):
 
 def is_allowlisted_in_check(allowlist, audited_account, check, region, resource):
     # If there is a *, it affects to all checks
-    if "*" in allowlist["Accounts"][account]["Checks"]:
+    if "*" in allowlist["Accounts"][audited_account]["Checks"]:
         check = "*"
         if is_allowlisted_in_region(allowlist, audited_account, check, region, resource):
             return True
