@@ -2,7 +2,7 @@ from lib.check.models import Check, Check_Report
 from providers.aws.services.iam.iam_client import iam_client
 
 
-class iam_policy_no_administrative_privileges(Check):
+class iam_no_custom_policy_permissive_role_assumption(Check):
     def execute(self) -> Check_Report:
         findings = []
         for index, policy_document in enumerate(iam_client.list_policies_version):
@@ -11,17 +11,20 @@ class iam_policy_no_administrative_privileges(Check):
             report.resource_arn = iam_client.policies[index]["Arn"]
             report.resource_id = iam_client.policies[index]["PolicyName"]
             report.status = "PASS"
-            report.status_extended = f"Policy {iam_client.policies[index]['PolicyName']} does not allow '*:*' administrative privileges"
-            # Check the statements, if one includes *:* stop iterating over the rest
+            report.status_extended = f"Custom Policy {iam_client.policies[index]['PolicyName']} does not allow permissive STS Role assumption"
             for statement in policy_document["Statement"]:
                 if (
-                    statement["Action"] == "*"
-                    and statement["Effect"] == "Allow"
+                    statement["Effect"] == "Allow"
+                    and (
+                        statement["Action"] == "sts:AssumeRole"
+                        or statement["Action"] == "sts:*"
+                    )
                     and statement["Resource"] == "*"
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"Policy {iam_client.policies[index]['PolicyName']} allows '*:*' administrative privileges"
+                    report.status_extended = f"Custom Policy {iam_client.policies[index]['PolicyName']} allows permissive STS Role assumption"
                     break
 
             findings.append(report)
+
         return findings
