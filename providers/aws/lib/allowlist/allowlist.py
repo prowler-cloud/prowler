@@ -79,27 +79,27 @@ def is_allowlisted(allowlist, audited_account, check, region, resource):
         sys.exit()
 
 
-def is_allowlisted_in_check(allowlist, account, check, region, resource):
+def is_allowlisted_in_check(allowlist, audited_account, check, region, resource):
     # If there is a *, it affects to all checks
     if "*" in allowlist["Accounts"][account]["Checks"]:
         check = "*"
-        if is_allowlisted_in_region(allowlist, account, check, region, resource):
+        if is_allowlisted_in_region(allowlist, audited_account, check, region, resource):
             return True
     # Check if there is the specific check
     if check in allowlist["Accounts"][account]["Checks"]:
-        if is_allowlisted_in_region(allowlist, account, check, region, resource):
+        if is_allowlisted_in_region(allowlist, audited_account, check, region, resource):
             return True
     return False
 
 
-def is_allowlisted_in_region(allowlist, account, check, region, resource):
+def is_allowlisted_in_region(allowlist, audited_account, check, region, resource):
     # If there is a *, it affects to all regions
-    if "*" in allowlist["Accounts"][account]["Checks"][check]["Regions"]:
-        for elem in allowlist["Accounts"][account]["Checks"][check]["Resources"]:
+    if "*" in allowlist["Accounts"][audited_account]["Checks"][check]["Regions"]:
+        for elem in allowlist["Accounts"][audited_account]["Checks"][check]["Resources"]:
             if re.search(elem, resource):
                 return True
     # Check if there is the specific region
-    if region in allowlist["Accounts"][account]["Checks"][check]["Regions"]:
-        for elem in allowlist["Accounts"][account]["Checks"][check]["Resources"]:
+    if region in allowlist["Accounts"][audited_account]["Checks"][check]["Regions"]:
+        for elem in allowlist["Accounts"][audited_account]["Checks"][check]["Resources"]:
             if re.search(elem, resource):
                 return True
