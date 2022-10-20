@@ -91,6 +91,12 @@ class Test_apigateway_logging_enabled:
             result = check.execute()
 
             assert result[0].status == "PASS"
+            assert len(result) == 1
+            assert (
+                result[0].status_extended
+                == f"API Gateway test-rest-api ID {rest_api['id']} in stage test has logging enabled."
+            )
+            assert result[0].resource_id == "test-rest-api"
 
     @mock_apigateway
     def test_apigateway_one_rest_api_without_logging(self):
@@ -146,6 +152,12 @@ class Test_apigateway_logging_enabled:
             result = check.execute()
 
             assert result[0].status == "FAIL"
+            assert len(result) == 1
+            assert (
+                result[0].status_extended
+                == f"API Gateway test-rest-api ID {rest_api['id']} in stage test has logging disabled."
+            )
+            assert result[0].resource_id == "test-rest-api"
 
     @mock_apigateway
     def test_bad_response(self):

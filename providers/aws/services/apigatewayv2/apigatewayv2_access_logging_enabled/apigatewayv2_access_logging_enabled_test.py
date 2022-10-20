@@ -42,15 +42,15 @@ class Test_apigatewayv2_access_logging_enabled:
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled.apigatewayv2_client",
+            "providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled.apigatewayv2_client",
             new=ApiGatewayV2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled import (
-                apigatewayv2_authorizers_enabled,
+            from providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled import (
+                apigatewayv2_access_logging_enabled,
             )
 
-            check = apigatewayv2_authorizers_enabled()
+            check = apigatewayv2_access_logging_enabled()
             result = check.execute()
 
             assert len(result) == 0
@@ -70,33 +70,39 @@ class Test_apigatewayv2_access_logging_enabled:
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled.apigatewayv2_client",
+            "providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled.apigatewayv2_client",
             new=ApiGatewayV2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled import (
-                apigatewayv2_authorizers_enabled,
+            from providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled import (
+                apigatewayv2_access_logging_enabled,
             )
 
-            check = apigatewayv2_authorizers_enabled()
+            check = apigatewayv2_access_logging_enabled()
             result = check.execute()
 
             assert result[0].status == "PASS"
+            assert len(result) == 1
+            assert (
+                result[0].status_extended
+                == f"API Gateway V2 test-api ID {api['ApiId']} in stage test-stage has access logging enabled."
+            )
+            assert result[0].resource_id == "test-api"
 
     @mock_apigatewayv2
     def test_bad_response(self):
         mock_client = mock.MagicMock()
 
         with mock.patch(
-            "providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled.apigatewayv2_client",
+            "providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled.apigatewayv2_client",
             new=mock_client,
         ):
             # Test Check
-            from providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled import (
-                apigatewayv2_authorizers_enabled,
+            from providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled import (
+                apigatewayv2_access_logging_enabled,
             )
 
-            check = apigatewayv2_authorizers_enabled()
+            check = apigatewayv2_access_logging_enabled()
             result = check.execute()
 
             assert len(result) == 0

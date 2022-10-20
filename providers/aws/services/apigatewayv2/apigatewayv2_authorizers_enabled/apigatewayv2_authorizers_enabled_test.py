@@ -88,6 +88,12 @@ class Test_apigatewayv2_authorizers_enabled:
             result = check.execute()
 
             assert result[0].status == "PASS"
+            assert len(result) == 1
+            assert (
+                result[0].status_extended
+                == f"API Gateway V2 test-api ID {api['ApiId']} has authorizer configured."
+            )
+            assert result[0].resource_id == "test-api"
 
     @mock_apigatewayv2
     def test_bad_response(self):

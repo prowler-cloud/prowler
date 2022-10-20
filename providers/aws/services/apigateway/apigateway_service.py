@@ -82,7 +82,6 @@ class APIGateway:
                     waf = None
                     logging = False
                     client_certificate = False
-                    print(stage)
                     if "webAclArn" in stage:
                         waf = stage["webAclArn"]
                     if "methodSettings" in stage:

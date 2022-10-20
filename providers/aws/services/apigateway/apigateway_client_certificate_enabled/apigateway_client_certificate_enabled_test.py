@@ -65,14 +65,9 @@ class Test_apigateway_client_certificate_enabled:
             integrationHttpMethod="POST",
             uri="http://test.com",
         )
-        deployment = apigateway_client.create_deployment(
+        apigateway_client.create_deployment(
             restApiId=rest_api["id"],
             stageName="test",
-        )
-        apigateway_client.create_stage(
-            restApiId=rest_api["id"],
-            stageName="test-stage",
-            deploymentId=deployment["id"],
         )
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.apigateway.apigateway_service import APIGateway
@@ -92,6 +87,12 @@ class Test_apigateway_client_certificate_enabled:
             result = check.execute()
 
             assert result[0].status == "FAIL"
+            assert len(result) == 1
+            assert (
+                result[0].status_extended
+                == f"API Gateway test-rest-api ID {rest_api['id']} in stage test has not client certificate enabled."
+            )
+            assert result[0].resource_id == "test-rest-api"
 
     # @mock_apigateway
     # def test_apigateway_one_stage_with_certificate(self):

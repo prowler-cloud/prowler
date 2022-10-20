@@ -33,7 +33,7 @@ class Test_apigateway_endpoint_public:
         # Create APIGateway Mocked Resources
         apigateway_client = client("apigateway", region_name=AWS_REGION)
         # Create APIGateway Deployment Stage
-        apigateway_client.create_rest_api(
+        rest_api = apigateway_client.create_rest_api(
             name="test-rest-api",
             endpointConfiguration={
                 "types": [
@@ -59,13 +59,19 @@ class Test_apigateway_endpoint_public:
             result = check.execute()
 
             assert result[0].status == "PASS"
+            assert len(result) == 1
+            assert (
+                result[0].status_extended
+                == f"API Gateway test-rest-api ID {rest_api['id']} is private."
+            )
+            assert result[0].resource_id == "test-rest-api"
 
     @mock_apigateway
     def test_apigateway_one_public_rest_api(self):
         # Create APIGateway Mocked Resources
         apigateway_client = client("apigateway", region_name=AWS_REGION)
         # Create APIGateway Deployment Stage
-        apigateway_client.create_rest_api(
+        rest_api = apigateway_client.create_rest_api(
             name="test-rest-api",
             endpointConfiguration={
                 "types": [
@@ -91,6 +97,12 @@ class Test_apigateway_endpoint_public:
             result = check.execute()
 
             assert result[0].status == "FAIL"
+            assert len(result) == 1
+            assert (
+                result[0].status_extended
+                == f"API Gateway test-rest-api ID {rest_api['id']} is internet accesible."
+            )
+            assert result[0].resource_id == "test-rest-api"
 
     @mock_apigateway
     def test_bad_response(self):
