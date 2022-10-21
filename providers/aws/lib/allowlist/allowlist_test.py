@@ -40,10 +40,13 @@ class Test_Allowlist:
         s3_resource = resource("s3", region_name=AWS_REGION)
         s3_resource.create_bucket(Bucket="test-allowlist")
         s3_resource.Object("test-allowlist", "allowlist.yaml").put(
-            Body=open("providers/aws/allowlist.yaml", "rb")
+            Body=open(
+                "providers/aws/lib/allowlist/fixtures/allowlist.yaml",
+                "rb",
+            )
         )
 
-        with open("providers/aws/allowlist.yaml") as f:
+        with open("providers/aws/lib/allowlist/fixtures/allowlist.yaml") as f:
             assert yaml.safe_load(f)["Allowlist"] == parse_allowlist_file(
                 audit_info, "s3://test-allowlist/allowlist.yaml"
             )
