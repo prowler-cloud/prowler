@@ -183,6 +183,7 @@ def set_output_options(
     input_output_directory: str,
     security_hub_enabled: bool,
     output_filename: str,
+    allowlist_file: str,
 ):
     global output_options
     output_options = Output_From_Options(
@@ -191,6 +192,7 @@ def set_output_options(
         output_directory=input_output_directory,
         security_hub_enabled=security_hub_enabled,
         output_filename=output_filename,
+        allowlist_file=allowlist_file,
         # set input options here
     )
     return output_options
