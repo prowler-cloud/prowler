@@ -56,7 +56,6 @@ def parse_allowlist_file(audit_info, allowlist_file):
         else:
             with open(allowlist_file) as f:
                 allowlist = yaml.safe_load(f)["Allowlist"]
-                print(allowlist)
         return allowlist
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")
@@ -66,12 +65,16 @@ def parse_allowlist_file(audit_info, allowlist_file):
 def is_allowlisted(allowlist, audited_account, check, region, resource):
     try:
         if audited_account in allowlist["Accounts"]:
-            if is_allowlisted_in_check(allowlist, audited_account, check, region, resource):
+            if is_allowlisted_in_check(
+                allowlist, audited_account, check, region, resource
+            ):
                 return True
         # If there is a *, it affects to all accounts
         if "*" in allowlist["Accounts"]:
             audited_account = "*"
-            if is_allowlisted_in_check(allowlist, audited_account, check, region, resource):
+            if is_allowlisted_in_check(
+                allowlist, audited_account, check, region, resource
+            ):
                 return True
         return False
     except Exception as error:
@@ -83,11 +86,15 @@ def is_allowlisted_in_check(allowlist, audited_account, check, region, resource)
     # If there is a *, it affects to all checks
     if "*" in allowlist["Accounts"][audited_account]["Checks"]:
         check = "*"
-        if is_allowlisted_in_region(allowlist, audited_account, check, region, resource):
+        if is_allowlisted_in_region(
+            allowlist, audited_account, check, region, resource
+        ):
             return True
     # Check if there is the specific check
     if check in allowlist["Accounts"][audited_account]["Checks"]:
-        if is_allowlisted_in_region(allowlist, audited_account, check, region, resource):
+        if is_allowlisted_in_region(
+            allowlist, audited_account, check, region, resource
+        ):
             return True
     return False
 
@@ -95,11 +102,15 @@ def is_allowlisted_in_check(allowlist, audited_account, check, region, resource)
 def is_allowlisted_in_region(allowlist, audited_account, check, region, resource):
     # If there is a *, it affects to all regions
     if "*" in allowlist["Accounts"][audited_account]["Checks"][check]["Regions"]:
-        for elem in allowlist["Accounts"][audited_account]["Checks"][check]["Resources"]:
+        for elem in allowlist["Accounts"][audited_account]["Checks"][check][
+            "Resources"
+        ]:
             if re.search(elem, resource):
                 return True
     # Check if there is the specific region
     if region in allowlist["Accounts"][audited_account]["Checks"][check]["Regions"]:
-        for elem in allowlist["Accounts"][audited_account]["Checks"][check]["Resources"]:
+        for elem in allowlist["Accounts"][audited_account]["Checks"][check][
+            "Resources"
+        ]:
             if re.search(elem, resource):
                 return True
