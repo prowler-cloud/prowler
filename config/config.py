@@ -21,7 +21,6 @@ csv_file_suffix = ".csv"
 json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
 config_yaml = "providers/aws/config.yaml"
-allowlist_yaml = "providers/aws/allowlist.yaml"
 
 
 def change_config_var(variable, value):
