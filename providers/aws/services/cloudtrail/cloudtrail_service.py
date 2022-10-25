@@ -12,10 +12,12 @@ class Cloudtrail:
         self.session = audit_info.audit_session
         self.account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
-        self.trail_regions = self.__get_trail_regions__()
         self.trails = []
         self.__threading_call__(self.__get_trails__)
         self.__get_trail_status__()
+
+    def __get_session__(self):
+        return self.session
 
     def __threading_call__(self, call):
         threads = []
@@ -30,13 +32,25 @@ class Cloudtrail:
         logger.info("Cloudtrail - Getting trails...")
         try:
             describe_trails = regional_client.describe_trails()["trailList"]
-            for trail in describe_trails:
+            if describe_trails:
+                for trail in describe_trails:
+                    self.trails.append(
+                        Trail(
+                            name=trail["Name"],
+                            is_multiregion=trail["IsMultiRegionTrail"],
+                            home_region=trail["HomeRegion"],
+                            trail_arn=trail["TrailARN"],
+                            region=regional_client.region,
+                            is_logging=False,
+                        )
+                    )
+            else:
                 self.trails.append(
-                    TrailDetails(
-                        name=trail["Name"],
-                        is_multiregion=trail["IsMultiRegionTrail"],
-                        home_region=trail["HomeRegion"],
-                        trail_arn=trail["TrailARN"],
+                    Trail(
+                        name="not_found",
+                        is_multiregion="",
+                        home_region="",
+                        trail_arn="",
                         region=regional_client.region,
                         is_logging=False,
                     )
@@ -59,16 +73,9 @@ class Cloudtrail:
         except Exception as error:
             logger.error(f"{client.region} -- {error.__class__.__name__}: {error}")
 
-    def __get_trail_regions__(self):
-        regions = []
-        for region in self.regional_clients.keys():
-            regions.append(region)
-
-        return regions
-
 
 @dataclass
-class TrailDetails:
+class Trail:
     name: str
     is_multiregion: bool
     home_region: str
@@ -91,6 +98,3 @@ class TrailDetails:
         self.trail_arn = trail_arn
         self.region = region
         self.is_logging = is_logging
-
-    def __getitem__(self, item):
-        return getattr(self, item)
