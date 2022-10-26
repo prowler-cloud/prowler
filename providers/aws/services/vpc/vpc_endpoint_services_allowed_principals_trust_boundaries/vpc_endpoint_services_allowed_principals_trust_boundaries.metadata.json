@@ -1,14 +1,14 @@
 {
   "Provider": "aws",
-  "CheckID": "vpc_endpoint_connections_trust_boundaries",
-  "CheckTitle": "Find trust boundaries in VPC endpoint connections.",
+  "CheckID": "vpc_endpoint_services_allowed_principals_trust_boundaries",
+  "CheckTitle": "Find trust boundaries in VPC endpoint services allowlisted principles.",
   "CheckType": ["Infrastructure Security"],
   "ServiceName": "vpc",
-  "SubServiceName": "endpoint",
+  "SubServiceName": "service_endpoint",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2Vpc",
-  "Description": "Find trust boundaries in VPC endpoint connections.",
+  "Description": "Find trust boundaries in VPC endpoint services allowlisted principles.",
   "Risk": "Account VPC could be linked to other accounts.",
   "RelatedUrl": "",
   "Remediation": {

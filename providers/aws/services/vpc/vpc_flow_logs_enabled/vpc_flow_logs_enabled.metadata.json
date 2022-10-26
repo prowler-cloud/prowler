@@ -4,7 +4,7 @@
   "CheckTitle": "Ensure VPC Flow Logging is Enabled in all VPCs.",
   "CheckType": ["Logging and Monitoring"],
   "ServiceName": "vpc",
-  "SubServiceName": "",
+  "SubServiceName": "flow_log",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2Vpc",

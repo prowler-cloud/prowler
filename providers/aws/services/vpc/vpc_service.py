@@ -16,11 +16,14 @@ class VPC:
         self.vpcs = []
         self.vpc_peering_connections = []
         self.vpc_endpoints = []
+        self.vpc_endpoint_services = []
         self.__threading_call__(self.__describe_vpcs__)
         self.__threading_call__(self.__describe_vpc_peering_connections__)
         self.__threading_call__(self.__describe_vpc_endpoints__)
+        self.__threading_call__(self.__describe_vpc_endpoint_services__)
         self.__describe_flow_logs__()
         self.__describe_route_tables__()
+        self.__describe_vpc_endpoint_service_permissions__()
 
     def __get_session__(self):
         return self.session
@@ -93,6 +96,7 @@ class VPC:
                 )["RouteTables"]:
                     destination_cidrs = []
                     for route in route_table["Routes"]:
+                        print(route)
                         if (
                             route["Origin"] != "CreateRouteTable"
                         ):  # avoid default route table
@@ -150,6 +154,45 @@ class VPC:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}: {error}"
             )
+
+    def __describe_vpc_endpoint_services__(self, regional_client):
+        logger.info("VPC - Describing VPC Endpoint Services...")
+        try:
+            describe_vpc_endpoint_services_paginator = regional_client.get_paginator(
+                "describe_vpc_endpoint_services"
+            )
+            for page in describe_vpc_endpoint_services_paginator.paginate():
+                for endpoint in page["ServiceDetails"]:
+                    if endpoint["Owner"] != "amazon":
+                        print(endpoint)
+                        self.vpc_endpoint_services.append(
+                            VpcEndpointService(
+                                endpoint["ServiceId"],
+                                endpoint["ServiceName"],
+                                endpoint["Owner"],
+                                regional_client.region,
+                            )
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+            )
+
+    def __describe_vpc_endpoint_service_permissions__(self):
+        logger.info("VPC - Describing VPC Endpoint service permissions...")
+        try:
+            for service in self.vpc_endpoint_services:
+                regional_client = self.regional_clients[service.region]
+                for (
+                    principal
+                ) in regional_client.describe_vpc_endpoint_service_permissions(
+                    ServiceId=service.id
+                )[
+                    "AllowedPrincipals"
+                ]:
+                    service.allowed_principals.append(principal["Principal"])
+        except Exception as error:
+            logger.error(f"{error.__class__.__name__}: {error}")
 
 
 @dataclass
@@ -240,4 +283,26 @@ class VpcEndpoint:
         self.policy_document = policy_document
         self.owner_id = owner_id
         self.route_tables = []
+        self.region = region
+
+
+@dataclass
+class VpcEndpointService:
+    id: str
+    service: str
+    owner_id: str
+    allowed_principals: list
+    region: str
+
+    def __init__(
+        self,
+        id,
+        service,
+        owner_id,
+        region,
+    ):
+        self.id = id
+        self.service = service
+        self.owner_id = owner_id
+        self.allowed_principals = []
         self.region = region
