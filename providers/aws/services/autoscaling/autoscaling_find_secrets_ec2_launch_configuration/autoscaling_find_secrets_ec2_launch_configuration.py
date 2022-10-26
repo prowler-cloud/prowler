@@ -1,4 +1,5 @@
 import os
+import tempfile
 from base64 import b64decode
 
 from detect_secrets import SecretsCollection
@@ -18,16 +19,14 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
             report.resource_arn = configuration.arn
 
             if configuration.user_data:
-                temp_user_data = "/tmp/user_data.txt"
+                temp_user_data = tempfile.NamedTemporaryFile(delete=False)
                 user_data = b64decode(configuration.user_data).decode("utf-8")
 
-                with open(temp_user_data, "w") as f:
-                    f.write(user_data)
-                    f.close()
-
+                temp_user_data.write(bytes(user_data, encoding="raw_unicode_escape"))
+                temp_user_data.close()
                 secrets = SecretsCollection()
                 with default_settings():
-                    secrets.scan_file(temp_user_data)
+                    secrets.scan_file(temp_user_data.name)
 
                 if secrets.json():
                     report.status = "FAIL"
@@ -36,7 +35,7 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                     report.status = "PASS"
                     report.status_extended = f"No secrets found in autoscaling {configuration.name} User Data."
 
-                os.remove(temp_user_data)
+                os.remove(temp_user_data.name)
             else:
                 report.status = "PASS"
                 report.status_extended = f"No secrets found in autoscaling {configuration.name} since User Data is empty."

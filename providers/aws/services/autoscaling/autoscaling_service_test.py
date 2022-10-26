@@ -87,5 +87,5 @@ class Test_AutoScaling_Service:
         audit_info = self.set_mocked_audit_info()
         autoscaling = AutoScaling(audit_info)
         assert len(autoscaling.launch_configurations) == len(
-            autoscaling_client.describe_launch_configurations()["LaunchConfigurations"]
+            autoscaling_client.describe_launch_configurations()
         )
