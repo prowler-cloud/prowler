@@ -8,7 +8,7 @@ class cloudtrail_multi_region_enabled(Check):
         actual_region = None
         for trail in cloudtrail_client.trails:
             report = Check_Report(self.metadata)
-            if trail.name != "not_found":  # Check if there are trails in region
+            if trail.name:  # Check if there are trails in region
                 if (
                     actual_region != trail.region
                 ):  # Check if region has changed and add report of previous region

@@ -10,7 +10,7 @@ class Cloudtrail:
     def __init__(self, audit_info):
         self.service = "cloudtrail"
         self.session = audit_info.audit_session
-        self.account = audit_info.audited_account
+        self.audited_account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.trails = []
         self.__threading_call__(self.__get_trails__)
@@ -32,6 +32,8 @@ class Cloudtrail:
         logger.info("Cloudtrail - Getting trails...")
         try:
             describe_trails = regional_client.describe_trails()["trailList"]
+            print(regional_client.region)
+            print(describe_trails)
             if describe_trails:
                 for trail in describe_trails:
                     self.trails.append(
@@ -47,12 +49,12 @@ class Cloudtrail:
             else:
                 self.trails.append(
                     Trail(
-                        name="not_found",
-                        is_multiregion="",
-                        home_region="",
-                        trail_arn="",
+                        name=None,
+                        is_multiregion=None,
+                        home_region=None,
+                        trail_arn=None,
                         region=regional_client.region,
-                        is_logging=False,
+                        is_logging=None,
                     )
                 )
 
