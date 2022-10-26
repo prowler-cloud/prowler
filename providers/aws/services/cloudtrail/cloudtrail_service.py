@@ -32,8 +32,6 @@ class Cloudtrail:
         logger.info("Cloudtrail - Getting trails...")
         try:
             describe_trails = regional_client.describe_trails()["trailList"]
-            print(regional_client.region)
-            print(describe_trails)
             if describe_trails:
                 for trail in describe_trails:
                     self.trails.append(
