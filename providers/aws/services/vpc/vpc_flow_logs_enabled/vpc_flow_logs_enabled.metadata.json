@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "",
-      "Terraform": ""
+      "Terraform": "https://docs.bridgecrew.io/docs/logging_9-enable-vpc-flow-logging#terraform"
     },
     "Recommendation": {
       "Text": "It is recommended that VPC Flow Logs be enabled for packet Rejects for VPCs.",

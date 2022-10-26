@@ -13,7 +13,7 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "https://docs.bridgecrew.io/docs/networking_5#cli-command",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""

@@ -1,3 +1,4 @@
+import json
 import threading
 from dataclasses import dataclass
 
@@ -14,8 +15,10 @@ class VPC:
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.vpcs = []
         self.vpc_peering_connections = []
+        self.vpc_endpoints = []
         self.__threading_call__(self.__describe_vpcs__)
         self.__threading_call__(self.__describe_vpc_peering_connections__)
+        self.__threading_call__(self.__describe_vpc_endpoints__)
         self.__describe_flow_logs__()
         self.__describe_route_tables__()
 
@@ -125,6 +128,29 @@ class VPC:
         except Exception as error:
             logger.error(f"{error.__class__.__name__}: {error}")
 
+    def __describe_vpc_endpoints__(self, regional_client):
+        logger.info("VPC - Describing VPC Endpoints...")
+        try:
+            describe_vpc_endpoints_paginator = regional_client.get_paginator(
+                "describe_vpc_endpoints"
+            )
+            for page in describe_vpc_endpoints_paginator.paginate():
+                for endpoint in page["VpcEndpoints"]:
+                    self.vpc_endpoints.append(
+                        VpcEndpoint(
+                            endpoint["VpcEndpointId"],
+                            endpoint["VpcId"],
+                            endpoint["State"],
+                            json.loads(endpoint["PolicyDocument"]),
+                            endpoint["OwnerId"],
+                            regional_client.region,
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+            )
+
 
 @dataclass
 class VPCs:
@@ -186,5 +212,32 @@ class VpcPeeringConnection:
         self.accepter_cidr = accepter_cidr
         self.requester_vpc = requester_vpc
         self.requester_cidr = requester_cidr
+        self.route_tables = []
+        self.region = region
+
+
+@dataclass
+class VpcEndpoint:
+    id: str
+    vpc_id: str
+    state: str
+    policy_document: dict
+    owner_id: list[Route]
+    region: str
+
+    def __init__(
+        self,
+        id,
+        vpc_id,
+        state,
+        policy_document,
+        owner_id,
+        region,
+    ):
+        self.id = id
+        self.vpc_id = vpc_id
+        self.state = state
+        self.policy_document = policy_document
+        self.owner_id = owner_id
         self.route_tables = []
         self.region = region
