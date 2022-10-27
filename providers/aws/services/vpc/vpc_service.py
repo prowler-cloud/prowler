@@ -53,7 +53,7 @@ class VPC:
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __describe_vpc_peering_connections__(self, regional_client):
@@ -76,7 +76,7 @@ class VPC:
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __describe_route_tables__(self):
@@ -96,7 +96,6 @@ class VPC:
                 )["RouteTables"]:
                     destination_cidrs = []
                     for route in route_table["Routes"]:
-                        print(route)
                         if (
                             route["Origin"] != "CreateRouteTable"
                         ):  # avoid default route table
@@ -109,7 +108,7 @@ class VPC:
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __describe_flow_logs__(self):
@@ -152,7 +151,7 @@ class VPC:
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __describe_vpc_endpoint_services__(self, regional_client):
@@ -164,7 +163,6 @@ class VPC:
             for page in describe_vpc_endpoint_services_paginator.paginate():
                 for endpoint in page["ServiceDetails"]:
                     if endpoint["Owner"] != "amazon":
-                        print(endpoint)
                         self.vpc_endpoint_services.append(
                             VpcEndpointService(
                                 endpoint["ServiceId"],
@@ -175,7 +173,7 @@ class VPC:
                         )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __describe_vpc_endpoint_service_permissions__(self):

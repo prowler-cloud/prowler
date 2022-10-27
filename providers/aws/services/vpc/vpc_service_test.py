@@ -124,6 +124,7 @@ class Test_VPC_Service:
         audit_info = self.set_mocked_audit_info()
         vpc = VPC(audit_info)
         assert len(vpc.vpc_peering_connections) == 1
+        assert vpc.vpc_peering_connections[0].id == vpc_pcx_id
 
     # Test VPC Describe VPC Peering connections
     @mock_ec2
@@ -145,6 +146,7 @@ class Test_VPC_Service:
         audit_info = self.set_mocked_audit_info()
         vpc = VPC(audit_info)
         assert len(vpc.vpc_peering_connections) == 1
+        assert vpc.vpc_peering_connections[0].id == vpc_pcx_id
 
     # Test VPC Describe VPC Peering connections
     @mock_ec2
@@ -186,6 +188,7 @@ class Test_VPC_Service:
             )
         ]
         assert len(vpc.vpc_peering_connections[0].route_tables) == 1
+        assert vpc.vpc_peering_connections[0].id == vpc_pcx_id
 
     # Test VPC Describe VPC Endpoints
     @mock_ec2
@@ -196,7 +199,7 @@ class Test_VPC_Service:
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
         route_table = ec2_client.create_route_table(VpcId=vpc["VpcId"])["RouteTable"]
-        ec2_client.create_vpc_endpoint(
+        endpoint = ec2_client.create_vpc_endpoint(
             VpcId=vpc["VpcId"],
             ServiceName="com.amazonaws.us-east-1.s3",
             RouteTableIds=[route_table["RouteTableId"]],
@@ -213,11 +216,12 @@ class Test_VPC_Service:
                     ]
                 }
             ),
-        )
+        )["VpcEndpoint"]["VpcEndpointId"]
         # VPC client for this test class
         audit_info = self.set_mocked_audit_info()
         vpc = VPC(audit_info)
         assert len(vpc.vpc_endpoints) == 1
+        assert vpc.vpc_endpoints[0].id == endpoint
 
     # Test VPC Describe VPC Endpoint Services
     @mock_ec2

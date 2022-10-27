@@ -11,7 +11,6 @@ class vpc_peering_routing_tables_with_least_privilege(Check):
             comply = True
             # Check each cidr in the peering route table
             for route_table in peer.route_tables:
-                print(route_table)
                 for cidr in route_table.destination_cidrs:
                     if (
                         cidr == "0.0.0.0/0"

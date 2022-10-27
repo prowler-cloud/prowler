@@ -3,6 +3,8 @@ from os import getcwd
 
 import yaml
 
+from lib.logger import logger
+
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
 prowler_version = "3.0-beta-08Aug2022"
@@ -24,17 +26,24 @@ config_yaml = "providers/aws/config.yaml"
 
 
 def change_config_var(variable, value):
-    with open(config_yaml) as f:
-        doc = yaml.safe_load(f)
+    try:
+        with open(config_yaml) as f:
+            doc = yaml.safe_load(f)
 
-    doc[variable] = value
+        doc[variable] = value
 
-    with open(config_yaml, "w") as f:
-        yaml.dump(doc, f)
+        with open(config_yaml, "w") as f:
+            yaml.dump(doc, f)
+    except Exception as error:
+        logger.error(f"{error.__class__.__name__}: {error}")
 
 
 def get_config_var(variable):
-    with open(config_yaml) as f:
-        doc = yaml.safe_load(f)
+    try:
+        with open(config_yaml) as f:
+            doc = yaml.safe_load(f)
 
-    return doc[variable]
+        return doc[variable]
+    except Exception as error:
+        logger.error(f"{error.__class__.__name__}: {error}")
+        return ""
