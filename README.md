@@ -32,6 +32,7 @@
 ## Table of Contents
 
 - [Description](#description)
+- [Prowler Container Versions](#prowler-container-versions)
 - [Features](#features)
 - [High level architecture](#high-level-architecture)
 - [Requirements and Installation](#requirements-and-installation)
