@@ -63,7 +63,7 @@ It follows guidelines of the CIS Amazon Web Services Foundations Benchmark (49 c
 
 Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-2018](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf)
 
-## Prowler versions
+## Prowler container versions
 
 The available versions of Prowler are the following:
 - latest: in sync with master branch (bear in mind that it is not a stable version)
