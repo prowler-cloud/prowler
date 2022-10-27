@@ -35,15 +35,16 @@ check21(){
     fi
     if [[ $TRAILS_DETAILS ]]
     then
-      for REGION_TRAIL in "${TRAILS_DETAILS}"; do
-        while read -r TRAIL_REGION IS_MULTIREGION TRAIL_ARN
+      for REGION_TRAIL in "${TRAILS_DETAILS}"
+      do
+        while read -r TRAIL_HOME_REGION IS_MULTIREGION TRAIL_ARN
         do
           TRAIL_ON_OFF_STATUS=$(${AWSCLI} cloudtrail get-trail-status ${PROFILE_OPT} --region ${regx} --name ${TRAIL_ARN} --query IsLogging --output text)
           if [[ "$TRAIL_ON_OFF_STATUS" == "False"  ]]
           then
             if [[ "${IS_MULTIREGION}" == "True" ]]
             then
-              textFail "$regx: Trail ${TRAIL_ARN} is multiregion configured from region "${TRAIL_REGION}" but it is not logging" "${regx}" "${TRAIL_ARN}"
+              textFail "$regx: Trail ${TRAIL_ARN} is multiregion configured from region "${TRAIL_HOME_REGION}" but it is not logging" "${regx}" "${TRAIL_ARN}"
             else
               textFail "$regx: Trail ${TRAIL_ARN} is not a multiregion trail and it is not logging" "${regx}" "${TRAIL_ARN}"
             fi
@@ -51,7 +52,7 @@ check21(){
           then
             if [[ "${IS_MULTIREGION}" == "True" ]]
             then
-              textPass "$regx: Trail ${TRAIL_ARN} is multiregion configured from region "${TRAIL_REGION}" and it is logging" "${regx}" "${TRAIL_ARN}"
+              textPass "$regx: Trail ${TRAIL_ARN} is multiregion configured from region "${TRAIL_HOME_REGION}" and it is logging" "${regx}" "${TRAIL_ARN}"
             else
               textFail "$regx: Trail ${TRAIL_ARN} is not a multiregion trail and it is logging" "${regx}" "${TRAIL_ARN}"
             fi
