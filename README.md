@@ -67,7 +67,7 @@ Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-20
 
 The available versions of Prowler are the following:
 - latest: in sync with master branch (bear in mind that it is not a stable version)
-- release: you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
+- <x.y.z> (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
 - stable: this tag always point to the latest release.  
 
 The container images are available here:
