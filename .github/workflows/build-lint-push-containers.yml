@@ -198,7 +198,7 @@ jobs:
           docker push ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
           docker push ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
 
-          docker push ${{ secrets.PRO_ECR }}/${{ secrets.PRO_ECR_REPOSITORY }}:${{ env.STABLE_TAG }}
+          docker push ${{ secrets.PLATFORM_ECR }}/${{ secrets.PLATFORM_ECR_REPOSITORY }}:${{ env.STABLE_TAG }}
           docker push ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
           docker push ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
       -
