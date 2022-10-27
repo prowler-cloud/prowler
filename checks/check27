@@ -27,33 +27,28 @@ CHECK_DOC_check27='https://docs.aws.amazon.com/awscloudtrail/latest/userguide/en
 CHECK_CAF_EPIC_check27='Logging and Monitoring'
 
 check27(){
-  trail_count=0
-  # "Ensure CloudTrail logs are encrypted at rest using KMS CMKs (Scored)"
   for regx in $REGIONS; do
-    TRAILS_AND_REGIONS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].{Name:TrailARN, HomeRegion:HomeRegion}' --output text 2>&1 | tr "	" ',')
-    if [[ $(echo "$TRAILS_AND_REGIONS" | grep AccessDenied) ]]; then
-      textInfo "$regx: Access Denied trying to describe trails" "$regx" "$trail"
+    TRAILS_DETAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].{Name:Name, KeyID:KmsKeyId}' --output text 2>&1)
+    if [[ $(echo "$TRAILS_DETAILS" | grep AccessDenied) ]]; then
+      textInfo "$regx: Access Denied trying to describe trails" "$regx"
       continue
     fi
-    if [[ $TRAILS_AND_REGIONS ]]; then
-      for reg_trail in $TRAILS_AND_REGIONS; do
-        TRAIL_REGION=$(echo $reg_trail | cut -d',' -f1)
-        if [ $TRAIL_REGION != $regx ]; then # Only report trails once in home region
-          continue
-        fi
-        trail=$(echo $reg_trail | cut -d',' -f2)
-        trail_count=$((trail_count + 1))
-
-        KMSKEYID=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $TRAIL_REGION --query 'trailList[*].KmsKeyId' --output text --trail-name-list $trail)
-        if [[ "$KMSKEYID" ]];then
-          textPass "$regx: Trail $trail has encryption enabled" "$regx" "$trail"
-        else
-          textFail "$regx: Trail $trail has encryption disabled" "$regx" "$trail"
-        fi
+    if [[ $TRAILS_DETAILS ]]
+    then
+      for REGION_TRAIL in "${TRAILS_DETAILS}"
+      do
+        while read -r TRAIL_KEY_ID TRAIL_NAME
+        do
+          if [[ "${TRAIL_KEY_ID}" != "None" ]]
+          then
+            textPass "$regx: Trail $TRAIL_NAME has encryption enabled" "$regx" "$TRAIL_NAME"
+          else
+            textFail "$regx: Trail $TRAIL_NAME has encryption disabled" "$regx" "$TRAIL_NAME"
+          fi
+        done <<< "${REGION_TRAIL}"
       done
-    fi
-    if [[ $trail_count == 0 ]]; then
-      textFail "$regx: No CloudTrail trails were found in the account" "$regx" "$trail"
+    else
+      textPass "$regx: No CloudTrail trails were found for the region" "${regx}" "No trails found"
     fi
   done
 }
