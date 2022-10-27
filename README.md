@@ -63,6 +63,17 @@ It follows guidelines of the CIS Amazon Web Services Foundations Benchmark (49 c
 
 Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-2018](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf)
 
+## Prowler versions
+
+The available versions of Prowler are the following:
+- latest: in sync with master branch (bear in mind that it is not a stable version)
+- release: you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
+- stable: this tag always point to the latest release.  
+
+The container images are available here:
+- [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
+- [AWS Public ECR](https://gallery.ecr.aws/o4g1s5r6/prowler)
+
 ## Features
 
 +240 checks covering security best practices across all AWS regions and most of AWS services and related to the next groups:
