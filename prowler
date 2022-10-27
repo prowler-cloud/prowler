@@ -23,7 +23,7 @@
 # I've just got to find my way...
 
 # Set the defaults variables
-PROWLER_VERSION=2.11.0-21July2022
+PROWLER_VERSION=2.12.0-27October2022
 PROWLER_DIR=$(dirname "$0")
 
 ############################################################
