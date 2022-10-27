@@ -22,11 +22,13 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                 temp_user_data_file = tempfile.NamedTemporaryFile(delete=False)
                 user_data = b64decode(configuration.user_data).decode("utf-8")
 
-                temp_user_data_file.write(bytes(user_data, encoding="raw_unicode_escape"))
-                temp_user_data.close()
+                temp_user_data_file.write(
+                    bytes(user_data, encoding="raw_unicode_escape")
+                )
+                temp_user_data_file.close()
                 secrets = SecretsCollection()
                 with default_settings():
-                    secrets.scan_file(temp_user_data.name)
+                    secrets.scan_file(temp_user_data_file.name)
 
                 if secrets.json():
                     report.status = "FAIL"

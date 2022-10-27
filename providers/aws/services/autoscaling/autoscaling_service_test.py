@@ -1,3 +1,5 @@
+from base64 import b64decode
+
 from boto3 import client, session
 from moto import mock_autoscaling
 
@@ -75,6 +77,7 @@ class Test_AutoScaling_Service:
             InstanceType="t1.micro",
             KeyName="the_keys",
             SecurityGroups=["default", "default2"],
+            UserData="DB_PASSWORD=foobar123",
         )
         autoscaling_client.create_launch_configuration(
             LaunchConfigurationName="tester2",
@@ -86,6 +89,12 @@ class Test_AutoScaling_Service:
         # AutoScaling client for this test class
         audit_info = self.set_mocked_audit_info()
         autoscaling = AutoScaling(audit_info)
-        assert len(autoscaling.launch_configurations) == len(
-            autoscaling_client.describe_launch_configurations()
+        assert len(autoscaling.launch_configurations) == 2
+        assert autoscaling.launch_configurations[0].name == "tester1"
+        assert (
+            b64decode(autoscaling.launch_configurations[0].user_data).decode("utf-8")
+            == "DB_PASSWORD=foobar123"
         )
+        assert autoscaling.launch_configurations[0].image_id == "ami-12c6146b"
+        assert autoscaling.launch_configurations[1].image_id == "ami-12c6146b"
+        assert autoscaling.launch_configurations[1].name == "tester2"
