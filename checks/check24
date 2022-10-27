@@ -27,40 +27,34 @@ CHECK_DOC_check24='https://docs.aws.amazon.com/awscloudtrail/latest/userguide/se
 CHECK_CAF_EPIC_check24='Logging and Monitoring'
 
 check24(){
-  trail_count=0
-  # "Ensure CloudTrail trails are integrated with CloudWatch Logs (Scored)"
   for regx in $REGIONS; do
-    TRAILS_AND_REGIONS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].{Name:TrailARN, HomeRegion:HomeRegion}' --output text 2>&1 | tr "	" ',')
-    if [[ $(echo "$TRAILS_AND_REGIONS" | grep AccessDenied) ]]; then
-      textInfo "$regx: Access Denied trying to describe trails" "$regx" "$trail"
+    TRAILS_DETAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].{Name:Name, HomeRegion:HomeRegion, ARN:TrailARN}' --output text 2>&1)
+    if [[ $(echo "$TRAILS_DETAILS" | grep AccessDenied) ]]; then
+      textInfo "$regx: Access Denied trying to describe trails" "$regx"
       continue
     fi
-    if [[ $TRAILS_AND_REGIONS ]]; then
-      for reg_trail in $TRAILS_AND_REGIONS; do
-        TRAIL_REGION=$(echo $reg_trail | cut -d',' -f1)
-        if [ $TRAIL_REGION != $regx ]; then # Only report trails once in home region
-          continue
-        fi
-        trail=$(echo $reg_trail | cut -d',' -f2)
-        trail_count=$((trail_count + 1))
-
-        LATESTDELIVERY_TIMESTAMP=$($AWSCLI cloudtrail get-trail-status --name $trail $PROFILE_OPT --region $TRAIL_REGION --query 'LatestCloudWatchLogsDeliveryTime' --output text|grep -v None)
-        if [[ ! $LATESTDELIVERY_TIMESTAMP ]];then
-          textFail "$TRAIL_REGION: $trail trail is not logging in the last 24h or not configured (it is in $TRAIL_REGION)" "$TRAIL_REGION" "$trail"
-        else
-          LATESTDELIVERY_DATE=$(timestamp_to_date $LATESTDELIVERY_TIMESTAMP)
-          HOWOLDER=$(how_older_from_today $LATESTDELIVERY_DATE)
-          if [ $HOWOLDER -gt "1" ];then
-            textFail "$TRAIL_REGION: $trail trail is not logging in the last 24h or not configured" "$TRAIL_REGION" "$trail"
+    if [[ $TRAILS_DETAILS ]]
+    then
+      for REGION_TRAIL in "${TRAILS_DETAILS}"
+      do
+        while read -r TRAIL_ARN TRAIL_HOME_REGION TRAIL_NAME
+        do
+          LATESTDELIVERY_TIMESTAMP=$(${AWSCLI} cloudtrail get-trail-status ${PROFILE_OPT} --region ${regx} --name ${TRAIL_ARN} --query LatestCloudWatchLogsDeliveryTime --output text|grep -v None)
+          if [[ ! $LATESTDELIVERY_TIMESTAMP ]];then
+            textFail "$regx: $TRAIL_NAME trail is not logging in the last 24h or not configured (its home region is $TRAIL_HOME_REGION)" "$regx" "$trail"
           else
-            textPass "$TRAIL_REGION: $trail trail has been logging during the last 24h" "$TRAIL_REGION" "$trail"
+            LATESTDELIVERY_DATE=$(timestamp_to_date $LATESTDELIVERY_TIMESTAMP)
+            HOWOLDER=$(how_older_from_today $LATESTDELIVERY_DATE)
+            if [ $HOWOLDER -gt "1" ];then
+              textFail "$regx: $TRAIL_NAME trail is not logging in the last 24h or not configured" "$regx" "$TRAIL_NAME"
+            else
+              textPass "$regx: $TRAIL_NAME trail has been logging during the last 24h" "$regx" "$TRAIL_NAME"
+            fi
           fi
-        fi
-
+        done <<< "${REGION_TRAIL}"
       done
-    fi
-    if [[ $trail_count == 0 ]]; then
-      textFail "$regx: No CloudTrail trails were found in the account" "$regx" "$trail"
+    else
+      textFail "$regx: No CloudTrail trails were found for the region" "${regx}" "No trails found"
     fi
   done
 }

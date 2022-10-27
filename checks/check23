@@ -27,68 +27,61 @@ CHECK_DOC_check23='https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_po
 CHECK_CAF_EPIC_check23='Logging and Monitoring'
 
 check23(){
-  trail_count=0
-  # "Ensure the S3 bucket CloudTrail logs to is not publicly accessible (Scored)"
-  for regx in $REGIONS; do
-    TRAILS_AND_REGIONS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].{Name:TrailARN, HomeRegion:HomeRegion}' --output text 2>&1 | tr "	" ',')
-    if [[ $(echo "$TRAILS_AND_REGIONS" | grep AccessDenied) ]]; then
-      textInfo "$regx: Access Denied trying to describe trails" "$regx" "$trail"
+  for regx in $REGIONS
+  do
+    TRAILS_DETAILS=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $regx --query 'trailList[*].{Name:Name, HomeRegion:HomeRegion, Multiregion:IsMultiRegionTrail, BucketName:S3BucketName}' --output text 2>&1)
+    if [[ $(echo "$TRAILS_DETAILS" | grep AccessDenied) ]]; then
+      textInfo "$regx: Access Denied trying to describe trails" "$regx"
       continue
     fi
-    if [[ $TRAILS_AND_REGIONS ]]; then
-      for reg_trail in $TRAILS_AND_REGIONS; do
-        TRAIL_REGION=$(echo $reg_trail | cut -d',' -f1)
-        if [ $TRAIL_REGION != $regx ]; then # Only report trails once in home region
-          continue
-        fi
-        trail=$(echo $reg_trail | cut -d',' -f2)
-        trail_count=$((trail_count + 1))
+    if [[ $TRAILS_DETAILS ]]
+    then
+      for REGION_TRAIL in "${TRAILS_DETAILS}"
+      do
+        while read -r TRAIL_BUCKET TRAIL_HOME_REGION IS_MULTIREGION TRAIL_NAME
+        do
+          if [[ ! "${TRAIL_BUCKET}" ]]
+          then
+            if [[ "${IS_MULTIREGION}" == "True" ]]
+              then
+                textFail "$regx: Multiregion trail ${TRAIL_NAME} configured from region ${TRAIL_HOME_REGION}  does not publish to S3" "$regx" "$TRAIL_NAME"
+              else
+                textFail "$regx: Single region trail ${TRAIL_NAME}  does not publish to S3" "$regx" "$TRAIL_NAME"
+              fi
+            continue
+          fi
 
-        CLOUDTRAILBUCKET=$($AWSCLI cloudtrail describe-trails $PROFILE_OPT --region $TRAIL_REGION --query 'trailList[*].[S3BucketName]' --output text --trail-name-list $trail)
-        if [[ -z $CLOUDTRAILBUCKET ]]; then
-          textFail "Trail $trail in $TRAIL_REGION does not publish to S3" "$regx" "$trail"
-          continue
-        fi
+          BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location $PROFILE_OPT --region $regx --bucket $TRAIL_BUCKET --output text 2>&1)
+          if [[ $(echo "$BUCKET_LOCATION" | grep AccessDenied) ]]
+          then
+            textInfo "$regx: Trail ${TRAIL_NAME} with home region ${TRAIL_HOME_REGION} Access Denied getting bucket location for bucket $TRAIL_BUCKET" "$regx" "$TRAIL_NAME"
+            continue
+          fi
+          if [[ $BUCKET_LOCATION == "None" ]]; then
+              BUCKET_LOCATION="us-east-1"
+          fi
+          if [[ $BUCKET_LOCATION == "EU" ]]; then
+            BUCKET_LOCATION="eu-west-1"
+          fi
 
-        CLOUDTRAIL_ACCOUNT_ID=$(echo $trail | awk -F: '{ print $5 }')
-        if [ "$CLOUDTRAIL_ACCOUNT_ID" != "$ACCOUNT_NUM" ]; then
-          textInfo "Trail $trail in $TRAIL_REGION S3 logging bucket $CLOUDTRAILBUCKET is not in current account" "$regx" "$trail"
-          continue
-        fi
+          CLOUDTRAILBUCKET_HASALLPERMISIONS=$($AWSCLI s3api get-bucket-acl --bucket $TRAIL_BUCKET $PROFILE_OPT --region $BUCKET_LOCATION --query 'Grants[?Grantee.URI==`http://acs.amazonaws.com/groups/global/AllUsers`]' --output text 2>&1)
+          if [[ $(echo "$CLOUDTRAILBUCKET_HASALLPERMISIONS" | grep AccessDenied) ]]; then
+            textInfo "$regx: Trail ${TRAIL_NAME} with home region ${TRAIL_HOME_REGION} Access Denied getting bucket acl for bucket $TRAIL_BUCKET" "$regx" "$TRAIL_NAME"
+            continue
+          fi
 
-        #
-        # LOCATION - requests referencing buckets created after March 20, 2019
-        # must be made to S3 endpoints in the same region as the bucket was
-        # created.
-        #
-        BUCKET_LOCATION=$($AWSCLI s3api get-bucket-location $PROFILE_OPT --region $regx --bucket $CLOUDTRAILBUCKET --output text 2>&1)
-        if [[ $(echo "$BUCKET_LOCATION" | grep AccessDenied) ]]; then
-          textInfo "Trail $trail in $TRAIL_REGION Access Denied getting bucket location for $CLOUDTRAILBUCKET" "$regx" "$trail"
-          continue
-        fi
-        if [[ $BUCKET_LOCATION == "None" ]]; then
-          BUCKET_LOCATION="us-east-1"
-        fi
-        if [[ $BUCKET_LOCATION == "EU" ]]; then
-          BUCKET_LOCATION="eu-west-1"
-        fi
+          if [[ ! $CLOUDTRAILBUCKET_HASALLPERMISIONS ]]; then
+            textPass "$regx: Trail ${TRAIL_NAME} with home region ${TRAIL_HOME_REGION} S3 logging bucket $TRAIL_BUCKET is not publicly accessible" "$regx" "$TRAIL_NAME"
+          else
+            textFail "$regx: Trail ${TRAIL_NAME} with home region ${TRAIL_HOME_REGION} S3 logging bucket $TRAIL_BUCKET is publicly accessible" "$regx" "$TRAIL_NAME"
+          fi
 
-        CLOUDTRAILBUCKET_HASALLPERMISIONS=$($AWSCLI s3api get-bucket-acl --bucket $CLOUDTRAILBUCKET $PROFILE_OPT --region $BUCKET_LOCATION --query 'Grants[?Grantee.URI==`http://acs.amazonaws.com/groups/global/AllUsers`]' --output text 2>&1)
-        if [[ $(echo "$CLOUDTRAILBUCKET_HASALLPERMISIONS" | grep AccessDenied) ]]; then
-          textInfo "Trail $trail in $TRAIL_REGION Access Denied getting bucket acl for $CLOUDTRAILBUCKET" "$regx" "$trail"
-          continue
-        fi
-
-        if [[ -z $CLOUDTRAILBUCKET_HASALLPERMISIONS ]]; then
-          textPass "Trail $trail in $TRAIL_REGION S3 logging bucket $CLOUDTRAILBUCKET is not publicly accessible" "$regx" "$trail"
-        else
-          textFail "Trail $trail in $TRAIL_REGION S3 logging bucket $CLOUDTRAILBUCKET is publicly accessible" "$regx" "$trail"
-        fi
-
+        done <<< "${REGION_TRAIL}"
       done
+    else
+      textPass "$regx: No trails found in the region" "$regx"
     fi
-    if [[ $trail_count == 0 ]]; then
-      textFail "$regx: No CloudTrail trails were found in the account" "$regx" "$trail"
-    fi
+
   done
+
 }
