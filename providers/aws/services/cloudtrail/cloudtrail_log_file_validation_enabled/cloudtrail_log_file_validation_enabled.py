@@ -11,12 +11,24 @@ class cloudtrail_log_file_validation_enabled(Check):
             report.resource_id = trail.name
             report.resource_arn = trail.trail_arn
             report.status = "FAIL"
-            report.status_extended = f"Trail {trail.name} log file validation disabled"
+            if trail.is_multiregion:
+                report.status_extended = (
+                    f"Multiregion trail {trail.name} log file validation disabled"
+                )
+            else:
+                report.status_extended = (
+                    f"Single region trail {trail.name} log file validation disabled"
+                )
             if trail.log_file_validation_enabled:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Trail {trail.name} log file validation enabled"
-                )
+                if trail.is_multiregion:
+                    report.status_extended = (
+                        f"Multiregion trail {trail.name} log file validation enabled"
+                    )
+                else:
+                    report.status_extended = (
+                        f"Single region trail {trail.name} log file validation enabled"
+                    )
 
             findings.append(report)
 
