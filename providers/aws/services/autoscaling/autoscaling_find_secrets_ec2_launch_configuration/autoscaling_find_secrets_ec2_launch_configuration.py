@@ -19,7 +19,7 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
             report.resource_arn = configuration.arn
 
             if configuration.user_data:
-                temp_user_data = tempfile.NamedTemporaryFile(delete=False)
+                temp_user_data_file = tempfile.NamedTemporaryFile(delete=False)
                 user_data = b64decode(configuration.user_data).decode("utf-8")
 
                 temp_user_data.write(bytes(user_data, encoding="raw_unicode_escape"))
