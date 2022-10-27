@@ -42,6 +42,9 @@ class Cloudtrail:
                             trail_arn=trail["TrailARN"],
                             region=regional_client.region,
                             is_logging=False,
+                            log_file_validation_enabled=trail[
+                                "LogFileValidationEnabled"
+                            ],
                         )
                     )
             else:
@@ -53,6 +56,7 @@ class Cloudtrail:
                         trail_arn=None,
                         region=regional_client.region,
                         is_logging=None,
+                        log_file_validation_enabled=None,
                     )
                 )
 
@@ -82,6 +86,7 @@ class Trail:
     trail_arn: str
     region: str
     is_logging: bool
+    log_file_validation_enabled: bool
 
     def __init__(
         self,
@@ -91,6 +96,7 @@ class Trail:
         trail_arn,
         region,
         is_logging,
+        log_file_validation_enabled,
     ):
         self.name = name
         self.is_multiregion = is_multiregion
@@ -98,3 +104,4 @@ class Trail:
         self.trail_arn = trail_arn
         self.region = region
         self.is_logging = is_logging
+        self.log_file_validation_enabled = log_file_validation_enabled
