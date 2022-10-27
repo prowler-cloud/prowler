@@ -35,7 +35,7 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                     report.status = "PASS"
                     report.status_extended = f"No secrets found in autoscaling {configuration.name} User Data."
 
-                os.remove(temp_user_data.name)
+                os.remove(temp_user_data_file.name)
             else:
                 report.status = "PASS"
                 report.status_extended = f"No secrets found in autoscaling {configuration.name} since User Data is empty."
