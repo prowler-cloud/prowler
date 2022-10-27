@@ -3,7 +3,6 @@
 name: Refresh regions of AWS services
 
 on:
-  workflow_dispatch:
   schedule:
     - cron: "0 9 * * *" #runs at 09:00 UTC everyday
 
