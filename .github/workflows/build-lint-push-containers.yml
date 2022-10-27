@@ -13,6 +13,7 @@ on:
 
 env:
   AWS_REGION_STG: eu-west-1
+  AWS_REGION_PLATFORM: eu-west-1
   AWS_REGION_PRO: us-east-1
   IMAGE_NAME: prowler
   LATEST_TAG: latest
@@ -146,25 +147,25 @@ jobs:
         with:
           registry: ${{ secrets.STG_ECR }}
       -
-        name: Configure AWS Credentials -- PRO
+        name: Configure AWS Credentials -- PLATFORM
         if: github.event_name == 'release'
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-region: ${{ env.AWS_REGION_PRO }}
-          role-to-assume: ${{ secrets.PRO_IAM_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION_PLATFORM }}
+          role-to-assume: ${{ secrets.STG_IAM_ROLE_ARN }}
           role-session-name: build-lint-containers-pro
       -
-        name: Login to ECR -- PRO
+        name: Login to ECR -- PLATFORM
         if: github.event_name == 'release'
         uses: docker/login-action@v2
         with:
-          registry: ${{ secrets.PRO_ECR }}
+          registry: ${{ secrets.PLATFORM_ECR }}
       -
         # Push to master branch - push "latest" tag
         name: Tag (latest)
         if: github.event_name == 'push'
         run: |
-          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.STG_ECR }}/${{ secrets.STG_ECR_REPOSITORY }}:${{ env.LATEST_TAG }}
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PLATFORM_ECR }}/${{ secrets.PLATFORM_ECR_REPOSITORY }}:${{ env.LATEST_TAG }}
           docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
           docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
       -
@@ -172,7 +173,7 @@ jobs:
         name: Push (latest)
         if: github.event_name == 'push'
         run: |
-          docker push ${{ secrets.STG_ECR }}/${{ secrets.STG_ECR_REPOSITORY }}:${{ env.LATEST_TAG }}
+          docker push ${{ secrets.PLATFORM_ECR }}/${{ secrets.PLATFORM_ECR_REPOSITORY }}:${{ env.LATEST_TAG }}
           docker push ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
           docker push ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
       -
@@ -180,11 +181,11 @@ jobs:
         name: Tag (release)
         if: github.event_name == 'release'
         run: |
-          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PRO_ECR }}/${{ secrets.PRO_ECR_REPOSITORY }}:${{ github.event.release.tag_name }}
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PLATFORM_ECR }}/${{ secrets.PLATFORM_ECR_REPOSITORY }}:${{ github.event.release.tag_name }}
           docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
           docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
 
-          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PRO_ECR }}/${{ secrets.PRO_ECR_REPOSITORY }}:${{ env.STABLE_TAG }}
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PLATFORM_ECR }}/${{ secrets.PLATFORM_ECR_REPOSITORY }}:${{ env.STABLE_TAG }}
           docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
           docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
 
@@ -193,7 +194,7 @@ jobs:
         name: Push (release)
         if: github.event_name == 'release'
         run: |
-          docker push ${{ secrets.PRO_ECR }}/${{ secrets.PRO_ECR_REPOSITORY }}:${{ github.event.release.tag_name }}
+          docker push ${{ secrets.PLATFORM_ECR }}/${{ secrets.PLATFORM_ECR_REPOSITORY }}:${{ github.event.release.tag_name }}
           docker push ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
           docker push ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
 
