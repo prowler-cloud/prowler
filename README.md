@@ -32,6 +32,7 @@
 ## Table of Contents
 
 - [Description](#description)
+- [Prowler Container Versions](#prowler-container-versions)
 - [Features](#features)
 - [High level architecture](#high-level-architecture)
 - [Requirements and Installation](#requirements-and-installation)
@@ -62,6 +63,17 @@ Prowler is a command line tool that helps you with AWS security assessment, audi
 It follows guidelines of the CIS Amazon Web Services Foundations Benchmark (49 checks) and has more than 190 additional checks including related to GDPR, HIPAA, PCI-DSS, ISO-27001, FFIEC, SOC2 and others.
 
 Read more about [CIS Amazon Web Services Foundations Benchmark v1.2.0 - 05-23-2018](https://d0.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf)
+
+## Prowler container versions
+
+The available versions of Prowler are the following:
+- latest: in sync with master branch (bear in mind that it is not a stable version)
+- <x.y.z> (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
+- stable: this tag always point to the latest release.  
+
+The container images are available here:
+- [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
+- [AWS Public ECR](https://gallery.ecr.aws/o4g1s5r6/prowler)
 
 ## Features
 
