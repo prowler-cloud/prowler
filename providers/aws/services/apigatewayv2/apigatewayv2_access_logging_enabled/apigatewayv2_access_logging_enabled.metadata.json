@@ -15,8 +15,8 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "https://docs.bridgecrew.io/docs/bc_aws_logging_30#aws-console",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_logging_30#cloudformation"
     },
     "Recommendation": {
       "Text": "Implement Amazon Cognito or a Lambda function to control access to your API.",
