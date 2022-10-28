@@ -8,7 +8,7 @@ AWS_REGION = "us-east-1"
 
 class Test_kms_cmk_are_used:
     @mock_kms
-    def test_kms_certificate_with_logging(self):
+    def test_kms_no_keys(self):
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.kms.kms_service import KMS
 
