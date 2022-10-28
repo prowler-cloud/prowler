@@ -16,6 +16,7 @@ class S3:
         self.buckets = self.__list_buckets__()
         self.__threading_call__(self.__get_bucket_versioning__)
         self.__threading_call__(self.__get_bucket_logging__)
+        self.__threading_call__(self.__get_bucket_acl__)
 
     def __get_session__(self):
         return self.session
@@ -79,6 +80,30 @@ class S3:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __get_bucket_acl__(self, bucket):
+        logger.info("S3 - Get buckets acl...")
+        try:
+            grantees = []
+            regional_client = self.regional_clients[bucket.region]
+            acl_grants = regional_client.get_bucket_acl(Bucket=bucket.name)["Grants"]
+            for grant in acl_grants:
+                grantee = ACL_Grantee(grantee_type=grant["Grantee"])
+                if "DisplayName" in grant["Grantee"]:
+                    grantee.display_name = grant["Grantee"]["DisplayName"]
+                if "EmailAddress" in grant["Grantee"]:
+                    grantee.email_address = grant["Grantee"]["EmailAddress"]
+                if "ID" in grant["Grantee"]:
+                    grantee.ID = grant["Grantee"]["ID"]
+                if "URI" in grant["Grantee"]:
+                    grantee.URI = grant["Grantee"]["URI"]
+                grantees.append(grantee)
+
+            bucket.acl_grantee = grantees
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 @dataclass
 class Bucket:
@@ -86,9 +111,27 @@ class Bucket:
     versioning: bool
     logging: bool
     region: str
+    acl_grantee: list
 
     def __init__(self, name, region):
         self.name = name
         self.versioning = False
         self.logging = False
         self.region = region
+        self.acl_grantee = None
+
+
+@dataclass
+class ACL_Grantee:
+    display_name: str
+    email_address: str
+    ID: str
+    grantee_type: str
+    URI: str
+
+    def __init__(self, grantee_type):
+        self.display_name = None
+        self.email_address = None
+        self.ID = None
+        self.grantee_type = grantee_type
+        self.URI = None

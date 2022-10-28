@@ -45,6 +45,7 @@ class Cloudtrail:
                             log_file_validation_enabled=trail[
                                 "LogFileValidationEnabled"
                             ],
+                            s3_bucket=trail["S3BucketName"],
                         )
                     )
             else:
@@ -57,6 +58,7 @@ class Cloudtrail:
                         region=regional_client.region,
                         is_logging=None,
                         log_file_validation_enabled=None,
+                        s3_bucket=None,
                     )
                 )
 
@@ -87,6 +89,7 @@ class Trail:
     region: str
     is_logging: bool
     log_file_validation_enabled: bool
+    s3_bucket: str
 
     def __init__(
         self,
@@ -97,6 +100,7 @@ class Trail:
         region,
         is_logging,
         log_file_validation_enabled,
+        s3_bucket,
     ):
         self.name = name
         self.is_multiregion = is_multiregion
@@ -105,3 +109,4 @@ class Trail:
         self.region = region
         self.is_logging = is_logging
         self.log_file_validation_enabled = log_file_validation_enabled
+        self.s3_bucket = s3_bucket
