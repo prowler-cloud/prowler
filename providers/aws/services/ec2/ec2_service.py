@@ -78,7 +78,7 @@ class EC2:
                             )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __describe_security_groups__(self, regional_client):
@@ -100,7 +100,7 @@ class EC2:
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __describe_network_acls__(self, regional_client):
@@ -120,7 +120,7 @@ class EC2:
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __describe_snapshots__(self, regional_client):
@@ -143,7 +143,7 @@ class EC2:
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __get_snapshot_public__(self):
@@ -159,7 +159,9 @@ class EC2:
                         if permission["Group"] == "all":
                             snapshot.public = True
         except Exception as error:
-            logger.error(f"{error.__class__.__name__}: {error}")
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __describe_elastic_ips__(self, regional_client):
         logger.info("EC2 - Describing Security Groups...")
@@ -181,7 +183,7 @@ class EC2:
                         )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 

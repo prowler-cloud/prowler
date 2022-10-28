@@ -23,8 +23,15 @@ class IAM:
         self.groups = self.__get_groups__()
         self.__get_group_users__()
         self.__list_attached_group_policies__()
+        self.__list_attached_user_policies__()
+        self.__list_inline_user_policies__()
         self.__list_mfa_devices__()
         self.password_policy = self.__get_password_policy__()
+        self.entities_attached_to_support_roles = (
+            self.__get_entities_attached_to_support_roles__()
+        )
+        self.policies = self.__list_policies__()
+        self.list_policies_version = self.__list_policies_version__(self.policies)
         self.saml_providers = self.__list_saml_providers__()
 
     def __get_client__(self):
@@ -37,7 +44,9 @@ class IAM:
         try:
             get_roles_paginator = self.client.get_paginator("list_roles")
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         else:
             roles = []
             for page in get_roles_paginator.paginate():
@@ -52,7 +61,9 @@ class IAM:
             try:
                 report_status = self.client.generate_credential_report()
             except Exception as error:
-                logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
             else:
                 if report_status["State"] == "COMPLETE":
                     report_is_completed = True
@@ -68,7 +79,9 @@ class IAM:
         try:
             get_groups_paginator = self.client.get_paginator("list_groups")
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         else:
             groups = []
             for page in get_groups_paginator.paginate():
@@ -83,7 +96,9 @@ class IAM:
                 "list_policies"
             )
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         else:
             customer_managed_policies = []
             # Use --scope Local to list only Customer Managed Policies
@@ -101,13 +116,17 @@ class IAM:
                 )
                 policy["PolicyDocument"] = response["PolicyVersion"]["Document"]
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_account_summary__(self):
         try:
             account_summary = self.client.get_account_summary()
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         else:
 
             return account_summary
@@ -128,7 +147,9 @@ class IAM:
             if "HardExpiry" in password_policy:
                 hard_expiry = password_policy["HardExpiry"]
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
             # Password policy does not exist
             password_policy = None
         else:
@@ -149,7 +170,9 @@ class IAM:
         try:
             get_users_paginator = self.client.get_paginator("list_users")
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         else:
             users = []
             for page in get_users_paginator.paginate():
@@ -171,7 +194,9 @@ class IAM:
                 "list_virtual_mfa_devices"
             )
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         else:
             mfa_devices = []
             for page in list_virtual_mfa_devices_paginator.paginate():
@@ -195,7 +220,9 @@ class IAM:
 
                 group.attached_policies = attached_group_policies
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_group_users__(self):
         try:
@@ -218,7 +245,9 @@ class IAM:
                             )
                 group.users = group_users
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __list_mfa_devices__(self):
         try:
@@ -236,14 +265,104 @@ class IAM:
                         mfa_devices.append(MFADevice(mfa_serial_number, mfa_type))
                 user.mfa_devices = mfa_devices
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __list_attached_user_policies__(self):
+        try:
+            for user in self.users:
+                attached_user_policies = []
+                get_user_attached_policies_paginator = self.client.get_paginator(
+                    "list_attached_user_policies"
+                )
+                for page in get_user_attached_policies_paginator.paginate(
+                    UserName=user.name
+                ):
+                    for policy in page["AttachedPolicies"]:
+                        attached_user_policies.append(policy)
+
+                user.attached_policies = attached_user_policies
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __list_inline_user_policies__(self):
+        try:
+            for user in self.users:
+                inline_user_policies = []
+                get_user_inline_policies_paginator = self.client.get_paginator(
+                    "list_user_policies"
+                )
+                for page in get_user_inline_policies_paginator.paginate(
+                    UserName=user.name
+                ):
+                    for policy in page["PolicyNames"]:
+                        inline_user_policies.append(policy)
+
+                user.inline_policies = inline_user_policies
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_entities_attached_to_support_roles__(self):
+        try:
+            support_roles = []
+            support_entry_policy_arn = (
+                "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
+            )
+            support_roles = self.client.list_entities_for_policy(
+                PolicyArn=support_entry_policy_arn, EntityFilter="Role"
+            )["PolicyRoles"]
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        finally:
+            return support_roles
+
+    def __list_policies__(self):
+        try:
+            policies = []
+            list_policies_paginator = self.client.get_paginator("list_policies")
+            for page in list_policies_paginator.paginate(Scope="Local"):
+                for policy in page["Policies"]:
+                    policies.append(policy)
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        finally:
+            return policies
+
+    def __list_policies_version__(self, policies):
+        try:
+            policies_version = []
+
+            for policy in policies:
+                policy_version = self.client.get_policy_version(
+                    PolicyArn=policy["Arn"], VersionId=policy["DefaultVersionId"]
+                )
+                policies_version.append(policy_version["PolicyVersion"]["Document"])
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        finally:
+            return policies_version
 
     def __list_saml_providers__(self):
         try:
             saml_providers = self.client.list_saml_providers()["SAMLProviderList"]
-
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
         finally:
             return saml_providers
@@ -263,22 +382,26 @@ class MFADevice:
 class User:
     name: str
     arn: str
-    mfa_devices: list[MFADevice]
+    mfa_devices: "list[MFADevice]"
     password_last_used: str
+    attached_policies: "list[dict]"
+    inline_policies: "list[str]"
 
     def __init__(self, name, arn, password_last_used):
         self.name = name
         self.arn = arn
         self.password_last_used = password_last_used
         self.mfa_devices = []
+        self.attached_policies = []
+        self.inline_policies = []
 
 
 @dataclass
 class Group:
     name: str
     arn: str
-    attached_policies: list[dict]
-    users: list[User]
+    attached_policies: "list[dict]"
+    users: " list[User]"
 
     def __init__(self, name, arn):
         self.name = name

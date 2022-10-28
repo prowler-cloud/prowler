@@ -24,12 +24,12 @@ from lib.outputs.models import (
     Severity,
 )
 from lib.utils.utils import file_exists, hash_sha512, open_file
+from providers.aws.lib.allowlist.allowlist import is_allowlisted
 from providers.aws.lib.security_hub.security_hub import send_to_security_hub
 
 
 def report(check_findings, output_options, audit_info):
     check_findings.sort(key=lambda x: x.region)
-
     csv_fields = []
     # check output options
     file_descriptors = {}
@@ -46,6 +46,16 @@ def report(check_findings, output_options, audit_info):
 
     if check_findings:
         for finding in check_findings:
+            # Check if finding is allowlisted
+            if output_options.allowlist_file:
+                if is_allowlisted(
+                    output_options.allowlist_file,
+                    audit_info.audited_account,
+                    finding.check_metadata.CheckID,
+                    finding.region,
+                    finding.resource_id,
+                ):
+                    finding.status = "WARNING"
             # Print findings by stdout
             color = set_report_color(finding.status)
             if output_options.is_quiet and "FAIL" in finding.status:
