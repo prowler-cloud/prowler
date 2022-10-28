@@ -96,6 +96,7 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
             check = vpc_endpoint_services_allowed_principals_trust_boundaries()
             result = check.execute()
 
+            assert len(result) == 23  # one per region
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
@@ -107,7 +108,6 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
                     "ServiceId"
                 ]
             )
-            assert len(result) == 23  # one per region
 
     @mock_ec2
     def test_bad_response(self):

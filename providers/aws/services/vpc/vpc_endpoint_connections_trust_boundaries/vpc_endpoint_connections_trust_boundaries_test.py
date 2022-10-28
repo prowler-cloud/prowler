@@ -79,13 +79,13 @@ class Test_vpc_endpoint_connections_trust_boundaries:
             check = vpc_endpoint_connections_trust_boundaries()
             result = check.execute()
 
+            assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
                 == f"VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']} has full access."
             )
             assert result[0].resource_id == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
-            assert len(result) == 1
             assert result[0].region == AWS_REGION
 
     @mock_ec2
@@ -132,13 +132,13 @@ class Test_vpc_endpoint_connections_trust_boundaries:
             check = vpc_endpoint_connections_trust_boundaries()
             result = check.execute()
 
+            assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
                 == f"Found trusted account {ACCOUNT_ID} in VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']}."
             )
             assert result[0].resource_id == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
-            assert len(result) == 1
             assert result[0].region == AWS_REGION
 
     @mock_ec2
@@ -185,6 +185,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
             check = vpc_endpoint_connections_trust_boundaries()
             result = check.execute()
 
+            assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
@@ -240,6 +241,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 check = vpc_endpoint_connections_trust_boundaries()
                 result = check.execute()
 
+                assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
@@ -249,7 +251,6 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     result[0].resource_id
                     == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
                 )
-                assert len(result) == 1
                 assert result[0].region == AWS_REGION
 
     @mock_ec2

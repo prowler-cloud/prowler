@@ -80,15 +80,15 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
             check = vpc_peering_routing_tables_with_least_privilege()
             result = check.execute()
 
+            assert len(result) == len(
+                ec2_client.describe_vpc_peering_connections()["VpcPeeringConnections"]
+            )
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
                 == f"VPC Peering Connection {vpc_pcx_id} comply with least privilege access."
             )
             assert result[0].resource_id == vpc_pcx_id
-            assert len(result) == len(
-                ec2_client.describe_vpc_peering_connections()["VpcPeeringConnections"]
-            )
             assert result[0].region == AWS_REGION
 
     @mock_ec2
@@ -142,15 +142,15 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
             check = vpc_peering_routing_tables_with_least_privilege()
             result = check.execute()
 
+            assert len(result) == len(
+                ec2_client.describe_vpc_peering_connections()["VpcPeeringConnections"]
+            )
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
                 == f"VPC Peering Connection {vpc_pcx_id} does not comply with least privilege access since it accepts whole VPCs CIDR in its route tables."
             )
             assert result[0].resource_id == vpc_pcx_id
-            assert len(result) == len(
-                ec2_client.describe_vpc_peering_connections()["VpcPeeringConnections"]
-            )
             assert result[0].region == AWS_REGION
 
     @mock_ec2
