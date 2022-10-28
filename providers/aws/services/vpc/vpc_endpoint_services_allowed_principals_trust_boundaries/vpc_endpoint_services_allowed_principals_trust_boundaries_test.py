@@ -74,7 +74,7 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
             Type="network",
         )["LoadBalancers"][0]["LoadBalancerArn"]
 
-        # Service is mocked
+        # Service is mocked until moto fix the issue https://github.com/spulec/moto/issues/5605
         # service = ec2_client.create_vpc_endpoint_service_configuration(
         #     NetworkLoadBalancerArns=[lb_arn]
         # )
