@@ -1,3 +1,4 @@
+import json
 import threading
 from dataclasses import dataclass
 
@@ -16,6 +17,7 @@ class KMS:
         self.__threading_call__(self.__list_keys__)
         self.__describe_key__()
         self.__get_key_rotation_status__()
+        self.__get_key_policy__()
 
     def __get_session__(self):
         return self.session
@@ -74,6 +76,22 @@ class KMS:
                     f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                 )
 
+    def __get_key_policy__(self):
+        logger.info("KMS - Get Key Policy...")
+        for key in self.keys:
+            try:
+                if key.manager == "CUSTOMER":  # only customer KMS have policies
+                    regional_client = self.regional_clients[key.region]
+                    key.policy = json.loads(
+                        regional_client.get_key_policy(
+                            KeyId=key.id, PolicyName="default"
+                        )["Policy"]
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                )
+
 
 @dataclass
 class Key:
@@ -83,6 +101,7 @@ class Key:
     origin: str
     manager: str
     rotation_enabled: bool
+    policy: dict
     region: str
 
     def __init__(
@@ -97,4 +116,5 @@ class Key:
         self.origin = None
         self.manager = None
         self.rotation_enabled = False
+        self.policy = {}
         self.region = region
