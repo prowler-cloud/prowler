@@ -3,6 +3,8 @@ from unittest import mock
 from boto3 import client
 from moto import mock_apigateway
 
+from providers.aws.services.apigateway.apigateway_service import Stage
+
 AWS_REGION = "us-east-1"
 
 
@@ -86,40 +88,53 @@ class Test_apigateway_client_certificate_enabled:
             check = apigateway_client_certificate_enabled()
             result = check.execute()
 
-            assert result[0].status == "FAIL"
             assert len(result) == 1
+            assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
                 == f"API Gateway test-rest-api ID {rest_api['id']} in stage test has not client certificate enabled."
             )
             assert result[0].resource_id == "test-rest-api"
 
-    # @mock_apigateway
-    # def test_apigateway_one_stage_with_certificate(self):
-    # Pending to add test since it is not possible to attach a certificate to a stage
+    @mock_apigateway
+    def test_apigateway_one_stage_with_certificate(self):
 
-    # domain_name = "testDomain"
-    # test_certificate_name = "test.certificate"
-    # # Create APIGateway Mocked Resources
-    # apigateway_client = client("apigateway", region_name=AWS_REGION)
-    # # Create APIGateway Deployment Stage
-    # rest_api = apigateway_client.create_rest_api(
-    #     name="test-rest-api",
-    # )
-    # from providers.aws.lib.audit_info.audit_info import current_audit_info
-    # from providers.aws.services.apigateway.apigateway_service import APIGateway
-    # current_audit_info.audited_partition = "aws"
+        # Create APIGateway Mocked Resources
+        apigateway_client = client("apigateway", region_name=AWS_REGION)
+        # Create APIGateway Deployment Stage
+        rest_api = apigateway_client.create_rest_api(
+            name="test-rest-api",
+        )
+        from providers.aws.lib.audit_info.audit_info import current_audit_info
+        from providers.aws.services.apigateway.apigateway_service import APIGateway
 
-    # with mock.patch(
-    #     "providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled.apigateway_client",
-    #     new=APIGateway(current_audit_info),
-    # ):
-    #     # Test Check
-    #     from providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled import (
-    #         apigateway_client_certificate_enabled,
-    #     )
+        current_audit_info.audited_partition = "aws"
 
-    #     check = apigateway_client_certificate_enabled()
-    #     result = check.execute()
+        with mock.patch(
+            "providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled.apigateway_client",
+            new=APIGateway(current_audit_info),
+        ) as service_client:
+            # Test Check
+            from providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled import (
+                apigateway_client_certificate_enabled,
+            )
 
-    #     assert result[0].status == 'PASS'
+            service_client.rest_apis[0].stages.append(
+                Stage(
+                    "test",
+                    logging=True,
+                    client_certificate=True,
+                    waf=True,
+                )
+            )
+
+            check = apigateway_client_certificate_enabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"API Gateway test-rest-api ID {rest_api['id']} in stage test has client certificate enabled."
+            )
+            assert result[0].resource_id == "test-rest-api"
