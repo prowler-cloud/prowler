@@ -32,7 +32,7 @@
 
 
 CHECK_ID_extra7195="7.195"
-CHECK_TITLE_extra7195="[check7195] Ensure CodeArtifact internal packages do not allow external public source publishing."
+CHECK_TITLE_extra7195="[extra7195] Ensure CodeArtifact internal packages do not allow external public source publishing."
 CHECK_SCORED_extra7195="NOT_SCORED"
 CHECK_CIS_LEVEL_extra7195="EXTRA"
 CHECK_SEVERITY_extra7195="Critical"
