@@ -88,7 +88,7 @@ def list_services(provider: str) -> set:
         # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
         service_name = check_name.split(".")[3]
         available_services.add(service_name)
-    return available_services
+    return sorted(available_services)
 
 
 def print_services(service_list: set):
