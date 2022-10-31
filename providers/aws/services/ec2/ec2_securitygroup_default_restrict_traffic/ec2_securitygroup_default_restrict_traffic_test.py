@@ -73,7 +73,7 @@ class Test_ec2_securitygroup_default_restrict_traffic:
                     assert sg.status == "FAIL"
                     assert (
                         sg.status_extended
-                        == f"Default Security Group ({default_sg_id}) is open to 0.0.0.0."
+                        == f"Default Security Group ({default_sg_id}) is open to the Internet."
                     )
 
     @mock_ec2
@@ -116,5 +116,5 @@ class Test_ec2_securitygroup_default_restrict_traffic:
                     assert sg.status == "PASS"
                     assert (
                         sg.status_extended
-                        == f"Default Security Group ({default_sg_id}) is not open to 0.0.0.0."
+                        == f"Default Security Group ({default_sg_id}) is not open to the Internet."
                     )

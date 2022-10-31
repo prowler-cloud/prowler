@@ -20,7 +20,7 @@ class ec2_securitygroup_default_restrict_traffic(Check):
                     report.resource_id = security_group.id
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"Default Security Group ({security_group.id}) is not open to 0.0.0.0."
+                    report.status_extended = f"Default Security Group ({security_group.id}) is not open to the Internet."
                     report.resource_id = security_group.id
                 findings.append(report)
 
