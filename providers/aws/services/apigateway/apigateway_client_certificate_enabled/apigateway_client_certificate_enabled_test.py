@@ -123,21 +123,3 @@ class Test_apigateway_client_certificate_enabled:
     #     result = check.execute()
 
     #     assert result[0].status == 'PASS'
-
-    @mock_apigateway
-    def test_bad_response(self):
-        mock_client = mock.MagicMock()
-
-        with mock.patch(
-            "providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled.apigateway_client",
-            new=mock_client,
-        ):
-            # Test Check
-            from providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled import (
-                apigateway_client_certificate_enabled,
-            )
-
-            check = apigateway_client_certificate_enabled()
-            result = check.execute()
-
-            assert len(result) == 0

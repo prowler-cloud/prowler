@@ -94,21 +94,3 @@ class Test_apigatewayv2_authorizers_enabled:
                 == f"API Gateway V2 test-api ID {api['ApiId']} has authorizer configured."
             )
             assert result[0].resource_id == "test-api"
-
-    @mock_apigatewayv2
-    def test_bad_response(self):
-        mock_client = mock.MagicMock()
-
-        with mock.patch(
-            "providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled.apigatewayv2_client",
-            new=mock_client,
-        ):
-            # Test Check
-            from providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled import (
-                apigatewayv2_authorizers_enabled,
-            )
-
-            check = apigatewayv2_authorizers_enabled()
-            result = check.execute()
-
-            assert len(result) == 0

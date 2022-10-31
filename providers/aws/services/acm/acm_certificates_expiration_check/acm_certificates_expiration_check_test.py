@@ -67,21 +67,3 @@ class Test_acm_certificates_expiration_check:
             assert result[0].status == "PASS"
             assert result[0].resource_id == "test.com"
             assert result[0].resource_arn == certificate["CertificateArn"]
-
-    @mock_acm
-    def test_bad_response(self):
-        mock_client = mock.MagicMock()
-
-        with mock.patch(
-            "providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
-            new=mock_client,
-        ):
-            # Test Check
-            from providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check import (
-                acm_certificates_expiration_check,
-            )
-
-            check = acm_certificates_expiration_check()
-            result = check.execute()
-
-            assert len(result) == 0

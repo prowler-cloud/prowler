@@ -84,20 +84,3 @@ class Test_ec2_elastic_ip_shodan:
                 result = check.execute()
 
                 assert len(result) == 1
-
-        @mock_ec2
-        def test_bad_response(self):
-            mock_client = mock.MagicMock()
-            with mock.patch(
-                "providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan.ec2_client",
-                new=mock_client,
-            ):
-                # Test Check
-                from providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan import (
-                    ec2_elastic_ip_shodan,
-                )
-
-                check = ec2_elastic_ip_shodan()
-                result = check.execute()
-
-                assert len(result) == 0

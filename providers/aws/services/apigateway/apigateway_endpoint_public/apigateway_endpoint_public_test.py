@@ -103,21 +103,3 @@ class Test_apigateway_endpoint_public:
                 == f"API Gateway test-rest-api ID {rest_api['id']} is internet accesible."
             )
             assert result[0].resource_id == "test-rest-api"
-
-    @mock_apigateway
-    def test_bad_response(self):
-        mock_client = mock.MagicMock()
-
-        with mock.patch(
-            "providers.aws.services.apigateway.apigateway_endpoint_public.apigateway_endpoint_public.apigateway_client",
-            new=mock_client,
-        ):
-            # Test Check
-            from providers.aws.services.apigateway.apigateway_endpoint_public.apigateway_endpoint_public import (
-                apigateway_endpoint_public,
-            )
-
-            check = apigateway_endpoint_public()
-            result = check.execute()
-
-            assert len(result) == 0
