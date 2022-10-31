@@ -84,6 +84,8 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.autoscaling.autoscaling_service import AutoScaling
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
             new=AutoScaling(current_audit_info),
@@ -124,6 +126,8 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.autoscaling.autoscaling_service import AutoScaling
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
             new=AutoScaling(current_audit_info),
@@ -157,6 +161,8 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
 
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.autoscaling.autoscaling_service import AutoScaling
+
+        current_audit_info.audited_partition = "aws"
 
         with mock.patch(
             "providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",

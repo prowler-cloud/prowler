@@ -152,21 +152,3 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
             )
             assert result[0].resource_id == vpc_pcx_id
             assert result[0].region == AWS_REGION
-
-    @mock_ec2
-    def test_bad_response(self):
-        mock_client = mock.MagicMock()
-
-        with mock.patch(
-            "providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege.vpc_client",
-            new=mock_client,
-        ):
-            # Test Check
-            from providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege import (
-                vpc_peering_routing_tables_with_least_privilege,
-            )
-
-            check = vpc_peering_routing_tables_with_least_privilege()
-            result = check.execute()
-
-            assert len(result) == 0

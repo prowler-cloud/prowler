@@ -111,21 +111,3 @@ class Test_acm_certificates_transparency_logs_enabled:
             )
             assert result[0].resource_id == "test.com"
             assert result[0].resource_arn == certificate["CertificateArn"]
-
-    @mock_acm
-    def test_bad_response(self):
-        mock_client = mock.MagicMock()
-
-        with mock.patch(
-            "providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled.acm_client",
-            new=mock_client,
-        ):
-            # Test Check
-            from providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled import (
-                acm_certificates_transparency_logs_enabled,
-            )
-
-            check = acm_certificates_transparency_logs_enabled()
-            result = check.execute()
-
-            assert len(result) == 0

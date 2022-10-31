@@ -92,21 +92,3 @@ class Test_kms_cmk_rotation_enabled:
             )
             assert result[0].resource_id == key["KeyId"]
             assert result[0].resource_arn == key["Arn"]
-
-    @mock_kms
-    def test_bad_response(self):
-        mock_client = mock.MagicMock()
-
-        with mock.patch(
-            "providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled.kms_client",
-            new=mock_client,
-        ):
-            # Test Check
-            from providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled import (
-                kms_cmk_rotation_enabled,
-            )
-
-            check = kms_cmk_rotation_enabled()
-            result = check.execute()
-
-            assert len(result) == 0

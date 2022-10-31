@@ -105,21 +105,3 @@ class Test_config_recorder_all_regions_enabled:
                         == f"AWS Config recorder default is enabled."
                     )
                     assert recorder.resource_id == "default"
-
-    @mock_config
-    def test_bad_response(self):
-        mock_client = mock.MagicMock()
-
-        with mock.patch(
-            "providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled.config_client",
-            new=mock_client,
-        ):
-            # Test Check
-            from providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled import (
-                config_recorder_all_regions_enabled,
-            )
-
-            check = config_recorder_all_regions_enabled()
-            result = check.execute()
-
-            assert len(result) == 0

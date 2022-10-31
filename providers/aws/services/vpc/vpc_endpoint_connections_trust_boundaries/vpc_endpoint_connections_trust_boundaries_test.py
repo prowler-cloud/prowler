@@ -252,21 +252,3 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
                 )
                 assert result[0].region == AWS_REGION
-
-    @mock_ec2
-    def test_bad_response(self):
-        mock_client = mock.MagicMock()
-
-        with mock.patch(
-            "providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
-            new=mock_client,
-        ):
-            # Test Check
-            from providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries import (
-                vpc_endpoint_connections_trust_boundaries,
-            )
-
-            check = vpc_endpoint_connections_trust_boundaries()
-            result = check.execute()
-
-            assert len(result) == 0
