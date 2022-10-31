@@ -1,0 +1,35 @@
+{
+  "Provider": "aws",
+  "CheckID": "apigatewayv2_authorizers_enabled",
+  "CheckTitle": "Check if API Gateway V2 has configured authorizers.",
+  "CheckType": ["IAM"],
+  "ServiceName": "apigateway",
+  "SubServiceName": "rest_api",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsApiGatewayV2Api",
+  "Description": "Check if API Gateway V2 has configured authorizers.",
+  "Risk": "If no authorizer is enabled anyone can use the service.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.bridgecrew.io/docs/bc_aws_logging_30#aws-console",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_logging_30#cloudformation"
+    },
+    "Recommendation": {
+      "Text": "Implement Amazon Cognito or a Lambda function to control access to your API.",
+      "Url": "https://docs.aws.amazon.com/apigatewayv2/latest/api-reference/apis-apiid-authorizers.html"
+    }
+  },
+  "Categories": [],
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  },
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "Compliance": []
+}

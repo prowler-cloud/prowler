@@ -1,0 +1,35 @@
+{
+  "Provider": "aws",
+  "CheckID": "apigatewayv2_authorizers_enabled",
+  "CheckTitle": "Checks if API Gateway V2 has Access Logging enabled.",
+  "CheckType": ["Logging and Monitoring"],
+  "ServiceName": "apigateway",
+  "SubServiceName": "api",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsApiGatewayV2Api",
+  "Description": "Checks if API Gateway V2 has Access Logging enabled.",
+  "Risk": "If not enabled the logging of API calls is not possible. This information is important for monitoring API access.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Access Logging in the API stage.",
+      "Url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-apigatewayv2-stage-accesslogsettings.html"
+    }
+  },
+  "Categories": [],
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  },
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "Compliance": []
+}
