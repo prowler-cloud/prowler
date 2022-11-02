@@ -9,29 +9,31 @@ class cloudtrail_multi_region_enabled(Check):
         for trail in cloudtrail_client.trails:
             report = Check_Report(self.metadata)
             if trail.name:  # Check if there are trails in region
-                if (
-                    actual_region != trail.region
-                ):  # Check if region has changed and add report of previous region
+                # Check if region has changed and add report of previous region
+                if actual_region != trail.region:
                     if report:  # Check if it not the beginning
                         findings.append(report)
-                    report.region = trail.region
-                    report.resource_id = trail.name
-                    report.resource_arn = trail.trail_arn
-                    trail_in_region = False
-                    if not trail_in_region:
-                        if trail.is_logging:
-                            report.status = "PASS"
-                            if trail.is_multiregion:
-                                report.status_extended = f"Trail {trail.name} is multiregion and it is logging"
-                            else:
-                                report.status_extended = f"Trail {trail.name} is not multiregion and it is logging"
-                            trail_in_region = True  # Trail enabled in region
+                report.region = trail.region
+                trail_in_region = False
+                if not trail_in_region:
+                    if trail.is_logging:
+                        report.status = "PASS"
+                        if trail.is_multiregion:
+                            report.status_extended = (
+                                f"Trail {trail.name} is multiregion and it is logging"
+                            )
                         else:
-                            report.status = "FAIL"
-                            if trail.is_multiregion:
-                                report.status_extended = f"Trail {trail.name} is multiregion but it is not logging"
-                            else:
-                                report.status_extended = f"Trail {trail.name} is not multiregion and it is not logging"
+                            report.status_extended = f"Trail {trail.name} is not multiregion and it is logging"
+                        report.resource_id = trail.name
+                        report.resource_arn = trail.trail_arn
+                        trail_in_region = True  # Trail enabled in region
+                    else:
+                        report.status = "FAIL"
+                        report.status_extended = (
+                            f"No CloudTrail trails enabled and logging were found"
+                        )
+                        report.resource_arn = "No trails"
+                        report.resource_id = "No trails"
                 actual_region = trail.region
             else:
                 report.status = "FAIL"
