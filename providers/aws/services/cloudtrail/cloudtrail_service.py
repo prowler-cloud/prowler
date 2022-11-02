@@ -1,3 +1,4 @@
+import datetime
 import threading
 from dataclasses import dataclass
 
@@ -45,6 +46,7 @@ class Cloudtrail:
                             log_file_validation_enabled=trail[
                                 "LogFileValidationEnabled"
                             ],
+                            latest_cloudwatch_delivery_time=None,
                             s3_bucket=trail["S3BucketName"],
                         )
                     )
@@ -58,6 +60,7 @@ class Cloudtrail:
                         region=regional_client.region,
                         is_logging=None,
                         log_file_validation_enabled=None,
+                        latest_cloudwatch_delivery_time=None,
                         s3_bucket=None,
                     )
                 )
@@ -72,9 +75,13 @@ class Cloudtrail:
         try:
             for trail in self.trails:
                 for region, client in self.regional_clients.items():
-                    if trail.region == region:
+                    if trail.region == region and trail.name:
                         status = client.get_trail_status(Name=trail.trail_arn)
                         trail.is_logging = status["IsLogging"]
+                        if "LatestCloudWatchLogsDeliveryTime" in status:
+                            trail.latest_cloudwatch_delivery_time = status[
+                                "LatestCloudWatchLogsDeliveryTime"
+                            ]
 
         except Exception as error:
             logger.error(f"{client.region} -- {error.__class__.__name__}: {error}")
@@ -89,6 +96,7 @@ class Trail:
     region: str
     is_logging: bool
     log_file_validation_enabled: bool
+    latest_cloudwatch_delivery_time: datetime
     s3_bucket: str
 
     def __init__(
@@ -100,6 +108,7 @@ class Trail:
         region,
         is_logging,
         log_file_validation_enabled,
+        latest_cloudwatch_delivery_time,
         s3_bucket,
     ):
         self.name = name
@@ -109,4 +118,5 @@ class Trail:
         self.region = region
         self.is_logging = is_logging
         self.log_file_validation_enabled = log_file_validation_enabled
+        self.latest_cloudwatch_delivery_time = latest_cloudwatch_delivery_time
         self.s3_bucket = s3_bucket

@@ -23,15 +23,15 @@ class Test_cloudtrail_log_file_validation_enabled:
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled.cloudtrail_client",
+            "providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled import (
-                cloudtrail_multi_region_enabled,
+            from providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled import (
+                cloudtrail_log_file_validation_enabled,
             )
 
-            check = cloudtrail_multi_region_enabled()
+            check = cloudtrail_log_file_validation_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -72,19 +72,19 @@ class Test_cloudtrail_log_file_validation_enabled:
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled.cloudtrail_client",
+            "providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ) as service_client:
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled import (
-                cloudtrail_multi_region_enabled,
+            from providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled import (
+                cloudtrail_log_file_validation_enabled,
             )
 
             regions = []
             for region in service_client.regional_clients.keys():
                 regions.append(region)
 
-            check = cloudtrail_multi_region_enabled()
+            check = cloudtrail_log_file_validation_enabled()
             result = check.execute()
             assert len(result) == 2
             for report in result:

@@ -1,5 +1,5 @@
-from boto3 import session
-from moto import mock_cloudtrail
+from boto3 import client, session
+from moto import mock_cloudtrail, mock_s3
 
 from providers.aws.lib.audit_info.models import AWS_Audit_Info
 from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
@@ -60,61 +60,86 @@ class Test_Cloudtrail_Service:
 
     # WAITING FOR MOTO PR TO BE APPROVED (https://github.com/spulec/moto/pull/5607)
 
-    # @mock_cloudtrail
-    # @mock_s3
-    # def test_describe_trails(self):
-    #     cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
-    #     s3_client_us_east_1 = client("s3", region_name="us-east-1")
-    #     cloudtrail_client_eu_west_1 = client("cloudtrail", region_name="eu-west-1")
-    #     s3_client_eu_west_1 = client("s3", region_name="eu-west-1")
-    #     trail_name_us = "trail_test_us"
-    #     bucket_name_us = "bucket_test_us"
-    #     trail_name_eu = "trail_test_eu"
-    #     bucket_name_eu = "bucket_test_eu"
-    #     s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
-    #     s3_client_eu_west_1.create_bucket(Bucket=bucket_name_eu, CreateBucketConfiguration={
-    #     'LocationConstraint': 'eu-west-1'
-    #     })
-    #     cloudtrail_client_us_east_1.create_trail(
-    #         Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
-    #     )
-    #     cloudtrail_client_eu_west_1.create_trail(
-    #         Name=trail_name_eu, S3BucketName=bucket_name_eu, IsMultiRegionTrail=False
-    #     )
-    #     audit_info = self.set_mocked_audit_info()
-    #     cloudtrail = Cloudtrail(audit_info)
-    #     # Here we are expecting 2, but moto does something weird and return 46 records
-    #     assert len(cloudtrail.trails) == 2
-    #     assert cloudtrail.trails[0].name == "trail_name_us"
-    #     assert cloudtrail.trails[1].name == "trail_name_eu"
+    @mock_cloudtrail
+    @mock_s3
+    def test_describe_trails(self):
 
-    # @mock_cloudtrail
-    # @mock_s3
-    # def test_status_trails(self):
-    #     cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
-    #     s3_client_us_east_1 = client("s3", region_name="us-east-1")
-    #     cloudtrail_client_eu_west_1 = client("cloudtrail", region_name="eu-west-1")
-    #     s3_client_eu_west_1 = client("s3", region_name="eu-west-1")
-    #     trail_name_us = "trail_test_us"
-    #     bucket_name_us = "bucket_test_us"
-    #     trail_name_eu = "trail_test_eu"
-    #     bucket_name_eu = "bucket_test_eu"
-    #     s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
-    #     s3_client_eu_west_1.create_bucket(Bucket=bucket_name_eu, CreateBucketConfiguration={
-    #     'LocationConstraint': 'eu-west-1'
-    #     })
-    #     cloudtrail_client_us_east_1.create_trail(
-    #         Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
-    #     )
-    #     cloudtrail_client_us_east_1.start_logging(Name=trail_name_us)
-    #     cloudtrail_client_eu_west_1.create_trail(
-    #         Name=trail_name_eu, S3BucketName=bucket_name_eu, IsMultiRegionTrail=False
-    #     )
-    #     audit_info = self.set_mocked_audit_info()
-    #     cloudtrail = Cloudtrail(audit_info)
-    #     # Here we are expecting 2, but moto does something weird and return 46 records
-    #     assert len(cloudtrail.trails) == 2
-    #     assert cloudtrail.trails[0].name == "trail_name_us"
-    #     assert cloudtrail.trails[1].name == "trail_name_eu"
-    #     assert cloudtrail.trails[0].is_logging == False
-    #     assert cloudtrail.trails[0].is_logging == True
+        cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
+        s3_client_us_east_1 = client("s3", region_name="us-east-1")
+        cloudtrail_client_eu_west_1 = client("cloudtrail", region_name="eu-west-1")
+        s3_client_eu_west_1 = client("s3", region_name="eu-west-1")
+        trail_name_us = "trail_test_us"
+        bucket_name_us = "bucket_test_us"
+        trail_name_eu = "trail_test_eu"
+        bucket_name_eu = "bucket_test_eu"
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
+        s3_client_eu_west_1.create_bucket(
+            Bucket=bucket_name_eu,
+            CreateBucketConfiguration={"LocationConstraint": "eu-west-1"},
+        )
+        cloudtrail_client_us_east_1.create_trail(
+            Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
+        )
+        cloudtrail_client_eu_west_1.create_trail(
+            Name=trail_name_eu, S3BucketName=bucket_name_eu, IsMultiRegionTrail=False
+        )
+        audit_info = self.set_mocked_audit_info()
+        cloudtrail = Cloudtrail(audit_info)
+        # Here we are expecting 2, but moto does something weird and return 46 records
+        assert len(cloudtrail.trails) == 23
+        for trail in cloudtrail.trails:
+            if trail.name:
+                assert trail.name == trail_name_us or trail.name == trail_name_eu
+                assert not trail.is_multiregion
+                assert (
+                    trail.home_region == "us-east-1" or trail.home_region == "eu-west-1"
+                )
+                assert trail.region == "us-east-1" or trail.region == "eu-west-1"
+                assert not trail.is_logging
+                assert not trail.log_file_validation_enabled
+                assert not trail.latest_cloudwatch_delivery_time
+                assert (
+                    trail.s3_bucket == bucket_name_eu
+                    or trail.s3_bucket == bucket_name_us
+                )
+
+    @mock_cloudtrail
+    @mock_s3
+    def test_status_trails(self):
+        cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
+        s3_client_us_east_1 = client("s3", region_name="us-east-1")
+        cloudtrail_client_eu_west_1 = client("cloudtrail", region_name="eu-west-1")
+        s3_client_eu_west_1 = client("s3", region_name="eu-west-1")
+        trail_name_us = "trail_test_us"
+        bucket_name_us = "bucket_test_us"
+        trail_name_eu = "trail_test_eu"
+        bucket_name_eu = "bucket_test_eu"
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
+        s3_client_eu_west_1.create_bucket(
+            Bucket=bucket_name_eu,
+            CreateBucketConfiguration={"LocationConstraint": "eu-west-1"},
+        )
+        cloudtrail_client_us_east_1.create_trail(
+            Name=trail_name_us,
+            S3BucketName=bucket_name_us,
+            IsMultiRegionTrail=False,
+            EnableLogFileValidation=True,
+        )
+        cloudtrail_client_us_east_1.start_logging(Name=trail_name_us)
+        cloudtrail_client_eu_west_1.create_trail(
+            Name=trail_name_eu, S3BucketName=bucket_name_eu, IsMultiRegionTrail=False
+        )
+        audit_info = self.set_mocked_audit_info()
+        cloudtrail = Cloudtrail(audit_info)
+        # Here we are expecting 2, but moto does something weird and return 46 records
+        assert len(cloudtrail.trails) == 23
+        for trail in cloudtrail.trails:
+            if trail.name:
+                if trail.name == trail_name_us:
+                    assert not trail.is_multiregion
+                    assert trail.home_region == "us-east-1"
+                    assert trail.region == "us-east-1"
+                    assert trail.is_logging
+                    assert trail.log_file_validation_enabled
+                    assert not trail.latest_cloudwatch_delivery_time
+                    assert trail.s3_bucket == bucket_name_us
