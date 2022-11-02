@@ -21,8 +21,8 @@ CHECK_ALTERNATE_check71="extra71"
 CHECK_ALTERNATE_check701="extra71"
 CHECK_ASFF_COMPLIANCE_TYPE_extra71="ens-op.exp.10.aws.trail.2"
 CHECK_SERVICENAME_extra71="iam"
-CHECK_RISK_extra71='Policy "may" allow Anonymous users to perform actions.'
-CHECK_REMEDIATION_extra71='Ensure this repository and its contents should be publicly accessible.'
+CHECK_RISK_extra71='Any user with AdministratorAccess is allowed to perform any action on an AWS account, so it needs to have a multi factor authentication enabled to avoid impersonation through a potential credentials leak'
+CHECK_REMEDIATION_extra71='Enable MFA for users belonging to groups with AdministratorAccess policies'
 CHECK_DOC_extra71='https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html'
 CHECK_CAF_EPIC_extra71='Infrastructure Security'
 
