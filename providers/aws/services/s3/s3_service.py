@@ -24,6 +24,7 @@ class S3:
         self.__threading_call__(self.__get_bucket_policy__)
         self.__threading_call__(self.__get_bucket_acl__)
         self.__threading_call__(self.__get_public_access_block__)
+        self.__threading_call__(self.__get_bucket_encryption__)
 
     def __get_session__(self):
         return self.session
@@ -73,6 +74,22 @@ class S3:
         except Exception as error:
             logger.error(
                 f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_bucket_encryption__(self, bucket):
+        logger.info("S3 - Get buckets encryption...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            bucket.encryption = regional_client.get_bucket_encryption(
+                Bucket=bucket.name
+            )["ServerSideEncryptionConfiguration"]["Rules"][0][
+                "ApplyServerSideEncryptionByDefault"
+            ][
+                "SSEAlgorithm"
+            ]
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __get_bucket_logging__(self, bucket):
@@ -214,6 +231,7 @@ class Bucket:
     public_access_block: PublicAccessBlock
     acl_grantees: list[ACL_Grantee]
     policy: dict
+    encryption: str
     region: str
 
     def __init__(self, name, region):
@@ -231,4 +249,5 @@ class Bucket:
         )
         self.acl_grantees = []
         self.policy = {}
+        self.encryption = None
         self.region = region
