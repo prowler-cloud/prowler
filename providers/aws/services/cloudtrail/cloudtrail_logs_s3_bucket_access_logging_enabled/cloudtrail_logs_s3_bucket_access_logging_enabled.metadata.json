@@ -15,7 +15,7 @@
       "Code": {
         "CLI": "",
         "NativeIaC": "",
-        "Other": "",
+        "Other": "https://docs.bridgecrew.io/docs/logging_6#aws-console",
         "Terraform": ""
       },
       "Recommendation": {
