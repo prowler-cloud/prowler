@@ -114,7 +114,7 @@ class Bucket:
     versioning: bool
     logging: bool
     region: str
-    acl_grantee: list
+    acl_grantee: list [ACL_Grantee]
     logging_target_bucket: str
 
     def __init__(self, name, region):
