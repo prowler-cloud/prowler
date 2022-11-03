@@ -8,7 +8,7 @@ from moto import mock_cloudtrail, mock_s3
 class Test_cloudtrail_log_file_validation_enabled:
     @mock_cloudtrail
     @mock_s3
-    def test_no_logging(self):
+    def test_no_logging_validation(self):
         cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
         s3_client_us_east_1 = client("s3", region_name="us-east-1")
         trail_name_us = "trail_test_us"
