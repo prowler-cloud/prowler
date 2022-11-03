@@ -29,6 +29,7 @@ from lib.check.checks_loader import load_checks_to_execute
 from lib.logger import logger, set_logging_config
 from lib.outputs.outputs import close_json, send_to_s3_bucket
 from providers.aws.aws_provider import provider_set_session
+from providers.aws.lib.allowlist.allowlist import parse_allowlist_file
 from providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
 )
@@ -186,6 +187,13 @@ if __name__ == "__main__":
         default=None,
         help="Shodan API key used by check ec2_elastic_ip_shodan.",
     )
+    parser.add_argument(
+        "-w",
+        "--allowlist-file",
+        nargs="?",
+        default=None,
+        help="Path for allowlist yaml file, by default is 'providers/aws/allowlist.yaml'. See default yaml for reference and format.",
+    )
     # Parse Arguments
     args = parser.parse_args()
 
@@ -299,9 +307,20 @@ if __name__ == "__main__":
             f"prowler-output-{audit_info.audited_account}-{output_file_timestamp}"
         )
 
+    # Parse content from Allowlist file and get it, if necessary, from S3
+    if args.allowlist_file:
+        allowlist_file = parse_allowlist_file(audit_info, args.allowlist_file)
+    else:
+        allowlist_file = None
+
     # Setting output options
     audit_output_options = set_output_options(
-        args.quiet, output_modes, output_directory, args.security_hub, output_filename
+        args.quiet,
+        output_modes,
+        output_directory,
+        args.security_hub,
+        output_filename,
+        allowlist_file,
     )
 
     # Execute checks

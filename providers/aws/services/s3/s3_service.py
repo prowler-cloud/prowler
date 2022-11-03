@@ -16,6 +16,7 @@ class S3:
         self.buckets = self.__list_buckets__()
         self.__threading_call__(self.__get_bucket_versioning__)
         self.__threading_call__(self.__get_bucket_logging__)
+        self.__threading_call__(self.__get_bucket_acl__)
 
     def __get_session__(self):
         return self.session
@@ -48,7 +49,9 @@ class S3:
                     buckets.append(Bucket(bucket["Name"], bucket_region))
             return buckets
         except Exception as error:
-            logger.error(f"{bucket_region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{bucket_region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_bucket_versioning__(self, bucket):
         logger.info("S3 - Get buckets versioning...")
@@ -61,7 +64,9 @@ class S3:
                 if "Enabled" == bucket_versioning["Status"]:
                     bucket.versioning = True
         except Exception as error:
-            logger.error(f"{bucket.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_bucket_logging__(self, bucket):
         logger.info("S3 - Get buckets logging...")
@@ -70,10 +75,51 @@ class S3:
             bucket_logging = regional_client.get_bucket_logging(Bucket=bucket.name)
             if "LoggingEnabled" in bucket_logging:
                 bucket.logging = True
+                bucket.logging_target_bucket = bucket_logging["LoggingEnabled"][
+                    "TargetBucket"
+                ]
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def __get_bucket_acl__(self, bucket):
+        logger.info("S3 - Get buckets acl...")
+        try:
+            grantees = []
+            regional_client = self.regional_clients[bucket.region]
+            acl_grants = regional_client.get_bucket_acl(Bucket=bucket.name)["Grants"]
+            for grant in acl_grants:
+                grantee = ACL_Grantee(grantee_type=grant["Grantee"])
+                if "DisplayName" in grant["Grantee"]:
+                    grantee.display_name = grant["Grantee"]["DisplayName"]
+                if "Type" in grant["Grantee"]:
+                    grantee.grantee_type = grant["Grantee"]["Type"]
+                if "ID" in grant["Grantee"]:
+                    grantee.ID = grant["Grantee"]["ID"]
+                if "URI" in grant["Grantee"]:
+                    grantee.URI = grant["Grantee"]["URI"]
+                grantees.append(grantee)
+
+            bucket.acl_grantee = grantees
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+@dataclass
+class ACL_Grantee:
+    display_name: str
+    ID: str
+    grantee_type: str
+    URI: str
+
+    def __init__(self, grantee_type):
+        self.display_name = None
+        self.ID = None
+        self.grantee_type = grantee_type
+        self.URI = None
 
 
 @dataclass
@@ -82,9 +128,13 @@ class Bucket:
     versioning: bool
     logging: bool
     region: str
+    acl_grantee: list[ACL_Grantee]
+    logging_target_bucket: str
 
     def __init__(self, name, region):
         self.name = name
         self.versioning = False
         self.logging = False
         self.region = region
+        self.acl_grantee = None
+        self.logging_target_bucket = None

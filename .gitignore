@@ -44,5 +44,5 @@ junit-reports/
 # Text
 *.txt
 
-#.env
-*.env
+# .env
+.env
