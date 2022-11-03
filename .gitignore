@@ -43,3 +43,6 @@ junit-reports/
 
 # Text
 *.txt
+
+# .env
+.env

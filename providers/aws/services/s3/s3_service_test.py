@@ -106,6 +106,41 @@ class Test_S3_Service:
         assert s3.buckets[0].versioning == True
 
     # Test S3 Get Bucket Versioning
+    @mock_s3
+    def test__get_bucket_acl__(self):
+        s3_client = client("s3")
+        bucket_name = "test-bucket"
+        s3_client.create_bucket(Bucket=bucket_name)
+        s3_client.put_bucket_acl(
+            AccessControlPolicy={
+                "Grants": [
+                    {
+                        "Grantee": {
+                            "DisplayName": "test",
+                            "ID": "test_ID",
+                            "Type": "Group",
+                            "URI": "http://acs.amazonaws.com/groups/global/AllUsers",
+                        },
+                        "Permission": "READ",
+                    },
+                ],
+                "Owner": {"DisplayName": "test", "ID": "test_id"},
+            },
+            Bucket=bucket_name,
+        )
+        audit_info = self.set_mocked_audit_info()
+        s3 = S3(audit_info)
+        assert len(s3.buckets) == 1
+        assert s3.buckets[0].name == bucket_name
+        assert s3.buckets[0].acl_grantee[0].display_name == "test"
+        assert s3.buckets[0].acl_grantee[0].ID == "test_ID"
+        assert s3.buckets[0].acl_grantee[0].grantee_type == "Group"
+        assert (
+            s3.buckets[0].acl_grantee[0].URI
+            == "http://acs.amazonaws.com/groups/global/AllUsers"
+        )
+
+    # Test S3 Get Bucket Versioning
     # @mock_s3
     # def test__get_bucket_logging__(self):
     #     # Generate S3 Client
