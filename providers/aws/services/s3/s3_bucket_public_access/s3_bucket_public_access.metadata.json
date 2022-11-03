@@ -1,26 +1,26 @@
 {
   "Provider": "aws",
-  "CheckID": "s3_bucket_server_access_logging_enabled",
-  "CheckTitle": "Check if S3 buckets have server access logging enabled",
-  "CheckType": ["Logging and Monitoring"],
+  "CheckID": "s3_bucket_public_access",
+  "CheckTitle": "Ensure there are no S3 buckets open to Everyone or Any AWS user.",
+  "CheckType": ["Data Protection"],
   "ServiceName": "s3",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "medium",
+  "Severity": "critical",
   "ResourceType": "AwsS3Bucket",
-  "Description": "Check if S3 buckets have server access logging enabled",
-  "Risk": "Server access logs can assist you in security and access audits; help you learn about your customer base; and understand your Amazon S3 bill.",
+  "Description": "Ensure there are no S3 buckets open to Everyone or Any AWS user.",
+  "Risk": "Even if you enable all possible bucket ACL options available in the Amazon S3 console the ACL alone does not allow everyone to download objects from your bucket. Depending on which option you select any user could perform some actions.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws s3api put-public-access-block --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true --bucket <bucket_name>",
       "NativeIaC": "",
       "Other": "",
-      "Terraform": ""
+      "Terraform": "https://docs.bridgecrew.io/docs/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached#terraform"
     },
     "Recommendation": {
-      "Text": "Ensure that S3 buckets have Logging enabled. CloudTrail data events can be used in place of S3 bucket logging. If that is the case, this finding can be considered a false positive.",
-      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/dev/security-best-practices.html"
+      "Text": "You can enable block public access settings only for access points, buckets and AWS accounts. Amazon S3 does not support block public access settings on a per-object basis. When you apply block public access settings to an account; the settings apply to all AWS Regions globally. The settings might not take effect in all Regions immediately or simultaneously, but they eventually propagate to all Regions.",
+      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
     }
   },
   "Categories": [],
