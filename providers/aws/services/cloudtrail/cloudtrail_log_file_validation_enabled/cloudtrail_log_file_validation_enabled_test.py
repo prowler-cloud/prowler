@@ -42,7 +42,7 @@ class Test_cloudtrail_log_file_validation_enabled:
 
     @mock_cloudtrail
     @mock_s3
-    def test_various_trails_with_and_without_logging_enabled(self):
+    def test_various_trails_with_and_without_logging_validation(self):
         cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
         s3_client_us_east_1 = client("s3", region_name="us-east-1")
         cloudtrail_client_eu_west_1 = client("cloudtrail", region_name="eu-west-1")
