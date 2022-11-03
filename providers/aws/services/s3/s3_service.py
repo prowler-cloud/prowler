@@ -1,8 +1,13 @@
+import json
 import threading
 from dataclasses import dataclass
 
 from lib.logger import logger
-from providers.aws.aws_provider import current_audit_info, generate_regional_clients
+from providers.aws.aws_provider import (
+    current_audit_info,
+    generate_regional_clients,
+    get_region_global_service,
+)
 
 
 ################## S3
@@ -16,6 +21,9 @@ class S3:
         self.buckets = self.__list_buckets__()
         self.__threading_call__(self.__get_bucket_versioning__)
         self.__threading_call__(self.__get_bucket_logging__)
+        self.__threading_call__(self.__get_bucket_policy__)
+        self.__threading_call__(self.__get_bucket_acl__)
+        self.__threading_call__(self.__get_public_access_block__)
 
     def __get_session__(self):
         return self.session
@@ -74,10 +82,128 @@ class S3:
             bucket_logging = regional_client.get_bucket_logging(Bucket=bucket.name)
             if "LoggingEnabled" in bucket_logging:
                 bucket.logging = True
+                bucket.logging_target_bucket = bucket_logging["LoggingEnabled"][
+                    "TargetBucket"
+                ]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def __get_public_access_block__(self, bucket):
+        logger.info("S3 - Get buckets public access block...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            bucket.public_access_block = PublicAccessBlock(
+                regional_client.get_public_access_block(Bucket=bucket.name)[
+                    "PublicAccessBlockConfiguration"
+                ]
+            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_bucket_acl__(self, bucket):
+        logger.info("S3 - Get buckets acl...")
+        try:
+            grantees = []
+            regional_client = self.regional_clients[bucket.region]
+            acl_grants = regional_client.get_bucket_acl(Bucket=bucket.name)["Grants"]
+            for grant in acl_grants:
+                grantee = ACL_Grantee(type=grant["Grantee"])
+                if "DisplayName" in grant["Grantee"]:
+                    grantee.display_name = grant["Grantee"]["DisplayName"]
+                if "Type" in grant["Grantee"]:
+                    grantee.type = grant["Grantee"]["Type"]
+                if "ID" in grant["Grantee"]:
+                    grantee.ID = grant["Grantee"]["ID"]
+                if "URI" in grant["Grantee"]:
+                    grantee.URI = grant["Grantee"]["URI"]
+                grantees.append(grantee)
+
+            bucket.acl_grantee = grantees
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_bucket_policy__(self, bucket):
+        logger.info("S3 - Get buckets policy...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            bucket.policy = json.loads(
+                regional_client.get_bucket_policy(Bucket=bucket.name)["Policy"]
+            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+################## S3
+class S3Control:
+    def __init__(self, audit_info):
+        self.service = "s3control"
+        self.session = audit_info.audit_session
+        self.client = self.session.client(self.service)
+        self.audited_account = audit_info.audited_account
+        self.region = get_region_global_service(audit_info)
+        self.account_public_access_block = self.__get_public_access_block__()
+
+    def __get_session__(self):
+        return self.session
+
+    def __get_public_access_block__(self):
+        logger.info("S3 - Get account public access block...")
+        try:
+            return PublicAccessBlock(
+                self.client.get_public_access_block(AccountId=self.audited_account)[
+                    "PublicAccessBlockConfiguration"
+                ]
+            )
+        except Exception as error:
+            if "NoSuchPublicAccessBlockConfiguration" in str(error):
+                # Set all block as False
+                return PublicAccessBlock(
+                    {
+                        "BlockPublicAcls": False,
+                        "IgnorePublicAcls": False,
+                        "BlockPublicPolicy": False,
+                        "RestrictPublicBuckets": False,
+                    }
+                )
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+@dataclass
+class ACL_Grantee:
+    display_name: str
+    ID: str
+    type: str
+    URI: str
+
+    def __init__(self, type):
+        self.display_name = None
+        self.ID = None
+        self.type = type
+        self.URI = None
+
+
+@dataclass
+class PublicAccessBlock:
+    block_public_acls: bool
+    ignore_public_acls: bool
+    block_public_policy: bool
+    restrict_public_buckets: bool
+
+    def __init__(self, configuration):
+        self.block_public_acls = configuration["BlockPublicAcls"]
+        self.ignore_public_acls = configuration["IgnorePublicAcls"]
+        self.block_public_policy = configuration["BlockPublicPolicy"]
+        self.restrict_public_buckets = configuration["RestrictPublicBuckets"]
 
 
 @dataclass
@@ -85,10 +211,24 @@ class Bucket:
     name: str
     versioning: bool
     logging: bool
+    public_access_block: PublicAccessBlock
+    acl_grantees: list[ACL_Grantee]
+    policy: dict
     region: str
 
     def __init__(self, name, region):
         self.name = name
         self.versioning = False
         self.logging = False
+        # Set all block as False
+        self.public_access_block = PublicAccessBlock(
+            {
+                "BlockPublicAcls": False,
+                "IgnorePublicAcls": False,
+                "BlockPublicPolicy": False,
+                "RestrictPublicBuckets": False,
+            }
+        )
+        self.acl_grantees = []
+        self.policy = {}
         self.region = region
