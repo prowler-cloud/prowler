@@ -75,6 +75,9 @@ class S3:
             bucket_logging = regional_client.get_bucket_logging(Bucket=bucket.name)
             if "LoggingEnabled" in bucket_logging:
                 bucket.logging = True
+                bucket.logging_target_bucket = bucket_logging["LoggingEnabled"][
+                    "TargetBucket"
+                ]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -112,6 +115,7 @@ class Bucket:
     logging: bool
     region: str
     acl_grantee: list
+    logging_target_bucket: str
 
     def __init__(self, name, region):
         self.name = name
@@ -119,6 +123,7 @@ class Bucket:
         self.logging = False
         self.region = region
         self.acl_grantee = None
+        self.logging_target_bucket = None
 
 
 @dataclass
