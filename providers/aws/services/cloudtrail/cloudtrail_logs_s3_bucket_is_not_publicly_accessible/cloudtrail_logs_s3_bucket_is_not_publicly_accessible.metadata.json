@@ -1,7 +1,7 @@
 {
     "Provider": "aws",
     "CheckID": "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
-    "CheckTitle": "Ensure the S3 bucket CloudTrail logs to is not publicly accessible",
+    "CheckTitle": "Ensure the S3 bucket CloudTrail logs is not publicly accessible",
     "CheckType": ["Software and Configuration Checks", "Industry and Regulatory Standards" ,"CIS AWS Foundations Benchmark"],
     "ServiceName": "cloudtrail",
     "SubServiceName": "",
