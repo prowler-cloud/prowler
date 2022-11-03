@@ -25,6 +25,7 @@ class S3:
         self.__threading_call__(self.__get_bucket_acl__)
         self.__threading_call__(self.__get_public_access_block__)
         self.__threading_call__(self.__get_bucket_encryption__)
+        self.__threading_call__(self.__get_bucket_ownership_controls__)
 
     def __get_session__(self):
         return self.session
@@ -157,8 +158,20 @@ class S3:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __get_bucket_ownership_controls__(self, bucket):
+        logger.info("S3 - Get buckets ownership controls...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            bucket.ownership = regional_client.get_bucket_ownership_controls(
+                Bucket=bucket.name
+            )["OwnershipControls"]["Rules"][0]["ObjectOwnership"]
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
-################## S3
+
+################## S3Control
 class S3Control:
     def __init__(self, audit_info):
         self.service = "s3control"
@@ -193,6 +206,7 @@ class S3Control:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
 
 @dataclass
 class ACL_Grantee:
@@ -234,6 +248,7 @@ class Bucket:
     region: str
     acl_grantee: list[ACL_Grantee]
     logging_target_bucket: str
+    ownership: str
 
     def __init__(self, name, region):
         self.name = name
@@ -254,3 +269,4 @@ class Bucket:
         self.region = region
         self.acl_grantee = None
         self.logging_target_bucket = None
+        self.ownership = None
