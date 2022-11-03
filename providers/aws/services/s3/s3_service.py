@@ -93,8 +93,8 @@ class S3:
                 grantee = ACL_Grantee(grantee_type=grant["Grantee"])
                 if "DisplayName" in grant["Grantee"]:
                     grantee.display_name = grant["Grantee"]["DisplayName"]
-                if "EmailAddress" in grant["Grantee"]:
-                    grantee.email_address = grant["Grantee"]["EmailAddress"]
+                if "Type" in grant["Grantee"]:
+                    grantee.grantee_type = grant["Grantee"]["Type"]
                 if "ID" in grant["Grantee"]:
                     grantee.ID = grant["Grantee"]["ID"]
                 if "URI" in grant["Grantee"]:
@@ -129,14 +129,12 @@ class Bucket:
 @dataclass
 class ACL_Grantee:
     display_name: str
-    email_address: str
     ID: str
     grantee_type: str
     URI: str
 
     def __init__(self, grantee_type):
         self.display_name = None
-        self.email_address = None
         self.ID = None
         self.grantee_type = grantee_type
         self.URI = None
