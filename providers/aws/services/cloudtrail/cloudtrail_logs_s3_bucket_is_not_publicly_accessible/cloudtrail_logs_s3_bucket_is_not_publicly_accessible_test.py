@@ -19,6 +19,7 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
         )
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+        from providers.aws.services.s3.s3_service import S3
 
         current_audit_info.audited_partition = "aws"
 
@@ -26,22 +27,26 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             "providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
-            # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible import (
-                cloudtrail_logs_s3_bucket_is_not_publicly_accessible,
-            )
+            with mock.patch(
+                "providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.s3_client",
+                new=S3(current_audit_info),
+            ):
+                # Test Check
+                from providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible import (
+                    cloudtrail_logs_s3_bucket_is_not_publicly_accessible,
+                )
 
-            check = cloudtrail_logs_s3_bucket_is_not_publicly_accessible()
-            result = check.execute()
+                check = cloudtrail_logs_s3_bucket_is_not_publicly_accessible()
+                result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert result[0].resource_id == trail_name_us
-            assert result[0].resource_arn == trail_us["TrailARN"]
-            assert search(
-                result[0].status_extended,
-                f"S3 Bucket {bucket_name_us} from single region trail {trail_name_us} is not publicly accessible",
-            )
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert result[0].resource_id == trail_name_us
+                assert result[0].resource_arn == trail_us["TrailARN"]
+                assert search(
+                    result[0].status_extended,
+                    f"S3 Bucket {bucket_name_us} from single region trail {trail_name_us} is not publicly accessible",
+                )
 
     @mock_cloudtrail
     @mock_s3
@@ -75,6 +80,7 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
         )
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+        from providers.aws.services.s3.s3_service import S3
 
         current_audit_info.audited_partition = "aws"
 
@@ -82,22 +88,26 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             "providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
-            # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible import (
-                cloudtrail_logs_s3_bucket_is_not_publicly_accessible,
-            )
+            with mock.patch(
+                "providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.s3_client",
+                new=S3(current_audit_info),
+            ):
+                # Test Check
+                from providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible import (
+                    cloudtrail_logs_s3_bucket_is_not_publicly_accessible,
+                )
 
-            check = cloudtrail_logs_s3_bucket_is_not_publicly_accessible()
-            result = check.execute()
+                check = cloudtrail_logs_s3_bucket_is_not_publicly_accessible()
+                result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert result[0].resource_id == trail_name_us
-            assert result[0].resource_arn == trail_us["TrailARN"]
-            assert search(
-                result[0].status_extended,
-                f"S3 Bucket {bucket_name_us} from single region trail {trail_name_us} is publicly accessible",
-            )
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert result[0].resource_id == trail_name_us
+                assert result[0].resource_arn == trail_us["TrailARN"]
+                assert search(
+                    result[0].status_extended,
+                    f"S3 Bucket {bucket_name_us} from single region trail {trail_name_us} is publicly accessible",
+                )
 
     @mock_cloudtrail
     @mock_s3
