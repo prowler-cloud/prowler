@@ -16,15 +16,19 @@ class s3_bucket_default_encryption(Check):
                 # Check if bucket policy enforce SSE
                 if not bucket.policy:
                     report.status = "FAIL"
-                    report.status_extended = f"Bucket {bucket.name} has default encryption with {bucket.encryption} but does not have a bucket policy."
+                    report.status_extended = f"S3 Bucket {bucket.name} has default encryption with {bucket.encryption} but does not have a bucket policy."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"Bucket {bucket.name} has default encryption with {bucket.encryption} but does not enforce it in the bucket policy."
+                    report.status_extended = f"S3 Bucket {bucket.name} has default encryption with {bucket.encryption} but does not enforce it in the bucket policy."
                     for statement in bucket.policy["Statement"]:
                         if (
                             statement["Effect"] == "Deny"
                             and "Condition" in statement
-                            and ("s3:PutObject" in statement["Action"] or "*" in statement["Action"] or "s3:*" in statement["Action"])
+                            and (
+                                "s3:PutObject" in statement["Action"]
+                                or "*" in statement["Action"]
+                                or "s3:*" in statement["Action"]
+                            )
                         ):
                             if "StringNotEquals" in statement["Condition"]:
                                 if (
@@ -38,7 +42,7 @@ class s3_bucket_default_encryption(Check):
                                         == bucket.encryption
                                     ):
                                         report.status = "PASS"
-                                        report.status_extended = f"Bucket {bucket.name} enforces default encryption with {bucket.encryption}."
+                                        report.status_extended = f"S3 Bucket {bucket.name} enforces default encryption with {bucket.encryption}."
 
             findings.append(report)
         return findings
