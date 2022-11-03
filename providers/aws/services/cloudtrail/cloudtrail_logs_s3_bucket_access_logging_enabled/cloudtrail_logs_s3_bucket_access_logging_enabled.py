@@ -19,7 +19,7 @@ class cloudtrail_logs_s3_bucket_access_logging_enabled(Check):
                 else:
                     report.status_extended = f"Single region Trail {trail.name} S3 bucket access logging is not enabled for bucket {trail_bucket}"
                 for bucket in s3_client.buckets:
-                    if trail_bucket == bucket.name and bucket.logging_target_bucket:
+                    if trail_bucket == bucket.name and bucket.logging:
                         report.status = "PASS"
                         if trail.is_multiregion:
                             report.status_extended = f"Multiregion trail {trail.name} S3 bucket access logging is enabled for bucket {trail_bucket}"
