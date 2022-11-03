@@ -109,24 +109,6 @@ class S3:
 
 
 @dataclass
-class Bucket:
-    name: str
-    versioning: bool
-    logging: bool
-    region: str
-    acl_grantee: list [ACL_Grantee]
-    logging_target_bucket: str
-
-    def __init__(self, name, region):
-        self.name = name
-        self.versioning = False
-        self.logging = False
-        self.region = region
-        self.acl_grantee = None
-        self.logging_target_bucket = None
-
-
-@dataclass
 class ACL_Grantee:
     display_name: str
     ID: str
@@ -138,3 +120,21 @@ class ACL_Grantee:
         self.ID = None
         self.grantee_type = grantee_type
         self.URI = None
+
+
+@dataclass
+class Bucket:
+    name: str
+    versioning: bool
+    logging: bool
+    region: str
+    acl_grantee: list[ACL_Grantee]
+    logging_target_bucket: str
+
+    def __init__(self, name, region):
+        self.name = name
+        self.versioning = False
+        self.logging = False
+        self.region = region
+        self.acl_grantee = None
+        self.logging_target_bucket = None
