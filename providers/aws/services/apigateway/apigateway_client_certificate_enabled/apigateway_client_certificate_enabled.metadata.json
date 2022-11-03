@@ -1,0 +1,35 @@
+{
+  "Provider": "aws",
+  "CheckID": "apigateway_client_certificate_enabled",
+  "CheckTitle": "Check if API Gateway has client certificate enabled to access your backend endpoint.",
+  "CheckType": ["Data Protection"],
+  "ServiceName": "apigateway",
+  "SubServiceName": "rest_api",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsApiGatewayRestApi",
+  "Description": "Check if API Gateway has client certificate enabled to access your backend endpoint.",
+  "Risk": "Possible man in the middle attacks and other similar risks.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable client certificate. Mutual TLS is recommended and commonly used for business-to-business (B2B) applications. It iss used in standards such as Open Banking. API Gateway now provides integrated mutual TLS authentication at no additional cost.",
+      "Url": "https://aws.amazon.com/blogs/compute/introducing-mutual-tls-authentication-for-amazon-api-gateway/"
+    }
+  },
+  "Categories": [],
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  },
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "Compliance": []
+}

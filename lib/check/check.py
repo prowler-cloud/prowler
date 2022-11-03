@@ -88,16 +88,21 @@ def list_services(provider: str) -> set:
         # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
         service_name = check_name.split(".")[3]
         available_services.add(service_name)
-    return available_services
+    return sorted(available_services)
 
 
 def print_services(service_list: set):
-    print(f"Available Services:")
+    print(
+        f"There are {Fore.YELLOW}{len(service_list)}{Style.RESET_ALL} available services: \n"
+    )
     for service in service_list:
         print(f"- {service}")
 
 
 def print_checks(provider: str, check_list: set, bulk_checks_metadata: dict):
+    print(
+        f"There are {Fore.YELLOW}{len(check_list)}{Style.RESET_ALL} available checks: \n"
+    )
     for check in check_list:
         try:
             print(
