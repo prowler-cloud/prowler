@@ -24,7 +24,7 @@ class s3_bucket_default_encryption(Check):
                         if (
                             statement["Effect"] == "Deny"
                             and "Condition" in statement
-                            and "s3:PutObject" in statement["Action"]
+                            and ("s3:PutObject" in statement["Action"] or "*" in statement["Action"] or "s3:*" in statement["Action"])
                         ):
                             if "StringNotEquals" in statement["Condition"]:
                                 if (

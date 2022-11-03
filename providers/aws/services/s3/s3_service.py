@@ -194,7 +194,6 @@ class S3Control:
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-
 @dataclass
 class ACL_Grantee:
     display_name: str
@@ -233,6 +232,8 @@ class Bucket:
     policy: dict
     encryption: str
     region: str
+    acl_grantee: list[ACL_Grantee]
+    logging_target_bucket: str
 
     def __init__(self, name, region):
         self.name = name
@@ -251,3 +252,5 @@ class Bucket:
         self.policy = {}
         self.encryption = None
         self.region = region
+        self.acl_grantee = None
+        self.logging_target_bucket = None
