@@ -8,6 +8,7 @@ class cloudtrail_s3_dataevents_enabled(Check):
         report = Check_Report(self.metadata)
         report.region = cloudtrail_client.region
         report.resource_id = "No trails"
+        report.resource_arn = "No trails"
         report.status = "FAIL"
         report.status_extended = f"No CloudTrail trails have a data event to record all S3 object-level API operations."
         for trail in cloudtrail_client.trails:
@@ -15,12 +16,13 @@ class cloudtrail_s3_dataevents_enabled(Check):
                 # Check if trail has a data event for all S3 Buckets for write/read
                 if data_event["ReadWriteType"] == "All":
                     for resource in data_event["DataResources"]:
-                        if (
-                            "AWS::S3::Object" == resource["Type"]
-                            and "arn:aws:s3" in resource["Values"]
+                        if "AWS::S3::Object" == resource["Type"] and (
+                            "arn:aws:s3" in resource["Values"]
+                            or "arn:aws:s3:::*/*" in resource["Values"]
                         ):
                             report.region = trail.region
                             report.resource_id = trail.name
+                            report.resource_arn = trail.arn
                             report.status = "PASS"
                             report.status_extended = f"Trail {trail.name} have a data event to record all S3 object-level API operations."
 

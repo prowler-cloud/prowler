@@ -49,7 +49,7 @@ class Cloudtrail:
                             name=trail["Name"],
                             is_multiregion=trail["IsMultiRegionTrail"],
                             home_region=trail["HomeRegion"],
-                            trail_arn=trail["TrailARN"],
+                            arn=trail["TrailARN"],
                             region=regional_client.region,
                             is_logging=False,
                             log_file_validation_enabled=trail[
@@ -67,14 +67,14 @@ class Cloudtrail:
                         name=None,
                         is_multiregion=None,
                         home_region=None,
-                        trail_arn=None,
+                        arn=None,
                         region=regional_client.region,
                         is_logging=None,
                         log_file_validation_enabled=None,
                         latest_cloudwatch_delivery_time=None,
                         s3_bucket=None,
                         kms_key=None,
-                        data_events=None,
+                        data_events=[],
                     )
                 )
 
@@ -89,7 +89,7 @@ class Cloudtrail:
             for trail in self.trails:
                 for region, client in self.regional_clients.items():
                     if trail.region == region and trail.name:
-                        status = client.get_trail_status(Name=trail.trail_arn)
+                        status = client.get_trail_status(Name=trail.arn)
                         trail.is_logging = status["IsLogging"]
                         if "LatestCloudWatchLogsDeliveryTime" in status:
                             trail.latest_cloudwatch_delivery_time = status[
@@ -107,9 +107,7 @@ class Cloudtrail:
             for trail in self.trails:
                 for region, client in self.regional_clients.items():
                     if trail.region == region and trail.name:
-                        data_events = client.get_event_selectors(
-                            TrailName=trail.trail_arn
-                        )
+                        data_events = client.get_event_selectors(TrailName=trail.arn)
                         if "EventSelectors" in data_events:
                             for event in data_events["EventSelectors"]:
                                 trail.data_events.append(event)
@@ -124,7 +122,7 @@ class Trail:
     name: str
     is_multiregion: bool
     home_region: str
-    trail_arn: str
+    arn: str
     region: str
     is_logging: bool
     log_file_validation_enabled: bool
@@ -138,7 +136,7 @@ class Trail:
         name,
         is_multiregion,
         home_region,
-        trail_arn,
+        arn,
         region,
         is_logging,
         log_file_validation_enabled,
@@ -150,7 +148,7 @@ class Trail:
         self.name = name
         self.is_multiregion = is_multiregion
         self.home_region = home_region
-        self.trail_arn = trail_arn
+        self.arn = arn
         self.region = region
         self.is_logging = is_logging
         self.log_file_validation_enabled = log_file_validation_enabled

@@ -25,7 +25,7 @@ class cloudtrail_multi_region_enabled(Check):
                         else:
                             report.status_extended = f"Trail {trail.name} is not multiregion and it is logging"
                         report.resource_id = trail.name
-                        report.resource_arn = trail.trail_arn
+                        report.resource_arn = trail.arn
                         trail_in_region = True  # Trail enabled in region
                     else:
                         report.status = "FAIL"

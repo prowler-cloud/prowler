@@ -12,7 +12,7 @@ class cloudtrail_logs_s3_bucket_access_logging_enabled(Check):
                 report = Check_Report(self.metadata)
                 report.region = trail.region
                 report.resource_id = trail.name
-                report.resource_arn = trail.trail_arn
+                report.resource_arn = trail.arn
                 report.status = "FAIL"
                 if trail.is_multiregion:
                     report.status_extended = f"Multiregion Trail {trail.name} S3 bucket access logging is not enabled for bucket {trail_bucket}"
