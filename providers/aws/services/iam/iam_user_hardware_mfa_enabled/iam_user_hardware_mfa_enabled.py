@@ -13,17 +13,15 @@ class iam_user_hardware_mfa_enabled(Check):
             report.resource_arn = user.arn
             report.region = iam_client.region
             if user.mfa_devices:
+                report.status = "PASS"
+                report.status_extended = f"User {user.name} has hardware MFA enabled."
                 for mfa_device in user.mfa_devices:
                     if mfa_device.type == "mfa" or mfa_device.type == "sms-mfa":
                         report.status = "FAIL"
                         report.status_extended = f"User {user.name} has a virtual MFA instead of a hardware MFA enabled."
-                        findings.append(report)
-                    else:
-                        report.status = "PASS"
-                        report.status_extended = (
-                            f"User {user.name} has hardware MFA enabled."
-                        )
-                        findings.append(report)
+                        break
+
+                findings.append(report)
             else:
                 report.status = "FAIL"
                 report.status_extended = (

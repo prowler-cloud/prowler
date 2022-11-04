@@ -14,6 +14,9 @@ from providers.aws.services.iam.iam_client import iam_client
 
 class iam_policy_allows_privilege_escalation(Check):
     def execute(self) -> Check_Report:
+        # Is necessary to include the "Action:*" for
+        # each service that has a policy that could
+        # allow for privilege escalation
         privilege_escalation_iam_actions = {
             "iam:AttachGroupPolicy",
             "iam:SetDefaultPolicyVersion2",
@@ -30,23 +33,31 @@ class iam_policy_allows_privilege_escalation(Check):
             "iam:SetDefaultPolicyVersion",
             "iam:UpdateAssumeRolePolicy",
             "iam:UpdateLoginProfile",
+            "iam:*",
             "sts:AssumeRole",
+            "sts:*",
             "ec2:RunInstances",
+            "ec2:*",
             "lambda:CreateEventSourceMapping",
             "lambda:CreateFunction",
             "lambda:InvokeFunction",
             "lambda:UpdateFunctionCode",
+            "lambda:*",
             "dynamodb:CreateTable",
             "dynamodb:PutItem",
+            "dynamodb:*",
             "glue:CreateDevEndpoint",
             "glue:GetDevEndpoint",
             "glue:GetDevEndpoints",
             "glue:UpdateDevEndpoint",
+            "glue:*",
             "cloudformation:CreateStack",
             "cloudformation:DescribeStacks",
+            "cloudformation:*",
             "datapipeline:CreatePipeline",
             "datapipeline:PutPipelineDefinition",
             "datapipeline:ActivatePipeline",
+            "datapipeline:*",
         }
         findings = []
         for policy in iam_client.customer_managed_policies:
@@ -86,7 +97,11 @@ class iam_policy_allows_privilege_escalation(Check):
             # First, we need to perform a left join with ALLOWED_ACTIONS and DENIED_ACTIONS
             left_actions = allowed_actions.difference(denied_actions)
             # Then, we need to find the DENIED_NOT_ACTIONS in LEFT_ACTIONS
-            privileged_actions = left_actions.intersection(denied_not_actions)
+            if denied_not_actions:
+                privileged_actions = left_actions.intersection(denied_not_actions)
+            # If there is no Denied Not Actions
+            else:
+                privileged_actions = left_actions
             # Finally, check if there is a privilege escalation action within this policy
             policy_privilege_escalation_actions = privileged_actions.intersection(
                 privilege_escalation_iam_actions
