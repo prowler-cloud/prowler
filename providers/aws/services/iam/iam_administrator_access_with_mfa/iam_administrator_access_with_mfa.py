@@ -12,14 +12,18 @@ class iam_administrator_access_with_mfa(Check):
             report.resource_id = group.name
             report.resource_arn = group.arn
             report.region = iam_client.region
+            report.status = "PASS"
+            report.status_extended = f"Group {group.name} has no policies."
+
             if group.attached_policies:
-                admin_policy = False
+                report.status_extended = (
+                    f"Group {group.name} provides non-administrative access."
+                )
                 for group_policy in group.attached_policies:
                     if (
                         group_policy["PolicyArn"]
                         == "arn:aws:iam::aws:policy/AdministratorAccess"
                     ):
-                        admin_policy = True
                         # users in group are Administrators
                         if group.users:
                             for group_user in group.users:
@@ -30,27 +34,9 @@ class iam_administrator_access_with_mfa(Check):
                                     ):
                                         report.status = "FAIL"
                                         report.status_extended = f"Group {group.name} provides administrator access to User {group_user.name} with MFA disabled."
-                                        findings.append(report)
-                                    elif (
-                                        user["user"] == group_user.name
-                                        and user["mfa_active"] == "true"
-                                    ):
-                                        report.status = "PASS"
-                                        report.status_extended = f"Group {group.name} provides administrator access to User {group_user.name} with MFA enabled."
-                                        findings.append(report)
                         else:
-                            report.status = "PASS"
                             report.status_extended = f"Group {group.name} provides administrative access but does not have users."
-                            findings.append(report)
-                if not admin_policy:
-                    report.status = "PASS"
-                    report.status_extended = (
-                        f"Group {group.name} provides non-administrative access."
-                    )
-                    findings.append(report)
-            else:
-                report.status = "PASS"
-                report.status_extended = f"Group {group.name} has no policies."
-                findings.append(report)
+
+            findings.append(report)
 
         return findings
