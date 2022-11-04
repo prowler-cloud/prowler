@@ -36,18 +36,28 @@ class AppStream:
                     self.fleets.append(
                         Fleet(
                             arn=fleet["Arn"],
-                            name=fleet["Name"], 
-                            max_user_duration_in_seconds=fleet["MaxUserDurationInSeconds"],
-                            disconnect_timeout_in_seconds=fleet["DisconnectTimeoutInSeconds"],
-                            idle_disconnect_timeout_in_seconds=fleet["IdleDisconnectTimeoutInSeconds"],
-                            enable_default_internet_access=fleet["EnableDefaultInternetAccess"],
+                            name=fleet["Name"],
+                            max_user_duration_in_seconds=fleet[
+                                "MaxUserDurationInSeconds"
+                            ],
+                            disconnect_timeout_in_seconds=fleet[
+                                "DisconnectTimeoutInSeconds"
+                            ],
+                            idle_disconnect_timeout_in_seconds=fleet[
+                                "IdleDisconnectTimeoutInSeconds"
+                            ],
+                            enable_default_internet_access=fleet[
+                                "EnableDefaultInternetAccess"
+                            ],
                             region=regional_client.region,
-                            ))
-                       
+                        )
+                    )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
 
 @dataclass
 class Fleet:
@@ -62,7 +72,7 @@ class Fleet:
         self,
         arn,
         name,
-        max_user_duration_in_seconds, 
+        max_user_duration_in_seconds,
         disconnect_timeout_in_seconds,
         idle_disconnect_timeout_in_seconds,
         enable_default_internet_access,

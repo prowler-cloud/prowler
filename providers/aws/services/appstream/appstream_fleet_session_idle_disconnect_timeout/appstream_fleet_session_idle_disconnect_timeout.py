@@ -1,16 +1,15 @@
 from lib.check.models import Check, Check_Report
-from providers.aws.services.appstream.appstream_client import (
-    appstream_client,
-)
+from providers.aws.services.appstream.appstream_client import appstream_client
 
 # max_disconnect_timeout_in_seconds 600
-max_idle_disconnect_timeout_in_seconds = 10*60
+max_idle_disconnect_timeout_in_seconds = 10 * 60
 
 # Check if there are AppStream Fleets with the idle disconnect timeout set to 10 minutes or less
 class appstream_fleet_session_idle_disconnect_timeout(Check):
     """Check if there are AppStream Fleets with the idle disconnect timeout set to 10 minutes or less"""
+
     def execute(self):
-        """ Execute the appstream_fleet_session_idle_disconnect_timeout check"""
+        """Execute the appstream_fleet_session_idle_disconnect_timeout check"""
         findings = []
         for fleet in appstream_client.fleets:
             report = Check_Report(self.metadata)
@@ -18,14 +17,17 @@ class appstream_fleet_session_idle_disconnect_timeout(Check):
             report.resource_id = fleet.name
             report.resource_arn = fleet.arn
 
-            if fleet.idle_disconnect_timeout_in_seconds <= max_idle_disconnect_timeout_in_seconds:
+            if (
+                fleet.idle_disconnect_timeout_in_seconds
+                <= max_idle_disconnect_timeout_in_seconds
+            ):
                 report.status = "PASS"
                 report.status_extended = f"Fleet {fleet.name} has the session idle disconnect timeout set to less than 10 minutes"
 
             else:
                 report.status = "FAIL"
                 report.status_extended = f"Fleet {fleet.name} has the session idle disconnect timeout set to more than 10 minutes"
-            
+
             findings.append(report)
 
         return findings

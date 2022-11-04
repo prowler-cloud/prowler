@@ -1,8 +1,10 @@
 from unittest import mock
 
 from providers.aws.services.appstream.appstream_service import Fleet
+
 # Mock Test Region
 AWS_REGION = "eu-west-1"
+
 
 class Test_appstream_fleet_session_disconnect_timeout:
     def test_no_fleets(self):
@@ -21,23 +23,23 @@ class Test_appstream_fleet_session_disconnect_timeout:
             result = check.execute()
 
             assert len(result) == 0
-   
+
     def test_one_fleet_session_disconnect_timeout_more_than_5_minutes(self):
         appstream_client = mock.MagicMock
         appstream_client.fleets = []
         fleet1 = Fleet(
-                            arn="arn",
-                            name="test-fleet",
-                            max_user_duration_in_seconds=1*60*60,
-                            # 1 hour
-                            disconnect_timeout_in_seconds=1*60*60,
-                            idle_disconnect_timeout_in_seconds=900,
-                            enable_default_internet_access=True,
-                            region=AWS_REGION,
-                            )
+            arn="arn",
+            name="test-fleet",
+            max_user_duration_in_seconds=1 * 60 * 60,
+            # 1 hour
+            disconnect_timeout_in_seconds=1 * 60 * 60,
+            idle_disconnect_timeout_in_seconds=900,
+            enable_default_internet_access=True,
+            region=AWS_REGION,
+        )
 
         appstream_client.fleets.append(fleet1)
-            
+
         with mock.patch(
             "providers.aws.services.appstream.appstream_service.AppStream",
             new=appstream_client,
@@ -55,24 +57,27 @@ class Test_appstream_fleet_session_disconnect_timeout:
             assert result[0].region == fleet1.region
             assert result[0].resource_id == fleet1.name
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == f"Fleet {fleet1.name} has the session disconnect timeout set to more than 5 minutes"
+            assert (
+                result[0].status_extended
+                == f"Fleet {fleet1.name} has the session disconnect timeout set to more than 5 minutes"
+            )
 
     def test_one_fleet_session_disconnect_timeout_less_than_5_minutes(self):
         appstream_client = mock.MagicMock
         appstream_client.fleets = []
         fleet1 = Fleet(
-                            arn="arn",
-                            name="test-fleet",
-                            max_user_duration_in_seconds=900,
-                            # 4 minutes
-                            disconnect_timeout_in_seconds=4*60,
-                            idle_disconnect_timeout_in_seconds=900,
-                            enable_default_internet_access=True,
-                            region=AWS_REGION,
-                            )
+            arn="arn",
+            name="test-fleet",
+            max_user_duration_in_seconds=900,
+            # 4 minutes
+            disconnect_timeout_in_seconds=4 * 60,
+            idle_disconnect_timeout_in_seconds=900,
+            enable_default_internet_access=True,
+            region=AWS_REGION,
+        )
 
         appstream_client.fleets.append(fleet1)
-            
+
         with mock.patch(
             "providers.aws.services.appstream.appstream_service.AppStream",
             new=appstream_client,
@@ -90,35 +95,40 @@ class Test_appstream_fleet_session_disconnect_timeout:
             assert result[0].region == fleet1.region
             assert result[0].resource_id == fleet1.name
             assert result[0].status == "PASS"
-            assert result[0].status_extended == f"Fleet {fleet1.name} has the session disconnect timeout set to less than 5 minutes"
+            assert (
+                result[0].status_extended
+                == f"Fleet {fleet1.name} has the session disconnect timeout set to less than 5 minutes"
+            )
 
-    def test_two_fleets_session_disconnect_timeout_less_than_5_minutes_one_more_than_5_minutes(self):
+    def test_two_fleets_session_disconnect_timeout_less_than_5_minutes_one_more_than_5_minutes(
+        self,
+    ):
         appstream_client = mock.MagicMock
         appstream_client.fleets = []
         fleet1 = Fleet(
-                            arn="arn",
-                            name="test-fleet-1", 
-                            max_user_duration_in_seconds=1*60*60,
-                            # 1 Hours
-                            disconnect_timeout_in_seconds=1*60*60,
-                            idle_disconnect_timeout_in_seconds=900,
-                            enable_default_internet_access=True,
-                            region=AWS_REGION,
-                            )
+            arn="arn",
+            name="test-fleet-1",
+            max_user_duration_in_seconds=1 * 60 * 60,
+            # 1 Hours
+            disconnect_timeout_in_seconds=1 * 60 * 60,
+            idle_disconnect_timeout_in_seconds=900,
+            enable_default_internet_access=True,
+            region=AWS_REGION,
+        )
         fleet2 = Fleet(
-                            arn="arn",
-                            name="test-fleet-2", 
-                            max_user_duration_in_seconds=24*60*60,
-                            #  3 minutes
-                            disconnect_timeout_in_seconds=3*60,
-                            idle_disconnect_timeout_in_seconds=900,
-                            enable_default_internet_access=False,
-                            region=AWS_REGION,
-                            )
+            arn="arn",
+            name="test-fleet-2",
+            max_user_duration_in_seconds=24 * 60 * 60,
+            #  3 minutes
+            disconnect_timeout_in_seconds=3 * 60,
+            idle_disconnect_timeout_in_seconds=900,
+            enable_default_internet_access=False,
+            region=AWS_REGION,
+        )
 
         appstream_client.fleets.append(fleet1)
         appstream_client.fleets.append(fleet2)
-            
+
         with mock.patch(
             "providers.aws.services.appstream.appstream_service.AppStream",
             new=appstream_client,
@@ -139,10 +149,16 @@ class Test_appstream_fleet_session_disconnect_timeout:
                     assert result[0].region == fleet1.region
                     assert result[0].resource_id == fleet1.name
                     assert result[0].status == "FAIL"
-                    assert result[0].status_extended == f"Fleet {fleet1.name} has the session disconnect timeout set to more than 5 minutes"
+                    assert (
+                        result[0].status_extended
+                        == f"Fleet {fleet1.name} has the session disconnect timeout set to more than 5 minutes"
+                    )
                 if res.resource_id == fleet2.name:
                     assert result[1].resource_arn == fleet2.arn
                     assert result[1].region == fleet2.region
                     assert result[1].resource_id == fleet2.name
                     assert result[1].status == "PASS"
-                    assert result[1].status_extended == f"Fleet {fleet2.name} has the session disconnect timeout set to less than 5 minutes"
+                    assert (
+                        result[1].status_extended
+                        == f"Fleet {fleet2.name} has the session disconnect timeout set to less than 5 minutes"
+                    )

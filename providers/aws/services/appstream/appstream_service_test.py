@@ -1,10 +1,10 @@
 from unittest.mock import patch
 
 import botocore
+from moto.core import DEFAULT_ACCOUNT_ID
 
 from providers.aws.lib.audit_info.audit_info import current_audit_info
 from providers.aws.services.appstream.appstream_service import AppStream
-from moto.core import DEFAULT_ACCOUNT_ID
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -37,7 +37,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "DisconnectTimeoutInSeconds": 900,
                     "IdleDisconnectTimeoutInSeconds": 900,
                     "EnableDefaultInternetAccess": True,
-                }
+                },
             ]
         }
     return make_api_call(self, operation_name, kwarg)
@@ -60,10 +60,7 @@ class Test_AppStream_Service:
     # Test AppStream Client
     def test__get_client__(self):
         appstream = AppStream(current_audit_info)
-        assert (
-            appstream.regional_clients[AWS_REGION].__class__.__name__
-            == "AppStream"
-        )
+        assert appstream.regional_clients[AWS_REGION].__class__.__name__ == "AppStream"
 
     # Test AppStream Session
     def test__get_session__(self):
@@ -80,8 +77,11 @@ class Test_AppStream_Service:
         current_audit_info.audited_partition = "aws"
         appstream = AppStream(current_audit_info)
         assert len(appstream.fleets) == 2
-        
-        assert appstream.fleets[0].arn == f"arn:aws:appstream:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:fleet/test-prowler3-0"
+
+        assert (
+            appstream.fleets[0].arn
+            == f"arn:aws:appstream:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:fleet/test-prowler3-0"
+        )
         assert appstream.fleets[0].name == "test-prowler3-0"
         assert appstream.fleets[0].max_user_duration_in_seconds == 100
         assert appstream.fleets[0].disconnect_timeout_in_seconds == 900
@@ -89,7 +89,10 @@ class Test_AppStream_Service:
         assert appstream.fleets[0].enable_default_internet_access == False
         assert appstream.fleets[0].region == AWS_REGION
 
-        assert appstream.fleets[1].arn == f"arn:aws:appstream:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:fleet/test-prowler3-1"
+        assert (
+            appstream.fleets[1].arn
+            == f"arn:aws:appstream:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:fleet/test-prowler3-1"
+        )
         assert appstream.fleets[1].name == "test-prowler3-1"
         assert appstream.fleets[1].max_user_duration_in_seconds == 57600
         assert appstream.fleets[1].disconnect_timeout_in_seconds == 900
