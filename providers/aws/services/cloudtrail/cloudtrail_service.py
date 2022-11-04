@@ -3,7 +3,10 @@ import threading
 from dataclasses import dataclass
 
 from lib.logger import logger
-from providers.aws.aws_provider import generate_regional_clients
+from providers.aws.aws_provider import (
+    generate_regional_clients,
+    get_region_global_service,
+)
 
 
 ################### CLOUDTRAIL
@@ -12,10 +15,12 @@ class Cloudtrail:
         self.service = "cloudtrail"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.region = get_region_global_service(audit_info)
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.trails = []
         self.__threading_call__(self.__get_trails__)
         self.__get_trail_status__()
+        self.__get_event_selectors__()
 
     def __get_session__(self):
         return self.session
@@ -53,6 +58,7 @@ class Cloudtrail:
                             latest_cloudwatch_delivery_time=None,
                             s3_bucket=trail["S3BucketName"],
                             kms_key=kms_key_id,
+                            data_events=[],
                         )
                     )
             else:
@@ -68,12 +74,13 @@ class Cloudtrail:
                         latest_cloudwatch_delivery_time=None,
                         s3_bucket=None,
                         kms_key=None,
+                        data_events=None,
                     )
                 )
 
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __get_trail_status__(self):
@@ -90,7 +97,26 @@ class Cloudtrail:
                             ]
 
         except Exception as error:
-            logger.error(f"{client.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_event_selectors__(self):
+        logger.info("Cloudtrail - Getting event selector")
+        try:
+            for trail in self.trails:
+                for region, client in self.regional_clients.items():
+                    if trail.region == region and trail.name:
+                        data_events = client.get_event_selectors(
+                            TrailName=trail.trail_arn
+                        )
+                        if "EventSelectors" in data_events:
+                            for event in data_events["EventSelectors"]:
+                                trail.data_events.append(event)
+        except Exception as error:
+            logger.error(
+                f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 
 @dataclass
@@ -105,6 +131,7 @@ class Trail:
     latest_cloudwatch_delivery_time: datetime
     s3_bucket: str
     kms_key: str
+    data_events: list
 
     def __init__(
         self,
@@ -118,6 +145,7 @@ class Trail:
         latest_cloudwatch_delivery_time,
         s3_bucket,
         kms_key,
+        data_events,
     ):
         self.name = name
         self.is_multiregion = is_multiregion
@@ -129,3 +157,4 @@ class Trail:
         self.latest_cloudwatch_delivery_time = latest_cloudwatch_delivery_time
         self.s3_bucket = s3_bucket
         self.kms_key = kms_key
+        self.data_events = data_events
