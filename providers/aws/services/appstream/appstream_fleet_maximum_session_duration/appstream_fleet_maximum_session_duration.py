@@ -1,9 +1,8 @@
 from lib.check.models import Check, Check_Report
 from providers.aws.services.appstream.appstream_client import appstream_client
 
-# max_session_duration_seconds 36000
 max_session_duration_seconds = 10 * 60 * 60
-
+"""max_session_duration_seconds 36000"""
 # Check if there are AppStream Fleets with the user maximum session duration no longer than 10 hours
 class appstream_fleet_maximum_session_duration(Check):
     """Check if there are AppStream Fleets with the user maximum session duration no longer than 10 hours"""
