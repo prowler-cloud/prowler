@@ -4,12 +4,13 @@ from unittest import mock
 from boto3 import client
 from moto import mock_iam
 
+AWS_REGION = "us-east-1"
+
 
 class Test_iam_policy_allows_privilege_escalation:
     @mock_iam
     def test_iam_policy_allows_privilege_escalation_sts(self):
-        region = "eu-west-1"
-        iam_client = client("iam", region_name=region)
+        iam_client = client("iam", region_name=AWS_REGION)
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -24,7 +25,6 @@ class Test_iam_policy_allows_privilege_escalation:
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info.audited_regions = [region]
         with mock.patch(
             "providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
             new=IAM(current_audit_info),
@@ -44,12 +44,11 @@ class Test_iam_policy_allows_privilege_escalation:
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
-            assert result[0].region == region
 
     @mock_iam
     def test_iam_policy_not_allows_privilege_escalation(self):
-        region = "eu-west-1"
-        iam_client = client("iam", region_name=region)
+
+        iam_client = client("iam", region_name=AWS_REGION)
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -66,7 +65,6 @@ class Test_iam_policy_allows_privilege_escalation:
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info.audited_regions = [region]
         with mock.patch(
             "providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
             new=IAM(current_audit_info),
@@ -86,12 +84,11 @@ class Test_iam_policy_allows_privilege_escalation:
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
-            assert result[0].region == region
 
     @mock_iam
     def test_iam_policy_not_allows_privilege_escalation_glue_GetDevEndpoints(self):
-        region = "eu-west-1"
-        iam_client = client("iam", region_name=region)
+
+        iam_client = client("iam", region_name=AWS_REGION)
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -112,7 +109,6 @@ class Test_iam_policy_allows_privilege_escalation:
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info.audited_regions = [region]
         with mock.patch(
             "providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
             new=IAM(current_audit_info),
@@ -132,12 +128,11 @@ class Test_iam_policy_allows_privilege_escalation:
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
-            assert result[0].region == region
 
     @mock_iam
     def test_iam_policy_not_allows_privilege_escalation_dynamodb_PutItem(self):
-        region = "eu-west-1"
-        iam_client = client("iam", region_name=region)
+
+        iam_client = client("iam", region_name=AWS_REGION)
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -169,7 +164,6 @@ class Test_iam_policy_allows_privilege_escalation:
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info.audited_regions = [region]
         with mock.patch(
             "providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
             new=IAM(current_audit_info),
@@ -189,4 +183,3 @@ class Test_iam_policy_allows_privilege_escalation:
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
-            assert result[0].region == region
