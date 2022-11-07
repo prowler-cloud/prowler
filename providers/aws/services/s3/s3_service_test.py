@@ -317,10 +317,10 @@ class Test_S3_Service:
         assert s3.buckets[0].public_access_block.block_public_policy
         assert s3.buckets[0].public_access_block.restrict_public_buckets
 
-    # Test S3 Get Public Access Block
+    # Test S3 Control Account Get Public Access Block
     @mock_s3control
     def test__get_public_access_block__(self):
-        # Generate S3 Client
+        # Generate S3Control Client
         s3control_client = client("s3control", region_name=AWS_REGION)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
