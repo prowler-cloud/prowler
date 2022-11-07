@@ -1,8 +1,11 @@
+from config.config import get_config_var
 from lib.check.models import Check, Check_Report
 from providers.aws.services.appstream.appstream_client import appstream_client
 
-max_idle_disconnect_timeout_in_seconds = 10 * 60
-"""max_disconnect_timeout_in_seconds 600"""
+max_idle_disconnect_timeout_in_seconds = get_config_var(
+    "max_idle_disconnect_timeout_in_seconds"
+)
+"""max_idle_disconnect_timeout_in_seconds, default: 600 seconds (10 minutes)"""
 
 # Check if there are AppStream Fleets with the idle disconnect timeout set to 10 minutes or less
 class appstream_fleet_session_idle_disconnect_timeout(Check):

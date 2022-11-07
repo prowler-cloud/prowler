@@ -1,8 +1,9 @@
+from config.config import get_config_var
 from lib.check.models import Check, Check_Report
 from providers.aws.services.appstream.appstream_client import appstream_client
 
-max_disconnect_timeout_in_seconds = 5 * 60
-"""max_disconnect_timeout_in_seconds 300"""
+max_disconnect_timeout_in_seconds = get_config_var("max_disconnect_timeout_in_seconds")
+"""max_disconnect_timeout_in_seconds, default: 300 seconds (5 minutes)"""
 
 # Check if there are AppStream Fleets with the session disconnect timeout set to 5 minutes or less
 class appstream_fleet_session_disconnect_timeout(Check):
