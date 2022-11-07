@@ -4,7 +4,6 @@ from dataclasses import dataclass
 
 from lib.logger import logger
 from providers.aws.aws_provider import (
-    current_audit_info,
     generate_regional_clients,
     get_region_global_service,
 )
@@ -18,7 +17,7 @@ class S3:
         self.client = self.session.client(self.service)
         self.audited_account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
-        self.buckets = self.__list_buckets__()
+        self.buckets = self.__list_buckets__(audit_info)
         self.__threading_call__(self.__get_bucket_versioning__)
         self.__threading_call__(self.__get_bucket_logging__)
         self.__threading_call__(self.__get_bucket_policy__)
@@ -39,27 +38,32 @@ class S3:
         for t in threads:
             t.join()
 
-    def __list_buckets__(self):
+    def __list_buckets__(self, audit_info):
         logger.info("S3 - Listing buckets...")
         try:
             buckets = []
             list_buckets = self.client.list_buckets()
             for bucket in list_buckets["Buckets"]:
-                bucket_region = self.client.get_bucket_location(Bucket=bucket["Name"])[
-                    "LocationConstraint"
-                ]
-                if not bucket_region:  # If us-east-1, bucket_region is none
-                    bucket_region = "us-east-1"
-                # Check if there are filter regions
-                if current_audit_info.audited_regions:
-                    if bucket_region in current_audit_info.audited_regions:
+                try:
+                    bucket_region = self.client.get_bucket_location(
+                        Bucket=bucket["Name"]
+                    )["LocationConstraint"]
+                    if not bucket_region:  # If us-east-1, bucket_region is none
+                        bucket_region = "us-east-1"
+                    # Check if there are filter regions
+                    if audit_info.audited_regions:
+                        if bucket_region in audit_info.audited_regions:
+                            buckets.append(Bucket(bucket["Name"], bucket_region))
+                    else:
                         buckets.append(Bucket(bucket["Name"], bucket_region))
-                else:
-                    buckets.append(Bucket(bucket["Name"], bucket_region))
+                except Exception as error:
+                    logger.error(
+                        f"{bucket_region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
             return buckets
         except Exception as error:
             logger.error(
-                f"{bucket_region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __get_bucket_versioning__(self, bucket):
@@ -129,18 +133,17 @@ class S3:
             regional_client = self.regional_clients[bucket.region]
             acl_grants = regional_client.get_bucket_acl(Bucket=bucket.name)["Grants"]
             for grant in acl_grants:
-                grantee = ACL_Grantee(type=grant["Grantee"])
+                grantee = ACL_Grantee(type=grant["Grantee"]["Type"])
                 if "DisplayName" in grant["Grantee"]:
                     grantee.display_name = grant["Grantee"]["DisplayName"]
-                if "Type" in grant["Grantee"]:
-                    grantee.type = grant["Grantee"]["Type"]
                 if "ID" in grant["Grantee"]:
                     grantee.ID = grant["Grantee"]["ID"]
                 if "URI" in grant["Grantee"]:
                     grantee.URI = grant["Grantee"]["URI"]
+                if "Permission" in grant:
+                    grantee.permission = grant["Permission"]
                 grantees.append(grantee)
-
-            bucket.acl_grantee = grantees
+            bucket.acl_grantees = grantees
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -214,12 +217,14 @@ class ACL_Grantee:
     ID: str
     type: str
     URI: str
+    permission: str
 
     def __init__(self, type):
         self.display_name = None
         self.ID = None
         self.type = type
         self.URI = None
+        self.permission = None
 
 
 @dataclass

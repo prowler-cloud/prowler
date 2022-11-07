@@ -14,7 +14,7 @@ class s3_bucket_public_access(Check):
             report = Check_Report(self.metadata)
             report.status = "PASS"
             report.status_extended = f"All S3 public access blocked at account level."
-            report.region = s3_client.region
+            report.region = s3control_client.region
             report.resource_id = ""
             findings.append(report)
         else:

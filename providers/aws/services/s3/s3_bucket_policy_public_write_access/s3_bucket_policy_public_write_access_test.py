@@ -82,10 +82,10 @@ class Test_s3_bucket_policy_public_write_access:
         s3_client_us_east_1.create_bucket(
             Bucket=bucket_name_us, ObjectOwnership="BucketOwnerEnforced"
         )
-        encryption_policy = '{"Version": "2012-10-17","Id": "PutObjPolicy","Statement": [{"Sid": "PublicWritePolicy","Effect": "Allow","Principal": "*","Action": "s3:PutObject","Resource": "arn:aws:s3:::bucket_test_us/*"}]}'
+        public_write_policy = '{"Version": "2012-10-17","Id": "PutObjPolicy","Statement": [{"Sid": "PublicWritePolicy","Effect": "Allow","Principal": "*","Action": "s3:PutObject","Resource": "arn:aws:s3:::bucket_test_us/*"}]}'
         s3_client_us_east_1.put_bucket_policy(
             Bucket=bucket_name_us,
-            Policy=encryption_policy,
+            Policy=public_write_policy,
         )
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.s3.s3_service import S3

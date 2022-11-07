@@ -128,11 +128,11 @@ class Test_S3_Service:
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
-        assert s3.buckets[0].acl_grantee[0].display_name == "test"
-        assert s3.buckets[0].acl_grantee[0].ID == "test_ID"
-        assert s3.buckets[0].acl_grantee[0].type == "Group"
+        assert s3.buckets[0].acl_grantees[0].display_name == "test"
+        assert s3.buckets[0].acl_grantees[0].ID == "test_ID"
+        assert s3.buckets[0].acl_grantees[0].type == "Group"
         assert (
-            s3.buckets[0].acl_grantee[0].URI
+            s3.buckets[0].acl_grantees[0].URI
             == "http://acs.amazonaws.com/groups/global/AllUsers"
         )
 
