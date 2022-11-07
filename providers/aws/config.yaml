@@ -8,3 +8,8 @@ trusted_account_ids : []
 
 # cloudwatch_log_group_retention_policy_specific_days_enabled --> by default is 365 days
 log_group_retention_days: 365
+
+# AppStream Session Configuration
+max_idle_disconnect_timeout_in_seconds: 600 # 10 Minutes
+max_disconnect_timeout_in_seconds: 300 # 5 Minutes
+max_session_duration_seconds: 36000 # 10 Hours
