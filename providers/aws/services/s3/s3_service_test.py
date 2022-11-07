@@ -1,12 +1,13 @@
 import json
 
 from boto3 import client, session
-from moto import mock_s3
+from moto import mock_s3, mock_s3control
 
 from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.s3.s3_service import S3
+from providers.aws.services.s3.s3_service import S3, S3Control
 
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
+AWS_REGION = "us-east-1"
 
 
 class Test_S3_Service:
@@ -17,6 +18,7 @@ class Test_S3_Service:
             audit_session=session.Session(
                 profile_name=None,
                 botocore_session=None,
+                region_name=AWS_REGION,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
             audited_user_id=None,
@@ -314,3 +316,25 @@ class Test_S3_Service:
         assert s3.buckets[0].public_access_block.ignore_public_acls
         assert s3.buckets[0].public_access_block.block_public_policy
         assert s3.buckets[0].public_access_block.restrict_public_buckets
+
+    # Test S3 Get Public Access Block
+    @mock_s3control
+    def test__get_public_access_block__(self):
+        # Generate S3 Client
+        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client.put_public_access_block(
+            AccountId=AWS_ACCOUNT_NUMBER,
+            PublicAccessBlockConfiguration={
+                "BlockPublicAcls": True,
+                "IgnorePublicAcls": True,
+                "BlockPublicPolicy": True,
+                "RestrictPublicBuckets": True,
+            },
+        )
+        # S3 client for this test class
+        audit_info = self.set_mocked_audit_info()
+        s3control = S3Control(audit_info)
+        assert s3control.account_public_access_block.block_public_acls
+        assert s3control.account_public_access_block.ignore_public_acls
+        assert s3control.account_public_access_block.block_public_policy
+        assert s3control.account_public_access_block.restrict_public_buckets
