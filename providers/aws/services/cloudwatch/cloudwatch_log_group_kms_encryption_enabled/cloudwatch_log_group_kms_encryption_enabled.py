@@ -1,5 +1,5 @@
 from lib.check.models import Check, Check_Report
-from providers.aws.services.cloudwatch.cloudwatch_client import logs_client
+from providers.aws.services.cloudwatch.logs_client import logs_client
 
 
 class cloudwatch_log_group_kms_encryption_enabled(Check):

@@ -1,26 +1,26 @@
 {
   "Provider": "aws",
-  "CheckID": "cloudwatch_cross_account_sharing_disabled",
-  "CheckTitle": "Check if CloudWatch has allowed cross-account sharing.",
+  "CheckID": "cloudwatch_log_metric_filter_unauthorized_api_calls",
+  "CheckTitle": "Ensure a log metric filter and alarm exist for unauthorized API calls.",
   "CheckType": ["Logging and Monitoring"],
   "ServiceName": "cloudwatch",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsCloudWatch",
+  "ResourceType": "AwsCloudTrailTrail",
   "Description": "Check if CloudWatch has allowed cross-account sharing.",
-  "Risk": "Cross-Account access to CloudWatch could increase the risk of compromising information between accounts.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Cross-Account-Cross-Region.html",
+  "Risk": "Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.",
+  "RelatedUrl": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "https://docs.bridgecrew.io/docs/monitoring_1#procedure",
       "NativeIaC": "",
       "Other": "",
-      "Terraform": ""
+      "Terraform": "https://docs.bridgecrew.io/docs/monitoring_1#fix---buildtime"
     },
     "Recommendation": {
-      "Text": "Grant usage permission on a per-resource basis to enforce least privilege and Zero Trust principles.",
-      "Url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Cross-Account-Cross-Region.html"
+      "Text": "It is recommended that a metric filter and alarm be established for unauthorized requests.",
+      "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html"
     }
   },
   "Categories": [],

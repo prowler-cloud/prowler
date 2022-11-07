@@ -35,10 +35,12 @@ class Cloudtrail:
             describe_trails = regional_client.describe_trails()["trailList"]
             if describe_trails:
                 for trail in describe_trails:
+                    kms_key_id = None
+                    log_group_arn = None
                     if "KmsKeyId" in trail:
                         kms_key_id = trail["KmsKeyId"]
-                    else:
-                        kms_key_id = None
+                    if "CloudWatchLogsLogGroupArn" in trail:
+                        log_group_arn = trail["CloudWatchLogsLogGroupArn"]
                     self.trails.append(
                         Trail(
                             name=trail["Name"],
@@ -53,6 +55,7 @@ class Cloudtrail:
                             latest_cloudwatch_delivery_time=None,
                             s3_bucket=trail["S3BucketName"],
                             kms_key=kms_key_id,
+                            log_group_arn=log_group_arn,
                         )
                     )
             else:
@@ -68,6 +71,7 @@ class Cloudtrail:
                         latest_cloudwatch_delivery_time=None,
                         s3_bucket=None,
                         kms_key=None,
+                        log_group_arn=None,
                     )
                 )
 
@@ -105,6 +109,7 @@ class Trail:
     latest_cloudwatch_delivery_time: datetime
     s3_bucket: str
     kms_key: str
+    log_group_arn: str
 
     def __init__(
         self,
@@ -118,6 +123,7 @@ class Trail:
         latest_cloudwatch_delivery_time,
         s3_bucket,
         kms_key,
+        log_group_arn,
     ):
         self.name = name
         self.is_multiregion = is_multiregion
@@ -129,3 +135,4 @@ class Trail:
         self.latest_cloudwatch_delivery_time = latest_cloudwatch_delivery_time
         self.s3_bucket = s3_bucket
         self.kms_key = kms_key
+        self.log_group_arn = log_group_arn

@@ -1,23 +1,41 @@
+import re
+
 from lib.check.models import Check, Check_Report
-from providers.aws.services.cloudwatch.logs_client import logs_client
 from providers.aws.services.cloudtrail.cloudtrail_client import cloudtrail_client
+from providers.aws.services.cloudwatch.cloudwatch_client import cloudwatch_client
+from providers.aws.services.cloudwatch.logs_client import logs_client
 
 
 class cloudwatch_log_metric_filter_unauthorized_api_calls(Check):
     def execute(self):
-        # 1. Iterate for CloudWatch Log Group in CloudTrail trails
-
-        # 2. Describe metric filters
-        # 3. Check if there is an alarm for the metric
+        pattern = '\$\.errorCode\s*=\s*"\*UnauthorizedOperation".+\$\.errorCode\s*=\s*"AccessDenied\*"'
         findings = []
         report = Check_Report(self.metadata)
-        report.status = "PASS"
-        report.status_extended = "CloudWatch doesn't allows cross-account sharing"
-        report.resource_id = "CloudWatch-CrossAccountSharingRole"
-        for filter in logs_client.metric_filters:
-            if role["RoleName"] == "CloudWatch-CrossAccountSharingRole":
-                report.resource_arn = role["Arn"]
-                report.status = "FAIL"
-                report.status_extended = "CloudWatch has allowed cross-account sharing."
+        report.status = "FAIL"
+        report.status_extended = (
+            f"No CloudWatch log groups found with metric filters or alarms associated."
+        )
+        report.region = "us-east-1"
+        report.resource_id = ""
+        # 1. Iterate for CloudWatch Log Group in CloudTrail trails
+        log_groups = []
+        for trail in cloudtrail_client.trails:
+            if trail.log_group_arn:
+                log_groups.append(trail.log_group_arn.split(":")[6])
+        # 2. Describe metric filters for previous log groups
+        for metric in logs_client.metric_filters:
+            if metric.log_group in log_groups:
+                if re.search(pattern, metric.pattern):
+                    report.resource_id = metric.log_group
+                    report.region = metric.region
+                    report.status = "FAIL"
+                    report.status_extended = f"CloudWatch log group {metric.log_group} found with metric filter {metric.name} but no alarms associated."
+                    # 3. Check if there is an alarm for the metric
+                    for alarm in cloudwatch_client.metric_alarms:
+                        if alarm.metric == metric:
+                            report.status = "PASS"
+                            report.status_extended = f"CloudWatch log group {metric.log_group} found with metric filter {metric.name} and alarms set."
+                    findings.append(report)
+
         findings.append(report)
         return findings
