@@ -65,7 +65,7 @@ class Test_AccessAnalyzer_Service:
         access_analyzer = AccessAnalyzer(current_audit_info)
         assert access_analyzer.session.__class__.__name__ == "Session"
 
-    # Test AccessAnalyzer Session
+    # Test AccessAnalyzer Service
     def test__get_service__(self):
         access_analyzer = AccessAnalyzer(current_audit_info)
         assert access_analyzer.service == "accessanalyzer"
