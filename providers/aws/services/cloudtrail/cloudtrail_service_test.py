@@ -58,8 +58,6 @@ class Test_Cloudtrail_Service:
         cloudtrail = Cloudtrail(audit_info)
         assert cloudtrail.audited_account == AWS_ACCOUNT_NUMBER
 
-    # WAITING FOR MOTO PR TO BE APPROVED (https://github.com/spulec/moto/pull/5607)
-
     @mock_cloudtrail
     @mock_s3
     def test_describe_trails(self):
@@ -85,7 +83,7 @@ class Test_Cloudtrail_Service:
         )
         audit_info = self.set_mocked_audit_info()
         cloudtrail = Cloudtrail(audit_info)
-        # Here we are expecting 2, but moto does something weird and return 46 records
+        # 1 None result per region plus 2 created
         assert len(cloudtrail.trails) == 23
         for trail in cloudtrail.trails:
             if trail.name:
@@ -131,7 +129,7 @@ class Test_Cloudtrail_Service:
         )
         audit_info = self.set_mocked_audit_info()
         cloudtrail = Cloudtrail(audit_info)
-        # Here we are expecting 2, but moto does something weird and return 46 records
+        # 1 None result per region plus 2 created
         assert len(cloudtrail.trails) == 23
         for trail in cloudtrail.trails:
             if trail.name:
@@ -143,3 +141,46 @@ class Test_Cloudtrail_Service:
                     assert trail.log_file_validation_enabled
                     assert not trail.latest_cloudwatch_delivery_time
                     assert trail.s3_bucket == bucket_name_us
+
+    @mock_cloudtrail
+    @mock_s3
+    def test_get_event_selectors(self):
+        cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
+        s3_client_us_east_1 = client("s3", region_name="us-east-1")
+        trail_name_us = "trail_test_us"
+        bucket_name_us = "bucket_test_us"
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
+        cloudtrail_client_us_east_1.create_trail(
+            Name=trail_name_us,
+            S3BucketName=bucket_name_us,
+            IsMultiRegionTrail=False,
+            EnableLogFileValidation=True,
+        )
+        cloudtrail_client_us_east_1.start_logging(Name=trail_name_us)
+        data_events_response = cloudtrail_client_us_east_1.put_event_selectors(
+            TrailName=trail_name_us,
+            EventSelectors=[
+                {
+                    "ReadWriteType": "All",
+                    "IncludeManagementEvents": True,
+                    "DataResources": [
+                        {"Type": "AWS::S3::Object", "Values": ["arn:aws:s3:::*/*"]}
+                    ],
+                }
+            ],
+        )["EventSelectors"]
+        audit_info = self.set_mocked_audit_info()
+        cloudtrail = Cloudtrail(audit_info)
+        # 1 None result per region plus 2 created
+        assert len(cloudtrail.trails) == 23
+        for trail in cloudtrail.trails:
+            if trail.name:
+                if trail.name == trail_name_us:
+                    assert not trail.is_multiregion
+                    assert trail.home_region == "us-east-1"
+                    assert trail.region == "us-east-1"
+                    assert trail.is_logging
+                    assert trail.log_file_validation_enabled
+                    assert not trail.latest_cloudwatch_delivery_time
+                    assert trail.s3_bucket == bucket_name_us
+                    assert trail.data_events == data_events_response

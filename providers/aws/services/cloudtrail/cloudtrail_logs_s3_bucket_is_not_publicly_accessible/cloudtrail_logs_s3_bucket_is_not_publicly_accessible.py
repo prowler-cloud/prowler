@@ -12,7 +12,7 @@ class cloudtrail_logs_s3_bucket_is_not_publicly_accessible(Check):
                 report = Check_Report(self.metadata)
                 report.region = trail.region
                 report.resource_id = trail.name
-                report.resource_arn = trail.trail_arn
+                report.resource_arn = trail.arn
                 report.status = "PASS"
                 if trail.is_multiregion:
                     report.status_extended = f"S3 Bucket {trail_bucket} from multiregion trail {trail.name} is not publicly accessible"
