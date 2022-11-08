@@ -22,21 +22,21 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
         from providers.aws.services.cloudtrail.cloudtrail_client import Cloudtrail
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls.logs_client",
+            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_client",
+            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudtrail_client",
+            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls import (
-                cloudwatch_log_metric_filter_unauthorized_api_calls,
+            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa import (
+                cloudwatch_log_metric_filter_sign_in_without_mfa,
             )
 
-            check = cloudwatch_log_metric_filter_unauthorized_api_calls()
+            check = cloudwatch_log_metric_filter_sign_in_without_mfa()
             result = check.execute()
 
             assert len(result) == 1
@@ -67,21 +67,21 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
         from providers.aws.services.cloudtrail.cloudtrail_client import Cloudtrail
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls.logs_client",
+            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_client",
+            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudtrail_client",
+            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls import (
-                cloudwatch_log_metric_filter_unauthorized_api_calls,
+            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa import (
+                cloudwatch_log_metric_filter_sign_in_without_mfa,
             )
 
-            check = cloudwatch_log_metric_filter_unauthorized_api_calls()
+            check = cloudwatch_log_metric_filter_sign_in_without_mfa()
             result = check.execute()
 
             assert len(result) == 1
@@ -118,21 +118,21 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
         from providers.aws.services.cloudtrail.cloudtrail_client import Cloudtrail
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls.logs_client",
+            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_client",
+            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudtrail_client",
+            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls import (
-                cloudwatch_log_metric_filter_unauthorized_api_calls,
+            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa import (
+                cloudwatch_log_metric_filter_sign_in_without_mfa,
             )
 
-            check = cloudwatch_log_metric_filter_unauthorized_api_calls()
+            check = cloudwatch_log_metric_filter_sign_in_without_mfa()
             result = check.execute()
 
             assert len(result) == 1
@@ -161,7 +161,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
             filterName="test-filter",
-            filterPattern="{ ($.errorCode = *UnauthorizedOperation) || ($.errorCode = AccessDenied*) || ($.sourceIPAddress!=delivery.logs.amazonaws.com) || ($.eventName!=HeadBucket) }",
+            filterPattern="{ ($.eventName = ConsoleLogin) && ($.additionalEventData.MFAUsed != Yes) }",
             metricTransformations=[
                 {
                     "metricName": "my-metric",
@@ -181,21 +181,21 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
         from providers.aws.services.cloudtrail.cloudtrail_client import Cloudtrail
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls.logs_client",
+            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_client",
+            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudtrail_client",
+            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls import (
-                cloudwatch_log_metric_filter_unauthorized_api_calls,
+            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa import (
+                cloudwatch_log_metric_filter_sign_in_without_mfa,
             )
 
-            check = cloudwatch_log_metric_filter_unauthorized_api_calls()
+            check = cloudwatch_log_metric_filter_sign_in_without_mfa()
             result = check.execute()
 
             assert len(result) == 1
@@ -225,7 +225,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
             filterName="test-filter",
-            filterPattern="{ ($.errorCode = *UnauthorizedOperation) || ($.errorCode = AccessDenied*) || ($.sourceIPAddress!=delivery.logs.amazonaws.com) || ($.eventName!=HeadBucket) }",
+            filterPattern="{ ($.eventName = ConsoleLogin) && ($.additionalEventData.MFAUsed != Yes) }",
             metricTransformations=[
                 {
                     "metricName": "my-metric",
@@ -256,21 +256,21 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
         from providers.aws.services.cloudtrail.cloudtrail_client import Cloudtrail
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls.logs_client",
+            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_client",
+            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudtrail_client",
+            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_unauthorized_api_calls.cloudwatch_log_metric_filter_unauthorized_api_calls import (
-                cloudwatch_log_metric_filter_unauthorized_api_calls,
+            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa import (
+                cloudwatch_log_metric_filter_sign_in_without_mfa,
             )
 
-            check = cloudwatch_log_metric_filter_unauthorized_api_calls()
+            check = cloudwatch_log_metric_filter_sign_in_without_mfa()
             result = check.execute()
 
             assert len(result) == 1
