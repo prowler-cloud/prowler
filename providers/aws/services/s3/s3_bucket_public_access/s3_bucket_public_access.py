@@ -15,7 +15,7 @@ class s3_bucket_public_access(Check):
             report.status = "PASS"
             report.status_extended = f"All S3 public access blocked at account level."
             report.region = s3control_client.region
-            report.resource_id = ""
+            report.resource_id = s3_client.audited_account
             findings.append(report)
         else:
             # 2. If public access is not blocked at account level, check it at each bucket level

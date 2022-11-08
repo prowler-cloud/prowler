@@ -63,6 +63,50 @@ class Test_s3_bucket_public_access:
 
     @mock_s3
     @mock_s3control
+    def test_bucket_account_public_block_without_buckets(self):
+        # Generate S3Control Client
+        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client.put_public_access_block(
+            AccountId=AWS_ACCOUNT_NUMBER,
+            PublicAccessBlockConfiguration={
+                "BlockPublicAcls": True,
+                "IgnorePublicAcls": True,
+                "BlockPublicPolicy": True,
+                "RestrictPublicBuckets": True,
+            },
+        )
+        from providers.aws.services.s3.s3_service import S3, S3Control
+
+        audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "providers.aws.lib.audit_info.audit_info.current_audit_info", new=audit_info
+        ):
+            with mock.patch(
+                "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
+                new=S3(audit_info),
+            ):
+                with mock.patch(
+                    "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
+                    new=S3Control(audit_info),
+                ):
+                    # Test Check
+                    from providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
+                        s3_bucket_public_access,
+                    )
+
+                    check = s3_bucket_public_access()
+                    result = check.execute()
+
+                    assert len(result) == 1
+                    assert result[0].status == "PASS"
+                    assert (
+                        result[0].status_extended
+                        == "All S3 public access blocked at account level."
+                    )
+
+    @mock_s3
+    @mock_s3control
     def test_bucket_account_public_block(self):
         s3_client = client("s3", region_name=AWS_REGION)
         bucket_name_us = "bucket_test_us"

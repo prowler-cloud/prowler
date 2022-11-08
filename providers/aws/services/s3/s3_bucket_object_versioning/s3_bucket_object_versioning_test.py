@@ -36,6 +36,7 @@ class Test_s3_bucket_object_versioning:
                 result[0].status_extended,
             )
             assert result[0].resource_id == bucket_name_us
+            assert result[0].region == "us-east-1"
 
     @mock_s3
     def test_bucket_object_versioning_enabled(self):
@@ -72,3 +73,4 @@ class Test_s3_bucket_object_versioning:
                 result[0].status_extended,
             )
             assert result[0].resource_id == bucket_name_us
+            assert result[0].region == "us-east-1"

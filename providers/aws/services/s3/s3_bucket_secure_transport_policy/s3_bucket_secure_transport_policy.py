@@ -12,9 +12,7 @@ class s3_bucket_secure_transport_policy(Check):
             # Check if bucket policy enforces SSL
             if not bucket.policy:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"S3 Bucket {bucket.name} does not have a bucket policy."
-                )
+                report.status_extended = f"S3 Bucket {bucket.name} does not have a bucket policy, thus it allows HTTP requests."
             else:
                 report.status = "FAIL"
                 report.status_extended = f"S3 Bucket {bucket.name} allows requests over insecure transport in the bucket policy."

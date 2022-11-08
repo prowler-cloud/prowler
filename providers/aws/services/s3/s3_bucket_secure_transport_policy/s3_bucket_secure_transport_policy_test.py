@@ -36,6 +36,7 @@ class Test_s3_bucket_secure_transport_policy:
                 result[0].status_extended,
             )
             assert result[0].resource_id == bucket_name_us
+            assert result[0].region == "us-east-1"
 
     @mock_s3
     def test_bucket_comply_policy(self):
@@ -62,7 +63,7 @@ class Test_s3_bucket_secure_transport_policy:
     }
   ]
 }
-"""        
+"""
         s3_client_us_east_1.put_bucket_policy(
             Bucket=bucket_name_us,
             Policy=ssl_policy,
@@ -91,6 +92,7 @@ class Test_s3_bucket_secure_transport_policy:
                 result[0].status_extended,
             )
             assert result[0].resource_id == bucket_name_us
+            assert result[0].region == "us-east-1"
 
     @mock_s3
     def test_bucket_uncomply_policy(self):
@@ -117,7 +119,7 @@ class Test_s3_bucket_secure_transport_policy:
     }
   ]
 }
-"""        
+"""
         s3_client_us_east_1.put_bucket_policy(
             Bucket=bucket_name_us,
             Policy=ssl_policy,
@@ -146,3 +148,4 @@ class Test_s3_bucket_secure_transport_policy:
                 result[0].status_extended,
             )
             assert result[0].resource_id == bucket_name_us
+            assert result[0].region == "us-east-1"
