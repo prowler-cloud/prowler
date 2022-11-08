@@ -83,6 +83,7 @@ class Logs:
                     self.metric_filters.append(
                         MetricFilter(
                             filter["filterName"],
+                            filter["metricTransformations"][0]["metricName"],
                             filter["filterPattern"],
                             filter["logGroupName"],
                             regional_client.region,
@@ -148,6 +149,7 @@ class MetricAlarm:
 @dataclass
 class MetricFilter:
     name: str
+    metric: str
     pattern: str
     log_group: str
     region: str
@@ -155,11 +157,13 @@ class MetricFilter:
     def __init__(
         self,
         name,
+        metric,
         pattern,
         log_group,
         region,
     ):
         self.name = name
+        self.metric = metric
         self.pattern = pattern
         self.log_group = log_group
         self.region = region

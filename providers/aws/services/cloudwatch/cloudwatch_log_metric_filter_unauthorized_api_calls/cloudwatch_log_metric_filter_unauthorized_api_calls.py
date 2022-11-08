@@ -8,7 +8,7 @@ from providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_metric_filter_unauthorized_api_calls(Check):
     def execute(self):
-        pattern = '\$\.errorCode\s*=\s*"\*UnauthorizedOperation".+\$\.errorCode\s*=\s*"AccessDenied\*"'
+        pattern = r"\$\.errorCode\s*=\s*\*UnauthorizedOperation.+\$\.errorCode\s*=\s*AccessDenied\*"
         findings = []
         report = Check_Report(self.metadata)
         report.status = "FAIL"
@@ -23,19 +23,19 @@ class cloudwatch_log_metric_filter_unauthorized_api_calls(Check):
             if trail.log_group_arn:
                 log_groups.append(trail.log_group_arn.split(":")[6])
         # 2. Describe metric filters for previous log groups
-        for metric in logs_client.metric_filters:
-            if metric.log_group in log_groups:
-                if re.search(pattern, metric.pattern):
-                    report.resource_id = metric.log_group
-                    report.region = metric.region
+        for metric_filter in logs_client.metric_filters:
+            if metric_filter.log_group in log_groups:
+                if re.search(pattern, metric_filter.pattern):
+                    report.resource_id = metric_filter.log_group
+                    report.region = metric_filter.region
                     report.status = "FAIL"
-                    report.status_extended = f"CloudWatch log group {metric.log_group} found with metric filter {metric.name} but no alarms associated."
+                    report.status_extended = f"CloudWatch log group {metric_filter.log_group} found with metric filter {metric_filter.name} but no alarms associated."
                     # 3. Check if there is an alarm for the metric
                     for alarm in cloudwatch_client.metric_alarms:
-                        if alarm.metric == metric:
+                        if alarm.metric == metric_filter.metric:
                             report.status = "PASS"
-                            report.status_extended = f"CloudWatch log group {metric.log_group} found with metric filter {metric.name} and alarms set."
-                    findings.append(report)
+                            report.status_extended = f"CloudWatch log group {metric_filter.log_group} found with metric filter {metric_filter.name} and alarms set."
+                            break
 
         findings.append(report)
         return findings
