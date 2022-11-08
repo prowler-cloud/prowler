@@ -98,7 +98,26 @@ class Test_s3_bucket_secure_transport_policy:
         bucket_name_us = "bucket_test_us"
         s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
 
-        ssl_policy = '{"Version": "2012-10-17","Id": "PutObjPolicy","Statement": [{"Sid": "s3-bucket-ssl-requests-only","Effect": "Deny","Principal": "*","Action": "s3:GetObject","Resource": "arn:aws:s3:::bucket_test_us/*","Condition": {"Bool": {"aws:SecureTransport": "false"}}}]}'
+        ssl_policy = """
+{
+  "Version": "2012-10-17",
+  "Id": "PutObjPolicy",
+  "Statement": [
+    {
+      "Sid": "s3-bucket-ssl-requests-only",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::bucket_test_us/*",
+      "Condition": {
+        "Bool": {
+          "aws:SecureTransport": "false"
+        }
+      }
+    }
+  ]
+}
+"""        
         s3_client_us_east_1.put_bucket_policy(
             Bucket=bucket_name_us,
             Policy=ssl_policy,
