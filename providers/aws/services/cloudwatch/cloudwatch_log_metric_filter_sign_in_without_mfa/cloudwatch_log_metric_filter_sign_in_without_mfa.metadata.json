@@ -2,7 +2,7 @@
   "Provider": "aws",
   "CheckID": "cloudwatch_log_metric_filter_sign_in_without_mfa",
   "CheckTitle": "Ensure a log metric filter and alarm exist for Management Console sign-in without MFA.",
-  "CheckType": ["Logging and Monitoring"],
+  "CheckType": ["Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"],
   "ServiceName": "cloudwatch",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
@@ -30,6 +30,6 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
+  "Notes": "Logging and Monitoring",
   "Compliance": []
 }
