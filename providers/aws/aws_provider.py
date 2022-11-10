@@ -305,6 +305,10 @@ def generate_regional_clients(service: str, audit_info: AWS_Audit_Info) -> dict:
         json_regions = data["services"]["cloudwatch"]["regions"][
             audit_info.audited_partition
         ]
+    elif service == "macie2":
+        json_regions = data["services"]["macie"]["regions"][
+            audit_info.audited_partition
+        ]
     else:
         json_regions = data["services"][service]["regions"][
             audit_info.audited_partition
