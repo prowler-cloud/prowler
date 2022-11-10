@@ -19,7 +19,7 @@ def parse_allowlist_file(audit_info, allowlist_file):
             )["Allowlist"]
         # Check if file is a DynamoDB ARN
         elif re.search(
-            "^arn:[aws\|aws\-cn\|aws\-us\-gov]+:dynamodb:[a-z]{2}-[north\|south\|east\|west\|central]+-[1-9]{1}:[0-9]{12}:table\/[a-zA-Z0-9._-]+$",
+            r"^arn:aws(-cn|-us-gov)?:dynamodb:[a-z]{2}-[a-z-]+-[1-9]{1}:[0-9]{12}:table\/[a-zA-Z0-9._-]+$",
             allowlist_file,
         ):
             allowlist = {"Accounts": {}}
