@@ -205,13 +205,13 @@ def set_output_options(
 
 def run_check(check, audit_info, output_options):
     print(
-        f"\nCheck ID: {check.checkID} - {Fore.MAGENTA}{check.serviceName}{Fore.YELLOW} [{check.severity}]{Style.RESET_ALL}"
+        f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
     )
-    logger.debug(f"Executing check: {check.checkID}")
+    logger.debug(f"Executing check: {check.CheckID}")
     try:
         findings = check.execute()
     except Exception as error:
-        print(f"Something went wrong in {check.checkID}, please use --log-level ERROR")
+        print(f"Something went wrong in {check.CheckID}, please use --log-level ERROR")
         logger.error(
             f"{check.checkID} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
