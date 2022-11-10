@@ -5,7 +5,7 @@ from boto3 import client
 from moto import mock_cloudtrail, mock_s3
 
 
-class Test_cloudtrail_s3_dataevents_enabled:
+class Test_cloudtrail_s3_dataevents_write_enabled:
     @mock_cloudtrail
     @mock_s3
     def test_trail_without_data_events(self):
@@ -24,15 +24,15 @@ class Test_cloudtrail_s3_dataevents_enabled:
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_enabled.cloudtrail_s3_dataevents_enabled.cloudtrail_client",
+            "providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_write_enabled.cloudtrail_s3_dataevents_write_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_enabled.cloudtrail_s3_dataevents_enabled import (
-                cloudtrail_s3_dataevents_enabled,
+            from providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_write_enabled.cloudtrail_s3_dataevents_write_enabled import (
+                cloudtrail_s3_dataevents_write_enabled,
             )
 
-            check = cloudtrail_s3_dataevents_enabled()
+            check = cloudtrail_s3_dataevents_write_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -73,15 +73,15 @@ class Test_cloudtrail_s3_dataevents_enabled:
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_enabled.cloudtrail_s3_dataevents_enabled.cloudtrail_client",
+            "providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_write_enabled.cloudtrail_s3_dataevents_write_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_enabled.cloudtrail_s3_dataevents_enabled import (
-                cloudtrail_s3_dataevents_enabled,
+            from providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_write_enabled.cloudtrail_s3_dataevents_write_enabled import (
+                cloudtrail_s3_dataevents_write_enabled,
             )
 
-            check = cloudtrail_s3_dataevents_enabled()
+            check = cloudtrail_s3_dataevents_write_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -122,15 +122,15 @@ class Test_cloudtrail_s3_dataevents_enabled:
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_enabled.cloudtrail_s3_dataevents_enabled.cloudtrail_client",
+            "providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_write_enabled.cloudtrail_s3_dataevents_write_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_enabled.cloudtrail_s3_dataevents_enabled import (
-                cloudtrail_s3_dataevents_enabled,
+            from providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_write_enabled.cloudtrail_s3_dataevents_write_enabled import (
+                cloudtrail_s3_dataevents_write_enabled,
             )
 
-            check = cloudtrail_s3_dataevents_enabled()
+            check = cloudtrail_s3_dataevents_write_enabled()
             result = check.execute()
 
             assert len(result) == 1
