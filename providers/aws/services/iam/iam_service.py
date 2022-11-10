@@ -1,5 +1,6 @@
 import csv
 from dataclasses import dataclass
+from datetime import datetime
 
 from lib.logger import logger
 from providers.aws.aws_provider import get_region_global_service
@@ -33,6 +34,7 @@ class IAM:
         self.policies = self.__list_policies__()
         self.list_policies_version = self.__list_policies_version__(self.policies)
         self.saml_providers = self.__list_saml_providers__()
+        self.server_certificates = self.__list_server_certificates__()
 
     def __get_client__(self):
         return self.client
@@ -367,6 +369,28 @@ class IAM:
         finally:
             return saml_providers
 
+    def __list_server_certificates__(self):
+        try:
+            server_certificates = []
+            for certificate in self.client.list_server_certificates()[
+                "ServerCertificateMetadataList"
+            ]:
+                server_certificates.append(
+                    Certificate(
+                        certificate["ServerCertificateName"],
+                        certificate["ServerCertificateId"],
+                        certificate["Arn"],
+                        certificate["Expiration"],
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        finally:
+            return server_certificates
+
 
 @dataclass
 class MFADevice:
@@ -446,3 +470,17 @@ class PasswordPolicy:
         self.max_age = max_age
         self.reuse_prevention = reuse_prevention
         self.hard_expiry = hard_expiry
+
+
+@dataclass
+class Certificate:
+    name: str
+    id: str
+    arn: str
+    expiration: datetime
+
+    def __init__(self, name, id, arn, expiration):
+        self.name = name
+        self.id = id
+        self.arn = arn
+        self.expiration = expiration
