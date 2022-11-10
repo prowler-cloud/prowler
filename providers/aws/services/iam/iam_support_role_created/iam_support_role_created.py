@@ -5,7 +5,7 @@ from providers.aws.services.iam.iam_client import iam_client
 class iam_support_role_created(Check):
     def execute(self) -> Check_Report:
         findings = []
-        report = Check_Report(self.metadata)
+        report = Check_Report(self.metadata())
         report.region = iam_client.region
         report.resource_id = "AWSSupportServiceRolePolicy"
         report.resource_arn = (

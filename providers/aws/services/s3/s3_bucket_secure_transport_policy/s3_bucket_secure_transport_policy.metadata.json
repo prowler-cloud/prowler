@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "s3_bucket_secure_transport_policy",
   "CheckTitle": "Check if S3 buckets have secure transport policy.",
-  "CheckType": ["Data Protection"],
+  "CheckType": [
+    "Data Protection"
+  ],
   "ServiceName": "s3",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

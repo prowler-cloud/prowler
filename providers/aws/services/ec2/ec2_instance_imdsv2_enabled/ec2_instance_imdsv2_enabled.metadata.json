@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "ec2_instance_imdsv2_enabled",
   "CheckTitle": "Check if EC2 Instance Metadata Service Version 2 (IMDSv2) is Enabled and Required.",
-  "CheckType": ["Infrastructure Security"],
+  "CheckType": [
+    "Infrastructure Security"
+  ],
   "ServiceName": "ec2",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

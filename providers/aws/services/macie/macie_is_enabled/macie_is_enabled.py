@@ -6,7 +6,7 @@ class macie_is_enabled(Check):
     def execute(self):
         findings = []
         for session in macie_client.sessions:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = session.region
             report.resource_id = "Macie"
             if session.status == "ENABLED":

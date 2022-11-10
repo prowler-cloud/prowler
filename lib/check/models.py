@@ -1,7 +1,6 @@
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List
 
 from pydantic import BaseModel, ValidationError
 
@@ -10,33 +9,20 @@ from lib.logger import logger
 
 @dataclass
 class Output_From_Options:
+    """Class to store the Prowler output modes options"""
+
     is_quiet: bool
     output_modes: list
     output_directory: str
     security_hub_enabled: bool
     output_filename: str
     allowlist_file: str
-
-
-# Testing Pending
-def load_check_metadata(metadata_file: str) -> dict:
-    try:
-        check_metadata = Check_Metadata_Model.parse_file(metadata_file)
-    except ValidationError as error:
-        logger.critical(f"Metadata from {metadata_file} is not valid: {error}")
-        sys.exit()
-    else:
-        return check_metadata
-
-
-class ComplianceItem(BaseModel):
-    Control: List[str]
-    Framework: str
-    Group: List[str]
-    Version: str
+    bulk_checks_metadata: dict
 
 
 class Code(BaseModel):
+    """Check's remediation information using IaC like CloudFormation, Terraform or the native CLI"""
+
     NativeIaC: str
     Terraform: str
     CLI: str
@@ -44,22 +30,26 @@ class Code(BaseModel):
 
 
 class Recommendation(BaseModel):
+    """Check's recommendation information"""
+
     Text: str
     Url: str
 
 
 class Remediation(BaseModel):
+    """Check's remediation: Code and Recommendation"""
+
     Code: Code
     Recommendation: Recommendation
 
 
 class Check_Metadata_Model(BaseModel):
+    """Check Metadata Model"""
+
     Provider: str
     CheckID: str
-    # CheckName: str
     CheckTitle: str
-    # CheckAlias: str
-    CheckType: List[str]
+    CheckType: list[str]
     ServiceName: str
     SubServiceName: str
     ResourceIdTemplate: str
@@ -69,151 +59,67 @@ class Check_Metadata_Model(BaseModel):
     Risk: str
     RelatedUrl: str
     Remediation: Remediation
-    Categories: List[str]
+    Categories: list[str]
     Tags: dict
-    DependsOn: List[str]
-    RelatedTo: List[str]
+    DependsOn: list[str]
+    RelatedTo: list[str]
     Notes: str
-    Compliance: List[ComplianceItem]
+    # We set the compliance to None to
+    # store the compliance later if supplied
+    Compliance: list = None
 
 
-class Check(ABC):
-    def __init__(self):
-        # Load metadata from check
+class Check(ABC, Check_Metadata_Model):
+    """Prowler Check"""
+
+    def __init__(self, **data):
+        """Check's init function. Calls the CheckMetadataModel init."""
+        # Parse the Check's metadata file
         check_path_name = self.__class__.__module__.replace(".", "/")
         metadata_file = f"{check_path_name}.metadata.json"
-        self.__check_metadata__ = load_check_metadata(metadata_file)
-        # Assign metadata values
-        self.__Provider__ = self.__check_metadata__.Provider
-        self.__CheckID__ = self.__check_metadata__.CheckID
-        # self.__CheckName__ = self.__check_metadata__.CheckName
-        self.__CheckTitle__ = self.__check_metadata__.CheckTitle
-        # self.__CheckAlias__ = self.__check_metadata__.CheckAlias
-        self.__CheckType__ = self.__check_metadata__.CheckType
-        self.__ServiceName__ = self.__check_metadata__.ServiceName
-        self.__SubServiceName__ = self.__check_metadata__.SubServiceName
-        self.__ResourceIdTemplate__ = self.__check_metadata__.ResourceIdTemplate
-        self.__Severity__ = self.__check_metadata__.Severity
-        self.__ResourceType__ = self.__check_metadata__.ResourceType
-        self.__Description__ = self.__check_metadata__.Description
-        self.__Risk__ = self.__check_metadata__.Risk
-        self.__RelatedUrl__ = self.__check_metadata__.RelatedUrl
-        self.__Remediation__ = self.__check_metadata__.Remediation
-        self.__Categories__ = self.__check_metadata__.Categories
-        self.__Tags__ = self.__check_metadata__.Tags
-        self.__DependsOn__ = self.__check_metadata__.DependsOn
-        self.__RelatedTo__ = self.__check_metadata__.RelatedTo
-        self.__Notes__ = self.__check_metadata__.Notes
-        self.__Compliance__ = self.__check_metadata__.Compliance
+        # Store it to validate them with Pydantic
+        data = Check_Metadata_Model.parse_file(metadata_file).dict()
+        # Calls parents init function
+        super().__init__(**data)
 
-    @property
-    def provider(self):
-        return self.__Provider__
-
-    @property
-    def checkID(self):
-        return self.__CheckID__
-
-    # @property
-    # def checkName(self):
-    #     return self.__CheckName__
-
-    @property
-    def checkTitle(self):
-        return self.__CheckTitle__
-
-    # @property
-    # def checkAlias(self):
-    #     return self.__CheckAlias__
-
-    @property
-    def checkType(self):
-        return self.__CheckType__
-
-    @property
-    def serviceName(self):
-        return self.__ServiceName__
-
-    @property
-    def subServiceName(self):
-        return self.__SubServiceName__
-
-    @property
-    def resourceIdTemplate(self):
-        return self.__ResourceIdTemplate__
-
-    @property
-    def severity(self):
-        return self.__Severity__
-
-    @property
-    def resourceType(self):
-        return self.__ResourceType__
-
-    @property
-    def description(self):
-        return self.__Description__
-
-    @property
-    def relatedUrl(self):
-        return self.__RelatedUrl__
-
-    @property
-    def risk(self):
-        return self.__Risk__
-
-    @property
-    def remediation(self):
-        return self.__Remediation__
-
-    @property
-    def categories(self):
-        return self.__Categories__
-
-    @property
-    def tags(self):
-        return self.__Tags__
-
-    @property
-    def dependsOn(self):
-        return self.__DependsOn__
-
-    @property
-    def relatedTo(self):
-        return self.__RelatedTo__
-
-    @property
-    def notes(self):
-        return self.__Notes__
-
-    @property
-    def compliance(self):
-        return self.__Compliance__
-
-    @property
-    def metadata(self):
-        return self.__check_metadata__
+    def metadata(self) -> dict:
+        """Return the JSON representation of the check's metadata"""
+        return self.json()
 
     @abstractmethod
     def execute(self):
-        pass
+        """Execute the check's logic"""
 
 
 @dataclass
 class Check_Report:
+    """Contains the Check's finding information."""
+
     status: str
     region: str
     status_extended: str
-    check_metadata: dict
+    check_metadata: Check_Metadata_Model
     resource_id: str
     resource_details: str
     resource_tags: list
     resource_arn: str
 
     def __init__(self, metadata):
-        self.check_metadata = metadata
+        self.check_metadata = Check_Metadata_Model.parse_raw(metadata)
         self.status_extended = ""
         self.resource_details = ""
         self.resource_tags = []
         self.resource_id = ""
         self.resource_arn = ""
+
+
+# Testing Pending
+def load_check_metadata(metadata_file: str) -> Check_Metadata_Model:
+    """load_check_metadata loads and parse a Check's metadata file"""
+    try:
+        check_metadata = Check_Metadata_Model.parse_file(metadata_file)
+    except ValidationError as error:
+        logger.critical(f"Metadata from {metadata_file} is not valid: {error}")
+        sys.exit()
+    else:
+        return check_metadata

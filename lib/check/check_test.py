@@ -1,10 +1,13 @@
 import os
+from unittest import mock
 
 from lib.check.check import (
+    bulk_load_compliance_frameworks,
     exclude_checks_to_run,
     exclude_groups_to_run,
     exclude_services_to_run,
     load_checks_to_execute_from_groups,
+    parse_checks_from_compliance_framework,
     parse_checks_from_file,
     parse_groups_from_file,
 )
@@ -12,17 +15,6 @@ from lib.check.models import load_check_metadata
 
 
 class Test_Check:
-    # def test_import_check(self):
-    #     test_cases = [
-    #         {
-    #             "name": "Test valid check path",
-    #             "input": "providers.aws.services.iam.iam_disable_30_days_credentials.iam_disable_30_days_credentials",
-    #             "expected": "providers.aws.services.iam.iam_disable_30_days_credentials.iam_disable_30_days_credentials",
-    #         }
-    #     ]
-    #     for test in test_cases:
-    #         assert importlib.import_module(test["input"]).__name__ == test["expected"
-
     def test_parse_groups_from_file(self):
         test_cases = [
             {
@@ -221,4 +213,76 @@ class Test_Check:
             assert (
                 exclude_services_to_run(checks_to_run, excluded_services, provider)
                 == test["expected"]
+            )
+
+    def test_parse_checks_from_compliance_framework_two(self):
+        test_case = {
+            "input": {"compliance_frameworks": ["cis_v1.4_aws", "ens_v3_aws"]},
+            "expected": {
+                "vpc_flow_logs_enabled",
+                "ec2_ebs_snapshot_encryption",
+                "iam_user_mfa_enabled_console_access",
+                "cloudtrail_multi_region_enabled",
+                "ec2_elbv2_insecure_ssl_ciphers",
+                "guardduty_is_enabled",
+                "s3_bucket_default_encryption",
+                "cloudfront_distributions_https_enabled",
+                "iam_avoid_root_usage",
+                "s3_bucket_secure_transport_policy",
+            },
+        }
+        with mock.patch(
+            "lib.check.check.compliance_specification_dir",
+            new=f"{os.path.dirname(os.path.realpath(__file__))}/fixtures",
+        ):
+            provider = "aws"
+            bulk_compliance_frameworks = bulk_load_compliance_frameworks(provider)
+            compliance_frameworks = test_case["input"]["compliance_frameworks"]
+            assert (
+                parse_checks_from_compliance_framework(
+                    compliance_frameworks, bulk_compliance_frameworks
+                )
+                == test_case["expected"]
+            )
+
+    def test_parse_checks_from_compliance_framework_one(self):
+        test_case = {
+            "input": {"compliance_frameworks": ["cis_v1.4_aws"]},
+            "expected": {
+                "iam_user_mfa_enabled_console_access",
+                "s3_bucket_default_encryption",
+                "iam_avoid_root_usage",
+            },
+        }
+        with mock.patch(
+            "lib.check.check.compliance_specification_dir",
+            new=f"{os.path.dirname(os.path.realpath(__file__))}/fixtures",
+        ):
+            provider = "aws"
+            bulk_compliance_frameworks = bulk_load_compliance_frameworks(provider)
+            compliance_frameworks = test_case["input"]["compliance_frameworks"]
+            assert (
+                parse_checks_from_compliance_framework(
+                    compliance_frameworks, bulk_compliance_frameworks
+                )
+                == test_case["expected"]
+            )
+
+    def test_parse_checks_from_compliance_framework_no_compliance(self):
+        test_case = {
+            "input": {"compliance_frameworks": []},
+            "expected": set(),
+        }
+        with mock.patch(
+            "lib.check.check.compliance_specification_dir",
+            new=f"{os.path.dirname(os.path.realpath(__file__))}/fixtures",
+        ):
+            provider = "aws"
+            bulk_compliance_frameworks = bulk_load_compliance_frameworks(provider)
+            compliance_frameworks = test_case["input"]["compliance_frameworks"]
+            assert (
+                parse_checks_from_compliance_framework(
+                    compliance_frameworks, bulk_compliance_frameworks
+                )
+                == test_case["expected"]
             )

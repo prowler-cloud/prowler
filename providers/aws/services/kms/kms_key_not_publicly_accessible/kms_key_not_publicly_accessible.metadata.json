@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "kms_key_not_publicly_accessible",
   "CheckTitle": "Check exposed KMS keys",
-  "CheckType": ["Data Protection"],
+  "CheckType": [
+    "Data Protection"
+  ],
   "ServiceName": "kms",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:kms:region:account-id:certificate/resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

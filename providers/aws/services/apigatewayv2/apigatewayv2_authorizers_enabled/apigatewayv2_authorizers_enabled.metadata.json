@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "apigatewayv2_authorizers_enabled",
   "CheckTitle": "Checks if API Gateway V2 has Access Logging enabled.",
-  "CheckType": ["Logging and Monitoring"],
+  "CheckType": [
+    "Logging and Monitoring"
+  ],
   "ServiceName": "apigateway",
   "SubServiceName": "api",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

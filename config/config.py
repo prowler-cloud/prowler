@@ -12,6 +12,9 @@ prowler_version = "3.0-beta-08Aug2022"
 # Groups
 groups_file = "groups.json"
 
+# Compliance
+compliance_specification_dir = "./compliance"
+
 # AWS services-regions matrix json
 aws_services_json_file = "providers/aws/aws_regions_by_service.json"
 

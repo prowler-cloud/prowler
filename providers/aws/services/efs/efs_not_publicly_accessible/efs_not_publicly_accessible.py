@@ -6,7 +6,7 @@ class efs_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for fs in efs_client.filesystems:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = fs.region
             report.resource_id = fs.id
             report.resource_arn = ""

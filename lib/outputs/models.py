@@ -4,7 +4,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 from config.config import timestamp
-from lib.check.models import Check_Report, ComplianceItem, Remediation
+from lib.check.models import Check_Report, Remediation
 from providers.aws.lib.audit_info.models import AWS_Organizations_Info
 
 
@@ -25,7 +25,6 @@ class Check_Output_JSON(BaseModel):
     OrganizationsInfo: Optional[AWS_Organizations_Info]
     Region: str = ""
     CheckID: str
-    # CheckName: str
     CheckTitle: str
     CheckType: List[str]
     ServiceName: str
@@ -46,7 +45,7 @@ class Check_Output_JSON(BaseModel):
     DependsOn: List[str]
     RelatedTo: List[str]
     Notes: str
-    Compliance: List[ComplianceItem]
+    # Compliance: List[ComplianceItem]
 
 
 # JSON ASFF Output
@@ -92,6 +91,26 @@ class Check_Output_JSON_ASFF(BaseModel):
     Remediation: dict = None
 
 
+class Check_Output_CSV_ENS_RD2022(BaseModel):
+    Provider: str
+    AccountId: str
+    Region: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Description: str
+    Requirements_Attributes_IdGrupoControl: str
+    Requirements_Attributes_Marco: str
+    Requirements_Attributes_Categoria: str
+    Requirements_Attributes_DescripcionControl: str
+    Requirements_Attributes_Nivel: str
+    Requirements_Attributes_Tipo: str
+    Requirements_Attributes_Dimensiones: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    CheckId: str
+
+
 @dataclass
 class Check_Output_CSV:
     assessment_start_time: str
@@ -106,7 +125,6 @@ class Check_Output_CSV:
     account_tags: str
     region: str
     check_id: str
-    # check_name: str
     check_title: str
     check_type: str
     status: str
@@ -132,7 +150,7 @@ class Check_Output_CSV:
     depends_on: str
     related_to: str
     notes: str
-    compliance: str
+    # compliance: str
 
     def get_csv_header(self):
         csv_header = []
@@ -160,7 +178,6 @@ class Check_Output_CSV:
             self.account_tags = organizations.account_details_tags
         self.region = report.region
         self.check_id = report.check_metadata.CheckID
-        # self.check_name = report.check_metadata.CheckName
         self.check_title = report.check_metadata.CheckTitle
         self.check_type = report.check_metadata.CheckType
         self.status = report.status
@@ -198,7 +215,7 @@ class Check_Output_CSV:
         self.depends_on = self.__unroll_list__(report.check_metadata.DependsOn)
         self.related_to = self.__unroll_list__(report.check_metadata.RelatedTo)
         self.notes = report.check_metadata.Notes
-        self.compliance = self.__unroll_compliance__(report.check_metadata.Compliance)
+        # self.compliance = self.__unroll_compliance__(report.check_metadata.Compliance)
 
     def __unroll_list__(self, listed_items: list):
         unrolled_items = ""

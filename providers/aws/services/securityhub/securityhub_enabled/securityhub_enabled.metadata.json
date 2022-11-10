@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "securityhub_enabled",
   "CheckTitle": "Check if Security Hub is enabled and its standard subscriptions.",
-  "CheckType": ["Logging and Monitoring"],
+  "CheckType": [
+    "Logging and Monitoring"
+  ],
   "ServiceName": "securityhub",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:securityhub:region:account-id:hub/hub-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

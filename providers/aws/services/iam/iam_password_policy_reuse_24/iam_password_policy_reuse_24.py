@@ -5,7 +5,7 @@ from providers.aws.services.iam.iam_client import iam_client
 class iam_password_policy_reuse_24(Check):
     def execute(self) -> Check_Report:
         findings = []
-        report = Check_Report(self.metadata)
+        report = Check_Report(self.metadata())
         report.region = iam_client.region
         report.resource_id = "password_policy"
         # Check if password policy exists

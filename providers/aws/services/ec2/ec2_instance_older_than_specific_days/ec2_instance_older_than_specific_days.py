@@ -10,7 +10,7 @@ class ec2_instance_older_than_specific_days(Check):
         findings = []
         max_ec2_instance_age_in_days = get_config_var("max_ec2_instance_age_in_days")
         for instance in ec2_client.instances:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = instance.region
             report.resource_id = instance.id
             report.status = "PASS"

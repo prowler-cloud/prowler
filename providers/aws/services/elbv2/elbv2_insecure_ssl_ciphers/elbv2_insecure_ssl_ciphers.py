@@ -18,7 +18,7 @@ class elbv2_insecure_ssl_ciphers(Check):
             "ELBSecurityPolicy-TLS13-1-2-Ext2-2021-06",
         ]
         for lb in elbv2_client.loadbalancersv2:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = lb.region
             report.resource_id = lb.name
             report.resource_arn = lb.arn

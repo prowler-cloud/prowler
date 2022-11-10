@@ -6,7 +6,7 @@ class apigatewayv2_authorizers_enabled(Check):
     def execute(self):
         findings = []
         for api in apigatewayv2_client.apis:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = api.region
             if api.authorizer:
                 report.status = "PASS"

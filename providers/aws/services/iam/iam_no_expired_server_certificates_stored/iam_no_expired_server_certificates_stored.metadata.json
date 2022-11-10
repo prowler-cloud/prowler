@@ -2,7 +2,11 @@
   "Provider": "aws",
   "CheckID": "iam_no_expired_server_certificates_stored",
   "CheckTitle": "Ensure that all the expired SSL/TLS certificates stored in AWS IAM are removed.",
-  "CheckType": ["Software and Configuration Checks", "Industry and Regulatory Standards" ,"CIS AWS Foundations Benchmark"],
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS AWS Foundations Benchmark"
+  ],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +34,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Data Protection",
-  "Compliance": []
+  "Notes": "Data Protection"
 }

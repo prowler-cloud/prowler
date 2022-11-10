@@ -7,7 +7,8 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port(Check):
     def execute(self):
         findings = []
         for security_group in ec2_client.security_groups:
-            report = Check_Report(self.metadata)
+            public = False
+            report = Check_Report(self.metadata())
             report.region = security_group.region
             report.status = "PASS"
             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has not all ports open to the Internet."

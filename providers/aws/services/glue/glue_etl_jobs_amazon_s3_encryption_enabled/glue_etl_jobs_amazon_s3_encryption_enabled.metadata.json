@@ -1,8 +1,10 @@
 {
   "Provider": "aws",
-  "CheckID": "glue_development_endpoints_s3_encryption_enabled",
+  "CheckID": "glue_etl_jobs_amazon_s3_encryption_enabled",
   "CheckTitle": "Check if Glue ETL Jobs have S3 encryption enabled.",
-  "CheckType": ["Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"],
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+  ],
   "ServiceName": "glue",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:glue:region:account-id:certificate/resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Data Protection",
-  "Compliance": []
+  "Notes": "Data Protection"
 }

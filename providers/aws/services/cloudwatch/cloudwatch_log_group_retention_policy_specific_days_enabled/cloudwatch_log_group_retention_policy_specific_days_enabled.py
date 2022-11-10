@@ -8,7 +8,7 @@ class cloudwatch_log_group_retention_policy_specific_days_enabled(Check):
         findings = []
         specific_retention_days = get_config_var("log_group_retention_days")
         for log_group in logs_client.log_groups:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = log_group.region
             report.resource_id = log_group.name
             report.resource_arn = log_group.arn

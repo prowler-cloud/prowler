@@ -8,7 +8,7 @@ class awslambda_function_url_public(Check):
     def execute(self):
         findings = []
         for function in awslambda_client.functions.values():
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = function.region
             report.resource_id = function.name
             report.resource_arn = function.arn

@@ -8,7 +8,7 @@ class ec2_securitygroup_with_many_ingress_egress_rules(Check):
         findings = []
         max_security_group_rules = get_config_var("max_security_group_rules")
         for security_group in ec2_client.security_groups:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = security_group.region
             report.resource_id = security_group.id
             report.status = "PASS"

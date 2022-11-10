@@ -6,7 +6,7 @@ class s3_bucket_default_encryption(Check):
     def execute(self):
         findings = []
         for bucket in s3_client.buckets:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = bucket.region
             report.resource_id = bucket.name
             if bucket.encryption:

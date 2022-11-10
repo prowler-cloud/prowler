@@ -13,7 +13,7 @@ class ecs_task_definitions_no_environment_secrets(Check):
     def execute(self):
         findings = []
         for task_definition in ecs_client.task_definitions:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = task_definition.region
             report.resource_id = task_definition.name
             report.resource_arn = task_definition.arn

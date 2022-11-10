@@ -6,7 +6,7 @@ class redshift_cluster_audit_logging(Check):
     def execute(self):
         findings = []
         for cluster in redshift_client.clusters:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = cluster.region
             report.resource_id = cluster.id
             report.resource_arn = cluster.arn

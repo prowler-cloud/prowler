@@ -8,7 +8,8 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483
         findings = []
         check_ports = [1521, 2483]
         for security_group in ec2_client.security_groups:
-            report = Check_Report(self.metadata)
+            public = False
+            report = Check_Report(self.metadata())
             report.region = security_group.region
             report.resource_id = security_group.id
             report.status = "PASS"

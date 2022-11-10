@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "cloudwatch_log_group_retention_policy_specific_days_enabled",
   "CheckTitle": "Check if CloudWatch Log Groups have a retention policy of specific days.",
-  "CheckType": ["Data Retention"],
+  "CheckType": [
+    "Data Retention"
+  ],
   "ServiceName": "cloudwatch",
   "SubServiceName": "logs",
   "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

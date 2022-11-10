@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "account_security_contact_information_is_registered",
   "CheckTitle": "Ensure security contact information is registered.",
-  "CheckType": ["IAM"],
+  "CheckType": [
+    "IAM"
+  ],
   "ServiceName": "account",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:access-recorder:region:account-id:recorder/resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

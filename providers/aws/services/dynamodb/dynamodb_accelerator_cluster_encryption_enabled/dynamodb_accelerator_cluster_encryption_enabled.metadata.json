@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "dynamodb_accelerator_cluster_encryption_enabled",
   "CheckTitle": "Check if DynamoDB DAX Clusters are encrypted at rest.",
-  "CheckType": ["Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"],
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+  ],
   "ServiceName": "dynamodb",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:dynamodb:region:account-id:certificate/resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Data Protection",
-  "Compliance": []
+  "Notes": "Data Protection"
 }

@@ -6,7 +6,7 @@ class ec2_elastic_ip_unassgined(Check):
     def execute(self):
         findings = []
         for eip in ec2_client.elastic_ips:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = eip.region
             if eip.public_ip:
                 report.resource_id = eip.public_ip

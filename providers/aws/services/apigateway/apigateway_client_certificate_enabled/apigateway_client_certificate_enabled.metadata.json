@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "apigateway_client_certificate_enabled",
   "CheckTitle": "Check if API Gateway has client certificate enabled to access your backend endpoint.",
-  "CheckType": ["Data Protection"],
+  "CheckType": [
+    "Data Protection"
+  ],
   "ServiceName": "apigateway",
   "SubServiceName": "rest_api",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

@@ -6,7 +6,7 @@ class dynamodb_tables_pitr_enabled(Check):
     def execute(self):
         findings = []
         for table in dynamodb_client.tables:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.resource_id = table.name
             report.resource_arn = table.arn
             report.region = table.region

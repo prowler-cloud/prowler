@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "ec2_elastic_ip_shodan",
   "CheckTitle": "Check if any of the Elastic or Public IP are in Shodan (requires Shodan API KEY).",
-  "CheckType": ["Infrastructure Security"],
+  "CheckType": [
+    "Infrastructure Security"
+  ],
   "ServiceName": "ec2",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

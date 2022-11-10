@@ -10,7 +10,7 @@ class cloudwatch_log_metric_filter_for_s3_bucket_policy_changes(Check):
     def execute(self):
         pattern = r"\$\.eventSource\s*=\s*s3.amazonaws.com.+\$\.eventName\s*=\s*PutBucketAcl.+\$\.eventName\s*=\s*PutBucketPolicy.+\$\.eventName\s*=\s*PutBucketCors.+\$\.eventName\s*=\s*PutBucketLifecycle.+\$\.eventName\s*=\s*PutBucketReplication.+\$\.eventName\s*=\s*DeleteBucketPolicy.+\$\.eventName\s*=\s*DeleteBucketCors.+\$\.eventName\s*=\s*DeleteBucketLifecycle.+\$\.eventName\s*=\s*DeleteBucketReplication"
         findings = []
-        report = Check_Report(self.metadata)
+        report = Check_Report(self.metadata())
         report.status = "FAIL"
         report.status_extended = (
             "No CloudWatch log groups found with metric filters or alarms associated."

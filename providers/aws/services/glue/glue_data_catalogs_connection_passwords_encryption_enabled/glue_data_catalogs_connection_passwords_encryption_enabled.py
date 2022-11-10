@@ -6,7 +6,7 @@ class glue_data_catalogs_connection_passwords_encryption_enabled(Check):
     def execute(self):
         findings = []
         for encryption in glue_client.catalog_encryption_settings:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.resource_id = glue_client.audited_account
             report.region = encryption.region
             report.status = "FAIL"

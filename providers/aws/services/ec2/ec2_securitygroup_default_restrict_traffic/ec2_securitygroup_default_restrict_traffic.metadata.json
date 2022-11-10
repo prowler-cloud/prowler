@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_default_restrict_traffic",
   "CheckTitle": "Ensure the default security group of every VPC restricts all traffic.",
-  "CheckType": ["Infrastructure Security"],
+  "CheckType": [
+    "Infrastructure Security"
+  ],
   "ServiceName": "ec2",
   "SubServiceName": "securitygroup",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

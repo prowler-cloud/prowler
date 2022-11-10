@@ -8,7 +8,8 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21(Check)
         findings = []
         check_ports = [20, 21]
         for security_group in ec2_client.security_groups:
-            report = Check_Report(self.metadata)
+            public = False
+            report = Check_Report(self.metadata())
             report.region = security_group.region
             report.status = "PASS"
             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has not FTP ports 20 and 21 open to the Internet."

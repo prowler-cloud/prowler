@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "ec2_ebs_snapshots_encrypted",
   "CheckTitle": "Check if EBS snapshots are encrypted.",
-  "CheckType": ["Data Protection"],
+  "CheckType": [
+    "Data Protection"
+  ],
   "ServiceName": "ec2",
   "SubServiceName": "snapshot",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

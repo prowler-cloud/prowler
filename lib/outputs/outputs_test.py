@@ -33,6 +33,7 @@ from lib.outputs.outputs import (
 )
 from lib.utils.utils import hash_sha512, open_file
 from providers.aws.lib.audit_info.models import AWS_Audit_Info
+import pytest
 
 
 class Test_Outputs:
@@ -114,6 +115,17 @@ class Test_Outputs:
         for status in test_status:
             assert set_report_color(status) in test_colors
 
+    def test_set_report_color_invalid(self):
+        test_status = "INVALID"
+
+        with pytest.raises(Exception) as exc:
+            set_report_color(test_status)
+
+        assert "Invalid Report Status. Must be PASS, FAIL, ERROR or WARNING" in str(
+            exc.value
+        )
+        assert exc.type == Exception
+
     def test_generate_csv_fields(self):
         expected = [
             "assessment_start_time",
@@ -153,7 +165,7 @@ class Test_Outputs:
             "depends_on",
             "related_to",
             "notes",
-            "compliance",
+            # "compliance",
         ]
 
         assert generate_csv_fields() == expected
@@ -176,7 +188,7 @@ class Test_Outputs:
         finding = Check_Report(
             load_check_metadata(
                 f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
-            )
+            ).json()
         )
         finding.resource_details = "Test resource details"
         finding.resource_id = "test-resource"
@@ -220,7 +232,7 @@ class Test_Outputs:
         finding = Check_Report(
             load_check_metadata(
                 f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
-            )
+            ).json()
         )
         finding.resource_details = "Test resource details"
         finding.resource_id = "test-resource"

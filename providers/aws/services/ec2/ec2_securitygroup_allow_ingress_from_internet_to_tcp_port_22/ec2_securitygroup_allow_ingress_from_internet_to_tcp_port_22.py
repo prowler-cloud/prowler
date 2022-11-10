@@ -8,7 +8,8 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22(Check):
         findings = []
         check_ports = [22]
         for security_group in ec2_client.security_groups:
-            report = Check_Report(self.metadata)
+            public = False
+            report = Check_Report(self.metadata())
             report.region = security_group.region
             report.status = "PASS"
             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has not SSH port 22 open to the Internet."

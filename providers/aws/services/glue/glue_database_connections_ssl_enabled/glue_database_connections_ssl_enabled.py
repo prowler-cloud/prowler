@@ -6,7 +6,7 @@ class glue_database_connections_ssl_enabled(Check):
     def execute(self):
         findings = []
         for conn in glue_client.connections:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.resource_id = conn.name
             report.region = conn.region
             report.status = "FAIL"

@@ -9,7 +9,7 @@ class trustedadvisor_errors_and_warnings(Check):
         findings = []
         if trustedadvisor_client.checks:
             for check in trustedadvisor_client.checks:
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = check.region
                 report.resource_id = check.id
                 report.status = "FAIL"

@@ -7,7 +7,7 @@ class iam_user_mfa_enabled_console_access(Check):
         findings = []
         response = iam_client.credential_report
         for user in response:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.resource_id = user["user"]
             report.resource_arn = user["arn"]
             report.region = iam_client.region

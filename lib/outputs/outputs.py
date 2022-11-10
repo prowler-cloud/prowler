@@ -2,9 +2,9 @@ import json
 import os
 import sys
 from csv import DictWriter
-
+from config.config import timestamp
 from colorama import Fore, Style
-
+from typing import Any
 from config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
@@ -22,25 +22,26 @@ from lib.outputs.models import (
     ProductFields,
     Resource,
     Severity,
+    Check_Output_CSV_ENS_RD2022,
 )
 from lib.utils.utils import file_exists, hash_sha512, open_file
 from providers.aws.lib.allowlist.allowlist import is_allowlisted
 from providers.aws.lib.security_hub.security_hub import send_to_security_hub
+from io import TextIOWrapper
 
 
 def report(check_findings, output_options, audit_info):
+    # Sort check findings
     check_findings.sort(key=lambda x: x.region)
-    csv_fields = []
-    # check output options
+
+    # Generate the required output files
+    # csv_fields = []
     file_descriptors = {}
     if output_options.output_modes:
-        if "csv" in output_options.output_modes:
-            csv_fields = generate_csv_fields()
-
+        # We have to create the required output files
         file_descriptors = fill_file_descriptors(
             output_options.output_modes,
             output_options.output_directory,
-            csv_fields,
             output_options.output_filename,
         )
 
@@ -68,7 +69,64 @@ def report(check_findings, output_options, audit_info):
                 )
 
             if file_descriptors:
-                # sending the finding to input options
+                if "ens_rd2022_aws" in output_options.output_modes:
+                    # We have to retrieve all the check's compliance requirements
+                    check_compliance = output_options.bulk_checks_metadata[
+                        finding.check_metadata.CheckID
+                    ].Compliance
+                    for compliance in check_compliance:
+                        if (
+                            compliance.Framework == "ENS"
+                            and compliance.Version == "RD2022"
+                        ):
+                            for requirement in compliance.Requirements:
+                                requirement_description = requirement.Description
+                                requirement_id = requirement.Id
+                                for attribute in requirement.Attributes:
+                                    compliance_row = Check_Output_CSV_ENS_RD2022(
+                                        Provider=finding.check_metadata.Provider,
+                                        AccountId=audit_info.audited_account,
+                                        Region=finding.region,
+                                        AssessmentDate=timestamp.isoformat(),
+                                        Requirements_Id=requirement_id,
+                                        Requirements_Description=requirement_description,
+                                        Requirements_Attributes_IdGrupoControl=attribute.get(
+                                            "IdGrupoControl"
+                                        ),
+                                        Requirements_Attributes_Marco=attribute.get(
+                                            "Marco"
+                                        ),
+                                        Requirements_Attributes_Categoria=attribute.get(
+                                            "Categoria"
+                                        ),
+                                        Requirements_Attributes_DescripcionControl=attribute.get(
+                                            "DescripcionControl"
+                                        ),
+                                        Requirements_Attributes_Nivel=attribute.get(
+                                            "Nivel"
+                                        ),
+                                        Requirements_Attributes_Tipo=attribute.get(
+                                            "Tipo"
+                                        ),
+                                        Requirements_Attributes_Dimensiones=",".join(
+                                            attribute.get("Dimensiones")
+                                        ),
+                                        Status=finding.status,
+                                        StatusExtended=finding.status_extended,
+                                        ResourceId=finding.resource_id,
+                                        CheckId=finding.check_metadata.CheckID,
+                                    )
+
+                            csv_header = generate_csv_fields(
+                                Check_Output_CSV_ENS_RD2022
+                            )
+                            csv_writer = DictWriter(
+                                file_descriptors["ens_rd2022_aws"],
+                                fieldnames=csv_header,
+                                delimiter=";",
+                            )
+                            csv_writer.writerow(compliance_row.__dict__)
+
                 if "csv" in file_descriptors:
                     finding_output = Check_Output_CSV(
                         audit_info.audited_account,
@@ -77,7 +135,9 @@ def report(check_findings, output_options, audit_info):
                         audit_info.organizations_metadata,
                     )
                     csv_writer = DictWriter(
-                        file_descriptors["csv"], fieldnames=csv_fields, delimiter=";"
+                        file_descriptors["csv"],
+                        fieldnames=generate_csv_fields(Check_Output_CSV),
+                        delimiter=";",
                     )
                     csv_writer.writerow(finding_output.__dict__)
 
@@ -113,65 +173,75 @@ def report(check_findings, output_options, audit_info):
             file_descriptors.get(file_descriptor).close()
 
 
-def fill_file_descriptors(output_modes, output_directory, csv_fields, output_filename):
+def initialize_file_descriptor(
+    filename: str, output_mode: str, format: Any = None
+) -> TextIOWrapper:
+    """Open/Create the output file. If needed include headers or the required format"""
+
+    if file_exists(filename):
+        file_descriptor = open_file(
+            filename,
+            "a",
+        )
+    else:
+        file_descriptor = open_file(
+            filename,
+            "a",
+        )
+
+        if output_mode in ("csv", "ens_rd2022_aws"):
+            # Format is the class model of the CSV format to print the headers
+            csv_header = [x.upper() for x in generate_csv_fields(format)]
+            csv_writer = DictWriter(
+                file_descriptor, fieldnames=csv_header, delimiter=";"
+            )
+            csv_writer.writeheader()
+
+        if output_mode in ("json", "json-asff"):
+            file_descriptor = open_file(
+                filename,
+                "a",
+            )
+            file_descriptor.write("[")
+
+    return file_descriptor
+
+
+def fill_file_descriptors(output_modes, output_directory, output_filename):
     file_descriptors = {}
-    for output_mode in output_modes:
-        if output_mode == "csv":
-            filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
-            if file_exists(filename):
-                file_descriptor = open_file(
-                    filename,
-                    "a",
+    if output_modes:
+        for output_mode in output_modes:
+            if output_mode == "csv":
+                filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
+                file_descriptor = initialize_file_descriptor(
+                    filename, output_mode, Check_Output_CSV
                 )
-            else:
-                file_descriptor = open_file(
-                    filename,
-                    "a",
-                )
-                csv_header = [x.upper() for x in csv_fields]
-                csv_writer = DictWriter(
-                    file_descriptor, fieldnames=csv_header, delimiter=";"
-                )
-                csv_writer.writeheader()
+                file_descriptors.update({output_mode: file_descriptor})
 
-            file_descriptors.update({output_mode: file_descriptor})
+            if output_mode == "json":
+                filename = f"{output_directory}/{output_filename}{json_file_suffix}"
+                file_descriptor = initialize_file_descriptor(filename, output_mode)
+                file_descriptors.update({output_mode: file_descriptor})
 
-        if output_mode == "json":
-            filename = f"{output_directory}/{output_filename}{json_file_suffix}"
-            if file_exists(filename):
-                file_descriptor = open_file(
-                    filename,
-                    "a",
+            if output_mode == "json-asff":
+                filename = (
+                    f"{output_directory}/{output_filename}{json_asff_file_suffix}"
                 )
-            else:
-                file_descriptor = open_file(
-                    filename,
-                    "a",
-                )
-                file_descriptor.write("[")
+                file_descriptor = initialize_file_descriptor(filename, output_mode)
+                file_descriptors.update({output_mode: file_descriptor})
 
-            file_descriptors.update({output_mode: file_descriptor})
-
-        if output_mode == "json-asff":
-            filename = f"{output_directory}/{output_filename}{json_asff_file_suffix}"
-            if file_exists(filename):
-                file_descriptor = open_file(
-                    filename,
-                    "a",
+            if output_mode == "ens_rd2022_aws":
+                filename = f"{output_directory}/{output_filename}_ens_rd2022_aws{csv_file_suffix}"
+                file_descriptor = initialize_file_descriptor(
+                    filename, output_mode, Check_Output_CSV_ENS_RD2022
                 )
-            else:
-                file_descriptor = open_file(
-                    filename,
-                    "a",
-                )
-                file_descriptor.write("[")
-
-            file_descriptors.update({output_mode: file_descriptor})
+                file_descriptors.update({output_mode: file_descriptor})
 
     return file_descriptors
 
 
-def set_report_color(status):
+def set_report_color(status: str) -> str:
+    """Return the color for a give result status"""
     color = ""
     if status == "PASS":
         color = Fore.GREEN
@@ -186,9 +256,10 @@ def set_report_color(status):
     return color
 
 
-def generate_csv_fields():
+def generate_csv_fields(format: Any) -> list[str]:
+    """Generates the CSV headers for the given class"""
     csv_fields = []
-    for field in Check_Output_CSV.__dict__["__annotations__"].keys():
+    for field in format.__dict__.get("__annotations__").keys():
         csv_fields.append(field)
     return csv_fields
 
@@ -264,7 +335,9 @@ def close_json(output_filename, output_directory, mode):
         file_descriptor.write("]")
         file_descriptor.close()
     except Exception as error:
-        logger.critical(f"{error.__class__.__name__} -- {error}")
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
         sys.exit()
 
 
@@ -287,5 +360,7 @@ def send_to_s3_bucket(
         s3_client.upload_file(file_name, bucket_name, object_name)
 
     except Exception as error:
-        logger.critical(f"{error.__class__.__name__} -- {error}")
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
         sys.exit()

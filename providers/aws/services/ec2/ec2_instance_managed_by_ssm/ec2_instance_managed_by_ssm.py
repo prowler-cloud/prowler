@@ -7,7 +7,7 @@ class ec2_instance_managed_by_ssm(Check):
     def execute(self):
         findings = []
         for instance in ec2_client.instances:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = instance.region
             if not ssm_client.managed_instances.get(instance.id):
                 report.status = "FAIL"
