@@ -31,7 +31,7 @@ class Test_iam_no_root_access_key_test:
             service_client.credential_report[0]["access_key_2_active"] = "false"
             check = iam_no_root_access_key()
             result = check.execute()
-            print(service_client.credential_report)
+
             # raise Exception
             assert result[0].status == "PASS"
             assert search(
@@ -69,7 +69,7 @@ class Test_iam_no_root_access_key_test:
             service_client.credential_report[0]["access_key_2_active"] = "false"
             check = iam_no_root_access_key()
             result = check.execute()
-            print(service_client.credential_report)
+
             # raise Exception
             assert result[0].status == "FAIL"
             assert search(
@@ -107,7 +107,7 @@ class Test_iam_no_root_access_key_test:
             service_client.credential_report[0]["access_key_2_active"] = "true"
             check = iam_no_root_access_key()
             result = check.execute()
-            print(service_client.credential_report)
+
             # raise Exception
             assert result[0].status == "FAIL"
             assert search(
@@ -145,7 +145,7 @@ class Test_iam_no_root_access_key_test:
             service_client.credential_report[0]["access_key_2_active"] = "true"
             check = iam_no_root_access_key()
             result = check.execute()
-            print(service_client.credential_report)
+
             # raise Exception
             assert result[0].status == "FAIL"
             assert search(
