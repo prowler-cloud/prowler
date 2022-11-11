@@ -2,13 +2,13 @@ from boto3 import client, session
 from moto import mock_dax, mock_dynamodb
 
 from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.dynamodb.dynamodb_service import DAX, Dynamo
+from providers.aws.services.dynamodb.dynamodb_service import DAX, DynamoDB
 
 AWS_ACCOUNT_NUMBER = 123456789012
 AWS_REGION = "us-east-1"
 
 
-class Test_Dynamo_Service:
+class Test_DynamoDB_Service:
     # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
@@ -35,7 +35,7 @@ class Test_Dynamo_Service:
     def test_service(self):
         # Dynamo client for this test class
         audit_info = self.set_mocked_audit_info()
-        dynamodb = Dynamo(audit_info)
+        dynamodb = DynamoDB(audit_info)
         assert dynamodb.service == "dynamodb"
 
     # Test Dynamo Client
@@ -43,7 +43,7 @@ class Test_Dynamo_Service:
     def test_client(self):
         # Dynamo client for this test class
         audit_info = self.set_mocked_audit_info()
-        dynamodb = Dynamo(audit_info)
+        dynamodb = DynamoDB(audit_info)
         for client in dynamodb.regional_clients.values():
             assert client.__class__.__name__ == "DynamoDB"
 
@@ -52,7 +52,7 @@ class Test_Dynamo_Service:
     def test__get_session__(self):
         # Dynamo client for this test class
         audit_info = self.set_mocked_audit_info()
-        dynamodb = Dynamo(audit_info)
+        dynamodb = DynamoDB(audit_info)
         assert dynamodb.session.__class__.__name__ == "Session"
 
     # Test Dynamo Session
@@ -60,7 +60,7 @@ class Test_Dynamo_Service:
     def test_audited_account(self):
         # Dynamo client for this test class
         audit_info = self.set_mocked_audit_info()
-        dynamodb = Dynamo(audit_info)
+        dynamodb = DynamoDB(audit_info)
         assert dynamodb.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test DynamoDB List Tables
@@ -95,7 +95,7 @@ class Test_Dynamo_Service:
         )
         # DynamoDB client for this test class
         audit_info = self.set_mocked_audit_info()
-        dynamo = Dynamo(audit_info)
+        dynamo = DynamoDB(audit_info)
         assert len(dynamo.tables) == 2
 
     # Test DynamoDB Describe Table
@@ -118,7 +118,7 @@ class Test_Dynamo_Service:
         )["TableDescription"]
         # DynamoDB client for this test class
         audit_info = self.set_mocked_audit_info()
-        dynamo = Dynamo(audit_info)
+        dynamo = DynamoDB(audit_info)
         assert len(dynamo.tables) == 1
         assert dynamo.tables[0].arn == table["TableArn"]
 
@@ -146,7 +146,7 @@ class Test_Dynamo_Service:
         )
         # DynamoDB client for this test class
         audit_info = self.set_mocked_audit_info()
-        dynamo = Dynamo(audit_info)
+        dynamo = DynamoDB(audit_info)
         assert len(dynamo.tables) == 1
         assert dynamo.tables[0].arn == table["TableArn"]
         assert dynamo.tables[0].pitr

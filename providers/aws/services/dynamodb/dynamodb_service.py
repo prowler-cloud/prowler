@@ -5,8 +5,8 @@ from lib.logger import logger
 from providers.aws.aws_provider import generate_regional_clients
 
 
-################## Dynamo
-class Dynamo:
+################## DynamoDB
+class DynamoDB:
     def __init__(self, audit_info):
         self.service = "dynamodb"
         self.session = audit_info.audit_session
@@ -30,7 +30,7 @@ class Dynamo:
             t.join()
 
     def __list_tables__(self, regional_client):
-        logger.info("Dynamo - Listing tables...")
+        logger.info("DynamoDB - Listing tables...")
         try:
             list_tables_paginator = regional_client.get_paginator("list_tables")
             for page in list_tables_paginator.paginate():
@@ -50,7 +50,7 @@ class Dynamo:
             )
 
     def __describe_table__(self):
-        logger.info("Dynamo - Describing Table...")
+        logger.info("DynamoDB - Describing Table...")
         try:
             for table in self.tables:
                 regional_client = self.regional_clients[table.region]
@@ -69,7 +69,7 @@ class Dynamo:
             )
 
     def __describe_continuous_backups__(self):
-        logger.info("Dynamo - Describing Continuous Backups...")
+        logger.info("DynamoDB - Describing Continuous Backups...")
         try:
             for table in self.tables:
                 regional_client = self.regional_clients[table.region]
@@ -90,7 +90,7 @@ class Dynamo:
             )
 
 
-################## Dynamo DAX
+################## DynamoDB DAX
 class DAX:
     def __init__(self, audit_info):
         self.service = "dax"
@@ -113,7 +113,7 @@ class DAX:
             t.join()
 
     def __describe_clusters__(self, regional_client):
-        logger.info("Dynamo DAX- Describing clusters...")
+        logger.info("DynamoDB DAX- Describing clusters...")
         try:
             describe_clusters_paginator = regional_client.get_paginator(
                 "describe_clusters"

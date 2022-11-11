@@ -11,13 +11,13 @@ class Test_dynamodb_tables_pitr_enabled:
     @mock_dynamodb
     def test_dynamodb_no_tables(self):
         from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.dynamodb.dynamodb_service import Dynamo
+        from providers.aws.services.dynamodb.dynamodb_service import DynamoDB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
             "providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled.dynamodb_client",
-            new=Dynamo(current_audit_info),
+            new=DynamoDB(current_audit_info),
         ):
             # Test Check
             from providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled import (
@@ -45,13 +45,13 @@ class Test_dynamodb_tables_pitr_enabled:
             BillingMode="PAY_PER_REQUEST",
         )["TableDescription"]
         from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.dynamodb.dynamodb_service import Dynamo
+        from providers.aws.services.dynamodb.dynamodb_service import DynamoDB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
             "providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled.dynamodb_client",
-            new=Dynamo(current_audit_info),
+            new=DynamoDB(current_audit_info),
         ):
             # Test Check
             from providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled import (
@@ -90,13 +90,13 @@ class Test_dynamodb_tables_pitr_enabled:
             PointInTimeRecoverySpecification={"PointInTimeRecoveryEnabled": True},
         )
         from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.dynamodb.dynamodb_service import Dynamo
+        from providers.aws.services.dynamodb.dynamodb_service import DynamoDB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
             "providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled.dynamodb_client",
-            new=Dynamo(current_audit_info),
+            new=DynamoDB(current_audit_info),
         ):
             # Test Check
             from providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled import (
