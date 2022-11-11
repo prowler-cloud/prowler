@@ -126,8 +126,8 @@ class DAX:
                             encryption = True
                     self.clusters.append(
                         Cluster(
-                            cluster["ClusterName"],
                             cluster["ClusterArn"],
+                            cluster["ClusterName"],
                             encryption,
                             regional_client.region,
                         )
