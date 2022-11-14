@@ -14,9 +14,9 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "https://docs.bridgecrew.io/docs/public_12#cloudformation",
+      "Other": "https://docs.bridgecrew.io/docs/public_12#aws-console",
+      "Terraform": "https://docs.bridgecrew.io/docs/public_12#terraform"
     },
     "Recommendation": {
       "Text": "Use an ALB and apply WAF ACL.",

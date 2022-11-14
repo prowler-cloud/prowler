@@ -14,6 +14,7 @@ class EC2:
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.instances = []
         self.__threading_call__(self.__describe_instances__)
+        self.__get_instance_user_data__()
         self.security_groups = []
         self.__threading_call__(self.__describe_security_groups__)
         self.network_acls = []
@@ -23,6 +24,8 @@ class EC2:
         self.__get_snapshot_public__()
         self.elastic_ips = []
         self.__threading_call__(self.__describe_elastic_ips__)
+        self.images = []
+        self.__threading_call__(self.__describe_images__)
 
     def __get_session__(self):
         return self.session
@@ -147,7 +150,7 @@ class EC2:
             )
 
     def __get_snapshot_public__(self):
-        logger.info("EC2 - Get snapshots encryption...")
+        logger.info("EC2 - Gettting snapshots encryption...")
         try:
             for snapshot in self.snapshots:
                 regional_client = self.regional_clients[snapshot.region]
@@ -164,7 +167,7 @@ class EC2:
             )
 
     def __describe_elastic_ips__(self, regional_client):
-        logger.info("EC2 - Describing Security Groups...")
+        logger.info("EC2 - Describing Network Interfaces...")
         try:
             describe_network_interfaces_paginator = regional_client.get_paginator(
                 "describe_network_interfaces"
@@ -186,6 +189,36 @@ class EC2:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __get_instance_user_data__(self):
+        logger.info("EC2 - Gettting instance user data...")
+        try:
+            for instance in self.instances:
+                regional_client = self.regional_clients[instance.region]
+                instance.user_data = regional_client.describe_instance_attribute(
+                    Attribute="userData", InstanceId=instance.id
+                )["UserData"]["Value"]
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __describe_images__(self, regional_client):
+        logger.info("EC2 - Describing Images...")
+        try:
+            public = False
+            for image in regional_client.describe_images(Owners=["self"])["Images"]:
+                if image["Public"]:
+                    public = True
+                self.images.append(
+                    Image(
+                        image["ImageId"], image["Name"], public, regional_client.region
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 @dataclass
 class Instance:
@@ -198,6 +231,7 @@ class Instance:
     private_ip: str
     public_dns: str
     public_ip: str
+    user_data: str
 
     def __init__(
         self,
@@ -220,6 +254,7 @@ class Instance:
         self.private_ip = private_ip
         self.public_dns = public_dns
         self.public_ip = public_ip
+        self.user_data = None
 
 
 @dataclass
@@ -275,4 +310,18 @@ class ElasticIP:
         self.public_ip = public_ip
         self.vpc = vpc
         self.subnet = subnet
+        self.region = region
+
+
+@dataclass
+class Image:
+    id: str
+    name: str
+    public: bool
+    region: str
+
+    def __init__(self, id, name, public, region):
+        self.id = id
+        self.name = name
+        self.public = public
         self.region = region

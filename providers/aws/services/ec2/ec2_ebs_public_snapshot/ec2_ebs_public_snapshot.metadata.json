@@ -13,9 +13,9 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "https://docs.bridgecrew.io/docs/public_7#cli-command",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "https://docs.bridgecrew.io/docs/public_7#aws-console",
       "Terraform": ""
     },
     "Recommendation": {

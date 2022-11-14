@@ -1,3 +1,5 @@
+from base64 import b64decode
+
 from boto3 import client, resource, session
 from moto import mock_ec2
 
@@ -6,6 +8,7 @@ from providers.aws.services.ec2.ec2_service import EC2
 
 AWS_ACCOUNT_NUMBER = 123456789012
 AWS_REGION = "us-east-1"
+EXAMPLE_AMI_ID = "ami-12c6146b"
 
 
 class Test_EC2_Service:
@@ -136,7 +139,7 @@ class Test_EC2_Service:
         ec2 = EC2(audit_info)
         assert snapshot_id in str(ec2.snapshots)
 
-    # Test EC2 Describe Snapshots
+    # Test EC2 Get Snapshot Public
     @mock_ec2
     def test__get_snapshot_public__(self):
         # Generate EC2 Client
@@ -165,3 +168,19 @@ class Test_EC2_Service:
         for snapshot in ec2.snapshots:
             if snapshot.id == snapshot_id:
                 assert snapshot.public == True
+
+    # Test EC2 Instance User Data
+    @mock_ec2
+    def test__get_instance_user_data__(self):
+        user_data = "This is some user_data"
+        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2.create_instances(
+            ImageId=EXAMPLE_AMI_ID,
+            MinCount=1,
+            MaxCount=1,
+            UserData="This is some user_data",
+        )
+        # EC2 client for this test class
+        audit_info = self.set_mocked_audit_info()
+        ec2 = EC2(audit_info)
+        assert user_data == b64decode(ec2.instances[0].user_data).decode("utf-8")
