@@ -23,7 +23,7 @@ class EC2:
         self.__threading_call__(self.__describe_snapshots__)
         self.__get_snapshot_public__()
         self.elastic_ips = []
-        self.__threading_call__(self.__describe_elastic_ips__)
+        self.__threading_call__(self.__describe_network_interfaces__)
         self.images = []
         self.__threading_call__(self.__describe_images__)
 
@@ -166,9 +166,28 @@ class EC2:
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_elastic_ips__(self, regional_client):
+    def __describe_network_interfaces__(self, regional_client):
         logger.info("EC2 - Describing Network Interfaces...")
         try:
+            # Get SGs Network Interfaces
+            for sg in self.security_groups:
+                regional_client = self.regional_clients[sg.region]
+                describe_network_interfaces_paginator = regional_client.get_paginator(
+                    "describe_network_interfaces"
+                )
+                for page in describe_network_interfaces_paginator.paginate(
+                    Filters=[
+                        {
+                            "Name": "group-id",
+                            "Values": [
+                                sg.id,
+                            ],
+                        },
+                    ],
+                ):
+                    for interface in page["NetworkInterfaces"]:
+                        sg.network_interfaces.append(interface["NetworkInterfaceId"])
+            # Get Elastic IPs
             describe_network_interfaces_paginator = regional_client.get_paginator(
                 "describe_network_interfaces"
             )
@@ -194,9 +213,11 @@ class EC2:
         try:
             for instance in self.instances:
                 regional_client = self.regional_clients[instance.region]
-                instance.user_data = regional_client.describe_instance_attribute(
+                user_data = regional_client.describe_instance_attribute(
                     Attribute="userData", InstanceId=instance.id
-                )["UserData"]["Value"]
+                )["UserData"]
+                if "Value" in user_data:
+                    instance.user_data = user_data["Value"]
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -276,6 +297,7 @@ class SecurityGroup:
     name: str
     region: str
     id: str
+    network_interfaces: list[str]
     ingress_rules: list[dict]
     egress_rules: list[dict]
 
@@ -285,6 +307,7 @@ class SecurityGroup:
         self.id = id
         self.ingress_rules = ingress_rules
         self.egress_rules = egress_rules
+        self.network_interfaces = []
 
 
 @dataclass
