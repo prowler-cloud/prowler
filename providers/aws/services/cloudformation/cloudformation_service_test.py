@@ -39,12 +39,15 @@ dummy_template = {
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
-# As you can see the operation_name has the list_analyzers snake_case form but
-# we are using the ListAnalyzers form.
-# Rationale -> https://github.com/boto/botocore/blob/develop/botocore/client.py#L810:L816
-#
-# We have to mock every AWS API call using Boto3
+
 def mock_make_api_call(self, operation_name, kwarg):
+    """
+    As you can see the operation_name has the list_analyzers snake_case form but
+    we are using the ListAnalyzers form.
+    Rationale -> https://github.com/boto/botocore/blob/develop/botocore/client.py#L810:L816
+
+    We have to mock every AWS API call using Boto3
+    """
     if operation_name == "CreateStack":
         return {
             "StackId": "arn:aws:cloudformation:eu-west-1:123456789012:stack/Test-Stack/796c8d26-b390-41d7-a23c-0702c4e78b60"
@@ -113,13 +116,6 @@ def mock_make_api_call(self, operation_name, kwarg):
             }
 
     return make_api_call(self, operation_name, kwarg)
-
-
-# Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
 
 
 # Mock generate_regional_clients()
@@ -207,7 +203,7 @@ class Test_CloudFormation_Service:
         assert cloudformation.stacks[0].arn == stack_arn["StackId"]
         assert cloudformation.stacks[0].name == "Test-Stack"
         assert cloudformation.stacks[0].outputs == ["TestOutput1:TestValue1"]
-        assert cloudformation.stacks[0].enable_termination_protection == True
-        assert cloudformation.stacks[0].is_nested_stack == False
+        assert cloudformation.stacks[0].enable_termination_protection is True
+        assert cloudformation.stacks[0].is_nested_stack is False
         assert cloudformation.stacks[0].root_nested_stack == ""
         assert cloudformation.stacks[0].region == AWS_REGION

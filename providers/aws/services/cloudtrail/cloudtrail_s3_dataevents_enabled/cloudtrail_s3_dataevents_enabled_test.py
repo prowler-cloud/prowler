@@ -55,7 +55,7 @@ class Test_cloudtrail_s3_dataevents_enabled:
         cloudtrail_client_us_east_1.create_trail(
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
         )
-        data_events_response = cloudtrail_client_us_east_1.put_event_selectors(
+        _ = cloudtrail_client_us_east_1.put_event_selectors(
             TrailName=trail_name_us,
             EventSelectors=[
                 {
@@ -104,7 +104,7 @@ class Test_cloudtrail_s3_dataevents_enabled:
         trail_us = cloudtrail_client_us_east_1.create_trail(
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
         )
-        data_events_response = cloudtrail_client_us_east_1.put_event_selectors(
+        _ = cloudtrail_client_us_east_1.put_event_selectors(
             TrailName=trail_name_us,
             EventSelectors=[
                 {

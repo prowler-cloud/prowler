@@ -136,7 +136,7 @@ def provider_set_session(
             current_audit_info.organizations_metadata = get_organizations_metadata(
                 current_audit_info.audited_account, assumed_credentials
             )
-            logger.info(f"Organizations metadata retrieved")
+            logger.info("Organizations metadata retrieved")
 
     logger.info("Checking if role assumption is needed ...")
     if input_role:
@@ -194,11 +194,11 @@ def print_audit_credentials(audit_info: AWS_Audit_Info):
     # Beautify audited regions, set "all" if there is no filter region
     regions = (
         ", ".join(audit_info.audited_regions)
-        if audit_info.audited_regions != None
+        if audit_info.audited_regions is not None
         else "all"
     )
     # Beautify audited profile, set "default" if there is no profile set
-    profile = audit_info.profile if audit_info.profile != None else "default"
+    profile = audit_info.profile if audit_info.profile is not None else "default"
 
     report = f"""
 This report is being generated using credentials below:
@@ -208,7 +208,7 @@ AWS Account: {Fore.YELLOW}[{audit_info.audited_account}]{Style.RESET_ALL} UserId
 Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESET_ALL}
 """
     # If -A is set, print Assumed Role ARN
-    if audit_info.assumed_role_info.role_arn != None:
+    if audit_info.assumed_role_info.role_arn is not None:
         report += f"Assumed Role ARN: {Fore.YELLOW}[{audit_info.assumed_role_info.role_arn}]{Style.RESET_ALL}"
     print(report)
 

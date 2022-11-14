@@ -251,7 +251,6 @@ class Bucket:
     policy: dict
     encryption: str
     region: str
-    acl_grantee: list[ACL_Grantee]
     logging_target_bucket: str
     ownership: str
 
@@ -272,6 +271,5 @@ class Bucket:
         self.policy = {}
         self.encryption = None
         self.region = region
-        self.acl_grantee = None
         self.logging_target_bucket = None
         self.ownership = None

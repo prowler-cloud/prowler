@@ -10,10 +10,14 @@ ACCOUNT_ID = "123456789012"
 
 # Mocking VPC Calls
 make_api_call = botocore.client.BaseClient._make_api_call
-# Rationale -> https://github.com/boto/botocore/blob/develop/botocore/client.py#L810:L816
-#
-# We have to mock every AWS API call using Boto3
+
+
 def mock_make_api_call(self, operation_name, kwarg):
+    """
+    We have to mock every AWS API call using Boto3
+
+    Rationale -> https://github.com/boto/botocore/blob/develop/botocore/client.py#L810:L816
+    """
     if operation_name == "DescribeVpcEndpointServices":
         return {
             "ServiceDetails": [
@@ -67,7 +71,7 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
             AvailabilityZone=f"{AWS_REGION}a",
         )
         lb_name = "lb_vpce-test"
-        lb_arn = elbv2_client.create_load_balancer(
+        _ = elbv2_client.create_load_balancer(
             Name=lb_name,
             Subnets=[subnet["Subnet"]["SubnetId"]],
             Scheme="internal",

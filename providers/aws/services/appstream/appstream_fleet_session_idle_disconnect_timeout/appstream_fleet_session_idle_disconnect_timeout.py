@@ -7,7 +7,7 @@ max_idle_disconnect_timeout_in_seconds = get_config_var(
 )
 """max_idle_disconnect_timeout_in_seconds, default: 600 seconds (10 minutes)"""
 
-# Check if there are AppStream Fleets with the idle disconnect timeout set to 10 minutes or less
+
 class appstream_fleet_session_idle_disconnect_timeout(Check):
     """Check if there are AppStream Fleets with the idle disconnect timeout set to 10 minutes or less"""
 

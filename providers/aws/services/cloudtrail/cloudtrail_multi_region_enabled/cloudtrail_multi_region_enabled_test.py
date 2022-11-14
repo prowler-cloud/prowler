@@ -54,10 +54,10 @@ class Test_cloudtrail_multi_region_enabled:
             Bucket=bucket_name_eu,
             CreateBucketConfiguration={"LocationConstraint": "eu-west-1"},
         )
-        trail_us = cloudtrail_client_us_east_1.create_trail(
+        _ = cloudtrail_client_us_east_1.create_trail(
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
         )
-        trail_eu = cloudtrail_client_eu_west_1.create_trail(
+        _ = cloudtrail_client_eu_west_1.create_trail(
             Name=trail_name_eu, S3BucketName=bucket_name_eu, IsMultiRegionTrail=False
         )
 
@@ -113,8 +113,8 @@ class Test_cloudtrail_multi_region_enabled:
         cloudtrail_client_eu_west_1.create_trail(
             Name=trail_name_eu, S3BucketName=bucket_name_eu, IsMultiRegionTrail=False
         )
-        response = cloudtrail_client_us_east_1.start_logging(Name=trail_name_us)
-        status = cloudtrail_client_us_east_1.get_trail_status(Name=trail_name_us)
+        _ = cloudtrail_client_us_east_1.start_logging(Name=trail_name_us)
+        _ = cloudtrail_client_us_east_1.get_trail_status(Name=trail_name_us)
 
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail

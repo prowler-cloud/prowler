@@ -230,7 +230,7 @@ class Test_IAM_Service:
         assert iam.password_policy.uppercase == require_upper
         assert iam.password_policy.lowercase == require_lower
         assert iam.password_policy.allow_change == allow_users_to_change
-        assert iam.password_policy.expiration == True
+        assert iam.password_policy.expiration is True
         assert iam.password_policy.max_age == max_password_age
         assert iam.password_policy.reuse_prevention == password_reuse_prevention
         assert iam.password_policy.hard_expiry == hard_expiry
@@ -379,7 +379,7 @@ class Test_IAM_Service:
     @mock_iam
     def test__get_entities_attached_to_support_roles__no_roles(self):
         iam_client = client("iam")
-        support_roles = iam_client.list_entities_for_policy(
+        _ = iam_client.list_entities_for_policy(
             PolicyArn="arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy",
             EntityFilter="Role",
         )["PolicyRoles"]
@@ -458,7 +458,7 @@ class Test_IAM_Service:
         assert iam.list_policies_version[0]["Statement"][0]["Effect"] == "Allow"
         assert iam.list_policies_version[0]["Statement"][0]["Action"] == "*"
         assert iam.list_policies_version[0]["Statement"][0]["Resource"] == "*"
-        
+
     # Test IAM List SAML Providers
     @mock_iam
     def test__list_saml_providers__(self):

@@ -44,8 +44,8 @@ class Test_APIGateway_Service:
         # APIGateway client for this test class
         audit_info = self.set_mocked_audit_info()
         apigateway = APIGateway(audit_info)
-        for client in apigateway.regional_clients.values():
-            assert client.__class__.__name__ == "APIGateway"
+        for regional_client in apigateway.regional_clients.values():
+            assert regional_client.__class__.__name__ == "APIGateway"
 
     # Test APIGateway Session
     @mock_apigateway
@@ -97,7 +97,7 @@ class Test_APIGateway_Service:
         # APIGateway client for this test class
         audit_info = self.set_mocked_audit_info()
         apigateway = APIGateway(audit_info)
-        assert apigateway.rest_apis[0].authorizer == True
+        assert apigateway.rest_apis[0].authorizer is True
 
     # Test APIGateway Get Rest API
     @mock_apigateway
@@ -111,7 +111,7 @@ class Test_APIGateway_Service:
         # APIGateway client for this test class
         audit_info = self.set_mocked_audit_info()
         apigateway = APIGateway(audit_info)
-        assert apigateway.rest_apis[0].public_endpoint == False
+        assert apigateway.rest_apis[0].public_endpoint is False
 
     # Test APIGateway Get Stages
     @mock_apigateway
@@ -162,4 +162,4 @@ class Test_APIGateway_Service:
         )
         audit_info = self.set_mocked_audit_info()
         apigateway = APIGateway(audit_info)
-        assert apigateway.rest_apis[0].stages[0].logging == True
+        assert apigateway.rest_apis[0].stages[0].logging is True

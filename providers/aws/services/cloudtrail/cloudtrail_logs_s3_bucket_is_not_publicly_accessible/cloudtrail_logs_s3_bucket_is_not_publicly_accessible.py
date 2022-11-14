@@ -21,8 +21,8 @@ class cloudtrail_logs_s3_bucket_is_not_publicly_accessible(Check):
                 for bucket in s3_client.buckets:
                     # Here we need to ensure that acl_grantee is filled since if we don't have permissions to query the api for a concrete region
                     # (for example due to a SCP) we are going to try access an attribute from a None type
-                    if trail_bucket == bucket.name and bucket.acl_grantee:
-                        for grant in bucket.acl_grantee:
+                    if trail_bucket == bucket.name and bucket.acl_grantees:
+                        for grant in bucket.acl_grantees:
                             if (
                                 grant.URI
                                 == "http://acs.amazonaws.com/groups/global/AllUsers"

@@ -233,7 +233,7 @@ class Test_Outputs:
 
         expected = Check_Output_JSON_ASFF()
         expected.Id = f"prowler-{finding.check_metadata.CheckID}-123456789012-eu-west-1-{hash_sha512('test-resource')}"
-        expected.ProductArn = f"arn:aws:securityhub:eu-west-1::product/prowler/prowler"
+        expected.ProductArn = "arn:aws:securityhub:eu-west-1::product/prowler/prowler"
         expected.ProductFields = ProductFields(
             ProviderVersion=prowler_version, ProwlerResourceName="test-resource"
         )
@@ -291,15 +291,9 @@ class Test_Outputs:
         client = boto3.client("s3")
         client.create_bucket(Bucket=bucket_name)
         # Create mock csv output file
-        output_directory = "."
+        output_directory = f"{os.path.dirname(os.path.realpath(__file__))}/fixtures"
         output_mode = "csv"
-        filename = (
-            f"prowler-output-{input_audit_info.audited_account}-{output_file_timestamp}"
-        )
-        file_descriptor = open_file(
-            f"{output_directory}/{filename}{csv_file_suffix}",
-            "a",
-        )
+        filename = f"prowler-output-{input_audit_info.audited_account}"
         # Send mock csv file to mock S3 Bucket
         send_to_s3_bucket(
             filename,
@@ -321,4 +315,4 @@ class Test_Outputs:
             )["ContentType"]
             == "binary/octet-stream"
         )
-        remove(f"{output_directory}/{filename}{csv_file_suffix}")
+        # remove(f"{output_directory}/{filename}{csv_file_suffix}")

@@ -21,6 +21,6 @@ class iam_password_policy_lowercase(Check):
                 )
         else:
             report.status = "FAIL"
-            report.status_extended = f"Password policy cannot be found"
+            report.status_extended = "Password policy cannot be found"
         findings.append(report)
         return findings

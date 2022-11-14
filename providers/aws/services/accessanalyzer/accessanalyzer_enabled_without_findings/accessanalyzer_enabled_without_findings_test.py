@@ -94,7 +94,7 @@ class Test_accessanalyzer_enabled_without_findings:
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
-                == f"IAM Access Analyzer Test Analyzer has 10 active findings"
+                == "IAM Access Analyzer Test Analyzer has 10 active findings"
             )
             assert result[1].resource_id == "Test Analyzer"
 
@@ -128,7 +128,7 @@ class Test_accessanalyzer_enabled_without_findings:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"IAM Access Analyzer Test Analyzer has no active findings"
+                == "IAM Access Analyzer Test Analyzer has no active findings"
             )
             assert result[0].resource_id == "Test Analyzer"
 
@@ -162,6 +162,6 @@ class Test_accessanalyzer_enabled_without_findings:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"IAM Access Analyzer Test Analyzer is not active"
+                == "IAM Access Analyzer Test Analyzer is not active"
             )
             assert result[0].resource_id == "Test Analyzer"
