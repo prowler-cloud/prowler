@@ -51,7 +51,7 @@ class Test_iam_no_expired_server_certificates_stored_test:
 
             assert result[0].status == "FAIL"
             assert search(
-                f"IAM Certificate certname has expired", result[0].status_extended
+                "IAM Certificate certname has expired", result[0].status_extended
             )
             assert result[0].resource_id == cert["ServerCertificateId"]
             assert result[0].resource_arn == cert["Arn"]

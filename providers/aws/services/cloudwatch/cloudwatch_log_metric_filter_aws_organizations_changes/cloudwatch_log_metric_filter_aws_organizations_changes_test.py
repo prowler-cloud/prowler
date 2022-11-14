@@ -202,7 +202,7 @@ class Test_cloudwatch_log_metric_filter_aws_organizations_changes:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudWatch log group /log-group/test found with metric filter test-filter but no alarms associated."
+                == "CloudWatch log group /log-group/test found with metric filter test-filter but no alarms associated."
             )
             assert result[0].resource_id == "/log-group/test"
 
@@ -277,6 +277,6 @@ class Test_cloudwatch_log_metric_filter_aws_organizations_changes:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudWatch log group /log-group/test found with metric filter test-filter and alarms set."
+                == "CloudWatch log group /log-group/test found with metric filter test-filter and alarms set."
             )
             assert result[0].resource_id == "/log-group/test"

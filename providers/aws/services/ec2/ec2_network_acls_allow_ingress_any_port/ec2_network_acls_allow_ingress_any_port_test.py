@@ -107,7 +107,7 @@ class Test_ec2_network_acls_allow_ingress_any_port:
                     )
 
     @mock_ec2
-    def test_ec2_non_compliant_nacl(self):
+    def test_ec2_compliant_nacl(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
         vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
