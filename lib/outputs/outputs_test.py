@@ -315,4 +315,3 @@ class Test_Outputs:
             )["ContentType"]
             == "binary/octet-stream"
         )
-        # remove(f"{output_directory}/{filename}{csv_file_suffix}")
