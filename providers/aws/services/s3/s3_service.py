@@ -73,7 +73,6 @@ class S3:
             bucket_versioning = regional_client.get_bucket_versioning(
                 Bucket=bucket.name
             )
-            print(bucket_versioning)
             if "Status" in bucket_versioning:
                 if "Enabled" == bucket_versioning["Status"]:
                     bucket.versioning = True
