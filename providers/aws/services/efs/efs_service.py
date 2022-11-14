@@ -55,14 +55,14 @@ class EFS:
             for filesystem in self.filesystems:
                 for region, client in self.regional_clients.items():
                     if filesystem.region == region:
+                        filesystem.backup_policy = client.describe_backup_policy(
+                            FileSystemId=filesystem.id
+                        )["BackupPolicy"]["Status"]
                         fs_policy = client.describe_file_system_policy(
                             FileSystemId=filesystem.id
                         )
                         if "Policy" in fs_policy:
                             filesystem.policy = fs_policy["Policy"]
-                        filesystem.backup_policy = client.describe_backup_policy(
-                            FileSystemId=filesystem.id
-                        )["BackupPolicy"]["Status"]
 
         except Exception as error:
             logger.error(
