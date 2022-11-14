@@ -25,9 +25,7 @@ class iam_policy_attached_only_to_group_or_roles(Check):
                             report = Check_Report(self.metadata)
                             report.region = iam_client.region
                             report.status = "FAIL"
-                            report.status_extended = (
-                                f"User {user.name} has the following inline policy {policy}"
-                            )
+                            report.status_extended = f"User {user.name} has the following inline policy {policy}"
                             report.resource_id = user.name
                             findings.append(report)
 

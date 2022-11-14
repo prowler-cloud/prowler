@@ -406,10 +406,10 @@ class MFADevice:
 class User:
     name: str
     arn: str
-    mfa_devices: "list[MFADevice]"
+    mfa_devices: list[MFADevice]
     password_last_used: str
-    attached_policies: "list[dict]"
-    inline_policies: "list[str]"
+    attached_policies: list[dict]
+    inline_policies: list[str]
 
     def __init__(self, name, arn, password_last_used):
         self.name = name
@@ -424,8 +424,8 @@ class User:
 class Group:
     name: str
     arn: str
-    attached_policies: "list[dict]"
-    users: " list[User]"
+    attached_policies: list[dict]
+    users: list[User]
 
     def __init__(self, name, arn):
         self.name = name

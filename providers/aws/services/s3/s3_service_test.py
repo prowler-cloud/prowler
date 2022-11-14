@@ -99,7 +99,7 @@ class Test_S3_Service:
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
-        assert s3.buckets[0].versioning == True
+        assert s3.buckets[0].versioning is True
 
     # Test S3 Get Bucket ACL
     @mock_s3
@@ -204,7 +204,7 @@ class Test_S3_Service:
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
-        assert s3.buckets[0].logging == True
+        assert s3.buckets[0].logging is True
 
     # Test S3 Get Bucket Policy
     @mock_s3
@@ -270,24 +270,6 @@ class Test_S3_Service:
         assert s3.buckets[0].name == bucket_name
         assert s3.buckets[0].ownership == "BucketOwnerEnforced"
 
-    # Test S3 Get Bucket Ownership Controls
-    @mock_s3
-    def test__get_bucket_ownership_controls__(self):
-        # Generate S3 Client
-        s3_client = client("s3")
-        # Create S3 Bucket
-        bucket_name = "test-bucket"
-        s3_client.create_bucket(
-            Bucket=bucket_name, ObjectOwnership="BucketOwnerEnforced"
-        )
-
-        # S3 client for this test class
-        audit_info = self.set_mocked_audit_info()
-        s3 = S3(audit_info)
-        assert len(s3.buckets) == 1
-        assert s3.buckets[0].name == bucket_name
-        assert s3.buckets[0].ownership == "BucketOwnerEnforced"
-
     # Test S3 Get Public Access Block
     @mock_s3
     def test__get_public_access_block__(self):
@@ -319,7 +301,7 @@ class Test_S3_Service:
 
     # Test S3 Control Account Get Public Access Block
     @mock_s3control
-    def test__get_public_access_block__(self):
+    def test__get_public_access_block__s3_control(self):
         # Generate S3Control Client
         s3control_client = client("s3control", region_name=AWS_REGION)
         s3control_client.put_public_access_block(

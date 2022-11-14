@@ -11,12 +11,15 @@ AWS_REGION = "eu-west-1"
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
-# As you can see the operation_name has the list_analyzers snake_case form but
-# we are using the ListAnalyzers form.
-# Rationale -> https://github.com/boto/botocore/blob/develop/botocore/client.py#L810:L816
-#
-# We have to mock every AWS API call using Boto3
+
 def mock_make_api_call(self, operation_name, kwarg):
+    """
+    Mock every AWS API call using Boto3
+
+    As you can see the operation_name has the list_analyzers snake_case form but
+    we are using the ListAnalyzers form.
+    Rationale -> https://github.com/boto/botocore/blob/develop/botocore/client.py#L810:L816
+    """
     if operation_name == "ListAnalyzers":
         return {
             "analyzers": [

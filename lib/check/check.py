@@ -117,7 +117,7 @@ def print_checks(provider: str, check_list: set, bulk_checks_metadata: dict):
 # List available groups
 def list_groups(provider: str):
     groups = parse_groups_from_file(groups_file)
-    print(f"Available Groups:")
+    print("Available Groups:")
 
     for group, value in groups[provider].items():
         group_description = value["description"]
@@ -219,8 +219,3 @@ def run_check(check, audit_info, output_options):
         report(findings, output_options, audit_info)
     finally:
         pass
-
-
-def import_check(check_path: str) -> ModuleType:
-    lib = importlib.import_module(f"{check_path}")
-    return lib

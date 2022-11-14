@@ -46,8 +46,8 @@ class Test_AutoScaling_Service:
         # AutoScaling client for this test class
         audit_info = self.set_mocked_audit_info()
         autoscaling = AutoScaling(audit_info)
-        for client in autoscaling.regional_clients.values():
-            assert client.__class__.__name__ == "AutoScaling"
+        for regional_client in autoscaling.regional_clients.values():
+            assert regional_client.__class__.__name__ == "AutoScaling"
 
     # Test AutoScaling Session
     @mock_autoscaling

@@ -11,10 +11,14 @@ AWS_REGION = "us-east-1"
 
 # Mocking ApiGatewayV2 Calls
 make_api_call = botocore.client.BaseClient._make_api_call
-# Rationale -> https://github.com/boto/botocore/blob/develop/botocore/client.py#L810:L816
-#
-# We have to mock every AWS API call using Boto3
+
+
 def mock_make_api_call(self, operation_name, kwarg):
+    """
+    We have to mock every AWS API call using Boto3
+
+    Rationale -> https://github.com/boto/botocore/blob/develop/botocore/client.py#L810:L816
+    """
     if operation_name == "GetAuthorizers":
         return {"Items": [{"AuthorizerId": "authorizer-id", "Name": "test-authorizer"}]}
     elif operation_name == "GetStages":
@@ -69,8 +73,8 @@ class Test_ApiGatewayV2_Service:
         # ApiGatewayV2 client for this test class
         audit_info = self.set_mocked_audit_info()
         apigatewayv2 = ApiGatewayV2(audit_info)
-        for client in apigatewayv2.regional_clients.values():
-            assert client.__class__.__name__ == "ApiGatewayV2"
+        for regional_client in apigatewayv2.regional_clients.values():
+            assert regional_client.__class__.__name__ == "ApiGatewayV2"
 
     # Test ApiGatewayV2 Session
     @mock_apigatewayv2
@@ -118,7 +122,7 @@ class Test_ApiGatewayV2_Service:
         # ApiGatewayV2 client for this test class
         audit_info = self.set_mocked_audit_info()
         apigatewayv2 = ApiGatewayV2(audit_info)
-        assert apigatewayv2.apis[0].authorizer == True
+        assert apigatewayv2.apis[0].authorizer is True
 
     # Test ApiGatewayV2 Get Stages
     @mock_apigatewayv2
@@ -130,4 +134,4 @@ class Test_ApiGatewayV2_Service:
 
         audit_info = self.set_mocked_audit_info()
         apigatewayv2 = ApiGatewayV2(audit_info)
-        assert apigatewayv2.apis[0].stages[0].logging == True
+        assert apigatewayv2.apis[0].stages[0].logging is True

@@ -30,7 +30,7 @@ class cloudtrail_multi_region_enabled(Check):
                     else:
                         report.status = "FAIL"
                         report.status_extended = (
-                            f"No CloudTrail trails enabled and logging were found"
+                            "No CloudTrail trails enabled and logging were found"
                         )
                         report.region = cloudtrail_client.region
                         report.resource_arn = "No trails"
