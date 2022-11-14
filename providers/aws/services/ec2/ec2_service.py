@@ -55,6 +55,7 @@ class EC2:
                             self.instances.append(
                                 Instance(
                                     instance["InstanceId"],
+                                    instance["State"]["Name"],
                                     regional_client.region,
                                     instance["InstanceType"],
                                     instance["ImageId"],
@@ -69,6 +70,7 @@ class EC2:
                             self.instances.append(
                                 Instance(
                                     instance["InstanceId"],
+                                    instance["State"]["Name"],
                                     regional_client.region,
                                     instance["InstanceType"],
                                     instance["ImageId"],
@@ -244,6 +246,7 @@ class EC2:
 @dataclass
 class Instance:
     id: str
+    state: str
     region: str
     type: str
     image_id: str
@@ -257,6 +260,7 @@ class Instance:
     def __init__(
         self,
         id,
+        state,
         region,
         type,
         image_id,
@@ -267,6 +271,7 @@ class Instance:
         public_ip,
     ):
         self.id = id
+        self.state = state
         self.region = region
         self.type = type
         self.image_id = image_id
