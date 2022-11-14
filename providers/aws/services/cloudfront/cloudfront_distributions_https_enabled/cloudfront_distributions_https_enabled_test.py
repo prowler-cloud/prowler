@@ -109,7 +109,7 @@ class Test_cloudfront_distributions_https_enabled:
                 == f"CloudFront Distribution {DISTRIBUTION_ID} has redirect to HTTPS"
             )
 
-    def test_one_distribution_https_redirect(self):
+    def test_one_distribution_https_only(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
             "DISTRIBUTION_ID": Distribution(

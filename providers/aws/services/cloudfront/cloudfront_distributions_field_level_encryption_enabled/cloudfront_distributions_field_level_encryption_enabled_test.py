@@ -71,7 +71,7 @@ class Test_cloudfront_distributions_field_level_encryption_enabled:
                 == f"CloudFront Distribution {DISTRIBUTION_ID} has Field Level Encryption enabled"
             )
 
-    def test_one_distribution_field_level_encryption_enabled(self):
+    def test_one_distribution_field_level_encryption_disabled(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
             "DISTRIBUTION_ID": Distribution(

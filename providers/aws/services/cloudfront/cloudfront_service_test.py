@@ -30,7 +30,10 @@ def example_distribution_config(ref):
             "TargetOriginId": "origin1",
             "ViewerProtocolPolicy": "allow-all",
             "MinTTL": 10,
-            "ForwardedValues": {"QueryString": False, "Cookies": {"Forward": "none"}},
+            "ForwardedValues": {
+                "QueryString": False,
+                "Cookies": {"Forward": "none"},
+            },
         },
         "Comment": "an optional comment that's not actually optional",
         "Enabled": False,
@@ -208,7 +211,7 @@ class Test_CloudFront_Service:
             == self.set_mocked_audit_info().audit_session.region_name
         )
         assert (
-            cloudfront.distributions[cloudfront_distribution_id].logging_enabled == True
+            cloudfront.distributions[cloudfront_distribution_id].logging_enabled is True
         )
         assert (
             cloudfront.distributions[cloudfront_distribution_id].origins

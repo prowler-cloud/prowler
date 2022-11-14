@@ -44,7 +44,10 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                         "CustomHeaders": {
                             "Quantity": 123,
                             "Items": [
-                                {"HeaderName": "string", "HeaderValue": "string"},
+                                {
+                                    "HeaderName": "string",
+                                    "HeaderValue": "string",
+                                },
                             ],
                         },
                         "S3OriginConfig": {"OriginAccessIdentity": "string"},
@@ -95,7 +98,7 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                 == f"CloudFront Distribution {DISTRIBUTION_ID} is using a deprecated SSL protocol"
             )
 
-    def test_one_distribution_using_deprecated_ssl_protocols(self):
+    def test_one_distribution_using_SSL_and_TLS(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
             "DISTRIBUTION_ID": Distribution(
@@ -110,7 +113,10 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                         "CustomHeaders": {
                             "Quantity": 123,
                             "Items": [
-                                {"HeaderName": "string", "HeaderValue": "string"},
+                                {
+                                    "HeaderName": "string",
+                                    "HeaderValue": "string",
+                                },
                             ],
                         },
                         "S3OriginConfig": {"OriginAccessIdentity": "string"},
@@ -174,7 +180,10 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                         "CustomHeaders": {
                             "Quantity": 123,
                             "Items": [
-                                {"HeaderName": "string", "HeaderValue": "string"},
+                                {
+                                    "HeaderName": "string",
+                                    "HeaderValue": "string",
+                                },
                             ],
                         },
                         "S3OriginConfig": {"OriginAccessIdentity": "string"},
