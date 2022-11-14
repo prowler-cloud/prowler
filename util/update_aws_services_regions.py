@@ -63,7 +63,7 @@ for item in original_matrix_regions_aws["prices"]:
     regions_dict["regions"] = regions
 
 # Store final JSON
-logging.info(f"Storing final JSON")
+logging.info("Storing final JSON")
 regions_by_service["services"] = services
 
 # Write to file

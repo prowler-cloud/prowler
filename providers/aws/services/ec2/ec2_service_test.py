@@ -47,8 +47,8 @@ class Test_EC2_Service:
         # EC2 client for this test class
         audit_info = self.set_mocked_audit_info()
         ec2 = EC2(audit_info)
-        for client in ec2.regional_clients.values():
-            assert client.__class__.__name__ == "EC2"
+        for regional_client in ec2.regional_clients.values():
+            assert regional_client.__class__.__name__ == "EC2"
 
     # Test EC2 Session
     @mock_ec2
@@ -167,7 +167,7 @@ class Test_EC2_Service:
         ec2 = EC2(audit_info)
         for snapshot in ec2.snapshots:
             if snapshot.id == snapshot_id:
-                assert snapshot.public == True
+                assert snapshot.public
 
     # Test EC2 Instance User Data
     @mock_ec2

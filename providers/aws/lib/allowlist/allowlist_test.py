@@ -113,30 +113,20 @@ class Test_Allowlist:
             }
         }
 
-        assert (
-            is_allowlisted(
-                allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "prowler"
-            )
-            == True
+        assert is_allowlisted(
+            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "prowler"
         )
 
-        assert (
-            is_allowlisted(
-                allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "prowler-test"
-            )
-            == True
+        assert is_allowlisted(
+            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "prowler-test"
         )
 
-        assert (
-            is_allowlisted(
-                allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "test-prowler"
-            )
-            == True
+        assert is_allowlisted(
+            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "test-prowler"
         )
 
-        assert (
+        assert not (
             is_allowlisted(
                 allowlist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test"
             )
-            == False
         )

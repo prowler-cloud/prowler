@@ -12,7 +12,7 @@ class config_recorder_all_regions_enabled(Check):
             # Check if Config is enabled in region
             if not recorder.name:
                 report.status = "FAIL"
-                report.status_extended = f"No AWS Config recorders in region."
+                report.status_extended = "No AWS Config recorders in region."
             else:
                 if recorder.recording:
                     if recorder.last_status == "Failure":

@@ -2,7 +2,7 @@ from colorama import Fore, Style
 
 from lib.check.models import Check
 
-### This check has no findings since it is manual
+# This check has no findings since it is manual
 
 
 class account_security_questions_are_registered_in_the_aws_account(Check):

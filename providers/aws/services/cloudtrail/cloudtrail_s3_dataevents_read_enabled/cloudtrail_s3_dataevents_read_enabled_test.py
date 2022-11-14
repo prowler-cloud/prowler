@@ -5,7 +5,7 @@ from boto3 import client
 from moto import mock_cloudtrail, mock_s3
 
 
-class Test_cloudtrail_s3_dataevents_enabled:
+class Test_cloudtrail_s3_dataevents_read_enabled:
     @mock_cloudtrail
     @mock_s3
     def test_trail_without_data_events(self):
@@ -24,15 +24,15 @@ class Test_cloudtrail_s3_dataevents_enabled:
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_enabled.cloudtrail_s3_dataevents_enabled.cloudtrail_client",
+            "providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_enabled.cloudtrail_s3_dataevents_enabled import (
-                cloudtrail_s3_dataevents_enabled,
+            from providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled import (
+                cloudtrail_s3_dataevents_read_enabled,
             )
 
-            check = cloudtrail_s3_dataevents_enabled()
+            check = cloudtrail_s3_dataevents_read_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -55,7 +55,7 @@ class Test_cloudtrail_s3_dataevents_enabled:
         cloudtrail_client_us_east_1.create_trail(
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
         )
-        data_events_response = cloudtrail_client_us_east_1.put_event_selectors(
+        _ = cloudtrail_client_us_east_1.put_event_selectors(
             TrailName=trail_name_us,
             EventSelectors=[
                 {
@@ -73,15 +73,15 @@ class Test_cloudtrail_s3_dataevents_enabled:
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_enabled.cloudtrail_s3_dataevents_enabled.cloudtrail_client",
+            "providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_enabled.cloudtrail_s3_dataevents_enabled import (
-                cloudtrail_s3_dataevents_enabled,
+            from providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled import (
+                cloudtrail_s3_dataevents_read_enabled,
             )
 
-            check = cloudtrail_s3_dataevents_enabled()
+            check = cloudtrail_s3_dataevents_read_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -104,7 +104,7 @@ class Test_cloudtrail_s3_dataevents_enabled:
         trail_us = cloudtrail_client_us_east_1.create_trail(
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
         )
-        data_events_response = cloudtrail_client_us_east_1.put_event_selectors(
+        _ = cloudtrail_client_us_east_1.put_event_selectors(
             TrailName=trail_name_us,
             EventSelectors=[
                 {
@@ -122,15 +122,15 @@ class Test_cloudtrail_s3_dataevents_enabled:
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_enabled.cloudtrail_s3_dataevents_enabled.cloudtrail_client",
+            "providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_enabled.cloudtrail_s3_dataevents_enabled import (
-                cloudtrail_s3_dataevents_enabled,
+            from providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled import (
+                cloudtrail_s3_dataevents_read_enabled,
             )
 
-            check = cloudtrail_s3_dataevents_enabled()
+            check = cloudtrail_s3_dataevents_read_enabled()
             result = check.execute()
 
             assert len(result) == 1

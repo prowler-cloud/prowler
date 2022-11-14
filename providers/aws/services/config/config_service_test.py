@@ -44,8 +44,8 @@ class Test_Config_Service:
         # Config client for this test class
         audit_info = self.set_mocked_audit_info()
         config = Config(audit_info)
-        for client in config.regional_clients.values():
-            assert client.__class__.__name__ == "ConfigService"
+        for regional_client in config.regional_clients.values():
+            assert regional_client.__class__.__name__ == "ConfigService"
 
     # Test Config Session
     @mock_config
@@ -86,4 +86,4 @@ class Test_Config_Service:
         # Search for the recorder just created
         for recorder in config.recorders:
             if recorder.name == "default":
-                assert recorder.recording == True
+                assert recorder.recording is True

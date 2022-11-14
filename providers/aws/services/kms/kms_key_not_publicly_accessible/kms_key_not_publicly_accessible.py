@@ -17,7 +17,7 @@ class kms_key_not_publicly_accessible(Check):
                 report.region = key.region
                 # If the "Principal" element value is set to { "AWS": "*" } and the policy statement is not using any Condition clauses to filter the access, the selected AWS KMS master key is publicly accessible.
                 for statement in key.policy["Statement"]:
-                    if "*" == statement["Principal"] and not "Condition" in statement:
+                    if "*" == statement["Principal"] and "Condition" not in statement:
                         report.status = "FAIL"
                         report.status_extended = (
                             f"KMS key {key.id} may be publicly accessible!"
@@ -28,7 +28,7 @@ class kms_key_not_publicly_accessible(Check):
                         else:
                             principals = statement["Principal"]["AWS"]
                         for principal_arn in principals:
-                            if principal_arn == "*" and not "Condition" in statement:
+                            if principal_arn == "*" and "Condition" not in statement:
                                 report.status = "FAIL"
                                 report.status_extended = (
                                     f"KMS key {key.id} may be publicly accessible!"

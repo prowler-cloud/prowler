@@ -46,8 +46,8 @@ class Test_ACM_Service:
         # KMS client for this test class
         audit_info = self.set_mocked_audit_info()
         kms = KMS(audit_info)
-        for client in kms.regional_clients.values():
-            assert client.__class__.__name__ == "KMS"
+        for regional_client in kms.regional_clients.values():
+            assert regional_client.__class__.__name__ == "KMS"
 
     # Test KMS Session
     @mock_kms
@@ -110,9 +110,9 @@ class Test_ACM_Service:
         kms = KMS(audit_info)
         assert len(kms.keys) == 2
         assert kms.keys[0].arn == key1["Arn"]
-        assert kms.keys[0].rotation_enabled == False
+        assert kms.keys[0].rotation_enabled is False
         assert kms.keys[1].arn == key2["Arn"]
-        assert kms.keys[1].rotation_enabled == True
+        assert kms.keys[1].rotation_enabled is True
 
     # Test KMS Key policy
     @mock_kms

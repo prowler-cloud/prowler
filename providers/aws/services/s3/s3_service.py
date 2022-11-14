@@ -76,6 +76,9 @@ class S3:
             if "Status" in bucket_versioning:
                 if "Enabled" == bucket_versioning["Status"]:
                     bucket.versioning = True
+            if "MFADelete" in bucket_versioning:
+                if "Enabled" == bucket_versioning["MFADelete"]:
+                    bucket.mfa_delete = True
         except Exception as error:
             logger.error(
                 f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -251,9 +254,9 @@ class Bucket:
     policy: dict
     encryption: str
     region: str
-    acl_grantee: list[ACL_Grantee]
     logging_target_bucket: str
     ownership: str
+    mfa_delete: bool
 
     def __init__(self, name, region):
         self.name = name
@@ -272,6 +275,6 @@ class Bucket:
         self.policy = {}
         self.encryption = None
         self.region = region
-        self.acl_grantee = None
         self.logging_target_bucket = None
         self.ownership = None
+        self.mfa_delete = False

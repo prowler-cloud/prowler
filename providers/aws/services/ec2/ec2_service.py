@@ -26,6 +26,8 @@ class EC2:
         self.__threading_call__(self.__describe_network_interfaces__)
         self.images = []
         self.__threading_call__(self.__describe_images__)
+        self.volumes = []
+        self.__threading_call__(self.__describe_volumes__)
 
     def __get_session__(self):
         return self.session
@@ -242,6 +244,26 @@ class EC2:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __describe_volumes__(self, regional_client):
+        logger.info("EC2 - Describing Volumes...")
+        try:
+            describe_volumes_paginator = regional_client.get_paginator(
+                "describe_volumes"
+            )
+            for page in describe_volumes_paginator.paginate():
+                for volume in page["Volumes"]:
+                    self.volumes.append(
+                        Volume(
+                            volume["VolumeId"],
+                            regional_client.region,
+                            volume["Encrypted"],
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 @dataclass
 class Instance:
@@ -295,6 +317,18 @@ class Snapshot:
         self.region = region
         self.encrypted = encrypted
         self.public = False
+
+
+@dataclass
+class Volume:
+    id: str
+    region: str
+    encrypted: bool
+
+    def __init__(self, id, region, encrypted):
+        self.id = id
+        self.region = region
+        self.encrypted = encrypted
 
 
 @dataclass

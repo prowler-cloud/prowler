@@ -2,7 +2,7 @@ from lib.check.models import Check, Check_Report
 from providers.aws.services.cloudtrail.cloudtrail_client import cloudtrail_client
 
 
-class cloudtrail_s3_dataevents_enabled(Check):
+class cloudtrail_s3_dataevents_write_enabled(Check):
     def execute(self):
         findings = []
         report = Check_Report(self.metadata)
@@ -10,11 +10,14 @@ class cloudtrail_s3_dataevents_enabled(Check):
         report.resource_id = "No trails"
         report.resource_arn = "No trails"
         report.status = "FAIL"
-        report.status_extended = f"No CloudTrail trails have a data event to record all S3 object-level API operations."
+        report.status_extended = "No CloudTrail trails have a data event to record all S3 object-level API operations."
         for trail in cloudtrail_client.trails:
             for data_event in trail.data_events:
-                # Check if trail has a data event for all S3 Buckets for write/read
-                if data_event["ReadWriteType"] == "All":
+                # Check if trail has a data event for all S3 Buckets for write
+                if (
+                    data_event["ReadWriteType"] == "All"
+                    or data_event["ReadWriteType"] == "WriteOnly"
+                ):
                     for resource in data_event["DataResources"]:
                         if "AWS::S3::Object" == resource["Type"] and (
                             "arn:aws:s3" in resource["Values"]

@@ -26,7 +26,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pipenv
-          pipenv install
+          pipenv install --dev
+          pipenv run pip list
+      - name: Lint with flake8
+        run: |
+          pipenv run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib
+      - name: Checking format with black
+        run: |
+          pipenv run black --check .
+      - name: Lint with pylint
+        run: |
+          pipenv run pylint --disable=W,C,R,E -j 0 providers lib util config
       - name: Bandit
         run: |
           pipenv run bandit -q -lll -x '*_test.py,./contrib/' -r .

@@ -81,7 +81,10 @@ class Test_iam_policy_attached_only_to_group_or_roles:
                 f"User {user} has attached the following policy",
                 result[0].status_extended,
             )
-            assert search(f"User {user} has the following inline policy", result[1].status_extended)
+            assert search(
+                f"User {user} has the following inline policy",
+                result[1].status_extended,
+            )
 
     @mock_iam
     def test_iam_user_inline_policy(self):
