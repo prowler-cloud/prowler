@@ -54,7 +54,7 @@ class Test_macie_is_enabled:
             assert result[0].status_extended == "Macie is enabled."
             assert result[0].resource_id == "Macie"
 
-    def test_macie_disabled(self):
+    def test_macie_suspended(self):
         macie_client = mock.MagicMock
         macie_client.sessions = [
             Session(
