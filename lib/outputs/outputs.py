@@ -273,7 +273,6 @@ def send_to_s3_bucket(
 ):
     try:
         # Get only last part of the path
-        output_directory = output_directory.split("/")[-1]
         if output_mode == "csv":
             filename = f"{output_filename}{csv_file_suffix}"
         elif output_mode == "json":

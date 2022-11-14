@@ -18,7 +18,7 @@ def arn_parsing(arn):
     else:
         arn_parsed = arnparse(arn)
         # First check if region is empty (in IAM arns region is always empty)
-        if arn_parsed.region != None:
+        if arn_parsed.region is not None:
             raise RoleArnParsingIAMRegionNotEmpty
         else:
             # check if needed fields are filled:
@@ -27,12 +27,12 @@ def arn_parsing(arn):
             # - account_id
             # - resource_type
             # - resource
-            if arn_parsed.partition == None:
+            if arn_parsed.partition is None:
                 raise RoleArnParsingPartitionEmpty
             elif arn_parsed.service != "iam":
                 raise RoleArnParsingServiceNotIAM
             elif (
-                arn_parsed.account_id == None
+                arn_parsed.account_id is None
                 or len(arn_parsed.account_id) != 12
                 or not arn_parsed.account_id.isnumeric()
             ):

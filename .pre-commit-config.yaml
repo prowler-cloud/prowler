@@ -20,7 +20,7 @@ repos:
       -   id: shellcheck
 ## PYTHON
   - repo: https://github.com/myint/autoflake
-    rev: v1.4
+    rev: v1.7.7
     hooks:
       - id: autoflake
         args: ['--in-place', '--remove-all-unused-imports', '--remove-unused-variable']
@@ -32,9 +32,18 @@ repos:
         args: ["--profile", "black"]
 
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 22.10.0
     hooks:
       - id: black
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 5.0.4
+    hooks:
+      - id: flake8
+        exclude: contrib
+        args: [
+          "--ignore=E266,W503,E203,E501,W605"
+        ]
 
   - repo: https://github.com/haizaar/check-pipfile-lock
     rev: v0.0.5
@@ -43,6 +52,11 @@ repos:
 
   - repo: local
     hooks:
+      - id: pylint
+        name: pylint
+        entry: bash -c 'pylint --disable=W,C,R,E -j 0 -rn -sn providers lib util config'
+        language: system
+
       - id: pytest-check
         name: pytest-check
         entry: bash -c 'pytest -n auto'

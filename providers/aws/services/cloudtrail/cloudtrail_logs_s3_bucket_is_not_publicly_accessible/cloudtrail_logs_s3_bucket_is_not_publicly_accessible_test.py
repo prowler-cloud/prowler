@@ -50,16 +50,10 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
 
     @mock_cloudtrail
     @mock_s3
-    def test_trail_bucket_not_valid_acl(self):
-        cloudtrail_client = client("cloudtrail", region_name="us-east-1")
+    def test_trail_bucket_public_acl(self):
         s3_client = client("s3", region_name="us-east-1")
-        trail_name_us = "trail_test_us"
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
-        trail_us = cloudtrail_client.create_trail(
-            Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
-        )
-
         s3_client.put_bucket_acl(
             AccessControlPolicy={
                 "Grants": [
@@ -78,6 +72,13 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             },
             Bucket=bucket_name_us,
         )
+
+        trail_name_us = "trail_test_us"
+        cloudtrail_client = client("cloudtrail", region_name="us-east-1")
+        trail_us = cloudtrail_client.create_trail(
+            Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
+        )
+
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
         from providers.aws.services.s3.s3_service import S3
@@ -89,7 +90,7 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             new=Cloudtrail(current_audit_info),
         ):
             with mock.patch(
-                "providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.s3_client",
+                "providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.s3_client",
                 new=S3(current_audit_info),
             ):
                 # Test Check
@@ -111,7 +112,7 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
 
     @mock_cloudtrail
     @mock_s3
-    def test_trail_bucket_not_valid_acl(self):
+    def test_trail_bucket_not_public_acl(self):
         cloudtrail_client = client("cloudtrail", region_name="us-east-1")
         s3_client = client("s3", region_name="us-east-1")
         trail_name_us = "trail_test_us"

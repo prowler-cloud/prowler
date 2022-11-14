@@ -1,4 +1,3 @@
-from re import T
 from typing import Any
 
 
@@ -8,7 +7,8 @@ def check_network_acl(rules: Any, protocol: str, port: str) -> bool:
 
     # Spliting IPv6 from IPv4 rules
     rules_IPv6 = list(
-        filter(lambda rule: rule.get("CidrBlock") is None and not rule["Egress"], rules))
+        filter(lambda rule: rule.get("CidrBlock") is None and not rule["Egress"], rules)
+    )
 
     # For IPv6
     # Rules must order by RuleNumber
@@ -18,11 +18,9 @@ def check_network_acl(rules: Any, protocol: str, port: str) -> bool:
             and rule["RuleAction"] == "deny"
             and (
                 rule["Protocol"] == "-1"
-                or
-                (
+                or (
                     rule["Protocol"] == protocol
-                    and
-                    rule["PortRange"]["From"] <= port <= rule["PortRange"]["To"]
+                    and rule["PortRange"]["From"] <= port <= rule["PortRange"]["To"]
                 )
             )
         ):
@@ -34,11 +32,9 @@ def check_network_acl(rules: Any, protocol: str, port: str) -> bool:
             and rule["RuleAction"] == "allow"
             and (
                 rule["Protocol"] == "-1"
-                or
-                (
+                or (
                     rule["Protocol"] == protocol
-                    and
-                    rule["PortRange"]["From"] <= port <= rule["PortRange"]["To"]
+                    and rule["PortRange"]["From"] <= port <= rule["PortRange"]["To"]
                 )
             )
         ):
@@ -48,7 +44,11 @@ def check_network_acl(rules: Any, protocol: str, port: str) -> bool:
     # There are not IPv6 Public access here
 
     # Spliting IPv4 from IPv6 rules
-    rules_IPv4 = list(filter(lambda rule: rule.get("Ipv6CidrBlock") is None and not rule["Egress"], rules))
+    rules_IPv4 = list(
+        filter(
+            lambda rule: rule.get("Ipv6CidrBlock") is None and not rule["Egress"], rules
+        )
+    )
 
     # For IPv4
     # Rules must order by RuleNumber
@@ -58,11 +58,9 @@ def check_network_acl(rules: Any, protocol: str, port: str) -> bool:
             and rule["RuleAction"] == "deny"
             and (
                 rule["Protocol"] == "-1"
-                or
-                (
+                or (
                     rule["Protocol"] == protocol
-                    and
-                    rule["PortRange"]["From"] <= port <= rule["PortRange"]["To"]
+                    and rule["PortRange"]["From"] <= port <= rule["PortRange"]["To"]
                 )
             )
         ):
@@ -75,11 +73,9 @@ def check_network_acl(rules: Any, protocol: str, port: str) -> bool:
             and rule["RuleAction"] == "allow"
             and (
                 rule["Protocol"] == "-1"
-                or
-                (
+                or (
                     rule["Protocol"] == protocol
-                    and
-                    rule["PortRange"]["From"] <= port <= rule["PortRange"]["To"]
+                    and rule["PortRange"]["From"] <= port <= rule["PortRange"]["To"]
                 )
             )
         ):

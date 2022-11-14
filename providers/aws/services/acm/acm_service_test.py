@@ -44,8 +44,8 @@ class Test_ACM_Service:
         # ACM client for this test class
         audit_info = self.set_mocked_audit_info()
         acm = ACM(audit_info)
-        for client in acm.regional_clients.values():
-            assert client.__class__.__name__ == "ACM"
+        for regional_client in acm.regional_clients.values():
+            assert regional_client.__class__.__name__ == "ACM"
 
     # Test ACM Session
     @mock_acm

@@ -13,7 +13,7 @@ class cloudwatch_log_metric_filter_sign_in_without_mfa(Check):
         report = Check_Report(self.metadata)
         report.status = "FAIL"
         report.status_extended = (
-            f"No CloudWatch log groups found with metric filters or alarms associated."
+            "No CloudWatch log groups found with metric filters or alarms associated."
         )
         report.region = "us-east-1"
         report.resource_id = ""

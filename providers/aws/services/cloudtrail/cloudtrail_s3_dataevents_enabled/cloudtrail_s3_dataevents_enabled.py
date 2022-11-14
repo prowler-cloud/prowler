@@ -10,7 +10,7 @@ class cloudtrail_s3_dataevents_enabled(Check):
         report.resource_id = "No trails"
         report.resource_arn = "No trails"
         report.status = "FAIL"
-        report.status_extended = f"No CloudTrail trails have a data event to record all S3 object-level API operations."
+        report.status_extended = "No CloudTrail trails have a data event to record all S3 object-level API operations."
         for trail in cloudtrail_client.trails:
             for data_event in trail.data_events:
                 # Check if trail has a data event for all S3 Buckets for write/read

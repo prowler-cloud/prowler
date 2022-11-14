@@ -2,7 +2,7 @@ from colorama import Fore, Style
 
 from lib.check.models import Check
 
-### This check has no findings since it is manual
+# This check has no findings since it is manual
 
 
 class account_maintain_current_contact_details(Check):

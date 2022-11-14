@@ -46,8 +46,8 @@ class Test_VPC_Service:
         # VPC client for this test class
         audit_info = self.set_mocked_audit_info()
         vpc = VPC(audit_info)
-        for client in vpc.regional_clients.values():
-            assert client.__class__.__name__ == "EC2"
+        for regional_client in vpc.regional_clients.values():
+            assert regional_client.__class__.__name__ == "EC2"
 
     # Test VPC Session
     @mock_ec2
@@ -102,29 +102,7 @@ class Test_VPC_Service:
         # Search created VPC among default ones
         for vpc in vpc.vpcs:
             if vpc.id == new_vpc["VpcId"]:
-                assert vpc.flow_log == True
-
-    # Test VPC Describe VPC Peering connections
-    @mock_ec2
-    def test__describe_vpc_peering_connections__(self):
-        # Generate VPC Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
-        # Create VPCs peers
-        vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        peer_vpc = ec2_client.create_vpc(CidrBlock="11.0.0.0/16")
-        vpc_pcx = ec2_client.create_vpc_peering_connection(
-            VpcId=vpc["Vpc"]["VpcId"], PeerVpcId=peer_vpc["Vpc"]["VpcId"]
-        )
-        vpc_pcx_id = vpc_pcx["VpcPeeringConnection"]["VpcPeeringConnectionId"]
-
-        vpc_pcx = ec2_client.accept_vpc_peering_connection(
-            VpcPeeringConnectionId=vpc_pcx_id
-        )
-        # VPC client for this test class
-        audit_info = self.set_mocked_audit_info()
-        vpc = VPC(audit_info)
-        assert len(vpc.vpc_peering_connections) == 1
-        assert vpc.vpc_peering_connections[0].id == vpc_pcx_id
+                assert vpc.flow_log is True
 
     # Test VPC Describe VPC Peering connections
     @mock_ec2
@@ -153,7 +131,7 @@ class Test_VPC_Service:
     def test__describe_route_tables__(self):
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION)
-        ec2_resource = resource("ec2", region_name=AWS_REGION)
+        _ = resource("ec2", region_name=AWS_REGION)
 
         # Create VPCs peers as well as a route
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
@@ -247,7 +225,7 @@ class Test_VPC_Service:
             Type="network",
         )["LoadBalancers"][0]["LoadBalancerArn"]
 
-        service = ec2_client.create_vpc_endpoint_service_configuration(
+        _ = ec2_client.create_vpc_endpoint_service_configuration(
             NetworkLoadBalancerArns=[lb_arn]
         )
         # VPC client for this test class

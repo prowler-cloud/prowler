@@ -91,19 +91,19 @@ class Test_AWS_Provider:
         # Recover credentials for the assume role operation
         credentials = assume_role_response["Credentials"]
         # Test the response
-        ## SessionToken
+        # SessionToken
         credentials["SessionToken"].should.have.length_of(356)
         credentials["SessionToken"].startswith("FQoGZXIvYXdzE")
-        ## AccessKeyId
+        # AccessKeyId
         credentials["AccessKeyId"].should.have.length_of(20)
         credentials["AccessKeyId"].startswith("ASIA")
-        ## SecretAccessKey
+        # SecretAccessKey
         credentials["SecretAccessKey"].should.have.length_of(40)
-        ## Assumed Role
+        # Assumed Role
         assume_role_response["AssumedRoleUser"]["Arn"].should.equal(
             f"arn:aws:sts::{ACCOUNT_ID}:assumed-role/{role_name}/{sessionName}"
         )
-        ## AssumedRoleUser
+        # AssumedRoleUser
         assert assume_role_response["AssumedRoleUser"]["AssumedRoleId"].startswith(
             "AROA"
         )

@@ -41,8 +41,8 @@ class Test_Cloudtrail_Service:
     def test_client(self):
         audit_info = self.set_mocked_audit_info()
         cloudtrail = Cloudtrail(audit_info)
-        for client in cloudtrail.regional_clients.values():
-            assert client.__class__.__name__ == "CloudTrail"
+        for regional_client in cloudtrail.regional_clients.values():
+            assert regional_client.__class__.__name__ == "CloudTrail"
 
     # Test Cloudtrail session
     @mock_cloudtrail

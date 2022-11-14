@@ -62,7 +62,7 @@ class Test_config_recorder_all_regions_enabled:
                     assert recorder.status == "FAIL"
                     assert (
                         recorder.status_extended
-                        == f"AWS Config recorder default is disabled."
+                        == "AWS Config recorder default is disabled."
                     )
                     assert recorder.resource_id == "default"
 
@@ -102,6 +102,6 @@ class Test_config_recorder_all_regions_enabled:
                     assert recorder.status == "PASS"
                     assert (
                         recorder.status_extended
-                        == f"AWS Config recorder default is enabled."
+                        == "AWS Config recorder default is enabled."
                     )
                     assert recorder.resource_id == "default"
