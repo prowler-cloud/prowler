@@ -50,39 +50,36 @@ class EC2:
             for page in describe_instances_paginator.paginate():
                 for reservation in page["Reservations"]:
                     for instance in reservation["Instances"]:
+                        http_tokens = None
+                        http_endpoint = None
+                        public_dns = None
+                        public_ip = None
+                        if "MetadataOptions" in instance:
+                            http_tokens = instance["MetadataOptions"]["HttpTokens"]
+                            http_endpoint = instance["MetadataOptions"]["HttpEndpoint"]
                         if (
                             "PublicDnsName" in instance
                             and "PublicIpAddress" in instance
                         ):
-                            self.instances.append(
-                                Instance(
-                                    instance["InstanceId"],
-                                    instance["State"]["Name"],
-                                    regional_client.region,
-                                    instance["InstanceType"],
-                                    instance["ImageId"],
-                                    instance["LaunchTime"],
-                                    instance["PrivateDnsName"],
-                                    instance["PrivateIpAddress"],
-                                    instance["PublicDnsName"],
-                                    instance["PublicIpAddress"],
-                                )
+                            public_dns = instance["PublicDnsName"]
+                            public_ip = instance["PublicIpAddress"]
+
+                        self.instances.append(
+                            Instance(
+                                instance["InstanceId"],
+                                instance["State"]["Name"],
+                                regional_client.region,
+                                instance["InstanceType"],
+                                instance["ImageId"],
+                                instance["LaunchTime"],
+                                instance["PrivateDnsName"],
+                                instance["PrivateIpAddress"],
+                                public_dns,
+                                public_ip,
+                                http_tokens,
+                                http_endpoint,
                             )
-                        else:
-                            self.instances.append(
-                                Instance(
-                                    instance["InstanceId"],
-                                    instance["State"]["Name"],
-                                    regional_client.region,
-                                    instance["InstanceType"],
-                                    instance["ImageId"],
-                                    instance["LaunchTime"],
-                                    instance["PrivateDnsName"],
-                                    instance["PrivateIpAddress"],
-                                    None,
-                                    None,
-                                )
-                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -278,6 +275,8 @@ class Instance:
     public_dns: str
     public_ip: str
     user_data: str
+    http_tokens: str
+    http_endpoint: str
 
     def __init__(
         self,
@@ -291,6 +290,8 @@ class Instance:
         private_ip,
         public_dns,
         public_ip,
+        http_tokens,
+        http_endpoint,
     ):
         self.id = id
         self.state = state
@@ -302,6 +303,8 @@ class Instance:
         self.private_ip = private_ip
         self.public_dns = public_dns
         self.public_ip = public_ip
+        self.http_tokens = http_tokens
+        self.http_endpoint = http_endpoint
         self.user_data = None
 
 
