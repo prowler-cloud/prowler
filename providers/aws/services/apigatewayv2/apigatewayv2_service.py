@@ -53,7 +53,6 @@ class ApiGatewayV2:
             for api in self.apis:
                 regional_client = self.regional_clients[api.region]
                 authorizers = regional_client.get_authorizers(ApiId=api.id)["Items"]
-                print(authorizers)
                 if authorizers:
                     api.authorizer = True
         except Exception as error:

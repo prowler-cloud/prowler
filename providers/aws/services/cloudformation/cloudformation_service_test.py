@@ -53,7 +53,6 @@ def mock_make_api_call(self, operation_name, kwarg):
             "StackId": "arn:aws:cloudformation:eu-west-1:123456789012:stack/Test-Stack/796c8d26-b390-41d7-a23c-0702c4e78b60"
         }
     if operation_name == "DescribeStacks":
-        print(f"ARGS: {kwarg}")
         if "StackName" in kwarg:
             return {
                 "Stacks": [
