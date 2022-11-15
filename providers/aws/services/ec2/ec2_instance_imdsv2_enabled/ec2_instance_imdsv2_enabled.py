@@ -6,7 +6,6 @@ class ec2_instance_imdsv2_enabled(Check):
     def execute(self):
         findings = []
         for instance in ec2_client.instances:
-            print(instance)
             report = Check_Report(self.metadata)
             report.region = instance.region
             report.resource_id = instance.id

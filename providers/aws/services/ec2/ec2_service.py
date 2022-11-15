@@ -54,6 +54,7 @@ class EC2:
                         http_endpoint = None
                         public_dns = None
                         public_ip = None
+                        instance_profile = None
                         if "MetadataOptions" in instance:
                             http_tokens = instance["MetadataOptions"]["HttpTokens"]
                             http_endpoint = instance["MetadataOptions"]["HttpEndpoint"]
@@ -63,6 +64,8 @@ class EC2:
                         ):
                             public_dns = instance["PublicDnsName"]
                             public_ip = instance["PublicIpAddress"]
+                        if "IamInstanceProfile" in instance:
+                            instance_profile = instance["IamInstanceProfile"]
 
                         self.instances.append(
                             Instance(
@@ -78,6 +81,7 @@ class EC2:
                                 public_ip,
                                 http_tokens,
                                 http_endpoint,
+                                instance_profile,
                             )
                         )
         except Exception as error:
@@ -277,6 +281,7 @@ class Instance:
     user_data: str
     http_tokens: str
     http_endpoint: str
+    instance_profile: str
 
     def __init__(
         self,
@@ -292,6 +297,7 @@ class Instance:
         public_ip,
         http_tokens,
         http_endpoint,
+        instance_profile,
     ):
         self.id = id
         self.state = state
@@ -306,6 +312,7 @@ class Instance:
         self.http_tokens = http_tokens
         self.http_endpoint = http_endpoint
         self.user_data = None
+        self.instance_profile = instance_profile
 
 
 @dataclass

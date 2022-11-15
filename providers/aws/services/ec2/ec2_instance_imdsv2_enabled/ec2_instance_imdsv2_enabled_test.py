@@ -43,6 +43,7 @@ class Test_ec2_instance_imdsv2_enabled:
                 None,
                 "required",
                 "enabled",
+                None,
             )
         ]
 
@@ -78,6 +79,7 @@ class Test_ec2_instance_imdsv2_enabled:
                 None,
                 "optional",
                 "disabled",
+                None,
             )
         ]
 

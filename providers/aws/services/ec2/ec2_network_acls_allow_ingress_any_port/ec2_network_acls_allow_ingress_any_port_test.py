@@ -98,7 +98,6 @@ class Test_ec2_network_acls_allow_ingress_any_port:
             assert len(result) == 25
             # Search changed sg
             for nacl in result:
-                print(nacl.status)
                 if nacl.resource_id == nacl_id:
                     assert nacl.status == "FAIL"
                     assert (
@@ -144,7 +143,6 @@ class Test_ec2_network_acls_allow_ingress_any_port:
             assert len(result) == 25
             # Search changed sg
             for nacl in result:
-                print(nacl.status)
                 if nacl.resource_id == nacl_id:
                     assert nacl.status == "PASS"
                     assert (
