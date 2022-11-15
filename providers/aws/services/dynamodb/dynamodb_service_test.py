@@ -44,8 +44,8 @@ class Test_DynamoDB_Service:
         # Dynamo client for this test class
         audit_info = self.set_mocked_audit_info()
         dynamodb = DynamoDB(audit_info)
-        for client in dynamodb.regional_clients.values():
-            assert client.__class__.__name__ == "DynamoDB"
+        for regional_client in dynamodb.regional_clients.values():
+            assert regional_client.__class__.__name__ == "DynamoDB"
 
     # Test Dynamo Session
     @mock_dynamodb
