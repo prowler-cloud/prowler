@@ -1,0 +1,35 @@
+{
+  "Provider": "aws",
+  "CheckID": "emr_cluster_account_public_block_enabled",
+  "CheckTitle": "EMR Account Public Access Block enabled.",
+  "CheckType": [],
+  "ServiceName": "emr",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:emr:region:account-id",
+  "Severity": "high",
+  "ResourceType": "AwsEMR",
+  "Description": "EMR Account Public Access Block enabled.",
+  "Risk": "EMR Clusters must have Account Public Access Block enabled.",
+  "RelatedUrl": "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://github.com/cloudmatos/matos/tree/master/remediations/aws/emr/block-emr-public-access",
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-glacier-vault-access-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
+    },
+    "Recommendation": {
+      "Text": "Enable EMR Account Public Access Block.",
+      "Url": "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html"
+    }
+  },
+  "Categories": [],
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  },
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "Compliance": []
+}
