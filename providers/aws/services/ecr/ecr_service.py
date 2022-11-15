@@ -36,8 +36,7 @@ class ECR:
             describe_ecr_paginator = regional_client.get_paginator(
                 "describe_repositories"
             )
-            paginador = describe_ecr_paginator.paginate()
-            for page in paginador:
+            for page in describe_ecr_paginator.paginate():
                 for repository in page["repositories"]:
                     self.repositories.append(
                         Repository(
