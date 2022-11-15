@@ -6,7 +6,7 @@
     "ServiceName": "ecr",
     "SubServiceName": "",
     "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-    "Severity": "medium",
+    "Severity": "low",
     "ResourceType": "AwsEcrRepository",
     "Description": "Check if ECR repositories have lifecycle policies enabled",
     "Risk": "Amazon ECR repositories run the risk of retaining huge volumes of images, increasing unnecessary cost.",
@@ -15,7 +15,7 @@
       "Code": {
         "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ECR/lifecycle-policy-in-use.html",
         "NativeIaC": "",
-        "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ECR/lifecycle-policy-in-use.html",
+        "Other": "",
         "Terraform": ""
       },
       "Recommendation": {
