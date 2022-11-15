@@ -5,7 +5,7 @@
   "CheckType": ["Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"],
   "ServiceName": "dynamodb",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:dynamodb:region:account-id:certificate/resource-id",
+  "ResourceIdTemplate": "arn:partition:dynamodb:region:account-id:table/resource-id",
   "Severity": "medium",
   "ResourceType": "AwsDynamoDBTable",
   "Description": "Check if DynamoDB table has encryption at rest enabled using CMK KMS.",

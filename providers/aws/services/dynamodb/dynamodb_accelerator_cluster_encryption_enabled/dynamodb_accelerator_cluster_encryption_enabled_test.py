@@ -67,7 +67,7 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
             assert result[0].resource_arn == cluster["ClusterArn"]
 
     @mock_dax
-    def test_dynamodb_table_with_encryption(self):
+    def test_dax_cluster_with_encryption(self):
         dax_client = client("dax", region_name=AWS_REGION)
         iam_role_arn = f"arn:aws:iam::{DEFAULT_ACCOUNT_ID}:role/aws-service-role/dax.amazonaws.com/AWSServiceRoleForDAX"
         cluster = dax_client.create_cluster(

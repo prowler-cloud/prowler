@@ -97,6 +97,10 @@ class Test_DynamoDB_Service:
         audit_info = self.set_mocked_audit_info()
         dynamo = DynamoDB(audit_info)
         assert len(dynamo.tables) == 2
+        assert dynamo.tables[0].name == "test1"
+        assert dynamo.tables[1].name == "test2"
+        assert dynamo.tables[0].region == AWS_REGION
+        assert dynamo.tables[1].region == AWS_REGION
 
     # Test DynamoDB Describe Table
     @mock_dynamodb
@@ -121,6 +125,8 @@ class Test_DynamoDB_Service:
         dynamo = DynamoDB(audit_info)
         assert len(dynamo.tables) == 1
         assert dynamo.tables[0].arn == table["TableArn"]
+        assert dynamo.tables[0].name == "test1"
+        assert dynamo.tables[0].region == AWS_REGION
 
     # Test DynamoDB Describe Table
     @mock_dynamodb
@@ -149,7 +155,9 @@ class Test_DynamoDB_Service:
         dynamo = DynamoDB(audit_info)
         assert len(dynamo.tables) == 1
         assert dynamo.tables[0].arn == table["TableArn"]
+        assert dynamo.tables[0].name == "test1"
         assert dynamo.tables[0].pitr
+        assert dynamo.tables[0].region == AWS_REGION
 
     # Test DAX List Tables
     @mock_dax
@@ -176,3 +184,7 @@ class Test_DynamoDB_Service:
         audit_info = self.set_mocked_audit_info()
         dax = DAX(audit_info)
         assert len(dax.clusters) == 2
+        assert dax.clusters[0].name == "daxcluster1"
+        assert dax.clusters[1].name == "daxcluster2"
+        assert dax.clusters[0].region == AWS_REGION
+        assert dax.clusters[1].region == AWS_REGION
