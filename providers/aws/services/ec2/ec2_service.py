@@ -28,6 +28,8 @@ class EC2:
         self.__threading_call__(self.__describe_images__)
         self.volumes = []
         self.__threading_call__(self.__describe_volumes__)
+        self.ebs_encryption_by_default = []
+        self.__threading_call__(self.__get_ebs_encryption_by_default__)
 
     def __get_session__(self):
         return self.session
@@ -265,6 +267,22 @@ class EC2:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __get_ebs_encryption_by_default__(self, regional_client):
+        logger.info("EC2 - Get EBS Encryption By Default...")
+        try:
+            self.ebs_encryption_by_default.append(
+                EbsEncryptionByDefault(
+                    regional_client.get_ebs_encryption_by_default()[
+                        "EbsEncryptionByDefault"
+                    ],
+                    regional_client.region,
+                )
+            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 @dataclass
 class Instance:
@@ -396,4 +414,14 @@ class Image:
         self.id = id
         self.name = name
         self.public = public
+        self.region = region
+
+
+@dataclass
+class EbsEncryptionByDefault:
+    status: bool
+    region: str
+
+    def __init__(self, status, region):
+        self.status = status
         self.region = region

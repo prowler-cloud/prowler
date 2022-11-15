@@ -184,3 +184,18 @@ class Test_EC2_Service:
         audit_info = self.set_mocked_audit_info()
         ec2 = EC2(audit_info)
         assert user_data == b64decode(ec2.instances[0].user_data).decode("utf-8")
+
+    # Test EC2 Instance User Data
+    @mock_ec2
+    def test__get_ebs_encryption_by_default__(self):
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client.enable_ebs_encryption_by_default()
+        # EC2 client for this test class
+        audit_info = self.set_mocked_audit_info()
+        ec2 = EC2(audit_info)
+
+        # One result per region
+        assert len(ec2.ebs_encryption_by_default) == 23
+        for result in ec2.ebs_encryption_by_default:
+            if result.region == AWS_REGION:
+                assert result.status
