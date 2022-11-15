@@ -100,8 +100,8 @@ class Test_ECR_Service:
     def test_client(self):
         audit_info = self.set_mocked_audit_info()
         ecr = ECR(audit_info)
-        for client in ecr.regional_clients.values():
-            assert client.__class__.__name__ == "ECR"
+        for regional_client in ecr.regional_clients.values():
+            assert regional_client.__class__.__name__ == "ECR"
 
     # Test ECR session
     def test__get_session__(self):
