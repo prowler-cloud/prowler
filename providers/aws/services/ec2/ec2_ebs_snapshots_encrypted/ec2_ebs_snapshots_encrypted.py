@@ -10,11 +10,11 @@ class ec2_ebs_snapshots_encrypted(Check):
             report.region = snapshot.region
             if snapshot.encrypted:
                 report.status = "PASS"
-                report.status_extended = f"EBS Snapshot {snapshot.id} is encrypted"
+                report.status_extended = f"EBS Snapshot {snapshot.id} is encrypted."
                 report.resource_id = snapshot.id
             else:
                 report.status = "FAIL"
-                report.status_extended = f"EBS Snapshot {snapshot.id} is unencrypted"
+                report.status_extended = f"EBS Snapshot {snapshot.id} is unencrypted."
                 report.resource_id = snapshot.id
             findings.append(report)
 

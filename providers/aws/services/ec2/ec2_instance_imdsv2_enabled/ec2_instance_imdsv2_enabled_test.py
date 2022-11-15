@@ -15,7 +15,7 @@ class Test_ec2_instance_imdsv2_enabled:
 
         with mock.patch(
             "providers.aws.services.ec2.ec2_service.EC2",
-            ec2_client,
+            new=ec2_client,
         ):
             # Test Check
             from providers.aws.services.ec2.ec2_instance_imdsv2_enabled.ec2_instance_imdsv2_enabled import (
@@ -49,7 +49,7 @@ class Test_ec2_instance_imdsv2_enabled:
 
         with mock.patch(
             "providers.aws.services.ec2.ec2_service.EC2",
-            ec2_client,
+            new=ec2_client,
         ):
             from providers.aws.services.ec2.ec2_instance_imdsv2_enabled.ec2_instance_imdsv2_enabled import (
                 ec2_instance_imdsv2_enabled,
@@ -85,7 +85,7 @@ class Test_ec2_instance_imdsv2_enabled:
 
         with mock.patch(
             "providers.aws.services.ec2.ec2_service.EC2",
-            ec2_client,
+            new=ec2_client,
         ):
             from providers.aws.services.ec2.ec2_instance_imdsv2_enabled.ec2_instance_imdsv2_enabled import (
                 ec2_instance_imdsv2_enabled,

@@ -17,7 +17,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22(Check):
             for ingress_rule in security_group.ingress_rules:
                 if check_security_group(ingress_rule, "tcp", check_ports):
                     report.status = "FAIL"
-                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) has the SSH port 22 open to the Internet."
+                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) has SSH port 22 open to the Internet."
                     break
             findings.append(report)
 

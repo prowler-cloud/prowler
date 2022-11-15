@@ -141,9 +141,7 @@ class EC2:
                 "describe_snapshots"
             )
             encrypted = False
-            for page in describe_snapshots_paginator.paginate(
-                OwnerIds=[str(self.audited_account)]
-            ):
+            for page in describe_snapshots_paginator.paginate(OwnerIds=["self"]):
                 for snapshot in page["Snapshots"]:
                     if snapshot["Encrypted"]:
                         encrypted = True
