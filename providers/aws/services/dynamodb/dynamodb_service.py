@@ -113,7 +113,7 @@ class DAX:
             t.join()
 
     def __describe_clusters__(self, regional_client):
-        logger.info("DynamoDB DAX- Describing clusters...")
+        logger.info("DynamoDB DAX - Describing clusters...")
         try:
             describe_clusters_paginator = regional_client.get_paginator(
                 "describe_clusters"
