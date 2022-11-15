@@ -26,6 +26,7 @@ pytest = "7.1.2"
 pytest-xdist = "2.5.0"
 coverage = "6.4.1"
 sure = "2.0.0"
+freezegun = "1.2.1"
 
 [requires]
 python_version = "3.9"
