@@ -199,3 +199,14 @@ class Test_EC2_Service:
         for result in ec2.ebs_encryption_by_default:
             if result.region == AWS_REGION:
                 assert result.status
+
+    # Test EC2 Describe Snapshots
+    @mock_ec2
+    def test__describe_addresses__(self):
+        # Generate EC2 Client
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client.allocate_address(Domain="vpc", Address="127.38.43.222")
+        # EC2 client for this test class
+        audit_info = self.set_mocked_audit_info()
+        ec2 = EC2(audit_info)
+        assert "127.38.43.222" in str(ec2.elastic_ips)

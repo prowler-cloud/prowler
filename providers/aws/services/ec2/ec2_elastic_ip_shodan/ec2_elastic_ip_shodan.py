@@ -21,6 +21,7 @@ class ec2_elastic_ip_shodan(Check):
                         report.status = "FAIL"
                         report.status_extended = f"Elastic IP {eip.public_ip} listed in Shodan with open ports {str(shodan_info['ports'])} and ISP {shodan_info['isp']} in {shodan_info['country_name']}. More info https://www.shodan.io/host/{eip.public_ip}"
                         report.resource_id = eip.public_ip
+                        findings.append(report)
                     except shodan.APIError as error:
                         if "No information available for that IP" in error.value:
                             report.status = "PASS"
@@ -32,13 +33,7 @@ class ec2_elastic_ip_shodan(Check):
                             continue
                         else:
                             logger.error(f"Unknown Shodan API Error: {error.value}")
-                else:
-                    report.status = "PASS"
-                    report.status_extended = (
-                        f"Elastic IP {eip.public_ip} has not a Public IP."
-                    )
-                    report.resource_id = eip.public_ip
-                findings.append(report)
+
         else:
             logger.error(
                 "ERROR: No Shodan API Key -- Please input a Shodan API Key with -N/--shodan or in config.yaml"

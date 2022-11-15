@@ -22,7 +22,6 @@ class EC2:
         self.snapshots = []
         self.__threading_call__(self.__describe_snapshots__)
         self.__get_snapshot_public__()
-        self.elastic_ips = []
         self.__threading_call__(self.__describe_network_interfaces__)
         self.images = []
         self.__threading_call__(self.__describe_images__)
@@ -30,6 +29,8 @@ class EC2:
         self.__threading_call__(self.__describe_volumes__)
         self.ebs_encryption_by_default = []
         self.__threading_call__(self.__get_ebs_encryption_by_default__)
+        self.elastic_ips = []
+        self.__threading_call__(self.__describe_addresses__)
 
     def __get_session__(self):
         return self.session
@@ -194,22 +195,7 @@ class EC2:
                 ):
                     for interface in page["NetworkInterfaces"]:
                         sg.network_interfaces.append(interface["NetworkInterfaceId"])
-            # Get Elastic IPs
-            describe_network_interfaces_paginator = regional_client.get_paginator(
-                "describe_network_interfaces"
-            )
-            for page in describe_network_interfaces_paginator.paginate():
-                for eip in page["NetworkInterfaces"]:
-                    # Get only public attached ones
-                    if "Association" in eip:
-                        self.elastic_ips.append(
-                            ElasticIP(
-                                eip["Association"]["PublicIp"],
-                                eip["VpcId"],
-                                eip["SubnetId"],
-                                regional_client.region,
-                            )
-                        )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -262,6 +248,33 @@ class EC2:
                             volume["Encrypted"],
                         )
                     )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __describe_addresses__(self, regional_client):
+        logger.info("EC2 - Describing Elastic IPs...")
+        try:
+            for address in regional_client.describe_addresses()["Addresses"]:
+                print(address)
+                public_ip = None
+                association_id = None
+                allocation_id = None
+                if "PublicIp" in address:
+                    public_ip = address["PublicIp"]
+                if "AssociationId" in address:
+                    association_id = address["AssociationId"]
+                if "AllocationId" in address:
+                    allocation_id = address["AllocationId"]
+                self.elastic_ips.append(
+                    ElasticIP(
+                        public_ip,
+                        association_id,
+                        allocation_id,
+                        regional_client.region,
+                    )
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -392,14 +405,14 @@ class NetworkACL:
 @dataclass
 class ElasticIP:
     public_ip: str
-    vpc: str
-    subnet: str
+    association_id: str
+    allocation_id: str
     region: str
 
-    def __init__(self, public_ip, vpc, subnet, region):
+    def __init__(self, public_ip, association_id, allocation_id, region):
         self.public_ip = public_ip
-        self.vpc = vpc
-        self.subnet = subnet
+        self.association_id = association_id
+        self.allocation_id = allocation_id
         self.region = region
 
 
