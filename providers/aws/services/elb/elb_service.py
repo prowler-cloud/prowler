@@ -1,4 +1,5 @@
 import threading
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -34,7 +35,7 @@ class ELB:
                 "describe_load_balancers"
             )
             for page in describe_elb_paginator.paginate():
-                for elb in page["LoadBalancers"]:
+                for elb in page["LoadBalancerDescriptions"]:
                     listeners = []
                     for listener in elb["ListenerDescriptions"]:
                         listeners.append(
@@ -82,6 +83,7 @@ class ELBv2:
         self.__threading_call__(self.__describe_load_balancers__)
         self.listeners = []
         self.__threading_call__(self.__describe_listeners__)
+        self.__threading_call__(self.__describe_load_balancer_attributes__)
 
     def __get_session__(self):
         return self.session
@@ -119,7 +121,7 @@ class ELBv2:
             )
 
     def __describe_listeners__(self, regional_client):
-        logger.info("ELBv2 - Describing load balancers...")
+        logger.info("ELBv2 - Describing listeners...")
         try:
             for lb in self.loadbalancersv2:
                 if lb.region == regional_client.region:
@@ -146,6 +148,23 @@ class ELBv2:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __describe_load_balancer_attributes__(self, regional_client):
+        logger.info("ELBv2 - Describing attributes...")
+        try:
+            for lb in self.loadbalancersv2:
+                if lb.region == regional_client.region:
+                    for attribute in regional_client.describe_load_balancer_attributes(
+                        LoadBalancerArn=lb.arn
+                    )["Attributes"]:
+                        if attribute["Key"] == "routing.http.desync_mitigation_mode":
+                            lb.desync_mitigation_mode = attribute["Value"]
+                        if attribute["Key"] == "deletion_protection.enabled":
+                            lb.deletion_protection = attribute["Value"]
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Listenerv2(BaseModel):
     arn: str
@@ -160,4 +179,6 @@ class LoadBalancerv2(BaseModel):
     region: str
     scheme: str
     type: str
+    desync_mitigation_mode: Optional[str]
+    deletion_protection: Optional[str]
     listeners: list[Listenerv2]
