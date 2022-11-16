@@ -20,7 +20,7 @@
       },
       "Recommendation": {
         "Text": "Add listeners to Elastic Load Balancers V2.",
-        "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-listener-config.html"
+        "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html"
       }
     },
     "Categories": [],

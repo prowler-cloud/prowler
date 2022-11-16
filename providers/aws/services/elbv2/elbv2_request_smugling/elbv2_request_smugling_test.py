@@ -8,25 +8,25 @@ AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class Test_elbv2_deletion_protection:
+class Test_elbv2_request_smugling:
     @mock_elbv2
     def test_elb_no_balancers(self):
 
         from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elb.elb_service import ELBv2
+        from providers.aws.services.elbv2.elbv2_service import ELBv2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elb.elbv2_deletion_protection.elbv2_deletion_protection.elbv2_client",
+            "providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling.elbv2_client",
             new=ELBv2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.elb.elbv2_deletion_protection.elbv2_deletion_protection import (
-                elbv2_deletion_protection,
+            from providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling import (
+                elbv2_request_smugling,
             )
 
-            check = elbv2_deletion_protection()
+            check = elbv2_request_smugling()
             result = check.execute()
 
             assert len(result) == 0
@@ -59,30 +59,33 @@ class Test_elbv2_deletion_protection:
         conn.modify_load_balancer_attributes(
             LoadBalancerArn=lb["LoadBalancerArn"],
             Attributes=[
-                {"Key": "deletion_protection.enabled", "Value": "false"},
+                {
+                    "Key": "routing.http.drop_invalid_header_fields.enabled",
+                    "Value": "false",
+                },
             ],
         )
 
         from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elb.elb_service import ELBv2
+        from providers.aws.services.elbv2.elbv2_service import ELBv2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elb.elbv2_deletion_protection.elbv2_deletion_protection.elbv2_client",
+            "providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling.elbv2_client",
             new=ELBv2(current_audit_info),
         ):
-            from providers.aws.services.elb.elbv2_deletion_protection.elbv2_deletion_protection import (
-                elbv2_deletion_protection,
+            from providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling import (
+                elbv2_request_smugling,
             )
 
-            check = elbv2_deletion_protection()
+            check = elbv2_request_smugling()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                "has not deletion protection",
+                "is not dropping invalid header fields",
                 result[0].status_extended,
             )
             assert result[0].resource_id == "my-lb"
@@ -137,30 +140,33 @@ class Test_elbv2_deletion_protection:
         conn.modify_load_balancer_attributes(
             LoadBalancerArn=lb["LoadBalancerArn"],
             Attributes=[
-                {"Key": "deletion_protection.enabled", "Value": "true"},
+                {
+                    "Key": "routing.http.drop_invalid_header_fields.enabled",
+                    "Value": "true",
+                },
             ],
         )
 
         from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elb.elb_service import ELBv2
+        from providers.aws.services.elbv2.elbv2_service import ELBv2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elb.elbv2_deletion_protection.elbv2_deletion_protection.elbv2_client",
+            "providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling.elbv2_client",
             new=ELBv2(current_audit_info),
         ):
-            from providers.aws.services.elb.elbv2_deletion_protection.elbv2_deletion_protection import (
-                elbv2_deletion_protection,
+            from providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling import (
+                elbv2_request_smugling,
             )
 
-            check = elbv2_deletion_protection()
+            check = elbv2_request_smugling()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                "has deletion protection enabled",
+                "is dropping invalid header fields",
                 result[0].status_extended,
             )
             assert result[0].resource_id == "my-lb"
