@@ -1,21 +1,21 @@
 {
     "Provider": "aws",
-    "CheckID": "elbv2_insecure_ssl_ciphers",
+    "CheckID": "elb_insecure_ssl_ciphers",
     "CheckTitle": "Check if Elastic Load Balancers have insecure SSL ciphers.",
     "CheckType": ["Data Protection"],
-    "ServiceName": "elbv2",
+    "ServiceName": "elb",
     "SubServiceName": "",
     "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
     "Severity": "medium",
-    "ResourceType": "AwsElasticLoadBalancingV2LoadBalancer",
+    "ResourceType": "AwsElbLoadBalancer",
     "Description": "Check if Elastic Load Balancers have insecure SSL ciphers.",
     "Risk": "Using insecure ciphers could affect privacy of in transit information.",
     "RelatedUrl": "",
     "Remediation": {
       "Code": {
-        "CLI": "aws elbv2 modify-listener --listener-arn <lb_arn> --ssl-policy ELBSecurityPolicy-TLS13-1-2-Ext2-2021-06",
+        "CLI": "aws elb set-load-balancer-policies-of-listener --load-balancer-name <lb_name> --load-balancer-port 443 --policy-names ELBSecurityPolicy-TLS-1-2-2017-01",
         "NativeIaC": "",
-        "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/security-policy.html",
+        "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/elb-security-policy.html",
         "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_general_43#terraform"
       },
       "Recommendation": {

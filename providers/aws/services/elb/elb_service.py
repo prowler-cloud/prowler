@@ -1,4 +1,5 @@
 import threading
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -14,6 +15,7 @@ class ELB:
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.loadbalancers = []
         self.__threading_call__(self.__describe_load_balancers__)
+        self.__threading_call__(self.__describe_load_balancer_attributes__)
 
     def __get_session__(self):
         return self.session
@@ -58,6 +60,22 @@ class ELB:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __describe_load_balancer_attributes__(self, regional_client):
+        logger.info("ELB - Describing attributes...")
+        try:
+            for lb in self.loadbalancers:
+                if lb.region == regional_client.region:
+                    attributes = regional_client.describe_load_balancer_attributes(
+                        LoadBalancerName=lb.name
+                    )["LoadBalancerAttributes"]
+                    if "AccessLog" in attributes:
+                        lb.access_logs = attributes["AccessLog"]["Enabled"]
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Listener(BaseModel):
     protocol: str
@@ -69,4 +87,5 @@ class LoadBalancer(BaseModel):
     dns: str
     region: str
     scheme: str
+    access_logs: Optional[bool]
     listeners: list[Listener]
