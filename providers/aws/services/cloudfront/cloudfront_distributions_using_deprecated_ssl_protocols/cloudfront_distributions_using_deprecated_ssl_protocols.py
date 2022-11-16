@@ -1,7 +1,6 @@
 from lib.check.models import Check, Check_Report
 from providers.aws.services.cloudfront.cloudfront_client import cloudfront_client
-
-SSLV3 = "SSLv3"
+from providers.aws.services.cloudfront.cloudfront_service import OriginsSSLProtocols
 
 
 class cloudfront_distributions_using_deprecated_ssl_protocols(Check):
@@ -15,14 +14,23 @@ class cloudfront_distributions_using_deprecated_ssl_protocols(Check):
             report.status = "PASS"
             report.status_extended = f"CloudFront Distribution {distribution.id} is not using a deprecated SSL protocol"
 
+            bad_ssl_protocol = False
             for origin in distribution.origins:
                 if "CustomOriginConfig" in origin:
-                    if (
-                        SSLV3
-                        in origin["CustomOriginConfig"]["OriginSslProtocols"]["Items"]
-                    ):
-                        report.status = "FAIL"
-                        report.status_extended = f"CloudFront Distribution {distribution.id} is using a deprecated SSL protocol"
+                    for ssl_protocol in origin["CustomOriginConfig"][
+                        "OriginSslProtocols"
+                    ]["Items"]:
+                        if ssl_protocol in (
+                            OriginsSSLProtocols.SSLv3.value,
+                            OriginsSSLProtocols.TLSv1.value,
+                            OriginsSSLProtocols.TLSv1_1.value,
+                        ):
+                            bad_ssl_protocol = True
+                            break
+                if bad_ssl_protocol:
+                    report.status = "FAIL"
+                    report.status_extended = f"CloudFront Distribution {distribution.id} is using a deprecated SSL protocol"
+                    break
 
             findings.append(report)
 

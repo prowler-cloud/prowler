@@ -93,6 +93,13 @@ class CloudFront:
             return distributions
 
 
+class OriginsSSLProtocols(Enum):
+    SSLv3 = "SSLv3"
+    TLSv1 = "TLSv1"
+    TLSv1_1 = "TLSv1.1"
+    TLSv1_2 = "TLSv1.2"
+
+
 class ViewerProtocolPolicy(Enum):
     """The protocol that viewers can use to access the files in the origin specified by TargetOriginId when a request matches the path pattern in PathPattern"""
 

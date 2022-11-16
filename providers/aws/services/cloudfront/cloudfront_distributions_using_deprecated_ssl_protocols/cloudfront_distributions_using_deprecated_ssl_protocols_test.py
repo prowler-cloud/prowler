@@ -126,7 +126,80 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                             "OriginProtocolPolicy": "https-only",
                             "OriginSslProtocols": {
                                 "Quantity": 123,
-                                "Items": ["SSLv3", "TLSv1.2"],
+                                "Items": [
+                                    "SSLv3",
+                                    "TLSv1.2",
+                                ],
+                            },
+                            "OriginReadTimeout": 123,
+                            "OriginKeepaliveTimeout": 123,
+                        },
+                        "ConnectionAttempts": 123,
+                        "ConnectionTimeout": 123,
+                        "OriginShield": {
+                            "Enabled": False,
+                            "OriginShieldRegion": "string",
+                        },
+                        "OriginAccessControlId": "string",
+                    },
+                ],
+            )
+        }
+
+        with mock.patch(
+            "providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            new=cloudfront_client,
+        ):
+            # Test Check
+            from providers.aws.services.cloudfront.cloudfront_distributions_using_deprecated_ssl_protocols.cloudfront_distributions_using_deprecated_ssl_protocols import (
+                cloudfront_distributions_using_deprecated_ssl_protocols,
+            )
+
+            check = cloudfront_distributions_using_deprecated_ssl_protocols()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].region == REGION
+            assert result[0].resource_arn == DISTRIBUTION_ARN
+            assert result[0].resource_id == DISTRIBUTION_ID
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"CloudFront Distribution {DISTRIBUTION_ID} is using a deprecated SSL protocol"
+            )
+
+    def test_one_distribution_using_SSL_and_bad_TLS(self):
+        cloudfront_client = mock.MagicMock
+        cloudfront_client.distributions = {
+            "DISTRIBUTION_ID": Distribution(
+                arn=DISTRIBUTION_ARN,
+                id=DISTRIBUTION_ID,
+                region=REGION,
+                origins=[
+                    {
+                        "Id": "string",
+                        "DomainName": "string",
+                        "OriginPath": "string",
+                        "CustomHeaders": {
+                            "Quantity": 123,
+                            "Items": [
+                                {
+                                    "HeaderName": "string",
+                                    "HeaderValue": "string",
+                                },
+                            ],
+                        },
+                        "S3OriginConfig": {"OriginAccessIdentity": "string"},
+                        "CustomOriginConfig": {
+                            "HTTPPort": 123,
+                            "HTTPSPort": 123,
+                            "OriginProtocolPolicy": "https-only",
+                            "OriginSslProtocols": {
+                                "Quantity": 123,
+                                "Items": [
+                                    "SSLv3",
+                                    "TLSv1.1",
+                                ],
                             },
                             "OriginReadTimeout": 123,
                             "OriginKeepaliveTimeout": 123,
