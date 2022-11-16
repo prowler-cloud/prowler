@@ -1,3 +1,5 @@
+import io
+import zipfile
 from unittest.mock import patch
 
 from boto3 import client, resource, session
@@ -94,6 +96,19 @@ class Test_SecretsManager_Service:
             Bucket="test-bucket",
             CreateBucketConfiguration={"LocationConstraint": AWS_REGION},
         )
+        # Create Lambda Code
+        zip_output = io.BytesIO()
+        zip_file = zipfile.ZipFile(zip_output, "w", zipfile.ZIP_DEFLATED)
+        zip_file.writestr(
+            "lambda_function.py",
+            """
+            def lambda_handler(event, context):
+                print("custom log event")
+                return event
+            """,
+        )
+        zip_file.close()
+        zip_output.seek(0)
         # Create Rotation Lambda
         lambda_client = client("lambda", region_name=AWS_REGION)
         resp = lambda_client.create_function(
@@ -101,7 +116,7 @@ class Test_SecretsManager_Service:
             Runtime="python3.7",
             Role=iam_role,
             Handler="lambda_function.lambda_handler",
-            Code={"ZipFile": b""},
+            Code={"ZipFile": zip_output.read()},
             Description="test lambda function",
             Timeout=3,
             MemorySize=128,
