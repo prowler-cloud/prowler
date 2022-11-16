@@ -160,6 +160,11 @@ class ELBv2:
                             lb.desync_mitigation_mode = attribute["Value"]
                         if attribute["Key"] == "deletion_protection.enabled":
                             lb.deletion_protection = attribute["Value"]
+                        if (
+                            attribute["Key"]
+                            == "routing.http.drop_invalid_header_fields.enabled"
+                        ):
+                            lb.drop_invalid_header_fields = attribute["Value"]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -181,4 +186,5 @@ class LoadBalancerv2(BaseModel):
     type: str
     desync_mitigation_mode: Optional[str]
     deletion_protection: Optional[str]
+    drop_invalid_header_fields: Optional[str]
     listeners: list[Listenerv2]
