@@ -6,7 +6,6 @@ class elbv2_deletion_protection(Check):
     def execute(self):
         findings = []
         for lb in elbv2_client.loadbalancersv2:
-            print(lb)
             report = Check_Report(self.metadata)
             report.region = lb.region
             report.resource_id = lb.name

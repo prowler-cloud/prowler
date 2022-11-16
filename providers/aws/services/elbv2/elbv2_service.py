@@ -77,6 +77,7 @@ class ELBv2:
                                     arn=listener["ListenerArn"],
                                     port=port,
                                     protocol=listener["Protocol"],
+                                    ssl_policy=listener.get("SslPolicy"),
                                     rules=[],
                                 )
                             )
@@ -143,6 +144,7 @@ class Listenerv2(BaseModel):
     region: str
     port: int
     protocol: str
+    ssl_policy: Optional[str]
     rules: list[ListenerRule]
 
 

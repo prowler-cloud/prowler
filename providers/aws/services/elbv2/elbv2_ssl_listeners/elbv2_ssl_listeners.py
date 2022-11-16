@@ -16,7 +16,6 @@ class elbv2_ssl_listeners(Check):
                     f"ELBv2 ALB {lb.name} has HTTPS listeners only."
                 )
                 for listener in lb.listeners:
-                    print(listener)
                     if listener.protocol == "HTTP":
                         report.status = "FAIL"
                         report.status_extended = (

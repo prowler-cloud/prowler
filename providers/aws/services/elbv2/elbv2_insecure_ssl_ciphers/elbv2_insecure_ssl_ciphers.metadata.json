@@ -1,0 +1,35 @@
+{
+    "Provider": "aws",
+    "CheckID": "elbv2_insecure_ssl_ciphers",
+    "CheckTitle": "Check if Elastic Load Balancers have insecure SSL ciphers.",
+    "CheckType": ["Data Protection"],
+    "ServiceName": "elbv2",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+    "Severity": "medium",
+    "ResourceType": "AwsElasticLoadBalancingV2LoadBalancer",
+    "Description": "Check if Elastic Load Balancers have insecure SSL ciphers.",
+    "Risk": "Using insecure ciphers could affect privacy of in transit information.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "aws elbv2 modify-load-balancer-attributes --load-balancer-arn <lb_arn> --attributes Key=routing.http.drop_invalid_header_fields.enabled,Value=true",
+        "NativeIaC": "",
+        "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/drop-invalid-header-fields-enabled.html",
+        "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-alb-drops-http-headers#terraform"
+      },
+      "Recommendation": {
+        "Text": "Use a Security policy with a ciphers that are stronger as possible. Drop legacy and unsecure ciphers.",
+        "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html#describe-ssl-policies"
+      }
+    },
+    "Categories": [],
+    "Tags": {
+      "Tag1Key": "value",
+      "Tag2Key": "value"
+    },
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "",
+    "Compliance": []
+  }
