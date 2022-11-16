@@ -42,6 +42,7 @@ class ELBv2:
                     self.loadbalancersv2.append(
                         LoadBalancerv2(
                             name=elbv2["LoadBalancerName"],
+                            dns=elbv2["DNSName"],
                             region=regional_client.region,
                             arn=elbv2["LoadBalancerArn"],
                             scheme=elbv2["Scheme"],
@@ -114,6 +115,7 @@ class Listenerv2(BaseModel):
 
 class LoadBalancerv2(BaseModel):
     name: str
+    dns: str
     arn: str
     region: str
     scheme: str

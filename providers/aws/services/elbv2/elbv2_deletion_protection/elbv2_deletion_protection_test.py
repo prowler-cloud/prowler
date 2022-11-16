@@ -112,28 +112,6 @@ class Test_elbv2_deletion_protection:
             Scheme="internal",
         )["LoadBalancers"][0]
 
-        response = conn.create_target_group(
-            Name="a-target",
-            Protocol="HTTP",
-            Port=8080,
-            VpcId=vpc.id,
-            HealthCheckProtocol="HTTP",
-            HealthCheckPort="8080",
-            HealthCheckPath="/",
-            HealthCheckIntervalSeconds=5,
-            HealthCheckTimeoutSeconds=5,
-            HealthyThresholdCount=5,
-            UnhealthyThresholdCount=2,
-            Matcher={"HttpCode": "200"},
-        )
-        target_group = response.get("TargetGroups")[0]
-        target_group_arn = target_group["TargetGroupArn"]
-        response = conn.create_listener(
-            LoadBalancerArn=lb["LoadBalancerArn"],
-            Protocol="HTTP",
-            DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group_arn}],
-        )
-
         conn.modify_load_balancer_attributes(
             LoadBalancerArn=lb["LoadBalancerArn"],
             Attributes=[
