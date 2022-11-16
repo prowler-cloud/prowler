@@ -95,6 +95,8 @@ class ELBv2:
                             lb.desync_mitigation_mode = attribute["Value"]
                         if attribute["Key"] == "deletion_protection.enabled":
                             lb.deletion_protection = attribute["Value"]
+                        if attribute["Key"] == "access_logs.s3.enabled":
+                            lb.access_logs = attribute["Value"]
                         if (
                             attribute["Key"]
                             == "routing.http.drop_invalid_header_fields.enabled"
@@ -120,6 +122,7 @@ class LoadBalancerv2(BaseModel):
     region: str
     scheme: str
     type: str
+    access_logs: Optional[str]
     desync_mitigation_mode: Optional[str]
     deletion_protection: Optional[str]
     drop_invalid_header_fields: Optional[str]
