@@ -18,6 +18,7 @@ class ELBv2:
         self.listeners = []
         self.__threading_call__(self.__describe_listeners__)
         self.__threading_call__(self.__describe_load_balancer_attributes__)
+        self.__threading_call__(self.__describe_rules__)
 
     def __get_session__(self):
         return self.session
@@ -76,6 +77,7 @@ class ELBv2:
                                     arn=listener["ListenerArn"],
                                     port=port,
                                     protocol=listener["Protocol"],
+                                    rules=[],
                                 )
                             )
         except Exception as error:
@@ -107,12 +109,41 @@ class ELBv2:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __describe_rules__(self, regional_client):
+        logger.info("ELBv2 - Describing Rules...")
+        try:
+            for lb in self.loadbalancersv2:
+                if lb.region == regional_client.region:
+                    for listener in lb.listeners:
+                        for rule in regional_client.describe_rules(
+                            ListenerArn=listener.arn
+                        )["Rules"]:
+                            listener.rules.append(
+                                ListenerRule(
+                                    arn=rule["RuleArn"],
+                                    actions=rule["Actions"],
+                                    conditions=rule["Conditions"],
+                                )
+                            )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+class ListenerRule(BaseModel):
+    arn: str
+    actions: list[dict]
+    conditions: list[dict]
+
 
 class Listenerv2(BaseModel):
     arn: str
     region: str
     port: int
     protocol: str
+    rules: list[ListenerRule]
 
 
 class LoadBalancerv2(BaseModel):

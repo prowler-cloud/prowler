@@ -33,7 +33,7 @@ class Test_elbv2_request_smugling:
 
     @mock_ec2
     @mock_elbv2
-    def test_elbv2_without_deletion_protection(self):
+    def test_elbv2_without_dropping(self):
         conn = client("elbv2", region_name=AWS_REGION)
         ec2 = resource("ec2", region_name=AWS_REGION)
 
@@ -93,7 +93,7 @@ class Test_elbv2_request_smugling:
 
     @mock_ec2
     @mock_elbv2
-    def test_elbv2_with_deletion_protection(self):
+    def test_elbv2_with_dropping(self):
         conn = client("elbv2", region_name=AWS_REGION)
         ec2 = resource("ec2", region_name=AWS_REGION)
 
