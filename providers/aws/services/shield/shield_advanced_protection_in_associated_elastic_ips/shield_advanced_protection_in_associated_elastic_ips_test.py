@@ -146,7 +146,7 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
         ]
         # Shield Client
         shield_client = mock.MagicMock
-        shield_client.enabled = True
+        shield_client.enabled = False
         shield_client.region = AWS_REGION
         shield_client.protections = {}
 
@@ -165,12 +165,4 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
             check = shield_advanced_protection_in_associated_elastic_ips()
             result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].region == AWS_REGION
-            assert result[0].resource_id == allocation_id
-            assert result[0].resource_arn == elastic_ip_arn
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"Elastic IP {allocation_id} is not protected by AWS Shield Advanced"
-            )
+            assert len(result) == 0
