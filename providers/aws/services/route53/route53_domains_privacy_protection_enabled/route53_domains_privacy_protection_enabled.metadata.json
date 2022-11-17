@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-privacy-protection.html",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws route53domains update-domain-contact-privacy --domain-name domain.com --registrant-privacy",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Route53/privacy-protection.html",
       "Terraform": ""
