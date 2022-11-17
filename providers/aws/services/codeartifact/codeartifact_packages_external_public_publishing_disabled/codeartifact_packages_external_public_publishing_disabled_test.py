@@ -17,7 +17,7 @@ from providers.aws.services.codeartifact.codeartifact_service import (
 AWS_REGION = "eu-west-1"
 
 
-class Test_accessanalyzer_enabled_without_findings:
+class Test_codeartifact_packages_external_public_publishing_disabled:
     def test_no_repositories(self):
         codeartifact_client = mock.MagicMock
         codeartifact_client.repositories = {}
