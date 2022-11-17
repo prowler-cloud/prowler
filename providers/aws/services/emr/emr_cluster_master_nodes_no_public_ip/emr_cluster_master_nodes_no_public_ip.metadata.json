@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-glacier-vault-access-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Only make acceptable EMR clusters public.",
