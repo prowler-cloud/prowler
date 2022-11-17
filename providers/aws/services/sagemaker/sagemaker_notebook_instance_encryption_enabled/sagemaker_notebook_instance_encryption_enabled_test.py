@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 from uuid import uuid4
 
-from providers.aws.services.sagemaker.sagemaker_service import SagemakerNotebookInstance
+from providers.aws.services.sagemaker.sagemaker_service import NotebookInstance
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -32,7 +32,7 @@ class Test_sagemaker_notebook_instance_encryption_enabled:
         sagemaker_client = mock.MagicMock
         sagemaker_client.sagemaker_notebook_instances = []
         sagemaker_client.sagemaker_notebook_instances.append(
-            SagemakerNotebookInstance(
+            NotebookInstance(
                 name=test_notebook_instance,
                 arn=notebook_instance_arn,
                 region=AWS_REGION,
@@ -59,7 +59,7 @@ class Test_sagemaker_notebook_instance_encryption_enabled:
         sagemaker_client = mock.MagicMock
         sagemaker_client.sagemaker_notebook_instances = []
         sagemaker_client.sagemaker_notebook_instances.append(
-            SagemakerNotebookInstance(
+            NotebookInstance(
                 name=test_notebook_instance,
                 arn=notebook_instance_arn,
                 region=AWS_REGION,

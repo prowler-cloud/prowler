@@ -43,7 +43,7 @@ class SageMaker:
             for page in list_notebook_instances_paginator.paginate():
                 for notebook_instance in page["NotebookInstances"]:
                     self.sagemaker_notebook_instances.append(
-                        SagemakerNotebookInstance(
+                        NotebookInstance(
                             name=notebook_instance["NotebookInstanceName"],
                             region=regional_client.region,
                             arn=notebook_instance["NotebookInstanceArn"],
@@ -61,7 +61,7 @@ class SageMaker:
             for page in list_models_paginator.paginate():
                 for model in page["Models"]:
                     self.sagemaker_models.append(
-                        SagemakerModel(
+                        Model(
                             name=model["ModelName"],
                             region=regional_client.region,
                             arn=model["ModelArn"],
@@ -81,7 +81,7 @@ class SageMaker:
             for page in list_training_jobs_paginator.paginate():
                 for training_job in page["TrainingJobSummaries"]:
                     self.sagemaker_training_jobs.append(
-                        SagemakerTrainingJob(
+                        TrainingJob(
                             name=training_job["TrainingJobName"],
                             region=regional_client.region,
                             arn=training_job["TrainingJobArn"],
@@ -175,7 +175,7 @@ class SageMaker:
             )
 
 
-class SagemakerNotebookInstance(BaseModel):
+class NotebookInstance(BaseModel):
     name: str
     region: str
     arn: str
@@ -185,7 +185,7 @@ class SagemakerNotebookInstance(BaseModel):
     kms_key_id: str = None
 
 
-class SagemakerModel(BaseModel):
+class Model(BaseModel):
     name: str
     region: str
     arn: str
@@ -193,7 +193,7 @@ class SagemakerModel(BaseModel):
     vpc_config_subnets: list[str] = []
 
 
-class SagemakerTrainingJob(BaseModel):
+class TrainingJob(BaseModel):
     name: str
     region: str
     arn: str

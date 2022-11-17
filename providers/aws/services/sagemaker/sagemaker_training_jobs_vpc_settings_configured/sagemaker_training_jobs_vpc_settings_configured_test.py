@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 from uuid import uuid4
 
-from providers.aws.services.sagemaker.sagemaker_service import SagemakerTrainingJob
+from providers.aws.services.sagemaker.sagemaker_service import TrainingJob
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -32,7 +32,7 @@ class Test_sagemaker_training_jobs_vpc_settings_configured:
         sagemaker_client = mock.MagicMock
         sagemaker_client.sagemaker_training_jobs = []
         sagemaker_client.sagemaker_training_jobs.append(
-            SagemakerTrainingJob(
+            TrainingJob(
                 name=test_training_job,
                 arn=training_job_arn,
                 region=AWS_REGION,
@@ -62,7 +62,7 @@ class Test_sagemaker_training_jobs_vpc_settings_configured:
         sagemaker_client = mock.MagicMock
         sagemaker_client.sagemaker_training_jobs = []
         sagemaker_client.sagemaker_training_jobs.append(
-            SagemakerTrainingJob(
+            TrainingJob(
                 name=test_training_job,
                 arn=training_job_arn,
                 region=AWS_REGION,
