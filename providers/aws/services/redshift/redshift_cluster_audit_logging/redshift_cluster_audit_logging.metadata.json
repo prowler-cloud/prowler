@@ -19,7 +19,7 @@
         "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_logging_12#terraform"
       },
       "Recommendation": {
-        "Text": "Enable logs. Create an S3 lifecycle policy. Define use cases; metrics and automated responses where applicable.",
+        "Text": "Enable logs. Create an S3 lifecycle policy. Define use cases, metrics and automated responses where applicable.",
         "Url": "https://docs.aws.amazon.com/redshift/latest/mgmt/db-auditing.html"
       }
     },
