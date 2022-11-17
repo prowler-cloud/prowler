@@ -13,7 +13,7 @@
     "RelatedUrl": "",
     "Remediation": {
       "Code": {
-        "CLI": "aws eks update-cluster-config --region us-east-1 --name cc-eks-mobile-app --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true,publicAccessCidrs=[\"123.123.123.123/32\"]",
+        "CLI": "aws eks update-cluster-config --region <region_name> --name <cluster_name> --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true,publicAccessCidrs=[\"123.123.123.123/32\"]",
         "NativeIaC": "",
         "Other": "https://github.com/cloudmatos/matos/tree/master/remediations/aws/eks/eks-disable-public-endpoint",
         "Terraform": ""
