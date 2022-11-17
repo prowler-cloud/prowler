@@ -1,27 +1,48 @@
+import ipaddress
 from typing import Any
 
 
 ################## Security Groups
-# Check if the security group ingress rule has public access to the check_ports using the protocol
 def check_security_group(ingress_rule: Any, protocol: str, ports: list = []) -> bool:
-    public_IPv4 = "0.0.0.0/0"
-    public_IPv6 = "::/0"
+    """
+    Check if the security group ingress rule has public access to the check_ports using the protocol
+
+    @param ingress_rule: AWS Security Group IpPermissions Ingress Rule
+    {
+        'FromPort': 123,
+        'IpProtocol': 'string',
+        'IpRanges': [
+            {
+                'CidrIp': 'string',
+                'Description': 'string'
+            },
+        ],
+        'Ipv6Ranges': [
+            {
+                'CidrIpv6': 'string',
+                'Description': 'string'
+            },
+        ],
+        'ToPort': 123,
+    }
+
+    @param procotol: Protocol to check.
+
+
+    @param ports: List of ports to check. (Default: [])
+    """
 
     # Check for all traffic ingress rules regardless of the protocol
-    if ingress_rule["IpProtocol"] == "-1" and (
-        (
-            "0.0.0.0/0" in str(ingress_rule["IpRanges"])
-            or "::/0" in str(ingress_rule["Ipv6Ranges"])
-        )
-    ):
-        return True
+    if ingress_rule["IpProtocol"] == "-1":
+        for ip_ingress_rule in ingress_rule["IpRanges"]:
+            if _is_cidr_public(ip_ingress_rule["CidrIp"]):
+                return True
+        for ip_ingress_rule in ingress_rule["Ipv6Ranges"]:
+            if _is_cidr_public(ip_ingress_rule["CidrIp"]):
+                return True
 
     # Check for specific ports in ingress rules
     if "FromPort" in ingress_rule:
-        # All ports
-        if ingress_rule["FromPort"] == 0 and ingress_rule["ToPort"] == 65535:
-            return True
-
         # If there is a port range
         if ingress_rule["FromPort"] != ingress_rule["ToPort"]:
             # Calculate port range, adding 1
@@ -35,14 +56,49 @@ def check_security_group(ingress_rule: Any, protocol: str, ports: list = []) -> 
             ingress_port_range.append(int(ingress_rule["FromPort"]))
 
         # Test Security Group
-        for port in ports:
-            if (
-                (
-                    public_IPv4 in str(ingress_rule["IpRanges"])
-                    or public_IPv6 in str(ingress_rule["Ipv6Ranges"])
-                )
-                and port in ingress_port_range
-                and ingress_rule["IpProtocol"] == protocol
-            ):
-                return True
+        # IPv4
+        for ip_ingress_rule in ingress_rule["IpRanges"]:
+            if _is_cidr_public(ip_ingress_rule["CidrIp"]):
+                # If there are input ports to check
+                if ports:
+                    for port in ports:
+                        if (
+                            port in ingress_port_range
+                            and ingress_rule["IpProtocol"] == protocol
+                        ):
+                            return True
+                else:
+                    return True
+
+        # IPv6
+        for ip_ingress_rule in ingress_rule["Ipv6Ranges"]:
+            if _is_cidr_public(ip_ingress_rule["CidrIp"]):
+                # If there are input ports to check
+                if ports:
+                    for port in ports:
+                        if (
+                            port in ingress_port_range
+                            and ingress_rule["IpProtocol"] == protocol
+                        ):
+                            return True
+                else:
+                    return True
+
     return False
+
+
+def _is_cidr_public(cidr: str) -> bool:
+    """
+    Check if an input CIDR is public
+
+    @param cidr: CIDR 10.22.33.44/8
+    """
+    public_IPv4 = "0.0.0.0/0"
+    public_IPv6 = "::/0"
+    # Workaround until this issue is fixed
+    # PR https://github.com/python/cpython/pull/97733
+    # Issue https://github.com/python/cpython/issues/82836
+    if cidr in (public_IPv4, public_IPv6):
+        return True
+
+    return ipaddress.ip_network(cidr).is_global
