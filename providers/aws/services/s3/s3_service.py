@@ -182,9 +182,9 @@ class S3Control:
     def __init__(self, audit_info):
         self.service = "s3control"
         self.session = audit_info.audit_session
-        self.client = self.session.client(self.service)
         self.audited_account = audit_info.audited_account
         self.region = get_region_global_service(audit_info)
+        self.client = self.session.client(self.service, self.region)
         self.account_public_access_block = self.__get_public_access_block__()
 
     def __get_session__(self):
