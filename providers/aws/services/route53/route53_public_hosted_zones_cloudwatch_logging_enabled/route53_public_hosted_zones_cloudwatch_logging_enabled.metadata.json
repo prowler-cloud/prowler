@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/monitoring-hosted-zones-with-cloudwatch.html",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws route53 create-query-logging-config  --hosted-zone-id <zone_id>  --cloud-watch-logs-log-group-arn <log_group_arn>",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Route53/enable-query-logging.html",
       "Terraform": ""
