@@ -16,7 +16,7 @@
         "CLI": "",
         "NativeIaC": "",
         "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SNS/topic-encrypted-with-kms-customer-master-keys.html",
-        "Terraform": ""
+        "Terraform": "https://docs.bridgecrew.io/docs/general_15#terraform"
       },
       "Recommendation": {
         "Text": "Use Amazon SNS with AWS KMS.",
