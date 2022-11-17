@@ -1,6 +1,6 @@
 from lib.check.models import Check, Check_Report
 from providers.aws.services.awslambda.awslambda_client import awslambda_client
-from providers.aws.services.cloudtrail.cloudtrail_client import CloudTrail_client
+from providers.aws.services.cloudtrail.cloudtrail_client import cloudtrail_client
 
 
 class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check):

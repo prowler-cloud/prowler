@@ -1,5 +1,7 @@
 from unittest import mock
+
 from moto.core import DEFAULT_ACCOUNT_ID
+
 from providers.aws.services.awslambda.awslambda_service import Function
 
 AWS_REGION = "us-east-1"
@@ -7,7 +9,7 @@ AWS_REGION = "us-east-1"
 
 class Test_awslambda_function_not_publicly_accessible:
     def test_no_functions(self):
-        lambda_client = mock.MagicMock()
+        lambda_client = mock.MagicMock
         lambda_client.functions = {}
 
         with mock.patch(

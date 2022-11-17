@@ -1,5 +1,7 @@
 from unittest import mock
+
 from moto.core import DEFAULT_ACCOUNT_ID
+
 from providers.aws.services.awslambda.awslambda_service import Function
 
 AWS_REGION = "us-east-1"
@@ -24,7 +26,7 @@ def mock_get_config_var(config_var: str):
 
 class Test_awslambda_function_using_supported_runtimes:
     def test_no_functions(self):
-        lambda_client = mock.MagicMock()
+        lambda_client = mock.MagicMock
         lambda_client.functions = {}
 
         with mock.patch(

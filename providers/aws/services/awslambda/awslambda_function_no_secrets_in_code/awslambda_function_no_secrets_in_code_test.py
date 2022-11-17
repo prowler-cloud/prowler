@@ -1,15 +1,17 @@
+import zipfile
 from unittest import mock
+
 from moto.core import DEFAULT_ACCOUNT_ID
+
 from providers.aws.services.awslambda.awslambda_service import Function, LambdaCode
 from providers.aws.services.awslambda.awslambda_service_test import create_zip_file
-import zipfile
 
 AWS_REGION = "us-east-1"
 
 
 class Test_awslambda_function_no_secrets_in_code:
     def test_no_functions(self):
-        lambda_client = mock.MagicMock()
+        lambda_client = mock.MagicMock
         lambda_client.functions = {}
 
         with mock.patch(
