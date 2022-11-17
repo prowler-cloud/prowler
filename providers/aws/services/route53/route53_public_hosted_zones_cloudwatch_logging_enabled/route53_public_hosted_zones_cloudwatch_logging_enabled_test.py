@@ -37,6 +37,7 @@ class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
         route53.hosted_zones = {
             hosted_zone_name: HostedZone(
                 name=hosted_zone_name,
+                arn=f"arn:aws:route53:::{hosted_zone_id}",
                 id=hosted_zone_id,
                 private_zone=False,
                 region=AWS_REGION,
@@ -72,6 +73,7 @@ class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
         route53.hosted_zones = {
             hosted_zone_name: HostedZone(
                 name=hosted_zone_name,
+                arn=f"arn:aws:route53:::{hosted_zone_id}",
                 id=hosted_zone_id,
                 private_zone=False,
                 region=AWS_REGION,
@@ -106,6 +108,7 @@ class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
         route53.hosted_zones = {
             hosted_zone_name: HostedZone(
                 name=hosted_zone_name,
+                arn=f"arn:aws:route53:::{hosted_zone_id}",
                 id=hosted_zone_id,
                 private_zone=True,
                 region=AWS_REGION,
