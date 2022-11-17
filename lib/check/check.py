@@ -100,9 +100,6 @@ def print_services(service_list: set):
 
 
 def print_checks(provider: str, check_list: set, bulk_checks_metadata: dict):
-    print(
-        f"There are {Fore.YELLOW}{len(check_list)}{Style.RESET_ALL} available checks: \n"
-    )
     for check in check_list:
         try:
             print(
@@ -112,6 +109,9 @@ def print_checks(provider: str, check_list: set, bulk_checks_metadata: dict):
             logger.error(
                 f"Check {error} was not found for the {provider.upper()} provider"
             )
+    print(
+        f"\nThere are {Fore.YELLOW}{len(check_list)}{Style.RESET_ALL} available checks.\n"
+    )
 
 
 # List available groups
