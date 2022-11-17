@@ -20,6 +20,10 @@ class Glue:
         self.__threading_call__(self.__search_tables__)
         self.catalog_encryption_settings = []
         self.__threading_call__(self.__get_data_catalog_encryption_settings__)
+        self.dev_endpoints = []
+        self.__threading_call__(self.__get_dev_endpoints__)
+        self.security_configs = []
+        self.__threading_call__(self.__get_security_configurations__)
 
     def __get_session__(self):
         return self.session
@@ -44,6 +48,63 @@ class Glue:
                             name=conn["Name"],
                             type=conn["ConnectionType"],
                             properties=conn["ConnectionProperties"],
+                            region=regional_client.region,
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+            )
+
+    def __get_dev_endpoints__(self, regional_client):
+        logger.info("Glue - Getting dev endpoints...")
+        try:
+            get_dev_endpoints_paginator = regional_client.get_paginator(
+                "get_dev_endpoints"
+            )
+            for page in get_dev_endpoints_paginator.paginate():
+                for endpoint in page["DevEndpoints"]:
+                    self.connections.append(
+                        DevEndpoint(
+                            name=endpoint["EndpointName"],
+                            security=endpoint.get("SecurityConfiguration"),
+                            region=regional_client.region,
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+            )
+
+    def __get_security_configurations__(self, regional_client):
+        logger.info("Glue - Getting security configs...")
+        try:
+            get_security_configurations_paginator = regional_client.get_paginator(
+                "get_security_configurations"
+            )
+            for page in get_security_configurations_paginator.paginate():
+                for config in page["SecurityConfigurations"]:
+                    self.security_configs.append(
+                        SecurityConfig(
+                            name=config["Name"],
+                            s3_encryption=config["EncryptionConfiguration"][
+                                "S3Encryption"
+                            ]["S3EncryptionMode"],
+                            s3_key_arn=config["EncryptionConfiguration"][
+                                "S3Encryption"
+                            ].get("KmsKeyArn"),
+                            cw_encryption=config["EncryptionConfiguration"][
+                                "CloudWatchEncryption"
+                            ]["CloudWatchEncryptionMode"],
+                            cw_key_arn=config["EncryptionConfiguration"][
+                                "CloudWatchEncryption"
+                            ].get("KmsKeyArn"),
+                            jb_encryption=config["EncryptionConfiguration"][
+                                "JobBookmarksEncryption"
+                            ]["JobBookmarksEncryptionMode"],
+                            jb_key_arn=config["EncryptionConfiguration"][
+                                "JobBookmarksEncryption"
+                            ].get("KmsKeyArn"),
                             region=regional_client.region,
                         )
                     )
@@ -107,4 +168,21 @@ class Table(BaseModel):
 class CatalogEncryptionSetting(BaseModel):
     mode: str
     kms_id: Optional[str]
+    region: str
+
+
+class DevEndpoint(BaseModel):
+    name: str
+    security: Optional[str]
+    region: str
+
+
+class SecurityConfig(BaseModel):
+    name: str
+    s3_encryption: str
+    s3_key_arn: Optional[str]
+    cw_encryption: str
+    cw_key_arn: Optional[str]
+    jb_encryption: str
+    jb_key_arn: Optional[str]
     region: str
