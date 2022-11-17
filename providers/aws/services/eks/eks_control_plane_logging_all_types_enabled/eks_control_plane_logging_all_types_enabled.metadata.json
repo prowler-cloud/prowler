@@ -13,7 +13,7 @@
     "RelatedUrl": "",
     "Remediation": {
       "Code": {
-        "CLI": "aws eks update-cluster-config --region us-east-1 --name cc-eks-prod-cluster --logging '{\"clusterLogging\":[{\"types\":[\"api\",\"audit\",\"authenticator\",\"controllerManager\",\"scheduler\"],\"enabled\":true}]}'",
+        "CLI": "aws eks update-cluster-config --region <region_name> --name <cluster_name> --logging '{\"clusterLogging\":[{\"types\":[\"api\",\"audit\",\"authenticator\",\"controllerManager\",\"scheduler\"],\"enabled\":true}]}'",
         "NativeIaC": "",
         "Other": "https://docs.bridgecrew.io/docs/bc_aws_kubernetes_4#aws-console",
         "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_kubernetes_4#fix---buildtime"
