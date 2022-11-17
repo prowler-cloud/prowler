@@ -14,7 +14,6 @@ class iam_no_expired_server_certificates_stored(Check):
             report.resource_id = certificate.id
             report.resource_arn = certificate.arn
             expiration_days = (datetime.now(timezone.utc) - certificate.expiration).days
-            print(certificate.expiration)
             if expiration_days >= 0:
                 report.status = "FAIL"
                 report.status_extended = f"IAM Certificate {certificate.name} has expired {expiration_days} days ago."
