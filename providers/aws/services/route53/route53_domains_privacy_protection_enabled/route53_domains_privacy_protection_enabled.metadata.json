@@ -1,0 +1,35 @@
+{
+  "Provider": "aws",
+  "CheckID": "route53_domains_privacy_protection_enabled",
+  "CheckTitle": "Enable Privacy Protection for for a Route53 Domain.",
+  "CheckType": [],
+  "ServiceName": "route53",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsRoute53Domain",
+  "Description": "Enable Privacy Protection for for a Route53 Domain.",
+  "Risk": "Without privacy protection enabled; ones personal information is published to the public WHOIS database.",
+  "RelatedUrl": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-privacy-protection.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure default Privacy is enabled.",
+      "Url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-privacy-protection.html"
+    }
+  },
+  "Categories": [],
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  },
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "Compliance": []
+}
