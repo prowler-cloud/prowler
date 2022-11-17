@@ -163,6 +163,12 @@ class Glue:
                 CatalogEncryptionSetting(
                     mode=settings["EncryptionAtRest"]["CatalogEncryptionMode"],
                     kms_id=settings["EncryptionAtRest"].get("SseAwsKmsKeyId"),
+                    password_encryption=settings["ConnectionPasswordEncryption"][
+                        "ReturnConnectionPasswordEncrypted"
+                    ],
+                    password_kms_id=settings["ConnectionPasswordEncryption"].get(
+                        "AwsKmsKeyId"
+                    ),
                     region=regional_client.region,
                 )
             )
@@ -189,6 +195,8 @@ class Table(BaseModel):
 class CatalogEncryptionSetting(BaseModel):
     mode: str
     kms_id: Optional[str]
+    password_encryption: bool
+    password_kms_id: Optional[str]
     region: str
 
 
