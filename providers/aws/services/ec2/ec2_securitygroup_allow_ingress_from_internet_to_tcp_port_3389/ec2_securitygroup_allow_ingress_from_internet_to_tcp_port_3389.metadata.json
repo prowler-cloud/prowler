@@ -13,10 +13,10 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "https://docs.bridgecrew.io/docs/networking_2#cli-command",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/networking_2#cloudformation",
+      "Other": "https://docs.bridgecrew.io/docs/networking_2#aws-console",
+      "Terraform": "https://docs.bridgecrew.io/docs/networking_2#terraform"
     },
     "Recommendation": {
       "Text": "Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.",
