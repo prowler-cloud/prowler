@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "https://github.com/cloudmatos/matos/tree/master/remediations/aws/emr/block-emr-public-access",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-glacier-vault-access-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Enable EMR Account Public Access Block.",
