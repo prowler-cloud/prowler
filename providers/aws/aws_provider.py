@@ -309,6 +309,10 @@ def generate_regional_clients(service: str, audit_info: AWS_Audit_Info) -> dict:
         json_regions = data["services"]["dynamodb"]["regions"][
             audit_info.audited_partition
         ]
+    elif service == "glacier":
+        json_regions = data["services"]["s3"]["regions"][audit_info.audited_partition]
+    elif service == "opensearch":
+        json_regions = data["services"]["es"]["regions"][audit_info.audited_partition]
     else:
         json_regions = data["services"][service]["regions"][
             audit_info.audited_partition
