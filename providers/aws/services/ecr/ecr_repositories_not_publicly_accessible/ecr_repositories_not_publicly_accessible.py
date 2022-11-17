@@ -15,15 +15,13 @@ class ecr_repositories_not_publicly_accessible(Check):
             if repository.policy:
                 for statement in repository.policy["Statement"]:
                     if statement["Effect"] == "Allow":
-                        if (
-                            "*" in statement["Principal"]
-                            or (
-                                "AWS" in statement["Principal"]
-                                and "*" in statement["Principal"]["AWS"]
-                            ):
-                                report.status = "FAIL"
-                                report.status_extended = f"Repository {repository.name} policy may allow anonymous users to perform actions (Principal: '*')"
-                                break
+                        if "*" in statement["Principal"] or (
+                            "AWS" in statement["Principal"]
+                            and "*" in statement["Principal"]["AWS"]
+                        ):
+                            report.status = "FAIL"
+                            report.status_extended = f"Repository {repository.name} policy may allow anonymous users to perform actions (Principal: '*')"
+                            break
 
             findings.append(report)
 
