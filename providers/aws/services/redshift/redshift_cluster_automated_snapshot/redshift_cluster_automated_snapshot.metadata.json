@@ -9,7 +9,7 @@
     "Severity": "medium",
     "ResourceType": "AwsRedshiftCluster",
     "Description": "Check if Redshift Clusters have automated snapshots enabled",
-    "Risk": "If backup is not enabled; data is vulnerable. Human error or bad actors could erase or modify data.",
+    "Risk": "If backup is not enabled, data is vulnerable. Human error or bad actors could erase or modify data.",
     "RelatedUrl": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Redshift.html",
     "Remediation": {
       "Code": {
