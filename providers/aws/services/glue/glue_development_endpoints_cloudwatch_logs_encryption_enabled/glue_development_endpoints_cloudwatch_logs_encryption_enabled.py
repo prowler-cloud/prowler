@@ -12,7 +12,6 @@ class glue_development_endpoints_cloudwatch_logs_encryption_enabled(Check):
             report.region = endpoint.region
             for sec_config in glue_client.security_configs:
                 if sec_config.name == endpoint.security:
-                    print("hola")
                     no_sec_configs = False
                     report.status = "FAIL"
                     report.status_extended = f"Glue development endpoint {endpoint.name} does not have CloudWatch logs encryption enabled."

@@ -2,7 +2,7 @@ from lib.check.models import Check, Check_Report
 from providers.aws.services.glue.glue_client import glue_client
 
 
-class glue_development_endpoints_s3_encryption_enabled(Check):
+class glue_development_endpoints_job_bookmark_encryption_enabled(Check):
     def execute(self):
         findings = []
         for endpoint in glue_client.dev_endpoints:
@@ -14,10 +14,10 @@ class glue_development_endpoints_s3_encryption_enabled(Check):
                 if sec_config.name == endpoint.security:
                     no_sec_configs = False
                     report.status = "FAIL"
-                    report.status_extended = f"Glue development endpoint {endpoint.name} does not have S3 encryption enabled."
-                    if sec_config.s3_encryption != "DISABLED":
+                    report.status_extended = f"Glue development endpoint {endpoint.name} does not have Job Bookmark encryption enabled."
+                    if sec_config.jb_encryption != "DISABLED":
                         report.status = "PASS"
-                        report.status_extended = f"Glue development endpoint {endpoint.name} has S3 encryption enabled with key {sec_config.s3_key_arn}."
+                        report.status_extended = f"Glue development endpoint {endpoint.name} has Job Bookmark encryption enabled with key {sec_config.jb_key_arn}."
             if no_sec_configs:
                 report.status = "FAIL"
                 report.status_extended = f"Glue development endpoint {endpoint.name} does not have security configuration."
