@@ -12,6 +12,8 @@ class ELB:
     def __init__(self, audit_info):
         self.service = "elb"
         self.session = audit_info.audit_session
+        self.audited_partition = audit_info.audited_partition
+        self.audited_account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.loadbalancers = []
         self.__threading_call__(self.__describe_load_balancers__)
@@ -48,6 +50,7 @@ class ELB:
                     self.loadbalancers.append(
                         LoadBalancer(
                             name=elb["LoadBalancerName"],
+                            arn=f"arn:{self.audited_partition}:elasticloadbalancing:${regional_client.region}:${self.audited_account}:loadbalancer/{elb['LoadBalancerName']}",
                             dns=elb["DNSName"],
                             region=regional_client.region,
                             scheme=elb["Scheme"],
@@ -85,6 +88,7 @@ class Listener(BaseModel):
 class LoadBalancer(BaseModel):
     name: str
     dns: str
+    arn: str
     region: str
     scheme: str
     access_logs: Optional[bool]
