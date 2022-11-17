@@ -30,7 +30,7 @@ class ECS:
             t.join()
 
     def __list_task_definitions__(self, regional_client):
-        logger.info("ECS listing task definitions...")
+        logger.info("ECS - Listing Task Definitions...")
         try:
 
             list_ecs_paginator = regional_client.get_paginator("list_task_definitions")
