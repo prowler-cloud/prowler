@@ -15,7 +15,7 @@
       "Code": {
         "CLI": "",
         "NativeIaC": "https://docs.bridgecrew.io/docs/public_1-ecr-repositories-not-public#cloudformation",
-        "Other": "",
+        "Other": "https://docs.bridgecrew.io/docs/public_1-ecr-repositories-not-public#aws-console",
         "Terraform": ""
       },
       "Recommendation": {
