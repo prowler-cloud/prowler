@@ -13,6 +13,22 @@ env_var_value_with_secrets = "pass-12343"
 
 
 class Test_ecs_task_definitions_no_environment_secrets:
+    def test_no_task_definitions(self):
+        ecs_client = mock.MagicMock
+        ecs_client.task_definitions = []
+
+        with mock.patch(
+            "providers.aws.services.ecs.ecs_service.ECS",
+            ecs_client,
+        ):
+            from providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
+                ecs_task_definitions_no_environment_secrets,
+            )
+
+            check = ecs_task_definitions_no_environment_secrets()
+            result = check.execute()
+            assert len(result) == 0
+
     def test_container_env_var_no_secrets(self):
         ecs_client = mock.MagicMock
         ecs_client.task_definitions = []

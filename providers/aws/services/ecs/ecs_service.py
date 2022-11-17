@@ -51,19 +51,25 @@ class ECS:
             )
 
     def __describe_task_definition__(self):
-        for task_definition in self.task_definitions:
-            client = self.regional_clients[task_definition.region]
-            container_definitions = client.describe_task_definition(
-                taskDefinition=task_definition.arn
-            )["taskDefinition"]["containerDefinitions"]
-            for container in container_definitions:
-                if "environment" in container:
-                    for env_var in container["environment"]:
-                        task_definition.environment_variables.append(
-                            ContainerEnvVariable(
-                                name=env_var["name"], value=env_var["value"]
+        logger.info("ECS - Describing Task Definitions...")
+        try:
+            for task_definition in self.task_definitions:
+                client = self.regional_clients[task_definition.region]
+                container_definitions = client.describe_task_definition(
+                    taskDefinition=task_definition.arn
+                )["taskDefinition"]["containerDefinitions"]
+                for container in container_definitions:
+                    if "environment" in container:
+                        for env_var in container["environment"]:
+                            task_definition.environment_variables.append(
+                                ContainerEnvVariable(
+                                    name=env_var["name"], value=env_var["value"]
+                                )
                             )
-                        )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 
 class ContainerEnvVariable(BaseModel):
