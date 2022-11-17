@@ -15,7 +15,7 @@ class ec2_securitygroup_default_restrict_traffic(Check):
                 report.status = "PASS"
                 report.status_extended = f"Default Security Group ({security_group.id}) is not open to the Internet."
                 for ingress_rule in security_group.ingress_rules:
-                    if check_security_group(ingress_rule, "-1"):
+                    if check_security_group(ingress_rule, "-1", any_address=True):
                         report.status = "FAIL"
                         report.status_extended = f"Default Security Group ({security_group.id}) is open to the Internet."
                         break

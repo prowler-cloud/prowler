@@ -14,7 +14,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port(Check):
             report.resource_id = security_group.id
             # Loop through every security group's ingress rule and check it
             for ingress_rule in security_group.ingress_rules:
-                if check_security_group(ingress_rule, "-1"):
+                if check_security_group(ingress_rule, "-1", any_address=True):
                     report.status = "FAIL"
                     report.status_extended = f"Security group {security_group.name} ({security_group.id}) has all ports open to the Internet."
                     break
