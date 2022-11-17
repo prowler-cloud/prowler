@@ -24,6 +24,8 @@ class Glue:
         self.__threading_call__(self.__get_dev_endpoints__)
         self.security_configs = []
         self.__threading_call__(self.__get_security_configurations__)
+        self.jobs = []
+        self.__threading_call__(self.__get_jobs__)
 
     def __get_session__(self):
         return self.session
@@ -68,6 +70,25 @@ class Glue:
                         DevEndpoint(
                             name=endpoint["EndpointName"],
                             security=endpoint.get("SecurityConfiguration"),
+                            region=regional_client.region,
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+            )
+
+    def __get_jobs__(self, regional_client):
+        logger.info("Glue - Getting jobs...")
+        try:
+            get_jobs_paginator = regional_client.get_paginator("get_jobs")
+            for page in get_jobs_paginator.paginate():
+                for job in page["Jobs"]:
+                    self.connections.append(
+                        Job(
+                            name=job["Name"],
+                            security=job.get("SecurityConfiguration"),
+                            arguments=job.get("DefaultArguments"),
                             region=regional_client.region,
                         )
                     )
@@ -174,6 +195,13 @@ class CatalogEncryptionSetting(BaseModel):
 class DevEndpoint(BaseModel):
     name: str
     security: Optional[str]
+    region: str
+
+
+class Job(BaseModel):
+    name: str
+    security: Optional[str]
+    arguments: Optional[dict]
     region: str
 
 
