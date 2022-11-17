@@ -57,7 +57,7 @@ class Test_elb_insecure_ssl_ciphers:
             LoadBalancerPort=443,
             PolicyNames=["ELBSecurityPolicy-TLS-1-2-2017-01"],
         )
-        print(elb.describe_load_balancer_policies(LoadBalancerName="my-lb"))
+        elb.describe_load_balancer_policies(LoadBalancerName="my-lb")
 
         from providers.aws.lib.audit_info.audit_info import current_audit_info
         from providers.aws.services.elb.elb_service import ELB

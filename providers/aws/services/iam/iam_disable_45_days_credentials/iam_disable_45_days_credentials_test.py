@@ -84,7 +84,6 @@ class Test_iam_disable_45_days_credentials_test:
             )
 
             service_client.users[0].password_last_used = ""
-            print(service_client.users)
             # raise Exception
             check = iam_disable_45_days_credentials()
             result = check.execute()

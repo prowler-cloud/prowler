@@ -19,7 +19,7 @@
         "Terraform": ""
       },
       "Recommendation": {
-        "Text": "Scan for Load Balancers with HTTP or TCP listeners and understand the reason for each of them. Check if the listener can be implemented as TLS instead..",
+        "Text": "Scan for Load Balancers with HTTP or TCP listeners and understand the reason for each of them. Check if the listener can be implemented as TLS instead.",
         "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html"
       }
     },
