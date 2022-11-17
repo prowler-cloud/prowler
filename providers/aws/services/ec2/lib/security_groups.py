@@ -3,7 +3,9 @@ from typing import Any
 
 
 ################## Security Groups
-def check_security_group(ingress_rule: Any, protocol: str, ports: list = []) -> bool:
+def check_security_group(
+    ingress_rule: Any, protocol: str, ports: list = [], any_address: bool = False
+) -> bool:
     """
     Check if the security group ingress rule has public access to the check_ports using the protocol
 
@@ -30,15 +32,17 @@ def check_security_group(ingress_rule: Any, protocol: str, ports: list = []) -> 
 
 
     @param ports: List of ports to check. (Default: [])
+
+    @param any_address: If True, only 0.0.0.0/0 will be public and do not search for public addresses. (Default: False)
     """
 
     # Check for all traffic ingress rules regardless of the protocol
     if ingress_rule["IpProtocol"] == "-1":
         for ip_ingress_rule in ingress_rule["IpRanges"]:
-            if _is_cidr_public(ip_ingress_rule["CidrIp"]):
+            if _is_cidr_public(ip_ingress_rule["CidrIp"], any_address):
                 return True
         for ip_ingress_rule in ingress_rule["Ipv6Ranges"]:
-            if _is_cidr_public(ip_ingress_rule["CidrIp"]):
+            if _is_cidr_public(ip_ingress_rule["CidrIp"], any_address):
                 return True
 
     # Check for specific ports in ingress rules
@@ -58,7 +62,7 @@ def check_security_group(ingress_rule: Any, protocol: str, ports: list = []) -> 
         # Test Security Group
         # IPv4
         for ip_ingress_rule in ingress_rule["IpRanges"]:
-            if _is_cidr_public(ip_ingress_rule["CidrIp"]):
+            if _is_cidr_public(ip_ingress_rule["CidrIp"], any_address):
                 # If there are input ports to check
                 if ports:
                     for port in ports:
@@ -87,11 +91,13 @@ def check_security_group(ingress_rule: Any, protocol: str, ports: list = []) -> 
     return False
 
 
-def _is_cidr_public(cidr: str) -> bool:
+def _is_cidr_public(cidr: str, any_address: bool = False) -> bool:
     """
     Check if an input CIDR is public
 
     @param cidr: CIDR 10.22.33.44/8
+
+    @param any_address: If True, only 0.0.0.0/0 will be public and do not search for public addresses. (Default: False)
     """
     public_IPv4 = "0.0.0.0/0"
     public_IPv6 = "::/0"
@@ -100,5 +106,5 @@ def _is_cidr_public(cidr: str) -> bool:
     # Issue https://github.com/python/cpython/issues/82836
     if cidr in (public_IPv4, public_IPv6):
         return True
-
-    return ipaddress.ip_network(cidr).is_global
+    if not any_address:
+        return ipaddress.ip_network(cidr).is_global

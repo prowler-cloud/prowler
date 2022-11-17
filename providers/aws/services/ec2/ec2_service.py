@@ -255,7 +255,6 @@ class EC2:
         logger.info("EC2 - Describing Elastic IPs...")
         try:
             for address in regional_client.describe_addresses()["Addresses"]:
-                print(address)
                 public_ip = None
                 association_id = None
                 allocation_id = None

@@ -17,10 +17,12 @@ class SSM:
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.documents = {}
         self.compliance_resources = {}
+        self.managed_instances = {}
         self.__threading_call__(self.__list_documents__)
         self.__threading_call__(self.__get_document__)
         self.__threading_call__(self.__describe_document_permission__)
         self.__threading_call__(self.__list_resource_compliance_summaries__)
+        self.__threading_call__(self.__describe_instance_information__)
 
     def __get_session__(self):
         return self.session
@@ -125,6 +127,28 @@ class SSM:
                 f" {error}"
             )
 
+    def __describe_instance_information__(self, regional_client):
+        logger.info("SSM - Describing Instance Information...")
+        try:
+            describe_instance_information_paginator = regional_client.get_paginator(
+                "describe_instance_information"
+            )
+            for page in describe_instance_information_paginator.paginate():
+                for item in page["InstanceInformationList"]:
+                    resource_id = item["InstanceId"]
+
+                    self.managed_instances[resource_id] = ManagedInstance(
+                        id=resource_id,
+                        region=regional_client.region,
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} --"
+                f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                f" {error}"
+            )
+
 
 class ResourceStatus(Enum):
     COMPLIANT = "COMPLIANT"
@@ -142,3 +166,8 @@ class Document(BaseModel):
     region: str
     content: dict = None
     account_owners: list[str] = None
+
+
+class ManagedInstance(BaseModel):
+    id: str
+    region: str
