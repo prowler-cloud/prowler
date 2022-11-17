@@ -13,7 +13,7 @@
     "RelatedUrl": "",
     "Remediation": {
       "Code": {
-        "CLI": "aws ecr create-repository --repository-name name --image-scanning-configuration scanOnPush=true--region us-east-2",
+        "CLI": "aws ecr create-repository --repository-name <repo_name> --image-scanning-configuration scanOnPush=true--region <region_name>",
         "NativeIaC": "https://docs.bridgecrew.io/docs/general_8#cli-command",
         "Other": "",
         "Terraform": "https://docs.bridgecrew.io/docs/general_8#fix---buildtime"
