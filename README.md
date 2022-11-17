@@ -3,7 +3,7 @@
   <img align="center" src="docs/images/prowler-pro-light.png#gh-light-mode-only" width="15%" height="15%">
 </p>
 <p align="center">
-  <b><i>&nbsp&nbsp&nbspExplore the Pro version of Prowler at <a href="https://prowler.pro">prowler.pro</a></i></b>
+  <b><i>&nbsp&nbsp&nbsp See all the things you and your team can do with ProwlerPro at <a href="https://prowler.pro">prowler.pro</a></i></b>
 </p>
 <hr>
 <p align="center">
