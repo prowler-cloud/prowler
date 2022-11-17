@@ -55,7 +55,7 @@ class Glue:
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __get_dev_endpoints__(self, regional_client):
@@ -66,7 +66,7 @@ class Glue:
             )
             for page in get_dev_endpoints_paginator.paginate():
                 for endpoint in page["DevEndpoints"]:
-                    self.connections.append(
+                    self.dev_endpoints.append(
                         DevEndpoint(
                             name=endpoint["EndpointName"],
                             security=endpoint.get("SecurityConfiguration"),
@@ -75,7 +75,7 @@ class Glue:
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __get_jobs__(self, regional_client):
@@ -84,7 +84,7 @@ class Glue:
             get_jobs_paginator = regional_client.get_paginator("get_jobs")
             for page in get_jobs_paginator.paginate():
                 for job in page["Jobs"]:
-                    self.connections.append(
+                    self.jobs.append(
                         Job(
                             name=job["Name"],
                             security=job.get("SecurityConfiguration"),
@@ -94,7 +94,7 @@ class Glue:
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __get_security_configurations__(self, regional_client):
@@ -110,10 +110,10 @@ class Glue:
                             name=config["Name"],
                             s3_encryption=config["EncryptionConfiguration"][
                                 "S3Encryption"
-                            ]["S3EncryptionMode"],
+                            ][0]["S3EncryptionMode"],
                             s3_key_arn=config["EncryptionConfiguration"][
                                 "S3Encryption"
-                            ].get("KmsKeyArn"),
+                            ][0].get("KmsKeyArn"),
                             cw_encryption=config["EncryptionConfiguration"][
                                 "CloudWatchEncryption"
                             ]["CloudWatchEncryptionMode"],
@@ -131,26 +131,24 @@ class Glue:
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __search_tables__(self, regional_client):
         logger.info("Glue - Search Tables...")
         try:
-            get_connections_paginator = regional_client.get_paginator("search_tables")
-            for page in get_connections_paginator.paginate():
-                for table in page["TableList"]:
-                    self.tables.append(
-                        Table(
-                            name=table["Name"],
-                            database=table["DatabaseName"],
-                            catalog=table["CatalogId"],
-                            region=regional_client.region,
-                        )
+            for table in regional_client.search_tables()["TableList"]:
+                self.tables.append(
+                    Table(
+                        name=table["Name"],
+                        database=table["DatabaseName"],
+                        catalog=table["CatalogId"],
+                        region=regional_client.region,
                     )
+                )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __get_data_catalog_encryption_settings__(self, regional_client):
@@ -174,7 +172,7 @@ class Glue:
             )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -188,7 +186,7 @@ class Connection(BaseModel):
 class Table(BaseModel):
     name: str
     database: str
-    catalog: dict
+    catalog: Optional[str]
     region: str
 
 
