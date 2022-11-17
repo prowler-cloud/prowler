@@ -1,6 +1,6 @@
 {
     "Provider": "aws",
-    "CheckID": "opensearch_service_domains_use_cognito_authentication_for_kibana_test",
+    "CheckID": "opensearch_service_domains_use_cognito_authentication_for_kibana",
     "CheckTitle": "Check if Amazon Elasticsearch/Opensearch Service domains has Amazon Cognito authentication for Kibana enabled",
     "CheckType": ["Identify", "Logging"],
     "ServiceName": "opensearch",
