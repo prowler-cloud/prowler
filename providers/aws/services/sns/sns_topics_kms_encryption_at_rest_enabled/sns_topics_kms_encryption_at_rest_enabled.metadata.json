@@ -13,7 +13,7 @@
     "RelatedUrl": "https://docs.aws.amazon.com/sns/latest/dg/sns-server-side-encryption.html",
     "Remediation": {
       "Code": {
-        "CLI": "",
+        "CLI": "aws sns set-topic-attributes --topic-arn <TOPIC_ARN> --attribute-name 'KmsMasterKeyId' --attribute-value <KEY>",
         "NativeIaC": "",
         "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SNS/topic-encrypted-with-kms-customer-master-keys.html",
         "Terraform": "https://docs.bridgecrew.io/docs/general_15#terraform"
