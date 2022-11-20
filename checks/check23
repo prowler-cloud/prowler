@@ -57,6 +57,11 @@ check23(){
             textInfo "$regx: Trail ${TRAIL_NAME} with home region ${TRAIL_HOME_REGION} Access Denied getting bucket location for bucket $TRAIL_BUCKET" "$regx" "$TRAIL_NAME"
             continue
           fi
+          if [[ $(echo "$BUCKET_LOCATION" | grep NoSuchBucket) ]]
+          then
+            textInfo "$regx: Trail ${TRAIL_NAME} with home region ${TRAIL_HOME_REGION} S3 logging bucket $TRAIL_BUCKET does not exist" "$regx" "$TRAIL_NAME"
+            continue
+          fi
           if [[ $BUCKET_LOCATION == "None" ]]; then
               BUCKET_LOCATION="us-east-1"
           fi
