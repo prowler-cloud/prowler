@@ -9,7 +9,7 @@ def print_version():
 
 def print_banner():
     orange = "\033[38;5;208m"
-    banner = f"""{Fore.CYAN}                         _
+    banner = f"""\033[1;92m                         _
  _ __  _ __ _____      _| | ___ _ __
 | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|
 | |_) | | | (_) \ V  V /| |  __/ |

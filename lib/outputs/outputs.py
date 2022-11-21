@@ -296,7 +296,12 @@ def send_to_s3_bucket(
         sys.exit()
 
 
-def display_summary_table(findings: list, audit_info: AWS_Audit_Info):
+def display_summary_table(
+    findings: list,
+    audit_info: AWS_Audit_Info,
+    output_filename: str,
+    output_directory: str,
+):
     try:
         if findings:
             current_service = ""
@@ -389,15 +394,18 @@ def display_summary_table(findings: list, audit_info: AWS_Audit_Info):
             print("\nOverview Results:")
             overview_table = [
                 [
-                    f"{Fore.GREEN}{round(pass_count/len(findings)*100, 2)}% ({pass_count}) Passed{Style.RESET_ALL}",
                     f"{Fore.RED}{round(fail_count/len(findings)*100, 2)}% ({fail_count}) Failed{Style.RESET_ALL}",
+                    f"{Fore.GREEN}{round(pass_count/len(findings)*100, 2)}% ({pass_count}) Passed{Style.RESET_ALL}",
                 ]
             ]
             print(tabulate(overview_table, tablefmt="rounded_grid"))
             print(
-                f"\nAccount {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} Scan Results:"
+                f"\nAccount {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
             )
             print(tabulate(findings_table, headers="keys", tablefmt="rounded_grid"))
+            print("\nDetailed results are in:")
+            print(f" - CSV: {output_directory}/{output_filename}.csv")
+            print(f" - JSON: {output_directory}/{output_filename}.json\n")
 
     except Exception as error:
         logger.critical(

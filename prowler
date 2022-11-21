@@ -365,4 +365,9 @@ if __name__ == "__main__":
         resolve_security_hub_previous_findings(output_directory, audit_info)
 
     # Display summary table
-    display_summary_table(findings, audit_info)
+    display_summary_table(
+        findings,
+        audit_info,
+        output_filename,
+        output_directory,
+    )

@@ -7,7 +7,7 @@ from lib.logger import logger
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-prowler_version = "3.0-beta-08Aug2022"
+prowler_version = "3.0-beta-21Nov2022"
 
 # Groups
 groups_file = "groups.json"
