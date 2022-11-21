@@ -10,13 +10,13 @@ class directoryservice_directory_log_forwarding_enabled(Check):
         for directory in directoryservice_client.directories.values():
             report = Check_Report(self.metadata)
             report.region = directory.region
-            report.resource_id = directory.name
+            report.resource_id = directory.id
             if directory.log_subscriptions:
                 report.status = "PASS"
-                report.status_extended = f"Directory Service {directory.name} have log forwarding to CloudWatch enabled"
+                report.status_extended = f"Directory Service {directory.id} have log forwarding to CloudWatch enabled"
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Directory Service {directory.name} have log forwarding to CloudWatch disabled"
+                report.status_extended = f"Directory Service {directory.id} have log forwarding to CloudWatch disabled"
 
             findings.append(report)
 

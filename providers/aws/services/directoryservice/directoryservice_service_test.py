@@ -11,6 +11,7 @@ from providers.aws.services.directoryservice.directoryservice_service import (
     CertificateState,
     CertificateType,
     DirectoryService,
+    DirectoryType,
     EventTopicStatus,
     RadiusStatus,
 )
@@ -28,8 +29,9 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "DirectoryDescriptions": [
                 {
-                    "DirectoryId": "test-directory",
+                    "DirectoryId": "d-12345a1b2",
                     "Name": "test-directory",
+                    "Type": "MicrosoftAD",
                     "ShortName": "test-directory",
                     "RadiusSettings": {
                         "RadiusServers": [
@@ -51,7 +53,7 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "LogSubscriptions": [
                 {
-                    "DirectoryId": "test-directory",
+                    "DirectoryId": "d-12345a1b2",
                     "LogGroupName": "test-log-group",
                     "SubscriptionCreatedDateTime": datetime(2022, 1, 1),
                 },
@@ -61,7 +63,7 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "EventTopics": [
                 {
-                    "DirectoryId": "test-directory",
+                    "DirectoryId": "d-12345a1b2",
                     "TopicName": "test-topic",
                     "TopicArn": f"arn:aws:sns:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:test-topic",
                     "CreatedDateTime": datetime(2022, 1, 1),
@@ -129,97 +131,100 @@ class Test_DirectoryService_Service:
         directoryservice = DirectoryService(current_audit_info)
         assert directoryservice.service == "ds"
 
+    @mock_ds
     def test__describe_directories__(self):
         # Set partition for the service
         current_audit_info.audited_partition = "aws"
         directoryservice = DirectoryService(current_audit_info)
 
         # __describe_directories__
-        assert directoryservice.directories["test-directory"]
-        assert directoryservice.directories["test-directory"].name == "test-directory"
-        assert directoryservice.directories["test-directory"].region == AWS_REGION
+        assert directoryservice.directories["d-12345a1b2"].id == "d-12345a1b2"
+        assert (
+            directoryservice.directories["d-12345a1b2"].type
+            == DirectoryType.MicrosoftAD
+        )
+        assert directoryservice.directories["d-12345a1b2"].name == "test-directory"
+        assert directoryservice.directories["d-12345a1b2"].region == AWS_REGION
         assert (
             directoryservice.directories[
-                "test-directory"
+                "d-12345a1b2"
             ].radius_settings.authentication_protocol
             == AuthenticationProtocol.MS_CHAPv2
         )
         assert (
-            directoryservice.directories["test-directory"].radius_settings.status
+            directoryservice.directories["d-12345a1b2"].radius_settings.status
             == RadiusStatus.Creating
         )
 
         # __list_log_subscriptions__
+        assert len(directoryservice.directories["d-12345a1b2"].log_subscriptions) == 1
         assert (
-            len(directoryservice.directories["test-directory"].log_subscriptions) == 1
-        )
-        assert (
-            directoryservice.directories["test-directory"]
+            directoryservice.directories["d-12345a1b2"]
             .log_subscriptions[0]
             .log_group_name
             == "test-log-group"
         )
-        assert directoryservice.directories["test-directory"].log_subscriptions[
+        assert directoryservice.directories["d-12345a1b2"].log_subscriptions[
             0
         ].created_date_time == datetime(2022, 1, 1)
 
         # __describe_event_topics__
-        assert len(directoryservice.directories["test-directory"].event_topics) == 1
+        assert len(directoryservice.directories["d-12345a1b2"].event_topics) == 1
         assert (
-            directoryservice.directories["test-directory"].event_topics[0].topic_name
+            directoryservice.directories["d-12345a1b2"].event_topics[0].topic_name
             == "test-topic"
         )
         assert (
-            directoryservice.directories["test-directory"].event_topics[0].topic_arn
+            directoryservice.directories["d-12345a1b2"].event_topics[0].topic_arn
             == f"arn:aws:sns:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:test-topic"
         )
         assert (
-            directoryservice.directories["test-directory"].event_topics[0].status
+            directoryservice.directories["d-12345a1b2"].event_topics[0].status
             == EventTopicStatus.Registered
         )
-        assert directoryservice.directories["test-directory"].event_topics[
+        assert directoryservice.directories["d-12345a1b2"].event_topics[
             0
         ].created_date_time == datetime(2022, 1, 1)
 
         # __list_certificates__
-        assert len(directoryservice.directories["test-directory"].certificates) == 1
+        assert len(directoryservice.directories["d-12345a1b2"].certificates) == 1
         assert (
-            directoryservice.directories["test-directory"].certificates[0].id
+            directoryservice.directories["d-12345a1b2"].certificates[0].id
             == "test-certificate"
         )
         assert (
-            directoryservice.directories["test-directory"].certificates[0].common_name
+            directoryservice.directories["d-12345a1b2"].certificates[0].common_name
             == "test-certificate"
         )
         assert (
-            directoryservice.directories["test-directory"].certificates[0].state
+            directoryservice.directories["d-12345a1b2"].certificates[0].state
             == CertificateState.Registered
         )
-        assert directoryservice.directories["test-directory"].certificates[
+        assert directoryservice.directories["d-12345a1b2"].certificates[
             0
         ].expiry_date_time == datetime(2023, 1, 1)
         assert (
-            directoryservice.directories["test-directory"].certificates[0].type
+            directoryservice.directories["d-12345a1b2"].certificates[0].type
             == CertificateType.ClientLDAPS
         )
 
         # __get_snapshot_limits__
-        assert directoryservice.directories["test-directory"].snapshots_limits
+        assert directoryservice.directories["d-12345a1b2"].snapshots_limits
         assert (
             directoryservice.directories[
-                "test-directory"
+                "d-12345a1b2"
             ].snapshots_limits.manual_snapshots_limit
             == 123
         )
         assert (
             directoryservice.directories[
-                "test-directory"
+                "d-12345a1b2"
             ].snapshots_limits.manual_snapshots_current_count
             == 123
         )
         assert (
             directoryservice.directories[
-                "test-directory"
+                "d-12345a1b2"
             ].snapshots_limits.manual_snapshots_limit_reached
             is True
         )

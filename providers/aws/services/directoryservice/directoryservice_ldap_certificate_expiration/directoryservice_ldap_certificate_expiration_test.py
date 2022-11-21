@@ -8,6 +8,7 @@ from providers.aws.services.directoryservice.directoryservice_service import (
     CertificateState,
     CertificateType,
     Directory,
+    DirectoryType,
 )
 
 AWS_REGION = "eu-west-1"
@@ -36,8 +37,11 @@ class Test_directoryservice_ldap_certificate_expiration:
     def test_directory_no_certificate(self):
         directoryservice_client = mock.MagicMock
         directory_name = "test-directory"
+        directory_id = "d-12345a1b2"
         directoryservice_client.directories = {
             directory_name: Directory(
+                id=directory_id,
+                type=DirectoryType.MicrosoftAD,
                 name=directory_name,
                 region=AWS_REGION,
                 certificates=[],
@@ -63,9 +67,12 @@ class Test_directoryservice_ldap_certificate_expiration:
         directoryservice_client = mock.MagicMock
         directory_name = "test-directory"
         certificate_id = "test-certificate"
+        directory_id = "d-12345a1b2"
         directoryservice_client.directories = {
             directory_name: Directory(
                 name=directory_name,
+                id=directory_id,
+                type=DirectoryType.MicrosoftAD,
                 region=AWS_REGION,
                 certificates=[
                     Certificate(
@@ -97,7 +104,7 @@ class Test_directoryservice_ldap_certificate_expiration:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"LDAP Certificate {certificate_id} configured at {directory_name} expires in {remaining_days_to_expire} days"
+                == f"LDAP Certificate {certificate_id} configured at {directory_id} expires in {remaining_days_to_expire} days"
             )
 
     def test_directory_certificate_expires_in_90_days(self):
@@ -106,9 +113,12 @@ class Test_directoryservice_ldap_certificate_expiration:
         directoryservice_client = mock.MagicMock
         directory_name = "test-directory"
         certificate_id = "test-certificate"
+        directory_id = "d-12345a1b2"
         directoryservice_client.directories = {
             directory_name: Directory(
                 name=directory_name,
+                id=directory_id,
+                type=DirectoryType.MicrosoftAD,
                 region=AWS_REGION,
                 certificates=[
                     Certificate(
@@ -140,7 +150,7 @@ class Test_directoryservice_ldap_certificate_expiration:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"LDAP Certificate {certificate_id} configured at {directory_name} is about to expire in {remaining_days_to_expire} days"
+                == f"LDAP Certificate {certificate_id} configured at {directory_id} is about to expire in {remaining_days_to_expire} days"
             )
 
     def test_directory_certificate_expires_in_31_days(self):
@@ -149,9 +159,12 @@ class Test_directoryservice_ldap_certificate_expiration:
         directoryservice_client = mock.MagicMock
         directory_name = "test-directory"
         certificate_id = "test-certificate"
+        directory_id = "d-12345a1b2"
         directoryservice_client.directories = {
             directory_name: Directory(
                 name=directory_name,
+                id=directory_id,
+                type=DirectoryType.MicrosoftAD,
                 region=AWS_REGION,
                 certificates=[
                     Certificate(
@@ -183,5 +196,5 @@ class Test_directoryservice_ldap_certificate_expiration:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"LDAP Certificate {certificate_id} configured at {directory_name} is about to expire in {remaining_days_to_expire} days"
+                == f"LDAP Certificate {certificate_id} configured at {directory_id} is about to expire in {remaining_days_to_expire} days"
             )

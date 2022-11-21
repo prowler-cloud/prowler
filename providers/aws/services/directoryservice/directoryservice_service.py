@@ -44,6 +44,8 @@ class DirectoryService:
             for page in describe_fleets_paginator.paginate():
                 for directory in page["DirectoryDescriptions"]:
                     directory_id = directory["DirectoryId"]
+                    directory_name = directory["Name"]
+                    directory_type = directory["Type"]
                     # Radius Configuration
                     radius_authentication_protocol = (
                         directory["RadiusSettings"]["AuthenticationProtocol"]
@@ -57,7 +59,9 @@ class DirectoryService:
                     )
 
                     self.directories[directory_id] = Directory(
-                        name=directory_id,
+                        name=directory_name,
+                        id=directory_id,
+                        type=directory_type,
                         region=regional_client.region,
                         radius_settings=RadiusSettings(
                             authentication_protocol=radius_authentication_protocol,
@@ -94,9 +98,7 @@ class DirectoryService:
                                     ],
                                 )
                             )
-                    self.directories[
-                        directory.name
-                    ].log_subscriptions = log_subscriptions
+                    self.directories[directory.id].log_subscriptions = log_subscriptions
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -121,7 +123,7 @@ class DirectoryService:
                                 created_date_time=event_topic["CreatedDateTime"],
                             )
                         )
-                    self.directories[directory.name].event_topics = event_topics
+                    self.directories[directory.id].event_topics = event_topics
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -131,7 +133,11 @@ class DirectoryService:
         logger.info("DirectoryService - Listing Certificates...")
         try:
             for directory in self.directories.values():
-                if directory.region == regional_client.region:
+                #  LDAPS operations are not supported for this Directory Type
+                if (
+                    directory.region == regional_client.region
+                    and directory.type != DirectoryType.SimpleAD
+                ):
                     list_certificates_paginator = regional_client.get_paginator(
                         "list_certificates"
                     )
@@ -150,7 +156,7 @@ class DirectoryService:
                                     type=certificate_info["Type"],
                                 )
                             )
-                    self.directories[directory.name].certificates = certificates
+                    self.directories[directory.id].certificates = certificates
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -160,12 +166,16 @@ class DirectoryService:
         logger.info("DirectoryService - Getting Snapshot Limits...")
         try:
             for directory in self.directories.values():
-                if directory.region == regional_client.region:
+                # Snapshot limits can be fetched only for VPC or Microsoft AD directories.
+                if (
+                    directory.region == regional_client.region
+                    and directory.type != DirectoryType.ADConnector
+                ):
                     get_snapshot_limits_parameters = {"DirectoryId": directory.name}
                     snapshot_limit = regional_client.get_snapshot_limits(
                         **get_snapshot_limits_parameters
                     )
-                    self.directories[directory.name].snapshots_limits = SnapshotLimit(
+                    self.directories[directory.id].snapshots_limits = SnapshotLimit(
                         manual_snapshots_current_count=snapshot_limit["SnapshotLimits"][
                             "ManualSnapshotsCurrentCount"
                         ],
@@ -250,8 +260,17 @@ class RadiusSettings(BaseModel):
     status: Union[RadiusStatus, None]
 
 
+class DirectoryType(Enum):
+    SimpleAD = "SimpleAD"
+    ADConnector = "ADConnector"
+    MicrosoftAD = "MicrosoftAD"
+    SharedMicrosoftAD = "SharedMicrosoftAD"
+
+
 class Directory(BaseModel):
     name: str
+    id: str
+    type: DirectoryType
     log_subscriptions: list[LogSubscriptions] = []
     event_topics: list[EventTopics] = []
     certificates: list[Certificate] = []
