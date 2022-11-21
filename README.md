@@ -366,7 +366,11 @@ Install psql
 
 #### Audit ID Field
 
-Prowler can add an optional `audit_id` field to identify each audit that has been made in the database. You can do this by adding the `-u audit_id` flag to the prowler command.
+To use Prowler postgres connector it is needed to set the -u flag to include  `audit_id` field into the query. This field helps to identify each audit that has been made in the database. This field needs to be an UUID V4 to match the table schema.
+For example:  
+```
+./prowler -M csv -d postgresql -u e5a0f214-8bf9-4600-a0c3-ff659b30e6c0
+```
 
 #### Credentials
 
@@ -427,7 +431,7 @@ prowler_start_time text
 ```
 
 - Execute Prowler with `-d` flag, for example:
-  `./prowler -M csv -d postgresql`
+  `./prowler -M csv -d postgresql -u e5a0f214-8bf9-4600-a0c3-ff659b30e6c0`
   > _Note_: This command creates a `csv` output file and stores the Prowler output in the configured PostgreSQL DB. It's an example, `-d` flag **does not** require `-M` to run.
 
 ## Output Formats
