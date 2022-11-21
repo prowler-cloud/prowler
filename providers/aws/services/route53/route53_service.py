@@ -9,6 +9,7 @@ class Route53:
     def __init__(self, audit_info):
         self.service = "route53"
         self.session = audit_info.audit_session
+        self.audited_partition = audit_info.audited_partition
         self.client = self.session.client(self.service)
         self.region = get_region_global_service(audit_info)
         self.hosted_zones = {}
@@ -32,6 +33,7 @@ class Route53:
                         id=hosted_zone_id,
                         name=hosted_zone_name,
                         private_zone=private_zone,
+                        arn=f"arn:{self.audited_partition}:route53:::{hosted_zone_id}",
                         region=self.region,
                     )
 
@@ -69,6 +71,7 @@ class LoggingConfig(BaseModel):
 
 class HostedZone(BaseModel):
     id: str
+    arn: str
     name: str
     private_zone: bool
     logging_config: LoggingConfig = None

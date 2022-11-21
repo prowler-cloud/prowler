@@ -10,6 +10,7 @@ class EC2:
     def __init__(self, audit_info):
         self.service = "ec2"
         self.session = audit_info.audit_session
+        self.audited_partition = audit_info.audited_partition
         self.audited_account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.instances = []
@@ -264,11 +265,14 @@ class EC2:
                     association_id = address["AssociationId"]
                 if "AllocationId" in address:
                     allocation_id = address["AllocationId"]
+                elastic_ip_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:eip-allocation/{allocation_id}"
+
                 self.elastic_ips.append(
                     ElasticIP(
                         public_ip,
                         association_id,
                         allocation_id,
+                        elastic_ip_arn,
                         regional_client.region,
                     )
                 )
@@ -403,13 +407,15 @@ class NetworkACL:
 class ElasticIP:
     public_ip: str
     association_id: str
+    arn: str
     allocation_id: str
     region: str
 
-    def __init__(self, public_ip, association_id, allocation_id, region):
+    def __init__(self, public_ip, association_id, allocation_id, arn, region):
         self.public_ip = public_ip
         self.association_id = association_id
         self.allocation_id = allocation_id
+        self.arn = arn
         self.region = region
 
 

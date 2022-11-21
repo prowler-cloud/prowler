@@ -205,8 +205,14 @@ class Test_EC2_Service:
     def test__describe_addresses__(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION)
-        ec2_client.allocate_address(Domain="vpc", Address="127.38.43.222")
+        allocation_id = ec2_client.allocate_address(
+            Domain="vpc", Address="127.38.43.222"
+        )["AllocationId"]
         # EC2 client for this test class
         audit_info = self.set_mocked_audit_info()
         ec2 = EC2(audit_info)
         assert "127.38.43.222" in str(ec2.elastic_ips)
+        assert (
+            ec2.elastic_ips[0].arn
+            == f"arn:aws:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:eip-allocation/{allocation_id}"
+        )
