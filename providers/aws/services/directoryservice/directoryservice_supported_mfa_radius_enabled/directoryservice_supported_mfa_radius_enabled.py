@@ -14,16 +14,16 @@ class directoryservice_supported_mfa_radius_enabled(Check):
             if directory.radius_settings:
                 report = Check_Report(self.metadata)
                 report.region = directory.region
-                report.resource_id = directory.name
+                report.resource_id = directory.id
                 if directory.radius_settings.status == RadiusStatus.Completed:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"Directory {directory.name} have Radius MFA enabled"
+                        f"Directory {directory.id} have Radius MFA enabled"
                     )
                 else:
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"Directory {directory.name} does not have Radius MFA enabled"
+                        f"Directory {directory.id} does not have Radius MFA enabled"
                     )
 
                 findings.append(report)

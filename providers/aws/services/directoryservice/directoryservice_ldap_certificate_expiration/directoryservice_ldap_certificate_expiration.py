@@ -23,10 +23,10 @@ class directoryservice_ldap_certificate_expiration(Check):
                 ).days
                 if remaining_days_to_expire <= DAYS_TO_EXPIRE_THRESHOLD:
                     report.status = "FAIL"
-                    report.status_extended = f"LDAP Certificate {certificate.id} configured at {directory.name} is about to expire in {remaining_days_to_expire} days"
+                    report.status_extended = f"LDAP Certificate {certificate.id} configured at {directory.id} is about to expire in {remaining_days_to_expire} days"
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"LDAP Certificate {certificate.id} configured at {directory.name} expires in {remaining_days_to_expire} days"
+                    report.status_extended = f"LDAP Certificate {certificate.id} configured at {directory.id} expires in {remaining_days_to_expire} days"
 
                 findings.append(report)
 

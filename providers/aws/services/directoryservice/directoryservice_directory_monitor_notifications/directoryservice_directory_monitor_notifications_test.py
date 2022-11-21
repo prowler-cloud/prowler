@@ -5,6 +5,7 @@ from moto.core import DEFAULT_ACCOUNT_ID
 
 from providers.aws.services.directoryservice.directoryservice_service import (
     Directory,
+    DirectoryType,
     EventTopics,
     EventTopicStatus,
 )
@@ -33,8 +34,11 @@ class Test_directoryservice_directory_monitor_notifications:
     def test_one_directory_logging_disabled(self):
         directoryservice_client = mock.MagicMock
         directory_name = "test-directory"
+        directory_id = "d-12345a1b2"
         directoryservice_client.directories = {
             directory_name: Directory(
+                id=directory_id,
+                type=DirectoryType.MicrosoftAD,
                 name=directory_name,
                 region=AWS_REGION,
                 event_topics=[],
@@ -53,20 +57,23 @@ class Test_directoryservice_directory_monitor_notifications:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].resource_id == "test-directory"
+            assert result[0].resource_id == directory_id
             assert result[0].region == AWS_REGION
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Directory Service {directory_name} have SNS messaging disabled"
+                == f"Directory Service {directory_id} have SNS messaging disabled"
             )
 
     def test_one_directory_logging_enabled(self):
         directoryservice_client = mock.MagicMock
         directory_name = "test-directory"
+        directory_id = "d-12345a1b2"
         directoryservice_client.directories = {
             directory_name: Directory(
                 name=directory_name,
+                id=directory_id,
+                type=DirectoryType.MicrosoftAD,
                 region=AWS_REGION,
                 event_topics=[
                     EventTopics(
@@ -91,10 +98,10 @@ class Test_directoryservice_directory_monitor_notifications:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].resource_id == "test-directory"
+            assert result[0].resource_id == directory_id
             assert result[0].region == AWS_REGION
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Directory Service {directory_name} have SNS messaging enabled"
+                == f"Directory Service {directory_id} have SNS messaging enabled"
             )
