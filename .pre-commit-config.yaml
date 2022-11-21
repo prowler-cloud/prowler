@@ -11,8 +11,7 @@ repos:
       - id: trailing-whitespace
       - id: no-commit-to-branch
       - id: pretty-format-json
-        args: ['--autofix']
-        exclude: .metadata.json
+        args: ['--autofix', --no-sort-keys, --no-ensure-ascii]
 ## BASH
   - repo: https://github.com/koalaman/shellcheck-precommit
     rev: v0.8.0
