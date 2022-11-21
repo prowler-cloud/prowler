@@ -4,6 +4,7 @@ import sys
 from csv import DictWriter
 
 from colorama import Fore, Style
+from tabulate import tabulate
 
 from config.config import (
     csv_file_suffix,
@@ -25,6 +26,7 @@ from lib.outputs.models import (
 )
 from lib.utils.utils import file_exists, hash_sha512, open_file
 from providers.aws.lib.allowlist.allowlist import is_allowlisted
+from providers.aws.lib.audit_info.models import AWS_Audit_Info
 from providers.aws.lib.security_hub.security_hub import send_to_security_hub
 
 
@@ -62,7 +64,7 @@ def report(check_findings, output_options, audit_info):
                 print(
                     f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
                 )
-            elif not output_options.is_quiet:
+            elif not output_options.is_quiet and output_options.verbose:
                 print(
                     f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
                 )
@@ -103,8 +105,8 @@ def report(check_findings, output_options, audit_info):
                         finding.region, finding_output, audit_info.audit_session
                     )
     else:  # No service resources in the whole account
-        color = set_report_color("WARNING")
-        if not output_options.is_quiet:
+        color = set_report_color("INFO")
+        if not output_options.is_quiet and output_options.verbose:
             print(f"\t{color}INFO{Style.RESET_ALL} There are no resources")
 
     if file_descriptors:
@@ -173,6 +175,7 @@ def fill_file_descriptors(output_modes, output_directory, csv_fields, output_fil
 
 def set_report_color(status):
     color = ""
+    orange = "\033[38;5;208m"
     if status == "PASS":
         color = Fore.GREEN
     elif status == "FAIL":
@@ -180,6 +183,8 @@ def set_report_color(status):
     elif status == "ERROR":
         color = Fore.BLACK
     elif status == "WARNING":
+        color = orange
+    elif status == "INFO":
         color = Fore.YELLOW
     else:
         raise Exception("Invalid Report Status. Must be PASS, FAIL, ERROR or WARNING")
@@ -288,4 +293,114 @@ def send_to_s3_bucket(
 
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")
+        sys.exit()
+
+
+def display_summary_table(findings: list, audit_info: AWS_Audit_Info):
+    try:
+        if findings:
+            current_service = ""
+            current_provider = ""
+            findings_table = {
+                "Provider": [],
+                "Service": [],
+                "Status": [],
+                "Critical": [],
+                "High": [],
+                "Medium": [],
+                "Low": [],
+            }
+            pass_count = (
+                fail_count
+            ) = current_critical = current_high = current_medium = current_low = 0
+            for finding in findings:
+                # If new service and not first, add previous row
+                if (
+                    current_service != finding.check_metadata.ServiceName
+                    and current_service
+                ):
+                    if (
+                        current_critical > 0
+                        or current_high > 0
+                        or current_medium > 0
+                        or current_low > 0
+                    ):
+                        current_status = f"{Fore.RED}FAIL{Style.RESET_ALL}"
+                    else:
+                        current_status = f"{Fore.GREEN}PASS{Style.RESET_ALL}"
+
+                    findings_table["Provider"].append(current_provider)
+                    findings_table["Service"].append(current_service)
+                    findings_table["Status"].append(current_status)
+                    findings_table["Critical"].append(
+                        f"{Fore.LIGHTRED_EX}{current_critical}{Style.RESET_ALL}"
+                    )
+                    findings_table["High"].append(
+                        f"{Fore.RED}{current_high}{Style.RESET_ALL}"
+                    )
+                    findings_table["Medium"].append(
+                        f"{Fore.YELLOW}{current_medium}{Style.RESET_ALL}"
+                    )
+                    findings_table["Low"].append(
+                        f"{Fore.BLUE}{current_low}{Style.RESET_ALL}"
+                    )
+
+                    current_critical = current_high = current_medium = current_low = 0
+
+                current_service = finding.check_metadata.ServiceName
+                current_provider = finding.check_metadata.Provider
+
+                if finding.status == "PASS":
+                    pass_count += 1
+                elif finding.status == "FAIL":
+                    fail_count += 1
+                    if finding.check_metadata.Severity == "critical":
+                        current_critical += 1
+                    elif finding.check_metadata.Severity == "high":
+                        current_high += 1
+                    elif finding.check_metadata.Severity == "medium":
+                        current_medium += 1
+                    elif finding.check_metadata.Severity == "low":
+                        current_low += 1
+
+            # Add final service
+            if (
+                current_critical > 0
+                or current_high > 0
+                or current_medium > 0
+                or current_low > 0
+            ):
+                current_status = f"{Fore.RED}FAIL{Style.RESET_ALL}"
+            else:
+                current_status = f"{Fore.GREEN}PASS{Style.RESET_ALL}"
+
+            findings_table["Provider"].append(finding.check_metadata.Provider)
+            findings_table["Service"].append(finding.check_metadata.ServiceName)
+            findings_table["Status"].append(current_status)
+            findings_table["Critical"].append(
+                f"{Fore.LIGHTRED_EX}{current_critical}{Style.RESET_ALL}"
+            )
+            findings_table["High"].append(f"{Fore.RED}{current_high}{Style.RESET_ALL}")
+            findings_table["Medium"].append(
+                f"{Fore.YELLOW}{current_medium}{Style.RESET_ALL}"
+            )
+            findings_table["Low"].append(f"{Fore.BLUE}{current_low}{Style.RESET_ALL}")
+
+            print("\nOverview Results:")
+            overview_table = [
+                [
+                    f"{Fore.GREEN}{round(pass_count/len(findings)*100, 2)}% ({pass_count}) Passed{Style.RESET_ALL}",
+                    f"{Fore.RED}{round(fail_count/len(findings)*100, 2)}% ({fail_count}) Failed{Style.RESET_ALL}",
+                ]
+            ]
+            print(tabulate(overview_table, tablefmt="rounded_grid"))
+            print(
+                f"\nAccount {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} Scan Results:"
+            )
+            print(tabulate(findings_table, headers="keys", tablefmt="rounded_grid"))
+
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+        )
         sys.exit()

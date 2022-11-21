@@ -16,6 +16,7 @@ class Output_From_Options:
     security_hub_enabled: bool
     output_filename: str
     allowlist_file: str
+    verbose: str
 
 
 # Testing Pending

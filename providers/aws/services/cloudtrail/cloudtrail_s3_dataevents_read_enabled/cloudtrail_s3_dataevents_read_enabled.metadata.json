@@ -2,8 +2,10 @@
   "Provider": "aws",
   "CheckID": "cloudtrail_s3_dataevents_read_enabled",
   "CheckTitle": "Check if S3 buckets have Object-level logging for read events is enabled in CloudTrail.",
-  "CheckType": ["Logging and Monitoring"],
-  "ServiceName": "s3",
+  "CheckType": [
+    "Logging and Monitoring"
+  ],
+  "ServiceName": "cloudtrail",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
