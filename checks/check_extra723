@@ -18,8 +18,8 @@ CHECK_SEVERITY_extra723="Critical"
 CHECK_ASFF_RESOURCE_TYPE_extra723="AwsRdsDbSnapshot"
 CHECK_ALTERNATE_check723="extra723"
 CHECK_SERVICENAME_extra723="rds"
-CHECK_RISK_extra723='Publicly accessible services could expose sensitive data to bad actors. t is recommended that your RDS snapshots should not be public in order to prevent potential leak or misuse of sensitive data or any other kind of security threat. If your RDS snapshot is public; then the data which is backed up in that snapshot is accessible to all other AWS accounts.'
-CHECK_REMEDIATION_extra723='Use AWS Config to identify any sanpshot that is public.'
+CHECK_RISK_extra723='Publicly accessible services could expose sensitive data to bad actors. It is recommended that your RDS snapshots should not be public in order to prevent potential leak or misuse of sensitive data or any other kind of security threat. If your RDS snapshot is public then the data which is backed up in that snapshot is accessible to all other AWS accounts.'
+CHECK_REMEDIATION_extra723='Use AWS Config to identify any snapshot that is public.'
 CHECK_DOC_extra723='https://docs.aws.amazon.com/config/latest/developerguide/rds-snapshots-public-prohibited.html'
 CHECK_CAF_EPIC_extra723='Data Protection'
 
