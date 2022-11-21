@@ -85,7 +85,7 @@ class Test_ELB_Service:
         assert elb.loadbalancers[0].scheme == "internal"
         assert (
             elb.loadbalancers[0].arn
-            == f"arn:aws:elasticloadbalancing:${AWS_REGION}:${AWS_ACCOUNT_NUMBER}:loadbalancer/my-lb"
+            == f"arn:aws:elasticloadbalancing:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:loadbalancer/my-lb"
         )
 
     # Test ELB Describe Load Balancers Attributes
@@ -130,5 +130,5 @@ class Test_ELB_Service:
         assert elb.loadbalancers[0].access_logs
         assert (
             elb.loadbalancers[0].arn
-            == f"arn:aws:elasticloadbalancing:${AWS_REGION}:${AWS_ACCOUNT_NUMBER}:loadbalancer/my-lb"
+            == f"arn:aws:elasticloadbalancing:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:loadbalancer/my-lb"
         )

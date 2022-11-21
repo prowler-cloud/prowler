@@ -50,7 +50,7 @@ class ELB:
                     self.loadbalancers.append(
                         LoadBalancer(
                             name=elb["LoadBalancerName"],
-                            arn=f"arn:{self.audited_partition}:elasticloadbalancing:${regional_client.region}:${self.audited_account}:loadbalancer/{elb['LoadBalancerName']}",
+                            arn=f"arn:{self.audited_partition}:elasticloadbalancing:{regional_client.region}:{self.audited_account}:loadbalancer/{elb['LoadBalancerName']}",
                             dns=elb["DNSName"],
                             region=regional_client.region,
                             scheme=elb["Scheme"],
