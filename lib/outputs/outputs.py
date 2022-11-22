@@ -403,7 +403,9 @@ def display_summary_table(
                 f"\nAccount {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
             )
             print(tabulate(findings_table, headers="keys", tablefmt="rounded_grid"))
-            print(f"{Style.BRIGHT}* You only see here those services that contains resources.{Style.RESET_ALL}")
+            print(
+                f"{Style.BRIGHT}* You only see here those services that contains resources.{Style.RESET_ALL}"
+            )
             print("\nDetailed results are in:")
             print(f" - CSV: {output_directory}/{output_filename}.csv")
             print(f" - JSON: {output_directory}/{output_filename}.json\n")
