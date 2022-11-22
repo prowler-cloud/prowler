@@ -23,6 +23,6 @@ class cloudformation_stacks_termination_protection_enabled(Check):
                 else:
                     report.status = "FAIL"
                     report.status_extended = f"CloudFormation {stack.name} has termination protection disabled"
-            findings.append(report)
+                findings.append(report)
 
         return findings
