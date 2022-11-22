@@ -10,10 +10,10 @@ from config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
+    orange_color,
     prowler_version,
     timestamp_iso,
     timestamp_utc,
-    orange_color,
 )
 from lib.logger import logger
 from lib.outputs.models import (
@@ -304,8 +304,14 @@ def display_summary_table(
 ):
     try:
         if findings:
-            current_service = ""
-            current_provider = ""
+            current = {
+                "Service": "",
+                "Provider": "",
+                "Critical": 0,
+                "High": 0,
+                "Medium": 0,
+                "Low": 0,
+            }
             findings_table = {
                 "Provider": [],
                 "Service": [],
@@ -315,81 +321,39 @@ def display_summary_table(
                 "Medium": [],
                 "Low": [],
             }
-            pass_count = (
-                fail_count
-            ) = current_critical = current_high = current_medium = current_low = 0
+            pass_count = fail_count = 0
             for finding in findings:
                 # If new service and not first, add previous row
                 if (
-                    current_service != finding.check_metadata.ServiceName
-                    and current_service
+                    current["Service"] != finding.check_metadata.ServiceName
+                    and current["Service"]
                 ):
-                    if (
-                        current_critical > 0
-                        or current_high > 0
-                        or current_medium > 0
-                        or current_low > 0
-                    ):
-                        current_status = f"{Fore.RED}FAIL{Style.RESET_ALL}"
-                    else:
-                        current_status = f"{Fore.GREEN}PASS{Style.RESET_ALL}"
 
-                    findings_table["Provider"].append(current_provider)
-                    findings_table["Service"].append(current_service)
-                    findings_table["Status"].append(current_status)
-                    findings_table["Critical"].append(
-                        f"{Fore.LIGHTRED_EX}{current_critical}{Style.RESET_ALL}"
-                    )
-                    findings_table["High"].append(
-                        f"{Fore.RED}{current_high}{Style.RESET_ALL}"
-                    )
-                    findings_table["Medium"].append(
-                        f"{Fore.YELLOW}{current_medium}{Style.RESET_ALL}"
-                    )
-                    findings_table["Low"].append(
-                        f"{Fore.BLUE}{current_low}{Style.RESET_ALL}"
-                    )
+                    add_service_to_table(findings_table, current)
 
-                    current_critical = current_high = current_medium = current_low = 0
+                    current["Critical"] = current["High"] = current["Medium"] = current[
+                        "Low"
+                    ] = 0
 
-                current_service = finding.check_metadata.ServiceName
-                current_provider = finding.check_metadata.Provider
+                current["Service"] = finding.check_metadata.ServiceName
+                current["Provider"] = finding.check_metadata.Provider
 
                 if finding.status == "PASS":
                     pass_count += 1
                 elif finding.status == "FAIL":
                     fail_count += 1
                     if finding.check_metadata.Severity == "critical":
-                        current_critical += 1
+                        current["Critical"] += 1
                     elif finding.check_metadata.Severity == "high":
-                        current_high += 1
+                        current["High"] += 1
                     elif finding.check_metadata.Severity == "medium":
-                        current_medium += 1
+                        current["Medium"] += 1
                     elif finding.check_metadata.Severity == "low":
-                        current_low += 1
+                        current["Low"] += 1
 
             # Add final service
-            if (
-                current_critical > 0
-                or current_high > 0
-                or current_medium > 0
-                or current_low > 0
-            ):
-                current_status = f"{Fore.RED}FAIL{Style.RESET_ALL}"
-            else:
-                current_status = f"{Fore.GREEN}PASS{Style.RESET_ALL}"
 
-            findings_table["Provider"].append(finding.check_metadata.Provider)
-            findings_table["Service"].append(finding.check_metadata.ServiceName)
-            findings_table["Status"].append(current_status)
-            findings_table["Critical"].append(
-                f"{Fore.LIGHTRED_EX}{current_critical}{Style.RESET_ALL}"
-            )
-            findings_table["High"].append(f"{Fore.RED}{current_high}{Style.RESET_ALL}")
-            findings_table["Medium"].append(
-                f"{Fore.YELLOW}{current_medium}{Style.RESET_ALL}"
-            )
-            findings_table["Low"].append(f"{Fore.BLUE}{current_low}{Style.RESET_ALL}")
+            add_service_to_table(findings_table, current)
 
             print("\nOverview Results:")
             overview_table = [
@@ -415,3 +379,26 @@ def display_summary_table(
             f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
         )
         sys.exit()
+
+
+def add_service_to_table(findings_table, current):
+    if (
+        current["Critical"] > 0
+        or current["High"] > 0
+        or current["Medium"] > 0
+        or current["Low"] > 0
+    ):
+        current["Status"] = f"{Fore.RED}FAIL{Style.RESET_ALL}"
+    else:
+        current["Status"] = f"{Fore.GREEN}PASS{Style.RESET_ALL}"
+    findings_table["Provider"].append(current["Provider"])
+    findings_table["Service"].append(current["Service"])
+    findings_table["Status"].append(current["Status"])
+    findings_table["Critical"].append(
+        f"{Fore.LIGHTRED_EX}{current['Critical']}{Style.RESET_ALL}"
+    )
+    findings_table["High"].append(f"{Fore.RED}{current['High']}{Style.RESET_ALL}")
+    findings_table["Medium"].append(
+        f"{Fore.YELLOW}{current['Medium']}{Style.RESET_ALL}"
+    )
+    findings_table["Low"].append(f"{Fore.BLUE}{current['Low']}{Style.RESET_ALL}")
