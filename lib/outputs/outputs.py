@@ -262,10 +262,11 @@ def close_json(output_filename, output_directory, mode):
             filename,
             "a",
         )
-        # Replace last comma for square bracket
-        file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
-        file_descriptor.truncate()
-        file_descriptor.write("]")
+        # Replace last comma for square bracket if not empty
+        if file_descriptor.tell() > 0:
+            file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
+            file_descriptor.truncate()
+            file_descriptor.write("]")
         file_descriptor.close()
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")
