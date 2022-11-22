@@ -69,7 +69,6 @@ def report(check_findings, output_options, audit_info):
                 print(
                     f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
                 )
-
             if file_descriptors:
                 # sending the finding to input options
                 if "csv" in file_descriptors:
@@ -109,7 +108,7 @@ def report(check_findings, output_options, audit_info):
         color = set_report_color("INFO")
         if not output_options.is_quiet and output_options.verbose:
             print(f"\t{color}INFO{Style.RESET_ALL} There are no resources")
-
+    print()
     if file_descriptors:
         # Close all file descriptors
         for file_descriptor in file_descriptors:
