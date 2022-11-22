@@ -7,7 +7,10 @@ from lib.logger import logger
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-prowler_version = "3.0-beta-08Aug2022"
+prowler_version = "3.0-beta-21Nov2022"
+
+orange_color = "\033[38;5;208m"
+banner_color = "\033[1;92m"
 
 # Groups
 groups_file = "groups.json"

@@ -17,17 +17,16 @@ from lib.check.check import (
     exclude_checks_to_run,
     exclude_groups_to_run,
     exclude_services_to_run,
-    import_check,
+    execute_checks,
     list_groups,
     list_services,
     print_checks,
     print_services,
-    run_check,
     set_output_options,
 )
 from lib.check.checks_loader import load_checks_to_execute
 from lib.logger import logger, set_logging_config
-from lib.outputs.outputs import close_json, send_to_s3_bucket
+from lib.outputs.outputs import close_json, display_summary_table, send_to_s3_bucket
 from providers.aws.aws_provider import provider_set_session
 from providers.aws.lib.allowlist.allowlist import parse_allowlist_file
 from providers.aws.lib.security_hub.security_hub import (
@@ -137,6 +136,7 @@ if __name__ == "__main__":
         "--output-modes",
         nargs="+",
         help="Output mode, by default csv",
+        default=["csv", "json"],
         choices=["csv", "json", "json-asff"],
     )
     parser.add_argument(
@@ -194,6 +194,11 @@ if __name__ == "__main__":
         default=None,
         help="Path for allowlist yaml file, by default is 'providers/aws/allowlist.yaml'. See default yaml for reference and format.",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Display detailed information about findings.",
+    )
     # Parse Arguments
     args = parser.parse_args()
 
@@ -227,7 +232,7 @@ if __name__ == "__main__":
         sys.exit()
 
     if args.no_banner:
-        print_banner()
+        print_banner(args)
 
     if args.list_groups:
         list_groups(provider)
@@ -321,30 +326,14 @@ if __name__ == "__main__":
         args.security_hub,
         output_filename,
         allowlist_file,
+        args.verbose,
     )
 
     # Execute checks
     if len(checks_to_execute):
-        for check_name in checks_to_execute:
-            # Recover service from check name
-            service = check_name.split("_")[0]
-            try:
-                # Import check module
-                check_module_path = (
-                    f"providers.{provider}.services.{service}.{check_name}.{check_name}"
-                )
-                lib = import_check(check_module_path)
-                # Recover functions from check
-                check_to_execute = getattr(lib, check_name)
-                c = check_to_execute()
-                # Run check
-                run_check(c, audit_info, audit_output_options)
-
-            # If check does not exists in the provider or is from another provider
-            except ModuleNotFoundError:
-                logger.error(
-                    f"Check '{check_name}' was not found for the {provider.upper()} provider"
-                )
+        findings = execute_checks(
+            checks_to_execute, provider, audit_info, audit_output_options
+        )
     else:
         logger.error(
             "There are no checks to execute. Please, check your input arguments"
@@ -374,3 +363,11 @@ if __name__ == "__main__":
     # Resolve previous fails of Security Hub
     if args.security_hub:
         resolve_security_hub_previous_findings(output_directory, audit_info)
+
+    # Display summary table
+    display_summary_table(
+        findings,
+        audit_info,
+        output_filename,
+        output_directory,
+    )
