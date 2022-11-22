@@ -36,8 +36,11 @@ class CloudFormation:
             for page in describe_stacks_paginator.paginate():
                 for stack in page["Stacks"]:
                     outputs = []
-                    for output in stack["Outputs"]:
-                        outputs.append(f"{output['OutputKey']}:{output['OutputValue']}")
+                    if "Outputs" in stack:
+                        for output in stack["Outputs"]:
+                            outputs.append(
+                                f"{output['OutputKey']}:{output['OutputValue']}"
+                            )
                     self.stacks.append(
                         Stack(
                             arn=stack["StackId"],
