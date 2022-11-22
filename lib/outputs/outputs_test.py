@@ -13,6 +13,7 @@ from config.config import (
     prowler_version,
     timestamp_iso,
     timestamp_utc,
+    orange_color,
 )
 from lib.check.models import Check_Report, load_check_metadata
 from lib.outputs.models import (
@@ -108,9 +109,8 @@ class Test_Outputs:
                 remove(expected[index][output_mode].name)
 
     def test_set_report_color(self):
-        orange = "\033[38;5;208m"
         test_status = ["PASS", "FAIL", "ERROR", "WARNING"]
-        test_colors = [Fore.GREEN, Fore.RED, Fore.BLACK, orange]
+        test_colors = [Fore.GREEN, Fore.RED, Fore.BLACK, orange_color]
 
         for status in test_status:
             assert set_report_color(status) in test_colors

@@ -6,7 +6,7 @@ from typing import Any
 from alive_progress import alive_bar
 from colorama import Fore, Style
 
-from config.config import groups_file
+from config.config import groups_file, orange_color
 from lib.check.models import Check, Output_From_Options, load_check_metadata
 from lib.logger import logger
 from lib.outputs.outputs import report
@@ -232,7 +232,6 @@ def execute_checks(
     audit_output_options: Output_From_Options,
 ) -> list:
     all_findings = []
-    orange = "\033[38;5;208m"
     print(
         f"{Style.BRIGHT}Executing {len(checks_to_execute)} checks, please wait...{Style.RESET_ALL}\n"
     )
@@ -247,7 +246,7 @@ def execute_checks(
         for check_name in checks_to_execute:
             # Recover service from check name
             service = check_name.split("_")[0]
-            bar.title = f"-> Scanning {orange}{service}{Style.RESET_ALL} service"
+            bar.title = f"-> Scanning {orange_color}{service}{Style.RESET_ALL} service"
             try:
                 # Import check module
                 check_module_path = (
@@ -268,4 +267,8 @@ def execute_checks(
                 logger.error(
                     f"Check '{check_name}' was not found for the {provider.upper()} provider"
                 )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
     return all_findings

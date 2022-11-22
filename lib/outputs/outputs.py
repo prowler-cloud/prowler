@@ -13,6 +13,7 @@ from config.config import (
     prowler_version,
     timestamp_iso,
     timestamp_utc,
+    orange_color,
 )
 from lib.logger import logger
 from lib.outputs.models import (
@@ -175,7 +176,6 @@ def fill_file_descriptors(output_modes, output_directory, csv_fields, output_fil
 
 def set_report_color(status):
     color = ""
-    orange = "\033[38;5;208m"
     if status == "PASS":
         color = Fore.GREEN
     elif status == "FAIL":
@@ -183,7 +183,7 @@ def set_report_color(status):
     elif status == "ERROR":
         color = Fore.BLACK
     elif status == "WARNING":
-        color = orange
+        color = orange_color
     elif status == "INFO":
         color = Fore.YELLOW
     else:
@@ -403,6 +403,7 @@ def display_summary_table(
                 f"\nAccount {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
             )
             print(tabulate(findings_table, headers="keys", tablefmt="rounded_grid"))
+            print(f"{Style.BRIGHT}* You only see here those services that contains resources.{Style.RESET_ALL}")
             print("\nDetailed results are in:")
             print(f" - CSV: {output_directory}/{output_filename}.csv")
             print(f" - JSON: {output_directory}/{output_filename}.json\n")

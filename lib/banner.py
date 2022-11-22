@@ -1,6 +1,6 @@
 from colorama import Fore, Style
 
-from config.config import prowler_version, timestamp
+from config.config import prowler_version, timestamp, banner_color, orange_color
 
 
 def print_version():
@@ -8,8 +8,7 @@ def print_version():
 
 
 def print_banner():
-    orange = "\033[38;5;208m"
-    banner = f"""\033[1;92m                         _
+    banner = f"""{banner_color}                         _
  _ __  _ __ _____      _| | ___ _ __
 | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|
 | |_) | | | (_) \ V  V /| |  __/ |
@@ -21,7 +20,7 @@ def print_banner():
 Color code for results:
  - {Fore.YELLOW}INFO (Information){Style.RESET_ALL}
  - {Fore.GREEN}PASS (Recommended value){Style.RESET_ALL}
- - {orange}WARNING (Ignored by allowlist){Style.RESET_ALL}
+ - {orange_color}WARNING (Ignored by allowlist){Style.RESET_ALL}
  - {Fore.RED}FAIL (Fix required){Style.RESET_ALL}
 """
     print(banner)
