@@ -15,8 +15,11 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
             for statement in policy_document["Statement"]:
                 if (
                     statement["Effect"] == "Allow"
-                    and "sts:AssumeRole" in statement["Action"]
-                    and "sts:*" in statement["Action"]
+                    and (
+                        "sts:AssumeRole" in statement["Action"]
+                        or "sts:*" in statement["Action"]
+                        or "*" in statement["Action"]
+                    )
                     and "*" in statement["Resource"]
                 ):
                     report.status = "FAIL"
