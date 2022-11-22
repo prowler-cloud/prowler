@@ -53,7 +53,7 @@ class RDS:
                             auto_minor_version_upgrade=instance[
                                 "AutoMinorVersionUpgrade"
                             ],
-                            backup_rentention_period=instance.get(
+                            backup_retention_period=instance.get(
                                 "BackupRetentionPeriod"
                             ),
                             cloudwatch_logs=instance.get(
@@ -153,7 +153,7 @@ class DBInstance(BaseModel):
     status: str
     public: bool
     encrypted: bool
-    backup_rentention_period: int = 0
+    backup_retention_period: int = 0
     cloudwatch_logs: Optional[list]
     deletion_protection: bool
     auto_minor_version_upgrade: bool

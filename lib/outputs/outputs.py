@@ -108,7 +108,9 @@ def report(check_findings, output_options, audit_info):
         color = set_report_color("INFO")
         if not output_options.is_quiet and output_options.verbose:
             print(f"\t{color}INFO{Style.RESET_ALL} There are no resources")
-    print()
+    # Separator between findings and bar
+    if output_options.is_quiet or output_options.verbose:
+        print()
     if file_descriptors:
         # Close all file descriptors
         for file_descriptor in file_descriptors:
@@ -352,7 +354,6 @@ def display_summary_table(
                         current["Low"] += 1
 
             # Add final service
-
             add_service_to_table(findings_table, current)
 
             print("\nOverview Results:")
