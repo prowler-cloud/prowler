@@ -5,7 +5,7 @@
   "CheckType": [],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:ssm:region:account-id:document/document-name",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbInstance",
   "Description": "Check if RDS instances storage is encrypted.",
