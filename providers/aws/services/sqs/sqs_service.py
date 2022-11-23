@@ -34,13 +34,14 @@ class SQS:
         try:
             list_queues_paginator = regional_client.get_paginator("list_queues")
             for page in list_queues_paginator.paginate():
-                for queue in page["QueueUrls"]:
-                    self.queues.append(
-                        Queue(
-                            id=queue,
-                            region=regional_client.region,
+                if "QueueUrls" in page:
+                    for queue in page["QueueUrls"]:
+                        self.queues.append(
+                            Queue(
+                                id=queue,
+                                region=regional_client.region,
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

@@ -92,11 +92,11 @@
       "Checks": [
         "sqs_queues_not_publicly_accessible",
         "s3_bucket_policy_public_write_access",
-        "lawslambda_function_not_publicly_accessible",
+        "awslambda_function_not_publicly_accessible",
         "iam_no_custom_policy_permissive_role_assumption",
         "cloudwatch_cross_account_sharing_disabled",
-        "lambda_function_url_public",
-        "lambda_function_url_cors_policy",
+        "awslambda_function_url_public",
+        "awslambda_function_url_cors_policy",
         "iam_policy_allows_privilege_escalation",
         "iam_policy_no_administrative_privileges"
       ]
@@ -337,7 +337,7 @@
         }
       ],
       "Checks": [
-        "iam_user_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
         "iam_root_hardware_mfa_enabled"
       ]
     },

@@ -8,7 +8,6 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22(Check):
         findings = []
         check_ports = [22]
         for security_group in ec2_client.security_groups:
-            public = False
             report = Check_Report(self.metadata())
             report.region = security_group.region
             report.status = "PASS"

@@ -30,7 +30,12 @@ from lib.check.check import (
 from lib.check.checks_loader import load_checks_to_execute
 from lib.check.compliance import update_checks_metadata_with_compliance
 from lib.logger import logger, set_logging_config
-from lib.outputs.outputs import close_json, display_summary_table, send_to_s3_bucket
+from lib.outputs.outputs import (
+    close_json,
+    display_compliance_table,
+    display_summary_table,
+    send_to_s3_bucket,
+)
 from providers.aws.aws_provider import provider_set_session
 from providers.aws.lib.allowlist.allowlist import parse_allowlist_file
 from providers.aws.lib.security_hub.security_hub import (
@@ -269,6 +274,7 @@ if __name__ == "__main__":
     # Load checks metadata
     logger.debug("Loading checks metadata from .metadata.json files")
     bulk_checks_metadata = bulk_load_checks_metadata(provider)
+    bulk_compliance_frameworks = {}
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
@@ -410,10 +416,21 @@ if __name__ == "__main__":
     if args.security_hub:
         resolve_security_hub_previous_findings(output_directory, audit_info)
 
-    # Display summary table
-    display_summary_table(
-        findings,
-        audit_info,
-        output_filename,
-        output_directory,
-    )
+    if findings:
+        # Display summary table
+        display_summary_table(
+            findings,
+            audit_info,
+            output_filename,
+            output_directory,
+        )
+
+        if compliance_framework:
+            # Display compliance table
+            display_compliance_table(
+                findings,
+                bulk_checks_metadata,
+                compliance_framework,
+                output_filename,
+                output_directory,
+            )

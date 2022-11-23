@@ -295,9 +295,9 @@ def run_check(check: Check, output_options: Output_From_Options) -> list:
     findings = []
     if output_options.verbose or output_options.is_quiet:
         print(
-            f"\nCheck ID: {check.checkID} - {Fore.MAGENTA}{check.serviceName}{Fore.YELLOW} [{check.severity}]{Style.RESET_ALL}"
+            f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
         )
-    logger.debug(f"Executing check: {check.checkID}")
+    logger.debug(f"Executing check: {check.CheckID}")
     try:
         findings = check.execute()
     except Exception as error:

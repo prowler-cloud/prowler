@@ -8,7 +8,6 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306(Check
         findings = []
         check_ports = [3306]
         for security_group in ec2_client.security_groups:
-            public = False
             report = Check_Report(self.metadata())
             report.region = security_group.region
             report.resource_id = security_group.id

@@ -8,7 +8,6 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21(Check)
         findings = []
         check_ports = [20, 21]
         for security_group in ec2_client.security_groups:
-            public = False
             report = Check_Report(self.metadata())
             report.region = security_group.region
             report.status = "PASS"
