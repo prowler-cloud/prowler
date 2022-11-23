@@ -94,6 +94,7 @@ if __name__ == "__main__":
         "--list-compliance-requirements",
         nargs="?",
         help="List compliance requirements for a given requirement",
+        choices=["ens_rd2022_aws"],
     )
     parser.add_argument(
         "-b", "--no-banner", action="store_false", help="Hide Prowler banner"
@@ -294,7 +295,9 @@ if __name__ == "__main__":
             print_compliance_frameworks(bulk_compliance_frameworks)
             sys.exit()
         if args.list_compliance_requirements:
-            print_compliance_requirements(bulk_compliance_frameworks)
+            print_compliance_requirements(
+                bulk_compliance_frameworks, args.list_compliance_requirements
+            )
             sys.exit()
 
     # Load checks to execute
