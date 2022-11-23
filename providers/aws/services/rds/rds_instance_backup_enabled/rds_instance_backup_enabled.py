@@ -9,7 +9,6 @@ class rds_instance_backup_enabled(Check):
             report = Check_Report(self.metadata)
             report.region = db_instance.region
             report.resource_id = db_instance.id
-            print(db_instance.backup_retention_period)
             if db_instance.backup_retention_period > 0:
                 report.status = "PASS"
                 report.status_extended = f"RDS Instance {db_instance.id} has backup enabled with retention period {db_instance.backup_retention_period} days."
