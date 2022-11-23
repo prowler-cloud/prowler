@@ -35,14 +35,13 @@ def check_security_group(
 
     @param any_address: If True, only 0.0.0.0/0 will be public and do not search for public addresses. (Default: False)
     """
-
     # Check for all traffic ingress rules regardless of the protocol
     if ingress_rule["IpProtocol"] == "-1":
         for ip_ingress_rule in ingress_rule["IpRanges"]:
             if _is_cidr_public(ip_ingress_rule["CidrIp"], any_address):
                 return True
         for ip_ingress_rule in ingress_rule["Ipv6Ranges"]:
-            if _is_cidr_public(ip_ingress_rule["CidrIp"], any_address):
+            if _is_cidr_public(ip_ingress_rule["CidrIpv6"], any_address):
                 return True
 
     # Check for specific ports in ingress rules
@@ -76,7 +75,7 @@ def check_security_group(
 
         # IPv6
         for ip_ingress_rule in ingress_rule["Ipv6Ranges"]:
-            if _is_cidr_public(ip_ingress_rule["CidrIp"]):
+            if _is_cidr_public(ip_ingress_rule["CidrIpv6"]):
                 # If there are input ports to check
                 if ports:
                     for port in ports:

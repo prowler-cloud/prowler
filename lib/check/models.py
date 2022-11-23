@@ -18,6 +18,7 @@ class Output_From_Options:
     output_filename: str
     allowlist_file: str
     bulk_checks_metadata: dict
+    verbose: str
 
 
 class Code(BaseModel):

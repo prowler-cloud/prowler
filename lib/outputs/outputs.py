@@ -5,10 +5,14 @@ from csv import DictWriter
 from config.config import timestamp
 from colorama import Fore, Style
 from typing import Any
+from tabulate import tabulate
+
+
 from config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
+    orange_color,
     prowler_version,
     timestamp_iso,
     timestamp_utc,
@@ -26,6 +30,7 @@ from lib.outputs.models import (
 )
 from lib.utils.utils import file_exists, hash_sha512, open_file
 from providers.aws.lib.allowlist.allowlist import is_allowlisted
+from providers.aws.lib.audit_info.models import AWS_Audit_Info
 from providers.aws.lib.security_hub.security_hub import send_to_security_hub
 from io import TextIOWrapper
 
@@ -63,7 +68,7 @@ def report(check_findings, output_options, audit_info):
                 print(
                     f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
                 )
-            elif not output_options.is_quiet:
+            elif not output_options.is_quiet and output_options.verbose:
                 print(
                     f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
                 )
@@ -163,8 +168,8 @@ def report(check_findings, output_options, audit_info):
                         finding.region, finding_output, audit_info.audit_session
                     )
     else:  # No service resources in the whole account
-        color = set_report_color("WARNING")
-        if not output_options.is_quiet:
+        color = set_report_color("INFO")
+        if not output_options.is_quiet and output_options.verbose:
             print(f"\t{color}INFO{Style.RESET_ALL} There are no resources")
 
     if file_descriptors:
@@ -250,6 +255,8 @@ def set_report_color(status: str) -> str:
     elif status == "ERROR":
         color = Fore.BLACK
     elif status == "WARNING":
+        color = orange_color
+    elif status == "INFO":
         color = Fore.YELLOW
     else:
         raise Exception("Invalid Report Status. Must be PASS, FAIL, ERROR or WARNING")
@@ -364,3 +371,111 @@ def send_to_s3_bucket(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
         sys.exit()
+
+
+def display_summary_table(
+    findings: list,
+    audit_info: AWS_Audit_Info,
+    output_filename: str,
+    output_directory: str,
+):
+    try:
+        if findings:
+            current = {
+                "Service": "",
+                "Provider": "",
+                "Critical": 0,
+                "High": 0,
+                "Medium": 0,
+                "Low": 0,
+            }
+            findings_table = {
+                "Provider": [],
+                "Service": [],
+                "Status": [],
+                "Critical": [],
+                "High": [],
+                "Medium": [],
+                "Low": [],
+            }
+            pass_count = fail_count = 0
+            for finding in findings:
+                # If new service and not first, add previous row
+                if (
+                    current["Service"] != finding.check_metadata.ServiceName
+                    and current["Service"]
+                ):
+
+                    add_service_to_table(findings_table, current)
+
+                    current["Critical"] = current["High"] = current["Medium"] = current[
+                        "Low"
+                    ] = 0
+
+                current["Service"] = finding.check_metadata.ServiceName
+                current["Provider"] = finding.check_metadata.Provider
+
+                if finding.status == "PASS":
+                    pass_count += 1
+                elif finding.status == "FAIL":
+                    fail_count += 1
+                    if finding.check_metadata.Severity == "critical":
+                        current["Critical"] += 1
+                    elif finding.check_metadata.Severity == "high":
+                        current["High"] += 1
+                    elif finding.check_metadata.Severity == "medium":
+                        current["Medium"] += 1
+                    elif finding.check_metadata.Severity == "low":
+                        current["Low"] += 1
+
+            # Add final service
+
+            add_service_to_table(findings_table, current)
+
+            print("\nOverview Results:")
+            overview_table = [
+                [
+                    f"{Fore.RED}{round(fail_count/len(findings)*100, 2)}% ({fail_count}) Failed{Style.RESET_ALL}",
+                    f"{Fore.GREEN}{round(pass_count/len(findings)*100, 2)}% ({pass_count}) Passed{Style.RESET_ALL}",
+                ]
+            ]
+            print(tabulate(overview_table, tablefmt="rounded_grid"))
+            print(
+                f"\nAccount {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
+            )
+            print(tabulate(findings_table, headers="keys", tablefmt="rounded_grid"))
+            print(
+                f"{Style.BRIGHT}* You only see here those services that contains resources.{Style.RESET_ALL}"
+            )
+            print("\nDetailed results are in:")
+            print(f" - CSV: {output_directory}/{output_filename}.csv")
+            print(f" - JSON: {output_directory}/{output_filename}.json\n")
+
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+        )
+        sys.exit()
+
+
+def add_service_to_table(findings_table, current):
+    if (
+        current["Critical"] > 0
+        or current["High"] > 0
+        or current["Medium"] > 0
+        or current["Low"] > 0
+    ):
+        current["Status"] = f"{Fore.RED}FAIL{Style.RESET_ALL}"
+    else:
+        current["Status"] = f"{Fore.GREEN}PASS{Style.RESET_ALL}"
+    findings_table["Provider"].append(current["Provider"])
+    findings_table["Service"].append(current["Service"])
+    findings_table["Status"].append(current["Status"])
+    findings_table["Critical"].append(
+        f"{Fore.LIGHTRED_EX}{current['Critical']}{Style.RESET_ALL}"
+    )
+    findings_table["High"].append(f"{Fore.RED}{current['High']}{Style.RESET_ALL}")
+    findings_table["Medium"].append(
+        f"{Fore.YELLOW}{current['Medium']}{Style.RESET_ALL}"
+    )
+    findings_table["Low"].append(f"{Fore.BLUE}{current['Low']}{Style.RESET_ALL}")

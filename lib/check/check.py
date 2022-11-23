@@ -6,14 +6,16 @@ from pkgutil import walk_packages
 from types import ModuleType
 from typing import Any
 
+from alive_progress import alive_bar
 from colorama import Fore, Style
 
-from config.config import compliance_specification_dir, groups_file
+from config.config import compliance_specification_dir, groups_file, orange_color
 from lib.check.compliance_models import load_compliance_framework
-from lib.check.models import Output_From_Options, load_check_metadata
+from lib.check.models import Check, Output_From_Options, load_check_metadata
 from lib.logger import logger
 from lib.outputs.outputs import report
 from lib.utils.utils import open_file, parse_json_file
+from providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
 # Load all checks metadata
@@ -271,6 +273,7 @@ def set_output_options(
     output_filename: str,
     allowlist_file: str,
     bulk_checks_metadata: dict,
+    verbose: bool,
 ):
     """Sets the Output_From_Options to be used in the output modes"""
     global output_options
@@ -282,16 +285,19 @@ def set_output_options(
         output_filename=output_filename,
         allowlist_file=allowlist_file,
         bulk_checks_metadata=bulk_checks_metadata,
+        verbose=verbose,
         # set input options here
     )
     return output_options
 
 
-def run_check(check, audit_info, output_options):
-    print(
-        f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
-    )
-    logger.debug(f"Executing check: {check.CheckID}")
+def run_check(check: Check, output_options: Output_From_Options) -> list:
+    findings = []
+    if output_options.verbose or output_options.is_quiet:
+        print(
+            f"\nCheck ID: {check.checkID} - {Fore.MAGENTA}{check.serviceName}{Fore.YELLOW} [{check.severity}]{Style.RESET_ALL}"
+        )
+    logger.debug(f"Executing check: {check.checkID}")
     try:
         findings = check.execute()
     except Exception as error:
@@ -299,7 +305,54 @@ def run_check(check, audit_info, output_options):
         logger.error(
             f"{check.CheckID} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
-    else:
-        report(findings, output_options, audit_info)
     finally:
-        pass
+        return findings
+
+
+def execute_checks(
+    checks_to_execute: list,
+    provider: str,
+    audit_info: AWS_Audit_Info,
+    audit_output_options: Output_From_Options,
+) -> list:
+    all_findings = []
+    print(
+        f"{Style.BRIGHT}Executing {len(checks_to_execute)} checks, please wait...{Style.RESET_ALL}\n"
+    )
+    with alive_bar(
+        total=len(checks_to_execute),
+        ctrl_c=False,
+        bar="blocks",
+        spinner="classic",
+        stats=False,
+        enrich_print=False,
+    ) as bar:
+        for check_name in checks_to_execute:
+            # Recover service from check name
+            service = check_name.split("_")[0]
+            bar.title = f"-> Scanning {orange_color}{service}{Style.RESET_ALL} service"
+            try:
+                # Import check module
+                check_module_path = (
+                    f"providers.{provider}.services.{service}.{check_name}.{check_name}"
+                )
+                lib = import_check(check_module_path)
+                # Recover functions from check
+                check_to_execute = getattr(lib, check_name)
+                c = check_to_execute()
+                # Run check
+                check_findings = run_check(c, audit_output_options)
+                all_findings.extend(check_findings)
+                report(check_findings, audit_output_options, audit_info)
+                bar()
+
+            # If check does not exists in the provider or is from another provider
+            except ModuleNotFoundError:
+                logger.error(
+                    f"Check '{check_name}' was not found for the {provider.upper()} provider"
+                )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+    return all_findings
