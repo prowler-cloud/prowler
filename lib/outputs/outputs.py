@@ -69,7 +69,6 @@ def report(check_findings, output_options, audit_info):
                 print(
                     f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
                 )
-
             if file_descriptors:
                 # sending the finding to input options
                 if "csv" in file_descriptors:
@@ -109,7 +108,9 @@ def report(check_findings, output_options, audit_info):
         color = set_report_color("INFO")
         if not output_options.is_quiet and output_options.verbose:
             print(f"\t{color}INFO{Style.RESET_ALL} There are no resources")
-
+    # Separator between findings and bar
+    if output_options.is_quiet or output_options.verbose:
+        print()
     if file_descriptors:
         # Close all file descriptors
         for file_descriptor in file_descriptors:
@@ -263,10 +264,11 @@ def close_json(output_filename, output_directory, mode):
             filename,
             "a",
         )
-        # Replace last comma for square bracket
-        file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
-        file_descriptor.truncate()
-        file_descriptor.write("]")
+        # Replace last comma for square bracket if not empty
+        if file_descriptor.tell() > 0:
+            file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
+            file_descriptor.truncate()
+            file_descriptor.write("]")
         file_descriptor.close()
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")
@@ -352,7 +354,6 @@ def display_summary_table(
                         current["Low"] += 1
 
             # Add final service
-
             add_service_to_table(findings_table, current)
 
             print("\nOverview Results:")

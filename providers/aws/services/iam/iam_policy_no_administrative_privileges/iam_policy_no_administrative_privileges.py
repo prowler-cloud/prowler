@@ -15,9 +15,9 @@ class iam_policy_no_administrative_privileges(Check):
             # Check the statements, if one includes *:* stop iterating over the rest
             for statement in policy_document["Statement"]:
                 if (
-                    statement["Action"] == "*"
-                    and statement["Effect"] == "Allow"
-                    and statement["Resource"] == "*"
+                    statement["Effect"] == "Allow"
+                    and "*" in statement["Action"]
+                    and "*" in statement["Resource"]
                 ):
                     report.status = "FAIL"
                     report.status_extended = f"Policy {iam_client.policies[index]['PolicyName']} allows '*:*' administrative privileges"

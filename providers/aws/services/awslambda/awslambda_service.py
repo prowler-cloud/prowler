@@ -1,14 +1,15 @@
+import io
+import json
 import threading
-
-from pydantic import BaseModel
+import zipfile
+from enum import Enum
 from typing import Any
+
+import requests
+from pydantic import BaseModel
+
 from lib.logger import logger
 from providers.aws.aws_provider import generate_regional_clients
-import requests
-from enum import Enum
-import io
-import zipfile
-import json
 
 
 ################## Lambda
@@ -45,7 +46,6 @@ class Lambda:
                     lambda_name = function["FunctionName"]
                     lambda_arn = function["FunctionArn"]
                     lambda_runtime = function["Runtime"]
-                    lambda_environment = function["Environment"]["Variables"]
                     self.functions[lambda_name] = Function(
                         name=lambda_name,
                         arn=lambda_arn,
@@ -53,6 +53,7 @@ class Lambda:
                         region=regional_client.region,
                     )
                     if "Environment" in function:
+                        lambda_environment = function["Environment"]["Variables"]
                         self.functions[lambda_name].environment = lambda_environment
 
         except Exception as error:

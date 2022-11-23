@@ -16,10 +16,11 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
                 if (
                     statement["Effect"] == "Allow"
                     and (
-                        statement["Action"] == "sts:AssumeRole"
-                        or statement["Action"] == "sts:*"
+                        "sts:AssumeRole" in statement["Action"]
+                        or "sts:*" in statement["Action"]
+                        or "*" in statement["Action"]
                     )
-                    and statement["Resource"] == "*"
+                    and "*" in statement["Resource"]
                 ):
                     report.status = "FAIL"
                     report.status_extended = f"Custom Policy {iam_client.policies[index]['PolicyName']} allows permissive STS Role assumption"

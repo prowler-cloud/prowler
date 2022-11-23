@@ -44,7 +44,7 @@ class CloudWatch:
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -91,7 +91,7 @@ class Logs:
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __describe_log_groups__(self, regional_client):
@@ -119,7 +119,7 @@ class Logs:
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 

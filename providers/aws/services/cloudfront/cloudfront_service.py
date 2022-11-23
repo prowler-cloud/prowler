@@ -73,13 +73,13 @@ class CloudFront:
                 default_chache_config = DefaultCacheConfigBehaviour(
                     realtime_log_config_arn=distribution_config["DistributionConfig"][
                         "DefaultCacheBehavior"
-                    ]["RealtimeLogConfigArn"],
+                    ].get("RealtimeLogConfigArn"),
                     viewer_protocol_policy=distribution_config["DistributionConfig"][
                         "DefaultCacheBehavior"
-                    ]["ViewerProtocolPolicy"],
+                    ].get("ViewerProtocolPolicy"),
                     field_level_encryption_id=distribution_config["DistributionConfig"][
                         "DefaultCacheBehavior"
-                    ]["FieldLevelEncryptionId"],
+                    ].get("FieldLevelEncryptionId"),
                 )
                 distributions[
                     distribution_id
