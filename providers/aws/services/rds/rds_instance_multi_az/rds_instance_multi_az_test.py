@@ -30,7 +30,7 @@ class Test_rds_instance_multi_az:
             assert len(result) == 0
 
     @mock_rds
-    def test_rds_instance_private(self):
+    def test_rds_instance_no_multi_az(self):
         conn = client("rds", region_name=AWS_REGION)
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
