@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "rds_snapshots_public_access",
-  "CheckTitle": "Check if RDS instances storage is encrypted.",
+  "CheckTitle": "Check if RDS Snapshots and Cluster Snapshots are public.",
   "CheckType": [],
   "ServiceName": "rds",
   "SubServiceName": "",
