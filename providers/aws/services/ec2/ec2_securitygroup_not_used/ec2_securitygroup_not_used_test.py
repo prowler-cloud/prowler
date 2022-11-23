@@ -33,7 +33,7 @@ class Test_ec2_securitygroup_not_used:
             result = check.execute()
 
             # One default sg per region
-            assert len(result) == 24
+            assert len(result) == 26
             # All are unused by default
             assert result[0].status == "FAIL"
 
@@ -64,7 +64,7 @@ class Test_ec2_securitygroup_not_used:
             result = check.execute()
 
             # One default sg per region
-            assert len(result) == 24
+            assert len(result) == 26
             # Search changed sg
             for sg in result:
                 if sg.resource_id == default_sg_id:
@@ -110,7 +110,7 @@ class Test_ec2_securitygroup_not_used:
             result = check.execute()
 
             # One default sg per region
-            assert len(result) == 24
+            assert len(result) == 26
             # Search changed sg
             for sg in result:
                 if sg.resource_id == default_sg_id:
