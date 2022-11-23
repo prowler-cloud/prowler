@@ -28,7 +28,7 @@ class Test_vpc_flow_logs_enabled:
             result = check.execute()
 
             assert (
-                len(result) == 23
+                len(result) == 25
             )  # Number of AWS regions, one default VPC per region
 
     @mock_ec2

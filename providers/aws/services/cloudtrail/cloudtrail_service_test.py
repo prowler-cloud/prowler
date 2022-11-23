@@ -84,7 +84,7 @@ class Test_Cloudtrail_Service:
         audit_info = self.set_mocked_audit_info()
         cloudtrail = Cloudtrail(audit_info)
         # 1 None result per region plus 2 created
-        assert len(cloudtrail.trails) == 23
+        assert len(cloudtrail.trails) == 25
         for trail in cloudtrail.trails:
             if trail.name:
                 assert trail.name == trail_name_us or trail.name == trail_name_eu
@@ -130,7 +130,7 @@ class Test_Cloudtrail_Service:
         audit_info = self.set_mocked_audit_info()
         cloudtrail = Cloudtrail(audit_info)
         # 1 None result per region plus 2 created
-        assert len(cloudtrail.trails) == 23
+        assert len(cloudtrail.trails) == 25
         for trail in cloudtrail.trails:
             if trail.name:
                 if trail.name == trail_name_us:
@@ -172,7 +172,7 @@ class Test_Cloudtrail_Service:
         audit_info = self.set_mocked_audit_info()
         cloudtrail = Cloudtrail(audit_info)
         # 1 None result per region plus 2 created
-        assert len(cloudtrail.trails) == 23
+        assert len(cloudtrail.trails) == 25
         for trail in cloudtrail.trails:
             if trail.name:
                 if trail.name == trail_name_us:

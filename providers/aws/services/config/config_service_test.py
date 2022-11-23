@@ -81,7 +81,7 @@ class Test_Config_Service:
         audit_info = self.set_mocked_audit_info()
         config = Config(audit_info)
         # One recorder per region
-        assert len(config.recorders) == 23
+        assert len(config.recorders) == 25
         # Check the active one
         # Search for the recorder just created
         for recorder in config.recorders:

@@ -76,7 +76,7 @@ class Test_VPC_Service:
         audit_info = self.set_mocked_audit_info()
         vpc = VPC(audit_info)
         assert (
-            len(vpc.vpcs) == 24
+            len(vpc.vpcs) == 26
         )  # Number of AWS regions + created VPC, one default VPC per region
 
     # Test VPC Describe Flow Logs
