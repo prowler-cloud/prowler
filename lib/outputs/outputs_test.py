@@ -2,6 +2,7 @@ import os
 from os import path, remove
 
 import boto3
+import pytest
 from colorama import Fore
 from moto import mock_s3
 
@@ -9,14 +10,15 @@ from config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
+    orange_color,
     output_file_timestamp,
     prowler_version,
     timestamp_iso,
     timestamp_utc,
-    orange_color,
 )
 from lib.check.models import Check_Report, load_check_metadata
 from lib.outputs.models import (
+    Check_Output_CSV,
     Check_Output_JSON,
     Check_Output_JSON_ASFF,
     Compliance,
@@ -34,14 +36,13 @@ from lib.outputs.outputs import (
 )
 from lib.utils.utils import hash_sha512, open_file
 from providers.aws.lib.audit_info.models import AWS_Audit_Info
-import pytest
 
 
 class Test_Outputs:
     def test_fill_file_descriptors(self):
         audited_account = "123456789012"
         output_directory = f"{os.path.dirname(os.path.realpath(__file__))}"
-        csv_fields = generate_csv_fields()
+        csv_fields = generate_csv_fields(Check_Output_CSV)
         test_output_modes = [
             ["csv"],
             ["json"],
@@ -169,7 +170,7 @@ class Test_Outputs:
             # "compliance",
         ]
 
-        assert generate_csv_fields() == expected
+        assert generate_csv_fields(Check_Output_CSV) == expected
 
     def test_fill_json(self):
         input_audit_info = AWS_Audit_Info(

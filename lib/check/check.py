@@ -232,19 +232,23 @@ def parse_checks_from_compliance_framework(
 
 # Recover all checks from the selected provider and service
 def recover_checks_from_provider(provider: str, service: str = None) -> list:
-    checks = []
-    modules = list_modules(provider, service)
-    for module_name in modules:
-        # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
-        check_name = module_name.name
-        # We need to exclude common shared libraries in services
-        if (
-            check_name.count(".") == 5
-            and "lib" not in check_name
-            and "test" not in check_name
-        ):
-            checks.append(check_name)
-    return checks
+    try:
+        checks = []
+        modules = list_modules(provider, service)
+        for module_name in modules:
+            # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
+            check_name = module_name.name
+            # We need to exclude common shared libraries in services
+            if (
+                check_name.count(".") == 5
+                and "lib" not in check_name
+                and "test" not in check_name
+            ):
+                checks.append(check_name)
+        return checks
+    except Exception as e:
+        logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")
+        sys.exit()
 
 
 # List all available modules in the selected provider and service
@@ -348,13 +352,14 @@ def execute_checks(
 
             # If check does not exists in the provider or is from another provider
             except ModuleNotFoundError:
-                logger.error(
+                logger.critical(
                     f"Check '{check_name}' was not found for the {provider.upper()} provider"
                 )
+                bar.title = f"-> {Fore.RED}Scan was aborted!{Style.RESET_ALL}"
+                sys.exit()
             except Exception as error:
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         bar.title = f"-> {Fore.GREEN}Scan is completed!{Style.RESET_ALL}"
-    print(Style.RESET_ALL)
     return all_findings
