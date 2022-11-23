@@ -19,7 +19,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Use AWS Config to identify any sanpshot that is public.",
+      "Text": "Use AWS Config to identify any snapshot that is public.",
       "Url": "https://docs.aws.amazon.com/config/latest/developerguide/rds-snapshots-public-prohibited.html"
     }
   },
