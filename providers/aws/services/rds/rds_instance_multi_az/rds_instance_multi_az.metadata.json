@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "aws rds create-db-instance --db-instance-identifier <db_instance_id> --multi-az true",
       "NativeIaC": "https://docs.bridgecrew.io/docs/general_73#cloudformation",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-publicly-accessible.html",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-multi-az.html",
       "Terraform": "https://docs.bridgecrew.io/docs/general_73#terraform"
     },
     "Recommendation": {
