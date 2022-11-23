@@ -10,9 +10,13 @@ from tabulate import tabulate
 
 from config.config import (
     csv_file_suffix,
+    html_file_suffix,
+    html_logo_img,
+    html_logo_url,
     json_asff_file_suffix,
     json_file_suffix,
     orange_color,
+    output_file_timestamp,
     prowler_version,
     timestamp,
     timestamp_iso,
@@ -48,6 +52,7 @@ def report(check_findings, output_options, audit_info):
             output_options.output_modes,
             output_options.output_directory,
             output_options.output_filename,
+            audit_info,
         )
 
     if check_findings:
@@ -161,6 +166,11 @@ def report(check_findings, output_options, audit_info):
                     )
                     file_descriptors["json-asff"].write(",")
 
+                if "html" in file_descriptors:
+                    fill_html(file_descriptors["html"], audit_info, finding)
+
+                    file_descriptors["html"].write("")
+
                 # Check if it is needed to send findings to security hub
                 if output_options.security_hub_enabled:
                     send_to_security_hub(
@@ -180,7 +190,10 @@ def report(check_findings, output_options, audit_info):
 
 
 def initialize_file_descriptor(
-    filename: str, output_mode: str, format: Any = None
+    filename: str,
+    output_mode: str,
+    audit_info: AWS_Audit_Info,
+    format: Any = None,
 ) -> TextIOWrapper:
     """Open/Create the output file. If needed include headers or the required format"""
 
@@ -204,36 +217,46 @@ def initialize_file_descriptor(
             csv_writer.writeheader()
 
         if output_mode in ("json", "json-asff"):
-            file_descriptor = open_file(
-                filename,
-                "a",
-            )
             file_descriptor.write("[")
+
+        if "html" in output_mode:
+            add_html_header(file_descriptor, audit_info)
 
     return file_descriptor
 
 
-def fill_file_descriptors(output_modes, output_directory, output_filename):
+def fill_file_descriptors(output_modes, output_directory, output_filename, audit_info):
     file_descriptors = {}
     if output_modes:
         for output_mode in output_modes:
             if output_mode == "csv":
                 filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
                 file_descriptor = initialize_file_descriptor(
-                    filename, output_mode, Check_Output_CSV
+                    filename, output_mode, Check_Output_CSV, audit_info
                 )
                 file_descriptors.update({output_mode: file_descriptor})
 
             if output_mode == "json":
                 filename = f"{output_directory}/{output_filename}{json_file_suffix}"
-                file_descriptor = initialize_file_descriptor(filename, output_mode)
+                file_descriptor = initialize_file_descriptor(
+                    filename, output_mode, audit_info
+                )
                 file_descriptors.update({output_mode: file_descriptor})
 
             if output_mode == "json-asff":
                 filename = (
                     f"{output_directory}/{output_filename}{json_asff_file_suffix}"
                 )
-                file_descriptor = initialize_file_descriptor(filename, output_mode)
+                file_descriptor = initialize_file_descriptor(
+                    filename, output_mode, audit_info
+                )
+                file_descriptors.update({output_mode: file_descriptor})
+
+            if output_mode == "html":
+                filename = f"{output_directory}/{output_filename}{html_file_suffix}"
+                file_descriptor = initialize_file_descriptor(
+                    filename, output_mode, audit_info
+                )
                 file_descriptors.update({output_mode: file_descriptor})
 
             if output_mode == "ens_rd2022_aws":
@@ -325,6 +348,34 @@ def fill_json_asff(finding_output, audit_info, finding):
     }
 
     return finding_output
+
+
+def fill_html(file_descriptor, audit_info, finding):
+    row_class = "p-3 mb-2 bg-success-custom"
+    if finding.status == "INFO":
+        row_class = "table-info"
+    elif finding.status == "FAIL":
+        row_class = "table-danger"
+    elif finding.status == "WARNING":
+        row_class = "table-warning"
+    file_descriptor.write(
+        f"""
+    '<tr class="{row_class}">'
+    '  <td>{finding.status}</td>'
+    '  <td>{finding.check_metadata.Severity}</td>'
+    '  <td>{audit_info.audited_account}</td>'
+    '  <td>{finding.region}</td>'
+    '  <td>{finding.check_metadata.ServiceName}</td>'
+    '  <td>{finding.check_metadata.CheckID}</td>'
+    '  <td>{finding.check_metadata.CheckTitle}</td>'
+    '  <td>{finding.status_extended}</td>'
+    '  <td><p class="show-read-more">{finding.check_metadata.Risk}</p></td>'
+    '  <td><p class="show-read-more">{finding.check_metadata.Remediation.Recommendation.Text}</p></td>'
+    '  <td><a class="read-more" href="{finding.check_metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>'
+    '  <td>{finding.resource_id}</td>'
+    '</tr>'
+    """
+    )
 
 
 def close_json(output_filename, output_directory, mode):
@@ -588,5 +639,224 @@ def display_compliance_table(
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+        )
+        sys.exit()
+
+
+def add_html_header(file_descriptor, audit_info):
+    file_descriptor.write(
+        """
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <!-- Required meta tags -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <style>
+	.read-more {color:#00f;}
+	.bg-success-custom {background-color: #70dc88 !important;}
+  </style>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <!-- https://datatables.net/download/index with jQuery, DataTables, Buttons, SearchPanes, and Select //-->
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jqc-1.12.4/dt-1.10.25/b-1.7.1/sp-1.3.0/sl-1.3.3/datatables.min.css"/>
+  <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
+  <style>
+    .show-read-more .more-text{
+        display: none;
+    }
+  </style>
+  <title>Prowler - AWS Security Assessments</title>
+</head>
+<body>
+  <nav class="navbar navbar-expand-xl sticky-top navbar-dark bg-dark">
+      <a class="navbar-brand" href="#">Prowler - Security Assessments in AWS</a>
+  </nav>
+  <div class="container-fluid">
+    <div class="row mt-3">
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">
+            Report Information:
+          </div>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <div class="row">
+                <div class="col-md-auto">
+                  <b>Version:</b> """
+        + prowler_version
+        + """
+                </div>
+              </div>
+            </li>
+            <li class="list-group-item">
+              <b>Parameters used:</b> $PROWLER_PARAMETERS
+            </li>
+            <li class="list-group-item">
+              <b>Date:</b> """
+        + output_file_timestamp
+        + """
+            </li>
+            <li class="list-group-item text-center">
+              <a href="""
+        + html_logo_url
+        + """><img src="""
+        + html_logo_img
+        + """
+                  alt="prowler-logo"></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">
+            Assessment Summary:
+          </div>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <b>AWS Account:</b> """
+        + audit_info.audited_account
+        + """
+            </li>
+            <li class="list-group-item">
+              <b>AWS-CLI Profile:</b> """
+        + audit_info.profile
+        + """
+            </li>
+            <li class="list-group-item">
+              <b>Audited Regions:</b> """
+        + " ".join(audit_info.audited_regions)
+        + """
+            </li>
+            <li class="list-group-item">
+              <b>User Id:</b> """
+        + audit_info.audited_user_id
+        + """
+            </li>
+            <li class="list-group-item">
+              <b>Caller Identity ARN:</b> """
+        + audit_info.audited_identity_arn
+        + """
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">
+            Scoring Information:
+          </div>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <b>Prowler Score:</b> PROWLER_SCORE%
+            </li>
+            <li class="list-group-item">
+              <b>Total Resources:</b> TOTAL_RESOURCES
+            </li>
+            <li class="list-group-item">
+              <b>Passed:</b> PASS_COUNTER
+            </li>
+            <li class="list-group-item">
+              <b>Failed:</b> FAIL_COUNTER
+            </li>
+            <li class="list-group-item">
+              <b>Total Checks Executed:</b> CHECKS_COUNTER
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-3">
+      <div class="col-md-12">
+        <table class="table compact stripe row-border ordering" id="findingsTable" data-order='[[ 5, "asc" ]]' data-page-length='100'>
+          <thead class="thead-light">
+            <tr>
+              <th scope="col">Status</th>
+              <th scope="col">Severity</th>
+              <th scope="col">Account ID</th>
+              <th scope="col">Region</th>
+              <th scope="col">Service</th>
+              <th scope="col">Check ID</th>
+              <th style="width:20%" scope="col">Check Title</th>
+              <th style="width:20%" scope="col">Check Output</th>
+              <th scope="col">Risk</th>
+              <th scope="col">Remediation</th>
+              <th scope="col">Related URL</th>
+              <th scope="col">Resource ID</th>
+            </tr>
+          </thead>
+          <tbody>
+    """
+    )
+
+
+def add_html_footer(output_filename, output_directory):
+    try:
+        filename = f"{output_directory}/{output_filename}{html_file_suffix}"
+        file_descriptor = open_file(
+            filename,
+            "a",
+        )
+        file_descriptor.write(
+            """
+</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  </div>
+  <!-- Table search and paginator -->
+  <!-- Optional JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js" integrity="sha384-1CmrxMRARb6aLqgBO7yyAxTOQE2AKb9GfXnEo760AUcUmFx3ibVJJAzGytlQcNXd" crossorigin="anonymous"></script>
+  <!-- https://datatables.net/download/index with jQuery, DataTables, Buttons, SearchPanes, and Select //-->
+  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jqc-1.12.4/dt-1.10.25/b-1.7.1/sp-1.3.0/sl-1.3.3/datatables.min.js"></script>
+  <script>
+    $(document).ready(function(){
+      // Initialise the table with 50 rows, and some search/filtering panes
+      $('#findingsTable').DataTable( {
+        lengthMenu: [ [50, 100, -1], [50, 100, "All"] ],
+        searchPanes: {
+            cascadePanes: true,
+            viewTotal: true
+        },
+        dom: 'Plfrtip',
+        columnDefs: [
+          {
+              searchPanes: {
+                  show: false
+              },
+              // Hide Compliance, Check ID (in favour of Check Title), CAF Epic, Risk, Remediation, Link
+              targets: [4, 6, 9, 10, 11, 12]
+          }
+        ]
+      });
+      var maxLength = 30;
+      $(".show-read-more").each(function(){
+        var myStr = $(this).text();
+        if($.trim(myStr).length > maxLength){
+          var newStr = myStr.substring(0, maxLength);
+          var removedStr = myStr.substring(maxLength, $.trim(myStr).length);
+          $(this).empty().html(newStr);
+          $(this).append(' <a href="javascript:void(0);" class="read-more">read more...</a>');
+          $(this).append('<span class="more-text">' + removedStr + '</span>');
+        }
+      });
+      $(".read-more").click(function(){
+        $(this).siblings(".more-text").contents().unwrap();
+        $(this).remove();
+      });
+    });
+    </script>
+</body>
+</html>
+"""
+        )
+        file_descriptor.close()
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
         sys.exit()
