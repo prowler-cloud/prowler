@@ -355,6 +355,6 @@ def execute_checks(
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-        bar.title = f"-> {Fore.GREEN}Scan is completed!"
+        bar.title = f"-> {Fore.GREEN}Scan is completed!{Style.RESET_ALL}"
     print(Style.RESET_ALL)
     return all_findings
