@@ -1,15 +1,15 @@
 from re import search
 
 from lib.check.models import Check, Check_Report
-from providers.azure.services.aad.aad_client import aad_client
+from providers.azure.services.iam.iam_client import iam_client
 
 
-class aad_subscription_roles_owner_custom_not_created(Check):
+class iam_subscription_roles_owner_custom_not_created(Check):
     def execute(self) -> Check_Report:
         findings = []
-        for role in aad_client.roles:
+        for role in iam_client.roles:
             report = Check_Report(self.metadata)
-            report.region = aad_client.region
+            report.region = iam_client.region
             report.status = "PASS"
             report.status_extended = f"Role {role.name} from subscription {role.role_subscription} is not a custom owner role"
             for scope in role.assignable_scopes:

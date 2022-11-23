@@ -1,11 +1,11 @@
 {
   "Provider": "azure",
-  "CheckID": "aad_subscription_roles_owner_custom_not_created",
+  "CheckID": "iam_subscription_roles_owner_custom_not_created",
   "CheckTitle": "Ensure that no custom subscription owner roles are created",
   "CheckType": [
     "Infrastructure Security"
   ],
-  "ServiceName": "aad",
+  "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

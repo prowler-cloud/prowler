@@ -20,8 +20,10 @@ class Azure_Audit_Info:
     credentials: DefaultAzureCredential
     identity: Azure_Identity_Info
     subscriptions: list[Azure_Subscription]
+    audited_account: str
 
     def __init__(self, credentials, identity, subscriptions):
         self.credentials = credentials
         self.identity = identity
         self.subscriptions = subscriptions
+        self.audited_account = None

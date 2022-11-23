@@ -38,10 +38,9 @@ def check_credential_env_vars() -> Azure_Identity_Info:
 
 
 def validate_credentials(
-    credentials: DefaultAzureCredential, azure_identity: Azure_Identity_Info
+    azure_identity: Azure_Identity_Info, client: GraphClient
 ) -> Azure_Identity_Info:
 
-    client = GraphClient(credential=credentials)
     try:
         logger.info("Azure provider: validating service principal credentials ...")
         result = client.get("/servicePrincipals/").json()
@@ -60,10 +59,14 @@ def azure_provider_set_session():
     logger.info("Setting azure session ...")
     azure_identity = check_credential_env_vars()
     azure_audit_info.credentials = Azure_Provider().get_credentials()
-    azure_audit_info.identity = validate_credentials(
-        azure_audit_info.credentials, azure_identity
-    )
+    client = GraphClient(credential=azure_audit_info.credentials)
+    azure_audit_info.identity = validate_credentials(azure_identity, client)
     try:
+
+        domain_result = client.get("/domains").json()
+        if "value" in domain_result:
+            if "id" in domain_result["value"][0]:
+                azure_audit_info.audited_account = domain_result["value"][0]["id"]
         subscriptions_client = SubscriptionClient(
             credential=azure_audit_info.credentials
         )

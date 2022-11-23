@@ -4,10 +4,10 @@ from azure.mgmt.authorization import AuthorizationManagementClient
 from azure.mgmt.authorization.v2022_04_01.models import Permission
 
 
-########################## AAD
-class AAD:
+########################## IAM
+class IAM:
     def __init__(self, audit_info):
-        self.service = "aad"
+        self.service = "iam"
         self.credentials = audit_info.credentials
         self.subscriptions = audit_info.subscriptions
         self.clients = self.__set_clients__(

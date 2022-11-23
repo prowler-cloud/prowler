@@ -27,7 +27,6 @@ from lib.outputs.models import (
 )
 from lib.utils.utils import file_exists, hash_sha512, open_file
 from providers.aws.lib.allowlist.allowlist import is_allowlisted
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
 from providers.aws.lib.security_hub.security_hub import send_to_security_hub
 
 
@@ -72,39 +71,48 @@ def report(check_findings, output_options, audit_info):
 
             if file_descriptors:
                 # sending the finding to input options
-                if "csv" in file_descriptors:
-                    finding_output = Check_Output_CSV(
-                        audit_info.audited_account,
-                        audit_info.profile,
-                        finding,
-                        audit_info.organizations_metadata,
-                    )
-                    csv_writer = DictWriter(
-                        file_descriptors["csv"], fieldnames=csv_fields, delimiter=";"
-                    )
-                    csv_writer.writerow(finding_output.__dict__)
+                if finding.check_metadata.Provider == "aws":
+                    if "csv" in file_descriptors:
+                        finding_output = Check_Output_CSV(
+                            audit_info.audited_account,
+                            audit_info.profile,
+                            finding,
+                            audit_info.organizations_metadata,
+                        )
+                        csv_writer = DictWriter(
+                            file_descriptors["csv"],
+                            fieldnames=csv_fields,
+                            delimiter=";",
+                        )
+                        csv_writer.writerow(finding_output.__dict__)
 
-                if "json" in file_descriptors:
-                    finding_output = Check_Output_JSON(**finding.check_metadata.dict())
-                    fill_json(finding_output, audit_info, finding)
+                    if "json" in file_descriptors:
+                        finding_output = Check_Output_JSON(
+                            **finding.check_metadata.dict()
+                        )
+                        fill_json(finding_output, audit_info, finding)
 
-                    json.dump(finding_output.dict(), file_descriptors["json"], indent=4)
-                    file_descriptors["json"].write(",")
+                        json.dump(
+                            finding_output.dict(), file_descriptors["json"], indent=4
+                        )
+                        file_descriptors["json"].write(",")
 
-                if "json-asff" in file_descriptors:
-                    finding_output = Check_Output_JSON_ASFF()
-                    fill_json_asff(finding_output, audit_info, finding)
+                    if "json-asff" in file_descriptors:
+                        finding_output = Check_Output_JSON_ASFF()
+                        fill_json_asff(finding_output, audit_info, finding)
 
-                    json.dump(
-                        finding_output.dict(), file_descriptors["json-asff"], indent=4
-                    )
-                    file_descriptors["json-asff"].write(",")
+                        json.dump(
+                            finding_output.dict(),
+                            file_descriptors["json-asff"],
+                            indent=4,
+                        )
+                        file_descriptors["json-asff"].write(",")
 
-                # Check if it is needed to send findings to security hub
-                if output_options.security_hub_enabled:
-                    send_to_security_hub(
-                        finding.region, finding_output, audit_info.audit_session
-                    )
+                    # Check if it is needed to send findings to security hub
+                    if output_options.security_hub_enabled:
+                        send_to_security_hub(
+                            finding.region, finding_output, audit_info.audit_session
+                        )
     else:  # No service resources in the whole account
         color = set_report_color("INFO")
         if not output_options.is_quiet and output_options.verbose:
@@ -298,11 +306,16 @@ def send_to_s3_bucket(
 
 def display_summary_table(
     findings: list,
-    audit_info: AWS_Audit_Info,
+    audit_info,
     output_filename: str,
     output_directory: str,
+    provider: str,
 ):
     try:
+        if provider == "aws":
+            entity_type = "Account"
+        elif provider == "azure":
+            entity_type = "Tenant Domain"
         if findings:
             current = {
                 "Service": "",
@@ -364,7 +377,7 @@ def display_summary_table(
             ]
             print(tabulate(overview_table, tablefmt="rounded_grid"))
             print(
-                f"\nAccount {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
+                f"\n{entity_type} {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
             )
             print(tabulate(findings_table, headers="keys", tablefmt="rounded_grid"))
             print(
