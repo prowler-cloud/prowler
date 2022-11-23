@@ -6,7 +6,7 @@ class iam_policy_no_administrative_privileges(Check):
     def execute(self) -> Check_Report:
         findings = []
         for index, policy_document in enumerate(iam_client.list_policies_version):
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = iam_client.region
             report.resource_arn = iam_client.policies[index]["Arn"]
             report.resource_id = iam_client.policies[index]["PolicyName"]

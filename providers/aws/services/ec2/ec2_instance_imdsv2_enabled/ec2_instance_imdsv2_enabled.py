@@ -6,7 +6,7 @@ class ec2_instance_imdsv2_enabled(Check):
     def execute(self):
         findings = []
         for instance in ec2_client.instances:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = instance.region
             report.resource_id = instance.id
             report.status = "FAIL"

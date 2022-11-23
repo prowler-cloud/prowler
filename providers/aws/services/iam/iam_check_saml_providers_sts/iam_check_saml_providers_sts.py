@@ -6,7 +6,7 @@ class iam_check_saml_providers_sts(Check):
     def execute(self) -> Check_Report:
         findings = []
         for provider in iam_client.saml_providers:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             provider_name = provider["Arn"].split("/")[1]
             report.resource_id = provider_name
             report.resource_arn = provider["Arn"]

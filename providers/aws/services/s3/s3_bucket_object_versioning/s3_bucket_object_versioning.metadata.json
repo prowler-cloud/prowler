@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "s3_bucket_object_versioning",
   "CheckTitle": "Check if S3 buckets have object versioning enabled",
-  "CheckType": ["Data Protection"],
+  "CheckType": [
+    "Data Protection"
+  ],
   "ServiceName": "s3",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

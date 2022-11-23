@@ -10,7 +10,7 @@ class cloudwatch_log_metric_filter_sign_in_without_mfa(Check):
     def execute(self):
         pattern = r"\$\.eventName\s*=\s*ConsoleLogin.+\$\.additionalEventData\.MFAUsed\s*!=\s*Yes"
         findings = []
-        report = Check_Report(self.metadata)
+        report = Check_Report(self.metadata())
         report.status = "FAIL"
         report.status_extended = (
             "No CloudWatch log groups found with metric filters or alarms associated."

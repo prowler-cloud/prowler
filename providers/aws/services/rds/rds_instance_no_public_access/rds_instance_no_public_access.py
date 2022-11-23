@@ -6,7 +6,7 @@ class rds_instance_no_public_access(Check):
     def execute(self):
         findings = []
         for db_instance in rds_client.db_instances:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = db_instance.region
             report.resource_id = db_instance.id
             if not db_instance.public:

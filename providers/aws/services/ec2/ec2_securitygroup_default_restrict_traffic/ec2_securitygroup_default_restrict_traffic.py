@@ -7,7 +7,7 @@ class ec2_securitygroup_default_restrict_traffic(Check):
     def execute(self):
         findings = []
         for security_group in ec2_client.security_groups:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = security_group.region
             report.resource_id = security_group.id
             # Find default security group

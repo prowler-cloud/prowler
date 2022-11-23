@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "dynamodb_tables_kms_cmk_encryption_enabled",
   "CheckTitle": "Check if DynamoDB table has encryption at rest enabled using CMK KMS.",
-  "CheckType": ["Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"],
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+  ],
   "ServiceName": "dynamodb",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:dynamodb:region:account-id:table/resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Data Protection",
-  "Compliance": []
+  "Notes": "Data Protection"
 }

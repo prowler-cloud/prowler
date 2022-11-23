@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_with_many_ingress_egress_rules",
   "CheckTitle": "Find security groups with more than 50 ingress or egress rules.",
-  "CheckType": ["Infrastructure Security"],
+  "CheckType": [
+    "Infrastructure Security"
+  ],
   "ServiceName": "ec2",
   "SubServiceName": "securitygroup",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

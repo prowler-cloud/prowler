@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "cloudfront_distributions_using_deprecated_ssl_protocols",
   "CheckTitle": "Check if CloudFront distributions are using deprecated SSL protocols.",
-  "CheckType": [""],
+  "CheckType": [
+    ""
+  ],
   "ServiceName": "cloudfront",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

@@ -15,6 +15,9 @@ banner_color = "\033[1;92m"
 # Groups
 groups_file = "groups.json"
 
+# Compliance
+compliance_specification_dir = "./compliance"
+
 # AWS services-regions matrix json
 aws_services_json_file = "providers/aws/aws_regions_by_service.json"
 

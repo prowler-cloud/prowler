@@ -6,7 +6,7 @@ class ec2_instance_internet_facing_with_instance_profile(Check):
     def execute(self):
         findings = []
         for instance in ec2_client.instances:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = instance.region
             report.resource_id = instance.id
             report.status = "PASS"

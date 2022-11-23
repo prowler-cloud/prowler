@@ -6,7 +6,7 @@ class vpc_flow_logs_enabled(Check):
     def execute(self):
         findings = []
         for vpc in vpc_client.vpcs:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = vpc.region
             if vpc.flow_log:
                 report.status = "PASS"

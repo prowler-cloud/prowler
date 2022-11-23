@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "accessanalyzer_enabled_without_findings",
   "CheckTitle": "Check if IAM Access Analyzer is enabled without findings",
-  "CheckType": ["IAM"],
+  "CheckType": [
+    "IAM"
+  ],
   "ServiceName": "accessanalyzer",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id",
@@ -30,13 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": [
-    {
-      "Framework": "CIS-AWS",
-      "Version": "1.4",
-      "Control": [ "1.20" ],
-      "Group": [ "level1" ]
-    }
-  ]
+  "Notes": ""
 }

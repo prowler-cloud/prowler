@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "cloudwatch_cross_account_sharing_disabled",
   "CheckTitle": "Check if CloudWatch has allowed cross-account sharing.",
-  "CheckType": ["Logging and Monitoring"],
+  "CheckType": [
+    "Logging and Monitoring"
+  ],
   "ServiceName": "cloudwatch",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

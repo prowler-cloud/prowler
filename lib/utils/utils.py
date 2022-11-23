@@ -12,7 +12,9 @@ def open_file(input_file: str, mode: str = "r") -> TextIOWrapper:
     try:
         f = open(input_file, mode)
     except Exception as e:
-        logger.critical(f"{input_file}: {e.__class__.__name__}")
+        logger.critical(
+            f"{input_file}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]"
+        )
         sys.exit()
     else:
         return f
@@ -23,7 +25,9 @@ def parse_json_file(input_file: TextIOWrapper) -> Any:
     try:
         json_file = json.load(input_file)
     except Exception as e:
-        logger.critical(f"{input_file.name}: {e.__class__.__name__}")
+        logger.critical(
+            f"{input_file.name}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]"
+        )
         sys.exit()
     else:
         return json_file
@@ -34,13 +38,12 @@ def file_exists(filename: str):
     try:
         exists_filename = exists(filename)
     except Exception as e:
-        logger.critical(f"{exists_filename.name}: {e.__class__.__name__}")
-        quit()
+        logger.critical(
+            f"{exists_filename.name}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]"
+        )
+        sys.exit()
     else:
-        if exists_filename:
-            return True
-        else:
-            return False
+        return exists_filename
 
 
 # create sha512 hash for string

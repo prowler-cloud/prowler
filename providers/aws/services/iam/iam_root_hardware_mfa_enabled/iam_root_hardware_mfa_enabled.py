@@ -6,7 +6,7 @@ class iam_root_hardware_mfa_enabled(Check):
     def execute(self) -> Check_Report:
         findings = []
         virtual_mfa = False
-        report = Check_Report(self.metadata)
+        report = Check_Report(self.metadata())
         report.region = iam_client.region
         report.resource_id = "root"
         report.resource_arn = f"arn:aws:iam::{iam_client.account}:root"

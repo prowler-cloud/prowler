@@ -11,7 +11,7 @@ class codeartifact_packages_external_public_publishing_disabled(Check):
         findings = []
         for repository in codeartifact_client.repositories.values():
             for package in repository.packages:
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = repository.region
                 report.resource_id = package.name
 

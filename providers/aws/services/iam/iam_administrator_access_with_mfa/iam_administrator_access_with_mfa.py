@@ -8,7 +8,7 @@ class iam_administrator_access_with_mfa(Check):
         response = iam_client.groups
 
         for group in response:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.resource_id = group.name
             report.resource_arn = group.arn
             report.region = iam_client.region

@@ -8,7 +8,7 @@ class secretsmanager_automatic_rotation_enabled(Check):
     def execute(self):
         findings = []
         for secret in secretsmanager_client.secrets.values():
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = secret.region
             report.resource_id = secret.name
             report.resource_arn = secret.arn

@@ -6,7 +6,7 @@ class sagemaker_models_vpc_settings_configured(Check):
     def execute(self):
         findings = []
         for model in sagemaker_client.sagemaker_models:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = model.region
             report.resource_id = model.name
             report.resource_arn = model.arn

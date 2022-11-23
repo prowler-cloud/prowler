@@ -6,7 +6,7 @@ class dynamodb_accelerator_cluster_encryption_enabled(Check):
     def execute(self):
         findings = []
         for cluster in dax_client.clusters:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.resource_id = cluster.name
             report.resource_arn = cluster.arn
             report.region = cluster.region

@@ -6,7 +6,7 @@ class vpc_peering_routing_tables_with_least_privilege(Check):
     def execute(self):
         findings = []
         for peer in vpc_client.vpc_peering_connections:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = peer.region
             comply = True
             # Check each cidr in the peering route table

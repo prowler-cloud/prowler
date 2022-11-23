@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "acm_certificates_expiration_check",
   "CheckTitle": "Check if ACM Certificates are about to expire in specific days or less",
-  "CheckType": ["Data Protection"],
+  "CheckType": [
+    "Data Protection"
+  ],
   "ServiceName": "acm",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:acm:region:account-id:certificate/resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

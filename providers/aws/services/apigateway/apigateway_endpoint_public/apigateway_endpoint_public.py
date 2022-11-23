@@ -6,7 +6,7 @@ class apigateway_endpoint_public(Check):
     def execute(self):
         findings = []
         for rest_api in apigateway_client.rest_apis:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = rest_api.region
             if rest_api.public_endpoint:
                 report.status = "FAIL"

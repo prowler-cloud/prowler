@@ -6,7 +6,7 @@ class eks_control_plane_endpoint_access_restricted(Check):
     def execute(self):
         findings = []
         for cluster in eks_client.clusters:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = cluster.region
             report.resource_id = cluster.name
             report.resource_arn = cluster.arn

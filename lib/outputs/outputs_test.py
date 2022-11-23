@@ -2,6 +2,7 @@ import os
 from os import path, remove
 
 import boto3
+import pytest
 from colorama import Fore
 from moto import mock_s3
 
@@ -9,14 +10,15 @@ from config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
+    orange_color,
     output_file_timestamp,
     prowler_version,
     timestamp_iso,
     timestamp_utc,
-    orange_color,
 )
 from lib.check.models import Check_Report, load_check_metadata
 from lib.outputs.models import (
+    Check_Output_CSV,
     Check_Output_JSON,
     Check_Output_JSON_ASFF,
     Compliance,
@@ -40,7 +42,7 @@ class Test_Outputs:
     def test_fill_file_descriptors(self):
         audited_account = "123456789012"
         output_directory = f"{os.path.dirname(os.path.realpath(__file__))}"
-        csv_fields = generate_csv_fields()
+        generate_csv_fields(Check_Output_CSV)
         test_output_modes = [
             ["csv"],
             ["json"],
@@ -98,7 +100,6 @@ class Test_Outputs:
             test_output_file_descriptors = fill_file_descriptors(
                 output_mode_list,
                 output_directory,
-                csv_fields,
                 output_filename,
             )
             for output_mode in output_mode_list:
@@ -114,6 +115,17 @@ class Test_Outputs:
 
         for status in test_status:
             assert set_report_color(status) in test_colors
+
+    def test_set_report_color_invalid(self):
+        test_status = "INVALID"
+
+        with pytest.raises(Exception) as exc:
+            set_report_color(test_status)
+
+        assert "Invalid Report Status. Must be PASS, FAIL, ERROR or WARNING" in str(
+            exc.value
+        )
+        assert exc.type == Exception
 
     def test_generate_csv_fields(self):
         expected = [
@@ -154,10 +166,10 @@ class Test_Outputs:
             "depends_on",
             "related_to",
             "notes",
-            "compliance",
+            # "compliance",
         ]
 
-        assert generate_csv_fields() == expected
+        assert generate_csv_fields(Check_Output_CSV) == expected
 
     def test_fill_json(self):
         input_audit_info = AWS_Audit_Info(
@@ -177,7 +189,7 @@ class Test_Outputs:
         finding = Check_Report(
             load_check_metadata(
                 f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
-            )
+            ).json()
         )
         finding.resource_details = "Test resource details"
         finding.resource_id = "test-resource"
@@ -221,7 +233,7 @@ class Test_Outputs:
         finding = Check_Report(
             load_check_metadata(
                 f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
-            )
+            ).json()
         )
         finding.resource_details = "Test resource details"
         finding.resource_id = "test-resource"

@@ -17,7 +17,7 @@ class cloudformation_outputs_find_secrets(Check):
         """Execute the cloudformation_outputs_find_secrets check"""
         findings = []
         for stack in cloudformation_client.stacks:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = stack.region
             report.resource_id = stack.name
             report.resource_arn = stack.arn

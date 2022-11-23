@@ -7,7 +7,7 @@ class elb_ssl_listeners(Check):
         findings = []
         secure_protocols = ["SSL", "HTTPS"]
         for lb in elb_client.loadbalancers:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = lb.region
             report.resource_id = lb.name
             report.status = "PASS"

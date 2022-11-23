@@ -6,7 +6,7 @@ class rds_instance_backup_enabled(Check):
     def execute(self):
         findings = []
         for db_instance in rds_client.db_instances:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = db_instance.region
             report.resource_id = db_instance.id
             if db_instance.backup_retention_period > 0:

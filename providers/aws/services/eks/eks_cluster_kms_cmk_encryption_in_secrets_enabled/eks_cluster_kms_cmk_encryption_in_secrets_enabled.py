@@ -6,7 +6,7 @@ class eks_cluster_kms_cmk_encryption_in_secrets_enabled(Check):
     def execute(self):
         findings = []
         for cluster in eks_client.clusters:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = cluster.region
             report.resource_id = cluster.name
             report.resource_arn = cluster.arn

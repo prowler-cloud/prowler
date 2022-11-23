@@ -8,7 +8,7 @@ class iam_user_hardware_mfa_enabled(Check):
         response = iam_client.users
 
         for user in response:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.resource_id = user.name
             report.resource_arn = user.arn
             report.region = iam_client.region

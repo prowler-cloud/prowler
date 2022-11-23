@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "cloudfront_distributions_using_waf",
   "CheckTitle": "Check if CloudFront distributions are using WAF.",
-  "CheckType": ["IAM"],
+  "CheckType": [
+    "IAM"
+  ],
   "ServiceName": "cloudfront",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

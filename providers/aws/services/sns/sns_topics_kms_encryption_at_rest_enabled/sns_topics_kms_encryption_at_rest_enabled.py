@@ -6,7 +6,7 @@ class sns_topics_kms_encryption_at_rest_enabled(Check):
     def execute(self):
         findings = []
         for topic in sns_client.topics:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = topic.region
             report.resource_id = topic.name
             report.resource_arn = topic.arn

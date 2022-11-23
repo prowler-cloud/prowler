@@ -1,0 +1,82 @@
+{
+  "Framework": "ENS",
+  "Version": "3",
+  "Requirements": [
+    {
+      "Id": "op.mon.1",
+      "Description": "Detección de intrusión",
+      "Attributes": [
+        {
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "Descripcion_Control": "- En ausencia de otras herramientas de terceros, habilitar Amazon GuarDuty para la detección de amenazas e intrusiones..- Activar el servicio de eventos AWS CloudTrail para todas las regiones..- Activar el servicio VPC FlowLogs..-Deberá habilitarse Amazon GuardDuty para todas las regiones tanto en la cuenta raíz como en las cuentas miembro de un entorno multi-cuenta..-Todas las cuentas miembro deberán estar añadidas para la supervisión bajo la cuenta raíz..-La adminsitración de Amazon GuardDuty quedará delegada exclusivamente a la cuenta de seguridad para garantizar una correcta asignación de los roles para este servicio.",
+          "Nivel": [
+            "bajo",
+            "medio",
+            "alto"
+          ],
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "cloudtrail_multi_region_enabled",
+        "vpc_flow_logs_enabled",
+        "guardduty_is_enabled"
+      ]
+    },
+    {
+      "Id": "op.mon.3",
+      "Description": "Protección de la integridad y de la autenticidad",
+      "Attributes": [
+        {
+          "Marco": "operacional",
+          "Categoria": "protección de las comunicaciones",
+          "Descripcion_Control": "- Habilitar TLS en los balanceadores de carga ELB.- Evitar el uso de protocolos de cifrado inseguros en la conexión TLS entre clientes y balanceadores de carga.- Asegurar que los Buckets de almacenamiento S3 apliquen cifrado para la transferencia de datos empleando TLS.- Asegurar que la distribución entre frontales CloudFront y sus orígenes únicamente emplee tráfico HTTPS.",
+          "Nivel": [
+            "bajo",
+            "medio",
+            "alto"
+          ],
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "ec2_elbv2_insecure_ssl_ciphers",
+        "ec2_elbv2_insecure_ssl_ciphers",
+        "s3_bucket_secure_transport_policy",
+        "cloudfront_distributions_https_enabled"
+      ]
+    },
+    {
+      "Id": "mp.si.2.r2.1",
+      "Description": "Copias de seguridad",
+      "Attributes": [
+        {
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los soportes de información",
+          "Descripcion_Control": "Se deberá asegurar el cifrado de las copias de seguridad de EBS.",
+          "Nivel": [
+            "alto"
+          ],
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad"
+          ]
+        }
+      ],
+      "Checks": [
+        "ec2_ebs_snapshot_encryption"
+      ]
+    }
+  ]
+}

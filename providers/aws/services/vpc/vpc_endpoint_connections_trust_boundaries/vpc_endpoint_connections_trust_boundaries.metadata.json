@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "vpc_endpoint_connections_trust_boundaries",
   "CheckTitle": "Find trust boundaries in VPC endpoint connections.",
-  "CheckType": ["Infrastructure Security"],
+  "CheckType": [
+    "Infrastructure Security"
+  ],
   "ServiceName": "vpc",
   "SubServiceName": "endpoint",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

@@ -8,7 +8,7 @@ class kms_cmk_are_used(Check):
         for key in kms_client.keys:
             # Only check CMKs keys
             if key.manager == "CUSTOMER":
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = key.region
                 report.resource_id = key.id
                 report.resource_arn = key.arn

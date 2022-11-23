@@ -12,7 +12,7 @@ class cloudformation_stacks_termination_protection_enabled(Check):
         findings = []
         for stack in cloudformation_client.stacks:
             if not stack.is_nested_stack:
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = stack.region
                 report.resource_id = stack.name
                 report.resource_arn = stack.arn

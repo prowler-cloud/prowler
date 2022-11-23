@@ -9,7 +9,7 @@ class ec2_networkacl_allow_ingress_tcp_port_22(Check):
         tcp_protocol = "6"
         check_port = 22
         for network_acl in ec2_client.network_acls:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = network_acl.region
             # If some entry allows it, that ACL is not securely configured
             if not check_network_acl(network_acl.entries, tcp_protocol, check_port):

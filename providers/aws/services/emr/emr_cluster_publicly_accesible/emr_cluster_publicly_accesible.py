@@ -15,7 +15,7 @@ class emr_cluster_publicly_accesible(Check):
                 ClusterStatus.TERMINATED,
                 ClusterStatus.TERMINATED_WITH_ERRORS,
             ):
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = cluster.region
                 report.resource_id = cluster.id
                 report.resource_arn = cluster.arn

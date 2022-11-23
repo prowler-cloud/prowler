@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "s3_bucket_policy_public_write_access",
   "CheckTitle": "Check if S3 buckets have policies which allow WRITE access.",
-  "CheckType": ["IAM"],
+  "CheckType": [
+    "IAM"
+  ],
   "ServiceName": "s3",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

@@ -7,7 +7,7 @@ class cloudfront_distributions_using_deprecated_ssl_protocols(Check):
     def execute(self):
         findings = []
         for distribution in cloudfront_client.distributions.values():
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = distribution.region
             report.resource_arn = distribution.arn
             report.resource_id = distribution.id

@@ -10,7 +10,7 @@ class cloudwatch_log_metric_filter_unauthorized_api_calls(Check):
     def execute(self):
         pattern = r"\$\.errorCode\s*=\s*\*UnauthorizedOperation.+\$\.errorCode\s*=\s*AccessDenied\*"
         findings = []
-        report = Check_Report(self.metadata)
+        report = Check_Report(self.metadata())
         report.status = "FAIL"
         report.status_extended = (
             "No CloudWatch log groups found with metric filters or alarms associated."

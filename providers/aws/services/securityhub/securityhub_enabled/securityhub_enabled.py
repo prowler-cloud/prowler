@@ -6,7 +6,7 @@ class securityhub_enabled(Check):
     def execute(self):
         findings = []
         for securityhub in securityhub_client.securityhubs:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = securityhub.region
             if securityhub.status == "ACTIVE":
                 report.status = "PASS"

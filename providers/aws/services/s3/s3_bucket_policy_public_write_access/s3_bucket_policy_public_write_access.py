@@ -6,7 +6,7 @@ class s3_bucket_policy_public_write_access(Check):
     def execute(self):
         findings = []
         for bucket in s3_client.buckets:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = bucket.region
             report.resource_id = bucket.name
             # Check if bucket policy allow public write access

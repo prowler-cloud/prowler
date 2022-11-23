@@ -39,17 +39,5 @@
     "othercheck3",
     "othercheck4"
   ],
-  "Notes": "additional information",
-  "Compliance": [
-    {
-      "Control": [
-        "4.1"
-      ],
-      "Framework": "CIS-AWS",
-      "Group": [
-        "level2"
-      ],
-      "Version": "1.4"
-    }
-  ]
+  "Notes": "additional information"
 }

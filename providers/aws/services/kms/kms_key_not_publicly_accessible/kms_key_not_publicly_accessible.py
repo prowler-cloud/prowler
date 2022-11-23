@@ -9,7 +9,7 @@ class kms_key_not_publicly_accessible(Check):
             if (
                 key.manager == "CUSTOMER" and key.state == "Enabled"
             ):  # only customer KMS have policies
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.status = "PASS"
                 report.status_extended = f"KMS key {key.id} is not exposed to Public."
                 report.resource_id = key.id

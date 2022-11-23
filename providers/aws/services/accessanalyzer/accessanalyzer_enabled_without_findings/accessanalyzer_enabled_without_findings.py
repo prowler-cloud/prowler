@@ -8,7 +8,7 @@ class accessanalyzer_enabled_without_findings(Check):
     def execute(self):
         findings = []
         for analyzer in accessanalyzer_client.analyzers:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = analyzer.region
             if analyzer.status == "ACTIVE":
                 if analyzer.findings_count > 0:

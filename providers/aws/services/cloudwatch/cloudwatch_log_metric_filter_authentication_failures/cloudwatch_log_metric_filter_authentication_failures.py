@@ -10,7 +10,7 @@ class cloudwatch_log_metric_filter_authentication_failures(Check):
     def execute(self):
         pattern = r"\$\.eventName\s*=\s*ConsoleLogin.+\$\.errorMessage\s*=\s*Failed authentication"
         findings = []
-        report = Check_Report(self.metadata)
+        report = Check_Report(self.metadata())
         report.status = "FAIL"
         report.status_extended = (
             "No CloudWatch log groups found with metric filters or alarms associated."

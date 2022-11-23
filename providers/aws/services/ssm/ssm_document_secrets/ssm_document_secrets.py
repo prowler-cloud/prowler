@@ -13,7 +13,7 @@ class ssm_document_secrets(Check):
     def execute(self):
         findings = []
         for document in ssm_client.documents.values():
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = document.region
             report.resource_arn = f"arn:aws:ssm:{document.region}:{ssm_client.audited_account}:document/{document.name}"
             report.resource_id = document.name
