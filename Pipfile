@@ -29,6 +29,11 @@ pytest-xdist = "2.5.0"
 coverage = "6.4.1"
 sure = "2.0.0"
 freezegun = "1.2.1"
+azure-identity = "*"
+azure-storage-blob = "*"
+msgraph-core = "*"
+azure-mgmt-subscription = "*"
+azure-mgmt-authorization = "*"
 
 [requires]
 python_version = "3.9"
