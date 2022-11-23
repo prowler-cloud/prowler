@@ -42,7 +42,7 @@ class Test_Outputs:
     def test_fill_file_descriptors(self):
         audited_account = "123456789012"
         output_directory = f"{os.path.dirname(os.path.realpath(__file__))}"
-        csv_fields = generate_csv_fields(Check_Output_CSV)
+        generate_csv_fields(Check_Output_CSV)
         test_output_modes = [
             ["csv"],
             ["json"],
@@ -100,7 +100,6 @@ class Test_Outputs:
             test_output_file_descriptors = fill_file_descriptors(
                 output_mode_list,
                 output_directory,
-                csv_fields,
                 output_filename,
             )
             for output_mode in output_mode_list:
