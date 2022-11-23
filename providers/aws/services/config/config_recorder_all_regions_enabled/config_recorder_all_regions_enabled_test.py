@@ -27,7 +27,7 @@ class Test_config_recorder_all_regions_enabled:
             result = check.execute()
 
             assert (
-                len(result) == 23
+                len(result) == 25
             )  # One fail result per region, since there are no recorders
             assert result[0].status == "FAIL"
 
@@ -55,7 +55,7 @@ class Test_config_recorder_all_regions_enabled:
 
             check = config_recorder_all_regions_enabled()
             result = check.execute()
-            assert len(result) == 23
+            assert len(result) == 25
             # Search for the recorder just created
             for recorder in result:
                 if recorder.resource_id:
@@ -95,7 +95,7 @@ class Test_config_recorder_all_regions_enabled:
 
             check = config_recorder_all_regions_enabled()
             result = check.execute()
-            assert len(result) == 23
+            assert len(result) == 25
             # Search for the recorder just created
             for recorder in result:
                 if recorder.resource_id:

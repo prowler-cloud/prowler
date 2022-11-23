@@ -195,7 +195,7 @@ class Test_EC2_Service:
         ec2 = EC2(audit_info)
 
         # One result per region
-        assert len(ec2.ebs_encryption_by_default) == 23
+        assert len(ec2.ebs_encryption_by_default) == 25
         for result in ec2.ebs_encryption_by_default:
             if result.region == AWS_REGION:
                 assert result.status

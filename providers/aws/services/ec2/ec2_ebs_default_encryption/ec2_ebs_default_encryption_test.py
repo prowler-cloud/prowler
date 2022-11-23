@@ -33,7 +33,7 @@ class Test_ec2_ebs_default_encryption:
             results = check.execute()
 
             # One result per region
-            assert len(results) == 23
+            assert len(results) == 25
             for result in results:
                 if result.region == AWS_REGION:
                     assert result.status == "PASS"
@@ -63,7 +63,7 @@ class Test_ec2_ebs_default_encryption:
             result = check.execute()
 
             # One result per region
-            assert len(result) == 23
+            assert len(result) == 25
             assert result[0].status == "FAIL"
             assert search(
                 "EBS Default Encryption is not activated",
