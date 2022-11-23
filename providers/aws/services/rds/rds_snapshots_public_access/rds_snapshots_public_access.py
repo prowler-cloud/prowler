@@ -6,7 +6,7 @@ class rds_snapshots_public_access(Check):
     def execute(self):
         findings = []
         for db_snap in rds_client.db_snapshots:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = db_snap.region
             report.resource_id = db_snap.id
             if db_snap.public:
@@ -23,7 +23,7 @@ class rds_snapshots_public_access(Check):
             findings.append(report)
 
         for db_snap in rds_client.db_cluster_snapshots:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = db_snap.region
             report.resource_id = db_snap.id
             if db_snap.public:

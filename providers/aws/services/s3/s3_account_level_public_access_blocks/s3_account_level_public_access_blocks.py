@@ -6,7 +6,7 @@ from providers.aws.services.s3.s3control_client import s3control_client
 class s3_account_level_public_access_blocks(Check):
     def execute(self):
         findings = []
-        report = Check_Report(self.metadata)
+        report = Check_Report(self.metadata())
         report.status = "FAIL"
         report.status_extended = f"Block Public Access is not configured for the account {s3_client.audited_account}."
         report.region = s3control_client.region

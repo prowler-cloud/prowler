@@ -1,8 +1,6 @@
 from lib.check.models import Check, Check_Report
+from providers.aws.services.route53.route53_client import route53_client
 from providers.aws.services.shield.shield_client import shield_client
-from providers.aws.services.route53.route53_client import (
-    route53_client,
-)
 
 
 class shield_advanced_protection_in_route53_hosted_zones(Check):
@@ -10,7 +8,7 @@ class shield_advanced_protection_in_route53_hosted_zones(Check):
         findings = []
         if shield_client.enabled:
             for hosted_zone in route53_client.hosted_zones.values():
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = shield_client.region
                 report.resource_id = hosted_zone.id
                 report.resource_arn = hosted_zone.arn
