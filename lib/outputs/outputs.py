@@ -2,11 +2,11 @@ import json
 import os
 import sys
 from csv import DictWriter
-from config.config import timestamp
-from colorama import Fore, Style
+from io import TextIOWrapper
 from typing import Any
-from tabulate import tabulate
 
+from colorama import Fore, Style
+from tabulate import tabulate
 
 from config.config import (
     csv_file_suffix,
@@ -14,25 +14,25 @@ from config.config import (
     json_file_suffix,
     orange_color,
     prowler_version,
+    timestamp,
     timestamp_iso,
     timestamp_utc,
 )
 from lib.logger import logger
 from lib.outputs.models import (
     Check_Output_CSV,
+    Check_Output_CSV_ENS_RD2022,
     Check_Output_JSON,
     Check_Output_JSON_ASFF,
     Compliance,
     ProductFields,
     Resource,
     Severity,
-    Check_Output_CSV_ENS_RD2022,
 )
 from lib.utils.utils import file_exists, hash_sha512, open_file
 from providers.aws.lib.allowlist.allowlist import is_allowlisted
 from providers.aws.lib.audit_info.models import AWS_Audit_Info
 from providers.aws.lib.security_hub.security_hub import send_to_security_hub
-from io import TextIOWrapper
 
 
 def report(check_findings, output_options, audit_info):
@@ -336,11 +336,11 @@ def close_json(output_filename, output_directory, mode):
             filename,
             "a",
         )
-        # Replace last comma for square bracket
-        file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
-        file_descriptor.truncate()
-        file_descriptor.write("]")
-        file_descriptor.close()
+        # Replace last comma for square bracket if not empty
+        if file_descriptor.tell() > 0:
+            file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
+            file_descriptor.truncate()
+            file_descriptor.write("]")
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"

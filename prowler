@@ -155,7 +155,6 @@ if __name__ == "__main__":
         help="Output mode, by default csv",
         default=["csv", "json"],
         choices=["csv", "json", "json-asff"],
-        default=[],
     )
     parser.add_argument(
         "-F",
