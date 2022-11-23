@@ -72,7 +72,6 @@ def report(check_findings, output_options, audit_info):
                 print(
                     f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
                 )
-
             if file_descriptors:
                 if "ens_rd2022_aws" in output_options.output_modes:
                     # We have to retrieve all the check's compliance requirements
@@ -171,7 +170,9 @@ def report(check_findings, output_options, audit_info):
         color = set_report_color("INFO")
         if not output_options.is_quiet and output_options.verbose:
             print(f"\t{color}INFO{Style.RESET_ALL} There are no resources")
-
+    # Separator between findings and bar
+    if output_options.is_quiet or output_options.verbose:
+        print()
     if file_descriptors:
         # Close all file descriptors
         for file_descriptor in file_descriptors:
@@ -341,6 +342,7 @@ def close_json(output_filename, output_directory, mode):
             file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
             file_descriptor.truncate()
             file_descriptor.write("]")
+        file_descriptor.close()
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
