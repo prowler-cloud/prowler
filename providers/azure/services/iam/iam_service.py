@@ -41,21 +41,19 @@ class IAM:
         roles = {}
         try:
             for subscription, client in self.clients.items():
-
+                roles.update({subscription: []})
                 for role in client.role_definitions.list(
                     scope=f"/subscriptions/{self.subscriptions[subscription]}",
                     filter="type eq 'CustomRole'",
                 ):
-                    roles.update(
-                        {
-                            subscription: Role(
-                                id=role.name,
-                                name=role.role_name,
-                                type=role.role_type,
-                                assignable_scopes=role.assignable_scopes,
-                                permissions=role.permissions,
-                            )
-                        }
+                    roles[subscription].append(
+                        Role(
+                            id=role.name,
+                            name=role.role_name,
+                            type=role.role_type,
+                            assignable_scopes=role.assignable_scopes,
+                            permissions=role.permissions,
+                        )
                     )
         except Exception as error:
             logger.error(

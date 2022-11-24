@@ -42,11 +42,11 @@ class Defender:
         try:
             for subscription, client in self.clients.items():
                 pricings_list = client.pricings.list()
+                pricings.update({subscription: {}})
                 for pricing in pricings_list.value:
-                    pricings.update(
+                    pricings[subscription].update(
                         {
-                            subscription: Defender_Pricing(
-                                name=pricing.name,
+                            pricing.name: Defender_Pricing(
                                 pricing_tier=pricing.pricing_tier,
                                 free_trial_remaining_time=pricing.free_trial_remaining_time,
                             )
@@ -61,6 +61,5 @@ class Defender:
 
 
 class Defender_Pricing(BaseModel):
-    name: str
     pricing_tier: str
     free_trial_remaining_time: timedelta
