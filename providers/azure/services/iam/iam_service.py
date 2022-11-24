@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from azure.mgmt.authorization import AuthorizationManagementClient
 from azure.mgmt.authorization.v2022_04_01.models import Permission
 
+from lib.logger import logger
+
 
 ########################## IAM
 class IAM:
@@ -18,34 +20,49 @@ class IAM:
 
     def __set_clients__(self, subscriptions, credentials):
         clients = {}
-        for subscription in subscriptions:
-            clients.update(
-                {
-                    subscription.id: AuthorizationManagementClient(
-                        credential=credentials, subscription_id=subscription.id
-                    )
-                }
+        try:
+            for display_name, id in subscriptions.items():
+                clients.update(
+                    {
+                        display_name: AuthorizationManagementClient(
+                            credential=credentials, subscription_id=id
+                        )
+                    }
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        return clients
+        else:
+            return clients
 
     def __get_roles__(self):
-        roles = []
-        for subscription, client in self.clients.items():
-            for role in client.role_definitions.list(
-                scope=f"/subscriptions/{subscription}", filter="type eq 'CustomRole'"
-            ):
-                roles.append(
-                    Role(
-                        id=role.name,
-                        name=role.role_name,
-                        type=role.role_type,
-                        assignable_scopes=role.assignable_scopes,
-                        permissions=role.permissions,
-                        role_subscription=subscription,
-                    )
-                )
+        logger.info("IAM - Getting roles...")
+        roles = {}
+        try:
+            for subscription, client in self.clients.items():
 
-        return roles
+                for role in client.role_definitions.list(
+                    scope=f"/subscriptions/{self.subscriptions[subscription]}",
+                    filter="type eq 'CustomRole'",
+                ):
+                    roles.update(
+                        {
+                            subscription: Role(
+                                id=role.name,
+                                name=role.role_name,
+                                type=role.role_type,
+                                assignable_scopes=role.assignable_scopes,
+                                permissions=role.permissions,
+                            )
+                        }
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        else:
+            return roles
 
 
 @dataclass
@@ -55,14 +72,10 @@ class Role:
     type: str
     assignable_scopes: list[str]
     permissions: list[Permission]
-    role_subscription: str
 
-    def __init__(
-        self, id, name, type, assignable_scopes, permissions, role_subscription
-    ):
+    def __init__(self, id, name, type, assignable_scopes, permissions):
         self.id = id
         self.name = name
         self.type = type
         self.assignable_scopes = assignable_scopes
         self.permissions = permissions
-        self.role_subscription = role_subscription
