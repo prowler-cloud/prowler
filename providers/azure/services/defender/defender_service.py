@@ -3,6 +3,8 @@ from datetime import timedelta
 from azure.mgmt.security import SecurityCenter
 from pydantic import BaseModel
 
+from lib.logger import logger
+
 
 ########################## Defender
 class Defender:
@@ -18,36 +20,47 @@ class Defender:
 
     def __set_clients__(self, subscriptions, credentials):
         clients = {}
-        for subscription in subscriptions:
-            clients.update(
-                {
-                    subscription.id: SecurityCenter(
-                        credential=credentials, subscription_id=subscription.id
-                    )
-                }
-            )
-        return clients
-
-    def __get_pricings__(self):
-        pricings = {}
-        for subscription, client in self.clients.items():
-            pricings_list = client.pricings.list()
-            for pricing in pricings_list.value:
-                pricings.update(
+        try:
+            for display_name, id in subscriptions.items():
+                clients.update(
                     {
-                        pricing.name: Defender_Pricing(
-                            subscription=subscription,
-                            name=pricing.name,
-                            pricing_tier=pricing.pricing_tier,
-                            free_trial_remaining_time=pricing.free_trial_remaining_time,
+                        display_name: SecurityCenter(
+                            credential=credentials, subscription_id=id
                         )
                     }
                 )
-        return pricings
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        else:
+            return clients
+
+    def __get_pricings__(self):
+        logger.info("Defender - Getting pricings...")
+        pricings = {}
+        try:
+            for subscription, client in self.clients.items():
+                pricings_list = client.pricings.list()
+                for pricing in pricings_list.value:
+                    pricings.update(
+                        {
+                            subscription: Defender_Pricing(
+                                name=pricing.name,
+                                pricing_tier=pricing.pricing_tier,
+                                free_trial_remaining_time=pricing.free_trial_remaining_time,
+                            )
+                        }
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        else:
+            return pricings
 
 
 class Defender_Pricing(BaseModel):
-    subscription: str
     name: str
     pricing_tier: str
     free_trial_remaining_time: timedelta

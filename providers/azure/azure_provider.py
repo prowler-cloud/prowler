@@ -7,10 +7,7 @@ from msgraph.core import GraphClient
 
 from lib.logger import logger
 from providers.azure.lib.audit_info.audit_info import azure_audit_info
-from providers.azure.lib.audit_info.models import (
-    Azure_Identity_Info,
-    Azure_Subscription,
-)
+from providers.azure.lib.audit_info.models import Azure_Identity_Info
 
 
 class Azure_Provider:
@@ -72,11 +69,8 @@ def azure_provider_set_session():
         )
         for subscription in subscriptions_client.subscriptions.list():
             logger.info(subscription.__dict__)
-            azure_audit_info.subscriptions.append(
-                Azure_Subscription(
-                    id=subscription.subscription_id,
-                    display_name=subscription.display_name,
-                )
+            azure_audit_info.subscriptions.update(
+                {subscription.display_name: subscription.subscription_id}
             )
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")

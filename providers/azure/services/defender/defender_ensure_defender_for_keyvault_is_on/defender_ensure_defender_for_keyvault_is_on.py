@@ -5,16 +5,18 @@ from providers.azure.services.defender.defender_client import defender_client
 class defender_ensure_defender_for_keyvault_is_on(Check):
     def execute(self) -> Check_Report:
         findings = []
-        report = Check_Report(self.metadata)
-        report.region = defender_client.region
-        report.status = "PASS"
-        report.resource_id = "Defender plan KeyVaults"
-        report.status_extended = (
-            "Defender plan Defender for KeyVaults is set to ON (pricing tier standard)"
-        )
-        if defender_client.pricings["KeyVaults"].pricing_tier != "Standard":
-            report.status = "FAIL"
-            report.status_extended = "Defender plan Defender for KeyVaults is set to OFF (pricing tier not standard)"
+        for subscription, defender_plan in defender_client.pricings.items():
+            report = Check_Report(self.metadata)
+            report.region = defender_client.region
+            report.status = "PASS"
+            report.resource_id = "Defender plan KeyVaults"
+            report.status_extended = f"Defender plan Defender for KeyVaults from subscription {subscription} is set to ON (pricing tier standard)"
+            if (
+                defender_plan.name == "KeyVaults"
+                and defender_plan.pricing_tier != "Standard"
+            ):
+                report.status = "FAIL"
+                report.status_extended = f"Defender plan Defender for KeyVaults subscription from {subscription}  is set to OFF (pricing tier not standard)"
 
-        findings.append(report)
+            findings.append(report)
         return findings

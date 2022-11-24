@@ -10,16 +10,11 @@ class Azure_Identity_Info(BaseModel):
     tenant_id: str = None
 
 
-class Azure_Subscription(BaseModel):
-    id: str = None
-    display_name: str = None
-
-
 @dataclass
 class Azure_Audit_Info:
     credentials: DefaultAzureCredential
     identity: Azure_Identity_Info
-    subscriptions: list[Azure_Subscription]
+    subscriptions: list[dict]
     audited_account: str
 
     def __init__(self, credentials, identity, subscriptions):
