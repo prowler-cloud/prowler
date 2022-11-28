@@ -64,7 +64,6 @@ class Storage:
             return storage_accounts
 
 
-# def __get_storage_account_keys_rotation_time__(self):
 
 
 @dataclass
