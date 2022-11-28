@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-access.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trustboundaries"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"
