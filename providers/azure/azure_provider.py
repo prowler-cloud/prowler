@@ -53,7 +53,7 @@ def validate_credentials(
 
 
 def azure_provider_set_session():
-    logger.info("Setting azure session ...")
+    logger.info("Setting Azure session ...")
     azure_identity = check_credential_env_vars()
     azure_audit_info.credentials = Azure_Provider().get_credentials()
     client = GraphClient(credential=azure_audit_info.credentials)
