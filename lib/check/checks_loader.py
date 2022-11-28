@@ -14,7 +14,6 @@ def load_checks_to_execute(
     checks_file: str,
     check_list: list,
     service_list: list,
-    group_list: list,
     severities: list,
     compliance_frameworks: list,
     categories: set,
