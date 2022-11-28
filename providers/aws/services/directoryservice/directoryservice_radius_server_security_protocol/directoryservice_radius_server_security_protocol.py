@@ -12,7 +12,7 @@ class directoryservice_radius_server_security_protocol(Check):
         findings = []
         for directory in directoryservice_client.directories.values():
             if directory.radius_settings:
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = directory.region
                 report.resource_id = directory.id
                 if (

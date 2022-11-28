@@ -11,7 +11,7 @@ class directoryservice_directory_snapshots_limit(Check):
     def execute(self):
         findings = []
         for directory in directoryservice_client.directories.values():
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = directory.region
             report.resource_id = directory.id
             if directory.snapshots_limits:

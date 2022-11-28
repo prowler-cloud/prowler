@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "apigateway_endpoint_public",
   "CheckTitle": "Check if API Gateway endpoint is public or private.",
-  "CheckType": ["Infrastructure Security"],
+  "CheckType": [
+    "Infrastructure Security"
+  ],
   "ServiceName": "apigateway",
   "SubServiceName": "rest_api",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

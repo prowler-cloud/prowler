@@ -6,7 +6,7 @@ class guardduty_is_enabled(Check):
     def execute(self):
         findings = []
         for detector in guardduty_client.detectors:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = detector.region
             report.resource_id = detector.id
             report.resource_arn = detector.arn

@@ -6,7 +6,7 @@ class sagemaker_notebook_instance_encryption_enabled(Check):
     def execute(self):
         findings = []
         for notebook_instance in sagemaker_client.sagemaker_notebook_instances:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = notebook_instance.region
             report.resource_id = notebook_instance.name
             report.resource_arn = notebook_instance.arn

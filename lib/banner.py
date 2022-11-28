@@ -22,10 +22,10 @@ def print_banner(args):
     if args.verbose or args.quiet:
         print(
             f"""
-        Color code for results:
-        - {Fore.YELLOW}INFO (Information){Style.RESET_ALL}
-        - {Fore.GREEN}PASS (Recommended value){Style.RESET_ALL}
-        - {orange_color}WARNING (Ignored by allowlist){Style.RESET_ALL}
-        - {Fore.RED}FAIL (Fix required){Style.RESET_ALL}
-        """
+Color code for results:
+- {Fore.YELLOW}INFO (Information){Style.RESET_ALL}
+- {Fore.GREEN}PASS (Recommended value){Style.RESET_ALL}
+- {orange_color}WARNING (Ignored by allowlist){Style.RESET_ALL}
+- {Fore.RED}FAIL (Fix required){Style.RESET_ALL}
+            """
         )

@@ -6,7 +6,7 @@ class apigateway_logging_enabled(Check):
     def execute(self):
         findings = []
         for rest_api in apigateway_client.rest_apis:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = rest_api.region
             for stage in rest_api.stages:
                 if stage.logging:

@@ -6,7 +6,7 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
     def execute(self) -> Check_Report:
         findings = []
         for index, policy_document in enumerate(iam_client.list_policies_version):
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = iam_client.region
             report.resource_arn = iam_client.policies[index]["Arn"]
             report.resource_id = iam_client.policies[index]["PolicyName"]
@@ -16,10 +16,11 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
                 if (
                     statement["Effect"] == "Allow"
                     and (
-                        statement["Action"] == "sts:AssumeRole"
-                        or statement["Action"] == "sts:*"
+                        "sts:AssumeRole" in statement["Action"]
+                        or "sts:*" in statement["Action"]
+                        or "*" in statement["Action"]
                     )
-                    and statement["Resource"] == "*"
+                    and "*" in statement["Resource"]
                 ):
                     report.status = "FAIL"
                     report.status_extended = f"Custom Policy {iam_client.policies[index]['PolicyName']} allows permissive STS Role assumption"

@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "vpc_flow_logs_enabled",
   "CheckTitle": "Ensure VPC Flow Logging is Enabled in all VPCs.",
-  "CheckType": ["Logging and Monitoring"],
+  "CheckType": [
+    "Logging and Monitoring"
+  ],
   "ServiceName": "vpc",
   "SubServiceName": "flow_log",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

@@ -11,7 +11,7 @@ class emr_cluster_master_nodes_no_public_ip(Check):
                 ClusterStatus.TERMINATED,
                 ClusterStatus.TERMINATED_WITH_ERRORS,
             ):
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = cluster.region
                 report.resource_id = cluster.id
                 report.resource_arn = cluster.arn

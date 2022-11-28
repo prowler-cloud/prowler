@@ -6,7 +6,7 @@ class opensearch_service_domains_use_cognito_authentication_for_kibana(Check):
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = domain.region
             report.resource_id = domain.name
             report.resource_arn = domain.arn

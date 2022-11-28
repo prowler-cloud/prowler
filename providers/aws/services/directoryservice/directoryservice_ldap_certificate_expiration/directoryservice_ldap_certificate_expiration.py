@@ -14,7 +14,7 @@ class directoryservice_ldap_certificate_expiration(Check):
         findings = []
         for directory in directoryservice_client.directories.values():
             for certificate in directory.certificates:
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = directory.region
                 report.resource_id = certificate.id
 

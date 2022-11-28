@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "s3_bucket_no_mfa_delete",
   "CheckTitle": "Check if S3 bucket MFA Delete is not enabled.",
-  "CheckType": ["Logging and Monitoring"],
+  "CheckType": [
+    "Logging and Monitoring"
+  ],
   "ServiceName": "s3",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "dynamodb_tables_pitr_enabled",
   "CheckTitle": "Check if DynamoDB tables point-in-time recovery (PITR) is enabled.",
-  "CheckType": ["Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"],
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+  ],
   "ServiceName": "dynamodb",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:dynamodb:region:account-id:certificate/resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Data Protection",
-  "Compliance": []
+  "Notes": "Data Protection"
 }

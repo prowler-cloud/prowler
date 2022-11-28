@@ -1,6 +1,6 @@
 from lib.check.models import Check, Check_Report
-from providers.aws.services.shield.shield_client import shield_client
 from providers.aws.services.ec2.ec2_client import ec2_client
+from providers.aws.services.shield.shield_client import shield_client
 
 
 class shield_advanced_protection_in_associated_elastic_ips(Check):
@@ -8,7 +8,7 @@ class shield_advanced_protection_in_associated_elastic_ips(Check):
         findings = []
         if shield_client.enabled:
             for elastic_ip in ec2_client.elastic_ips:
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = shield_client.region
                 report.resource_id = elastic_ip.allocation_id
                 report.resource_arn = elastic_ip.arn

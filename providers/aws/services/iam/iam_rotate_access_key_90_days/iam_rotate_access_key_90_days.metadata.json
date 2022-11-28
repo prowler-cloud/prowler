@@ -2,7 +2,11 @@
   "Provider": "aws",
   "CheckID": "iam_rotate_access_key_90_days",
   "CheckTitle": "Ensure access keys are rotated every 90 days or less",
-  "CheckType": ["Software and Configuration Checks", "Industry and Regulatory Standards" ,"CIS AWS Foundations Benchmark"],
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS AWS Foundations Benchmark"
+  ],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,17 +34,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": [
-    {
-      "Control": [
-        "1.4"
-      ],
-      "Framework": "CIS-AWS",
-      "Group": [
-        "level1"
-      ],
-      "Version": "1.4"
-    }
-  ]
+  "Notes": ""
 }

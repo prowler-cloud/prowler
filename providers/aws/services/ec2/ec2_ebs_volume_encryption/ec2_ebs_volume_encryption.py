@@ -6,7 +6,7 @@ class ec2_ebs_volume_encryption(Check):
     def execute(self):
         findings = []
         for volume in ec2_client.volumes:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = volume.region
             report.resource_id = volume.id
             if volume.encrypted:

@@ -10,7 +10,7 @@ class vpc_endpoint_services_allowed_principals_trust_boundaries(Check):
         trusted_account_ids = get_config_var("trusted_account_ids")
         for service in vpc_client.vpc_endpoint_services:
             if not service.allowed_principals:
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = service.region
                 report.status = "PASS"
                 report.status_extended = (
@@ -21,7 +21,7 @@ class vpc_endpoint_services_allowed_principals_trust_boundaries(Check):
             else:
                 for principal in service.allowed_principals:
                     account_id = principal.split(":")[4]
-                    report = Check_Report(self.metadata)
+                    report = Check_Report(self.metadata())
                     report.region = service.region
                     if (
                         account_id in trusted_account_ids

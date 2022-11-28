@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "ec2_instance_older_than_specific_days",
   "CheckTitle": "Check EC2 Instances older than specific days.",
-  "CheckType": ["Infrastructure Security"],
+  "CheckType": [
+    "Infrastructure Security"
+  ],
   "ServiceName": "ec2",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

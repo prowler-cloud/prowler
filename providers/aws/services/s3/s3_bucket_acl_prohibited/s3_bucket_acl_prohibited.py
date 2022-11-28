@@ -6,7 +6,7 @@ class s3_bucket_acl_prohibited(Check):
     def execute(self):
         findings = []
         for bucket in s3_client.buckets:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = bucket.region
             report.resource_id = bucket.name
             report.status = "FAIL"

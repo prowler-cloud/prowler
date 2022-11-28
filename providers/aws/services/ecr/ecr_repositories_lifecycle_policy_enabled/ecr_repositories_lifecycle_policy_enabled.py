@@ -6,7 +6,7 @@ class ecr_repositories_lifecycle_policy_enabled(Check):
     def execute(self):
         findings = []
         for repository in ecr_client.repositories:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = repository.region
             report.resource_id = repository.name
             report.resource_arn = repository.arn

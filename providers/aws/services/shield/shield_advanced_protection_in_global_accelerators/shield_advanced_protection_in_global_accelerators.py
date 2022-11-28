@@ -1,8 +1,8 @@
 from lib.check.models import Check, Check_Report
-from providers.aws.services.shield.shield_client import shield_client
 from providers.aws.services.globalaccelerator.globalaccelerator_client import (
     globalaccelerator_client,
 )
+from providers.aws.services.shield.shield_client import shield_client
 
 
 class shield_advanced_protection_in_global_accelerators(Check):
@@ -10,7 +10,7 @@ class shield_advanced_protection_in_global_accelerators(Check):
         findings = []
         if shield_client.enabled:
             for accelerator in globalaccelerator_client.accelerators.values():
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = shield_client.region
                 report.resource_id = accelerator.name
                 report.resource_arn = accelerator.arn

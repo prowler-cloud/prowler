@@ -1,0 +1,1636 @@
+{
+  "Framework": "ENS",
+  "Version": "RD2022",
+  "Provider": "AWS",
+  "Requirements": [
+    {
+      "Id": "op.acc.1.aws.iam.2",
+      "Description": "Proveedor de identidad centralizado",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Es muy recomendable la utilización de un proveedor de identidades que permita administrar las identidades en un lugar centralizado, en vez de utilizar IAM para ello.",
+          "Nivel": "bajo",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_check_saml_providers_sts"
+      ]
+    },
+    {
+      "Id": "op.acc.2.aws.iam.4",
+      "Description": "Requisitos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se deberá delegar en cuentas administradoras la administración de la organización, dejando la cuenta maestra sin uso y con las medidas de seguridad pertinentes.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_avoid_root_usage"
+      ]
+    },
+    {
+      "Id": "op.acc.3.r1.aws.iam.1",
+      "Description": "Segregación rigurosa",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.3.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "En caso de ser de aplicación, la segregación deberá tener en cuenta la separación de las funciones de configuración y mantenimiento y de auditoría de cualquier otra.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_support_role_created"
+      ]
+    },
+    {
+      "Id": "op.acc.4.aws.iam.1",
+      "Description": "Proceso de gestión de derechos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.4",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Las políticas IAM deben permitir sólo los privilegios necesarios para cada rol. Se recomienda comenzar con el mínimo nivel de permisos e ir añadiendo permisos adicionales según vaya surgiendo la necesidad en lugar de comenzar con permisos administrativos.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "sqs_queues_not_publicly_accessible",
+        "s3_bucket_policy_public_write_access",
+        "awslambda_function_not_publicly_accessible",
+        "iam_no_custom_policy_permissive_role_assumption",
+        "cloudwatch_cross_account_sharing_disabled",
+        "awslambda_function_url_public",
+        "awslambda_function_url_cors_policy",
+        "iam_policy_allows_privilege_escalation",
+        "iam_policy_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "op.acc.4.aws.iam.9",
+      "Description": "Proceso de gestión de derechos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.4",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se restringirá todo acceso a las acciones especificadas para el usuario root de una cuenta.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_no_root_access_key",
+        "iam_avoid_root_usage"
+      ]
+    },
+    {
+      "Id": "op.acc.4.aws.iam.11",
+      "Description": "Proceso de gestión de derechos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.4",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se configurarán diferentes permisos a las cuentas de usuario, limitando la utilización de la cuenta “root” para tareas específicas que necesiten un nivel de privilegios elevado, esta configuración debe entenderse como un mecanismo para impedir que el trabajo directo con usuarios con privilegios de administrador repercuta negativamente en la seguridad, a acometer todas las acciones con el máximo privilegio cuando este no es siempre requerido.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_policy_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "op.acc.4.aws.sys.1",
+      "Description": "Proceso de gestión de derechos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.4",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Habilitar systems manager automation para evitar acceso remoto humano a tareas automatizables.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm"
+      ]
+    },
+    {
+      "Id": "op.acc.6.aws.iam.1",
+      "Description": "Mecanismo de autenticación (usuarios de la organización)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Evitar el uso permanente de múltiples claves de acceso para un mismo usuario IAM.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_user_two_active_access_key"
+      ]
+    },
+    {
+      "Id": "op.acc.6.aws.iam.2",
+      "Description": "Mecanismo de autenticación (usuarios de la organización)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Las claves de acceso deberán rotarse cada 90 días o menos.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_disable_90_days_credentials",
+        "iam_rotate_access_key_90_days"
+      ]
+    },
+    {
+      "Id": "op.acc.6.aws.iam.3",
+      "Description": "Mecanismo de autenticación (usuarios de la organización)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Deberá habilitarse el vencimiento de las credenciales de los usuarios. (Bien a través de la política de contraseñas de IAM o del proveedor de identidades federado).",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_password_policy_expires_passwords_within_90_days_or_less",
+        "iam_disable_90_days_credentials",
+        "iam_rotate_access_key_90_days"
+      ]
+    },
+    {
+      "Id": "op.acc.6.aws.iam.4",
+      "Description": "Mecanismo de autenticación (usuarios de la organización)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se deberá evitar la asignación por defecto de claves de acceso para todos los usuarios que tengan acceso a la consola. Para cumplir con este requisito, se recomienda revisar qué usuarios se encuentran dados de alta en la cuenta de AWS y disponen de acceso a la consola de administración y evitar la asignación de claves de acceso cuando no son necesarias.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_user_no_setup_initial_access_key"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r1.aws.iam.1",
+      "Description": "Contraseñas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Las contraseñas de los usuarios deberán tener normas de complejidad mínima y robustez.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_password_policy_lowercase",
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_number",
+        "iam_password_policy_reuse_24",
+        "iam_password_policy_symbol",
+        "iam_password_policy_uppercase"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r2.aws.iam.1",
+      "Description": "Contraseña + otro factor de autenticación",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "MFA deberá estar habilitado para todas las cuentas que tengan contraseña para acceder a la consola, incluyendo el usuario root.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_user_mfa_enabled_console_access"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r4.aws.iam.1",
+      "Description": "Certificados en dispositvo físico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r4",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Habilitar los dispositivos MFA físicos para todos los usuarios IAM mediante la consola, línea de comandos o la propia API de IAM. Del mismo modo, el uso de estos certificados deberá estar protegido por un segundo factor de tipo PIN o biométrico.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_user_mfa_enabled_console_access",
+        "iam_root_hardware_mfa_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r4.aws.ct.1",
+      "Description": "Certificados en dispositvo físico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r4",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Habilitar los dispositivos MFA físicos para todos los usuarios IAM mediante la consola, línea de comandos o la propia API de IAM. Del mismo modo, el uso de estos certificados deberá estar protegido por un segundo factor de tipo PIN o biométrico.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_administrator_access_with_mfa",
+        "iam_root_mfa_enabled",
+        "iam_user_mfa_enabled_console_access"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r5.aws.iam.1",
+      "Description": "Registro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r5",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Para registrar los intentos de acceso, se deberá habilitar CloudTrail en todas las regiones y activar el registro de acceso de usuarios.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r7.aws.iam.1",
+      "Description": "Suspensión por no utilización",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r7",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Activar la deshabilitación de las credenciales de los usuarios IAM que no hayan sido empleadas durante un periodo de tiempo (o bien, se deberá establecer la deshabilitación en el proveedor de identidades).",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_disable_30_days_credentials",
+        "iam_disable_90_days_credentials"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r8.aws.iam.1",
+      "Description": "Doble factor para acceso desde o a través de zonas no controladas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r8",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se deberá emplear como mecanismo de autenticación o bien una contraseña más otro factor de autenticación, o bien un certificado cualificado (con o sin soporte físico) protegido por un doble factor de autenticación.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_user_mfa_enabled_console_access"
+      ]
+    },
+    {
+      "Id": "op.exp.1.aws.cfg.1",
+      "Description": "Inventario de activos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "En lo referente al inventariado de activos, asegurar que AWS Config está habilitado en todas las regiones y utilizar la herramienta para obtener una vista de los recursos existentes en las cuentas de AWS.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.1.aws.sys.1",
+      "Description": "Inventario de activos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "En el ámbito del software desplegado en las instancias de EC2, habilitar AWS System Manager Inventory para todo el entorno de EC2 en caso de no utilizar herramientas de terceros.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "op.exp.3.aws.cfg.1",
+      "Description": "Gestión de la configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.3",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "El cumplimiento de los requisitos se puede apoyar en la utilización de los servicios Config, Config Rules y Conformance Packs para identificar líneas base de configuración para evaluar si los recursos de AWS se ajustan a las prácticas autorizadas por la organización.",
+          "Nivel": "bajo",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.3.r3.aws.cfg.1",
+      "Description": "Copias de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.3.r3",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "La entidad usuaria puede consultar el histórico de configuraciones de recursos en AWS Config.",
+          "Nivel": "bajo",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.4.aws.sys.2",
+      "Description": "Mantenimiento y actualizaciones de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Utilizar AWS Systems Manager Patch Manager para planificar y gestionar la aplicación de parches minimizando los riesgos asociados a tener instancias con software desactualizado y expuesto a vulnerabilidades conocidas.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "op.exp.4.r2.aws.sys.1",
+      "Description": "Prevención de fallos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.4.r2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Utilizar la solución AWS Systems Manager Automation para automatizar las tareas de corrección en servicios de AWS como EC2 y RDS.",
+          "Nivel": "bajo",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "op.exp.5.aws.ct.1",
+      "Description": "Gestión de cambios",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.5",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Asegurar que CloudTrail esté activo para todas las regiones.",
+          "Nivel": "bajo",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.6.aws.gd.1",
+      "Description": "Protección frente a código dañino",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.6",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Activar la protección contra software malintencionado de GuardDuty en todas las regiones.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.aws.ct.1",
+      "Description": "Registro de actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Habilitar la herramienta CloudTrail en todas las regiones. Este serviio está habilitado por defecto cuando se crea una nueva cuenta, pero es posible deshabilitarlo.",
+          "Nivel": "alto",
+          "Tipo": "medida",
+          "Dimensiones": [
+            "trazabilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.aws.ct.2",
+      "Description": "Registro de actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Establecer un filtro de métricas desde AWS CloudWatch para detectar cambios en las configuraciones de CloudTrail",
+          "Nivel": "alto",
+          "Tipo": "medida",
+          "Dimensiones": [
+            "trazabilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.aws.ct.3",
+      "Description": "Registro de actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.",
+          "Nivel": "alto",
+          "Tipo": "medida",
+          "Dimensiones": [
+            "trazabilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudtrail_log_file_validation_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.aws.ct.4",
+      "Description": "Registro de actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Habilitar la entrega continua de eventos de CloudTrail a un bucket S3 dedicado con el fin de unificar los archivos de registro.",
+          "Nivel": "alto",
+          "Tipo": "medida",
+          "Dimensiones": [
+            "trazabilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+        "cloudtrail_s3_dataevents_write_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.aws.ct.5",
+      "Description": "Registro de actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se deberán habilitar alertas para los siguientes eventos:\n* Llamadas no permitidas a la API\n* Accesos no permitidos a la consola\n* Todos los intentos de acceso sin el correcto uso de MFA\n* Toda la actividad realizada sobre y por la cuenta root\n* Cualquier cambio en las políticas IAM",
+          "Nivel": "alto",
+          "Tipo": "medida",
+          "Dimensiones": [
+            "trazabilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_sign_in_without_mfa",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_policy_changes"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r1.aws.ct.2",
+      "Description": "Revisión de los registros",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Configurar la herramienta CloudTrail de manera que realice el registro de eventos de administración, eventos de datos y eventos anómalos (insights).",
+          "Nivel": "pytec",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_s3_dataevents_read_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r1.aws.ct.4",
+      "Description": "Revisión de los registros",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Registrar los eventos de lectura y escritura de datos.",
+          "Nivel": "pytec",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_s3_dataevents_read_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r1.aws.ct.6",
+      "Description": "Revisión de los registros",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Habilitar la entrega continua de eventos de CloudTrail a un bucket de Amazon S3",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudtrail_logs_s3_bucket_access_logging_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r1.aws.ct.7",
+      "Description": "Revisión de los registros",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Integrar CloudTrail con el servicio CloudWatch Logs",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudtrail_cloudwatch_logging_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r3.aws.cw.1",
+      "Description": "Retención de registros",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r3",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Ejecutar la acción PutRetentionPolicy de Amazon CloudWatch, permitiendo así establecer la retención del grupo de registros especificado y configurar el número de días durante los cuales se conservarán los eventos de registro en el grupo seleccionado de acuerdo con el documento de seguridad correspondiente. Paralelamente, se debe definir un periodo de retención para los datos almacenados en CloudTrail Lakes.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudwatch_log_group_retention_policy_specific_days_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r4.aws.ct.3",
+      "Description": "Control de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Utilizar una política de bucket para restringir el acceso de forma pública e imponer restricciones sobre cuáles de los usuarios pueden eliminar objetos de Amazon S3.",
+          "Nivel": "bajo",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "s3_bucket_public_access",
+        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+        "s3_bucket_policy_public_write_access"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r4.aws.ct.5",
+      "Description": "Control de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Configurar los archivos de logs de AWS CloudTrail para aprovechar el cifrado del lado del servidor (SSE – Server Side Encryption) y las claves maestras creadas por el cliente (CMK de KMS).",
+          "Nivel": "pytec",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudtrail_kms_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r4.aws.ct.6",
+      "Description": "Control de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "El almacén de logs de CloudTrail no debería ser accesible de forma pública",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudtrail_logs_s3_bucket_access_logging_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r4.aws.ct.7",
+      "Description": "Control de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "El almacén de logs de CloudTrail no debería ser accesible de forma pública  (ACLs)",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r4.aws.ct.8",
+      "Description": "Control de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Cifrado de los trails con KMS",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudtrail_kms_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.10.aws.cmk.6",
+      "Description": "Protección de claves criptográficas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.10",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Activar la rotación de las claves CMK.",
+          "Nivel": "pytec",
+          "Tipo": "medida",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_cmk_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.10.aws.cmk.7",
+      "Description": "Protección de claves criptográficas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.10",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": " Para el archivo posterior a la explotación y destrucción de las claves se debe deshabilitar todas las claves CMK que no estén en uso.",
+          "Nivel": "pytec",
+          "Tipo": "medida",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk"
+      ]
+    },
+    {
+      "Id": "op.exp.10.aws.cmk.8",
+      "Description": "Protección de claves criptográficas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.10",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Eliminar las claves deshabilitadas que no estén en uso y no mantengan ningún objeto o recurso cifrado, completando el ciclo de vida de la clave.",
+          "Nivel": "pytec",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk"
+      ]
+    },
+    {
+      "Id": "op.mon.1.aws.gd.1",
+      "Description": "Detección de intrusión",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.1",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "En ausencia de otras herramientas de terceros, habilitar Amazon GuarDuty para la detección de amenazas e intrusiones.",
+          "Nivel": "alto",
+          "Tipo": "medida",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled"
+      ]
+    },
+    {
+      "Id": "op.mon.1.aws.ct.1",
+      "Description": "Detección de intrusión",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.1",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Activar el servicio de eventos AWS CloudTrail para todas las regiones.",
+          "Nivel": "alto",
+          "Tipo": "medida",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled"
+      ]
+    },
+    {
+      "Id": "op.mon.1.aws.flow.1",
+      "Description": "Detección de intrusión",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.1",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Activar el servicio VPC FlowLogs.",
+          "Nivel": "alto",
+          "Tipo": "medida",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "op.mon.1.aws.gd.2",
+      "Description": "Detección de intrusión",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.1",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Deberá habilitarse Amazon GuardDuty para todas las regiones tanto en la cuenta raíz como en las cuentas miembro de un entorno multi-cuenta.",
+          "Nivel": "alto",
+          "Tipo": "medida",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled"
+      ]
+    },
+    {
+      "Id": "op.mon.2.aws.sh.1",
+      "Description": "Sistema de métricas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.2",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Utilizar Security Hub para obtener una vista consolidada de los hallazgos de seguridad en los servicios de AWS habilitados.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "mp.com.1.aws.sg.1",
+      "Description": "Perímetro seguro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Asegurar que el Security Group restrinja todo el tráfico. Para ello, se deberán agregar las reglas del Security Group que se aplica por defecto cuando se crea una VPC.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_securitygroup_from_launch_wizard"
+      ]
+    },
+    {
+      "Id": "mp.com.1.aws.sg.2",
+      "Description": "Perímetro seguro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Evitar la existencia de Security Groups que dejen abierto todo el tráfico entrante.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "ec2_securitygroup_in_use_without_ingress_filtering"
+      ]
+    },
+    {
+      "Id": "mp.com.1.aws.sg.3",
+      "Description": "Perímetro seguro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Evitar tener un repositorio de Security Groups que no estén siendo usados.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "ec2_securitygroup_not_used"
+      ]
+    },
+    {
+      "Id": "mp.com.1.aws.elb.1",
+      "Description": "Perímetro seguro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Habilitar TLS en los balanceadores de carga ELB ",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "elb_ssl_listeners"
+      ]
+    },
+    {
+      "Id": "mp.com.1.aws.elb.2",
+      "Description": "Perímetro seguro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Evitar el uso de protocolos de cifrado inseguros para las políticas de seguridad de ELB. Esto podría dejar la conexión SSL entre balanceadores y clientes vulnerables a ser explotados. En particular deberá evitarse el uso de TLS 1.0. ",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "elb_insecure_ssl_ciphers"
+      ]
+    },
+    {
+      "Id": "mp.com.1.aws.s3.1",
+      "Description": "Perímetro seguro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Asegurar que los Buckets S3 de almacenamiento apliquen cifrado para la transferencia de datos empleando Secure Sockets Layer (SSL)",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "s3_bucket_secure_transport_policy"
+      ]
+    },
+    {
+      "Id": "mp.com.1.aws.cf.1",
+      "Description": "Perímetro seguro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Asegurar que la distribución entre frontales CloudFront y sus orígenes únicamente emplee tráfico HTTPs ",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudfront_distributions_https_enabled"
+      ]
+    },
+    {
+      "Id": "mp.com.3.aws.elb.1",
+      "Description": "Protección de la integridad y de la autenticidad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Habilitar TLS en los balanceadores de carga ELB.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "elbv2_insecure_ssl_ciphers"
+      ]
+    },
+    {
+      "Id": "mp.com.3.aws.elb.2",
+      "Description": "Protección de la integridad y de la autenticidad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Evitar el uso de protocolos de cifrado inseguros en la conexión TLS entre clientes y balanceadores de carga. En particular, se deberá evitar el uso de TLS 1.0.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "elbv2_insecure_ssl_ciphers"
+      ]
+    },
+    {
+      "Id": "mp.com.3.aws.s3.1",
+      "Description": "Protección de la integridad y de la autenticidad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Asegurar que los Buckets de almacenamiento S3 apliquen cifrado para la transferencia de datos empleando TLS.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "s3_bucket_secure_transport_policy"
+      ]
+    },
+    {
+      "Id": "mp.com.3.aws.cf.1",
+      "Description": "Protección de la integridad y de la autenticidad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Asegurar que la distribución entre frontales CloudFront y sus orígenes únicamente emplee tráfico HTTPS.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudfront_distributions_https_enabled"
+      ]
+    },
+    {
+      "Id": "mp.com.4.aws.vpc.2",
+      "Description": "Separación de flujos de información en la red",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Evitar el uso de subnets con la opción de asignación automática de IPs (auto-assign Public IP).",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "ec2_instance_public_ip"
+      ]
+    },
+    {
+      "Id": "mp.si.2.aws.kms.1",
+      "Description": "Criptografía",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.si.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los soportes de información",
+          "DescripcionControl": "Aplicar cifrado sobre el almacenamiento de las instancias en todos sus volúmenes de datos.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad"
+          ]
+        }
+      ],
+      "Checks": [
+        "ec2_ebs_volume_encryption"
+      ]
+    },
+    {
+      "Id": "mp.si.2.aws.s3.1",
+      "Description": "Criptografía",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.si.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los soportes de información",
+          "DescripcionControl": "Aplicar cifrado sobre los distintos buckets de S3, de los cuales se debe asegurar que tengan activado el cifrado en reposo.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad"
+          ]
+        }
+      ],
+      "Checks": [
+        "s3_bucket_default_encryption"
+      ]
+    },
+    {
+      "Id": "mp.si.2.aws.sqs.1",
+      "Description": "Criptografía",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.si.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los soportes de información",
+          "DescripcionControl": "Aplicar cifrado sobre las colas de mensajes de AWS (Amazon SQS).",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad"
+          ]
+        }
+      ],
+      "Checks": [
+        "sqs_queues_server_side_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "mp.si.2.aws.dydb.1",
+      "Description": "Criptografía",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.si.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los soportes de información",
+          "DescripcionControl": "Aplicar cifrado sobre las bases de datos DynamoDB, que deben implementar cifrado seguro mediante el uso de claves de cliente (KMS).",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad"
+          ]
+        }
+      ],
+      "Checks": [
+        "dynamodb_tables_kms_cmk_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "mp.si.2.aws.es.1",
+      "Description": "Criptografía",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.si.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los soportes de información",
+          "DescripcionControl": "Aplicar cifrado sobre todos los dominios del servicio Amazon Elasticsearch Service (ES). En caso de usar este servicio, deberá asegurarse la activación del cifrado en reposo.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad"
+          ]
+        }
+      ],
+      "Checks": [
+        "opensearch_service_domains_encryption_at_rest_enabled"
+      ]
+    },
+    {
+      "Id": "mp.si.2.r2.aws.ebs.1",
+      "Description": "Copias de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.si.2.r2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los soportes de información",
+          "DescripcionControl": "Se deberá asegurar el cifrado de las copias de seguridad (snapshots) de EBS.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad"
+          ]
+        }
+      ],
+      "Checks": [
+        "ec2_ebs_snapshots_encrypted"
+      ]
+    },
+    {
+      "Id": "mp.s.2.aws.waf.1",
+      "Description": "Protección de servicios y aplicaciones web",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Todas las aplicaciones web distribuidas por el servicio de AWS CloudFront deben estar integradas con el servicio de firewall de aplicaciones web AWS WAF.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudfront_distributions_using_waf"
+      ]
+    },
+    {
+      "Id": "mp.s.2.aws.waf.2",
+      "Description": "Protección de servicios y aplicaciones web",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Los API gateways deben tener un ACL WAF asociado.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "apigateway_waf_acl_attached"
+      ]
+    },
+    {
+      "Id": "mp.s.2.aws.waf.3",
+      "Description": "Protección de servicios y aplicaciones web",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Todos los balanceadores de aplicación deben estar integrados con el servicio de firewall de aplicación web para quedar protegidos ante ataques de la capa de aplicación",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "elbv2_waf_acl_attached"
+      ]
+    },
+    {
+      "Id": "mp.s.4.r1.aws.shieldadv.1",
+      "Description": "Detección y reacción",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.4.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Activar AWS Shield Advanced con el fin de disponer de una herramienta de prevención, detección y mitigación de ataques de denegación de servicio.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "disponibilidad"
+          ]
+        }
+      ],
+      "Checks": [
+        "shield_advanced_protection_in_associated_elastic_ips",
+        "shield_advanced_protection_in_classic_load_balancers",
+        "shield_advanced_protection_in_cloudfront_distributions",
+        "shield_advanced_protection_in_global_accelerators",
+        "shield_advanced_protection_in_internet_facing_load_balancers",
+        "shield_advanced_protection_in_route53_hosted_zones"
+      ]
+    }
+  ]
+}

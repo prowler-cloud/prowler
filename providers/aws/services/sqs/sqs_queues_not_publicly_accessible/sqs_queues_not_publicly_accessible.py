@@ -6,7 +6,7 @@ class sqs_queues_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for queue in sqs_client.queues:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = queue.region
             report.resource_id = queue.id
             report.resource_arn = queue.arn

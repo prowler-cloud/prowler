@@ -11,7 +11,7 @@ class cloudtrail_cloudwatch_logging_enabled(Check):
         findings = []
         for trail in cloudtrail_client.trails:
             if trail.name:
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = trail.region
                 report.resource_id = trail.name
                 report.resource_arn = trail.arn

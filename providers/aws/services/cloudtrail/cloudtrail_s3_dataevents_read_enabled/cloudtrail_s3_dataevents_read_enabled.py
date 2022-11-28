@@ -5,7 +5,7 @@ from providers.aws.services.cloudtrail.cloudtrail_client import cloudtrail_clien
 class cloudtrail_s3_dataevents_read_enabled(Check):
     def execute(self):
         findings = []
-        report = Check_Report(self.metadata)
+        report = Check_Report(self.metadata())
         report.region = cloudtrail_client.region
         report.resource_id = "No trails"
         report.resource_arn = "No trails"

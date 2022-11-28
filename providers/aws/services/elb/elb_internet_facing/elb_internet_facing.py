@@ -6,7 +6,7 @@ class elb_internet_facing(Check):
     def execute(self):
         findings = []
         for lb in elb_client.loadbalancers:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = lb.region
             report.resource_id = lb.name
             report.status = "PASS"

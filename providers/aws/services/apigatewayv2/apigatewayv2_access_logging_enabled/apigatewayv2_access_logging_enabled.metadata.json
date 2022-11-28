@@ -1,8 +1,10 @@
 {
   "Provider": "aws",
-  "CheckID": "apigatewayv2_authorizers_enabled",
+  "CheckID": "apigatewayv2_access_logging_enabled",
   "CheckTitle": "Check if API Gateway V2 has configured authorizers.",
-  "CheckType": ["IAM"],
+  "CheckType": [
+    "IAM"
+  ],
   "ServiceName": "apigateway",
   "SubServiceName": "rest_api",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

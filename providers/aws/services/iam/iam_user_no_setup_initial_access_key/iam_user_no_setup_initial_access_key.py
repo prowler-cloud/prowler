@@ -20,7 +20,7 @@ class iam_user_no_setup_initial_access_key(Check):
                     and user_record["access_key_1_last_used_date"] == "N/A"
                     and user_record["password_enabled"] == "true"
                 ):
-                    report = Check_Report(self.metadata)
+                    report = Check_Report(self.metadata())
                     report.region = iam_client.region
                     report.resource_id = user_record["user"]
                     report.resource_arn = user_record["arn"]
@@ -34,7 +34,7 @@ class iam_user_no_setup_initial_access_key(Check):
                     and user_record["access_key_2_last_used_date"] == "N/A"
                     and user_record["password_enabled"] == "true"
                 ):
-                    report = Check_Report(self.metadata)
+                    report = Check_Report(self.metadata())
                     report.region = iam_client.region
                     report.resource_id = user_record["user"]
                     report.resource_arn = user_record["arn"]
@@ -44,7 +44,7 @@ class iam_user_no_setup_initial_access_key(Check):
                     )
                     findings.append(report)
             else:
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = iam_client.region
                 report.resource_id = user_record["user"]
                 report.resource_arn = user_record["arn"]

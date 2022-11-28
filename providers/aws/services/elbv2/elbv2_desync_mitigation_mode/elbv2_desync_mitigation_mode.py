@@ -7,7 +7,7 @@ class elbv2_desync_mitigation_mode(Check):
         findings = []
         for lb in elbv2_client.loadbalancersv2:
             if lb.type == "application":
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = lb.region
                 report.resource_id = lb.name
                 report.resource_arn = lb.arn

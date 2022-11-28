@@ -6,7 +6,7 @@ class opensearch_service_domains_encryption_at_rest_enabled(Check):
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = domain.region
             report.resource_id = domain.name
             report.resource_arn = domain.arn

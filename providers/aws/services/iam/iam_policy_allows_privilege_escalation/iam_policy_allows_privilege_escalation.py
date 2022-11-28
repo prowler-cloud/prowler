@@ -61,7 +61,7 @@ class iam_policy_allows_privilege_escalation(Check):
         }
         findings = []
         for policy in iam_client.customer_managed_policies:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.resource_id = policy["PolicyName"]
             report.resource_arn = policy["Arn"]
             report.region = iam_client.region

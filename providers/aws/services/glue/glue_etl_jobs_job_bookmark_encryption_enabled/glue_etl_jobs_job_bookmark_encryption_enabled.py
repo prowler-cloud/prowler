@@ -7,7 +7,7 @@ class glue_etl_jobs_job_bookmark_encryption_enabled(Check):
         findings = []
         for job in glue_client.jobs:
             no_sec_configs = True
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.resource_id = job.name
             report.region = job.region
             for sec_config in glue_client.security_configs:

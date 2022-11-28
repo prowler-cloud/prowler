@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "cloudwatch_log_group_kms_encryption_enabled",
   "CheckTitle": "Check if CloudWatch log groups are protected by AWS KMS.",
-  "CheckType": ["Data Protection"],
+  "CheckType": [
+    "Data Protection"
+  ],
   "ServiceName": "cloudwatch",
   "SubServiceName": "logs",
   "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

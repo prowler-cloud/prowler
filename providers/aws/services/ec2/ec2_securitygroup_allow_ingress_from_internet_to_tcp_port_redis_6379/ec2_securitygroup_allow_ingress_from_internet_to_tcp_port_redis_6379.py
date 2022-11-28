@@ -8,7 +8,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379(Check
         findings = []
         check_ports = [6379]
         for security_group in ec2_client.security_groups:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = security_group.region
             report.resource_id = security_group.id
             report.status = "PASS"

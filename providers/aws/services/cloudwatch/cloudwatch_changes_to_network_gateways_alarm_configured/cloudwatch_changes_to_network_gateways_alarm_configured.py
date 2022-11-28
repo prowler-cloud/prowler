@@ -10,7 +10,7 @@ class cloudwatch_changes_to_network_gateways_alarm_configured(Check):
     def execute(self):
         pattern = r"\$\.eventName\s*=\s*CreateCustomerGateway.+\$\.eventName\s*=\s*DeleteCustomerGateway.+\$\.eventName\s*=\s*AttachInternetGateway.+\$\.eventName\s*=\s*CreateInternetGateway.+\$\.eventName\s*=\s*DeleteInternetGateway.+\$\.eventName\s*=\s*DetachInternetGateway"
         findings = []
-        report = Check_Report(self.metadata)
+        report = Check_Report(self.metadata())
         report.status = "FAIL"
         report.status_extended = (
             "No CloudWatch log groups found with metric filters or alarms associated."

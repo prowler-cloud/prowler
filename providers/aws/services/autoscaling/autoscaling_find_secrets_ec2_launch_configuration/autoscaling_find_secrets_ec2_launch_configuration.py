@@ -13,7 +13,7 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
     def execute(self):
         findings = []
         for configuration in autoscaling_client.launch_configurations:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = configuration.region
             report.resource_id = configuration.name
             report.resource_arn = configuration.arn

@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "vpc_peering_routing_tables_with_least_privilege",
   "CheckTitle": "Ensure routing tables for VPC peering are least access.",
-  "CheckType": ["Infrastructure Security"],
+  "CheckType": [
+    "Infrastructure Security"
+  ],
   "ServiceName": "vpc",
   "SubServiceName": "route_table",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

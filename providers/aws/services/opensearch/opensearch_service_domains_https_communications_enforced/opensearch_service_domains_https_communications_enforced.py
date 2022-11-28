@@ -6,7 +6,7 @@ class opensearch_service_domains_https_communications_enforced(Check):
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = domain.region
             report.resource_id = domain.name
             report.resource_arn = domain.arn

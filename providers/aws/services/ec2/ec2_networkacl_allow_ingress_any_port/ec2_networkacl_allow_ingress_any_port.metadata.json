@@ -1,8 +1,12 @@
 {
   "Provider": "aws",
-  "CheckID": "ec2_network_acls_allow_ingress_any_port",
+  "CheckID": "ec2_networkacl_allow_ingress_any_port",
   "CheckTitle": "Ensure no Network ACLs allow ingress from 0.0.0.0/0 to any port.",
-  "CheckType": ["Software and Configuration Checks", "Industry and Regulatory Standards", "CIS AWS Foundations Benchmark"],
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS AWS Foundations Benchmark"
+  ],
   "ServiceName": "ec2",
   "SubServiceName": "networkacl",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +34,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Infrastructure Security",
-  "Compliance": []
+  "Notes": "Infrastructure Security"
 }

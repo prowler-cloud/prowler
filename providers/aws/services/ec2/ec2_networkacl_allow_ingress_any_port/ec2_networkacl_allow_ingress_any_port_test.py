@@ -6,7 +6,7 @@ from moto import mock_ec2
 AWS_REGION = "us-east-1"
 
 
-class Test_ec2_network_acls_allow_ingress_any_port:
+class ec2_networkacl_allow_ingress_any_port:
     @mock_ec2
     def test_ec2_default_nacls(self):
 
@@ -16,19 +16,19 @@ class Test_ec2_network_acls_allow_ingress_any_port:
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_network_acls_allow_ingress_any_port.ec2_network_acls_allow_ingress_any_port.ec2_client",
+            "providers.aws.services.ec2.ec2_networkacl_allow_ingress_any_port.ec2_networkacl_allow_ingress_any_port.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_network_acls_allow_ingress_any_port.ec2_network_acls_allow_ingress_any_port import (
-                ec2_network_acls_allow_ingress_any_port,
+            from providers.aws.services.ec2.ec2_networkacl_allow_ingress_any_port.ec2_networkacl_allow_ingress_any_port import (
+                ec2_networkacl_allow_ingress_any_port,
             )
 
-            check = ec2_network_acls_allow_ingress_any_port()
+            check = ec2_networkacl_allow_ingress_any_port()
             result = check.execute()
 
             # One default nacl per region
-            assert len(result) == 23
+            assert len(result) == 25
 
     @mock_ec2
     def test_ec2_non_default_compliant_nacl(self):
@@ -39,19 +39,19 @@ class Test_ec2_network_acls_allow_ingress_any_port:
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_network_acls_allow_ingress_any_port.ec2_network_acls_allow_ingress_any_port.ec2_client",
+            "providers.aws.services.ec2.ec2_networkacl_allow_ingress_any_port.ec2_networkacl_allow_ingress_any_port.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_network_acls_allow_ingress_any_port.ec2_network_acls_allow_ingress_any_port import (
-                ec2_network_acls_allow_ingress_any_port,
+            from providers.aws.services.ec2.ec2_networkacl_allow_ingress_any_port.ec2_networkacl_allow_ingress_any_port import (
+                ec2_networkacl_allow_ingress_any_port,
             )
 
-            check = ec2_network_acls_allow_ingress_any_port()
+            check = ec2_networkacl_allow_ingress_any_port()
             result = check.execute()
 
             # One default sg per region
-            assert len(result) == 23
+            assert len(result) == 25
 
             # by default nacls are public
             assert result[0].status == "FAIL"
@@ -83,19 +83,19 @@ class Test_ec2_network_acls_allow_ingress_any_port:
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_network_acls_allow_ingress_any_port.ec2_network_acls_allow_ingress_any_port.ec2_client",
+            "providers.aws.services.ec2.ec2_networkacl_allow_ingress_any_port.ec2_networkacl_allow_ingress_any_port.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_network_acls_allow_ingress_any_port.ec2_network_acls_allow_ingress_any_port import (
-                ec2_network_acls_allow_ingress_any_port,
+            from providers.aws.services.ec2.ec2_networkacl_allow_ingress_any_port.ec2_networkacl_allow_ingress_any_port import (
+                ec2_networkacl_allow_ingress_any_port,
             )
 
-            check = ec2_network_acls_allow_ingress_any_port()
+            check = ec2_networkacl_allow_ingress_any_port()
             result = check.execute()
 
             # One default sg per region + default of new VPC + new NACL
-            assert len(result) == 25
+            assert len(result) == 27
             # Search changed sg
             for nacl in result:
                 if nacl.resource_id == nacl_id:
@@ -128,19 +128,19 @@ class Test_ec2_network_acls_allow_ingress_any_port:
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_network_acls_allow_ingress_any_port.ec2_network_acls_allow_ingress_any_port.ec2_client",
+            "providers.aws.services.ec2.ec2_networkacl_allow_ingress_any_port.ec2_networkacl_allow_ingress_any_port.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_network_acls_allow_ingress_any_port.ec2_network_acls_allow_ingress_any_port import (
-                ec2_network_acls_allow_ingress_any_port,
+            from providers.aws.services.ec2.ec2_networkacl_allow_ingress_any_port.ec2_networkacl_allow_ingress_any_port import (
+                ec2_networkacl_allow_ingress_any_port,
             )
 
-            check = ec2_network_acls_allow_ingress_any_port()
+            check = ec2_networkacl_allow_ingress_any_port()
             result = check.execute()
 
             # One default sg per region + default of new VPC + new NACL
-            assert len(result) == 25
+            assert len(result) == 27
             # Search changed sg
             for nacl in result:
                 if nacl.resource_id == nacl_id:

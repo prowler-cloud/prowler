@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "iam_administrator_access_with_mfa",
   "CheckTitle": "Ensure users of groups with AdministratorAccess policy have MFA tokens enabled",
-  "CheckType": ["Infrastructure Security"],
+  "CheckType": [
+    "Infrastructure Security"
+  ],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

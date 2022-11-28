@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "acm_certificates_transparency_logs_enabled",
   "CheckTitle": "Check if ACM certificates have Certificate Transparency logging enabled",
-  "CheckType": ["Logging and Monitoring"],
+  "CheckType": [
+    "Logging and Monitoring"
+  ],
   "ServiceName": "acm",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:acm:region:account-id:certificate/resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": []
+  "Notes": ""
 }

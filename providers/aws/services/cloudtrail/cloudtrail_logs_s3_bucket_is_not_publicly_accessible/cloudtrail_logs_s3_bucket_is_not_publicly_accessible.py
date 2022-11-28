@@ -9,7 +9,7 @@ class cloudtrail_logs_s3_bucket_is_not_publicly_accessible(Check):
         for trail in cloudtrail_client.trails:
             if trail.name:
                 trail_bucket = trail.s3_bucket
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = trail.region
                 report.resource_id = trail.name
                 report.resource_arn = trail.arn

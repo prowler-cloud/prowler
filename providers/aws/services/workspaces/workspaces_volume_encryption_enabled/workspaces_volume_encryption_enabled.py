@@ -6,7 +6,7 @@ class workspaces_volume_encryption_enabled(Check):
     def execute(self):
         findings = []
         for workspace in workspaces_client.workspaces:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = workspace.region
             report.resource_id = workspace.id
             report.resource_arn = workspace.arn

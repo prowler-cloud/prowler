@@ -2,7 +2,11 @@
   "Provider": "aws",
   "CheckID": "iam_avoid_root_usage",
   "CheckTitle": "Avoid the use of the root accounts",
-  "CheckType": ["Software and Configuration Checks", "Industry and Regulatory Standards" ,"CIS AWS Foundations Benchmark"],
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS AWS Foundations Benchmark"
+  ],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
@@ -30,17 +34,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Compliance": [
-    {
-      "Control": [
-        "1.1"
-      ],
-      "Framework": "CIS-AWS",
-      "Group": [
-        "level1"
-      ],
-      "Version": "1.4"
-    }
-  ]
+  "Notes": ""
 }

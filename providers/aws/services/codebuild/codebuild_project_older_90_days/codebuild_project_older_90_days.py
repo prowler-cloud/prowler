@@ -8,7 +8,7 @@ class codebuild_project_older_90_days(Check):
     def execute(self):
         findings = []
         for project in codebuild_client.projects:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = project.region
             report.resource_id = project.name
             report.resource_arn = ""

@@ -9,7 +9,7 @@ class iam_no_expired_server_certificates_stored(Check):
         findings = []
 
         for certificate in iam_client.server_certificates:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = iam_client.region
             report.resource_id = certificate.id
             report.resource_arn = certificate.arn

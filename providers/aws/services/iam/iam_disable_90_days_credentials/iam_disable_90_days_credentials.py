@@ -12,7 +12,7 @@ class iam_disable_90_days_credentials(Check):
         response = iam_client.users
 
         for user in response:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = iam_client.region
             report.resource_id = user.name
             report.resource_arn = user.arn

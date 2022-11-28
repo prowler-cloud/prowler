@@ -10,7 +10,7 @@ class cloudwatch_changes_to_network_route_tables_alarm_configured(Check):
     def execute(self):
         pattern = r"\$\.eventName\s*=\s*CreateRoute.+\$\.eventName\s*=\s*CreateRouteTable.+\$\.eventName\s*=\s*ReplaceRoute.+\$\.eventName\s*=\s*ReplaceRouteTableAssociation.+\$\.eventName\s*=\s*DeleteRouteTable.+\$\.eventName\s*=\s*DeleteRoute.+\$\.eventName\s*=\s*DisassociateRouteTable"
         findings = []
-        report = Check_Report(self.metadata)
+        report = Check_Report(self.metadata())
         report.status = "FAIL"
         report.status_extended = (
             "No CloudWatch log groups found with metric filters or alarms associated."

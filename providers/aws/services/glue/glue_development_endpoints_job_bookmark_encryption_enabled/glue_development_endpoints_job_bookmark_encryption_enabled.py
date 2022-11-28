@@ -7,7 +7,7 @@ class glue_development_endpoints_job_bookmark_encryption_enabled(Check):
         findings = []
         for endpoint in glue_client.dev_endpoints:
             no_sec_configs = True
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.resource_id = endpoint.name
             report.region = endpoint.region
             for sec_config in glue_client.security_configs:

@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "glue_development_endpoints_job_bookmark_encryption_enabled",
   "CheckTitle": "Check if Glue development endpoints have Job bookmark encryption enabled.",
-  "CheckType": ["Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"],
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+  ],
   "ServiceName": "glue",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:glue:region:account-id:certificate/resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Data Protection",
-  "Compliance": []
+  "Notes": "Data Protection"
 }

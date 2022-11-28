@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "cloudfront_distributions_geo_restrictions_enabled",
   "CheckTitle": "Check if Geo restrictions are enabled in CloudFront distributions.",
-  "CheckType": [""],
+  "CheckType": [
+    ""
+  ],
   "ServiceName": "cloudfront",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
@@ -30,6 +32,5 @@
   },
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Infrastructure Security",
-  "Compliance": []
+  "Notes": "Infrastructure Security"
 }

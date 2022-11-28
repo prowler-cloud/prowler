@@ -6,7 +6,7 @@ class ec2_ebs_snapshots_encrypted(Check):
     def execute(self):
         findings = []
         for snapshot in ec2_client.snapshots:
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = snapshot.region
             if snapshot.encrypted:
                 report.status = "PASS"
