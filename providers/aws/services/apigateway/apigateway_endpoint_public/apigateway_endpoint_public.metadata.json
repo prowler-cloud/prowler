@@ -25,7 +25,9 @@
       "Url": "https://d1.awsstatic.com/whitepapers/api-gateway-security.pdf?svrd_sip6"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

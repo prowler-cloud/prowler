@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

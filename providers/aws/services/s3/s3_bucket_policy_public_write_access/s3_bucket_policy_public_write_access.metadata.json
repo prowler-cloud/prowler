@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_s3_rw-bucket.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

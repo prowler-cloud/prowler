@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-basic-examples-of-sqs-policies.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"
