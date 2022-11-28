@@ -1,14 +1,15 @@
+import botocore
+from boto3 import session
+from mock import patch
+from moto.core import DEFAULT_ACCOUNT_ID
+
 from providers.aws.lib.audit_info.models import AWS_Audit_Info
 from providers.aws.services.globalaccelerator.globalaccelerator_service import (
     GlobalAccelerator,
 )
-from mock import patch
-from moto.core import DEFAULT_ACCOUNT_ID
-import botocore
-from boto3 import session
 
 # Mock Test Region
-AWS_REGION = "eu-west-1"
+AWS_REGION = "us-west-2"
 
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
