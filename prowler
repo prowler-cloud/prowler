@@ -30,24 +30,25 @@ from lib.check.check import (
 from lib.check.checks_loader import load_checks_to_execute
 from lib.check.compliance import update_checks_metadata_with_compliance
 from lib.logger import logger, set_logging_config
+from providers.aws.aws_provider import aws_provider_set_session
 from lib.outputs.outputs import (
     close_json,
     display_compliance_table,
     display_summary_table,
     send_to_s3_bucket,
 )
-from providers.aws.aws_provider import provider_set_session
 from providers.aws.lib.allowlist.allowlist import parse_allowlist_file
 from providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
 )
+from providers.azure.azure_provider import azure_provider_set_session
 
 if __name__ == "__main__":
     # CLI Arguments
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "provider",
-        choices=["aws"],
+        choices=["aws", "azure"],
         nargs="?",
         default="aws",
         help="Specify Cloud Provider",
@@ -350,15 +351,18 @@ if __name__ == "__main__":
             if output_modes:
                 mkdir(output_directory)
 
-    # Set global session
-    audit_info = provider_set_session(
-        args.profile,
-        args.role,
-        args.session_duration,
-        args.external_id,
-        args.filter_region,
-        args.organizations_role,
-    )
+    if provider == "aws":
+        # Set global session
+        audit_info = aws_provider_set_session(
+            args.profile,
+            args.role,
+            args.session_duration,
+            args.external_id,
+            args.filter_region,
+            args.organizations_role,
+        )
+    elif provider == "azure":
+        audit_info = azure_provider_set_session()
 
     # Check if custom output filename was input, if not, set the default
     if not output_filename:
@@ -427,6 +431,7 @@ if __name__ == "__main__":
             audit_info,
             output_filename,
             output_directory,
+            provider
         )
 
         if compliance_framework:
