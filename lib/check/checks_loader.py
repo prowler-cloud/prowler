@@ -20,6 +20,7 @@ def load_checks_to_execute(
     group_list: list,
     severities: list,
     compliance_frameworks: list,
+    categories: set,
     provider: str,
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and input arguments specified"""
@@ -78,6 +79,14 @@ def load_checks_to_execute(
             )
         except Exception as e:
             logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
+
+    # Handle if there are categories passed using --categories
+    elif categories:
+        for cat in categories:
+            for check in bulk_checks_metadata:
+                # Check check's categories
+                if cat in bulk_checks_metadata[check].Categories:
+                    checks_to_execute.add(check)
 
     # If there are no checks passed as argument
     else:
