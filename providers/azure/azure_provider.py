@@ -68,7 +68,7 @@ def azure_provider_set_session():
             credential=azure_audit_info.credentials
         )
         for subscription in subscriptions_client.subscriptions.list():
-            logger.info(subscription.__dict__)
+        
             azure_audit_info.subscriptions.update(
                 {subscription.display_name: subscription.subscription_id}
             )
