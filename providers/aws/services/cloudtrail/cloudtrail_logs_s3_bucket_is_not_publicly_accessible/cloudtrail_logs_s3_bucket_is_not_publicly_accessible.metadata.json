@@ -27,7 +27,9 @@
       "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "forensics-ready"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

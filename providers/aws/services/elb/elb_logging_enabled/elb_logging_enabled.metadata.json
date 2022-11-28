@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/access-log-collection.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "forensics-ready"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

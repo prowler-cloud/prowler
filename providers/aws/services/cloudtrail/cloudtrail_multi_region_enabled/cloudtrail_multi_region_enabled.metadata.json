@@ -27,7 +27,9 @@
       "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrailconcepts.html#cloudtrail-concepts-management-events"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "forensics-ready"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

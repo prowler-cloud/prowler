@@ -25,7 +25,9 @@
       "Url": "http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/flow-logs.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "forensics-ready"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

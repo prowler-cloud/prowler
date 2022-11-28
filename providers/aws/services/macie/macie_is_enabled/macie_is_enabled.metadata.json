@@ -25,7 +25,9 @@
       "Url": "https://aws.amazon.com/macie/getting-started/"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "forensics-ready"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

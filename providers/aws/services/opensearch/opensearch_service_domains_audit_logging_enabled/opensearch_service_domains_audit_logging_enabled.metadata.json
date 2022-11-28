@@ -26,7 +26,9 @@
       "Url": "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/audit-logs.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "forensics-ready"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"
