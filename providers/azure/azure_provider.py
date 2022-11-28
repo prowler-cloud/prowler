@@ -73,7 +73,7 @@ def azure_provider_set_session():
                 {subscription.display_name: subscription.subscription_id}
             )
     except Exception as error:
-        logger.critical(f"{error.__class__.__name__} -- {error}")
+        logger.critical(f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}")
         sys.exit()
     else:
         return azure_audit_info
