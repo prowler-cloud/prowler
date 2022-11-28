@@ -12,7 +12,7 @@ from providers.azure.lib.audit_info.models import Azure_Identity_Info
 
 class Azure_Provider:
     def __init__(self):
-        logger.info("Instantiating azure provider ...")
+        logger.info("Instantiating Azure Provider ...")
         self.credentials = DefaultAzureCredential()
 
     def get_credentials(self):
