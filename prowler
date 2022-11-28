@@ -30,13 +30,13 @@ from lib.check.check import (
 from lib.check.checks_loader import load_checks_to_execute
 from lib.check.compliance import update_checks_metadata_with_compliance
 from lib.logger import logger, set_logging_config
-from providers.aws.aws_provider import aws_provider_set_session
 from lib.outputs.outputs import (
     close_json,
     display_compliance_table,
     display_summary_table,
     send_to_s3_bucket,
 )
+from providers.aws.aws_provider import aws_provider_set_session
 from providers.aws.lib.allowlist.allowlist import parse_allowlist_file
 from providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
@@ -427,11 +427,7 @@ if __name__ == "__main__":
     if findings:
         # Display summary table
         display_summary_table(
-            findings,
-            audit_info,
-            output_filename,
-            output_directory,
-            provider
+            findings, audit_info, output_filename, output_directory, provider
         )
 
         if compliance_framework:

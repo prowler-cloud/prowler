@@ -483,7 +483,7 @@ def add_service_to_table(findings_table, current):
         )
         current["Status"] = f"{Fore.RED}FAIL ({total_fails}){Style.RESET_ALL}"
     else:
-        current["Status"] = f"{Fore.GREEN}PASS ({current['Total']}){Style.RESET_ALL}"
+        current["Status"] = f"{Fore.GREEN}PASS {Style.RESET_ALL}"
     findings_table["Provider"].append(current["Provider"])
     findings_table["Service"].append(current["Service"])
     findings_table["Status"].append(current["Status"])
