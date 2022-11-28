@@ -73,99 +73,105 @@ def report(check_findings, output_options, audit_info):
                 )
             if file_descriptors:
                 if finding.check_metadata.Provider == "aws":
-                  if "ens_rd2022_aws" in output_options.output_modes:
-                      # We have to retrieve all the check's compliance requirements
-                      check_compliance = output_options.bulk_checks_metadata[
-                          finding.check_metadata.CheckID
-                      ].Compliance
-                      for compliance in check_compliance:
-                          if (
-                              compliance.Framework == "ENS"
-                              and compliance.Version == "RD2022"
-                          ):
-                              for requirement in compliance.Requirements:
-                                  requirement_description = requirement.Description
-                                  requirement_id = requirement.Id
-                                  for attribute in requirement.Attributes:
-                                      compliance_row = Check_Output_CSV_ENS_RD2022(
-                                          Provider=finding.check_metadata.Provider,
-                                          AccountId=audit_info.audited_account,
-                                          Region=finding.region,
-                                          AssessmentDate=timestamp.isoformat(),
-                                          Requirements_Id=requirement_id,
-                                          Requirements_Description=requirement_description,
-                                          Requirements_Attributes_IdGrupoControl=attribute.get(
-                                              "IdGrupoControl"
-                                          ),
-                                          Requirements_Attributes_Marco=attribute.get(
-                                              "Marco"
-                                          ),
-                                          Requirements_Attributes_Categoria=attribute.get(
-                                              "Categoria"
-                                          ),
-                                          Requirements_Attributes_DescripcionControl=attribute.get(
-                                              "DescripcionControl"
-                                          ),
-                                          Requirements_Attributes_Nivel=attribute.get(
-                                              "Nivel"
-                                          ),
-                                          Requirements_Attributes_Tipo=attribute.get(
-                                              "Tipo"
-                                          ),
-                                          Requirements_Attributes_Dimensiones=",".join(
-                                              attribute.get("Dimensiones")
-                                          ),
-                                          Status=finding.status,
-                                          StatusExtended=finding.status_extended,
-                                          ResourceId=finding.resource_id,
-                                          CheckId=finding.check_metadata.CheckID,
-                                      )
+                    if "ens_rd2022_aws" in output_options.output_modes:
+                        # We have to retrieve all the check's compliance requirements
+                        check_compliance = output_options.bulk_checks_metadata[
+                            finding.check_metadata.CheckID
+                        ].Compliance
+                        for compliance in check_compliance:
+                            if (
+                                compliance.Framework == "ENS"
+                                and compliance.Version == "RD2022"
+                            ):
+                                for requirement in compliance.Requirements:
+                                    requirement_description = requirement.Description
+                                    requirement_id = requirement.Id
+                                    for attribute in requirement.Attributes:
+                                        compliance_row = Check_Output_CSV_ENS_RD2022(
+                                            Provider=finding.check_metadata.Provider,
+                                            AccountId=audit_info.audited_account,
+                                            Region=finding.region,
+                                            AssessmentDate=timestamp.isoformat(),
+                                            Requirements_Id=requirement_id,
+                                            Requirements_Description=requirement_description,
+                                            Requirements_Attributes_IdGrupoControl=attribute.get(
+                                                "IdGrupoControl"
+                                            ),
+                                            Requirements_Attributes_Marco=attribute.get(
+                                                "Marco"
+                                            ),
+                                            Requirements_Attributes_Categoria=attribute.get(
+                                                "Categoria"
+                                            ),
+                                            Requirements_Attributes_DescripcionControl=attribute.get(
+                                                "DescripcionControl"
+                                            ),
+                                            Requirements_Attributes_Nivel=attribute.get(
+                                                "Nivel"
+                                            ),
+                                            Requirements_Attributes_Tipo=attribute.get(
+                                                "Tipo"
+                                            ),
+                                            Requirements_Attributes_Dimensiones=",".join(
+                                                attribute.get("Dimensiones")
+                                            ),
+                                            Status=finding.status,
+                                            StatusExtended=finding.status_extended,
+                                            ResourceId=finding.resource_id,
+                                            CheckId=finding.check_metadata.CheckID,
+                                        )
 
-                              csv_header = generate_csv_fields(
-                                  Check_Output_CSV_ENS_RD2022
-                              )
-                              csv_writer = DictWriter(
-                                  file_descriptors["ens_rd2022_aws"],
-                                  fieldnames=csv_header,
-                                  delimiter=";",
-                              )
-                              csv_writer.writerow(compliance_row.__dict__)
+                                csv_header = generate_csv_fields(
+                                    Check_Output_CSV_ENS_RD2022
+                                )
+                                csv_writer = DictWriter(
+                                    file_descriptors["ens_rd2022_aws"],
+                                    fieldnames=csv_header,
+                                    delimiter=";",
+                                )
+                                csv_writer.writerow(compliance_row.__dict__)
 
-                  if "csv" in file_descriptors:
-                      finding_output = Check_Output_CSV(
-                          audit_info.audited_account,
-                          audit_info.profile,
-                          finding,
-                          audit_info.organizations_metadata,
-                      )
-                      csv_writer = DictWriter(
-                          file_descriptors["csv"],
-                          fieldnames=generate_csv_fields(Check_Output_CSV),
-                          delimiter=";",
-                      )
-                      csv_writer.writerow(finding_output.__dict__)
+                    if "csv" in file_descriptors:
+                        finding_output = Check_Output_CSV(
+                            audit_info.audited_account,
+                            audit_info.profile,
+                            finding,
+                            audit_info.organizations_metadata,
+                        )
+                        csv_writer = DictWriter(
+                            file_descriptors["csv"],
+                            fieldnames=generate_csv_fields(Check_Output_CSV),
+                            delimiter=";",
+                        )
+                        csv_writer.writerow(finding_output.__dict__)
 
-                  if "json" in file_descriptors:
-                      finding_output = Check_Output_JSON(**finding.check_metadata.dict())
-                      fill_json(finding_output, audit_info, finding)
+                    if "json" in file_descriptors:
+                        finding_output = Check_Output_JSON(
+                            **finding.check_metadata.dict()
+                        )
+                        fill_json(finding_output, audit_info, finding)
 
-                      json.dump(finding_output.dict(), file_descriptors["json"], indent=4)
-                      file_descriptors["json"].write(",")
+                        json.dump(
+                            finding_output.dict(), file_descriptors["json"], indent=4
+                        )
+                        file_descriptors["json"].write(",")
 
-                  if "json-asff" in file_descriptors:
-                      finding_output = Check_Output_JSON_ASFF()
-                      fill_json_asff(finding_output, audit_info, finding)
+                    if "json-asff" in file_descriptors:
+                        finding_output = Check_Output_JSON_ASFF()
+                        fill_json_asff(finding_output, audit_info, finding)
 
-                      json.dump(
-                          finding_output.dict(), file_descriptors["json-asff"], indent=4
-                      )
-                      file_descriptors["json-asff"].write(",")
+                        json.dump(
+                            finding_output.dict(),
+                            file_descriptors["json-asff"],
+                            indent=4,
+                        )
+                        file_descriptors["json-asff"].write(",")
 
-                  # Check if it is needed to send findings to security hub
-                  if output_options.security_hub_enabled:
-                      send_to_security_hub(
-                          finding.region, finding_output, audit_info.audit_session
-                      )
+                    # Check if it is needed to send findings to security hub
+                    if output_options.security_hub_enabled:
+                        send_to_security_hub(
+                            finding.region, finding_output, audit_info.audit_session
+                        )
     else:  # No service resources in the whole account
         color = set_report_color("INFO")
         if not output_options.is_quiet and output_options.verbose:

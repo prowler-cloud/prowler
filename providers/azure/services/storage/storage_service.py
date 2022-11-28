@@ -64,8 +64,6 @@ class Storage:
             return storage_accounts
 
 
-
-
 @dataclass
 class Storage_Account:
     id: str
