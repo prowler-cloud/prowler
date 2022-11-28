@@ -7,7 +7,7 @@ class storage_ensure_minimum_tls_version_12(Check):
         findings = []
         for subscription, storage_accounts in storage_client.storage_accounts.items():
             for storage_account in storage_accounts:
-                report = Check_Report(self.metadata)
+                report = Check_Report(self.metadata())
                 report.region = storage_client.region
                 report.status = "PASS"
                 report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has TLS version set to 1.2"

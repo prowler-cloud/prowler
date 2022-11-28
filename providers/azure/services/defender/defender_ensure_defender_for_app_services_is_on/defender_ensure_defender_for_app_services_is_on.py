@@ -6,7 +6,7 @@ class defender_ensure_defender_for_app_services_is_on(Check):
     def execute(self) -> Check_Report:
         findings = []
         for subscription, pricings in defender_client.pricings.items():
-            report = Check_Report(self.metadata)
+            report = Check_Report(self.metadata())
             report.region = defender_client.region
             report.status = "PASS"
             report.resource_id = "Defender plan App Services"
