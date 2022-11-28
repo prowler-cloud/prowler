@@ -84,7 +84,9 @@ class Route53Domains:
         self.service = "route53domains"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
-        self.region = get_region_global_service(audit_info)
+        # Route53Domains is a global service that supports endpoints in multiple AWS Regions
+        # but you must specify the US East (N. Virginia) Region to create, update, or otherwise work with domains.
+        self.region = "us-east-1"
         self.client = self.session.client(self.service, self.region)
         self.domains = {}
         self.__list_domains__()
