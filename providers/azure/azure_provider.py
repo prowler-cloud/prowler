@@ -46,7 +46,7 @@ def validate_credentials(
                 if sp["appId"] == azure_identity.app_id:
                     azure_identity.id = sp["id"]
     except Exception as error:
-        logger.critical(f"{error.__class__.__name__} -- {error}")
+        logger.critical(f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}")
         sys.exit()
     else:
         return azure_identity
