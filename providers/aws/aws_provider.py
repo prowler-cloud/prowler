@@ -83,7 +83,7 @@ class AWS_Provider:
         return refreshed_credentials
 
 
-def provider_set_session(
+def aws_provider_set_session(
     input_profile,
     input_role,
     input_session_duration,

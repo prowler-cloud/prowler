@@ -36,7 +36,6 @@ from lib.outputs.models import (
 )
 from lib.utils.utils import file_exists, hash_sha512, open_file
 from providers.aws.lib.allowlist.allowlist import is_allowlisted
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
 from providers.aws.lib.security_hub.security_hub import send_to_security_hub
 
 
@@ -79,104 +78,110 @@ def report(check_findings, output_options, audit_info):
                     f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
                 )
             if file_descriptors:
-                if "ens_rd2022_aws" in output_options.output_modes:
-                    # We have to retrieve all the check's compliance requirements
-                    check_compliance = output_options.bulk_checks_metadata[
-                        finding.check_metadata.CheckID
-                    ].Compliance
-                    for compliance in check_compliance:
-                        if (
-                            compliance.Framework == "ENS"
-                            and compliance.Version == "RD2022"
-                        ):
-                            for requirement in compliance.Requirements:
-                                requirement_description = requirement.Description
-                                requirement_id = requirement.Id
-                                for attribute in requirement.Attributes:
-                                    compliance_row = Check_Output_CSV_ENS_RD2022(
-                                        Provider=finding.check_metadata.Provider,
-                                        AccountId=audit_info.audited_account,
-                                        Region=finding.region,
-                                        AssessmentDate=timestamp.isoformat(),
-                                        Requirements_Id=requirement_id,
-                                        Requirements_Description=requirement_description,
-                                        Requirements_Attributes_IdGrupoControl=attribute.get(
-                                            "IdGrupoControl"
-                                        ),
-                                        Requirements_Attributes_Marco=attribute.get(
-                                            "Marco"
-                                        ),
-                                        Requirements_Attributes_Categoria=attribute.get(
-                                            "Categoria"
-                                        ),
-                                        Requirements_Attributes_DescripcionControl=attribute.get(
-                                            "DescripcionControl"
-                                        ),
-                                        Requirements_Attributes_Nivel=attribute.get(
-                                            "Nivel"
-                                        ),
-                                        Requirements_Attributes_Tipo=attribute.get(
-                                            "Tipo"
-                                        ),
-                                        Requirements_Attributes_Dimensiones=",".join(
-                                            attribute.get("Dimensiones")
-                                        ),
-                                        Status=finding.status,
-                                        StatusExtended=finding.status_extended,
-                                        ResourceId=finding.resource_id,
-                                        CheckId=finding.check_metadata.CheckID,
-                                    )
+                if finding.check_metadata.Provider == "aws":
+                    if "ens_rd2022_aws" in output_options.output_modes:
+                        # We have to retrieve all the check's compliance requirements
+                        check_compliance = output_options.bulk_checks_metadata[
+                            finding.check_metadata.CheckID
+                        ].Compliance
+                        for compliance in check_compliance:
+                            if (
+                                compliance.Framework == "ENS"
+                                and compliance.Version == "RD2022"
+                            ):
+                                for requirement in compliance.Requirements:
+                                    requirement_description = requirement.Description
+                                    requirement_id = requirement.Id
+                                    for attribute in requirement.Attributes:
+                                        compliance_row = Check_Output_CSV_ENS_RD2022(
+                                            Provider=finding.check_metadata.Provider,
+                                            AccountId=audit_info.audited_account,
+                                            Region=finding.region,
+                                            AssessmentDate=timestamp.isoformat(),
+                                            Requirements_Id=requirement_id,
+                                            Requirements_Description=requirement_description,
+                                            Requirements_Attributes_IdGrupoControl=attribute.get(
+                                                "IdGrupoControl"
+                                            ),
+                                            Requirements_Attributes_Marco=attribute.get(
+                                                "Marco"
+                                            ),
+                                            Requirements_Attributes_Categoria=attribute.get(
+                                                "Categoria"
+                                            ),
+                                            Requirements_Attributes_DescripcionControl=attribute.get(
+                                                "DescripcionControl"
+                                            ),
+                                            Requirements_Attributes_Nivel=attribute.get(
+                                                "Nivel"
+                                            ),
+                                            Requirements_Attributes_Tipo=attribute.get(
+                                                "Tipo"
+                                            ),
+                                            Requirements_Attributes_Dimensiones=",".join(
+                                                attribute.get("Dimensiones")
+                                            ),
+                                            Status=finding.status,
+                                            StatusExtended=finding.status_extended,
+                                            ResourceId=finding.resource_id,
+                                            CheckId=finding.check_metadata.CheckID,
+                                        )
 
-                            csv_header = generate_csv_fields(
-                                Check_Output_CSV_ENS_RD2022
-                            )
-                            csv_writer = DictWriter(
-                                file_descriptors["ens_rd2022_aws"],
-                                fieldnames=csv_header,
-                                delimiter=";",
-                            )
-                            csv_writer.writerow(compliance_row.__dict__)
+                                csv_header = generate_csv_fields(
+                                    Check_Output_CSV_ENS_RD2022
+                                )
+                                csv_writer = DictWriter(
+                                    file_descriptors["ens_rd2022_aws"],
+                                    fieldnames=csv_header,
+                                    delimiter=";",
+                                )
+                                csv_writer.writerow(compliance_row.__dict__)
 
-                if "csv" in file_descriptors:
-                    finding_output = Check_Output_CSV(
-                        audit_info.audited_account,
-                        audit_info.profile,
-                        finding,
-                        audit_info.organizations_metadata,
-                    )
-                    csv_writer = DictWriter(
-                        file_descriptors["csv"],
-                        fieldnames=generate_csv_fields(Check_Output_CSV),
-                        delimiter=";",
-                    )
-                    csv_writer.writerow(finding_output.__dict__)
+                    if "csv" in file_descriptors:
+                        finding_output = Check_Output_CSV(
+                            audit_info.audited_account,
+                            audit_info.profile,
+                            finding,
+                            audit_info.organizations_metadata,
+                        )
+                        csv_writer = DictWriter(
+                            file_descriptors["csv"],
+                            fieldnames=generate_csv_fields(Check_Output_CSV),
+                            delimiter=";",
+                        )
+                        csv_writer.writerow(finding_output.__dict__)
 
-                if "json" in file_descriptors:
-                    finding_output = Check_Output_JSON(**finding.check_metadata.dict())
-                    fill_json(finding_output, audit_info, finding)
+                    if "json" in file_descriptors:
+                        finding_output = Check_Output_JSON(
+                            **finding.check_metadata.dict()
+                        )
+                        fill_json(finding_output, audit_info, finding)
 
-                    json.dump(finding_output.dict(), file_descriptors["json"], indent=4)
-                    file_descriptors["json"].write(",")
+                        json.dump(
+                            finding_output.dict(), file_descriptors["json"], indent=4
+                        )
+                        file_descriptors["json"].write(",")
 
-                if "json-asff" in file_descriptors:
-                    finding_output = Check_Output_JSON_ASFF()
-                    fill_json_asff(finding_output, audit_info, finding)
+                    if "json-asff" in file_descriptors:
+                        finding_output = Check_Output_JSON_ASFF()
+                        fill_json_asff(finding_output, audit_info, finding)
 
-                    json.dump(
-                        finding_output.dict(), file_descriptors["json-asff"], indent=4
-                    )
-                    file_descriptors["json-asff"].write(",")
+                        json.dump(
+                            finding_output.dict(),
+                            file_descriptors["json-asff"],
+                            indent=4,
+                        )
+                        file_descriptors["json-asff"].write(",")
+                        
+                    if "html" in file_descriptors:
+                        fill_html(file_descriptors["html"], audit_info, finding)
 
-                if "html" in file_descriptors:
-                    fill_html(file_descriptors["html"], audit_info, finding)
+                        file_descriptors["html"].write("")
 
-                    file_descriptors["html"].write("")
-
-                # Check if it is needed to send findings to security hub
-                if output_options.security_hub_enabled:
-                    send_to_security_hub(
-                        finding.region, finding_output, audit_info.audit_session
-                    )
+                    # Check if it is needed to send findings to security hub
+                    if output_options.security_hub_enabled:
+                        send_to_security_hub(
+                            finding.region, finding_output, audit_info.audit_session)
     else:  # No service resources in the whole account
         color = set_report_color("INFO")
         if not output_options.is_quiet and output_options.verbose:
@@ -431,67 +436,73 @@ def display_summary_table(
     findings: list,
     audit_info: AWS_Audit_Info,
     output_options: Output_From_Options,
+    provider: str,
 ):
     output_directory = output_options.output_directory
     output_filename = output_options.output_filename
     try:
-        current = {
-            "Service": "",
-            "Provider": "",
-            "Total": 0,
-            "Critical": 0,
-            "High": 0,
-            "Medium": 0,
-            "Low": 0,
-        }
-        findings_table = {
-            "Provider": [],
-            "Service": [],
-            "Status": [],
-            "Critical": [],
-            "High": [],
-            "Medium": [],
-            "Low": [],
-        }
-        pass_count = fail_count = 0
-        for finding in findings:
-            # If new service and not first, add previous row
-            if (
-                current["Service"] != finding.check_metadata.ServiceName
-                and current["Service"]
-            ):
+        if provider == "aws":
+            entity_type = "Account"
+        elif provider == "azure":
+            entity_type = "Tenant Domain"
+        if findings:
+            current = {
+                "Service": "",
+                "Provider": "",
+                "Critical": 0,
+                "High": 0,
+                "Medium": 0,
+                "Low": 0,
+            }
+            findings_table = {
+                "Provider": [],
+                "Service": [],
+                "Status": [],
+                "Critical": [],
+                "High": [],
+                "Medium": [],
+                "Low": [],
+            }
+            pass_count = fail_count = 0
+            for finding in findings:
+                # If new service and not first, add previous row
+                if (
+                    current["Service"] != finding.check_metadata.ServiceName
+                    and current["Service"]
+                ):
 
-                add_service_to_table(findings_table, current)
+                    add_service_to_table(findings_table, current)
 
-                current["Total"] = current["Critical"] = current["High"] = current[
-                    "Medium"
-                ] = current["Low"] = 0
+                    current["Critical"] = current["High"] = current["Medium"] = current[
+                        "Low"
+                    ] = 0
 
-            current["Service"] = finding.check_metadata.ServiceName
-            current["Provider"] = finding.check_metadata.Provider
+                current["Service"] = finding.check_metadata.ServiceName
+                current["Provider"] = finding.check_metadata.Provider
 
-            current["Total"] += 1
-            if finding.status == "PASS":
-                pass_count += 1
-            elif finding.status == "FAIL":
-                fail_count += 1
-                if finding.check_metadata.Severity == "critical":
-                    current["Critical"] += 1
-                elif finding.check_metadata.Severity == "high":
-                    current["High"] += 1
-                elif finding.check_metadata.Severity == "medium":
-                    current["Medium"] += 1
-                elif finding.check_metadata.Severity == "low":
-                    current["Low"] += 1
+                if finding.status == "PASS":
+                    pass_count += 1
+                elif finding.status == "FAIL":
+                    fail_count += 1
+                    if finding.check_metadata.Severity == "critical":
+                        current["Critical"] += 1
+                    elif finding.check_metadata.Severity == "high":
+                        current["High"] += 1
+                    elif finding.check_metadata.Severity == "medium":
+                        current["Medium"] += 1
+                    elif finding.check_metadata.Severity == "low":
+                        current["Low"] += 1
 
-        # Add final service
-        add_service_to_table(findings_table, current)
+            # Add final service
 
-        print("\nOverview Results:")
-        overview_table = [
-            [
-                f"{Fore.RED}{round(fail_count/len(findings)*100, 2)}% ({fail_count}) Failed{Style.RESET_ALL}",
-                f"{Fore.GREEN}{round(pass_count/len(findings)*100, 2)}% ({pass_count}) Passed{Style.RESET_ALL}",
+            add_service_to_table(findings_table, current)
+
+            print("\nOverview Results:")
+            overview_table = [
+                [
+                    f"{Fore.RED}{round(fail_count/len(findings)*100, 2)}% ({fail_count}) Failed{Style.RESET_ALL}",
+                    f"{Fore.GREEN}{round(pass_count/len(findings)*100, 2)}% ({pass_count}) Passed{Style.RESET_ALL}",
+                ]
             ]
         ]
         print(tabulate(overview_table, tablefmt="rounded_grid"))
@@ -508,7 +519,6 @@ def display_summary_table(
         if "json-asff" in output_options.output_modes:
             print(f" - JSON-ASFF: {output_directory}/{output_filename}.asff.json")
         print(f" - CSV: {output_directory}/{output_filename}.csv")
-        print(f" - JSON: {output_directory}/{output_filename}.json\n")
 
     except Exception as error:
         logger.critical(
@@ -529,7 +539,7 @@ def add_service_to_table(findings_table, current):
         )
         current["Status"] = f"{Fore.RED}FAIL ({total_fails}){Style.RESET_ALL}"
     else:
-        current["Status"] = f"{Fore.GREEN}PASS ({current['Total']}){Style.RESET_ALL}"
+        current["Status"] = f"{Fore.GREEN}PASS {Style.RESET_ALL}"
     findings_table["Provider"].append(current["Provider"])
     findings_table["Service"].append(current["Service"])
     findings_table["Status"].append(current["Status"])

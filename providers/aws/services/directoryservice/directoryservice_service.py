@@ -82,7 +82,7 @@ class DirectoryService:
                     list_log_subscriptions_paginator = regional_client.get_paginator(
                         "list_log_subscriptions"
                     )
-                    list_log_subscriptions_parameters = {"DirectoryId": directory.name}
+                    list_log_subscriptions_parameters = {"DirectoryId": directory.id}
                     log_subscriptions = []
                     for page in list_log_subscriptions_paginator.paginate(
                         **list_log_subscriptions_parameters
@@ -109,7 +109,7 @@ class DirectoryService:
         try:
             for directory in self.directories.values():
                 if directory.region == regional_client.region:
-                    describe_event_topics_parameters = {"DirectoryId": directory.name}
+                    describe_event_topics_parameters = {"DirectoryId": directory.id}
                     event_topics = []
                     describe_event_topics = regional_client.describe_event_topics(
                         **describe_event_topics_parameters
@@ -141,7 +141,7 @@ class DirectoryService:
                     list_certificates_paginator = regional_client.get_paginator(
                         "list_certificates"
                     )
-                    list_certificates_parameters = {"DirectoryId": directory.name}
+                    list_certificates_parameters = {"DirectoryId": directory.id}
                     certificates = []
                     for page in list_certificates_paginator.paginate(
                         **list_certificates_parameters
@@ -171,7 +171,7 @@ class DirectoryService:
                     directory.region == regional_client.region
                     and directory.type != DirectoryType.ADConnector
                 ):
-                    get_snapshot_limits_parameters = {"DirectoryId": directory.name}
+                    get_snapshot_limits_parameters = {"DirectoryId": directory.id}
                     snapshot_limit = regional_client.get_snapshot_limits(
                         **get_snapshot_limits_parameters
                     )

@@ -37,18 +37,19 @@ from lib.outputs.outputs import (
     display_summary_table,
     send_to_s3_bucket,
 )
-from providers.aws.aws_provider import provider_set_session
+from providers.aws.aws_provider import aws_provider_set_session
 from providers.aws.lib.allowlist.allowlist import parse_allowlist_file
 from providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
 )
+from providers.azure.azure_provider import azure_provider_set_session
 
 if __name__ == "__main__":
     # CLI Arguments
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "provider",
-        choices=["aws"],
+        choices=["aws", "azure"],
         nargs="?",
         default="aws",
         help="Specify Cloud Provider",
@@ -95,6 +96,7 @@ if __name__ == "__main__":
         "--list-compliance-requirements",
         nargs="?",
         help="List compliance requirements for a given requirement",
+        choices=["ens_rd2022_aws"],
     )
     parser.add_argument(
         "-b", "--no-banner", action="store_false", help="Hide Prowler banner"
@@ -295,7 +297,9 @@ if __name__ == "__main__":
             print_compliance_frameworks(bulk_compliance_frameworks)
             sys.exit()
         if args.list_compliance_requirements:
-            print_compliance_requirements(bulk_compliance_frameworks)
+            print_compliance_requirements(
+                bulk_compliance_frameworks, args.list_compliance_requirements
+            )
             sys.exit()
 
     # Load checks to execute
@@ -348,15 +352,18 @@ if __name__ == "__main__":
             if output_modes:
                 mkdir(output_directory)
 
-    # Set global session
-    audit_info = provider_set_session(
-        args.profile,
-        args.role,
-        args.session_duration,
-        args.external_id,
-        args.filter_region,
-        args.organizations_role,
-    )
+    if provider == "aws":
+        # Set global session
+        audit_info = aws_provider_set_session(
+            args.profile,
+            args.role,
+            args.session_duration,
+            args.external_id,
+            args.filter_region,
+            args.organizations_role,
+        )
+    elif provider == "azure":
+        audit_info = azure_provider_set_session()
 
     # Check if custom output filename was input, if not, set the default
     if not output_filename:
@@ -426,6 +433,7 @@ if __name__ == "__main__":
             findings,
             audit_info,
             audit_output_options,
+            provider,
         )
 
         if compliance_framework:

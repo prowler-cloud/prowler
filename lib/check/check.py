@@ -128,7 +128,9 @@ def print_services(service_list: set):
         print(f"- {service}")
 
 
-def print_compliance_frameworks(bulk_compliance_frameworks: dict):
+def print_compliance_frameworks(
+    bulk_compliance_frameworks: dict,
+):
     print(
         f"There are {Fore.YELLOW}{len(bulk_compliance_frameworks.keys())}{Style.RESET_ALL} available Compliance Frameworks: \n"
     )
@@ -136,10 +138,19 @@ def print_compliance_frameworks(bulk_compliance_frameworks: dict):
         print(f"\t- {Fore.YELLOW}{framework}{Style.RESET_ALL}")
 
 
-def print_compliance_requirements(bulk_compliance_frameworks: dict):
-    if bulk_compliance_frameworks and "ens_rd2022_aws" in bulk_compliance_frameworks:
-        print("Listing ENS RD2022 AWS Compliance Requirements:\n")
-        for compliance in bulk_compliance_frameworks.values():
+def print_compliance_requirements(
+    bulk_compliance_frameworks: dict, compliance_framework: str
+):
+    for compliance in bulk_compliance_frameworks.values():
+        # Workaround until we have more Compliance Frameworks
+        split_compliance = compliance_framework.split("_")
+        framework = split_compliance[0].upper()
+        version = split_compliance[1].upper()
+        provider = split_compliance[2].upper()
+        if compliance.Framework == framework and compliance.Version == version:
+            print(
+                f"Listing {framework} {version} {provider} Compliance Requirements:\n"
+            )
             for requirement in compliance.Requirements:
                 checks = ""
                 for check in requirement.Checks:
