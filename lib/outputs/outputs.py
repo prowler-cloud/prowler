@@ -393,6 +393,7 @@ def display_summary_table(
             entity_type = "Account"
         elif provider == "azure":
             entity_type = "Tenant Domain"
+
         if findings:
             current = {
                 "Service": "",
@@ -456,6 +457,10 @@ def display_summary_table(
             print(
                 f"\n{entity_type} {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
             )
+            if provider == "azure":
+                print(
+                    f"\nSubscriptions scanned: {Fore.YELLOW}{' '.join(audit_info.subscriptions.keys())}{Style.RESET_ALL}"
+                )
             print(tabulate(findings_table, headers="keys", tablefmt="rounded_grid"))
             print(
                 f"{Style.BRIGHT}* You only see here those services that contains resources.{Style.RESET_ALL}"

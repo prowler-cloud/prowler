@@ -229,6 +229,12 @@ if __name__ == "__main__":
         action="store_true",
         help="Display detailed information about findings.",
     )
+    parser.add_argument(
+        "--subscription-ids",
+        nargs="+",
+        default=[],
+        help="Azure subscription ids to be scanned by prowler",
+    )
     # Parse Arguments
     args = parser.parse_args()
 
@@ -244,6 +250,10 @@ if __name__ == "__main__":
     severities = args.severity
     compliance_framework = args.compliance
     output_modes = args.output_modes
+
+    # Azure options
+    subscriptions = args.subscription_ids
+
     # We treat the compliance framework as another output format
     if compliance_framework:
         output_modes.extend(compliance_framework)
@@ -362,7 +372,7 @@ if __name__ == "__main__":
             args.organizations_role,
         )
     elif provider == "azure":
-        audit_info = azure_provider_set_session()
+        audit_info = azure_provider_set_session(subscriptions)
 
     # Check if custom output filename was input, if not, set the default
     if not output_filename:

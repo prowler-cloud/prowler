@@ -7,7 +7,7 @@ from msgraph.core import GraphClient
 
 from lib.logger import logger
 from providers.azure.lib.audit_info.audit_info import azure_audit_info
-from providers.azure.lib.audit_info.models import Azure_Identity_Info
+from providers.azure.lib.audit_info.models import Azure_Audit_Info, Azure_Identity_Info
 
 
 class Azure_Provider:
@@ -54,7 +54,7 @@ def validate_credentials(
         return azure_identity
 
 
-def azure_provider_set_session():
+def azure_provider_set_session(subscription_ids: list) -> Azure_Audit_Info:
     logger.info("Setting Azure session ...")
     azure_identity = check_credential_env_vars()
     azure_audit_info.credentials = Azure_Provider().get_credentials()
@@ -69,11 +69,20 @@ def azure_provider_set_session():
         subscriptions_client = SubscriptionClient(
             credential=azure_audit_info.credentials
         )
-        for subscription in subscriptions_client.subscriptions.list():
+        if not subscription_ids:
+            logger.info("Scanning all the Azure subscriptions...")
+            for subscription in subscriptions_client.subscriptions.list():
 
-            azure_audit_info.subscriptions.update(
-                {subscription.display_name: subscription.subscription_id}
-            )
+                azure_audit_info.subscriptions.update(
+                    {subscription.display_name: subscription.subscription_id}
+                )
+        else:
+            logger.info("Scanning the subscriptions passed as argument ...")
+            for id in subscription_ids:
+                subscription = subscriptions_client.subscriptions.get(
+                    subscription_id=id
+                )
+                azure_audit_info.subscriptions.update({subscription.display_name: id})
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
