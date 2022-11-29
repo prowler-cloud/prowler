@@ -14,7 +14,7 @@ class Azure_Identity_Info(BaseModel):
 class Azure_Audit_Info:
     credentials: DefaultAzureCredential
     identity: Azure_Identity_Info
-    subscriptions: list[dict]
+    subscriptions: dict
     audited_account: str
 
     def __init__(self, credentials, identity, subscriptions):
