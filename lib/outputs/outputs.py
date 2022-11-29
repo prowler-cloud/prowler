@@ -531,7 +531,7 @@ def display_summary_table(
             ]
         print(tabulate(overview_table, tablefmt="rounded_grid"))
         print(
-            f"\nAccount {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
+            f"\n{entity_type} {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
         )
         print(tabulate(findings_table, headers="keys", tablefmt="rounded_grid"))
         print(
