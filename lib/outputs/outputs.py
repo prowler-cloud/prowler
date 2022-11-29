@@ -41,160 +41,169 @@ from providers.aws.lib.security_hub.security_hub import send_to_security_hub
 
 
 def report(check_findings, output_options, audit_info):
-    # Sort check findings
-    check_findings.sort(key=lambda x: x.region)
+    try:
+        # Sort check findings
+        check_findings.sort(key=lambda x: x.region)
 
-    # Generate the required output files
-    # csv_fields = []
-    file_descriptors = {}
-    if output_options.output_modes:
-        # We have to create the required output files
-        file_descriptors = fill_file_descriptors(
-            output_options.output_modes,
-            output_options.output_directory,
-            output_options.output_filename,
-            audit_info,
-        )
+        # Generate the required output files
+        # csv_fields = []
+        file_descriptors = {}
+        if output_options.output_modes:
+            # We have to create the required output files
+            file_descriptors = fill_file_descriptors(
+                output_options.output_modes,
+                output_options.output_directory,
+                output_options.output_filename,
+                audit_info,
+            )
 
-    if check_findings:
-        for finding in check_findings:
-            # Check if finding is allowlisted
-            if output_options.allowlist_file:
-                if is_allowlisted(
-                    output_options.allowlist_file,
-                    audit_info.audited_account,
-                    finding.check_metadata.CheckID,
-                    finding.region,
-                    finding.resource_id,
-                ):
-                    finding.status = "WARNING"
-            # Print findings by stdout
-            color = set_report_color(finding.status)
-            if output_options.is_quiet and "FAIL" in finding.status:
-                print(
-                    f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
-                )
-            elif not output_options.is_quiet and output_options.verbose:
-                print(
-                    f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
-                )
-            if file_descriptors:
-                if finding.check_metadata.Provider == "aws":
-                    if "ens_rd2022_aws" in output_options.output_modes:
-                        # We have to retrieve all the check's compliance requirements
-                        check_compliance = output_options.bulk_checks_metadata[
-                            finding.check_metadata.CheckID
-                        ].Compliance
-                        for compliance in check_compliance:
-                            if (
-                                compliance.Framework == "ENS"
-                                and compliance.Version == "RD2022"
-                            ):
-                                for requirement in compliance.Requirements:
-                                    requirement_description = requirement.Description
-                                    requirement_id = requirement.Id
-                                    for attribute in requirement.Attributes:
-                                        compliance_row = Check_Output_CSV_ENS_RD2022(
-                                            Provider=finding.check_metadata.Provider,
-                                            AccountId=audit_info.audited_account,
-                                            Region=finding.region,
-                                            AssessmentDate=timestamp.isoformat(),
-                                            Requirements_Id=requirement_id,
-                                            Requirements_Description=requirement_description,
-                                            Requirements_Attributes_IdGrupoControl=attribute.get(
-                                                "IdGrupoControl"
-                                            ),
-                                            Requirements_Attributes_Marco=attribute.get(
-                                                "Marco"
-                                            ),
-                                            Requirements_Attributes_Categoria=attribute.get(
-                                                "Categoria"
-                                            ),
-                                            Requirements_Attributes_DescripcionControl=attribute.get(
-                                                "DescripcionControl"
-                                            ),
-                                            Requirements_Attributes_Nivel=attribute.get(
-                                                "Nivel"
-                                            ),
-                                            Requirements_Attributes_Tipo=attribute.get(
-                                                "Tipo"
-                                            ),
-                                            Requirements_Attributes_Dimensiones=",".join(
-                                                attribute.get("Dimensiones")
-                                            ),
-                                            Status=finding.status,
-                                            StatusExtended=finding.status_extended,
-                                            ResourceId=finding.resource_id,
-                                            CheckId=finding.check_metadata.CheckID,
+        if check_findings:
+            for finding in check_findings:
+                # Check if finding is allowlisted
+                if output_options.allowlist_file:
+                    if is_allowlisted(
+                        output_options.allowlist_file,
+                        audit_info.audited_account,
+                        finding.check_metadata.CheckID,
+                        finding.region,
+                        finding.resource_id,
+                    ):
+                        finding.status = "WARNING"
+                # Print findings by stdout
+                color = set_report_color(finding.status)
+                if output_options.is_quiet and "FAIL" in finding.status:
+                    print(
+                        f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
+                    )
+                elif not output_options.is_quiet and output_options.verbose:
+                    print(
+                        f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
+                    )
+                if file_descriptors:
+                    if finding.check_metadata.Provider == "aws":
+                        if "ens_rd2022_aws" in output_options.output_modes:
+                            # We have to retrieve all the check's compliance requirements
+                            check_compliance = output_options.bulk_checks_metadata[
+                                finding.check_metadata.CheckID
+                            ].Compliance
+                            for compliance in check_compliance:
+                                if (
+                                    compliance.Framework == "ENS"
+                                    and compliance.Version == "RD2022"
+                                ):
+                                    for requirement in compliance.Requirements:
+                                        requirement_description = (
+                                            requirement.Description
                                         )
+                                        requirement_id = requirement.Id
+                                        for attribute in requirement.Attributes:
+                                            compliance_row = Check_Output_CSV_ENS_RD2022(
+                                                Provider=finding.check_metadata.Provider,
+                                                AccountId=audit_info.audited_account,
+                                                Region=finding.region,
+                                                AssessmentDate=timestamp.isoformat(),
+                                                Requirements_Id=requirement_id,
+                                                Requirements_Description=requirement_description,
+                                                Requirements_Attributes_IdGrupoControl=attribute.get(
+                                                    "IdGrupoControl"
+                                                ),
+                                                Requirements_Attributes_Marco=attribute.get(
+                                                    "Marco"
+                                                ),
+                                                Requirements_Attributes_Categoria=attribute.get(
+                                                    "Categoria"
+                                                ),
+                                                Requirements_Attributes_DescripcionControl=attribute.get(
+                                                    "DescripcionControl"
+                                                ),
+                                                Requirements_Attributes_Nivel=attribute.get(
+                                                    "Nivel"
+                                                ),
+                                                Requirements_Attributes_Tipo=attribute.get(
+                                                    "Tipo"
+                                                ),
+                                                Requirements_Attributes_Dimensiones=",".join(
+                                                    attribute.get("Dimensiones")
+                                                ),
+                                                Status=finding.status,
+                                                StatusExtended=finding.status_extended,
+                                                ResourceId=finding.resource_id,
+                                                CheckId=finding.check_metadata.CheckID,
+                                            )
 
-                                csv_header = generate_csv_fields(
-                                    Check_Output_CSV_ENS_RD2022
-                                )
-                                csv_writer = DictWriter(
-                                    file_descriptors["ens_rd2022_aws"],
-                                    fieldnames=csv_header,
-                                    delimiter=";",
-                                )
-                                csv_writer.writerow(compliance_row.__dict__)
+                                    csv_header = generate_csv_fields(
+                                        Check_Output_CSV_ENS_RD2022
+                                    )
+                                    csv_writer = DictWriter(
+                                        file_descriptors["ens_rd2022_aws"],
+                                        fieldnames=csv_header,
+                                        delimiter=";",
+                                    )
+                                    csv_writer.writerow(compliance_row.__dict__)
 
-                    if "csv" in file_descriptors:
-                        finding_output = Check_Output_CSV(
-                            audit_info.audited_account,
-                            audit_info.profile,
-                            finding,
-                            audit_info.organizations_metadata,
-                        )
-                        csv_writer = DictWriter(
-                            file_descriptors["csv"],
-                            fieldnames=generate_csv_fields(Check_Output_CSV),
-                            delimiter=";",
-                        )
-                        csv_writer.writerow(finding_output.__dict__)
+                        if "csv" in file_descriptors:
+                            finding_output = Check_Output_CSV(
+                                audit_info.audited_account,
+                                audit_info.profile,
+                                finding,
+                                audit_info.organizations_metadata,
+                            )
+                            csv_writer = DictWriter(
+                                file_descriptors["csv"],
+                                fieldnames=generate_csv_fields(Check_Output_CSV),
+                                delimiter=";",
+                            )
+                            csv_writer.writerow(finding_output.__dict__)
 
-                    if "json" in file_descriptors:
-                        finding_output = Check_Output_JSON(
-                            **finding.check_metadata.dict()
-                        )
-                        fill_json(finding_output, audit_info, finding)
+                        if "json" in file_descriptors:
+                            finding_output = Check_Output_JSON(
+                                **finding.check_metadata.dict()
+                            )
+                            fill_json(finding_output, audit_info, finding)
 
-                        json.dump(
-                            finding_output.dict(), file_descriptors["json"], indent=4
-                        )
-                        file_descriptors["json"].write(",")
+                            json.dump(
+                                finding_output.dict(),
+                                file_descriptors["json"],
+                                indent=4,
+                            )
+                            file_descriptors["json"].write(",")
 
-                    if "json-asff" in file_descriptors:
-                        finding_output = Check_Output_JSON_ASFF()
-                        fill_json_asff(finding_output, audit_info, finding)
+                        if "json-asff" in file_descriptors:
+                            finding_output = Check_Output_JSON_ASFF()
+                            fill_json_asff(finding_output, audit_info, finding)
 
-                        json.dump(
-                            finding_output.dict(),
-                            file_descriptors["json-asff"],
-                            indent=4,
-                        )
-                        file_descriptors["json-asff"].write(",")
+                            json.dump(
+                                finding_output.dict(),
+                                file_descriptors["json-asff"],
+                                indent=4,
+                            )
+                            file_descriptors["json-asff"].write(",")
 
-                    if "html" in file_descriptors:
-                        fill_html(file_descriptors["html"], audit_info, finding)
+                        if "html" in file_descriptors:
+                            fill_html(file_descriptors["html"], audit_info, finding)
 
-                        file_descriptors["html"].write("")
+                            file_descriptors["html"].write("")
 
-                    # Check if it is needed to send findings to security hub
-                    if output_options.security_hub_enabled:
-                        send_to_security_hub(
-                            finding.region, finding_output, audit_info.audit_session
-                        )
-    else:  # No service resources in the whole account
-        color = set_report_color("INFO")
-        if not output_options.is_quiet and output_options.verbose:
-            print(f"\t{color}INFO{Style.RESET_ALL} There are no resources")
-    # Separator between findings and bar
-    if output_options.is_quiet or output_options.verbose:
-        print()
-    if file_descriptors:
-        # Close all file descriptors
-        for file_descriptor in file_descriptors:
-            file_descriptors.get(file_descriptor).close()
+                        # Check if it is needed to send findings to security hub
+                        if output_options.security_hub_enabled:
+                            send_to_security_hub(
+                                finding.region, finding_output, audit_info.audit_session
+                            )
+        else:  # No service resources in the whole account
+            color = set_report_color("INFO")
+            if not output_options.is_quiet and output_options.verbose:
+                print(f"\t{color}INFO{Style.RESET_ALL} There are no resources")
+        # Separator between findings and bar
+        if output_options.is_quiet or output_options.verbose:
+            print()
+        if file_descriptors:
+            # Close all file descriptors
+            for file_descriptor in file_descriptors:
+                file_descriptors.get(file_descriptor).close()
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
 
 def initialize_file_descriptor(
@@ -204,78 +213,87 @@ def initialize_file_descriptor(
     format: Any = None,
 ) -> TextIOWrapper:
     """Open/Create the output file. If needed include headers or the required format"""
-
-    if file_exists(filename):
-        file_descriptor = open_file(
-            filename,
-            "a",
-        )
-    else:
-        file_descriptor = open_file(
-            filename,
-            "a",
-        )
-
-        if output_mode in ("csv", "ens_rd2022_aws"):
-            # Format is the class model of the CSV format to print the headers
-            csv_header = [x.upper() for x in generate_csv_fields(format)]
-            csv_writer = DictWriter(
-                file_descriptor, fieldnames=csv_header, delimiter=";"
+    try:
+        if file_exists(filename):
+            file_descriptor = open_file(
+                filename,
+                "a",
             )
-            csv_writer.writeheader()
+        else:
+            file_descriptor = open_file(
+                filename,
+                "a",
+            )
 
-        if output_mode in ("json", "json-asff"):
-            file_descriptor.write("[")
+            if output_mode in ("csv", "ens_rd2022_aws"):
+                # Format is the class model of the CSV format to print the headers
+                csv_header = [x.upper() for x in generate_csv_fields(format)]
+                csv_writer = DictWriter(
+                    file_descriptor, fieldnames=csv_header, delimiter=";"
+                )
+                csv_writer.writeheader()
 
-        if "html" in output_mode:
-            add_html_header(file_descriptor, audit_info)
+            if output_mode in ("json", "json-asff"):
+                file_descriptor.write("[")
+
+            if "html" in output_mode:
+                add_html_header(file_descriptor, audit_info)
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
     return file_descriptor
 
 
 def fill_file_descriptors(output_modes, output_directory, output_filename, audit_info):
-    file_descriptors = {}
-    if output_modes:
-        for output_mode in output_modes:
-            if output_mode == "csv":
-                filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
-                file_descriptor = initialize_file_descriptor(
-                    filename,
-                    output_mode,
-                    audit_info,
-                    Check_Output_CSV,
-                )
-                file_descriptors.update({output_mode: file_descriptor})
+    try:
+        file_descriptors = {}
+        if output_modes:
+            for output_mode in output_modes:
+                if output_mode == "csv":
+                    filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
+                    file_descriptor = initialize_file_descriptor(
+                        filename,
+                        output_mode,
+                        audit_info,
+                        Check_Output_CSV,
+                    )
+                    file_descriptors.update({output_mode: file_descriptor})
 
-            if output_mode == "json":
-                filename = f"{output_directory}/{output_filename}{json_file_suffix}"
-                file_descriptor = initialize_file_descriptor(
-                    filename, output_mode, audit_info
-                )
-                file_descriptors.update({output_mode: file_descriptor})
+                if output_mode == "json":
+                    filename = f"{output_directory}/{output_filename}{json_file_suffix}"
+                    file_descriptor = initialize_file_descriptor(
+                        filename, output_mode, audit_info
+                    )
+                    file_descriptors.update({output_mode: file_descriptor})
 
-            if output_mode == "json-asff":
-                filename = (
-                    f"{output_directory}/{output_filename}{json_asff_file_suffix}"
-                )
-                file_descriptor = initialize_file_descriptor(
-                    filename, output_mode, audit_info
-                )
-                file_descriptors.update({output_mode: file_descriptor})
+                if output_mode == "json-asff":
+                    filename = (
+                        f"{output_directory}/{output_filename}{json_asff_file_suffix}"
+                    )
+                    file_descriptor = initialize_file_descriptor(
+                        filename, output_mode, audit_info
+                    )
+                    file_descriptors.update({output_mode: file_descriptor})
 
-            if output_mode == "html":
-                filename = f"{output_directory}/{output_filename}{html_file_suffix}"
-                file_descriptor = initialize_file_descriptor(
-                    filename, output_mode, audit_info
-                )
-                file_descriptors.update({output_mode: file_descriptor})
+                if output_mode == "html":
+                    filename = f"{output_directory}/{output_filename}{html_file_suffix}"
+                    file_descriptor = initialize_file_descriptor(
+                        filename, output_mode, audit_info
+                    )
+                    file_descriptors.update({output_mode: file_descriptor})
 
-            if output_mode == "ens_rd2022_aws":
-                filename = f"{output_directory}/{output_filename}_ens_rd2022_aws{csv_file_suffix}"
-                file_descriptor = initialize_file_descriptor(
-                    filename, output_mode, audit_info, Check_Output_CSV_ENS_RD2022
-                )
-                file_descriptors.update({output_mode: file_descriptor})
+                if output_mode == "ens_rd2022_aws":
+                    filename = f"{output_directory}/{output_filename}_ens_rd2022_aws{csv_file_suffix}"
+                    file_descriptor = initialize_file_descriptor(
+                        filename, output_mode, audit_info, Check_Output_CSV_ENS_RD2022
+                    )
+                    file_descriptors.update({output_mode: file_descriptor})
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
     return file_descriptors
 
@@ -301,8 +319,6 @@ def set_report_color(status: str) -> str:
 def generate_csv_fields(format: Any) -> list[str]:
     """Generates the CSV headers for the given class"""
     csv_fields = []
-    print(format.__dict__)
-    print(format)
     for field in format.__dict__.get("__annotations__").keys():
         csv_fields.append(field)
     return csv_fields
@@ -373,21 +389,21 @@ def fill_html(file_descriptor, audit_info, finding):
         row_class = "table-warning"
     file_descriptor.write(
         f"""
-    <tr class="{row_class}">
-      <td>{finding.status}</td>
-      <td>{finding.check_metadata.Severity}</td>
-      <td>{audit_info.audited_account}</td>
-      <td>{finding.region}</td>
-      <td>{finding.check_metadata.ServiceName}</td>
-      <td>{finding.check_metadata.CheckID}</td>
-      <td>{finding.check_metadata.CheckTitle}</td>
-      <td>{finding.status_extended}</td>
-      <td><p class="show-read-more">{finding.check_metadata.Risk}</p></td>
-      <td><p class="show-read-more">{finding.check_metadata.Remediation.Recommendation.Text}</p></td>
-      <td><a class="read-more" href="{finding.check_metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
-      <td>{finding.resource_id}</td>
-    </tr>
-    """
+            <tr class="{row_class}">
+                <td>{finding.status}</td>
+                <td>{finding.check_metadata.Severity}</td>
+                <td>{audit_info.audited_account}</td>
+                <td>{finding.region}</td>
+                <td>{finding.check_metadata.ServiceName}</td>
+                <td>{finding.check_metadata.CheckID}</td>
+                <td>{finding.check_metadata.CheckTitle}</td>
+                <td>{finding.status_extended}</td>
+                <td><p class="show-read-more">{finding.check_metadata.Risk}</p></td>
+                <td><p class="show-read-more">{finding.check_metadata.Remediation.Recommendation.Text}</p></td>
+                <td><a class="read-more" href="{finding.check_metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
+                <td>{finding.resource_id}</td>
+            </tr>
+            """
     )
 
 
@@ -669,128 +685,137 @@ def display_compliance_table(
 
 
 def add_html_header(file_descriptor, audit_info):
-    file_descriptor.write(
-        """
-    <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <!-- Required meta tags -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <style>
-  .read-more {color:#00f;}
-  .bg-success-custom {background-color: #70dc88 !important;}
-  </style>
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-  <!-- https://datatables.net/download/index with jQuery, DataTables, Buttons, SearchPanes, and Select //-->
-  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jqc-1.12.4/dt-1.10.25/b-1.7.1/sp-1.3.0/sl-1.3.3/datatables.min.css"/>
-  <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
-  <style>
-    .show-read-more .more-text{
-        display: none;
-    }
-  </style>
-  <title>Prowler - AWS Security Assessments</title>
-</head>
-<body>
-  <nav class="navbar navbar-expand-xl sticky-top navbar-dark bg-dark">
-      <a class="navbar-brand" href="#">Prowler - Security Assessments in AWS</a>
-  </nav>
-  <div class="container-fluid">
-    <div class="row mt-3">
-      <div class="col-md-4">
-        <div class="card">
-          <div class="card-header">
-            Report Information:
-          </div>
-          <ul class="list-group list-group-flush">
-            <li class="list-group-item">
-              <div class="row">
-                <div class="col-md-auto">
-                  <b>Version:</b> """
-        + prowler_version
-        + """
+    try:
+        if isinstance(audit_info.audited_regions, list):
+            audited_regions = " ".join(audit_info.audited_regions)
+        else:
+            audited_regions = audit_info.audited_regions
+        file_descriptor.write(
+            """
+        <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Required meta tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <style>
+    .read-more {color:#00f;}
+    .bg-success-custom {background-color: #70dc88 !important;}
+    </style>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <!-- https://datatables.net/download/index with jQuery, DataTables, Buttons, SearchPanes, and Select //-->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jqc-1.12.4/dt-1.10.25/b-1.7.1/sp-1.3.0/sl-1.3.3/datatables.min.css"/>
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
+    <style>
+        .show-read-more .more-text{
+            display: none;
+        }
+    </style>
+    <title>Prowler - AWS Security Assessments</title>
+    </head>
+    <body>
+    <nav class="navbar navbar-expand-xl sticky-top navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Prowler - Security Assessments in AWS</a>
+    </nav>
+    <div class="container-fluid">
+        <div class="row mt-3">
+        <div class="col-md-4">
+            <div class="card">
+            <div class="card-header">
+                Report Information:
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                <div class="row">
+                    <div class="col-md-auto">
+                    <b>Version:</b> """
+            + prowler_version
+            + """
+                    </div>
                 </div>
-              </div>
-            </li>
-            <li class="list-group-item">
-              <b>Parameters used:</b> """
-        + " ".join(sys.argv[1:])
-        + """
-            </li>
-            <li class="list-group-item">
-              <b>Date:</b> """
-        + output_file_timestamp
-        + """
-            </li>
-            <li class="list-group-item text-center">
-              <a href="""
-        + html_logo_url
-        + """><img src="""
-        + html_logo_img
-        + """
-                  alt="prowler-logo"></a>
-            </li>
-          </ul>
+                </li>
+                <li class="list-group-item">
+                <b>Parameters used:</b> """
+            + " ".join(sys.argv[1:])
+            + """
+                </li>
+                <li class="list-group-item">
+                <b>Date:</b> """
+            + output_file_timestamp
+            + """
+                </li>
+                <li class="list-group-item text-center">
+                <a href="""
+            + html_logo_url
+            + """><img src="""
+            + html_logo_img
+            + """
+                    alt="prowler-logo"></a>
+                </li>
+            </ul>
+            </div>
         </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card">
-          <div class="card-header">
-            Assessment Summary:
-          </div>
-          <ul class="list-group list-group-flush">
-            <li class="list-group-item">
-              <b>AWS Account:</b> """
-        + audit_info.audited_account
-        + """
-            </li>
-            <li class="list-group-item">
-              <b>AWS-CLI Profile:</b> """
-        + audit_info.profile
-        + """
-            </li>
-            <li class="list-group-item">
-              <b>Audited Regions:</b> """
-        + " ".join(audit_info.audited_regions)
-        + """
-            </li>
-            <li class="list-group-item">
-              <b>User Id:</b> """
-        + audit_info.audited_user_id
-        + """
-            </li>
-            <li class="list-group-item">
-              <b>Caller Identity ARN:</b> """
-        + audit_info.audited_identity_arn
-        + """
-            </li>
-          </ul>
+        <div class="col-md-4">
+            <div class="card">
+            <div class="card-header">
+                Assessment Summary:
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                <b>AWS Account:</b> """
+            + audit_info.audited_account
+            + """
+                </li>
+                <li class="list-group-item">
+                <b>AWS-CLI Profile:</b> """
+            + audit_info.profile
+            + """
+                </li>
+                <li class="list-group-item">
+                <b>Audited Regions:</b> """
+            + audited_regions
+            + """
+                </li>
+                <li class="list-group-item">
+                <b>User Id:</b> """
+            + audit_info.audited_user_id
+            + """
+                </li>
+                <li class="list-group-item">
+                <b>Caller Identity ARN:</b> """
+            + audit_info.audited_identity_arn
+            + """
+                </li>
+            </ul>
+            </div>
         </div>
-      </div>
-    <div class="row mt-3">
-      <div class="col-md-12">
-        <table class="table compact stripe row-border ordering" id="findingsTable" data-order='[[ 5, "asc" ]]' data-page-length='100'>
-          <thead class="thead-light">
-            <tr>
-              <th scope="col">Status</th>
-              <th scope="col">Severity</th>
-              <th scope="col">Account ID</th>
-              <th scope="col">Region</th>
-              <th scope="col">Service</th>
-              <th scope="col">Check ID</th>
-              <th style="width:20%" scope="col">Check Title</th>
-              <th style="width:20%" scope="col">Check Output</th>
-              <th scope="col">Risk</th>
-              <th scope="col">Remediation</th>
-              <th scope="col">Related URL</th>
-              <th scope="col">Resource ID</th>
-            </tr>
-          </thead>
-          <tbody>
-"""
-    )
+        <div class="row mt-3">
+        <div class="col-md-12">
+            <table class="table compact stripe row-border ordering" id="findingsTable" data-order='[[ 5, "asc" ]]' data-page-length='100'>
+            <thead class="thead-light">
+                <tr>
+                <th scope="col">Status</th>
+                <th scope="col">Severity</th>
+                <th scope="col">Account ID</th>
+                <th scope="col">Region</th>
+                <th scope="col">Service</th>
+                <th scope="col">Check ID</th>
+                <th style="width:20%" scope="col">Check Title</th>
+                <th style="width:20%" scope="col">Check Output</th>
+                <th scope="col">Risk</th>
+                <th scope="col">Remediation</th>
+                <th scope="col">Related URL</th>
+                <th scope="col">Resource ID</th>
+                </tr>
+            </thead>
+            <tbody>
+    """
+        )
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
 
 def add_html_footer(output_filename, output_directory):
