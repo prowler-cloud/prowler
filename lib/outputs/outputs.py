@@ -465,9 +465,9 @@ def display_summary_table(
     output_filename = output_options.output_filename
     try:
         if provider == "aws":
-            pass
+            entity_type = "Account"
         elif provider == "azure":
-            pass
+            entity_type = "Tenant Domain"
         if findings:
             current = {
                 "Service": "",
