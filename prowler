@@ -31,6 +31,7 @@ from lib.check.checks_loader import load_checks_to_execute
 from lib.check.compliance import update_checks_metadata_with_compliance
 from lib.logger import logger, set_logging_config
 from lib.outputs.outputs import (
+    add_html_footer,
     close_json,
     display_compliance_table,
     display_summary_table,
@@ -167,7 +168,7 @@ if __name__ == "__main__":
         nargs="+",
         help="Output mode, by default csv",
         default=["csv", "json"],
-        choices=["csv", "json", "json-asff"],
+        choices=["csv", "json", "json-asff", "html"],
     )
     parser.add_argument(
         "-F",
@@ -404,6 +405,8 @@ if __name__ == "__main__":
             # Close json file if exists
             if mode == "json" or mode == "json-asff":
                 close_json(output_filename, output_directory, mode)
+            if mode == "html":
+                add_html_footer(output_filename, output_directory)
             # Send output to S3 if needed (-B / -D)
             if args.output_bucket or args.output_bucket_no_assume:
                 output_bucket = args.output_bucket
@@ -424,18 +427,19 @@ if __name__ == "__main__":
     if args.security_hub:
         resolve_security_hub_previous_findings(output_directory, audit_info)
 
-    if findings:
-        # Display summary table
-        display_summary_table(
-            findings, audit_info, output_filename, output_directory, provider
-        )
+    # Display summary table
+    display_summary_table(
+        findings,
+        audit_info,
+        audit_output_options,
+        provider,
+    )
 
-        if compliance_framework:
-            # Display compliance table
-            display_compliance_table(
-                findings,
-                bulk_checks_metadata,
-                compliance_framework,
-                output_filename,
-                output_directory,
-            )
+    if compliance_framework and findings:
+        # Display compliance table
+        display_compliance_table(
+            findings,
+            bulk_checks_metadata,
+            compliance_framework,
+            audit_output_options,
+        )

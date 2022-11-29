@@ -8,6 +8,10 @@ from lib.logger import logger
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
 prowler_version = "3.0-beta-21Nov2022"
+html_logo_url = "https://github.com/prowler-cloud/prowler/"
+html_logo_img = (
+    "https://github.com/prowler-cloud/prowler/raw/master/util/html/prowler-logo-new.png"
+)
 
 orange_color = "\033[38;5;208m"
 banner_color = "\033[1;92m"
@@ -25,6 +29,7 @@ timestamp_iso = timestamp.isoformat()
 csv_file_suffix = ".csv"
 json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
+html_file_suffix = ".html"
 config_yaml = "providers/aws/config.yaml"
 
 
