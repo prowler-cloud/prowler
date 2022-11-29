@@ -671,8 +671,8 @@ def add_html_header(file_descriptor, audit_info):
   <!-- Required meta tags -->
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <style>
-	.read-more {color:#00f;}
-	.bg-success-custom {background-color: #70dc88 !important;}
+  .read-more {color:#00f;}
+  .bg-success-custom {background-color: #70dc88 !important;}
   </style>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
@@ -782,7 +782,7 @@ def add_html_header(file_descriptor, audit_info):
             </tr>
           </thead>
           <tbody>
-    """
+"""
     )
 
 
