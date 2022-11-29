@@ -529,21 +529,26 @@ def display_summary_table(
                     f"{Fore.GREEN}{round(pass_count/len(findings)*100, 2)}% ({pass_count}) Passed{Style.RESET_ALL}",
                 ]
             ]
-        print(tabulate(overview_table, tablefmt="rounded_grid"))
-        print(
-            f"\n{entity_type} {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
-        )
-        print(tabulate(findings_table, headers="keys", tablefmt="rounded_grid"))
-        print(
-            f"{Style.BRIGHT}* You only see here those services that contains resources.{Style.RESET_ALL}"
-        )
-        print("\nDetailed results are in:")
-        if "html" in output_options.output_modes:
-            print(f" - HTML: {output_directory}/{output_filename}.html")
-        if "json-asff" in output_options.output_modes:
-            print(f" - JSON-ASFF: {output_directory}/{output_filename}.asff.json")
-        print(f" - CSV: {output_directory}/{output_filename}.csv")
-        print(f" - JSON: {output_directory}/{output_filename}.json")
+            print(tabulate(overview_table, tablefmt="rounded_grid"))
+            print(
+                f"\n{entity_type} {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
+            )
+            print(tabulate(findings_table, headers="keys", tablefmt="rounded_grid"))
+            print(
+                f"{Style.BRIGHT}* You only see here those services that contains resources.{Style.RESET_ALL}"
+            )
+            print("\nDetailed results are in:")
+            if "html" in output_options.output_modes:
+                print(f" - HTML: {output_directory}/{output_filename}.html")
+            if "json-asff" in output_options.output_modes:
+                print(f" - JSON-ASFF: {output_directory}/{output_filename}.asff.json")
+            print(f" - CSV: {output_directory}/{output_filename}.csv")
+            print(f" - JSON: {output_directory}/{output_filename}.json")
+
+        else:
+            print(
+                f"\n {Style.BRIGHT}There are no findings in {entity_type} {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL}\n"
+            )
 
     except Exception as error:
         logger.critical(

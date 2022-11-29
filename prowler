@@ -427,20 +427,19 @@ if __name__ == "__main__":
     if args.security_hub:
         resolve_security_hub_previous_findings(output_directory, audit_info)
 
-    if findings:
-        # Display summary table
-        display_summary_table(
-            findings,
-            audit_info,
-            audit_output_options,
-            provider,
-        )
+    # Display summary table
+    display_summary_table(
+        findings,
+        audit_info,
+        audit_output_options,
+        provider,
+    )
 
-        if compliance_framework:
-            # Display compliance table
-            display_compliance_table(
-                findings,
-                bulk_checks_metadata,
-                compliance_framework,
-                audit_output_options,
-            )
+    if compliance_framework:
+        # Display compliance table
+        display_compliance_table(
+            findings,
+            bulk_checks_metadata,
+            compliance_framework,
+            audit_output_options,
+        )
