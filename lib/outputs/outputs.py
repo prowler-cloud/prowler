@@ -36,6 +36,7 @@ from lib.outputs.models import (
 )
 from lib.utils.utils import file_exists, hash_sha512, open_file
 from providers.aws.lib.allowlist.allowlist import is_allowlisted
+from providers.aws.lib.audit_info.models import AWS_Audit_Info
 from providers.aws.lib.security_hub.security_hub import send_to_security_hub
 
 
@@ -172,7 +173,7 @@ def report(check_findings, output_options, audit_info):
                             indent=4,
                         )
                         file_descriptors["json-asff"].write(",")
-                        
+
                     if "html" in file_descriptors:
                         fill_html(file_descriptors["html"], audit_info, finding)
 
@@ -181,7 +182,8 @@ def report(check_findings, output_options, audit_info):
                     # Check if it is needed to send findings to security hub
                     if output_options.security_hub_enabled:
                         send_to_security_hub(
-                            finding.region, finding_output, audit_info.audit_session)
+                            finding.region, finding_output, audit_info.audit_session
+                        )
     else:  # No service resources in the whole account
         color = set_report_color("INFO")
         if not output_options.is_quiet and output_options.verbose:
@@ -442,9 +444,9 @@ def display_summary_table(
     output_filename = output_options.output_filename
     try:
         if provider == "aws":
-            entity_type = "Account"
+            pass
         elif provider == "azure":
-            entity_type = "Tenant Domain"
+            pass
         if findings:
             current = {
                 "Service": "",
@@ -504,7 +506,6 @@ def display_summary_table(
                     f"{Fore.GREEN}{round(pass_count/len(findings)*100, 2)}% ({pass_count}) Passed{Style.RESET_ALL}",
                 ]
             ]
-        ]
         print(tabulate(overview_table, tablefmt="rounded_grid"))
         print(
             f"\nAccount {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
@@ -519,6 +520,7 @@ def display_summary_table(
         if "json-asff" in output_options.output_modes:
             print(f" - JSON-ASFF: {output_directory}/{output_filename}.asff.json")
         print(f" - CSV: {output_directory}/{output_filename}.csv")
+        print(f" - JSON: {output_directory}/{output_filename}.json")
 
     except Exception as error:
         logger.critical(
