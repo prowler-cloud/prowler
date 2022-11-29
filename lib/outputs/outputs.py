@@ -22,6 +22,7 @@ from config.config import (
     timestamp_iso,
     timestamp_utc,
 )
+from lib.check.models import Output_From_Options
 from lib.logger import logger
 from lib.outputs.models import (
     Check_Output_CSV,
@@ -360,20 +361,20 @@ def fill_html(file_descriptor, audit_info, finding):
         row_class = "table-warning"
     file_descriptor.write(
         f"""
-    '<tr class="{row_class}">'
-    '  <td>{finding.status}</td>'
-    '  <td>{finding.check_metadata.Severity}</td>'
-    '  <td>{audit_info.audited_account}</td>'
-    '  <td>{finding.region}</td>'
-    '  <td>{finding.check_metadata.ServiceName}</td>'
-    '  <td>{finding.check_metadata.CheckID}</td>'
-    '  <td>{finding.check_metadata.CheckTitle}</td>'
-    '  <td>{finding.status_extended}</td>'
-    '  <td><p class="show-read-more">{finding.check_metadata.Risk}</p></td>'
-    '  <td><p class="show-read-more">{finding.check_metadata.Remediation.Recommendation.Text}</p></td>'
-    '  <td><a class="read-more" href="{finding.check_metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>'
-    '  <td>{finding.resource_id}</td>'
-    '</tr>'
+    <tr class="{row_class}">
+      <td>{finding.status}</td>
+      <td>{finding.check_metadata.Severity}</td>
+      <td>{audit_info.audited_account}</td>
+      <td>{finding.region}</td>
+      <td>{finding.check_metadata.ServiceName}</td>
+      <td>{finding.check_metadata.CheckID}</td>
+      <td>{finding.check_metadata.CheckTitle}</td>
+      <td>{finding.status_extended}</td>
+      <td><p class="show-read-more">{finding.check_metadata.Risk}</p></td>
+      <td><p class="show-read-more">{finding.check_metadata.Remediation.Recommendation.Text}</p></td>
+      <td><a class="read-more" href="{finding.check_metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
+      <td>{finding.resource_id}</td>
+    </tr>
     """
     )
 
@@ -429,9 +430,10 @@ def send_to_s3_bucket(
 def display_summary_table(
     findings: list,
     audit_info: AWS_Audit_Info,
-    output_filename: str,
-    output_directory: str,
+    output_options: Output_From_Options,
 ):
+    output_directory = output_options.output_directory
+    output_filename = output_options.output_filename
     try:
         current = {
             "Service": "",
@@ -501,6 +503,10 @@ def display_summary_table(
             f"{Style.BRIGHT}* You only see here those services that contains resources.{Style.RESET_ALL}"
         )
         print("\nDetailed results are in:")
+        if "html" in output_options.output_modes:
+            print(f" - HTML: {output_directory}/{output_filename}.html")
+        if "json-asff" in output_options.output_modes:
+            print(f" - JSON-ASFF: {output_directory}/{output_filename}.asff.json")
         print(f" - CSV: {output_directory}/{output_filename}.csv")
         print(f" - JSON: {output_directory}/{output_filename}.json\n")
 
@@ -690,7 +696,9 @@ def add_html_header(file_descriptor, audit_info):
               </div>
             </li>
             <li class="list-group-item">
-              <b>Parameters used:</b> $PROWLER_PARAMETERS
+              <b>Parameters used:</b> """
+        + " ".join(sys.argv[1:])
+        + """
             </li>
             <li class="list-group-item">
               <b>Date:</b> """
@@ -742,31 +750,6 @@ def add_html_header(file_descriptor, audit_info):
           </ul>
         </div>
       </div>
-      <div class="col-md-4">
-        <div class="card">
-          <div class="card-header">
-            Scoring Information:
-          </div>
-          <ul class="list-group list-group-flush">
-            <li class="list-group-item">
-              <b>Prowler Score:</b> PROWLER_SCORE%
-            </li>
-            <li class="list-group-item">
-              <b>Total Resources:</b> TOTAL_RESOURCES
-            </li>
-            <li class="list-group-item">
-              <b>Passed:</b> PASS_COUNTER
-            </li>
-            <li class="list-group-item">
-              <b>Failed:</b> FAIL_COUNTER
-            </li>
-            <li class="list-group-item">
-              <b>Total Checks Executed:</b> CHECKS_COUNTER
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
     <div class="row mt-3">
       <div class="col-md-12">
         <table class="table compact stripe row-border ordering" id="findingsTable" data-order='[[ 5, "asc" ]]' data-page-length='100'>

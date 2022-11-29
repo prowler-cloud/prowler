@@ -46,7 +46,7 @@ repos:
     hooks:
       - id: flake8
         exclude: contrib
-        args: ["--ignore=E266,W503,E203,E501,W605"]
+        args: ["--ignore=E266,W503,E203,E501,W605,W191,E101"]
 
   - repo: https://github.com/haizaar/check-pipfile-lock
     rev: v0.0.5

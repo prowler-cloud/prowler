@@ -425,8 +425,7 @@ if __name__ == "__main__":
         display_summary_table(
             findings,
             audit_info,
-            output_filename,
-            output_directory,
+            audit_output_options,
         )
 
         if compliance_framework:
@@ -435,6 +434,5 @@ if __name__ == "__main__":
                 findings,
                 bulk_checks_metadata,
                 compliance_framework,
-                output_filename,
-                output_directory,
+                audit_output_options,
             )
