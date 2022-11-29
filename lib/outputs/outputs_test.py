@@ -42,7 +42,20 @@ class Test_Outputs:
     def test_fill_file_descriptors(self):
         audited_account = "123456789012"
         output_directory = f"{os.path.dirname(os.path.realpath(__file__))}"
-        generate_csv_fields(Check_Output_CSV)
+        audit_info = AWS_Audit_Info(
+            original_session=None,
+            audit_session=None,
+            audited_account="123456789012",
+            audited_identity_arn="test-arn",
+            audited_user_id="test",
+            audited_partition="aws",
+            profile="default",
+            profile_region="eu-west-1",
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=["eu-west-2", "eu-west-1"],
+            organizations_metadata=None,
+        )
         test_output_modes = [
             ["csv"],
             ["json"],
@@ -101,6 +114,7 @@ class Test_Outputs:
                 output_mode_list,
                 output_directory,
                 output_filename,
+                audit_info,
             )
             for output_mode in output_mode_list:
                 assert (

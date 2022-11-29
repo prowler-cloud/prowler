@@ -240,7 +240,10 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
             if output_mode == "csv":
                 filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
                 file_descriptor = initialize_file_descriptor(
-                    filename, output_mode, Check_Output_CSV, audit_info
+                    filename,
+                    output_mode,
+                    audit_info,
+                    Check_Output_CSV,
                 )
                 file_descriptors.update({output_mode: file_descriptor})
 
@@ -270,7 +273,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
             if output_mode == "ens_rd2022_aws":
                 filename = f"{output_directory}/{output_filename}_ens_rd2022_aws{csv_file_suffix}"
                 file_descriptor = initialize_file_descriptor(
-                    filename, output_mode, Check_Output_CSV_ENS_RD2022
+                    filename, output_mode, audit_info, Check_Output_CSV_ENS_RD2022
                 )
                 file_descriptors.update({output_mode: file_descriptor})
 
@@ -298,6 +301,8 @@ def set_report_color(status: str) -> str:
 def generate_csv_fields(format: Any) -> list[str]:
     """Generates the CSV headers for the given class"""
     csv_fields = []
+    print(format.__dict__)
+    print(format)
     for field in format.__dict__.get("__annotations__").keys():
         csv_fields.append(field)
     return csv_fields
