@@ -21,7 +21,8 @@ class cloudformation_outputs_find_secrets(Check):
             report.region = stack.region
             report.resource_id = stack.name
             report.resource_arn = stack.arn
-
+            report.status = "PASS"
+            report.status_extended = f"No secrets found in Stack {stack.name} Outputs."
             if stack.outputs:
                 temp_output_file = tempfile.NamedTemporaryFile(delete=False)
 
@@ -40,11 +41,6 @@ class cloudformation_outputs_find_secrets(Check):
                     report.status = "FAIL"
                     report.status_extended = (
                         f"Potential secret found in Stack {stack.name} Outputs."
-                    )
-                else:
-                    report.status = "PASS"
-                    report.status_extended = (
-                        f"No secrets found in Stack {stack.name} Outputs."
                     )
 
                 os.remove(temp_output_file.name)
