@@ -81,9 +81,6 @@ if __name__ == "__main__":
     # List checks options
     list_group = parser.add_mutually_exclusive_group()
     list_group.add_argument(
-        "-L", "--list-groups", action="store_true", help="List groups"
-    )
-    list_group.add_argument(
         "-l", "--list-checks", action="store_true", help="List checks"
     )
     list_group.add_argument(
