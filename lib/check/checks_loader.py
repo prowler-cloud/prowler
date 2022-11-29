@@ -1,9 +1,6 @@
-from config.config import groups_file
-from lib.check.check import (  # load_checks_to_execute_from_compliance_framework,
-    load_checks_to_execute_from_groups,
+from lib.check.check import (
     parse_checks_from_compliance_framework,
     parse_checks_from_file,
-    parse_groups_from_file,
     recover_checks_from_provider,
 )
 from lib.logger import logger
@@ -17,9 +14,9 @@ def load_checks_to_execute(
     checks_file: str,
     check_list: list,
     service_list: list,
-    group_list: list,
     severities: list,
     compliance_frameworks: list,
+    categories: set,
     provider: str,
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and input arguments specified"""
@@ -60,16 +57,6 @@ def load_checks_to_execute(
                     # if service_name in group_list: checks_to_execute.add(check_name)
                     checks_to_execute.add(check_name)
 
-    # Handle if there are groups passed using -g/--groups
-    elif group_list:
-        try:
-            available_groups = parse_groups_from_file(groups_file)
-            checks_to_execute = load_checks_to_execute_from_groups(
-                available_groups, group_list, provider
-            )
-        except Exception as e:
-            logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
-
     # Handle if there are compliance frameworks passed using --compliance
     elif compliance_frameworks:
         try:
@@ -78,6 +65,14 @@ def load_checks_to_execute(
             )
         except Exception as e:
             logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
+
+    # Handle if there are categories passed using --categories
+    elif categories:
+        for cat in categories:
+            for check in bulk_checks_metadata:
+                # Check check's categories
+                if cat in bulk_checks_metadata[check].Categories:
+                    checks_to_execute.add(check)
 
     # If there are no checks passed as argument
     else:

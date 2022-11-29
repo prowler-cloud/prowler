@@ -12,9 +12,6 @@ prowler_version = "3.0-beta-21Nov2022"
 orange_color = "\033[38;5;208m"
 banner_color = "\033[1;92m"
 
-# Groups
-groups_file = "groups.json"
-
 # Compliance
 compliance_specification_dir = "./compliance"
 

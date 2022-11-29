@@ -27,7 +27,9 @@
       "Url": "https://docs.aws.amazon.com/AmazonS3/latest/dev/security-best-practices.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "forensics-ready"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

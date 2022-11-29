@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

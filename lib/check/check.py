@@ -4,12 +4,11 @@ import os
 import sys
 from pkgutil import walk_packages
 from types import ModuleType
-from typing import Any
 
 from alive_progress import alive_bar
 from colorama import Fore, Style
 
-from config.config import compliance_specification_dir, groups_file, orange_color
+from config.config import compliance_specification_dir, orange_color
 from lib.check.compliance_models import load_compliance_framework
 from lib.check.models import Check, Output_From_Options, load_check_metadata
 from lib.logger import logger
@@ -65,20 +64,6 @@ def exclude_checks_to_run(checks_to_execute: set, excluded_checks: list) -> set:
     return checks_to_execute
 
 
-# Exclude groups to run
-def exclude_groups_to_run(
-    checks_to_execute: set, excluded_groups: list, provider: str
-) -> set:
-    # Recover checks from the input groups
-    available_groups = parse_groups_from_file(groups_file)
-    checks_from_groups = load_checks_to_execute_from_groups(
-        available_groups, excluded_groups, provider
-    )
-    for check_name in checks_from_groups:
-        checks_to_execute.discard(check_name)
-    return checks_to_execute
-
-
 # Exclude services to run
 def exclude_services_to_run(
     checks_to_execute: set, excluded_services: list, provider: str
@@ -110,7 +95,7 @@ def parse_checks_from_file(input_file: str, provider: str) -> set:
     return checks_to_execute
 
 
-def list_services(provider: str) -> set:
+def list_services(provider: str) -> set():
     available_services = set()
     checks = recover_checks_from_provider(provider)
     for check_name in checks:
@@ -118,6 +103,22 @@ def list_services(provider: str) -> set:
         service_name = check_name.split(".")[3]
         available_services.add(service_name)
     return sorted(available_services)
+
+
+def list_categories(provider: str, bulk_checks_metadata: dict) -> set():
+    available_categories = set()
+    for check in bulk_checks_metadata.values():
+        for cat in check.Categories:
+            available_categories.add(cat)
+    return available_categories
+
+
+def print_categories(categories: set):
+    print(
+        f"There are {Fore.YELLOW}{len(categories)}{Style.RESET_ALL} available categories: \n"
+    )
+    for category in categories:
+        print(f"- {category}")
 
 
 def print_services(service_list: set):
@@ -179,40 +180,6 @@ def print_checks(
     print(
         f"\nThere are {Fore.YELLOW}{len(check_list)}{Style.RESET_ALL} available checks.\n"
     )
-
-
-# List available groups
-def list_groups(provider: str):
-    groups = parse_groups_from_file(groups_file)
-    print("Available Groups:")
-
-    for group, value in groups[provider].items():
-        group_description = value["description"]
-        print(f"\t - {group_description} -- [{group}] ")
-
-
-# Parse groups from groups.json
-def parse_groups_from_file(group_file: str) -> Any:
-    f = open_file(group_file)
-    available_groups = parse_json_file(f)
-    return available_groups
-
-
-# Parse checks from groups to execute
-def load_checks_to_execute_from_groups(
-    available_groups: Any, group_list: list, provider: str
-) -> set:
-    checks_to_execute = set()
-
-    for group in group_list:
-        if group in available_groups[provider]:
-            for check_name in available_groups[provider][group]["checks"]:
-                checks_to_execute.add(check_name)
-        else:
-            logger.error(
-                f"Group '{group}' was not found for the {provider.upper()} provider"
-            )
-    return checks_to_execute
 
 
 # Parse checks from compliance frameworks specification

@@ -25,7 +25,9 @@
       "Url": "https://www.shodan.io/"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

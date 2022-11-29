@@ -4,45 +4,14 @@ from unittest import mock
 from lib.check.check import (
     bulk_load_compliance_frameworks,
     exclude_checks_to_run,
-    exclude_groups_to_run,
     exclude_services_to_run,
-    load_checks_to_execute_from_groups,
     parse_checks_from_compliance_framework,
     parse_checks_from_file,
-    parse_groups_from_file,
 )
 from lib.check.models import load_check_metadata
 
 
 class Test_Check:
-    def test_parse_groups_from_file(self):
-        test_cases = [
-            {
-                "input": {
-                    "path": f"{os.path.dirname(os.path.realpath(__file__))}/fixtures/groupsA.json",
-                    "provider": "aws",
-                },
-                "expected": {
-                    "aws": {
-                        "gdpr": {
-                            "description": "GDPR Readiness",
-                            "checks": ["check11", "check12"],
-                        },
-                        "iam": {
-                            "description": "Identity and Access Management",
-                            "checks": [
-                                "iam_disable_30_days_credentials",
-                                "iam_disable_90_days_credentials",
-                            ],
-                        },
-                    }
-                },
-            }
-        ]
-        for test in test_cases:
-            check_file = test["input"]["path"]
-            assert parse_groups_from_file(check_file) == test["expected"]
-
     def test_load_check_metadata(self):
         test_cases = [
             {
@@ -80,42 +49,6 @@ class Test_Check:
             provider = test["input"]["provider"]
             assert parse_checks_from_file(check_file, provider) == test["expected"]
 
-    def test_load_checks_to_execute_from_groups(self):
-        test_cases = [
-            {
-                "input": {
-                    "groups_json": {
-                        "aws": {
-                            "gdpr": {
-                                "description": "GDPR Readiness",
-                                "checks": ["check11", "check12"],
-                            },
-                            "iam": {
-                                "description": "Identity and Access Management",
-                                "checks": [
-                                    "iam_disable_30_days_credentials",
-                                    "iam_disable_90_days_credentials",
-                                ],
-                            },
-                        }
-                    },
-                    "provider": "aws",
-                    "groups": ["gdpr"],
-                },
-                "expected": {"check11", "check12"},
-            }
-        ]
-
-        for test in test_cases:
-            provider = test["input"]["provider"]
-            groups = test["input"]["groups"]
-            group_file = test["input"]["groups_json"]
-
-            assert (
-                load_checks_to_execute_from_groups(group_file, groups, provider)
-                == test["expected"]
-            )
-
     def test_exclude_checks_to_run(self):
         test_cases = [
             {
@@ -138,44 +71,6 @@ class Test_Check:
             excluded_checks = test["input"]["excluded_checks"]
             assert (
                 exclude_checks_to_run(check_list, excluded_checks) == test["expected"]
-            )
-
-    def test_exclude_groups_to_run(self):
-        test_cases = [
-            {
-                "input": {
-                    "excluded_group_list": {"gdpr"},
-                    "provider": "aws",
-                    "checks_to_run": {
-                        "iam_disable_30_days_credentials",
-                        "iam_disable_90_days_credentials",
-                    },
-                },
-                "expected": {
-                    "iam_disable_30_days_credentials",
-                },
-            },
-            {
-                "input": {
-                    "excluded_group_list": {"pci"},
-                    "provider": "aws",
-                    "checks_to_run": {
-                        "iam_disable_30_days_credentials",
-                        "iam_disable_90_days_credentials",
-                    },
-                },
-                "expected": {
-                    "iam_disable_30_days_credentials",
-                },
-            },
-        ]
-        for test in test_cases:
-            excluded_group_list = test["input"]["excluded_group_list"]
-            checks_to_run = test["input"]["checks_to_run"]
-            provider = test["input"]["provider"]
-            assert (
-                exclude_groups_to_run(checks_to_run, excluded_group_list, provider)
-                == test["expected"]
             )
 
     def test_exclude_services_to_run(self):

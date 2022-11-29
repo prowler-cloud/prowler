@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/usingsharedamis-finding.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

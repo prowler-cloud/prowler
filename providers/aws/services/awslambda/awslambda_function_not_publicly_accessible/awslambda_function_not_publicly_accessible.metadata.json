@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

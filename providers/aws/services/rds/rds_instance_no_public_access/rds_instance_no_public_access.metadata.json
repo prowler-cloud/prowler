@@ -23,7 +23,9 @@
       "Url": "https://docs.amazonaws.cn/en_us/config/latest/developerguide/rds-instance-public-access-check.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

@@ -16,11 +16,11 @@ from lib.check.check import (
     bulk_load_checks_metadata,
     bulk_load_compliance_frameworks,
     exclude_checks_to_run,
-    exclude_groups_to_run,
     exclude_services_to_run,
     execute_checks,
-    list_groups,
+    list_categories,
     list_services,
+    print_categories,
     print_checks,
     print_compliance_frameworks,
     print_compliance_requirements,
@@ -60,7 +60,6 @@ if __name__ == "__main__":
     group.add_argument("-c", "--checks", nargs="+", help="List of checks")
     group.add_argument("-C", "--checks-file", nargs="?", help="List of checks")
     group.add_argument("-s", "--services", nargs="+", help="List of services")
-    group.add_argument("-g", "--groups", nargs="+", help="List of groups")
     group.add_argument(
         "--severity",
         nargs="+",
@@ -73,9 +72,10 @@ if __name__ == "__main__":
         help="Compliance Framework to check against for. The format should be the following: framework_version_provider (e.g.: ens_rd2022_aws)",
         choices=["ens_rd2022_aws"],
     )
+    group.add_argument("--categories", nargs="+", help="List of categories", default=[])
+
     # Exclude checks options
     parser.add_argument("-e", "--excluded-checks", nargs="+", help="Checks to exclude")
-    parser.add_argument("-E", "--excluded-groups", nargs="+", help="Groups to exclude")
     parser.add_argument("--excluded-services", nargs="+", help="Services to exclude")
     # List checks options
     list_group = parser.add_mutually_exclusive_group()
@@ -97,6 +97,12 @@ if __name__ == "__main__":
         help="List compliance requirements for a given requirement",
         choices=["ens_rd2022_aws"],
     )
+    list_group.add_argument(
+        "--list-categories",
+        action="store_true",
+        help="List the available check's categories",
+    )
+
     parser.add_argument(
         "-b", "--no-banner", action="store_false", help="Hide Prowler banner"
     )
@@ -229,10 +235,9 @@ if __name__ == "__main__":
     provider = args.provider
     checks = args.checks
     excluded_checks = args.excluded_checks
-    excluded_groups = args.excluded_groups
     excluded_services = args.excluded_services
     services = args.services
-    groups = args.groups
+    categories = args.categories
     checks_file = args.checks_file
     output_directory = args.output_directory
     output_filename = args.output_filename
@@ -262,10 +267,6 @@ if __name__ == "__main__":
     if args.no_banner:
         print_banner(args)
 
-    if args.list_groups:
-        list_groups(provider)
-        sys.exit()
-
     if args.list_services:
         print_services(list_services(provider))
         sys.exit()
@@ -276,6 +277,11 @@ if __name__ == "__main__":
     # Load checks metadata
     logger.debug("Loading checks metadata from .metadata.json files")
     bulk_checks_metadata = bulk_load_checks_metadata(provider)
+
+    if args.list_categories:
+        print_categories(list_categories(provider, bulk_checks_metadata))
+        sys.exit()
+
     bulk_compliance_frameworks = {}
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
@@ -308,21 +314,15 @@ if __name__ == "__main__":
         checks_file,
         checks,
         services,
-        groups,
         severities,
         compliance_framework,
+        categories,
         provider,
     )
 
     # Exclude checks if -e/--excluded-checks
     if excluded_checks:
         checks_to_execute = exclude_checks_to_run(checks_to_execute, excluded_checks)
-
-    # Exclude groups if -g/--excluded-groups
-    if excluded_groups:
-        checks_to_execute = exclude_groups_to_run(
-            checks_to_execute, excluded_groups, provider
-        )
 
     # Exclude services if -s/--excluded-services
     if excluded_services:

@@ -26,7 +26,9 @@
       "Url": "https://docs.aws.amazon.com/AmazonECR/latest/public/security_iam_service-with-iam.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

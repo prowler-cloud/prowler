@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_settingup.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "forensics-ready"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"
