@@ -435,7 +435,7 @@ if __name__ == "__main__":
         provider,
     )
 
-    if compliance_framework:
+    if compliance_framework and findings:
         # Display compliance table
         display_compliance_table(
             findings,
