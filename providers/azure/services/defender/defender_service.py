@@ -11,9 +11,9 @@ class Defender:
     def __init__(self, audit_info):
         self.service = "defender"
         self.credentials = audit_info.credentials
-        self.subscriptions = audit_info.subscriptions
+        self.subscriptions = audit_info.identity.subscriptions
         self.clients = self.__set_clients__(
-            audit_info.subscriptions, audit_info.credentials
+            audit_info.identity.subscriptions, audit_info.credentials
         )
         self.pricings = self.__get_pricings__()
         self.region = "azure"

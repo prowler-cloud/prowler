@@ -5,20 +5,20 @@ from pydantic import BaseModel
 
 
 class Azure_Identity_Info(BaseModel):
-    id: str = None
-    app_id: str = None
-    tenant_id: str = None
+    identity_id: str = None
+    identity_type: str = None
+    tenant_ids: list[str] = []
+    domain: str = None
+    subscriptions: dict = {}
 
 
 @dataclass
 class Azure_Audit_Info:
     credentials: DefaultAzureCredential
     identity: Azure_Identity_Info
-    subscriptions: dict
-    audited_account: str
+    is_azure: bool
 
-    def __init__(self, credentials, identity, subscriptions):
+    def __init__(self, credentials, identity):
         self.credentials = credentials
         self.identity = identity
-        self.subscriptions = subscriptions
-        self.audited_account = None
+        self.is_azure = True

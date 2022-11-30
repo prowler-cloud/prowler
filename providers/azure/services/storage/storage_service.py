@@ -11,9 +11,9 @@ class Storage:
     def __init__(self, audit_info):
         self.service = "storage"
         self.credentials = audit_info.credentials
-        self.subscriptions = audit_info.subscriptions
+        self.subscriptions = audit_info.identity.subscriptions
         self.clients = self.__set_clients__(
-            audit_info.subscriptions, audit_info.credentials
+            audit_info.identity.subscriptions, audit_info.credentials
         )
         self.storage_accounts = self.__get_storage_accounts__()
         self.region = "azure"
