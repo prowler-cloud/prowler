@@ -1,73 +1,38 @@
-# Prowler Documentation
+# Security Hub Integration
 
-Welcome to Prowler Documentation!
-You will see different sections in this page:
+Prowler supports natively and as **official integration** sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows Prowler to import its findings to AWS Security Hub.
 
-- You are currently in the **Getting Started** section where you can find general information and requirements to help you start with the tool.
-- In the [Tutorials](tutorials) section you can find step-by-step guides that help you accomplish specific tasks.
+With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions and from Prowler for free.
 
-# About Prowler
+Before sending findings to Prowler, you will need to perform next steps:
 
-**Prowler** is an Open Source security tool to perform AWS and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness.
+1. Since Security Hub is a region based service, enable it in the region or regions you require. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions:
+    - `aws securityhub enable-security-hub --region <region>`.
+2. Enable Prowler as partner integration integration. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions:
+    - `aws securityhub enable-import-findings-for-product --region <region> --product-arn arn:aws:securityhub:<region>::product/prowler/prowler` (change region also inside the ARN).
+    - Using the AWS Management Console:
+     ![Screenshot 2020-10-29 at 10 26 02 PM](https://user-images.githubusercontent.com/3985464/97634660-5ade3400-1a36-11eb-9a92-4a45cc98c158.png)
+3. Allow Prowler to import its findings to AWS Security Hub by adding the policy below to the role or user running Prowler:
+    - [iam/prowler-security-hub.json](iam/prowler-security-hub.json)
 
-It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
+Once it is enabled, it is as simple as running the command below (for all regions):
 
-# 💻 Quick Start
-
-Prowler is available as a project in [PyPI](https://pypi.org/project/moto/), thus can be installed using pip:
-
-```bash
-pip install prowler
-prowler -v
+```sh
+./prowler aws -S
 ```
 
-## Basic Usage
+or for only one filtered region like eu-west-1:
 
-To run prowler, you will need to specify the provider (e.g aws or azure):
-
-```console
-prowler <provider>
-```
-> Running the `prowler` command without options will use your environment variable credentials, see [Requirements](getting-started/requirements/) section to review the credentials settings.
-
-By default, prowler will generate a CSV and a JSON report, however you could generate an HTML or an JSON-ASFF report with `-M` or `--output-modes`:
-
-```console
-prowler <provider> -M csv json json-asff html
+```sh
+./prowler -S -f eu-west-1
 ```
 
-You can use `-l`/`--list-checks` or `--list-services` to list all available checks or services within the provider.
+> **Note 1**: It is recommended to send only fails to Security Hub and that is possible adding `-q` to the command.
 
-```console
-prowler <provider> --list-checks
-prowler <provider> --list-services
-```
+> **Note 2**: Since Prowler perform checks to all regions by defauls you may need to filter by region when runing Security Hub integration, as shown in the example above. Remember to enable Security Hub in the region or regions you need by calling `aws securityhub enable-security-hub --region <region>` and run Prowler with the option `-f <region>` (if no region is used it will try to push findings in all regions hubs).
 
-For executing specific checks or services you can use options `-c`/`checks` or `-s`/`services`:
+> **Note 3** to have updated findings in Security Hub you have to run Prowler periodically. Once a day or every certain amount of hours.
 
-```console
-prowler aws --checks s3_bucket_public_access
-prowler aws --services s3 ec2
-```
+Once you run findings for first time you will be able to see Prowler findings in Findings section:
 
-Also, checks and services can be excluded with options `-e`/`--excluded-checks` or `--excluded-services`:
-
-```console
-prowler aws --excluded-checks s3_bucket_public_access
-prowler aws --excluded-services s3 ec2
-```
-
-You can always use `-h`/`--help` to access to the usage information and all the possible options:
-
-```console
-prowler -h
-```
-
-### AWS
-
-Use a custom AWS profile with `-p`/`--profile` and/or AWS regions which you want to audit with `-f`/`--filter-region`:
-
-```console
-prowler aws --profile custom-profile -f us-east-1 eu-south-2
-```
-> By default, `prowler` will scan all AWS regions.
+![Screenshot 2020-10-29 at 10 29 05 PM](https://user-images.githubusercontent.com/3985464/97634676-66c9f600-1a36-11eb-9341-70feb06f6331.png)

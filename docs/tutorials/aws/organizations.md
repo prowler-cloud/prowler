@@ -1,73 +1,49 @@
-# Prowler Documentation
+# AWS Organizations
+## Get AWS Account details from your AWS Organization:
 
-Welcome to Prowler Documentation!
-You will see different sections in this page:
+Prowler allows you to get additional information of the scanned account in CSV and JSON outputs. When scanning a single account you get the Account ID as part of the output.
 
-- You are currently in the **Getting Started** section where you can find general information and requirements to help you start with the tool.
-- In the [Tutorials](tutorials) section you can find step-by-step guides that help you accomplish specific tasks.
+If you have AWS Organizations Prowler can get your account details like Account Name, Email, ARN, Organization ID and Tags and you will have them next to every finding in the CSV and JSON outputs.
 
-# About Prowler
+- In order to do that you can use the option `-O`/`--organizations-role <organizations_role_arn>`. See the following sample command:
 
-**Prowler** is an Open Source security tool to perform AWS and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness.
+```
+prowler aws -O arn:aws:iam::<management_organizations_account_id>:role/<role_name>
+```
+> Make sure the role in your AWS Organizatiosn management account has the permissions `organizations:ListAccounts*` and `organizations:ListTagsForResource`.
 
-It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
+- In that command Prowler will scan the account and getting the account details from the AWS Organizations management account assuming a role and creating two reports with those details in JSON and CSV.
 
-# 💻 Quick Start
+In the JSON output below (redacted) you can see tags coded in base64 to prevent breaking CSV or JSON due to its format:
 
-Prowler is available as a project in [PyPI](https://pypi.org/project/moto/), thus can be installed using pip:
-
-```bash
-pip install prowler
-prowler -v
+```json
+  "Account Email": "my-prod-account@domain.com",
+  "Account Name": "my-prod-account",
+  "Account ARN": "arn:aws:organizations::222222222222:account/o-abcde1234/111111111111",
+  "Account Organization": "o-abcde1234",
+  "Account tags": "\"eyJUYWdzIjpasf0=\""
 ```
 
-## Basic Usage
+The additional fields in CSV header output are as follow:
 
-To run prowler, you will need to specify the provider (e.g aws or azure):
-
-```console
-prowler <provider>
-```
-> Running the `prowler` command without options will use your environment variable credentials, see [Requirements](getting-started/requirements/) section to review the credentials settings.
-
-By default, prowler will generate a CSV and a JSON report, however you could generate an HTML or an JSON-ASFF report with `-M` or `--output-modes`:
-
-```console
-prowler <provider> -M csv json json-asff html
+```csv
+ACCOUNT_DETAILS_EMAIL,ACCOUNT_DETAILS_NAME,ACCOUNT_DETAILS_ARN,ACCOUNT_DETAILS_ORG,ACCOUNT_DETAILS_TAGS
 ```
 
-You can use `-l`/`--list-checks` or `--list-services` to list all available checks or services within the provider.
+## Assume Role and across all accounts in AWS Organizations or just a list of accounts:
 
-```console
-prowler <provider> --list-checks
-prowler <provider> --list-services
+If you want to run Prowler across all accounts of AWS Organizations you can do this:
+
+- First get a list of accounts that are not suspended:
+
+```
+ACCOUNTS_IN_ORGS=$(aws organizations list-accounts --query Accounts[?Status==`ACTIVE`].Id --output text)
 ```
 
-For executing specific checks or services you can use options `-c`/`checks` or `-s`/`services`:
+- Then run Prowler to assume a role (same in all members) per each account, in this example it is just running one particular check:
 
-```console
-prowler aws --checks s3_bucket_public_access
-prowler aws --services s3 ec2
+```
+for accountId in $ACCOUNTS_IN_ORGS; do prowler aws -O arn:aws:iam::<management_organizations_account_id>:role/<role_name>; done
 ```
 
-Also, checks and services can be excluded with options `-e`/`--excluded-checks` or `--excluded-services`:
-
-```console
-prowler aws --excluded-checks s3_bucket_public_access
-prowler aws --excluded-services s3 ec2
-```
-
-You can always use `-h`/`--help` to access to the usage information and all the possible options:
-
-```console
-prowler -h
-```
-
-### AWS
-
-Use a custom AWS profile with `-p`/`--profile` and/or AWS regions which you want to audit with `-f`/`--filter-region`:
-
-```console
-prowler aws --profile custom-profile -f us-east-1 eu-south-2
-```
-> By default, `prowler` will scan all AWS regions.
+- Using the same for loop it can be scanned a list of accounts with a variable like `ACCOUNTS_LIST='11111111111 2222222222 333333333'`

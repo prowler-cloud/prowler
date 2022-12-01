@@ -1,73 +1,24 @@
-# Prowler Documentation
+# AWS Assume Role
 
-Welcome to Prowler Documentation!
-You will see different sections in this page:
+Prowler uses the AWS SDK (Boto3) underneath so it uses the same authentication methods.
 
-- You are currently in the **Getting Started** section where you can find general information and requirements to help you start with the tool.
-- In the [Tutorials](tutorials) section you can find step-by-step guides that help you accomplish specific tasks.
+However, there are few ways to run Prowler against multiple accounts using IAM Assume Role feature depending on each use case:
 
-# About Prowler
+1. You can just set up your custom profile inside `~/.aws/config` with all needed information about the role to assume then call it with `prowler aws -p/--profile your-custom-profile`.
 
-**Prowler** is an Open Source security tool to perform AWS and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness.
+2. You can use `-R`/`--role <role_arn>` and Prowler will get those temporary credentials using `aws sts assume-role`, set them up as environment variables and run against that given account.
+```sh
+prowler aws -R arn:aws:iam::<account_id>:role/<role_name>
+```
+- Optionally, the session duration (in seconds, by deafult 3600) and the external ID of this role assumption can be defined:
 
-It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
-
-# 💻 Quick Start
-
-Prowler is available as a project in [PyPI](https://pypi.org/project/moto/), thus can be installed using pip:
-
-```bash
-pip install prowler
-prowler -v
+```sh
+prowler aws -T/--session-duration <seconds> -I/--external-id <external_id> -R arn:aws:iam::<account_id>:role/<role_name>
 ```
 
-## Basic Usage
+>To create a role to assume in multiple accounts easier either as CFN Stack or StackSet, look at [this CloudFormation template](iam/create_role_to_assume_cfn.yaml) and adapt it.
 
-To run prowler, you will need to specify the provider (e.g aws or azure):
 
-```console
-prowler <provider>
-```
-> Running the `prowler` command without options will use your environment variable credentials, see [Requirements](getting-started/requirements/) section to review the credentials settings.
+> _NOTE 1 about Session Duration_: Depending on the mount of checks you run and the size of your infrastructure, Prowler may require more than 1 hour to finish. Use option `-T <seconds>` to allow up to 12h (43200 seconds). To allow more than 1h you need to modify _"Maximum CLI/API session duration"_ for that particular role, read more [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session).
 
-By default, prowler will generate a CSV and a JSON report, however you could generate an HTML or an JSON-ASFF report with `-M` or `--output-modes`:
-
-```console
-prowler <provider> -M csv json json-asff html
-```
-
-You can use `-l`/`--list-checks` or `--list-services` to list all available checks or services within the provider.
-
-```console
-prowler <provider> --list-checks
-prowler <provider> --list-services
-```
-
-For executing specific checks or services you can use options `-c`/`checks` or `-s`/`services`:
-
-```console
-prowler aws --checks s3_bucket_public_access
-prowler aws --services s3 ec2
-```
-
-Also, checks and services can be excluded with options `-e`/`--excluded-checks` or `--excluded-services`:
-
-```console
-prowler aws --excluded-checks s3_bucket_public_access
-prowler aws --excluded-services s3 ec2
-```
-
-You can always use `-h`/`--help` to access to the usage information and all the possible options:
-
-```console
-prowler -h
-```
-
-### AWS
-
-Use a custom AWS profile with `-p`/`--profile` and/or AWS regions which you want to audit with `-f`/`--filter-region`:
-
-```console
-prowler aws --profile custom-profile -f us-east-1 eu-south-2
-```
-> By default, `prowler` will scan all AWS regions.
+> _NOTE 2 about Session Duration_: Bear in mind that if you are using roles assumed by role chaining there is a hard limit of 1 hour so consider not using role chaining if possible, read more about that, in foot note 1 below the table [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html).
