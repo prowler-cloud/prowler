@@ -40,8 +40,9 @@ nav:
           - Assume Role: tutorials/aws/role-assumption.md
           - Security Hub: tutorials/aws/securityhub.md
           - AWS Organizations: tutorials/aws/organizations.md
-    - Support: support.md
+    - Contact Us: contact.md
     - FAQ: faq.md
+    - About: about.md
 # Customization
 extra:
   consent:

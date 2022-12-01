@@ -8,9 +8,9 @@
 Welcome to Prowler Documentation!
 
 - You are currently in the **Getting Started** section where you can find general information and requirements to help you start with the tool.
-- In the [Tutorials](tutorials/overview) section .
-- In the [Support](support) section you can find step-by-step guides that help you accomplish specific tasks.
-- In the [FAQ](faq) .
+- In the [Tutorials](tutorials/overview) section you will see how to take advantage of all the features in Prowler.
+- In the [Contact Us](contact) section you can find how to reach us out in case of technical issues.
+- In the [FAQ](faq) section you will find questions answered covering the most common inquiries using Prowler.
 
 ## About Prowler
 
@@ -23,10 +23,28 @@ It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, F
 Prowler is available as a project in [PyPI](https://pypi.org/project/moto/), thus can be installed using pip:
 
 ```bash
-pip install prowler
+pip install prowler-cloud
 prowler -v
 ```
 
+## Prowler container versions
+
+The available versions of Prowler are the following:
+
+- latest: in sync with master branch (bear in mind that it is not a stable version)
+- <x.y.z> (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
+- stable: this tag always point to the latest release.
+
+The container images are available here:
+
+- [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
+- [AWS Public ECR](https://gallery.ecr.aws/o4g1s5r6/prowler)
+
+## High level architecture
+
+You can run Prowler from your workstation, an EC2 instance, Fargate or any other container, Codebuild, CloudShell and Cloud9.
+
+![Architecture](img/architecture.png)
 ## Basic Usage
 
 To run prowler, you will need to specify the provider (e.g aws or azure):

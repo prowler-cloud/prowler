@@ -1,4 +1,4 @@
-# Contact Support
+# Contact Us
 
 For technical support or any type of inquiries, you are very welcome to:
 
@@ -6,4 +6,4 @@ For technical support or any type of inquiries, you are very welcome to:
 
 - Open an Issue or a Pull Request in our [**GitHub repository**](https://github.com/prowler-cloud/prowler).
 
-We will appreciate all types of feedback and contribution, Prowler would not be the same without our awesome community! 😃
+We will appreciate all types of feedback and contribution, Prowler would not be the same without our vibrant community! 😃

@@ -1,73 +1,48 @@
-# Prowler Documentation
+# Logging
 
-Welcome to Prowler Documentation!
-You will see different sections in this page:
+Prowler has a logging feature to be as transparent as possible so you can see every action that is going on will the tool is been executing.
 
-- You are currently in the **Getting Started** section where you can find general information and requirements to help you start with the tool.
-- In the [Tutorials](tutorials) section you can find step-by-step guides that help you accomplish specific tasks.
+## Set Log Level
 
-# About Prowler
+There are different log levels depending on the logging information that is desired to be displayed:
 
-**Prowler** is an Open Source security tool to perform AWS and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness.
+- **DEBUG**: it will show low-level logs of Python.
+- **INFO**: it will show all the API Calls that are being used in the provider.
+- **WARNING**: it will show the resources that are being **allowlisted**.
+- **ERROR**: it will show the errors, e.g., not authorized actions.
+- **CRITICAL**: default log level, if a critical log appears, it will **exit** Prowler’s execution.
 
-It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
-
-# 💻 Quick Start
-
-Prowler is available as a project in [PyPI](https://pypi.org/project/moto/), thus can be installed using pip:
-
-```bash
-pip install prowler
-prowler -v
-```
-
-## Basic Usage
-
-To run prowler, you will need to specify the provider (e.g aws or azure):
+You can establish the log level of Prowler with `--log-level` option:
 
 ```console
-prowler <provider>
+prowler <provider> --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
 ```
-> Running the `prowler` command without options will use your environment variable credentials, see [Requirements](getting-started/requirements/) section to review the credentials settings.
 
-By default, prowler will generate a CSV and a JSON report, however you could generate an HTML or an JSON-ASFF report with `-M` or `--output-modes`:
+> By default, Prowler will run with the `CRITICAL` log level, since critical errors will abort the execution.
+
+## Export Logs to File
+
+Prowler allows you to export the logs in json format with `--log-file` option:
 
 ```console
-prowler <provider> -M csv json json-asff html
+prowler <provider> --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL} --log-file <file_name>.json
 ```
 
-You can use `-l`/`--list-checks` or `--list-services` to list all available checks or services within the provider.
+An example of a log file will be the following:
 
-```console
-prowler <provider> --list-checks
-prowler <provider> --list-services
-```
+    {
+        "timestamp": "2022-12-01 16:45:56,399",
+        "filename": "ec2_service.py:114",
+        "level": "ERROR",
+        "module": "ec2_service",
+        "message": "eu-west-2 -- ClientError[102]: An error occurred (UnauthorizedOperation) when calling the DescribeSecurityGroups operation: You are not authorized to perform this operation."
+    }
+    {
+        "timestamp": "2022-12-01 16:45:56,438",
+        "filename": "ec2_service.py:134",
+        "level": "ERROR",
+        "module": "ec2_service",
+        "message": "eu-west-2 -- ClientError[124]: An error occurred (UnauthorizedOperation) when calling the DescribeNetworkAcls operation: You are not authorized to perform this operation."
+    }
 
-For executing specific checks or services you can use options `-c`/`checks` or `-s`/`services`:
-
-```console
-prowler aws --checks s3_bucket_public_access
-prowler aws --services s3 ec2
-```
-
-Also, checks and services can be excluded with options `-e`/`--excluded-checks` or `--excluded-services`:
-
-```console
-prowler aws --excluded-checks s3_bucket_public_access
-prowler aws --excluded-services s3 ec2
-```
-
-You can always use `-h`/`--help` to access to the usage information and all the possible options:
-
-```console
-prowler -h
-```
-
-### AWS
-
-Use a custom AWS profile with `-p`/`--profile` and/or AWS regions which you want to audit with `-f`/`--filter-region`:
-
-```console
-prowler aws --profile custom-profile -f us-east-1 eu-south-2
-```
-> By default, `prowler` will scan all AWS regions.
+> NOTE: Each finding is a `json` object.

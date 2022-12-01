@@ -41,6 +41,25 @@ It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, F
 pip install prowler
 ```
 
+## Prowler container versions
+
+The available versions of Prowler are the following:
+
+- latest: in sync with master branch (bear in mind that it is not a stable version)
+- <x.y.z> (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
+- stable: this tag always point to the latest release.
+
+The container images are available here:
+
+- [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
+- [AWS Public ECR](https://gallery.ecr.aws/o4g1s5r6/prowler)
+
+# 📐✏️ High level architecture
+
+You can run Prowler from your workstation, an EC2 instance, Fargate or any other container, Codebuild, CloudShell and Cloud9.
+
+![Architecture](docs/img/architecture.png)
+
 # 📝 Requirements
 
 Prowler has been written in Python using the [AWS SDK (Boto3)](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html#) and [Azure SDK](https://azure.github.io/azure-sdk-for-python/).
