@@ -166,7 +166,7 @@ if __name__ == "__main__":
         "-M",
         "--output-modes",
         nargs="+",
-        help="Output mode, by default csv",
+        help="Output mode, by default csv and json",
         default=["csv", "json"],
         choices=["csv", "json", "json-asff", "html"],
     )
