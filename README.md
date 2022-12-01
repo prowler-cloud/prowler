@@ -78,7 +78,7 @@ To run prowler, you will need to specify the provider (e.g aws or azure):
 ```console
 prowler <provider>
 ```
-> Running the `prowler` command without options will use your environment variable credentials if they exist or the `~/.aws/credentials` file.
+> Running the `prowler` command without options will use your environment variable credentials.
 
 By default, prowler will generate a CSV and a JSON report, however you could generate an HTML or an JSON-ASFF report with `-M` or `--output-modes`:
 

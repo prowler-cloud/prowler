@@ -223,7 +223,7 @@ if __name__ == "__main__":
         "--allowlist-file",
         nargs="?",
         default=None,
-        help="Path for allowlist yaml file, by default is 'providers/aws/allowlist.yaml'. See default yaml for reference and format.",
+        help="Path for allowlist yaml file, supports local file, S3 URI or DynamoDB ARN. See example yaml in 'providers/allowlist.yaml' for reference and format.",
     )
     parser.add_argument(
         "--verbose",
