@@ -39,13 +39,30 @@ Prowler for azure supports the following authentication types:
 - Interactive browser authentication
 - Managed identity authentication
 
+### Service Principal authentication
+
+To allow Prowler assume the service principal identity to start the scan it is needed to configure the following environment variables:
+
+```console
+export AZURE_CLIENT_ID="XXXXXXXXX"
+export AZURE_TENANT_ID="XXXXXXXXX"
+export AZURE_CLIENT_SECRET="XXXXXXX"
+```
+
+If you try to execute Prowler with the `--sp-env-auth` flag and those variables are empty or not exported, the execution is going to fail.
+### AZ CLI / Browser / Managed Identity authentication
+
+The other three cases does not need additional configuration, `--az-cli-auth` and `--managed-identity-auth` are automated options, `--browser-auth` needs the user to authenticate using the default browser to start the scan.
+
+### Permissions
 
 To use each one you need to pass the proper flag to the execution. Prowler fro Azure handles two types of permission scopes, which are:
 
 - **Azure Active Directory permissions**: Used to retrieve metadata from the identity assumed by Prowler and future AAD checks (not mandatory to have access to execute the tool)
 - **Subscription scope permissions**: Required to launch the checks against your resources, mandatory to launch the tool.
 
-### Azure Active Directory scope
+
+#### Azure Active Directory scope
 
 Azure Active Directory (AAD) permissions required by the tool are the following:
 
@@ -56,7 +73,7 @@ The best way to assign it is through the azure web console:
 
 ![AAD Permissions](../img/AAD-permissions.png)
 
-### Subscriptions scope
+#### Subscriptions scope
 
 Regarding the subscription scope, Prowler by default scans all the subscriptions that is able to list, so it is required to add the following RBAC builtin roles per subscription  to the entity that is going to be assumed by the tool:
 
