@@ -1,4 +1,4 @@
-# 📝 Requirements
+# Requirements
 
 Prowler has been written in Python using the [AWS SDK (Boto3)](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html#) and [Azure SDK](https://azure.github.io/azure-sdk-for-python/).
 ## AWS

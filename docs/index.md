@@ -5,7 +5,7 @@
 
 # Prowler Documentation
 
-Welcome to Prowler Documentation!
+Welcome to Prowler Documentation! 📄
 
 - You are currently in the **Getting Started** section where you can find general information and requirements to help you start with the tool.
 - In the [Tutorials](tutorials/overview) section you will see how to take advantage of all the features in Prowler.
