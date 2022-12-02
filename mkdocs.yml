@@ -40,6 +40,9 @@ nav:
           - Assume Role: tutorials/aws/role-assumption.md
           - Security Hub: tutorials/aws/securityhub.md
           - AWS Organizations: tutorials/aws/organizations.md
+        - Azure:
+          - Authentication: tutorials/azure/authentication.md
+          - Subscriptions: tutorials/azure/subscriptions.md
     - Contact Us: contact.md
     - About: about.md
 # Customization

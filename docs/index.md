@@ -70,7 +70,7 @@ prowler <provider> --list-services
 For executing specific checks or services you can use options `-c`/`checks` or `-s`/`services`:
 
 ```console
-prowler aws --checks s3_bucket_public_access
+prowler azure --checks storage_blob_public_access_level_is_disabled
 prowler aws --services s3 ec2
 ```
 
@@ -78,7 +78,7 @@ Also, checks and services can be excluded with options `-e`/`--excluded-checks` 
 
 ```console
 prowler aws --excluded-checks s3_bucket_public_access
-prowler aws --excluded-services s3 ec2
+prowler azure --excluded-services defender iam
 ```
 
 You can always use `-h`/`--help` to access to the usage information and all the possible options:
@@ -95,3 +95,28 @@ Use a custom AWS profile with `-p`/`--profile` and/or AWS regions which you want
 prowler aws --profile custom-profile -f us-east-1 eu-south-2
 ```
 > By default, `prowler` will scan all AWS regions.
+
+### Azure
+
+With Azure you need to specify which auth method is going to be used:
+
+```console
+# To use service principal authentication
+prowler azure --sp-env-auth
+
+# To use az cli authentication
+prowler azure --az-cli-auth
+
+# To use browser authentication
+prowler azure --browser-auth
+
+# To use managed identity auth
+prowler azure --managed-identity-auth
+```
+
+More details in [Requirements](getting-started/requirements.md)  
+
+Prowler by default scans all the subscriptions that is allowed to scan, if you want to scan a single subscription or various concrete subscriptions you can use the following flag (using az cli auth as example):
+```console
+prowler azure --az-cli-auth --subscription-ids <subscription ID 1> <subscription ID 2> ... <subscription ID N>
+```
