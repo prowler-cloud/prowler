@@ -16,7 +16,7 @@ Prowler is maintained by the Engineers of the **Prowler Team** :
 
 | ![](/img/nacho.png)[![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/NachoRivCor.svg?style=social&label=Follow%20%40NachoRivCor)](https://twitter.com/NachoRivCor) | ![](/img/sergio.png)[![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/sergargar1.svg?style=social&label=Follow%20%40sergargar1)](https://twitter.com/sergargar1) |![](/img/pepe.png)[![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/jfagoagas.svg?style=social&label=Follow%20%40jfagoagas)](https://twitter.com/jfagoagas) |
 |:--:|:--:|:--:
-| <b>Nacho Rivera</b>| <b>Pepe Fagoaga</b>| <b>Sergio Garcia</b>|
+| <b>Nacho Rivera</b>| <b>Sergio Garcia</b>| <b>Pepe Fagoaga</b>|
 
 
 

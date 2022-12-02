@@ -5,7 +5,7 @@
 
 # Prowler Documentation
 
-Welcome to Prowler Documentation! 📄
+Welcome to [Prowler](https://github.com/prowler-cloud/prowler/) Documentation! 📄
 
 - You are currently in the **Getting Started** section where you can find general information and requirements to help you start with the tool.
 - In the [Tutorials](tutorials/overview) section you will see how to take advantage of all the features in Prowler.
@@ -114,7 +114,7 @@ prowler azure --browser-auth
 prowler azure --managed-identity-auth
 ```
 
-More details in [Requirements](getting-started/requirements.md)  
+More details in [Requirements](getting-started/requirements.md)
 
 Prowler by default scans all the subscriptions that is allowed to scan, if you want to scan a single subscription or various concrete subscriptions you can use the following flag (using az cli auth as example):
 ```console

@@ -7,9 +7,9 @@ site_description: >-
 # Theme Configuration
 theme:
   language: en
-  logo: img/prowler-logo.png
+  logo: img/ProwlerPro-icon.svg
   name: material
-  favicon: favicon.ico
+  favicon: img/ProwlerPro-icon.svg
   features:
     - navigation.tabs
     - navigation.tabs.sticky
@@ -29,13 +29,12 @@ nav:
         - Overview: index.md
         - Requirements: getting-started/requirements.md
     - Tutorials:
-        - Overview: tutorials/overview.md
+        - Miscellaneous: tutorials/misc.md
         - Reporting: tutorials/reporting.md
         - Compliance: tutorials/compliance.md
         - Logging: tutorials/logging.md
         - Allowlist: tutorials/allowlist.md
         - Pentesting: tutorials/pentesting.md
-        - Miscellaneous: tutorials/misc.md
         - AWS:
           - Assume Role: tutorials/aws/role-assumption.md
           - Security Hub: tutorials/aws/securityhub.md

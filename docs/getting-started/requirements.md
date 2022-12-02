@@ -5,6 +5,8 @@ Prowler has been written in Python using the [AWS SDK (Boto3)](https://boto3.ama
 
 Since Prowler uses AWS Credentials under the hood, you can follow any authentication method as described [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence).
 
+### AWS Authentication
+
 Make sure you have properly configured your AWS-CLI with a valid Access Key and Region or declare AWS variables properly (or instance profile/role):
 
 ```console
@@ -30,34 +32,33 @@ Those credentials must be associated to a user or role with proper permissions t
 
 ## Azure
 
-Prowler for azure supports the following authentication types:  
+Prowler for azure supports the following authentication types:
 
-- Service principal authentication by environment variables (Enterprise Application)  
-- Current az cli credentials stored  
-- Interactive browser authentication  
-- Managed identity authentication  
+- Service principal authentication by environment variables (Enterprise Application)
+- Current az cli credentials stored
+- Interactive browser authentication
+- Managed identity authentication
 
 
-To use each one you need to pass the proper flag to the execution. Prowler fro Azure handles two types of permission scopes, which are:  
+To use each one you need to pass the proper flag to the execution. Prowler fro Azure handles two types of permission scopes, which are:
 
-- **Azure Active Directory permissions**: Used to retrieve metadata from the identity assumed by Prowler and future AAD checks (not mandatory to have access to execute the tool)  
-- **Subscription scope permissions**: Required to launch the checks against your resources, mandatory to launch the tool.  
+- **Azure Active Directory permissions**: Used to retrieve metadata from the identity assumed by Prowler and future AAD checks (not mandatory to have access to execute the tool)
+- **Subscription scope permissions**: Required to launch the checks against your resources, mandatory to launch the tool.
 
 ### Azure Active Directory scope
 
 Azure Active Directory (AAD) permissions required by the tool are the following:
 
-- `Directory.Read.All`  
-- `Policy.Read.All`  
+- `Directory.Read.All`
+- `Policy.Read.All`
 
-The best way to assign it is through the azure web console:  
+The best way to assign it is through the azure web console:
 
 ![AAD Permissions](../img/AAD-permissions.png)
 
 ### Subscriptions scope
 
-Regarding the subscription scope, Prowler by default scans all the subscriptions that is able to list, so it is required to add the following RBAC builtin roles per subscription  to the entity that is going to be assumed by the tool:  
+Regarding the subscription scope, Prowler by default scans all the subscriptions that is able to list, so it is required to add the following RBAC builtin roles per subscription  to the entity that is going to be assumed by the tool:
 
 - `Security Reader`
 - `Reader`
-
