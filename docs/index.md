@@ -10,7 +10,7 @@ Welcome to Prowler Documentation! 📄
 - You are currently in the **Getting Started** section where you can find general information and requirements to help you start with the tool.
 - In the [Tutorials](tutorials/overview) section you will see how to take advantage of all the features in Prowler.
 - In the [Contact Us](contact) section you can find how to reach us out in case of technical issues.
-- In the [FAQ](faq) section you will find questions answered covering the most common inquiries using Prowler.
+- In the [About](about) section you will find more information about the Prowler team and license.
 
 ## About Prowler
 
