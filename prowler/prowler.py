@@ -6,7 +6,7 @@ import sys
 from os import mkdir
 from os.path import isdir
 
-from config.config import (
+from prowler.config.config import (
     change_config_var,
     default_output_directory,
     output_file_timestamp,
@@ -45,7 +45,8 @@ from providers.aws.lib.security_hub.security_hub import (
 )
 from providers.azure.azure_provider import azure_provider_set_session
 
-if __name__ == "__main__":
+
+def prowler():
     # CLI Arguments
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -517,3 +518,7 @@ if __name__ == "__main__":
                 audit_output_options.output_filename,
                 audit_output_options.output_directory,
             )
+
+
+if __name__ == "__main__":
+    prowler()
