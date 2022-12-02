@@ -49,13 +49,14 @@ def report(check_findings, output_options, audit_info):
         # csv_fields = []
         file_descriptors = {}
         if output_options.output_modes:
-            # We have to create the required output files
-            file_descriptors = fill_file_descriptors(
-                output_options.output_modes,
-                output_options.output_directory,
-                output_options.output_filename,
-                audit_info,
-            )
+            if isinstance(audit_info, AWS_Audit_Info):
+                # We have to create the required output files
+                file_descriptors = fill_file_descriptors(
+                    output_options.output_modes,
+                    output_options.output_directory,
+                    output_options.output_filename,
+                    audit_info,
+                )
 
         if check_findings:
             for finding in check_findings:
@@ -325,6 +326,7 @@ def generate_csv_fields(format: Any) -> list[str]:
 
 
 def fill_json(finding_output, audit_info, finding):
+
     finding_output.AssessmentStartTime = timestamp_iso
     finding_output.FindingUniqueId = ""
     finding_output.Profile = audit_info.profile
@@ -457,7 +459,7 @@ def send_to_s3_bucket(
 
 def display_summary_table(
     findings: list,
-    audit_info: AWS_Audit_Info,
+    audit_info,
     output_options: Output_From_Options,
     provider: str,
 ):
@@ -466,8 +468,14 @@ def display_summary_table(
     try:
         if provider == "aws":
             entity_type = "Account"
+            audited_entities = audit_info.audited_account
         elif provider == "azure":
-            entity_type = "Tenant Domain"
+            if audit_info.identity.domain:
+                entity_type = "Tenant Domain"
+                audited_entities = audit_info.identity.domain
+            else:
+                entity_type = "Tenant ID/s"
+                audited_entities = " ".join(audit_info.identity.tenant_ids)
 
         if findings:
             current = {
@@ -531,12 +539,13 @@ def display_summary_table(
                 ]
             ]
             print(tabulate(overview_table, tablefmt="rounded_grid"))
+
             print(
-                f"\n{entity_type} {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
+                f"\n{entity_type} {Fore.YELLOW}{audited_entities}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
             )
             if provider == "azure":
                 print(
-                    f"\nSubscriptions scanned: {Fore.YELLOW}{' '.join(audit_info.subscriptions.keys())}{Style.RESET_ALL}"
+                    f"\nSubscriptions scanned: {Fore.YELLOW}{' '.join(audit_info.identity.subscriptions.keys())}{Style.RESET_ALL}"
                 )
             print(tabulate(findings_table, headers="keys", tablefmt="rounded_grid"))
             print(
@@ -552,7 +561,7 @@ def display_summary_table(
 
         else:
             print(
-                f"\n {Style.BRIGHT}There are no findings in {entity_type} {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL}\n"
+                f"\n {Style.BRIGHT}There are no findings in {entity_type} {Fore.YELLOW}{audited_entities}{Style.RESET_ALL}\n"
             )
 
     except Exception as error:

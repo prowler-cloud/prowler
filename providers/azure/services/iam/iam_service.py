@@ -11,9 +11,9 @@ class IAM:
     def __init__(self, audit_info):
         self.service = "iam"
         self.credentials = audit_info.credentials
-        self.subscriptions = audit_info.subscriptions
+        self.subscriptions = audit_info.identity.subscriptions
         self.clients = self.__set_clients__(
-            audit_info.subscriptions, audit_info.credentials
+            audit_info.identity.subscriptions, audit_info.credentials
         )
         self.roles = self.__get_roles__()
         self.region = "azure"
