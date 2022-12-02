@@ -49,7 +49,7 @@ def report(check_findings, output_options, audit_info):
         # csv_fields = []
         file_descriptors = {}
         if output_options.output_modes:
-            if not hasattr(audit_info, "is_azure"):
+            if isinstance(audit_info, AWS_Audit_Info):
                 # We have to create the required output files
                 file_descriptors = fill_file_descriptors(
                     output_options.output_modes,

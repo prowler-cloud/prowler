@@ -46,8 +46,11 @@ class Azure_Provider:
                     exclude_environment_credential=not sp_env_auth,
                     exclude_cli_credential=not az_cli_auth,
                     exclude_managed_identity_credential=not managed_entity_auth,
+                    # Azure Auth using Visual Studio is not supported
                     exclude_visual_studio_code_credential=True,
+                    # Azure Auth using Shared Token Cache is not supported
                     exclude_shared_token_cache_credential=True,
+                    # Azure Auth using PowerShell is not supported
                     exclude_powershell_credential=True,
                 )
             except Exception as error:
@@ -55,6 +58,7 @@ class Azure_Provider:
                 logger.critical(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                 )
+                sys.exit()
         else:
             credentials = InteractiveBrowserCredential()
 
@@ -82,7 +86,7 @@ class Azure_Provider:
     ):
         identity = Azure_Identity_Info()
 
-        # If credentials comes from service principal or browser, it the needed permissions are assigned
+        # If credentials comes from service principal or browser, if the required permissions are assigned
         # the identity can access AAD and retrieve the tenant domain name.
         # With cli also should be possible but right now it does not work, azure python package issue is coming
         # At the time of writting this with az cli creds is not working, despite that is included
@@ -112,7 +116,7 @@ class Azure_Provider:
             # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
             # should work but it doesn't, pending issue
             else:
-                identity.identity_id = "unkown user id (NO AAD permissions)"
+                identity.identity_id = "Unknown user id (NO AAD permissions)"
                 identity.identity_type = "User"
                 try:
                     logger.info(
@@ -131,7 +135,7 @@ class Azure_Provider:
                     )
         # Managed identities only can be assigned resource, resource group and subscription scope permissions
         elif managed_entity_auth:
-            identity.identity_id = "Default managed identity id"
+            identity.identity_id = "Default Managed Identity ID"
             identity.identity_type = "Managed Identity"
             # Pending extracting info from managed identity
 

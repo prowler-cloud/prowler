@@ -16,7 +16,6 @@ class Azure_Identity_Info(BaseModel):
 class Azure_Audit_Info:
     credentials: DefaultAzureCredential
     identity: Azure_Identity_Info
-    is_azure: bool
 
     def __init__(self, credentials, identity):
         self.credentials = credentials
