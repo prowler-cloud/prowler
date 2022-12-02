@@ -68,3 +68,6 @@ package-dir = {"" = "prowler"}
 
 [project.scripts]
 prowler = "prowler:prowler"
+
+[tool.pytest.ini_options]
+pythonpath = "prowler"

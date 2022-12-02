@@ -4,8 +4,6 @@ from os import path, remove
 import boto3
 import pytest
 from colorama import Fore
-from moto import mock_s3
-
 from config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
@@ -35,6 +33,7 @@ from lib.outputs.outputs import (
     set_report_color,
 )
 from lib.utils.utils import hash_sha512, open_file
+from moto import mock_s3
 from providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 

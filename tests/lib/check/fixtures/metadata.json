@@ -5,7 +5,9 @@
   ],
   "CheckID": "iam_disable_30_days_credentials",
   "CheckTitle": "Ensure credentials unused for 30 days or greater are disabled",
-  "CheckType": ["Software and Configuration Checks"],
+  "CheckType": [
+    "Software and Configuration Checks"
+  ],
   "Compliance": [
     {
       "Control": [
