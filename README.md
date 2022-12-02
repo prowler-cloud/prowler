@@ -1,6 +1,6 @@
 <p align="center">
-  <img align="center" src="docs/images/prowler-pro-dark.png#gh-dark-mode-only" width="150" height="36">
-  <img align="center" src="docs/images/prowler-pro-light.png#gh-light-mode-only" width="15%" height="15%">
+  <img align="center" src="docs/img/prowler-pro-dark.png#gh-dark-mode-only" width="150" height="36">
+  <img align="center" src="docs/img/prowler-pro-light.png#gh-light-mode-only" width="15%" height="15%">
 </p>
 <p align="center">
   <b><i>&nbsp&nbsp&nbsp See all the things you and your team can do with ProwlerPro at <a href="https://prowler.pro">prowler.pro</a></i></b>
@@ -97,6 +97,9 @@ To run prowler, you will need to specify the provider (e.g aws or azure):
 ```console
 prowler <provider>
 ```
+
+![Prowler Execution](docs/img/short-display.png)
+
 > Running the `prowler` command without options will use your environment variable credentials.
 
 By default, prowler will generate a CSV and a JSON report, however you could generate an HTML or an JSON-ASFF report with `-M` or `--output-modes`:
