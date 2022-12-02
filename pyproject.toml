@@ -55,7 +55,8 @@ dependencies = [
 # packages = ["prowler", "prowler.config", "prowler.lib", "prowler.providers"]
 [tool.setuptools]
 include-package-data = true
-# py-modules = []
+package-dir = {"" = "prowler"}
+#py-modules = ["prowler-cloud"]
 
 # [tool.setuptools.packages.find]
 # where = ["prowler"]
@@ -66,4 +67,4 @@ include-package-data = true
 "*" = ["*.yaml", "*.json"]
 
 [project.scripts]
-prowler = "prowler.prowler:prowler"
+prowler = "prowler:prowler"

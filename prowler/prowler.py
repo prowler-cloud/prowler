@@ -6,7 +6,7 @@ import sys
 from os import mkdir
 from os.path import isdir
 
-from prowler.config.config import (
+from config.config import (
     change_config_var,
     default_output_directory,
     output_file_timestamp,
