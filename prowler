@@ -164,7 +164,7 @@ if __name__ == "__main__":
         "--output-modes",
         nargs="+",
         help="Output mode, by default csv",
-        default=["csv", "json"],
+        default=["csv", "json", "html"],
         choices=["csv", "json", "json-asff", "html"],
     )
     parser.add_argument(

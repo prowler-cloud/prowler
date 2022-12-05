@@ -555,8 +555,10 @@ def display_summary_table(
                 print(f" - HTML: {output_directory}/{output_filename}.html")
             if "json-asff" in output_options.output_modes:
                 print(f" - JSON-ASFF: {output_directory}/{output_filename}.asff.json")
-            print(f" - CSV: {output_directory}/{output_filename}.csv")
-            print(f" - JSON: {output_directory}/{output_filename}.json")
+            if "csv" in output_options.output_modes:
+                print(f" - CSV: {output_directory}/{output_filename}.csv")
+            if "json" in output_options.output_modes:
+                print(f" - JSON: {output_directory}/{output_filename}.json")
 
         else:
             print(
