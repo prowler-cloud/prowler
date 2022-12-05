@@ -104,7 +104,7 @@ class Test_ec2_instance_secrets_user_data:
     def test_one_ec2_file_with_secrets(self):
         # Include launch_configurations to check
         f = open(
-            "providers/aws/services/ec2/ec2_instance_secrets_user_data/fixtures/fixture",
+            "prowler/providers/aws/services/ec2/ec2_instance_secrets_user_data/fixtures/fixture",
             "r",
         )
         secrets = f.read()

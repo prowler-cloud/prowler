@@ -2,9 +2,8 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from pydantic import BaseModel, ValidationError
-
 from lib.logger import logger
+from pydantic import BaseModel, ValidationError
 
 
 @dataclass
@@ -77,7 +76,7 @@ class Check(ABC, Check_Metadata_Model):
         """Check's init function. Calls the CheckMetadataModel init."""
         # Parse the Check's metadata file
         check_path_name = self.__class__.__module__.replace(".", "/")
-        metadata_file = f"{check_path_name}.metadata.json"
+        metadata_file = f"prowler/{check_path_name}.metadata.json"
         # Store it to validate them with Pydantic
         data = Check_Metadata_Model.parse_file(metadata_file).dict()
         # Calls parents init function

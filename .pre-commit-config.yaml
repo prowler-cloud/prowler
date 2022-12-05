@@ -57,12 +57,12 @@ repos:
     hooks:
       - id: pylint
         name: pylint
-        entry: bash -c 'pylint --disable=W,C,R,E -j 0 -rn -sn providers lib util config'
+        entry: bash -c 'pylint --disable=W,C,R,E -j 0 -rn -sn prowler/providers prowler/lib util prowler/config'
         language: system
 
       - id: pytest-check
         name: pytest-check
-        entry: bash -c 'pytest -n auto'
+        entry: bash -c 'pytest tests -n auto'
         language: system
 
       - id: bandit

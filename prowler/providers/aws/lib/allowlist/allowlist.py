@@ -3,7 +3,6 @@ import sys
 
 import yaml
 from boto3.dynamodb.conditions import Attr
-
 from lib.logger import logger
 
 
@@ -78,39 +77,53 @@ def is_allowlisted(allowlist, audited_account, check, region, resource):
                 return True
         return False
     except Exception as error:
-        logger.critical(f"{error.__class__.__name__} -- {error}")
+        logger.critical(
+            f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
+        )
         sys.exit()
 
 
 def is_allowlisted_in_check(allowlist, audited_account, check, region, resource):
-    # If there is a *, it affects to all checks
-    if "*" in allowlist["Accounts"][audited_account]["Checks"]:
-        check = "*"
-        if is_allowlisted_in_region(
-            allowlist, audited_account, check, region, resource
-        ):
-            return True
-    # Check if there is the specific check
-    if check in allowlist["Accounts"][audited_account]["Checks"]:
-        if is_allowlisted_in_region(
-            allowlist, audited_account, check, region, resource
-        ):
-            return True
-    return False
+    try:
+        # If there is a *, it affects to all checks
+        if "*" in allowlist["Accounts"][audited_account]["Checks"]:
+            check = "*"
+            if is_allowlisted_in_region(
+                allowlist, audited_account, check, region, resource
+            ):
+                return True
+        # Check if there is the specific check
+        if check in allowlist["Accounts"][audited_account]["Checks"]:
+            if is_allowlisted_in_region(
+                allowlist, audited_account, check, region, resource
+            ):
+                return True
+        return False
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
+        )
+        sys.exit()
 
 
 def is_allowlisted_in_region(allowlist, audited_account, check, region, resource):
-    # If there is a *, it affects to all regions
-    if "*" in allowlist["Accounts"][audited_account]["Checks"][check]["Regions"]:
-        for elem in allowlist["Accounts"][audited_account]["Checks"][check][
-            "Resources"
-        ]:
-            if re.search(elem, resource):
-                return True
-    # Check if there is the specific region
-    if region in allowlist["Accounts"][audited_account]["Checks"][check]["Regions"]:
-        for elem in allowlist["Accounts"][audited_account]["Checks"][check][
-            "Resources"
-        ]:
-            if re.search(elem, resource):
-                return True
+    try:
+        # If there is a *, it affects to all regions
+        if "*" in allowlist["Accounts"][audited_account]["Checks"][check]["Regions"]:
+            for elem in allowlist["Accounts"][audited_account]["Checks"][check][
+                "Resources"
+            ]:
+                if re.search(re.escape(elem), resource):
+                    return True
+        # Check if there is the specific region
+        if region in allowlist["Accounts"][audited_account]["Checks"][check]["Regions"]:
+            for elem in allowlist["Accounts"][audited_account]["Checks"][check][
+                "Resources"
+            ]:
+                if re.search(elem, resource):
+                    return True
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
+        )
+        sys.exit()

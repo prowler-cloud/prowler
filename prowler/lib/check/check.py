@@ -7,14 +7,14 @@ from types import ModuleType
 
 from alive_progress import alive_bar
 from colorama import Fore, Style
-
-from config.config import compliance_specification_dir, orange_color
 from lib.check.compliance_models import load_compliance_framework
 from lib.check.models import Check, Output_From_Options, load_check_metadata
 from lib.logger import logger
 from lib.outputs.outputs import report
 from lib.utils.utils import open_file, parse_json_file
 from providers.aws.lib.audit_info.models import AWS_Audit_Info
+
+from config.config import compliance_specification_dir, orange_color
 
 
 # Load all checks metadata
@@ -26,7 +26,7 @@ def bulk_load_checks_metadata(provider: str) -> dict:
         # Build check path name
         check_path_name = check_name.replace(".", "/")
         # Append metadata file extension
-        metadata_file = f"{check_path_name}.metadata.json"
+        metadata_file = f"prowler/{check_path_name}.metadata.json"
         # Load metadata
         check_metadata = load_check_metadata(metadata_file)
         bulk_check_metadata[check_metadata.CheckID] = check_metadata

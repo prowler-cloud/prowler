@@ -48,4 +48,4 @@ jobs:
           pipenv run vulture --exclude "contrib" --min-confidence 100 .
       - name: Test with pytest
         run: |
-          pipenv run pytest -n auto
+          pipenv run pytest tests -n auto

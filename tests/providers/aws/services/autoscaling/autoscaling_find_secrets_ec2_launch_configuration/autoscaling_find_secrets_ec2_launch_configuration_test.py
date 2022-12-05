@@ -109,7 +109,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
     def test_one_autoscaling_file_with_secrets(self):
         # Include launch_configurations to check
         f = open(
-            "providers/aws/services/autoscaling/autoscaling_find_secrets_ec2_launch_configuration/fixtures/fixture",
+            "prowler/providers/aws/services/autoscaling/autoscaling_find_secrets_ec2_launch_configuration/fixtures/fixture",
             "r",
         )
         secrets = f.read()

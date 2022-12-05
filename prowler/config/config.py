@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 from os import getcwd
 
 import yaml
-
 from lib.logger import logger
 
 timestamp = datetime.today()
@@ -20,7 +19,7 @@ banner_color = "\033[1;92m"
 compliance_specification_dir = "./compliance"
 
 # AWS services-regions matrix json
-aws_services_json_file = "providers/aws/aws_regions_by_service.json"
+aws_services_json_file = "prowler/providers/aws/aws_regions_by_service.json"
 
 default_output_directory = getcwd() + "/output"
 
@@ -30,7 +29,7 @@ csv_file_suffix = ".csv"
 json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
 html_file_suffix = ".html"
-config_yaml = "providers/aws/config.yaml"
+config_yaml = "prowler/config/config.yaml"
 
 
 def change_config_var(variable, value):

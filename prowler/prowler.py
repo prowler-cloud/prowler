@@ -6,11 +6,6 @@ import sys
 from os import mkdir
 from os.path import isdir
 
-from config.config import (
-    change_config_var,
-    default_output_directory,
-    output_file_timestamp,
-)
 from lib.banner import print_banner, print_version
 from lib.check.check import (
     bulk_load_checks_metadata,
@@ -44,6 +39,12 @@ from providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
 )
 from providers.azure.azure_provider import azure_provider_set_session
+
+from config.config import (
+    change_config_var,
+    default_output_directory,
+    output_file_timestamp,
+)
 
 
 def prowler():
@@ -239,7 +240,7 @@ def prowler():
         "--allowlist-file",
         nargs="?",
         default=None,
-        help="Path for allowlist yaml file, supports local file, S3 URI or DynamoDB ARN. See example yaml in 'providers/allowlist.yaml' for reference and format.",
+        help="Path for allowlist yaml file. See example prowler/config/allowlist.yaml for reference and format.",
     )
     parser.add_argument(
         "--verbose",
