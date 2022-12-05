@@ -704,6 +704,8 @@ def display_compliance_table(
 
 def add_html_header(file_descriptor, audit_info):
     try:
+        if not audit_info.profile:
+            audit_info.profile = "ENV"
         if isinstance(audit_info.audited_regions, list):
             audited_regions = " ".join(audit_info.audited_regions)
         elif not audit_info.audited_regions:
