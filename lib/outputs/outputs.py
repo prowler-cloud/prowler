@@ -236,7 +236,6 @@ def initialize_file_descriptor(
 
             if output_mode in ("json", "json-asff"):
                 file_descriptor.write("[")
-
             if "html" in output_mode:
                 add_html_header(file_descriptor, audit_info)
     except Exception as error:
@@ -707,6 +706,8 @@ def add_html_header(file_descriptor, audit_info):
     try:
         if isinstance(audit_info.audited_regions, list):
             audited_regions = " ".join(audit_info.audited_regions)
+        elif not audit_info.audited_regions:
+            audited_regions = "All Regions"
         else:
             audited_regions = audit_info.audited_regions
         file_descriptor.write(
