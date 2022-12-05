@@ -20,6 +20,8 @@ It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, F
 
 ## Quick Start
 
+### Installation
+
 Prowler is available as a project in [PyPI](https://pypi.org/project/moto/), thus can be installed using pip:
 
 ```bash
