@@ -71,7 +71,7 @@ if __name__ == "__main__":
         "--compliance",
         nargs="+",
         help="Compliance Framework to check against for. The format should be the following: framework_version_provider (e.g.: ens_rd2022_aws)",
-        choices=["ens_rd2022_aws"],
+        choices=["ens_rd2022_aws", "cis_1.4_aws", "cis_1.5_aws"],
     )
     group.add_argument("--categories", nargs="+", help="List of categories", default=[])
 
@@ -493,5 +493,6 @@ if __name__ == "__main__":
             findings,
             bulk_checks_metadata,
             compliance_framework,
-            audit_output_options,
+            audit_output_options.output_filename,
+            audit_output_options.output_directory,
         )
