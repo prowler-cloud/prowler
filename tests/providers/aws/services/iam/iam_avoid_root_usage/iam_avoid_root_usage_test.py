@@ -15,14 +15,14 @@ class Test_iam_avoid_root_usage:
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage.iam_client",
+            "prowler.providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
-            from providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage import (
+            from prowler.providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage import (
                 iam_avoid_root_usage,
             )
 
@@ -48,14 +48,14 @@ class Test_iam_avoid_root_usage:
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage.iam_client",
+            "prowler.providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
-            from providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage import (
+            from prowler.providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage import (
                 iam_avoid_root_usage,
             )
 
@@ -80,14 +80,14 @@ class Test_iam_avoid_root_usage:
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage.iam_client",
+            "prowler.providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
-            from providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage import (
+            from prowler.providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage import (
                 iam_avoid_root_usage,
             )
 
@@ -112,14 +112,14 @@ class Test_iam_avoid_root_usage:
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage.iam_client",
+            "prowler.providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
-            from providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage import (
+            from prowler.providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage import (
                 iam_avoid_root_usage,
             )
 

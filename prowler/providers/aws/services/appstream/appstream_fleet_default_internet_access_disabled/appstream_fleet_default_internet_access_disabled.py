@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.appstream.appstream_client import appstream_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.appstream.appstream_client import appstream_client
 
 
 # Check if there are AppStream Fleets with the default internet access enabled

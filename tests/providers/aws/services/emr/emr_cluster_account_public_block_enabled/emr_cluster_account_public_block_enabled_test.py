@@ -1,7 +1,10 @@
 from unittest import mock
 
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.emr.emr_service import BlockPublicAccessConfiguration
+
+from prowler.providers.aws.services.emr.emr_service import (
+    BlockPublicAccessConfiguration,
+)
 
 AWS_REGION = "eu-west-1"
 
@@ -16,11 +19,11 @@ class Test_emr_cluster_account_public_block_enabled:
             )
         }
         with mock.patch(
-            "providers.aws.services.emr.emr_service.EMR",
+            "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ):
             # Test Check
-            from providers.aws.services.emr.emr_cluster_account_public_block_enabled.emr_cluster_account_public_block_enabled import (
+            from prowler.providers.aws.services.emr.emr_cluster_account_public_block_enabled.emr_cluster_account_public_block_enabled import (
                 emr_cluster_account_public_block_enabled,
             )
 
@@ -45,11 +48,11 @@ class Test_emr_cluster_account_public_block_enabled:
             )
         }
         with mock.patch(
-            "providers.aws.services.emr.emr_service.EMR",
+            "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ):
             # Test Check
-            from providers.aws.services.emr.emr_cluster_account_public_block_enabled.emr_cluster_account_public_block_enabled import (
+            from prowler.providers.aws.services.emr.emr_cluster_account_public_block_enabled.emr_cluster_account_public_block_enabled import (
                 emr_cluster_account_public_block_enabled,
             )
 

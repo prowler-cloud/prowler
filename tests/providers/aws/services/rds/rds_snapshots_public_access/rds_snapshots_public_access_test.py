@@ -10,17 +10,17 @@ AWS_REGION = "us-east-1"
 class Test_rds_snapshots_public_access:
     @mock_rds
     def test_rds_no_snapshots(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.rds.rds_service import RDS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.rds.rds_service import RDS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access.rds_client",
+            "prowler.providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access.rds_client",
             new=RDS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access import (
+            from prowler.providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access import (
                 rds_snapshots_public_access,
             )
 
@@ -43,17 +43,17 @@ class Test_rds_snapshots_public_access:
         conn.create_db_snapshot(
             DBInstanceIdentifier="db-primary-1", DBSnapshotIdentifier="snapshot-1"
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.rds.rds_service import RDS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.rds.rds_service import RDS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access.rds_client",
+            "prowler.providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access.rds_client",
             new=RDS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access import (
+            from prowler.providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access import (
                 rds_snapshots_public_access,
             )
 
@@ -82,17 +82,17 @@ class Test_rds_snapshots_public_access:
         conn.create_db_snapshot(
             DBInstanceIdentifier="db-primary-1", DBSnapshotIdentifier="snapshot-1"
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.rds.rds_service import RDS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.rds.rds_service import RDS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access.rds_client",
+            "prowler.providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access.rds_client",
             new=RDS(current_audit_info),
         ) as service_client:
             # Test Check
-            from providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access import (
+            from prowler.providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access import (
                 rds_snapshots_public_access,
             )
 
@@ -123,17 +123,17 @@ class Test_rds_snapshots_public_access:
         conn.create_db_cluster_snapshot(
             DBClusterIdentifier="db-primary-1", DBClusterSnapshotIdentifier="snapshot-1"
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.rds.rds_service import RDS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.rds.rds_service import RDS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access.rds_client",
+            "prowler.providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access.rds_client",
             new=RDS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access import (
+            from prowler.providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access import (
                 rds_snapshots_public_access,
             )
 
@@ -163,17 +163,17 @@ class Test_rds_snapshots_public_access:
         conn.create_db_cluster_snapshot(
             DBClusterIdentifier="db-primary-1", DBClusterSnapshotIdentifier="snapshot-1"
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.rds.rds_service import RDS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.rds.rds_service import RDS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access.rds_client",
+            "prowler.providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access.rds_client",
             new=RDS(current_audit_info),
         ) as service_client:
             # Test Check
-            from providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access import (
+            from prowler.providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access import (
                 rds_snapshots_public_access,
             )
 

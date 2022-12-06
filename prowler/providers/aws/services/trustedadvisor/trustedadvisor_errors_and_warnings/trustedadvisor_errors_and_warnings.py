@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.trustedadvisor.trustedadvisor_client import (
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.trustedadvisor.trustedadvisor_client import (
     trustedadvisor_client,
 )
 

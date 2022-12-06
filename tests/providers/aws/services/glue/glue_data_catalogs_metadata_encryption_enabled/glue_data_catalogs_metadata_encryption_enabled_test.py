@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from providers.aws.services.glue.glue_service import CatalogEncryptionSetting
+from prowler.providers.aws.services.glue.glue_service import CatalogEncryptionSetting
 
 AWS_REGION = "us-east-1"
 
@@ -12,11 +12,11 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         glue_client.catalog_encryption_settings = []
 
         with mock.patch(
-            "providers.aws.services.glue.glue_service.Glue",
+            "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
         ):
             # Test Check
-            from providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled import (
+            from prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled import (
                 glue_data_catalogs_metadata_encryption_enabled,
             )
 
@@ -39,11 +39,11 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         glue_client.audited_account = "12345678912"
 
         with mock.patch(
-            "providers.aws.services.glue.glue_service.Glue",
+            "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
         ):
             # Test Check
-            from providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled import (
+            from prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled import (
                 glue_data_catalogs_metadata_encryption_enabled,
             )
 
@@ -72,11 +72,11 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         glue_client.audited_account = "12345678912"
 
         with mock.patch(
-            "providers.aws.services.glue.glue_service.Glue",
+            "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
         ):
             # Test Check
-            from providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled import (
+            from prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled import (
                 glue_data_catalogs_metadata_encryption_enabled,
             )
 

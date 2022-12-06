@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from providers.aws.services.glue.glue_service import DevEndpoint, SecurityConfig
+from prowler.providers.aws.services.glue.glue_service import DevEndpoint, SecurityConfig
 
 AWS_REGION = "us-east-1"
 
@@ -12,11 +12,11 @@ class Test_glue_development_endpoints_s3_encryption_enabled:
         glue_client.dev_endpoints = []
 
         with mock.patch(
-            "providers.aws.services.glue.glue_service.Glue",
+            "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
         ):
             # Test Check
-            from providers.aws.services.glue.glue_development_endpoints_s3_encryption_enabled.glue_development_endpoints_s3_encryption_enabled import (
+            from prowler.providers.aws.services.glue.glue_development_endpoints_s3_encryption_enabled.glue_development_endpoints_s3_encryption_enabled import (
                 glue_development_endpoints_s3_encryption_enabled,
             )
 
@@ -46,11 +46,11 @@ class Test_glue_development_endpoints_s3_encryption_enabled:
         ]
 
         with mock.patch(
-            "providers.aws.services.glue.glue_service.Glue",
+            "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
         ):
             # Test Check
-            from providers.aws.services.glue.glue_development_endpoints_s3_encryption_enabled.glue_development_endpoints_s3_encryption_enabled import (
+            from prowler.providers.aws.services.glue.glue_development_endpoints_s3_encryption_enabled.glue_development_endpoints_s3_encryption_enabled import (
                 glue_development_endpoints_s3_encryption_enabled,
             )
 
@@ -85,11 +85,11 @@ class Test_glue_development_endpoints_s3_encryption_enabled:
         ]
 
         with mock.patch(
-            "providers.aws.services.glue.glue_service.Glue",
+            "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
         ):
             # Test Check
-            from providers.aws.services.glue.glue_development_endpoints_s3_encryption_enabled.glue_development_endpoints_s3_encryption_enabled import (
+            from prowler.providers.aws.services.glue.glue_development_endpoints_s3_encryption_enabled.glue_development_endpoints_s3_encryption_enabled import (
                 glue_development_endpoints_s3_encryption_enabled,
             )
 
@@ -116,11 +116,11 @@ class Test_glue_development_endpoints_s3_encryption_enabled:
         glue_client.security_configs = []
 
         with mock.patch(
-            "providers.aws.services.glue.glue_service.Glue",
+            "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
         ):
             # Test Check
-            from providers.aws.services.glue.glue_development_endpoints_s3_encryption_enabled.glue_development_endpoints_s3_encryption_enabled import (
+            from prowler.providers.aws.services.glue.glue_development_endpoints_s3_encryption_enabled.glue_development_endpoints_s3_encryption_enabled import (
                 glue_development_endpoints_s3_encryption_enabled,
             )
 

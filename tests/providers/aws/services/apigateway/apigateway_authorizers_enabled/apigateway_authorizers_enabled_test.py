@@ -10,17 +10,19 @@ AWS_REGION = "us-east-1"
 class Test_apigateway_authorizers_enabled:
     @mock_apigateway
     def test_apigateway_no_rest_apis(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigateway.apigateway_service import APIGateway
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigateway.apigateway_authorizers_enabled.apigateway_authorizers_enabled.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_authorizers_enabled.apigateway_authorizers_enabled.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigateway.apigateway_authorizers_enabled.apigateway_authorizers_enabled import (
+            from prowler.providers.aws.services.apigateway.apigateway_authorizers_enabled.apigateway_authorizers_enabled import (
                 apigateway_authorizers_enabled,
             )
 
@@ -60,17 +62,19 @@ class Test_apigateway_authorizers_enabled:
             type="TOKEN",
             authorizerUri=f"arn:aws:apigateway:{apigateway_client.meta.region_name}:lambda:path/2015-03-31/functions/arn:aws:lambda:{apigateway_client.meta.region_name}:{ACCOUNT_ID}:function:{authorizer['FunctionName']}/invocations",
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigateway.apigateway_service import APIGateway
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigateway.apigateway_authorizers_enabled.apigateway_authorizers_enabled.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_authorizers_enabled.apigateway_authorizers_enabled.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigateway.apigateway_authorizers_enabled.apigateway_authorizers_enabled import (
+            from prowler.providers.aws.services.apigateway.apigateway_authorizers_enabled.apigateway_authorizers_enabled import (
                 apigateway_authorizers_enabled,
             )
 
@@ -93,17 +97,19 @@ class Test_apigateway_authorizers_enabled:
         rest_api = apigateway_client.create_rest_api(
             name="test-rest-api",
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigateway.apigateway_service import APIGateway
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigateway.apigateway_authorizers_enabled.apigateway_authorizers_enabled.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_authorizers_enabled.apigateway_authorizers_enabled.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigateway.apigateway_authorizers_enabled.apigateway_authorizers_enabled import (
+            from prowler.providers.aws.services.apigateway.apigateway_authorizers_enabled.apigateway_authorizers_enabled import (
                 apigateway_authorizers_enabled,
             )
 

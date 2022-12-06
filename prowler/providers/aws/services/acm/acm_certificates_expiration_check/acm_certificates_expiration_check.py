@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.acm.acm_client import acm_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.acm.acm_client import acm_client
 
 DAYS_TO_EXPIRE_THRESHOLD = 7
 

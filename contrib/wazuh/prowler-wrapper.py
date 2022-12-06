@@ -19,15 +19,15 @@
 #   6 - Error sending to socket
 
 
-import signal
-import sys
-import socket
 import argparse
-import subprocess
 import json
-from datetime import datetime
 import os
 import re
+import signal
+import socket
+import subprocess
+import sys
+from datetime import datetime
 
 ################################################################################
 # Constants

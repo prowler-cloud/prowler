@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 from uuid import uuid4
 
-from providers.aws.services.sqs.sqs_service import Queue
+from prowler.providers.aws.services.sqs.sqs_service import Queue
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -17,10 +17,10 @@ class Test_sqs_queues_server_side_encryption_enabled:
         sqs_client = mock.MagicMock
         sqs_client.queues = []
         with mock.patch(
-            "providers.aws.services.sqs.sqs_service.SQS",
+            "prowler.providers.aws.services.sqs.sqs_service.SQS",
             sqs_client,
         ):
-            from providers.aws.services.sqs.sqs_queues_server_side_encryption_enabled.sqs_queues_server_side_encryption_enabled import (
+            from prowler.providers.aws.services.sqs.sqs_queues_server_side_encryption_enabled.sqs_queues_server_side_encryption_enabled import (
                 sqs_queues_server_side_encryption_enabled,
             )
 
@@ -35,10 +35,10 @@ class Test_sqs_queues_server_side_encryption_enabled:
             Queue(id=queue_id, region=AWS_REGION, kms_key_id=test_kms_key_id)
         )
         with mock.patch(
-            "providers.aws.services.sqs.sqs_service.SQS",
+            "prowler.providers.aws.services.sqs.sqs_service.SQS",
             sqs_client,
         ):
-            from providers.aws.services.sqs.sqs_queues_server_side_encryption_enabled.sqs_queues_server_side_encryption_enabled import (
+            from prowler.providers.aws.services.sqs.sqs_queues_server_side_encryption_enabled.sqs_queues_server_side_encryption_enabled import (
                 sqs_queues_server_side_encryption_enabled,
             )
 
@@ -60,10 +60,10 @@ class Test_sqs_queues_server_side_encryption_enabled:
             )
         )
         with mock.patch(
-            "providers.aws.services.sqs.sqs_service.SQS",
+            "prowler.providers.aws.services.sqs.sqs_service.SQS",
             sqs_client,
         ):
-            from providers.aws.services.sqs.sqs_queues_server_side_encryption_enabled.sqs_queues_server_side_encryption_enabled import (
+            from prowler.providers.aws.services.sqs.sqs_queues_server_side_encryption_enabled.sqs_queues_server_side_encryption_enabled import (
                 sqs_queues_server_side_encryption_enabled,
             )
 

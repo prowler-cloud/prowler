@@ -21,14 +21,14 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption.iam_client",
+            "prowler.providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption.iam_client",
             new=IAM(current_audit_info),
         ):
-            from providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption import (
+            from prowler.providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption import (
                 iam_no_custom_policy_permissive_role_assumption,
             )
 
@@ -56,14 +56,14 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption.iam_client",
+            "prowler.providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption.iam_client",
             new=IAM(current_audit_info),
         ):
-            from providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption import (
+            from prowler.providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption import (
                 iam_no_custom_policy_permissive_role_assumption,
             )
 
@@ -94,14 +94,14 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
         arn = iam_client.create_policy(
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption.iam_client",
+            "prowler.providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption.iam_client",
             new=IAM(current_audit_info),
         ):
-            from providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption import (
+            from prowler.providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption import (
                 iam_no_custom_policy_permissive_role_assumption,
             )
 
@@ -129,14 +129,14 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption.iam_client",
+            "prowler.providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption.iam_client",
             new=IAM(current_audit_info),
         ):
-            from providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption import (
+            from prowler.providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption import (
                 iam_no_custom_policy_permissive_role_assumption,
             )
 
@@ -176,14 +176,14 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
             PolicyDocument=dumps(policy_document_permissive),
         )["Policy"]["Arn"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption.iam_client",
+            "prowler.providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption.iam_client",
             new=IAM(current_audit_info),
         ):
-            from providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption import (
+            from prowler.providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption import (
                 iam_no_custom_policy_permissive_role_assumption,
             )
 

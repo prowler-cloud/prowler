@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from re import search
 from unittest import mock
 
-from providers.aws.services.codebuild.codebuild_service import CodebuildProject
+from prowler.providers.aws.services.codebuild.codebuild_service import CodebuildProject
 
 
 class Test_codebuild_project_older_90_days:
@@ -17,10 +17,10 @@ class Test_codebuild_project_older_90_days:
             )
         ]
         with mock.patch(
-            "providers.aws.services.codebuild.codebuild_service.Codebuild",
+            "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
         ):
-            from providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days import (
+            from prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days import (
                 codebuild_project_older_90_days,
             )
 
@@ -43,10 +43,10 @@ class Test_codebuild_project_older_90_days:
             )
         ]
         with mock.patch(
-            "providers.aws.services.codebuild.codebuild_service.Codebuild",
+            "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
         ):
-            from providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days import (
+            from prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days import (
                 codebuild_project_older_90_days,
             )
 
@@ -70,10 +70,10 @@ class Test_codebuild_project_older_90_days:
             )
         ]
         with mock.patch(
-            "providers.aws.services.codebuild.codebuild_service.Codebuild",
+            "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
         ):
-            from providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days import (
+            from prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days import (
                 codebuild_project_older_90_days,
             )
 

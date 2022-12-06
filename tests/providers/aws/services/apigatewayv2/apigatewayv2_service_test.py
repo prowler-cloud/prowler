@@ -2,8 +2,11 @@ import botocore
 from boto3 import client, session
 from mock import patch
 from moto import mock_apigatewayv2
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.apigatewayv2.apigatewayv2_service import ApiGatewayV2
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.apigatewayv2.apigatewayv2_service import (
+    ApiGatewayV2,
+)
 
 AWS_ACCOUNT_NUMBER = 123456789012
 AWS_REGION = "us-east-1"

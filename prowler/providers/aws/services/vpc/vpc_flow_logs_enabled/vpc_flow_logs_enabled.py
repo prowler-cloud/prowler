@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.vpc.vpc_client import vpc_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
 class vpc_flow_logs_enabled(Check):

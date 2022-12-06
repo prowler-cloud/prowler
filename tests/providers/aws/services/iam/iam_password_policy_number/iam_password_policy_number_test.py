@@ -11,15 +11,15 @@ class Test_iam_password_policy_number:
         # update password policy
         iam_client.update_account_password_policy(RequireNumbers=False)
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_password_policy_number.iam_password_policy_number.iam_client",
+            "prowler.providers.aws.services.iam.iam_password_policy_number.iam_password_policy_number.iam_client",
             new=IAM(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.iam.iam_password_policy_number.iam_password_policy_number import (
+            from prowler.providers.aws.services.iam.iam_password_policy_number.iam_password_policy_number import (
                 iam_password_policy_number,
             )
 
@@ -33,15 +33,15 @@ class Test_iam_password_policy_number:
         # update password policy
         iam_client.update_account_password_policy(RequireNumbers=True)
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_password_policy_number.iam_password_policy_number.iam_client",
+            "prowler.providers.aws.services.iam.iam_password_policy_number.iam_password_policy_number.iam_client",
             new=IAM(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.iam.iam_password_policy_number.iam_password_policy_number import (
+            from prowler.providers.aws.services.iam.iam_password_policy_number.iam_password_policy_number import (
                 iam_password_policy_number,
             )
 

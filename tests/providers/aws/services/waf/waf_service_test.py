@@ -2,8 +2,9 @@ from unittest.mock import patch
 
 import botocore
 from boto3 import session
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.waf.waf_service import WAF
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.waf.waf_service import WAF
 
 AWS_ACCOUNT_NUMBER = 123456789012
 AWS_REGION = "us-east-1"
@@ -40,7 +41,7 @@ def mock_generate_regional_clients(service, audit_info):
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 @patch(
-    "providers.aws.services.waf.waf_service.generate_regional_clients",
+    "prowler.providers.aws.services.waf.waf_service.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_WAF_Service:

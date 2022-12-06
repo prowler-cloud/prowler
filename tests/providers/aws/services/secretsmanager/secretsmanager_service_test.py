@@ -5,8 +5,11 @@ from unittest.mock import patch
 from boto3 import client, resource, session
 from moto import mock_ec2, mock_iam, mock_lambda, mock_s3, mock_secretsmanager
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.secretsmanager.secretsmanager_service import SecretsManager
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.secretsmanager.secretsmanager_service import (
+    SecretsManager,
+)
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -21,7 +24,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch(
-    "providers.aws.services.secretsmanager.secretsmanager_service.generate_regional_clients",
+    "prowler.providers.aws.services.secretsmanager.secretsmanager_service.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_SecretsManager_Service:

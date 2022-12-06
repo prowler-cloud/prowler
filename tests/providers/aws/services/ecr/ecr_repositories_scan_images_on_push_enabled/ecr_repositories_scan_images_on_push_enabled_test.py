@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from providers.aws.services.ecr.ecr_service import Repository
+from prowler.providers.aws.services.ecr.ecr_service import Repository
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -40,10 +40,10 @@ class Test_ecr_repositories_scan_images_on_push_enabled:
         )
 
         with mock.patch(
-            "providers.aws.services.ecr.ecr_service.ECR",
+            "prowler.providers.aws.services.ecr.ecr_service.ECR",
             ecr_client,
         ):
-            from providers.aws.services.ecr.ecr_repositories_scan_images_on_push_enabled.ecr_repositories_scan_images_on_push_enabled import (
+            from prowler.providers.aws.services.ecr.ecr_repositories_scan_images_on_push_enabled.ecr_repositories_scan_images_on_push_enabled import (
                 ecr_repositories_scan_images_on_push_enabled,
             )
 
@@ -71,10 +71,10 @@ class Test_ecr_repositories_scan_images_on_push_enabled:
         )
 
         with mock.patch(
-            "providers.aws.services.ecr.ecr_service.ECR",
+            "prowler.providers.aws.services.ecr.ecr_service.ECR",
             ecr_client,
         ):
-            from providers.aws.services.ecr.ecr_repositories_scan_images_on_push_enabled.ecr_repositories_scan_images_on_push_enabled import (
+            from prowler.providers.aws.services.ecr.ecr_repositories_scan_images_on_push_enabled.ecr_repositories_scan_images_on_push_enabled import (
                 ecr_repositories_scan_images_on_push_enabled,
             )
 

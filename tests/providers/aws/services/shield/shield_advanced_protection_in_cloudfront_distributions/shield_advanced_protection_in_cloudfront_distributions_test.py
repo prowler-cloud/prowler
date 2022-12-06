@@ -1,8 +1,9 @@
 from unittest import mock
 
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.cloudfront.cloudfront_service import Distribution
-from providers.aws.services.shield.shield_service import Protection
+
+from prowler.providers.aws.services.cloudfront.cloudfront_service import Distribution
+from prowler.providers.aws.services.shield.shield_service import Protection
 
 AWS_REGION = "eu-west-1"
 
@@ -15,14 +16,14 @@ class Test_shield_advanced_protection_in_cloudfront_distributions:
         # CloudFront Client
         cloudfront_client = mock.MagicMock
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_cloudfront_distributions.shield_advanced_protection_in_cloudfront_distributions import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_cloudfront_distributions.shield_advanced_protection_in_cloudfront_distributions import (
                 shield_advanced_protection_in_cloudfront_distributions,
             )
 
@@ -60,14 +61,14 @@ class Test_shield_advanced_protection_in_cloudfront_distributions:
         }
 
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_cloudfront_distributions.shield_advanced_protection_in_cloudfront_distributions import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_cloudfront_distributions.shield_advanced_protection_in_cloudfront_distributions import (
                 shield_advanced_protection_in_cloudfront_distributions,
             )
 
@@ -104,14 +105,14 @@ class Test_shield_advanced_protection_in_cloudfront_distributions:
         shield_client.protections = {}
 
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_cloudfront_distributions.shield_advanced_protection_in_cloudfront_distributions import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_cloudfront_distributions.shield_advanced_protection_in_cloudfront_distributions import (
                 shield_advanced_protection_in_cloudfront_distributions,
             )
 
@@ -148,14 +149,14 @@ class Test_shield_advanced_protection_in_cloudfront_distributions:
         shield_client.protections = {}
 
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_cloudfront_distributions.shield_advanced_protection_in_cloudfront_distributions import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_cloudfront_distributions.shield_advanced_protection_in_cloudfront_distributions import (
                 shield_advanced_protection_in_cloudfront_distributions,
             )
 

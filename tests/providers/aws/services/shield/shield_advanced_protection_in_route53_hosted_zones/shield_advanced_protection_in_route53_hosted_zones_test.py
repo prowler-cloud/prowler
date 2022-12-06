@@ -1,7 +1,7 @@
 from unittest import mock
 
-from providers.aws.services.route53.route53_service import HostedZone
-from providers.aws.services.shield.shield_service import Protection
+from prowler.providers.aws.services.route53.route53_service import HostedZone
+from prowler.providers.aws.services.shield.shield_service import Protection
 
 AWS_REGION = "eu-west-1"
 
@@ -14,14 +14,14 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
         # Route53 Client
         route53_client = mock.MagicMock
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.services.route53.route53_service.Route53",
+            "prowler.providers.aws.services.route53.route53_service.Route53",
             new=route53_client,
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_route53_hosted_zones.shield_advanced_protection_in_route53_hosted_zones import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_route53_hosted_zones.shield_advanced_protection_in_route53_hosted_zones import (
                 shield_advanced_protection_in_route53_hosted_zones,
             )
 
@@ -64,14 +64,14 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
         }
 
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.services.route53.route53_service.Route53",
+            "prowler.providers.aws.services.route53.route53_service.Route53",
             new=route53_client,
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_route53_hosted_zones.shield_advanced_protection_in_route53_hosted_zones import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_route53_hosted_zones.shield_advanced_protection_in_route53_hosted_zones import (
                 shield_advanced_protection_in_route53_hosted_zones,
             )
 
@@ -113,14 +113,14 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
         shield_client.protections = {}
 
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.services.route53.route53_service.Route53",
+            "prowler.providers.aws.services.route53.route53_service.Route53",
             new=route53_client,
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_route53_hosted_zones.shield_advanced_protection_in_route53_hosted_zones import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_route53_hosted_zones.shield_advanced_protection_in_route53_hosted_zones import (
                 shield_advanced_protection_in_route53_hosted_zones,
             )
 
@@ -162,14 +162,14 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
         shield_client.protections = {}
 
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.services.route53.route53_service.Route53",
+            "prowler.providers.aws.services.route53.route53_service.Route53",
             new=route53_client,
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_route53_hosted_zones.shield_advanced_protection_in_route53_hosted_zones import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_route53_hosted_zones.shield_advanced_protection_in_route53_hosted_zones import (
                 shield_advanced_protection_in_route53_hosted_zones,
             )
 

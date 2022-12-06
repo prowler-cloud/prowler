@@ -1,7 +1,8 @@
 from unittest import mock
 
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.glacier.glacier_service import Vault
+
+from prowler.providers.aws.services.glacier.glacier_service import Vault
 
 AWS_REGION = "eu-west-1"
 
@@ -11,11 +12,11 @@ class Test_glacier_vaults_policy_public_access:
         glacier_client = mock.MagicMock
         glacier_client.vaults = {}
         with mock.patch(
-            "providers.aws.services.glacier.glacier_service.Glacier",
+            "prowler.providers.aws.services.glacier.glacier_service.Glacier",
             new=glacier_client,
         ):
             # Test Check
-            from providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
+            from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
                 glacier_vaults_policy_public_access,
             )
 
@@ -39,11 +40,11 @@ class Test_glacier_vaults_policy_public_access:
             )
         }
         with mock.patch(
-            "providers.aws.services.glacier.glacier_service.Glacier",
+            "prowler.providers.aws.services.glacier.glacier_service.Glacier",
             new=glacier_client,
         ):
             # Test Check
-            from providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
+            from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
                 glacier_vaults_policy_public_access,
             )
 
@@ -93,11 +94,11 @@ class Test_glacier_vaults_policy_public_access:
             )
         }
         with mock.patch(
-            "providers.aws.services.glacier.glacier_service.Glacier",
+            "prowler.providers.aws.services.glacier.glacier_service.Glacier",
             new=glacier_client,
         ):
             # Test Check
-            from providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
+            from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
                 glacier_vaults_policy_public_access,
             )
 
@@ -147,11 +148,11 @@ class Test_glacier_vaults_policy_public_access:
             )
         }
         with mock.patch(
-            "providers.aws.services.glacier.glacier_service.Glacier",
+            "prowler.providers.aws.services.glacier.glacier_service.Glacier",
             new=glacier_client,
         ):
             # Test Check
-            from providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
+            from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
                 glacier_vaults_policy_public_access,
             )
 
@@ -201,11 +202,11 @@ class Test_glacier_vaults_policy_public_access:
             )
         }
         with mock.patch(
-            "providers.aws.services.glacier.glacier_service.Glacier",
+            "prowler.providers.aws.services.glacier.glacier_service.Glacier",
             new=glacier_client,
         ):
             # Test Check
-            from providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
+            from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
                 glacier_vaults_policy_public_access,
             )
 
@@ -259,11 +260,11 @@ class Test_glacier_vaults_policy_public_access:
             )
         }
         with mock.patch(
-            "providers.aws.services.glacier.glacier_service.Glacier",
+            "prowler.providers.aws.services.glacier.glacier_service.Glacier",
             new=glacier_client,
         ):
             # Test Check
-            from providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
+            from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
                 glacier_vaults_policy_public_access,
             )
 

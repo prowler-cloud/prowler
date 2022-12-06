@@ -1,7 +1,11 @@
 from unittest import mock
 
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.route53.route53_service import HostedZone, LoggingConfig
+
+from prowler.providers.aws.services.route53.route53_service import (
+    HostedZone,
+    LoggingConfig,
+)
 
 AWS_REGION = "us-east-1"
 
@@ -12,11 +16,11 @@ class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
         route53.hosted_zones = {}
 
         with mock.patch(
-            "providers.aws.services.route53.route53_service.Route53",
+            "prowler.providers.aws.services.route53.route53_service.Route53",
             new=route53,
         ):
             # Test Check
-            from providers.aws.services.route53.route53_public_hosted_zones_cloudwatch_logging_enabled.route53_public_hosted_zones_cloudwatch_logging_enabled import (
+            from prowler.providers.aws.services.route53.route53_public_hosted_zones_cloudwatch_logging_enabled.route53_public_hosted_zones_cloudwatch_logging_enabled import (
                 route53_public_hosted_zones_cloudwatch_logging_enabled,
             )
 
@@ -45,11 +49,11 @@ class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
         }
 
         with mock.patch(
-            "providers.aws.services.route53.route53_service.Route53",
+            "prowler.providers.aws.services.route53.route53_service.Route53",
             new=route53,
         ):
             # Test Check
-            from providers.aws.services.route53.route53_public_hosted_zones_cloudwatch_logging_enabled.route53_public_hosted_zones_cloudwatch_logging_enabled import (
+            from prowler.providers.aws.services.route53.route53_public_hosted_zones_cloudwatch_logging_enabled.route53_public_hosted_zones_cloudwatch_logging_enabled import (
                 route53_public_hosted_zones_cloudwatch_logging_enabled,
             )
 
@@ -80,11 +84,11 @@ class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
         }
 
         with mock.patch(
-            "providers.aws.services.route53.route53_service.Route53",
+            "prowler.providers.aws.services.route53.route53_service.Route53",
             new=route53,
         ):
             # Test Check
-            from providers.aws.services.route53.route53_public_hosted_zones_cloudwatch_logging_enabled.route53_public_hosted_zones_cloudwatch_logging_enabled import (
+            from prowler.providers.aws.services.route53.route53_public_hosted_zones_cloudwatch_logging_enabled.route53_public_hosted_zones_cloudwatch_logging_enabled import (
                 route53_public_hosted_zones_cloudwatch_logging_enabled,
             )
 
@@ -115,11 +119,11 @@ class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
         }
 
         with mock.patch(
-            "providers.aws.services.route53.route53_service.Route53",
+            "prowler.providers.aws.services.route53.route53_service.Route53",
             new=route53,
         ):
             # Test Check
-            from providers.aws.services.route53.route53_public_hosted_zones_cloudwatch_logging_enabled.route53_public_hosted_zones_cloudwatch_logging_enabled import (
+            from prowler.providers.aws.services.route53.route53_public_hosted_zones_cloudwatch_logging_enabled.route53_public_hosted_zones_cloudwatch_logging_enabled import (
                 route53_public_hosted_zones_cloudwatch_logging_enabled,
             )
 

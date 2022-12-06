@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 from uuid import uuid4
 
-from providers.aws.services.workspaces.workspaces_service import WorkSpace
+from prowler.providers.aws.services.workspaces.workspaces_service import WorkSpace
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -15,10 +15,10 @@ class Test_workspaces_volume_encryption_enabled:
         workspaces_client = mock.MagicMock
         workspaces_client.workspaces = []
         with mock.patch(
-            "providers.aws.services.workspaces.workspaces_service.WorkSpaces",
+            "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
             workspaces_client,
         ):
-            from providers.aws.services.workspaces.workspaces_volume_encryption_enabled.workspaces_volume_encryption_enabled import (
+            from prowler.providers.aws.services.workspaces.workspaces_volume_encryption_enabled.workspaces_volume_encryption_enabled import (
                 workspaces_volume_encryption_enabled,
             )
 
@@ -38,10 +38,10 @@ class Test_workspaces_volume_encryption_enabled:
             )
         )
         with mock.patch(
-            "providers.aws.services.workspaces.workspaces_service.WorkSpaces",
+            "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
             workspaces_client,
         ):
-            from providers.aws.services.workspaces.workspaces_volume_encryption_enabled.workspaces_volume_encryption_enabled import (
+            from prowler.providers.aws.services.workspaces.workspaces_volume_encryption_enabled.workspaces_volume_encryption_enabled import (
                 workspaces_volume_encryption_enabled,
             )
 
@@ -67,10 +67,10 @@ class Test_workspaces_volume_encryption_enabled:
             )
         )
         with mock.patch(
-            "providers.aws.services.workspaces.workspaces_service.WorkSpaces",
+            "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
             workspaces_client,
         ):
-            from providers.aws.services.workspaces.workspaces_volume_encryption_enabled.workspaces_volume_encryption_enabled import (
+            from prowler.providers.aws.services.workspaces.workspaces_volume_encryption_enabled.workspaces_volume_encryption_enabled import (
                 workspaces_volume_encryption_enabled,
             )
 
@@ -94,10 +94,10 @@ class Test_workspaces_volume_encryption_enabled:
             )
         )
         with mock.patch(
-            "providers.aws.services.workspaces.workspaces_service.WorkSpaces",
+            "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
             workspaces_client,
         ):
-            from providers.aws.services.workspaces.workspaces_volume_encryption_enabled.workspaces_volume_encryption_enabled import (
+            from prowler.providers.aws.services.workspaces.workspaces_volume_encryption_enabled.workspaces_volume_encryption_enabled import (
                 workspaces_volume_encryption_enabled,
             )
 
@@ -121,10 +121,10 @@ class Test_workspaces_volume_encryption_enabled:
             )
         )
         with mock.patch(
-            "providers.aws.services.workspaces.workspaces_service.WorkSpaces",
+            "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
             workspaces_client,
         ):
-            from providers.aws.services.workspaces.workspaces_volume_encryption_enabled.workspaces_volume_encryption_enabled import (
+            from prowler.providers.aws.services.workspaces.workspaces_volume_encryption_enabled.workspaces_volume_encryption_enabled import (
                 workspaces_volume_encryption_enabled,
             )
 

@@ -1,5 +1,7 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.apigatewayv2.apigatewayv2_client import apigatewayv2_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.apigatewayv2.apigatewayv2_client import (
+    apigatewayv2_client,
+)
 
 
 class apigatewayv2_authorizers_enabled(Check):

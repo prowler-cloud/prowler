@@ -1,14 +1,14 @@
 import os
 from unittest import mock
 
-from lib.check.check import (
+from prowler.lib.check.check import (
     bulk_load_compliance_frameworks,
     exclude_checks_to_run,
     exclude_services_to_run,
     parse_checks_from_compliance_framework,
     parse_checks_from_file,
 )
-from lib.check.models import load_check_metadata
+from prowler.lib.check.models import load_check_metadata
 
 
 class Test_Check:
@@ -127,7 +127,7 @@ class Test_Check:
             },
         }
         with mock.patch(
-            "lib.check.check.compliance_specification_dir",
+            "prowler.lib.check.check.compliance_specification_dir",
             new=f"{os.path.dirname(os.path.realpath(__file__))}/fixtures",
         ):
             provider = "aws"
@@ -150,7 +150,7 @@ class Test_Check:
             },
         }
         with mock.patch(
-            "lib.check.check.compliance_specification_dir",
+            "prowler.lib.check.check.compliance_specification_dir",
             new=f"{os.path.dirname(os.path.realpath(__file__))}/fixtures",
         ):
             provider = "aws"
@@ -169,7 +169,7 @@ class Test_Check:
             "expected": set(),
         }
         with mock.patch(
-            "lib.check.check.compliance_specification_dir",
+            "prowler.lib.check.check.compliance_specification_dir",
             new=f"{os.path.dirname(os.path.realpath(__file__))}/fixtures",
         ):
             provider = "aws"

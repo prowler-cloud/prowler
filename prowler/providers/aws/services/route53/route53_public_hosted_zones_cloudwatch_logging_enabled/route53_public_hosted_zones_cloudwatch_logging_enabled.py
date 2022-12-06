@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.route53.route53_client import route53_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.route53.route53_client import route53_client
 
 
 class route53_public_hosted_zones_cloudwatch_logging_enabled(Check):

@@ -11,14 +11,14 @@ class Test_iam_user_hardware_mfa_enabled_test:
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_user_hardware_mfa_enabled.iam_user_hardware_mfa_enabled.iam_client",
+            "prowler.providers.aws.services.iam.iam_user_hardware_mfa_enabled.iam_user_hardware_mfa_enabled.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
-            from providers.aws.services.iam.iam_user_hardware_mfa_enabled.iam_user_hardware_mfa_enabled import (
+            from prowler.providers.aws.services.iam.iam_user_hardware_mfa_enabled.iam_user_hardware_mfa_enabled import (
                 iam_user_hardware_mfa_enabled,
             )
 
@@ -39,14 +39,14 @@ class Test_iam_user_hardware_mfa_enabled_test:
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM, MFADevice
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM, MFADevice
 
         with mock.patch(
-            "providers.aws.services.iam.iam_user_hardware_mfa_enabled.iam_user_hardware_mfa_enabled.iam_client",
+            "prowler.providers.aws.services.iam.iam_user_hardware_mfa_enabled.iam_user_hardware_mfa_enabled.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
-            from providers.aws.services.iam.iam_user_hardware_mfa_enabled.iam_user_hardware_mfa_enabled import (
+            from prowler.providers.aws.services.iam.iam_user_hardware_mfa_enabled.iam_user_hardware_mfa_enabled import (
                 iam_user_hardware_mfa_enabled,
             )
 
@@ -73,14 +73,14 @@ class Test_iam_user_hardware_mfa_enabled_test:
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM, MFADevice
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM, MFADevice
 
         with mock.patch(
-            "providers.aws.services.iam.iam_user_hardware_mfa_enabled.iam_user_hardware_mfa_enabled.iam_client",
+            "prowler.providers.aws.services.iam.iam_user_hardware_mfa_enabled.iam_user_hardware_mfa_enabled.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
-            from providers.aws.services.iam.iam_user_hardware_mfa_enabled.iam_user_hardware_mfa_enabled import (
+            from prowler.providers.aws.services.iam.iam_user_hardware_mfa_enabled.iam_user_hardware_mfa_enabled import (
                 iam_user_hardware_mfa_enabled,
             )
 

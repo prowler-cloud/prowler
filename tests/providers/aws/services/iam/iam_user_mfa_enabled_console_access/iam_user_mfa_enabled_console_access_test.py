@@ -11,14 +11,14 @@ class Test_iam_user_mfa_enabled_console_access_test:
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
+            "prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
-            from providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access import (
+            from prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access import (
                 iam_user_mfa_enabled_console_access,
             )
 
@@ -41,14 +41,14 @@ class Test_iam_user_mfa_enabled_console_access_test:
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
+            "prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
-            from providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access import (
+            from prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access import (
                 iam_user_mfa_enabled_console_access,
             )
 
@@ -72,14 +72,14 @@ class Test_iam_user_mfa_enabled_console_access_test:
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
+            "prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
-            from providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access import (
+            from prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access import (
                 iam_user_mfa_enabled_console_access,
             )
 

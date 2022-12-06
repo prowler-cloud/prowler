@@ -9,17 +9,17 @@ AWS_REGION = "us-east-1"
 class Test_kms_cmk_are_used:
     @mock_kms
     def test_kms_no_keys(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.kms.kms_service import KMS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.kms.kms_service import KMS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
+            "prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
             new=KMS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used import (
+            from prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used import (
                 kms_cmk_are_used,
             )
 
@@ -34,17 +34,17 @@ class Test_kms_cmk_are_used:
         kms_client = client("kms", region_name=AWS_REGION)
         # Create enabled KMS key
         key = kms_client.create_key()["KeyMetadata"]
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.kms.kms_service import KMS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.kms.kms_service import KMS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
+            "prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
             new=KMS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used import (
+            from prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used import (
                 kms_cmk_are_used,
             )
 
@@ -64,17 +64,17 @@ class Test_kms_cmk_are_used:
         # Creaty KMS key with deletion
         key = kms_client.create_key()["KeyMetadata"]
         kms_client.schedule_key_deletion(KeyId=key["KeyId"])
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.kms.kms_service import KMS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.kms.kms_service import KMS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
+            "prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
             new=KMS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used import (
+            from prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used import (
                 kms_cmk_are_used,
             )
 
@@ -97,17 +97,17 @@ class Test_kms_cmk_are_used:
         # Creaty KMS key with deletion
         key = kms_client.create_key()["KeyMetadata"]
         kms_client.disable_key(KeyId=key["KeyId"])
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.kms.kms_service import KMS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.kms.kms_service import KMS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
+            "prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
             new=KMS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used import (
+            from prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used import (
                 kms_cmk_are_used,
             )
 

@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 from uuid import uuid4
 
-from providers.aws.services.guardduty.guardduty_service import Detector
+from prowler.providers.aws.services.guardduty.guardduty_service import Detector
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -15,10 +15,10 @@ class Test_guardduty_is_enabled:
         guardduty_client = mock.MagicMock
         guardduty_client.detectors = []
         with mock.patch(
-            "providers.aws.services.guardduty.guardduty_service.GuardDuty",
+            "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
             guardduty_client,
         ):
-            from providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled import (
+            from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled import (
                 guardduty_is_enabled,
             )
 
@@ -37,10 +37,10 @@ class Test_guardduty_is_enabled:
             )
         )
         with mock.patch(
-            "providers.aws.services.guardduty.guardduty_service.GuardDuty",
+            "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
             guardduty_client,
         ):
-            from providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled import (
+            from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled import (
                 guardduty_is_enabled,
             )
 
@@ -63,10 +63,10 @@ class Test_guardduty_is_enabled:
             )
         )
         with mock.patch(
-            "providers.aws.services.guardduty.guardduty_service.GuardDuty",
+            "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
             guardduty_client,
         ):
-            from providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled import (
+            from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled import (
                 guardduty_is_enabled,
             )
 
@@ -88,10 +88,10 @@ class Test_guardduty_is_enabled:
             )
         )
         with mock.patch(
-            "providers.aws.services.guardduty.guardduty_service.GuardDuty",
+            "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
             guardduty_client,
         ):
-            from providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled import (
+            from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled import (
                 guardduty_is_enabled,
             )
 

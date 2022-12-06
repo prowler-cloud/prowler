@@ -3,8 +3,8 @@ from enum import Enum
 
 from pydantic import BaseModel
 
-from lib.logger import logger
-from providers.aws.aws_provider import generate_regional_clients
+from prowler.lib.logger import logger
+from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
 ################## CodeArtifact

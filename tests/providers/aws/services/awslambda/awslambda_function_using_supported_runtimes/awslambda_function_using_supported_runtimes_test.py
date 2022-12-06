@@ -1,7 +1,8 @@
 from unittest import mock
 
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.awslambda.awslambda_service import Function
+
+from prowler.providers.aws.services.awslambda.awslambda_service import Function
 
 AWS_REGION = "us-east-1"
 
@@ -29,11 +30,11 @@ class Test_awslambda_function_using_supported_runtimes:
         lambda_client.functions = {}
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes import (
                 awslambda_function_using_supported_runtimes,
             )
 
@@ -59,14 +60,14 @@ class Test_awslambda_function_using_supported_runtimes:
         }
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ), mock.patch(
-            "providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes.get_config_var",
+            "prowler.providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes.get_config_var",
             new=mock_get_config_var,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes import (
                 awslambda_function_using_supported_runtimes,
             )
 
@@ -100,14 +101,14 @@ class Test_awslambda_function_using_supported_runtimes:
         }
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ), mock.patch(
-            "providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes.get_config_var",
+            "prowler.providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes.get_config_var",
             new=mock_get_config_var,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes import (
                 awslambda_function_using_supported_runtimes,
             )
 

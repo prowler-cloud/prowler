@@ -1,26 +1,26 @@
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": [
-                "ds:ListAuthorizedApplications",
-                "ec2:GetEbsEncryptionByDefault",
-                "ecr:Describe*",
-                "elasticfilesystem:DescribeBackupPolicy",
-                "glue:GetConnections",
-                "glue:GetSecurityConfiguration",
-                "glue:SearchTables",
-                "lambda:GetFunction",
-                "s3:GetAccountPublicAccessBlock",
-                "shield:DescribeProtection",
-                "shield:GetSubscriptionState",
-                "ssm:GetDocument",
-                "support:Describe*",
-                "tag:GetTagKeys"
-            ],
-            "Resource": "*",
-            "Effect": "Allow",
-            "Sid": "AllowMoreReadForProwler"
-        }
-    ]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "ds:ListAuthorizedApplications",
+        "ec2:GetEbsEncryptionByDefault",
+        "ecr:Describe*",
+        "elasticfilesystem:DescribeBackupPolicy",
+        "glue:GetConnections",
+        "glue:GetSecurityConfiguration",
+        "glue:SearchTables",
+        "lambda:GetFunction",
+        "s3:GetAccountPublicAccessBlock",
+        "shield:DescribeProtection",
+        "shield:GetSubscriptionState",
+        "ssm:GetDocument",
+        "support:Describe*",
+        "tag:GetTagKeys"
+      ],
+      "Resource": "*",
+      "Effect": "Allow",
+      "Sid": "AllowMoreReadForProwler"
+    }
+  ]
 }

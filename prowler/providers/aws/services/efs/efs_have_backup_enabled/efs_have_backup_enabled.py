@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.efs.efs_client import efs_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.efs.efs_client import efs_client
 
 
 class efs_have_backup_enabled(Check):

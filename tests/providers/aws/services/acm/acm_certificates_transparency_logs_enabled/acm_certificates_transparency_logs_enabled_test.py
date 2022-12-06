@@ -16,17 +16,17 @@ class Test_acm_certificates_transparency_logs_enabled:
             DomainName="test.com",
             Options={"CertificateTransparencyLoggingPreference": "ENABLED"},
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.acm.acm_service import ACM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.acm.acm_service import ACM
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled.acm_client",
+            "prowler.providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled.acm_client",
             new=ACM(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled import (
+            from prowler.providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled import (
                 acm_certificates_transparency_logs_enabled,
             )
 
@@ -51,17 +51,17 @@ class Test_acm_certificates_transparency_logs_enabled:
             DomainName="test.com",
             Options={"CertificateTransparencyLoggingPreference": "ENABLED"},
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.acm.acm_service import ACM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.acm.acm_service import ACM
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled.acm_client",
+            "prowler.providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled.acm_client",
             new=ACM(current_audit_info),
         ) as service_client:
             # Test Check
-            from providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled import (
+            from prowler.providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled import (
                 acm_certificates_transparency_logs_enabled,
             )
 
@@ -86,17 +86,17 @@ class Test_acm_certificates_transparency_logs_enabled:
         certificate = acm_client.request_certificate(
             DomainName="test.com",
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.acm.acm_service import ACM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.acm.acm_service import ACM
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled.acm_client",
+            "prowler.providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled.acm_client",
             new=ACM(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled import (
+            from prowler.providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled import (
                 acm_certificates_transparency_logs_enabled,
             )
 

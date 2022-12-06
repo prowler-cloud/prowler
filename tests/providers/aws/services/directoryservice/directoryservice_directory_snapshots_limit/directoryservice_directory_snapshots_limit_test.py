@@ -1,6 +1,6 @@
 from unittest import mock
 
-from providers.aws.services.directoryservice.directoryservice_service import (
+from prowler.providers.aws.services.directoryservice.directoryservice_service import (
     Directory,
     DirectoryType,
     SnapshotLimit,
@@ -14,11 +14,11 @@ class Test_directoryservice_directory_snapshots_limit:
         directoryservice_client = mock.MagicMock
         directoryservice_client.directories = {}
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_directory_snapshots_limit.directoryservice_directory_snapshots_limit import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_directory_snapshots_limit.directoryservice_directory_snapshots_limit import (
                 directoryservice_directory_snapshots_limit,
             )
 
@@ -48,11 +48,11 @@ class Test_directoryservice_directory_snapshots_limit:
             )
         }
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_directory_snapshots_limit.directoryservice_directory_snapshots_limit import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_directory_snapshots_limit.directoryservice_directory_snapshots_limit import (
                 directoryservice_directory_snapshots_limit,
             )
 
@@ -89,11 +89,11 @@ class Test_directoryservice_directory_snapshots_limit:
             )
         }
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_directory_snapshots_limit.directoryservice_directory_snapshots_limit import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_directory_snapshots_limit.directoryservice_directory_snapshots_limit import (
                 directoryservice_directory_snapshots_limit,
             )
 
@@ -130,11 +130,11 @@ class Test_directoryservice_directory_snapshots_limit:
             )
         }
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_directory_snapshots_limit.directoryservice_directory_snapshots_limit import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_directory_snapshots_limit.directoryservice_directory_snapshots_limit import (
                 directoryservice_directory_snapshots_limit,
             )
 
@@ -171,11 +171,11 @@ class Test_directoryservice_directory_snapshots_limit:
             )
         }
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_directory_snapshots_limit.directoryservice_directory_snapshots_limit import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_directory_snapshots_limit.directoryservice_directory_snapshots_limit import (
                 directoryservice_directory_snapshots_limit,
             )
 

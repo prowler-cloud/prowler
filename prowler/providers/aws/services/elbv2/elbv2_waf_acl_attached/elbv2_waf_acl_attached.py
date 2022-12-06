@@ -1,7 +1,7 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.elbv2.elbv2_client import elbv2_client
-from providers.aws.services.waf.waf_client import waf_client
-from providers.aws.services.wafv2.wafv2_client import wafv2_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.elbv2.elbv2_client import elbv2_client
+from prowler.providers.aws.services.waf.waf_client import waf_client
+from prowler.providers.aws.services.wafv2.wafv2_client import wafv2_client
 
 
 class elbv2_waf_acl_attached(Check):

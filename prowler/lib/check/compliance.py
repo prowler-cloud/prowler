@@ -1,7 +1,10 @@
 import sys
 
-from lib.check.compliance_models import Compliance_Base_Model, Compliance_Requirement
-from lib.logger import logger
+from prowler.lib.check.compliance_models import (
+    Compliance_Base_Model,
+    Compliance_Requirement,
+)
+from prowler.lib.logger import logger
 
 
 def update_checks_metadata_with_compliance(

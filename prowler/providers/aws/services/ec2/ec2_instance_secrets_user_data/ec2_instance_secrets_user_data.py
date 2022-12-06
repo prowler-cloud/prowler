@@ -5,8 +5,8 @@ from base64 import b64decode
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
-from lib.check.models import Check, Check_Report
-from providers.aws.services.ec2.ec2_client import ec2_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
 class ec2_instance_secrets_user_data(Check):

@@ -55,7 +55,7 @@ cp /var/ossec/integrations/prowler/integrations/prowler_rules.xml /var/ossec/etc
 ```
 
 Edit `/var/ossec/etc/ossec.conf` and add the following wodle configuration. Remember that here `timeout 21600 seconds` is 6 hours, just to allow Prowler runs completely in case of a large account. The interval recommended is 1d:
-```xml 
+```xml
   <wodle name="command">
     <disabled>no</disabled>
     <tag>aws-prowler: account1</tag>

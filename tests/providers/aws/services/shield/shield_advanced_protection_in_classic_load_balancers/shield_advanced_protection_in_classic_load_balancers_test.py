@@ -3,8 +3,9 @@ from unittest import mock
 from boto3 import client, resource, session
 from moto import mock_ec2, mock_elb
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.shield.shield_service import Protection
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.shield.shield_service import Protection
 
 AWS_REGION = "eu-west-1"
 
@@ -38,20 +39,20 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
         shield_client = mock.MagicMock
         shield_client.enabled = False
 
-        from providers.aws.services.elb.elb_service import ELB
+        from prowler.providers.aws.services.elb.elb_service import ELB
 
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=self.set_mocked_audit_info(),
         ), mock.patch(
-            "providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
+            "prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
             new=ELB(self.set_mocked_audit_info()),
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers import (
                 shield_advanced_protection_in_classic_load_balancers,
             )
 
@@ -98,20 +99,20 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
             )
         }
 
-        from providers.aws.services.elb.elb_service import ELB
+        from prowler.providers.aws.services.elb.elb_service import ELB
 
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=self.set_mocked_audit_info(),
         ), mock.patch(
-            "providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
+            "prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
             new=ELB(self.set_mocked_audit_info()),
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers import (
                 shield_advanced_protection_in_classic_load_balancers,
             )
 
@@ -157,20 +158,20 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
         shield_client.region = AWS_REGION
         shield_client.protections = {}
 
-        from providers.aws.services.elb.elb_service import ELB
+        from prowler.providers.aws.services.elb.elb_service import ELB
 
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=self.set_mocked_audit_info(),
         ), mock.patch(
-            "providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
+            "prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
             new=ELB(self.set_mocked_audit_info()),
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers import (
                 shield_advanced_protection_in_classic_load_balancers,
             )
 
@@ -216,20 +217,20 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
         shield_client.region = AWS_REGION
         shield_client.protections = {}
 
-        from providers.aws.services.elb.elb_service import ELB
+        from prowler.providers.aws.services.elb.elb_service import ELB
 
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=self.set_mocked_audit_info(),
         ), mock.patch(
-            "providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
+            "prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
             new=ELB(self.set_mocked_audit_info()),
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers import (
                 shield_advanced_protection_in_classic_load_balancers,
             )
 

@@ -5,7 +5,7 @@ from io import TextIOWrapper
 from os.path import exists
 from typing import Any
 
-from lib.logger import logger
+from prowler.lib.logger import logger
 
 
 def open_file(input_file: str, mode: str = "r") -> TextIOWrapper:

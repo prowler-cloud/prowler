@@ -1,12 +1,12 @@
-from config.config import get_config_var
-from lib.check.models import Check, Check_Report
-from providers.aws.services.vpc.vpc_client import vpc_client
+from prowler.config.config import get_config_var
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
 class vpc_endpoint_connections_trust_boundaries(Check):
     def execute(self):
         findings = []
-        # Get trusted account_ids from config.yaml
+        # Get trusted account_ids from prowler.config.yaml
         trusted_account_ids = get_config_var("trusted_account_ids")
         for endpoint in vpc_client.vpc_endpoints:
             # Check VPC endpoint policy

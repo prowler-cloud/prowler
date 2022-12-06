@@ -1,6 +1,6 @@
-from lib.check.models import Check, Check_Report
-from lib.logger import logger
-from providers.aws.services.iam.iam_client import iam_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.logger import logger
+from prowler.providers.aws.services.iam.iam_client import iam_client
 
 
 class iam_user_two_active_access_key(Check):

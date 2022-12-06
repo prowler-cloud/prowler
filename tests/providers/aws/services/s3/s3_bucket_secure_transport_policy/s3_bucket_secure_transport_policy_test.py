@@ -12,17 +12,17 @@ class Test_s3_bucket_secure_transport_policy:
         bucket_name_us = "bucket_test_us"
         s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.s3.s3_service import S3
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.s3.s3_service import S3
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.s3.s3_bucket_secure_transport_policy.s3_bucket_secure_transport_policy.s3_client",
+            "prowler.providers.aws.services.s3.s3_bucket_secure_transport_policy.s3_bucket_secure_transport_policy.s3_client",
             new=S3(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.s3.s3_bucket_secure_transport_policy.s3_bucket_secure_transport_policy import (
+            from prowler.providers.aws.services.s3.s3_bucket_secure_transport_policy.s3_bucket_secure_transport_policy import (
                 s3_bucket_secure_transport_policy,
             )
 
@@ -68,17 +68,17 @@ class Test_s3_bucket_secure_transport_policy:
             Bucket=bucket_name_us,
             Policy=ssl_policy,
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.s3.s3_service import S3
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.s3.s3_service import S3
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.s3.s3_bucket_secure_transport_policy.s3_bucket_secure_transport_policy.s3_client",
+            "prowler.providers.aws.services.s3.s3_bucket_secure_transport_policy.s3_bucket_secure_transport_policy.s3_client",
             new=S3(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.s3.s3_bucket_secure_transport_policy.s3_bucket_secure_transport_policy import (
+            from prowler.providers.aws.services.s3.s3_bucket_secure_transport_policy.s3_bucket_secure_transport_policy import (
                 s3_bucket_secure_transport_policy,
             )
 
@@ -124,17 +124,17 @@ class Test_s3_bucket_secure_transport_policy:
             Bucket=bucket_name_us,
             Policy=ssl_policy,
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.s3.s3_service import S3
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.s3.s3_service import S3
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.s3.s3_bucket_secure_transport_policy.s3_bucket_secure_transport_policy.s3_client",
+            "prowler.providers.aws.services.s3.s3_bucket_secure_transport_policy.s3_bucket_secure_transport_policy.s3_client",
             new=S3(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.s3.s3_bucket_secure_transport_policy.s3_bucket_secure_transport_policy import (
+            from prowler.providers.aws.services.s3.s3_bucket_secure_transport_policy.s3_bucket_secure_transport_policy import (
                 s3_bucket_secure_transport_policy,
             )
 

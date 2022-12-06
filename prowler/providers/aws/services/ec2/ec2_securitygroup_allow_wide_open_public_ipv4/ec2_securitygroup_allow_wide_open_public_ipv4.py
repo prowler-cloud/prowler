@@ -1,7 +1,7 @@
 import ipaddress
 
-from lib.check.models import Check, Check_Report
-from providers.aws.services.ec2.ec2_client import ec2_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
 class ec2_securitygroup_allow_wide_open_public_ipv4(Check):

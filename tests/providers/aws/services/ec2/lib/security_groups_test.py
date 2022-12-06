@@ -1,5 +1,6 @@
 import pytest
-from providers.aws.services.ec2.lib.security_groups import _is_cidr_public
+
+from prowler.providers.aws.services.ec2.lib.security_groups import _is_cidr_public
 
 
 class Test_security_groups:

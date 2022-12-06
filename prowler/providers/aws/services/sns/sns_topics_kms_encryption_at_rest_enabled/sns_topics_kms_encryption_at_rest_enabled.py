@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.sns.sns_client import sns_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.sns.sns_client import sns_client
 
 
 class sns_topics_kms_encryption_at_rest_enabled(Check):

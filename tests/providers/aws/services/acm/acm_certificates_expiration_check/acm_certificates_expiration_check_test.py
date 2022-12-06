@@ -15,17 +15,17 @@ class Test_acm_certificates_expiration_check:
         certificate = acm_client.request_certificate(
             DomainName="test.com",
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.acm.acm_service import ACM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.acm.acm_service import ACM
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
+            "prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
             new=ACM(current_audit_info),
         ) as service_client:
             # Test Check
-            from providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check import (
+            from prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check import (
                 acm_certificates_expiration_check,
             )
 
@@ -46,17 +46,17 @@ class Test_acm_certificates_expiration_check:
         certificate = acm_client.request_certificate(
             DomainName="test.com",
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.acm.acm_service import ACM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.acm.acm_service import ACM
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
+            "prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
             new=ACM(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check import (
+            from prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check import (
                 acm_certificates_expiration_check,
             )
 

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
-from lib.check.models import Check, Check_Report
-from providers.aws.services.codebuild.codebuild_client import codebuild_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.codebuild.codebuild_client import codebuild_client
 
 
 class codebuild_project_older_90_days(Check):

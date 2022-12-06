@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 from uuid import uuid4
 
-from providers.aws.services.sns.sns_service import Topic
+from prowler.providers.aws.services.sns.sns_service import Topic
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -17,10 +17,10 @@ class Test_sns_topics_kms_encryption_at_rest_enabled:
         sns_client = mock.MagicMock
         sns_client.topics = []
         with mock.patch(
-            "providers.aws.services.sns.sns_service.SNS",
+            "prowler.providers.aws.services.sns.sns_service.SNS",
             sns_client,
         ):
-            from providers.aws.services.sns.sns_topics_kms_encryption_at_rest_enabled.sns_topics_kms_encryption_at_rest_enabled import (
+            from prowler.providers.aws.services.sns.sns_topics_kms_encryption_at_rest_enabled.sns_topics_kms_encryption_at_rest_enabled import (
                 sns_topics_kms_encryption_at_rest_enabled,
             )
 
@@ -40,10 +40,10 @@ class Test_sns_topics_kms_encryption_at_rest_enabled:
             )
         )
         with mock.patch(
-            "providers.aws.services.sns.sns_service.SNS",
+            "prowler.providers.aws.services.sns.sns_service.SNS",
             sns_client,
         ):
-            from providers.aws.services.sns.sns_topics_kms_encryption_at_rest_enabled.sns_topics_kms_encryption_at_rest_enabled import (
+            from prowler.providers.aws.services.sns.sns_topics_kms_encryption_at_rest_enabled.sns_topics_kms_encryption_at_rest_enabled import (
                 sns_topics_kms_encryption_at_rest_enabled,
             )
 
@@ -62,10 +62,10 @@ class Test_sns_topics_kms_encryption_at_rest_enabled:
             Topic(arn=topic_arn, name=topic_name, region=AWS_REGION)
         )
         with mock.patch(
-            "providers.aws.services.sns.sns_service.SNS",
+            "prowler.providers.aws.services.sns.sns_service.SNS",
             sns_client,
         ):
-            from providers.aws.services.sns.sns_topics_kms_encryption_at_rest_enabled.sns_topics_kms_encryption_at_rest_enabled import (
+            from prowler.providers.aws.services.sns.sns_topics_kms_encryption_at_rest_enabled.sns_topics_kms_encryption_at_rest_enabled import (
                 sns_topics_kms_encryption_at_rest_enabled,
             )
 

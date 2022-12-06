@@ -1,7 +1,6 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.awslambda.awslambda_client import awslambda_client
-
-from providers.aws.services.awslambda.awslambda_service import AuthType
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
+from prowler.providers.aws.services.awslambda.awslambda_service import AuthType
 
 
 class awslambda_function_url_public(Check):

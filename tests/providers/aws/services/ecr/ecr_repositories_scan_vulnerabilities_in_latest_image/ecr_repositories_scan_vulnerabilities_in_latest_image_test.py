@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from providers.aws.services.ecr.ecr_service import (
+from prowler.providers.aws.services.ecr.ecr_service import (
     FindingSeverityCounts,
     ImageDetails,
     Repository,
@@ -53,10 +53,10 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             ),
         ),
         with mock.patch(
-            "providers.aws.services.ecr.ecr_service.ECR",
+            "prowler.providers.aws.services.ecr.ecr_service.ECR",
             ecr_client,
         ):
-            from providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
+            from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,
             )
 
@@ -93,10 +93,10 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             ),
         ),
         with mock.patch(
-            "providers.aws.services.ecr.ecr_service.ECR",
+            "prowler.providers.aws.services.ecr.ecr_service.ECR",
             ecr_client,
         ):
-            from providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
+            from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,
             )
 
@@ -133,10 +133,10 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             ),
         ),
         with mock.patch(
-            "providers.aws.services.ecr.ecr_service.ECR",
+            "prowler.providers.aws.services.ecr.ecr_service.ECR",
             ecr_client,
         ):
-            from providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
+            from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,
             )
 
@@ -173,10 +173,10 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             ),
         ),
         with mock.patch(
-            "providers.aws.services.ecr.ecr_service.ECR",
+            "prowler.providers.aws.services.ecr.ecr_service.ECR",
             ecr_client,
         ):
-            from providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
+            from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,
             )
 

@@ -12,17 +12,17 @@ class Test_elb_insecure_ssl_ciphers:
     @mock_elb
     def test_elb_no_balancers(self):
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elb.elb_service import ELB
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.elb.elb_service import ELB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers.elb_client",
+            "prowler.providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers.elb_client",
             new=ELB(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers import (
+            from prowler.providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers import (
                 elb_insecure_ssl_ciphers,
             )
 
@@ -59,16 +59,16 @@ class Test_elb_insecure_ssl_ciphers:
         )
         elb.describe_load_balancer_policies(LoadBalancerName="my-lb")
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elb.elb_service import ELB
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.elb.elb_service import ELB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers.elb_client",
+            "prowler.providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers.elb_client",
             new=ELB(current_audit_info),
         ):
-            from providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers import (
+            from prowler.providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers import (
                 elb_insecure_ssl_ciphers,
             )
 
@@ -104,16 +104,16 @@ class Test_elb_insecure_ssl_ciphers:
             SecurityGroups=[security_group.id],
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elb.elb_service import ELB
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.elb.elb_service import ELB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers.elb_client",
+            "prowler.providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers.elb_client",
             new=ELB(current_audit_info),
         ):
-            from providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers import (
+            from prowler.providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers import (
                 elb_insecure_ssl_ciphers,
             )
 

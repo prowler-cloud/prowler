@@ -1,5 +1,6 @@
 import sure  # noqa
-from providers.aws.lib.arn.arn import arn_parsing
+
+from prowler.providers.aws.lib.arn.arn import arn_parsing
 
 ACCOUNT_ID = "123456789012"
 RESOURCE_TYPE = "role"

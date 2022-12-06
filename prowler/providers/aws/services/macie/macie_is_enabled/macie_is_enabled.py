@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.macie.macie_client import macie_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.macie.macie_client import macie_client
 
 
 class macie_is_enabled(Check):

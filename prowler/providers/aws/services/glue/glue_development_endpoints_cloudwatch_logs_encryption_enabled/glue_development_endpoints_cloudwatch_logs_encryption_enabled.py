@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.glue.glue_client import glue_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.glue.glue_client import glue_client
 
 
 class glue_development_endpoints_cloudwatch_logs_encryption_enabled(Check):

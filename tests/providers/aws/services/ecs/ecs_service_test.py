@@ -2,8 +2,9 @@ from unittest.mock import patch
 
 from boto3 import client, session
 from moto import mock_ecs
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.ecs.ecs_service import ECS
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.ecs.ecs_service import ECS
 
 AWS_ACCOUNT_NUMBER = 123456789012
 AWS_REGION = "eu-west-1"
@@ -16,7 +17,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 
 @patch(
-    "providers.aws.services.ecs.ecs_service.generate_regional_clients",
+    "prowler.providers.aws.services.ecs.ecs_service.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_ECS_Service:

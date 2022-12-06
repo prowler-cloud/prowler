@@ -12,17 +12,17 @@ class Test_s3_bucket_default_encryption:
         bucket_name_us = "bucket_test_us"
         s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.s3.s3_service import S3
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.s3.s3_service import S3
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.s3.s3_bucket_default_encryption.s3_bucket_default_encryption.s3_client",
+            "prowler.providers.aws.services.s3.s3_bucket_default_encryption.s3_bucket_default_encryption.s3_client",
             new=S3(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.s3.s3_bucket_default_encryption.s3_bucket_default_encryption import (
+            from prowler.providers.aws.services.s3.s3_bucket_default_encryption.s3_bucket_default_encryption import (
                 s3_bucket_default_encryption,
             )
 
@@ -59,17 +59,17 @@ class Test_s3_bucket_default_encryption:
         s3_client_us_east_1.put_bucket_encryption(
             Bucket=bucket_name_us, ServerSideEncryptionConfiguration=sse_config
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.s3.s3_service import S3
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.s3.s3_service import S3
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.s3.s3_bucket_default_encryption.s3_bucket_default_encryption.s3_client",
+            "prowler.providers.aws.services.s3.s3_bucket_default_encryption.s3_bucket_default_encryption.s3_client",
             new=S3(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.s3.s3_bucket_default_encryption.s3_bucket_default_encryption import (
+            from prowler.providers.aws.services.s3.s3_bucket_default_encryption.s3_bucket_default_encryption import (
                 s3_bucket_default_encryption,
             )
 

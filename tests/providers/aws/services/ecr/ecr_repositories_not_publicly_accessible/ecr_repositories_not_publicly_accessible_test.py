@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from providers.aws.services.ecr.ecr_service import Repository
+from prowler.providers.aws.services.ecr.ecr_service import Repository
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -52,10 +52,10 @@ class Test_ecr_repositories_not_publicly_accessible:
         )
 
         with mock.patch(
-            "providers.aws.services.ecr.ecr_service.ECR",
+            "prowler.providers.aws.services.ecr.ecr_service.ECR",
             ecr_client,
         ):
-            from providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible import (
+            from prowler.providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible import (
                 ecr_repositories_not_publicly_accessible,
             )
 
@@ -83,10 +83,10 @@ class Test_ecr_repositories_not_publicly_accessible:
         )
 
         with mock.patch(
-            "providers.aws.services.ecr.ecr_service.ECR",
+            "prowler.providers.aws.services.ecr.ecr_service.ECR",
             ecr_client,
         ):
-            from providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible import (
+            from prowler.providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible import (
                 ecr_repositories_not_publicly_accessible,
             )
 

@@ -4,7 +4,9 @@ from os import path, remove
 import boto3
 import pytest
 from colorama import Fore
-from config.config import (
+from moto import mock_s3
+
+from prowler.config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
@@ -14,8 +16,8 @@ from config.config import (
     timestamp_iso,
     timestamp_utc,
 )
-from lib.check.models import Check_Report, load_check_metadata
-from lib.outputs.models import (
+from prowler.lib.check.models import Check_Report, load_check_metadata
+from prowler.lib.outputs.models import (
     Check_Output_CSV,
     Check_Output_JSON,
     Check_Output_JSON_ASFF,
@@ -24,7 +26,7 @@ from lib.outputs.models import (
     Resource,
     Severity,
 )
-from lib.outputs.outputs import (
+from prowler.lib.outputs.outputs import (
     fill_file_descriptors,
     fill_json,
     fill_json_asff,
@@ -32,9 +34,8 @@ from lib.outputs.outputs import (
     send_to_s3_bucket,
     set_report_color,
 )
-from lib.utils.utils import hash_sha512, open_file
-from moto import mock_s3
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.lib.utils.utils import hash_sha512, open_file
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
 class Test_Outputs:

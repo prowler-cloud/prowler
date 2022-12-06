@@ -12,17 +12,17 @@ class Test_elbv2_request_smugling:
     @mock_elbv2
     def test_elb_no_balancers(self):
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elbv2.elbv2_service import ELBv2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling.elbv2_client",
+            "prowler.providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling.elbv2_client",
             new=ELBv2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling import (
+            from prowler.providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling import (
                 elbv2_request_smugling,
             )
 
@@ -66,16 +66,16 @@ class Test_elbv2_request_smugling:
             ],
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elbv2.elbv2_service import ELBv2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling.elbv2_client",
+            "prowler.providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling.elbv2_client",
             new=ELBv2(current_audit_info),
         ):
-            from providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling import (
+            from prowler.providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling import (
                 elbv2_request_smugling,
             )
 
@@ -125,16 +125,16 @@ class Test_elbv2_request_smugling:
             ],
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elbv2.elbv2_service import ELBv2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling.elbv2_client",
+            "prowler.providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling.elbv2_client",
             new=ELBv2(current_audit_info),
         ):
-            from providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling import (
+            from prowler.providers.aws.services.elbv2.elbv2_request_smugling.elbv2_request_smugling import (
                 elbv2_request_smugling,
             )
 

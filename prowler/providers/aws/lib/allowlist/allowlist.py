@@ -3,7 +3,8 @@ import sys
 
 import yaml
 from boto3.dynamodb.conditions import Attr
-from lib.logger import logger
+
+from prowler.lib.logger import logger
 
 
 def parse_allowlist_file(audit_info, allowlist_file):

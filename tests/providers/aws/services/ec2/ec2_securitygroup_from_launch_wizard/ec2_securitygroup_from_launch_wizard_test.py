@@ -15,17 +15,17 @@ class Test_ec2_securitygroup_from_launch_wizard:
         ec2_client = client("ec2", region_name=AWS_REGION)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_securitygroup_from_launch_wizard.ec2_securitygroup_from_launch_wizard.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_from_launch_wizard.ec2_securitygroup_from_launch_wizard.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_securitygroup_from_launch_wizard.ec2_securitygroup_from_launch_wizard import (
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_from_launch_wizard.ec2_securitygroup_from_launch_wizard import (
                 ec2_securitygroup_from_launch_wizard,
             )
 
@@ -46,17 +46,17 @@ class Test_ec2_securitygroup_from_launch_wizard:
             GroupName="launch-wizard-1", Description="launch wizard sg"
         )["GroupId"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_securitygroup_from_launch_wizard.ec2_securitygroup_from_launch_wizard.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_from_launch_wizard.ec2_securitygroup_from_launch_wizard.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_securitygroup_from_launch_wizard.ec2_securitygroup_from_launch_wizard import (
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_from_launch_wizard.ec2_securitygroup_from_launch_wizard import (
                 ec2_securitygroup_from_launch_wizard,
             )
 
@@ -92,17 +92,17 @@ class Test_ec2_securitygroup_from_launch_wizard:
                 default_sg_id,
             ],
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_securitygroup_from_launch_wizard.ec2_securitygroup_from_launch_wizard.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_from_launch_wizard.ec2_securitygroup_from_launch_wizard.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_securitygroup_from_launch_wizard.ec2_securitygroup_from_launch_wizard import (
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_from_launch_wizard.ec2_securitygroup_from_launch_wizard import (
                 ec2_securitygroup_from_launch_wizard,
             )
 

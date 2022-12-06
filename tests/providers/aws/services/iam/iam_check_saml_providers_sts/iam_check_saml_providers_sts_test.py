@@ -41,15 +41,15 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
             SAMLMetadataDocument=xml_template, Name=saml_provider_name
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_check_saml_providers_sts.iam_check_saml_providers_sts.iam_client",
+            "prowler.providers.aws.services.iam.iam_check_saml_providers_sts.iam_check_saml_providers_sts.iam_client",
             new=IAM(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.iam.iam_check_saml_providers_sts.iam_check_saml_providers_sts import (
+            from prowler.providers.aws.services.iam.iam_check_saml_providers_sts.iam_check_saml_providers_sts import (
                 iam_check_saml_providers_sts,
             )
 

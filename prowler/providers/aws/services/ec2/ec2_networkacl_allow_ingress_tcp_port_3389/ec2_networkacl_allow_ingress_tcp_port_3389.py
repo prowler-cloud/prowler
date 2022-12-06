@@ -1,6 +1,6 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.ec2.ec2_client import ec2_client
-from providers.aws.services.ec2.lib.network_acls import check_network_acl
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.ec2.ec2_client import ec2_client
+from prowler.providers.aws.services.ec2.lib.network_acls import check_network_acl
 
 
 class ec2_networkacl_allow_ingress_tcp_port_3389(Check):

@@ -1,6 +1,6 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.ssm.ssm_client import ssm_client
-from providers.aws.services.ssm.ssm_service import ResourceStatus
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.ssm.ssm_client import ssm_client
+from prowler.providers.aws.services.ssm.ssm_service import ResourceStatus
 
 
 class ssm_managed_compliant_patching(Check):

@@ -4,8 +4,9 @@ from boto3 import client, session
 from mock import patch
 from moto import mock_cloudtrail, mock_s3
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
-from providers.aws.services.awslambda.awslambda_service import Function
+
+from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
+from prowler.providers.aws.services.awslambda.awslambda_service import Function
 
 AWS_REGION = "us-east-1"
 
@@ -19,7 +20,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch(
-    "providers.aws.services.accessanalyzer.accessanalyzer_service.generate_regional_clients",
+    "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
@@ -49,20 +50,22 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
         lambda_client = mock.MagicMock
         lambda_client.functions = {}
 
-        from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ), mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             self.set_mocked_audit_info(),
         ), mock.patch(
-            "providers.aws.services.awslambda.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.cloudtrail_client",
+            "prowler.providers.aws.services.awslambda.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.cloudtrail_client",
             new=Cloudtrail(self.set_mocked_audit_info()),
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled import (
                 awslambda_function_invoke_api_operations_cloudtrail_logging_enabled,
             )
 
@@ -102,21 +105,23 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             Name=trail_name, S3BucketName=bucket_name, IsMultiRegionTrail=False
         )
 
-        from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ), mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             self.set_mocked_audit_info(),
         ), mock.patch(
-            "providers.aws.services.awslambda.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.cloudtrail_client",
+            "prowler.providers.aws.services.awslambda.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.cloudtrail_client",
             new=Cloudtrail(self.set_mocked_audit_info()),
         ):
 
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled import (
                 awslambda_function_invoke_api_operations_cloudtrail_logging_enabled,
             )
 
@@ -176,21 +181,23 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             ],
         )
 
-        from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ), mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             self.set_mocked_audit_info(),
         ), mock.patch(
-            "providers.aws.services.awslambda.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.cloudtrail_client",
+            "prowler.providers.aws.services.awslambda.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.cloudtrail_client",
             new=Cloudtrail(self.set_mocked_audit_info()),
         ):
 
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled.awslambda_function_invoke_api_operations_cloudtrail_logging_enabled import (
                 awslambda_function_invoke_api_operations_cloudtrail_logging_enabled,
             )
 

@@ -10,17 +10,17 @@ AWS_REGION = "us-east-1"
 class Test_rds_instance_minor_version_upgrade_enabled:
     @mock_rds
     def test_rds_no_instances(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.rds.rds_service import RDS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.rds.rds_service import RDS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.rds.rds_instance_minor_version_upgrade_enabled.rds_instance_minor_version_upgrade_enabled.rds_client",
+            "prowler.providers.aws.services.rds.rds_instance_minor_version_upgrade_enabled.rds_instance_minor_version_upgrade_enabled.rds_client",
             new=RDS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.rds.rds_instance_minor_version_upgrade_enabled.rds_instance_minor_version_upgrade_enabled import (
+            from prowler.providers.aws.services.rds.rds_instance_minor_version_upgrade_enabled.rds_instance_minor_version_upgrade_enabled import (
                 rds_instance_minor_version_upgrade_enabled,
             )
 
@@ -39,17 +39,17 @@ class Test_rds_instance_minor_version_upgrade_enabled:
             DBName="staging-postgres",
             DBInstanceClass="db.m1.small",
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.rds.rds_service import RDS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.rds.rds_service import RDS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.rds.rds_instance_minor_version_upgrade_enabled.rds_instance_minor_version_upgrade_enabled.rds_client",
+            "prowler.providers.aws.services.rds.rds_instance_minor_version_upgrade_enabled.rds_instance_minor_version_upgrade_enabled.rds_client",
             new=RDS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.rds.rds_instance_minor_version_upgrade_enabled.rds_instance_minor_version_upgrade_enabled import (
+            from prowler.providers.aws.services.rds.rds_instance_minor_version_upgrade_enabled.rds_instance_minor_version_upgrade_enabled import (
                 rds_instance_minor_version_upgrade_enabled,
             )
 
@@ -75,17 +75,17 @@ class Test_rds_instance_minor_version_upgrade_enabled:
             DBInstanceClass="db.m1.small",
             AutoMinorVersionUpgrade=True,
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.rds.rds_service import RDS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.rds.rds_service import RDS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.rds.rds_instance_minor_version_upgrade_enabled.rds_instance_minor_version_upgrade_enabled.rds_client",
+            "prowler.providers.aws.services.rds.rds_instance_minor_version_upgrade_enabled.rds_instance_minor_version_upgrade_enabled.rds_client",
             new=RDS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.rds.rds_instance_minor_version_upgrade_enabled.rds_instance_minor_version_upgrade_enabled import (
+            from prowler.providers.aws.services.rds.rds_instance_minor_version_upgrade_enabled.rds_instance_minor_version_upgrade_enabled import (
                 rds_instance_minor_version_upgrade_enabled,
             )
 

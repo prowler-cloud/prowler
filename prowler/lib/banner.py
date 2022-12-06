@@ -1,6 +1,6 @@
 from colorama import Fore, Style
 
-from config.config import banner_color, orange_color, prowler_version, timestamp
+from prowler.config.config import banner_color, orange_color, prowler_version, timestamp
 
 
 def print_version():

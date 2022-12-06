@@ -1,6 +1,6 @@
 from unittest import mock
 
-from providers.aws.services.route53.route53_service import Domain
+from prowler.providers.aws.services.route53.route53_service import Domain
 
 AWS_REGION = "us-east-1"
 
@@ -11,11 +11,11 @@ class Test_route53_domains_transferlock_enabled:
         route53domains.domains = {}
 
         with mock.patch(
-            "providers.aws.services.route53.route53_service.Route53Domains",
+            "prowler.providers.aws.services.route53.route53_service.Route53Domains",
             new=route53domains,
         ):
             # Test Check
-            from providers.aws.services.route53.route53_domains_transferlock_enabled.route53_domains_transferlock_enabled import (
+            from prowler.providers.aws.services.route53.route53_domains_transferlock_enabled.route53_domains_transferlock_enabled import (
                 route53_domains_transferlock_enabled,
             )
 
@@ -37,11 +37,11 @@ class Test_route53_domains_transferlock_enabled:
         }
 
         with mock.patch(
-            "providers.aws.services.route53.route53_service.Route53Domains",
+            "prowler.providers.aws.services.route53.route53_service.Route53Domains",
             new=route53domains,
         ):
             # Test Check
-            from providers.aws.services.route53.route53_domains_transferlock_enabled.route53_domains_transferlock_enabled import (
+            from prowler.providers.aws.services.route53.route53_domains_transferlock_enabled.route53_domains_transferlock_enabled import (
                 route53_domains_transferlock_enabled,
             )
 
@@ -70,11 +70,11 @@ class Test_route53_domains_transferlock_enabled:
         }
 
         with mock.patch(
-            "providers.aws.services.route53.route53_service.Route53Domains",
+            "prowler.providers.aws.services.route53.route53_service.Route53Domains",
             new=route53domains,
         ):
             # Test Check
-            from providers.aws.services.route53.route53_domains_transferlock_enabled.route53_domains_transferlock_enabled import (
+            from prowler.providers.aws.services.route53.route53_domains_transferlock_enabled.route53_domains_transferlock_enabled import (
                 route53_domains_transferlock_enabled,
             )
 

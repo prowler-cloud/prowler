@@ -9,17 +9,17 @@ AWS_REGION = "us-east-1"
 class Test_config_recorder_all_regions_enabled:
     @mock_config
     def test_config_no_recorders(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.config.config_service import Config
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.config.config_service import Config
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled.config_client",
+            "prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled.config_client",
             new=Config(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled import (
+            from prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled import (
                 config_recorder_all_regions_enabled,
             )
 
@@ -39,17 +39,17 @@ class Test_config_recorder_all_regions_enabled:
         config_client.put_configuration_recorder(
             ConfigurationRecorder={"name": "default", "roleARN": "somearn"}
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.config.config_service import Config
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.config.config_service import Config
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled.config_client",
+            "prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled.config_client",
             new=Config(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled import (
+            from prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled import (
                 config_recorder_all_regions_enabled,
             )
 
@@ -79,17 +79,17 @@ class Test_config_recorder_all_regions_enabled:
             DeliveryChannel={"name": "testchannel", "s3BucketName": "somebucket"}
         )
         config_client.start_configuration_recorder(ConfigurationRecorderName="default")
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.config.config_service import Config
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.config.config_service import Config
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled.config_client",
+            "prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled.config_client",
             new=Config(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled import (
+            from prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled import (
                 config_recorder_all_regions_enabled,
             )
 

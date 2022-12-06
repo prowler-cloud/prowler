@@ -12,15 +12,15 @@
 # specific language governing permissions and limitations under the License.
 
 
-## This script helps to generate a single html report from a single or multiple csv 
+## This script helps to generate a single html report from a single or multiple csv
 # output reports.
 # I use it when I want to visualize multiple accounts reports in a single view.
-# Report information and Assessment Summary will be empty due to the variables 
+# Report information and Assessment Summary will be empty due to the variables
 # that are not set here.
 
 ## First: Remove the CSV header from each output report.
 
-## Second: If you want to aggretate all csv files in you can do like this: 
+## Second: If you want to aggretate all csv files in you can do like this:
 # find . -type f -name '*.csv' -exec cat {} + > prowler-output-unified-csv.file
 # use .file instead of .csv unless you want to get into an infinite loop ;)
 
@@ -30,7 +30,7 @@
 OUTPUT_FILE_NAME="report-unified-csv"
 EXTENSION_HTML="html"
 INPUT=$1
-IFS=',' # used inside the while loop for csv delimiter 
+IFS=',' # used inside the while loop for csv delimiter
 HTML_LOGO_URL="https://github.com/prowler-cloud/prowler/"
 HTML_LOGO_IMG="https://raw.githubusercontent.com/prowler-cloud/prowler/master/util/html/prowler-logo-new.png"
 
@@ -41,7 +41,7 @@ addHtmlHeader() {
   if [[ $PROFILE == "" ]];then
     PROFILE="ENV"
   fi
-  if [[ -z $HTML_REPORT_INIT ]]; then 
+  if [[ -z $HTML_REPORT_INIT ]]; then
   cat <<EOF
 <!DOCTYPE html>
 <html lang="en">
@@ -112,7 +112,7 @@ addHtmlHeader() {
             </li>
           </ul>
         </div>
-        * Sortable columns are CheckID (default) and Result 
+        * Sortable columns are CheckID (default) and Result
       </div>
     </div>
     <div class="row mt-3">
@@ -135,7 +135,7 @@ addHtmlHeader() {
           <tbody>
 EOF
 
-fi 
+fi
 }
 
 addHtmlFooter() {
@@ -170,7 +170,7 @@ unset HTML_REPORT_INIT
 
 addHtmlHeader > ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
 while IFS=, read -r PROFILE ACCOUNT_NUM REPREGION TITLE_ID RESULT SCORED LEVEL TITLE_TEXT NOTES ASFF_COMPLIANCE_TYPE CHECK_SEVERITY CHECK_SERVICENAME;do
-  if [[ $RESULT == "INFO" ]]; then 
+  if [[ $RESULT == "INFO" ]]; then
     echo '<tr class="table-info">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><i class="fas fa-info-circle"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>INFO</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
@@ -183,8 +183,8 @@ while IFS=, read -r PROFILE ACCOUNT_NUM REPREGION TITLE_ID RESULT SCORED LEVEL T
       echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$NOTES'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  fi 
-  if [[ $RESULT == "PASS" ]]; then 
+  fi
+  if [[ $RESULT == "PASS" ]]; then
     echo '<tr class="p-3 mb-2 bg-success">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><i class="fas fa-thumbs-up"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>PASS</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
@@ -197,8 +197,8 @@ while IFS=, read -r PROFILE ACCOUNT_NUM REPREGION TITLE_ID RESULT SCORED LEVEL T
       echo '<td>'$TITLE_TEXT'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>'$NOTES'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-  fi 
-  if [[ $RESULT == "FAIL" ]]; then 
+  fi
+  if [[ $RESULT == "FAIL" ]]; then
     echo '<tr class="table-danger" >' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td> <i class="fas fa-thumbs-down"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>FAIL</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
@@ -212,7 +212,7 @@ while IFS=, read -r PROFILE ACCOUNT_NUM REPREGION TITLE_ID RESULT SCORED LEVEL T
       echo '<td>'$NOTES'</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
     echo '</tr>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
   fi
-  if [[ $RESULT == "WARNING" ]]; then 
+  if [[ $RESULT == "WARNING" ]]; then
     echo '<tr class="table-warning">' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td><i class="fas fa-exclamation-triangle"></i></td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
       echo '<td>WARN</td>' >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
@@ -228,6 +228,3 @@ while IFS=, read -r PROFILE ACCOUNT_NUM REPREGION TITLE_ID RESULT SCORED LEVEL T
   fi
 done < $INPUT
 addHtmlFooter >> ${OUTPUT_FILE_NAME}.$EXTENSION_HTML
-
-
-

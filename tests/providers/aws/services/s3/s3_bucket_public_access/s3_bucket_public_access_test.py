@@ -3,7 +3,8 @@ from unittest import mock
 
 from boto3 import client, session
 from moto import mock_s3, mock_s3control
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
@@ -35,23 +36,24 @@ class Test_s3_bucket_public_access:
     @mock_s3
     @mock_s3control
     def test_no_buckets(self):
-        from providers.aws.services.s3.s3_service import S3, S3Control
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info", new=audit_info
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
             with mock.patch(
-                "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
+                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
                 new=S3(audit_info),
             ):
                 with mock.patch(
-                    "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
+                    "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
                     new=S3Control(audit_info),
                 ):
                     # Test Check
-                    from providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
+                    from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
                         s3_bucket_public_access,
                     )
 
@@ -74,23 +76,24 @@ class Test_s3_bucket_public_access:
                 "RestrictPublicBuckets": True,
             },
         )
-        from providers.aws.services.s3.s3_service import S3, S3Control
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info", new=audit_info
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
             with mock.patch(
-                "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
+                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
                 new=S3(audit_info),
             ):
                 with mock.patch(
-                    "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
+                    "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
                     new=S3Control(audit_info),
                 ):
                     # Test Check
-                    from providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
+                    from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
                         s3_bucket_public_access,
                     )
 
@@ -123,23 +126,24 @@ class Test_s3_bucket_public_access:
                 "RestrictPublicBuckets": True,
             },
         )
-        from providers.aws.services.s3.s3_service import S3, S3Control
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info", new=audit_info
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
             with mock.patch(
-                "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
+                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
                 new=S3(audit_info),
             ):
                 with mock.patch(
-                    "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
+                    "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
                     new=S3Control(audit_info),
                 ):
                     # Test Check
-                    from providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
+                    from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
                         s3_bucket_public_access,
                     )
 
@@ -181,23 +185,24 @@ class Test_s3_bucket_public_access:
                 "RestrictPublicBuckets": True,
             },
         )
-        from providers.aws.services.s3.s3_service import S3, S3Control
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info", new=audit_info
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
             with mock.patch(
-                "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
+                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
                 new=S3(audit_info),
             ):
                 with mock.patch(
-                    "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
+                    "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
                     new=S3Control(audit_info),
                 ):
                     # Test Check
-                    from providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
+                    from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
                         s3_bucket_public_access,
                     )
 
@@ -255,23 +260,24 @@ class Test_s3_bucket_public_access:
                 "Owner": bucket_owner,
             },
         )
-        from providers.aws.services.s3.s3_service import S3, S3Control
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info", new=audit_info
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
             with mock.patch(
-                "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
+                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
                 new=S3(audit_info),
             ):
                 with mock.patch(
-                    "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
+                    "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
                     new=S3Control(audit_info),
                 ):
                     # Test Check
-                    from providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
+                    from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
                         s3_bucket_public_access,
                     )
 
@@ -318,23 +324,24 @@ class Test_s3_bucket_public_access:
             Bucket=bucket_name_us,
             Policy=public_write_policy,
         )
-        from providers.aws.services.s3.s3_service import S3, S3Control
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info", new=audit_info
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
             with mock.patch(
-                "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
+                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
                 new=S3(audit_info),
             ):
                 with mock.patch(
-                    "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
+                    "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
                     new=S3Control(audit_info),
                 ):
                     # Test Check
-                    from providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
+                    from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
                         s3_bucket_public_access,
                     )
 
@@ -365,23 +372,24 @@ class Test_s3_bucket_public_access:
                 "RestrictPublicBuckets": True,
             },
         )
-        from providers.aws.services.s3.s3_service import S3, S3Control
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info", new=audit_info
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
             with mock.patch(
-                "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
+                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
                 new=S3(audit_info),
             ):
                 with mock.patch(
-                    "providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
+                    "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
                     new=S3Control(audit_info),
                 ):
                     # Test Check
-                    from providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
+                    from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
                         s3_bucket_public_access,
                     )
 

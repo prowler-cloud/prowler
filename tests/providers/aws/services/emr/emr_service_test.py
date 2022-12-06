@@ -5,8 +5,9 @@ import botocore
 from boto3 import client, session
 from moto import mock_emr
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.emr.emr_service import EMR, ClusterStatus
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.emr.emr_service import EMR, ClusterStatus
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -43,7 +44,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 
 @patch(
-    "providers.aws.services.emr.emr_service.generate_regional_clients",
+    "prowler.providers.aws.services.emr.emr_service.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)

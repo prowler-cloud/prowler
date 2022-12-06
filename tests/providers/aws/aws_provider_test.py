@@ -3,13 +3,14 @@ import json
 import boto3
 import sure  # noqa
 from moto import mock_iam, mock_organizations, mock_sts
-from providers.aws.aws_provider import (
+
+from prowler.providers.aws.aws_provider import (
     assume_role,
     get_organizations_metadata,
     get_region_global_service,
     validate_credentials,
 )
-from providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
+from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 
 ACCOUNT_ID = 123456789012
 

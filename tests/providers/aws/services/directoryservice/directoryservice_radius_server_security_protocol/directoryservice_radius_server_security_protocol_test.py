@@ -1,6 +1,6 @@
 from unittest import mock
 
-from providers.aws.services.directoryservice.directoryservice_service import (
+from prowler.providers.aws.services.directoryservice.directoryservice_service import (
     AuthenticationProtocol,
     Directory,
     DirectoryType,
@@ -16,11 +16,11 @@ class Test_directoryservice_radius_server_security_protocol:
         directoryservice_client = mock.MagicMock
         directoryservice_client.directories = {}
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_radius_server_security_protocol.directoryservice_radius_server_security_protocol import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_radius_server_security_protocol.directoryservice_radius_server_security_protocol import (
                 directoryservice_radius_server_security_protocol,
             )
 
@@ -43,11 +43,11 @@ class Test_directoryservice_radius_server_security_protocol:
             )
         }
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_radius_server_security_protocol.directoryservice_radius_server_security_protocol import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_radius_server_security_protocol.directoryservice_radius_server_security_protocol import (
                 directoryservice_radius_server_security_protocol,
             )
 
@@ -73,11 +73,11 @@ class Test_directoryservice_radius_server_security_protocol:
             )
         }
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_radius_server_security_protocol.directoryservice_radius_server_security_protocol import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_radius_server_security_protocol.directoryservice_radius_server_security_protocol import (
                 directoryservice_radius_server_security_protocol,
             )
 
@@ -110,11 +110,11 @@ class Test_directoryservice_radius_server_security_protocol:
             )
         }
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_radius_server_security_protocol.directoryservice_radius_server_security_protocol import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_radius_server_security_protocol.directoryservice_radius_server_security_protocol import (
                 directoryservice_radius_server_security_protocol,
             )
 

@@ -1,3 +1,4 @@
+import os
 import sys
 
 from arnparse import arnparse
@@ -6,12 +7,12 @@ from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
 from colorama import Fore, Style
 
-from config.config import aws_services_json_file
-from lib.logger import logger
-from lib.utils.utils import open_file, parse_json_file
-from providers.aws.lib.arn.arn import arn_parsing
-from providers.aws.lib.audit_info.audit_info import current_audit_info
-from providers.aws.lib.audit_info.models import (
+from prowler.config.config import aws_services_json_file
+from prowler.lib.logger import logger
+from prowler.lib.utils.utils import open_file, parse_json_file
+from prowler.providers.aws.lib.arn.arn import arn_parsing
+from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+from prowler.providers.aws.lib.audit_info.models import (
     AWS_Audit_Info,
     AWS_Credentials,
     AWS_Organizations_Info,
@@ -288,7 +289,8 @@ def get_organizations_metadata(
 def generate_regional_clients(service: str, audit_info: AWS_Audit_Info) -> dict:
     regional_clients = {}
     # Get json locally
-    f = open_file(aws_services_json_file)
+    actual_directory = os.path.dirname(os.path.realpath(__file__))
+    f = open_file(f"{actual_directory}/{aws_services_json_file}")
     data = parse_json_file(f)
     # Check if it is a subservice
     if service == "accessanalyzer":
@@ -331,7 +333,6 @@ def generate_regional_clients(service: str, audit_info: AWS_Audit_Info) -> dict:
         regional_client = audit_info.audit_session.client(service, region_name=region)
         regional_client.region = region
         regional_clients[region] = regional_client
-        # regional_clients.append(regional_client)
     return regional_clients
 
 

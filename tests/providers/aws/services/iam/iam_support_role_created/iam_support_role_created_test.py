@@ -29,14 +29,14 @@ class Test_iam_support_role_created:
             PolicyArn="arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy",
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_support_role_created.iam_support_role_created.iam_client",
+            "prowler.providers.aws.services.iam.iam_support_role_created.iam_support_role_created.iam_client",
             new=IAM(current_audit_info),
         ):
-            from providers.aws.services.iam.iam_support_role_created.iam_support_role_created import (
+            from prowler.providers.aws.services.iam.iam_support_role_created.iam_support_role_created import (
                 iam_support_role_created,
             )
 
@@ -56,14 +56,14 @@ class Test_iam_support_role_created:
     @mock_iam
     def test_no_support_role_created(self):
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_support_role_created.iam_support_role_created.iam_client",
+            "prowler.providers.aws.services.iam.iam_support_role_created.iam_support_role_created.iam_client",
             new=IAM(current_audit_info),
         ):
-            from providers.aws.services.iam.iam_support_role_created.iam_support_role_created import (
+            from prowler.providers.aws.services.iam.iam_support_role_created.iam_support_role_created import (
                 iam_support_role_created,
             )
 

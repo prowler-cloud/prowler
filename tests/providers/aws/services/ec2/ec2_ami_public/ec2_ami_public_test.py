@@ -11,17 +11,17 @@ class Test_ec2_ami_public:
     @mock_ec2
     def test_no_amis(self):
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_ami_public.ec2_ami_public import (
+            from prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public import (
                 ec2_ami_public,
             )
 
@@ -43,16 +43,16 @@ class Test_ec2_ami_public:
             InstanceId=instance_id, Name="test-ami", Description="this is a test ami"
         )["ImageId"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
             new=EC2(current_audit_info),
         ):
-            from providers.aws.services.ec2.ec2_ami_public.ec2_ami_public import (
+            from prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public import (
                 ec2_ami_public,
             )
 
@@ -86,16 +86,16 @@ class Test_ec2_ami_public:
         }
         image.modify_attribute(**ADD_GROUP_ARGS)
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
             new=EC2(current_audit_info),
         ):
-            from providers.aws.services.ec2.ec2_ami_public.ec2_ami_public import (
+            from prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public import (
                 ec2_ami_public,
             )
 

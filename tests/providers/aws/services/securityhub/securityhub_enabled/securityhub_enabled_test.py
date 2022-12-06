@@ -1,6 +1,8 @@
 from unittest import mock
 
-from providers.aws.services.securityhub.securityhub_service import SecurityHubHub
+from prowler.providers.aws.services.securityhub.securityhub_service import (
+    SecurityHubHub,
+)
 
 
 class Test_accessanalyzer_enabled_without_findings:
@@ -16,11 +18,11 @@ class Test_accessanalyzer_enabled_without_findings:
             )
         ]
         with mock.patch(
-            "providers.aws.services.securityhub.securityhub_service.SecurityHub",
+            "prowler.providers.aws.services.securityhub.securityhub_service.SecurityHub",
             new=securityhub_client,
         ):
             # Test Check
-            from providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled import (
+            from prowler.providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled import (
                 securityhub_enabled,
             )
 
@@ -43,11 +45,11 @@ class Test_accessanalyzer_enabled_without_findings:
             )
         ]
         with mock.patch(
-            "providers.aws.services.securityhub.securityhub_service.SecurityHub",
+            "prowler.providers.aws.services.securityhub.securityhub_service.SecurityHub",
             new=securityhub_client,
         ):
             # Test Check
-            from providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled import (
+            from prowler.providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled import (
                 securityhub_enabled,
             )
 

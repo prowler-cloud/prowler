@@ -4,8 +4,9 @@ from boto3 import client, session
 from mock import patch
 from moto import mock_ec2
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.shield.shield_service import Protection
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.shield.shield_service import Protection
 
 AWS_REGION = "eu-west-1"
 
@@ -19,7 +20,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch(
-    "providers.aws.services.accessanalyzer.accessanalyzer_service.generate_regional_clients",
+    "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_shield_advanced_protection_in_associated_elastic_ips:
@@ -50,20 +51,20 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
         shield_client = mock.MagicMock
         shield_client.enabled = False
 
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=self.set_mocked_audit_info(),
         ), mock.patch(
-            "providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
+            "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
             new=EC2(self.set_mocked_audit_info()),
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (
                 shield_advanced_protection_in_associated_elastic_ips,
             )
 
@@ -95,20 +96,20 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
             )
         }
 
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=self.set_mocked_audit_info(),
         ), mock.patch(
-            "providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
+            "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
             new=EC2(self.set_mocked_audit_info()),
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (
                 shield_advanced_protection_in_associated_elastic_ips,
             )
 
@@ -139,20 +140,20 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
         shield_client.region = AWS_REGION
         shield_client.protections = {}
 
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=self.set_mocked_audit_info(),
         ), mock.patch(
-            "providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
+            "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
             new=EC2(self.set_mocked_audit_info()),
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (
                 shield_advanced_protection_in_associated_elastic_ips,
             )
 
@@ -183,20 +184,20 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
         shield_client.region = AWS_REGION
         shield_client.protections = {}
 
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         with mock.patch(
-            "providers.aws.services.shield.shield_service.Shield",
+            "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "providers.aws.lib.audit_info.audit_info.current_audit_info",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=self.set_mocked_audit_info(),
         ), mock.patch(
-            "providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
+            "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
             new=EC2(self.set_mocked_audit_info()),
         ):
             # Test Check
-            from providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (
+            from prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (
                 shield_advanced_protection_in_associated_elastic_ips,
             )
 

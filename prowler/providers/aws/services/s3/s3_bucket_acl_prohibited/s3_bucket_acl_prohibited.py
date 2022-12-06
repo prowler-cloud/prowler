@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.s3.s3_client import s3_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.s3.s3_client import s3_client
 
 
 class s3_bucket_acl_prohibited(Check):

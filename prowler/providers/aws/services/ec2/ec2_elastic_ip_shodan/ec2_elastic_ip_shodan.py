@@ -1,9 +1,9 @@
 import shodan
 
-from config.config import get_config_var
-from lib.check.models import Check, Check_Report
-from lib.logger import logger
-from providers.aws.services.ec2.ec2_client import ec2_client
+from prowler.config.config import get_config_var
+from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.logger import logger
+from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
 class ec2_elastic_ip_shodan(Check):

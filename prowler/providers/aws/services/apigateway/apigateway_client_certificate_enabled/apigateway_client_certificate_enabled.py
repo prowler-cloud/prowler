@@ -1,5 +1,7 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.apigateway.apigateway_client import apigateway_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.apigateway.apigateway_client import (
+    apigateway_client,
+)
 
 
 class apigateway_client_certificate_enabled(Check):

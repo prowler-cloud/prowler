@@ -1,9 +1,13 @@
 import re
 
-from lib.check.models import Check, Check_Report
-from providers.aws.services.cloudtrail.cloudtrail_client import cloudtrail_client
-from providers.aws.services.cloudwatch.cloudwatch_client import cloudwatch_client
-from providers.aws.services.cloudwatch.logs_client import logs_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
+    cloudtrail_client,
+)
+from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
+    cloudwatch_client,
+)
+from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 
 class cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled(

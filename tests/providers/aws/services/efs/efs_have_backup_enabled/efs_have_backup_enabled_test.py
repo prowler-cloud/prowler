@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from providers.aws.services.efs.efs_service import FileSystem
+from prowler.providers.aws.services.efs.efs_service import FileSystem
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -27,10 +27,10 @@ class Test_efs_have_backup_enabled:
             )
         ]
         with mock.patch(
-            "providers.aws.services.efs.efs_service.EFS",
+            "prowler.providers.aws.services.efs.efs_service.EFS",
             efs_client,
         ):
-            from providers.aws.services.efs.efs_have_backup_enabled.efs_have_backup_enabled import (
+            from prowler.providers.aws.services.efs.efs_have_backup_enabled.efs_have_backup_enabled import (
                 efs_have_backup_enabled,
             )
 
@@ -54,10 +54,10 @@ class Test_efs_have_backup_enabled:
             )
         ]
         with mock.patch(
-            "providers.aws.services.efs.efs_service.EFS",
+            "prowler.providers.aws.services.efs.efs_service.EFS",
             efs_client,
         ):
-            from providers.aws.services.efs.efs_have_backup_enabled.efs_have_backup_enabled import (
+            from prowler.providers.aws.services.efs.efs_have_backup_enabled.efs_have_backup_enabled import (
                 efs_have_backup_enabled,
             )
 
@@ -81,10 +81,10 @@ class Test_efs_have_backup_enabled:
             )
         ]
         with mock.patch(
-            "providers.aws.services.efs.efs_service.EFS",
+            "prowler.providers.aws.services.efs.efs_service.EFS",
             efs_client,
         ):
-            from providers.aws.services.efs.efs_have_backup_enabled.efs_have_backup_enabled import (
+            from prowler.providers.aws.services.efs.efs_have_backup_enabled.efs_have_backup_enabled import (
                 efs_have_backup_enabled,
             )
 

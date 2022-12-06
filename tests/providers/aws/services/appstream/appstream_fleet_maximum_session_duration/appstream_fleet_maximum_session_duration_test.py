@@ -1,6 +1,6 @@
 from unittest import mock
 
-from providers.aws.services.appstream.appstream_service import Fleet
+from prowler.providers.aws.services.appstream.appstream_service import Fleet
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -11,11 +11,11 @@ class Test_appstream_fleet_maximum_session_duration:
         appstream_client = mock.MagicMock
         appstream_client.fleets = []
         with mock.patch(
-            "providers.aws.services.appstream.appstream_service.AppStream",
+            "prowler.providers.aws.services.appstream.appstream_service.AppStream",
             new=appstream_client,
         ):
             # Test Check
-            from providers.aws.services.appstream.appstream_fleet_maximum_session_duration.appstream_fleet_maximum_session_duration import (
+            from prowler.providers.aws.services.appstream.appstream_fleet_maximum_session_duration.appstream_fleet_maximum_session_duration import (
                 appstream_fleet_maximum_session_duration,
             )
 
@@ -41,11 +41,11 @@ class Test_appstream_fleet_maximum_session_duration:
         appstream_client.fleets.append(fleet1)
 
         with mock.patch(
-            "providers.aws.services.appstream.appstream_service.AppStream",
+            "prowler.providers.aws.services.appstream.appstream_service.AppStream",
             new=appstream_client,
         ):
             # Test Check
-            from providers.aws.services.appstream.appstream_fleet_maximum_session_duration.appstream_fleet_maximum_session_duration import (
+            from prowler.providers.aws.services.appstream.appstream_fleet_maximum_session_duration.appstream_fleet_maximum_session_duration import (
                 appstream_fleet_maximum_session_duration,
             )
 
@@ -79,11 +79,11 @@ class Test_appstream_fleet_maximum_session_duration:
         appstream_client.fleets.append(fleet1)
 
         with mock.patch(
-            "providers.aws.services.appstream.appstream_service.AppStream",
+            "prowler.providers.aws.services.appstream.appstream_service.AppStream",
             new=appstream_client,
         ):
             # Test Check
-            from providers.aws.services.appstream.appstream_fleet_maximum_session_duration.appstream_fleet_maximum_session_duration import (
+            from prowler.providers.aws.services.appstream.appstream_fleet_maximum_session_duration.appstream_fleet_maximum_session_duration import (
                 appstream_fleet_maximum_session_duration,
             )
 
@@ -130,11 +130,11 @@ class Test_appstream_fleet_maximum_session_duration:
         appstream_client.fleets.append(fleet2)
 
         with mock.patch(
-            "providers.aws.services.appstream.appstream_service.AppStream",
+            "prowler.providers.aws.services.appstream.appstream_service.AppStream",
             new=appstream_client,
         ):
             # Test Check
-            from providers.aws.services.appstream.appstream_fleet_maximum_session_duration.appstream_fleet_maximum_session_duration import (
+            from prowler.providers.aws.services.appstream.appstream_fleet_maximum_session_duration.appstream_fleet_maximum_session_duration import (
                 appstream_fleet_maximum_session_duration,
             )
 

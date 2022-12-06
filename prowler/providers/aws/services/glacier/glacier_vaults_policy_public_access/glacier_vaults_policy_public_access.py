@@ -1,7 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.glacier.glacier_client import (
-    glacier_client,
-)
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.glacier.glacier_client import glacier_client
 
 
 class glacier_vaults_policy_public_access(Check):

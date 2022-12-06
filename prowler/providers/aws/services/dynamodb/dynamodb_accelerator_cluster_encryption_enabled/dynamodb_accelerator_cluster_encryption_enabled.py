@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.dynamodb.dax_client import dax_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.dynamodb.dax_client import dax_client
 
 
 class dynamodb_accelerator_cluster_encryption_enabled(Check):

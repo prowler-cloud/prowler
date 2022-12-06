@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from azure.mgmt.authorization import AuthorizationManagementClient
 from azure.mgmt.authorization.v2022_04_01.models import Permission
 
-from lib.logger import logger
+from prowler.lib.logger import logger
 
 
 ########################## IAM

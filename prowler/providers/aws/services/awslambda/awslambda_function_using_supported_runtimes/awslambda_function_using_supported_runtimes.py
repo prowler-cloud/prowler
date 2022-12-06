@@ -1,6 +1,6 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.awslambda.awslambda_client import awslambda_client
-from config.config import get_config_var
+from prowler.config.config import get_config_var
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
 class awslambda_function_using_supported_runtimes(Check):

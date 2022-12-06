@@ -1,6 +1,6 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.ec2.ec2_client import ec2_client
-from providers.aws.services.ec2.lib.security_groups import check_security_group
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.ec2.ec2_client import ec2_client
+from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
 
 
 class ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018(Check):

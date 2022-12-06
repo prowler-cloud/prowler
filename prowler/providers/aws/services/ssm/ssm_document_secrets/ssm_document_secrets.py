@@ -5,8 +5,8 @@ import tempfile
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
-from lib.check.models import Check, Check_Report
-from providers.aws.services.ssm.ssm_client import ssm_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.ssm.ssm_client import ssm_client
 
 
 class ssm_document_secrets(Check):

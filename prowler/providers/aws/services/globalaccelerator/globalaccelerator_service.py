@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from lib.logger import logger
+from prowler.lib.logger import logger
 
 
 ################### GlobalAccelerator

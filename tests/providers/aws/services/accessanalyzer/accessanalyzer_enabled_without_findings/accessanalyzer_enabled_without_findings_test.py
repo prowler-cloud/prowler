@@ -1,6 +1,8 @@
 from unittest import mock
 
-from providers.aws.services.accessanalyzer.accessanalyzer_service import Analyzer
+from prowler.providers.aws.services.accessanalyzer.accessanalyzer_service import (
+    Analyzer,
+)
 
 
 class Test_accessanalyzer_enabled_without_findings:
@@ -8,11 +10,11 @@ class Test_accessanalyzer_enabled_without_findings:
         accessanalyzer_client = mock.MagicMock
         accessanalyzer_client.analyzers = []
         with mock.patch(
-            "providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             new=accessanalyzer_client,
         ):
             # Test Check
-            from providers.aws.services.accessanalyzer.accessanalyzer_enabled_without_findings.accessanalyzer_enabled_without_findings import (
+            from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled_without_findings.accessanalyzer_enabled_without_findings import (
                 accessanalyzer_enabled_without_findings,
             )
 
@@ -36,10 +38,10 @@ class Test_accessanalyzer_enabled_without_findings:
             )
         ]
         with mock.patch(
-            "providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             accessanalyzer_client,
         ):
-            from providers.aws.services.accessanalyzer.accessanalyzer_enabled_without_findings.accessanalyzer_enabled_without_findings import (
+            from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled_without_findings.accessanalyzer_enabled_without_findings import (
                 accessanalyzer_enabled_without_findings,
             )
 
@@ -76,11 +78,11 @@ class Test_accessanalyzer_enabled_without_findings:
 
         # Patch AccessAnalyzer Client
         with mock.patch(
-            "providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             new=accessanalyzer_client,
         ):
             # Test Check
-            from providers.aws.services.accessanalyzer.accessanalyzer_enabled_without_findings.accessanalyzer_enabled_without_findings import (
+            from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled_without_findings.accessanalyzer_enabled_without_findings import (
                 accessanalyzer_enabled_without_findings,
             )
 
@@ -113,11 +115,11 @@ class Test_accessanalyzer_enabled_without_findings:
         ]
 
         with mock.patch(
-            "providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             new=accessanalyzer_client,
         ):
             # Test Check
-            from providers.aws.services.accessanalyzer.accessanalyzer_enabled_without_findings.accessanalyzer_enabled_without_findings import (
+            from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled_without_findings.accessanalyzer_enabled_without_findings import (
                 accessanalyzer_enabled_without_findings,
             )
 
@@ -147,11 +149,11 @@ class Test_accessanalyzer_enabled_without_findings:
         ]
         # Patch AccessAnalyzer Client
         with mock.patch(
-            "providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             new=accessanalyzer_client,
         ):
             # Test Check
-            from providers.aws.services.accessanalyzer.accessanalyzer_enabled_without_findings.accessanalyzer_enabled_without_findings import (
+            from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled_without_findings.accessanalyzer_enabled_without_findings import (
                 accessanalyzer_enabled_without_findings,
             )
 

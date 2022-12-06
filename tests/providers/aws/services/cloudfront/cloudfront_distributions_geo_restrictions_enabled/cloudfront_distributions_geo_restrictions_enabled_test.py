@@ -1,7 +1,8 @@
 from unittest import mock
 
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.cloudfront.cloudfront_service import (
+
+from prowler.providers.aws.services.cloudfront.cloudfront_service import (
     Distribution,
     GeoRestrictionType,
 )
@@ -18,11 +19,11 @@ class Test_cloudfront_distributions_geo_restrictions_enabled:
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {}
         with mock.patch(
-            "providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ):
             # Test Check
-            from providers.aws.services.cloudfront.cloudfront_distributions_geo_restrictions_enabled.cloudfront_distributions_geo_restrictions_enabled import (
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_geo_restrictions_enabled.cloudfront_distributions_geo_restrictions_enabled import (
                 cloudfront_distributions_geo_restrictions_enabled,
             )
 
@@ -44,11 +45,11 @@ class Test_cloudfront_distributions_geo_restrictions_enabled:
         }
 
         with mock.patch(
-            "providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ):
             # Test Check
-            from providers.aws.services.cloudfront.cloudfront_distributions_geo_restrictions_enabled.cloudfront_distributions_geo_restrictions_enabled import (
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_geo_restrictions_enabled.cloudfront_distributions_geo_restrictions_enabled import (
                 cloudfront_distributions_geo_restrictions_enabled,
             )
 
@@ -78,11 +79,11 @@ class Test_cloudfront_distributions_geo_restrictions_enabled:
         }
 
         with mock.patch(
-            "providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ):
             # Test Check
-            from providers.aws.services.cloudfront.cloudfront_distributions_geo_restrictions_enabled.cloudfront_distributions_geo_restrictions_enabled import (
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_geo_restrictions_enabled.cloudfront_distributions_geo_restrictions_enabled import (
                 cloudfront_distributions_geo_restrictions_enabled,
             )
 
@@ -112,11 +113,11 @@ class Test_cloudfront_distributions_geo_restrictions_enabled:
         }
 
         with mock.patch(
-            "providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ):
             # Test Check
-            from providers.aws.services.cloudfront.cloudfront_distributions_geo_restrictions_enabled.cloudfront_distributions_geo_restrictions_enabled import (
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_geo_restrictions_enabled.cloudfront_distributions_geo_restrictions_enabled import (
                 cloudfront_distributions_geo_restrictions_enabled,
             )
 

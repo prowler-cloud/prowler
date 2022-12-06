@@ -12,17 +12,17 @@ class Test_elb_ssl_listeners:
     @mock_elb
     def test_elb_no_balancers(self):
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elb.elb_service import ELB
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.elb.elb_service import ELB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elb.elb_ssl_listeners.elb_ssl_listeners.elb_client",
+            "prowler.providers.aws.services.elb.elb_ssl_listeners.elb_ssl_listeners.elb_client",
             new=ELB(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.elb.elb_ssl_listeners.elb_ssl_listeners import (
+            from prowler.providers.aws.services.elb.elb_ssl_listeners.elb_ssl_listeners import (
                 elb_ssl_listeners,
             )
 
@@ -52,16 +52,16 @@ class Test_elb_ssl_listeners:
             SecurityGroups=[security_group.id],
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elb.elb_service import ELB
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.elb.elb_service import ELB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elb.elb_ssl_listeners.elb_ssl_listeners.elb_client",
+            "prowler.providers.aws.services.elb.elb_ssl_listeners.elb_ssl_listeners.elb_client",
             new=ELB(current_audit_info),
         ):
-            from providers.aws.services.elb.elb_ssl_listeners.elb_ssl_listeners import (
+            from prowler.providers.aws.services.elb.elb_ssl_listeners.elb_ssl_listeners import (
                 elb_ssl_listeners,
             )
 
@@ -95,16 +95,16 @@ class Test_elb_ssl_listeners:
             Scheme="internal",
             SecurityGroups=[security_group.id],
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elb.elb_service import ELB
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.elb.elb_service import ELB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elb.elb_ssl_listeners.elb_ssl_listeners.elb_client",
+            "prowler.providers.aws.services.elb.elb_ssl_listeners.elb_ssl_listeners.elb_client",
             new=ELB(current_audit_info),
         ):
-            from providers.aws.services.elb.elb_ssl_listeners.elb_ssl_listeners import (
+            from prowler.providers.aws.services.elb.elb_ssl_listeners.elb_ssl_listeners import (
                 elb_ssl_listeners,
             )
 

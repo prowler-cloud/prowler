@@ -10,17 +10,17 @@ class Test_ec2_ebs_public_snapshot:
     @mock_ec2
     def test_ec2_default_snapshots(self):
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_ebs_public_snapshot.ec2_ebs_public_snapshot.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_ebs_public_snapshot.ec2_ebs_public_snapshot.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_ebs_public_snapshot.ec2_ebs_public_snapshot import (
+            from prowler.providers.aws.services.ec2.ec2_ebs_public_snapshot.ec2_ebs_public_snapshot import (
                 ec2_ebs_public_snapshot,
             )
 
@@ -28,7 +28,7 @@ class Test_ec2_ebs_public_snapshot:
             result = check.execute()
 
             # Default snapshots
-            assert len(result) == 1485
+            assert len(result) == 1433
 
     @mock_ec2
     def test_ec2_public_snapshot(self):
@@ -43,17 +43,17 @@ class Test_ec2_ebs_public_snapshot:
             OperationType="add",
             GroupNames=["all"],
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_ebs_public_snapshot.ec2_ebs_public_snapshot.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_ebs_public_snapshot.ec2_ebs_public_snapshot.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_ebs_public_snapshot.ec2_ebs_public_snapshot import (
+            from prowler.providers.aws.services.ec2.ec2_ebs_public_snapshot.ec2_ebs_public_snapshot import (
                 ec2_ebs_public_snapshot,
             )
 
@@ -61,7 +61,7 @@ class Test_ec2_ebs_public_snapshot:
             results = check.execute()
 
             # Default snapshots + 1 created
-            assert len(results) == 1486
+            assert len(results) == 1434
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
@@ -79,17 +79,17 @@ class Test_ec2_ebs_public_snapshot:
             Size=80, AvailabilityZone=f"{AWS_REGION}a", Encrypted=True
         )
         snapshot = volume.create_snapshot(Description="testsnap")
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_ebs_public_snapshot.ec2_ebs_public_snapshot.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_ebs_public_snapshot.ec2_ebs_public_snapshot.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_ebs_public_snapshot.ec2_ebs_public_snapshot import (
+            from prowler.providers.aws.services.ec2.ec2_ebs_public_snapshot.ec2_ebs_public_snapshot import (
                 ec2_ebs_public_snapshot,
             )
 
@@ -97,7 +97,7 @@ class Test_ec2_ebs_public_snapshot:
             results = check.execute()
 
             # Default snapshots + 1 created
-            assert len(results) == 1486
+            assert len(results) == 1434
 
             for snap in results:
                 if snap.resource_id == snapshot.id:

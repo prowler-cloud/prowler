@@ -17,17 +17,17 @@ def mock_get_config_var(config_var):
 class Test_vpc_endpoint_connections_trust_boundaries:
     @mock_ec2
     def test_vpc_no_endpoints(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.vpc.vpc_service import VPC
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
+            "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
             new=VPC(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries import (
+            from prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries import (
                 vpc_endpoint_connections_trust_boundaries,
             )
 
@@ -62,17 +62,17 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 }
             ),
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.vpc.vpc_service import VPC
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
+            "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
             new=VPC(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries import (
+            from prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries import (
                 vpc_endpoint_connections_trust_boundaries,
             )
 
@@ -114,18 +114,18 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 }
             ),
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.vpc.vpc_service import VPC
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info.audited_partition = "aws"
         current_audit_info.audited_account = ACCOUNT_ID
 
         with mock.patch(
-            "providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
+            "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
             new=VPC(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries import (
+            from prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries import (
                 vpc_endpoint_connections_trust_boundaries,
             )
 
@@ -167,18 +167,18 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 }
             ),
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.vpc.vpc_service import VPC
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info.audited_partition = "aws"
         current_audit_info.audited_account = ACCOUNT_ID
 
         with mock.patch(
-            "providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
+            "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
             new=VPC(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries import (
+            from prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries import (
                 vpc_endpoint_connections_trust_boundaries,
             )
 
@@ -219,22 +219,22 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 }
             ),
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.vpc.vpc_service import VPC
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info.audited_partition = "aws"
         current_audit_info.audited_account = ACCOUNT_ID
 
         with mock.patch(
-            "providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
+            "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
             new=VPC(current_audit_info),
         ):
             with mock.patch(
-                "providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.get_config_var",
+                "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.get_config_var",
                 new=mock_get_config_var,
             ):
                 # Test Check
-                from providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries import (
+                from prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries import (
                     vpc_endpoint_connections_trust_boundaries,
                 )
 

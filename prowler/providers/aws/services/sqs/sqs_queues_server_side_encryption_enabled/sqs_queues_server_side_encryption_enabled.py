@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.sqs.sqs_client import sqs_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.sqs.sqs_client import sqs_client
 
 
 class sqs_queues_server_side_encryption_enabled(Check):

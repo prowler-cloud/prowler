@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.eks.eks_client import eks_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.eks.eks_client import eks_client
 
 
 class eks_control_plane_endpoint_access_restricted(Check):

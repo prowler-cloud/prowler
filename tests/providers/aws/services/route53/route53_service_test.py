@@ -3,8 +3,9 @@ from unittest.mock import patch
 import botocore
 from boto3 import client, session
 from moto import mock_logs, mock_route53
-from providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
-from providers.aws.services.route53.route53_service import Route53
+
+from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
+from prowler.providers.aws.services.route53.route53_service import Route53
 
 # Mock Test Region
 AWS_REGION = "us-east-1"

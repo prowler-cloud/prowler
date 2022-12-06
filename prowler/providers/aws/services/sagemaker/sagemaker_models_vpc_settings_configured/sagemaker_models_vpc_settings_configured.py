@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.sagemaker.sagemaker_client import sagemaker_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.sagemaker.sagemaker_client import sagemaker_client
 
 
 class sagemaker_models_vpc_settings_configured(Check):

@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.emr.emr_client import emr_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.emr.emr_client import emr_client
 
 
 class emr_cluster_account_public_block_enabled(Check):

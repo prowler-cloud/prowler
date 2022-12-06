@@ -2,8 +2,9 @@ import datetime
 from unittest.mock import patch
 
 import botocore
-from providers.aws.lib.audit_info.audit_info import current_audit_info
-from providers.aws.services.macie.macie_service import Macie, Session
+
+from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+from prowler.providers.aws.services.macie.macie_service import Macie, Session
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -40,7 +41,7 @@ def mock_generate_regional_clients(service, audit_info):
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 @patch(
-    "providers.aws.services.macie.macie_service.generate_regional_clients",
+    "prowler.providers.aws.services.macie.macie_service.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_Macie_Service:

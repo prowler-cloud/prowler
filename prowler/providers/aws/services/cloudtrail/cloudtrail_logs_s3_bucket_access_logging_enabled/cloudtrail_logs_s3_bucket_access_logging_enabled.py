@@ -1,6 +1,8 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.cloudtrail.cloudtrail_client import cloudtrail_client
-from providers.aws.services.s3.s3_client import s3_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
+    cloudtrail_client,
+)
+from prowler.providers.aws.services.s3.s3_client import s3_client
 
 
 class cloudtrail_logs_s3_bucket_access_logging_enabled(Check):

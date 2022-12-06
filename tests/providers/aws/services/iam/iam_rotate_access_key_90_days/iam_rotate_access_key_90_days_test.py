@@ -12,14 +12,14 @@ class Test_iam_rotate_access_key_90_days_test:
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
+            "prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
-            from providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days import (
+            from prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days import (
                 iam_rotate_access_key_90_days,
             )
 
@@ -42,14 +42,14 @@ class Test_iam_rotate_access_key_90_days_test:
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
+            "prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
-            from providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days import (
+            from prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days import (
                 iam_rotate_access_key_90_days,
             )
 
@@ -76,14 +76,14 @@ class Test_iam_rotate_access_key_90_days_test:
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
+            "prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
-            from providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days import (
+            from prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days import (
                 iam_rotate_access_key_90_days,
             )
 

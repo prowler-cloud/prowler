@@ -2,8 +2,9 @@ from base64 import b64decode
 
 from boto3 import client, resource, session
 from moto import mock_ec2
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.ec2.ec2_service import EC2
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.ec2.ec2_service import EC2
 
 AWS_ACCOUNT_NUMBER = 123456789012
 AWS_REGION = "us-east-1"

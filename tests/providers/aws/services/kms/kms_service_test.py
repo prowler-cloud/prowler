@@ -2,8 +2,9 @@ import json
 
 from boto3 import client, session
 from moto import mock_kms
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.kms.kms_service import KMS
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.kms.kms_service import KMS
 
 AWS_ACCOUNT_NUMBER = 123456789012
 AWS_REGION = "us-east-1"

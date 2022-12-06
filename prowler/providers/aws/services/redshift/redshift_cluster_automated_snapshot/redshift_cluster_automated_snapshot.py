@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.redshift.redshift_client import redshift_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.redshift.redshift_client import redshift_client
 
 
 class redshift_cluster_automated_snapshot(Check):

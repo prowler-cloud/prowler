@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 from uuid import uuid4
 
-from providers.aws.services.redshift.redshift_service import Cluster
+from prowler.providers.aws.services.redshift.redshift_service import Cluster
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -15,10 +15,10 @@ class Test_redshift_cluster_audit_logging:
         redshift_client = mock.MagicMock
         redshift_client.clusters = []
         with mock.patch(
-            "providers.aws.services.redshift.redshift_service.Redshift",
+            "prowler.providers.aws.services.redshift.redshift_service.Redshift",
             redshift_client,
         ):
-            from providers.aws.services.redshift.redshift_cluster_audit_logging.redshift_cluster_audit_logging import (
+            from prowler.providers.aws.services.redshift.redshift_cluster_audit_logging.redshift_cluster_audit_logging import (
                 redshift_cluster_audit_logging,
             )
 
@@ -37,10 +37,10 @@ class Test_redshift_cluster_audit_logging:
             )
         )
         with mock.patch(
-            "providers.aws.services.redshift.redshift_service.Redshift",
+            "prowler.providers.aws.services.redshift.redshift_service.Redshift",
             redshift_client,
         ):
-            from providers.aws.services.redshift.redshift_cluster_audit_logging.redshift_cluster_audit_logging import (
+            from prowler.providers.aws.services.redshift.redshift_cluster_audit_logging.redshift_cluster_audit_logging import (
                 redshift_cluster_audit_logging,
             )
 
@@ -63,10 +63,10 @@ class Test_redshift_cluster_audit_logging:
             )
         )
         with mock.patch(
-            "providers.aws.services.redshift.redshift_service.Redshift",
+            "prowler.providers.aws.services.redshift.redshift_service.Redshift",
             redshift_client,
         ):
-            from providers.aws.services.redshift.redshift_cluster_audit_logging.redshift_cluster_audit_logging import (
+            from prowler.providers.aws.services.redshift.redshift_cluster_audit_logging.redshift_cluster_audit_logging import (
                 redshift_cluster_audit_logging,
             )
 

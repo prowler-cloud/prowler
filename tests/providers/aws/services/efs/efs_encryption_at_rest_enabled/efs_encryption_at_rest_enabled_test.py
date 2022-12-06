@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from providers.aws.services.efs.efs_service import FileSystem
+from prowler.providers.aws.services.efs.efs_service import FileSystem
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -25,10 +25,10 @@ class Test_efs_encryption_at_rest_enabled:
             )
         ]
         with mock.patch(
-            "providers.aws.services.efs.efs_service.EFS",
+            "prowler.providers.aws.services.efs.efs_service.EFS",
             efs_client,
         ):
-            from providers.aws.services.efs.efs_encryption_at_rest_enabled.efs_encryption_at_rest_enabled import (
+            from prowler.providers.aws.services.efs.efs_encryption_at_rest_enabled.efs_encryption_at_rest_enabled import (
                 efs_encryption_at_rest_enabled,
             )
 
@@ -52,10 +52,10 @@ class Test_efs_encryption_at_rest_enabled:
             )
         ]
         with mock.patch(
-            "providers.aws.services.efs.efs_service.EFS",
+            "prowler.providers.aws.services.efs.efs_service.EFS",
             efs_client,
         ):
-            from providers.aws.services.efs.efs_encryption_at_rest_enabled.efs_encryption_at_rest_enabled import (
+            from prowler.providers.aws.services.efs.efs_encryption_at_rest_enabled.efs_encryption_at_rest_enabled import (
                 efs_encryption_at_rest_enabled,
             )
 

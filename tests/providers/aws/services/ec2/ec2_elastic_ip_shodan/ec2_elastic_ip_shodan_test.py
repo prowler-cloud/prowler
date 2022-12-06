@@ -1,8 +1,9 @@
 from unittest import mock
 
 from boto3 import client
-from config.config import get_config_var
 from moto import mock_ec2
+
+from prowler.config.config import get_config_var
 
 EXAMPLE_AMI_ID = "ami-12c6146b"
 shodan_api_key = get_config_var("shodan_api_key")
@@ -18,17 +19,19 @@ class Test_ec2_elastic_ip_shodan:
             # Create EC2 Instance
             ec2_client.run_instances(ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1)
 
-            from providers.aws.lib.audit_info.audit_info import current_audit_info
-            from providers.aws.services.ec2.ec2_service import EC2
+            from prowler.providers.aws.lib.audit_info.audit_info import (
+                current_audit_info,
+            )
+            from prowler.providers.aws.services.ec2.ec2_service import EC2
 
             current_audit_info.audited_partition = "aws"
 
             with mock.patch(
-                "providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan.ec2_client",
+                "prowler.providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan.ec2_client",
                 new=EC2(current_audit_info),
             ):
                 # Test Check
-                from providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan import (
+                from prowler.providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan import (
                     ec2_elastic_ip_shodan,
                 )
 
@@ -44,17 +47,19 @@ class Test_ec2_elastic_ip_shodan:
             # Create EC2 Instance
             ec2_client.allocate_address(Domain="vpc")
 
-            from providers.aws.lib.audit_info.audit_info import current_audit_info
-            from providers.aws.services.ec2.ec2_service import EC2
+            from prowler.providers.aws.lib.audit_info.audit_info import (
+                current_audit_info,
+            )
+            from prowler.providers.aws.services.ec2.ec2_service import EC2
 
             current_audit_info.audited_partition = "aws"
 
             with mock.patch(
-                "providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan.ec2_client",
+                "prowler.providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan.ec2_client",
                 new=EC2(current_audit_info),
             ):
                 # Test Check
-                from providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan import (
+                from prowler.providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan import (
                     ec2_elastic_ip_shodan,
                 )
 
@@ -77,17 +82,19 @@ class Test_ec2_elastic_ip_shodan:
                 InstanceId=instance["Instances"][0]["InstanceId"],
             )
 
-            from providers.aws.lib.audit_info.audit_info import current_audit_info
-            from providers.aws.services.ec2.ec2_service import EC2
+            from prowler.providers.aws.lib.audit_info.audit_info import (
+                current_audit_info,
+            )
+            from prowler.providers.aws.services.ec2.ec2_service import EC2
 
             current_audit_info.audited_partition = "aws"
 
             with mock.patch(
-                "providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan.ec2_client",
+                "prowler.providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan.ec2_client",
                 new=EC2(current_audit_info),
             ):
                 # Test Check
-                from providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan import (
+                from prowler.providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan import (
                     ec2_elastic_ip_shodan,
                 )
 

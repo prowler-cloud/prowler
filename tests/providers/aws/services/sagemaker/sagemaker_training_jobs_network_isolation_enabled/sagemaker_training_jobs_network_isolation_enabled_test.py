@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 from uuid import uuid4
 
-from providers.aws.services.sagemaker.sagemaker_service import TrainingJob
+from prowler.providers.aws.services.sagemaker.sagemaker_service import TrainingJob
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -17,10 +17,10 @@ class Test_sagemaker_training_jobs_network_isolation_enabled:
         sagemaker_client = mock.MagicMock
         sagemaker_client.sagemaker_training_jobs = []
         with mock.patch(
-            "providers.aws.services.sagemaker.sagemaker_service.SageMaker",
+            "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker",
             sagemaker_client,
         ):
-            from providers.aws.services.sagemaker.sagemaker_training_jobs_network_isolation_enabled.sagemaker_training_jobs_network_isolation_enabled import (
+            from prowler.providers.aws.services.sagemaker.sagemaker_training_jobs_network_isolation_enabled.sagemaker_training_jobs_network_isolation_enabled import (
                 sagemaker_training_jobs_network_isolation_enabled,
             )
 
@@ -40,10 +40,10 @@ class Test_sagemaker_training_jobs_network_isolation_enabled:
             )
         )
         with mock.patch(
-            "providers.aws.services.sagemaker.sagemaker_service.SageMaker",
+            "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker",
             sagemaker_client,
         ):
-            from providers.aws.services.sagemaker.sagemaker_training_jobs_network_isolation_enabled.sagemaker_training_jobs_network_isolation_enabled import (
+            from prowler.providers.aws.services.sagemaker.sagemaker_training_jobs_network_isolation_enabled.sagemaker_training_jobs_network_isolation_enabled import (
                 sagemaker_training_jobs_network_isolation_enabled,
             )
 
@@ -66,10 +66,10 @@ class Test_sagemaker_training_jobs_network_isolation_enabled:
             )
         )
         with mock.patch(
-            "providers.aws.services.sagemaker.sagemaker_service.SageMaker",
+            "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker",
             sagemaker_client,
         ):
-            from providers.aws.services.sagemaker.sagemaker_training_jobs_network_isolation_enabled.sagemaker_training_jobs_network_isolation_enabled import (
+            from prowler.providers.aws.services.sagemaker.sagemaker_training_jobs_network_isolation_enabled.sagemaker_training_jobs_network_isolation_enabled import (
                 sagemaker_training_jobs_network_isolation_enabled,
             )
 

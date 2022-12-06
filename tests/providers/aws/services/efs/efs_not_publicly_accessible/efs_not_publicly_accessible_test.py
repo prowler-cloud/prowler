@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from providers.aws.services.efs.efs_service import FileSystem
+from prowler.providers.aws.services.efs.efs_service import FileSystem
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -46,10 +46,10 @@ class Test_efs_not_publicly_accessible:
             )
         ]
         with mock.patch(
-            "providers.aws.services.efs.efs_service.EFS",
+            "prowler.providers.aws.services.efs.efs_service.EFS",
             efs_client,
         ):
-            from providers.aws.services.efs.efs_not_publicly_accessible.efs_not_publicly_accessible import (
+            from prowler.providers.aws.services.efs.efs_not_publicly_accessible.efs_not_publicly_accessible import (
                 efs_not_publicly_accessible,
             )
 
@@ -76,10 +76,10 @@ class Test_efs_not_publicly_accessible:
             )
         ]
         with mock.patch(
-            "providers.aws.services.efs.efs_service.EFS",
+            "prowler.providers.aws.services.efs.efs_service.EFS",
             efs_client,
         ):
-            from providers.aws.services.efs.efs_not_publicly_accessible.efs_not_publicly_accessible import (
+            from prowler.providers.aws.services.efs.efs_not_publicly_accessible.efs_not_publicly_accessible import (
                 efs_not_publicly_accessible,
             )
 
@@ -105,10 +105,10 @@ class Test_efs_not_publicly_accessible:
             )
         ]
         with mock.patch(
-            "providers.aws.services.efs.efs_service.EFS",
+            "prowler.providers.aws.services.efs.efs_service.EFS",
             efs_client,
         ):
-            from providers.aws.services.efs.efs_not_publicly_accessible.efs_not_publicly_accessible import (
+            from prowler.providers.aws.services.efs.efs_not_publicly_accessible.efs_not_publicly_accessible import (
                 efs_not_publicly_accessible,
             )
 

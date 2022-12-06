@@ -1,7 +1,8 @@
 from boto3 import client, resource, session
 from moto import mock_ec2, mock_elbv2, mock_wafv2
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.wafv2.wafv2_service import WAFv2
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
 AWS_ACCOUNT_NUMBER = 123456789012
 AWS_REGION = "us-east-1"

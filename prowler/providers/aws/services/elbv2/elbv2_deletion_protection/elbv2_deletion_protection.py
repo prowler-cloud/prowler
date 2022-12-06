@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.elbv2.elbv2_client import elbv2_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.elbv2.elbv2_client import elbv2_client
 
 
 class elbv2_deletion_protection(Check):

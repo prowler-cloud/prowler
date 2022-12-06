@@ -17,17 +17,19 @@ class Test_cloudtrail_log_file_validation_enabled:
         trail_us = cloudtrail_client_us_east_1.create_trail(
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled import (
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled import (
                 cloudtrail_log_file_validation_enabled,
             )
 
@@ -66,17 +68,19 @@ class Test_cloudtrail_log_file_validation_enabled:
             Name=trail_name_eu, S3BucketName=bucket_name_eu, IsMultiRegionTrail=False
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ) as service_client:
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled import (
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled import (
                 cloudtrail_log_file_validation_enabled,
             )
 

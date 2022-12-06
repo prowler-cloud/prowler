@@ -3,7 +3,11 @@ from unittest import mock
 
 from awslambda_service_test import create_zip_file
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.awslambda.awslambda_service import Function, LambdaCode
+
+from prowler.providers.aws.services.awslambda.awslambda_service import (
+    Function,
+    LambdaCode,
+)
 
 AWS_REGION = "us-east-1"
 
@@ -14,11 +18,11 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client.functions = {}
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
                 awslambda_function_no_secrets_in_code,
             )
 
@@ -54,11 +58,11 @@ class Test_awslambda_function_no_secrets_in_code:
         }
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
                 awslambda_function_no_secrets_in_code,
             )
 
@@ -101,11 +105,11 @@ class Test_awslambda_function_no_secrets_in_code:
         }
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
                 awslambda_function_no_secrets_in_code,
             )
 

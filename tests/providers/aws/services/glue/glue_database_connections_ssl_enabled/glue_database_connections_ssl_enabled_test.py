@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from providers.aws.services.glue.glue_service import Connection
+from prowler.providers.aws.services.glue.glue_service import Connection
 
 AWS_REGION = "us-east-1"
 
@@ -12,11 +12,11 @@ class Test_glue_database_connections_ssl_enabled:
         glue_client.connections = []
 
         with mock.patch(
-            "providers.aws.services.glue.glue_service.Glue",
+            "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
         ):
             # Test Check
-            from providers.aws.services.glue.glue_database_connections_ssl_enabled.glue_database_connections_ssl_enabled import (
+            from prowler.providers.aws.services.glue.glue_database_connections_ssl_enabled.glue_database_connections_ssl_enabled import (
                 glue_database_connections_ssl_enabled,
             )
 
@@ -42,11 +42,11 @@ class Test_glue_database_connections_ssl_enabled:
         ]
 
         with mock.patch(
-            "providers.aws.services.glue.glue_service.Glue",
+            "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
         ):
             # Test Check
-            from providers.aws.services.glue.glue_database_connections_ssl_enabled.glue_database_connections_ssl_enabled import (
+            from prowler.providers.aws.services.glue.glue_database_connections_ssl_enabled.glue_database_connections_ssl_enabled import (
                 glue_database_connections_ssl_enabled,
             )
 
@@ -79,11 +79,11 @@ class Test_glue_database_connections_ssl_enabled:
         ]
 
         with mock.patch(
-            "providers.aws.services.glue.glue_service.Glue",
+            "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
         ):
             # Test Check
-            from providers.aws.services.glue.glue_database_connections_ssl_enabled.glue_database_connections_ssl_enabled import (
+            from prowler.providers.aws.services.glue.glue_database_connections_ssl_enabled.glue_database_connections_ssl_enabled import (
                 glue_database_connections_ssl_enabled,
             )
 

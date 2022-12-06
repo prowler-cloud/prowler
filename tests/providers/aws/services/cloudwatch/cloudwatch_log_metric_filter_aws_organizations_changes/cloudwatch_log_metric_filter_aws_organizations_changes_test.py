@@ -12,27 +12,29 @@ class Test_cloudwatch_log_metric_filter_aws_organizations_changes:
     @mock_cloudtrail
     @mock_cloudwatch
     def test_cloudwatch_no_log_groups(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudwatch.cloudwatch_service import (
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
 
         current_audit_info.audited_partition = "aws"
-        from providers.aws.services.cloudtrail.cloudtrail_client import Cloudtrail
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
+            Cloudtrail,
+        )
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes import (
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes import (
                 cloudwatch_log_metric_filter_aws_organizations_changes,
             )
 
@@ -57,27 +59,29 @@ class Test_cloudwatch_log_metric_filter_aws_organizations_changes:
         s3_client.create_bucket(Bucket="test")
         cloudtrail_client.create_trail(Name="test_trail", S3BucketName="test")
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudwatch.cloudwatch_service import (
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
 
         current_audit_info.audited_partition = "aws"
-        from providers.aws.services.cloudtrail.cloudtrail_client import Cloudtrail
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
+            Cloudtrail,
+        )
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes import (
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes import (
                 cloudwatch_log_metric_filter_aws_organizations_changes,
             )
 
@@ -108,27 +112,29 @@ class Test_cloudwatch_log_metric_filter_aws_organizations_changes:
             CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudwatch.cloudwatch_service import (
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
 
         current_audit_info.audited_partition = "aws"
-        from providers.aws.services.cloudtrail.cloudtrail_client import Cloudtrail
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
+            Cloudtrail,
+        )
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes import (
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes import (
                 cloudwatch_log_metric_filter_aws_organizations_changes,
             )
 
@@ -171,27 +177,29 @@ class Test_cloudwatch_log_metric_filter_aws_organizations_changes:
             ],
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudwatch.cloudwatch_service import (
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
 
         current_audit_info.audited_partition = "aws"
-        from providers.aws.services.cloudtrail.cloudtrail_client import Cloudtrail
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
+            Cloudtrail,
+        )
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes import (
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes import (
                 cloudwatch_log_metric_filter_aws_organizations_changes,
             )
 
@@ -246,27 +254,29 @@ class Test_cloudwatch_log_metric_filter_aws_organizations_changes:
             ActionsEnabled=True,
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudwatch.cloudwatch_service import (
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
 
         current_audit_info.audited_partition = "aws"
-        from providers.aws.services.cloudtrail.cloudtrail_client import Cloudtrail
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
+            Cloudtrail,
+        )
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes import (
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_aws_organizations_changes.cloudwatch_log_metric_filter_aws_organizations_changes import (
                 cloudwatch_log_metric_filter_aws_organizations_changes,
             )
 

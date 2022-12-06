@@ -1,10 +1,10 @@
 from copy import deepcopy
 
-from lib.check.models import Check, Check_Report
-from providers.aws.services.ec2.ec2_client import ec2_client
-from providers.aws.services.ec2.lib.security_groups import check_security_group
-from providers.aws.services.emr.emr_client import emr_client
-from providers.aws.services.emr.emr_service import ClusterStatus
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.ec2.ec2_client import ec2_client
+from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
+from prowler.providers.aws.services.emr.emr_client import emr_client
+from prowler.providers.aws.services.emr.emr_service import ClusterStatus
 
 
 class emr_cluster_publicly_accesible(Check):

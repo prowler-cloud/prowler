@@ -10,17 +10,17 @@ AWS_REGION = "us-east-1"
 class Test_dynamodb_tables_pitr_enabled:
     @mock_dynamodb
     def test_dynamodb_no_tables(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.dynamodb.dynamodb_service import DynamoDB
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.dynamodb.dynamodb_service import DynamoDB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled.dynamodb_client",
+            "prowler.providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled.dynamodb_client",
             new=DynamoDB(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled import (
+            from prowler.providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled import (
                 dynamodb_tables_pitr_enabled,
             )
 
@@ -44,17 +44,17 @@ class Test_dynamodb_tables_pitr_enabled:
             ],
             BillingMode="PAY_PER_REQUEST",
         )["TableDescription"]
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.dynamodb.dynamodb_service import DynamoDB
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.dynamodb.dynamodb_service import DynamoDB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled.dynamodb_client",
+            "prowler.providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled.dynamodb_client",
             new=DynamoDB(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled import (
+            from prowler.providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled import (
                 dynamodb_tables_pitr_enabled,
             )
 
@@ -89,17 +89,17 @@ class Test_dynamodb_tables_pitr_enabled:
             TableName="test1",
             PointInTimeRecoverySpecification={"PointInTimeRecoveryEnabled": True},
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.dynamodb.dynamodb_service import DynamoDB
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.dynamodb.dynamodb_service import DynamoDB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled.dynamodb_client",
+            "prowler.providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled.dynamodb_client",
             new=DynamoDB(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled import (
+            from prowler.providers.aws.services.dynamodb.dynamodb_tables_pitr_enabled.dynamodb_tables_pitr_enabled import (
                 dynamodb_tables_pitr_enabled,
             )
 

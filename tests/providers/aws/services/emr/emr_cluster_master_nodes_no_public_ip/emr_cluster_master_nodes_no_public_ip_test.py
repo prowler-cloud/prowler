@@ -1,7 +1,8 @@
 from unittest import mock
 
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.emr.emr_service import Cluster, ClusterStatus
+
+from prowler.providers.aws.services.emr.emr_service import Cluster, ClusterStatus
 
 AWS_REGION = "eu-west-1"
 
@@ -11,11 +12,11 @@ class Test_emr_cluster_master_nodes_no_public_ip:
         emr_client = mock.MagicMock
         emr_client.clusters = {}
         with mock.patch(
-            "providers.aws.services.emr.emr_service.EMR",
+            "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ):
             # Test Check
-            from providers.aws.services.emr.emr_cluster_master_nodes_no_public_ip.emr_cluster_master_nodes_no_public_ip import (
+            from prowler.providers.aws.services.emr.emr_cluster_master_nodes_no_public_ip.emr_cluster_master_nodes_no_public_ip import (
                 emr_cluster_master_nodes_no_public_ip,
             )
 
@@ -41,11 +42,11 @@ class Test_emr_cluster_master_nodes_no_public_ip:
             )
         }
         with mock.patch(
-            "providers.aws.services.emr.emr_service.EMR",
+            "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ):
             # Test Check
-            from providers.aws.services.emr.emr_cluster_master_nodes_no_public_ip.emr_cluster_master_nodes_no_public_ip import (
+            from prowler.providers.aws.services.emr.emr_cluster_master_nodes_no_public_ip.emr_cluster_master_nodes_no_public_ip import (
                 emr_cluster_master_nodes_no_public_ip,
             )
 
@@ -78,11 +79,11 @@ class Test_emr_cluster_master_nodes_no_public_ip:
             )
         }
         with mock.patch(
-            "providers.aws.services.emr.emr_service.EMR",
+            "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ):
             # Test Check
-            from providers.aws.services.emr.emr_cluster_master_nodes_no_public_ip.emr_cluster_master_nodes_no_public_ip import (
+            from prowler.providers.aws.services.emr.emr_cluster_master_nodes_no_public_ip.emr_cluster_master_nodes_no_public_ip import (
                 emr_cluster_master_nodes_no_public_ip,
             )
 
@@ -116,11 +117,11 @@ class Test_emr_cluster_master_nodes_no_public_ip:
             )
         }
         with mock.patch(
-            "providers.aws.services.emr.emr_service.EMR",
+            "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ):
             # Test Check
-            from providers.aws.services.emr.emr_cluster_master_nodes_no_public_ip.emr_cluster_master_nodes_no_public_ip import (
+            from prowler.providers.aws.services.emr.emr_cluster_master_nodes_no_public_ip.emr_cluster_master_nodes_no_public_ip import (
                 emr_cluster_master_nodes_no_public_ip,
             )
 
@@ -146,11 +147,11 @@ class Test_emr_cluster_master_nodes_no_public_ip:
             )
         }
         with mock.patch(
-            "providers.aws.services.emr.emr_service.EMR",
+            "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ):
             # Test Check
-            from providers.aws.services.emr.emr_cluster_master_nodes_no_public_ip.emr_cluster_master_nodes_no_public_ip import (
+            from prowler.providers.aws.services.emr.emr_cluster_master_nodes_no_public_ip.emr_cluster_master_nodes_no_public_ip import (
                 emr_cluster_master_nodes_no_public_ip,
             )
 

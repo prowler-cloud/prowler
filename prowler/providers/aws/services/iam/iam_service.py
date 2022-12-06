@@ -2,8 +2,8 @@ import csv
 from dataclasses import dataclass
 from datetime import datetime
 
-from lib.logger import logger
-from providers.aws.aws_provider import get_region_global_service
+from prowler.lib.logger import logger
+from prowler.providers.aws.aws_provider import get_region_global_service
 
 
 ################## IAM

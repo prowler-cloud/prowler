@@ -1,10 +1,12 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.awslambda.awslambda_client import awslambda_client
-import tempfile
 import json
+import os
+import tempfile
+
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
-import os
+
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
 class awslambda_function_no_secrets_in_variables(Check):

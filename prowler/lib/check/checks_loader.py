@@ -1,9 +1,9 @@
-from lib.check.check import (
+from prowler.lib.check.check import (
     parse_checks_from_compliance_framework,
     parse_checks_from_file,
     recover_checks_from_provider,
 )
-from lib.logger import logger
+from prowler.lib.logger import logger
 
 
 # Generate the list of checks to execute
@@ -52,7 +52,7 @@ def load_checks_to_execute(
                 for check_module in modules:
                     # Recover check name and module name from import path
                     # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
-                    check_name = check_module.split(".")[-1]
+                    check_name = check_module[0].split(".")[-1]
                     # If the service is present in the group list passed as parameters
                     # if service_name in group_list: checks_to_execute.add(check_name)
                     checks_to_execute.add(check_name)
@@ -82,10 +82,10 @@ def load_checks_to_execute(
         except Exception as e:
             logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
         else:
-            for check_name in checks:
+            for check_info in checks:
                 # Recover check name from import path (last part)
                 # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
-                check_name = check_name.split(".")[-1]
+                check_name = check_info[0]
                 checks_to_execute.add(check_name)
 
     return checks_to_execute

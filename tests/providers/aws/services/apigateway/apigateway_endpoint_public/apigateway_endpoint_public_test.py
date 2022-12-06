@@ -9,17 +9,19 @@ AWS_REGION = "us-east-1"
 class Test_apigateway_endpoint_public:
     @mock_apigateway
     def test_apigateway_no_rest_apis(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigateway.apigateway_service import APIGateway
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigateway.apigateway_endpoint_public.apigateway_endpoint_public.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_endpoint_public.apigateway_endpoint_public.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigateway.apigateway_endpoint_public.apigateway_endpoint_public import (
+            from prowler.providers.aws.services.apigateway.apigateway_endpoint_public.apigateway_endpoint_public import (
                 apigateway_endpoint_public,
             )
 
@@ -41,17 +43,19 @@ class Test_apigateway_endpoint_public:
                 ]
             },
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigateway.apigateway_service import APIGateway
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigateway.apigateway_endpoint_public.apigateway_endpoint_public.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_endpoint_public.apigateway_endpoint_public.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigateway.apigateway_endpoint_public.apigateway_endpoint_public import (
+            from prowler.providers.aws.services.apigateway.apigateway_endpoint_public.apigateway_endpoint_public import (
                 apigateway_endpoint_public,
             )
 
@@ -79,17 +83,19 @@ class Test_apigateway_endpoint_public:
                 ]
             },
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigateway.apigateway_service import APIGateway
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigateway.apigateway_endpoint_public.apigateway_endpoint_public.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_endpoint_public.apigateway_endpoint_public.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigateway.apigateway_endpoint_public.apigateway_endpoint_public import (
+            from prowler.providers.aws.services.apigateway.apigateway_endpoint_public.apigateway_endpoint_public import (
                 apigateway_endpoint_public,
             )
 

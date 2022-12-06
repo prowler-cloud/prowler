@@ -1,5 +1,7 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.cloudtrail.cloudtrail_client import cloudtrail_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
+    cloudtrail_client,
+)
 
 
 class cloudtrail_kms_encryption_enabled(Check):

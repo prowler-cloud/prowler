@@ -11,15 +11,15 @@ class Test_iam_password_policy_reuse_24:
         # update password policy
         iam_client.update_account_password_policy(PasswordReusePrevention=24)
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_password_policy_reuse_24.iam_password_policy_reuse_24.iam_client",
+            "prowler.providers.aws.services.iam.iam_password_policy_reuse_24.iam_password_policy_reuse_24.iam_client",
             new=IAM(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.iam.iam_password_policy_reuse_24.iam_password_policy_reuse_24 import (
+            from prowler.providers.aws.services.iam.iam_password_policy_reuse_24.iam_password_policy_reuse_24 import (
                 iam_password_policy_reuse_24,
             )
 
@@ -33,15 +33,15 @@ class Test_iam_password_policy_reuse_24:
         # update password policy
         iam_client.update_account_password_policy(PasswordReusePrevention=20)
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_password_policy_reuse_24.iam_password_policy_reuse_24.iam_client",
+            "prowler.providers.aws.services.iam.iam_password_policy_reuse_24.iam_password_policy_reuse_24.iam_client",
             new=IAM(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.iam.iam_password_policy_reuse_24.iam_password_policy_reuse_24 import (
+            from prowler.providers.aws.services.iam.iam_password_policy_reuse_24.iam_password_policy_reuse_24 import (
                 iam_password_policy_reuse_24,
             )
 

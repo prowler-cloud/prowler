@@ -10,17 +10,17 @@ class Test_ec2_ebs_snapshots_encrypted:
     @mock_ec2
     def test_ec2_default_snapshots(self):
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted import (
+            from prowler.providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted import (
                 ec2_ebs_snapshots_encrypted,
             )
 
@@ -28,7 +28,7 @@ class Test_ec2_ebs_snapshots_encrypted:
             result = check.execute()
 
             # Default snapshots
-            assert len(result) == 1485
+            assert len(result) == 1433
 
     @mock_ec2
     def test_ec2_unencrypted_snapshot(self):
@@ -37,17 +37,17 @@ class Test_ec2_ebs_snapshots_encrypted:
         volume = ec2.create_volume(Size=80, AvailabilityZone=f"{AWS_REGION}a")
         snapshot = volume.create_snapshot(Description="testsnap")
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted import (
+            from prowler.providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted import (
                 ec2_ebs_snapshots_encrypted,
             )
 
@@ -55,7 +55,7 @@ class Test_ec2_ebs_snapshots_encrypted:
             results = check.execute()
 
             # Default snapshots + 1 created
-            assert len(results) == 1486
+            assert len(results) == 1434
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
@@ -73,17 +73,17 @@ class Test_ec2_ebs_snapshots_encrypted:
             Size=80, AvailabilityZone=f"{AWS_REGION}a", Encrypted=True
         )
         snapshot = volume.create_snapshot(Description="testsnap")
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted import (
+            from prowler.providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted import (
                 ec2_ebs_snapshots_encrypted,
             )
 
@@ -91,7 +91,7 @@ class Test_ec2_ebs_snapshots_encrypted:
             results = check.execute()
 
             # Default snapshots + 1 created
-            assert len(results) == 1486
+            assert len(results) == 1434
 
             for snap in results:
                 if snap.resource_id == snapshot.id:

@@ -57,7 +57,7 @@ repos:
     hooks:
       - id: pylint
         name: pylint
-        entry: bash -c 'pylint --disable=W,C,R,E -j 0 -rn -sn prowler/providers prowler/lib util prowler/config'
+        entry: bash -c 'pylint --disable=W,C,R,E -j 0 -rn -sn prowler/'
         language: system
 
       - id: pytest-check

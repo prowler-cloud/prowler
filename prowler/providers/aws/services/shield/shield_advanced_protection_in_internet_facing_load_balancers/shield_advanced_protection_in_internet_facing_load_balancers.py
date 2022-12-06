@@ -1,6 +1,6 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.elbv2.elbv2_client import elbv2_client
-from providers.aws.services.shield.shield_client import shield_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.elbv2.elbv2_client import elbv2_client
+from prowler.providers.aws.services.shield.shield_client import shield_client
 
 
 class shield_advanced_protection_in_internet_facing_load_balancers(Check):

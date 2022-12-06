@@ -1,6 +1,6 @@
-from config.config import get_config_var
-from lib.check.models import Check, Check_Report
-from providers.aws.services.appstream.appstream_client import appstream_client
+from prowler.config.config import get_config_var
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.appstream.appstream_client import appstream_client
 
 max_disconnect_timeout_in_seconds = get_config_var("max_disconnect_timeout_in_seconds")
 """max_disconnect_timeout_in_seconds, default: 300 seconds (5 minutes)"""

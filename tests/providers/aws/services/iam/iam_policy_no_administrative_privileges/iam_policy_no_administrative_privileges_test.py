@@ -22,14 +22,14 @@ class Test_iam_policy_no_administrative_privileges_test:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges.iam_client",
+            "prowler.providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges.iam_client",
             new=IAM(current_audit_info),
         ):
-            from providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges import (
+            from prowler.providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges import (
                 iam_policy_no_administrative_privileges,
             )
 
@@ -55,14 +55,14 @@ class Test_iam_policy_no_administrative_privileges_test:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges.iam_client",
+            "prowler.providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges.iam_client",
             new=IAM(current_audit_info),
         ):
-            from providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges import (
+            from prowler.providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges import (
                 iam_policy_no_administrative_privileges,
             )
 
@@ -102,14 +102,14 @@ class Test_iam_policy_no_administrative_privileges_test:
             PolicyDocument=dumps(policy_document_administrative),
         )["Policy"]["Arn"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges.iam_client",
+            "prowler.providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges.iam_client",
             new=IAM(current_audit_info),
         ):
-            from providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges import (
+            from prowler.providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges import (
                 iam_policy_no_administrative_privileges,
             )
 

@@ -8,17 +8,19 @@ from moto import mock_cloudtrail, mock_s3
 class Test_cloudtrail_multi_region_enabled:
     @mock_cloudtrail
     def test_no_trails(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ) as service_client:
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled import (
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled import (
                 cloudtrail_multi_region_enabled,
             )
 
@@ -61,17 +63,19 @@ class Test_cloudtrail_multi_region_enabled:
             Name=trail_name_eu, S3BucketName=bucket_name_eu, IsMultiRegionTrail=False
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ) as service_client:
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled import (
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled import (
                 cloudtrail_multi_region_enabled,
             )
 
@@ -116,17 +120,19 @@ class Test_cloudtrail_multi_region_enabled:
         _ = cloudtrail_client_us_east_1.start_logging(Name=trail_name_us)
         _ = cloudtrail_client_us_east_1.get_trail_status(Name=trail_name_us)
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ) as service_client:
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled import (
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled import (
                 cloudtrail_multi_region_enabled,
             )
 

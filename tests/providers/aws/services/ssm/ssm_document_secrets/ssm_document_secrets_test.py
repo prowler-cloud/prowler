@@ -1,7 +1,8 @@
 from unittest import mock
 
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.ssm.ssm_service import Document
+
+from prowler.providers.aws.services.ssm.ssm_service import Document
 
 AWS_REGION = "eu-west-1"
 
@@ -11,11 +12,11 @@ class Test_ssm_documents_secrets:
         ssm_client = mock.MagicMock
         ssm_client.documents = {}
         with mock.patch(
-            "providers.aws.services.ssm.ssm_service.SSM",
+            "prowler.providers.aws.services.ssm.ssm_service.SSM",
             new=ssm_client,
         ):
             # Test Check
-            from providers.aws.services.ssm.ssm_document_secrets.ssm_document_secrets import (
+            from prowler.providers.aws.services.ssm.ssm_document_secrets.ssm_document_secrets import (
                 ssm_document_secrets,
             )
 
@@ -40,11 +41,11 @@ class Test_ssm_documents_secrets:
             )
         }
         with mock.patch(
-            "providers.aws.services.ssm.ssm_service.SSM",
+            "prowler.providers.aws.services.ssm.ssm_service.SSM",
             new=ssm_client,
         ):
             # Test Check
-            from providers.aws.services.ssm.ssm_document_secrets.ssm_document_secrets import (
+            from prowler.providers.aws.services.ssm.ssm_document_secrets.ssm_document_secrets import (
                 ssm_document_secrets,
             )
 
@@ -77,11 +78,11 @@ class Test_ssm_documents_secrets:
             )
         }
         with mock.patch(
-            "providers.aws.services.ssm.ssm_service.SSM",
+            "prowler.providers.aws.services.ssm.ssm_service.SSM",
             new=ssm_client,
         ):
             # Test Check
-            from providers.aws.services.ssm.ssm_document_secrets.ssm_document_secrets import (
+            from prowler.providers.aws.services.ssm.ssm_document_secrets.ssm_document_secrets import (
                 ssm_document_secrets,
             )
 

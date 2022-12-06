@@ -1,4 +1,4 @@
-from providers.aws.services.ec2.lib.network_acls import check_network_acl
+from prowler.providers.aws.services.ec2.lib.network_acls import check_network_acl
 
 default_deny_entry_ingress_IPv4 = {
     "CidrBlock": "0.0.0.0/0",

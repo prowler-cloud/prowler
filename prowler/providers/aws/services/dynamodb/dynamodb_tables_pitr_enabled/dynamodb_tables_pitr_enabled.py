@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.dynamodb.dynamodb_client import dynamodb_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.dynamodb.dynamodb_client import dynamodb_client
 
 
 class dynamodb_tables_pitr_enabled(Check):

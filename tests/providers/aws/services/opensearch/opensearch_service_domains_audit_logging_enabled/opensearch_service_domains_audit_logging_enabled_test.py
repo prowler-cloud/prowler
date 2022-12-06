@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from providers.aws.services.opensearch.opensearch_service import (
+from prowler.providers.aws.services.opensearch.opensearch_service import (
     OpenSearchDomain,
     PublishingLoggingOption,
 )
@@ -18,10 +18,10 @@ class Test_opensearch_service_domains_audit_logging_enabled:
         opensearch_client = mock.MagicMock
         opensearch_client.opensearch_domains = []
         with mock.patch(
-            "providers.aws.services.opensearch.opensearch_service.OpenSearchService",
+            "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             opensearch_client,
         ):
-            from providers.aws.services.opensearch.opensearch_service_domains_audit_logging_enabled.opensearch_service_domains_audit_logging_enabled import (
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_audit_logging_enabled.opensearch_service_domains_audit_logging_enabled import (
                 opensearch_service_domains_audit_logging_enabled,
             )
 
@@ -38,10 +38,10 @@ class Test_opensearch_service_domains_audit_logging_enabled:
         opensearch_client.opensearch_domains[0].logging = []
 
         with mock.patch(
-            "providers.aws.services.opensearch.opensearch_service.OpenSearchService",
+            "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             opensearch_client,
         ):
-            from providers.aws.services.opensearch.opensearch_service_domains_audit_logging_enabled.opensearch_service_domains_audit_logging_enabled import (
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_audit_logging_enabled.opensearch_service_domains_audit_logging_enabled import (
                 opensearch_service_domains_audit_logging_enabled,
             )
 
@@ -65,10 +65,10 @@ class Test_opensearch_service_domains_audit_logging_enabled:
         )
 
         with mock.patch(
-            "providers.aws.services.opensearch.opensearch_service.OpenSearchService",
+            "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             opensearch_client,
         ):
-            from providers.aws.services.opensearch.opensearch_service_domains_audit_logging_enabled.opensearch_service_domains_audit_logging_enabled import (
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_audit_logging_enabled.opensearch_service_domains_audit_logging_enabled import (
                 opensearch_service_domains_audit_logging_enabled,
             )
 

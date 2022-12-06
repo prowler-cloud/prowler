@@ -18,17 +18,19 @@ class Test_cloudtrail_kms_encryption_enabled:
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_kms_encryption_enabled.cloudtrail_kms_encryption_enabled.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_kms_encryption_enabled.cloudtrail_kms_encryption_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_kms_encryption_enabled.cloudtrail_kms_encryption_enabled import (
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_kms_encryption_enabled.cloudtrail_kms_encryption_enabled import (
                 cloudtrail_kms_encryption_enabled,
             )
 
@@ -62,17 +64,19 @@ class Test_cloudtrail_kms_encryption_enabled:
             KmsKeyId=key_arn,
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_kms_encryption_enabled.cloudtrail_kms_encryption_enabled.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_kms_encryption_enabled.cloudtrail_kms_encryption_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_kms_encryption_enabled.cloudtrail_kms_encryption_enabled import (
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_kms_encryption_enabled.cloudtrail_kms_encryption_enabled import (
                 cloudtrail_kms_encryption_enabled,
             )
 

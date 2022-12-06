@@ -12,17 +12,17 @@ class Test_elb_logging_enabled:
     @mock_elb
     def test_elb_no_balancers(self):
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elb.elb_service import ELB
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.elb.elb_service import ELB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elb.elb_logging_enabled.elb_logging_enabled.elb_client",
+            "prowler.providers.aws.services.elb.elb_logging_enabled.elb_logging_enabled.elb_client",
             new=ELB(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.elb.elb_logging_enabled.elb_logging_enabled import (
+            from prowler.providers.aws.services.elb.elb_logging_enabled.elb_logging_enabled import (
                 elb_logging_enabled,
             )
 
@@ -52,16 +52,16 @@ class Test_elb_logging_enabled:
             SecurityGroups=[security_group.id],
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elb.elb_service import ELB
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.elb.elb_service import ELB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elb.elb_logging_enabled.elb_logging_enabled.elb_client",
+            "prowler.providers.aws.services.elb.elb_logging_enabled.elb_logging_enabled.elb_client",
             new=ELB(current_audit_info),
         ):
-            from providers.aws.services.elb.elb_logging_enabled.elb_logging_enabled import (
+            from prowler.providers.aws.services.elb.elb_logging_enabled.elb_logging_enabled import (
                 elb_logging_enabled,
             )
 
@@ -109,16 +109,16 @@ class Test_elb_logging_enabled:
             },
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elb.elb_service import ELB
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.elb.elb_service import ELB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elb.elb_logging_enabled.elb_logging_enabled.elb_client",
+            "prowler.providers.aws.services.elb.elb_logging_enabled.elb_logging_enabled.elb_client",
             new=ELB(current_audit_info),
         ):
-            from providers.aws.services.elb.elb_logging_enabled.elb_logging_enabled import (
+            from prowler.providers.aws.services.elb.elb_logging_enabled.elb_logging_enabled import (
                 elb_logging_enabled,
             )
 

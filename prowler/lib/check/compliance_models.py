@@ -4,7 +4,7 @@ from typing import Any, List, Optional, Union
 
 from pydantic import BaseModel, ValidationError
 
-from lib.logger import logger
+from prowler.lib.logger import logger
 
 
 # ENS - Esquema Nacional de Seguridad - España

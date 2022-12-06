@@ -2,7 +2,8 @@ from datetime import datetime
 from unittest import mock
 
 from freezegun import freeze_time
-from providers.aws.services.directoryservice.directoryservice_service import (
+
+from prowler.providers.aws.services.directoryservice.directoryservice_service import (
     Certificate,
     CertificateState,
     CertificateType,
@@ -20,11 +21,11 @@ class Test_directoryservice_ldap_certificate_expiration:
         directoryservice_client = mock.MagicMock
         directoryservice_client.directories = {}
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_ldap_certificate_expiration.directoryservice_ldap_certificate_expiration import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_ldap_certificate_expiration.directoryservice_ldap_certificate_expiration import (
                 directoryservice_ldap_certificate_expiration,
             )
 
@@ -47,11 +48,11 @@ class Test_directoryservice_ldap_certificate_expiration:
             )
         }
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_ldap_certificate_expiration.directoryservice_ldap_certificate_expiration import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_ldap_certificate_expiration.directoryservice_ldap_certificate_expiration import (
                 directoryservice_ldap_certificate_expiration,
             )
 
@@ -86,11 +87,11 @@ class Test_directoryservice_ldap_certificate_expiration:
         }
 
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_ldap_certificate_expiration.directoryservice_ldap_certificate_expiration import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_ldap_certificate_expiration.directoryservice_ldap_certificate_expiration import (
                 directoryservice_ldap_certificate_expiration,
             )
 
@@ -132,11 +133,11 @@ class Test_directoryservice_ldap_certificate_expiration:
         }
 
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_ldap_certificate_expiration.directoryservice_ldap_certificate_expiration import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_ldap_certificate_expiration.directoryservice_ldap_certificate_expiration import (
                 directoryservice_ldap_certificate_expiration,
             )
 
@@ -178,11 +179,11 @@ class Test_directoryservice_ldap_certificate_expiration:
         }
 
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_ldap_certificate_expiration.directoryservice_ldap_certificate_expiration import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_ldap_certificate_expiration.directoryservice_ldap_certificate_expiration import (
                 directoryservice_ldap_certificate_expiration,
             )
 

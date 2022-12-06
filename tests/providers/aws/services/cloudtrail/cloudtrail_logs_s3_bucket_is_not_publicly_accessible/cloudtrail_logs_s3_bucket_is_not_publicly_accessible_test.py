@@ -17,22 +17,24 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
         trail_us = cloudtrail_client.create_trail(
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
-        from providers.aws.services.s3.s3_service import S3
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+        from prowler.providers.aws.services.s3.s3_service import S3
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             with mock.patch(
-                "providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.s3_client",
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.s3_client",
                 new=S3(current_audit_info),
             ):
                 # Test Check
-                from providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible import (
+                from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible import (
                     cloudtrail_logs_s3_bucket_is_not_publicly_accessible,
                 )
 
@@ -79,22 +81,24 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
-        from providers.aws.services.s3.s3_service import S3
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+        from prowler.providers.aws.services.s3.s3_service import S3
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             with mock.patch(
-                "providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.s3_client",
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.s3_client",
                 new=S3(current_audit_info),
             ):
                 # Test Check
-                from providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible import (
+                from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible import (
                     cloudtrail_logs_s3_bucket_is_not_publicly_accessible,
                 )
 
@@ -140,17 +144,19 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             },
             Bucket=bucket_name_us,
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible import (
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible import (
                 cloudtrail_logs_s3_bucket_is_not_publicly_accessible,
             )
 

@@ -1,5 +1,7 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.workspaces.workspaces_client import workspaces_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.workspaces.workspaces_client import (
+    workspaces_client,
+)
 
 
 class workspaces_volume_encryption_enabled(Check):

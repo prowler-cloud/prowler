@@ -1,5 +1,7 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.opensearch.opensearch_client import opensearch_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.opensearch.opensearch_client import (
+    opensearch_client,
+)
 
 
 class opensearch_service_domains_internal_user_database_enabled(Check):

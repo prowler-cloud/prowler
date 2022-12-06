@@ -1,7 +1,8 @@
 from unittest import mock
 
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.awslambda.awslambda_service import Function
+
+from prowler.providers.aws.services.awslambda.awslambda_service import Function
 
 AWS_REGION = "us-east-1"
 
@@ -12,11 +13,11 @@ class Test_awslambda_function_no_secrets_in_variables:
         lambda_client.functions = {}
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_no_secrets_in_variables.awslambda_function_no_secrets_in_variables import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_variables.awslambda_function_no_secrets_in_variables import (
                 awslambda_function_no_secrets_in_variables,
             )
 
@@ -43,11 +44,11 @@ class Test_awslambda_function_no_secrets_in_variables:
         }
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_no_secrets_in_variables.awslambda_function_no_secrets_in_variables import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_variables.awslambda_function_no_secrets_in_variables import (
                 awslambda_function_no_secrets_in_variables,
             )
 
@@ -83,11 +84,11 @@ class Test_awslambda_function_no_secrets_in_variables:
         }
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_no_secrets_in_variables.awslambda_function_no_secrets_in_variables import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_variables.awslambda_function_no_secrets_in_variables import (
                 awslambda_function_no_secrets_in_variables,
             )
 
@@ -123,11 +124,11 @@ class Test_awslambda_function_no_secrets_in_variables:
         }
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_no_secrets_in_variables.awslambda_function_no_secrets_in_variables import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_variables.awslambda_function_no_secrets_in_variables import (
                 awslambda_function_no_secrets_in_variables,
             )
 

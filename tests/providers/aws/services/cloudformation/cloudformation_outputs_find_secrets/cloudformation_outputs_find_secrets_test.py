@@ -1,6 +1,6 @@
 from unittest import mock
 
-from providers.aws.services.cloudformation.cloudformation_service import Stack
+from prowler.providers.aws.services.cloudformation.cloudformation_service import Stack
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -11,11 +11,11 @@ class Test_cloudformation_outputs_find_secrets:
         cloudformation_client = mock.MagicMock
         cloudformation_client.stacks = []
         with mock.patch(
-            "providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+            "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
             new=cloudformation_client,
         ):
             # Test Check
-            from providers.aws.services.cloudformation.cloudformation_outputs_find_secrets.cloudformation_outputs_find_secrets import (
+            from prowler.providers.aws.services.cloudformation.cloudformation_outputs_find_secrets.cloudformation_outputs_find_secrets import (
                 cloudformation_outputs_find_secrets,
             )
 
@@ -37,10 +37,10 @@ class Test_cloudformation_outputs_find_secrets:
         ]
 
         with mock.patch(
-            "providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+            "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
             cloudformation_client,
         ):
-            from providers.aws.services.cloudformation.cloudformation_outputs_find_secrets.cloudformation_outputs_find_secrets import (
+            from prowler.providers.aws.services.cloudformation.cloudformation_outputs_find_secrets.cloudformation_outputs_find_secrets import (
                 cloudformation_outputs_find_secrets,
             )
 
@@ -73,10 +73,10 @@ class Test_cloudformation_outputs_find_secrets:
         ]
 
         with mock.patch(
-            "providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+            "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
             cloudformation_client,
         ):
-            from providers.aws.services.cloudformation.cloudformation_outputs_find_secrets.cloudformation_outputs_find_secrets import (
+            from prowler.providers.aws.services.cloudformation.cloudformation_outputs_find_secrets.cloudformation_outputs_find_secrets import (
                 cloudformation_outputs_find_secrets,
             )
 
@@ -109,10 +109,10 @@ class Test_cloudformation_outputs_find_secrets:
         ]
 
         with mock.patch(
-            "providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+            "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
             cloudformation_client,
         ):
-            from providers.aws.services.cloudformation.cloudformation_outputs_find_secrets.cloudformation_outputs_find_secrets import (
+            from prowler.providers.aws.services.cloudformation.cloudformation_outputs_find_secrets.cloudformation_outputs_find_secrets import (
                 cloudformation_outputs_find_secrets,
             )
 

@@ -1,6 +1,6 @@
 from unittest import mock
 
-from providers.aws.services.macie.macie_service import Session
+from prowler.providers.aws.services.macie.macie_service import Session
 
 
 class Test_macie_is_enabled:
@@ -13,11 +13,11 @@ class Test_macie_is_enabled:
             )
         ]
         with mock.patch(
-            "providers.aws.services.macie.macie_service.Macie",
+            "prowler.providers.aws.services.macie.macie_service.Macie",
             new=macie_client,
         ):
             # Test Check
-            from providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
+            from prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
                 macie_is_enabled,
             )
 
@@ -38,11 +38,11 @@ class Test_macie_is_enabled:
             )
         ]
         with mock.patch(
-            "providers.aws.services.macie.macie_service.Macie",
+            "prowler.providers.aws.services.macie.macie_service.Macie",
             new=macie_client,
         ):
             # Test Check
-            from providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
+            from prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
                 macie_is_enabled,
             )
 
@@ -63,11 +63,11 @@ class Test_macie_is_enabled:
             )
         ]
         with mock.patch(
-            "providers.aws.services.macie.macie_service.Macie",
+            "prowler.providers.aws.services.macie.macie_service.Macie",
             new=macie_client,
         ):
             # Test Check
-            from providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
+            from prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
                 macie_is_enabled,
             )
 

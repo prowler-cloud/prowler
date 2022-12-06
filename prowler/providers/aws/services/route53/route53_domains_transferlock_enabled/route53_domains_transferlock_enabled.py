@@ -1,5 +1,7 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.route53.route53domains_client import route53domains_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.route53.route53domains_client import (
+    route53domains_client,
+)
 
 
 class route53_domains_transferlock_enabled(Check):

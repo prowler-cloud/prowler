@@ -1,5 +1,7 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.securityhub.securityhub_client import securityhub_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.securityhub.securityhub_client import (
+    securityhub_client,
+)
 
 
 class securityhub_enabled(Check):

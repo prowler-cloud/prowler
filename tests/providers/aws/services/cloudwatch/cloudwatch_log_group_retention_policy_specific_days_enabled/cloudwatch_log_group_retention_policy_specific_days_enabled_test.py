@@ -8,17 +8,17 @@ AWS_REGION = "us-east-1"
 
 class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
     def test_cloudwatch_no_log_groups(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudwatch.cloudwatch_service import Logs
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
             new=Logs(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled import (
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled import (
                 cloudwatch_log_group_retention_policy_specific_days_enabled,
             )
 
@@ -35,17 +35,17 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
         logs_client.create_log_group(
             logGroupName="test",
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudwatch.cloudwatch_service import Logs
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
             new=Logs(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled import (
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled import (
                 cloudwatch_log_group_retention_policy_specific_days_enabled,
             )
 
@@ -69,17 +69,17 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             logGroupName="test",
         )
         logs_client.put_retention_policy(logGroupName="test", retentionInDays=400)
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudwatch.cloudwatch_service import Logs
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
             new=Logs(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled import (
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled import (
                 cloudwatch_log_group_retention_policy_specific_days_enabled,
             )
 
@@ -103,17 +103,17 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             logGroupName="test",
         )
         logs_client.put_retention_policy(logGroupName="test", retentionInDays=7)
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudwatch.cloudwatch_service import Logs
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
             new=Logs(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled import (
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled import (
                 cloudwatch_log_group_retention_policy_specific_days_enabled,
             )
 

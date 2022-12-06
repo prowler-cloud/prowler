@@ -3,7 +3,7 @@ from datetime import timedelta
 from azure.mgmt.security import SecurityCenter
 from pydantic import BaseModel
 
-from lib.logger import logger
+from prowler.lib.logger import logger
 
 
 ########################## Defender

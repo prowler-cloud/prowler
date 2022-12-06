@@ -2,7 +2,8 @@ from datetime import datetime
 from unittest import mock
 
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.directoryservice.directoryservice_service import (
+
+from prowler.providers.aws.services.directoryservice.directoryservice_service import (
     Directory,
     DirectoryType,
     EventTopics,
@@ -17,11 +18,11 @@ class Test_directoryservice_directory_monitor_notifications:
         directoryservice_client = mock.MagicMock
         directoryservice_client.directories = {}
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_directory_monitor_notifications.directoryservice_directory_monitor_notifications import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_directory_monitor_notifications.directoryservice_directory_monitor_notifications import (
                 directoryservice_directory_monitor_notifications,
             )
 
@@ -44,11 +45,11 @@ class Test_directoryservice_directory_monitor_notifications:
             )
         }
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_directory_monitor_notifications.directoryservice_directory_monitor_notifications import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_directory_monitor_notifications.directoryservice_directory_monitor_notifications import (
                 directoryservice_directory_monitor_notifications,
             )
 
@@ -85,11 +86,11 @@ class Test_directoryservice_directory_monitor_notifications:
             )
         }
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_directory_monitor_notifications.directoryservice_directory_monitor_notifications import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_directory_monitor_notifications.directoryservice_directory_monitor_notifications import (
                 directoryservice_directory_monitor_notifications,
             )
 

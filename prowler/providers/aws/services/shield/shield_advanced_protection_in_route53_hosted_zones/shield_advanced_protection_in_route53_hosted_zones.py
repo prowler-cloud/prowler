@@ -1,6 +1,6 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.route53.route53_client import route53_client
-from providers.aws.services.shield.shield_client import shield_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.route53.route53_client import route53_client
+from prowler.providers.aws.services.shield.shield_client import shield_client
 
 
 class shield_advanced_protection_in_route53_hosted_zones(Check):

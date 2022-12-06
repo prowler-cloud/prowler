@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 from uuid import uuid4
 
-from providers.aws.services.guardduty.guardduty_service import Detector
+from prowler.providers.aws.services.guardduty.guardduty_service import Detector
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -15,10 +15,10 @@ class Test_guardduty_no_high_severity_findings:
         guardduty_client = mock.MagicMock
         guardduty_client.detectors = []
         with mock.patch(
-            "providers.aws.services.guardduty.guardduty_service.GuardDuty",
+            "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
             guardduty_client,
         ):
-            from providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings import (
+            from prowler.providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings import (
                 guardduty_no_high_severity_findings,
             )
 
@@ -36,10 +36,10 @@ class Test_guardduty_no_high_severity_findings:
             )
         )
         with mock.patch(
-            "providers.aws.services.guardduty.guardduty_service.GuardDuty",
+            "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
             guardduty_client,
         ):
-            from providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings import (
+            from prowler.providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings import (
                 guardduty_no_high_severity_findings,
             )
 
@@ -62,10 +62,10 @@ class Test_guardduty_no_high_severity_findings:
             )
         )
         with mock.patch(
-            "providers.aws.services.guardduty.guardduty_service.GuardDuty",
+            "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
             guardduty_client,
         ):
-            from providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings import (
+            from prowler.providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings import (
                 guardduty_no_high_severity_findings,
             )
 

@@ -1,6 +1,6 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.emr.emr_client import emr_client
-from providers.aws.services.emr.emr_service import ClusterStatus
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.emr.emr_client import emr_client
+from prowler.providers.aws.services.emr.emr_service import ClusterStatus
 
 
 class emr_cluster_master_nodes_no_public_ip(Check):

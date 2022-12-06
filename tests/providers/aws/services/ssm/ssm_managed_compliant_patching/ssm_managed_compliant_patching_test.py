@@ -1,7 +1,11 @@
 from unittest import mock
 
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.ssm.ssm_service import ComplianceResource, ResourceStatus
+
+from prowler.providers.aws.services.ssm.ssm_service import (
+    ComplianceResource,
+    ResourceStatus,
+)
 
 AWS_REGION = "eu-west-1"
 
@@ -11,11 +15,11 @@ class Test_ssm_managed_compliant_patching:
         ssm_client = mock.MagicMock
         ssm_client.compliance_resources = {}
         with mock.patch(
-            "providers.aws.services.ssm.ssm_service.SSM",
+            "prowler.providers.aws.services.ssm.ssm_service.SSM",
             new=ssm_client,
         ):
             # Test Check
-            from providers.aws.services.ssm.ssm_managed_compliant_patching.ssm_managed_compliant_patching import (
+            from prowler.providers.aws.services.ssm.ssm_managed_compliant_patching.ssm_managed_compliant_patching import (
                 ssm_managed_compliant_patching,
             )
 
@@ -40,11 +44,11 @@ class Test_ssm_managed_compliant_patching:
         }
 
         with mock.patch(
-            "providers.aws.services.ssm.ssm_service.SSM",
+            "prowler.providers.aws.services.ssm.ssm_service.SSM",
             new=ssm_client,
         ):
             # Test Check
-            from providers.aws.services.ssm.ssm_managed_compliant_patching.ssm_managed_compliant_patching import (
+            from prowler.providers.aws.services.ssm.ssm_managed_compliant_patching.ssm_managed_compliant_patching import (
                 ssm_managed_compliant_patching,
             )
 
@@ -77,11 +81,11 @@ class Test_ssm_managed_compliant_patching:
         }
 
         with mock.patch(
-            "providers.aws.services.ssm.ssm_service.SSM",
+            "prowler.providers.aws.services.ssm.ssm_service.SSM",
             new=ssm_client,
         ):
             # Test Check
-            from providers.aws.services.ssm.ssm_managed_compliant_patching.ssm_managed_compliant_patching import (
+            from prowler.providers.aws.services.ssm.ssm_managed_compliant_patching.ssm_managed_compliant_patching import (
                 ssm_managed_compliant_patching,
             )
 

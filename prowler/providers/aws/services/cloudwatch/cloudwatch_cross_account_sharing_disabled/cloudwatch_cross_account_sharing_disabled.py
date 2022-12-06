@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.iam.iam_client import iam_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.iam.iam_client import iam_client
 
 
 class cloudwatch_cross_account_sharing_disabled(Check):

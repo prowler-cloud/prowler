@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 from uuid import uuid4
 
-from providers.aws.services.sns.sns_service import Topic
+from prowler.providers.aws.services.sns.sns_service import Topic
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -50,10 +50,10 @@ class Test_sns_topics_not_publicly_accessible:
         sns_client = mock.MagicMock
         sns_client.topics = []
         with mock.patch(
-            "providers.aws.services.sns.sns_service.SNS",
+            "prowler.providers.aws.services.sns.sns_service.SNS",
             sns_client,
         ):
-            from providers.aws.services.sns.sns_topics_not_publicly_accessible.sns_topics_not_publicly_accessible import (
+            from prowler.providers.aws.services.sns.sns_topics_not_publicly_accessible.sns_topics_not_publicly_accessible import (
                 sns_topics_not_publicly_accessible,
             )
 
@@ -73,10 +73,10 @@ class Test_sns_topics_not_publicly_accessible:
             )
         )
         with mock.patch(
-            "providers.aws.services.sns.sns_service.SNS",
+            "prowler.providers.aws.services.sns.sns_service.SNS",
             sns_client,
         ):
-            from providers.aws.services.sns.sns_topics_not_publicly_accessible.sns_topics_not_publicly_accessible import (
+            from prowler.providers.aws.services.sns.sns_topics_not_publicly_accessible.sns_topics_not_publicly_accessible import (
                 sns_topics_not_publicly_accessible,
             )
 
@@ -95,10 +95,10 @@ class Test_sns_topics_not_publicly_accessible:
             Topic(arn=topic_arn, name=topic_name, region=AWS_REGION)
         )
         with mock.patch(
-            "providers.aws.services.sns.sns_service.SNS",
+            "prowler.providers.aws.services.sns.sns_service.SNS",
             sns_client,
         ):
-            from providers.aws.services.sns.sns_topics_not_publicly_accessible.sns_topics_not_publicly_accessible import (
+            from prowler.providers.aws.services.sns.sns_topics_not_publicly_accessible.sns_topics_not_publicly_accessible import (
                 sns_topics_not_publicly_accessible,
             )
 
@@ -122,10 +122,10 @@ class Test_sns_topics_not_publicly_accessible:
             )
         )
         with mock.patch(
-            "providers.aws.services.sns.sns_service.SNS",
+            "prowler.providers.aws.services.sns.sns_service.SNS",
             sns_client,
         ):
-            from providers.aws.services.sns.sns_topics_not_publicly_accessible.sns_topics_not_publicly_accessible import (
+            from prowler.providers.aws.services.sns.sns_topics_not_publicly_accessible.sns_topics_not_publicly_accessible import (
                 sns_topics_not_publicly_accessible,
             )
 
@@ -149,10 +149,10 @@ class Test_sns_topics_not_publicly_accessible:
             )
         )
         with mock.patch(
-            "providers.aws.services.sns.sns_service.SNS",
+            "prowler.providers.aws.services.sns.sns_service.SNS",
             sns_client,
         ):
-            from providers.aws.services.sns.sns_topics_not_publicly_accessible.sns_topics_not_publicly_accessible import (
+            from prowler.providers.aws.services.sns.sns_topics_not_publicly_accessible.sns_topics_not_publicly_accessible import (
                 sns_topics_not_publicly_accessible,
             )
 

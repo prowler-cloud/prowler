@@ -10,17 +10,17 @@ ACCOUNT_ID = "123456789012"
 class Test_vpc_peering_routing_tables_with_least_privilege:
     @mock_ec2
     def test_vpc_no_peering_connections(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.vpc.vpc_service import VPC
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege.vpc_client",
+            "prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege.vpc_client",
             new=VPC(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege import (
+            from prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege import (
                 vpc_peering_routing_tables_with_least_privilege,
             )
 
@@ -57,17 +57,17 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
             DestinationCidrBlock="10.0.0.4/24", VpcPeeringConnectionId=vpc_pcx_id
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.vpc.vpc_service import VPC, Route
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.vpc.vpc_service import VPC, Route
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege.vpc_client",
+            "prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege.vpc_client",
             new=VPC(current_audit_info),
         ) as service_client:
             # Test Check
-            from providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege import (
+            from prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege import (
                 vpc_peering_routing_tables_with_least_privilege,
             )
 
@@ -119,17 +119,17 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
             DestinationCidrBlock="10.0.0.0/16", VpcPeeringConnectionId=vpc_pcx_id
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.vpc.vpc_service import VPC, Route
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.vpc.vpc_service import VPC, Route
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege.vpc_client",
+            "prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege.vpc_client",
             new=VPC(current_audit_info),
         ) as service_client:
             # Test Check
-            from providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege import (
+            from prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege import (
                 vpc_peering_routing_tables_with_least_privilege,
             )
 

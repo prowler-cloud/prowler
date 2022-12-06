@@ -1,8 +1,8 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.globalaccelerator.globalaccelerator_client import (
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.globalaccelerator.globalaccelerator_client import (
     globalaccelerator_client,
 )
-from providers.aws.services.shield.shield_client import shield_client
+from prowler.providers.aws.services.shield.shield_client import shield_client
 
 
 class shield_advanced_protection_in_global_accelerators(Check):

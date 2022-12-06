@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.elb.elb_client import elb_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.elb.elb_client import elb_client
 
 
 class elb_ssl_listeners(Check):

@@ -1,7 +1,8 @@
 from boto3 import client, session
 from moto import mock_cloudtrail, mock_s3
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
 
 AWS_ACCOUNT_NUMBER = 123456789012
 

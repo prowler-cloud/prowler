@@ -1,6 +1,6 @@
-from config.config import get_config_var
-from lib.check.models import Check, Check_Report
-from providers.aws.services.appstream.appstream_client import appstream_client
+from prowler.config.config import get_config_var
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.appstream.appstream_client import appstream_client
 
 max_session_duration_seconds = get_config_var("max_session_duration_seconds")
 """max_session_duration_seconds, default: 36000 seconds (10 hours)"""

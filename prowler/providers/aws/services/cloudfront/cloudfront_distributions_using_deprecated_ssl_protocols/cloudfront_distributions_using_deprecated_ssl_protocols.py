@@ -1,6 +1,10 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.cloudfront.cloudfront_client import cloudfront_client
-from providers.aws.services.cloudfront.cloudfront_service import OriginsSSLProtocols
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.cloudfront.cloudfront_client import (
+    cloudfront_client,
+)
+from prowler.providers.aws.services.cloudfront.cloudfront_service import (
+    OriginsSSLProtocols,
+)
 
 
 class cloudfront_distributions_using_deprecated_ssl_protocols(Check):

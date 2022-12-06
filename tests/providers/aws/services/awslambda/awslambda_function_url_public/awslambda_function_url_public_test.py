@@ -1,7 +1,8 @@
 from unittest import mock
 
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.awslambda.awslambda_service import (
+
+from prowler.providers.aws.services.awslambda.awslambda_service import (
     AuthType,
     Function,
     URLConfig,
@@ -17,11 +18,11 @@ class Test_awslambda_function_url_public:
         lambda_client.functions = {}
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_url_public.awslambda_function_url_public import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_url_public.awslambda_function_url_public import (
                 awslambda_function_url_public,
             )
 
@@ -52,11 +53,11 @@ class Test_awslambda_function_url_public:
         }
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_url_public.awslambda_function_url_public import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_url_public.awslambda_function_url_public import (
                 awslambda_function_url_public,
             )
 
@@ -95,11 +96,11 @@ class Test_awslambda_function_url_public:
         }
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_url_public.awslambda_function_url_public import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_url_public.awslambda_function_url_public import (
                 awslambda_function_url_public,
             )
 

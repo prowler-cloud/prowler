@@ -1,7 +1,9 @@
 from re import search
 from unittest import mock
 
-from providers.aws.services.opensearch.opensearch_service import OpenSearchDomain
+from prowler.providers.aws.services.opensearch.opensearch_service import (
+    OpenSearchDomain,
+)
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -15,10 +17,10 @@ class Test_opensearch_service_domains_updated_to_the_latest_service_software_ver
         opensearch_client = mock.MagicMock
         opensearch_client.opensearch_domains = []
         with mock.patch(
-            "providers.aws.services.opensearch.opensearch_service.OpenSearchService",
+            "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             opensearch_client,
         ):
-            from providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version import (
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version import (
                 opensearch_service_domains_updated_to_the_latest_service_software_version,
             )
 
@@ -42,10 +44,10 @@ class Test_opensearch_service_domains_updated_to_the_latest_service_software_ver
         opensearch_client.opensearch_domains[0].logging = []
 
         with mock.patch(
-            "providers.aws.services.opensearch.opensearch_service.OpenSearchService",
+            "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             opensearch_client,
         ):
-            from providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version import (
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version import (
                 opensearch_service_domains_updated_to_the_latest_service_software_version,
             )
 
@@ -75,10 +77,10 @@ class Test_opensearch_service_domains_updated_to_the_latest_service_software_ver
         opensearch_client.opensearch_domains[0].logging = []
 
         with mock.patch(
-            "providers.aws.services.opensearch.opensearch_service.OpenSearchService",
+            "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             opensearch_client,
         ):
-            from providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version import (
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version import (
                 opensearch_service_domains_updated_to_the_latest_service_software_version,
             )
 

@@ -1,6 +1,8 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.codeartifact.codeartifact_client import codeartifact_client
-from providers.aws.services.codeartifact.codeartifact_service import (
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.codeartifact.codeartifact_client import (
+    codeartifact_client,
+)
+from prowler.providers.aws.services.codeartifact.codeartifact_service import (
     OriginInformationValues,
     RestrictionValues,
 )

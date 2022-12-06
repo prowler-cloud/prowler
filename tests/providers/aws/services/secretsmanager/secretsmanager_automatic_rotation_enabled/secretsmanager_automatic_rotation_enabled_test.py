@@ -1,7 +1,8 @@
 from unittest import mock
 
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.secretsmanager.secretsmanager_service import Secret
+
+from prowler.providers.aws.services.secretsmanager.secretsmanager_service import Secret
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -12,11 +13,11 @@ class Test_secretsmanager_automatic_rotation_enabled:
         secretsmanager_client = mock.MagicMock
         secretsmanager_client.secrets = {}
         with mock.patch(
-            "providers.aws.services.secretsmanager.secretsmanager_service.SecretsManager",
+            "prowler.providers.aws.services.secretsmanager.secretsmanager_service.SecretsManager",
             new=secretsmanager_client,
         ):
             # Test Check
-            from providers.aws.services.secretsmanager.secretsmanager_automatic_rotation_enabled.secretsmanager_automatic_rotation_enabled import (
+            from prowler.providers.aws.services.secretsmanager.secretsmanager_automatic_rotation_enabled.secretsmanager_automatic_rotation_enabled import (
                 secretsmanager_automatic_rotation_enabled,
             )
 
@@ -38,11 +39,11 @@ class Test_secretsmanager_automatic_rotation_enabled:
             )
         }
         with mock.patch(
-            "providers.aws.services.secretsmanager.secretsmanager_service.SecretsManager",
+            "prowler.providers.aws.services.secretsmanager.secretsmanager_service.SecretsManager",
             new=secretsmanager_client,
         ):
             # Test Check
-            from providers.aws.services.secretsmanager.secretsmanager_automatic_rotation_enabled.secretsmanager_automatic_rotation_enabled import (
+            from prowler.providers.aws.services.secretsmanager.secretsmanager_automatic_rotation_enabled.secretsmanager_automatic_rotation_enabled import (
                 secretsmanager_automatic_rotation_enabled,
             )
 
@@ -72,11 +73,11 @@ class Test_secretsmanager_automatic_rotation_enabled:
             )
         }
         with mock.patch(
-            "providers.aws.services.secretsmanager.secretsmanager_service.SecretsManager",
+            "prowler.providers.aws.services.secretsmanager.secretsmanager_service.SecretsManager",
             new=secretsmanager_client,
         ):
             # Test Check
-            from providers.aws.services.secretsmanager.secretsmanager_automatic_rotation_enabled.secretsmanager_automatic_rotation_enabled import (
+            from prowler.providers.aws.services.secretsmanager.secretsmanager_automatic_rotation_enabled.secretsmanager_automatic_rotation_enabled import (
                 secretsmanager_automatic_rotation_enabled,
             )
 

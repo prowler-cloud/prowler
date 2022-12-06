@@ -11,14 +11,14 @@ class Test_iam_root_hardware_mfa_enabled_test:
         iam = client("iam")
         mfa_device_name = "mfa-test"
         iam.create_virtual_mfa_device(VirtualMFADeviceName=mfa_device_name)
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled.iam_client",
+            "prowler.providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
-            from providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled import (
+            from prowler.providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled import (
                 iam_root_hardware_mfa_enabled,
             )
 
@@ -39,14 +39,14 @@ class Test_iam_root_hardware_mfa_enabled_test:
         iam = client("iam")
         mfa_device_name = "mfa-test"
         iam.create_virtual_mfa_device(VirtualMFADeviceName=mfa_device_name)
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled.iam_client",
+            "prowler.providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
-            from providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled import (
+            from prowler.providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled import (
                 iam_root_hardware_mfa_enabled,
             )
 

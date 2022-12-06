@@ -2,7 +2,8 @@ from unittest import mock
 
 from boto3 import client
 from moto import mock_apigateway
-from providers.aws.services.apigateway.apigateway_service import Stage
+
+from prowler.providers.aws.services.apigateway.apigateway_service import Stage
 
 AWS_REGION = "us-east-1"
 
@@ -16,17 +17,19 @@ class Test_apigateway_client_certificate_enabled:
         apigateway_client.create_rest_api(
             name="test-rest-api",
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigateway.apigateway_service import APIGateway
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled import (
+            from prowler.providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled import (
                 apigateway_client_certificate_enabled,
             )
 
@@ -70,17 +73,19 @@ class Test_apigateway_client_certificate_enabled:
             restApiId=rest_api["id"],
             stageName="test",
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigateway.apigateway_service import APIGateway
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled import (
+            from prowler.providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled import (
                 apigateway_client_certificate_enabled,
             )
 
@@ -104,17 +109,19 @@ class Test_apigateway_client_certificate_enabled:
         rest_api = apigateway_client.create_rest_api(
             name="test-rest-api",
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigateway.apigateway_service import APIGateway
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled.apigateway_client",
             new=APIGateway(current_audit_info),
         ) as service_client:
             # Test Check
-            from providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled import (
+            from prowler.providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled import (
                 apigateway_client_certificate_enabled,
             )
 

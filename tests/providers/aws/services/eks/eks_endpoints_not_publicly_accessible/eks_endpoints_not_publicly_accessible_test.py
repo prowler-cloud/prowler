@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from providers.aws.services.eks.eks_service import EKSCluster
+from prowler.providers.aws.services.eks.eks_service import EKSCluster
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -15,10 +15,10 @@ class Test_eks_endpoints_not_publicly_accessible:
         eks_client = mock.MagicMock
         eks_client.clusters = []
         with mock.patch(
-            "providers.aws.services.eks.eks_service.EKS",
+            "prowler.providers.aws.services.eks.eks_service.EKS",
             eks_client,
         ):
-            from providers.aws.services.eks.eks_endpoints_not_publicly_accessible.eks_endpoints_not_publicly_accessible import (
+            from prowler.providers.aws.services.eks.eks_endpoints_not_publicly_accessible.eks_endpoints_not_publicly_accessible import (
                 eks_endpoints_not_publicly_accessible,
             )
 
@@ -41,10 +41,10 @@ class Test_eks_endpoints_not_publicly_accessible:
         )
 
         with mock.patch(
-            "providers.aws.services.eks.eks_service.EKS",
+            "prowler.providers.aws.services.eks.eks_service.EKS",
             eks_client,
         ):
-            from providers.aws.services.eks.eks_endpoints_not_publicly_accessible.eks_endpoints_not_publicly_accessible import (
+            from prowler.providers.aws.services.eks.eks_endpoints_not_publicly_accessible.eks_endpoints_not_publicly_accessible import (
                 eks_endpoints_not_publicly_accessible,
             )
 
@@ -74,10 +74,10 @@ class Test_eks_endpoints_not_publicly_accessible:
         )
 
         with mock.patch(
-            "providers.aws.services.eks.eks_service.EKS",
+            "prowler.providers.aws.services.eks.eks_service.EKS",
             eks_client,
         ):
-            from providers.aws.services.eks.eks_endpoints_not_publicly_accessible.eks_endpoints_not_publicly_accessible import (
+            from prowler.providers.aws.services.eks.eks_endpoints_not_publicly_accessible.eks_endpoints_not_publicly_accessible import (
                 eks_endpoints_not_publicly_accessible,
             )
 

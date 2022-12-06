@@ -2,7 +2,8 @@ from datetime import datetime, timezone
 from os import getcwd
 
 import yaml
-from lib.logger import logger
+
+from prowler.lib.logger import logger
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
@@ -19,7 +20,7 @@ banner_color = "\033[1;92m"
 compliance_specification_dir = "./compliance"
 
 # AWS services-regions matrix json
-aws_services_json_file = "prowler/providers/aws/aws_regions_by_service.json"
+aws_services_json_file = "aws_regions_by_service.json"
 
 default_output_directory = getcwd() + "/output"
 

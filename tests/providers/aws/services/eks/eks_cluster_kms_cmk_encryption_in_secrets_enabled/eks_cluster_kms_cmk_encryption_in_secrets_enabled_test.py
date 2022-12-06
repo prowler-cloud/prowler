@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from providers.aws.services.eks.eks_service import EKSCluster
+from prowler.providers.aws.services.eks.eks_service import EKSCluster
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -15,10 +15,10 @@ class Test_eks_cluster_kms_cmk_encryption_in_secrets_enabled:
         eks_client = mock.MagicMock
         eks_client.clusters = []
         with mock.patch(
-            "providers.aws.services.eks.eks_service.EKS",
+            "prowler.providers.aws.services.eks.eks_service.EKS",
             eks_client,
         ):
-            from providers.aws.services.eks.eks_cluster_kms_cmk_encryption_in_secrets_enabled.eks_cluster_kms_cmk_encryption_in_secrets_enabled import (
+            from prowler.providers.aws.services.eks.eks_cluster_kms_cmk_encryption_in_secrets_enabled.eks_cluster_kms_cmk_encryption_in_secrets_enabled import (
                 eks_cluster_kms_cmk_encryption_in_secrets_enabled,
             )
 
@@ -39,10 +39,10 @@ class Test_eks_cluster_kms_cmk_encryption_in_secrets_enabled:
         )
 
         with mock.patch(
-            "providers.aws.services.eks.eks_service.EKS",
+            "prowler.providers.aws.services.eks.eks_service.EKS",
             eks_client,
         ):
-            from providers.aws.services.eks.eks_cluster_kms_cmk_encryption_in_secrets_enabled.eks_cluster_kms_cmk_encryption_in_secrets_enabled import (
+            from prowler.providers.aws.services.eks.eks_cluster_kms_cmk_encryption_in_secrets_enabled.eks_cluster_kms_cmk_encryption_in_secrets_enabled import (
                 eks_cluster_kms_cmk_encryption_in_secrets_enabled,
             )
 
@@ -69,10 +69,10 @@ class Test_eks_cluster_kms_cmk_encryption_in_secrets_enabled:
         )
 
         with mock.patch(
-            "providers.aws.services.eks.eks_service.EKS",
+            "prowler.providers.aws.services.eks.eks_service.EKS",
             eks_client,
         ):
-            from providers.aws.services.eks.eks_cluster_kms_cmk_encryption_in_secrets_enabled.eks_cluster_kms_cmk_encryption_in_secrets_enabled import (
+            from prowler.providers.aws.services.eks.eks_cluster_kms_cmk_encryption_in_secrets_enabled.eks_cluster_kms_cmk_encryption_in_secrets_enabled import (
                 eks_cluster_kms_cmk_encryption_in_secrets_enabled,
             )
 

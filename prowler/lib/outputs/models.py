@@ -3,9 +3,9 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from config.config import timestamp
-from lib.check.models import Check_Report, Remediation
-from providers.aws.lib.audit_info.models import AWS_Organizations_Info
+from prowler.config.config import timestamp
+from prowler.lib.check.models import Check_Report, Remediation
+from prowler.providers.aws.lib.audit_info.models import AWS_Organizations_Info
 
 
 @dataclass

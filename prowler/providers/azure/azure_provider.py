@@ -5,9 +5,12 @@ from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
 from azure.mgmt.subscription import SubscriptionClient
 from msgraph.core import GraphClient
 
-from lib.logger import logger
-from providers.azure.lib.audit_info.audit_info import azure_audit_info
-from providers.azure.lib.audit_info.models import Azure_Audit_Info, Azure_Identity_Info
+from prowler.lib.logger import logger
+from prowler.providers.azure.lib.audit_info.audit_info import azure_audit_info
+from prowler.providers.azure.lib.audit_info.models import (
+    Azure_Audit_Info,
+    Azure_Identity_Info,
+)
 
 
 class Azure_Provider:

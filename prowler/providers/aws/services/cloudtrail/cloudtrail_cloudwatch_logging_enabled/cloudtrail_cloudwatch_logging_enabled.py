@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta, timezone
 
-from lib.check.models import Check, Check_Report
-from providers.aws.services.cloudtrail.cloudtrail_client import cloudtrail_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
+    cloudtrail_client,
+)
 
 maximum_time_without_logging = 1
 

@@ -2,8 +2,9 @@ import json
 
 from boto3 import client, session
 from moto import mock_s3, mock_s3control
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.s3.s3_service import S3, S3Control
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"

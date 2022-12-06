@@ -1,6 +1,6 @@
-from config.config import get_config_var
-from lib.check.models import Check, Check_Report
-from providers.aws.services.ec2.ec2_client import ec2_client
+from prowler.config.config import get_config_var
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
 class ec2_securitygroup_with_many_ingress_egress_rules(Check):

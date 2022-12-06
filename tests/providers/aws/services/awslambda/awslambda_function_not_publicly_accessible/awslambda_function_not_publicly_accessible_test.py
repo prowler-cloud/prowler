@@ -1,7 +1,8 @@
 from unittest import mock
 
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.awslambda.awslambda_service import Function
+
+from prowler.providers.aws.services.awslambda.awslambda_service import Function
 
 AWS_REGION = "us-east-1"
 
@@ -12,11 +13,11 @@ class Test_awslambda_function_not_publicly_accessible:
         lambda_client.functions = {}
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible import (
                 awslambda_function_not_publicly_accessible,
             )
 
@@ -58,11 +59,11 @@ class Test_awslambda_function_not_publicly_accessible:
         }
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible import (
                 awslambda_function_not_publicly_accessible,
             )
 
@@ -112,11 +113,11 @@ class Test_awslambda_function_not_publicly_accessible:
         }
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible import (
                 awslambda_function_not_publicly_accessible,
             )
 
@@ -166,11 +167,11 @@ class Test_awslambda_function_not_publicly_accessible:
         }
 
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
             new=lambda_client,
         ):
             # Test Check
-            from providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible import (
+            from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible import (
                 awslambda_function_not_publicly_accessible,
             )
 

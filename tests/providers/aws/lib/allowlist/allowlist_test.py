@@ -1,8 +1,12 @@
 import yaml
 from boto3 import resource, session
 from moto import mock_dynamodb, mock_s3
-from providers.aws.lib.allowlist.allowlist import is_allowlisted, parse_allowlist_file
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
+
+from prowler.providers.aws.lib.allowlist.allowlist import (
+    is_allowlisted,
+    parse_allowlist_file,
+)
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 AWS_ACCOUNT_NUMBER = 123456789012
 AWS_REGION = "us-east-1"

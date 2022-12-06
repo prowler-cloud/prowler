@@ -4,8 +4,9 @@ import botocore
 from boto3 import client, session
 from moto import mock_cloudfront
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.cloudfront.cloudfront_service import CloudFront
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.cloudfront.cloudfront_service import CloudFront
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"

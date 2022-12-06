@@ -38,19 +38,19 @@ def mock_make_api_call(self, operation_name, kwarg):
 class Test_apigatewayv2_access_logging_enabled:
     @mock_apigatewayv2
     def test_apigateway_no_apis(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigatewayv2.apigatewayv2_service import (
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigatewayv2.apigatewayv2_service import (
             ApiGatewayV2,
         )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled.apigatewayv2_client",
+            "prowler.providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled.apigatewayv2_client",
             new=ApiGatewayV2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled import (
+            from prowler.providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled import (
                 apigatewayv2_access_logging_enabled,
             )
 
@@ -66,19 +66,19 @@ class Test_apigatewayv2_access_logging_enabled:
         # Create ApiGatewayV2 API
         api = apigatewayv2_client.create_api(Name="test-api", ProtocolType="HTTP")
         # Get stages mock with stage with logging
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigatewayv2.apigatewayv2_service import (
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigatewayv2.apigatewayv2_service import (
             ApiGatewayV2,
         )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled.apigatewayv2_client",
+            "prowler.providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled.apigatewayv2_client",
             new=ApiGatewayV2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled import (
+            from prowler.providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled import (
                 apigatewayv2_access_logging_enabled,
             )
 

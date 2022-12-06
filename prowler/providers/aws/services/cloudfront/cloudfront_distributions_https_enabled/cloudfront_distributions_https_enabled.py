@@ -1,6 +1,10 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.cloudfront.cloudfront_client import cloudfront_client
-from providers.aws.services.cloudfront.cloudfront_service import ViewerProtocolPolicy
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.cloudfront.cloudfront_client import (
+    cloudfront_client,
+)
+from prowler.providers.aws.services.cloudfront.cloudfront_service import (
+    ViewerProtocolPolicy,
+)
 
 
 class cloudfront_distributions_https_enabled(Check):

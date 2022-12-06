@@ -38,19 +38,19 @@ def mock_make_api_call(self, operation_name, kwarg):
 class Test_apigatewayv2_authorizers_enabled:
     @mock_apigatewayv2
     def test_apigateway_no_apis(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigatewayv2.apigatewayv2_service import (
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigatewayv2.apigatewayv2_service import (
             ApiGatewayV2,
         )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled.apigatewayv2_client",
+            "prowler.providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled.apigatewayv2_client",
             new=ApiGatewayV2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled import (
+            from prowler.providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled import (
                 apigatewayv2_authorizers_enabled,
             )
 
@@ -72,19 +72,19 @@ class Test_apigatewayv2_authorizers_enabled:
             Name="auth1",
             AuthorizerPayloadFormatVersion="2.0",
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigatewayv2.apigatewayv2_service import (
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigatewayv2.apigatewayv2_service import (
             ApiGatewayV2,
         )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled.apigatewayv2_client",
+            "prowler.providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled.apigatewayv2_client",
             new=ApiGatewayV2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled import (
+            from prowler.providers.aws.services.apigatewayv2.apigatewayv2_authorizers_enabled.apigatewayv2_authorizers_enabled import (
                 apigatewayv2_authorizers_enabled,
             )
 

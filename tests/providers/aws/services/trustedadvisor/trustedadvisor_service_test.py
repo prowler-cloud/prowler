@@ -3,8 +3,11 @@ from unittest.mock import patch
 import botocore
 from boto3 import session
 from moto import mock_support
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.trustedadvisor.trustedadvisor_service import TrustedAdvisor
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.trustedadvisor.trustedadvisor_service import (
+    TrustedAdvisor,
+)
 
 AWS_ACCOUNT_NUMBER = 123456789012
 AWS_REGION = "us-east-1"
@@ -26,7 +29,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 @patch(
-    "providers.aws.services.trustedadvisor.trustedadvisor_service.generate_regional_clients",
+    "prowler.providers.aws.services.trustedadvisor.trustedadvisor_service.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_TrustedAdvisor_Service:

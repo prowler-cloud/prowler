@@ -14,14 +14,14 @@ class Test_iam_administrator_access_with_mfa_test:
 
         arn = iam.create_group(GroupName=group_name)["Group"]["Arn"]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa.iam_client",
+            "prowler.providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa.iam_client",
             new=IAM(current_audit_info),
         ):
-            from providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa import (
+            from prowler.providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa import (
                 iam_administrator_access_with_mfa,
             )
 
@@ -52,14 +52,14 @@ class Test_iam_administrator_access_with_mfa_test:
         arn = iam.create_group(GroupName=group_name)["Group"]["Arn"]
         iam.attach_group_policy(GroupName=group_name, PolicyArn=policy_arn)
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa.iam_client",
+            "prowler.providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa.iam_client",
             new=IAM(current_audit_info),
         ):
-            from providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa import (
+            from prowler.providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa import (
                 iam_administrator_access_with_mfa,
             )
 
@@ -85,14 +85,14 @@ class Test_iam_administrator_access_with_mfa_test:
             PolicyArn="arn:aws:iam::aws:policy/AdministratorAccess",
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa.iam_client",
+            "prowler.providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa.iam_client",
             new=IAM(current_audit_info),
         ):
-            from providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa import (
+            from prowler.providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa import (
                 iam_administrator_access_with_mfa,
             )
 
@@ -120,14 +120,14 @@ class Test_iam_administrator_access_with_mfa_test:
         )
         iam.add_user_to_group(GroupName=group_name, UserName=user_name)
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa.iam_client",
+            "prowler.providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa.iam_client",
             new=IAM(current_audit_info),
         ):
-            from providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa import (
+            from prowler.providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa import (
                 iam_administrator_access_with_mfa,
             )
 
@@ -179,14 +179,14 @@ class Test_iam_administrator_access_with_mfa_test:
         iam.add_user_to_group(GroupName=group_name, UserName=user_name_no_mfa)
         iam.add_user_to_group(GroupName=group_name, UserName=user_name_mfa)
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.iam.iam_service import IAM
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa.iam_client",
+            "prowler.providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa.iam_client",
             new=IAM(current_audit_info),
         ):
-            from providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa import (
+            from prowler.providers.aws.services.iam.iam_administrator_access_with_mfa.iam_administrator_access_with_mfa import (
                 iam_administrator_access_with_mfa,
             )
 

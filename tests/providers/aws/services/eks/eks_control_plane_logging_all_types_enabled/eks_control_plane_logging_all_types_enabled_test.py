@@ -1,7 +1,10 @@
 from re import search
 from unittest import mock
 
-from providers.aws.services.eks.eks_service import EKSCluster, EKSClusterLoggingEntity
+from prowler.providers.aws.services.eks.eks_service import (
+    EKSCluster,
+    EKSClusterLoggingEntity,
+)
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -15,10 +18,10 @@ class Test_eks_control_plane_logging_all_types_enabled:
         eks_client = mock.MagicMock
         eks_client.clusters = []
         with mock.patch(
-            "providers.aws.services.eks.eks_service.EKS",
+            "prowler.providers.aws.services.eks.eks_service.EKS",
             eks_client,
         ):
-            from providers.aws.services.eks.eks_control_plane_logging_all_types_enabled.eks_control_plane_logging_all_types_enabled import (
+            from prowler.providers.aws.services.eks.eks_control_plane_logging_all_types_enabled.eks_control_plane_logging_all_types_enabled import (
                 eks_control_plane_logging_all_types_enabled,
             )
 
@@ -39,10 +42,10 @@ class Test_eks_control_plane_logging_all_types_enabled:
         )
 
         with mock.patch(
-            "providers.aws.services.eks.eks_service.EKS",
+            "prowler.providers.aws.services.eks.eks_service.EKS",
             eks_client,
         ):
-            from providers.aws.services.eks.eks_control_plane_logging_all_types_enabled.eks_control_plane_logging_all_types_enabled import (
+            from prowler.providers.aws.services.eks.eks_control_plane_logging_all_types_enabled.eks_control_plane_logging_all_types_enabled import (
                 eks_control_plane_logging_all_types_enabled,
             )
 
@@ -73,10 +76,10 @@ class Test_eks_control_plane_logging_all_types_enabled:
         )
 
         with mock.patch(
-            "providers.aws.services.eks.eks_service.EKS",
+            "prowler.providers.aws.services.eks.eks_service.EKS",
             eks_client,
         ):
-            from providers.aws.services.eks.eks_control_plane_logging_all_types_enabled.eks_control_plane_logging_all_types_enabled import (
+            from prowler.providers.aws.services.eks.eks_control_plane_logging_all_types_enabled.eks_control_plane_logging_all_types_enabled import (
                 eks_control_plane_logging_all_types_enabled,
             )
 
@@ -113,10 +116,10 @@ class Test_eks_control_plane_logging_all_types_enabled:
         )
 
         with mock.patch(
-            "providers.aws.services.eks.eks_service.EKS",
+            "prowler.providers.aws.services.eks.eks_service.EKS",
             eks_client,
         ):
-            from providers.aws.services.eks.eks_control_plane_logging_all_types_enabled.eks_control_plane_logging_all_types_enabled import (
+            from prowler.providers.aws.services.eks.eks_control_plane_logging_all_types_enabled.eks_control_plane_logging_all_types_enabled import (
                 eks_control_plane_logging_all_types_enabled,
             )
 

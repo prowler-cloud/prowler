@@ -5,8 +5,8 @@ from json import dumps
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
-from lib.check.models import Check, Check_Report
-from providers.aws.services.ecs.ecs_client import ecs_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
 class ecs_task_definitions_no_environment_secrets(Check):

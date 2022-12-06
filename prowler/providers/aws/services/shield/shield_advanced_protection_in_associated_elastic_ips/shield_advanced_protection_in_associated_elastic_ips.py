@@ -1,6 +1,6 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.ec2.ec2_client import ec2_client
-from providers.aws.services.shield.shield_client import shield_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.ec2.ec2_client import ec2_client
+from prowler.providers.aws.services.shield.shield_client import shield_client
 
 
 class shield_advanced_protection_in_associated_elastic_ips(Check):

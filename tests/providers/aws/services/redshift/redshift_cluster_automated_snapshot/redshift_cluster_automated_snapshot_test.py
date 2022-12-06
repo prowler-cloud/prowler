@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 from uuid import uuid4
 
-from providers.aws.services.redshift.redshift_service import Cluster
+from prowler.providers.aws.services.redshift.redshift_service import Cluster
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -15,10 +15,10 @@ class Test_redshift_cluster_automated_snapshot:
         redshift_client = mock.MagicMock
         redshift_client.clusters = []
         with mock.patch(
-            "providers.aws.services.redshift.redshift_service.Redshift",
+            "prowler.providers.aws.services.redshift.redshift_service.Redshift",
             redshift_client,
         ):
-            from providers.aws.services.redshift.redshift_cluster_automated_snapshot.redshift_cluster_automated_snapshot import (
+            from prowler.providers.aws.services.redshift.redshift_cluster_automated_snapshot.redshift_cluster_automated_snapshot import (
                 redshift_cluster_automated_snapshot,
             )
 
@@ -37,10 +37,10 @@ class Test_redshift_cluster_automated_snapshot:
             )
         )
         with mock.patch(
-            "providers.aws.services.redshift.redshift_service.Redshift",
+            "prowler.providers.aws.services.redshift.redshift_service.Redshift",
             redshift_client,
         ):
-            from providers.aws.services.redshift.redshift_cluster_automated_snapshot.redshift_cluster_automated_snapshot import (
+            from prowler.providers.aws.services.redshift.redshift_cluster_automated_snapshot.redshift_cluster_automated_snapshot import (
                 redshift_cluster_automated_snapshot,
             )
 
@@ -62,10 +62,10 @@ class Test_redshift_cluster_automated_snapshot:
             )
         )
         with mock.patch(
-            "providers.aws.services.redshift.redshift_service.Redshift",
+            "prowler.providers.aws.services.redshift.redshift_service.Redshift",
             redshift_client,
         ):
-            from providers.aws.services.redshift.redshift_cluster_automated_snapshot.redshift_cluster_automated_snapshot import (
+            from prowler.providers.aws.services.redshift.redshift_cluster_automated_snapshot.redshift_cluster_automated_snapshot import (
                 redshift_cluster_automated_snapshot,
             )
 

@@ -35,27 +35,27 @@ class Test_elbv2_waf_acl_attached:
     @mock_elbv2
     def test_elb_no_balancers(self):
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elbv2.elbv2_service import ELBv2
-        from providers.aws.services.waf.waf_service import WAF
-        from providers.aws.services.wafv2.wafv2_service import WAFv2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
+        from prowler.providers.aws.services.waf.waf_service import WAF
+        from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.elbv2_client",
+            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.elbv2_client",
             new=ELBv2(current_audit_info),
         ):
             with mock.patch(
-                "providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafv2_client",
+                "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafv2_client",
                 new=WAFv2(current_audit_info),
             ):
                 with mock.patch(
-                    "providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
+                    "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
                     new=WAF(current_audit_info),
                 ):
                     # Test Check
-                    from providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached import (
+                    from prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached import (
                         elbv2_waf_acl_attached,
                     )
 
@@ -100,27 +100,27 @@ class Test_elbv2_waf_acl_attached:
             Type="application",
         )["LoadBalancers"][0]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elbv2.elbv2_service import ELBv2
-        from providers.aws.services.waf.waf_service import WAF
-        from providers.aws.services.wafv2.wafv2_service import WAFv2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
+        from prowler.providers.aws.services.waf.waf_service import WAF
+        from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.elbv2_client",
+            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.elbv2_client",
             new=ELBv2(current_audit_info),
         ):
             with mock.patch(
-                "providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafv2_client",
+                "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafv2_client",
                 new=WAFv2(current_audit_info),
             ):
                 with mock.patch(
-                    "providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
+                    "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
                     new=WAF(current_audit_info),
                 ):
                     # Test Check
-                    from providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached import (
+                    from prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached import (
                         elbv2_waf_acl_attached,
                     )
 
@@ -174,27 +174,27 @@ class Test_elbv2_waf_acl_attached:
 
         wafv2.associate_web_acl(WebACLArn=waf["ARN"], ResourceArn=lb["LoadBalancerArn"])
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.elbv2.elbv2_service import ELBv2
-        from providers.aws.services.waf.waf_service import WAF
-        from providers.aws.services.wafv2.wafv2_service import WAFv2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
+        from prowler.providers.aws.services.waf.waf_service import WAF
+        from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.elbv2_client",
+            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.elbv2_client",
             new=ELBv2(current_audit_info),
         ):
             with mock.patch(
-                "providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafv2_client",
+                "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafv2_client",
                 new=WAFv2(current_audit_info),
             ) as service_client:
                 with mock.patch(
-                    "providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
+                    "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
                     new=WAF(current_audit_info),
                 ):
                     # Test Check
-                    from providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached import (
+                    from prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached import (
                         elbv2_waf_acl_attached,
                     )
 

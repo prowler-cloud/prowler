@@ -15,7 +15,7 @@ Originally based on [org-multi-account](https://github.com/prowler-cloud/prowler
  The solution is designed to be very simple. Prowler is run via an ECS Task definition that launches a single Fargate container. This Task Definition is executed on a schedule using an EventBridge Rule.
 
 ## CloudFormation Templates
- 
+
  ### CF-Prowler-IAM.yml
 Creates the following IAM Roles:
 
@@ -33,7 +33,7 @@ Creates the following resources:
  5. **ProwlerTaskScheduler**: EventBridge Rule that schedules the execution of the Task Definition. The cron expression is specified as a CloudFormation template parameter.
 
 ### CF-Prowler-CrossAccountRole.yml
-Creates the cross account IAM Role required for Prowler to run. Deploy it as StackSet in every account in the AWS Organization.  
+Creates the cross account IAM Role required for Prowler to run. Deploy it as StackSet in every account in the AWS Organization.
 
 ## Docker Container
 
@@ -42,7 +42,7 @@ The Dockerfile does the following:
  1. Uses amazonlinux:2022 as a base.
  2. Downloads required dependencies.
  3. Copies the .awsvariables and run-prowler-securityhub.sh files into the root.
- 4. Downloads the specified version of Prowler as recommended in the release notes. 
+ 4. Downloads the specified version of Prowler as recommended in the release notes.
  5. Assigns permissions to a lower privileged user and then drops to it.
  6. Runs the script.
 
@@ -58,10 +58,10 @@ The script gets the list of accounts in AWS Organizations, and then executes Pro
 The logs that are generated and sent to Cloudwatch are error logs, and assessment start and finish logs.
 
 ## Instructions
- 1. Create a Private ECR Repository in the account that will host the Prowler container. The Audit account is recommended, but any account can be used. 
+ 1. Create a Private ECR Repository in the account that will host the Prowler container. The Audit account is recommended, but any account can be used.
  2.  Configure the .awsvariables file. Note the ROLE name chosen as it will be the CrossAccountRole.
  3. Follow the steps from "View Push Commands" to build and upload the container image. You need to have Docker and AWS CLI installed, and use the cli to login to the account first.  After upload note the Image URI, as it is required for the CF-Prowler-ECS template.
- 4.  Make sure SecurityHub is enabled in every account in AWS Organizations, and that the SecurityHub integration is enabled as explained in [Prowler - Security Hub Integration](https://github.com/prowler-cloud/prowler#security-hub-integration) 
+ 4.  Make sure SecurityHub is enabled in every account in AWS Organizations, and that the SecurityHub integration is enabled as explained in [Prowler - Security Hub Integration](https://github.com/prowler-cloud/prowler#security-hub-integration)
  5. Deploy **CF-Prowler-CrossAccountRole.yml** in the Master Account as a single stack. You will have to choose the CrossAccountRole name (ProwlerXA-Role by default) and the ProwlerTaskRoleName (ProwlerECSTask-Role by default)
  6. Deploy **CF-Prowler-CrossAccountRole.yml** in every Member Account as a StackSet. Choose the same CrossAccountName and ProwlerTaskRoleName as the previous step.
  7. Deploy **CF-Prowler-IAM.yml** in the account that will host the Prowler container (the same from step 1).  The following template parameters must be provided:
@@ -72,7 +72,7 @@ The logs that are generated and sent to Cloudwatch are error logs, and assessmen
  8. Deploy **CF-Prowler-ECS.yml** in the account that will host the Prowler container (the same from step 1).  The following template parameters must be provided:
 	- **ProwlerClusterName**: Name for the ECS Cluster (default ProwlerCluster)
 	- **ProwlerContainerName**: Name for the Prowler container (default prowler)
-	- **ProwlerContainerInfo**: ECR URI from step 1. 
+	- **ProwlerContainerInfo**: ECR URI from step 1.
 	- **ProwlerECSLogGroupName**: CloudWatch Log Group name (default /aws/ecs/SecurityHub-Prowler)
 	- **SecurityGroupVPCId**: VPC ID for the VPC where the container will run.
 	- **ProwlerScheduledSubnet1 and 2**: Subnets IDs from the VPC specified. Choose private subnets if possible.
@@ -90,5 +90,5 @@ If you permission find errors in the CloudWatch logs, the culprit might be a [Se
 ---
 ## Upgrading Prowler
 
-Prowler version is controlled by the PROWLERVER argument in the Dockerfile, change it to the desired version and follow the ECR Push Commands to update the container image. 
+Prowler version is controlled by the PROWLERVER argument in the Dockerfile, change it to the desired version and follow the ECR Push Commands to update the container image.
 Old images can be deleted from the ECR Repository after the new image is confirmed to work. They will show as "untagged" as only one image can hold the "latest" tag.

@@ -5,14 +5,14 @@ Parameters:
     Type: String
     Description: Name of the ECS Cluster that the Prowler Fargate Task will run in
     Default: ProwlerCluster
-  ProwlerContainerName: 
+  ProwlerContainerName:
     Type: String
     Description: Name of the Prowler Container Definition within the ECS Task
     Default: prowler
-  ProwlerContainerInfo: 
+  ProwlerContainerInfo:
     Type: String
     Description: ECR URI of the Prowler container
-  ProwlerECSLogGroupName: 
+  ProwlerECSLogGroupName:
     Type: String
     Description: Name for the log group to be created
     Default: /aws/ecs/SecurityHub-Prowler
@@ -41,17 +41,17 @@ Parameters:
 Resources:
   ProwlerECSCloudWatchLogsGroup:
     Type: AWS::Logs::LogGroup
-    Properties: 
+    Properties:
       LogGroupName: !Ref ProwlerECSLogGroupName
       RetentionInDays: 90
   ProwlerECSCluster:
     Type: AWS::ECS::Cluster
-    Properties: 
+    Properties:
       ClusterName: !Ref ProwlerClusterName
   ProwlerECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
-    Properties: 
-      ContainerDefinitions: 
+    Properties:
+      ContainerDefinitions:
         - Image: !Ref ProwlerContainerInfo
           Name: !Ref ProwlerContainerName
           LogConfiguration:

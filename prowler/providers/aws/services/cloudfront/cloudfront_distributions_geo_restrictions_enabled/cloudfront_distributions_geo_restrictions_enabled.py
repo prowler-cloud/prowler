@@ -1,6 +1,10 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.cloudfront.cloudfront_client import cloudfront_client
-from providers.aws.services.cloudfront.cloudfront_service import GeoRestrictionType
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.cloudfront.cloudfront_client import (
+    cloudfront_client,
+)
+from prowler.providers.aws.services.cloudfront.cloudfront_service import (
+    GeoRestrictionType,
+)
 
 
 class cloudfront_distributions_geo_restrictions_enabled(Check):

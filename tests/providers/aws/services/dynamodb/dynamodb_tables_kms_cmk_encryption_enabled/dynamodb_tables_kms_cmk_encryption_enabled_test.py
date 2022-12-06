@@ -10,17 +10,17 @@ AWS_REGION = "us-east-1"
 class Test_dynamodb_tables_kms_cmk_encryption_enabled:
     @mock_dynamodb
     def test_dynamodb_no_tables(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.dynamodb.dynamodb_service import DynamoDB
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.dynamodb.dynamodb_service import DynamoDB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.dynamodb.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_client",
+            "prowler.providers.aws.services.dynamodb.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_client",
             new=DynamoDB(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.dynamodb.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_tables_kms_cmk_encryption_enabled import (
+            from prowler.providers.aws.services.dynamodb.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_tables_kms_cmk_encryption_enabled import (
                 dynamodb_tables_kms_cmk_encryption_enabled,
             )
 
@@ -45,17 +45,17 @@ class Test_dynamodb_tables_kms_cmk_encryption_enabled:
             BillingMode="PAY_PER_REQUEST",
             SSESpecification={"Enabled": True, "KMSMasterKeyId": "/custom-kms-key"},
         )["TableDescription"]
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.dynamodb.dynamodb_service import DynamoDB
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.dynamodb.dynamodb_service import DynamoDB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.dynamodb.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_client",
+            "prowler.providers.aws.services.dynamodb.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_client",
             new=DynamoDB(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.dynamodb.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_tables_kms_cmk_encryption_enabled import (
+            from prowler.providers.aws.services.dynamodb.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_tables_kms_cmk_encryption_enabled import (
                 dynamodb_tables_kms_cmk_encryption_enabled,
             )
 
@@ -83,17 +83,17 @@ class Test_dynamodb_tables_kms_cmk_encryption_enabled:
             ],
             BillingMode="PAY_PER_REQUEST",
         )["TableDescription"]
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.dynamodb.dynamodb_service import DynamoDB
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.dynamodb.dynamodb_service import DynamoDB
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.dynamodb.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_client",
+            "prowler.providers.aws.services.dynamodb.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_client",
             new=DynamoDB(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.dynamodb.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_tables_kms_cmk_encryption_enabled import (
+            from prowler.providers.aws.services.dynamodb.dynamodb_tables_kms_cmk_encryption_enabled.dynamodb_tables_kms_cmk_encryption_enabled import (
                 dynamodb_tables_kms_cmk_encryption_enabled,
             )
 

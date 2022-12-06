@@ -11,17 +11,17 @@ class Test_ec2_instance_secrets_user_data:
     @mock_ec2
     def test_no_ec2(self):
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
+            from prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
                 ec2_instance_secrets_user_data,
             )
 
@@ -41,16 +41,16 @@ class Test_ec2_instance_secrets_user_data:
             UserData="This is some user_data",
         )[0]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
             new=EC2(current_audit_info),
         ):
-            from providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
+            from prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
                 ec2_instance_secrets_user_data,
             )
 
@@ -76,16 +76,16 @@ class Test_ec2_instance_secrets_user_data:
             UserData="DB_PASSWORD=foobar123",
         )[0]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
             new=EC2(current_audit_info),
         ):
-            from providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
+            from prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
                 ec2_instance_secrets_user_data,
             )
 
@@ -113,16 +113,16 @@ class Test_ec2_instance_secrets_user_data:
             ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1, UserData=secrets
         )[0]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
             new=EC2(current_audit_info),
         ):
-            from providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
+            from prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
                 ec2_instance_secrets_user_data,
             )
 
@@ -145,16 +145,16 @@ class Test_ec2_instance_secrets_user_data:
             ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1, UserData=""
         )[0]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
             new=EC2(current_audit_info),
         ):
-            from providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
+            from prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
                 ec2_instance_secrets_user_data,
             )
 

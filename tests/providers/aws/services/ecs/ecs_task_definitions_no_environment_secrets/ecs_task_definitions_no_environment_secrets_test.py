@@ -1,7 +1,10 @@
 from re import search
 from unittest import mock
 
-from providers.aws.services.ecs.ecs_service import ContainerEnvVariable, TaskDefinition
+from prowler.providers.aws.services.ecs.ecs_service import (
+    ContainerEnvVariable,
+    TaskDefinition,
+)
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -18,10 +21,10 @@ class Test_ecs_task_definitions_no_environment_secrets:
         ecs_client.task_definitions = []
 
         with mock.patch(
-            "providers.aws.services.ecs.ecs_service.ECS",
+            "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
-            from providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
+            from prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
                 ecs_task_definitions_no_environment_secrets,
             )
 
@@ -46,10 +49,10 @@ class Test_ecs_task_definitions_no_environment_secrets:
         )
 
         with mock.patch(
-            "providers.aws.services.ecs.ecs_service.ECS",
+            "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
-            from providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
+            from prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
                 ecs_task_definitions_no_environment_secrets,
             )
 
@@ -83,10 +86,10 @@ class Test_ecs_task_definitions_no_environment_secrets:
         )
 
         with mock.patch(
-            "providers.aws.services.ecs.ecs_service.ECS",
+            "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
-            from providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
+            from prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
                 ecs_task_definitions_no_environment_secrets,
             )
 

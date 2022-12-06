@@ -9,17 +9,17 @@ AWS_REGION = "us-east-1"
 class Test_kms_cmk_rotation_enabled:
     @mock_kms
     def test_kms_no_key(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.kms.kms_service import KMS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.kms.kms_service import KMS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled.kms_client",
+            "prowler.providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled.kms_client",
             new=KMS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled import (
+            from prowler.providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled import (
                 kms_cmk_rotation_enabled,
             )
 
@@ -35,17 +35,17 @@ class Test_kms_cmk_rotation_enabled:
         # Creaty KMS key with rotation
         key = kms_client.create_key()["KeyMetadata"]
         kms_client.enable_key_rotation(KeyId=key["KeyId"])
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.kms.kms_service import KMS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.kms.kms_service import KMS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled.kms_client",
+            "prowler.providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled.kms_client",
             new=KMS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled import (
+            from prowler.providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled import (
                 kms_cmk_rotation_enabled,
             )
 
@@ -67,17 +67,17 @@ class Test_kms_cmk_rotation_enabled:
         kms_client = client("kms", region_name=AWS_REGION)
         # Creaty KMS key without rotation
         key = kms_client.create_key()["KeyMetadata"]
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.kms.kms_service import KMS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.kms.kms_service import KMS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled.kms_client",
+            "prowler.providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled.kms_client",
             new=KMS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled import (
+            from prowler.providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled import (
                 kms_cmk_rotation_enabled,
             )
 

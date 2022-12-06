@@ -1,7 +1,7 @@
 from datetime import datetime
 from unittest import mock
 
-from providers.aws.services.directoryservice.directoryservice_service import (
+from prowler.providers.aws.services.directoryservice.directoryservice_service import (
     Directory,
     DirectoryType,
     LogSubscriptions,
@@ -15,11 +15,11 @@ class Test_directoryservice_directory_log_forwarding_enabled:
         directoryservice_client = mock.MagicMock
         directoryservice_client.directories = {}
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_directory_log_forwarding_enabled.directoryservice_directory_log_forwarding_enabled import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_directory_log_forwarding_enabled.directoryservice_directory_log_forwarding_enabled import (
                 directoryservice_directory_log_forwarding_enabled,
             )
 
@@ -42,11 +42,11 @@ class Test_directoryservice_directory_log_forwarding_enabled:
             )
         }
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_directory_log_forwarding_enabled.directoryservice_directory_log_forwarding_enabled import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_directory_log_forwarding_enabled.directoryservice_directory_log_forwarding_enabled import (
                 directoryservice_directory_log_forwarding_enabled,
             )
 
@@ -82,11 +82,11 @@ class Test_directoryservice_directory_log_forwarding_enabled:
         }
 
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_directory_log_forwarding_enabled.directoryservice_directory_log_forwarding_enabled import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_directory_log_forwarding_enabled.directoryservice_directory_log_forwarding_enabled import (
                 directoryservice_directory_log_forwarding_enabled,
             )
 

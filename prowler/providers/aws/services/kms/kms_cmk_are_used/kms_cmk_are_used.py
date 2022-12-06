@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.kms.kms_client import kms_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.kms.kms_client import kms_client
 
 
 class kms_cmk_are_used(Check):

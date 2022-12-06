@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.rds.rds_client import rds_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.rds.rds_client import rds_client
 
 
 class rds_snapshots_public_access(Check):

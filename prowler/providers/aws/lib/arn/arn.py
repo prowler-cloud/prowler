@@ -1,6 +1,6 @@
 from arnparse import arnparse
 
-from providers.aws.lib.arn.error import (
+from prowler.providers.aws.lib.arn.error import (
     RoleArnParsingEmptyResource,
     RoleArnParsingFailedMissingFields,
     RoleArnParsingIAMRegionNotEmpty,

@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.ssm.ssm_client import ssm_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.ssm.ssm_client import ssm_client
 
 
 class ssm_documents_set_as_public(Check):

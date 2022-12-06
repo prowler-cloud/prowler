@@ -4,8 +4,8 @@ import tempfile
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
-from lib.check.models import Check, Check_Report
-from providers.aws.services.cloudformation.cloudformation_client import (
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.cloudformation.cloudformation_client import (
     cloudformation_client,
 )
 

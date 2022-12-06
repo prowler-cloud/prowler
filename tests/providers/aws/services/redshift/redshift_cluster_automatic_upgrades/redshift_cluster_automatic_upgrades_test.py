@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 from uuid import uuid4
 
-from providers.aws.services.redshift.redshift_service import Cluster
+from prowler.providers.aws.services.redshift.redshift_service import Cluster
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -15,10 +15,10 @@ class Test_redshift_cluster_automatic_upgrades:
         redshift_client = mock.MagicMock
         redshift_client.clusters = []
         with mock.patch(
-            "providers.aws.services.redshift.redshift_service.Redshift",
+            "prowler.providers.aws.services.redshift.redshift_service.Redshift",
             redshift_client,
         ):
-            from providers.aws.services.redshift.redshift_cluster_automatic_upgrades.redshift_cluster_automatic_upgrades import (
+            from prowler.providers.aws.services.redshift.redshift_cluster_automatic_upgrades.redshift_cluster_automatic_upgrades import (
                 redshift_cluster_automatic_upgrades,
             )
 
@@ -37,10 +37,10 @@ class Test_redshift_cluster_automatic_upgrades:
             )
         )
         with mock.patch(
-            "providers.aws.services.redshift.redshift_service.Redshift",
+            "prowler.providers.aws.services.redshift.redshift_service.Redshift",
             redshift_client,
         ):
-            from providers.aws.services.redshift.redshift_cluster_automatic_upgrades.redshift_cluster_automatic_upgrades import (
+            from prowler.providers.aws.services.redshift.redshift_cluster_automatic_upgrades.redshift_cluster_automatic_upgrades import (
                 redshift_cluster_automatic_upgrades,
             )
 
@@ -58,10 +58,10 @@ class Test_redshift_cluster_automatic_upgrades:
             Cluster(id=cluster_id, region=AWS_REGION, allow_version_upgrade=True)
         )
         with mock.patch(
-            "providers.aws.services.redshift.redshift_service.Redshift",
+            "prowler.providers.aws.services.redshift.redshift_service.Redshift",
             redshift_client,
         ):
-            from providers.aws.services.redshift.redshift_cluster_automatic_upgrades.redshift_cluster_automatic_upgrades import (
+            from prowler.providers.aws.services.redshift.redshift_cluster_automatic_upgrades.redshift_cluster_automatic_upgrades import (
                 redshift_cluster_automatic_upgrades,
             )
 

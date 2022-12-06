@@ -9,17 +9,19 @@ AWS_REGION = "us-east-1"
 class Test_apigateway_logging_enabled:
     @mock_apigateway
     def test_apigateway_no_rest_apis(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigateway.apigateway_service import APIGateway
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigateway.apigateway_logging_enabled.apigateway_logging_enabled.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_logging_enabled.apigateway_logging_enabled.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigateway.apigateway_logging_enabled.apigateway_logging_enabled import (
+            from prowler.providers.aws.services.apigateway.apigateway_logging_enabled.apigateway_logging_enabled import (
                 apigateway_logging_enabled,
             )
 
@@ -73,17 +75,19 @@ class Test_apigateway_logging_enabled:
                 },
             ],
         )
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigateway.apigateway_service import APIGateway
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigateway.apigateway_logging_enabled.apigateway_logging_enabled.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_logging_enabled.apigateway_logging_enabled.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigateway.apigateway_logging_enabled.apigateway_logging_enabled import (
+            from prowler.providers.aws.services.apigateway.apigateway_logging_enabled.apigateway_logging_enabled import (
                 apigateway_logging_enabled,
             )
 
@@ -134,17 +138,19 @@ class Test_apigateway_logging_enabled:
             stageName="test",
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigateway.apigateway_service import APIGateway
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigateway.apigateway_logging_enabled.apigateway_logging_enabled.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_logging_enabled.apigateway_logging_enabled.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigateway.apigateway_logging_enabled.apigateway_logging_enabled import (
+            from prowler.providers.aws.services.apigateway.apigateway_logging_enabled.apigateway_logging_enabled import (
                 apigateway_logging_enabled,
             )
 

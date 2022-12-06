@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.azure.services.storage.storage_client import storage_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.azure.services.storage.storage_client import storage_client
 
 
 class storage_default_network_access_rule_is_denied(Check):

@@ -1,8 +1,8 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.directoryservice.directoryservice_client import (
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.directoryservice.directoryservice_client import (
     directoryservice_client,
 )
-from providers.aws.services.directoryservice.directoryservice_service import (
+from prowler.providers.aws.services.directoryservice.directoryservice_service import (
     RadiusStatus,
 )
 

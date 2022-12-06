@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.config.config_client import config_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.config.config_client import config_client
 
 
 class config_recorder_all_regions_enabled(Check):

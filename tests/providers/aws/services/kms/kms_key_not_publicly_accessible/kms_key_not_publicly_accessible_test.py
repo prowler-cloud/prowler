@@ -10,17 +10,17 @@ AWS_REGION = "us-east-1"
 class Test_kms_key_not_publicly_accessible:
     @mock_kms
     def test_no_kms_keys(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.kms.kms_service import KMS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.kms.kms_service import KMS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
+            "prowler.providers.aws.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
             new=KMS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible import (
+            from prowler.providers.aws.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible import (
                 kms_key_not_publicly_accessible,
             )
 
@@ -35,17 +35,17 @@ class Test_kms_key_not_publicly_accessible:
         kms_client = client("kms", region_name=AWS_REGION)
         # Creaty KMS key without policy
         key = kms_client.create_key()["KeyMetadata"]
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.kms.kms_service import KMS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.kms.kms_service import KMS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
+            "prowler.providers.aws.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
             new=KMS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible import (
+            from prowler.providers.aws.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible import (
                 kms_key_not_publicly_accessible,
             )
 
@@ -83,17 +83,17 @@ class Test_kms_key_not_publicly_accessible:
                 }
             )
         )["KeyMetadata"]
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.kms.kms_service import KMS
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.kms.kms_service import KMS
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
+            "prowler.providers.aws.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
             new=KMS(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible import (
+            from prowler.providers.aws.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible import (
                 kms_key_not_publicly_accessible,
             )
 

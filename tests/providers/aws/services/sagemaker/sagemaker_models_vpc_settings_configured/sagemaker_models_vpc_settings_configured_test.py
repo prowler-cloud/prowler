@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 from uuid import uuid4
 
-from providers.aws.services.sagemaker.sagemaker_service import Model
+from prowler.providers.aws.services.sagemaker.sagemaker_service import Model
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -17,10 +17,10 @@ class Test_sagemaker_models_vpc_settings_configured:
         sagemaker_client = mock.MagicMock
         sagemaker_client.sagemaker_models = []
         with mock.patch(
-            "providers.aws.services.sagemaker.sagemaker_service.SageMaker",
+            "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker",
             sagemaker_client,
         ):
-            from providers.aws.services.sagemaker.sagemaker_models_vpc_settings_configured.sagemaker_models_vpc_settings_configured import (
+            from prowler.providers.aws.services.sagemaker.sagemaker_models_vpc_settings_configured.sagemaker_models_vpc_settings_configured import (
                 sagemaker_models_vpc_settings_configured,
             )
 
@@ -40,10 +40,10 @@ class Test_sagemaker_models_vpc_settings_configured:
             )
         )
         with mock.patch(
-            "providers.aws.services.sagemaker.sagemaker_service.SageMaker",
+            "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker",
             sagemaker_client,
         ):
-            from providers.aws.services.sagemaker.sagemaker_models_vpc_settings_configured.sagemaker_models_vpc_settings_configured import (
+            from prowler.providers.aws.services.sagemaker.sagemaker_models_vpc_settings_configured.sagemaker_models_vpc_settings_configured import (
                 sagemaker_models_vpc_settings_configured,
             )
 
@@ -66,10 +66,10 @@ class Test_sagemaker_models_vpc_settings_configured:
             )
         )
         with mock.patch(
-            "providers.aws.services.sagemaker.sagemaker_service.SageMaker",
+            "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker",
             sagemaker_client,
         ):
-            from providers.aws.services.sagemaker.sagemaker_models_vpc_settings_configured.sagemaker_models_vpc_settings_configured import (
+            from prowler.providers.aws.services.sagemaker.sagemaker_models_vpc_settings_configured.sagemaker_models_vpc_settings_configured import (
                 sagemaker_models_vpc_settings_configured,
             )
 

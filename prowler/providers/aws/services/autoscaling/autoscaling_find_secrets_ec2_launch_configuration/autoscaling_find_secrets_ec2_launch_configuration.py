@@ -5,8 +5,10 @@ from base64 import b64decode
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
-from lib.check.models import Check, Check_Report
-from providers.aws.services.autoscaling.autoscaling_client import autoscaling_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.autoscaling.autoscaling_client import (
+    autoscaling_client,
+)
 
 
 class autoscaling_find_secrets_ec2_launch_configuration(Check):

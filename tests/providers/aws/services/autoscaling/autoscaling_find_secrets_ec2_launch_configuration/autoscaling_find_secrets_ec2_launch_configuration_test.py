@@ -12,17 +12,19 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
         autoscaling_client = client("autoscaling", region_name=AWS_REGION)
         autoscaling_client.launch_configurations = []
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.autoscaling.autoscaling_service import AutoScaling
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.autoscaling.autoscaling_service import (
+            AutoScaling,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
             new=AutoScaling(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
+            from prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
                 autoscaling_find_secrets_ec2_launch_configuration,
             )
 
@@ -44,16 +46,18 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             UserData="This is some user_data",
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.autoscaling.autoscaling_service import AutoScaling
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.autoscaling.autoscaling_service import (
+            AutoScaling,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
             new=AutoScaling(current_audit_info),
         ):
-            from providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
+            from prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
                 autoscaling_find_secrets_ec2_launch_configuration,
             )
 
@@ -81,16 +85,18 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             UserData="DB_PASSWORD=foobar123",
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.autoscaling.autoscaling_service import AutoScaling
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.autoscaling.autoscaling_service import (
+            AutoScaling,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
             new=AutoScaling(current_audit_info),
         ):
-            from providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
+            from prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
                 autoscaling_find_secrets_ec2_launch_configuration,
             )
 
@@ -123,16 +129,18 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             UserData=secrets,
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.autoscaling.autoscaling_service import AutoScaling
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.autoscaling.autoscaling_service import (
+            AutoScaling,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
             new=AutoScaling(current_audit_info),
         ):
-            from providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
+            from prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
                 autoscaling_find_secrets_ec2_launch_configuration,
             )
 
@@ -159,16 +167,18 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             SecurityGroups=["default", "default2"],
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.autoscaling.autoscaling_service import AutoScaling
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.autoscaling.autoscaling_service import (
+            AutoScaling,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
             new=AutoScaling(current_audit_info),
         ):
-            from providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
+            from prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
                 autoscaling_find_secrets_ec2_launch_configuration,
             )
 

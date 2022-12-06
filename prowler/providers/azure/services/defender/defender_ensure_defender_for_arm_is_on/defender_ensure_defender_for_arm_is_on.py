@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.azure.services.defender.defender_client import defender_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.azure.services.defender.defender_client import defender_client
 
 
 class defender_ensure_defender_for_arm_is_on(Check):

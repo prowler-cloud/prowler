@@ -12,27 +12,29 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
     @mock_cloudtrail
     @mock_cloudwatch
     def test_cloudwatch_no_log_groups(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudwatch.cloudwatch_service import (
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
 
         current_audit_info.audited_partition = "aws"
-        from providers.aws.services.cloudtrail.cloudtrail_client import Cloudtrail
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
+            Cloudtrail,
+        )
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled import (
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled import (
                 cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled,
             )
 
@@ -59,27 +61,29 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
         s3_client.create_bucket(Bucket="test")
         cloudtrail_client.create_trail(Name="test_trail", S3BucketName="test")
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudwatch.cloudwatch_service import (
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
 
         current_audit_info.audited_partition = "aws"
-        from providers.aws.services.cloudtrail.cloudtrail_client import Cloudtrail
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
+            Cloudtrail,
+        )
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled import (
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled import (
                 cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled,
             )
 
@@ -112,27 +116,29 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudwatch.cloudwatch_service import (
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
 
         current_audit_info.audited_partition = "aws"
-        from providers.aws.services.cloudtrail.cloudtrail_client import Cloudtrail
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
+            Cloudtrail,
+        )
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled import (
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled import (
                 cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled,
             )
 
@@ -177,27 +183,29 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             ],
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudwatch.cloudwatch_service import (
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
 
         current_audit_info.audited_partition = "aws"
-        from providers.aws.services.cloudtrail.cloudtrail_client import Cloudtrail
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
+            Cloudtrail,
+        )
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled import (
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled import (
                 cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled,
             )
 
@@ -254,27 +262,29 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             ActionsEnabled=True,
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.cloudwatch.cloudwatch_service import (
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
 
         current_audit_info.audited_partition = "aws"
-        from providers.aws.services.cloudtrail.cloudtrail_client import Cloudtrail
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
+            Cloudtrail,
+        )
 
         with mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled import (
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled import (
                 cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled,
             )
 

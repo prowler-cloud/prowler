@@ -1,7 +1,8 @@
 from unittest import mock
 
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.services.cloudfront.cloudfront_service import Distribution
+
+from prowler.providers.aws.services.cloudfront.cloudfront_service import Distribution
 
 DISTRIBUTION_ID = "E27LVI50CSW06W"
 DISTRIBUTION_ARN = (
@@ -15,11 +16,11 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {}
         with mock.patch(
-            "providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ):
             # Test Check
-            from providers.aws.services.cloudfront.cloudfront_distributions_using_deprecated_ssl_protocols.cloudfront_distributions_using_deprecated_ssl_protocols import (
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_using_deprecated_ssl_protocols.cloudfront_distributions_using_deprecated_ssl_protocols import (
                 cloudfront_distributions_using_deprecated_ssl_protocols,
             )
 
@@ -76,11 +77,11 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
         }
 
         with mock.patch(
-            "providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ):
             # Test Check
-            from providers.aws.services.cloudfront.cloudfront_distributions_using_deprecated_ssl_protocols.cloudfront_distributions_using_deprecated_ssl_protocols import (
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_using_deprecated_ssl_protocols.cloudfront_distributions_using_deprecated_ssl_protocols import (
                 cloudfront_distributions_using_deprecated_ssl_protocols,
             )
 
@@ -146,11 +147,11 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
         }
 
         with mock.patch(
-            "providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ):
             # Test Check
-            from providers.aws.services.cloudfront.cloudfront_distributions_using_deprecated_ssl_protocols.cloudfront_distributions_using_deprecated_ssl_protocols import (
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_using_deprecated_ssl_protocols.cloudfront_distributions_using_deprecated_ssl_protocols import (
                 cloudfront_distributions_using_deprecated_ssl_protocols,
             )
 
@@ -216,11 +217,11 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
         }
 
         with mock.patch(
-            "providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ):
             # Test Check
-            from providers.aws.services.cloudfront.cloudfront_distributions_using_deprecated_ssl_protocols.cloudfront_distributions_using_deprecated_ssl_protocols import (
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_using_deprecated_ssl_protocols.cloudfront_distributions_using_deprecated_ssl_protocols import (
                 cloudfront_distributions_using_deprecated_ssl_protocols,
             )
 
@@ -283,11 +284,11 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
         }
 
         with mock.patch(
-            "providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ):
             # Test Check
-            from providers.aws.services.cloudfront.cloudfront_distributions_using_deprecated_ssl_protocols.cloudfront_distributions_using_deprecated_ssl_protocols import (
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_using_deprecated_ssl_protocols.cloudfront_distributions_using_deprecated_ssl_protocols import (
                 cloudfront_distributions_using_deprecated_ssl_protocols,
             )
 

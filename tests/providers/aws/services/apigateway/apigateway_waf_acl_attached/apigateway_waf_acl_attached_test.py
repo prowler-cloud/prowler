@@ -9,17 +9,19 @@ AWS_REGION = "us-east-1"
 class Test_apigateway_waf_acl_attached:
     @mock_apigateway
     def test_apigateway_no_rest_apis(self):
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigateway.apigateway_service import APIGateway
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached import (
+            from prowler.providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached import (
                 apigateway_waf_acl_attached,
             )
 
@@ -79,17 +81,19 @@ class Test_apigateway_waf_acl_attached:
             ResourceArn=f"arn:aws:apigateway:{apigateway_client.meta.region_name}::/restapis/{rest_api['id']}/stages/test",
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigateway.apigateway_service import APIGateway
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached import (
+            from prowler.providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached import (
                 apigateway_waf_acl_attached,
             )
 
@@ -140,17 +144,19 @@ class Test_apigateway_waf_acl_attached:
             stageName="test",
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.apigateway.apigateway_service import APIGateway
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached import (
+            from prowler.providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached import (
                 apigateway_waf_acl_attached,
             )
 

@@ -1,7 +1,7 @@
 import datetime
 
-from lib.check.models import Check, Check_Report
-from providers.aws.services.iam.iam_client import iam_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.iam.iam_client import iam_client
 
 maximum_expiration_days = 45
 

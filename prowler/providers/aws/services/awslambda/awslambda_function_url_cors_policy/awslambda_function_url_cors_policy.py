@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.awslambda.awslambda_client import awslambda_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
 class awslambda_function_url_cors_policy(Check):

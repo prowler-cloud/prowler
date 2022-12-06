@@ -14,17 +14,17 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
         ec2_client = client("ec2", region_name=AWS_REGION)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
                 ec2_securitygroup_allow_ingress_from_internet_to_any_port,
             )
 
@@ -54,17 +54,17 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
             ],
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
                 ec2_securitygroup_allow_ingress_from_internet_to_any_port,
             )
 
@@ -100,17 +100,17 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
             ],
         )
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
                 ec2_securitygroup_allow_ingress_from_internet_to_any_port,
             )
 

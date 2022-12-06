@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from azure.mgmt.storage import StorageManagementClient
 from azure.mgmt.storage.v2022_09_01.models import NetworkRuleSet
 
-from lib.logger import logger
+from prowler.lib.logger import logger
 
 
 ########################## Storage

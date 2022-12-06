@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.account.account_client import account_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.account.account_client import account_client
 
 # This check has no findings since it is manual
 

@@ -1,5 +1,5 @@
 ################## Account
-from providers.aws.aws_provider import get_region_global_service
+from prowler.providers.aws.aws_provider import get_region_global_service
 
 
 class Account:

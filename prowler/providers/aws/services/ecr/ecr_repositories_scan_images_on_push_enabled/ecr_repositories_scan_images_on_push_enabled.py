@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.ecr.ecr_client import ecr_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.ecr.ecr_client import ecr_client
 
 
 class ecr_repositories_scan_images_on_push_enabled(Check):

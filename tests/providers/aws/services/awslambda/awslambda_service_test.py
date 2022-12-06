@@ -9,9 +9,10 @@ import mock
 from boto3 import client, resource, session
 from moto import mock_iam, mock_lambda, mock_s3
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.lib.audit_info.audit_info import current_audit_info
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.awslambda.awslambda_service import AuthType, Lambda
+
+from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.awslambda.awslambda_service import AuthType, Lambda
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -52,7 +53,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 
 @patch(
-    "providers.aws.services.awslambda.awslambda_service.generate_regional_clients",
+    "prowler.providers.aws.services.awslambda.awslambda_service.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_Lambda_Service:
@@ -172,7 +173,7 @@ class Test_Lambda_Service:
 
         lambda_arn = resp["FunctionArn"]
         with mock.patch(
-            "providers.aws.services.awslambda.awslambda_service.requests.get",
+            "prowler.providers.aws.services.awslambda.awslambda_service.requests.get",
             new=mock_request_get,
         ):
             awslambda = Lambda(self.set_mocked_audit_info())

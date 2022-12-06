@@ -2,8 +2,9 @@ import botocore
 from boto3 import session
 from mock import patch
 from moto.core import DEFAULT_ACCOUNT_ID
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.services.globalaccelerator.globalaccelerator_service import (
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.globalaccelerator.globalaccelerator_service import (
     GlobalAccelerator,
 )
 

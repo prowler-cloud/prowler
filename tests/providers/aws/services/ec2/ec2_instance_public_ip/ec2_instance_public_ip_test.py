@@ -12,17 +12,17 @@ class Test_ec2_instance_public_ip:
     @mock_ec2
     def test_ec2_no_instances(self):
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_instance_public_ip.ec2_instance_public_ip.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_public_ip.ec2_instance_public_ip.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from providers.aws.services.ec2.ec2_instance_public_ip.ec2_instance_public_ip import (
+            from prowler.providers.aws.services.ec2.ec2_instance_public_ip.ec2_instance_public_ip import (
                 ec2_instance_public_ip,
             )
 
@@ -50,16 +50,16 @@ class Test_ec2_instance_public_ip:
             ],
         )[0]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_instance_public_ip.ec2_instance_public_ip.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_public_ip.ec2_instance_public_ip.ec2_client",
             new=EC2(current_audit_info),
         ):
-            from providers.aws.services.ec2.ec2_instance_public_ip.ec2_instance_public_ip import (
+            from prowler.providers.aws.services.ec2.ec2_instance_public_ip.ec2_instance_public_ip import (
                 ec2_instance_public_ip,
             )
 
@@ -93,16 +93,16 @@ class Test_ec2_instance_public_ip:
             ],
         )[0]
 
-        from providers.aws.lib.audit_info.audit_info import current_audit_info
-        from providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
 
         with mock.patch(
-            "providers.aws.services.ec2.ec2_instance_public_ip.ec2_instance_public_ip.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_public_ip.ec2_instance_public_ip.ec2_client",
             new=EC2(current_audit_info),
         ):
-            from providers.aws.services.ec2.ec2_instance_public_ip.ec2_instance_public_ip import (
+            from prowler.providers.aws.services.ec2.ec2_instance_public_ip.ec2_instance_public_ip import (
                 ec2_instance_public_ip,
             )
 

@@ -1,6 +1,6 @@
-from config.config import get_config_var
-from lib.check.models import Check, Check_Report
-from providers.aws.services.cloudwatch.logs_client import logs_client
+from prowler.config.config import get_config_var
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 
 class cloudwatch_log_group_retention_policy_specific_days_enabled(Check):

@@ -1,5 +1,5 @@
-from lib.check.models import Check, Check_Report
-from providers.aws.services.guardduty.guardduty_client import guardduty_client
+from prowler.lib.check.models import Check, Check_Report
+from prowler.providers.aws.services.guardduty.guardduty_client import guardduty_client
 
 
 class guardduty_is_enabled(Check):

@@ -1,6 +1,6 @@
 from unittest import mock
 
-from providers.aws.services.directoryservice.directoryservice_service import (
+from prowler.providers.aws.services.directoryservice.directoryservice_service import (
     AuthenticationProtocol,
     Directory,
     DirectoryType,
@@ -16,11 +16,11 @@ class Test_directoryservice_supported_mfa_radius_enabled:
         directoryservice_client = mock.MagicMock
         directoryservice_client.directories = {}
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_supported_mfa_radius_enabled.directoryservice_supported_mfa_radius_enabled import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_supported_mfa_radius_enabled.directoryservice_supported_mfa_radius_enabled import (
                 directoryservice_supported_mfa_radius_enabled,
             )
 
@@ -43,11 +43,11 @@ class Test_directoryservice_supported_mfa_radius_enabled:
             )
         }
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_supported_mfa_radius_enabled.directoryservice_supported_mfa_radius_enabled import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_supported_mfa_radius_enabled.directoryservice_supported_mfa_radius_enabled import (
                 directoryservice_supported_mfa_radius_enabled,
             )
 
@@ -73,11 +73,11 @@ class Test_directoryservice_supported_mfa_radius_enabled:
             )
         }
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_supported_mfa_radius_enabled.directoryservice_supported_mfa_radius_enabled import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_supported_mfa_radius_enabled.directoryservice_supported_mfa_radius_enabled import (
                 directoryservice_supported_mfa_radius_enabled,
             )
 
@@ -110,11 +110,11 @@ class Test_directoryservice_supported_mfa_radius_enabled:
             )
         }
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_supported_mfa_radius_enabled.directoryservice_supported_mfa_radius_enabled import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_supported_mfa_radius_enabled.directoryservice_supported_mfa_radius_enabled import (
                 directoryservice_supported_mfa_radius_enabled,
             )
 
@@ -147,11 +147,11 @@ class Test_directoryservice_supported_mfa_radius_enabled:
             )
         }
         with mock.patch(
-            "providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
+            "prowler.providers.aws.services.directoryservice.directoryservice_service.DirectoryService",
             new=directoryservice_client,
         ):
             # Test Check
-            from providers.aws.services.directoryservice.directoryservice_supported_mfa_radius_enabled.directoryservice_supported_mfa_radius_enabled import (
+            from prowler.providers.aws.services.directoryservice.directoryservice_supported_mfa_radius_enabled.directoryservice_supported_mfa_radius_enabled import (
                 directoryservice_supported_mfa_radius_enabled,
             )
 

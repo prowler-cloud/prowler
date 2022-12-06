@@ -7,14 +7,14 @@ from types import ModuleType
 
 from alive_progress import alive_bar
 from colorama import Fore, Style
-from lib.check.compliance_models import load_compliance_framework
-from lib.check.models import Check, Output_From_Options, load_check_metadata
-from lib.logger import logger
-from lib.outputs.outputs import report
-from lib.utils.utils import open_file, parse_json_file
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
 
-from config.config import compliance_specification_dir, orange_color
+from prowler.config.config import compliance_specification_dir, orange_color
+from prowler.lib.check.compliance_models import load_compliance_framework
+from prowler.lib.check.models import Check, Output_From_Options, load_check_metadata
+from prowler.lib.logger import logger
+from prowler.lib.outputs.outputs import report
+from prowler.lib.utils.utils import open_file, parse_json_file
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
 # Load all checks metadata
@@ -22,11 +22,12 @@ def bulk_load_checks_metadata(provider: str) -> dict:
     bulk_check_metadata = {}
     checks = recover_checks_from_provider(provider)
     # Build list of check's metadata files
-    for check_name in checks:
+    for check_info in checks:
         # Build check path name
-        check_path_name = check_name.replace(".", "/")
+        check_name = check_info[0]
+        check_path = check_info[1]
         # Append metadata file extension
-        metadata_file = f"prowler/{check_path_name}.metadata.json"
+        metadata_file = f"{check_path}/{check_name}.metadata.json"
         # Load metadata
         check_metadata = load_check_metadata(metadata_file)
         bulk_check_metadata[check_metadata.CheckID] = check_metadata
@@ -77,7 +78,7 @@ def exclude_services_to_run(
             for check_module in modules:
                 # Recover check name and module name from import path
                 # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
-                check_name = check_module.split(".")[-1]
+                check_name = check_module[0].split(".")[-1]
                 # Exclude checks from the input services
                 checks_to_execute.discard(check_name)
     return checks_to_execute
@@ -100,7 +101,7 @@ def list_services(provider: str) -> set():
     checks = recover_checks_from_provider(provider)
     for check_name in checks:
         # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
-        service_name = check_name.split(".")[3]
+        service_name = check_name[0].split(".")[3]
         available_services.add(service_name)
     return sorted(available_services)
 
@@ -209,21 +210,29 @@ def parse_checks_from_compliance_framework(
     return checks_to_execute
 
 
-# Recover all checks from the selected provider and service
-def recover_checks_from_provider(provider: str, service: str = None) -> list:
+def recover_checks_from_provider(provider: str, service: str = None) -> list[tuple]:
+    """
+    Recover all checks from the selected provider and service
+
+    Returns a list of tuples with the following format (check_name, check_path)
+    """
     try:
         checks = []
         modules = list_modules(provider, service)
         for module_name in modules:
-            # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
-            check_name = module_name.name
+            # Format: "prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
+            check_module_name = module_name.name
             # We need to exclude common shared libraries in services
             if (
-                check_name.count(".") == 5
-                and "lib" not in check_name
-                and "test" not in check_name
+                check_module_name.count(".") == 6
+                and "lib" not in check_module_name
+                and "test" not in check_module_name
             ):
-                checks.append(check_name)
+                check_path = module_name.module_finder.path
+                # Check name is the last part of the check_module_name
+                check_name = check_module_name.split(".")[-1]
+                check_info = (check_name, check_path)
+                checks.append(check_info)
         return checks
     except Exception as e:
         logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")
@@ -232,7 +241,8 @@ def recover_checks_from_provider(provider: str, service: str = None) -> list:
 
 # List all available modules in the selected provider and service
 def list_modules(provider: str, service: str):
-    module_path = f"providers.{provider}.services"
+    # This module path requires the full path includig "prowler."
+    module_path = f"prowler.providers.{provider}.services"
     if service:
         module_path += f".{service}"
     return walk_packages(
@@ -316,9 +326,7 @@ def execute_checks(
             bar.title = f"-> Scanning {orange_color}{service}{Style.RESET_ALL} service"
             try:
                 # Import check module
-                check_module_path = (
-                    f"providers.{provider}.services.{service}.{check_name}.{check_name}"
-                )
+                check_module_path = f"prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
                 lib = import_check(check_module_path)
                 # Recover functions from check
                 check_to_execute = getattr(lib, check_name)

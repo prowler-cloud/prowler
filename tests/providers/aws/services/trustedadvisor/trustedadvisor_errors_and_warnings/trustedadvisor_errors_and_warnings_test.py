@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 from uuid import uuid4
 
-from providers.aws.services.trustedadvisor.trustedadvisor_service import Check
+from prowler.providers.aws.services.trustedadvisor.trustedadvisor_service import Check
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -15,10 +15,10 @@ class Test_trustedadvisor_errors_and_warnings:
         trustedadvisor_client = mock.MagicMock
         trustedadvisor_client.checks = []
         with mock.patch(
-            "providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
+            "prowler.providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
             trustedadvisor_client,
         ):
-            from providers.aws.services.trustedadvisor.trustedadvisor_errors_and_warnings.trustedadvisor_errors_and_warnings import (
+            from prowler.providers.aws.services.trustedadvisor.trustedadvisor_errors_and_warnings.trustedadvisor_errors_and_warnings import (
                 trustedadvisor_errors_and_warnings,
             )
 
@@ -38,10 +38,10 @@ class Test_trustedadvisor_errors_and_warnings:
             )
         )
         with mock.patch(
-            "providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
+            "prowler.providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
             trustedadvisor_client,
         ):
-            from providers.aws.services.trustedadvisor.trustedadvisor_errors_and_warnings.trustedadvisor_errors_and_warnings import (
+            from prowler.providers.aws.services.trustedadvisor.trustedadvisor_errors_and_warnings.trustedadvisor_errors_and_warnings import (
                 trustedadvisor_errors_and_warnings,
             )
 
@@ -64,10 +64,10 @@ class Test_trustedadvisor_errors_and_warnings:
             )
         )
         with mock.patch(
-            "providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
+            "prowler.providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
             trustedadvisor_client,
         ):
-            from providers.aws.services.trustedadvisor.trustedadvisor_errors_and_warnings.trustedadvisor_errors_and_warnings import (
+            from prowler.providers.aws.services.trustedadvisor.trustedadvisor_errors_and_warnings.trustedadvisor_errors_and_warnings import (
                 trustedadvisor_errors_and_warnings,
             )
 
