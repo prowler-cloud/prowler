@@ -1,8 +1,16 @@
+import csv
+import json
+
 from alive_progress import alive_bar
 from colorama import Fore, Style
 from tabulate import tabulate
 
-from config.config import orange_color, output_file_timestamp
+from config.config import (
+    csv_file_suffix,
+    json_file_suffix,
+    orange_color,
+    output_file_timestamp,
+)
 from lib.logger import logger
 from providers.aws.lib.audit_info.models import AWS_Audit_Info
 
@@ -12,7 +20,6 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
         f"-=- Running Quick Inventory for AWS Account {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} -=-\n"
     )
     resources = []
-    output_file = f"{output_directory}/prowler-inventory-{audit_info.audited_account}-{output_file_timestamp}.csv"
     # If not inputed regions, check all of them
     if not audit_info.audited_regions:
         # EC2 client for describing all regions
@@ -98,10 +105,10 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
 
     print(f"\nTotal resources found: {Fore.GREEN}{len(resources)}{Style.RESET_ALL}")
 
-    print(f"\nMore details in file: {Fore.GREEN}{output_file}{Style.RESET_ALL}")
+    create_output(resources, audit_info, output_directory)
 
 
-def create_inventory_table(resources: list):
+def create_inventory_table(resources: list) -> dict:
 
     services = {}
     # { "S3":
@@ -147,3 +154,46 @@ def create_inventory_table(resources: list):
         inventory_table["Count per resource types"].append(summary)
 
     return inventory_table
+
+
+def create_output(resources: list, audit_info: AWS_Audit_Info, output_directory: str):
+
+    json_output = []
+    output_file = f"{output_directory}/prowler-inventory-{audit_info.audited_account}-{output_file_timestamp}"
+
+    for item in sorted(resources):
+        resource = {}
+        resource["AWS_AccountID"] = audit_info.audited_account
+        resource["AWS_Region"] = item.split(":")[3]
+        resource["AWS_Partition"] = item.split(":")[1]
+        resource["AWS_Service"] = item.split(":")[2]
+        resource["AWS_ResourceType"] = item.split(":")[5]
+        resource["AWS_ResourceID"] = ""
+        if len(item.split("/")) > 1:
+            resource["AWS_ResourceID"] = item.split("/")[-1]
+        resource["AWS_ResourceARN"] = item
+        json_output.append(resource)
+
+    # Serializing json
+    json_object = json.dumps(json_output, indent=4)
+
+    # Writing to sample.json
+    with open(output_file + json_file_suffix, "w") as outfile:
+        outfile.write(json_object)
+
+    csv_file = open(output_file + csv_file_suffix, "w", newline="")
+    csv_writer = csv.writer(csv_file)
+
+    count = 0
+    for data in json_output:
+        if count == 0:
+            header = data.keys()
+            csv_writer.writerow(header)
+            count += 1
+        csv_writer.writerow(data.values())
+
+    csv_file.close()
+
+    print("\nMore details in files:")
+    print(f" - CSV: {Fore.GREEN}{output_file+csv_file_suffix}{Style.RESET_ALL}")
+    print(f" - JSON: {Fore.GREEN}{output_file+json_file_suffix}{Style.RESET_ALL}")
