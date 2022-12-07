@@ -16,7 +16,6 @@ from config.config import (
     json_asff_file_suffix,
     json_file_suffix,
     orange_color,
-    output_file_timestamp,
     prowler_version,
     timestamp,
     timestamp_iso,
@@ -462,34 +461,6 @@ def fill_json_asff(finding_output, audit_info, finding):
     return finding_output
 
 
-def fill_html(file_descriptor, audit_info, finding):
-    row_class = "p-3 mb-2 bg-success-custom"
-    if finding.status == "INFO":
-        row_class = "table-info"
-    elif finding.status == "FAIL":
-        row_class = "table-danger"
-    elif finding.status == "WARNING":
-        row_class = "table-warning"
-    file_descriptor.write(
-        f"""
-            <tr class="{row_class}">
-                <td>{finding.status}</td>
-                <td>{finding.check_metadata.Severity}</td>
-                <td>{audit_info.audited_account}</td>
-                <td>{finding.region}</td>
-                <td>{finding.check_metadata.ServiceName}</td>
-                <td>{finding.check_metadata.CheckID}</td>
-                <td>{finding.check_metadata.CheckTitle}</td>
-                <td>{finding.status_extended}</td>
-                <td><p class="show-read-more">{finding.check_metadata.Risk}</p></td>
-                <td><p class="show-read-more">{finding.check_metadata.Remediation.Recommendation.Text}</p></td>
-                <td><a class="read-more" href="{finding.check_metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
-                <td>{finding.resource_id}</td>
-            </tr>
-            """
-    )
-
-
 def close_json(output_filename, output_directory, mode):
     try:
         suffix = json_file_suffix
@@ -906,7 +877,8 @@ def add_html_header(file_descriptor, audit_info):
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <style>
     .read-more {color:#00f;}
-    .bg-success-custom {background-color: #70dc88 !important;}
+    .bg-success-custom {background-color: #98dea7 !important;}
+    .bg-danger {background-color: #f28484 !important;}
     </style>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
@@ -918,12 +890,9 @@ def add_html_header(file_descriptor, audit_info):
             display: none;
         }
     </style>
-    <title>Prowler - AWS Security Assessments</title>
+    <title>Prowler - The Handy Cloud Security Tool</title>
     </head>
     <body>
-    <nav class="navbar navbar-expand-xl sticky-top navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">Prowler - Security Assessments in AWS</a>
-    </nav>
     <div class="container-fluid">
         <div class="row mt-3">
         <div class="col-md-4">
@@ -932,6 +901,14 @@ def add_html_header(file_descriptor, audit_info):
                 Report Information:
             </div>
             <ul class="list-group list-group-flush">
+             <li class="list-group-item text-center">
+            <a href="""
+            + html_logo_url
+            + """><img src="""
+            + html_logo_img
+            + """
+            alt="prowler-logo"></a>
+            </li>
                 <li class="list-group-item">
                 <div class="row">
                     <div class="col-md-auto">
@@ -948,16 +925,8 @@ def add_html_header(file_descriptor, audit_info):
                 </li>
                 <li class="list-group-item">
                 <b>Date:</b> """
-            + output_file_timestamp
+            + timestamp.isoformat()
             + """
-                </li>
-                <li class="list-group-item text-center">
-                <a href="""
-            + html_logo_url
-            + """><img src="""
-            + html_logo_img
-            + """
-                    alt="prowler-logo"></a>
                 </li>
             </ul>
             </div>
@@ -1003,16 +972,16 @@ def add_html_header(file_descriptor, audit_info):
                 <tr>
                 <th scope="col">Status</th>
                 <th scope="col">Severity</th>
-                <th scope="col">Account ID</th>
+                <th scope="col">Service Name</th>
                 <th scope="col">Region</th>
-                <th scope="col">Service</th>
-                <th scope="col">Check ID</th>
                 <th style="width:20%" scope="col">Check Title</th>
-                <th style="width:20%" scope="col">Check Output</th>
-                <th scope="col">Risk</th>
-                <th scope="col">Remediation</th>
-                <th scope="col">Related URL</th>
                 <th scope="col">Resource ID</th>
+                <th scope="col">Check Description</th>
+                <th scope="col">Check ID</th>
+                <th scope="col">Status Extended</th>
+                <th scope="col">Risk</th>
+                <th scope="col">Recomendation</th>
+                <th style="5% width" scope="col">Recomendation URL</th>
                 </tr>
             </thead>
             <tbody>
@@ -1022,6 +991,34 @@ def add_html_header(file_descriptor, audit_info):
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
+
+
+def fill_html(file_descriptor, audit_info, finding):
+    row_class = "p-3 mb-2 bg-success-custom"
+    if finding.status == "INFO":
+        row_class = "table-info"
+    elif finding.status == "FAIL":
+        row_class = "table-danger"
+    elif finding.status == "WARNING":
+        row_class = "table-warning"
+    file_descriptor.write(
+        f"""
+            <tr class="{row_class}">
+                <td>{finding.status}</td>
+                <td>{finding.check_metadata.Severity}</td>
+                <td>{finding.check_metadata.ServiceName}</td>
+                <td>{finding.region}</td>
+                <td>{finding.check_metadata.CheckTitle}</td>
+                <td>{finding.resource_id}</td>
+                <td>{finding.check_metadata.Description}</td>
+                <td>{finding.check_metadata.CheckID}</td>
+                <td>{finding.status_extended}</td>
+                <td><p class="show-read-more">{finding.check_metadata.Risk}</p></td>
+                <td><p class="show-read-more">{finding.check_metadata.Remediation.Recommendation.Text}</p></td>
+                <td><a class="read-more" href="{finding.check_metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
+            </tr>
+            """
+    )
 
 
 def add_html_footer(output_filename, output_directory):
@@ -1050,6 +1047,8 @@ def add_html_footer(output_filename, output_directory):
     $(document).ready(function(){
       // Initialise the table with 50 rows, and some search/filtering panes
       $('#findingsTable').DataTable( {
+        lengthChange: true,
+        buttons: [ 'copy', 'excel', 'pdf' ],
         lengthMenu: [ [50, 100, -1], [50, 100, "All"] ],
         searchPanes: {
             cascadePanes: true,
@@ -1059,10 +1058,11 @@ def add_html_footer(output_filename, output_directory):
         columnDefs: [
           {
               searchPanes: {
-                  show: false
+                  show: true,
+                  pagingType: 'numbers',
+                  searching: true
               },
-              // Hide Compliance, Check ID (in favour of Check Title), CAF Epic, Risk, Remediation, Link
-              targets: [4, 6, 9, 10, 11, 12]
+              targets: [0, 1, 2, 3, 4]
           }
         ]
       });
