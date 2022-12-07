@@ -39,6 +39,7 @@ from lib.outputs.outputs import (
 )
 from providers.aws.aws_provider import aws_provider_set_session
 from providers.aws.lib.allowlist.allowlist import parse_allowlist_file
+from providers.aws.lib.quick_inventory.quick_inventory import quick_inventory
 from providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
 )
@@ -203,6 +204,12 @@ if __name__ == "__main__":
         "--security-hub",
         action="store_true",
         help="Send check output to AWS Security Hub",
+    )
+    parser.add_argument(
+        "-i",
+        "--quick-inventory",
+        action="store_true",
+        help="Run Prowler Quick Inventory. The inventory will be stored in an output csv by default",
     )
     bucket = parser.add_mutually_exclusive_group()
     bucket.add_argument(
@@ -452,58 +459,61 @@ if __name__ == "__main__":
         args.verbose,
     )
 
-    # Execute checks
-    findings = []
-    if len(checks_to_execute):
-        findings = execute_checks(
-            checks_to_execute, provider, audit_info, audit_output_options
-        )
+    if args.quick_inventory and provider == "aws":
+        quick_inventory(audit_info, output_directory)
     else:
-        logger.error(
-            "There are no checks to execute. Please, check your input arguments"
-        )
+        # Execute checks
+        findings = []
+        if len(checks_to_execute):
+            findings = execute_checks(
+                checks_to_execute, provider, audit_info, audit_output_options
+            )
+        else:
+            logger.error(
+                "There are no checks to execute. Please, check your input arguments"
+            )
 
-    if output_modes:
-        for mode in output_modes:
-            # Close json file if exists
-            if mode == "json" or mode == "json-asff":
-                close_json(output_filename, output_directory, mode)
-            if mode == "html":
-                add_html_footer(output_filename, output_directory)
-            # Send output to S3 if needed (-B / -D)
-            if args.output_bucket or args.output_bucket_no_assume:
-                output_bucket = args.output_bucket
-                bucket_session = audit_info.audit_session
-                # Check if -D was input
-                if args.output_bucket_no_assume:
-                    output_bucket = args.output_bucket_no_assume
-                    bucket_session = audit_info.original_session
-                send_to_s3_bucket(
-                    output_filename,
-                    output_directory,
-                    mode,
-                    output_bucket,
-                    bucket_session,
-                )
+        if output_modes:
+            for mode in output_modes:
+                # Close json file if exists
+                if mode == "json" or mode == "json-asff":
+                    close_json(output_filename, output_directory, mode)
+                if mode == "html":
+                    add_html_footer(output_filename, output_directory)
+                # Send output to S3 if needed (-B / -D)
+                if args.output_bucket or args.output_bucket_no_assume:
+                    output_bucket = args.output_bucket
+                    bucket_session = audit_info.audit_session
+                    # Check if -D was input
+                    if args.output_bucket_no_assume:
+                        output_bucket = args.output_bucket_no_assume
+                        bucket_session = audit_info.original_session
+                    send_to_s3_bucket(
+                        output_filename,
+                        output_directory,
+                        mode,
+                        output_bucket,
+                        bucket_session,
+                    )
 
-    # Resolve previous fails of Security Hub
-    if args.security_hub:
-        resolve_security_hub_previous_findings(output_directory, audit_info)
+        # Resolve previous fails of Security Hub
+        if args.security_hub:
+            resolve_security_hub_previous_findings(output_directory, audit_info)
 
-    # Display summary table
-    display_summary_table(
-        findings,
-        audit_info,
-        audit_output_options,
-        provider,
-    )
-
-    if compliance_framework and findings:
-        # Display compliance table
-        display_compliance_table(
+        # Display summary table
+        display_summary_table(
             findings,
-            bulk_checks_metadata,
-            compliance_framework,
-            audit_output_options.output_filename,
-            audit_output_options.output_directory,
+            audit_info,
+            audit_output_options,
+            provider,
         )
+
+        if compliance_framework and findings:
+            # Display compliance table
+            display_compliance_table(
+                findings,
+                bulk_checks_metadata,
+                compliance_framework,
+                audit_output_options.output_filename,
+                audit_output_options.output_directory,
+            )
