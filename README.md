@@ -11,9 +11,8 @@
 </p>
 <p align="center">
   <a href="https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog"><img alt="Slack Shield" src="https://img.shields.io/badge/slack-prowler-brightgreen.svg?logo=slack"></a>
-  <a href="https://pypi.org/project/moto/"><img alt="Python Version" src="https://img.shields.io/pypi/v/moto.svg"></a>
-  <a href="https://pypi.python.org/pypi/moto/"><img alt="Python Version" src="https://img.shields.io/pypi/pyversions/moto.svg"></a>
-  <a href="https://pypi.python.org/pypi/moto/"><img alt="Python Downloads" src="https://pepy.tech/badge/moto"></a>
+  <a href="https://pypi.org/project/prowler-cloud/"><img alt="Python Version" src="https://img.shields.io/pypi/v/prowler-cloud.svg"></a>
+  <a href="https://pypi.python.org/pypi/prowler-cloud/"><img alt="Python Version" src="https://img.shields.io/pypi/pyversions/prowler-cloud.svg"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/toniblyx/prowler"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/cloud/build/toniblyx/prowler"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/image-size/toniblyx/prowler"></a>
@@ -38,7 +37,8 @@ It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, F
 # ⚙️ Install
 
 ```console
-pip install prowler
+pip install prowler-cloud
+prowler -v
 ```
 
 ## Prowler container versions
