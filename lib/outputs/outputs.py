@@ -26,6 +26,7 @@ from lib.check.models import Output_From_Options
 from lib.logger import logger
 from lib.outputs.models import (
     Check_Output_CSV,
+    Check_Output_CSV_CIS,
     Check_Output_CSV_ENS_RD2022,
     Check_Output_JSON,
     Check_Output_JSON_ASFF,
@@ -141,6 +142,73 @@ def report(check_findings, output_options, audit_info):
                                         delimiter=";",
                                     )
                                     csv_writer.writerow(compliance_row.__dict__)
+                        elif "cis" in str(output_options.output_modes):
+                            # We have to retrieve all the check's compliance requirements
+                            check_compliance = output_options.bulk_checks_metadata[
+                                finding.check_metadata.CheckID
+                            ].Compliance
+                            for compliance in check_compliance:
+                                if compliance.Framework == "CIS-AWS":
+                                    for requirement in compliance.Requirements:
+                                        requirement_description = (
+                                            requirement.Description
+                                        )
+                                        requirement_id = requirement.Id
+                                        for attribute in requirement.Attributes:
+                                            compliance_row = Check_Output_CSV_CIS(
+                                                Provider=finding.check_metadata.Provider,
+                                                AccountId=audit_info.audited_account,
+                                                Region=finding.region,
+                                                AssessmentDate=timestamp.isoformat(),
+                                                Requirements_Id=requirement_id,
+                                                Requirements_Description=requirement_description,
+                                                Requirements_Attributes_Section=attribute.get(
+                                                    "Section"
+                                                ),
+                                                Requirements_Attributes_Profile=attribute.get(
+                                                    "Profile"
+                                                ),
+                                                Requirements_Attributes_AssessmentStatus=attribute.get(
+                                                    "AssessmentStatus"
+                                                ),
+                                                Requirements_Attributes_Description=attribute.get(
+                                                    "Description"
+                                                ),
+                                                Requirements_Attributes_RationaleStatement=attribute.get(
+                                                    "RationaleStatement"
+                                                ),
+                                                Requirements_Attributes_ImpactStatement=attribute.get(
+                                                    "ImpactStatement"
+                                                ),
+                                                Requirements_Attributes_RemediationProcedure=attribute.get(
+                                                    "RemediationProcedure"
+                                                ),
+                                                Requirements_Attributes_AuditProcedure=attribute.get(
+                                                    "AuditProcedure"
+                                                ),
+                                                Requirements_Attributes_AdditionalInformation=attribute.get(
+                                                    "AdditionalInformation"
+                                                ),
+                                                Requirements_Attributes_References=attribute.get(
+                                                    "References"
+                                                ),
+                                                Status=finding.status,
+                                                StatusExtended=finding.status_extended,
+                                                ResourceId=finding.resource_id,
+                                                CheckId=finding.check_metadata.CheckID,
+                                            )
+
+                                    csv_header = generate_csv_fields(
+                                        Check_Output_CSV_CIS
+                                    )
+                                    csv_writer = DictWriter(
+                                        file_descriptors[
+                                            output_options.output_modes[-1]
+                                        ],
+                                        fieldnames=csv_header,
+                                        delimiter=";",
+                                    )
+                                    csv_writer.writerow(compliance_row.__dict__)
 
                         if "csv" in file_descriptors:
                             finding_output = Check_Output_CSV(
@@ -226,7 +294,7 @@ def initialize_file_descriptor(
                 "a",
             )
 
-            if output_mode in ("csv", "ens_rd2022_aws"):
+            if output_mode in ("csv", "ens_rd2022_aws", "cis_1.5_aws", "cis_1.4_aws"):
                 # Format is the class model of the CSV format to print the headers
                 csv_header = [x.upper() for x in generate_csv_fields(format)]
                 csv_writer = DictWriter(
@@ -289,6 +357,20 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                     filename = f"{output_directory}/{output_filename}_ens_rd2022_aws{csv_file_suffix}"
                     file_descriptor = initialize_file_descriptor(
                         filename, output_mode, audit_info, Check_Output_CSV_ENS_RD2022
+                    )
+                    file_descriptors.update({output_mode: file_descriptor})
+
+                if output_mode == "cis_1.5_aws":
+                    filename = f"{output_directory}/{output_filename}_cis_1.5_aws{csv_file_suffix}"
+                    file_descriptor = initialize_file_descriptor(
+                        filename, output_mode, audit_info, Check_Output_CSV_CIS
+                    )
+                    file_descriptors.update({output_mode: file_descriptor})
+
+                if output_mode == "cis_1.4_aws":
+                    filename = f"{output_directory}/{output_filename}_cis_1.4_aws{csv_file_suffix}"
+                    file_descriptor = initialize_file_descriptor(
+                        filename, output_mode, audit_info, Check_Output_CSV_CIS
                     )
                     file_descriptors.update({output_mode: file_descriptor})
     except Exception as error:
