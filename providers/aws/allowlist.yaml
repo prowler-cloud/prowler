@@ -17,7 +17,7 @@ Allowlist:
           Resources:
             - "test"             # Will ignore every resource containing the string "test" in every account and region
 
-    "098765432109":
+    "*":
       Checks:
         "s3_bucket_object_versioning":
           Regions:

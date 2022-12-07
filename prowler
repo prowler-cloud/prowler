@@ -58,13 +58,22 @@ if __name__ == "__main__":
     # Arguments to set checks to run
     # The following arguments needs to be set exclusivelly
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("-c", "--checks", nargs="+", help="List of checks")
-    group.add_argument("-C", "--checks-file", nargs="?", help="List of checks")
-    group.add_argument("-s", "--services", nargs="+", help="List of services")
+    group.add_argument(
+        "-c", "--checks", nargs="+", help="List of checks to be executed."
+    )
+    group.add_argument(
+        "-C",
+        "--checks-file",
+        nargs="?",
+        help="Json file containing checks to be executed.",
+    )
+    group.add_argument(
+        "-s", "--services", nargs="+", help="List of services to be executed."
+    )
     group.add_argument(
         "--severity",
         nargs="+",
-        help="List of severities [informational, low, medium, high, critical]",
+        help="List of severities to be executed [informational, low, medium, high, critical]",
         choices=["informational", "low", "medium", "high", "critical"],
     )
     group.add_argument(
@@ -73,7 +82,9 @@ if __name__ == "__main__":
         help="Compliance Framework to check against for. The format should be the following: framework_version_provider (e.g.: ens_rd2022_aws)",
         choices=["ens_rd2022_aws", "cis_1.4_aws", "cis_1.5_aws"],
     )
-    group.add_argument("--categories", nargs="+", help="List of categories", default=[])
+    group.add_argument(
+        "--categories", nargs="+", help="List of categories to be executed.", default=[]
+    )
 
     # Exclude checks options
     parser.add_argument("-e", "--excluded-checks", nargs="+", help="Checks to exclude")
@@ -163,7 +174,7 @@ if __name__ == "__main__":
         "-M",
         "--output-modes",
         nargs="+",
-        help="Output mode, by default csv",
+        help="Output mode, by default csv and json",
         default=["csv", "json"],
         choices=["csv", "json", "json-asff", "html"],
     )
@@ -220,7 +231,7 @@ if __name__ == "__main__":
         "--allowlist-file",
         nargs="?",
         default=None,
-        help="Path for allowlist yaml file, by default is 'providers/aws/allowlist.yaml'. See default yaml for reference and format.",
+        help="Path for allowlist yaml file, supports local file, S3 URI or DynamoDB ARN. See example yaml in 'providers/allowlist.yaml' for reference and format.",
     )
     parser.add_argument(
         "--verbose",
