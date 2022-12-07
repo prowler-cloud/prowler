@@ -102,9 +102,9 @@ if __name__ == "__main__":
     )
     list_group.add_argument(
         "--list-compliance-requirements",
-        nargs="?",
+        nargs="+",
         help="List compliance requirements for a given requirement",
-        choices=["ens_rd2022_aws"],
+        choices=["ens_rd2022_aws", "cis_1.4_aws", "cis_1.5_aws"],
     )
     list_group.add_argument(
         "--list-categories",
