@@ -1,0 +1,68 @@
+# Project information
+site_name: Prowler Documentation
+site_url: https://docs.prowler.pro/
+site_description: >-
+  Prowler Documentation Site
+
+# Theme Configuration
+theme:
+  language: en
+  logo: img/ProwlerPro-icon.svg
+  name: material
+  favicon: img/ProwlerPro-icon.svg
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.top
+  palette:
+    primary: black
+    accent: green
+
+edit_uri: ""
+# Prowler OSS Repository
+repo_url: https://github.com/prowler-cloud/prowler/
+repo_name: prowler-cloud/prowler
+
+nav:
+    - Getting Started:
+        - Overview: index.md
+        - Requirements: getting-started/requirements.md
+    - Tutorials:
+        - Miscellaneous: tutorials/misc.md
+        - Reporting: tutorials/reporting.md
+        - Compliance: tutorials/compliance.md
+        - Logging: tutorials/logging.md
+        - Allowlist: tutorials/allowlist.md
+        - Pentesting: tutorials/pentesting.md
+        - AWS:
+          - Assume Role: tutorials/aws/role-assumption.md
+          - Security Hub: tutorials/aws/securityhub.md
+          - AWS Organizations: tutorials/aws/organizations.md
+        - Azure:
+          - Authentication: tutorials/azure/authentication.md
+          - Subscriptions: tutorials/azure/subscriptions.md
+    - Contact Us: contact.md
+    - About: about.md
+# Customization
+extra:
+  consent:
+    title: Cookie consent
+    description: >-
+      We use cookies to recognize your repeated visits and preferences, as well
+      as to measure the effectiveness of our documentation and whether users
+      find what they're searching for. With your consent, you're helping us to
+      make our documentation better.
+  analytics:
+    provider: google
+    property: G-H5TFH6WJRQ
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/prowler-cloud
+    - icon: fontawesome/brands/docker
+      link: https://hub.docker.com/r/toniblyx
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/toniblyx
+
+# Copyright
+copyright: Copyright &copy; 2022 Toni de la Fuente, Maintained by the Prowler Team</a>.

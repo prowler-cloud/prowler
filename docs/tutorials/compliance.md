@@ -1,0 +1,3 @@
+  --list-compliance     List compliance frameworks
+  --list-compliance-requirements [{ens_rd2022_aws}]
+--compliance {ens_rd2022_aws} [{ens_rd2022_aws} ...]
