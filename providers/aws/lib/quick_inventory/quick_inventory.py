@@ -23,7 +23,7 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
     # If not inputed regions, check all of them
     if not audit_info.audited_regions:
         # EC2 client for describing all regions
-        ec2_client = audit_info.audit_session.client("ec2")
+        ec2_client = audit_info.audit_session.client("ec2", region_name="us-east-1")
         # Get all the available regions
         audit_info.audited_regions = [
             region["RegionName"] for region in ec2_client.describe_regions()["Regions"]
@@ -48,7 +48,9 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
                     get_roles_paginator = iam_client.get_paginator("list_roles")
                     for page in get_roles_paginator.paginate():
                         for role in page["Roles"]:
-                            resources_in_region.append(role["Arn"])
+                            # Avoid aws-service-role roles
+                            if "aws-service-role" not in role["Arn"]:
+                                resources_in_region.append(role["Arn"])
 
                     get_users_paginator = iam_client.get_paginator("list_users")
                     for page in get_users_paginator.paginate():
@@ -147,10 +149,12 @@ def create_inventory_table(resources: list) -> dict:
     }
     for service in services:
         summary = ""
-        inventory_table["Service"].append(service)
-        inventory_table["Total"].append(services[service])
+        inventory_table["Service"].append(f"{service}")
+        inventory_table["Total"].append(
+            f"{Fore.GREEN}{services[service]}{Style.RESET_ALL}"
+        )
         for resource_type in resources_type[service]:
-            summary += f"{resource_type} {resources_type[service][resource_type]}\n"
+            summary += f"{resource_type} {Fore.GREEN}{resources_type[service][resource_type]}{Style.RESET_ALL}\n"
         inventory_table["Count per resource types"].append(summary)
 
     return inventory_table
@@ -167,11 +171,24 @@ def create_output(resources: list, audit_info: AWS_Audit_Info, output_directory:
         resource["AWS_Region"] = item.split(":")[3]
         resource["AWS_Partition"] = item.split(":")[1]
         resource["AWS_Service"] = item.split(":")[2]
-        resource["AWS_ResourceType"] = item.split(":")[5]
+        resource["AWS_ResourceType"] = item.split(":")[5].split("/")[0]
         resource["AWS_ResourceID"] = ""
         if len(item.split("/")) > 1:
             resource["AWS_ResourceID"] = item.split("/")[-1]
+        elif len(item.split(":")) > 6:
+            resource["AWS_ResourceID"] = item.split(":")[-1]
         resource["AWS_ResourceARN"] = item
+        # Cover S3 case
+        if resource["AWS_Service"] == "s3":
+            resource["AWS_ResourceType"] = "bucket"
+            resource["AWS_ResourceID"] = item.split(":")[-1]
+        # Cover WAFv2 case
+        if resource["AWS_Service"] == "wafv2":
+            resource["AWS_ResourceType"] = "/".join(item.split(":")[-1].split("/")[:-2])
+            resource["AWS_ResourceID"] = "/".join(item.split(":")[-1].split("/")[2:])
+        # Cover Config case
+        if resource["AWS_Service"] == "config":
+            resource["AWS_ResourceID"] = "/".join(item.split(":")[-1].split("/")[1:])
         json_output.append(resource)
 
     # Serializing json
