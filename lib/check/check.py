@@ -140,25 +140,26 @@ def print_compliance_frameworks(
 
 
 def print_compliance_requirements(
-    bulk_compliance_frameworks: dict, compliance_framework: str
+    bulk_compliance_frameworks: dict, compliance_frameworks: list
 ):
-    for compliance in bulk_compliance_frameworks.values():
-        # Workaround until we have more Compliance Frameworks
-        split_compliance = compliance_framework.split("_")
-        framework = split_compliance[0].upper()
-        version = split_compliance[1].upper()
-        provider = split_compliance[2].upper()
-        if compliance.Framework == framework and compliance.Version == version:
-            print(
-                f"Listing {framework} {version} {provider} Compliance Requirements:\n"
-            )
-            for requirement in compliance.Requirements:
-                checks = ""
-                for check in requirement.Checks:
-                    checks += f" {Fore.YELLOW}\t\t{check}\n{Style.RESET_ALL}"
+    for compliance_framework in compliance_frameworks:
+        for compliance in bulk_compliance_frameworks.values():
+            # Workaround until we have more Compliance Frameworks
+            split_compliance = compliance_framework.split("_")
+            framework = split_compliance[0].upper()
+            version = split_compliance[1].upper()
+            provider = split_compliance[2].upper()
+            if framework in compliance.Framework and compliance.Version == version:
                 print(
-                    f"Requirement Id: {Fore.MAGENTA}{requirement.Id}{Style.RESET_ALL}\n\t- Description: {requirement.Description}\n\t- Checks:\n{checks}"
+                    f"Listing {framework} {version} {provider} Compliance Requirements:\n"
                 )
+                for requirement in compliance.Requirements:
+                    checks = ""
+                    for check in requirement.Checks:
+                        checks += f" {Fore.YELLOW}\t\t{check}\n{Style.RESET_ALL}"
+                    print(
+                        f"Requirement Id: {Fore.MAGENTA}{requirement.Id}{Style.RESET_ALL}\n\t- Description: {requirement.Description}\n\t- Checks:\n{checks}"
+                    )
 
 
 def print_checks(
