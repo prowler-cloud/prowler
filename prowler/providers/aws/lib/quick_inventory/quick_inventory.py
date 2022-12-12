@@ -5,14 +5,14 @@ from alive_progress import alive_bar
 from colorama import Fore, Style
 from tabulate import tabulate
 
-from config.config import (
+from prowler.config.config import (
     csv_file_suffix,
     json_file_suffix,
     orange_color,
     output_file_timestamp,
 )
-from lib.logger import logger
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.lib.logger import logger
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
 def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):

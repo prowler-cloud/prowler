@@ -239,7 +239,7 @@ def prowler():
         "--allowlist-file",
         nargs="?",
         default=None,
-        help="Path for allowlist yaml file. See example prowler/config/allowlist.yaml for reference and format.",
+        help="Path for allowlist yaml file. See example prowler/config/allowlist.yaml for reference and format. It also accepts AWS DynamoDB Table ARN or S3 URI, see more in https://docs.prowler.cloud/en/latest/tutorials/allowlist/",
     )
     parser.add_argument(
         "--verbose",
