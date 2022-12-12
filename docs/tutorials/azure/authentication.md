@@ -1,6 +1,6 @@
 # Azure authentication
 
-By default prowler uses Azure Python SDK identity package authentication methods using the classes `DefaultAzureCredential` and `InteractiveBrowserCredential`.
+By default Prowler uses Azure Python SDK identity package authentication methods using the classes `DefaultAzureCredential` and `InteractiveBrowserCredential`.
 This allows Prowler to authenticate against azure using the following methods:
 
 - Service principal authentication by environment variables (Enterprise Application)
