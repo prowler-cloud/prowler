@@ -6,8 +6,13 @@ import sys
 from os import mkdir
 from os.path import isdir
 
-from lib.banner import print_banner, print_version
-from lib.check.check import (
+from prowler.config.config import (
+    change_config_var,
+    default_output_directory,
+    output_file_timestamp,
+)
+from prowler.lib.banner import print_banner, print_version
+from prowler.lib.check.check import (
     bulk_load_checks_metadata,
     bulk_load_compliance_frameworks,
     exclude_checks_to_run,
@@ -22,29 +27,23 @@ from lib.check.check import (
     print_services,
     set_output_options,
 )
-from lib.check.checks_loader import load_checks_to_execute
-from lib.check.compliance import update_checks_metadata_with_compliance
-from lib.logger import logger, set_logging_config
-from lib.outputs.outputs import (
+from prowler.lib.check.checks_loader import load_checks_to_execute
+from prowler.lib.check.compliance import update_checks_metadata_with_compliance
+from prowler.lib.logger import logger, set_logging_config
+from prowler.lib.outputs.outputs import (
     add_html_footer,
     close_json,
     display_compliance_table,
     display_summary_table,
     send_to_s3_bucket,
 )
-from providers.aws.aws_provider import aws_provider_set_session
-from providers.aws.lib.allowlist.allowlist import parse_allowlist_file
-from providers.aws.lib.quick_inventory.quick_inventory import quick_inventory
-from providers.aws.lib.security_hub.security_hub import (
+from prowler.providers.aws.aws_provider import aws_provider_set_session
+from prowler.providers.aws.lib.allowlist.allowlist import parse_allowlist_file
+from prowler.providers.aws.lib.quick_inventory.quick_inventory import quick_inventory
+from prowler.providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
 )
-from providers.azure.azure_provider import azure_provider_set_session
-
-from config.config import (
-    change_config_var,
-    default_output_directory,
-    output_file_timestamp,
-)
+from prowler.providers.azure.azure_provider import azure_provider_set_session
 
 
 def prowler():

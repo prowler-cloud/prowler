@@ -8,7 +8,7 @@ from typing import Any
 from colorama import Fore, Style
 from tabulate import tabulate
 
-from config.config import (
+from prowler.config.config import (
     csv_file_suffix,
     html_file_suffix,
     html_logo_img,
@@ -21,9 +21,9 @@ from config.config import (
     timestamp_iso,
     timestamp_utc,
 )
-from lib.check.models import Output_From_Options
-from lib.logger import logger
-from lib.outputs.models import (
+from prowler.lib.check.models import Output_From_Options
+from prowler.lib.logger import logger
+from prowler.lib.outputs.models import (
     Check_Output_CSV,
     Check_Output_CSV_CIS,
     Check_Output_CSV_ENS_RD2022,
@@ -34,10 +34,10 @@ from lib.outputs.models import (
     Resource,
     Severity,
 )
-from lib.utils.utils import file_exists, hash_sha512, open_file
-from providers.aws.lib.allowlist.allowlist import is_allowlisted
-from providers.aws.lib.audit_info.models import AWS_Audit_Info
-from providers.aws.lib.security_hub.security_hub import send_to_security_hub
+from prowler.lib.utils.utils import file_exists, hash_sha512, open_file
+from prowler.providers.aws.lib.allowlist.allowlist import is_allowlisted
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.lib.security_hub.security_hub import send_to_security_hub
 
 
 def report(check_findings, output_options, audit_info):
