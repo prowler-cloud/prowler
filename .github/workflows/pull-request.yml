@@ -25,9 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pipenv
-          pipenv install --dev
-          pipenv run pip list
+          pip install .
       - name: Lint with flake8
         run: |
           pipenv run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib
