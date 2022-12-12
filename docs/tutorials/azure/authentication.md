@@ -4,7 +4,7 @@ By default Prowler uses Azure Python SDK identity package authentication methods
 This allows Prowler to authenticate against azure using the following methods:
 
 - Service principal authentication by environment variables (Enterprise Application)
-- Current az cli credentials stored
+- Current AZ CLI credentials stored
 - Interactive browser authentication
 - Managed identity authentication
 
