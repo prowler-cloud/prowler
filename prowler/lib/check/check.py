@@ -8,7 +8,7 @@ from types import ModuleType
 from alive_progress import alive_bar
 from colorama import Fore, Style
 
-from prowler.config.config import compliance_specification_dir, orange_color
+from prowler.config.config import orange_color
 from prowler.lib.check.compliance_models import load_compliance_framework
 from prowler.lib.check.models import Check, Output_From_Options, load_check_metadata
 from prowler.lib.logger import logger
@@ -38,22 +38,31 @@ def bulk_load_checks_metadata(provider: str) -> dict:
 # Bulk load all compliance frameworks specification
 def bulk_load_compliance_frameworks(provider: str) -> dict:
     """Bulk load all compliance frameworks specification into a dict"""
-    bulk_compliance_frameworks = {}
-    compliance_specification_dir_path = f"{compliance_specification_dir}/{provider}"
     try:
-        for filename in os.listdir(compliance_specification_dir_path):
-            file_path = os.path.join(compliance_specification_dir_path, filename)
-            # Check if it is a file
-            if os.path.isfile(file_path):
-                # Open Compliance file in JSON
-                # cis_v1.4_aws.json --> cis_v1.4_aws
-                compliance_framework_name = filename.split(".json")[0]
-                # Store the compliance info
-                bulk_compliance_frameworks[
-                    compliance_framework_name
-                ] = load_compliance_framework(file_path)
+        bulk_compliance_frameworks = {}
+        available_compliance_framework_modules = list_compliance_modules()
+        for compliance_framework in available_compliance_framework_modules:
+            if provider in compliance_framework.name:
+                compliance_specification_dir_path = (
+                    f"{compliance_framework.module_finder.path}/{provider}"
+                )
+
+                # for compliance_framework in available_compliance_framework_modules:
+                for filename in os.listdir(compliance_specification_dir_path):
+                    file_path = os.path.join(
+                        compliance_specification_dir_path, filename
+                    )
+                    # Check if it is a file and ti size is greater than 0
+                    if os.path.isfile(file_path) and os.stat(file_path).st_size > 0:
+                        # Open Compliance file in JSON
+                        # cis_v1.4_aws.json --> cis_v1.4_aws
+                        compliance_framework_name = filename.split(".json")[0]
+                        # Store the compliance info
+                        bulk_compliance_frameworks[
+                            compliance_framework_name
+                        ] = load_compliance_framework(file_path)
     except Exception as e:
-        logger.error(f"{e.__class__.__name__} -- {e}")
+        logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
 
     return bulk_compliance_frameworks
 
@@ -237,6 +246,18 @@ def recover_checks_from_provider(provider: str, service: str = None) -> list[tup
     except Exception as e:
         logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")
         sys.exit()
+
+
+def list_compliance_modules():
+    """
+    list_compliance_modules returns the available compliance frameworks and returns their path
+    """
+    # This module path requires the full path includig "prowler."
+    module_path = "prowler.compliance"
+    return walk_packages(
+        importlib.import_module(module_path).__path__,
+        importlib.import_module(module_path).__name__ + ".",
+    )
 
 
 # List all available modules in the selected provider and service
