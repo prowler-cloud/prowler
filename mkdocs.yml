@@ -32,6 +32,7 @@ nav:
         - Miscellaneous: tutorials/misc.md
         - Reporting: tutorials/reporting.md
         - Compliance: tutorials/compliance.md
+        - Quick Inventory: tutorials/quick-inventory.md
         - Logging: tutorials/logging.md
         - Allowlist: tutorials/allowlist.md
         - Pentesting: tutorials/pentesting.md
