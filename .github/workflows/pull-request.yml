@@ -36,7 +36,7 @@ jobs:
           pipenv run black --check .
       - name: Lint with pylint
         run: |
-          pipenv run pylint --disable=W,C,R,E -j 0 providers lib util config
+          pipenv run pylint --disable=W,C,R,E -j 0 -rn -sn prowler/
       - name: Bandit
         run: |
           pipenv run bandit -q -lll -x '*_test.py,./contrib/' -r .

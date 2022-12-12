@@ -25,7 +25,7 @@ aws_services_json_file = "aws_regions_by_service.json"
 default_output_directory = getcwd() + "/output"
 
 output_file_timestamp = timestamp.strftime("%Y%m%d%H%M%S")
-timestamp_iso = timestamp.isoformat()
+timestamp_iso = timestamp.isoformat(sep=" ", timespec="seconds")
 csv_file_suffix = ".csv"
 json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
