@@ -12,7 +12,7 @@ Welcome to [Prowler Open Source v3](https://github.com/prowler-cloud/prowler/) D
 - In the [Contact Us](contact) section you can find how to reach us out in case of technical issues.
 - In the [About](about) section you will find more information about the Prowler team and license.
 
-> For Prowler v2, you can access [here](https://github.com/prowler-cloud/prowler/tree/2.13.0) to the branch and README.
+> For Prowler v2, you can access [here](https://github.com/prowler-cloud/prowler/tree/2.12.0) to the branch and README.
 ## About Prowler
 
 **Prowler** is an Open Source security tool to perform AWS and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness.
