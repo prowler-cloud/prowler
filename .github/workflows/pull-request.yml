@@ -3,14 +3,13 @@ name: Lint & Test
 on:
   push:
     branches:
-      - 'prowler-3.0-dev'
+      - "prowler-3.0-dev"
   pull_request:
     branches:
-      - 'prowler-3.0-dev'
+      - "prowler-3.0-dev"
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -28,7 +27,6 @@ jobs:
           pip install pipenv
           pipenv install --dev
           pipenv run pip list
-          pip install .
       - name: Lint with flake8
         run: |
           pipenv run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib
