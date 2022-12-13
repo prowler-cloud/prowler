@@ -20,7 +20,6 @@ azure-mgmt-subscription = "3.1.1"
 azure-mgmt-authorization = "3.0.0"
 azure-mgmt-security = "3.0.0"
 azure-mgmt-storage = "21.0.0"
-prowler-cloud = {path = "."}
 
 [dev-packages]
 black = "22.10.0"
@@ -29,7 +28,7 @@ flake8 = "5.0.4"
 bandit = "1.7.4"
 safety = "2.3.1"
 vulture = "2.6"
-moto = "4.0.9"
+moto = "4.0.11"
 docker = "6.0.0"
 openapi-spec-validator = "0.5.1"
 pytest = "7.1.2"
