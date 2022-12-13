@@ -6,13 +6,13 @@
 # Prowler Documentation
 
 Welcome to [Prowler Open Source v3](https://github.com/prowler-cloud/prowler/) Documentation! 📄
+> For **Prowler v2**, you can access [here](https://github.com/prowler-cloud/prowler/tree/2.12.0) to the branch and README.
 
 - You are currently in the **Getting Started** section where you can find general information and requirements to help you start with the tool.
 - In the [Tutorials](tutorials/overview) section you will see how to take advantage of all the features in Prowler.
 - In the [Contact Us](contact) section you can find how to reach us out in case of technical issues.
 - In the [About](about) section you will find more information about the Prowler team and license.
 
-> For Prowler v2, you can access [here](https://github.com/prowler-cloud/prowler/tree/2.12.0) to the branch and README.
 ## About Prowler
 
 **Prowler** is an Open Source security tool to perform AWS and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness.

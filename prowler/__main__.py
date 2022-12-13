@@ -9,6 +9,7 @@ from os.path import isdir
 from prowler.config.config import (
     change_config_var,
     default_output_directory,
+    get_aws_available_regions,
     output_file_timestamp,
 )
 from prowler.lib.banner import print_banner, print_version
@@ -171,6 +172,7 @@ def prowler():
         "--filter-region",
         nargs="+",
         help="AWS region names to run Prowler against",
+        choices=get_aws_available_regions(),
     )
     parser.add_argument(
         "-M",
