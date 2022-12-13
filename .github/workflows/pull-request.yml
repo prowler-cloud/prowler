@@ -3,14 +3,13 @@ name: Lint & Test
 on:
   push:
     branches:
-      - 'prowler-3.0-dev'
+      - "prowler-3.0-dev"
   pull_request:
     branches:
-      - 'prowler-3.0-dev'
+      - "prowler-3.0-dev"
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -36,7 +35,7 @@ jobs:
           pipenv run black --check .
       - name: Lint with pylint
         run: |
-          pipenv run pylint --disable=W,C,R,E -j 0 providers lib util config
+          pipenv run pylint --disable=W,C,R,E -j 0 -rn -sn prowler/
       - name: Bandit
         run: |
           pipenv run bandit -q -lll -x '*_test.py,./contrib/' -r .
@@ -48,4 +47,4 @@ jobs:
           pipenv run vulture --exclude "contrib" --min-confidence 100 .
       - name: Test with pytest
         run: |
-          pipenv run pytest -n auto
+          pipenv run pytest tests -n auto

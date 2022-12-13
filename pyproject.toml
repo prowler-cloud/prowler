@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prowler-cloud"
+# https://peps.python.org/pep-0440/
+version = "3.0.0-rc1"
+authors = [{ name = "Toni de la Fuente", email = "toni@blyx.com" }]
+maintainers = [
+  { name = "Sergio Garcia", email = "sergio@verica.io" },
+  { name = "Nacho Rivera", email = "nacho@verica.io" },
+  { name = "Pepe Fagoaga", email = "pepe@verica.io" },
+]
+description = "Prowler is an Open Source security tool to perform AWS security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains more than 240 controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "License :: OSI Approved :: Apache Software License",
+]
+
+# https://peps.python.org/pep-0631/
+dependencies = [
+  "colorama ~=0.4.4",
+  "boto3 ~=1.26.17",
+  "arnparse ~=0.0.2",
+  "botocore ~=1.29.18",
+  "pydantic ~=1.9.1",
+  "shodan ~=1.28.0",
+  "detect-secrets ~=1.4.0",
+  "alive-progress ~=2.4.1",
+  "tabulate ~=0.9.0",
+  "azure-identity ~=1.12.0",
+  "azure-storage-blob ~=12.14.1",
+  "msgraph-core ~=0.2.2",
+  "azure-mgmt-subscription ~=3.1.1",
+  "azure-mgmt-authorization ~=3.0.0",
+  "azure-mgmt-security ~=3.0.0",
+  "azure-mgmt-storage ~=21.0.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/prowler-cloud/prowler"
+"Documentation" = "https://github.com/prowler-cloud/prowler/blob/master/README.md"
+"Issue tracker" = "https://github.com/prowler-cloud/prowler/issues"
+"Changelog" = "https://github.com/prowler-cloud/prowler/releases"
+
+# https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
+[tool.setuptools]
+include-package-data = true
+package-dir = { "prowler" = "prowler" }
+
+[tool.setuptools.package-data]
+# We need the above pattern to include our data files
+"*" = ["*.yaml", "*.json"]
+
+[project.scripts]
+prowler = "prowler.__main__:prowler"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]

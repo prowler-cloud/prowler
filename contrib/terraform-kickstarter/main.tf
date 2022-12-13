@@ -256,7 +256,7 @@ resource "aws_iam_role" "prowler_event_trigger_role" {
                                 }
                               ]
                             })
-    
+
 }
 resource "aws_iam_policy" "prowler_event_trigger_policy" {
   depends_on        = [aws_codebuild_project.prowler_codebuild]
@@ -328,7 +328,7 @@ resource "aws_iam_policy" "prowler_kickstarter_iam_policy" {
                   ]
         Effect   = "Allow"
         Resource = "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog"
-                                    
+
       },
       {
         Action =  [
@@ -340,19 +340,19 @@ resource "aws_iam_policy" "prowler_kickstarter_iam_policy" {
                                     ]
         Effect   = "Allow"
         Resource = "arn:aws:codebuild:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:report-group/*"
-                                    
+
       },
        {
         Action =  [ "securityhub:BatchImportFindings"]
         Effect   = "Allow"
-        Resource = "*"                      
+        Resource = "*"
       },
              {
         Action =  [ "securityhub:GetFindings"]
         Effect   = "Allow"
-        Resource = "*"                      
+        Resource = "*"
       },
-      { 
+      {
             "Action": "codebuild:StartBuild",
             "Resource": "arn:aws:codebuild:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:project/*",
             "Effect": "Allow"
@@ -416,7 +416,7 @@ resource "aws_s3_bucket_policy" "prowler_report_storage_bucket_policy" {
                                     }
                                 }
                             }
-                            
+
                             ]
                         })
                         }
@@ -474,7 +474,7 @@ resource "aws_codebuild_project" "prowler_codebuild" {
 
 
 
-resource "aws_securityhub_account" "securityhub_resource" { 
+resource "aws_securityhub_account" "securityhub_resource" {
     }
 
 resource "aws_securityhub_product_subscription" "security_hub_enable_prowler_findings" {

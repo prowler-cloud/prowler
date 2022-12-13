@@ -17,7 +17,7 @@ mkdir ${account}-results
 cd ~
 git clone https://github.com/prowler-cloud/prowler
 pip3 install detect-secrets --user
-cd prowler 
+cd prowler
 screen -dmS prowler sh -c "./prowler -M csv,html;cd ~;zip -r ${account}-results/prowler-${account}.zip /home/cloudshell-user/prowler/output"
 
 # ScoutSuite

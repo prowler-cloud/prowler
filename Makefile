@@ -22,6 +22,18 @@ lint: ## Lint Code
 	@echo "Running pylint..."
 	pylint --disable=W,C,R,E -j 0 providers lib util config
 
+##@ PyPI
+pypi-clean: ## Delete the distribution files
+	rm -rf ./dist && rm -rf ./build && rm -rf prowler_cloud.egg-info
+
+pypi-build: ## Build package
+	$(MAKE) pypi-clean && \
+	python3 -m build
+
+pypi-upload: ## Upload package
+	python3 -m twine upload --repository pypi dist/*
+
+
 ##@ Help
 help:     ## Show this help.
 	@echo "Prowler Makefile"

@@ -2,11 +2,11 @@
 
 ### Use Case:
 
-Customers look to use multiple auditing tools in order to provide quick assessments about their AWS environments. These tools allow for reports to be generated for review by the customer and appropriate teams, which in turns helps them begin security remediation efforts. 
+Customers look to use multiple auditing tools in order to provide quick assessments about their AWS environments. These tools allow for reports to be generated for review by the customer and appropriate teams, which in turns helps them begin security remediation efforts.
 
 Prowler and ScoutSuite are two publicly available security auditing tools that provide comprehensive reports for customers using AWS.
 
-ShortCut is a mechanism for customers to use to run both Prowler and ScoutSuite within an AWS account, using AWS CloudShell. When customers use ShortCut, this allows for customers to quickly perform an audit on their environment, without having to provision IAM Access Keys or EC2 instances. 
+ShortCut is a mechanism for customers to use to run both Prowler and ScoutSuite within an AWS account, using AWS CloudShell. When customers use ShortCut, this allows for customers to quickly perform an audit on their environment, without having to provision IAM Access Keys or EC2 instances.
 
 ### Prerequisites:
 

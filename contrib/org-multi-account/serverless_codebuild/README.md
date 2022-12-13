@@ -32,7 +32,7 @@ For more information on how to use prowler, see [here](https://github.com/prowle
       - Specify regions : Region to deploy
 3. **Audit Account**
    1. Go to S3 console, create a bucket, upload [run-prowler-reports.sh.zip](src/run-prowler-reports.sh.zip)
-      - bucket name : prowler-util-*[Account ID]*-*[region]*  
+      - bucket name : prowler-util-*[Account ID]*-*[region]*
      ![Untitled](docs/images/s3_screenshot.png)
 
    1. Deploy  [ProwlerCodeBuildStack.yaml](templates/ProwlerCodeBuildStack.yaml) which creates CloudWatch Rule to trigger CodeBuild every fixed time, allowing prowler to audit multi-accounts.

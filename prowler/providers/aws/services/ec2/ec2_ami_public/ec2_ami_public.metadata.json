@@ -1,0 +1,38 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_ami_public",
+  "CheckTitle": "Ensure there are no EC2 AMIs set as Public.",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "ami",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "critical",
+  "ResourceType": "AwsEc2SecurityGroup",
+  "Description": "Ensure there are no EC2 AMIs set as Public.",
+  "Risk": "A shared AMI is an AMI that a developer created and made available for other developers to use. If AMIs have embebed information about the environment could pose a security risk. You use a shared AMI at your own risk. Amazon can not vouch for the integrity or security of AMIs shared by Amazon EC2 users.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.bridgecrew.io/docs/public_8#cli-command",
+      "NativeIaC": "",
+      "Other": "https://docs.bridgecrew.io/docs/public_8#aws-console",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "List all shared AMIs and make sure there is a business reason for them.",
+      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/usingsharedamis-finding.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  },
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

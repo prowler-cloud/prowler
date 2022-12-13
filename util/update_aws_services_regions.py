@@ -20,7 +20,7 @@ logging.basicConfig(
 with request.urlopen(aws_services_json_url) as url:  # Get the AWS regions matrix online
     logging.info(f"Downloading JSON from {aws_services_json_url}")
     original_matrix_regions_aws = json.loads(url.read().decode())
-parsed__matrix_regions_aws = f"{os.path.dirname(os.path.realpath(__name__))}/providers/aws/aws_regions_by_service.json"
+parsed__matrix_regions_aws = f"{os.path.dirname(os.path.realpath(__name__))}/prowler/providers/aws/aws_regions_by_service.json"
 
 # JSON objects
 regions_by_service = {}

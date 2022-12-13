@@ -1,0 +1,5919 @@
+{
+  "services": {
+    "acm": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "eu-south-2",
+          "eu-west-1",
+          "sa-east-1",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "eu-south-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-1",
+          "us-west-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-north-1",
+          "me-central-1",
+          "us-east-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "ahl": {
+      "regions": {
+        "aws": [
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "aiq": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "me-south-1",
+          "us-west-1",
+          "us-west-2",
+          "ap-northeast-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "alexaforbusiness": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "amazonlocationservice": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "amplify": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-south-1",
+          "me-south-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-south-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "apigateway": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-3",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-2",
+          "sa-east-1",
+          "us-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-central-1",
+          "us-east-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "appflow": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "af-south-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "application-autoscaling": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-south-1",
+          "us-east-2",
+          "us-west-2",
+          "eu-central-1",
+          "eu-north-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "appmesh": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "us-west-1",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-north-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ca-central-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": {}
+      }
+    },
+    "appstream": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-west-2",
+          "ap-southeast-2",
+          "us-east-1",
+          "us-east-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "appsync": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-north-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-1",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "ap-southeast-3",
+          "eu-south-1",
+          "eu-west-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": {}
+      }
+    },
+    "aps": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "artifact": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-2",
+          "eu-south-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-2",
+          "me-central-1",
+          "sa-east-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "us-east-1"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "athena": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-1",
+          "us-west-1",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-2",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "eu-south-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "auditmanager": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-southeast-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "augmentedairuntime": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-south-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "aurora": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "eu-central-2",
+          "eu-west-2",
+          "me-central-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3",
+          "us-east-2",
+          "ap-south-1",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-2",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "autoscaling": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-west-2",
+          "me-central-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-south-2",
+          "me-south-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-west-1",
+          "eu-west-3",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "backup": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-west-1",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-north-1",
+          "eu-west-1",
+          "me-south-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-3",
+          "ca-central-1",
+          "eu-south-1",
+          "sa-east-1",
+          "us-east-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "batch": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "sa-east-1",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "af-south-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "me-south-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "braket": {
+      "regions": {
+        "aws": [
+          "us-east-1",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "budgets": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-2",
+          "ca-central-1",
+          "eu-west-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": {}
+      }
+    },
+    "chatbot": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-central-1",
+          "me-south-1",
+          "us-east-1",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-west-1",
+          "us-west-1",
+          "us-west-2",
+          "af-south-1",
+          "sa-east-1",
+          "us-east-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "chime": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-2",
+          "us-east-2",
+          "us-west-1"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "cloud9": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-west-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "eu-west-3"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "clouddirectory": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "cloudenduredisasterrecovery": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-3",
+          "us-east-1",
+          "me-south-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "cloudenduremigration": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-southeast-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "eu-south-1",
+          "eu-west-2",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "cloudformation": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-2",
+          "eu-south-2",
+          "eu-west-2",
+          "me-central-1",
+          "us-east-2",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-3",
+          "us-east-1",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "cloudfront": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-south-2",
+          "eu-west-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "eu-north-1",
+          "eu-west-2",
+          "me-central-1",
+          "me-south-1",
+          "us-west-1",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "eu-central-2",
+          "eu-south-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": {}
+      }
+    },
+    "cloudhsmv2": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-south-1",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-west-2",
+          "eu-west-3",
+          "us-west-1",
+          "us-west-2",
+          "ap-northeast-2",
+          "eu-north-1",
+          "eu-west-1",
+          "me-central-1",
+          "sa-east-1"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "cloudsearch": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "cloudshell": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-2",
+          "ap-northeast-1",
+          "ca-central-1",
+          "us-east-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "cloudtrail": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "eu-south-2",
+          "eu-west-3",
+          "me-central-1",
+          "sa-east-1",
+          "us-west-2",
+          "ap-northeast-3",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "us-east-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "cloudwatch": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ca-central-1",
+          "eu-north-1",
+          "me-central-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-southeast-3",
+          "eu-central-2",
+          "eu-south-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-south-2",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "codeartifact": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "us-east-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "codebuild": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3",
+          "me-south-1",
+          "us-west-1",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "sa-east-1",
+          "us-east-2"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "codecommit": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-3",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "sa-east-1",
+          "us-west-1",
+          "ap-northeast-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "codedeploy": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-south-1",
+          "me-south-1",
+          "us-west-1",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "eu-central-2",
+          "eu-west-1",
+          "eu-west-2",
+          "me-central-1",
+          "sa-east-1",
+          "us-east-2",
+          "ap-northeast-1",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-2",
+          "eu-west-3",
+          "us-east-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "codeguruprofiler": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "codepipeline": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "us-west-2",
+          "ap-northeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-southeast-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "codestar": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "cognito-identity": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-west-1",
+          "eu-west-3",
+          "us-east-1",
+          "us-west-1",
+          "ap-northeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-2",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "comprehend": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-2",
+          "us-west-2",
+          "ap-southeast-2",
+          "us-east-1"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "comprehendmedical": {
+      "regions": {
+        "aws": [
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "compute-optimizer": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "eu-north-1",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-west-1",
+          "us-west-2",
+          "ap-east-1",
+          "eu-south-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": {}
+      }
+    },
+    "config": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-south-1",
+          "me-south-1",
+          "us-east-1",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-southeast-2",
+          "eu-central-2",
+          "eu-south-2",
+          "eu-west-1",
+          "eu-west-3",
+          "me-central-1",
+          "us-east-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "connect": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "us-east-1",
+          "us-west-2",
+          "eu-west-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "controltower": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-3",
+          "sa-east-1"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "costexplorer": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "cn": [
+          "cn-northwest-1"
+        ],
+        "gov": {}
+      }
+    },
+    "cur": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "cn": [
+          "cn-northwest-1"
+        ],
+        "gov": {}
+      }
+    },
+    "dataexchange": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "us-east-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "datapipeline": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "datasync": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "ap-east-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-north-1",
+          "me-south-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "eu-south-1",
+          "me-central-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "deepcomposer": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "deeplens": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "eu-central-1",
+          "us-east-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "deepracer": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "detective": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-west-1",
+          "af-south-1",
+          "ap-east-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ca-central-1"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "devicefarm": {
+      "regions": {
+        "aws": [
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "devops-guru": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-west-2",
+          "us-west-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "directconnect": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "eu-central-2",
+          "eu-north-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-south-2",
+          "eu-west-1",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-central-1",
+          "me-south-1",
+          "us-east-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "discovery": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "dms": {
+      "regions": {
+        "aws": [
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-2",
+          "eu-south-2",
+          "eu-west-1",
+          "me-central-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-2",
+          "us-west-1",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-north-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "docdb": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "drs": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-2",
+          "us-west-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-3",
+          "eu-west-1",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-2",
+          "eu-north-1",
+          "us-east-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "ds": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-3",
+          "me-central-1",
+          "me-south-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "dynamodb": {
+      "regions": {
+        "aws": [
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "eu-south-2",
+          "me-central-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-south-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "ebs": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-south-2",
+          "eu-west-1",
+          "me-south-1",
+          "af-south-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-2",
+          "me-central-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "ec2": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-central-1",
+          "sa-east-1",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "eu-south-1",
+          "eu-south-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-west-1",
+          "me-south-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "ecr": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "eu-south-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-2",
+          "eu-west-1",
+          "me-central-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "af-south-1",
+          "ap-northeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-2",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "ecs": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-south-2",
+          "eu-west-3",
+          "us-east-2",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-1",
+          "af-south-1",
+          "ap-northeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "me-central-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "efs": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-2",
+          "us-west-1",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "eu-south-1",
+          "eu-west-3",
+          "me-central-1",
+          "sa-east-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-north-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "eks": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-north-1",
+          "me-south-1",
+          "us-east-2",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-west-1",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-west-3",
+          "me-central-1",
+          "us-east-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "elastic-inference": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "elasticache": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-2",
+          "eu-south-2",
+          "eu-west-1",
+          "me-central-1",
+          "ap-east-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "elasticbeanstalk": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-north-1",
+          "eu-west-1",
+          "sa-east-1",
+          "us-west-1",
+          "af-south-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-1",
+          "ap-northeast-1",
+          "ca-central-1",
+          "eu-west-3",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "elastictranscoder": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "elb": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-2",
+          "me-central-1",
+          "me-south-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-west-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "af-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-south-2",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "emr": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-2",
+          "me-central-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-west-1",
+          "eu-west-3",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "eu-south-1",
+          "eu-south-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "es": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-south-1",
+          "eu-south-2",
+          "eu-west-3",
+          "us-west-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-3",
+          "eu-west-2",
+          "me-central-1",
+          "me-south-1",
+          "sa-east-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "eventbridge": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-3",
+          "us-east-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-central-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-2",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-2",
+          "eu-south-1",
+          "eu-south-2",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "fargate": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "eu-west-2",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "ap-northeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-south-2",
+          "eu-west-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-west-3",
+          "me-central-1",
+          "us-east-2",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "filecache": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "firehose": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "af-south-1",
+          "ap-east-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-west-1",
+          "me-central-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-south-1",
+          "me-south-1",
+          "sa-east-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "fis": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "me-south-1",
+          "us-west-1",
+          "us-east-1",
+          "us-east-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "fms": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-3",
+          "sa-east-1",
+          "eu-north-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "forecast": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "frauddetector": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "freertosota": {
+      "regions": {
+        "aws": [
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-1",
+          "us-west-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": {}
+      }
+    },
+    "fsx-lustre": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "me-south-1",
+          "us-east-2",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-west-1",
+          "ap-east-1",
+          "ap-northeast-2",
+          "eu-south-1",
+          "sa-east-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "fsx-ontap": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-1",
+          "me-south-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "eu-north-1"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "fsx-openzfs": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "fsx-windows": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "us-east-2",
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "eu-west-3",
+          "me-south-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "gamelift": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-2",
+          "ca-central-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-1",
+          "ap-east-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "eu-central-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": {}
+      }
+    },
+    "globalaccelerator": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "eu-west-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "glue": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "us-east-1",
+          "us-west-1",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-2",
+          "af-south-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "grafana": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "greengrass": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-2",
+          "us-west-2",
+          "ap-southeast-2",
+          "eu-central-1",
+          "us-east-1"
+        ],
+        "cn": [
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "groundstation": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "eu-west-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "guardduty": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3",
+          "me-central-1",
+          "me-south-1",
+          "us-east-2",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-north-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "honeycode": {
+      "regions": {
+        "aws": [
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "iam": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-north-1",
+          "me-central-1",
+          "us-west-1",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-south-2",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "eu-central-2",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "inspector2": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-west-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "eu-south-1",
+          "eu-west-1",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "iot": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-east-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-west-1",
+          "me-central-1",
+          "sa-east-1",
+          "us-east-1",
+          "ap-northeast-2",
+          "eu-central-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "iot1click-projects": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "iotanalytics": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1"
+        ],
+        "gov": {}
+      }
+    },
+    "iotdevicedefender": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-3",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-1",
+          "us-west-2",
+          "ap-northeast-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "iotdevicemanagement": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2",
+          "eu-west-1",
+          "sa-east-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "iotevents": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-west-1"
+        ],
+        "cn": [
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "iotsitewise": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "us-east-2"
+        ],
+        "cn": [
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "iottwinmaker": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "ivs": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "kafka": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-west-3",
+          "us-east-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "sa-east-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "kendra": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "kinesis": {
+      "regions": {
+        "aws": [
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-central-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-2",
+          "eu-south-2",
+          "us-east-2",
+          "ap-east-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-south-1",
+          "me-south-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "kinesisanalytics": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3",
+          "us-east-1",
+          "us-west-1",
+          "af-south-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "kinesisvideo": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "kms": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "eu-central-2",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-2",
+          "me-south-1",
+          "sa-east-1",
+          "af-south-1",
+          "ap-northeast-3",
+          "ca-central-1",
+          "eu-south-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-central-1",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "lakeformation": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "us-east-1",
+          "us-west-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-west-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "sa-east-1",
+          "us-east-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "lambda": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-south-2",
+          "eu-west-2",
+          "me-central-1",
+          "me-south-1",
+          "us-east-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-3",
+          "us-east-2",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "sa-east-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "lex-runtime": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2",
+          "ap-southeast-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "license-manager": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "us-east-2",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-2",
+          "me-south-1",
+          "ap-east-1",
+          "ap-south-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "lightsail": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "ca-central-1",
+          "eu-west-3",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "lookoutmetrics": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "lookoutvision": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "lumberyard": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-1",
+          "us-west-1",
+          "ap-east-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "m2": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-west-2",
+          "ca-central-1",
+          "sa-east-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "macie": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ca-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "us-west-1",
+          "us-west-2",
+          "eu-south-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "managedblockchain": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "managedservices": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1",
+          "sa-east-1"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "marketplace": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "eu-south-2",
+          "me-central-1",
+          "me-south-1",
+          "us-west-1",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-2",
+          "eu-west-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "ap-east-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-2",
+          "eu-west-3"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "mcs": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-2",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-west-1",
+          "eu-west-3",
+          "us-east-2",
+          "us-west-1",
+          "ap-southeast-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "mediaconnect": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-west-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "mediaconvert": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "medialive": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-north-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "mediapackage": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-2",
+          "eu-west-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "mediastore": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "mediatailor": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "memorydb": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-3",
+          "us-west-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": {}
+      }
+    },
+    "mgh": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "mgn": {
+      "regions": {
+        "aws": [
+          "ap-northeast-3",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-south-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-2",
+          "us-west-1",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-north-1",
+          "eu-west-1",
+          "sa-east-1",
+          "us-east-1",
+          "eu-central-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "mq": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-2",
+          "us-east-2",
+          "us-west-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "mwaa": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "us-east-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "neptune": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-1",
+          "us-west-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-2",
+          "af-south-1",
+          "ca-central-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "network-firewall": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-2",
+          "us-west-1",
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "us-east-1",
+          "sa-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "nimble": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "opsworks": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-2",
+          "ca-central-1",
+          "eu-west-1",
+          "sa-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "opsworkschefautomate": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "opsworkspuppetenterprise": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "organizations": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-south-2",
+          "me-south-1",
+          "us-west-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "eu-west-1",
+          "eu-west-3",
+          "me-central-1",
+          "sa-east-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "outposts": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ca-central-1",
+          "eu-south-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "eu-north-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "personalize": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-northeast-2"
+        ],
+        "cn": [
+          "cn-north-1"
+        ],
+        "gov": {}
+      }
+    },
+    "phd": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "ca-central-1",
+          "me-south-1",
+          "sa-east-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-south-1",
+          "eu-west-3",
+          "me-central-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "eu-north-1",
+          "eu-south-2",
+          "eu-west-1",
+          "eu-west-2",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "pinpoint": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-2",
+          "ap-southeast-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "polly": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-east-1"
+        ],
+        "cn": [
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "privatelink": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "us-west-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-2",
+          "eu-south-1",
+          "eu-south-2",
+          "eu-west-2",
+          "us-east-2",
+          "us-west-1",
+          "af-south-1",
+          "ap-northeast-1",
+          "eu-north-1",
+          "eu-west-1",
+          "me-central-1",
+          "us-east-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "proton": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-southeast-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "qldb": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-2",
+          "us-west-2",
+          "us-east-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "quicksight": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "us-east-1"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "ram": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3",
+          "us-east-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-north-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-2",
+          "me-central-1",
+          "me-south-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "rds": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-2",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "af-south-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3",
+          "me-central-1",
+          "me-south-1",
+          "us-west-1",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-2",
+          "eu-west-2"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "rdsvmware": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "redshift": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-south-1",
+          "eu-south-2",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-2",
+          "eu-west-1",
+          "eu-west-3",
+          "me-central-1",
+          "us-east-1",
+          "ap-northeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "sa-east-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "rekognition": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-south-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "resiliencehub": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-west-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "robomaker": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "rosa": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "me-south-1",
+          "us-east-2",
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-1",
+          "us-west-2",
+          "eu-west-3",
+          "sa-east-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "route53": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-west-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-west-1",
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-south-2",
+          "eu-west-3",
+          "me-central-1",
+          "ap-northeast-1",
+          "ca-central-1",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": {}
+      }
+    },
+    "s3": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "eu-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-central-1",
+          "sa-east-1",
+          "us-west-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-south-2",
+          "us-east-1",
+          "af-south-1",
+          "ca-central-1",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "me-south-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "sagemaker": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3",
+          "me-south-1",
+          "ap-east-1",
+          "ap-southeast-1",
+          "sa-east-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "secretsmanager": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "eu-central-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-2",
+          "eu-west-1",
+          "me-central-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ca-central-1",
+          "eu-south-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "securityhub": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-2",
+          "us-east-2",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-3",
+          "ap-southeast-3",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "eu-central-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "serverlessrepo": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-west-1",
+          "us-west-1",
+          "us-west-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-2",
+          "ca-central-1",
+          "us-east-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "servicecatalog": {
+      "regions": {
+        "aws": [
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-1",
+          "me-south-1",
+          "sa-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-south-1",
+          "eu-west-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "servicediscovery": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-south-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-west-1",
+          "af-south-1",
+          "ap-northeast-3",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "me-south-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-west-1",
+          "me-central-1",
+          "sa-east-1",
+          "us-east-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "ses": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "me-south-1",
+          "us-east-2",
+          "us-west-1",
+          "ca-central-1",
+          "us-east-1"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "shield": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-southeast-2",
+          "ca-central-1"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "sms": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-east-1",
+          "ap-southeast-2",
+          "eu-central-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "snowball": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "eu-west-3",
+          "us-east-1",
+          "us-west-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-2",
+          "sa-east-1",
+          "ap-east-1",
+          "ca-central-1",
+          "eu-central-1",
+          "us-east-2",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "snowcone": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "ap-northeast-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "snowmobile": {
+      "regions": {
+        "aws": [
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "sns": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-west-3",
+          "me-central-1",
+          "me-south-1",
+          "ap-south-1",
+          "ap-southeast-3",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-south-2",
+          "eu-west-2",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ca-central-1",
+          "eu-west-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "sqs": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-central-2",
+          "eu-south-2",
+          "eu-west-1",
+          "eu-west-2",
+          "me-central-1",
+          "me-south-1",
+          "ap-northeast-3",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "sa-east-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "ssm": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "eu-south-2",
+          "eu-west-2",
+          "me-central-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "us-east-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-3",
+          "eu-central-2",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "sso": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-3",
+          "us-east-2",
+          "us-west-2",
+          "eu-west-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "stepfunctions": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-south-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-south-2",
+          "eu-west-1",
+          "me-central-1",
+          "us-east-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-southeast-3",
+          "eu-north-1",
+          "us-west-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "storagegateway": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-3",
+          "me-central-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-2",
+          "us-west-1",
+          "ap-south-1",
+          "eu-north-1",
+          "eu-south-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "sumerian": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-west-1",
+          "us-west-2",
+          "ap-northeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "support": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ca-central-1",
+          "eu-central-2",
+          "eu-south-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-south-2",
+          "me-central-1",
+          "me-south-1",
+          "us-east-1",
+          "af-south-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "swf": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-south-1",
+          "sa-east-1",
+          "ap-east-1",
+          "ap-southeast-2",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-2",
+          "us-west-1",
+          "af-south-1",
+          "ap-northeast-2",
+          "eu-south-2",
+          "eu-west-1",
+          "eu-west-3",
+          "me-central-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "textract": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-west-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "timestream": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "transcribe": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-1",
+          "af-south-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "ap-southeast-1"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "transcribemedical": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-west-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "transfer": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "eu-north-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-1",
+          "us-west-2",
+          "ap-northeast-1",
+          "ca-central-1",
+          "eu-south-1",
+          "eu-west-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "transitgateway": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "eu-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "af-south-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-south-1",
+          "me-south-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "translate": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "trustedadvisor": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-2",
+          "eu-west-1",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-2",
+          "eu-south-1",
+          "us-west-1",
+          "af-south-1",
+          "ap-northeast-3",
+          "ap-southeast-2",
+          "eu-west-2",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "vmwarecloudonaws": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-west-1"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "vpc": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-north-1",
+          "eu-south-1",
+          "us-east-1",
+          "us-west-1",
+          "ap-northeast-3",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-south-2",
+          "eu-west-3",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-central-1",
+          "me-south-1",
+          "sa-east-1"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "vpn": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-south-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "eu-west-2",
+          "us-east-2",
+          "ca-central-1",
+          "eu-central-2",
+          "eu-west-1",
+          "me-central-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "waf": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-south-1",
+          "eu-west-3"
+        ],
+        "cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "wam": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "wellarchitectedtool": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-1"
+        ],
+        "cn": {},
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "workdocs": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "workmail": {
+      "regions": {
+        "aws": [
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "workspaces": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "eu-west-1",
+          "eu-west-2"
+        ],
+        "cn": [
+          "cn-northwest-1"
+        ],
+        "gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "workspaces-web": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "cn": {},
+        "gov": {}
+      }
+    },
+    "xray": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-south-1",
+          "eu-west-1",
+          "me-central-1",
+          "af-south-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "eu-north-1",
+          "eu-south-2",
+          "me-south-1",
+          "sa-east-1",
+          "us-west-2"
+        ],
+        "cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    }
+  }
+}

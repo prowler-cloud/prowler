@@ -16,7 +16,7 @@ spec:
           - name: prowler
             image: toniblyx/prowler:latest
             imagePullPolicy: Always
-            command: 
+            command:
             - "./prowler"
             args: [ "-g", "hipaa", "-M", "csv,json,html", "-B", "$(awsS3Bucket)" ]
             env:
@@ -30,11 +30,11 @@ spec:
                 secretKeyRef:
                   name:  devsecops-prowler-cronjob-secret
                   key: awsSecretKey
-            - name: awsS3Bucket 
+            - name: awsS3Bucket
               valueFrom:
                 secretKeyRef:
                   name:  devsecops-prowler-cronjob-secret
-                  key: awsS3Bucket 
+                  key: awsS3Bucket
             imagePullPolicy: IfNotPresent
           restartPolicy: OnFailure
       backoffLimit: 3

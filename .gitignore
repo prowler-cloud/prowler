@@ -8,6 +8,9 @@
 # Python code
 __pycache__
 venv/
+build/
+dist/
+*.egg-info/
 
 # Session
 Session.vim

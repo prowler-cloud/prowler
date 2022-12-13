@@ -1,6 +1,6 @@
 import csv
-import sys
 import json
+import sys
 
 # Convert a CSV file following the Spanish ENS - Esquema Nacional de Seguridad - RD2022 benchmark into a Prowler v3.0 Compliance JSON file
 # CSV fields:
