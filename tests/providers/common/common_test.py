@@ -36,7 +36,7 @@ mock_azure_audit_info = Azure_Audit_Info(
 mock_set_audit_info = Audit_Info()
 
 
-def mock_validate_credentials(mock_set_audit_info, session):
+def mock_validate_credentials(*_):
     caller_identity = {
         "Arn": "arn:aws:iam::123456789012:user/test",
         "Account": "123456789012",
@@ -45,25 +45,15 @@ def mock_validate_credentials(mock_set_audit_info, session):
     return caller_identity
 
 
-def mock_print_audit_credentials(mock_set_audit_info, mock_current_audit_info):
+def mock_print_audit_credentials(*_):
     pass
 
 
-def mock_set_identity_info(
-    az,
-    credentials,
-    az_cli,
-    sp_env_auth,
-    browser_auth,
-    managed_entity_auth,
-    subscription_ids,
-):
+def mock_set_identity_info(*_):
     return Azure_Identity_Info()
 
 
-def mock_set_credentials(
-    az_cli, sp_env_auth, browser_auth, managed_entity_auth, subscription_ids
-):
+def mock_set_credentials(*_):
     return {}
 
 
