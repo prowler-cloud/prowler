@@ -6,11 +6,7 @@ from azure.mgmt.subscription import SubscriptionClient
 from msgraph.core import GraphClient
 
 from prowler.lib.logger import logger
-from prowler.providers.azure.lib.audit_info.audit_info import azure_audit_info
-from prowler.providers.azure.lib.audit_info.models import (
-    Azure_Audit_Info,
-    Azure_Identity_Info,
-)
+from prowler.providers.azure.lib.audit_info.models import Azure_Identity_Info
 
 
 class Azure_Provider:
@@ -183,21 +179,3 @@ class Azure_Provider:
 
     def get_identity(self):
         return self.identity
-
-
-def azure_provider_set_session(
-    subscription_ids: list,
-    az_cli_auth: bool,
-    sp_env_auth: bool,
-    browser_auth: bool,
-    managed_entity_auth: bool,
-) -> Azure_Audit_Info:
-    logger.info("Setting Azure session ...")
-
-    azure_provider = Azure_Provider(
-        az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, subscription_ids
-    )
-    azure_audit_info.credentials = azure_provider.get_credentials()
-    azure_audit_info.identity = azure_provider.get_identity()
-
-    return azure_audit_info

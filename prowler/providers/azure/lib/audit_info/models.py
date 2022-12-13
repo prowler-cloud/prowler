@@ -20,4 +20,3 @@ class Azure_Audit_Info:
     def __init__(self, credentials, identity):
         self.credentials = credentials
         self.identity = identity
-        self.is_azure = True

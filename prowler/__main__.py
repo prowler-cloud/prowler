@@ -37,13 +37,12 @@ from prowler.lib.outputs.outputs import (
     display_summary_table,
     send_to_s3_bucket,
 )
-from prowler.providers.aws.aws_provider import aws_provider_set_session
 from prowler.providers.aws.lib.allowlist.allowlist import parse_allowlist_file
 from prowler.providers.aws.lib.quick_inventory.quick_inventory import quick_inventory
 from prowler.providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
 )
-from prowler.providers.azure.azure_provider import azure_provider_set_session
+from prowler.providers.common.common import set_provider_audit_info
 
 
 def prowler():
@@ -296,17 +295,6 @@ def prowler():
     sp_env_auth = args.sp_env_auth
     browser_auth = args.browser_auth
     managed_entity_auth = args.managed_identity_auth
-    if provider == "azure":
-        if (
-            not az_cli_auth
-            and not sp_env_auth
-            and not browser_auth
-            and not managed_entity_auth
-        ):
-            logger.critical(
-                "If you are using Azure provider you need to set one of the following options: --az-cli-auth, --sp-env-auth, --browser-auth, --managed-identity-auth"
-            )
-            sys.exit()
 
     # We treat the compliance framework as another output format
     if compliance_framework:
@@ -415,20 +403,20 @@ def prowler():
             if output_modes:
                 mkdir(output_directory)
 
-    if provider == "aws":
-        # Set global session
-        audit_info = aws_provider_set_session(
-            args.profile,
-            args.role,
-            args.session_duration,
-            args.external_id,
-            args.filter_region,
-            args.organizations_role,
-        )
-    elif provider == "azure":
-        audit_info = azure_provider_set_session(
-            subscriptions, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth
-        )
+    arguments = {
+        "profile": args.profile,
+        "role": args.role,
+        "session_duration": args.session_duration,
+        "external_id": args.external_id,
+        "regions": args.filter_region,
+        "organizations_role": args.organizations_role,
+        "subscriptions": subscriptions,
+        "az_cli_auth": az_cli_auth,
+        "sp_env_auth": sp_env_auth,
+        "browser_auth": browser_auth,
+        "managed_entity_auth": managed_entity_auth,
+    }
+    audit_info = set_provider_audit_info(provider, arguments)
 
     # Check if custom output filename was input, if not, set the default
     if not output_filename:
