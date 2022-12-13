@@ -6,7 +6,7 @@ from boto3 import client, session
 from colorama import Fore, Style
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import AWS_Provider
+from prowler.providers.aws.aws_provider import AWS_Provider, assume_role
 from prowler.providers.aws.lib.arn.arn import arn_parsing
 from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.lib.audit_info.models import (
@@ -32,32 +32,6 @@ class Audit_Info:
             sys.exit()
         else:
             return caller_identity
-
-    def assume_role(self, audit_info: AWS_Audit_Info) -> dict:
-        try:
-            # set the info to assume the role from the partition, account and role name
-            sts_client = audit_info.original_session.client("sts")
-            # If external id, set it to the assume role api call
-            if audit_info.assumed_role_info.external_id:
-                assumed_credentials = sts_client.assume_role(
-                    RoleArn=audit_info.assumed_role_info.role_arn,
-                    RoleSessionName="ProwlerProAsessmentSession",
-                    DurationSeconds=audit_info.assumed_role_info.session_duration,
-                    ExternalId=audit_info.assumed_role_info.external_id,
-                )
-            # else assume the role without the external id
-            else:
-                assumed_credentials = sts_client.assume_role(
-                    RoleArn=audit_info.assumed_role_info.role_arn,
-                    RoleSessionName="ProwlerProAsessmentSession",
-                    DurationSeconds=audit_info.assumed_role_info.session_duration,
-                )
-        except Exception as error:
-            logger.critical(f"{error.__class__.__name__} -- {error}")
-            sys.exit()
-
-        else:
-            return assumed_credentials
 
     def print_audit_credentials(self, audit_info: AWS_Audit_Info):
         # Beautify audited regions, set "all" if there is no filter region
@@ -174,7 +148,7 @@ class Audit_Info:
                 logger.info(
                     f"Getting organizations metadata for account {organizations_role_arn}"
                 )
-                assumed_credentials = self.assume_role(current_audit_info)
+                assumed_credentials = assume_role(current_audit_info)
                 current_audit_info.organizations_metadata = (
                     self.get_organizations_metadata(
                         current_audit_info.audited_account, assumed_credentials
