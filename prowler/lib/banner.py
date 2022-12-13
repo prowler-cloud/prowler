@@ -3,10 +3,6 @@ from colorama import Fore, Style
 from prowler.config.config import banner_color, orange_color, prowler_version, timestamp
 
 
-def print_version():
-    print(f"Prowler {prowler_version}")
-
-
 def print_banner(args):
     banner = f"""{banner_color}                         _
  _ __  _ __ _____      _| | ___ _ __
