@@ -27,6 +27,11 @@ jobs:
           pip install pipenv
           pipenv install --dev
           pipenv run pip list
+          VERSION=$(curl --silent "https://api.github.com/repos/hadolint/hadolint/releases/latest" | \
+            grep '"tag_name":' | \
+            sed -E 's/.*"v([^"]+)".*/\1/' \
+            ) && curl -L -o /tmp/hadolint https://github.com/hadolint/hadolint/releases/download/v${VERSION}/hadolint-Linux-x86_64 \
+            && chmod +x /tmp/hadolint
       - name: Lint with flake8
         run: |
           pipenv run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib
@@ -45,6 +50,9 @@ jobs:
       - name: Vulture
         run: |
           pipenv run vulture --exclude "contrib" --min-confidence 100 .
+      - name: Hadolint
+        run: |
+          /tmp/hadolint Dockerfile --ignore=DL3013
       - name: Test with pytest
         run: |
           pipenv run pytest tests -n auto

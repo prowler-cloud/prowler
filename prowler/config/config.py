@@ -1,9 +1,11 @@
+import os
 from datetime import datetime, timezone
 from os import getcwd
 
 import yaml
 
 from prowler.lib.logger import logger
+from prowler.lib.utils.utils import open_file, parse_json_file
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
@@ -55,3 +57,22 @@ def get_config_var(variable):
     except Exception as error:
         logger.error(f"{error.__class__.__name__}: {error}")
         return ""
+
+
+def get_aws_available_regions():
+    try:
+        actual_directory = ("/").join(
+            os.path.dirname(os.path.realpath(__file__)).split("/")[:-1]
+        )
+        f = open_file(f"{actual_directory}/providers/aws/{aws_services_json_file}")
+        data = parse_json_file(f)
+
+        regions = set()
+        for service in data["services"].values():
+            for partition in service["regions"]:
+                for item in service["regions"][partition]:
+                    regions.add(item)
+        return list(regions)
+    except Exception as error:
+        logger.error(f"{error.__class__.__name__}: {error}")
+        return []

@@ -7,7 +7,7 @@ site_description: >-
 # Theme Configuration
 theme:
   language: en
-  logo: img/ProwlerPro-icon.svg
+  logo: img/prowler-logo.png
   name: material
   favicon: img/ProwlerPro-icon.svg
   features:
