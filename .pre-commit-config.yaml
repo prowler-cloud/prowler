@@ -53,8 +53,20 @@ repos:
     hooks:
       - id: check-pipfile-lock
 
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint
+        args: ["--ignore=DL3013"]
+
   - repo: local
     hooks:
+      - id: dockle
+        name: dockle
+        description: Lint Dockerfiles and Security Audit
+        entry: bash -c 'docker build -t prowler . & dockle prowler'
+        language: system
+
       - id: pylint
         name: pylint
         entry: bash -c 'pylint --disable=W,C,R,E -j 0 -rn -sn prowler/'
