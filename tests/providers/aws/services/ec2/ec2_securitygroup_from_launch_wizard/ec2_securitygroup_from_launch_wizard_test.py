@@ -19,6 +19,7 @@ class Test_ec2_securitygroup_from_launch_wizard:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_from_launch_wizard.ec2_securitygroup_from_launch_wizard.ec2_client",
@@ -33,7 +34,7 @@ class Test_ec2_securitygroup_from_launch_wizard:
             result = check.execute()
 
             # One default sg per region
-            assert len(result) == 26
+            assert len(result) == 3
             # All are compliant by default
             assert result[0].status == "PASS"
 
@@ -50,6 +51,7 @@ class Test_ec2_securitygroup_from_launch_wizard:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_from_launch_wizard.ec2_securitygroup_from_launch_wizard.ec2_client",
@@ -64,7 +66,7 @@ class Test_ec2_securitygroup_from_launch_wizard:
             result = check.execute()
 
             # One default sg per region + created one
-            assert len(result) == 27
+            assert len(result) == 4
             # Search changed sg
             for sg in result:
                 if sg.resource_id == sg_id:
@@ -96,6 +98,7 @@ class Test_ec2_securitygroup_from_launch_wizard:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_from_launch_wizard.ec2_securitygroup_from_launch_wizard.ec2_client",
@@ -110,7 +113,7 @@ class Test_ec2_securitygroup_from_launch_wizard:
             result = check.execute()
 
             # One default sg per region
-            assert len(result) == 26
+            assert len(result) == 3
             # Search changed sg
             for sg in result:
                 if sg.resource_id == default_sg_id:

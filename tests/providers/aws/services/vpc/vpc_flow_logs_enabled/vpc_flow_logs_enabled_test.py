@@ -14,6 +14,7 @@ class Test_vpc_flow_logs_enabled:
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",
@@ -27,9 +28,7 @@ class Test_vpc_flow_logs_enabled:
             check = vpc_flow_logs_enabled()
             result = check.execute()
 
-            assert (
-                len(result) == 25
-            )  # Number of AWS regions, one default VPC per region
+            assert len(result) == 2  # Number of AWS regions, one default VPC per region
 
     @mock_ec2
     def test_vpc_with_flow_logs(self):
@@ -51,6 +50,7 @@ class Test_vpc_flow_logs_enabled:
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",
@@ -85,6 +85,7 @@ class Test_vpc_flow_logs_enabled:
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",

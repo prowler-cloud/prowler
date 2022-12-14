@@ -21,6 +21,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
@@ -66,6 +67,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
@@ -118,6 +120,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
         current_audit_info.audited_account = ACCOUNT_ID
 
         with mock.patch(
@@ -171,6 +174,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
         current_audit_info.audited_account = ACCOUNT_ID
 
         with mock.patch(
@@ -223,6 +227,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
         current_audit_info.audited_account = ACCOUNT_ID
 
         with mock.patch(

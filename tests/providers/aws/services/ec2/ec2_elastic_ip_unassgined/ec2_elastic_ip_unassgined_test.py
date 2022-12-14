@@ -16,6 +16,7 @@ class Test_ec2_elastic_ip_unassgined:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.ec2.ec2_elastic_ip_unassgined.ec2_elastic_ip_unassgined.ec2_client",
@@ -41,6 +42,7 @@ class Test_ec2_elastic_ip_unassgined:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.ec2.ec2_elastic_ip_unassgined.ec2_elastic_ip_unassgined.ec2_client",
@@ -84,6 +86,7 @@ class Test_ec2_elastic_ip_unassgined:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.ec2.ec2_elastic_ip_unassgined.ec2_elastic_ip_unassgined.ec2_client",

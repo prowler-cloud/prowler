@@ -19,6 +19,7 @@ class Test_ec2_ebs_default_encryption:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.ec2.ec2_ebs_default_encryption.ec2_ebs_default_encryption.ec2_client",
@@ -33,7 +34,7 @@ class Test_ec2_ebs_default_encryption:
             results = check.execute()
 
             # One result per region
-            assert len(results) == 25
+            assert len(results) == 2
             for result in results:
                 if result.region == AWS_REGION:
                     assert result.status == "PASS"
@@ -49,6 +50,7 @@ class Test_ec2_ebs_default_encryption:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.ec2.ec2_ebs_default_encryption.ec2_ebs_default_encryption.ec2_client",
@@ -63,7 +65,7 @@ class Test_ec2_ebs_default_encryption:
             result = check.execute()
 
             # One result per region
-            assert len(result) == 25
+            assert len(result) == 2
             assert result[0].status == "FAIL"
             assert search(
                 "EBS Default Encryption is not activated",
