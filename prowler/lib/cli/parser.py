@@ -9,7 +9,7 @@ class ProwlerArgumentParser:
         # CLI Arguments
         self.parser = argparse.ArgumentParser(
             prog="prowler",
-            epilog="To get addtional help on a specific provider run: prowler {provider} -h",
+            epilog="To see the different available options on a specific provider, run: prowler {provider} -h",
         )
         # Default
         self.parser.add_argument(
