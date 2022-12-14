@@ -10,11 +10,12 @@ from colorama import Fore, Style
 
 from prowler.config.config import orange_color
 from prowler.lib.check.compliance_models import load_compliance_framework
-from prowler.lib.check.models import Check, Output_From_Options, load_check_metadata
+from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.outputs import Provider_Output_Options
 
 
 # Load all checks metadata
@@ -278,34 +279,7 @@ def import_check(check_path: str) -> ModuleType:
     return lib
 
 
-# Sets the Output_From_Options to be used in the output modes
-def set_output_options(
-    quiet: bool,
-    output_modes: list,
-    input_output_directory: str,
-    security_hub_enabled: bool,
-    output_filename: str,
-    allowlist_file: str,
-    bulk_checks_metadata: dict,
-    verbose: bool,
-):
-    """Sets the Output_From_Options to be used in the output modes"""
-    global output_options
-    output_options = Output_From_Options(
-        is_quiet=quiet,
-        output_modes=output_modes,
-        output_directory=input_output_directory,
-        security_hub_enabled=security_hub_enabled,
-        output_filename=output_filename,
-        allowlist_file=allowlist_file,
-        bulk_checks_metadata=bulk_checks_metadata,
-        verbose=verbose,
-        # set input options here
-    )
-    return output_options
-
-
-def run_check(check: Check, output_options: Output_From_Options) -> list:
+def run_check(check: Check, output_options: Provider_Output_Options) -> list:
     findings = []
     if output_options.verbose or output_options.is_quiet:
         print(
@@ -327,7 +301,7 @@ def execute_checks(
     checks_to_execute: list,
     provider: str,
     audit_info: AWS_Audit_Info,
-    audit_output_options: Output_From_Options,
+    audit_output_options: Provider_Output_Options,
 ) -> list:
     all_findings = []
     print(

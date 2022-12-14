@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from os import mkdir
-from os.path import isdir
 
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
@@ -19,7 +17,6 @@ from prowler.lib.check.check import (
     print_compliance_frameworks,
     print_compliance_requirements,
     print_services,
-    set_output_options,
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
@@ -37,7 +34,9 @@ from prowler.providers.aws.lib.quick_inventory.quick_inventory import quick_inve
 from prowler.providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
 )
-from prowler.providers.common.common import set_provider_audit_info
+from prowler.providers.common.audit_info import set_provider_audit_info
+
+from prowler.providers.common.outputs import set_provider_output_options
 
 
 def prowler():
@@ -53,15 +52,13 @@ def prowler():
     services = args.services
     categories = args.categories
     checks_file = args.checks_file
-    output_directory = args.output_directory
     output_filename = args.output_filename
     severities = args.severity
     compliance_framework = args.compliance
-    output_modes = args.output_modes
 
     # We treat the compliance framework as another output format
     if compliance_framework:
-        output_modes.extend(compliance_framework)
+        args.output_modes.extend(compliance_framework)
 
     # Set Logger configuration
     set_logging_config(args.log_file, args.log_level)
@@ -137,12 +134,6 @@ def prowler():
         print_checks(provider, checks_to_execute, bulk_checks_metadata)
         sys.exit()
 
-    # Check output directory, if it is not created -> create it
-    if output_directory:
-        if not isdir(output_directory):
-            if output_modes:
-                mkdir(output_directory)
-
     # Set the audit info based on the selected provider
     audit_info = set_provider_audit_info(provider, args.__dict__)
 
@@ -152,21 +143,14 @@ def prowler():
     else:
         allowlist_file = None
 
-    # Setting output options
-    audit_output_options = set_output_options(
-        args.quiet,
-        output_modes,
-        output_directory,
-        args.security_hub,
-        output_filename,
-        allowlist_file,
-        bulk_checks_metadata,
-        args.verbose,
+    # Setting output options based on the selected provider
+    audit_output_options = set_provider_output_options(
+        provider, args, audit_info, allowlist_file, bulk_checks_metadata
     )
 
     # Quick Inventory for AWS
     if provider == "aws" and args.quick_inventory:
-        quick_inventory(audit_info, output_directory)
+        quick_inventory(audit_info, args.output_directory)
         sys.exit()
 
     # Execute checks
@@ -180,13 +164,13 @@ def prowler():
             "There are no checks to execute. Please, check your input arguments"
         )
 
-    if output_modes:
-        for mode in output_modes:
+    if args.output_modes:
+        for mode in args.output_modes:
             # Close json file if exists
             if mode == "json" or mode == "json-asff":
-                close_json(output_filename, output_directory, mode)
+                close_json(output_filename, args.output_directory, mode)
             if mode == "html":
-                add_html_footer(output_filename, output_directory)
+                add_html_footer(output_filename, args.output_directory)
             # Send output to S3 if needed (-B / -D)
             if args.output_bucket or args.output_bucket_no_assume:
                 output_bucket = args.output_bucket
@@ -197,7 +181,7 @@ def prowler():
                     bucket_session = audit_info.original_session
                 send_to_s3_bucket(
                     output_filename,
-                    output_directory,
+                    args.output_directory,
                     mode,
                     output_bucket,
                     bucket_session,
@@ -205,7 +189,7 @@ def prowler():
 
     # Resolve previous fails of Security Hub
     if args.security_hub:
-        resolve_security_hub_previous_findings(output_directory, audit_info)
+        resolve_security_hub_previous_findings(args.output_directory, audit_info)
 
     # Display summary table
     display_summary_table(
@@ -228,40 +212,3 @@ def prowler():
 
 if __name__ == "__main__":
     prowler()
-
-
-#     # Role assumption input options tests
-#     # Move the abpve to the audit info
-#     # if args.session_duration != 3600 or args.external_id:
-#     #     if not args.role:
-#     #         logger.critical("To use -I/-T options -R option is needed")
-#     #         sys.exit()
-
-
-#     # Esto debe moverse al provider de AWS
-#     # if args.shodan:
-#     #     change_config_var("shodan_api_key", args.shodan)
-
-
-# en azure hay que indicar que los modos de autenticación son requeridos
-
-
-#     # elif provider == "azure":
-#     #     audit_info = azure_provider_set_session(
-#     #         subscriptions, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth
-#     #     )
-
-# comprobar que azure tenga algun modo de autenticación en el audit info
-
-
-#     # Check if custom output filename was input, if not, set the default
-#     if not output_filename:
-#         if provider == "aws":
-#             output_filename = (
-#                 f"prowler-output-{audit_info.audited_account}-{output_file_timestamp}"
-#             )
-#         elif provider == "azure":
-#             if audit_info.identity.domain:
-#                 output_filename = f"prowler-output-{audit_info.identity.domain}-{output_file_timestamp}"
-#             else:
-#                 output_filename = f"prowler-output-{'-'.join(audit_info.identity.tenant_ids)}-{output_file_timestamp}"
