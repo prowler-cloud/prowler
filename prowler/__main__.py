@@ -52,7 +52,6 @@ def prowler():
     services = args.services
     categories = args.categories
     checks_file = args.checks_file
-    output_filename = args.output_filename
     severities = args.severity
     compliance_framework = args.compliance
 
@@ -168,9 +167,13 @@ def prowler():
         for mode in args.output_modes:
             # Close json file if exists
             if mode == "json" or mode == "json-asff":
-                close_json(output_filename, args.output_directory, mode)
+                close_json(
+                    audit_output_options.output_filename, args.output_directory, mode
+                )
             if mode == "html":
-                add_html_footer(output_filename, args.output_directory)
+                add_html_footer(
+                    audit_output_options.output_filename, args.output_directory
+                )
             # Send output to S3 if needed (-B / -D)
             if args.output_bucket or args.output_bucket_no_assume:
                 output_bucket = args.output_bucket
@@ -180,7 +183,7 @@ def prowler():
                     output_bucket = args.output_bucket_no_assume
                     bucket_session = audit_info.original_session
                 send_to_s3_bucket(
-                    output_filename,
+                    audit_output_options.output_filename,
                     args.output_directory,
                     mode,
                     output_bucket,

@@ -68,7 +68,8 @@ class Azure_Output_Options(Provider_Output_Options):
 
 
 class Aws_Output_Options(Provider_Output_Options):
-    # security_hub_enabled: bool
+    security_hub_enabled: bool
+
     def __init__(self, arguments, audit_info, allowlist_file, bulk_checks_metadata):
         # First call Provider_Output_Options init
         super().__init__(arguments, allowlist_file, bulk_checks_metadata)
@@ -82,3 +83,11 @@ class Aws_Output_Options(Provider_Output_Options):
             self.output_filename = (
                 f"prowler-output-{audit_info.audited_account}-{output_file_timestamp}"
             )
+
+        # Security Hub Outputs
+        self.security_hub_enabled = arguments.security_hub
+        if arguments.security_hub:
+            if not self.output_modes:
+                self.output_modes = ["json-asff"]
+            else:
+                self.output_modes.append("json-asff")

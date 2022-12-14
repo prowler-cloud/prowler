@@ -1,7 +1,5 @@
 import argparse
 
-from argparse_range import range_action
-
 from prowler.config.config import default_output_directory, prowler_version
 
 
@@ -10,7 +8,8 @@ class ProwlerArgumentParser:
     def __init__(self):
         # CLI Arguments
         self.parser = argparse.ArgumentParser(
-            epilog="To get addtional help on a specific provider run: prowler {provider} -h"
+            prog="prowler",
+            epilog="To get addtional help on a specific provider run: prowler {provider} -h",
         )
         # Default
         self.parser.add_argument(
@@ -213,9 +212,8 @@ class ProwlerArgumentParser:
             "--session-duration",
             nargs="?",
             default=3600,
-            action=range_action(900, 43200),
             type=int,
-            help="Assumed role session duration in seconds, by default 3600",
+            help="Assumed role session duration in seconds, must be between 900 and 43200. Default: 3600",
         )
         aws_auth_subparser.add_argument(
             "-I",

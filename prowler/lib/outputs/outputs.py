@@ -37,7 +37,7 @@ from prowler.lib.utils.utils import file_exists, hash_sha512, open_file
 from prowler.providers.aws.lib.allowlist.allowlist import is_allowlisted
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.lib.security_hub.security_hub import send_to_security_hub
-from prowler.providers.common.common import Provider_Output_Options
+from prowler.providers.common.outputs import Provider_Output_Options
 
 
 def report(check_findings, output_options, audit_info):
