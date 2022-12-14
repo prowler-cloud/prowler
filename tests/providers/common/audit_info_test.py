@@ -11,7 +11,7 @@ from prowler.providers.azure.lib.audit_info.models import (
     Azure_Audit_Info,
     Azure_Identity_Info,
 )
-from prowler.providers.common.common import Audit_Info, set_provider_audit_info
+from prowler.providers.common.audit_info import Audit_Info, set_provider_audit_info
 
 ACCOUNT_ID = 123456789012
 mock_current_audit_info = AWS_Audit_Info(
@@ -59,7 +59,7 @@ def mock_set_credentials(*_):
 
 class Test_Set_Audit_Info:
     @patch(
-        "prowler.providers.common.common.current_audit_info",
+        "prowler.providers.common.audit_info.current_audit_info",
         new=mock_current_audit_info,
     )
     @mock_sts
@@ -88,7 +88,7 @@ class Test_Set_Audit_Info:
         # assert get_caller_identity["UserId"] == str(ACCOUNT_ID)
 
     @patch(
-        "prowler.providers.common.common.current_audit_info",
+        "prowler.providers.common.audit_info.current_audit_info",
         new=mock_current_audit_info,
     )
     @mock_organizations
@@ -147,7 +147,7 @@ class Test_Set_Audit_Info:
         org.account_details_tags.should.equal("key:value,")
 
     @patch(
-        "prowler.providers.common.common.current_audit_info",
+        "prowler.providers.common.audit_info.current_audit_info",
         new=mock_current_audit_info,
     )
     @patch.object(Audit_Info, "validate_credentials", new=mock_validate_credentials)
@@ -174,7 +174,8 @@ class Test_Set_Audit_Info:
         assert isinstance(audit_info, AWS_Audit_Info)
 
     @patch(
-        "prowler.providers.common.common.azure_audit_info", new=mock_azure_audit_info
+        "prowler.providers.common.audit_info.azure_audit_info",
+        new=mock_azure_audit_info,
     )
     @patch.object(Azure_Provider, "__set_credentials__", new=mock_set_credentials)
     @patch.object(Azure_Provider, "__set_identity_info__", new=mock_set_identity_info)
@@ -188,7 +189,8 @@ class Test_Set_Audit_Info:
             "regions": None,
             "organizations_role": None,
             "subscriptions": None,
-            "az_cli_auth": None,
+            # We need to set exactly one auth method
+            "az_cli_auth": True,
             "sp_env_auth": None,
             "browser_auth": None,
             "managed_entity_auth": None,
