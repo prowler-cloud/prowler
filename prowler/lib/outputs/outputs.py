@@ -21,7 +21,6 @@ from prowler.config.config import (
     timestamp_iso,
     timestamp_utc,
 )
-from prowler.lib.check.models import Output_From_Options
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import (
     Check_Output_CSV,
@@ -38,6 +37,7 @@ from prowler.lib.utils.utils import file_exists, hash_sha512, open_file
 from prowler.providers.aws.lib.allowlist.allowlist import is_allowlisted
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.lib.security_hub.security_hub import send_to_security_hub
+from prowler.providers.common.outputs import Provider_Output_Options
 
 
 def report(check_findings, output_options, audit_info):
@@ -512,7 +512,7 @@ def send_to_s3_bucket(
 def display_summary_table(
     findings: list,
     audit_info,
-    output_options: Output_From_Options,
+    output_options: Provider_Output_Options,
     provider: str,
 ):
     output_directory = output_options.output_directory

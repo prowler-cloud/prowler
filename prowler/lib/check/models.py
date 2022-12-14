@@ -8,20 +8,6 @@ from pydantic import BaseModel, ValidationError
 from prowler.lib.logger import logger
 
 
-@dataclass
-class Output_From_Options:
-    """Class to store the Prowler output modes options"""
-
-    is_quiet: bool
-    output_modes: list
-    output_directory: str
-    security_hub_enabled: bool
-    output_filename: str
-    allowlist_file: str
-    bulk_checks_metadata: dict
-    verbose: str
-
-
 class Code(BaseModel):
     """Check's remediation information using IaC like CloudFormation, Terraform or the native CLI"""
 

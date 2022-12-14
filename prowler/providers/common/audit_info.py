@@ -1,4 +1,3 @@
-import importlib
 import sys
 
 from arnparse import arnparse
@@ -21,7 +20,7 @@ from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 
 class Audit_Info:
     def __init__(self):
-        logger.info("Instantiating audit info")
+        logger.info("Setting Audit Info ...")
 
     def validate_credentials(self, validate_session: session) -> dict:
         try:
@@ -44,11 +43,11 @@ class Audit_Info:
         profile = audit_info.profile if audit_info.profile is not None else "default"
 
         report = f"""
-    This report is being generated using credentials below:
+This report is being generated using credentials below:
 
-    AWS-CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} AWS Filter Region: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
-    AWS Account: {Fore.YELLOW}[{audit_info.audited_account}]{Style.RESET_ALL} UserId: {Fore.YELLOW}[{audit_info.audited_user_id}]{Style.RESET_ALL}
-    Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESET_ALL}
+AWS-CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} AWS Filter Region: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
+AWS Account: {Fore.YELLOW}[{audit_info.audited_account}]{Style.RESET_ALL} UserId: {Fore.YELLOW}[{audit_info.audited_user_id}]{Style.RESET_ALL}
+Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESET_ALL}
     """
         # If -A is set, print Assumed Role ARN
         if audit_info.assumed_role_info.role_arn is not None:
@@ -92,13 +91,30 @@ class Audit_Info:
             )
             return organizations_info
 
-    def set_aws_audit_info(self, arguments):
-        input_profile = arguments["profile"]
-        input_role = arguments["role"]
-        input_session_duration = arguments["session_duration"]
-        input_external_id = arguments["external_id"]
-        input_regions = arguments["regions"]
-        organizations_role_arn = arguments["organizations_role"]
+    def set_aws_audit_info(self, arguments) -> AWS_Audit_Info:
+        """
+        set_aws_audit_info returns the AWS_Audit_Info
+        """
+        logger.info("Setting Azure session ...")
+
+        # Assume Role Options
+        input_role = arguments.get("role")
+        input_session_duration = arguments.get("session_duration")
+        input_external_id = arguments.get("external_id")
+        print(input_session_duration)
+        if input_session_duration and input_session_duration not in range(900, 43200):
+            raise Exception("Value for -T option must be between 900 and 43200")
+
+        if (
+            input_session_duration and input_session_duration != 3600
+        ) or input_external_id:
+            if not input_role:
+                raise Exception("To use -I/-T options -R option is needed")
+
+        input_profile = arguments.get("profile")
+        input_regions = arguments.get("regions")
+        organizations_role_arn = arguments.get("organizations_role")
+
         # Assumed AWS session
         assumed_session = None
 
@@ -218,12 +234,26 @@ class Audit_Info:
         return current_audit_info
 
     def set_azure_audit_info(self, arguments) -> Azure_Audit_Info:
+        """
+        set_azure_audit_info returns the Azure_Audit_Info
+        """
         logger.info("Setting Azure session ...")
-        subscription_ids = arguments["subscriptions"]
-        az_cli_auth = arguments["az_cli_auth"]
-        sp_env_auth = arguments["sp_env_auth"]
-        browser_auth = arguments["browser_auth"]
-        managed_entity_auth = arguments["managed_entity_auth"]
+        subscription_ids = arguments.get("subscriptions")
+
+        logger.info("Checking if any credentials mode is set ...")
+        az_cli_auth = arguments.get("az_cli_auth")
+        sp_env_auth = arguments.get("sp_env_auth")
+        browser_auth = arguments.get("browser_auth")
+        managed_entity_auth = arguments.get("managed_entity_auth")
+        if (
+            not az_cli_auth
+            and not sp_env_auth
+            and not browser_auth
+            and not managed_entity_auth
+        ):
+            raise Exception(
+                "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+            )
 
         azure_provider = Azure_Provider(
             az_cli_auth,
@@ -239,17 +269,16 @@ class Audit_Info:
 
 
 def set_provider_audit_info(provider: str, arguments: dict):
+    """
+    set_provider_audit_info configures automatically the audit session based on the selected provider and returns the audit_info object.
+    """
     try:
         provider_set_audit_info = f"set_{provider}_audit_info"
         provider_audit_info = getattr(Audit_Info(), provider_set_audit_info)(arguments)
     except Exception as error:
-        logger.error(
+        logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
+        sys.exit()
     else:
         return provider_audit_info
-
-
-def import_lib(path: str):
-    lib = importlib.import_module(path)
-    return lib
