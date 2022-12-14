@@ -28,7 +28,7 @@ class Test_EC2_Service:
             profile_region=None,
             credentials=None,
             assumed_role_info=None,
-            audited_regions=None,
+            audited_regions=["eu-west-1", "us-east-1"],
             organizations_metadata=None,
         )
         return audit_info
@@ -195,7 +195,7 @@ class Test_EC2_Service:
         ec2 = EC2(audit_info)
 
         # One result per region
-        assert len(ec2.ebs_encryption_by_default) == 25
+        assert len(ec2.ebs_encryption_by_default) == 2
         for result in ec2.ebs_encryption_by_default:
             if result.region == AWS_REGION:
                 assert result.status

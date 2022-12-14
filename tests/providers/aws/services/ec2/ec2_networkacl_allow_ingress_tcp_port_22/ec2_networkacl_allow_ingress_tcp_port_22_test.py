@@ -14,6 +14,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.ec2.ec2_networkacl_allow_ingress_tcp_port_22.ec2_networkacl_allow_ingress_tcp_port_22.ec2_client",
@@ -28,7 +29,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
             result = check.execute()
 
             # One default nacl per region
-            assert len(result) == 25
+            assert len(result) == 2
 
     @mock_ec2
     def test_ec2_non_default_compliant_nacl(self):
@@ -37,6 +38,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.ec2.ec2_networkacl_allow_ingress_tcp_port_22.ec2_networkacl_allow_ingress_tcp_port_22.ec2_client",
@@ -51,7 +53,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
             result = check.execute()
 
             # One default sg per region
-            assert len(result) == 25
+            assert len(result) == 2
 
             # by default nacls are public
             assert result[0].status == "FAIL"
@@ -82,6 +84,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.ec2.ec2_networkacl_allow_ingress_tcp_port_22.ec2_networkacl_allow_ingress_tcp_port_22.ec2_client",
@@ -96,7 +99,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
             result = check.execute()
 
             # One default sg per region + default of new VPC + new NACL
-            assert len(result) == 27
+            assert len(result) == 4
             # Search changed sg
             for nacl in result:
                 if nacl.resource_id == nacl_id:
@@ -128,6 +131,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.ec2.ec2_networkacl_allow_ingress_tcp_port_22.ec2_networkacl_allow_ingress_tcp_port_22.ec2_client",
@@ -142,7 +146,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
             result = check.execute()
 
             # One default sg per region + default of new VPC + new NACL
-            assert len(result) == 27
+            assert len(result) == 4
             # Search changed sg
             for nacl in result:
                 if nacl.resource_id == nacl_id:

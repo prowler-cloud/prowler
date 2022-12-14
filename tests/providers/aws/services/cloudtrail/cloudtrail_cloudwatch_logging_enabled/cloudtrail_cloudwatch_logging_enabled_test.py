@@ -36,6 +36,7 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
         )
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled.cloudtrail_client",
@@ -111,6 +112,7 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
         )
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled.cloudtrail_client",
@@ -137,8 +139,8 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
 
             check = cloudtrail_cloudwatch_logging_enabled()
             result = check.execute()
-            # len of result should be 24 -> (1 multiregion entry per region + 1 entry because of single region trail)
-            assert len(result) == 26
+            # len of result should be 3 -> (1 multiregion entry per region + 1 entry because of single region trail)
+            assert len(result) == 3
             for report in result:
                 if report.resource_id == trail_name_us:
                     assert report.resource_id == trail_name_us
@@ -186,6 +188,7 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
         )
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled.cloudtrail_client",

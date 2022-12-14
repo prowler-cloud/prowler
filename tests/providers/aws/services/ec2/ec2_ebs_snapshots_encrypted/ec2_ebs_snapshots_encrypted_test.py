@@ -14,6 +14,7 @@ class Test_ec2_ebs_snapshots_encrypted:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted.ec2_client",
@@ -28,7 +29,7 @@ class Test_ec2_ebs_snapshots_encrypted:
             result = check.execute()
 
             # Default snapshots
-            assert len(result) == 1485
+            assert len(result) == 122
 
     @mock_ec2
     def test_ec2_unencrypted_snapshot(self):
@@ -41,6 +42,7 @@ class Test_ec2_ebs_snapshots_encrypted:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted.ec2_client",
@@ -55,7 +57,7 @@ class Test_ec2_ebs_snapshots_encrypted:
             results = check.execute()
 
             # Default snapshots + 1 created
-            assert len(results) == 1486
+            assert len(results) == 123
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
@@ -77,6 +79,7 @@ class Test_ec2_ebs_snapshots_encrypted:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted.ec2_client",
@@ -91,7 +94,7 @@ class Test_ec2_ebs_snapshots_encrypted:
             results = check.execute()
 
             # Default snapshots + 1 created
-            assert len(results) == 1486
+            assert len(results) == 123
 
             for snap in results:
                 if snap.resource_id == snapshot.id:

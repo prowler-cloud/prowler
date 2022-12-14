@@ -14,6 +14,7 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege.vpc_client",
@@ -61,6 +62,7 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
         from prowler.providers.aws.services.vpc.vpc_service import VPC, Route
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege.vpc_client",
@@ -123,6 +125,7 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
         from prowler.providers.aws.services.vpc.vpc_service import VPC, Route
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
             "prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege.vpc_client",

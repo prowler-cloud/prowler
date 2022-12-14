@@ -25,7 +25,7 @@ class Test_Config_Service:
             profile_region=None,
             credentials=None,
             assumed_role_info=None,
-            audited_regions=None,
+            audited_regions=["eu-west-1", "us-east-1"],
             organizations_metadata=None,
         )
         return audit_info
@@ -81,7 +81,7 @@ class Test_Config_Service:
         audit_info = self.set_mocked_audit_info()
         config = Config(audit_info)
         # One recorder per region
-        assert len(config.recorders) == 25
+        assert len(config.recorders) == 2
         # Check the active one
         # Search for the recorder just created
         for recorder in config.recorders:

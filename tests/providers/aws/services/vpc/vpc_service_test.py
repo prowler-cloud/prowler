@@ -27,7 +27,7 @@ class Test_VPC_Service:
             profile_region=None,
             credentials=None,
             assumed_role_info=None,
-            audited_regions=None,
+            audited_regions=["eu-west-1", "us-east-1"],
             organizations_metadata=None,
         )
         return audit_info
@@ -76,7 +76,7 @@ class Test_VPC_Service:
         audit_info = self.set_mocked_audit_info()
         vpc = VPC(audit_info)
         assert (
-            len(vpc.vpcs) == 26
+            len(vpc.vpcs) == 3
         )  # Number of AWS regions + created VPC, one default VPC per region
 
     # Test VPC Describe Flow Logs
