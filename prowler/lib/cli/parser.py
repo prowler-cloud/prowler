@@ -29,7 +29,6 @@ class ProwlerArgumentParser:
             dest="provider",
         )
 
-        self.__init_allowlist_parser__()
         self.__init_outputs_parser__()
         self.__init_logging_parser__()
         self.__init_checks_parser__()
@@ -77,17 +76,6 @@ class ProwlerArgumentParser:
         default_args.extend(args[1:])
         # Save the arguments with the default provider included
         return default_args
-
-    def __init_allowlist_parser__(self):
-        # Allowlist
-        allowlist_parser = self.common_providers_parser.add_argument_group("Allowlist")
-        allowlist_parser.add_argument(
-            "-w",
-            "--allowlist-file",
-            nargs="?",
-            default=None,
-            help="Path for allowlist yaml file. See example prowler/config/allowlist.yaml for reference and format. It also accepts AWS DynamoDB Table ARN or S3 URI, see more in https://docs.prowler.cloud/en/latest/tutorials/allowlist/",
-        )
 
     def __init_outputs_parser__(self):
         # Outputs
@@ -321,6 +309,15 @@ class ProwlerArgumentParser:
             nargs="?",
             default=None,
             help="Shodan API key used by check ec2_elastic_ip_shodan.",
+        )
+        # Allowlist
+        allowlist_subparser = aws_parser.add_argument_group("Allowlist")
+        allowlist_subparser.add_argument(
+            "-w",
+            "--allowlist-file",
+            nargs="?",
+            default=None,
+            help="Path for allowlist yaml file. See example prowler/config/allowlist.yaml for reference and format. It also accepts AWS DynamoDB Table ARN or S3 URI, see more in https://docs.prowler.cloud/en/latest/tutorials/allowlist/",
         )
 
     def __init_azure_parser__(self):

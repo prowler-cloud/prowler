@@ -136,7 +136,7 @@ def prowler():
     audit_info = set_provider_audit_info(provider, args.__dict__)
 
     # Parse content from Allowlist file and get it, if necessary, from S3
-    if args.allowlist_file:
+    if provider == "aws" and args.allowlist_file:
         allowlist_file = parse_allowlist_file(audit_info, args.allowlist_file)
     else:
         allowlist_file = None
