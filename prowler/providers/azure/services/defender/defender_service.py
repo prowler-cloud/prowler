@@ -16,7 +16,6 @@ class Defender:
             audit_info.identity.subscriptions, audit_info.credentials
         )
         self.pricings = self.__get_pricings__()
-        self.region = "azure"
 
     def __set_clients__(self, subscriptions, credentials):
         clients = {}
@@ -47,6 +46,7 @@ class Defender:
                     pricings[subscription].update(
                         {
                             pricing.name: Defender_Pricing(
+                                resource_id=pricing.id,
                                 pricing_tier=pricing.pricing_tier,
                                 free_trial_remaining_time=pricing.free_trial_remaining_time,
                             )
@@ -61,5 +61,6 @@ class Defender:
 
 
 class Defender_Pricing(BaseModel):
+    resource_id: str
     pricing_tier: str
     free_trial_remaining_time: timedelta

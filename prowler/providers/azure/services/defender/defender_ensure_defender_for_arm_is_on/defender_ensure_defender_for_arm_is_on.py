@@ -7,9 +7,9 @@ class defender_ensure_defender_for_arm_is_on(Check):
         findings = []
         for subscription, pricings in defender_client.pricings.items():
             report = Check_Report_Azure(self.metadata())
-            report.region = defender_client.region
             report.status = "PASS"
-            report.resource_id = "Defender planARM"
+            report.resource_id = pricings["Arm"].resource_id
+            report.resource_name = "Defender planARM"
             report.status_extended = f"Defender plan Defender for ARM from subscription {subscription} is set to ON (pricing tier standard)"
             if pricings["Arm"].pricing_tier != "Standard":
                 report.status = "FAIL"

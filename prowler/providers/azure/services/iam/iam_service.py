@@ -48,7 +48,7 @@ class IAM:
                 ):
                     roles[subscription].append(
                         Role(
-                            id=role.name,
+                            id=role.id,
                             name=role.role_name,
                             type=role.role_type,
                             assignable_scopes=role.assignable_scopes,

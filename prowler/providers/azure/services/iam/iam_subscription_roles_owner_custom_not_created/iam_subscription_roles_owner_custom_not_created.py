@@ -10,7 +10,8 @@ class iam_subscription_roles_owner_custom_not_created(Check):
         for subscription, roles in iam_client.roles.items():
             for role in roles:
                 report = Check_Report_Azure(self.metadata())
-                report.region = iam_client.region
+                report.resource_id = role.id
+                report.resource_name = role.role_name
                 report.status = "PASS"
                 report.status_extended = f"Role {role.name} from subscription {subscription} is not a custom owner role"
                 for scope in role.assignable_scopes:

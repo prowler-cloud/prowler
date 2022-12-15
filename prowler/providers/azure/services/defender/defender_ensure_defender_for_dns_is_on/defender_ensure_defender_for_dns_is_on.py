@@ -7,9 +7,9 @@ class defender_ensure_defender_for_dns_is_on(Check):
         findings = []
         for subscription, pricings in defender_client.pricings.items():
             report = Check_Report_Azure(self.metadata())
-            report.region = defender_client.region
             report.status = "PASS"
-            report.resource_id = "Defender plan DNS"
+            report.resource_name = "Defender plan DNS"
+            report.resource_id = pricings["Dns"].resource_id
             report.status_extended = f"Defender plan Defender for DNS from subscription {subscription} is set to ON (pricing tier standard)"
             if pricings["Dns"].pricing_tier != "Standard":
                 report.status = "FAIL"
