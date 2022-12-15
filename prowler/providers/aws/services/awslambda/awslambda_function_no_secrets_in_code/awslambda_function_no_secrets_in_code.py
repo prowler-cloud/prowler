@@ -4,7 +4,7 @@ import tempfile
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
@@ -12,7 +12,7 @@ class awslambda_function_no_secrets_in_code(Check):
     def execute(self):
         findings = []
         for function in awslambda_client.functions.values():
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = function.region
             report.resource_id = function.name
             report.resource_arn = function.arn

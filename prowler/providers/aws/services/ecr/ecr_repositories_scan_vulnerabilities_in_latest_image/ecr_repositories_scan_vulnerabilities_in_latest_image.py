@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ecr.ecr_client import ecr_client
 
 
@@ -7,7 +7,7 @@ class ecr_repositories_scan_vulnerabilities_in_latest_image(Check):
         findings = []
         for repository in ecr_client.repositories:
             for image in repository.images_details:
-                report = Check_Report(self.metadata())
+                report = Check_Report_AWS(self.metadata())
                 report.region = repository.region
                 report.resource_id = repository.name
                 report.resource_arn = repository.arn

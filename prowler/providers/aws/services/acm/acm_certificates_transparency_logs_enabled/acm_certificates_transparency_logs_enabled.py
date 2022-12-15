@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.acm.acm_client import acm_client
 
 
@@ -6,7 +6,7 @@ class acm_certificates_transparency_logs_enabled(Check):
     def execute(self):
         findings = []
         for certificate in acm_client.certificates:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = certificate.region
             if certificate.type == "IMPORTED":
                 report.status = "PASS"

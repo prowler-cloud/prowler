@@ -5,7 +5,7 @@ from base64 import b64decode
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
@@ -13,7 +13,7 @@ class ec2_instance_secrets_user_data(Check):
     def execute(self):
         findings = []
         for instance in ec2_client.instances:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = instance.region
             report.resource_id = instance.id
 

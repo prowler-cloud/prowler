@@ -1,13 +1,13 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.storage.storage_client import storage_client
 
 
 class storage_default_network_access_rule_is_denied(Check):
-    def execute(self) -> Check_Report:
+    def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, storage_accounts in storage_client.storage_accounts.items():
             for storage_account in storage_accounts:
-                report = Check_Report(self.metadata())
+                report = Check_Report_Azure(self.metadata())
                 report.region = storage_client.region
                 report.status = "PASS"
                 report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has network access rule set to Deny"

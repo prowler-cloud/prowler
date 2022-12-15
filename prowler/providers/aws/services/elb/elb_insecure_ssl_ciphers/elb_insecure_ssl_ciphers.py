@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.elb.elb_client import elb_client
 
 
@@ -9,7 +9,7 @@ class elb_insecure_ssl_ciphers(Check):
             "ELBSecurityPolicy-TLS-1-2-2017-01",
         ]
         for lb in elb_client.loadbalancers:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = lb.region
             report.resource_id = lb.name
             report.status = "PASS"

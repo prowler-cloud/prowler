@@ -4,7 +4,7 @@ import tempfile
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudformation.cloudformation_client import (
     cloudformation_client,
 )
@@ -17,7 +17,7 @@ class cloudformation_outputs_find_secrets(Check):
         """Execute the cloudformation_outputs_find_secrets check"""
         findings = []
         for stack in cloudformation_client.stacks:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = stack.region
             report.resource_id = stack.name
             report.resource_arn = stack.arn

@@ -1,9 +1,9 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
 
 class iam_user_no_setup_initial_access_key(Check):
-    def execute(self) -> Check_Report:
+    def execute(self) -> Check_Report_AWS:
         findings = []
         for user_record in iam_client.credential_report:
             if (
@@ -20,7 +20,7 @@ class iam_user_no_setup_initial_access_key(Check):
                     and user_record["access_key_1_last_used_date"] == "N/A"
                     and user_record["password_enabled"] == "true"
                 ):
-                    report = Check_Report(self.metadata())
+                    report = Check_Report_AWS(self.metadata())
                     report.region = iam_client.region
                     report.resource_id = user_record["user"]
                     report.resource_arn = user_record["arn"]
@@ -34,7 +34,7 @@ class iam_user_no_setup_initial_access_key(Check):
                     and user_record["access_key_2_last_used_date"] == "N/A"
                     and user_record["password_enabled"] == "true"
                 ):
-                    report = Check_Report(self.metadata())
+                    report = Check_Report_AWS(self.metadata())
                     report.region = iam_client.region
                     report.resource_id = user_record["user"]
                     report.resource_arn = user_record["arn"]
@@ -44,7 +44,7 @@ class iam_user_no_setup_initial_access_key(Check):
                     )
                     findings.append(report)
             else:
-                report = Check_Report(self.metadata())
+                report = Check_Report_AWS(self.metadata())
                 report.region = iam_client.region
                 report.resource_id = user_record["user"]
                 report.resource_arn = user_record["arn"]

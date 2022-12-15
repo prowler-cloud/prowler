@@ -5,7 +5,7 @@ from json import dumps
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
@@ -13,7 +13,7 @@ class ecs_task_definitions_no_environment_secrets(Check):
     def execute(self):
         findings = []
         for task_definition in ecs_client.task_definitions:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = task_definition.region
             report.resource_id = task_definition.name
             report.resource_arn = task_definition.arn

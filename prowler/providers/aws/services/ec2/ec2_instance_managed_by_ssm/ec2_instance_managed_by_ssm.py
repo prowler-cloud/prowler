@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.ssm.ssm_client import ssm_client
 
@@ -7,7 +7,7 @@ class ec2_instance_managed_by_ssm(Check):
     def execute(self):
         findings = []
         for instance in ec2_client.instances:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = instance.region
             if not ssm_client.managed_instances.get(instance.id):
                 report.status = "FAIL"

@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.sns.sns_client import sns_client
 
 
@@ -6,7 +6,7 @@ class sns_topics_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for topic in sns_client.topics:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = topic.region
             report.resource_id = topic.name
             report.resource_arn = topic.arn

@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.trustedadvisor.trustedadvisor_client import (
     trustedadvisor_client,
 )
@@ -9,7 +9,7 @@ class trustedadvisor_errors_and_warnings(Check):
         findings = []
         if trustedadvisor_client.checks:
             for check in trustedadvisor_client.checks:
-                report = Check_Report(self.metadata())
+                report = Check_Report_AWS(self.metadata())
                 report.region = check.region
                 report.resource_id = check.id
                 report.status = "FAIL"

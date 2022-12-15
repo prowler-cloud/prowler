@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.opensearch.opensearch_client import (
     opensearch_client,
 )
@@ -8,7 +8,7 @@ class opensearch_service_domains_internal_user_database_enabled(Check):
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = domain.region
             report.resource_id = domain.name
             report.resource_arn = domain.arn

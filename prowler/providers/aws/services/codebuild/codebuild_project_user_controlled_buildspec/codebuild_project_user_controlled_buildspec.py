@@ -1,6 +1,6 @@
 from re import search
 
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.codebuild.codebuild_client import codebuild_client
 
 
@@ -8,7 +8,7 @@ class codebuild_project_user_controlled_buildspec(Check):
     def execute(self):
         findings = []
         for project in codebuild_client.projects:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = project.region
             report.resource_id = project.name
             report.resource_arn = ""

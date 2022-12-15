@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.s3.s3_client import s3_client
 
 
@@ -6,7 +6,7 @@ class s3_bucket_default_encryption(Check):
     def execute(self):
         findings = []
         for bucket in s3_client.buckets:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = bucket.region
             report.resource_id = bucket.name
             if bucket.encryption:

@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.kms.kms_client import kms_client
 
 
@@ -9,7 +9,7 @@ class kms_key_not_publicly_accessible(Check):
             if (
                 key.manager == "CUSTOMER" and key.state == "Enabled"
             ):  # only customer KMS have policies
-                report = Check_Report(self.metadata())
+                report = Check_Report_AWS(self.metadata())
                 report.status = "PASS"
                 report.status_extended = f"KMS key {key.id} is not exposed to Public."
                 report.resource_id = key.id

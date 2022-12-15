@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.workspaces.workspaces_client import (
     workspaces_client,
 )
@@ -8,7 +8,7 @@ class workspaces_volume_encryption_enabled(Check):
     def execute(self):
         findings = []
         for workspace in workspaces_client.workspaces:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = workspace.region
             report.resource_id = workspace.id
             report.resource_arn = workspace.arn

@@ -1,18 +1,18 @@
 import datetime
 
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
 maximum_expiration_days = 90
 
 
 class iam_rotate_access_key_90_days(Check):
-    def execute(self) -> Check_Report:
+    def execute(self) -> Check_Report_AWS:
         findings = []
         response = iam_client.credential_report
 
         for user in response:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = iam_client.region
             report.resource_id = user["user"]
             report.resource_arn = user["arn"]

@@ -1,12 +1,12 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.defender.defender_client import defender_client
 
 
 class defender_ensure_defender_for_os_relational_databases_is_on(Check):
-    def execute(self) -> Check_Report:
+    def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, pricings in defender_client.pricings.items():
-            report = Check_Report(self.metadata())
+            report = Check_Report_Azure(self.metadata())
             report.region = defender_client.region
             report.status = "PASS"
             report.resource_id = "Defender plan Open-Source Relational Databases"

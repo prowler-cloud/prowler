@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.accessanalyzer.accessanalyzer_client import (
     accessanalyzer_client,
 )
@@ -8,7 +8,7 @@ class accessanalyzer_enabled_without_findings(Check):
     def execute(self):
         findings = []
         for analyzer in accessanalyzer_client.analyzers:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = analyzer.region
             if analyzer.status == "ACTIVE":
                 if analyzer.findings_count > 0:

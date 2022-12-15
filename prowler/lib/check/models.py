@@ -85,21 +85,44 @@ class Check_Report:
     """Contains the Check's finding information."""
 
     status: str
-    region: str
     status_extended: str
     check_metadata: Check_Metadata_Model
-    resource_id: str
     resource_details: str
     resource_tags: list
-    resource_arn: str
 
     def __init__(self, metadata):
         self.check_metadata = Check_Metadata_Model.parse_raw(metadata)
         self.status_extended = ""
         self.resource_details = ""
         self.resource_tags = []
+
+
+@dataclass
+class Check_Report_AWS(Check_Report):
+    """Contains the AWS Check's finding information."""
+
+    resource_id: str
+    resource_arn: str
+    region: str
+
+    def __init__(self, metadata):
+        super().__init__(metadata)
         self.resource_id = ""
         self.resource_arn = ""
+        self.region = ""
+
+
+@dataclass
+class Check_Report_Azure(Check_Report):
+    """Contains the Azure Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+
+    def __init__(self, metadata):
+        super().__init__(metadata)
+        self.resource_name = ""
+        self.resource_id = ""
 
 
 # Testing Pending

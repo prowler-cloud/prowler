@@ -1,11 +1,11 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
 
 class cloudwatch_cross_account_sharing_disabled(Check):
     def execute(self):
         findings = []
-        report = Check_Report(self.metadata())
+        report = Check_Report_AWS(self.metadata())
         report.status = "PASS"
         report.status_extended = "CloudWatch doesn't allows cross-account sharing"
         report.resource_id = "CloudWatch-CrossAccountSharingRole"

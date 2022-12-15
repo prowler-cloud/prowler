@@ -1,5 +1,5 @@
 from prowler.config.config import get_config_var
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.appstream.appstream_client import appstream_client
 
 max_disconnect_timeout_in_seconds = get_config_var("max_disconnect_timeout_in_seconds")
@@ -13,7 +13,7 @@ class appstream_fleet_session_disconnect_timeout(Check):
         """Execute the appstream_fleet_maximum_session_duration check"""
         findings = []
         for fleet in appstream_client.fleets:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = fleet.region
             report.resource_id = fleet.name
             report.resource_arn = fleet.arn

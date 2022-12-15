@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
 from prowler.providers.aws.services.emr.emr_client import emr_client
@@ -15,7 +15,7 @@ class emr_cluster_publicly_accesible(Check):
                 ClusterStatus.TERMINATED,
                 ClusterStatus.TERMINATED_WITH_ERRORS,
             ):
-                report = Check_Report(self.metadata())
+                report = Check_Report_AWS(self.metadata())
                 report.region = cluster.region
                 report.resource_id = cluster.id
                 report.resource_arn = cluster.arn

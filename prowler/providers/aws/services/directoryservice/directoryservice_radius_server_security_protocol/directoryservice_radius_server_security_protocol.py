@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.directoryservice.directoryservice_client import (
     directoryservice_client,
 )
@@ -12,7 +12,7 @@ class directoryservice_radius_server_security_protocol(Check):
         findings = []
         for directory in directoryservice_client.directories.values():
             if directory.radius_settings:
-                report = Check_Report(self.metadata())
+                report = Check_Report_AWS(self.metadata())
                 report.region = directory.region
                 report.resource_id = directory.id
                 if (

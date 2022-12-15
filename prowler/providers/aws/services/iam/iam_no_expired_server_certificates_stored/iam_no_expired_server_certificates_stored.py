@@ -1,15 +1,15 @@
 from datetime import datetime, timezone
 
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
 
 class iam_no_expired_server_certificates_stored(Check):
-    def execute(self) -> Check_Report:
+    def execute(self) -> Check_Report_AWS:
         findings = []
 
         for certificate in iam_client.server_certificates:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = iam_client.region
             report.resource_id = certificate.id
             report.resource_arn = certificate.arn

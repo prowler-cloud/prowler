@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
 
@@ -7,7 +7,7 @@ class ec2_securitygroup_in_use_without_ingress_filtering(Check):
     def execute(self):
         findings = []
         for security_group in ec2_client.security_groups:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = security_group.region
             report.resource_id = security_group.id
             report.status = "PASS"

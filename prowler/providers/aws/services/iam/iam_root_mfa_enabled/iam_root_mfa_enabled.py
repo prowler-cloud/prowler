@@ -1,14 +1,14 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
 
 class iam_root_mfa_enabled(Check):
-    def execute(self) -> Check_Report:
+    def execute(self) -> Check_Report_AWS:
         findings = []
 
         for user in iam_client.credential_report:
             if user["user"] == "<root_account>":
-                report = Check_Report(self.metadata())
+                report = Check_Report_AWS(self.metadata())
                 report.region = iam_client.region
                 report.resource_id = user["user"]
                 report.resource_arn = user["arn"]
