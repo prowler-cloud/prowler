@@ -44,6 +44,7 @@ nav:
           - Authentication: tutorials/azure/authentication.md
           - Subscriptions: tutorials/azure/subscriptions.md
     - Contact Us: contact.md
+    - FAQ: faq.md
     - About: about.md
 # Customization
 extra:

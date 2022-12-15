@@ -42,7 +42,7 @@ from prowler.providers.common.outputs import set_provider_output_options
 def prowler():
     # Parse Arguments
     parser = ProwlerArgumentParser()
-    args = parser.parser.parse_args()
+    args = parser.parse()
 
     # Save Arguments
     provider = args.provider

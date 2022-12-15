@@ -144,6 +144,15 @@ prowler aws --profile custom-profile -f us-east-1 eu-south-2
 ```
 > By default, `prowler` will scan all AWS regions.
 
+## Azure
+
+With Azure you need to specify which auth method is going to be used:
+
+```console
+prowler azure [--sp-env-auth, --az-cli-auth, --browser-auth, --managed-identity-auth]
+```
+> By default, `prowler` will scan all Azure subscriptions.
+
 # 🎉 New Features
 
 - Multi-cloud support!
@@ -152,7 +161,7 @@ prowler aws --profile custom-profile -f us-east-1 eu-south-2
 
 The full documentation can be found here:
 
-[https://prowler-cloud.github.io/prowler/](https://prowler-cloud.github.io/prowler/)
+[https://docs.prowler.cloud](https://docs.prowler.cloud)
 # 📃 License
 
 Prowler is licensed as Apache License 2.0 as specified in each file. You may obtain a copy of the License at

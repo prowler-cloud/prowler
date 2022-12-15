@@ -9,7 +9,7 @@ from prowler.lib.utils.utils import open_file, parse_json_file
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-prowler_version = "3.0-beta-21Nov2022"
+prowler_version = "3.0.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 html_logo_img = (
     "https://github.com/prowler-cloud/prowler/raw/master/util/html/prowler-logo-new.png"
@@ -32,7 +32,7 @@ csv_file_suffix = ".csv"
 json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
 html_file_suffix = ".html"
-config_yaml = "prowler/config/config.yaml"
+config_yaml = f"{os.path.dirname(os.path.realpath(__file__))}/config.yaml"
 
 
 def change_config_var(variable, value):

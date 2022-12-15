@@ -14,4 +14,4 @@ prowler <provider> -i
 
 - Also, it creates by default a CSV and JSON to see detailed information about the resources extracted.
 
-![Quick Inventory Example](/img/quick-inventory.png)
+![Quick Inventory Example](../img/quick-inventory.png)

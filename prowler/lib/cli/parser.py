@@ -1,6 +1,7 @@
 import argparse
 
 from prowler.config.config import default_output_directory, prowler_version
+import sys
 
 
 class ProwlerArgumentParser:
@@ -9,7 +10,7 @@ class ProwlerArgumentParser:
         # CLI Arguments
         self.parser = argparse.ArgumentParser(
             prog="prowler",
-            epilog="To see the different available options on a specific provider, run: prowler {provider} -h",
+            epilog="To see the different available options on a specific provider, run: prowler {provider} -h|--help",
         )
         # Default
         self.parser.add_argument(
@@ -24,7 +25,8 @@ class ProwlerArgumentParser:
 
         # Providers Parser
         self.subparsers = self.parser.add_subparsers(
-            title="Prowler Available Cloud Providers", dest="provider"
+            title="Prowler Available Cloud Providers",
+            dest="provider",
         )
 
         self.__init_allowlist_parser__()
@@ -37,6 +39,44 @@ class ProwlerArgumentParser:
         # Init Providers Arguments
         self.__init_aws_parser__()
         self.__init_azure_parser__()
+
+    def parse(self) -> argparse.Namespace:
+        """
+        parse is a wrapper to call parse_args() and do some validation
+        """
+        # Set AWS as the default provider if no provider is supplied
+        if len(sys.argv) == 1:
+            sys.argv = self.__set_default_provider__(sys.argv)
+
+        # Help and Version flags cannot set a default provider
+        if (
+            len(sys.argv) >= 2
+            and (sys.argv[1] not in ("-h", "--help"))
+            and (sys.argv[1] not in ("-v", "--version"))
+        ):
+            # Since the provider is always the second argument, we are checking if
+            # a flag, starting by "-", is supplied
+            if "-" in sys.argv[1]:
+                sys.argv = self.__set_default_provider__(sys.argv)
+
+        # Parse arguments
+        args = self.parser.parse_args()
+
+        # A provider is always required
+        if not args.provider:
+            self.parser.error(
+                "A provider is required to see its specific help options."
+            )
+
+        return args
+
+    def __set_default_provider__(self, args: list) -> list:
+        default_args = [args[0]]
+        provider = "aws"
+        default_args.append(provider)
+        default_args.extend(args[1:])
+        # Save the arguments with the default provider included
+        return default_args
 
     def __init_allowlist_parser__(self):
         # Allowlist
@@ -232,7 +272,7 @@ class ProwlerArgumentParser:
             help="AWS region names to run Prowler against",
         )
         # AWS Organizations
-        aws_orgs_subparser = aws_parser.add_argument_group("Organizations")
+        aws_orgs_subparser = aws_parser.add_argument_group("AWS Organizations")
         aws_orgs_subparser.add_argument(
             "-O",
             "--organizations-role",
@@ -240,7 +280,7 @@ class ProwlerArgumentParser:
             help="Specify AWS Organizations management role ARN to be assumed, to get Organization metadata",
         )
         # AWS Security Hub
-        aws_security_hub_subparser = aws_parser.add_argument_group("Security Hub")
+        aws_security_hub_subparser = aws_parser.add_argument_group("AWS Security Hub")
         aws_security_hub_subparser.add_argument(
             "-S",
             "--security-hub",
