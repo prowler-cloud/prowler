@@ -8,6 +8,7 @@ class defender_ensure_defender_for_databases_is_on(Check):
         for subscription, pricings in defender_client.pricings.items():
             report = Check_Report_Azure(self.metadata())
             report.resource_name = "Defender plan Databases"
+            report.subscription = subscription
             report.resource_id = pricings["SqlServers"].resource_id
             report.status_extended = f"Defender plan Defender for Databases from subscription {subscription} is set to ON (pricing tier standard)"
             if (

@@ -8,6 +8,7 @@ class defender_ensure_defender_for_app_services_is_on(Check):
         for subscription, pricings in defender_client.pricings.items():
             report = Check_Report_Azure(self.metadata())
             report.status = "PASS"
+            report.subscription = subscription
             report.resource_name = "Defender plan App Services"
             report.resource_id = pricings["AppServices"].resource_id
             report.status_extended = f"Defender plan Defender for App Services from subscription {subscription} is set to ON (pricing tier standard)"

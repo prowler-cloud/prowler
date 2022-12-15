@@ -8,6 +8,7 @@ class storage_blob_public_access_level_is_disabled(Check):
         for subscription, storage_accounts in storage_client.storage_accounts.items():
             for storage_account in storage_accounts:
                 report = Check_Report_Azure(self.metadata())
+                report.subscription = subscription
                 report.status = "PASS"
                 report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has allow blob public access disabled"
                 report.resource_name = storage_account.name
