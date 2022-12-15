@@ -111,7 +111,7 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
                 raise Exception("To use -I/-T options -R option is needed")
 
         input_profile = arguments.get("profile")
-        input_regions = arguments.get("regions")
+        input_regions = arguments.get("region")
         organizations_role_arn = arguments.get("organizations_role")
 
         # Assumed AWS session

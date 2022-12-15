@@ -18,15 +18,12 @@ from prowler.config.config import (
     orange_color,
     prowler_version,
     timestamp,
-    timestamp_iso,
     timestamp_utc,
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import (
-    Check_Output_CSV,
     Check_Output_CSV_CIS,
     Check_Output_CSV_ENS_RD2022,
-    Check_Output_JSON,
     Check_Output_JSON_ASFF,
     Compliance,
     ProductFields,
@@ -36,27 +33,38 @@ from prowler.lib.outputs.models import (
 from prowler.lib.utils.utils import file_exists, hash_sha512, open_file
 from prowler.providers.aws.lib.allowlist.allowlist import is_allowlisted
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 from prowler.providers.aws.lib.security_hub.security_hub import send_to_security_hub
 from prowler.providers.common.outputs import Provider_Output_Options
+from prowler.lib.outputs.models import (
+    generate_provider_output_csv,
+    generate_provider_output_json,
+    generate_csv_fields,
+    Aws_Check_Output_CSV,
+    Azure_Check_Output_CSV,
+)
 
 
 def report(check_findings, output_options, audit_info):
     try:
-        # Sort check findings
-        check_findings.sort(key=lambda x: x.region)
+        # TO-DO Generic Function
+        if isinstance(audit_info, AWS_Audit_Info):
+            check_findings.sort(key=lambda x: x.region)
+
+        if isinstance(audit_info, Azure_Audit_Info):
+            check_findings.sort(key=lambda x: x.subscription)
 
         # Generate the required output files
-        # csv_fields = []
         file_descriptors = {}
         if output_options.output_modes:
-            if isinstance(audit_info, AWS_Audit_Info):
-                # We have to create the required output files
-                file_descriptors = fill_file_descriptors(
-                    output_options.output_modes,
-                    output_options.output_directory,
-                    output_options.output_filename,
-                    audit_info,
-                )
+            # if isinstance(audit_info, AWS_Audit_Info):
+            # We have to create the required output files
+            file_descriptors = fill_file_descriptors(
+                output_options.output_modes,
+                output_options.output_directory,
+                output_options.output_filename,
+                audit_info,
+            )
 
         if check_findings:
             for finding in check_findings:
@@ -81,6 +89,7 @@ def report(check_findings, output_options, audit_info):
                         f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
                     )
                 if file_descriptors:
+                    # AWS specific outputs
                     if finding.check_metadata.Provider == "aws":
                         if "ens_rd2022_aws" in output_options.output_modes:
                             # We have to retrieve all the check's compliance requirements
@@ -209,32 +218,10 @@ def report(check_findings, output_options, audit_info):
                                     )
                                     csv_writer.writerow(compliance_row.__dict__)
 
-                        if "csv" in file_descriptors:
-                            finding_output = Check_Output_CSV(
-                                audit_info.audited_account,
-                                audit_info.profile,
-                                finding,
-                                audit_info.organizations_metadata,
-                            )
-                            csv_writer = DictWriter(
-                                file_descriptors["csv"],
-                                fieldnames=generate_csv_fields(Check_Output_CSV),
-                                delimiter=";",
-                            )
-                            csv_writer.writerow(finding_output.__dict__)
+                        if "html" in file_descriptors:
+                            fill_html(file_descriptors["html"], audit_info, finding)
 
-                        if "json" in file_descriptors:
-                            finding_output = Check_Output_JSON(
-                                **finding.check_metadata.dict()
-                            )
-                            fill_json(finding_output, audit_info, finding)
-
-                            json.dump(
-                                finding_output.dict(),
-                                file_descriptors["json"],
-                                indent=4,
-                            )
-                            file_descriptors["json"].write(",")
+                        file_descriptors["html"].write("")
 
                         if "json-asff" in file_descriptors:
                             finding_output = Check_Output_JSON_ASFF()
@@ -247,16 +234,38 @@ def report(check_findings, output_options, audit_info):
                             )
                             file_descriptors["json-asff"].write(",")
 
-                        if "html" in file_descriptors:
-                            fill_html(file_descriptors["html"], audit_info, finding)
-
-                            file_descriptors["html"].write("")
-
                         # Check if it is needed to send findings to security hub
                         if output_options.security_hub_enabled:
                             send_to_security_hub(
                                 finding.region, finding_output, audit_info.audit_session
                             )
+
+                    # Common outputs
+                    if "csv" in file_descriptors:
+                        csv_writer, finding_output = generate_provider_output_csv(
+                            finding.check_metadata.Provider,
+                            finding,
+                            audit_info,
+                            "csv",
+                            file_descriptors["csv"],
+                        )
+                        csv_writer.writerow(finding_output.__dict__)
+
+                    if "json" in file_descriptors:
+                        finding_output = generate_provider_output_json(
+                            finding.check_metadata.Provider,
+                            finding,
+                            audit_info,
+                            "json",
+                            file_descriptors["json"],
+                        )
+                        json.dump(
+                            finding_output.dict(),
+                            file_descriptors["json"],
+                            indent=4,
+                        )
+                        file_descriptors["json"].write(",")
+
         else:  # No service resources in the whole account
             color = set_report_color("INFO")
             if not output_options.is_quiet and output_options.verbose:
@@ -320,12 +329,20 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
             for output_mode in output_modes:
                 if output_mode == "csv":
                     filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
-                    file_descriptor = initialize_file_descriptor(
-                        filename,
-                        output_mode,
-                        audit_info,
-                        Check_Output_CSV,
-                    )
+                    if isinstance(audit_info, AWS_Audit_Info):
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            audit_info,
+                            Aws_Check_Output_CSV,
+                        )
+                    if isinstance(audit_info, Azure_Audit_Info):
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            audit_info,
+                            Azure_Check_Output_CSV,
+                        )
                     file_descriptors.update({output_mode: file_descriptor})
 
                 if output_mode == "json":
@@ -335,42 +352,47 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                     )
                     file_descriptors.update({output_mode: file_descriptor})
 
-                if output_mode == "json-asff":
-                    filename = (
-                        f"{output_directory}/{output_filename}{json_asff_file_suffix}"
-                    )
-                    file_descriptor = initialize_file_descriptor(
-                        filename, output_mode, audit_info
-                    )
-                    file_descriptors.update({output_mode: file_descriptor})
+                if isinstance(audit_info, AWS_Audit_Info):
 
-                if output_mode == "html":
-                    filename = f"{output_directory}/{output_filename}{html_file_suffix}"
-                    file_descriptor = initialize_file_descriptor(
-                        filename, output_mode, audit_info
-                    )
-                    file_descriptors.update({output_mode: file_descriptor})
+                    if output_mode == "json-asff":
+                        filename = f"{output_directory}/{output_filename}{json_asff_file_suffix}"
+                        file_descriptor = initialize_file_descriptor(
+                            filename, output_mode, audit_info
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
 
-                if output_mode == "ens_rd2022_aws":
-                    filename = f"{output_directory}/{output_filename}_ens_rd2022_aws{csv_file_suffix}"
-                    file_descriptor = initialize_file_descriptor(
-                        filename, output_mode, audit_info, Check_Output_CSV_ENS_RD2022
-                    )
-                    file_descriptors.update({output_mode: file_descriptor})
+                    if output_mode == "html":
+                        filename = (
+                            f"{output_directory}/{output_filename}{html_file_suffix}"
+                        )
+                        file_descriptor = initialize_file_descriptor(
+                            filename, output_mode, audit_info
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
 
-                if output_mode == "cis_1.5_aws":
-                    filename = f"{output_directory}/{output_filename}_cis_1.5_aws{csv_file_suffix}"
-                    file_descriptor = initialize_file_descriptor(
-                        filename, output_mode, audit_info, Check_Output_CSV_CIS
-                    )
-                    file_descriptors.update({output_mode: file_descriptor})
+                    if output_mode == "ens_rd2022_aws":
+                        filename = f"{output_directory}/{output_filename}_ens_rd2022_aws{csv_file_suffix}"
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            audit_info,
+                            Check_Output_CSV_ENS_RD2022,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
 
-                if output_mode == "cis_1.4_aws":
-                    filename = f"{output_directory}/{output_filename}_cis_1.4_aws{csv_file_suffix}"
-                    file_descriptor = initialize_file_descriptor(
-                        filename, output_mode, audit_info, Check_Output_CSV_CIS
-                    )
-                    file_descriptors.update({output_mode: file_descriptor})
+                    if output_mode == "cis_1.5_aws":
+                        filename = f"{output_directory}/{output_filename}_cis_1.5_aws{csv_file_suffix}"
+                        file_descriptor = initialize_file_descriptor(
+                            filename, output_mode, audit_info, Check_Output_CSV_CIS
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
+
+                    if output_mode == "cis_1.4_aws":
+                        filename = f"{output_directory}/{output_filename}_cis_1.4_aws{csv_file_suffix}"
+                        file_descriptor = initialize_file_descriptor(
+                            filename, output_mode, audit_info, Check_Output_CSV_CIS
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -395,32 +417,6 @@ def set_report_color(status: str) -> str:
     else:
         raise Exception("Invalid Report Status. Must be PASS, FAIL, ERROR or WARNING")
     return color
-
-
-def generate_csv_fields(format: Any) -> list[str]:
-    """Generates the CSV headers for the given class"""
-    csv_fields = []
-    for field in format.__dict__.get("__annotations__").keys():
-        csv_fields.append(field)
-    return csv_fields
-
-
-def fill_json(finding_output, audit_info, finding):
-
-    finding_output.AssessmentStartTime = timestamp_iso
-    finding_output.FindingUniqueId = ""
-    finding_output.Profile = audit_info.profile
-    finding_output.AccountId = audit_info.audited_account
-    if audit_info.organizations_metadata:
-        finding_output.OrganizationsInfo = audit_info.organizations_metadata.__dict__
-    finding_output.Region = finding.region
-    finding_output.Status = finding.status
-    finding_output.StatusExtended = finding.status_extended
-    finding_output.ResourceId = finding.resource_id
-    finding_output.ResourceArn = finding.resource_arn
-    finding_output.ResourceDetails = finding.resource_details
-
-    return finding_output
 
 
 def fill_json_asff(finding_output, audit_info, finding):
