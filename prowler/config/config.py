@@ -32,7 +32,7 @@ csv_file_suffix = ".csv"
 json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
 html_file_suffix = ".html"
-config_yaml = "prowler/config/config.yaml"
+config_yaml = f"{os.path.dirname(os.path.realpath(__file__))}/config.yaml"
 
 
 def change_config_var(variable, value):
