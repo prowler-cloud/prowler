@@ -101,7 +101,6 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         input_role = arguments.get("role")
         input_session_duration = arguments.get("session_duration")
         input_external_id = arguments.get("external_id")
-        print(input_session_duration)
         if input_session_duration and input_session_duration not in range(900, 43200):
             raise Exception("Value for -T option must be between 900 and 43200")
 
