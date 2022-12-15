@@ -138,19 +138,11 @@ class Test_Outputs:
         )
         assert exc.type == Exception
 
-    def test_generate_csv_fields(self):
+    def test_generate_common_csv_fields(self):
         expected = [
             "assessment_start_time",
             "finding_unique_id",
             "provider",
-            "profile",
-            "account_id",
-            "account_name",
-            "account_email",
-            "account_arn",
-            "account_org",
-            "account_tags",
-            "region",
             "check_id",
             "check_title",
             "check_type",
@@ -159,8 +151,6 @@ class Test_Outputs:
             "service_name",
             "subservice_name",
             "severity",
-            "resource_id",
-            "resource_arn",
             "resource_type",
             "resource_details",
             "resource_tags",
@@ -177,7 +167,6 @@ class Test_Outputs:
             "depends_on",
             "related_to",
             "notes",
-            # "compliance",
         ]
 
         assert generate_csv_fields(Check_Output_CSV) == expected
