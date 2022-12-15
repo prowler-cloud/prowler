@@ -45,6 +45,22 @@ from prowler.lib.outputs.models import (
 )
 
 
+def stdout_report(finding, color, verbose, is_quiet):
+    if finding.check_metadata.Provider == "aws":
+        details = finding.region
+    if finding.check_metadata.Provider == "azure":
+        details = finding.check_metadata.ServiceName
+
+    if is_quiet and "FAIL" in finding.status:
+        print(
+            f"\t{color}{finding.status}{Style.RESET_ALL} {details}: {finding.status_extended}"
+        )
+    elif not is_quiet and verbose:
+        print(
+            f"\t{color}{finding.status}{Style.RESET_ALL} {details}: {finding.status_extended}"
+        )
+
+
 def report(check_findings, output_options, audit_info):
     try:
         # TO-DO Generic Function
@@ -80,14 +96,10 @@ def report(check_findings, output_options, audit_info):
                         finding.status = "WARNING"
                 # Print findings by stdout
                 color = set_report_color(finding.status)
-                if output_options.is_quiet and "FAIL" in finding.status:
-                    print(
-                        f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
-                    )
-                elif not output_options.is_quiet and output_options.verbose:
-                    print(
-                        f"\t{color}{finding.status}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
-                    )
+                stdout_report(
+                    finding, color, output_options.verbose, output_options.is_quiet
+                )
+
                 if file_descriptors:
                     # AWS specific outputs
                     if finding.check_metadata.Provider == "aws":
