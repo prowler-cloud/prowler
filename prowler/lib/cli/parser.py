@@ -41,23 +41,23 @@ class ProwlerArgumentParser:
         self.__init_azure_parser__()
 
     def parse(self) -> argparse.Namespace:
-        print(sys.argv)
         """
         parse is a wrapper to call parse_args() and do some validation
         """
+        # Set AWS as the default provider if no provider is supplied
+        if len(sys.argv) == 1:
+            sys.argv = self.__set_default_provider__(sys.argv)
+
         # Help and Version flags cannot set a default provider
-        if (sys.argv[1] not in ("-h", "--help")) and (
-            sys.argv[1] not in ("-v", "--version")
+        if (
+            len(sys.argv) >= 2
+            and (sys.argv[1] not in ("-h", "--help"))
+            and (sys.argv[1] not in ("-v", "--version"))
         ):
-            # Set AWS as the default provider if no provider is supplied
-            # Since the provider is always the second argument
-            if sys.argv[1] not in ("aws", "azure"):
-                default_args = [sys.argv[0]]
-                provider = "aws"
-                default_args.append(provider)
-                default_args.extend(sys.argv[1:])
-                # Save the arguments with the default provider included
-                sys.argv = default_args
+            # Since the provider is always the second argument, we are checking if
+            # a flag, starting by "-", is supplied
+            if "-" in sys.argv[1]:
+                sys.argv = self.__set_default_provider__(sys.argv)
 
         # Parse arguments
         args = self.parser.parse_args()
@@ -69,6 +69,14 @@ class ProwlerArgumentParser:
             )
 
         return args
+
+    def __set_default_provider__(self, args: list) -> list:
+        default_args = [args[0]]
+        provider = "aws"
+        default_args.append(provider)
+        default_args.extend(args[1:])
+        # Save the arguments with the default provider included
+        return default_args
 
     def __init_allowlist_parser__(self):
         # Allowlist
