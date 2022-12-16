@@ -22,6 +22,8 @@ from prowler.config.config import (
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import (
+    Aws_Check_Output_CSV,
+    Azure_Check_Output_CSV,
     Check_Output_CSV_CIS,
     Check_Output_CSV_ENS_RD2022,
     Check_Output_JSON_ASFF,
@@ -29,20 +31,16 @@ from prowler.lib.outputs.models import (
     ProductFields,
     Resource,
     Severity,
+    generate_csv_fields,
+    generate_provider_output_csv,
+    generate_provider_output_json,
 )
 from prowler.lib.utils.utils import file_exists, hash_sha512, open_file
 from prowler.providers.aws.lib.allowlist.allowlist import is_allowlisted
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 from prowler.providers.aws.lib.security_hub.security_hub import send_to_security_hub
+from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 from prowler.providers.common.outputs import Provider_Output_Options
-from prowler.lib.outputs.models import (
-    generate_provider_output_csv,
-    generate_provider_output_json,
-    generate_csv_fields,
-    Aws_Check_Output_CSV,
-    Azure_Check_Output_CSV,
-)
 
 
 def stdout_report(finding, color, verbose, is_quiet):
@@ -688,6 +686,9 @@ def display_compliance_table(
                         and compliance.Provider == "AWS"
                         and compliance.Version == "RD2022"
                     ):
+                        compliance_version = compliance.Version
+                        compliance_fm = compliance.Framework
+                        compliance_provider = compliance.Provider
                         for requirement in compliance.Requirements:
                             for attribute in requirement.Attributes:
                                 marco_categoria = (
@@ -737,11 +738,11 @@ def display_compliance_table(
                 )
             if fail_count + pass_count < 0:
                 print(
-                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance.Framework} {compliance.Version} - {compliance.Provider}{Style.RESET_ALL}.\n"
+                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_fm} {compliance_version} - {compliance_provider}{Style.RESET_ALL}.\n"
                 )
             else:
                 print(
-                    f"\nEstado de Cumplimiento de {Fore.YELLOW}{compliance.Framework} {compliance.Version} - {compliance.Provider}{Style.RESET_ALL}:"
+                    f"\nEstado de Cumplimiento de {Fore.YELLOW}{compliance_fm} {compliance_version} - {compliance_provider}{Style.RESET_ALL}:"
                 )
                 overview_table = [
                     [
@@ -751,7 +752,7 @@ def display_compliance_table(
                 ]
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
                 print(
-                    f"\nResultados de {Fore.YELLOW}{compliance.Framework} {compliance.Version} - {compliance.Provider}{Style.RESET_ALL}:"
+                    f"\nResultados de {Fore.YELLOW}{compliance_fm} {compliance_version} - {compliance_provider}{Style.RESET_ALL}:"
                 )
                 print(
                     tabulate(
@@ -766,8 +767,6 @@ def display_compliance_table(
                     f" - CSV: {output_directory}/{output_filename}_{compliance_framework[0]}.csv\n"
                 )
         if "cis" in str(compliance_framework):
-            print("COMPLIANCE FRAMEWORK")
-            print(compliance_framework)
             sections = {}
             cis_compliance_table = {
                 "Provider": [],
@@ -784,6 +783,7 @@ def display_compliance_table(
                         compliance_framework
                     ):
                         compliance_version = compliance.Version
+                        compliance_fm = compliance.Framework
                         for requirement in compliance.Requirements:
                             for attribute in requirement.Attributes:
                                 section = attribute["Section"]
@@ -832,11 +832,11 @@ def display_compliance_table(
                     )
             if fail_count + pass_count < 0:
                 print(
-                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance.Framework}-{compliance.Version}{Style.RESET_ALL}.\n"
+                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_fm}-{compliance_version}{Style.RESET_ALL}.\n"
                 )
             else:
                 print(
-                    f"\nCompliance Status of {Fore.YELLOW}{compliance.Framework}-{compliance_version}{Style.RESET_ALL} Framework:"
+                    f"\nCompliance Status of {Fore.YELLOW}{compliance_fm}-{compliance_version}{Style.RESET_ALL} Framework:"
                 )
                 overview_table = [
                     [
@@ -846,7 +846,7 @@ def display_compliance_table(
                 ]
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
                 print(
-                    f"\nFramework {Fore.YELLOW}{compliance.Framework}-{compliance_version}{Style.RESET_ALL} Results:"
+                    f"\nFramework {Fore.YELLOW}{compliance_fm}-{compliance_version}{Style.RESET_ALL} Results:"
                 )
                 print(
                     tabulate(
