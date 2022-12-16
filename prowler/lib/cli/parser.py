@@ -1,7 +1,11 @@
 import argparse
-
-from prowler.config.config import default_output_directory, prowler_version
 import sys
+
+from prowler.config.config import (
+    default_output_directory,
+    get_aws_available_regions,
+    prowler_version,
+)
 
 
 class ProwlerArgumentParser:
@@ -39,10 +43,14 @@ class ProwlerArgumentParser:
         self.__init_aws_parser__()
         self.__init_azure_parser__()
 
-    def parse(self) -> argparse.Namespace:
+    def parse(self, args=None) -> argparse.Namespace:
         """
         parse is a wrapper to call parse_args() and do some validation
         """
+        # We can override sys.argv
+        if args:
+            sys.argv = args
+
         # Set AWS as the default provider if no provider is supplied
         if len(sys.argv) == 1:
             sys.argv = self.__set_default_provider__(sys.argv)
@@ -185,6 +193,7 @@ class ProwlerArgumentParser:
             nargs="+",
             help="List of categories to be executed.",
             default=[],
+            # Pending validate choices
         )
 
     def __init_list_checks_parser__(self):
@@ -234,6 +243,7 @@ class ProwlerArgumentParser:
             nargs="?",
             default=None,
             help="ARN of the role to be assumed",
+            # Pending ARN validation
         )
         aws_auth_subparser.add_argument(
             "-T",
@@ -242,6 +252,7 @@ class ProwlerArgumentParser:
             default=3600,
             type=int,
             help="Assumed role session duration in seconds, must be between 900 and 43200. Default: 3600",
+            # Pending session duration validation
         )
         aws_auth_subparser.add_argument(
             "-I",
@@ -258,6 +269,7 @@ class ProwlerArgumentParser:
             "--filter-region",
             nargs="+",
             help="AWS region names to run Prowler against",
+            choices=get_aws_available_regions(),
         )
         # AWS Organizations
         aws_orgs_subparser = aws_parser.add_argument_group("AWS Organizations")
