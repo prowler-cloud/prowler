@@ -212,5 +212,5 @@ def create_output(resources: list, audit_info: AWS_Audit_Info, output_directory:
     csv_file.close()
 
     print("\nMore details in files:")
-    print(f" - CSV: {Fore.GREEN}{output_file+csv_file_suffix}{Style.RESET_ALL}")
-    print(f" - JSON: {Fore.GREEN}{output_file+json_file_suffix}{Style.RESET_ALL}")
+    print(f" - CSV: {output_file+csv_file_suffix}")
+    print(f" - JSON: {output_file+json_file_suffix}")
