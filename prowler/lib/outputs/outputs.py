@@ -737,11 +737,11 @@ def display_compliance_table(
                 )
             if fail_count + pass_count < 0:
                 print(
-                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}ENS RD2022 - AWS{Style.RESET_ALL}.\n"
+                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance.Framework} {compliance.Version} - {compliance.Provider}{Style.RESET_ALL}.\n"
                 )
             else:
                 print(
-                    f"\nEstado de Cumplimiento de {Fore.YELLOW}ENS RD2022 - AWS{Style.RESET_ALL}:"
+                    f"\nEstado de Cumplimiento de {Fore.YELLOW}{compliance.Framework} {compliance.Version} - {compliance.Provider}{Style.RESET_ALL}:"
                 )
                 overview_table = [
                     [
@@ -751,7 +751,7 @@ def display_compliance_table(
                 ]
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
                 print(
-                    f"\nResultados de {Fore.YELLOW}ENS RD2022 - AWS{Style.RESET_ALL}:"
+                    f"\nResultados de {Fore.YELLOW}{compliance.Framework} {compliance.Version} - {compliance.Provider}{Style.RESET_ALL}:"
                 )
                 print(
                     tabulate(
@@ -766,6 +766,8 @@ def display_compliance_table(
                     f" - CSV: {output_directory}/{output_filename}_{compliance_framework[0]}.csv\n"
                 )
         if "cis" in str(compliance_framework):
+            print("COMPLIANCE FRAMEWORK")
+            print(compliance_framework)
             sections = {}
             cis_compliance_table = {
                 "Provider": [],
