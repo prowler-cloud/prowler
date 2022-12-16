@@ -48,10 +48,11 @@ This report is being generated using credentials below:
 AWS-CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} AWS Filter Region: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
 AWS Account: {Fore.YELLOW}[{audit_info.audited_account}]{Style.RESET_ALL} UserId: {Fore.YELLOW}[{audit_info.audited_user_id}]{Style.RESET_ALL}
 Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESET_ALL}
-    """
+"""
         # If -A is set, print Assumed Role ARN
         if audit_info.assumed_role_info.role_arn is not None:
-            report += f"Assumed Role ARN: {Fore.YELLOW}[{audit_info.assumed_role_info.role_arn}]{Style.RESET_ALL}"
+            report += f"""Assumed Role ARN: {Fore.YELLOW}[{audit_info.assumed_role_info.role_arn}]{Style.RESET_ALL}
+"""
         print(report)
 
     def get_organizations_metadata(
@@ -101,7 +102,8 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         input_role = arguments.get("role")
         input_session_duration = arguments.get("session_duration")
         input_external_id = arguments.get("external_id")
-        if input_session_duration and input_session_duration not in range(900, 43200):
+        # Since the range(i,j) goes from i to j-1 we have to j+1
+        if input_session_duration and input_session_duration not in range(900, 43201):
             raise Exception("Value for -T option must be between 900 and 43200")
 
         if (
@@ -195,7 +197,7 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
                     f"Assuming role {current_audit_info.assumed_role_info.role_arn}"
                 )
                 # Assume the role
-                assumed_role_response = self.assume_role(current_audit_info)
+                assumed_role_response = assume_role(current_audit_info)
                 logger.info("Role assumed")
                 # Set the info needed to create a session with an assumed role
                 current_audit_info.credentials = AWS_Credentials(
