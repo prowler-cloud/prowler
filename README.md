@@ -26,6 +26,7 @@
   <a href="https://github.com/prowler-cloud/prowler"><img alt="Contributors" src="https://img.shields.io/github/contributors-anon/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler"><img alt="License" src="https://img.shields.io/github/license/prowler-cloud/prowler"></a>
   <a href="https://twitter.com/ToniBlyx"><img alt="Twitter" src="https://img.shields.io/twitter/follow/toniblyx?style=social"></a>
+  <a href="https://twitter.com/prowlercloud"><img alt="Twitter" src="https://img.shields.io/twitter/follow/prowlercloud?style=social"></a>
 </p>
 
 # Description
@@ -36,6 +37,8 @@ It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, F
 
 # ⚙️ Install
 
+Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python >= 3.9:
+
 ```console
 pip install prowler-cloud
 prowler -v
@@ -45,9 +48,9 @@ prowler -v
 
 The available versions of Prowler are the following:
 
-- latest: in sync with master branch (bear in mind that it is not a stable version)
-- <x.y.z> (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
-- stable: this tag always point to the latest release.
+- `latest`: in sync with master branch (bear in mind that it is not a stable version)
+- `<x.y.z>` (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
+- `stable`: this tag always point to the latest release.
 
 The container images are available here:
 
@@ -102,11 +105,15 @@ prowler <provider>
 
 > Running the `prowler` command without options will use your environment variable credentials.
 
-By default, prowler will generate a CSV and a JSON report, however you could generate an HTML or an JSON-ASFF report with `-M` or `--output-modes`:
+By default, prowler will generate a CSV, a JSON and a HTML report, however you can generate JSON-ASFF (only for AWS Security Hub) report with `-M` or `--output-modes`:
 
 ```console
 prowler <provider> -M csv json json-asff html
 ```
+
+The html report will be located in the `output` directory as the other files and it will look like:
+
+![Prowler Execution](docs/img/html-output.png)
 
 You can use `-l`/`--list-checks` or `--list-services` to list all available checks or services within the provider.
 
@@ -115,7 +122,7 @@ prowler <provider> --list-checks
 prowler <provider> --list-services
 ```
 
-For executing specific checks or services you can use options `-c`/`checks` or `-s`/`services`:
+For executing specific checks or services you can use options `-c`/`--checks` or `-s`/`--services`:
 
 ```console
 prowler aws --checks s3_bucket_public_access
