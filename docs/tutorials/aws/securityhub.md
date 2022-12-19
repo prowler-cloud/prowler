@@ -1,4 +1,4 @@
-# Security Hub Integration
+# AWS Security Hub Integration
 
 Prowler supports natively and as **official integration** sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows Prowler to import its findings to AWS Security Hub.
 

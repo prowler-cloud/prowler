@@ -7,7 +7,7 @@
 
 **Welcome to [Prowler Open Source v3](https://github.com/prowler-cloud/prowler/) Documentation!** 📄 
 
-Please for **Prowler v2 Documentation**, please go [here](https://github.com/prowler-cloud/prowler/tree/2.12.0) to the branch and its README.md.
+For **Prowler v2 Documentation**, please go [here](https://github.com/prowler-cloud/prowler/tree/2.12.0) to the branch and its README.md.
 
 - You are currently in the **Getting Started** section where you can find general information and requirements to help you start with the tool.
 - In the [Tutorials](tutorials/overview) section you will see how to take advantage of all the features in Prowler.
@@ -31,8 +31,7 @@ Visit <a href="https://prowler.pro">prowler.pro</a> for more info.
 ## Quick Start
 ### Installation
 
-Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip:
-
+Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python >= 3.9:
 ```bash
 pip install prowler-cloud
 prowler -v
@@ -42,23 +41,24 @@ prowler -v
 
 The available versions of Prowler are the following:
 
-- latest: in sync with master branch (bear in mind that it is not a stable version)
-- <x.y.z> (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
-- stable: this tag always point to the latest release.
+- `latest`: in sync with master branch (bear in mind that it is not a stable version)
+- `<x.y.z>` (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
+- `stable`: this tag always point to the latest release.
 
 The container images are available here:
 
 - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
 - [AWS Public ECR](https://gallery.ecr.aws/o4g1s5r6/prowler)
 
-## High level architecture
+## High level architecture
 
 You can run Prowler from your workstation, an EC2 instance, Fargate or any other container, Codebuild, CloudShell, Cloud9 and many more.
 
 ![Architecture](img/architecture.png)
 ## Basic Usage
 
-To run prowler, you will need to specify the provider (e.g aws or azure):
+To run Prowler, you will need to specify the provider (e.g aws or azure):
+> If no provider specified, AWS will be used for backward compatibility with most of v2 options.
 
 ```console
 prowler <provider>
@@ -73,6 +73,9 @@ By default, Prowler will generate a CSV, JSON and HTML reports, however you can 
 ```console
 prowler <provider> -M csv json json-asff html
 ```
+The html report will be located in the output directory as the other files and it will look like:
+
+![Prowler Execution](img/html-output.png)
 
 You can use `-l`/`--list-checks` or `--list-services` to list all available checks or services within the provider.
 
@@ -95,10 +98,12 @@ prowler aws --excluded-checks s3_bucket_public_access
 prowler azure --excluded-services defender iam
 ```
 
+More options and executions methods that will save your time in [Miscelaneous](tutorials/misc.md).
+
 You can always use `-h`/`--help` to access to the usage information and all the possible options:
 
 ```console
-prowler -h
+prowler --help
 ```
 
 ### AWS

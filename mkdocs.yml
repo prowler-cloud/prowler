@@ -39,7 +39,7 @@ nav:
         - Pentesting: tutorials/pentesting.md
         - AWS:
           - Assume Role: tutorials/aws/role-assumption.md
-          - Security Hub: tutorials/aws/securityhub.md
+          - AWS Security Hub: tutorials/aws/securityhub.md
           - AWS Organizations: tutorials/aws/organizations.md
         - Azure:
           - Authentication: tutorials/azure/authentication.md

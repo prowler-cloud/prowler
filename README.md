@@ -26,6 +26,7 @@
   <a href="https://github.com/prowler-cloud/prowler"><img alt="Contributors" src="https://img.shields.io/github/contributors-anon/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler"><img alt="License" src="https://img.shields.io/github/license/prowler-cloud/prowler"></a>
   <a href="https://twitter.com/ToniBlyx"><img alt="Twitter" src="https://img.shields.io/twitter/follow/toniblyx?style=social"></a>
+  <a href="https://twitter.com/prowlercloud"><img alt="Twitter" src="https://img.shields.io/twitter/follow/prowlercloud?style=social"></a>
 </p>
 
 # Description
@@ -34,25 +35,47 @@
 
 It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
 
+## Looking for Prowler v2 documentation?
+For Prowler v2 Documentation, please go to https://github.com/prowler-cloud/prowler/tree/2.12.1.
 # ⚙️ Install
+
+## Pip package
+Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python >= 3.9:
 
 ```console
 pip install prowler-cloud
 prowler -v
 ```
 
-## Prowler container versions
+## Containers
 
 The available versions of Prowler are the following:
 
-- latest: in sync with master branch (bear in mind that it is not a stable version)
-- <x.y.z> (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
-- stable: this tag always point to the latest release.
+- `latest`: in sync with master branch (bear in mind that it is not a stable version)
+- `<x.y.z>` (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
+- `stable`: this tag always point to the latest release.
 
 The container images are available here:
 
 - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
 - [AWS Public ECR](https://gallery.ecr.aws/o4g1s5r6/prowler)
+
+## From Github
+
+Python >= 3.9 is required with pip and pipenv:
+
+```
+git clone https://github.com/prowler-cloud/prowler
+cd prowler
+pipenv shell
+pipenv install
+python prowler.py -v
+```
+
+# 📖 Documentation
+
+The full documentation now can be found at [https://docs.prowler.cloud](https://docs.prowler.cloud)
+
 
 # 📐✏️ High level architecture
 
@@ -102,11 +125,15 @@ prowler <provider>
 
 > Running the `prowler` command without options will use your environment variable credentials.
 
-By default, prowler will generate a CSV and a JSON report, however you could generate an HTML or an JSON-ASFF report with `-M` or `--output-modes`:
+By default, prowler will generate a CSV, a JSON and a HTML report, however you can generate JSON-ASFF (only for AWS Security Hub) report with `-M` or `--output-modes`:
 
 ```console
 prowler <provider> -M csv json json-asff html
 ```
+
+The html report will be located in the `output` directory as the other files and it will look like:
+
+![Prowler Execution](docs/img/html-output.png)
 
 You can use `-l`/`--list-checks` or `--list-services` to list all available checks or services within the provider.
 
@@ -115,7 +142,7 @@ prowler <provider> --list-checks
 prowler <provider> --list-services
 ```
 
-For executing specific checks or services you can use options `-c`/`checks` or `-s`/`services`:
+For executing specific checks or services you can use options `-c`/`--checks` or `-s`/`--services`:
 
 ```console
 prowler aws --checks s3_bucket_public_access
@@ -158,17 +185,15 @@ With Azure you need to specify which auth method is going to be used:
 ```console
 prowler azure [--sp-env-auth, --az-cli-auth, --browser-auth, --managed-identity-auth]
 ```
-> By default, `prowler` will scan all Azure subscriptions.
+> By default, `prowler` will scan all Azure subscriptions.  
 
 # 🎉 New Features
 
-- Multi-cloud support!
+- Python: we got rid of all bash and it is now all in Python.
+- Faster: huge performance improvements (same account from 2.5 hours to 4 minutes).
+- Developers and community: we have made it easier to contribute with new checks and new compliance frameworks. We also included unit tests.
+- Multi-cloud: in addition to AWS, we have added Azure, we plan to include GCP and OCI soon, let us know if you want to contribute!
 
-# 📖 Documentation
-
-The full documentation can be found here:
-
-[https://docs.prowler.cloud](https://docs.prowler.cloud)
 # 📃 License
 
 Prowler is licensed as Apache License 2.0 as specified in each file. You may obtain a copy of the License at
