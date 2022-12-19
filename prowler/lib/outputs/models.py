@@ -1,19 +1,14 @@
-from typing import List, Optional
-
-from pydantic import BaseModel
-from prowler.lib.logger import logger
-from prowler.config.config import timestamp
-from prowler.lib.check.models import Remediation
-
-# Check_Report_AWS, Check_Report_Azure
-from prowler.providers.aws.lib.audit_info.models import AWS_Organizations_Info
 import importlib
 import sys
-from typing import Any
 from csv import DictWriter
+from typing import Any, List, Optional
 
-# from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-# from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
+from pydantic import BaseModel
+
+from prowler.config.config import timestamp
+from prowler.lib.check.models import Remediation
+from prowler.lib.logger import logger
+from prowler.providers.aws.lib.audit_info.models import AWS_Organizations_Info
 
 
 def generate_provider_output_csv(provider: str, finding, audit_info, mode: str, fd):

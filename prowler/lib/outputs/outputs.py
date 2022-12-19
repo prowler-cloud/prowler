@@ -229,7 +229,7 @@ def report(check_findings, output_options, audit_info):
                                     csv_writer.writerow(compliance_row.__dict__)
 
                         if "html" in file_descriptors:
-                            fill_html(file_descriptors["html"], audit_info, finding)
+                            fill_html(file_descriptors["html"], finding)
 
                         file_descriptors["html"].write("")
 
@@ -886,18 +886,42 @@ def add_html_header(file_descriptor, audit_info):
     <!-- Required meta tags -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <style>
-    .read-more {color:#00f;}
-    .bg-success-custom {background-color: #98dea7 !important;}
-    .bg-danger {background-color: #f28484 !important;}
+        .read-more {
+            color: #00f;
+        }
+
+        .bg-success-custom {
+            background-color: #98dea7 !important;
+        }
+
+        .bg-danger {
+            background-color: #f28484 !important;
+        }
     </style>
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
     <!-- https://datatables.net/download/index with jQuery, DataTables, Buttons, SearchPanes, and Select //-->
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jqc-1.12.4/dt-1.10.25/b-1.7.1/sp-1.3.0/sl-1.3.3/datatables.min.css"/>
-    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
+    <link rel="stylesheet" type="text/css"
+        href="https://cdn.datatables.net/v/dt/jqc-1.12.4/dt-1.10.25/b-1.7.1/sp-1.4.0/sl-1.3.3/datatables.min.css" />
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css"
+        integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous" />
     <style>
-        .show-read-more .more-text{
+        .show-read-more .more-text {
             display: none;
+        }
+
+        .dataTable {
+            font-size: 14px;
+        }
+
+        .container-fluid {
+            font-size: 14px;
+        }
+
+        .float-left {
+            float: left !important;
+            max-width: 100%;
         }
     </style>
     <title>Prowler - The Handy Cloud Security Tool</title>
@@ -906,19 +930,18 @@ def add_html_header(file_descriptor, audit_info):
     <div class="container-fluid">
         <div class="row mt-3">
         <div class="col-md-4">
-            <div class="card">
-            <div class="card-header">
-                Report Information:
-            </div>
-            <ul class="list-group list-group-flush">
-             <li class="list-group-item text-center">
             <a href="""
             + html_logo_url
-            + """><img src="""
+            + """><img class="float-left card-img-left mt-4 mr-4 ml-4"
+                        src="""
             + html_logo_img
             + """
-            alt="prowler-logo"></a>
-            </li>
+                        alt="prowler-logo"></a>
+            <div class="card">
+            <div class="card-header">
+                Report Information
+            </div>
+            <ul class="list-group list-group-flush">
                 <li class="list-group-item">
                 <div class="row">
                     <div class="col-md-auto">
@@ -941,57 +964,90 @@ def add_html_header(file_descriptor, audit_info):
             </ul>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card">
-            <div class="card-header">
-                Assessment Summary:
-            </div>
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item">
-                <b>AWS Account:</b> """
+        <div class="col-md-2">
+                <div class="card">
+                    <div class="card-header">
+                        AWS Assessment Summary
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>AWS Account:</b> """
             + audit_info.audited_account
             + """
-                </li>
-                <li class="list-group-item">
-                <b>AWS-CLI Profile:</b> """
+                        </li>
+                        <li class="list-group-item">
+                            <b>AWS-CLI Profile:</b> """
             + audit_info.profile
             + """
-                </li>
-                <li class="list-group-item">
-                <b>Audited Regions:</b> """
+                        </li>
+                        <li class="list-group-item">
+                            <b>Audited Regions:</b> """
             + audited_regions
             + """
-                </li>
-                <li class="list-group-item">
-                <b>User Id:</b> """
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        AWS Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>User Id:</b> """
             + audit_info.audited_user_id
             + """
-                </li>
-                <li class="list-group-item">
-                <b>Caller Identity ARN:</b> """
+                        </li>
+                        <li class="list-group-item">
+                            <b>Caller Identity ARN:</b>
+                            """
             + audit_info.audited_identity_arn
             + """
-                </li>
-            </ul>
+                        </li>
+                    </ul>
+                </div>
             </div>
+            <div class="col-md-2">
+            <div class="card">
+                <div class="card-header">
+                    Assessment Overview
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <b>Total Findings:</b> TOTAL_FINDINGS
+                    </li>
+                    <li class="list-group-item">
+                        <b>Passed:</b> TOTAL_PASS
+                    </li>
+                    <li class="list-group-item">
+                        <b>Failed:</b> TOTAL_FAIL
+                    </li>
+                    <li class="list-group-item">
+                        <b>Total Resources:</b> TOTAL_RESOURCES
+                    </li>
+                </ul>
+            </div>
+        </div>
+        </div>
         </div>
         <div class="row mt-3">
         <div class="col-md-12">
             <table class="table compact stripe row-border ordering" id="findingsTable" data-order='[[ 5, "asc" ]]' data-page-length='100'>
             <thead class="thead-light">
                 <tr>
-                <th scope="col">Status</th>
-                <th scope="col">Severity</th>
-                <th scope="col">Service Name</th>
-                <th scope="col">Region</th>
-                <th style="width:20%" scope="col">Check Title</th>
-                <th scope="col">Resource ID</th>
-                <th scope="col">Check Description</th>
-                <th scope="col">Check ID</th>
-                <th scope="col">Status Extended</th>
-                <th scope="col">Risk</th>
-                <th scope="col">Recomendation</th>
-                <th style="5% width" scope="col">Recomendation URL</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Severity</th>
+                    <th style="width:5%" scope="col">Service Name</th>
+                    <th scope="col">Region</th>
+                    <th style="width:20%" scope="col">Check Title</th>
+                    <th scope="col">Resource ID</th>
+                    <th style="width:15%" scope="col">Check Description</th>
+                    <th scope="col">Check ID</th>
+                    <th scope="col">Status Extended</th>
+                    <th scope="col">Risk</th>
+                    <th scope="col">Recomendation</th>
+                    <th style="width:5%" scope="col">Recomendation URL</th>
                 </tr>
             </thead>
             <tbody>
@@ -1003,7 +1059,7 @@ def add_html_header(file_descriptor, audit_info):
         )
 
 
-def fill_html(file_descriptor, audit_info, finding):
+def fill_html(file_descriptor, finding):
     row_class = "p-3 mb-2 bg-success-custom"
     if finding.status == "INFO":
         row_class = "table-info"
@@ -1019,9 +1075,9 @@ def fill_html(file_descriptor, audit_info, finding):
                 <td>{finding.check_metadata.ServiceName}</td>
                 <td>{finding.region}</td>
                 <td>{finding.check_metadata.CheckTitle}</td>
-                <td>{finding.resource_id}</td>
+                <td>{finding.resource_id.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>
                 <td>{finding.check_metadata.Description}</td>
-                <td>{finding.check_metadata.CheckID}</td>
+                <td>{finding.check_metadata.CheckID.replace("_", "<wbr>_")}</td>
                 <td>{finding.status_extended}</td>
                 <td><p class="show-read-more">{finding.check_metadata.Risk}</p></td>
                 <td><p class="show-read-more">{finding.check_metadata.Remediation.Recommendation.Text}</p></td>
@@ -1029,6 +1085,60 @@ def fill_html(file_descriptor, audit_info, finding):
             </tr>
             """
     )
+
+
+def extract_findings_statistics(findings: list) -> dict:
+    stats = {}
+    total_pass = 0
+    total_fail = 0
+    resources = set()
+    findings_count = 0
+
+    for finding in findings:
+        # Save the resource_id
+        resources.add(finding.resource_id)
+        # Increment findings
+        findings_count += 1
+        if finding.status == "PASS":
+            total_pass += 1
+        if finding.status == "FAIL":
+            total_fail += 1
+
+    stats["total_pass"] = total_pass
+    stats["total_fail"] = total_fail
+    stats["resources_count"] = len(resources)
+    stats["findings_count"] = findings_count
+
+    return stats
+
+
+def fill_html_overview_statistics(stats, output_filename, output_directory):
+    try:
+        filename = f"{output_directory}/{output_filename}{html_file_suffix}"
+        #  Read file
+        with open(filename, "r") as file:
+            filedata = file.read()
+
+        # Replace statistics
+        # TOTAL_FINDINGS
+        filedata = filedata.replace("TOTAL_FINDINGS", str(stats.get("findings_count")))
+        # TOTAL_RESOURCES
+        filedata = filedata.replace(
+            "TOTAL_RESOURCES", str(stats.get("resources_count"))
+        )
+        # TOTAL_PASS
+        filedata = filedata.replace("TOTAL_PASS", str(stats.get("total_pass")))
+        # TOTAL_FAIL
+        filedata = filedata.replace("TOTAL_FAIL", str(stats.get("total_fail")))
+        # Write file
+        with open(filename, "w") as file:
+            file.write(filedata)
+
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        sys.exit()
 
 
 def add_html_footer(output_filename, output_directory):
@@ -1040,60 +1150,87 @@ def add_html_footer(output_filename, output_directory):
         )
         file_descriptor.write(
             """
-</tbody>
-        </table>
-      </div>
+               </tbody>
+            </table>
+        </div>
     </div>
-  </div>
-  </div>
-  <!-- Table search and paginator -->
-  <!-- Optional JavaScript -->
-  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-  <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js" integrity="sha384-1CmrxMRARb6aLqgBO7yyAxTOQE2AKb9GfXnEo760AUcUmFx3ibVJJAzGytlQcNXd" crossorigin="anonymous"></script>
-  <!-- https://datatables.net/download/index with jQuery, DataTables, Buttons, SearchPanes, and Select //-->
-  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jqc-1.12.4/dt-1.10.25/b-1.7.1/sp-1.3.0/sl-1.3.3/datatables.min.js"></script>
-  <script>
-    $(document).ready(function(){
-      // Initialise the table with 50 rows, and some search/filtering panes
-      $('#findingsTable').DataTable( {
-        lengthChange: true,
-        buttons: [ 'copy', 'excel', 'pdf' ],
-        lengthMenu: [ [50, 100, -1], [50, 100, "All"] ],
-        searchPanes: {
-            cascadePanes: true,
-            viewTotal: true
-        },
-        dom: 'Plfrtip',
-        columnDefs: [
-          {
-              searchPanes: {
-                  show: true,
-                  pagingType: 'numbers',
-                  searching: true
-              },
-              targets: [0, 1, 2, 3, 4]
-          }
-        ]
-      });
-      var maxLength = 30;
-      $(".show-read-more").each(function(){
-        var myStr = $(this).text();
-        if($.trim(myStr).length > maxLength){
-          var newStr = myStr.substring(0, maxLength);
-          var removedStr = myStr.substring(maxLength, $.trim(myStr).length);
-          $(this).empty().html(newStr);
-          $(this).append(' <a href="javascript:void(0);" class="read-more">read more...</a>');
-          $(this).append('<span class="more-text">' + removedStr + '</span>');
-        }
-      });
-      $(".read-more").click(function(){
-        $(this).siblings(".more-text").contents().unwrap();
-        $(this).remove();
-      });
-    });
+    </div>
+    </div>
+    <!-- Table search and paginator -->
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"
+        integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"
+        integrity="sha384-1CmrxMRARb6aLqgBO7yyAxTOQE2AKb9GfXnEo760AUcUmFx3ibVJJAzGytlQcNXd"
+        crossorigin="anonymous"></script>
+    <!-- https://datatables.net/download/index with jQuery, DataTables, Buttons, SearchPanes, and Select //-->
+    <script type="text/javascript"
+        src="https://cdn.datatables.net/v/dt/jqc-1.12.4/dt-1.10.25/b-1.7.1/sp-1.4.0/sl-1.3.3/datatables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Initialise the table with 50 rows, and some search/filtering panes
+            $('#findingsTable').DataTable({
+                responsive: true,
+                // Show 25, 50, 100 and All records
+                lengthChange: true,
+                lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                searchPanes: {
+                    cascadePanes: true,
+                    viewTotal: true,
+                },
+                dom: 'Blfrtip',
+                language: {
+                    // To enable a filter button instead of the filter row
+                    searchPanes: {
+                        clearMessage: 'Clear Filters',
+                        collapse: { 0: 'Filters', _: 'Filters (%d)' },
+                        initCollapsed: true
+
+                    }
+                },
+                buttons: [
+                    {
+                        extend: 'searchPanes',
+                        config: {
+                            cascadePanes: true,
+                            viewTotal: true,
+                            orderable: false
+                        }
+                    }
+                ],
+                columnDefs: [
+                    {
+                        searchPanes: {
+                            show: true,
+                            pagingType: 'numbers',
+                            searching: true
+                        },
+                        // Show all filters
+                        targets: [0, 1, 2, 3, 5, 7]
+                    }
+                ]
+            });
+            var maxLength = 30;
+            // ReadMore ReadLess
+            $(".show-read-more").each(function () {
+                var myStr = $(this).text();
+                if ($.trim(myStr).length > maxLength) {
+                    var newStr = myStr.substring(0, maxLength);
+                    var removedStr = myStr.substring(maxLength, $.trim(myStr).length);
+                    $(this).empty().html(newStr);
+                    $(this).append(' <a href="javascript:void(0);" class="read-more">read more...</a>');
+                    $(this).append('<span class="more-text">' + removedStr + '</span>');
+                }
+            });
+            $(".read-more").click(function () {
+                $(this).siblings(".more-text").contents().unwrap();
+                $(this).remove();
+            });
+        });
     </script>
 </body>
+
 </html>
 """
         )

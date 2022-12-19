@@ -27,6 +27,8 @@ from prowler.lib.outputs.outputs import (
     close_json,
     display_compliance_table,
     display_summary_table,
+    extract_findings_statistics,
+    fill_html_overview_statistics,
     send_to_s3_bucket,
 )
 from prowler.providers.aws.lib.allowlist.allowlist import parse_allowlist_file
@@ -162,6 +164,9 @@ def prowler():
             "There are no checks to execute. Please, check your input arguments"
         )
 
+    # Extract findings stats
+    stats = extract_findings_statistics(findings)
+
     if args.output_modes:
         for mode in args.output_modes:
             # Close json file if exists
@@ -172,6 +177,9 @@ def prowler():
             if mode == "html":
                 add_html_footer(
                     audit_output_options.output_filename, args.output_directory
+                )
+                fill_html_overview_statistics(
+                    stats, audit_output_options.output_filename, args.output_directory
                 )
             # Send output to S3 if needed (-B / -D)
             if provider == "aws" and (
