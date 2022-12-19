@@ -40,7 +40,9 @@ class SecretsManager:
                         region=regional_client.region,
                     )
                     if "RotationEnabled" in secret:
-                        self.secrets[secret["Name"]].rotation_enabled = secret["RotationEnabled"]
+                        self.secrets[secret["Name"]].rotation_enabled = secret[
+                            "RotationEnabled"
+                        ]
 
         except Exception as error:
             logger.error(

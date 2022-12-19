@@ -19,6 +19,7 @@ from prowler.lib.check.models import Check_Report, load_check_metadata
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.json import fill_json_asff
 from prowler.lib.outputs.models import (
+    generate_csv_fields,
     Check_Output_CSV,
     Check_Output_JSON_ASFF,
     Compliance,
@@ -27,7 +28,6 @@ from prowler.lib.outputs.models import (
     Severity,
 )
 from prowler.lib.outputs.outputs import (
-    generate_csv_fields,
     send_to_s3_bucket,
     set_report_color,
 )

@@ -5,30 +5,11 @@ from prowler.config.config import (
     json_asff_file_suffix,
     json_file_suffix,
     prowler_version,
-    timestamp_iso,
     timestamp_utc,
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import Compliance, ProductFields, Resource, Severity
 from prowler.lib.utils.utils import hash_sha512, open_file
-
-
-def fill_json(finding_output, audit_info, finding):
-
-    finding_output.AssessmentStartTime = timestamp_iso
-    finding_output.FindingUniqueId = ""
-    finding_output.Profile = audit_info.profile
-    finding_output.AccountId = audit_info.audited_account
-    if audit_info.organizations_metadata:
-        finding_output.OrganizationsInfo = audit_info.organizations_metadata.__dict__
-    finding_output.Region = finding.region
-    finding_output.Status = finding.status
-    finding_output.StatusExtended = finding.status_extended
-    finding_output.ResourceId = finding.resource_id
-    finding_output.ResourceArn = finding.resource_arn
-    finding_output.ResourceDetails = finding.resource_details
-
-    return finding_output
 
 
 def fill_json_asff(finding_output, audit_info, finding):

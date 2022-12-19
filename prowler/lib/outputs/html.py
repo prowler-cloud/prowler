@@ -230,6 +230,7 @@ def fill_html(file_descriptor, finding):
             """
     )
 
+
 def fill_html_overview_statistics(stats, output_filename, output_directory):
     try:
         filename = f"{output_directory}/{output_filename}{html_file_suffix}"

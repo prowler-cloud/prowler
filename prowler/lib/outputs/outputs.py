@@ -92,7 +92,7 @@ def report(check_findings, output_options, audit_info):
                             )
 
                         if "html" in file_descriptors:
-                            fill_html(file_descriptors["html"], audit_info, finding)
+                            fill_html(file_descriptors["html"], finding)
                             file_descriptors["html"].write("")
 
                         if "json-asff" in file_descriptors:
@@ -197,6 +197,7 @@ def send_to_s3_bucket(
         )
         sys.exit()
 
+
 def extract_findings_statistics(findings: list) -> dict:
     stats = {}
     total_pass = 0
@@ -220,4 +221,3 @@ def extract_findings_statistics(findings: list) -> dict:
     stats["findings_count"] = findings_count
 
     return stats
-
