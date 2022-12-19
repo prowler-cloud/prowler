@@ -38,8 +38,9 @@ class SecretsManager:
                         arn=secret["ARN"],
                         name=secret["Name"],
                         region=regional_client.region,
-                        rotation_enabled=secret["RotationEnabled"],
                     )
+                    if "RotationEnabled" in secret:
+                        secret.rotation_enabled = True
 
         except Exception as error:
             logger.error(
@@ -53,4 +54,4 @@ class Secret(BaseModel):
     arn: str
     name: str
     region: str
-    rotation_enabled: bool
+    rotation_enabled: bool = False
