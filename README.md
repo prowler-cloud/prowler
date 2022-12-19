@@ -135,6 +135,13 @@ You can always use `-h`/`--help` to access to the usage information and all the 
 prowler -h
 ```
 
+## Checks Configurations
+Several Prowler's checks have user configurable variables that can be modified in a common **configuration file**.
+This file can be found in the following path:
+```
+prowler/config/config.yaml
+```
+
 ## AWS
 
 Use a custom AWS profile with `-p`/`--profile` and/or AWS regions which you want to audit with `-f`/`--filter-region`:
