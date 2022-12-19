@@ -5,8 +5,9 @@
 
 # Prowler Documentation
 
-Welcome to [Prowler Open Source v3](https://github.com/prowler-cloud/prowler/) Documentation! 📄
-> For **Prowler v2**, you can access [here](https://github.com/prowler-cloud/prowler/tree/2.12.0) to the branch and README.
+**Welcome to [Prowler Open Source v3](https://github.com/prowler-cloud/prowler/) Documentation!** 📄 
+
+Please for **Prowler v2 Documentation**, please go [here](https://github.com/prowler-cloud/prowler/tree/2.12.0) to the branch and its README.md.
 
 - You are currently in the **Getting Started** section where you can find general information and requirements to help you start with the tool.
 - In the [Tutorials](tutorials/overview) section you will see how to take advantage of all the features in Prowler.
@@ -19,8 +20,15 @@ Welcome to [Prowler Open Source v3](https://github.com/prowler-cloud/prowler/) D
 
 It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
 
-## Quick Start
+[![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/prowlercloud.svg?style=social&label=Follow%20%40prowlercloud)](https://twitter.com/prowlercloud)
 
+## About ProwlerPro
+
+<a href="https://prowler.pro"><img align="right" src="./img/prowler-pro-light.png" width="350"></a> **ProwlerPro** gives you the benefits of Prowler Open Source plus continuous monitoring, faster execution, personalized support, visualization of your data with dashboards, alerts and much more.
+Visit <a href="https://prowler.pro">prowler.pro</a> for more info.
+
+
+## Quick Start
 ### Installation
 
 Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip:
@@ -45,7 +53,7 @@ The container images are available here:
 
 ## High level architecture
 
-You can run Prowler from your workstation, an EC2 instance, Fargate or any other container, Codebuild, CloudShell and Cloud9.
+You can run Prowler from your workstation, an EC2 instance, Fargate or any other container, Codebuild, CloudShell, Cloud9 and many more.
 
 ![Architecture](img/architecture.png)
 ## Basic Usage
@@ -58,7 +66,9 @@ prowler <provider>
 ![Prowler Execution](img/short-display.png)
 > Running the `prowler` command without options will use your environment variable credentials, see [Requirements](getting-started/requirements/) section to review the credentials settings.
 
-By default, prowler will generate a CSV and a JSON report, however you could generate an HTML or an JSON-ASFF report with `-M` or `--output-modes`:
+If you miss the former output you can use `--verbose` but Prowler v3 is smoking fast so you won't see much ;)
+
+By default, Prowler will generate a CSV, JSON and HTML reports, however you can generate a JSON-ASFF (used by AWS Security Hub) report with `-M` or `--output-modes`:
 
 ```console
 prowler <provider> -M csv json json-asff html

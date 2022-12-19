@@ -1,6 +1,6 @@
 # Reporting
 
-By default, Prowler will generate a CSV and a JSON report, however you could generate an HTML or an JSON-ASFF report with `-M` or `--output-modes`:
+By default, Prowler will generate a CSV, JSON and a HTML report, however you could generate a JSON-ASFF (used by AWS Security Hub) report with `-M` or `--output-modes`:
 
 ```console
 prowler <provider> -M csv json json-asff html
@@ -73,10 +73,6 @@ Hereunder is the structure for each of the supported report formats by Prowler:
     "ResourceArn": "",
     "ResourceType": "AwsRdsDbInstance",
     "ResourceDetails": "",
-    "Tags": {
-        "Tag1Key": "value",
-        "Tag2Key": "value"
-    },
     "Description": "Ensure RDS instances have minor version upgrade enabled.",
     "Risk": "Auto Minor Version Upgrade is a feature that you can enable to have your database automatically upgraded when a new minor database engine version is available. Minor version upgrades often patch security vulnerabilities and fix bugs and therefore should be applied.",
     "RelatedUrl": "https://aws.amazon.com/blogs/database/best-practices-for-upgrading-amazon-rds-to-major-and-minor-versions-of-postgresql/",
@@ -93,8 +89,6 @@ Hereunder is the structure for each of the supported report formats by Prowler:
         }
     },
     "Categories": [],
-    "DependsOn": [],
-    "RelatedTo": [],
     "Notes": ""
 },{
     "AssessmentStartTime": "2022-12-01T14:16:57.354413",
@@ -116,10 +110,6 @@ Hereunder is the structure for each of the supported report formats by Prowler:
     "ResourceArn": "",
     "ResourceType": "AwsRdsDbInstance",
     "ResourceDetails": "",
-    "Tags": {
-        "Tag1Key": "value",
-        "Tag2Key": "value"
-    },
     "Description": "Ensure RDS instances have minor version upgrade enabled.",
     "Risk": "Auto Minor Version Upgrade is a feature that you can enable to have your database automatically upgraded when a new minor database engine version is available. Minor version upgrades often patch security vulnerabilities and fix bugs and therefore should be applied.",
     "RelatedUrl": "https://aws.amazon.com/blogs/database/best-practices-for-upgrading-amazon-rds-to-major-and-minor-versions-of-postgresql/",
@@ -136,8 +126,6 @@ Hereunder is the structure for each of the supported report formats by Prowler:
         }
     },
     "Categories": [],
-    "DependsOn": [],
-    "RelatedTo": [],
     "Notes": ""
 }]
 ```
