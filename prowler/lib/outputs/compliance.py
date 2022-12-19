@@ -18,8 +18,13 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
     check_compliance = output_options.bulk_checks_metadata[
         finding.check_metadata.CheckID
     ].Compliance
+    csv_header = compliance_row = None
     for compliance in check_compliance:
-        if compliance.Framework == "ENS" and compliance.Version == "RD2022":
+        if (
+            compliance.Framework == "ENS"
+            and compliance.Version == "RD2022"
+            and "ens_rd2022_aws" in output_options.output_modes
+        ):
             for requirement in compliance.Requirements:
                 requirement_description = requirement.Description
                 requirement_id = requirement.Id
@@ -52,7 +57,9 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
 
             csv_header = generate_csv_fields(Check_Output_CSV_ENS_RD2022)
 
-        elif compliance.Framework == "CIS-AWS":
+        elif compliance.Framework == "CIS-AWS" and "cis" in str(
+            output_options.output_modes
+        ):
             for requirement in compliance.Requirements:
                 requirement_description = requirement.Description
                 requirement_id = requirement.Id
@@ -96,12 +103,13 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
 
             csv_header = generate_csv_fields(Check_Output_CSV_CIS)
 
-        csv_writer = DictWriter(
-            file_descriptors[output_options.output_modes[-1]],
-            fieldnames=csv_header,
-            delimiter=";",
-        )
-        csv_writer.writerow(compliance_row.__dict__)
+        if compliance_row:
+            csv_writer = DictWriter(
+                file_descriptors[output_options.output_modes[-1]],
+                fieldnames=csv_header,
+                delimiter=";",
+            )
+            csv_writer.writerow(compliance_row.__dict__)
 
 
 def display_compliance_table(

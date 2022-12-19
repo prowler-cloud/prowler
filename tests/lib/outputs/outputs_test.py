@@ -16,6 +16,8 @@ from prowler.config.config import (
     timestamp_utc,
 )
 from prowler.lib.check.models import Check_Report, load_check_metadata
+from prowler.lib.outputs.file_descriptors import fill_file_descriptors
+from prowler.lib.outputs.json import fill_json_asff
 from prowler.lib.outputs.models import (
     Check_Output_CSV,
     Check_Output_JSON_ASFF,
@@ -25,8 +27,6 @@ from prowler.lib.outputs.models import (
     Severity,
 )
 from prowler.lib.outputs.outputs import (
-    fill_file_descriptors,
-    fill_json_asff,
     generate_csv_fields,
     send_to_s3_bucket,
     set_report_color,
