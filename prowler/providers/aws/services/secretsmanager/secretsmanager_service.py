@@ -34,7 +34,6 @@ class SecretsManager:
             list_secrets_paginator = regional_client.get_paginator("list_secrets")
             for page in list_secrets_paginator.paginate():
                 for secret in page["SecretList"]:
-                    print(secret)
                     self.secrets[secret["Name"]] = Secret(
                         arn=secret["ARN"],
                         name=secret["Name"],
