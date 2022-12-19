@@ -175,7 +175,7 @@ def add_html_header(file_descriptor, audit_info):
         </div>
         </div>
         </div>
-        <div class="row mt-3">
+        <div class="row-mt-3">
         <div class="col-md-12">
             <table class="table compact stripe row-border ordering" id="findingsTable" data-order='[[ 5, "asc" ]]' data-page-length='100'>
             <thead class="thead-light">
