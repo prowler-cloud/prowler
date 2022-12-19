@@ -66,7 +66,7 @@ prowler <provider>
 ![Prowler Execution](img/short-display.png)
 > Running the `prowler` command without options will use your environment variable credentials, see [Requirements](getting-started/requirements/) section to review the credentials settings.
 
-If you miss the former output you can use `--verbose` but Prower v3 is smoking fast so you won't see much ;)
+If you miss the former output you can use `--verbose` but Prowler v3 is smoking fast so you won't see much ;)
 
 By default, Prowler will generate a CSV, JSON and HTML reports, however you can generate a JSON-ASFF (used by AWS Security Hub) report with `-M` or `--output-modes`:
 
