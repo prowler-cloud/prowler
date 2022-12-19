@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.glue.glue_client import glue_client
 
 
@@ -7,7 +7,7 @@ class glue_development_endpoints_job_bookmark_encryption_enabled(Check):
         findings = []
         for endpoint in glue_client.dev_endpoints:
             no_sec_configs = True
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.resource_id = endpoint.name
             report.region = endpoint.region
             for sec_config in glue_client.security_configs:

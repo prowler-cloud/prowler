@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
@@ -13,7 +13,7 @@ class cloudtrail_cloudwatch_logging_enabled(Check):
         findings = []
         for trail in cloudtrail_client.trails:
             if trail.name:
-                report = Check_Report(self.metadata())
+                report = Check_Report_AWS(self.metadata())
                 report.region = trail.region
                 report.resource_id = trail.name
                 report.resource_arn = trail.arn

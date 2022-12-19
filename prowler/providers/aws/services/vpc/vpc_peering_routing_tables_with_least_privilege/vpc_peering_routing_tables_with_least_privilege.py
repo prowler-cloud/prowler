@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
@@ -6,7 +6,7 @@ class vpc_peering_routing_tables_with_least_privilege(Check):
     def execute(self):
         findings = []
         for peer in vpc_client.vpc_peering_connections:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = peer.region
             comply = True
             # Check each cidr in the peering route table

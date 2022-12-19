@@ -1,5 +1,5 @@
 from prowler.config.config import get_config_var
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
@@ -12,7 +12,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
             # Check VPC endpoint policy
             for statement in endpoint.policy_document["Statement"]:
                 if "*" == statement["Principal"]:
-                    report = Check_Report(self.metadata())
+                    report = Check_Report_AWS(self.metadata())
                     report.region = endpoint.region
                     report.status = "FAIL"
                     report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} has full access."
@@ -27,7 +27,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                         principals = statement["Principal"]["AWS"]
                     for principal_arn in principals:
                         account_id = principal_arn.split(":")[4]
-                        report = Check_Report(self.metadata())
+                        report = Check_Report_AWS(self.metadata())
                         report.region = endpoint.region
                         if (
                             account_id in trusted_account_ids

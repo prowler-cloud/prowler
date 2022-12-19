@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.apigateway.apigateway_client import (
     apigateway_client,
 )
@@ -8,7 +8,7 @@ class apigateway_logging_enabled(Check):
     def execute(self):
         findings = []
         for rest_api in apigateway_client.rest_apis:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = rest_api.region
             for stage in rest_api.stages:
                 if stage.logging:

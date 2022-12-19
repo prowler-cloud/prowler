@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.securityhub.securityhub_client import (
     securityhub_client,
 )
@@ -8,7 +8,7 @@ class securityhub_enabled(Check):
     def execute(self):
         findings = []
         for securityhub in securityhub_client.securityhubs:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = securityhub.region
             if securityhub.status == "ACTIVE":
                 report.status = "PASS"

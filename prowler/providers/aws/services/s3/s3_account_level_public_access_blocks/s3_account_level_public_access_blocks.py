@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.s3.s3_client import s3_client
 from prowler.providers.aws.services.s3.s3control_client import s3control_client
 
@@ -6,7 +6,7 @@ from prowler.providers.aws.services.s3.s3control_client import s3control_client
 class s3_account_level_public_access_blocks(Check):
     def execute(self):
         findings = []
-        report = Check_Report(self.metadata())
+        report = Check_Report_AWS(self.metadata())
         report.status = "FAIL"
         report.status_extended = f"Block Public Access is not configured for the account {s3_client.audited_account}."
         report.region = s3control_client.region

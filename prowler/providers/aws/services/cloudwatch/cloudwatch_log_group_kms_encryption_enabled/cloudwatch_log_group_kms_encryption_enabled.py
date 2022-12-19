@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 
@@ -6,7 +6,7 @@ class cloudwatch_log_group_kms_encryption_enabled(Check):
     def execute(self):
         findings = []
         for log_group in logs_client.log_groups:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = log_group.region
             report.resource_id = log_group.name
             report.resource_arn = log_group.arn

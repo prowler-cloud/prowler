@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.appstream.appstream_client import appstream_client
 
 
@@ -10,7 +10,7 @@ class appstream_fleet_default_internet_access_disabled(Check):
         """Execute the appstream_fleet_default_internet_access_disabled check"""
         findings = []
         for fleet in appstream_client.fleets:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = fleet.region
             report.resource_id = fleet.name
             report.resource_arn = fleet.arn

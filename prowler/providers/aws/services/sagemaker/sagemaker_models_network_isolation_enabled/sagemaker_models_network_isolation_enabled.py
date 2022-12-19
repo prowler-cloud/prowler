@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.sagemaker.sagemaker_client import sagemaker_client
 
 
@@ -6,7 +6,7 @@ class sagemaker_models_network_isolation_enabled(Check):
     def execute(self):
         findings = []
         for model in sagemaker_client.sagemaker_models:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = model.region
             report.resource_id = model.name
             report.resource_arn = model.arn

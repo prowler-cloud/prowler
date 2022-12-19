@@ -5,7 +5,7 @@ from base64 import b64decode
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.autoscaling.autoscaling_client import (
     autoscaling_client,
 )
@@ -15,7 +15,7 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
     def execute(self):
         findings = []
         for configuration in autoscaling_client.launch_configurations:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = configuration.region
             report.resource_id = configuration.name
             report.resource_arn = configuration.arn

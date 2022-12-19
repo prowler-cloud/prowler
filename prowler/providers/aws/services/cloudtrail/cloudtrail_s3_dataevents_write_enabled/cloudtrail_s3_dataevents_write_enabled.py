@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
@@ -7,7 +7,7 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
 class cloudtrail_s3_dataevents_write_enabled(Check):
     def execute(self):
         findings = []
-        report = Check_Report(self.metadata())
+        report = Check_Report_AWS(self.metadata())
         report.region = cloudtrail_client.region
         report.resource_id = "No trails"
         report.resource_arn = "No trails"

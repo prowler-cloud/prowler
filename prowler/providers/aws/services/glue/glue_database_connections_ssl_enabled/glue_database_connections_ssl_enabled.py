@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.glue.glue_client import glue_client
 
 
@@ -6,7 +6,7 @@ class glue_database_connections_ssl_enabled(Check):
     def execute(self):
         findings = []
         for conn in glue_client.connections:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.resource_id = conn.name
             report.region = conn.region
             report.status = "FAIL"

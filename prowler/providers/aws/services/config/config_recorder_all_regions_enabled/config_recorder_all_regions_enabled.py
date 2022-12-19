@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.config.config_client import config_client
 
 
@@ -6,7 +6,7 @@ class config_recorder_all_regions_enabled(Check):
     def execute(self):
         findings = []
         for recorder in config_client.recorders:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = recorder.region
             report.resource_id = "" if not recorder.name else recorder.name
             # Check if Config is enabled in region

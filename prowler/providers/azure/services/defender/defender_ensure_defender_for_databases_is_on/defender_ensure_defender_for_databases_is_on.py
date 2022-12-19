@@ -1,15 +1,15 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.defender.defender_client import defender_client
 
 
 class defender_ensure_defender_for_databases_is_on(Check):
-    def execute(self) -> Check_Report:
+    def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, pricings in defender_client.pricings.items():
-            report = Check_Report(self.metadata())
-            report.region = defender_client.region
-            report.status = "PASS"
-            report.resource_id = "Defender plan Databases"
+            report = Check_Report_Azure(self.metadata())
+            report.resource_name = "Defender plan Databases"
+            report.subscription = subscription
+            report.resource_id = pricings["SqlServers"].resource_id
             report.status_extended = f"Defender plan Defender for Databases from subscription {subscription} is set to ON (pricing tier standard)"
             if (
                 pricings["SqlServers"].pricing_tier != "Standard"

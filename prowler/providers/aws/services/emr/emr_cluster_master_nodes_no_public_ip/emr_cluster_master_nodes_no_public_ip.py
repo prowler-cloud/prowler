@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.emr.emr_client import emr_client
 from prowler.providers.aws.services.emr.emr_service import ClusterStatus
 
@@ -11,7 +11,7 @@ class emr_cluster_master_nodes_no_public_ip(Check):
                 ClusterStatus.TERMINATED,
                 ClusterStatus.TERMINATED_WITH_ERRORS,
             ):
-                report = Check_Report(self.metadata())
+                report = Check_Report_AWS(self.metadata())
                 report.region = cluster.region
                 report.resource_id = cluster.id
                 report.resource_arn = cluster.arn

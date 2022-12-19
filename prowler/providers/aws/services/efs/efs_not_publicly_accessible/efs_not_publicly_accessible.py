@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.efs.efs_client import efs_client
 
 
@@ -6,7 +6,7 @@ class efs_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for fs in efs_client.filesystems:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = fs.region
             report.resource_id = fs.id
             report.resource_arn = ""

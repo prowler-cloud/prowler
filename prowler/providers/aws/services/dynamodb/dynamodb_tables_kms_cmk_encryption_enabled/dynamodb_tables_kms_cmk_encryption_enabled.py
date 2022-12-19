@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.dynamodb.dynamodb_client import dynamodb_client
 
 
@@ -6,7 +6,7 @@ class dynamodb_tables_kms_cmk_encryption_enabled(Check):
     def execute(self):
         findings = []
         for table in dynamodb_client.tables:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.resource_id = table.name
             report.resource_arn = table.arn
             report.region = table.region

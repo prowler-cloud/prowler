@@ -35,7 +35,6 @@ from prowler.providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
 )
 from prowler.providers.common.audit_info import set_provider_audit_info
-
 from prowler.providers.common.outputs import set_provider_output_options
 
 
@@ -137,7 +136,7 @@ def prowler():
     audit_info = set_provider_audit_info(provider, args.__dict__)
 
     # Parse content from Allowlist file and get it, if necessary, from S3
-    if args.allowlist_file:
+    if provider == "aws" and args.allowlist_file:
         allowlist_file = parse_allowlist_file(audit_info, args.allowlist_file)
     else:
         allowlist_file = None
@@ -175,7 +174,9 @@ def prowler():
                     audit_output_options.output_filename, args.output_directory
                 )
             # Send output to S3 if needed (-B / -D)
-            if args.output_bucket or args.output_bucket_no_assume:
+            if provider == "aws" and (
+                args.output_bucket or args.output_bucket_no_assume
+            ):
                 output_bucket = args.output_bucket
                 bucket_session = audit_info.audit_session
                 # Check if -D was input
@@ -191,7 +192,7 @@ def prowler():
                 )
 
     # Resolve previous fails of Security Hub
-    if args.security_hub:
+    if provider == "aws" and args.security_hub:
         resolve_security_hub_previous_findings(args.output_directory, audit_info)
 
     # Display summary table

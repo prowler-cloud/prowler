@@ -1,14 +1,14 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
 
 class iam_administrator_access_with_mfa(Check):
-    def execute(self) -> Check_Report:
+    def execute(self) -> Check_Report_AWS:
         findings = []
         response = iam_client.groups
 
         for group in response:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.resource_id = group.name
             report.resource_arn = group.arn
             report.region = iam_client.region

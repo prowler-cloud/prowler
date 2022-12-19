@@ -1,6 +1,6 @@
 import re
 
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
@@ -14,7 +14,7 @@ class cloudwatch_changes_to_vpcs_alarm_configured(Check):
     def execute(self):
         pattern = r"\$\.eventName\s*=\s*CreateVpc.+\$\.eventName\s*=\s*DeleteVpc.+\$\.eventName\s*=\s*ModifyVpcAttribute.+\$\.eventName\s*=\s*AcceptVpcPeeringConnection.+\$\.eventName\s*=\s*CreateVpcPeeringConnection.+\$\.eventName\s*=\s*DeleteVpcPeeringConnection.+\$\.eventName\s*=\s*RejectVpcPeeringConnection.+\$\.eventName\s*=\s*AttachClassicLinkVpc.+\$\.eventName\s*=\s*DetachClassicLinkVpc.+\$\.eventName\s*=\s*DisableVpcClassicLink.+\$\.eventName\s*=\s*EnableVpcClassicLink"
         findings = []
-        report = Check_Report(self.metadata())
+        report = Check_Report_AWS(self.metadata())
         report.status = "FAIL"
         report.status_extended = (
             "No CloudWatch log groups found with metric filters or alarms associated."

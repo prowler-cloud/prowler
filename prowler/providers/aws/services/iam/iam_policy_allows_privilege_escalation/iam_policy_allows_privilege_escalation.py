@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
 # Does the tool analyze both users and roles, or just one or the other? --> Everything using AttachementCount.
@@ -13,7 +13,7 @@ from prowler.providers.aws.services.iam.iam_client import iam_client
 
 
 class iam_policy_allows_privilege_escalation(Check):
-    def execute(self) -> Check_Report:
+    def execute(self) -> Check_Report_AWS:
         # Is necessary to include the "Action:*" for
         # each service that has a policy that could
         # allow for privilege escalation
@@ -61,7 +61,7 @@ class iam_policy_allows_privilege_escalation(Check):
         }
         findings = []
         for policy in iam_client.customer_managed_policies:
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.resource_id = policy["PolicyName"]
             report.resource_arn = policy["Arn"]
             report.region = iam_client.region

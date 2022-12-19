@@ -65,6 +65,9 @@ class Azure_Output_Options(Provider_Output_Options):
                 self.output_filename = f"prowler-output-{audit_info.identity.domain}-{output_file_timestamp}"
             else:
                 self.output_filename = f"prowler-output-{'-'.join(audit_info.identity.tenant_ids)}-{output_file_timestamp}"
+        # Remove HTML Output since it is not supported yet
+        if "html" in arguments.output_modes:
+            arguments.output_modes.remove("html")
 
 
 class Aws_Output_Options(Provider_Output_Options):

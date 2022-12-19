@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report
+from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.glacier.glacier_client import glacier_client
 
 
@@ -6,7 +6,7 @@ class glacier_vaults_policy_public_access(Check):
     def execute(self):
         findings = []
         for vault in glacier_client.vaults.values():
-            report = Check_Report(self.metadata())
+            report = Check_Report_AWS(self.metadata())
             report.region = vault.region
             report.resource_id = vault.name
             report.resource_arn = vault.arn
