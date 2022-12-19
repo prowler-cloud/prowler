@@ -94,4 +94,5 @@ Each file version of a framework will have the following structure at high level
       ]
     }
 ```
-Finally, to have a proper output file for your reports, your framwrork data model has to be created in `prowler/lib/outputs/models.py` and also the CLI table output in `prowler/lib/outputs/compliance.py`.
+
+Finally, to have a proper output file for your reports, your framework data model has to be created in `prowler/lib/outputs/models.py` and also the CLI table output in `prowler/lib/outputs/compliance.py`.
