@@ -1,6 +1,6 @@
 <p align="center">
-  <img align="center" src="https://github.com/prowler-cloud/prowler/tree/prowler-3.0-dev/docs/img/prowler-pro-dark.png#gh-dark-mode-only" width="150" height="36">
-  <img align="center" src="https://github.com/prowler-cloud/prowler/tree/prowler-3.0-dev/docs/img/prowler-pro-light.png#gh-light-mode-only" width="15%" height="15%">
+  <img align="center" src="docs/img/prowler-pro-dark.png#gh-dark-mode-only" width="150" height="36">
+  <img align="center" src="docs/img/prowler-pro-light.png#gh-light-mode-only" width="15%" height="15%">
 </p>
 <p align="center">
   <b><i>&nbsp&nbsp&nbsp See all the things you and your team can do with ProwlerPro at <a href="https://prowler.pro">prowler.pro</a></i></b>
@@ -58,7 +58,7 @@ The container images are available here:
 
 You can run Prowler from your workstation, an EC2 instance, Fargate or any other container, Codebuild, CloudShell and Cloud9.
 
-![Architecture](https://github.com/prowler-cloud/prowler/tree/prowler-3.0-dev/docs/img/architecture.png)
+![Architecture](docs/img/architecture.png)
 
 # 📝 Requirements
 
@@ -98,7 +98,7 @@ To run prowler, you will need to specify the provider (e.g aws or azure):
 prowler <provider>
 ```
 
-![Prowler Execution](https://github.com/prowler-cloud/prowler/tree/prowler-3.0-dev/docs/img/short-display.png)
+![Prowler Execution](docs/img/short-display.png)
 
 > Running the `prowler` command without options will use your environment variable credentials.
 

@@ -1,4 +1,4 @@
-# Checks Configurations
+# Configuration File
 Several Prowler's checks have user configurable variables that can be modified in a common **configuration file**.
 This file can be found in the following path:
 ```
