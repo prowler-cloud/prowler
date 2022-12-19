@@ -23,14 +23,13 @@ from prowler.lib.check.compliance import update_checks_metadata_with_compliance
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.outputs import (
-    add_html_footer,
-    close_json,
-    display_compliance_table,
-    display_summary_table,
     extract_findings_statistics,
-    fill_html_overview_statistics,
     send_to_s3_bucket,
 )
+from prowler.lib.outputs.compliance import display_compliance_table
+from prowler.lib.outputs.html import add_html_footer, fill_html_overview_statistics
+from prowler.lib.outputs.json import close_json
+from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.allowlist.allowlist import parse_allowlist_file
 from prowler.providers.aws.lib.quick_inventory.quick_inventory import quick_inventory
 from prowler.providers.aws.lib.security_hub.security_hub import (
