@@ -35,8 +35,11 @@
 
 It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
 
+## Looking for Prowler v2 documentation?
+For Prowler v2 Documentation, please go to https://github.com/prowler-cloud/prowler/tree/2.12.1.
 # ⚙️ Install
 
+## Pip package
 Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python >= 3.9:
 
 ```console
@@ -44,7 +47,7 @@ pip install prowler-cloud
 prowler -v
 ```
 
-## Prowler container versions
+## Containers
 
 The available versions of Prowler are the following:
 
@@ -56,6 +59,23 @@ The container images are available here:
 
 - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
 - [AWS Public ECR](https://gallery.ecr.aws/o4g1s5r6/prowler)
+
+## From Github
+
+Python >= 3.9 is required with pip and pipenv:
+
+```
+git clone https://github.com/prowler-cloud/prowler
+cd prowler
+pipenv shell
+pipenv install
+python prowler.py -v
+```
+
+# 📖 Documentation
+
+The full documentation now can be found at [https://docs.prowler.cloud](https://docs.prowler.cloud)
+
 
 # 📐✏️ High level architecture
 
@@ -165,17 +185,15 @@ With Azure you need to specify which auth method is going to be used:
 ```console
 prowler azure [--sp-env-auth, --az-cli-auth, --browser-auth, --managed-identity-auth]
 ```
-> By default, `prowler` will scan all Azure subscriptions.
+> By default, `prowler` will scan all Azure subscriptions.  
 
 # 🎉 New Features
 
-- Multi-cloud support!
+- Python: we got rid of all bash and it is now all in Python.
+- Faster: huge performance improvements (same account from 2.5 hours to 4 minutes).
+- Developers and community: we have made it easier to contribute with new checks and new compliance frameworks. We also included unit tests.
+- Multi-cloud: in addition to AWS, we have added Azure, we plan to include GCP and OCI soon, let us know if you want to contribute!
 
-# 📖 Documentation
-
-The full documentation can be found here:
-
-[https://docs.prowler.cloud](https://docs.prowler.cloud)
 # 📃 License
 
 Prowler is licensed as Apache License 2.0 as specified in each file. You may obtain a copy of the License at

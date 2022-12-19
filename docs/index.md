@@ -7,7 +7,7 @@
 
 **Welcome to [Prowler Open Source v3](https://github.com/prowler-cloud/prowler/) Documentation!** 📄 
 
-Please for **Prowler v2 Documentation**, please go [here](https://github.com/prowler-cloud/prowler/tree/2.12.0) to the branch and its README.md.
+For **Prowler v2 Documentation**, please go [here](https://github.com/prowler-cloud/prowler/tree/2.12.0) to the branch and its README.md.
 
 - You are currently in the **Getting Started** section where you can find general information and requirements to help you start with the tool.
 - In the [Tutorials](tutorials/overview) section you will see how to take advantage of all the features in Prowler.
