@@ -47,6 +47,7 @@ nav:
     - Contact Us: contact.md
     - FAQ: faq.md
     - About: about.md
+    - ProwlerPro: https://prowler.pro
 # Customization
 extra:
   consent:
@@ -66,6 +67,8 @@ extra:
       link: https://hub.docker.com/r/toniblyx
     - icon: fontawesome/brands/twitter
       link: https://twitter.com/toniblyx
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/prowlercloud
 
 # Copyright
-copyright: Copyright &copy; 2022 Toni de la Fuente, Maintained by the Prowler Team</a>.
+copyright: Copyright &copy; 2022 Toni de la Fuente, Maintained by the Prowler Team at Verica, Inc.</a>.
