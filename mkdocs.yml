@@ -42,11 +42,12 @@ nav:
           - AWS Security Hub: tutorials/aws/securityhub.md
           - AWS Organizations: tutorials/aws/organizations.md
           - Scan Multiple AWS Accounts: tutorials/aws/multiaccount.md
+          - AWS CloudShell: tutorials/aws/cloudshell.md
         - Azure:
           - Authentication: tutorials/azure/authentication.md
           - Subscriptions: tutorials/azure/subscriptions.md
     - Contact Us: contact.md
-    - FAQ: faq.md
+    - Troubleshooting: troubleshooting.md
     - About: about.md
     - ProwlerPro: https://prowler.pro
 # Customization
