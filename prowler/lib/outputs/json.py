@@ -38,10 +38,14 @@ def fill_json_asff(finding_output, audit_info, finding):
             Region=finding.region,
         )
     ]
+    # Check if any Requirement has > 64 characters
+    check_types = []
+    for type in finding.check_metadata.CheckType:
+        check_types.extend(type.split("/"))
     # Add ED to PASS or FAIL (PASSED/FAILED)
     finding_output.Compliance = Compliance(
         Status=finding.status + "ED",
-        RelatedRequirements=finding.check_metadata.CheckType,
+        RelatedRequirements=check_types,
     )
     finding_output.Remediation = {
         "Recommendation": finding.check_metadata.Remediation.Recommendation

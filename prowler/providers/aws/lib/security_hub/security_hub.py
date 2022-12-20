@@ -31,11 +31,6 @@ def send_to_security_hub(
                 f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://github.com/prowler-cloud/prowler/#security-hub-integration"
             )
 
-        # Check if any Requirement has > 64 characters
-        for requirement in finding_output.Compliance.RelatedRequirements:
-            if len(requirement) > 64:
-                finding_output.Compliance.RelatedRequirements.remove(requirement)
-                finding_output.Compliance.RelatedRequirements.extend(requirement.split("/"))
         # Send finding to Security Hub
         batch_import = security_hub_client.batch_import_findings(
             Findings=[finding_output.dict()]
