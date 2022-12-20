@@ -41,6 +41,7 @@ nav:
           - Assume Role: tutorials/aws/role-assumption.md
           - AWS Security Hub: tutorials/aws/securityhub.md
           - AWS Organizations: tutorials/aws/organizations.md
+          - Scan Multiple AWS Accounts: tutorials/aws/multiaccount.md
         - Azure:
           - Authentication: tutorials/azure/authentication.md
           - Subscriptions: tutorials/azure/subscriptions.md
