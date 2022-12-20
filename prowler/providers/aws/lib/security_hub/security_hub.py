@@ -4,7 +4,11 @@ from operator import itemgetter
 
 from boto3 import session
 
-from prowler.config.config import json_asff_file_suffix, timestamp_utc
+from prowler.config.config import (
+    json_asff_file_suffix,
+    output_file_timestamp,
+    timestamp_utc,
+)
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import Check_Output_JSON_ASFF
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
@@ -48,7 +52,7 @@ def resolve_security_hub_previous_findings(
     logger.info("Checking previous findings in Security Hub to archive them.")
     # Read current findings from json-asff file
     with open(
-        f"{output_directory}/prowler-output-{audit_info.audited_account}-{json_asff_file_suffix}"
+        f"{output_directory}/prowler-output-{audit_info.audited_account}-{output_file_timestamp}{json_asff_file_suffix}"
     ) as f:
         json_asff_file = json.load(f)
 

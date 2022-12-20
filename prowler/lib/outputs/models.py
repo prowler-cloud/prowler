@@ -29,6 +29,9 @@ def generate_provider_output_csv(provider: str, finding, audit_info, mode: str, 
             data["resource_name"] = finding.resource_name
             data["subscription"] = finding.subscription
             data["tenant_domain"] = audit_info.identity.domain
+            data[
+                "finding_unique_id"
+            ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
             finding_output = output_model(**data)
 
         if provider == "aws":
@@ -37,6 +40,9 @@ def generate_provider_output_csv(provider: str, finding, audit_info, mode: str, 
             data["region"] = finding.region
             data["resource_id"] = finding.resource_id
             data["resource_arn"] = finding.resource_arn
+            data[
+                "finding_unique_id"
+            ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
             finding_output = output_model(**data)
 
             if audit_info.organizations_metadata:
@@ -221,6 +227,7 @@ def generate_provider_output_json(provider: str, finding, audit_info, mode: str,
             finding_output.Subscription = finding.subscription
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceName = finding.resource_name
+            finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
 
         if provider == "aws":
             finding_output.Profile = audit_info.profile
@@ -228,6 +235,7 @@ def generate_provider_output_json(provider: str, finding, audit_info, mode: str,
             finding_output.Region = finding.region
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceArn = finding.resource_arn
+            finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
 
             if audit_info.organizations_metadata:
                 finding_output.OrganizationsInfo = (
