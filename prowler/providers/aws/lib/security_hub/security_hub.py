@@ -35,6 +35,7 @@ def send_to_security_hub(
         for requirement in finding_output.Compliance.RelatedRequirements:
             if len(requirement) > 64:
                 finding_output.Compliance.RelatedRequirements.remove(requirement)
+                finding_output.Compliance.RelatedRequirements.extend(requirement.split("/"))
         # Send finding to Security Hub
         batch_import = security_hub_client.batch_import_findings(
             Findings=[finding_output.dict()]

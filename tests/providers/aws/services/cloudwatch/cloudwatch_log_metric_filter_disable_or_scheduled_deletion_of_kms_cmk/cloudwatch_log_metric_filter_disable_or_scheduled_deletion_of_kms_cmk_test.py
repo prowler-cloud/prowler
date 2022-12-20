@@ -49,7 +49,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
                 result[0].status_extended
                 == "No CloudWatch log groups found with metric filters or alarms associated."
             )
-            assert result[0].resource_id == ""
+            assert result[0].resource_id == current_audit_info.audited_account
 
     @mock_logs
     @mock_cloudtrail
@@ -98,7 +98,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
                 result[0].status_extended
                 == "No CloudWatch log groups found with metric filters or alarms associated."
             )
-            assert result[0].resource_id == ""
+            assert result[0].resource_id == current_audit_info.audited_account
 
     @mock_logs
     @mock_cloudtrail
@@ -153,7 +153,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
                 result[0].status_extended
                 == "No CloudWatch log groups found with metric filters or alarms associated."
             )
-            assert result[0].resource_id == ""
+            assert result[0].resource_id == current_audit_info.audited_account
 
     @mock_logs
     @mock_cloudtrail
