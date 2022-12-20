@@ -20,7 +20,7 @@ class cloudwatch_changes_to_network_acls_alarm_configured(Check):
             "No CloudWatch log groups found with metric filters or alarms associated."
         )
         report.region = "us-east-1"
-        report.resource_id = ""
+        report.resource_id = cloudtrail_client.audited_account
         # 1. Iterate for CloudWatch Log Group in CloudTrail trails
         log_groups = []
         for trail in cloudtrail_client.trails:

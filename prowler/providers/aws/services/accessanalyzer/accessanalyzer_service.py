@@ -52,7 +52,7 @@ class AccessAnalyzer:
                 self.analyzers.append(
                     Analyzer(
                         "",
-                        "",
+                        self.audited_account,
                         "NOT_AVAILABLE",
                         "",
                         "",

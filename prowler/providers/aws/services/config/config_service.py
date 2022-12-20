@@ -57,7 +57,7 @@ class Config:
             else:
                 self.recorders.append(
                     Recorder(
-                        None,
+                        self.audited_account,
                         None,
                         None,
                         regional_client.region,
