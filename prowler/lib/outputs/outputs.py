@@ -107,7 +107,10 @@ def report(check_findings, output_options, audit_info):
                             file_descriptors["json-asff"].write(",")
 
                         # Check if it is needed to send findings to security hub
-                        if output_options.security_hub_enabled:
+                        if (
+                            output_options.security_hub_enabled
+                            and finding.status != "INFO"
+                        ):
                             send_to_security_hub(
                                 finding.region, finding_output, audit_info.audit_session
                             )
