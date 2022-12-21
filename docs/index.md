@@ -37,6 +37,8 @@ pip install prowler-cloud
 prowler -v
 ```
 
+If you want to execute Prowler from AWS CloudShell see [here](tutorials/aws/cloudshell.md).
+
 ## Prowler container versions
 
 The available versions of Prowler are the following:
@@ -49,6 +51,11 @@ The container images are available here:
 
 - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
 - [AWS Public ECR](https://gallery.ecr.aws/o4g1s5r6/prowler)
+
+To run it using Docker:
+```
+docker run -ti --rm --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest
+```
 
 ## High level architecture
 
