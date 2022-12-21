@@ -1,12 +1,12 @@
-name: Lint & Test
+name: pr-lint-test
 
 on:
   push:
     branches:
-      - "prowler-3.0-dev"
+      - "master"
   pull_request:
     branches:
-      - "prowler-3.0-dev"
+      - "master"
 
 jobs:
   build:
