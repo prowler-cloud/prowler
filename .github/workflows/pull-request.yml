@@ -1,12 +1,12 @@
-name: Lint & Test
+name: pr-lint-test
 
 on:
   push:
     branches:
-      - "prowler-3.0-dev"
+      - "master"
   pull_request:
     branches:
-      - "prowler-3.0-dev"
+      - "master"
 
 jobs:
   build:
@@ -30,7 +30,7 @@ jobs:
           VERSION=$(curl --silent "https://api.github.com/repos/hadolint/hadolint/releases/latest" | \
             grep '"tag_name":' | \
             sed -E 's/.*"v([^"]+)".*/\1/' \
-            ) && curl -L -o /tmp/hadolint https://github.com/hadolint/hadolint/releases/download/v${VERSION}/hadolint-Linux-x86_64 \
+            ) && curl -L -o /tmp/hadolint "https://github.com/hadolint/hadolint/releases/download/v${VERSION}/hadolint-Linux-x86_64" \
             && chmod +x /tmp/hadolint
       - name: Lint with flake8
         run: |
