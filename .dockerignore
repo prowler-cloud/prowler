@@ -1,6 +1,0 @@
-.git/
-.github/
-
-# Ignore output directories
-output/
-junit-reports/
