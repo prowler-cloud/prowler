@@ -1,5 +1,6 @@
 import argparse
 import sys
+from argparse import RawTextHelpFormatter
 
 from prowler.config.config import (
     default_output_directory,
@@ -14,7 +15,13 @@ class ProwlerArgumentParser:
         # CLI Arguments
         self.parser = argparse.ArgumentParser(
             prog="prowler",
-            epilog="To see the different available options on a specific provider, run: prowler {provider} -h|--help",
+            formatter_class=RawTextHelpFormatter,
+            epilog="""
+To see the different available options on a specific provider, run:
+    prowler {provider} -h|--help
+
+Detailed documentation at https://docs.prowler.cloud
+""",
         )
         # Default
         self.parser.add_argument(
