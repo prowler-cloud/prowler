@@ -27,6 +27,6 @@ class iam_root_hardware_mfa_enabled(Check):
                 report.status = "FAIL"
                 report.status_extended = "MFA is not enabled for root account."
 
-        findings.append(report)
+            findings.append(report)
 
         return findings
