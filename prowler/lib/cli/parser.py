@@ -7,6 +7,8 @@ from prowler.config.config import (
     prowler_version,
 )
 
+from argparse import RawTextHelpFormatter
+
 
 class ProwlerArgumentParser:
     # Set the default parser
@@ -14,7 +16,13 @@ class ProwlerArgumentParser:
         # CLI Arguments
         self.parser = argparse.ArgumentParser(
             prog="prowler",
-            epilog="To see the different available options on a specific provider, run: prowler {provider} -h|--help",
+            formatter_class=RawTextHelpFormatter,
+            epilog="""
+To see the different available options on a specific provider, run:
+    prowler {provider} -h|--help
+
+Detailed documentation at https://docs.prowler.cloud
+""",
         )
         # Default
         self.parser.add_argument(
