@@ -1,6 +1,6 @@
 <p align="center">
-  <img align="center" src="docs/img/prowler-pro-dark.png#gh-dark-mode-only" width="150" height="36">
-  <img align="center" src="docs/img/prowler-pro-light.png#gh-light-mode-only" width="15%" height="15%">
+  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/prowler-3.0-dev/docs/img/prowler-pro-dark.png#gh-dark-mode-only" width="150" height="36">
+  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/prowler-3.0-dev/docs/img/prowler-pro-light.png#gh-light-mode-only" width="15%" height="15%">
 </p>
 <p align="center">
   <b><i>&nbsp&nbsp&nbsp See all the things you and your team can do with ProwlerPro at <a href="https://prowler.pro">prowler.pro</a></i></b>
@@ -81,7 +81,7 @@ The full documentation now can be found at [https://docs.prowler.cloud](https://
 
 You can run Prowler from your workstation, an EC2 instance, Fargate or any other container, Codebuild, CloudShell and Cloud9.
 
-![Architecture](docs/img/architecture.png)
+![Architecture](https://github.com/prowler-cloud/prowler/blob/prowler-3.0-dev/docs/img/architecture.png)
 
 # 📝 Requirements
 
@@ -121,7 +121,7 @@ To run prowler, you will need to specify the provider (e.g aws or azure):
 prowler <provider>
 ```
 
-![Prowler Execution](docs/img/short-display.png)
+![Prowler Execution](https://github.com/prowler-cloud/prowler/blob/prowler-3.0-dev/docs/img/short-display.png)
 
 > Running the `prowler` command without options will use your environment variable credentials.
 
@@ -133,7 +133,7 @@ prowler <provider> -M csv json json-asff html
 
 The html report will be located in the `output` directory as the other files and it will look like:
 
-![Prowler Execution](docs/img/html-output.png)
+![Prowler Execution](https://github.com/prowler-cloud/prowler/blob/prowler-3.0-dev/docs/img/html-output.png)
 
 You can use `-l`/`--list-checks` or `--list-services` to list all available checks or services within the provider.
 
