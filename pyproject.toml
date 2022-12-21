@@ -12,7 +12,7 @@ maintainers = [
   { name = "Nacho Rivera", email = "nacho@verica.io" },
   { name = "Pepe Fagoaga", email = "pepe@verica.io" },
 ]
-description = "Prowler is an Open Source security tool to perform AWS security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains more than 240 controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks."
+description = "Prowler is an Open Source security tool to perform Cloud Security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains more than 240 controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "Apache-2.0" }
