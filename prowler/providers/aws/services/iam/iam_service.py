@@ -12,6 +12,7 @@ class IAM:
         self.service = "iam"
         self.session = audit_info.audit_session
         self.account = audit_info.audited_account
+        self.partition = audit_info.audited_partition
         self.client = self.session.client(self.service)
         self.region = get_region_global_service(audit_info)
         self.users = self.__get_users__()

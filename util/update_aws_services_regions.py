@@ -41,8 +41,8 @@ for item in original_matrix_regions_aws["prices"]:
         old_service = service
         regions = {}
         regions["aws"] = {}
-        regions["cn"] = {}
-        regions["gov"] = {}
+        regions["aws-cn"] = {}
+        regions["aws-us-gov"] = {}
         regions_dict["regions"] = {}
         regions_aws = []
         regions_cn = []
@@ -51,11 +51,11 @@ for item in original_matrix_regions_aws["prices"]:
     # Include the region in their AWS partition
     if "cn-" in region:
         regions_cn.append(region)
-        regions["cn"] = regions_cn
+        regions["aws-cn"] = regions_cn
 
     elif "gov-" in region:
         regions_gov.append(region)
-        regions["gov"] = regions_gov
+        regions["aws-us-gov"] = regions_gov
     else:
         regions_aws.append(region)
         regions["aws"] = regions_aws
