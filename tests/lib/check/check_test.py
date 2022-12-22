@@ -242,8 +242,7 @@ class Test_Check:
     def test_list_modules(self):
         provider = "azure"
         service = "storage"
-        list_modules(provider, service)
-        expected_modules = expected_packages
+        expected_modules = list_modules(provider, service)
         assert expected_modules == expected_packages
 
     # def test_parse_checks_from_compliance_framework_two(self):
