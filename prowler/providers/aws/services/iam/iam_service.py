@@ -149,11 +149,13 @@ class IAM:
             if "HardExpiry" in password_policy:
                 hard_expiry = password_policy["HardExpiry"]
         except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            # Password policy does not exist
-            password_policy = None
+            if "NoSuchEntity" in str(error):
+                # Password policy does not exist
+                password_policy = None
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         else:
             return PasswordPolicy(
                 password_policy["MinimumPasswordLength"],
