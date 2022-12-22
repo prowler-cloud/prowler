@@ -18,6 +18,8 @@ class Test_iam_avoid_root_usage:
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage.iam_client",
             new=IAM(current_audit_info),
@@ -51,6 +53,8 @@ class Test_iam_avoid_root_usage:
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage.iam_client",
             new=IAM(current_audit_info),
@@ -83,6 +87,8 @@ class Test_iam_avoid_root_usage:
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage.iam_client",
             new=IAM(current_audit_info),
@@ -114,6 +120,8 @@ class Test_iam_avoid_root_usage:
 
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
+
+        current_audit_info.audited_partition = "aws"
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_avoid_root_usage.iam_avoid_root_usage.iam_client",
