@@ -6,8 +6,10 @@ from moto import mock_iam
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.iam.iam_service import IAM
+from freezegun import freeze_time
 
 AWS_ACCOUNT_NUMBER = 123456789012
+TEST_DATETIME = "2023-01-01T12:01:01+00:00"
 
 
 class Test_IAM_Service:
@@ -49,19 +51,171 @@ class Test_IAM_Service:
         assert iam.session.__class__.__name__ == "Session"
 
     # Test IAM Get Credential Report
+    @freeze_time(TEST_DATETIME)
     @mock_iam
     def test__get_credential_report__(self):
         # Generate IAM Client
         iam_client = client("iam")
-        # Create an IAM Users
+        # Create IAM User
+        username = "user1"
         iam_client.create_user(
-            UserName="user1",
+            UserName=username,
         )
+        # Expected credential report
+        expected_credential_report = {
+            "user": username,
+            "arn": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/{username}",
+            "user_creation_time": TEST_DATETIME,
+            "password_enabled": "false",
+            "password_last_used": "not_supported",
+            "password_last_changed": TEST_DATETIME,
+            "password_next_rotation": "not_supported",
+            "mfa_active": "false",
+            "access_key_1_active": "false",
+            "access_key_1_last_rotated": "N/A",
+            "access_key_1_last_used_date": "N/A",
+            "access_key_1_last_used_region": "not_supported",
+            "access_key_1_last_used_service": "not_supported",
+            "access_key_2_active": "false",
+            "access_key_2_last_rotated": "N/A",
+            "access_key_2_last_used_date": "N/A",
+            "access_key_2_last_used_region": "not_supported",
+            "access_key_2_last_used_service": "not_supported",
+            "cert_1_active": "false",
+            "cert_1_last_rotated": "N/A",
+            "cert_2_active": "false",
+            "cert_2_last_rotated": "N/A",
+        }
 
         # IAM client for this test class
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
-        assert len(iam.credential_report) == len(iam_client.list_users()["Users"])
+        assert len(iam.credential_report) == 1
+        assert iam.credential_report[0].get("user")
+        assert iam.credential_report[0]["user"] == expected_credential_report["user"]
+
+        assert iam.credential_report[0].get("arn")
+        assert iam.credential_report[0]["arn"] == expected_credential_report["arn"]
+
+        assert iam.credential_report[0].get("user_creation_time")
+        assert (
+            iam.credential_report[0]["user_creation_time"]
+            == expected_credential_report["user_creation_time"]
+        )
+
+        assert iam.credential_report[0].get("password_enabled")
+        assert (
+            iam.credential_report[0]["password_enabled"]
+            == expected_credential_report["password_enabled"]
+        )
+
+        assert iam.credential_report[0].get("password_last_used")
+        assert (
+            iam.credential_report[0]["password_last_used"]
+            == expected_credential_report["password_last_used"]
+        )
+
+        assert iam.credential_report[0].get("password_last_changed")
+        assert (
+            iam.credential_report[0]["password_last_changed"]
+            == expected_credential_report["password_last_changed"]
+        )
+
+        assert iam.credential_report[0].get("password_next_rotation")
+        assert (
+            iam.credential_report[0]["password_next_rotation"]
+            == expected_credential_report["password_next_rotation"]
+        )
+
+        assert iam.credential_report[0].get("mfa_active")
+        assert (
+            iam.credential_report[0]["mfa_active"]
+            == expected_credential_report["mfa_active"]
+        )
+
+        assert iam.credential_report[0].get("access_key_1_active")
+        assert (
+            iam.credential_report[0]["access_key_1_active"]
+            == expected_credential_report["access_key_1_active"]
+        )
+
+        assert iam.credential_report[0].get("access_key_1_last_rotated")
+        assert (
+            iam.credential_report[0]["access_key_1_last_rotated"]
+            == expected_credential_report["access_key_1_last_rotated"]
+        )
+
+        assert iam.credential_report[0].get("access_key_1_last_used_date")
+        assert (
+            iam.credential_report[0]["access_key_1_last_used_date"]
+            == expected_credential_report["access_key_1_last_used_date"]
+        )
+
+        assert iam.credential_report[0].get("access_key_1_last_used_region")
+        assert (
+            iam.credential_report[0]["access_key_1_last_used_region"]
+            == expected_credential_report["access_key_1_last_used_region"]
+        )
+
+        assert iam.credential_report[0].get("access_key_1_last_used_service")
+        assert (
+            iam.credential_report[0]["access_key_1_last_used_service"]
+            == expected_credential_report["access_key_1_last_used_service"]
+        )
+
+        assert iam.credential_report[0].get("access_key_2_active")
+        assert (
+            iam.credential_report[0]["access_key_2_active"]
+            == expected_credential_report["access_key_2_active"]
+        )
+
+        assert iam.credential_report[0].get("access_key_2_last_rotated")
+        assert (
+            iam.credential_report[0]["access_key_2_last_rotated"]
+            == expected_credential_report["access_key_2_last_rotated"]
+        )
+
+        assert iam.credential_report[0].get("access_key_2_last_used_date")
+        assert (
+            iam.credential_report[0]["access_key_2_last_used_date"]
+            == expected_credential_report["access_key_2_last_used_date"]
+        )
+
+        assert iam.credential_report[0].get("access_key_2_last_used_region")
+        assert (
+            iam.credential_report[0]["access_key_2_last_used_region"]
+            == expected_credential_report["access_key_2_last_used_region"]
+        )
+
+        assert iam.credential_report[0].get("access_key_2_last_used_service")
+        assert (
+            iam.credential_report[0]["access_key_2_last_used_service"]
+            == expected_credential_report["access_key_2_last_used_service"]
+        )
+
+        assert iam.credential_report[0].get("cert_1_active")
+        assert (
+            iam.credential_report[0]["cert_1_active"]
+            == expected_credential_report["cert_1_active"]
+        )
+
+        assert iam.credential_report[0].get("cert_1_last_rotated")
+        assert (
+            iam.credential_report[0]["cert_1_last_rotated"]
+            == expected_credential_report["cert_1_last_rotated"]
+        )
+
+        assert iam.credential_report[0].get("cert_2_active")
+        assert (
+            iam.credential_report[0]["cert_2_active"]
+            == expected_credential_report["cert_2_active"]
+        )
+
+        assert iam.credential_report[0].get("cert_2_last_rotated")
+        assert (
+            iam.credential_report[0]["cert_2_last_rotated"]
+            == expected_credential_report["cert_2_last_rotated"]
+        )
 
     # Test IAM Get Roles
     @mock_iam
