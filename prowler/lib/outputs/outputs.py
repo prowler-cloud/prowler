@@ -221,12 +221,12 @@ def extract_findings_statistics(findings: list) -> dict:
     for finding in findings:
         # Save the resource_id
         resources.add(finding.resource_id)
-        # Increment findings
-        findings_count += 1
         if finding.status == "PASS":
             total_pass += 1
+            findings_count += 1
         if finding.status == "FAIL":
             total_fail += 1
+            findings_count += 1
 
     stats["total_pass"] = total_pass
     stats["total_fail"] = total_fail

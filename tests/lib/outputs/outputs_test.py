@@ -361,6 +361,21 @@ class Test_Outputs:
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 2
 
+    def test_extract_findings_statistics_info_resources(self):
+        finding_1 = mock.MagicMock()
+        finding_1.status = "INFO"
+        finding_1.resource_id = "test_resource_1"
+        finding_2 = mock.MagicMock()
+        finding_2.status = "PASS"
+        finding_2.resource_id = "test_resource_1"
+        findings = [finding_1, finding_2]
+
+        stats = extract_findings_statistics(findings)
+        assert stats["total_pass"] == 1
+        assert stats["total_fail"] == 0
+        assert stats["resources_count"] == 1
+        assert stats["findings_count"] == 1
+
     def test_extract_findings_statistics_no_findings(self):
         findings = []
 
