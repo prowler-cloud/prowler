@@ -123,10 +123,12 @@ class ECR:
                                     severity_counts.medium = finding_severity_counts[
                                         "MEDIUM"
                                     ]
-
+                            latest_tag = "None"
+                            if image.get("imageTags"):
+                                latest_tag = image["imageTags"][0]
                             repository.images_details.append(
                                 ImageDetails(
-                                    latest_tag=image.get("imageTags")[0],
+                                    latest_tag=latest_tag,
                                     latest_digest=image["imageDigest"],
                                     scan_findings_status=last_scan_status,
                                     scan_findings_severity_count=severity_counts,
