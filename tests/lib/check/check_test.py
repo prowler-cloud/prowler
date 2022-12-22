@@ -1,11 +1,105 @@
 import os
+from importlib.machinery import FileFinder
+from pkgutil import ModuleInfo
+
+from mock import patch
 
 from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
+    list_modules,
+    list_services,
     parse_checks_from_file,
+    recover_checks_from_provider,
 )
 from prowler.lib.check.models import load_check_metadata
+
+expected_packages = [
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/storage/storage_ensure_minimum_tls_version_12"
+        ),
+        name="prowler.providers.azure.services.storage.storage_ensure_minimum_tls_version_12.storage_ensure_minimum_tls_version_12",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder("/root_dir/prowler/providers/azure/services/storage"),
+        name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/storage/storage_ensure_encryption_with_customer_managed_keys"
+        ),
+        name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys.storage_ensure_encryption_with_customer_managed_keys",
+        ispkg=False,
+    ),
+]
+
+
+def mock_walk_packages(*_):
+    return expected_packages
+
+
+def mock_list_modules(*_):
+    modules = [
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/storage/storage_ensure_minimum_tls_version_12"
+            ),
+            name="prowler.providers.azure.services.storage.storage_ensure_minimum_tls_version_12.storage_ensure_minimum_tls_version_12",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/storage"
+            ),
+            name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/storage/storage_ensure_encryption_with_customer_managed_keys"
+            ),
+            name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys.storage_ensure_encryption_with_customer_managed_keys",
+            ispkg=False,
+        ),
+    ]
+    return modules
+
+
+def mock_recover_checks_from_azure_provider(*_):
+    return [
+        (
+            "defender_ensure_defender_for_app_services_is_on",
+            "/root_dir/fake_path/defender/defender_ensure_defender_for_app_services_is_on",
+        ),
+        (
+            "iam_subscription_roles_owner_custom_not_created",
+            "/root_dir/fake_path/iam/iam_subscription_roles_owner_custom_not_created",
+        ),
+        (
+            "storage_default_network_access_rule_is_denied",
+            "/root_dir/fake_path/storage/storage_default_network_access_rule_is_denied",
+        ),
+    ]
+
+
+def mock_recover_checks_from_aws_provider(*_):
+    return [
+        (
+            "accessanalyzer_enabled_without_findings",
+            "/root_dir/fake_path/accessanalyzer/accessanalyzer_enabled_without_findings",
+        ),
+        (
+            "awslambda_function_url_cors_policy",
+            "/root_dir/fake_path/awslambda/awslambda_function_url_cors_policy",
+        ),
+        (
+            "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+            "/root_dir/fake_path/ec2/ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        ),
+    ]
 
 
 class Test_Check:
@@ -106,6 +200,51 @@ class Test_Check:
                 exclude_services_to_run(checks_to_run, excluded_services, provider)
                 == test["expected"]
             )
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_azure_provider,
+    )
+    def test_list_azure_services(self):
+        provider = "azure"
+        expected_services = {"defender", "iam", "storage"}
+        listed_services = list_services(provider)
+        assert listed_services == sorted(expected_services)
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider,
+    )
+    def test_list_aws_services(self):
+        provider = "azure"
+        expected_services = {"accessanalyzer", "awslambda", "ec2"}
+        listed_services = list_services(provider)
+        assert listed_services == sorted(expected_services)
+
+    @patch("prowler.lib.check.check.list_modules", new=mock_list_modules)
+    def test_recover_checks_from_provider(self):
+        provider = "azure"
+        service = "storage"
+        expected_checks = [
+            (
+                "storage_ensure_minimum_tls_version_12",
+                "/root_dir/prowler/providers/azure/services/storage/storage_ensure_minimum_tls_version_12",
+            ),
+            (
+                "storage_ensure_encryption_with_customer_managed_keys",
+                "/root_dir/prowler/providers/azure/services/storage/storage_ensure_encryption_with_customer_managed_keys",
+            ),
+        ]
+        returned_checks = recover_checks_from_provider(provider, service)
+        assert returned_checks == expected_checks
+
+    @patch("prowler.lib.check.check.walk_packages", new=mock_walk_packages)
+    def test_list_modules(self):
+        provider = "azure"
+        service = "storage"
+        list_modules(provider, service)
+        expected_modules = expected_packages
+        assert expected_modules == expected_packages
 
     # def test_parse_checks_from_compliance_framework_two(self):
     #     test_case = {
