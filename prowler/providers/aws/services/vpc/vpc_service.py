@@ -139,12 +139,15 @@ class VPC:
             )
             for page in describe_vpc_endpoints_paginator.paginate():
                 for endpoint in page["VpcEndpoints"]:
+                    endpoint_policy = None
+                    if endpoint.get("PolicyDocument"):
+                        endpoint_policy = json.loads(endpoint["PolicyDocument"])
                     self.vpc_endpoints.append(
                         VpcEndpoint(
                             endpoint["VpcEndpointId"],
                             endpoint["VpcId"],
                             endpoint["State"],
-                            json.loads(endpoint["PolicyDocument"]),
+                            endpoint_policy,
                             endpoint["OwnerId"],
                             regional_client.region,
                         )
