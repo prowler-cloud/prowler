@@ -21,17 +21,7 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
-
-
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
-@patch(
-    "prowler.providers.aws.services.trustedadvisor.trustedadvisor_service.generate_regional_clients",
-    new=mock_generate_regional_clients,
-)
 class Test_TrustedAdvisor_Service:
     # Mocked Audit Info
     def set_mocked_audit_info(self):
@@ -46,7 +36,7 @@ class Test_TrustedAdvisor_Service:
             audited_partition="aws",
             audited_identity_arn=None,
             profile=None,
-            profile_region=None,
+            profile_region=AWS_REGION,
             credentials=None,
             assumed_role_info=None,
             audited_regions=None,
@@ -64,8 +54,7 @@ class Test_TrustedAdvisor_Service:
     def test_client(self):
         audit_info = self.set_mocked_audit_info()
         trustedadvisor = TrustedAdvisor(audit_info)
-        for reg_client in trustedadvisor.regional_clients.values():
-            assert reg_client.__class__.__name__ == "Support"
+        assert trustedadvisor.client.__class__.__name__ == "Support"
 
     # Test TrustedAdvisor session
     def test__get_session__(self):
