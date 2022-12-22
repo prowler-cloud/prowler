@@ -96,9 +96,12 @@ class S3:
                 "SSEAlgorithm"
             ]
         except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if "ServerSideEncryptionConfigurationNotFoundError" in str(error):
+                bucket.encryption = None
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_bucket_logging__(self, bucket):
         logger.info("S3 - Get buckets logging...")
@@ -125,9 +128,20 @@ class S3:
                 ]
             )
         except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if "NoSuchPublicAccessBlockConfiguration" in str(error):
+                # Set all block as False
+                bucket.public_access_block = PublicAccessBlock(
+                    {
+                        "BlockPublicAcls": False,
+                        "IgnorePublicAcls": False,
+                        "BlockPublicPolicy": False,
+                        "RestrictPublicBuckets": False,
+                    }
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_bucket_acl__(self, bucket):
         logger.info("S3 - Get buckets acl...")
@@ -160,9 +174,12 @@ class S3:
                 regional_client.get_bucket_policy(Bucket=bucket.name)["Policy"]
             )
         except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if "NoSuchBucketPolicy" in str(error):
+                bucket.policy = {}
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_bucket_ownership_controls__(self, bucket):
         logger.info("S3 - Get buckets ownership controls...")
@@ -172,9 +189,12 @@ class S3:
                 Bucket=bucket.name
             )["OwnershipControls"]["Rules"][0]["ObjectOwnership"]
         except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if "OwnershipControlsNotFoundError" in str(error):
+                bucket.ownership = None
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
 
 ################## S3Control
