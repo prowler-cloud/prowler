@@ -1,6 +1,8 @@
 import threading
 from dataclasses import dataclass
 
+from botocore.client import ClientError
+
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
@@ -55,15 +57,22 @@ class EFS:
             for filesystem in self.filesystems:
                 for region, client in self.regional_clients.items():
                     if filesystem.region == region:
-                        filesystem.backup_policy = client.describe_backup_policy(
-                            FileSystemId=filesystem.id
-                        )["BackupPolicy"]["Status"]
-                        fs_policy = client.describe_file_system_policy(
-                            FileSystemId=filesystem.id
-                        )
-                        if "Policy" in fs_policy:
-                            filesystem.policy = fs_policy["Policy"]
-
+                        try:
+                            filesystem.backup_policy = client.describe_backup_policy(
+                                FileSystemId=filesystem.id
+                            )["BackupPolicy"]["Status"]
+                        except ClientError as e:
+                            if e.response["ErrorCode"] == "PolicyNotFound":
+                                filesystem.backup_policy = "DISABLED"
+                        try:
+                            fs_policy = client.describe_file_system_policy(
+                                FileSystemId=filesystem.id
+                            )
+                            if "Policy" in fs_policy:
+                                filesystem.policy = fs_policy["Policy"]
+                        except ClientError as e:
+                            if e.response["ErrorCode"] == "PolicyNotFound":
+                                filesystem.policy = {}
         except Exception as error:
             logger.error(
                 f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
