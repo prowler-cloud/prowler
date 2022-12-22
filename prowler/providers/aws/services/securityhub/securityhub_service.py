@@ -63,9 +63,21 @@ class SecurityHub:
                 )
 
         except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            # Check if Account is subscribed to Security Hub
+            if "InvalidAccessException" in str(error):
+                self.securityhubs.append(
+                    SecurityHubHub(
+                        "",
+                        "Security Hub",
+                        "NOT_AVAILABLE",
+                        "",
+                        regional_client.region,
+                    )
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
 
 @dataclass
