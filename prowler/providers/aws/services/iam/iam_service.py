@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import get_region_global_service
+from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
 ################## IAM
@@ -14,7 +14,11 @@ class IAM:
         self.account = audit_info.audited_account
         self.partition = audit_info.audited_partition
         self.client = self.session.client(self.service)
-        self.region = get_region_global_service(audit_info)
+        global_client = generate_regional_clients(
+            self.service, audit_info, global_service=True
+        )
+        self.client = list(global_client.values())[0]
+        self.region = self.client.region
         self.users = self.__get_users__()
         self.roles = self.__get_roles__()
         self.account_summary = self.__get_account_summary__()

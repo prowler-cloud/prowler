@@ -3,10 +3,7 @@ import threading
 from dataclasses import dataclass
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import (
-    generate_regional_clients,
-    get_region_global_service,
-)
+from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
 ################### CLOUDTRAIL
@@ -15,7 +12,7 @@ class Cloudtrail:
         self.service = "cloudtrail"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
-        self.region = get_region_global_service(audit_info)
+        self.region = audit_info.profile_region
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.trails = []
         self.__threading_call__(self.__get_trails__)

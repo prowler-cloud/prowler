@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import get_region_global_service
+from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
 ################### Shield
@@ -10,11 +10,17 @@ class Shield:
         self.service = "shield"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
-        self.client = self.session.client(self.service)
-        self.region = get_region_global_service(audit_info)
-        self.enabled = self.__get_subscription_state__()
+        global_client = generate_regional_clients(
+            self.service, audit_info, global_service=True
+        )
         self.protections = {}
-        self.__list_protections__()
+        self.enabled = False
+        if global_client:
+            self.client = list(global_client.values())[0]
+            self.region = self.client.region
+            self.enabled = self.__get_subscription_state__()
+            if self.enabled:
+                self.__list_protections__()
 
     def __get_session__(self):
         return self.session

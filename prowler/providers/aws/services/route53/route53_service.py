@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import get_region_global_service
+from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
 ################## Route53
@@ -10,11 +10,15 @@ class Route53:
         self.service = "route53"
         self.session = audit_info.audit_session
         self.audited_partition = audit_info.audited_partition
-        self.client = self.session.client(self.service)
-        self.region = get_region_global_service(audit_info)
         self.hosted_zones = {}
-        self.__list_hosted_zones__()
-        self.__list_query_logging_configs__()
+        global_client = generate_regional_clients(
+            self.service, audit_info, global_service=True
+        )
+        if global_client:
+            self.client = list(global_client.values())[0]
+            self.region = self.client.region
+            self.__list_hosted_zones__()
+            self.__list_query_logging_configs__()
 
     def __get_session__(self):
         return self.session

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import get_region_global_service
+from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
 ################## CloudFront
@@ -11,12 +11,17 @@ class CloudFront:
         self.service = "cloudfront"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
-        self.client = self.session.client(self.service)
-        self.region = get_region_global_service(audit_info)
-        self.distributions = self.__list_distributions__(self.client, self.region)
-        self.distributions = self.__get_distribution_config__(
-            self.client, self.distributions, self.region
+        global_client = generate_regional_clients(
+            self.service, audit_info, global_service=True
         )
+        self.distributions = {}
+        if global_client:
+            self.client = list(global_client.values())[0]
+            self.region = self.client.region
+            self.distributions = self.__list_distributions__(self.client, self.region)
+            self.distributions = self.__get_distribution_config__(
+                self.client, self.distributions, self.region
+            )
 
     def __get_session__(self):
         return self.session
