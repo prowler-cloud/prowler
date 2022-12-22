@@ -30,7 +30,7 @@ class SQS:
             t.join()
 
     def __list_queues__(self, regional_client):
-        logger.info("Redshift - describing queues...")
+        logger.info("SQS - describing queues...")
         try:
             list_queues_paginator = regional_client.get_paginator("list_queues")
             for page in list_queues_paginator.paginate():
@@ -49,18 +49,25 @@ class SQS:
 
     def __get_queue_attributes__(self, regional_clients):
         try:
+            logger.info("SQS - describing queue attributes...")
             for queue in self.queues:
                 regional_client = regional_clients[queue.region]
                 queue_attributes = regional_client.get_queue_attributes(
-                    QueueUrl=queue.id
+                    QueueUrl=queue.id, AttributeNames=["All"]
                 )
-                if (
-                    "Attributes" in queue_attributes
-                    and "Policy" in queue_attributes["Attributes"]
-                ):
-                    queue.policy = loads(queue_attributes["Attributes"]["Policy"])
-                if "KmsMasterKeyId" in queue_attributes["Attributes"]:
-                    queue.kms_key_id = queue_attributes["Attributes"]["KmsMasterKeyId"]
+                if "Attributes" in queue_attributes:
+                    if "Policy" in queue_attributes["Attributes"]:
+                        queue.policy = loads(queue_attributes["Attributes"]["Policy"])
+                    if "KmsMasterKeyId" in queue_attributes["Attributes"]:
+                        queue.kms_key_id = queue_attributes["Attributes"][
+                            "KmsMasterKeyId"
+                        ]
+                    if "SqsManagedSseEnabled" in queue_attributes["Attributes"]:
+                        if (
+                            queue_attributes["Attributes"]["SqsManagedSseEnabled"]
+                            == "true"
+                        ):
+                            queue.kms_key_id = "SqsManagedSseEnabled"
 
         except Exception as error:
             logger.error(
