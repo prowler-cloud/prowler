@@ -243,10 +243,14 @@ def recover_checks_from_provider(provider: str, service: str = None) -> list[tup
                 check_name = check_module_name.split(".")[-1]
                 check_info = (check_name, check_path)
                 checks.append(check_info)
-        return checks
+    except ModuleNotFoundError:
+        logger.critical(f"Service {service} was not found for the {provider} provider.")
+        sys.exit()
     except Exception as e:
         logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")
         sys.exit()
+    else:
+        return checks
 
 
 def list_compliance_modules():
