@@ -33,15 +33,14 @@ A clear and concise description of what you expected to happen.
 **Screenshots or Logs**
 If applicable, add screenshots to help explain your problem.
 Also, you can add logs (anonymize them first!). Here a command that may help to share a log
-`bash -x ./prowler -options > debug.log 2>&1` then attach here `debug.log`
+`prowler <your arguments> --log-level DEBUG --log-file $(date +%F)_debug.log ` then attach here the log file.
 
 
 **From where are you running Prowler?**
 Please, complete the following information:
  - Resource: [e.g. EC2 instance, Fargate task, Docker container manually, EKS, Cloud9, CodeBuild, workstation, etc.)
  - OS: [e.g. Amazon Linux 2, Mac, Alpine, Windows, etc. ]
- - AWS-CLI Version [`aws --version`]:
- - Prowler Version [`./prowler -V`]:
+ - Prowler Version [`./prowler --version`]:
  - Shell and version:
  - Others:
 
