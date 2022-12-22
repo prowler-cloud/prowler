@@ -66,9 +66,10 @@ class ECR:
                     repository.policy = loads(policy["policyText"])
 
         except Exception as error:
-            logger.error(
-                f"-- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if "RepositoryPolicyNotFoundException" not in str(error):
+                logger.error(
+                    f"-- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_repository_lifecycle_policy__(self):
         logger.info("ECR - Getting repository lifecycle policy...")
@@ -80,9 +81,10 @@ class ECR:
                     repository.lyfecicle_policy = policy["lifecyclePolicyText"]
 
         except Exception as error:
-            logger.error(
-                f"-- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if "LifecyclePolicyNotFoundException" not in str(error):
+                logger.error(
+                    f"-- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_image_details__(self):
         logger.info("ECR - Getting images details...")
@@ -121,10 +123,12 @@ class ECR:
                                     severity_counts.medium = finding_severity_counts[
                                         "MEDIUM"
                                     ]
-
+                            latest_tag = "None"
+                            if image.get("imageTags"):
+                                latest_tag = image["imageTags"][0]
                             repository.images_details.append(
                                 ImageDetails(
-                                    latest_tag=image["imageTags"][0],
+                                    latest_tag=latest_tag,
                                     latest_digest=image["imageDigest"],
                                     scan_findings_status=last_scan_status,
                                     scan_findings_severity_count=severity_counts,
