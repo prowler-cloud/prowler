@@ -14,6 +14,4 @@ cd ~/environment/ || exit
 # Prepare Prowler 3.0
 git clone https://github.com/prowler-cloud/prowler
 cd prowler || exit
-git checkout prowler-3.0-dev
-sudo pip3 install pipenv detect-secrets==1.0.3
 pipenv install && pipenv shell

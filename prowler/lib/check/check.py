@@ -341,7 +341,7 @@ def execute_checks(
                 sys.exit()
             except Exception as error:
                 logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         bar.title = f"-> {Fore.GREEN}Scan completed!{Style.RESET_ALL}"
     return all_findings
