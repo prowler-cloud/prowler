@@ -306,7 +306,10 @@ class Test_Outputs:
         client = boto3.client("s3")
         client.create_bucket(Bucket=bucket_name)
         # Create mock csv output file
-        output_directory = f"{os.path.dirname(os.path.realpath(__file__))}/fixtures"
+        fixtures_dir = "fixtures"
+        output_directory = (
+            f"{os.path.dirname(os.path.realpath(__file__))}/{fixtures_dir}"
+        )
         output_mode = "csv"
         filename = f"prowler-output-{input_audit_info.audited_account}"
         # Send mock csv file to mock S3 Bucket
@@ -321,12 +324,7 @@ class Test_Outputs:
         assert (
             client.get_object(
                 Bucket=bucket_name,
-                Key=output_directory
-                + "/"
-                + output_mode
-                + "/"
-                + filename
-                + csv_file_suffix,
+                Key=fixtures_dir + "/" + output_mode + "/" + filename + csv_file_suffix,
             )["ContentType"]
             == "binary/octet-stream"
         )
