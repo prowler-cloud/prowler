@@ -1,5 +1,6 @@
 import os
 from os import path, remove
+from unittest import mock
 
 import boto3
 import pytest
@@ -27,7 +28,11 @@ from prowler.lib.outputs.models import (
     Severity,
     generate_csv_fields,
 )
-from prowler.lib.outputs.outputs import send_to_s3_bucket, set_report_color
+from prowler.lib.outputs.outputs import (
+    extract_findings_statistics,
+    send_to_s3_bucket,
+    set_report_color,
+)
 from prowler.lib.utils.utils import hash_sha512, open_file
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
@@ -323,3 +328,57 @@ class Test_Outputs:
             )["ContentType"]
             == "binary/octet-stream"
         )
+
+    def test_extract_findings_statistics_different_resources(self):
+        finding_1 = mock.MagicMock()
+        finding_1.status = "PASS"
+        finding_1.resource_id = "test_resource_1"
+        finding_2 = mock.MagicMock()
+        finding_2.status = "FAIL"
+        finding_2.resource_id = "test_resource_2"
+        findings = [finding_1, finding_2]
+
+        stats = extract_findings_statistics(findings)
+        assert stats["total_pass"] == 1
+        assert stats["total_fail"] == 1
+        assert stats["resources_count"] == 2
+        assert stats["findings_count"] == 2
+
+    def test_extract_findings_statistics_same_resources(self):
+        finding_1 = mock.MagicMock()
+        finding_1.status = "PASS"
+        finding_1.resource_id = "test_resource_1"
+        finding_2 = mock.MagicMock()
+        finding_2.status = "PASS"
+        finding_2.resource_id = "test_resource_1"
+        findings = [finding_1, finding_2]
+
+        stats = extract_findings_statistics(findings)
+        assert stats["total_pass"] == 2
+        assert stats["total_fail"] == 0
+        assert stats["resources_count"] == 1
+        assert stats["findings_count"] == 2
+
+    def test_extract_findings_statistics_info_resources(self):
+        finding_1 = mock.MagicMock()
+        finding_1.status = "INFO"
+        finding_1.resource_id = "test_resource_1"
+        finding_2 = mock.MagicMock()
+        finding_2.status = "PASS"
+        finding_2.resource_id = "test_resource_1"
+        findings = [finding_1, finding_2]
+
+        stats = extract_findings_statistics(findings)
+        assert stats["total_pass"] == 1
+        assert stats["total_fail"] == 0
+        assert stats["resources_count"] == 1
+        assert stats["findings_count"] == 1
+
+    def test_extract_findings_statistics_no_findings(self):
+        findings = []
+
+        stats = extract_findings_statistics(findings)
+        assert stats["total_pass"] == 0
+        assert stats["total_fail"] == 0
+        assert stats["resources_count"] == 0
+        assert stats["findings_count"] == 0

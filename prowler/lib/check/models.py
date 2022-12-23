@@ -91,6 +91,7 @@ class Check_Report:
     resource_tags: list
 
     def __init__(self, metadata):
+        self.status = ""
         self.check_metadata = Check_Metadata_Model.parse_raw(metadata)
         self.status_extended = ""
         self.resource_details = ""

@@ -47,7 +47,7 @@ def load_checks_to_execute(
         for service in service_list:
             modules = recover_checks_from_provider(provider, service)
             if not modules:
-                logger.error(f"Service '{service}' was not found for the AWS provider")
+                logger.error(f"Service '{service}' does not have checks.")
             else:
                 for check_module in modules:
                     # Recover check name and module name from import path

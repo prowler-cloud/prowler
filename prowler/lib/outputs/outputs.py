@@ -207,6 +207,16 @@ def send_to_s3_bucket(
 
 
 def extract_findings_statistics(findings: list) -> dict:
+    """
+    extract_findings_statistics takes a list of findings and returns the following dict with the aggregated statistics
+    {
+        "total_pass": 0,
+        "total_fail": 0,
+        "resources_count": 0,
+        "findings_count": 0,
+    }
+    """
+    logger.info("Extracting audit statistics...")
     stats = {}
     total_pass = 0
     total_fail = 0
@@ -216,12 +226,12 @@ def extract_findings_statistics(findings: list) -> dict:
     for finding in findings:
         # Save the resource_id
         resources.add(finding.resource_id)
-        # Increment findings
-        findings_count += 1
         if finding.status == "PASS":
             total_pass += 1
+            findings_count += 1
         if finding.status == "FAIL":
             total_fail += 1
+            findings_count += 1
 
     stats["total_pass"] = total_pass
     stats["total_fail"] = total_fail
