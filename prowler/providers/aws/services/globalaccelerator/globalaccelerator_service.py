@@ -9,13 +9,14 @@ class GlobalAccelerator:
         self.service = "globalaccelerator"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
-        # Global Accelerator is a global service that supports endpoints in multiple AWS Regions
-        # but you must specify the US West (Oregon) Region to create, update, or otherwise work with accelerators.
-        # That is, for example, specify --region us-west-2 on AWS CLI commands.
-        self.region = "us-west-2"
-        self.client = self.session.client(self.service, self.region)
         self.accelerators = {}
-        self.__list_accelerators__()
+        if audit_info.audited_partition == "aws":
+            # Global Accelerator is a global service that supports endpoints in multiple AWS Regions
+            # but you must specify the US West (Oregon) Region to create, update, or otherwise work with accelerators.
+            # That is, for example, specify --region us-west-2 on AWS CLI commands.
+            self.region = "us-west-2"
+            self.client = self.session.client(self.service, self.region)
+            self.__list_accelerators__()
 
     def __get_session__(self):
         return self.session

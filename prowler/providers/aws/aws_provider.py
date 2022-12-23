@@ -103,58 +103,39 @@ def assume_role(audit_info: AWS_Audit_Info) -> dict:
         return assumed_credentials
 
 
-def generate_regional_clients(service: str, audit_info: AWS_Audit_Info) -> dict:
-    regional_clients = {}
-    # Get json locally
-    actual_directory = os.path.dirname(os.path.realpath(__file__))
-    f = open_file(f"{actual_directory}/{aws_services_json_file}")
-    data = parse_json_file(f)
-    # Check if it is a subservice
-    if service == "accessanalyzer":
-        json_regions = data["services"]["iam"]["regions"][audit_info.audited_partition]
-    elif service == "apigatewayv2":
-        json_regions = data["services"]["apigateway"]["regions"][
-            audit_info.audited_partition
-        ]
-    elif service == "macie2":
-        json_regions = data["services"]["macie"]["regions"][
-            audit_info.audited_partition
-        ]
-    elif service == "logs":
-        json_regions = data["services"]["cloudwatch"]["regions"][
-            audit_info.audited_partition
-        ]
-    elif service == "dax":
-        json_regions = data["services"]["dynamodb"]["regions"][
-            audit_info.audited_partition
-        ]
-    elif service == "glacier":
-        json_regions = data["services"]["s3"]["regions"][audit_info.audited_partition]
-    elif service == "opensearch":
-        json_regions = data["services"]["es"]["regions"][audit_info.audited_partition]
-    elif service == "elbv2":
-        json_regions = data["services"]["elb"]["regions"][audit_info.audited_partition]
-    elif service == "wafv2" or service == "waf-regional":
-        json_regions = data["services"]["waf"]["regions"][audit_info.audited_partition]
-    else:
+def generate_regional_clients(
+    service: str, audit_info: AWS_Audit_Info, global_service: bool = False
+) -> dict:
+    try:
+        regional_clients = {}
+        # Get json locally
+        actual_directory = os.path.dirname(os.path.realpath(__file__))
+        f = open_file(f"{actual_directory}/{aws_services_json_file}")
+        data = parse_json_file(f)
+        # Check if it is a subservice
         json_regions = data["services"][service]["regions"][
             audit_info.audited_partition
         ]
-    if audit_info.audited_regions:  # Check for input aws audit_info.audited_regions
-        regions = list(
-            set(json_regions).intersection(audit_info.audited_regions)
-        )  # Get common regions between input and json
-    else:  # Get all regions from json of the service and partition
-        regions = json_regions
-    for region in regions:
-        regional_client = audit_info.audit_session.client(service, region_name=region)
-        regional_client.region = region
-        regional_clients[region] = regional_client
-    return regional_clients
-
-
-def get_region_global_service(audit_info: AWS_Audit_Info) -> str:
-    # Check if global service to send the finding to first audited region
-    if audit_info.audited_regions:
-        return audit_info.audited_regions[0]
-    return audit_info.profile_region
+        if audit_info.audited_regions:  # Check for input aws audit_info.audited_regions
+            regions = list(
+                set(json_regions).intersection(audit_info.audited_regions)
+            )  # Get common regions between input and json
+        else:  # Get all regions from json of the service and partition
+            regions = json_regions
+        # Check if it is global service to gather only one region
+        if global_service:
+            if regions:
+                if audit_info.profile_region in regions:
+                    regions = [audit_info.profile_region]
+                regions = regions[:1]
+        for region in regions:
+            regional_client = audit_info.audit_session.client(
+                service, region_name=region
+            )
+            regional_client.region = region
+            regional_clients[region] = regional_client
+        return regional_clients
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )

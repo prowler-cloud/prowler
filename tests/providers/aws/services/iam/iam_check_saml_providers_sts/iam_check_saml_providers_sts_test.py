@@ -44,6 +44,8 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_check_saml_providers_sts.iam_check_saml_providers_sts.iam_client",
             new=IAM(current_audit_info),

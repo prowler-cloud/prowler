@@ -2,11 +2,11 @@ import json
 from json import dumps
 
 from boto3 import client, session
+from freezegun import freeze_time
 from moto import mock_iam
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.iam.iam_service import IAM
-from freezegun import freeze_time
 
 AWS_ACCOUNT_NUMBER = 123456789012
 TEST_DATETIME = "2023-01-01T12:01:01+00:00"
@@ -23,10 +23,10 @@ class Test_IAM_Service:
             ),
             audited_account=None,
             audited_user_id=None,
-            audited_partition=None,
+            audited_partition="aws",
             audited_identity_arn=None,
             profile=None,
-            profile_region=None,
+            profile_region="us-east-1",
             credentials=None,
             assumed_role_info=None,
             audited_regions=None,

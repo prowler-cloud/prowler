@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import get_region_global_service
+from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
 ################## Route53
@@ -10,11 +10,15 @@ class Route53:
         self.service = "route53"
         self.session = audit_info.audit_session
         self.audited_partition = audit_info.audited_partition
-        self.client = self.session.client(self.service)
-        self.region = get_region_global_service(audit_info)
         self.hosted_zones = {}
-        self.__list_hosted_zones__()
-        self.__list_query_logging_configs__()
+        global_client = generate_regional_clients(
+            self.service, audit_info, global_service=True
+        )
+        if global_client:
+            self.client = list(global_client.values())[0]
+            self.region = self.client.region
+            self.__list_hosted_zones__()
+            self.__list_query_logging_configs__()
 
     def __get_session__(self):
         return self.session
@@ -84,13 +88,14 @@ class Route53Domains:
         self.service = "route53domains"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
-        # Route53Domains is a global service that supports endpoints in multiple AWS Regions
-        # but you must specify the US East (N. Virginia) Region to create, update, or otherwise work with domains.
-        self.region = "us-east-1"
-        self.client = self.session.client(self.service, self.region)
         self.domains = {}
-        self.__list_domains__()
-        self.__get_domain_detail__()
+        if audit_info.audited_partition == "aws":
+            # Route53Domains is a global service that supports endpoints in multiple AWS Regions
+            # but you must specify the US East (N. Virginia) Region to create, update, or otherwise work with domains.
+            self.region = "us-east-1"
+            self.client = self.session.client(self.service, self.region)
+            self.__list_domains__()
+            self.__get_domain_detail__()
 
     def __get_session__(self):
         return self.session

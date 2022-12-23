@@ -20,7 +20,8 @@ logging.basicConfig(
 with request.urlopen(aws_services_json_url) as url:  # Get the AWS regions matrix online
     logging.info(f"Downloading JSON from {aws_services_json_url}")
     original_matrix_regions_aws = json.loads(url.read().decode())
-parsed__matrix_regions_aws = f"{os.path.dirname(os.path.realpath(__name__))}/prowler/providers/aws/aws_regions_by_service.json"
+parsed_matrix_regions_aws = f"{os.path.dirname(os.path.realpath(__name__))}/prowler/providers/aws/aws_regions_by_service.json"
+
 
 # JSON objects
 regions_by_service = {}
@@ -66,7 +67,38 @@ for item in original_matrix_regions_aws["prices"]:
 logging.info("Storing final JSON")
 regions_by_service["services"] = services
 
+# Include the regions for the subservices and the services not present
+logging.info("Updating subservices and the services not present in the original matrix")
+# accessanalyzer --> iam
+regions_by_service["services"]["accessanalyzer"] = regions_by_service["services"]["iam"]
+# apigatewayv2 --> apigateway
+regions_by_service["services"]["apigatewayv2"] = regions_by_service["services"][
+    "apigateway"
+]
+# macie2 --> macie
+regions_by_service["services"]["macie2"] = regions_by_service["services"]["macie"]
+# logs --> cloudwatch
+regions_by_service["services"]["logs"] = regions_by_service["services"]["cloudwatch"]
+# dax --> dynamodb
+regions_by_service["services"]["dax"] = regions_by_service["services"]["dynamodb"]
+# glacier --> s3
+regions_by_service["services"]["glacier"] = regions_by_service["services"]["s3"]
+# opensearch --> es
+regions_by_service["services"]["opensearch"] = regions_by_service["services"]["es"]
+# elbv2 --> elb
+regions_by_service["services"]["elbv2"] = regions_by_service["services"]["elb"]
+# route53domains --> route53
+regions_by_service["services"]["route53domains"] = regions_by_service["services"][
+    "route53"
+]
+# s3control --> s3
+regions_by_service["services"]["s3control"] = regions_by_service["services"]["s3"]
+# wafv2 --> waf
+regions_by_service["services"]["wafv2"] = regions_by_service["services"]["waf"]
+# waf-regional --> waf
+regions_by_service["services"]["waf-regional"] = regions_by_service["services"]["waf"]
+
 # Write to file
-logging.info(f"Writing {parsed__matrix_regions_aws}")
-with open(parsed__matrix_regions_aws, "w") as outfile:
+logging.info(f"Writing {parsed_matrix_regions_aws}")
+with open(parsed_matrix_regions_aws, "w") as outfile:
     json.dump(regions_by_service, outfile, indent=2, sort_keys=True)

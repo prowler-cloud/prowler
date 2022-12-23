@@ -2,7 +2,7 @@ import boto3
 import sure  # noqa
 from moto import mock_iam, mock_sts
 
-from prowler.providers.aws.aws_provider import assume_role, get_region_global_service
+from prowler.providers.aws.aws_provider import assume_role, generate_regional_clients
 from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 
 ACCOUNT_ID = 123456789012
@@ -82,24 +82,85 @@ class Test_AWS_Provider:
             21 + 1 + len(sessionName)
         )
 
-    def test_get_region_global_service(self):
-        # Create mock audit_info
-        input_audit_info = AWS_Audit_Info(
+    def test_generate_regional_clients(self):
+        # New Boto3 session with the previously create user
+        session = boto3.session.Session(
+            region_name="us-east-1",
+        )
+        audited_regions = ["eu-west-1", "us-east-1"]
+        # Fulfil the input session object for Prowler
+        audit_info = AWS_Audit_Info(
             original_session=None,
-            audit_session=None,
-            audited_account="123456789012",
-            audited_identity_arn="test-arn",
-            audited_user_id="test",
+            audit_session=session,
+            audited_account=None,
             audited_partition="aws",
-            profile="default",
-            profile_region="eu-west-1",
+            audited_identity_arn=None,
+            audited_user_id=None,
+            profile=None,
+            profile_region=None,
             credentials=None,
             assumed_role_info=None,
-            audited_regions=["eu-west-2", "eu-west-1"],
+            audited_regions=audited_regions,
             organizations_metadata=None,
         )
-
-        assert (
-            get_region_global_service(input_audit_info)
-            == input_audit_info.audited_regions[0]
+        generate_regional_clients_response = generate_regional_clients(
+            "ec2", audit_info
         )
+
+        assert set(generate_regional_clients_response.keys()) == set(audited_regions)
+
+    def test_generate_regional_clients_global_service(self):
+        # New Boto3 session with the previously create user
+        session = boto3.session.Session(
+            region_name="us-east-1",
+        )
+        audited_regions = ["eu-west-1", "us-east-1"]
+        profile_region = "us-east-1"
+        # Fulfil the input session object for Prowler
+        audit_info = AWS_Audit_Info(
+            original_session=None,
+            audit_session=session,
+            audited_account=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            audited_user_id=None,
+            profile=None,
+            profile_region=profile_region,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=audited_regions,
+            organizations_metadata=None,
+        )
+        generate_regional_clients_response = generate_regional_clients(
+            "route53", audit_info, global_service=True
+        )
+
+        assert list(generate_regional_clients_response.keys()) == [profile_region]
+
+    def test_generate_regional_clients_cn_partition(self):
+        # New Boto3 session with the previously create user
+        session = boto3.session.Session(
+            region_name="us-east-1",
+        )
+        audited_regions = ["cn-northwest-1", "cn-north-1"]
+        # Fulfil the input session object for Prowler
+        audit_info = AWS_Audit_Info(
+            original_session=None,
+            audit_session=session,
+            audited_account=None,
+            audited_partition="aws-cn",
+            audited_identity_arn=None,
+            audited_user_id=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=audited_regions,
+            organizations_metadata=None,
+        )
+        generate_regional_clients_response = generate_regional_clients(
+            "shield", audit_info, global_service=True
+        )
+
+        # Shield does not exist in China
+        assert generate_regional_clients_response == {}

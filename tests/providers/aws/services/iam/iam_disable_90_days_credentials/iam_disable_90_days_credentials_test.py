@@ -18,6 +18,8 @@ class Test_iam_disable_90_days_credentials_test:
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_disable_90_days_credentials.iam_disable_90_days_credentials.iam_client",
             new=IAM(current_audit_info),
@@ -48,6 +50,8 @@ class Test_iam_disable_90_days_credentials_test:
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_disable_90_days_credentials.iam_disable_90_days_credentials.iam_client",
             new=IAM(current_audit_info),
@@ -74,6 +78,8 @@ class Test_iam_disable_90_days_credentials_test:
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
+
+        current_audit_info.audited_partition = "aws"
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_disable_90_days_credentials.iam_disable_90_days_credentials.iam_client",
