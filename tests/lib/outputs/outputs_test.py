@@ -19,18 +19,15 @@ from prowler.lib.check.models import Check_Report, load_check_metadata
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.json import fill_json_asff
 from prowler.lib.outputs.models import (
-    generate_csv_fields,
     Check_Output_CSV,
     Check_Output_JSON_ASFF,
     Compliance,
     ProductFields,
     Resource,
     Severity,
+    generate_csv_fields,
 )
-from prowler.lib.outputs.outputs import (
-    send_to_s3_bucket,
-    set_report_color,
-)
+from prowler.lib.outputs.outputs import send_to_s3_bucket, set_report_color
 from prowler.lib.utils.utils import hash_sha512, open_file
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
@@ -304,7 +301,10 @@ class Test_Outputs:
         client = boto3.client("s3")
         client.create_bucket(Bucket=bucket_name)
         # Create mock csv output file
-        output_directory = f"{os.path.dirname(os.path.realpath(__file__))}/fixtures"
+        fixtures_dir = "fixtures"
+        output_directory = (
+            f"{os.path.dirname(os.path.realpath(__file__))}/{fixtures_dir}"
+        )
         output_mode = "csv"
         filename = f"prowler-output-{input_audit_info.audited_account}"
         # Send mock csv file to mock S3 Bucket
@@ -319,12 +319,7 @@ class Test_Outputs:
         assert (
             client.get_object(
                 Bucket=bucket_name,
-                Key=output_directory
-                + "/"
-                + output_mode
-                + "/"
-                + filename
-                + csv_file_suffix,
+                Key=fixtures_dir + "/" + output_mode + "/" + filename + csv_file_suffix,
             )["ContentType"]
             == "binary/octet-stream"
         )
