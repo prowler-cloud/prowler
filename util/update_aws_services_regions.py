@@ -68,6 +68,7 @@ logging.info("Storing final JSON")
 regions_by_service["services"] = services
 
 # Include the regions for the subservices and the services not present
+logging.info("Updating subservices and the services not present in the original matrix")
 # accessanalyzer --> iam
 regions_by_service["services"]["accessanalyzer"] = regions_by_service["services"]["iam"]
 # apigatewayv2 --> apigateway
