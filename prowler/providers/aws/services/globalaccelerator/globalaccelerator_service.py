@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
 ################### GlobalAccelerator
@@ -18,14 +17,6 @@ class GlobalAccelerator:
             self.region = "us-west-2"
             self.client = self.session.client(self.service, self.region)
             self.__list_accelerators__()
-        else:
-            global_client = generate_regional_clients(
-                self.service, audit_info, global_service=True
-            )
-            if global_client:
-                self.client = list(global_client.values())[0]
-                self.region = self.client.region
-                self.__list_accelerators__()
 
     def __get_session__(self):
         return self.session

@@ -16,7 +16,8 @@ class TrustedAdvisor:
             self.service, audit_info, global_service=True
         )
         self.checks = []
-        if global_client:
+        # Support API is not available in China Partition
+        if global_client and audit_info.audited_partition != "aws-cn":
             self.client = list(global_client.values())[0]
             self.region = self.client.region
             self.__describe_trusted_advisor_checks__()

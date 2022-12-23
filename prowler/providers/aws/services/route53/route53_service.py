@@ -96,15 +96,6 @@ class Route53Domains:
             self.client = self.session.client(self.service, self.region)
             self.__list_domains__()
             self.__get_domain_detail__()
-        else:
-            global_client = generate_regional_clients(
-                self.service, audit_info, global_service=True
-            )
-            if global_client:
-                self.client = list(global_client.values())[0]
-                self.region = self.client.region
-                self.__list_domains__()
-                self.__get_domain_detail__()
 
     def __get_session__(self):
         return self.session
