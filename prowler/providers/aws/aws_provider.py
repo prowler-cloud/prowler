@@ -145,6 +145,10 @@ def generate_regional_clients(
             json_regions = data["services"]["elb"]["regions"][
                 audit_info.audited_partition
             ]
+        elif service == "route53domains":
+            json_regions = data["services"]["route53"]["regions"][
+                audit_info.audited_partition
+            ]
         elif service == "s3control":
             json_regions = data["services"]["s3"]["regions"][
                 audit_info.audited_partition
