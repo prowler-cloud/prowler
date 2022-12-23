@@ -5,6 +5,7 @@ from colorama import Fore, Style
 
 from prowler.config.config import (
     csv_file_suffix,
+    html_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
     orange_color,
@@ -180,6 +181,7 @@ def send_to_s3_bucket(
     output_filename, output_directory, output_mode, output_bucket, audit_session
 ):
     try:
+        filename = ""
         # Get only last part of the path
         if output_mode == "csv":
             filename = f"{output_filename}{csv_file_suffix}"
@@ -187,10 +189,13 @@ def send_to_s3_bucket(
             filename = f"{output_filename}{json_file_suffix}"
         elif output_mode == "json-asff":
             filename = f"{output_filename}{json_asff_file_suffix}"
+        elif output_mode == "html":
+            filename = f"{output_filename}{html_file_suffix}"
         logger.info(f"Sending outputs to S3 bucket {output_bucket}")
+        bucket_remote_dir = output_directory.split("/")[-1]
         file_name = output_directory + "/" + filename
         bucket_name = output_bucket
-        object_name = output_directory + "/" + output_mode + "/" + filename
+        object_name = bucket_remote_dir + "/" + output_mode + "/" + filename
         s3_client = audit_session.client("s3")
         s3_client.upload_file(file_name, bucket_name, object_name)
 
