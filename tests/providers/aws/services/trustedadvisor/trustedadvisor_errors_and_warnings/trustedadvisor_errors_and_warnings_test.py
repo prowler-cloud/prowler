@@ -14,6 +14,8 @@ class Test_trustedadvisor_errors_and_warnings:
     def test_no_detectors(self):
         trustedadvisor_client = mock.MagicMock
         trustedadvisor_client.checks = []
+        trustedadvisor_client.enabled = False
+        trustedadvisor_client.account = AWS_ACCOUNT_NUMBER
         with mock.patch(
             "prowler.providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
             trustedadvisor_client,
@@ -24,11 +26,16 @@ class Test_trustedadvisor_errors_and_warnings:
 
             check = trustedadvisor_errors_and_warnings()
             result = check.execute()
-            assert len(result) == 0
+            assert len(result) == 1
+            assert (
+                result[0].status_extended
+                == "Amazon Web Services Premium Support Subscription is required to use this service."
+            )
 
     def test_trustedadvisor_all_passed_checks(self):
         trustedadvisor_client = mock.MagicMock
         trustedadvisor_client.checks = []
+        trustedadvisor_client.enabled = True
         trustedadvisor_client.checks.append(
             Check(
                 id="check1",
@@ -55,6 +62,7 @@ class Test_trustedadvisor_errors_and_warnings:
     def test_trustedadvisor_error_check(self):
         trustedadvisor_client = mock.MagicMock
         trustedadvisor_client.checks = []
+        trustedadvisor_client.enabled = True
         trustedadvisor_client.checks.append(
             Check(
                 id="check1",
