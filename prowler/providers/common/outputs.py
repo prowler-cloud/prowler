@@ -60,11 +60,14 @@ class Azure_Output_Options(Provider_Output_Options):
         super().__init__(arguments, allowlist_file, bulk_checks_metadata)
 
         # Check if custom output filename was input, if not, set the default
-        if not arguments.output_filename:
+        if not hasattr(arguments, "output_filename"):
             if audit_info.identity.domain:
                 self.output_filename = f"prowler-output-{audit_info.identity.domain}-{output_file_timestamp}"
             else:
                 self.output_filename = f"prowler-output-{'-'.join(audit_info.identity.tenant_ids)}-{output_file_timestamp}"
+        else:
+            self.output_filename = arguments.output_filename
+
         # Remove HTML Output since it is not supported yet
         if "html" in arguments.output_modes:
             arguments.output_modes.remove("html")
@@ -82,10 +85,12 @@ class Aws_Output_Options(Provider_Output_Options):
             change_config_var("shodan_api_key", arguments.shodan)
 
         # Check if custom output filename was input, if not, set the default
-        if not arguments.output_filename:
+        if not hasattr(arguments, "output_filename"):
             self.output_filename = (
                 f"prowler-output-{audit_info.audited_account}-{output_file_timestamp}"
             )
+        else:
+            self.output_filename = arguments.output_filename
 
         # Security Hub Outputs
         self.security_hub_enabled = arguments.security_hub
