@@ -16,7 +16,7 @@ class AWS_Provider:
     def __init__(self, audit_info):
         logger.info("Instantiating aws provider ...")
         self.aws_session = self.set_session(audit_info)
-        self.role_info = audit_info.assumed_role_info
+        self.audit_info = audit_info
 
     def get_session(self):
         return self.aws_session
@@ -62,7 +62,7 @@ class AWS_Provider:
     def refresh(self):
         logger.info("Refreshing assumed credentials...")
 
-        response = assume_role(self.role_info)
+        response = assume_role(self.audit_info)
         refreshed_credentials = dict(
             # Keys of the dict has to be the same as those that are being searched in the parent class
             # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L609
