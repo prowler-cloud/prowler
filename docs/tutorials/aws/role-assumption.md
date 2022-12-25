@@ -10,7 +10,7 @@ However, there are few ways to run Prowler against multiple accounts using IAM A
 ```sh
 prowler aws -R arn:aws:iam::<account_id>:role/<role_name>
 ```
-- Optionally, the session duration (in seconds, by deafult 3600) and the external ID of this role assumption can be defined:
+- Optionally, the session duration (in seconds, by default 3600) and the external ID of this role assumption can be defined:
 
 ```sh
 prowler aws -T/--session-duration <seconds> -I/--external-id <external_id> -R arn:aws:iam::<account_id>:role/<role_name>
