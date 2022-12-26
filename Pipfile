@@ -33,7 +33,7 @@ docker = "6.0.0"
 openapi-spec-validator = "0.5.1"
 pytest = "7.1.2"
 pytest-xdist = "2.5.0"
-coverage = "7.0.0"
+coverage = "7.0.1"
 sure = "2.0.0"
 freezegun = "1.2.1"
 
