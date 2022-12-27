@@ -52,9 +52,9 @@ The container images are available here:
 - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
 - [AWS Public ECR](https://gallery.ecr.aws/o4g1s5r6/prowler)
 
-To run it using Docker:
+To run it using Docker (change `-v` local dir path to yours in order to access the reports):
 ```
-docker run -ti --rm --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest
+docker run -ti --rm -v /your/local/dir/prowler-output:/home/prowler/output --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest
 ```
 
 ## High level architecture
