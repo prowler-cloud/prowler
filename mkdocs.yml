@@ -19,7 +19,7 @@ theme:
     primary: black
     accent: green
 
-edit_uri: ""
+edit_uri: "https://github.com/prowler-cloud/prowler/tree/master/docs"
 # Prowler OSS Repository
 repo_url: https://github.com/prowler-cloud/prowler/
 repo_name: prowler-cloud/prowler
@@ -74,3 +74,42 @@ extra:
 
 # Copyright
 copyright: Copyright &copy; 2022 Toni de la Fuente, Maintained by the Prowler Team at Verica, Inc.</a>.
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:materialx.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: squidfunk
+      repo: mkdocs-material
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde

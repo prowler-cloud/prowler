@@ -31,13 +31,117 @@ Visit <a href="https://prowler.pro">prowler.pro</a> for more info.
 ## Quick Start
 ### Installation
 
-Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python >= 3.9:
-```bash
-pip install prowler-cloud
-prowler -v
-```
+Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with `Python >= 3.9`:
 
-If you want to execute Prowler from AWS CloudShell see [here](tutorials/aws/cloudshell.md).
+
+=== "Generic"
+
+    _Requirements_:
+
+    * `Python >= 3.9`
+    * `Python pip >= 3.9`
+    * AWS and/or Azure credentials
+
+    _Commands_:
+
+    ``` bash
+    pip install prowler-cloud
+    prowler -v
+    ```
+
+=== "Docker"
+
+    _Requirements_:
+
+    * Have `docker` installed: https://docs.docker.com/get-docker/.
+    * AWS and/or Azure credentials
+    * In the command below, change `-v` to your local directory path in order to access the reports.
+
+    _Commands_:
+
+    ``` bash
+    docker run -ti --rm -v /your/local/dir/prowler-output:/home/prowler/output \
+    --name prowler \
+    --env AWS_ACCESS_KEY_ID \
+    --env AWS_SECRET_ACCESS_KEY \
+    --env AWS_SESSION_TOKEN toniblyx/prowler:latest
+    ```
+
+=== "Ubuntu"
+
+    _Requirements for Ubuntu 20.04.3 LTS_:
+
+    * AWS and/or Azure credentials
+    * Install python 3.9 with: `sudo apt-get install python3.9`
+    * Remove python 3.8 to avoid conflicts if you can: `sudo apt-get remove python3.8`
+    * Make sure you have the python3 distutils package installed: `sudo apt-get install python3-distutils`
+    * To make sure you use pip for 3.9 get the get-pip script with: `curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py`
+    * Execute it with the proper python version: `sudo python3.9 get-pip.py`
+    * Now you should have pip for 3.9 ready: `pip3.9 --version`
+
+    _Commands_:
+
+    ```
+    pip3.9 install prowler-cloud
+    export PATH=$PATH:/home/$HOME/.local/bin/
+    prowler -v
+    ```
+
+=== "Amazon Linux 2"
+
+    _Requirements_:
+
+    * AWS and/or Azure credentials
+    * Latest Amazon Linux 2 should come with Python 3.9 already installed however it may need pip. Install Python pip 3.9 with: `sudo dnf install -y python3-pip`.
+    * Make sure setuptools for python is already installed with: `pip3 install setuptools`
+
+    _Commands_:
+
+    ```
+    pip3.9 install prowler-cloud
+    export PATH=$PATH:/home/$HOME/.local/bin/
+    prowler -v
+    ```
+
+=== "AWS CloudShell"
+
+    Prowler can be easely executed in AWS CloudShell but it has some prerequsites to be able to to so. AWS CloudShell is a container running with `Amazon Linux release 2 (Karoo)` that comes with Python 3.7, since Prowler requires Python >= 3.9 we need to first install a newer version of Python. Follow the steps below to successfully execute Prowler v3 in AWS CloudShell:
+
+    _Requirements_:
+
+    * First install all dependences and then Python, in this case we need to compile it because there is not a package available at the time this document is written:
+    ```
+    sudo yum -y install gcc openssl-devel bzip2-devel libffi-devel
+    wget https://www.python.org/ftp/python/3.9.16/Python-3.9.16.tgz
+    tar zxf Python-3.9.16.tgz
+    cd Python-3.9.16/
+    ./configure --enable-optimizations
+    sudo make altinstall
+    python3.9 --version
+    cd 
+    ```
+    _Commands_:
+
+    * Once Python 3.9 is available we can install Prowler from pip:
+    ```
+    pip3.9 install prowler-cloud
+    prowler -v
+    ```
+
+    > To download the results from AWS CloudShell, select Actions -> Download File and add the full path of each file. For the CSV file it will be something like `/home/cloudshell-user/output/prowler-output-123456789012-20221220191331.csv`
+
+=== "Azure CloudShell"
+
+    _Requirements_:
+
+    * Open Azure CloudShell `bash`.
+
+    _Commands_:
+
+    ```
+    pip install prowler-cloud
+    prowler -v
+    ```
 
 ## Prowler container versions
 
@@ -51,11 +155,6 @@ The container images are available here:
 
 - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
 - [AWS Public ECR](https://gallery.ecr.aws/o4g1s5r6/prowler)
-
-To run it using Docker:
-```
-docker run -ti --rm --name prowler --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN toniblyx/prowler:latest
-```
 
 ## High level architecture
 
