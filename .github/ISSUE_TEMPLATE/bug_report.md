@@ -22,8 +22,9 @@ A clear and concise description of what the bug is or what is not working as exp
 **How to reproduce it**
 Steps to reproduce the behavior:
 1. What command are you running?
-2. Environment you have, like single account, multi-account, organizations, etc.
-3. See error
+2. Cloud provider you are launching
+3. Environment you have like single account, multi-account, organizations, multi or single subsctiption, etc.
+4. See error
 
 
 **Expected behavior**
@@ -33,15 +34,14 @@ A clear and concise description of what you expected to happen.
 **Screenshots or Logs**
 If applicable, add screenshots to help explain your problem.
 Also, you can add logs (anonymize them first!). Here a command that may help to share a log
-`prowler <your arguments> --log-level DEBUG --log-file $(date +%F)_debug.log ` then attach here the log file.
+`prowler <your arguments> --log-level DEBUG --log-file $(date +%F)_debug.log` then attach here the log file.
 
 
 **From where are you running Prowler?**
 Please, complete the following information:
- - Resource: [e.g. EC2 instance, Fargate task, Docker container manually, EKS, Cloud9, CodeBuild, workstation, etc.)
+ - Resource: (e.g. EC2 instance, Fargate task, Docker container manually, EKS, Cloud9, CodeBuild, workstation, etc.)
  - OS: [e.g. Amazon Linux 2, Mac, Alpine, Windows, etc. ]
  - Prowler Version [`./prowler --version`]:
- - Shell and version:
  - Others:
 
 
