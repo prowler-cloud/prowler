@@ -15,33 +15,39 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
 def send_to_security_hub(
-    region: str, finding_output: Check_Output_JSON_ASFF, session: session.Session
+    is_quiet: bool,
+    finding_status: str,
+    region: str,
+    finding_output: Check_Output_JSON_ASFF,
+    session: session.Session,
 ) -> int:
+    success_count = 0
     try:
-        logger.info("Sending findings to Security Hub.")
-        success_count = 0
-        # Check if security hub is enabled in current region
-        security_hub_client = session.client("securityhub", region_name=region)
-        security_hub_client.describe_hub()
+        # Check if -q option is set
+        if not is_quiet or (is_quiet and finding_status == "FAIL"):
+            logger.info("Sending findings to Security Hub.")
+            # Check if security hub is enabled in current region
+            security_hub_client = session.client("securityhub", region_name=region)
+            security_hub_client.describe_hub()
 
-        # Check if Prowler integration is enabled in Security Hub
-        if "prowler/prowler" not in str(
-            security_hub_client.list_enabled_products_for_import()
-        ):
-            logger.error(
-                f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://github.com/prowler-cloud/prowler/#security-hub-integration"
-            )
+            # Check if Prowler integration is enabled in Security Hub
+            if "prowler/prowler" not in str(
+                security_hub_client.list_enabled_products_for_import()
+            ):
+                logger.error(
+                    f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://github.com/prowler-cloud/prowler/#security-hub-integration"
+                )
 
-        # Send finding to Security Hub
-        batch_import = security_hub_client.batch_import_findings(
-            Findings=[finding_output.dict()]
-        )
-        if batch_import["FailedCount"] > 0:
-            failed_import = batch_import["FailedFindings"][0]
-            logger.error(
-                f"Failed to send archived findings to AWS Security Hub -- {failed_import['ErrorCode']} -- {failed_import['ErrorMessage']}"
+            # Send finding to Security Hub
+            batch_import = security_hub_client.batch_import_findings(
+                Findings=[finding_output.dict()]
             )
-        success_count = batch_import["SuccessCount"]
+            if batch_import["FailedCount"] > 0:
+                failed_import = batch_import["FailedFindings"][0]
+                logger.error(
+                    f"Failed to send archived findings to AWS Security Hub -- {failed_import['ErrorCode']} -- {failed_import['ErrorMessage']}"
+                )
+            success_count = batch_import["SuccessCount"]
     except Exception as error:
         logger.error(f"{error.__class__.__name__} -- {error} in region {region}")
     return success_count

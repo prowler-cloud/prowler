@@ -447,9 +447,22 @@ class Test_Outputs:
 
         assert (
             send_to_security_hub(
+                False,
+                finding.status,
                 finding.region,
                 finding_output,
                 input_audit_info.audit_session,
             )
             == 1
+        )
+        # Setting is_quiet to True
+        assert (
+            send_to_security_hub(
+                True,
+                finding.status,
+                finding.region,
+                finding_output,
+                input_audit_info.audit_session,
+            )
+            == 0
         )
