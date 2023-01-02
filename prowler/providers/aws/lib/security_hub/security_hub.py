@@ -21,6 +21,9 @@ def send_to_security_hub(
     finding_output: Check_Output_JSON_ASFF,
     session: session.Session,
 ) -> int:
+    """
+    send_to_security_hub send each finding to Security Hub and return the number of findings that were successfully sent
+    """
     success_count = 0
     try:
         # Check if -q option is set
@@ -37,17 +40,17 @@ def send_to_security_hub(
                 logger.error(
                     f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://github.com/prowler-cloud/prowler/#security-hub-integration"
                 )
-
-            # Send finding to Security Hub
-            batch_import = security_hub_client.batch_import_findings(
-                Findings=[finding_output.dict()]
-            )
-            if batch_import["FailedCount"] > 0:
-                failed_import = batch_import["FailedFindings"][0]
-                logger.error(
-                    f"Failed to send archived findings to AWS Security Hub -- {failed_import['ErrorCode']} -- {failed_import['ErrorMessage']}"
+            else:
+                # Send finding to Security Hub
+                batch_import = security_hub_client.batch_import_findings(
+                    Findings=[finding_output.dict()]
                 )
-            success_count = batch_import["SuccessCount"]
+                if batch_import["FailedCount"] > 0:
+                    failed_import = batch_import["FailedFindings"][0]
+                    logger.error(
+                        f"Failed to send archived findings to AWS Security Hub -- {failed_import['ErrorCode']} -- {failed_import['ErrorMessage']}"
+                    )
+                success_count = batch_import["SuccessCount"]
     except Exception as error:
         logger.error(f"{error.__class__.__name__} -- {error} in region {region}")
     return success_count
@@ -57,6 +60,9 @@ def send_to_security_hub(
 def resolve_security_hub_previous_findings(
     output_directory: str, audit_info: AWS_Audit_Info
 ) -> list:
+    """
+    resolve_security_hub_previous_findings archives all the findings that does not appear in the current execution
+    """
     logger.info("Checking previous findings in Security Hub to archive them.")
     # Read current findings from json-asff file
     with open(
