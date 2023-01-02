@@ -183,7 +183,7 @@ class Aws_Check_Output_CSV(Check_Output_CSV):
     Aws_Check_Output_CSV generates a finding's output in CSV format for the AWS provider.
     """
 
-    profile: str
+    profile: Optional[str]
     account_id: int
     account_name: Optional[str]
     account_email: Optional[str]

@@ -60,7 +60,10 @@ class Azure_Output_Options(Provider_Output_Options):
         super().__init__(arguments, allowlist_file, bulk_checks_metadata)
 
         # Check if custom output filename was input, if not, set the default
-        if not hasattr(arguments, "output_filename"):
+        if (
+            not hasattr(arguments, "output_filename")
+            or arguments.output_filename is None
+        ):
             if audit_info.identity.domain:
                 self.output_filename = f"prowler-output-{audit_info.identity.domain}-{output_file_timestamp}"
             else:
@@ -85,7 +88,10 @@ class Aws_Output_Options(Provider_Output_Options):
             change_config_var("shodan_api_key", arguments.shodan)
 
         # Check if custom output filename was input, if not, set the default
-        if not hasattr(arguments, "output_filename"):
+        if (
+            not hasattr(arguments, "output_filename")
+            or arguments.output_filename is None
+        ):
             self.output_filename = (
                 f"prowler-output-{audit_info.audited_account}-{output_file_timestamp}"
             )
