@@ -125,9 +125,8 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
 
         logger.info("Generating original session ...")
         # Create an global original session using only profile/basic credentials info
-        current_audit_info.original_session = AWS_Provider(
-            current_audit_info
-        ).get_session()
+        aws_provider = AWS_Provider(current_audit_info)
+        current_audit_info.original_session = aws_provider.aws_session
         logger.info("Validating credentials ...")
         # Verificate if we have valid credentials
         caller_identity = self.validate_credentials(current_audit_info.original_session)
@@ -165,7 +164,9 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
                 logger.info(
                     f"Getting organizations metadata for account {organizations_role_arn}"
                 )
-                assumed_credentials = assume_role(current_audit_info)
+                assumed_credentials = assume_role(
+                    aws_provider.aws_session, aws_provider.role_info
+                )
                 current_audit_info.organizations_metadata = (
                     self.get_organizations_metadata(
                         current_audit_info.audited_account, assumed_credentials
@@ -197,7 +198,9 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
                     f"Assuming role {current_audit_info.assumed_role_info.role_arn}"
                 )
                 # Assume the role
-                assumed_role_response = assume_role(current_audit_info)
+                assumed_role_response = assume_role(
+                    aws_provider.aws_session, aws_provider.role_info
+                )
                 logger.info("Role assumed")
                 # Set the info needed to create a session with an assumed role
                 current_audit_info.credentials = AWS_Credentials(
@@ -212,8 +215,8 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
                     ],
                     expiration=assumed_role_response["Credentials"]["Expiration"],
                 )
-                assumed_session = AWS_Provider(current_audit_info).get_session()
-
+                # new session is needed
+                assumed_session = aws_provider.set_session(current_audit_info)
         if assumed_session:
             logger.info("Audit session is the new session created assuming role")
             current_audit_info.audit_session = assumed_session
@@ -222,7 +225,6 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         else:
             logger.info("Audit session is the original one")
             current_audit_info.audit_session = current_audit_info.original_session
-
         # Setting default region of session
         if current_audit_info.audit_session.region_name:
             current_audit_info.profile_region = (
