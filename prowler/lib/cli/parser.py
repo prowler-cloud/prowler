@@ -115,7 +115,6 @@ Detailed documentation at https://docs.prowler.cloud
             "-F",
             "--output-filename",
             nargs="?",
-            default=None,
             help="Custom output report name without the file extension, if not specified will use default output/prowler-output-ACCOUNT_NUM-OUTPUT_DATE.format",
         )
         common_outputs_parser.add_argument(
