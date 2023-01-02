@@ -198,10 +198,18 @@ Resources:
           commands:
             01-install-prowler-prereqs-yum:
               command: |
-                yum install python-pip git jq -y
-            02-install-prowler-prereqs-pip:
+                sudo yum -y install openssl-devel bzip2-devel libffi-devel gcc
+            02-upgrade-python3.9:
               command: |
-                sudo -u ec2-user pip install --user boto3 awscli detect-secrets
+                cd /tmp && wget https://www.python.org/ftp/python/3.9.13/Python-3.9.13.tgz
+                tar zxf Python-3.9.13.tgz
+                cd Python-3.9.13/
+                ./configure --enable-optimizations
+                sudo make altinstall
+            03-install-prowler:
+              command: |
+                cd ~
+                python3.9 -m pip install prowler-cloud
         prowler-reports:
           files:
             /home/ec2-user/run-prowler-reports.sh:

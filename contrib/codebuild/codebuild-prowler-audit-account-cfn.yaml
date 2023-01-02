@@ -17,8 +17,8 @@ Parameters:
     Description: 'Options to pass to Prowler command, make sure at least -M junit-xml is used for CodeBuild reports. Use -r for the region to send API queries, -f to filter only one region, -M output formats, -c for comma separated checks, for all checks do not use -c or -g, for more options see -h. For a complete assessment use  "-M text,junit-xml,html,csv,json", for SecurityHub integration use "-r region -f region -M text,junit-xml,html,csv,json,json-asff -S -q"'
     Type: String
     # Prowler command below runs a set of checks, configure it base on your needs, no options will run all regions all checks.
-    # option -M junit-xml is requirede in order to get the report in CodeBuild.
-    Default: -r eu-west-1 -f eu-west-1 -M text,junit-xml,html,csv,json -c check11,check12,check13,check14
+    # option -M junit-xml is required in order to get the report in CodeBuild.
+    Default: -f eu-west-1 -M junit-xml html csv json -s iam
 
   ProwlerScheduler:
     Description: The time when Prowler will run in cron format. Default is daily at 22:00h or 10PM 'cron(0 22 * * ? *)', for every 5 hours also works 'rate(5 hours)'. More info here https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html.
@@ -297,11 +297,11 @@ Resources:
                 python: 3.9
               commands:
                 - echo "Installing Prowler and dependencies..."
-                - pip3 install detect-secrets
+                - pipenv install
             build:
               commands:
                 - echo "Running Prowler as ./prowler $PROWLER_OPTIONS"
-                - ./prowler $PROWLER_OPTIONS
+                - ./prowler.py $PROWLER_OPTIONS
             post_build:
               commands:
                 - echo "Uploading reports to S3..."
