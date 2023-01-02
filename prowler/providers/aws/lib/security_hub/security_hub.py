@@ -16,9 +16,10 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 def send_to_security_hub(
     region: str, finding_output: Check_Output_JSON_ASFF, session: session.Session
-):
+) -> int:
     try:
         logger.info("Sending findings to Security Hub.")
+        success_count = 0
         # Check if security hub is enabled in current region
         security_hub_client = session.client("securityhub", region_name=region)
         security_hub_client.describe_hub()
@@ -40,9 +41,10 @@ def send_to_security_hub(
             logger.error(
                 f"Failed to send archived findings to AWS Security Hub -- {failed_import['ErrorCode']} -- {failed_import['ErrorMessage']}"
             )
-
+        success_count = batch_import["SuccessCount"]
     except Exception as error:
         logger.error(f"{error.__class__.__name__} -- {error} in region {region}")
+    return success_count
 
 
 # Move previous Security Hub check findings to ARCHIVED (as prowler didn't re-detect them)

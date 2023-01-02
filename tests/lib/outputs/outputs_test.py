@@ -45,13 +45,20 @@ make_api_call = botocore.client.BaseClient._make_api_call
 
 
 def mock_make_api_call(self, operation_name, kwarg):
-    if operation_name == "GetFindings":
+    if operation_name == "BatchImportFindings":
         return {
-            "Findings": [
-                {
-                    "AwsAccountId": AWS_ACCOUNT_ID,
-                }
-            ]
+            "FailedCount": 0,
+            "SuccessCount": 1,
+        }
+    if operation_name == "DescribeHub":
+        return {
+            "HubArn": "test-hub",
+        }
+    if operation_name == "ListEnabledProductsForImport":
+        return {
+            "ProductSubscriptions": [
+                "prowler/prowler",
+            ],
         }
     return make_api_call(self, operation_name, kwarg)
 
@@ -438,25 +445,11 @@ class Test_Outputs:
 
         fill_json_asff(finding_output, input_audit_info, finding)
 
-        send_to_security_hub(
-            finding.region,
-            finding_output,
-            input_audit_info.audit_session,
-        )
-
-        client = session.client("securityhub")
-
-        findings_filter = {
-            "ProductName": [{"Value": "Prowler", "Comparison": "EQUALS"}],
-            "RecordState": [{"Value": "ACTIVE", "Comparison": "EQUALS"}],
-            "AwsAccountId": [
-                {"Value": input_audit_info.audited_account, "Comparison": "EQUALS"}
-            ],
-            "Region": [
-                {"Value": input_audit_info.profile_region, "Comparison": "EQUALS"}
-            ],
-        }
         assert (
-            client.get_findings(Filters=findings_filter)["Findings"][0]["AwsAccountId"]
-            == AWS_ACCOUNT_ID
+            send_to_security_hub(
+                finding.region,
+                finding_output,
+                input_audit_info.audit_session,
+            )
+            == 1
         )
