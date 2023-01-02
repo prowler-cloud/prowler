@@ -52,7 +52,9 @@ def send_to_security_hub(
                     )
                 success_count = batch_import["SuccessCount"]
     except Exception as error:
-        logger.error(f"{error.__class__.__name__} -- {error} in region {region}")
+        logger.error(
+            f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]:{error} in region {region}"
+        )
     return success_count
 
 
@@ -127,4 +129,6 @@ def resolve_security_hub_previous_findings(
                         f"Failed to send archived findings to AWS Security Hub -- {failed_import['ErrorCode']} -- {failed_import['ErrorMessage']}"
                     )
         except Exception as error:
-            logger.error(f"{error.__class__.__name__} -- {error} in region {region}")
+            logger.error(
+                f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]:{error} in region {region}"
+            )
