@@ -42,6 +42,9 @@ Please, complete the following information:
  - Resource: (e.g. EC2 instance, Fargate task, Docker container manually, EKS, Cloud9, CodeBuild, workstation, etc.)
  - OS: [e.g. Amazon Linux 2, Mac, Alpine, Windows, etc. ]
  - Prowler Version [`./prowler --version`]:
+ - Python version [`python --version`]:
+ - Pip version [`pip --version`]:
+ - Installation method (Are you running it from pip package or cloning the github repo?):
  - Others:
 
 
