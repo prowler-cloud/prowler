@@ -112,9 +112,14 @@ def report(check_findings, output_options, audit_info):
                             output_options.security_hub_enabled
                             and finding.status != "INFO"
                         ):
-                            send_to_security_hub(
-                                finding.region, finding_output, audit_info.audit_session
-                            )
+                            if not output_options.is_quiet or (
+                                output_options.is_quiet and finding.status == "FAIL"
+                            ):
+                                send_to_security_hub(
+                                    finding.region,
+                                    finding_output,
+                                    audit_info.audit_session,
+                                )
 
                     # Common outputs
                     if "csv" in file_descriptors:
