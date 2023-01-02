@@ -113,7 +113,11 @@ def report(check_findings, output_options, audit_info):
                             and finding.status != "INFO"
                         ):
                             send_to_security_hub(
-                                finding.region, finding_output, audit_info.audit_session
+                                output_options.is_quiet,
+                                finding.status,
+                                finding.region,
+                                finding_output,
+                                audit_info.audit_session,
                             )
 
                     # Common outputs
