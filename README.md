@@ -138,7 +138,7 @@ The other three cases does not need additional configuration, `--az-cli-auth` an
 
 ### Permissions
 
-To use each one you need to pass the proper flag to the execution. Prowler fro Azure handles two types of permission scopes, which are:
+To use each one you need to pass the proper flag to the execution. Prowler for Azure handles two types of permission scopes, which are:
 
 - **Azure Active Directory permissions**: Used to retrieve metadata from the identity assumed by Prowler and future AAD checks (not mandatory to have access to execute the tool)
 - **Subscription scope permissions**: Required to launch the checks against your resources, mandatory to launch the tool.
