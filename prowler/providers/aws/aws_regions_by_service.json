@@ -3479,6 +3479,7 @@
     "kendra": {
       "regions": {
         "aws": [
+          "ap-south-1",
           "ap-southeast-1",
           "ap-southeast-2",
           "ca-central-1",
