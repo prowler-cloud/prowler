@@ -2,7 +2,7 @@
 
 name: Refresh regions of AWS services
 
-on: workflow_dispatch
+on: [pull_request]
 
 env:
   GITHUB_BRANCH: "master"
@@ -17,6 +17,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
+      actions: write
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
