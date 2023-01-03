@@ -2,7 +2,7 @@
 
 name: Refresh regions of AWS services
 
-on: workflow_dispatch
+on: [pull_request]
 
 env:
   GITHUB_BRANCH: "master"
@@ -22,6 +22,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ref: ${{ env.GITHUB_BRANCH }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: setup python
         uses: actions/setup-python@v2
