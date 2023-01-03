@@ -5,7 +5,7 @@ name: Refresh regions of AWS services
 on: [pull_request]
 
 env:
-  GITHUB_BRANCH: "master"
+  GITHUB_BRANCH: "PRWLR-1230-change-aws-service-regions-page"
   AWS_REGION_DEV: us-east-1
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
