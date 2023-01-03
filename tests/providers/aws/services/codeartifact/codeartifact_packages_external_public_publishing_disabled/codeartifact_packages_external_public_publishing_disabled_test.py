@@ -113,7 +113,7 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Internal package {package_namespace} {package_name} is vulnerable to dependency confusion in repository {repository_arn}"
+                == f"Internal package {package_name} is vulnerable to dependency confusion in repository {repository_arn}"
             )
 
     def test_repository_package_private_publishing_origin_internal(self):
@@ -168,5 +168,5 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Internal package {package_namespace} {package_name} is not vulnerable to dependency confusion in repository {repository_arn}"
+                == f"Internal package {package_name} is not vulnerable to dependency confusion in repository {repository_arn}"
             )

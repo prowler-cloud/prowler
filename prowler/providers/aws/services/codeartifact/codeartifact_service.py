@@ -1,5 +1,6 @@
 import threading
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -79,7 +80,7 @@ class CodeArtifact:
                         for package in page["packages"]:
                             # Package information
                             package_format = package["format"]
-                            package_namespace = package["namespace"]
+                            package_namespace = package.get("namespace")
                             package_name = package["package"]
                             package_origin_configuration_restrictions_publish = package[
                                 "originConfiguration"
@@ -98,9 +99,8 @@ class CodeArtifact:
                                     ].domain_owner,
                                     repository=repository,
                                     format=package_format,
-                                    namespace=package_namespace,
                                     package=package_name,
-                                    short_by="PUBLISHED_TIME",
+                                    sortBy="PUBLISHED_TIME",
                                 )
                             )
                             latest_version = latest_version_information["versions"][0][
@@ -207,7 +207,7 @@ class Package(BaseModel):
     """Details of a package"""
 
     name: str
-    namespace: str
+    namespace: Optional[str]
     format: str
     origin_configuration: OriginConfiguration
     latest_version: LatestPackageVersion
