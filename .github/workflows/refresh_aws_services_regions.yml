@@ -8,6 +8,7 @@ on:
 
 env:
   GITHUB_BRANCH: "master"
+  AWS_REGION_DEV: us-east-1
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -26,6 +27,13 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.9 #install the python needed
+
+      - name: Configure AWS Credentials -- DEV
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION_DEV }}
+          role-to-assume: ${{ secrets.DEV_IAM_ROLE_ARN }}
+          role-session-name: refresh-AWS-regions-dev
 
       # Runs a single command using the runners shell
       - name: Run a one-line script
