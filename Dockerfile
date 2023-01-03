@@ -3,7 +3,7 @@ FROM python:3.9-alpine
 LABEL maintainer="https://github.com/prowler-cloud/prowler"
 
 # Update system dependencies
-RUN apk --no-cache update && apk --no-cache upgrade
+RUN apk --no-cache upgrade
 
 # Create nonroot user
 RUN mkdir -p /home/prowler && \
