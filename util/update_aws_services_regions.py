@@ -2,11 +2,8 @@ import json
 import logging
 import os
 import sys
-from urllib import request
 
-aws_services_json_url = (
-    "https://api.regional-table.region-services.aws.a2z.com/index.json"
-)
+import boto3
 
 # Logging config
 logging.basicConfig(
@@ -16,89 +13,46 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-# JSON files
-with request.urlopen(aws_services_json_url) as url:  # Get the AWS regions matrix online
-    logging.info(f"Downloading JSON from {aws_services_json_url}")
-    original_matrix_regions_aws = json.loads(url.read().decode())
-parsed_matrix_regions_aws = f"{os.path.dirname(os.path.realpath(__name__))}/prowler/providers/aws/aws_regions_by_service.json"
-
-
-# JSON objects
-regions_by_service = {}
-services = {}
-old_service = ""
+regions_by_service = {"services": {}}
 
 logging.info("Recovering AWS Regions by Service")
-# Iterating through the json list
-for item in original_matrix_regions_aws["prices"]:
-    service = item["id"].split(":")[0]
-    region = item["id"].split(":")[1]
-    # Init regions for the new service
-    if service != old_service:
-        regions_dict = {}
-        # Store the service
-        services[service] = regions_dict
-        # Init objects for every new service
-        old_service = service
-        regions = {}
-        regions["aws"] = {}
-        regions["aws-cn"] = {}
-        regions["aws-us-gov"] = {}
-        regions_dict["regions"] = {}
-        regions_aws = []
-        regions_cn = []
-        regions_gov = []
-
-    # Include the region in their AWS partition
-    if "cn-" in region:
-        regions_cn.append(region)
-        regions["aws-cn"] = regions_cn
-
-    elif "gov-" in region:
-        regions_gov.append(region)
-        regions["aws-us-gov"] = regions_gov
-    else:
-        regions_aws.append(region)
-        regions["aws"] = regions_aws
-
-    regions_dict["regions"] = regions
-
-# Store final JSON
-logging.info("Storing final JSON")
-regions_by_service["services"] = services
+client = boto3.client("ssm", region_name="us-east-1")
+get_parameters_by_path_paginator = client.get_paginator("get_parameters_by_path")
+# Get all AWS Available Services
+for page in get_parameters_by_path_paginator.paginate(
+    Path="/aws/service/global-infrastructure/services"
+):
+    for service in page["Parameters"]:
+        regions_by_service["services"][service["Value"]] = {}
+        # Get all AWS Regions for the specific service
+        regions = {"aws": [], "aws-cn": [], "aws-us-gov": []}
+        for page in get_parameters_by_path_paginator.paginate(
+            Path="/aws/service/global-infrastructure/services/"
+            + service["Value"]
+            + "/regions"
+        ):
+            for region in page["Parameters"]:
+                if "cn" in region["Value"]:
+                    regions["aws-cn"].append(region["Value"])
+                elif "gov" in region["Value"]:
+                    regions["aws-us-gov"].append(region["Value"])
+                else:
+                    regions["aws"].append(region["Value"])
+        regions_by_service["services"][service["Value"]]["regions"] = regions
 
 # Include the regions for the subservices and the services not present
 logging.info("Updating subservices and the services not present in the original matrix")
-# accessanalyzer --> iam
-regions_by_service["services"]["accessanalyzer"] = regions_by_service["services"]["iam"]
-# apigatewayv2 --> apigateway
-regions_by_service["services"]["apigatewayv2"] = regions_by_service["services"][
-    "apigateway"
-]
 # macie2 --> macie
 regions_by_service["services"]["macie2"] = regions_by_service["services"]["macie"]
-# logs --> cloudwatch
-regions_by_service["services"]["logs"] = regions_by_service["services"]["cloudwatch"]
-# dax --> dynamodb
-regions_by_service["services"]["dax"] = regions_by_service["services"]["dynamodb"]
-# glacier --> s3
-regions_by_service["services"]["glacier"] = regions_by_service["services"]["s3"]
 # opensearch --> es
 regions_by_service["services"]["opensearch"] = regions_by_service["services"]["es"]
 # elbv2 --> elb
 regions_by_service["services"]["elbv2"] = regions_by_service["services"]["elb"]
-# route53domains --> route53
-regions_by_service["services"]["route53domains"] = regions_by_service["services"][
-    "route53"
-]
-# s3control --> s3
-regions_by_service["services"]["s3control"] = regions_by_service["services"]["s3"]
 # wafv2 --> waf
 regions_by_service["services"]["wafv2"] = regions_by_service["services"]["waf"]
-# waf-regional --> waf
-regions_by_service["services"]["waf-regional"] = regions_by_service["services"]["waf"]
 
 # Write to file
+parsed_matrix_regions_aws = f"{os.path.dirname(os.path.realpath(__name__))}/prowler/providers/aws/aws_regions_by_service.json"
 logging.info(f"Writing {parsed_matrix_regions_aws}")
 with open(parsed_matrix_regions_aws, "w") as outfile:
     json.dump(regions_by_service, outfile, indent=2, sort_keys=True)
