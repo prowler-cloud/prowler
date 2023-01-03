@@ -2,7 +2,9 @@
 
 name: Refresh regions of AWS services
 
-on: workflow_dispatch
+on:
+  schedule:
+    - cron: "0 9 * * *" #runs at 09:00 UTC everyday
 
 env:
   GITHUB_BRANCH: "master"
@@ -16,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-      contents: write
+      pull-requests: write
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
