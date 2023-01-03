@@ -2,7 +2,9 @@
 
 name: Refresh regions of AWS services
 
-on: [pull_request]
+on:
+  schedule:
+    - cron: "0 9 * * *" #runs at 09:00 UTC everyday
 
 env:
   GITHUB_BRANCH: "master"
