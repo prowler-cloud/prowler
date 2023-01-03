@@ -3,32 +3,32 @@
     "accessanalyzer": {
       "regions": {
         "aws": [
-          "ap-south-2",
-          "ap-southeast-1",
-          "ap-southeast-2",
-          "ap-southeast-3",
-          "eu-north-1",
-          "us-west-1",
-          "af-south-1",
+          "ap-east-1",
           "ap-northeast-1",
-          "ca-central-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
           "eu-central-1",
-          "eu-south-2",
           "eu-west-2",
           "me-central-1",
-          "me-south-1",
-          "us-east-2",
           "us-west-2",
-          "ap-east-1",
-          "ap-northeast-2",
-          "ap-northeast-3",
-          "ap-south-1",
+          "af-south-1",
+          "ap-southeast-2",
           "eu-central-2",
-          "eu-south-1",
+          "eu-north-1",
           "eu-west-1",
           "eu-west-3",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-2",
+          "ca-central-1",
+          "eu-south-1",
+          "eu-south-2",
           "sa-east-1",
-          "us-east-1"
+          "us-west-1"
         ],
         "aws-cn": [
           "cn-north-1",
@@ -38,6 +38,43 @@
           "us-gov-east-1",
           "us-gov-west-1"
         ]
+      }
+    },
+    "account": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "eu-central-1",
+          "eu-south-2",
+          "eu-west-2",
+          "eu-west-3",
+          "me-central-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-west-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "ap-northeast-2",
+          "ap-south-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-south-1",
+          "us-west-2"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": []
       }
     },
     "acm": {
@@ -107,7 +144,7 @@
           "sa-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1",
           "us-gov-east-1"
@@ -121,8 +158,8 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "aiq": {
@@ -150,8 +187,8 @@
           "us-west-2",
           "ap-northeast-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "alexaforbusiness": {
@@ -159,8 +196,8 @@
         "aws": [
           "us-east-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "amazonlocationservice": {
@@ -180,8 +217,8 @@
           "eu-west-1",
           "sa-east-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "amplify": {
@@ -207,8 +244,58 @@
           "us-east-1",
           "us-west-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "amplifybackend": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-3",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "amplifyuibuilder": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "apigateway": {
@@ -251,35 +338,28 @@
         ]
       }
     },
-    "apigatewayv2": {
+    "apigatewaymanagementapi": {
       "regions": {
         "aws": [
-          "af-south-1",
-          "ap-east-1",
-          "ap-northeast-3",
-          "eu-central-1",
-          "eu-north-1",
-          "eu-south-2",
-          "sa-east-1",
-          "us-east-1",
           "ap-northeast-1",
-          "ap-northeast-2",
-          "ap-southeast-2",
-          "ap-southeast-3",
-          "eu-south-1",
-          "eu-west-1",
-          "eu-west-2",
-          "me-central-1",
-          "us-east-2",
+          "ap-northeast-3",
           "ap-south-1",
-          "ap-south-2",
-          "ap-southeast-1",
+          "ap-southeast-2",
           "ca-central-1",
-          "eu-central-2",
+          "eu-central-1",
           "eu-west-3",
           "me-south-1",
-          "us-west-1",
-          "us-west-2"
+          "us-east-2",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2",
+          "eu-north-1",
+          "sa-east-1",
+          "us-west-1"
         ],
         "aws-cn": [
           "cn-northwest-1",
@@ -288,6 +368,116 @@
         "aws-us-gov": [
           "us-gov-east-1",
           "us-gov-west-1"
+        ]
+      }
+    },
+    "apigatewayv2": {
+      "regions": {
+        "aws": [
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2",
+          "ap-northeast-2",
+          "us-east-2",
+          "us-west-1"
+        ],
+        "aws-cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "appconfig": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "me-south-1",
+          "us-east-1",
+          "us-west-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-south-2",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-south-2",
+          "eu-west-2",
+          "me-central-1",
+          "sa-east-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3",
+          "us-east-2"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "appconfigdata": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-2",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ca-central-1",
+          "eu-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-3"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
         ]
       }
     },
@@ -311,8 +501,26 @@
           "eu-west-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "appintegrations": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "application-autoscaling": {
@@ -351,6 +559,50 @@
         ]
       }
     },
+    "application-insights": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "us-east-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-2",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "eu-north-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-1"
+        ],
+        "aws-cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "applicationcostprofiler": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "appmesh": {
       "regions": {
         "aws": [
@@ -381,7 +633,20 @@
           "cn-northwest-1",
           "cn-north-1"
         ],
-        "aws-us-gov": {}
+        "aws-us-gov": []
+      }
+    },
+    "apprunner": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "appstream": {
@@ -401,7 +666,7 @@
           "us-east-1",
           "us-east-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
@@ -437,7 +702,7 @@
           "cn-north-1",
           "cn-northwest-1"
         ],
-        "aws-us-gov": {}
+        "aws-us-gov": []
       }
     },
     "aps": {
@@ -454,8 +719,25 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "arc-zonal-shift": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "artifact": {
@@ -488,7 +770,7 @@
           "eu-west-1",
           "us-east-1"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-east-1",
           "us-gov-west-1"
@@ -547,8 +829,8 @@
           "ap-northeast-1",
           "ap-southeast-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "augmentedairuntime": {
@@ -567,8 +849,8 @@
           "ap-northeast-2",
           "ap-south-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "aurora": {
@@ -687,6 +969,50 @@
         ]
       }
     },
+    "backup-gateway": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-2",
+          "ap-southeast-2",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "backupstorage": {
+      "regions": {
+        "aws": [
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "batch": {
       "regions": {
         "aws": [
@@ -723,6 +1049,15 @@
         ]
       }
     },
+    "billingconductor": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "braket": {
       "regions": {
         "aws": [
@@ -730,8 +1065,8 @@
           "us-west-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "budgets": {
@@ -757,7 +1092,7 @@
           "cn-northwest-1",
           "cn-north-1"
         ],
-        "aws-us-gov": {}
+        "aws-us-gov": []
       }
     },
     "chatbot": {
@@ -790,8 +1125,8 @@
           "sa-east-1",
           "us-east-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "chime": {
@@ -816,11 +1151,75 @@
           "us-east-2",
           "us-west-1"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-east-1",
           "us-gov-west-1"
         ]
+      }
+    },
+    "chime-sdk-identity": {
+      "regions": {
+        "aws": [
+          "eu-central-1",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "chime-sdk-media-pipelines": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1",
+          "eu-central-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "chime-sdk-meetings": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1",
+          "eu-central-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "chime-sdk-messaging": {
+      "regions": {
+        "aws": [
+          "eu-central-1",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "chime-sdk-voice": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "cloud9": {
@@ -848,8 +1247,8 @@
           "us-west-2",
           "eu-west-3"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "clouddirectory": {
@@ -865,7 +1264,7 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
@@ -896,8 +1295,8 @@
           "us-east-1",
           "me-south-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "cloudenduremigration": {
@@ -1009,7 +1408,7 @@
           "cn-north-1",
           "cn-northwest-1"
         ],
-        "aws-us-gov": {}
+        "aws-us-gov": []
       }
     },
     "cloudhsmv2": {
@@ -1040,7 +1439,7 @@
           "me-central-1",
           "sa-east-1"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-east-1",
           "us-gov-west-1"
@@ -1061,8 +1460,8 @@
           "us-west-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "cloudshell": {
@@ -1080,7 +1479,7 @@
           "ca-central-1",
           "us-east-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-east-1",
           "us-gov-west-1"
@@ -1184,8 +1583,8 @@
           "ap-southeast-1",
           "us-east-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "codebuild": {
@@ -1222,6 +1621,15 @@
           "us-gov-east-1",
           "us-gov-west-1"
         ]
+      }
+    },
+    "codecatalyst": {
+      "regions": {
+        "aws": [
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "codecommit": {
@@ -1299,6 +1707,24 @@
         ]
       }
     },
+    "codeguru-reviewer": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "codeguruprofiler": {
       "regions": {
         "aws": [
@@ -1313,8 +1739,8 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "codepipeline": {
@@ -1365,8 +1791,58 @@
           "eu-central-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "codestar-connections": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-3",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "codestar-notifications": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "cognito-identity": {
@@ -1399,6 +1875,53 @@
         ]
       }
     },
+    "cognito-idp": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-south-1",
+          "me-south-1",
+          "us-east-2",
+          "us-west-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "cognito-sync": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-2",
+          "us-west-2",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "comprehend": {
       "regions": {
         "aws": [
@@ -1415,7 +1938,7 @@
           "ap-southeast-2",
           "us-east-1"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
@@ -1432,7 +1955,7 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
@@ -1467,7 +1990,7 @@
           "cn-northwest-1",
           "cn-north-1"
         ],
-        "aws-us-gov": {}
+        "aws-us-gov": []
       }
     },
     "config": {
@@ -1524,7 +2047,53 @@
           "us-west-2",
           "eu-west-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "connect-contact-lens": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "connectcases": {
+      "regions": {
+        "aws": [
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "connectparticipant": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-2",
+          "us-west-2",
+          "us-east-1"
+        ],
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
@@ -1549,7 +2118,7 @@
           "eu-west-3",
           "sa-east-1"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1",
           "us-gov-east-1"
@@ -1564,7 +2133,7 @@
         "aws-cn": [
           "cn-northwest-1"
         ],
-        "aws-us-gov": {}
+        "aws-us-gov": []
       }
     },
     "cur": {
@@ -1575,7 +2144,57 @@
         "aws-cn": [
           "cn-northwest-1"
         ],
-        "aws-us-gov": {}
+        "aws-us-gov": []
+      }
+    },
+    "customer-profiles": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "databrew": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-west-1",
+          "us-west-2",
+          "ca-central-1",
+          "us-east-2"
+        ],
+        "aws-cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
       }
     },
     "dataexchange": {
@@ -1593,8 +2212,8 @@
           "us-west-2",
           "us-east-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "datapipeline": {
@@ -1606,8 +2225,8 @@
           "us-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "datasync": {
@@ -1650,41 +2269,25 @@
     "dax": {
       "regions": {
         "aws": [
-          "ap-south-2",
-          "ap-southeast-3",
-          "ca-central-1",
-          "eu-central-1",
-          "eu-central-2",
-          "eu-north-1",
-          "eu-west-2",
-          "me-south-1",
-          "ap-east-1",
           "ap-northeast-1",
-          "ap-northeast-2",
           "ap-southeast-2",
-          "eu-south-2",
-          "eu-west-1",
-          "me-central-1",
-          "us-east-2",
-          "us-west-2",
-          "af-south-1",
-          "ap-northeast-3",
-          "ap-south-1",
-          "ap-southeast-1",
-          "eu-south-1",
+          "eu-central-1",
           "eu-west-3",
           "sa-east-1",
           "us-east-1",
-          "us-west-1"
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-west-1",
+          "eu-west-2"
         ],
         "aws-cn": [
           "cn-north-1",
           "cn-northwest-1"
         ],
-        "aws-us-gov": [
-          "us-gov-east-1",
-          "us-gov-west-1"
-        ]
+        "aws-us-gov": []
       }
     },
     "deepcomposer": {
@@ -1692,8 +2295,8 @@
         "aws": [
           "us-east-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "deeplens": {
@@ -1703,8 +2306,8 @@
           "eu-central-1",
           "us-east-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "deepracer": {
@@ -1712,8 +2315,8 @@
         "aws": [
           "us-east-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "detective": {
@@ -1740,7 +2343,7 @@
           "us-west-2",
           "ca-central-1"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1",
           "us-gov-east-1"
@@ -1752,8 +2355,8 @@
         "aws": [
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "devops-guru": {
@@ -1776,8 +2379,8 @@
           "eu-west-2",
           "us-west-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "directconnect": {
@@ -1831,8 +2434,45 @@
           "us-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "dlm": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-3",
+          "us-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-west-2",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "me-central-1",
+          "us-west-1"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
       }
     },
     "dms": {
@@ -1929,8 +2569,8 @@
           "eu-north-1",
           "us-east-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "ds": {
@@ -1999,6 +2639,46 @@
           "sa-east-1",
           "us-east-1",
           "us-west-1"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "dynamodbstreams": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-south-1",
+          "me-central-1",
+          "sa-east-1",
+          "us-east-2",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-south-2",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-1",
+          "ap-northeast-1",
+          "ap-south-2",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-west-1",
+          "us-west-1",
+          "us-west-2"
         ],
         "aws-cn": [
           "cn-north-1",
@@ -2130,6 +2810,16 @@
         ]
       }
     },
+    "ecr-public": {
+      "regions": {
+        "aws": [
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "ecs": {
       "regions": {
         "aws": [
@@ -2255,8 +2945,8 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "elasticache": {
@@ -2347,8 +3037,8 @@
           "us-west-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "elb": {
@@ -2471,6 +3161,57 @@
         ]
       }
     },
+    "emr-containers": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-2",
+          "us-west-1"
+        ],
+        "aws-cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "aws-us-gov": []
+      }
+    },
+    "emr-serverless": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "es": {
       "regions": {
         "aws": [
@@ -2551,6 +3292,63 @@
         ]
       }
     },
+    "events": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-2",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-west-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-south-2",
+          "me-south-1",
+          "us-east-1",
+          "us-west-2",
+          "af-south-1",
+          "eu-south-1",
+          "eu-west-3",
+          "me-central-1",
+          "sa-east-1",
+          "us-east-2"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "evidently": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "fargate": {
       "regions": {
         "aws": [
@@ -2605,8 +3403,34 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "finspace": {
+      "regions": {
+        "aws": [
+          "ca-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "finspace-data": {
+      "regions": {
+        "aws": [
+          "ca-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "firehose": {
@@ -2670,7 +3494,7 @@
           "us-east-1",
           "us-east-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1",
           "us-gov-east-1"
@@ -2726,8 +3550,26 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "forecastquery": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "frauddetector": {
@@ -2740,8 +3582,8 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "freertosota": {
@@ -2770,7 +3612,43 @@
           "cn-northwest-1",
           "cn-north-1"
         ],
-        "aws-us-gov": {}
+        "aws-us-gov": []
+      }
+    },
+    "fsx": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-3",
+          "eu-central-1",
+          "eu-north-1",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-west-1",
+          "eu-west-2",
+          "sa-east-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ca-central-1",
+          "eu-south-1",
+          "eu-west-3",
+          "us-west-1"
+        ],
+        "aws-cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
       }
     },
     "fsx-lustre": {
@@ -2832,7 +3710,7 @@
           "us-east-1",
           "eu-north-1"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1",
           "us-gov-east-1"
@@ -2857,8 +3735,8 @@
           "eu-north-1",
           "us-east-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "fsx-windows": {
@@ -2926,42 +3804,48 @@
           "cn-north-1",
           "cn-northwest-1"
         ],
-        "aws-us-gov": {}
+        "aws-us-gov": []
+      }
+    },
+    "gamesparks": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "glacier": {
       "regions": {
         "aws": [
-          "ap-east-1",
-          "ap-northeast-1",
-          "eu-central-1",
-          "eu-west-2",
-          "eu-west-3",
-          "me-central-1",
-          "sa-east-1",
-          "us-west-1",
-          "ap-northeast-3",
-          "ap-south-1",
-          "ap-south-2",
-          "ap-southeast-1",
-          "ap-southeast-2",
-          "ap-southeast-3",
-          "eu-south-2",
-          "us-east-1",
-          "af-south-1",
           "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-2",
           "ca-central-1",
-          "eu-central-2",
           "eu-north-1",
           "eu-south-1",
           "eu-west-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-west-2",
           "me-south-1",
+          "us-east-1",
           "us-east-2",
-          "us-west-2"
+          "af-south-1",
+          "ap-northeast-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-west-1"
         ],
         "aws-cn": [
-          "cn-north-1",
-          "cn-northwest-1"
+          "cn-northwest-1",
+          "cn-north-1"
         ],
         "aws-us-gov": [
           "us-gov-east-1",
@@ -2994,8 +3878,8 @@
           "us-west-1",
           "eu-west-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "glue": {
@@ -3048,8 +3932,8 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "greengrass": {
@@ -3093,8 +3977,8 @@
           "eu-west-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "guardduty": {
@@ -3135,13 +4019,28 @@
         ]
       }
     },
+    "health": {
+      "regions": {
+        "aws": [
+          "us-east-1",
+          "us-east-2"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
     "honeycode": {
       "regions": {
         "aws": [
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "iam": {
@@ -3184,6 +4083,88 @@
         ]
       }
     },
+    "identitystore": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
+    "imagebuilder": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "eu-west-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "us-west-1"
+        ],
+        "aws-cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "importexport": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": []
+      }
+    },
     "inspector": {
       "regions": {
         "aws": [
@@ -3200,7 +4181,7 @@
           "eu-west-1",
           "us-east-1"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1",
           "us-gov-east-1"
@@ -3230,8 +4211,8 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "iot": {
@@ -3267,6 +4248,58 @@
         ]
       }
     },
+    "iot-data": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-west-1",
+          "sa-east-1",
+          "us-west-1",
+          "ca-central-1",
+          "eu-west-2",
+          "me-central-1"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "iot-roborunner": {
+      "regions": {
+        "aws": [
+          "eu-central-1",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "iot1click-devices": {
+      "regions": {
+        "aws": [
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "iot1click-projects": {
       "regions": {
         "aws": [
@@ -3278,8 +4311,8 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "iotanalytics": {
@@ -3297,7 +4330,19 @@
         "aws-cn": [
           "cn-north-1"
         ],
-        "aws-us-gov": {}
+        "aws-us-gov": []
+      }
+    },
+    "iotdeviceadvisor": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "iotdevicedefender": {
@@ -3388,6 +4433,93 @@
         ]
       }
     },
+    "iotevents-data": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-2",
+          "us-west-2",
+          "ap-northeast-1",
+          "us-east-1"
+        ],
+        "aws-cn": [
+          "cn-north-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "iotfleethub": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "us-east-1",
+          "us-east-2",
+          "eu-west-1",
+          "eu-west-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "iotfleetwise": {
+      "regions": {
+        "aws": [
+          "eu-central-1",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "iotsecuretunneling": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "eu-west-3"
+        ],
+        "aws-cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
     "iotsitewise": {
       "regions": {
         "aws": [
@@ -3421,8 +4553,23 @@
           "us-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "iotwireless": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "ivs": {
@@ -3436,8 +4583,23 @@
           "us-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "ivschat": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "kafka": {
@@ -3476,6 +4638,30 @@
         ]
       }
     },
+    "kafkaconnect": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-west-1",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "kendra": {
       "regions": {
         "aws": [
@@ -3488,7 +4674,7 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
@@ -3590,8 +4776,8 @@
           "ca-central-1",
           "eu-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "kms": {
@@ -3709,6 +4895,24 @@
         ]
       }
     },
+    "lex-models": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
     "lex-runtime": {
       "regions": {
         "aws": [
@@ -3724,8 +4928,27 @@
           "us-west-2",
           "ap-southeast-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "lexv2-models": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2",
+          "af-south-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "license-manager": {
@@ -3764,6 +4987,35 @@
         ]
       }
     },
+    "license-manager-user-subscriptions": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-south-1",
+          "me-south-1",
+          "us-east-2",
+          "us-west-2",
+          "eu-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "lightsail": {
       "regions": {
         "aws": [
@@ -3782,48 +5034,59 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "logs": {
       "regions": {
         "aws": [
           "ap-northeast-2",
-          "ap-south-2",
-          "ca-central-1",
-          "me-central-1",
-          "me-south-1",
-          "sa-east-1",
-          "us-east-1",
-          "us-east-2",
-          "us-west-1",
-          "us-west-2",
-          "af-south-1",
-          "ap-east-1",
-          "ap-northeast-1",
           "ap-northeast-3",
           "ap-southeast-3",
-          "eu-central-2",
-          "eu-north-1",
-          "ap-south-1",
-          "ap-southeast-1",
-          "ap-southeast-2",
           "eu-central-1",
-          "eu-south-1",
           "eu-south-2",
-          "eu-west-1",
           "eu-west-2",
-          "eu-west-3"
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-2",
+          "eu-south-1",
+          "eu-west-1",
+          "me-central-1",
+          "us-west-1",
+          "ap-east-1",
+          "ap-south-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-west-2"
         ],
         "aws-cn": [
-          "cn-north-1",
-          "cn-northwest-1"
+          "cn-northwest-1",
+          "cn-north-1"
         ],
         "aws-us-gov": [
-          "us-gov-west-1",
-          "us-gov-east-1"
+          "us-gov-east-1",
+          "us-gov-west-1"
         ]
+      }
+    },
+    "lookoutequipment": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "eu-west-1",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "lookoutmetrics": {
@@ -3839,8 +5102,8 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "lookoutvision": {
@@ -3854,8 +5117,8 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "lumberyard": {
@@ -3880,8 +5143,8 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "m2": {
@@ -3900,8 +5163,18 @@
           "ca-central-1",
           "sa-east-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "machinelearning": {
+      "regions": {
+        "aws": [
+          "eu-west-1",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "macie": {
@@ -3929,8 +5202,8 @@
           "us-west-2",
           "eu-south-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "macie2": {
@@ -3958,8 +5231,8 @@
           "us-west-2",
           "eu-south-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "managedblockchain": {
@@ -3972,7 +5245,7 @@
           "eu-west-2",
           "us-east-1"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
@@ -4000,7 +5273,7 @@
           "me-south-1",
           "sa-east-1"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1",
           "us-gov-east-1"
@@ -4045,6 +5318,33 @@
           "us-gov-east-1",
           "us-gov-west-1"
         ]
+      }
+    },
+    "marketplace-catalog": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "marketplace-entitlement": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "marketplacecommerceanalytics": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "mcs": {
@@ -4099,8 +5399,8 @@
           "us-east-2",
           "us-west-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "mediaconvert": {
@@ -4150,8 +5450,8 @@
           "eu-west-1",
           "eu-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "mediapackage": {
@@ -4173,8 +5473,31 @@
           "sa-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "mediapackage-vod": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-2",
+          "eu-central-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "mediastore": {
@@ -4190,8 +5513,25 @@
           "us-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "mediastore-data": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "mediatailor": {
@@ -4205,8 +5545,8 @@
           "us-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "memorydb": {
@@ -4235,7 +5575,44 @@
           "cn-north-1",
           "cn-northwest-1"
         ],
-        "aws-us-gov": {}
+        "aws-us-gov": []
+      }
+    },
+    "meteringmarketplace": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-south-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-south-2",
+          "eu-west-2",
+          "me-central-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "me-south-1",
+          "sa-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
       }
     },
     "mgh": {
@@ -4249,8 +5626,8 @@
           "us-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "mgn": {
@@ -4279,8 +5656,66 @@
           "eu-central-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "migration-hub-refactor-spaces": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "migrationhuborchestrator": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "migrationhubstrategy": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "mobile": {
+      "regions": {
+        "aws": [
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "mq": {
@@ -4320,6 +5755,15 @@
         ]
       }
     },
+    "mturk": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "mwaa": {
       "regions": {
         "aws": [
@@ -4339,8 +5783,8 @@
           "eu-central-1",
           "us-east-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "neptune": {
@@ -4402,10 +5846,21 @@
           "sa-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1",
           "us-gov-east-1"
+        ]
+      }
+    },
+    "networkmanager": {
+      "regions": {
+        "aws": [
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-west-1"
         ]
       }
     },
@@ -4419,8 +5874,56 @@
           "us-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "oam": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-south-2",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-2",
+          "eu-south-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-2",
+          "ap-northeast-1",
+          "ap-south-2",
+          "ap-southeast-3",
+          "eu-north-1",
+          "eu-west-3",
+          "me-central-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "omics": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "opensearch": {
@@ -4463,6 +5966,19 @@
         ]
       }
     },
+    "opensearchserverless": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "opsworks": {
       "regions": {
         "aws": [
@@ -4482,8 +5998,8 @@
           "sa-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "opsworkschefautomate": {
@@ -4499,8 +6015,25 @@
           "us-west-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "opsworkscm": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "opsworkspuppetenterprise": {
@@ -4516,8 +6049,8 @@
           "us-west-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "organizations": {
@@ -4586,11 +6119,25 @@
           "eu-north-1",
           "us-west-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-east-1",
           "us-gov-west-1"
         ]
+      }
+    },
+    "panorama": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "personalize": {
@@ -4611,7 +6158,7 @@
         "aws-cn": [
           "cn-north-1"
         ],
-        "aws-us-gov": {}
+        "aws-us-gov": []
       }
     },
     "phd": {
@@ -4654,6 +6201,46 @@
         ]
       }
     },
+    "pi": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-south-1",
+          "ap-south-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-west-2",
+          "eu-west-3",
+          "ap-northeast-3",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-south-1",
+          "eu-south-2",
+          "eu-west-1",
+          "me-central-1",
+          "sa-east-1",
+          "us-west-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "eu-central-1",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
     "pinpoint": {
       "regions": {
         "aws": [
@@ -4670,10 +6257,89 @@
           "us-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
+      }
+    },
+    "pinpoint-email": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "pinpoint-sms-voice": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "pinpoint-sms-voice-v2": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2",
+          "ap-northeast-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "pipes": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-2",
+          "us-west-1",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "me-central-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "polly": {
@@ -4705,6 +6371,16 @@
         "aws-us-gov": [
           "us-gov-west-1"
         ]
+      }
+    },
+    "pricing": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "privatelink": {
@@ -4747,6 +6423,17 @@
         ]
       }
     },
+    "privatenetworks": {
+      "regions": {
+        "aws": [
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "proton": {
       "regions": {
         "aws": [
@@ -4762,8 +6449,8 @@
           "us-west-2",
           "ap-southeast-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "qldb": {
@@ -4781,8 +6468,27 @@
           "us-west-2",
           "us-east-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "qldb-session": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2",
+          "us-east-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "quicksight": {
@@ -4804,7 +6510,7 @@
           "eu-north-1",
           "us-east-1"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
@@ -4839,6 +6545,46 @@
           "me-south-1",
           "sa-east-1",
           "us-west-2"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "rbin": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-south-2",
+          "me-central-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-west-1",
+          "ap-south-2",
+          "ap-southeast-1",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2"
         ],
         "aws-cn": [
           "cn-north-1",
@@ -4890,13 +6636,35 @@
         ]
       }
     },
+    "rds-data": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-west-2",
+          "ap-northeast-2",
+          "eu-west-1",
+          "us-east-2",
+          "us-west-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "rdsvmware": {
       "regions": {
         "aws": [
           "us-east-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "redshift": {
@@ -4939,6 +6707,42 @@
         ]
       }
     },
+    "redshift-data": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "eu-south-1",
+          "eu-west-1",
+          "me-south-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
     "rekognition": {
       "regions": {
         "aws": [
@@ -4956,7 +6760,7 @@
           "eu-west-2",
           "us-west-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
@@ -4986,8 +6790,110 @@
           "sa-east-1",
           "us-west-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "resource-explorer-2": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "resource-groups": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-south-1",
+          "me-central-1",
+          "me-south-1",
+          "us-west-2",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "eu-north-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-3",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2"
+        ],
+        "aws-cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "resourcegroupstaggingapi": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-central-2",
+          "eu-west-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-2",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-south-2",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-south-2",
+          "me-central-1",
+          "me-south-1",
+          "us-east-2",
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-3",
+          "us-west-1"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
       }
     },
     "robomaker": {
@@ -5001,10 +6907,40 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
+      }
+    },
+    "rolesanywhere": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3",
+          "us-west-1",
+          "sa-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "rosa": {
@@ -5033,8 +6969,8 @@
           "eu-west-3",
           "sa-east-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "route53": {
@@ -5071,44 +7007,70 @@
           "cn-north-1",
           "cn-northwest-1"
         ],
-        "aws-us-gov": {}
+        "aws-us-gov": []
       }
     },
     "route53domains": {
       "regions": {
         "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "route53resolver": {
+      "regions": {
+        "aws": [
+          "af-south-1",
           "ap-east-1",
+          "ap-northeast-1",
           "ap-northeast-3",
           "ap-south-1",
-          "eu-central-1",
-          "eu-central-2",
-          "eu-west-1",
-          "eu-west-2",
-          "sa-east-1",
-          "us-west-1",
-          "af-south-1",
-          "ap-northeast-2",
-          "ap-south-2",
-          "ap-southeast-1",
+          "eu-south-1",
+          "us-east-1",
+          "us-east-2",
           "ap-southeast-2",
           "ap-southeast-3",
-          "eu-north-1",
-          "eu-south-1",
-          "eu-south-2",
+          "eu-central-1",
+          "eu-west-2",
           "eu-west-3",
-          "ap-northeast-1",
-          "ca-central-1",
-          "me-central-1",
           "me-south-1",
+          "sa-east-1",
+          "us-west-2",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "us-west-1"
+        ],
+        "aws-cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "rum": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
           "us-east-1",
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": [
-          "cn-north-1",
-          "cn-northwest-1"
-        ],
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "s3": {
@@ -5154,32 +7116,23 @@
     "s3control": {
       "regions": {
         "aws": [
-          "ap-east-1",
           "ap-northeast-1",
-          "eu-central-1",
+          "ap-northeast-3",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
           "eu-west-2",
           "eu-west-3",
-          "me-central-1",
-          "sa-east-1",
-          "us-west-1",
-          "ap-northeast-3",
-          "ap-south-1",
-          "ap-south-2",
-          "ap-southeast-1",
-          "ap-southeast-2",
-          "ap-southeast-3",
-          "eu-south-2",
-          "us-east-1",
-          "af-south-1",
-          "ap-northeast-2",
-          "ca-central-1",
-          "eu-central-2",
-          "eu-north-1",
-          "eu-south-1",
-          "eu-west-1",
-          "me-south-1",
           "us-east-2",
-          "us-west-2"
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1",
+          "us-west-2",
+          "ap-southeast-1"
         ],
         "aws-cn": [
           "cn-north-1",
@@ -5188,6 +7141,39 @@
         "aws-us-gov": [
           "us-gov-east-1",
           "us-gov-west-1"
+        ]
+      }
+    },
+    "s3outposts": {
+      "regions": {
+        "aws": [
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-west-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "me-south-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
         ]
       }
     },
@@ -5225,6 +7211,169 @@
         "aws-us-gov": [
           "us-gov-west-1"
         ]
+      }
+    },
+    "sagemaker-featurestore-runtime": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-2",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-3",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-2",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ca-central-1",
+          "sa-east-1",
+          "us-west-1"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": []
+      }
+    },
+    "sagemaker-geospatial": {
+      "regions": {
+        "aws": [
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "sagemaker-runtime": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-west-2",
+          "me-central-1",
+          "us-west-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-southeast-2",
+          "eu-north-1",
+          "sa-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "savingsplans": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-2",
+          "sa-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "scheduler": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "schemas": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "sdb": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-west-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "secretsmanager": {
@@ -5314,8 +7463,8 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "serverlessrepo": {
@@ -5344,6 +7493,40 @@
           "cn-north-1",
           "cn-northwest-1"
         ],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "service-quotas": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-2",
+          "ap-east-1",
+          "ap-northeast-3",
+          "eu-central-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-west-1",
+          "us-west-2",
+          "af-south-1",
+          "ap-southeast-1",
+          "eu-south-1",
+          "eu-west-3",
+          "me-central-1"
+        ],
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-east-1",
           "us-gov-west-1"
@@ -5383,6 +7566,39 @@
         "aws-us-gov": [
           "us-gov-west-1",
           "us-gov-east-1"
+        ]
+      }
+    },
+    "servicecatalog-appregistry": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-east-1",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "sa-east-1",
+          "us-west-2",
+          "eu-north-1",
+          "eu-south-1",
+          "us-east-2",
+          "us-west-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
         ]
       }
     },
@@ -5451,7 +7667,7 @@
           "ca-central-1",
           "us-east-1"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
@@ -5483,8 +7699,55 @@
           "ap-southeast-2",
           "ca-central-1"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "signer": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "us-west-1",
+          "ap-east-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+          "ap-southeast-1"
+        ],
+        "aws-cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "aws-us-gov": []
+      }
+    },
+    "simspaceweaver": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "sms": {
@@ -5519,6 +7782,45 @@
           "us-gov-west-1",
           "us-gov-east-1"
         ]
+      }
+    },
+    "sms-voice": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "snow-device-management": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "snowball": {
@@ -5574,8 +7876,8 @@
           "us-west-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "snowmobile": {
@@ -5586,7 +7888,7 @@
           "us-west-1",
           "us-west-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-east-1",
           "us-gov-west-1"
@@ -5713,6 +8015,63 @@
         ]
       }
     },
+    "ssm-contacts": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "ssm-incidents": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "sa-east-1",
+          "us-east-2",
+          "us-west-1",
+          "ap-northeast-2",
+          "ap-southeast-2",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "ssm-sap": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "sso": {
       "regions": {
         "aws": [
@@ -5739,7 +8098,40 @@
           "ca-central-1",
           "eu-west-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "sso-oidc": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-southeast-2",
+          "eu-west-2",
+          "me-south-1",
+          "sa-east-1",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "ap-northeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-east-1",
           "us-gov-west-1"
@@ -5823,6 +8215,46 @@
         ]
       }
     },
+    "sts": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-south-2",
+          "ap-southeast-3",
+          "eu-central-1",
+          "eu-south-2",
+          "eu-west-1",
+          "eu-west-2",
+          "me-south-1",
+          "sa-east-1",
+          "us-west-1",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-2",
+          "us-east-1",
+          "us-east-2",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-3",
+          "me-central-1",
+          "us-west-2"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
     "sumerian": {
       "regions": {
         "aws": [
@@ -5843,8 +8275,8 @@
           "us-east-1",
           "us-east-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "support": {
@@ -5887,6 +8319,17 @@
         ]
       }
     },
+    "support-app": {
+      "regions": {
+        "aws": [
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "swf": {
       "regions": {
         "aws": [
@@ -5927,6 +8370,46 @@
         ]
       }
     },
+    "synthetics": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-3",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-south-2",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "eu-central-2",
+          "eu-west-1",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-south-2",
+          "eu-central-1",
+          "me-central-1",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
+      }
+    },
     "textract": {
       "regions": {
         "aws": [
@@ -5944,7 +8427,7 @@
           "eu-central-1",
           "eu-west-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1",
           "us-gov-east-1"
@@ -5962,7 +8445,24 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "timestream-write": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
@@ -6022,8 +8522,8 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "transfer": {
@@ -6118,7 +8618,7 @@
           "us-west-1",
           "us-west-2"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
@@ -6187,11 +8687,27 @@
           "sa-east-1",
           "us-west-1"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-east-1",
           "us-gov-west-1"
         ]
+      }
+    },
+    "voice-id": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "vpc": {
@@ -6264,7 +8780,7 @@
           "us-east-1",
           "us-west-1"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-west-1",
           "us-gov-east-1"
@@ -6310,32 +8826,32 @@
     "waf-regional": {
       "regions": {
         "aws": [
-          "af-south-1",
-          "ap-east-1",
-          "ap-southeast-3",
-          "eu-central-1",
-          "eu-north-1",
-          "eu-west-1",
-          "eu-west-2",
-          "me-south-1",
-          "us-west-1",
-          "ap-northeast-1",
-          "ap-northeast-2",
-          "ap-northeast-3",
-          "ap-southeast-1",
-          "sa-east-1",
-          "us-east-1",
-          "us-east-2",
-          "us-west-2",
           "ap-south-1",
+          "ap-southeast-1",
           "ap-southeast-2",
           "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-southeast-3",
+          "eu-north-1",
           "eu-south-1",
-          "eu-west-3"
+          "eu-west-2",
+          "us-east-1",
+          "us-west-1",
+          "ap-east-1",
+          "ap-northeast-2",
+          "us-east-2",
+          "us-west-2"
         ],
         "aws-cn": [
-          "cn-north-1",
-          "cn-northwest-1"
+          "cn-northwest-1",
+          "cn-north-1"
         ],
         "aws-us-gov": [
           "us-gov-west-1",
@@ -6388,8 +8904,8 @@
           "us-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "wellarchitectedtool": {
@@ -6414,11 +8930,25 @@
           "us-east-2",
           "us-west-1"
         ],
-        "aws-cn": {},
+        "aws-cn": [],
         "aws-us-gov": [
           "us-gov-east-1",
           "us-gov-west-1"
         ]
+      }
+    },
+    "wisdom": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "workdocs": {
@@ -6431,8 +8961,8 @@
           "us-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "workmail": {
@@ -6442,8 +8972,19 @@
           "us-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "workmailmessageflow": {
+      "regions": {
+        "aws": [
+          "eu-west-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "workspaces": {
@@ -6485,8 +9026,8 @@
           "us-east-1",
           "us-west-2"
         ],
-        "aws-cn": {},
-        "aws-us-gov": {}
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "xray": {
