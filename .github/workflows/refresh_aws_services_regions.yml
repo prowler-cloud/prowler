@@ -2,7 +2,7 @@
 
 name: Refresh regions of AWS services
 
-on: [pull_request]
+on: workflow_dispatch
 
 env:
   GITHUB_BRANCH: "master"
