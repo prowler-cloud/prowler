@@ -9,6 +9,7 @@ class ec2_instance_imdsv2_enabled(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = instance.region
             report.resource_id = instance.id
+            report.resource_arn = instance.arn
             report.status = "FAIL"
             report.status_extended = (
                 f"EC2 Instance {instance.id} has IMDSv2 disabled or not required."

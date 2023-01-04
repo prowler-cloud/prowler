@@ -16,6 +16,7 @@ class ec2_instance_secrets_user_data(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = instance.region
             report.resource_id = instance.id
+            report.resource_arn = instance.arn
 
             if instance.user_data:
                 temp_user_data_file = tempfile.NamedTemporaryFile(delete=False)

@@ -9,6 +9,7 @@ class ec2_ami_public(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = image.region
             report.resource_id = image.id
+            report.resource_arn = image.arn
             report.status = "PASS"
             report.status_extended = f"EC2 AMI {image.id} is not public."
             if image.public:

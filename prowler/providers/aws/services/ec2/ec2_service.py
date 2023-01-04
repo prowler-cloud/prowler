@@ -54,6 +54,7 @@ class EC2:
             for page in describe_instances_paginator.paginate():
                 for reservation in page["Reservations"]:
                     for instance in reservation["Instances"]:
+                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:instance/{instance['InstanceId']}"
                         http_tokens = None
                         http_endpoint = None
                         public_dns = None
@@ -74,6 +75,7 @@ class EC2:
                         self.instances.append(
                             Instance(
                                 instance["InstanceId"],
+                                arn,
                                 instance["State"]["Name"],
                                 regional_client.region,
                                 instance["InstanceType"],
@@ -101,9 +103,11 @@ class EC2:
             )
             for page in describe_security_groups_paginator.paginate():
                 for sg in page["SecurityGroups"]:
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:security-group/{sg['GroupId']}"
                     self.security_groups.append(
                         SecurityGroup(
                             sg["GroupName"],
+                            arn,
                             regional_client.region,
                             sg["GroupId"],
                             sg["IpPermissions"],
@@ -123,9 +127,11 @@ class EC2:
             )
             for page in describe_network_acls_paginator.paginate():
                 for nacl in page["NetworkAcls"]:
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:network-acl/{nacl['NetworkAclId']}"
                     self.network_acls.append(
                         NetworkACL(
                             nacl["NetworkAclId"],
+                            arn,
                             regional_client.region,
                             nacl["Entries"],
                         )
@@ -144,11 +150,12 @@ class EC2:
             encrypted = False
             for page in describe_snapshots_paginator.paginate(OwnerIds=["self"]):
                 for snapshot in page["Snapshots"]:
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:snapshot/{snapshot['SnapshotId']}"
                     if snapshot["Encrypted"]:
                         encrypted = True
                     self.snapshots.append(
                         Snapshot(
-                            snapshot["SnapshotId"], regional_client.region, encrypted
+                            snapshot["SnapshotId"], arn, regional_client.region, encrypted
                         )
                     )
         except Exception as error:
@@ -220,11 +227,12 @@ class EC2:
         try:
             public = False
             for image in regional_client.describe_images(Owners=["self"])["Images"]:
+                arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
                 if image["Public"]:
                     public = True
                 self.images.append(
                     Image(
-                        image["ImageId"], image["Name"], public, regional_client.region
+                        image["ImageId"], arn, image["Name"], public, regional_client.region
                     )
                 )
         except Exception as error:
@@ -240,9 +248,11 @@ class EC2:
             )
             for page in describe_volumes_paginator.paginate():
                 for volume in page["Volumes"]:
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:volume/{volume['VolumeId']}"
                     self.volumes.append(
                         Volume(
                             volume["VolumeId"],
+                            arn,
                             regional_client.region,
                             volume["Encrypted"],
                         )
@@ -301,6 +311,7 @@ class EC2:
 @dataclass
 class Instance:
     id: str
+    arn: str
     state: str
     region: str
     type: str
@@ -318,6 +329,7 @@ class Instance:
     def __init__(
         self,
         id,
+        arn,
         state,
         region,
         type,
@@ -332,6 +344,7 @@ class Instance:
         instance_profile,
     ):
         self.id = id
+        self.arn = arn
         self.state = state
         self.region = region
         self.type = type
@@ -350,12 +363,14 @@ class Instance:
 @dataclass
 class Snapshot:
     id: str
+    arn: str
     region: str
     encrypted: bool
     public: bool
 
-    def __init__(self, id, region, encrypted):
+    def __init__(self, id, arn, region, encrypted):
         self.id = id
+        self.arn = arn
         self.region = region
         self.encrypted = encrypted
         self.public = False
@@ -364,11 +379,13 @@ class Snapshot:
 @dataclass
 class Volume:
     id: str
+    arn: str
     region: str
     encrypted: bool
 
-    def __init__(self, id, region, encrypted):
+    def __init__(self, id, arn, region, encrypted):
         self.id = id
+        self.arn = arn
         self.region = region
         self.encrypted = encrypted
 
@@ -376,14 +393,16 @@ class Volume:
 @dataclass
 class SecurityGroup:
     name: str
+    arn: str
     region: str
     id: str
     network_interfaces: list[str]
     ingress_rules: list[dict]
     egress_rules: list[dict]
 
-    def __init__(self, name, region, id, ingress_rules, egress_rules):
+    def __init__(self, name, arn, region, id, ingress_rules, egress_rules):
         self.name = name
+        self.arn = arn
         self.region = region
         self.id = id
         self.ingress_rules = ingress_rules
@@ -394,11 +413,13 @@ class SecurityGroup:
 @dataclass
 class NetworkACL:
     id: str
+    arn: str
     region: str
     entries: list[dict]
 
-    def __init__(self, id, region, entries):
+    def __init__(self, id, arn, region, entries):
         self.id = id
+        self.arn = arn
         self.region = region
         self.entries = entries
 
@@ -422,12 +443,14 @@ class ElasticIP:
 @dataclass
 class Image:
     id: str
+    arn: str
     name: str
     public: bool
     region: str
 
-    def __init__(self, id, name, public, region):
+    def __init__(self, id, arn, name, public, region):
         self.id = id
+        self.arn = arn
         self.name = name
         self.public = public
         self.region = region
