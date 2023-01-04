@@ -17,8 +17,8 @@ spec:
             image: toniblyx/prowler:latest
             imagePullPolicy: Always
             command:
-            - "./prowler"
-            args: [ "-g", "hipaa", "-M", "csv,json,html", "-B", "$(awsS3Bucket)" ]
+            - "./prowler.py"
+            args: [ "-B", "$(awsS3Bucket)" ]
             env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:

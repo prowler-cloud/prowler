@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-Description: Creates a CodeBuild project to audit an AWS account with Prowler and stores the html report in a S3 bucket. This will run onece at the beginning and on a schedule afterwards. Partial contribution from https://github.com/stevecjones
+Description: Creates a CodeBuild project to audit an AWS account with Prowler Version 2 and stores the html report in a S3 bucket. This will run onece at the beginning and on a schedule afterwards. Partial contribution from https://github.com/stevecjones
 Parameters:
   ServiceName:
     Description: 'Specifies the service name used within component naming'
@@ -17,7 +17,7 @@ Parameters:
     Description: 'Options to pass to Prowler command, make sure at least -M junit-xml is used for CodeBuild reports. Use -r for the region to send API queries, -f to filter only one region, -M output formats, -c for comma separated checks, for all checks do not use -c or -g, for more options see -h. For a complete assessment use  "-M text,junit-xml,html,csv,json", for SecurityHub integration use "-r region -f region -M text,junit-xml,html,csv,json,json-asff -S -q"'
     Type: String
     # Prowler command below runs a set of checks, configure it base on your needs, no options will run all regions all checks.
-    # option -M junit-xml is requirede in order to get the report in CodeBuild.
+    # option -M junit-xml is required in order to get the report in CodeBuild.
     Default: -r eu-west-1 -f eu-west-1 -M text,junit-xml,html,csv,json -c check11,check12,check13,check14
 
   ProwlerScheduler:
@@ -284,6 +284,7 @@ Resources:
       Artifacts:
         Type: NO_ARTIFACTS
       ConcurrentBuildLimit: 1
+      SourceVersion: prowler-2
       Source:
         GitCloneDepth: 1
         Location: https://github.com/prowler-cloud/prowler
