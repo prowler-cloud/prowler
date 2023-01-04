@@ -2,7 +2,11 @@ import boto3
 import sure  # noqa
 from moto import mock_iam, mock_sts
 
-from prowler.providers.aws.aws_provider import assume_role, generate_regional_clients
+from prowler.providers.aws.aws_provider import (
+    AWS_Provider,
+    assume_role,
+    generate_regional_clients,
+)
 from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 
 ACCOUNT_ID = 123456789012
@@ -55,7 +59,10 @@ class Test_AWS_Provider:
         )
 
         # Call assume_role
-        assume_role_response = assume_role(audit_info)
+        aws_provider = AWS_Provider(audit_info)
+        assume_role_response = assume_role(
+            aws_provider.aws_session, aws_provider.role_info
+        )
         # Recover credentials for the assume role operation
         credentials = assume_role_response["Credentials"]
         # Test the response
