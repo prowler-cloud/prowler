@@ -36,7 +36,9 @@ class Test_ec2_elastic_ip_unassgined:
     def test_eip_unassociated(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
-        ec2_client.allocate_address(Domain="vpc", Address="127.38.43.222")
+        allocation_id = ec2_client.allocate_address(
+            Domain="vpc", Address="127.38.43.222"
+        )["AllocationId"]
 
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -61,6 +63,10 @@ class Test_ec2_elastic_ip_unassgined:
             assert search(
                 "is not associated",
                 results[0].status_extended,
+            )
+            assert (
+                results[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:eip-allocation/{allocation_id}"
             )
 
     @mock_ec2
@@ -105,4 +111,8 @@ class Test_ec2_elastic_ip_unassgined:
             assert search(
                 "is associated",
                 results[0].status_extended,
+            )
+            assert (
+                results[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:eip-allocation/{eip.allocation_id}"
             )

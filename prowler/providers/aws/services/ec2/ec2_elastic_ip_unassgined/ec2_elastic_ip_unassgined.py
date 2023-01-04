@@ -10,6 +10,7 @@ class ec2_elastic_ip_unassgined(Check):
             report.region = eip.region
             if eip.public_ip:
                 report.resource_id = eip.public_ip
+                report.resource_arn = eip.arn
                 report.status = "FAIL"
                 report.status_extended = f"Elastic IP {eip.public_ip} is not associated with an instance or network interface."
                 if eip.association_id:

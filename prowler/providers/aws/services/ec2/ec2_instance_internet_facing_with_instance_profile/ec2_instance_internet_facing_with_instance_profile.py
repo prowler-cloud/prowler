@@ -9,6 +9,7 @@ class ec2_instance_internet_facing_with_instance_profile(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = instance.region
             report.resource_id = instance.id
+            report.resource_arn = instance.arn
             report.status = "PASS"
             report.status_extended = f"EC2 Instance {instance.id} is not internet facing with an instance profile."
             if instance.public_ip and instance.instance_profile:

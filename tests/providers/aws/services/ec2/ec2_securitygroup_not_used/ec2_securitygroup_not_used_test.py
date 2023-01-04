@@ -75,6 +75,10 @@ class Test_ec2_securitygroup_not_used:
                         "it is not being used",
                         sg.status_extended,
                     )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
 
     @mock_ec2
     def test_ec2_used_default_sg(self):
@@ -121,4 +125,8 @@ class Test_ec2_securitygroup_not_used:
                     assert search(
                         "it is being used",
                         sg.status_extended,
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )

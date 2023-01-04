@@ -107,6 +107,10 @@ class ec2_networkacl_allow_ingress_any_port:
                         nacl.status_extended
                         == f"Network ACL {nacl_id} has every port open to the Internet."
                     )
+                    assert (
+                        nacl.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:network-acl/{nacl_id}"
+                    )
 
     @mock_ec2
     def test_ec2_compliant_nacl(self):
@@ -152,4 +156,8 @@ class ec2_networkacl_allow_ingress_any_port:
                     assert (
                         nacl.status_extended
                         == f"Network ACL {nacl_id} has not every port open to the Internet."
+                    )
+                    assert (
+                        nacl.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:network-acl/{nacl_id}"
                     )

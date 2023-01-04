@@ -83,6 +83,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                         "has all ports open to the Internet",
                         sg.status_extended,
                     )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
 
     @mock_ec2
     def test_ec2_compliant_default_sg(self):
@@ -129,4 +133,8 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     assert search(
                         "has not all ports open to the Internet",
                         sg.status_extended,
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )

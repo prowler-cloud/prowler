@@ -84,6 +84,10 @@ class Test_ec2_securitygroup_in_use_without_ingress_filtering:
                         "has no ingress filtering and it is not being used",
                         sg.status_extended,
                     )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
 
     @mock_ec2
     def test_ec2_used_public_default_sg(self):
@@ -139,6 +143,10 @@ class Test_ec2_securitygroup_in_use_without_ingress_filtering:
                         "has no ingress filtering and it is being used",
                         sg.status_extended,
                     )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
 
     @mock_ec2
     def test_ec2_private_default_sg(self):
@@ -176,4 +184,8 @@ class Test_ec2_securitygroup_in_use_without_ingress_filtering:
                     assert search(
                         "has ingress filtering",
                         sg.status_extended,
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )

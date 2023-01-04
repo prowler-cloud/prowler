@@ -73,6 +73,10 @@ class Test_ec2_instance_imdsv2_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+            )
 
     @mock_ec2
     def test_one_uncompliant_ec2(self):
@@ -115,3 +119,7 @@ class Test_ec2_instance_imdsv2_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+            )
