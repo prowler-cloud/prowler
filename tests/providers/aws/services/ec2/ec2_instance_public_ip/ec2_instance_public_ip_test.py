@@ -75,6 +75,10 @@ class Test_ec2_instance_public_ip:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+            )
 
     @mock_ec2
     def test_one_ec2_with_public_ip(self):
@@ -118,3 +122,7 @@ class Test_ec2_instance_public_ip:
                 f"EC2 Instance {instance.id} has a Public IP", result[0].status_extended
             )
             assert result[0].resource_id == instance.id
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+            )

@@ -89,6 +89,10 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_
                         "has Microsoft SQL Server ports 1433 and 1434 open to the Internet",
                         sg.status_extended,
                     )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
 
     @mock_ec2
     def test_ec2_compliant_default_sg(self):
@@ -139,4 +143,8 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_
                     assert search(
                         "has not Microsoft SQL Server ports 1433 and 1434 open to the Internet",
                         sg.status_extended,
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )

@@ -75,6 +75,10 @@ class Test_ec2_securitygroup_from_launch_wizard:
                         "was created using the EC2 Launch Wizard",
                         sg.status_extended,
                     )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{sg_id}"
+                    )
 
     @mock_ec2
     def test_ec2_compliant_default_sg(self):
@@ -121,4 +125,8 @@ class Test_ec2_securitygroup_from_launch_wizard:
                     assert search(
                         "was not created using the EC2 Launch Wizard",
                         sg.status_extended,
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )

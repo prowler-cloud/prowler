@@ -77,6 +77,10 @@ class Test_ec2_securitygroup_default_restrict_traffic:
                         sg.status_extended
                         == f"Default Security Group ({default_sg_id}) is open to the Internet."
                     )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
 
     @mock_ec2
     def test_ec2_compliant_default_sg(self):
@@ -120,4 +124,8 @@ class Test_ec2_securitygroup_default_restrict_traffic:
                     assert (
                         sg.status_extended
                         == f"Default Security Group ({default_sg_id}) is not open to the Internet."
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )

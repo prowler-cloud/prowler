@@ -89,6 +89,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306:
                         "has MySQL port 3306 open to the Internet",
                         sg.status_extended,
                     )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
 
     @mock_ec2
     def test_ec2_compliant_default_sg(self):
@@ -139,4 +143,8 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306:
                     assert search(
                         "has not MySQL port 3306 open to the Internet",
                         sg.status_extended,
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )

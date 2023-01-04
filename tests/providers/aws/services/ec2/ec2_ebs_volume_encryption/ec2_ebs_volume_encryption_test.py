@@ -60,6 +60,10 @@ class Test_ec2_ebs_volume_encryption:
             assert (
                 result[0].status_extended == f"EBS Snapshot {volume.id} is unencrypted."
             )
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:volume/{volume.id}"
+            )
 
     @mock_ec2
     def test_ec2_encrypted_volume(self):
@@ -92,4 +96,8 @@ class Test_ec2_ebs_volume_encryption:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended == f"EBS Snapshot {volume.id} is encrypted."
+            )
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:volume/{volume.id}"
             )

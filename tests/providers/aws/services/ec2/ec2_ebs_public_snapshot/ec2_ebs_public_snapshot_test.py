@@ -72,6 +72,10 @@ class Test_ec2_ebs_public_snapshot:
                         snap.status_extended
                         == f"EBS Snapshot {snapshot.id} is currently Public."
                     )
+                    assert (
+                        snap.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:snapshot/{snapshot.id}"
+                    )
 
     @mock_ec2
     def test_ec2_private_snapshot(self):
@@ -108,4 +112,8 @@ class Test_ec2_ebs_public_snapshot:
                     assert (
                         snap.status_extended
                         == f"EBS Snapshot {snapshot.id} is not Public."
+                    )
+                    assert (
+                        snap.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:snapshot/{snapshot.id}"
                     )

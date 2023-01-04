@@ -83,6 +83,10 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
                         "has no potential wide-open non-RFC1918 address",
                         sg.status_extended,
                     )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
 
     @mock_ec2
     def test_ec2_default_sg_with_non_RFC1918_address(self):
@@ -129,4 +133,8 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
                     assert search(
                         "has potential wide-open non-RFC1918 address",
                         sg.status_extended,
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )

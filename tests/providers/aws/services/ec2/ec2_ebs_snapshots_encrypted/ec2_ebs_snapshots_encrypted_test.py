@@ -66,6 +66,10 @@ class Test_ec2_ebs_snapshots_encrypted:
                         snap.status_extended
                         == f"EBS Snapshot {snapshot.id} is unencrypted."
                     )
+                    assert (
+                        snap.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:snapshot/{snapshot.id}"
+                    )
 
     @mock_ec2
     def test_ec2_encrypted_snapshot(self):
@@ -102,4 +106,8 @@ class Test_ec2_ebs_snapshots_encrypted:
                     assert (
                         snap.status_extended
                         == f"EBS Snapshot {snapshot.id} is encrypted."
+                    )
+                    assert (
+                        snap.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:snapshot/{snapshot.id}"
                     )

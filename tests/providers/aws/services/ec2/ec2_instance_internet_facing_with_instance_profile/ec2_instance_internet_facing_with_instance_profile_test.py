@@ -81,6 +81,10 @@ class Test_ec2_instance_internet_facing_with_instance_profile:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+            )
 
     @mock_iam
     @mock_ec2
@@ -130,3 +134,7 @@ class Test_ec2_instance_internet_facing_with_instance_profile:
                 "is internet-facing with Instance Profile", result[0].status_extended
             )
             assert result[0].resource_id == instance.id
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+            )
