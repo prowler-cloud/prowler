@@ -284,6 +284,7 @@ Resources:
       Artifacts:
         Type: NO_ARTIFACTS
       ConcurrentBuildLimit: 1
+      SourceVersion: prowler-2
       Source:
         GitCloneDepth: 1
         Location: https://github.com/prowler-cloud/prowler
@@ -300,7 +301,6 @@ Resources:
                 - pip3 install detect-secrets
             build:
               commands:
-                - git checkout prowler-2
                 - echo "Running Prowler as ./prowler $PROWLER_OPTIONS"
                 - ./prowler $PROWLER_OPTIONS
             post_build:
