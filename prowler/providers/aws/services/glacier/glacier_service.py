@@ -1,6 +1,7 @@
 import json
 import threading
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -56,13 +57,16 @@ class Glacier:
         try:
             for vault in self.vaults.values():
                 if vault.region == regional_client.region:
-                    vault_access_policy = regional_client.get_vault_access_policy(
-                        vaultName=vault.name
-                    )
-                    self.vaults[vault.name].access_policy = json.loads(
-                        vault_access_policy["policy"]["Policy"]
-                    )
-
+                    try:
+                        vault_access_policy = regional_client.get_vault_access_policy(
+                            vaultName=vault.name
+                        )
+                        self.vaults[vault.name].access_policy = json.loads(
+                            vault_access_policy["policy"]["Policy"]
+                        )
+                    except ClientError as e:
+                        if e.response["Error"]["Code"] == "ResourceNotFoundException":
+                            self.vaults[vault.name].access_policy = {}
         except Exception as error:
             logger.error(
                 f"{regional_client.region} --"

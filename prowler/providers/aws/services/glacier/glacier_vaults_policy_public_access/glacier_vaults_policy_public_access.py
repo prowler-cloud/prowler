@@ -36,7 +36,8 @@ class glacier_vaults_policy_public_access(Check):
                         ):
                             public_access = True
                             break
-
+            else:
+                report.status_extended = f"Vault {vault.name} does not have a policy"
             if public_access:
                 report.status = "FAIL"
                 report.status_extended = (
