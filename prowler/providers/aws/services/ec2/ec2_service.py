@@ -155,7 +155,10 @@ class EC2:
                         encrypted = True
                     self.snapshots.append(
                         Snapshot(
-                            snapshot["SnapshotId"], arn, regional_client.region, encrypted
+                            snapshot["SnapshotId"],
+                            arn,
+                            regional_client.region,
+                            encrypted,
                         )
                     )
         except Exception as error:
@@ -232,7 +235,11 @@ class EC2:
                     public = True
                 self.images.append(
                     Image(
-                        image["ImageId"], arn, image["Name"], public, regional_client.region
+                        image["ImageId"],
+                        arn,
+                        image["Name"],
+                        public,
+                        regional_client.region,
                     )
                 )
         except Exception as error:
