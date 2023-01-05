@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "6cb765e0f1aa07a4588ec055c83c848802255550457b990da79d6f252c6f4277"
+            "sha256": "a39efc9ed367c10ee33e3ccc1ac144a585f4fe095da35f875829073c279a5d22"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -526,11 +526,11 @@
         },
         "xlsxwriter": {
             "hashes": [
-                "sha256:a5c97a25b319e92b7eeab6e37593192c4dde718084eff23f045eb1df704dde83",
-                "sha256:fe2b1e2dec38ef8952e9a41a0290861a052e6771a9f43f5e3d56dc63b7112348"
+                "sha256:2f9e5ea13343fe85486e349d4e5fdf746bb69dc7bc1dedfa9b5fae2bb48c0795",
+                "sha256:56eae8ae587536734009aa819845c3e3c865462399823085b0baabbb081a929c"
             ],
             "markers": "python_version >= '3.6'",
-            "version": "==3.0.5"
+            "version": "==3.0.6"
         }
     },
     "develop": {
@@ -1012,11 +1012,11 @@
         },
         "moto": {
             "hashes": [
-                "sha256:30f8f31658f18cdb15eb626c8cb3a07520f0d8c2193226fbcb3326ae12fba246",
-                "sha256:e6592727d90a2dc82ca7c7fa61b224e2b195cc0dcdac2f46ccbf0cd8efde1459"
+                "sha256:baf7d6969cf837990c730e6e648315bebc2e1c0038d9d8fc4f59d03561484469",
+                "sha256:e73400c6d3fe06028aa7f07bb6f276f14260d289b70f38928a98e3d3d968352d"
             ],
             "index": "pypi",
-            "version": "==4.0.12"
+            "version": "==4.0.13"
         },
         "mypy-extensions": {
             "hashes": [
@@ -1363,7 +1363,7 @@
                 "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
                 "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"
             ],
-            "markers": "python_full_version < '3.11.0a7'",
+            "markers": "python_version < '3.11'",
             "version": "==2.0.1"
         },
         "tomlkit": {
