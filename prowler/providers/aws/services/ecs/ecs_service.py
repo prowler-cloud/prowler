@@ -41,6 +41,7 @@ class ECS:
                             # we want the family name without the revision
                             name=sub(":.*", "", task_definition.split("/")[1]),
                             arn=task_definition,
+                            revision=task_definition.split(":")[-1],
                             region=regional_client.region,
                             environment_variables=[],
                         )
@@ -80,5 +81,6 @@ class ContainerEnvVariable(BaseModel):
 class TaskDefinition(BaseModel):
     name: str
     arn: str
+    revision: str
     region: str
     environment_variables: list[ContainerEnvVariable]

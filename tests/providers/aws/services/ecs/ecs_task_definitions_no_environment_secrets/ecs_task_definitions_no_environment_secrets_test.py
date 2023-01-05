@@ -39,6 +39,7 @@ class Test_ecs_task_definitions_no_environment_secrets:
             TaskDefinition(
                 name=task_name,
                 arn=f"arn:aws:ecs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:task-definition/{task_name}:1",
+                revision="1",
                 region=AWS_REGION,
                 environment_variables=[
                     ContainerEnvVariable(
@@ -61,7 +62,8 @@ class Test_ecs_task_definitions_no_environment_secrets:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                "No secrets found in ECS task definition", result[0].status_extended
+                "No secrets found in variables of ECS task definition",
+                result[0].status_extended,
             )
             assert result[0].resource_id == task_name
             assert (
@@ -76,6 +78,7 @@ class Test_ecs_task_definitions_no_environment_secrets:
             TaskDefinition(
                 name=task_name,
                 arn=f"arn:aws:ecs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:task-definition/{task_name}:1",
+                revision="1",
                 region=AWS_REGION,
                 environment_variables=[
                     ContainerEnvVariable(
@@ -98,7 +101,7 @@ class Test_ecs_task_definitions_no_environment_secrets:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                "Potential secret found in ECS in ECS task definition",
+                "Potential secret found in variables of ECS task definition",
                 result[0].status_extended,
             )
             assert result[0].resource_id == task_name
