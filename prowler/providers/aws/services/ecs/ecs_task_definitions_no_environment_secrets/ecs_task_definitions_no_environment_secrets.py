@@ -15,7 +15,7 @@ class ecs_task_definitions_no_environment_secrets(Check):
         for task_definition in ecs_client.task_definitions:
             report = Check_Report_AWS(self.metadata())
             report.region = task_definition.region
-            report.resource_id = task_definition.name
+            report.resource_id = f"{task_definition.name} revision {task_definition.revision}" 
             report.resource_arn = task_definition.arn
             report.status = "PASS"
             report.status_extended = f"No secrets found in variables of ECS task definition {task_definition.name} revision {task_definition.revision}"
