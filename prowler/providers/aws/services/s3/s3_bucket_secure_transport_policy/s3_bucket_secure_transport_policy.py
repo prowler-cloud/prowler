@@ -9,6 +9,7 @@ class s3_bucket_secure_transport_policy(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = bucket.region
             report.resource_id = bucket.name
+            report.resource_arn = bucket.arn
             # Check if bucket policy enforces SSL
             if not bucket.policy:
                 report.status = "FAIL"

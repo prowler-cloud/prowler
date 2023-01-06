@@ -9,6 +9,7 @@ class s3_bucket_policy_public_write_access(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = bucket.region
             report.resource_id = bucket.name
+            report.resource_arn = bucket.arn
             # Check if bucket policy allow public write access
             if not bucket.policy:
                 report.status = "PASS"

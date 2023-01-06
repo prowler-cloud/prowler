@@ -9,6 +9,7 @@ class s3_bucket_no_mfa_delete(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = bucket.region
             report.resource_id = bucket.name
+            report.resource_arn = bucket.arn
             if bucket.mfa_delete:
                 report.status = "PASS"
                 report.status_extended = (

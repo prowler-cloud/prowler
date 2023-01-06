@@ -9,6 +9,7 @@ class s3_bucket_default_encryption(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = bucket.region
             report.resource_id = bucket.name
+            report.resource_arn = bucket.arn
             if bucket.encryption:
                 report.status = "PASS"
                 report.status_extended = f"S3 Bucket {bucket.name} has Server Side Encryption with {bucket.encryption}."
