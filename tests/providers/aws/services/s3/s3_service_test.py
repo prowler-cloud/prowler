@@ -80,6 +80,10 @@ class Test_S3_Service:
 
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
+        assert (
+            s3.buckets[0].arn
+            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+        )
 
     # Test S3 Get Bucket Versioning
     @mock_s3
@@ -99,6 +103,10 @@ class Test_S3_Service:
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
+        assert (
+            s3.buckets[0].arn
+            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+        )
         assert s3.buckets[0].versioning is True
 
     # Test S3 Get Bucket ACL
@@ -128,6 +136,10 @@ class Test_S3_Service:
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
+        assert (
+            s3.buckets[0].arn
+            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+        )
         assert s3.buckets[0].acl_grantees[0].display_name == "test"
         assert s3.buckets[0].acl_grantees[0].ID == "test_ID"
         assert s3.buckets[0].acl_grantees[0].type == "Group"
@@ -204,6 +216,10 @@ class Test_S3_Service:
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
+        assert (
+            s3.buckets[0].arn
+            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+        )
         assert s3.buckets[0].logging is True
 
     # Test S3 Get Bucket Policy
@@ -221,6 +237,10 @@ class Test_S3_Service:
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
+        assert (
+            s3.buckets[0].arn
+            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+        )
         assert s3.buckets[0].policy == json.loads(ssl_policy)
 
     # Test S3 Get Bucket Encryption
@@ -250,6 +270,10 @@ class Test_S3_Service:
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
+        assert (
+            s3.buckets[0].arn
+            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+        )
         assert s3.buckets[0].encryption == "aws:kms"
 
     # Test S3 Get Bucket Ownership Controls
@@ -268,6 +292,10 @@ class Test_S3_Service:
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
+        assert (
+            s3.buckets[0].arn
+            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+        )
         assert s3.buckets[0].ownership == "BucketOwnerEnforced"
 
     # Test S3 Get Public Access Block
@@ -294,6 +322,10 @@ class Test_S3_Service:
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
+        assert (
+            s3.buckets[0].arn
+            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+        )
         assert s3.buckets[0].public_access_block.block_public_acls
         assert s3.buckets[0].public_access_block.ignore_public_acls
         assert s3.buckets[0].public_access_block.block_public_policy

@@ -13,6 +13,7 @@ class S3:
         self.session = audit_info.audit_session
         self.client = self.session.client(self.service)
         self.audited_account = audit_info.audited_account
+        self.audited_partition = audit_info.audited_partition
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.buckets = self.__list_buckets__(audit_info)
         self.__threading_call__(self.__get_bucket_versioning__)
@@ -47,12 +48,14 @@ class S3:
                     )["LocationConstraint"]
                     if not bucket_region:  # If us-east-1, bucket_region is none
                         bucket_region = "us-east-1"
+                    # Arn
+                    arn = f"arn:{self.audited_partition}:s3:::{bucket['Name']}"
                     # Check if there are filter regions
                     if audit_info.audited_regions:
                         if bucket_region in audit_info.audited_regions:
-                            buckets.append(Bucket(bucket["Name"], bucket_region))
+                            buckets.append(Bucket(bucket["Name"], arn, bucket_region))
                     else:
-                        buckets.append(Bucket(bucket["Name"], bucket_region))
+                        buckets.append(Bucket(bucket["Name"], arn, bucket_region))
                 except Exception as error:
                     logger.error(
                         f"{bucket_region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -268,6 +271,7 @@ class PublicAccessBlock:
 @dataclass
 class Bucket:
     name: str
+    arn: str
     versioning: bool
     logging: bool
     public_access_block: PublicAccessBlock
@@ -279,8 +283,9 @@ class Bucket:
     ownership: str
     mfa_delete: bool
 
-    def __init__(self, name, region):
+    def __init__(self, name, arn, region):
         self.name = name
+        self.arn = arn
         self.versioning = False
         self.logging = False
         # Set all block as False

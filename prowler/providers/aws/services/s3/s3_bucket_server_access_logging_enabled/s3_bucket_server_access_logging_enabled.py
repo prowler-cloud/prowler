@@ -9,6 +9,7 @@ class s3_bucket_server_access_logging_enabled(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = bucket.region
             report.resource_id = bucket.name
+            report.resource_arn = bucket.arn
             if bucket.logging:
                 report.status = "PASS"
                 report.status_extended = (
