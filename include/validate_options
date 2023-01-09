@@ -248,7 +248,7 @@ validate_database() {
         then
             db_exit_abnormally "postgresql" "Database not exists, please check ${HOME}/.pgpass file - EXITING!"
         # and finally, if database exists -> table exists ?
-        elif ! psql -U "${POSTGRES_USER}" -h "${POSTGRES_HOST}" "${POSTGRES_DB}"  -c "SELECT * FROM ${POSTGRES_TABLE};" > /dev/null  2>&1
+        elif ! psql -U "${POSTGRES_USER}" -h "${POSTGRES_HOST}" "${POSTGRES_DB}"  -c "SELECT * FROM ${POSTGRES_TABLE} limit 1;" > /dev/null  2>&1
         then
             db_exit_abnormally "postgresql" "Table ${POSTGRES_TABLE} not exists, please check ${HOME}/.pgpass file - EXITING!"
         fi
