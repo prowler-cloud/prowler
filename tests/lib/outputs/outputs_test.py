@@ -276,7 +276,7 @@ class Test_Outputs:
         expected.Id = f"prowler-{finding.check_metadata.CheckID}-123456789012-eu-west-1-{hash_sha512('test-resource')}"
         expected.ProductArn = "arn:aws:securityhub:eu-west-1::product/prowler/prowler"
         expected.ProductFields = ProductFields(
-            ProviderVersion=prowler_version, ProwlerResourceName="test-resource"
+            ProviderVersion=prowler_version, ProwlerResourceName="test-arn"
         )
         expected.GeneratorId = "prowler-" + finding.check_metadata.CheckID
         expected.AwsAccountId = AWS_ACCOUNT_ID
@@ -289,7 +289,7 @@ class Test_Outputs:
         expected.Description = finding.check_metadata.Description
         expected.Resources = [
             Resource(
-                Id="test-resource",
+                Id="test-arn",
                 Type=finding.check_metadata.ResourceType,
                 Partition="aws",
                 Region="eu-west-1",

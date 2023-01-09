@@ -14,12 +14,14 @@ from prowler.lib.utils.utils import hash_sha512, open_file
 
 def fill_json_asff(finding_output, audit_info, finding):
     # Check if there are no resources in the finding
-    if finding.resource_id == "":
-        finding.resource_id = "NONE_PROVIDED"
+    if finding.resource_arn == "":
+        if finding.resource_id == "":
+            finding.resource_id = "NONE_PROVIDED"
+        finding.resource_arn = finding.resource_id
     finding_output.Id = f"prowler-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{hash_sha512(finding.resource_id)}"
     finding_output.ProductArn = f"arn:{audit_info.audited_partition}:securityhub:{finding.region}::product/prowler/prowler"
     finding_output.ProductFields = ProductFields(
-        ProviderVersion=prowler_version, ProwlerResourceName=finding.resource_id
+        ProviderVersion=prowler_version, ProwlerResourceName=finding.resource_arn
     )
     finding_output.GeneratorId = "prowler-" + finding.check_metadata.CheckID
     finding_output.AwsAccountId = audit_info.audited_account
@@ -32,7 +34,7 @@ def fill_json_asff(finding_output, audit_info, finding):
     finding_output.Description = finding.check_metadata.Description
     finding_output.Resources = [
         Resource(
-            Id=finding.resource_id,
+            Id=finding.resource_arn,
             Type=finding.check_metadata.ResourceType,
             Partition=audit_info.audited_partition,
             Region=finding.region,
