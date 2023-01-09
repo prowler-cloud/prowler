@@ -216,6 +216,10 @@ class Test_s3_bucket_public_access:
                         result[0].status_extended,
                     )
                     assert result[0].resource_id == bucket_name_us
+                    assert (
+                        result[0].resource_arn
+                        == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
+                    )
                     assert result[0].region == AWS_REGION
 
     @mock_s3
@@ -291,6 +295,10 @@ class Test_s3_bucket_public_access:
                         result[0].status_extended,
                     )
                     assert result[0].resource_id == bucket_name_us
+                    assert (
+                        result[0].resource_arn
+                        == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
+                    )
                     assert result[0].region == AWS_REGION
 
     @mock_s3
@@ -355,6 +363,10 @@ class Test_s3_bucket_public_access:
                         result[0].status_extended,
                     )
                     assert result[0].resource_id == bucket_name_us
+                    assert (
+                        result[0].resource_arn
+                        == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
+                    )
                     assert result[0].region == AWS_REGION
 
     @mock_s3
@@ -403,4 +415,8 @@ class Test_s3_bucket_public_access:
                         result[0].status_extended,
                     )
                     assert result[0].resource_id == bucket_name_us
+                    assert (
+                        result[0].resource_arn
+                        == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
+                    )
                     assert result[0].region == AWS_REGION
