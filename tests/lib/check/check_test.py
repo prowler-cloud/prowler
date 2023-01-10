@@ -107,7 +107,7 @@ class Test_Check:
         test_cases = [
             {
                 "input": {
-                    "metadata_path": f"{pathlib.Path().absolute()}/fixtures/metadata.json",
+                    "metadata_path": f"{pathlib.Path().absolute()}/tests/lib/check/fixtures/metadata.json",
                 },
                 "expected": {
                     "CheckID": "iam_disable_30_days_credentials",
@@ -129,7 +129,7 @@ class Test_Check:
         test_cases = [
             {
                 "input": {
-                    "path": f"{pathlib.Path().absolute()}/fixtures/checklistA.json",
+                    "path": f"{pathlib.Path().absolute()}/tests/lib/check/fixtures/checklistA.json",
                     "provider": "aws",
                 },
                 "expected": {"check11", "check12", "check7777"},
