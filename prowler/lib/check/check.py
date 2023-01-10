@@ -308,8 +308,9 @@ def execute_checks(
     audit_output_options: Provider_Output_Options,
 ) -> list:
     all_findings = []
+    checks_num = len(checks_to_execute)
     print(
-        f"{Style.BRIGHT}Executing {len(checks_to_execute)} checks, please wait...{Style.RESET_ALL}\n"
+        f"{Style.BRIGHT}Executing {checks_num} check{'' if checks_num == 1 else 's'}, please wait...{Style.RESET_ALL}\n"
     )
     with alive_bar(
         total=len(checks_to_execute),
