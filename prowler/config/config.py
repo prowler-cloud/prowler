@@ -1,4 +1,5 @@
 import os
+import pathlib
 from datetime import datetime, timezone
 from os import getcwd
 
@@ -59,10 +60,10 @@ def get_config_var(variable):
 
 def get_aws_available_regions():
     try:
-        actual_directory = ("/").join(
-            os.path.dirname(os.path.realpath(__file__)).split("/")[:-1]
+        actual_directory = pathlib.Path().absolute()
+        f = open_file(
+            f"{actual_directory}/prowler/providers/aws/{aws_services_json_file}"
         )
-        f = open_file(f"{actual_directory}/providers/aws/{aws_services_json_file}")
         data = parse_json_file(f)
 
         regions = set()
