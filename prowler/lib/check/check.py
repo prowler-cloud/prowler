@@ -125,8 +125,8 @@ def list_categories(provider: str, bulk_checks_metadata: dict) -> set():
 
 
 def noun_plural_or_singular_string(
-    noun_count: int, 
-    plural_string: str, 
+    noun_count: int,
+    plural_string: str,
     singular_string: str,
 ) -> str:
     if noun_count == 1:
@@ -211,7 +211,6 @@ def print_checks(
                 f"Check {error} was not found for the {provider.upper()} provider"
             )
             sys.exit()
-
 
     checks_num = len(check_list)
     message = noun_plural_or_singular_string(
@@ -340,7 +339,7 @@ def execute_checks(
     check_noun = noun_plural_or_singular_string(
         noun_count=checks_num,
         plural_string="checks",
-        singular_string=f"check",
+        singular_string="check",
     )
     print(
         f"{Style.BRIGHT}Executing {checks_num} {check_noun}, please wait...{Style.RESET_ALL}\n"
