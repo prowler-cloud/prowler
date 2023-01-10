@@ -1,4 +1,4 @@
-import os
+import pathlib
 import sys
 
 from boto3 import session
@@ -108,8 +108,10 @@ def generate_regional_clients(
     try:
         regional_clients = {}
         # Get json locally
-        actual_directory = os.path.dirname(os.path.realpath(__file__))
-        f = open_file(f"{actual_directory}/{aws_services_json_file}")
+        actual_directory = pathlib.Path().absolute()
+        f = open_file(
+            f"{actual_directory}/prowler/providers/aws/{aws_services_json_file}"
+        )
         data = parse_json_file(f)
         # Check if it is a subservice
         json_regions = data["services"][service]["regions"][
