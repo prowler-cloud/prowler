@@ -1,4 +1,4 @@
-import os
+import pathlib
 from os import path, remove
 from unittest import mock
 
@@ -66,7 +66,7 @@ def mock_make_api_call(self, operation_name, kwarg):
 class Test_Outputs:
     def test_fill_file_descriptors(self):
         audited_account = AWS_ACCOUNT_ID
-        output_directory = f"{os.path.dirname(os.path.realpath(__file__))}"
+        output_directory = f"{pathlib.Path().absolute()}"
         audit_info = AWS_Audit_Info(
             original_session=None,
             audit_session=None,
@@ -334,7 +334,7 @@ class Test_Outputs:
         # Create mock csv output file
         fixtures_dir = "fixtures"
         output_directory = (
-            f"{os.path.dirname(os.path.realpath(__file__))}/{fixtures_dir}"
+            f"{pathlib.Path().absolute()}/tests/lib/outputs/{fixtures_dir}"
         )
         output_mode = "csv"
         filename = f"prowler-output-{input_audit_info.audited_account}"

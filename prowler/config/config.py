@@ -1,4 +1,4 @@
-import os
+import pathlib
 from datetime import datetime, timezone
 from os import getcwd
 
@@ -30,7 +30,8 @@ csv_file_suffix = ".csv"
 json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
 html_file_suffix = ".html"
-config_yaml = f"{os.path.dirname(os.path.realpath(__file__))}/config.yaml"
+config_yaml = f"{pathlib.Path().absolute()}/prowler/config/config.yaml"
+print(config_yaml)
 
 
 def change_config_var(variable, value):
@@ -59,10 +60,10 @@ def get_config_var(variable):
 
 def get_aws_available_regions():
     try:
-        actual_directory = ("/").join(
-            os.path.dirname(os.path.realpath(__file__)).split("/")[:-1]
+        actual_directory = pathlib.Path().absolute()
+        f = open_file(
+            f"{actual_directory}/prowler/providers/aws/{aws_services_json_file}"
         )
-        f = open_file(f"{actual_directory}/providers/aws/{aws_services_json_file}")
         data = parse_json_file(f)
 
         regions = set()

@@ -1,4 +1,4 @@
-import os
+import pathlib
 from importlib.machinery import FileFinder
 from pkgutil import ModuleInfo
 
@@ -107,7 +107,7 @@ class Test_Check:
         test_cases = [
             {
                 "input": {
-                    "metadata_path": f"{os.path.dirname(os.path.realpath(__file__))}/fixtures/metadata.json",
+                    "metadata_path": f"{pathlib.Path().absolute()}/tests/lib/check/fixtures/metadata.json",
                 },
                 "expected": {
                     "CheckID": "iam_disable_30_days_credentials",
@@ -129,7 +129,7 @@ class Test_Check:
         test_cases = [
             {
                 "input": {
-                    "path": f"{os.path.dirname(os.path.realpath(__file__))}/fixtures/checklistA.json",
+                    "path": f"{pathlib.Path().absolute()}/tests/lib/check/fixtures/checklistA.json",
                     "provider": "aws",
                 },
                 "expected": {"check11", "check12", "check7777"},
@@ -263,7 +263,7 @@ class Test_Check:
     #     }
     #     with mock.patch(
     #         "prowler.lib.check.check.compliance_specification_dir_path",
-    #         new=f"{os.path.dirname(os.path.realpath(__file__))}/fixtures",
+    #         new=f"{pathlib.Path().absolute()}/fixtures",
     #     ):
     #         provider = "aws"
     #         bulk_compliance_frameworks = bulk_load_compliance_frameworks(provider)
@@ -286,7 +286,7 @@ class Test_Check:
     #     }
     #     with mock.patch(
     #         "prowler.lib.check.check.compliance_specification_dir",
-    #         new=f"{os.path.dirname(os.path.realpath(__file__))}/fixtures",
+    #         new=f"{pathlib.Path().absolute()}/fixtures",
     #     ):
     #         provider = "aws"
     #         bulk_compliance_frameworks = bulk_load_compliance_frameworks(provider)
@@ -305,7 +305,7 @@ class Test_Check:
     #     }
     #     with mock.patch(
     #         "prowler.lib.check.check.compliance_specification_dir",
-    #         new=f"{os.path.dirname(os.path.realpath(__file__))}/fixtures",
+    #         new=f"{pathlib.Path().absolute()}/fixtures",
     #     ):
     #         provider = "aws"
     #         bulk_compliance_frameworks = bulk_load_compliance_frameworks(provider)
