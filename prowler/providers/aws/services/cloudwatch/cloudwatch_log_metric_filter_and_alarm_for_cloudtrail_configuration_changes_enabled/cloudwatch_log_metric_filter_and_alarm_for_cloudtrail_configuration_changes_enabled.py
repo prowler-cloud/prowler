@@ -21,7 +21,7 @@ class cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_change
         report.status_extended = (
             "No CloudWatch log groups found with metric filters or alarms associated."
         )
-        report.region = "us-east-1"
+        report.region = cloudwatch_client.region
         report.resource_id = cloudtrail_client.audited_account
         # 1. Iterate for CloudWatch Log Group in CloudTrail trails
         log_groups = []
