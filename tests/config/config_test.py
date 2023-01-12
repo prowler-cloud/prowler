@@ -1,4 +1,4 @@
-from prowler.config.config import get_aws_available_regions
+from prowler.providers.aws.aws_provider import get_aws_available_regions
 
 
 class Test_Config:
