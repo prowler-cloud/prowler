@@ -72,14 +72,17 @@ class iam_policy_allows_privilege_escalation(Check):
             denied_not_actions = set()
 
             # Recover all policy actions
-            for statements in policy["PolicyDocument"]["Statement"]:
+            if type(policy["PolicyDocument"]["Statement"]) != list:
+                policy_statements = [policy["PolicyDocument"]["Statement"]]
+            else:
+                policy_statements = policy["PolicyDocument"]["Statement"]
+            for statements in policy_statements:
                 # Recover allowed actions
                 if statements["Effect"] == "Allow":
-                    if "Action" in statements:
-                        if type(statements["Action"]) is str:
-                            allowed_actions = {statements["Action"]}
-                        if type(statements["Action"]) is list:
-                            allowed_actions = set(statements["Action"])
+                    if type(statements["Action"]) is str:
+                        allowed_actions = {statements["Action"]}
+                    if type(statements["Action"]) is list:
+                        allowed_actions = set(statements["Action"])
 
                 # Recover denied actions
                 if statements["Effect"] == "Deny":
