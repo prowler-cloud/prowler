@@ -13,6 +13,7 @@ class iam_policy_no_administrative_privileges(Check):
             report.status = "PASS"
             report.status_extended = f"Policy {iam_client.policies[index]['PolicyName']} does not allow '*:*' administrative privileges"
             # Check the statements, if one includes *:* stop iterating over the rest
+            print(policy_document)
             for statement in policy_document["Statement"]:
                 if (
                     statement["Effect"] == "Allow"
