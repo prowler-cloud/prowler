@@ -43,7 +43,11 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
             try:
                 # If us-east-1 get IAM resources from there otherwise see if it is US GovCloud or China
                 iam_client = audit_info.audit_session.client("iam")
-                if region == "us-east-1" or region == "us-gov-west-1" or region == "cn-north-1":
+                if (
+                    region == "us-east-1"
+                    or region == "us-gov-west-1"
+                    or region == "cn-north-1"
+                ):
 
                     get_roles_paginator = iam_client.get_paginator("list_roles")
                     for page in get_roles_paginator.paginate():
