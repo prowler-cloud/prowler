@@ -99,7 +99,8 @@ class VPC:
                         if (
                             route["Origin"] != "CreateRouteTable"
                         ):  # avoid default route table
-                            destination_cidrs.append(route["DestinationCidrBlock"])
+                            if "DestinationCidrBlock" in route:
+                                destination_cidrs.append(route["DestinationCidrBlock"])
                     conn.route_tables.append(
                         Route(
                             route_table["RouteTableId"],
