@@ -1,6 +1,7 @@
 import datetime
 import threading
 from dataclasses import dataclass
+from typing import Optional
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import generate_regional_clients
@@ -63,12 +64,16 @@ class Codebuild:
                                     "endTime"
                                 ]
 
-                        project.buildspec = client.batch_get_projects(
-                            names=[project.name]
-                        )["projects"][0]["source"]["buildspec"]
+                        projects = client.batch_get_projects(names=[project.name])[
+                            "projects"
+                        ][0]["source"]
+                        if "buildspec" in projects:
+                            project.buildspec = projects["buildspec"]
 
         except Exception as error:
-            logger.error(f"{client.region} -- {error.__class__.__name__}: {error}")
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 
 @dataclass
@@ -76,7 +81,7 @@ class CodebuildProject:
     name: str
     region: str
     last_invoked_time: datetime
-    buildspec: str
+    buildspec: Optional[str]
 
     def __init__(self, name, region, last_invoked_time, buildspec):
         self.name = name

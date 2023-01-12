@@ -16,6 +16,7 @@ class iam_policy_no_administrative_privileges(Check):
             for statement in policy_document["Statement"]:
                 if (
                     statement["Effect"] == "Allow"
+                    and "Action" in statement
                     and "*" in statement["Action"]
                     and "*" in statement["Resource"]
                 ):

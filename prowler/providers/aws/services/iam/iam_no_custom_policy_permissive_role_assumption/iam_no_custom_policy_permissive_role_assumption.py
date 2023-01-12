@@ -15,6 +15,7 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
             for statement in policy_document["Statement"]:
                 if (
                     statement["Effect"] == "Allow"
+                    and "Action" in statement
                     and (
                         "sts:AssumeRole" in statement["Action"]
                         or "sts:*" in statement["Action"]
