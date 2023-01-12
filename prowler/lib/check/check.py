@@ -233,11 +233,7 @@ def recover_checks_from_provider(provider: str, service: str = None) -> list[tup
             # Format: "prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
             check_module_name = module_name.name
             # We need to exclude common shared libraries in services
-            if (
-                check_module_name.count(".") == 6
-                and "lib" not in check_module_name
-                and "test" not in check_module_name
-            ):
+            if check_module_name.count(".") == 6 and "lib" not in check_module_name:
                 check_path = module_name.module_finder.path
                 # Check name is the last part of the check_module_name
                 check_name = check_module_name.split(".")[-1]
