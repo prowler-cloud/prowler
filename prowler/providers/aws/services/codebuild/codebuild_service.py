@@ -58,11 +58,12 @@ class Codebuild:
                     if project.region == region:
                         ids = client.list_builds_for_project(projectName=project.name)
                         if "ids" in ids:
-                            builds = client.batch_get_builds(ids=[ids["ids"][0]])
-                            if "builds" in builds:
-                                project.last_invoked_time = builds["builds"][0][
-                                    "endTime"
-                                ]
+                            if len(ids["ids"]) > 0:
+                                builds = client.batch_get_builds(ids=[ids["ids"][0]])
+                                if "builds" in builds:
+                                    project.last_invoked_time = builds["builds"][0][
+                                        "endTime"
+                                    ]
 
                         projects = client.batch_get_projects(names=[project.name])[
                             "projects"

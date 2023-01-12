@@ -12,7 +12,11 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
             report.resource_id = iam_client.policies[index]["PolicyName"]
             report.status = "PASS"
             report.status_extended = f"Custom Policy {iam_client.policies[index]['PolicyName']} does not allow permissive STS Role assumption"
-            for statement in policy_document["Statement"]:
+            if type(policy_document["Statement"]) != list:
+                policy_statements = [policy_document["Statement"]]
+            else:
+                policy_statements = policy_document["Statement"]
+            for statement in policy_statements:
                 if (
                     statement["Effect"] == "Allow"
                     and "Action" in statement
