@@ -74,7 +74,7 @@ extra:
       link: https://twitter.com/prowlercloud
 
 # Copyright
-copyright: Copyright &copy; 2022 Toni de la Fuente, Maintained by the Prowler Team at Verica, Inc.</a>.
+copyright: Copyright &copy; 2022 Toni de la Fuente, Maintained by the Prowler Team at Verica, Inc.</a>
 
 markdown_extensions:
   - abbr
