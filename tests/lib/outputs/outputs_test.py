@@ -1,3 +1,4 @@
+import os
 import pathlib
 from os import path, remove
 from unittest import mock
@@ -66,7 +67,7 @@ def mock_make_api_call(self, operation_name, kwarg):
 class Test_Outputs:
     def test_fill_file_descriptors(self):
         audited_account = AWS_ACCOUNT_ID
-        output_directory = f"{pathlib.Path().absolute()}"
+        output_directory = f"{os.path.dirname(os.path.realpath(__file__))}"
         audit_info = AWS_Audit_Info(
             original_session=None,
             audit_session=None,
