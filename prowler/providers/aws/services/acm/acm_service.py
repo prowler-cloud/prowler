@@ -59,9 +59,12 @@ class ACM:
                     CertificateArn=certificate.arn
                 )["Certificate"]
                 certificate.type = response["Type"]
-                certificate.expiration_days = (
-                    response["NotAfter"] - timestamp_utc
-                ).days
+                if "NotAfter" in response:
+                    certificate.expiration_days = (
+                        response["NotAfter"] - timestamp_utc
+                    ).days
+                else:
+                    certificate.expiration_days = 0
                 if (
                     response["Options"]["CertificateTransparencyLoggingPreference"]
                     == "ENABLED"

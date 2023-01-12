@@ -62,7 +62,7 @@ class EFS:
                                 FileSystemId=filesystem.id
                             )["BackupPolicy"]["Status"]
                         except ClientError as e:
-                            if e.response["ErrorCode"] == "PolicyNotFound":
+                            if e.response["Error"]["Code"] == "PolicyNotFound":
                                 filesystem.backup_policy = "DISABLED"
                         try:
                             fs_policy = client.describe_file_system_policy(
@@ -71,7 +71,7 @@ class EFS:
                             if "Policy" in fs_policy:
                                 filesystem.policy = fs_policy["Policy"]
                         except ClientError as e:
-                            if e.response["ErrorCode"] == "PolicyNotFound":
+                            if e.response["Error"]["Code"] == "PolicyNotFound":
                                 filesystem.policy = {}
         except Exception as error:
             logger.error(
