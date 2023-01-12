@@ -1,3 +1,4 @@
+import os
 import pathlib
 import sys
 
@@ -108,10 +109,8 @@ def generate_regional_clients(
     try:
         regional_clients = {}
         # Get json locally
-        actual_directory = pathlib.Path().absolute()
-        f = open_file(
-            f"{actual_directory}/prowler/providers/aws/{aws_services_json_file}"
-        )
+        actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        f = open_file(f"{actual_directory}/{aws_services_json_file}")
         data = parse_json_file(f)
         # Check if it is a subservice
         json_regions = data["services"][service]["regions"][
@@ -140,3 +139,20 @@ def generate_regional_clients(
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
+
+
+def get_aws_available_regions():
+    try:
+        actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        f = open_file(f"{actual_directory}/{aws_services_json_file}")
+        data = parse_json_file(f)
+
+        regions = set()
+        for service in data["services"].values():
+            for partition in service["regions"]:
+                for item in service["regions"][partition]:
+                    regions.add(item)
+        return list(regions)
+    except Exception as error:
+        logger.error(f"{error.__class__.__name__}: {error}")
+        return []

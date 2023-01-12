@@ -1,3 +1,4 @@
+import os
 import pathlib
 from importlib.machinery import FileFinder
 from pkgutil import ModuleInfo
@@ -107,7 +108,7 @@ class Test_Check:
         test_cases = [
             {
                 "input": {
-                    "metadata_path": f"{pathlib.Path().absolute()}/tests/lib/check/fixtures/metadata.json",
+                    "metadata_path": f"{os.path.dirname(os.path.realpath(__file__))}/fixtures/metadata.json",
                 },
                 "expected": {
                     "CheckID": "iam_disable_30_days_credentials",
