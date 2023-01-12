@@ -6,7 +6,8 @@ As an **AWS Partner** and we have passed the [AWS Foundation Technical Review (F
 - `bandit` for code security review.
 - `safety` and `dependabot` for dependencies.
 - `hadolint` and `dockle` for our containers security.
-- `snyk` in Docker Hub and `quay/clair` in Amazon ECR.
+- `snyk` in Docker Hub.
+- `clair` in Amazon ECR.
 - `vulture`, `flake8`, `black` and `pylint` for formatting and best practices.
 
 ## Reporting a Vulnerability
