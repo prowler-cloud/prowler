@@ -2,11 +2,8 @@ import argparse
 import sys
 from argparse import RawTextHelpFormatter
 
-from prowler.config.config import (
-    default_output_directory,
-    get_aws_available_regions,
-    prowler_version,
-)
+from prowler.config.config import default_output_directory, prowler_version
+from prowler.providers.aws.aws_provider import get_aws_available_regions
 
 
 class ProwlerArgumentParser:
