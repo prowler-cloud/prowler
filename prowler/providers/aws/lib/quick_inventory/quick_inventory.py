@@ -23,7 +23,9 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
     # If not inputed regions, check all of them
     if not audit_info.audited_regions:
         # EC2 client for describing all regions
-        ec2_client = audit_info.audit_session.client("ec2", region_name="us-east-1")
+        ec2_client = audit_info.audit_session.client(
+            "ec2", region_name=audit_info.profile_region
+        )
         # Get all the available regions
         audit_info.audited_regions = [
             region["RegionName"] for region in ec2_client.describe_regions()["Regions"]
@@ -41,9 +43,13 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
             bar.title = f"-> Scanning {orange_color}{region}{Style.RESET_ALL} region"
             resources_in_region = []
             try:
-                # If us-east-1 get IAM resources
+                # If us-east-1 get IAM resources from there otherwise see if it is US GovCloud or China
                 iam_client = audit_info.audit_session.client("iam")
-                if region == "us-east-1":
+                if (
+                    region == "us-east-1"
+                    or region == "us-gov-west-1"
+                    or region == "cn-north-1"
+                ):
 
                     get_roles_paginator = iam_client.get_paginator("list_roles")
                     for page in get_roles_paginator.paginate():
