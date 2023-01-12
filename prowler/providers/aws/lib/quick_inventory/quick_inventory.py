@@ -23,7 +23,9 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
     # If not inputed regions, check all of them
     if not audit_info.audited_regions:
         # EC2 client for describing all regions
-        ec2_client = audit_info.audit_session.client("ec2", region_name=audit_info.profile_region)
+        ec2_client = audit_info.audit_session.client(
+            "ec2", region_name=audit_info.profile_region
+        )
         # Get all the available regions
         audit_info.audited_regions = [
             region["RegionName"] for region in ec2_client.describe_regions()["Regions"]
