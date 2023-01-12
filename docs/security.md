@@ -2,7 +2,7 @@
 
 ## Software Security
 
-As an **AWS Partner** and we have passed the [AWS Foundation Technical Review (FTR)](https://aws.amazon.com/partners/foundational-technical-review/) and we use use the following tools and automation to make sure our code is secure and dependencies up-to-dated:
+As an **AWS Partner** and we have passed the [AWS Foundation Technical Review (FTR)](https://aws.amazon.com/partners/foundational-technical-review/) and we use the following tools and automation to make sure our code is secure and dependencies up-to-dated:
 
 - `bandit` for code security review.
 - `safety` and `dependabot` for dependencies.
