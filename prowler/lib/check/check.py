@@ -13,7 +13,6 @@ from prowler.lib.check.compliance_models import load_compliance_framework
 from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.logger import logger
 
-# from prowler.lib.outputs.outputs import report
 try:
     lib = os.getenv("REPORT_LIB_PATH")
     outputs_module = importlib.import_module(lib)
