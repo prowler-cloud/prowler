@@ -79,7 +79,7 @@ Detailed documentation at https://docs.prowler.cloud
                 "A provider is required to see its specific help options."
             )
 
-        # Only Logging Configurationå
+        # Only Logging Configuration
         if args.only_logs:
             args.no_banner = True
 
