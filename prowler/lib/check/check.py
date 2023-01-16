@@ -313,44 +313,86 @@ def execute_checks(
     audit_output_options: Provider_Output_Options,
 ) -> list:
     all_findings = []
-    print(
-        f"{Style.BRIGHT}Executing {len(checks_to_execute)} checks, please wait...{Style.RESET_ALL}\n"
-    )
-    with alive_bar(
-        total=len(checks_to_execute),
-        ctrl_c=False,
-        bar="blocks",
-        spinner="classic",
-        stats=False,
-        enrich_print=False,
-    ) as bar:
+    # Execution with the --only-logs flag
+    if audit_output_options.only_logs:
         for check_name in checks_to_execute:
             # Recover service from check name
             service = check_name.split("_")[0]
-            bar.title = f"-> Scanning {orange_color}{service}{Style.RESET_ALL} service"
             try:
-                # Import check module
-                check_module_path = f"prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
-                lib = import_check(check_module_path)
-                # Recover functions from check
-                check_to_execute = getattr(lib, check_name)
-                c = check_to_execute()
-                # Run check
-                check_findings = run_check(c, audit_output_options)
+                check_findings = execute(
+                    service, check_name, provider, audit_output_options, audit_info
+                )
                 all_findings.extend(check_findings)
-                report(check_findings, audit_output_options, audit_info)
-                bar()
 
             # If check does not exists in the provider or is from another provider
             except ModuleNotFoundError:
+
                 logger.critical(
                     f"Check '{check_name}' was not found for the {provider.upper()} provider"
                 )
-                bar.title = f"-> {Fore.RED}Scan was aborted!{Style.RESET_ALL}"
                 sys.exit()
             except Exception as error:
                 logger.error(
                     f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-        bar.title = f"-> {Fore.GREEN}Scan completed!{Style.RESET_ALL}"
+    else:
+        # Default execution
+        print(
+            f"{Style.BRIGHT}Executing {len(checks_to_execute)} checks, please wait...{Style.RESET_ALL}\n"
+        )
+        with alive_bar(
+            total=len(checks_to_execute),
+            ctrl_c=False,
+            bar="blocks",
+            spinner="classic",
+            stats=False,
+            enrich_print=False,
+        ) as bar:
+            for check_name in checks_to_execute:
+                # Recover service from check name
+                service = check_name.split("_")[0]
+                bar.title = (
+                    f"-> Scanning {orange_color}{service}{Style.RESET_ALL} service"
+                )
+                try:
+                    check_findings = execute(
+                        service, check_name, provider, audit_output_options, audit_info
+                    )
+                    all_findings.extend(check_findings)
+                    bar()
+
+                # If check does not exists in the provider or is from another provider
+                except ModuleNotFoundError:
+                    logger.critical(
+                        f"Check '{check_name}' was not found for the {provider.upper()} provider"
+                    )
+                    bar.title = f"-> {Fore.RED}Scan was aborted!{Style.RESET_ALL}"
+                    sys.exit()
+                except Exception as error:
+                    logger.error(
+                        f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+            bar.title = f"-> {Fore.GREEN}Scan completed!{Style.RESET_ALL}"
     return all_findings
+
+
+def execute(
+    service,
+    check_name: str,
+    provider: str,
+    audit_output_options: Provider_Output_Options,
+    audit_info: AWS_Audit_Info,
+):
+    # Import check module
+    check_module_path = (
+        f"prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
+    )
+    lib = import_check(check_module_path)
+    # Recover functions from check
+    check_to_execute = getattr(lib, check_name)
+    c = check_to_execute()
+    # Run check
+    check_findings = run_check(c, audit_output_options)
+    report(check_findings, audit_output_options, audit_info)
+
+    return check_findings
