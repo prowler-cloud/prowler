@@ -6,6 +6,22 @@ from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
+def is_service_role(role):
+    for statement in role["AssumeRolePolicyDocument"]["Statement"]:
+        if (
+            statement["Effect"] == "Allow"
+            and (
+                "sts:AssumeRole" in statement["Action"]
+                or "sts:*" in statement["Action"]
+                or "*" in statement["Action"]
+            )
+            # This is what defines a service role
+            and "Service" in statement["Principal"]
+        ):
+            return True
+    return False
+
+
 ################## IAM
 class IAM:
     def __init__(self, audit_info):
@@ -58,6 +74,7 @@ class IAM:
                             name=role["RoleName"],
                             arn=role["Arn"],
                             assume_role_policy=role["AssumeRolePolicyDocument"],
+                            is_service_role=is_service_role(role),
                         )
                     )
             return roles
@@ -436,11 +453,13 @@ class Role:
     name: str
     arn: str
     assume_role_policy: dict
+    is_service_role: bool
 
-    def __init__(self, name, arn, assume_role_policy):
+    def __init__(self, name, arn, assume_role_policy, is_service_role):
         self.name = name
         self.arn = arn
         self.assume_role_policy = assume_role_policy
+        self.is_service_role = is_service_role
 
 
 @dataclass
