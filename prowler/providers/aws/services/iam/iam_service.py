@@ -50,17 +50,21 @@ class IAM:
     def __get_roles__(self):
         try:
             get_roles_paginator = self.client.get_paginator("list_roles")
+            roles = []
+            for page in get_roles_paginator.paginate():
+                for role in page["Roles"]:
+                    roles.append(
+                        Role(
+                            name=role["RoleName"],
+                            arn=role["Arn"],
+                            assume_role_policy=role["AssumeRolePolicyDocument"],
+                        )
+                    )
+            return roles
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        else:
-            roles = []
-            for page in get_roles_paginator.paginate():
-                for role in page["Roles"]:
-                    roles.append(role)
-
-            return roles
 
     def __get_credential_report__(self):
         report_is_completed = False
@@ -425,6 +429,18 @@ class User:
         self.mfa_devices = []
         self.attached_policies = []
         self.inline_policies = []
+
+
+@dataclass
+class Role:
+    name: str
+    arn: str
+    assume_role_policy: dict
+
+    def __init__(self, name, arn, assume_role_policy):
+        self.name = name
+        self.arn = arn
+        self.assume_role_policy = assume_role_policy
 
 
 @dataclass
