@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html#cross-service-confused-deputy-prevention"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trustboundaries"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"
