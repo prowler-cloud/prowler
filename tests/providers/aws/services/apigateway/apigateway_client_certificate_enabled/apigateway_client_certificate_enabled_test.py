@@ -99,6 +99,10 @@ class Test_apigateway_client_certificate_enabled:
                 == f"API Gateway test-rest-api ID {rest_api['id']} in stage test has not client certificate enabled."
             )
             assert result[0].resource_id == "test-rest-api"
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/apis/{rest_api['id']}/stages/test"
+            )
 
     @mock_apigateway
     def test_apigateway_one_stage_with_certificate(self):
@@ -128,6 +132,7 @@ class Test_apigateway_client_certificate_enabled:
             service_client.rest_apis[0].stages.append(
                 Stage(
                     "test",
+                    f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/apis/test-rest-api/stages/test",
                     logging=True,
                     client_certificate=True,
                     waf=True,
@@ -144,3 +149,7 @@ class Test_apigateway_client_certificate_enabled:
                 == f"API Gateway test-rest-api ID {rest_api['id']} in stage test has client certificate enabled."
             )
             assert result[0].resource_id == "test-rest-api"
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/apis/test-rest-api/stages/test"
+            )

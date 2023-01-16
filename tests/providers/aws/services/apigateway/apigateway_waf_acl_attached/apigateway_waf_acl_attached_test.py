@@ -107,6 +107,10 @@ class Test_apigateway_waf_acl_attached:
                 == f"API Gateway test-rest-api ID {rest_api['id']} in stage test has {waf_arn} WAF ACL attached."
             )
             assert result[0].resource_id == "test-rest-api"
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/apis/{rest_api['id']}/stages/test"
+            )
 
     @mock_apigateway
     def test_apigateway_one_rest_api_without_waf(self):
@@ -170,3 +174,7 @@ class Test_apigateway_waf_acl_attached:
                 == f"API Gateway test-rest-api ID {rest_api['id']} in stage test has not WAF ACL attached."
             )
             assert result[0].resource_id == "test-rest-api"
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/apis/{rest_api['id']}/stages/test"
+            )
