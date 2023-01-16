@@ -19,11 +19,9 @@ try:
     report = getattr(outputs_module, "report")
 except KeyError:
     from prowler.lib.outputs.outputs import report
-except Exception as error:
-    logger.critical(
-        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-    )
+except Exception:
     sys.exit()
+
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.outputs import Provider_Output_Options
