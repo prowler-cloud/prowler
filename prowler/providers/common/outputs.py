@@ -38,6 +38,7 @@ class Provider_Output_Options:
     bulk_checks_metadata: dict
     verbose: str
     output_filename: str
+    only_logs: bool
 
     def __init__(self, arguments, allowlist_file, bulk_checks_metadata):
         self.is_quiet = arguments.quiet
