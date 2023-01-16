@@ -1,5 +1,5 @@
 import sys
-
+from os import path
 from prowler.config.config import (
     html_file_suffix,
     html_logo_img,
@@ -263,12 +263,14 @@ def fill_html_overview_statistics(stats, output_filename, output_directory):
 def add_html_footer(output_filename, output_directory):
     try:
         filename = f"{output_directory}/{output_filename}{html_file_suffix}"
-        file_descriptor = open_file(
-            filename,
-            "a",
-        )
-        file_descriptor.write(
-            """
+        # Close HTML file if exists
+        if path.isfile(filename):
+            file_descriptor = open_file(
+                filename,
+                "a",
+            )
+            file_descriptor.write(
+                """
                </tbody>
             </table>
         </div>
@@ -352,8 +354,8 @@ def add_html_footer(output_filename, output_directory):
 
 </html>
 """
-        )
-        file_descriptor.close()
+            )
+            file_descriptor.close()
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
