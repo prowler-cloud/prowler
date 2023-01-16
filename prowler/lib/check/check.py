@@ -14,15 +14,16 @@ from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.logger import logger
 
 try:
-    lib = os.getenv("REPORT_LIB_PATH")
+    lib = os.environ["PROWLER_REPORT_LIB_PATH"]
     outputs_module = importlib.import_module(lib)
     report = getattr(outputs_module, "report")
-except AttributeError:
+except KeyError:
     from prowler.lib.outputs.outputs import report
 except Exception as error:
-    logger.error(
+    logger.critical(
         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
     )
+    sys.exit()
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.outputs import Provider_Output_Options
