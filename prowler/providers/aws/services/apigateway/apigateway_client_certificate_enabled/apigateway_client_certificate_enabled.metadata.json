@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "apigateway_client_certificate_enabled",
-  "CheckTitle": "Check if API Gateway has client certificate enabled to access your backend endpoint.",
+  "CheckTitle": "Check if API Gateway Stage has client certificate enabled to access your backend endpoint.",
   "CheckType": [
     "Data Protection"
   ],
@@ -9,8 +9,8 @@
   "SubServiceName": "rest_api",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsApiGatewayRestApi",
-  "Description": "Check if API Gateway has client certificate enabled to access your backend endpoint.",
+  "ResourceType": "AwsApiGatewayStage",
+  "Description": "Check if API Gateway Stage has client certificate enabled to access your backend endpoint.",
   "Risk": "Possible man in the middle attacks and other similar risks.",
   "RelatedUrl": "",
   "Remediation": {

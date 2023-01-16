@@ -69,6 +69,10 @@ class Test_apigateway_endpoint_public:
                 == f"API Gateway test-rest-api ID {rest_api['id']} is private."
             )
             assert result[0].resource_id == "test-rest-api"
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/apis/{rest_api['id']}"
+            )
 
     @mock_apigateway
     def test_apigateway_one_public_rest_api(self):
@@ -109,3 +113,7 @@ class Test_apigateway_endpoint_public:
                 == f"API Gateway test-rest-api ID {rest_api['id']} is internet accesible."
             )
             assert result[0].resource_id == "test-rest-api"
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/apis/{rest_api['id']}"
+            )
