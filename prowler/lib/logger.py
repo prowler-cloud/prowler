@@ -1,4 +1,5 @@
 import logging
+from os import environ
 
 # Logging levels
 logging_levels = {
@@ -10,7 +11,7 @@ logging_levels = {
 }
 
 
-def set_logging_config(log_file: str = None, log_level: str = "ERROR"):
+def set_logging_config(log_level: str, log_file: str = None, only_logs: bool = False):
     # Logs formatter
     stream_formatter = logging.Formatter(
         "%(asctime)s [File: %(filename)s:%(lineno)d] \t[Module: %(module)s]\t %(levelname)s: %(message)s"
@@ -22,9 +23,12 @@ def set_logging_config(log_file: str = None, log_level: str = "ERROR"):
     # Where to put logs
     logging_handlers = []
 
-    # Include stdout by default
+    # Include stdout by default, if only_logs is set the log format is JSON
     stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(stream_formatter)
+    if only_logs:
+        stream_handler.setFormatter(log_file_formatter)
+    else:
+        stream_handler.setFormatter(stream_formatter)
     logging_handlers.append(stream_handler)
 
     # Log to file configuration
@@ -34,6 +38,12 @@ def set_logging_config(log_file: str = None, log_level: str = "ERROR"):
         log_file_handler.setFormatter(log_file_formatter)
         # Append the log formatter
         logging_handlers.append(log_file_handler)
+
+    # Set Log Level, environment takes precedence over the --log-level argument
+    try:
+        log_level = environ["LOG_LEVEL"]
+    except KeyError:
+        log_level = log_level
 
     # Configure Logger
     # Initialize you log configuration using the base class

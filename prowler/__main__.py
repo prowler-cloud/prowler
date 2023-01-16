@@ -60,9 +60,9 @@ def prowler():
         args.output_modes.extend(compliance_framework)
 
     # Set Logger configuration
-    set_logging_config(args.log_file, args.log_level)
+    set_logging_config(args.log_level, args.log_file, args.only_logs)
 
-    if args.no_banner:
+    if not args.no_banner:
         print_banner(args)
 
     if args.list_services:
@@ -203,22 +203,23 @@ def prowler():
         resolve_security_hub_previous_findings(args.output_directory, audit_info)
 
     # Display summary table
-    display_summary_table(
-        findings,
-        audit_info,
-        audit_output_options,
-        provider,
-    )
-
-    if compliance_framework and findings:
-        # Display compliance table
-        display_compliance_table(
+    if not args.only_logs:
+        display_summary_table(
             findings,
-            bulk_checks_metadata,
-            compliance_framework,
-            audit_output_options.output_filename,
-            audit_output_options.output_directory,
+            audit_info,
+            audit_output_options,
+            provider,
         )
+
+        if compliance_framework and findings:
+            # Display compliance table
+            display_compliance_table(
+                findings,
+                bulk_checks_metadata,
+                compliance_framework,
+                audit_output_options.output_filename,
+                audit_output_options.output_directory,
+            )
 
 
 if __name__ == "__main__":
