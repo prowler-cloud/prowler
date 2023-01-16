@@ -7,18 +7,19 @@ from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
 def is_service_role(role):
-    for statement in role["AssumeRolePolicyDocument"]["Statement"]:
-        if (
-            statement["Effect"] == "Allow"
-            and (
-                "sts:AssumeRole" in statement["Action"]
-                or "sts:*" in statement["Action"]
-                or "*" in statement["Action"]
-            )
-            # This is what defines a service role
-            and "Service" in statement["Principal"]
-        ):
-            return True
+    if "Statement" in role["AssumeRolePolicyDocument"]:
+        for statement in role["AssumeRolePolicyDocument"]["Statement"]:
+            if (
+                statement["Effect"] == "Allow"
+                and (
+                    "sts:AssumeRole" in statement["Action"]
+                    or "sts:*" in statement["Action"]
+                    or "*" in statement["Action"]
+                )
+                # This is what defines a service role
+                and "Service" in statement["Principal"]
+            ):
+                return True
     return False
 
 
