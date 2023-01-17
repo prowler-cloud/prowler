@@ -298,7 +298,10 @@ def run_check(check: Check, output_options: Provider_Output_Options) -> list:
     try:
         findings = check.execute()
     except Exception as error:
-        print(f"Something went wrong in {check.CheckID}, please use --log-level ERROR")
+        if not output_options.only_logs:
+            print(
+                f"Something went wrong in {check.CheckID}, please use --log-level ERROR"
+            )
         logger.error(
             f"{check.CheckID} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
