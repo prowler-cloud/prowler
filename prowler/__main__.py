@@ -22,13 +22,10 @@ from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
-from prowler.lib.outputs.outputs import (
-    extract_findings_statistics,
-    send_to_s3_bucket,
-)
 from prowler.lib.outputs.compliance import display_compliance_table
 from prowler.lib.outputs.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json import close_json
+from prowler.lib.outputs.outputs import extract_findings_statistics, send_to_s3_bucket
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.allowlist.allowlist import parse_allowlist_file
 from prowler.providers.aws.lib.quick_inventory.quick_inventory import quick_inventory
@@ -60,9 +57,9 @@ def prowler():
         args.output_modes.extend(compliance_framework)
 
     # Set Logger configuration
-    set_logging_config(args.log_file, args.log_level)
+    set_logging_config(args.log_level, args.log_file, args.only_logs)
 
-    if args.no_banner:
+    if not args.no_banner:
         print_banner(args)
 
     if args.list_services:
@@ -203,22 +200,23 @@ def prowler():
         resolve_security_hub_previous_findings(args.output_directory, audit_info)
 
     # Display summary table
-    display_summary_table(
-        findings,
-        audit_info,
-        audit_output_options,
-        provider,
-    )
-
-    if compliance_framework and findings:
-        # Display compliance table
-        display_compliance_table(
+    if not args.only_logs:
+        display_summary_table(
             findings,
-            bulk_checks_metadata,
-            compliance_framework,
-            audit_output_options.output_filename,
-            audit_output_options.output_directory,
+            audit_info,
+            audit_output_options,
+            provider,
         )
+
+        if compliance_framework and findings:
+            # Display compliance table
+            display_compliance_table(
+                findings,
+                bulk_checks_metadata,
+                compliance_framework,
+                audit_output_options.output_filename,
+                audit_output_options.output_directory,
+            )
 
 
 if __name__ == "__main__":

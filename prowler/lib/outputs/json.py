@@ -57,21 +57,24 @@ def fill_json_asff(finding_output, audit_info, finding):
 
 
 def close_json(output_filename, output_directory, mode):
+    """close_json closes the output JSON file replacing the last comma with ]"""
     try:
         suffix = json_file_suffix
         if mode == "json-asff":
             suffix = json_asff_file_suffix
         filename = f"{output_directory}/{output_filename}{suffix}"
-        file_descriptor = open_file(
-            filename,
-            "a",
-        )
-        # Replace last comma for square bracket if not empty
-        if file_descriptor.tell() > 0:
-            file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
-            file_descriptor.truncate()
-            file_descriptor.write("]")
-        file_descriptor.close()
+        # Close JSON file if exists
+        if os.path.isfile(filename):
+            file_descriptor = open_file(
+                filename,
+                "a",
+            )
+            # Replace last comma for square bracket if not empty
+            if file_descriptor.tell() > 0:
+                file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
+                file_descriptor.truncate()
+                file_descriptor.write("]")
+            file_descriptor.close()
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"

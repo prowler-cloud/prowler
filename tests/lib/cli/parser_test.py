@@ -7,7 +7,7 @@ from prowler.lib.cli.parser import ProwlerArgumentParser
 prowler_command = "prowler"
 
 
-class Test_Outputs:
+class Test_Parser:
     # Init parser
     def setup_method(self):
         self.parser = ProwlerArgumentParser()
@@ -25,9 +25,10 @@ class Test_Outputs:
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
-        assert parsed.no_banner
+        assert not parsed.no_banner
         assert parsed.log_level == "CRITICAL"
         assert not parsed.log_file
+        assert not parsed.only_logs
         assert not parsed.checks
         assert not parsed.checks_file
         assert not parsed.services
@@ -67,9 +68,10 @@ class Test_Outputs:
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
-        assert parsed.no_banner
+        assert not parsed.no_banner
         assert parsed.log_level == "CRITICAL"
         assert not parsed.log_file
+        assert not parsed.only_logs
         assert not parsed.checks
         assert not parsed.checks_file
         assert not parsed.services
@@ -201,12 +203,18 @@ class Test_Outputs:
     def test_root_parser_no_banner_short(self):
         command = [prowler_command, "-b"]
         parsed = self.parser.parse(command)
-        assert not parsed.no_banner
+        assert parsed.no_banner
 
     def test_root_parser_no_banner_long(self):
         command = [prowler_command, "--no-banner"]
         parsed = self.parser.parse(command)
-        assert not parsed.no_banner
+        assert parsed.no_banner
+
+    def test_logging_parser_only_logs_set(self):
+        command = [prowler_command, "--only-logs"]
+        parsed = self.parser.parse(command)
+        assert parsed.only_logs
+        assert parsed.no_banner
 
     def test_logging_parser_log_level_default(self):
         log_level = "CRITICAL"
