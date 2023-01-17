@@ -6,7 +6,7 @@ from freezegun import freeze_time
 from moto import mock_iam
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.aws.services.iam.iam_service import IAM
+from prowler.providers.aws.services.iam.iam_service import IAM, is_service_role
 
 AWS_ACCOUNT_NUMBER = 123456789012
 TEST_DATETIME = "2023-01-01T12:01:01+00:00"
@@ -223,20 +223,42 @@ class Test_IAM_Service:
         # Generate IAM Client
         iam_client = client("iam")
         # Create 2 IAM Roles
-        iam_client.create_role(
-            RoleName="role1",
-            AssumeRolePolicyDocument="string",
-        )
-        iam_client.create_role(
-            RoleName="role2",
-            AssumeRolePolicyDocument="string",
-        )
+        service_policy_document = {
+            "Version": "2008-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"Service": "ec2.amazonaws.com"},
+                    "Action": "sts:AssumeRole",
+                }
+            ],
+        }
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"},
+                    "Action": "sts:AssumeRole",
+                }
+            ],
+        }
+        service_role = iam_client.create_role(
+            RoleName="test-1",
+            AssumeRolePolicyDocument=dumps(service_policy_document),
+        )["Role"]
+        role = iam_client.create_role(
+            RoleName="test-2",
+            AssumeRolePolicyDocument=dumps(policy_document),
+        )["Role"]
 
         # IAM client for this test class
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
 
         assert len(iam.roles) == len(iam_client.list_roles()["Roles"])
+        assert is_service_role(service_role)
+        assert not is_service_role(role)
 
     # Test IAM Get Groups
     @mock_iam

@@ -59,7 +59,7 @@ prowler <provider> --compliance <compliance_framework>
 ```
 Standard results will be shown and additionally the framework information as the sample below for CIS AWS 1.5. For details a CSV file has been generated as well.
 
-<img src="/img/compliance-cis-sample1.png"/>
+<img src="../img/compliance-cis-sample1.png"/>
 
 ## Create and contribute adding other Security Frameworks
 
@@ -72,7 +72,7 @@ Each file version of a framework will have the following structure at high level
 - `Version`: string. Version of the framework itself, like 1.4 for CIS.
 - `Requirements`: array of objects. Include all requirements or controls with the mapping to Prowler.
 - `Requirements_Id`: string. Unique identifier per each requirement in the specific framework
-- `Requirements_Description`: string. Description as in the framework. 
+- `Requirements_Description`: string. Description as in the framework.
 - `Requirements_Attributes`: array of objects. Includes all needed attributes per each requirement, like levels, sections, etc. Whatever helps to create a dedicated report with the result of the findings. Attributes would be taken as closely as possible from the framework's own terminology directly.
 - `Requirements_Checks`: array. Prowler checks that are needed to prove this requirement. It can be one or multiple checks. In case of no automation possible this can be empty.
 

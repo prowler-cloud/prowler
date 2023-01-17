@@ -132,8 +132,8 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         caller_identity = self.validate_credentials(current_audit_info.original_session)
 
         logger.info("Credentials validated")
-        logger.info(f"Original caller identity UserId : {caller_identity['UserId']}")
-        logger.info(f"Original caller identity ARN : {caller_identity['Arn']}")
+        logger.info(f"Original caller identity UserId: {caller_identity['UserId']}")
+        logger.info(f"Original caller identity ARN: {caller_identity['Arn']}")
 
         current_audit_info.audited_account = caller_identity["Account"]
         current_audit_info.audited_identity_arn = caller_identity["Arn"]
@@ -233,7 +233,9 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         else:
             current_audit_info.profile_region = "us-east-1"
 
-        self.print_audit_credentials(current_audit_info)
+        if not arguments.get("only_logs"):
+            self.print_audit_credentials(current_audit_info)
+
         return current_audit_info
 
     def set_azure_audit_info(self, arguments) -> Azure_Audit_Info:

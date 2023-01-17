@@ -2,11 +2,8 @@ import argparse
 import sys
 from argparse import RawTextHelpFormatter
 
-from prowler.config.config import (
-    default_output_directory,
-    get_aws_available_regions,
-    prowler_version,
-)
+from prowler.config.config import default_output_directory, prowler_version
+from prowler.providers.aws.aws_provider import get_aws_available_regions
 
 
 class ProwlerArgumentParser:
@@ -82,6 +79,10 @@ Detailed documentation at https://docs.prowler.cloud
                 "A provider is required to see its specific help options."
             )
 
+        # Only Logging Configuration
+        if args.only_logs:
+            args.no_banner = True
+
         return args
 
     def __set_default_provider__(self, args: list) -> list:
@@ -130,7 +131,7 @@ Detailed documentation at https://docs.prowler.cloud
             help="Display detailed information about findings",
         )
         common_outputs_parser.add_argument(
-            "-b", "--no-banner", action="store_false", help="Hide Prowler banner"
+            "-b", "--no-banner", action="store_true", help="Hide Prowler banner"
         )
 
     def __init_logging_parser__(self):
@@ -149,6 +150,11 @@ Detailed documentation at https://docs.prowler.cloud
             "--log-file",
             nargs="?",
             help="Set log file name",
+        )
+        common_logging_parser.add_argument(
+            "--only-logs",
+            action="store_true",
+            help="Print only Prowler logs by the stdout. This option sets --no-banner.",
         )
 
     def __init_exclude_checks_parser__(self):

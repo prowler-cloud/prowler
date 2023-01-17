@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "apigateway_waf_acl_attached",
-  "CheckTitle": "Check if API Gateway has a WAF ACL attached.",
+  "CheckTitle": "Check if API Gateway Stage has a WAF ACL attached.",
   "CheckType": [
     "Infrastructure Security"
   ],
@@ -9,8 +9,8 @@
   "SubServiceName": "rest_api",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsApiGatewayRestApi",
-  "Description": "Check if API Gateway has a WAF ACL attached.",
+  "ResourceType": "AwsApiGatewayStage",
+  "Description": "Check if API Gateway Stage has a WAF ACL attached.",
   "Risk": "Potential attacks and / or abuse of service, more even for even for internet reachable services.",
   "RelatedUrl": "",
   "Remediation": {

@@ -30,6 +30,6 @@ class ecr_repositories_scan_vulnerabilities_in_latest_image(Check):
                         report.status = "FAIL"
                         report.status_extended = f"ECR repository {repository.name} has imageTag {image.latest_tag} scanned with findings: CRITICAL->{image.scan_findings_severity_count.critical}, HIGH->{image.scan_findings_severity_count.high}, MEDIUM->{image.scan_findings_severity_count.medium} "
 
-            findings.append(report)
+                findings.append(report)
 
         return findings

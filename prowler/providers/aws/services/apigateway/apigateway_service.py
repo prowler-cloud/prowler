@@ -11,6 +11,7 @@ class APIGateway:
         self.service = "apigateway"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audited_partition = audit_info.audited_partition
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.rest_apis = []
         self.__threading_call__(self.__get_rest_apis__)
@@ -36,9 +37,11 @@ class APIGateway:
             get_rest_apis_paginator = regional_client.get_paginator("get_rest_apis")
             for page in get_rest_apis_paginator.paginate():
                 for apigw in page["items"]:
+                    arn = f"arn:{self.audited_partition}:apigateway:{regional_client.region}::/apis/{apigw['id']}"
                     self.rest_apis.append(
                         RestAPI(
                             apigw["id"],
+                            arn,
                             regional_client.region,
                             apigw["name"],
                         )
@@ -89,9 +92,11 @@ class APIGateway:
                             logging = True
                     if "clientCertificateId" in stage:
                         client_certificate = True
+                    arn = f"arn:{self.audited_partition}:apigateway:{regional_client.region}::/apis/{rest_api.id}/stages/{stage['stageName']}"
                     rest_api.stages.append(
                         Stage(
                             stage["stageName"],
+                            arn,
                             logging,
                             client_certificate,
                             waf,
@@ -104,6 +109,7 @@ class APIGateway:
 @dataclass
 class Stage:
     name: str
+    arn: str
     logging: bool
     client_certificate: bool
     waf: str
@@ -111,11 +117,13 @@ class Stage:
     def __init__(
         self,
         name,
+        arn,
         logging,
         client_certificate,
         waf,
     ):
         self.name = name
+        self.arn = arn
         self.logging = logging
         self.client_certificate = client_certificate
         self.waf = waf
@@ -124,6 +132,7 @@ class Stage:
 @dataclass
 class RestAPI:
     id: str
+    arn: str
     region: str
     name: str
     authorizer: bool
@@ -133,10 +142,12 @@ class RestAPI:
     def __init__(
         self,
         id,
+        arn,
         region,
         name,
     ):
         self.id = id
+        self.arn = arn
         self.region = region
         self.name = name
         self.authorizer = False

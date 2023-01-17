@@ -66,6 +66,7 @@ class Test_Common_Output_Options:
         arguments.output_filename = "output_test_filename"
         arguments.security_hub = True
         arguments.shodan = "test-api-key"
+        arguments.only_logs = False
 
         audit_info = self.set_mocked_aws_audit_info()
         allowlist_file = ""
@@ -94,6 +95,7 @@ class Test_Common_Output_Options:
         arguments.verbose = True
         arguments.security_hub = True
         arguments.shodan = "test-api-key"
+        arguments.only_logs = False
 
         # Mock AWS Audit Info
         audit_info = self.set_mocked_aws_audit_info()
@@ -125,6 +127,7 @@ class Test_Common_Output_Options:
         arguments.output_modes = ["html", "csv", "json"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
+        arguments.only_logs = False
 
         # Mock Azure Audit Info
         audit_info = self.set_mocked_azure_audit_info()
@@ -159,6 +162,7 @@ class Test_Common_Output_Options:
         arguments.output_modes = ["html", "csv", "json"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
+        arguments.only_logs = False
 
         # Mock Azure Audit Info
         audit_info = self.set_mocked_azure_audit_info()

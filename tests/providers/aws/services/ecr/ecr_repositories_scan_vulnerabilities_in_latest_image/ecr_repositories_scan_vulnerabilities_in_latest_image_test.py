@@ -28,6 +28,32 @@ repo_policy_public = {
 
 
 class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
+    def test_empty_repository(self):
+        ecr_client = mock.MagicMock
+        ecr_client.repositories = []
+        ecr_client.repositories.append(
+            Repository(
+                name=repository_name,
+                arn=repository_arn,
+                region=AWS_REGION,
+                scan_on_push=True,
+                policy=repo_policy_public,
+                images_details=[],
+                lyfecicle_policy=None,
+            )
+        )
+        with mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_service.ECR",
+            ecr_client,
+        ):
+            from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
+                ecr_repositories_scan_vulnerabilities_in_latest_image,
+            )
+
+            check = ecr_repositories_scan_vulnerabilities_in_latest_image()
+            result = check.execute()
+            assert len(result) == 0
+
     def test_image_scaned_without_findings(self):
         ecr_client = mock.MagicMock
         ecr_client.repositories = []

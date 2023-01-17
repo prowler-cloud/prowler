@@ -63,7 +63,7 @@ prowler aws -w arn:aws:dynamodb:<region_name>:<account_id>:table/<table_name>
 ```
 
 1. The DynamoDB Table must have the following String keys:
-<img src="/img/allowlist-keys.png"/>
+<img src="../img/allowlist-keys.png"/>
 
 - The Allowlist Table must have the following columns:
     - Accounts (String): This field can contain either an Account ID or an `*` (which applies to all the accounts that use this table as an allowlist).
@@ -71,6 +71,6 @@ prowler aws -w arn:aws:dynamodb:<region_name>:<account_id>:table/<table_name>
     - Regions (List): This field contains a list of regions where this allowlist rule is applied (it can also contains an `*` to apply all scanned regions).
     - Resources (List): This field contains a list of regex expressions that applies to the resources that are wanted to be allowlisted.
 
-<img src="/img/allowlist-row.png"/>
+<img src="../img/allowlist-row.png"/>
 
 > Make sure that the used AWS credentials have `dynamodb:PartiQLSelect` permissions in the table.

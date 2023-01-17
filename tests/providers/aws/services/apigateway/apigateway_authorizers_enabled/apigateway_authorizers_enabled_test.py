@@ -88,6 +88,10 @@ class Test_apigateway_authorizers_enabled:
                 == f"API Gateway test-rest-api ID {rest_api['id']} has authorizer configured."
             )
             assert result[0].resource_id == "test-rest-api"
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/apis/{rest_api['id']}"
+            )
 
     @mock_apigateway
     def test_apigateway_one_rest_api_without_lambda_authorizer(self):
@@ -123,3 +127,7 @@ class Test_apigateway_authorizers_enabled:
                 == f"API Gateway test-rest-api ID {rest_api['id']} has not authorizer configured."
             )
             assert result[0].resource_id == "test-rest-api"
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/apis/{rest_api['id']}"
+            )

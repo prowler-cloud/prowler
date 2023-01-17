@@ -11,8 +11,8 @@ class cloudwatch_cross_account_sharing_disabled(Check):
         report.resource_id = "CloudWatch-CrossAccountSharingRole"
         report.region = iam_client.region
         for role in iam_client.roles:
-            if role["RoleName"] == "CloudWatch-CrossAccountSharingRole":
-                report.resource_arn = role["Arn"]
+            if role.name == "CloudWatch-CrossAccountSharingRole":
+                report.resource_arn = role.arn
                 report.status = "FAIL"
                 report.status_extended = "CloudWatch has allowed cross-account sharing."
         findings.append(report)

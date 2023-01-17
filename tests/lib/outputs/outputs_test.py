@@ -1,4 +1,5 @@
 import os
+import pathlib
 from os import path, remove
 from unittest import mock
 
@@ -334,7 +335,7 @@ class Test_Outputs:
         # Create mock csv output file
         fixtures_dir = "fixtures"
         output_directory = (
-            f"{os.path.dirname(os.path.realpath(__file__))}/{fixtures_dir}"
+            f"{pathlib.Path().absolute()}/tests/lib/outputs/{fixtures_dir}"
         )
         output_mode = "csv"
         filename = f"prowler-output-{input_audit_info.audited_account}"

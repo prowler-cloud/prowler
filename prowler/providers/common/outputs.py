@@ -38,6 +38,7 @@ class Provider_Output_Options:
     bulk_checks_metadata: dict
     verbose: str
     output_filename: str
+    only_logs: bool
 
     def __init__(self, arguments, allowlist_file, bulk_checks_metadata):
         self.is_quiet = arguments.quiet
@@ -46,7 +47,7 @@ class Provider_Output_Options:
         self.verbose = arguments.verbose
         self.bulk_checks_metadata = bulk_checks_metadata
         self.allowlist_file = allowlist_file
-
+        self.only_logs = arguments.only_logs
         # Check output directory, if it is not created -> create it
         if arguments.output_directory:
             if not isdir(arguments.output_directory):
