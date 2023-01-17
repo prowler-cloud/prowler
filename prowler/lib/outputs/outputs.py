@@ -82,69 +82,74 @@ def report(check_findings, output_options, audit_info):
                 )
 
                 if file_descriptors:
-                    # AWS specific outputs
-                    if finding.check_metadata.Provider == "aws":
-                        if (
-                            "ens_rd2022_aws" in output_options.output_modes
-                            or "cis" in str(output_options.output_modes)
-                        ):
-                            fill_compliance(
-                                output_options, finding, audit_info, file_descriptors
+                    # Check if --quiet to only add fails to outputs
+                    if not (finding.status != "FAIL" and output_options.is_quiet):
+                        # AWS specific outputs
+                        if finding.check_metadata.Provider == "aws":
+                            if (
+                                "ens_rd2022_aws" in output_options.output_modes
+                                or "cis" in str(output_options.output_modes)
+                            ):
+                                fill_compliance(
+                                    output_options,
+                                    finding,
+                                    audit_info,
+                                    file_descriptors,
+                                )
+
+                            if "html" in file_descriptors:
+                                fill_html(file_descriptors["html"], finding)
+                                file_descriptors["html"].write("")
+
+                            if "json-asff" in file_descriptors:
+                                finding_output = Check_Output_JSON_ASFF()
+                                fill_json_asff(finding_output, audit_info, finding)
+
+                                json.dump(
+                                    finding_output.dict(),
+                                    file_descriptors["json-asff"],
+                                    indent=4,
+                                )
+                                file_descriptors["json-asff"].write(",")
+
+                            # Check if it is needed to send findings to security hub
+                            if (
+                                output_options.security_hub_enabled
+                                and finding.status != "INFO"
+                            ):
+                                send_to_security_hub(
+                                    output_options.is_quiet,
+                                    finding.status,
+                                    finding.region,
+                                    finding_output,
+                                    audit_info.audit_session,
+                                )
+
+                        # Common outputs
+                        if "csv" in file_descriptors:
+                            csv_writer, finding_output = generate_provider_output_csv(
+                                finding.check_metadata.Provider,
+                                finding,
+                                audit_info,
+                                "csv",
+                                file_descriptors["csv"],
                             )
+                            csv_writer.writerow(finding_output.__dict__)
 
-                        if "html" in file_descriptors:
-                            fill_html(file_descriptors["html"], finding)
-                            file_descriptors["html"].write("")
-
-                        if "json-asff" in file_descriptors:
-                            finding_output = Check_Output_JSON_ASFF()
-                            fill_json_asff(finding_output, audit_info, finding)
-
+                        if "json" in file_descriptors:
+                            finding_output = generate_provider_output_json(
+                                finding.check_metadata.Provider,
+                                finding,
+                                audit_info,
+                                "json",
+                                file_descriptors["json"],
+                            )
                             json.dump(
                                 finding_output.dict(),
-                                file_descriptors["json-asff"],
+                                file_descriptors["json"],
                                 indent=4,
                             )
-                            file_descriptors["json-asff"].write(",")
-
-                        # Check if it is needed to send findings to security hub
-                        if (
-                            output_options.security_hub_enabled
-                            and finding.status != "INFO"
-                        ):
-                            send_to_security_hub(
-                                output_options.is_quiet,
-                                finding.status,
-                                finding.region,
-                                finding_output,
-                                audit_info.audit_session,
-                            )
-
-                    # Common outputs
-                    if "csv" in file_descriptors:
-                        csv_writer, finding_output = generate_provider_output_csv(
-                            finding.check_metadata.Provider,
-                            finding,
-                            audit_info,
-                            "csv",
-                            file_descriptors["csv"],
-                        )
-                        csv_writer.writerow(finding_output.__dict__)
-
-                    if "json" in file_descriptors:
-                        finding_output = generate_provider_output_json(
-                            finding.check_metadata.Provider,
-                            finding,
-                            audit_info,
-                            "json",
-                            file_descriptors["json"],
-                        )
-                        json.dump(
-                            finding_output.dict(),
-                            file_descriptors["json"],
-                            indent=4,
-                        )
-                        file_descriptors["json"].write(",")
+                            file_descriptors["json"].write(",")
 
         else:  # No service resources in the whole account
             color = set_report_color("INFO")
