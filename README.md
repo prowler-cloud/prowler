@@ -123,7 +123,7 @@ Those credentials must be associated to a user or role with proper permissions t
 
 ### Service Principal authentication
 
-To allow Prowler assume the service principal identity to start the scan it is needed to configure the following environment variables:
+To allow Prowler assume the service principal identity to start the scan, it is needed to configure the following environment variables:
 
 ```console
 export AZURE_CLIENT_ID="XXXXXXXXX"
