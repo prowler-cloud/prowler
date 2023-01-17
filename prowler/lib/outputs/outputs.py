@@ -32,11 +32,7 @@ def stdout_report(finding, color, verbose, is_quiet):
     if finding.check_metadata.Provider == "azure":
         details = finding.check_metadata.ServiceName
 
-    if is_quiet and "FAIL" in finding.status:
-        print(
-            f"\t{color}{finding.status}{Style.RESET_ALL} {details}: {finding.status_extended}"
-        )
-    elif not is_quiet and verbose:
+    if verbose:
         print(
             f"\t{color}{finding.status}{Style.RESET_ALL} {details}: {finding.status_extended}"
         )
@@ -153,10 +149,10 @@ def report(check_findings, output_options, audit_info):
 
         else:  # No service resources in the whole account
             color = set_report_color("INFO")
-            if not output_options.is_quiet and output_options.verbose:
+            if output_options.verbose:
                 print(f"\t{color}INFO{Style.RESET_ALL} There are no resources")
         # Separator between findings and bar
-        if output_options.is_quiet or output_options.verbose:
+        if output_options.verbose:
             print()
         if file_descriptors:
             # Close all file descriptors

@@ -290,7 +290,7 @@ def import_check(check_path: str) -> ModuleType:
 
 def run_check(check: Check, output_options: Provider_Output_Options) -> list:
     findings = []
-    if output_options.verbose or output_options.is_quiet:
+    if output_options.verbose:
         print(
             f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
         )
