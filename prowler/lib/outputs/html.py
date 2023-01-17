@@ -1,5 +1,6 @@
 import sys
 from os import path
+
 from prowler.config.config import (
     html_file_suffix,
     html_logo_img,
@@ -235,23 +236,26 @@ def fill_html_overview_statistics(stats, output_filename, output_directory):
     try:
         filename = f"{output_directory}/{output_filename}{html_file_suffix}"
         #  Read file
-        with open(filename, "r") as file:
-            filedata = file.read()
+        if path.isfile(filename):
+            with open(filename, "r") as file:
+                filedata = file.read()
 
-        # Replace statistics
-        # TOTAL_FINDINGS
-        filedata = filedata.replace("TOTAL_FINDINGS", str(stats.get("findings_count")))
-        # TOTAL_RESOURCES
-        filedata = filedata.replace(
-            "TOTAL_RESOURCES", str(stats.get("resources_count"))
-        )
-        # TOTAL_PASS
-        filedata = filedata.replace("TOTAL_PASS", str(stats.get("total_pass")))
-        # TOTAL_FAIL
-        filedata = filedata.replace("TOTAL_FAIL", str(stats.get("total_fail")))
-        # Write file
-        with open(filename, "w") as file:
-            file.write(filedata)
+            # Replace statistics
+            # TOTAL_FINDINGS
+            filedata = filedata.replace(
+                "TOTAL_FINDINGS", str(stats.get("findings_count"))
+            )
+            # TOTAL_RESOURCES
+            filedata = filedata.replace(
+                "TOTAL_RESOURCES", str(stats.get("resources_count"))
+            )
+            # TOTAL_PASS
+            filedata = filedata.replace("TOTAL_PASS", str(stats.get("total_pass")))
+            # TOTAL_FAIL
+            filedata = filedata.replace("TOTAL_FAIL", str(stats.get("total_fail")))
+            # Write file
+            with open(filename, "w") as file:
+                file.write(filedata)
 
     except Exception as error:
         logger.critical(
