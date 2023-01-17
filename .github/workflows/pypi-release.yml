@@ -23,12 +23,19 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install build --upgrade
-      #- name: Set version number
-      #  run: python update_prowler_version.py ${{ env.VERSION }}
+          pip install build toml --upgrade
       - name: Build package
         run: python -m build
-      - name: Publish package to PyPI
+      - name: Publish prowler-cloud package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Replicate PyPi Package
+        run: |
+          rm -rf ./dist && rm -rf ./build && rm -rf prowler_cloud.egg-info
+          python util/replicate_pypi_package.py
+          python -m build
+      - name: Publish prowler package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
