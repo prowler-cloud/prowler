@@ -2,7 +2,7 @@ name: pypi-release
 
 on:
   release:
-    types: [published, edited]
+    types: [published]
 
 env:
   GITHUB_BRANCH: master
