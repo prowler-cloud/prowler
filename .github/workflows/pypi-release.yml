@@ -28,7 +28,7 @@ jobs:
       #  run: python update_prowler_version.py ${{ env.VERSION }}
       - name: Build package
         run: python -m build
-      - name: Publish package to TestPyPI
+      - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
