@@ -1,14 +1,11 @@
 name: pypi-release
 
 on:
-  pull_request:
-    branches:
-      - master
   release:
     types: [published]
 
 env:
-  GITHUB_BRANCH: PRWLR-1340-replicate-py-pi-packages
+  GITHUB_BRANCH: master
 
 jobs:
   release-prowler-job:
@@ -32,8 +29,7 @@ jobs:
       - name: Publish prowler-cloud package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
+          password: ${{ secrets.PYPI_API_TOKEN }}
       - name: Replicate PyPi Package
         run: |
           rm -rf ./dist && rm -rf ./build && rm -rf prowler_cloud.egg-info
@@ -42,5 +38,4 @@ jobs:
       - name: Publish prowler package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
+          password: ${{ secrets.PYPI_API_TOKEN }}
