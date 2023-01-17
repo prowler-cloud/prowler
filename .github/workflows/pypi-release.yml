@@ -10,7 +10,7 @@ env:
 jobs:
   release-prowler-job:
     runs-on: ubuntu-latest
-    name: Release Prowler
+    name: Release Prowler to PyPI
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
