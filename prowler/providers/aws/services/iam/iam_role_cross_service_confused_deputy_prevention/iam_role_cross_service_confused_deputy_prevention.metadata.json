@@ -19,7 +19,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Use the aws:SourceArn and aws:SourceAccount global condition context keys in resource-based policies to limit the permissions that a service has to a specific resource",
+      "Text": "Use the aws:SourceArn and aws:SourceAccount global condition context keys in trust relationship policies to limit the permissions that a service has to a specific resource",
       "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html#cross-service-confused-deputy-prevention"
     }
   },
