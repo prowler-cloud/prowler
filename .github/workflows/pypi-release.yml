@@ -26,7 +26,7 @@ jobs:
           pip install build --upgrade
       #- name: Set version number
       #  run: python update_prowler_version.py ${{ env.VERSION }}
-      - name: Build
+      - name: Build package
         run: python -m build
       - name: Publish package to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
