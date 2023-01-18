@@ -114,7 +114,7 @@ def is_allowlisted_in_region(allowlist, audited_account, check, region, resource
             for elem in allowlist["Accounts"][audited_account]["Checks"][check][
                 "Resources"
             ]:
-                if re.search(re.escape(elem), resource):
+                if re.search(elem, resource):
                     return True
         # Check if there is the specific region
         if region in allowlist["Accounts"][audited_account]["Checks"][check]["Regions"]:
