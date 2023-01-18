@@ -171,3 +171,37 @@ class Test_Allowlist:
                 allowlist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test"
             )
         )
+
+    def test_is_allowlisted_asterisk(self):
+
+        # Allowlist example
+        allowlist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": ["us-east-1", "eu-west-1"],
+                            "Resources": ["*"],
+                        }
+                    }
+                }
+            }
+        }
+
+        assert is_allowlisted(
+            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "prowler"
+        )
+
+        assert is_allowlisted(
+            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "prowler-test"
+        )
+
+        assert is_allowlisted(
+            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "test-prowler"
+        )
+
+        assert not (
+            is_allowlisted(
+                allowlist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test"
+            )
+        )
