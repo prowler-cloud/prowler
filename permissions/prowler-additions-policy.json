@@ -3,15 +3,22 @@
   "Statement": [
     {
       "Action": [
-        "ds:ListAuthorizedApplications",
+        "appstream:Describe*",
+        "codeartifact:List*",
+        "codebuild:BatchGet*",
+        "ds:Describe*",
+        "ds:Get*",
+        "ds:List*",
         "ec2:GetEbsEncryptionByDefault",
         "ecr:Describe*",
         "elasticfilesystem:DescribeBackupPolicy",
         "glue:GetConnections",
-        "glue:GetSecurityConfiguration",
+        "glue:GetSecurityConfiguration*",
         "glue:SearchTables",
-        "lambda:GetFunction",
+        "lambda:GetFunction*",
+        "macie2:GetMacieSession",
         "s3:GetAccountPublicAccessBlock",
+        "s3:GetPublicAccessBlock",
         "shield:DescribeProtection",
         "shield:GetSubscriptionState",
         "ssm:GetDocument",
@@ -21,6 +28,15 @@
       "Resource": "*",
       "Effect": "Allow",
       "Sid": "AllowMoreReadForProwler"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "apigateway:GET"
+      ],
+      "Resource": [
+        "arn:aws:apigateway:*::/restapis/*"
+      ]
     }
   ]
 }
