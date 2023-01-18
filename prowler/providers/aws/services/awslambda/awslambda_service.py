@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Any
 
 import requests
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -90,12 +91,16 @@ class Lambda:
         try:
             for function in self.functions.values():
                 if function.region == regional_client.region:
-                    function_policy = regional_client.get_policy(
-                        FunctionName=function.name
-                    )
-                    self.functions[function.name].policy = json.loads(
-                        function_policy["Policy"]
-                    )
+                    try:
+                        function_policy = regional_client.get_policy(
+                            FunctionName=function.name
+                        )
+                        self.functions[function.name].policy = json.loads(
+                            function_policy["Policy"]
+                        )
+                    except ClientError as e:
+                        if e.response["Error"]["Code"] == "ResourceNotFoundException":
+                            self.functions[function.name].policy = {}
 
         except Exception as error:
             logger.error(
@@ -109,16 +114,22 @@ class Lambda:
         try:
             for function in self.functions.values():
                 if function.region == regional_client.region:
-                    function_url_config = regional_client.get_function_url_config(
-                        FunctionName=function.name
-                    )
-                    self.functions[function.name].url_config = URLConfig(
-                        auth_type=function_url_config["AuthType"],
-                        url=function_url_config["FunctionUrl"],
-                        cors_config=URLConfigCORS(
-                            allow_origins=function_url_config["Cors"]["AllowOrigins"]
-                        ),
-                    )
+                    try:
+                        function_url_config = regional_client.get_function_url_config(
+                            FunctionName=function.name
+                        )
+                        if "Cors" in function_url_config:
+                            allow_origins = function_url_config["Cors"]["AllowOrigins"]
+                        else:
+                            allow_origins = []
+                        self.functions[function.name].url_config = URLConfig(
+                            auth_type=function_url_config["AuthType"],
+                            url=function_url_config["FunctionUrl"],
+                            cors_config=URLConfigCORS(allow_origins=allow_origins),
+                        )
+                    except ClientError as e:
+                        if e.response["Error"]["Code"] == "ResourceNotFoundException":
+                            self.functions[function.name].url_config = None
 
         except Exception as error:
             logger.error(
