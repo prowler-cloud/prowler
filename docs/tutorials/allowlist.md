@@ -11,7 +11,7 @@ You can use `-w`/`--allowlist-file` with the path of your allowlist yaml file, b
     ### Resources is a list that can have either Regex or Keywords:
     ###########################  ALLOWLIST EXAMPLE  ###########################
     Allowlist:
-    Accounts:
+      Accounts:
         "123456789012":
         Checks:
             "iam_user_hardware_mfa_enabled":
