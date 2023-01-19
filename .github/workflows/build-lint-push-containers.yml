@@ -124,7 +124,7 @@ jobs:
           password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
         env:
           AWS_REGION: ${{ env.AWS_REGION_PRO }}
-          
+
         name: Tag (latest)
         if: github.event_name == 'push'
         run: |
