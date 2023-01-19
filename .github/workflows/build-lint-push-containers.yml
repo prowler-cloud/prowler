@@ -124,53 +124,51 @@ jobs:
           password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
         env:
           AWS_REGION: ${{ env.AWS_REGION_PRO }}
-      - name: Configure AWS Credentials -- STG
-        if: github.event_name == 'push'
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-region: ${{ env.AWS_REGION_STG }}
-          role-to-assume: ${{ secrets.STG_IAM_ROLE_ARN }}
-          role-session-name: build-lint-containers-stg
-      - name: Login to ECR -- STG
-        if: github.event_name == 'push'
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ secrets.STG_ECR }}
-      - name: Configure AWS Credentials -- PLATFORM
-        if: github.event_name == 'release'
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-region: ${{ env.AWS_REGION_PLATFORM }}
-          role-to-assume: ${{ secrets.STG_IAM_ROLE_ARN }}
-          role-session-name: build-lint-containers-pro
-      - name: Login to ECR -- PLATFORM
-        if: github.event_name == 'release'
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ secrets.PLATFORM_ECR }}
+      # - name: Configure AWS Credentials -- STG
+      #   if: github.event_name == 'push'
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   with:
+      #     aws-region: ${{ env.AWS_REGION_STG }}
+      #     role-to-assume: ${{ secrets.STG_IAM_ROLE_ARN }}
+      #     role-session-name: build-lint-containers-stg
+      # - name: Login to ECR -- STG
+      #   if: github.event_name == 'push'
+      #   uses: docker/login-action@v2
+      #   with:
+      #     registry: ${{ secrets.STG_ECR }}
+      # - name: Configure AWS Credentials -- PLATFORM
+      #   if: github.event_name == 'release'
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   with:
+      #     aws-region: ${{ env.AWS_REGION_PLATFORM }}
+      #     role-to-assume: ${{ secrets.STG_IAM_ROLE_ARN }}
+      #     role-session-name: build-lint-containers-pro
+      # - name: Login to ECR -- PLATFORM
+      #   if: github.event_name == 'release'
+      #   uses: docker/login-action@v2
+        # with:
+        #   registry: ${{ secrets.PLATFORM_ECR }}
       - # Push to master branch - push "latest" tag
         name: Tag (latest)
         if: github.event_name == 'push'
         run: |
-          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PLATFORM_ECR }}/${{ secrets.PLATFORM_ECR_REPOSITORY }}:${{ env.LATEST_TAG }}
           docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
           docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
+
       - # Push to master branch - push "latest" tag
         name: Push (latest)
         if: github.event_name == 'push'
         run: |
-          docker push ${{ secrets.PLATFORM_ECR }}/${{ secrets.PLATFORM_ECR_REPOSITORY }}:${{ env.LATEST_TAG }}
           docker push ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
           docker push ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
+
       - # Tag the new release (stable and release tag)
         name: Tag (release)
         if: github.event_name == 'release'
         run: |
-          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PLATFORM_ECR }}/${{ secrets.PLATFORM_ECR_REPOSITORY }}:${{ github.event.release.tag_name }}
           docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
           docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
 
-          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PLATFORM_ECR }}/${{ secrets.PLATFORM_ECR_REPOSITORY }}:${{ env.STABLE_TAG }}
           docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
           docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
 
@@ -178,15 +176,27 @@ jobs:
         name: Push (release)
         if: github.event_name == 'release'
         run: |
-          docker push ${{ secrets.PLATFORM_ECR }}/${{ secrets.PLATFORM_ECR_REPOSITORY }}:${{ github.event.release.tag_name }}
           docker push ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
           docker push ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
 
-          docker push ${{ secrets.PLATFORM_ECR }}/${{ secrets.PLATFORM_ECR_REPOSITORY }}:${{ env.STABLE_TAG }}
           docker push ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
           docker push ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
+
       - name: Delete artifacts
         if: always()
         uses: geekyeggo/delete-artifact@v1
         with:
           name: ${{ env.IMAGE_NAME }}.tar
+
+  dispatch-action:
+    needs: container-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch event for latest
+        if: github.event_name == 'push'
+        run: |
+          curl https://api.github.com/repos/${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}/dispatches -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" --data '{"event_type":"dispatch","client_payload":{"version":"latest"}'
+      - name: Dispatch event for release
+        if: github.event_name == 'release'
+        run: |
+          curl https://api.github.com/repos/${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}/dispatches -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" --data '{"event_type":"dispatch","client_payload":{"version":"release", "tag":"${{ github.event.release.tag_name }}"}}'
