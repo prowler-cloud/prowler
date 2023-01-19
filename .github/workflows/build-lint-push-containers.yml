@@ -124,31 +124,7 @@ jobs:
           password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
         env:
           AWS_REGION: ${{ env.AWS_REGION_PRO }}
-      # - name: Configure AWS Credentials -- STG
-      #   if: github.event_name == 'push'
-      #   uses: aws-actions/configure-aws-credentials@v1
-      #   with:
-      #     aws-region: ${{ env.AWS_REGION_STG }}
-      #     role-to-assume: ${{ secrets.STG_IAM_ROLE_ARN }}
-      #     role-session-name: build-lint-containers-stg
-      # - name: Login to ECR -- STG
-      #   if: github.event_name == 'push'
-      #   uses: docker/login-action@v2
-      #   with:
-      #     registry: ${{ secrets.STG_ECR }}
-      # - name: Configure AWS Credentials -- PLATFORM
-      #   if: github.event_name == 'release'
-      #   uses: aws-actions/configure-aws-credentials@v1
-      #   with:
-      #     aws-region: ${{ env.AWS_REGION_PLATFORM }}
-      #     role-to-assume: ${{ secrets.STG_IAM_ROLE_ARN }}
-      #     role-session-name: build-lint-containers-pro
-      # - name: Login to ECR -- PLATFORM
-      #   if: github.event_name == 'release'
-      #   uses: docker/login-action@v2
-        # with:
-        #   registry: ${{ secrets.PLATFORM_ECR }}
-      - # Push to master branch - push "latest" tag
+          
         name: Tag (latest)
         if: github.event_name == 'push'
         run: |
