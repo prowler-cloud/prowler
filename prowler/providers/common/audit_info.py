@@ -96,7 +96,7 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         """
         set_aws_audit_info returns the AWS_Audit_Info
         """
-        logger.info("Setting Azure session ...")
+        logger.info("Setting AWS session ...")
 
         # Assume Role Options
         input_role = arguments.get("role")
@@ -122,6 +122,16 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         # Setting session
         current_audit_info.profile = input_profile
         current_audit_info.audited_regions = input_regions
+
+        # Parse Scan Tags
+        input_scan_tags = arguments.get("scan_tags")
+        scan_tags = []
+        if input_scan_tags:
+            for tag in input_scan_tags:
+                key = tag.split(":")[0]
+                value = tag.split(":")[1]
+                scan_tags.append({"Key": key, "Value": value})
+        current_audit_info.audit_tags = scan_tags
 
         logger.info("Generating original session ...")
         # Create an global original session using only profile/basic credentials info

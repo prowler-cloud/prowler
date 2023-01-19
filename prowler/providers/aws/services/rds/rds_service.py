@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -13,6 +14,7 @@ class RDS:
         self.service = "rds"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_tags = audit_info.audit_tags
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.db_instances = []
         self.db_snapshots = []
@@ -43,30 +45,31 @@ class RDS:
             )
             for page in describe_db_instances_paginator.paginate():
                 for instance in page["DBInstances"]:
-                    self.db_instances.append(
-                        DBInstance(
-                            id=instance["DBInstanceIdentifier"],
-                            endpoint=instance["Endpoint"]["Address"],
-                            status=instance["DBInstanceStatus"],
-                            public=instance["PubliclyAccessible"],
-                            encrypted=instance["StorageEncrypted"],
-                            auto_minor_version_upgrade=instance[
-                                "AutoMinorVersionUpgrade"
-                            ],
-                            backup_retention_period=instance.get(
-                                "BackupRetentionPeriod"
-                            ),
-                            cloudwatch_logs=instance.get(
-                                "EnabledCloudwatchLogsExports"
-                            ),
-                            deletion_protection=instance["DeletionProtection"],
-                            enhanced_monitoring_arn=instance.get(
-                                "EnhancedMonitoringResourceArn"
-                            ),
-                            multi_az=instance["MultiAZ"],
-                            region=regional_client.region,
+                    if is_resource_filtered(instance["TagList"], self.audit_tags):
+                        self.db_instances.append(
+                            DBInstance(
+                                id=instance["DBInstanceIdentifier"],
+                                endpoint=instance["Endpoint"]["Address"],
+                                status=instance["DBInstanceStatus"],
+                                public=instance["PubliclyAccessible"],
+                                encrypted=instance["StorageEncrypted"],
+                                auto_minor_version_upgrade=instance[
+                                    "AutoMinorVersionUpgrade"
+                                ],
+                                backup_retention_period=instance.get(
+                                    "BackupRetentionPeriod"
+                                ),
+                                cloudwatch_logs=instance.get(
+                                    "EnabledCloudwatchLogsExports"
+                                ),
+                                deletion_protection=instance["DeletionProtection"],
+                                enhanced_monitoring_arn=instance.get(
+                                    "EnhancedMonitoringResourceArn"
+                                ),
+                                multi_az=instance["MultiAZ"],
+                                region=regional_client.region,
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -80,13 +83,14 @@ class RDS:
             )
             for page in describe_db_snapshots_paginator.paginate():
                 for snapshot in page["DBSnapshots"]:
-                    self.db_snapshots.append(
-                        DBSnapshot(
-                            id=snapshot["DBSnapshotIdentifier"],
-                            instance_id=snapshot["DBInstanceIdentifier"],
-                            region=regional_client.region,
+                    if is_resource_filtered(snapshot["TagList"], self.audit_tags):
+                        self.db_snapshots.append(
+                            DBSnapshot(
+                                id=snapshot["DBSnapshotIdentifier"],
+                                instance_id=snapshot["DBInstanceIdentifier"],
+                                region=regional_client.region,
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -117,13 +121,14 @@ class RDS:
             )
             for page in describe_db_snapshots_paginator.paginate():
                 for snapshot in page["DBClusterSnapshots"]:
-                    self.db_cluster_snapshots.append(
-                        ClusterSnapshot(
-                            id=snapshot["DBClusterSnapshotIdentifier"],
-                            cluster_id=snapshot["DBClusterIdentifier"],
-                            region=regional_client.region,
+                    if is_resource_filtered(snapshot["TagList"], self.audit_tags):
+                        self.db_cluster_snapshots.append(
+                            ClusterSnapshot(
+                                id=snapshot["DBClusterSnapshotIdentifier"],
+                                cluster_id=snapshot["DBClusterIdentifier"],
+                                region=regional_client.region,
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
