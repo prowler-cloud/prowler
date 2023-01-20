@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -70,14 +71,18 @@ class IAM:
             roles = []
             for page in get_roles_paginator.paginate():
                 for role in page["Roles"]:
-                    roles.append(
-                        Role(
-                            name=role["RoleName"],
-                            arn=role["Arn"],
-                            assume_role_policy=role["AssumeRolePolicyDocument"],
-                            is_service_role=is_service_role(role),
+                    if not self.audit_tags or (
+                        "Tags" in role
+                        and is_resource_filtered(role["Tags"], self.audit_tags)
+                    ):
+                        roles.append(
+                            Role(
+                                name=role["RoleName"],
+                                arn=role["Arn"],
+                                assume_role_policy=role["AssumeRolePolicyDocument"],
+                                is_service_role=is_service_role(role),
+                            )
                         )
-                    )
             return roles
         except Exception as error:
             logger.error(
@@ -133,7 +138,13 @@ class IAM:
             # Use --scope Local to list only Customer Managed Policies
             for page in get_customer_managed_policies_paginator.paginate(Scope="Local"):
                 for customer_managed_policy in page["Policies"]:
-                    customer_managed_policies.append(customer_managed_policy)
+                    if not self.audit_tags or (
+                        "Tags" in customer_managed_policy
+                        and is_resource_filtered(
+                            customer_managed_policy["Tags"], self.audit_tags
+                        )
+                    ):
+                        customer_managed_policies.append(customer_managed_policy)
 
             return customer_managed_policies
 
@@ -208,14 +219,20 @@ class IAM:
             users = []
             for page in get_users_paginator.paginate():
                 for user in page["Users"]:
-                    if "PasswordLastUsed" not in user:
-                        users.append(User(user["UserName"], user["Arn"], None))
-                    else:
-                        users.append(
-                            User(
-                                user["UserName"], user["Arn"], user["PasswordLastUsed"]
+                    if not self.audit_tags or (
+                        "Tags" in user
+                        and is_resource_filtered(user["Tags"], self.audit_tags)
+                    ):
+                        if "PasswordLastUsed" not in user:
+                            users.append(User(user["UserName"], user["Arn"], None))
+                        else:
+                            users.append(
+                                User(
+                                    user["UserName"],
+                                    user["Arn"],
+                                    user["PasswordLastUsed"],
+                                )
                             )
-                        )
 
             return users
 
@@ -232,7 +249,11 @@ class IAM:
             mfa_devices = []
             for page in list_virtual_mfa_devices_paginator.paginate():
                 for mfa_device in page["VirtualMFADevices"]:
-                    mfa_devices.append(mfa_device)
+                    if not self.audit_tags or (
+                        "Tags" in mfa_device
+                        and is_resource_filtered(mfa_device["Tags"], self.audit_tags)
+                    ):
+                        mfa_devices.append(mfa_device)
 
             return mfa_devices
 

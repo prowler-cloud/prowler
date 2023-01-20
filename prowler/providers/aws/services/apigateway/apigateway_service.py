@@ -39,7 +39,8 @@ class APIGateway:
             for page in get_rest_apis_paginator.paginate():
                 for apigw in page["items"]:
                     if not self.audit_tags or (
-                        is_resource_filtered(apigw["tags"], self.audit_tags)
+                        "Tags" in apigw
+                        and is_resource_filtered(apigw["tags"], self.audit_tags)
                     ):
                         arn = f"arn:{self.audited_partition}:apigateway:{regional_client.region}::/apis/{apigw['id']}"
                         self.rest_apis.append(

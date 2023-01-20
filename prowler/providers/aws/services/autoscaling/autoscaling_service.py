@@ -2,6 +2,7 @@ import threading
 from dataclasses import dataclass
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -35,15 +36,19 @@ class AutoScaling:
             )
             for page in describe_launch_configurations_paginator.paginate():
                 for configuration in page["LaunchConfigurations"]:
-                    self.launch_configurations.append(
-                        LaunchConfiguration(
-                            configuration["LaunchConfigurationARN"],
-                            configuration["LaunchConfigurationName"],
-                            configuration["UserData"],
-                            configuration["ImageId"],
-                            regional_client.region,
+                    if not self.audit_tags or (
+                        "Tags" in configuration
+                        and is_resource_filtered(configuration["Tags"], self.audit_tags)
+                    ):
+                        self.launch_configurations.append(
+                            LaunchConfiguration(
+                                configuration["LaunchConfigurationARN"],
+                                configuration["LaunchConfigurationName"],
+                                configuration["UserData"],
+                                configuration["ImageId"],
+                                regional_client.region,
+                            )
                         )
-                    )
 
         except Exception as error:
             logger.error(

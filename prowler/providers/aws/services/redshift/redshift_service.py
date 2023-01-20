@@ -3,6 +3,7 @@ import threading
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -35,25 +36,29 @@ class Redshift:
             list_clusters_paginator = regional_client.get_paginator("describe_clusters")
             for page in list_clusters_paginator.paginate():
                 for cluster in page["Clusters"]:
-                    cluster_to_append = Cluster(
-                        id=cluster["ClusterIdentifier"],
-                        region=regional_client.region,
-                    )
-                    if (
-                        "PubliclyAccessible" in cluster
-                        and cluster["PubliclyAccessible"]
+                    if not self.audit_tags or (
+                        "Tags" in cluster
+                        and is_resource_filtered(cluster["Tags"], self.audit_tags)
                     ):
-                        cluster_to_append.public_access = True
-                    if "Endpoint" in cluster and "Address" in cluster["Endpoint"]:
-                        cluster_to_append.endpoint_address = cluster["Endpoint"][
-                            "Address"
-                        ]
-                    if (
-                        "AllowVersionUpgrade" in cluster
-                        and cluster["AllowVersionUpgrade"]
-                    ):
-                        cluster_to_append.allow_version_upgrade = True
-                    self.clusters.append(cluster_to_append)
+                        cluster_to_append = Cluster(
+                            id=cluster["ClusterIdentifier"],
+                            region=regional_client.region,
+                        )
+                        if (
+                            "PubliclyAccessible" in cluster
+                            and cluster["PubliclyAccessible"]
+                        ):
+                            cluster_to_append.public_access = True
+                        if "Endpoint" in cluster and "Address" in cluster["Endpoint"]:
+                            cluster_to_append.endpoint_address = cluster["Endpoint"][
+                                "Address"
+                            ]
+                        if (
+                            "AllowVersionUpgrade" in cluster
+                            and cluster["AllowVersionUpgrade"]
+                        ):
+                            cluster_to_append.allow_version_upgrade = True
+                        self.clusters.append(cluster_to_append)
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

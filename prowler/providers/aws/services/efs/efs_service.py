@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from botocore.client import ClientError
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -37,15 +38,19 @@ class EFS:
             )
             for page in describe_efs_paginator.paginate():
                 for efs in page["FileSystems"]:
-                    self.filesystems.append(
-                        FileSystem(
-                            id=efs["FileSystemId"],
-                            region=regional_client.region,
-                            policy=None,
-                            backup_policy=None,
-                            encrypted=efs["Encrypted"],
+                    if not self.audit_tags or (
+                        "Tags" in efs
+                        and is_resource_filtered(efs["Tags"], self.audit_tags)
+                    ):
+                        self.filesystems.append(
+                            FileSystem(
+                                id=efs["FileSystemId"],
+                                region=regional_client.region,
+                                policy=None,
+                                backup_policy=None,
+                                encrypted=efs["Encrypted"],
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

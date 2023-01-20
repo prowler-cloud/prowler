@@ -46,7 +46,8 @@ class RDS:
             for page in describe_db_instances_paginator.paginate():
                 for instance in page["DBInstances"]:
                     if not self.audit_tags or (
-                        is_resource_filtered(instance["TagList"], self.audit_tags)
+                        "TagList" in instance
+                        and is_resource_filtered(instance["TagList"], self.audit_tags)
                     ):
                         self.db_instances.append(
                             DBInstance(
@@ -86,7 +87,8 @@ class RDS:
             for page in describe_db_snapshots_paginator.paginate():
                 for snapshot in page["DBSnapshots"]:
                     if not self.audit_tags or (
-                        is_resource_filtered(snapshot["TagList"], self.audit_tags)
+                        "TagList" in snapshot
+                        and is_resource_filtered(snapshot["TagList"], self.audit_tags)
                     ):
                         self.db_snapshots.append(
                             DBSnapshot(
@@ -126,7 +128,8 @@ class RDS:
             for page in describe_db_snapshots_paginator.paginate():
                 for snapshot in page["DBClusterSnapshots"]:
                     if not self.audit_tags or (
-                        is_resource_filtered(snapshot["TagList"], self.audit_tags)
+                        "TagList" in snapshot
+                        and is_resource_filtered(snapshot["TagList"], self.audit_tags)
                     ):
                         self.db_cluster_snapshots.append(
                             ClusterSnapshot(

@@ -37,7 +37,8 @@ class ApiGatewayV2:
             for page in get_rest_apis_paginator.paginate():
                 for apigw in page["Items"]:
                     if not self.audit_tags or (
-                        is_resource_filtered(apigw["Tags"], self.audit_tags)
+                        "Tags" in apigw
+                        and is_resource_filtered(apigw["Tags"], self.audit_tags)
                     ):
                         self.apis.append(
                             API(
