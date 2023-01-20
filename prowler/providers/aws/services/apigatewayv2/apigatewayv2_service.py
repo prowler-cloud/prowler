@@ -2,6 +2,7 @@ import threading
 from dataclasses import dataclass
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -35,13 +36,16 @@ class ApiGatewayV2:
             get_rest_apis_paginator = regional_client.get_paginator("get_apis")
             for page in get_rest_apis_paginator.paginate():
                 for apigw in page["Items"]:
-                    self.apis.append(
-                        API(
-                            apigw["ApiId"],
-                            regional_client.region,
-                            apigw["Name"],
+                    if not self.audit_tags or (
+                        is_resource_filtered(apigw["Tags"], self.audit_tags)
+                    ):
+                        self.apis.append(
+                            API(
+                                apigw["ApiId"],
+                                regional_client.region,
+                                apigw["Name"],
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

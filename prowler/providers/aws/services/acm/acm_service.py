@@ -36,11 +36,11 @@ class ACM:
                 "list_certificates"
             )
             for page in list_certificates_paginator.paginate():
-                for analyzer in page["CertificateSummaryList"]:
+                for certificate in page["CertificateSummaryList"]:
                     self.certificates.append(
                         Certificate(
-                            analyzer["CertificateArn"],
-                            analyzer["DomainName"],
+                            certificate["CertificateArn"],
+                            certificate["DomainName"],
                             False,
                             regional_client.region,
                         )
