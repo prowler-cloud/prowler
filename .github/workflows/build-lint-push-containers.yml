@@ -125,7 +125,7 @@ jobs:
         env:
           AWS_REGION: ${{ env.AWS_REGION_PRO }}
 
-        name: Tag (latest)
+      - name: Tag (latest)
         if: github.event_name == 'push'
         run: |
           docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
