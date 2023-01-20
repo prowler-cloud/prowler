@@ -15,7 +15,7 @@ cd
 ```
 - Once Python 3.9 is available we can install Prowler from pip:
 ```
-pip3.9 install prowler-cloud
+pip3.9 install prowler
 ```
 - Now enjoy Prowler:
 ```
