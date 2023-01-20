@@ -2,6 +2,7 @@ import threading
 from dataclasses import dataclass
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -12,6 +13,7 @@ class EC2:
         self.session = audit_info.audit_session
         self.audited_partition = audit_info.audited_partition
         self.audited_account = audit_info.audited_account
+        self.audit_tags = audit_info.audit_tags
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.instances = []
         self.__threading_call__(self.__describe_instances__)
@@ -54,42 +56,48 @@ class EC2:
             for page in describe_instances_paginator.paginate():
                 for reservation in page["Reservations"]:
                     for instance in reservation["Instances"]:
-                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:instance/{instance['InstanceId']}"
-                        http_tokens = None
-                        http_endpoint = None
-                        public_dns = None
-                        public_ip = None
-                        instance_profile = None
-                        if "MetadataOptions" in instance:
-                            http_tokens = instance["MetadataOptions"]["HttpTokens"]
-                            http_endpoint = instance["MetadataOptions"]["HttpEndpoint"]
-                        if (
-                            "PublicDnsName" in instance
-                            and "PublicIpAddress" in instance
+                        if not self.audit_tags or (
+                            "Tags" in instance
+                            and is_resource_filtered(instance["Tags"], self.audit_tags)
                         ):
-                            public_dns = instance["PublicDnsName"]
-                            public_ip = instance["PublicIpAddress"]
-                        if "IamInstanceProfile" in instance:
-                            instance_profile = instance["IamInstanceProfile"]
+                            arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:instance/{instance['InstanceId']}"
+                            http_tokens = None
+                            http_endpoint = None
+                            public_dns = None
+                            public_ip = None
+                            instance_profile = None
+                            if "MetadataOptions" in instance:
+                                http_tokens = instance["MetadataOptions"]["HttpTokens"]
+                                http_endpoint = instance["MetadataOptions"][
+                                    "HttpEndpoint"
+                                ]
+                            if (
+                                "PublicDnsName" in instance
+                                and "PublicIpAddress" in instance
+                            ):
+                                public_dns = instance["PublicDnsName"]
+                                public_ip = instance["PublicIpAddress"]
+                            if "IamInstanceProfile" in instance:
+                                instance_profile = instance["IamInstanceProfile"]
 
-                        self.instances.append(
-                            Instance(
-                                instance["InstanceId"],
-                                arn,
-                                instance["State"]["Name"],
-                                regional_client.region,
-                                instance["InstanceType"],
-                                instance["ImageId"],
-                                instance["LaunchTime"],
-                                instance["PrivateDnsName"],
-                                instance["PrivateIpAddress"],
-                                public_dns,
-                                public_ip,
-                                http_tokens,
-                                http_endpoint,
-                                instance_profile,
+                            self.instances.append(
+                                Instance(
+                                    instance["InstanceId"],
+                                    arn,
+                                    instance["State"]["Name"],
+                                    regional_client.region,
+                                    instance["InstanceType"],
+                                    instance["ImageId"],
+                                    instance["LaunchTime"],
+                                    instance["PrivateDnsName"],
+                                    instance["PrivateIpAddress"],
+                                    public_dns,
+                                    public_ip,
+                                    http_tokens,
+                                    http_endpoint,
+                                    instance_profile,
+                                )
                             )
-                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -103,17 +111,21 @@ class EC2:
             )
             for page in describe_security_groups_paginator.paginate():
                 for sg in page["SecurityGroups"]:
-                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:security-group/{sg['GroupId']}"
-                    self.security_groups.append(
-                        SecurityGroup(
-                            sg["GroupName"],
-                            arn,
-                            regional_client.region,
-                            sg["GroupId"],
-                            sg["IpPermissions"],
-                            sg["IpPermissionsEgress"],
+                    if not self.audit_tags or (
+                        "Tags" in sg
+                        and is_resource_filtered(sg["Tags"], self.audit_tags)
+                    ):
+                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:security-group/{sg['GroupId']}"
+                        self.security_groups.append(
+                            SecurityGroup(
+                                sg["GroupName"],
+                                arn,
+                                regional_client.region,
+                                sg["GroupId"],
+                                sg["IpPermissions"],
+                                sg["IpPermissionsEgress"],
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -127,15 +139,19 @@ class EC2:
             )
             for page in describe_network_acls_paginator.paginate():
                 for nacl in page["NetworkAcls"]:
-                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:network-acl/{nacl['NetworkAclId']}"
-                    self.network_acls.append(
-                        NetworkACL(
-                            nacl["NetworkAclId"],
-                            arn,
-                            regional_client.region,
-                            nacl["Entries"],
+                    if not self.audit_tags or (
+                        "Tags" in nacl
+                        and is_resource_filtered(nacl["Tags"], self.audit_tags)
+                    ):
+                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:network-acl/{nacl['NetworkAclId']}"
+                        self.network_acls.append(
+                            NetworkACL(
+                                nacl["NetworkAclId"],
+                                arn,
+                                regional_client.region,
+                                nacl["Entries"],
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -150,17 +166,21 @@ class EC2:
             encrypted = False
             for page in describe_snapshots_paginator.paginate(OwnerIds=["self"]):
                 for snapshot in page["Snapshots"]:
-                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:snapshot/{snapshot['SnapshotId']}"
-                    if snapshot["Encrypted"]:
-                        encrypted = True
-                    self.snapshots.append(
-                        Snapshot(
-                            snapshot["SnapshotId"],
-                            arn,
-                            regional_client.region,
-                            encrypted,
+                    if not self.audit_tags or (
+                        "Tags" in snapshot
+                        and is_resource_filtered(snapshot["Tags"], self.audit_tags)
+                    ):
+                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:snapshot/{snapshot['SnapshotId']}"
+                        if snapshot["Encrypted"]:
+                            encrypted = True
+                        self.snapshots.append(
+                            Snapshot(
+                                snapshot["SnapshotId"],
+                                arn,
+                                regional_client.region,
+                                encrypted,
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -230,18 +250,22 @@ class EC2:
         try:
             public = False
             for image in regional_client.describe_images(Owners=["self"])["Images"]:
-                arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
-                if image["Public"]:
-                    public = True
-                self.images.append(
-                    Image(
-                        image["ImageId"],
-                        arn,
-                        image["Name"],
-                        public,
-                        regional_client.region,
+                if not self.audit_tags or (
+                    "Tags" in image
+                    and is_resource_filtered(image["Tags"], self.audit_tags)
+                ):
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
+                    if image["Public"]:
+                        public = True
+                    self.images.append(
+                        Image(
+                            image["ImageId"],
+                            arn,
+                            image["Name"],
+                            public,
+                            regional_client.region,
+                        )
                     )
-                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -255,15 +279,19 @@ class EC2:
             )
             for page in describe_volumes_paginator.paginate():
                 for volume in page["Volumes"]:
-                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:volume/{volume['VolumeId']}"
-                    self.volumes.append(
-                        Volume(
-                            volume["VolumeId"],
-                            arn,
-                            regional_client.region,
-                            volume["Encrypted"],
+                    if not self.audit_tags or (
+                        "Tags" in volume
+                        and is_resource_filtered(volume["Tags"], self.audit_tags)
+                    ):
+                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:volume/{volume['VolumeId']}"
+                        self.volumes.append(
+                            Volume(
+                                volume["VolumeId"],
+                                arn,
+                                regional_client.region,
+                                volume["Encrypted"],
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -273,26 +301,30 @@ class EC2:
         logger.info("EC2 - Describing Elastic IPs...")
         try:
             for address in regional_client.describe_addresses()["Addresses"]:
-                public_ip = None
-                association_id = None
-                allocation_id = None
-                if "PublicIp" in address:
-                    public_ip = address["PublicIp"]
-                if "AssociationId" in address:
-                    association_id = address["AssociationId"]
-                if "AllocationId" in address:
-                    allocation_id = address["AllocationId"]
-                elastic_ip_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:eip-allocation/{allocation_id}"
+                if not self.audit_tags or (
+                    "Tags" in address
+                    and is_resource_filtered(address["Tags"], self.audit_tags)
+                ):
+                    public_ip = None
+                    association_id = None
+                    allocation_id = None
+                    if "PublicIp" in address:
+                        public_ip = address["PublicIp"]
+                    if "AssociationId" in address:
+                        association_id = address["AssociationId"]
+                    if "AllocationId" in address:
+                        allocation_id = address["AllocationId"]
+                    elastic_ip_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:eip-allocation/{allocation_id}"
 
-                self.elastic_ips.append(
-                    ElasticIP(
-                        public_ip,
-                        association_id,
-                        allocation_id,
-                        elastic_ip_arn,
-                        regional_client.region,
+                    self.elastic_ips.append(
+                        ElasticIP(
+                            public_ip,
+                            association_id,
+                            allocation_id,
+                            elastic_ip_arn,
+                            regional_client.region,
+                        )
                     )
-                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
