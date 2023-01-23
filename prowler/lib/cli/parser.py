@@ -102,7 +102,7 @@ Detailed documentation at https://docs.prowler.cloud
             "-q",
             "--quiet",
             action="store_true",
-            help="Show only Prowler failed findings",
+            help="Store or send only Prowler failed findings",
         )
         common_outputs_parser.add_argument(
             "-M",

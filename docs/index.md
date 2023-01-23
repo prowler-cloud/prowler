@@ -45,7 +45,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
     _Commands_:
 
     ``` bash
-    pip install prowler-cloud
+    pip install prowler
     prowler -v
     ```
 
@@ -82,7 +82,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
     _Commands_:
 
     ```
-    pip3.9 install prowler-cloud
+    pip3.9 install prowler
     export PATH=$PATH:/home/$HOME/.local/bin/
     prowler -v
     ```
@@ -98,7 +98,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
     _Commands_:
 
     ```
-    pip3.9 install prowler-cloud
+    pip3.9 install prowler
     export PATH=$PATH:/home/$HOME/.local/bin/
     prowler -v
     ```
@@ -124,7 +124,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
 
     * Once Python 3.9 is available we can install Prowler from pip:
     ```
-    pip3.9 install prowler-cloud
+    pip3.9 install prowler
     prowler -v
     ```
 
@@ -139,7 +139,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
     _Commands_:
 
     ```
-    pip install prowler-cloud
+    pip install prowler
     prowler -v
     ```
 
