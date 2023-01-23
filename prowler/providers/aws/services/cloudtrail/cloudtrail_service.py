@@ -3,6 +3,7 @@ import threading
 from dataclasses import dataclass
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -12,6 +13,7 @@ class Cloudtrail:
         self.service = "cloudtrail"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.region = audit_info.profile_region
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.trails = []
@@ -35,8 +37,12 @@ class Cloudtrail:
         logger.info("Cloudtrail - Getting trails...")
         try:
             describe_trails = regional_client.describe_trails()["trailList"]
-            if describe_trails:
-                for trail in describe_trails:
+            trails_count = 0
+            for trail in describe_trails:
+                if not self.audit_resources or (
+                    is_resource_filtered(trail["TrailARN"], self.audit_resources)
+                ):
+                    trails_count += 1
                     kms_key_id = None
                     log_group_arn = None
                     if "KmsKeyId" in trail:
@@ -61,7 +67,7 @@ class Cloudtrail:
                             data_events=[],
                         )
                     )
-            else:
+            if trails_count == 0:
                 self.trails.append(
                     Trail(
                         name=None,

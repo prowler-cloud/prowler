@@ -14,7 +14,7 @@ class RDS:
         self.service = "rds"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
-        self.audit_tags = audit_info.audit_tags
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.db_instances = []
         self.db_snapshots = []
@@ -45,9 +45,10 @@ class RDS:
             )
             for page in describe_db_instances_paginator.paginate():
                 for instance in page["DBInstances"]:
-                    if not self.audit_tags or (
-                        "TagList" in instance
-                        and is_resource_filtered(instance["TagList"], self.audit_tags)
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            instance["DBInstanceIdentifier"], self.audit_resources
+                        )
                     ):
                         self.db_instances.append(
                             DBInstance(
@@ -86,9 +87,10 @@ class RDS:
             )
             for page in describe_db_snapshots_paginator.paginate():
                 for snapshot in page["DBSnapshots"]:
-                    if not self.audit_tags or (
-                        "TagList" in snapshot
-                        and is_resource_filtered(snapshot["TagList"], self.audit_tags)
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            snapshot["DBSnapshotIdentifier"], self.audit_resources
+                        )
                     ):
                         self.db_snapshots.append(
                             DBSnapshot(
@@ -127,9 +129,11 @@ class RDS:
             )
             for page in describe_db_snapshots_paginator.paginate():
                 for snapshot in page["DBClusterSnapshots"]:
-                    if not self.audit_tags or (
-                        "TagList" in snapshot
-                        and is_resource_filtered(snapshot["TagList"], self.audit_tags)
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            snapshot["DBClusterSnapshotIdentifier"],
+                            self.audit_resources,
+                        )
                     ):
                         self.db_cluster_snapshots.append(
                             ClusterSnapshot(

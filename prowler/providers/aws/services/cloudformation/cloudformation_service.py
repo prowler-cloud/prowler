@@ -12,6 +12,7 @@ class CloudFormation:
         self.service = "cloudformation"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.stacks = []
         self.__threading_call__(self.__describe_stacks__)
@@ -36,9 +37,8 @@ class CloudFormation:
             describe_stacks_paginator = regional_client.get_paginator("describe_stacks")
             for page in describe_stacks_paginator.paginate():
                 for stack in page["Stacks"]:
-                    if not self.audit_tags or (
-                        "Tags" in stack
-                        and is_resource_filtered(stack["Tags"], self.audit_tags)
+                    if not self.audit_resources or (
+                        is_resource_filtered(stack["StackId"], self.audit_resources)
                     ):
                         outputs = []
                         if "Outputs" in stack:

@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -14,6 +15,7 @@ class ELB:
         self.session = audit_info.audit_session
         self.audited_partition = audit_info.audited_partition
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.loadbalancers = []
         self.__threading_call__(self.__describe_load_balancers__)
@@ -39,24 +41,28 @@ class ELB:
             )
             for page in describe_elb_paginator.paginate():
                 for elb in page["LoadBalancerDescriptions"]:
-                    listeners = []
-                    for listener in elb["ListenerDescriptions"]:
-                        listeners.append(
-                            Listener(
-                                protocol=listener["Listener"]["Protocol"],
-                                policies=listener["PolicyNames"],
+                    arn = f"arn:{self.audited_partition}:elasticloadbalancing:{regional_client.region}:{self.audited_account}:loadbalancer/{elb['LoadBalancerName']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
+                    ):
+                        listeners = []
+                        for listener in elb["ListenerDescriptions"]:
+                            listeners.append(
+                                Listener(
+                                    protocol=listener["Listener"]["Protocol"],
+                                    policies=listener["PolicyNames"],
+                                )
+                            )
+                        self.loadbalancers.append(
+                            LoadBalancer(
+                                name=elb["LoadBalancerName"],
+                                arn=arn,
+                                dns=elb["DNSName"],
+                                region=regional_client.region,
+                                scheme=elb["Scheme"],
+                                listeners=listeners,
                             )
                         )
-                    self.loadbalancers.append(
-                        LoadBalancer(
-                            name=elb["LoadBalancerName"],
-                            arn=f"arn:{self.audited_partition}:elasticloadbalancing:{regional_client.region}:{self.audited_account}:loadbalancer/{elb['LoadBalancerName']}",
-                            dns=elb["DNSName"],
-                            region=regional_client.region,
-                            scheme=elb["Scheme"],
-                            listeners=listeners,
-                        )
-                    )
 
         except Exception as error:
             logger.error(

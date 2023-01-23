@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from prowler.config.config import timestamp_utc
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -12,6 +13,7 @@ class ACM:
         self.service = "acm"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.certificates = []
         self.__threading_call__(self.__list_certificates__)
@@ -37,14 +39,19 @@ class ACM:
             )
             for page in list_certificates_paginator.paginate():
                 for certificate in page["CertificateSummaryList"]:
-                    self.certificates.append(
-                        Certificate(
-                            certificate["CertificateArn"],
-                            certificate["DomainName"],
-                            False,
-                            regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            certificate["CertificateArn"], self.audit_resources
                         )
-                    )
+                    ):
+                        self.certificates.append(
+                            Certificate(
+                                certificate["CertificateArn"],
+                                certificate["DomainName"],
+                                False,
+                                regional_client.region,
+                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

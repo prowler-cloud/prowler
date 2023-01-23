@@ -15,6 +15,7 @@ class SSM:
         self.service = "ssm"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.documents = {}
         self.compliance_resources = {}
@@ -54,9 +55,8 @@ class SSM:
             list_documents_paginator = regional_client.get_paginator("list_documents")
             for page in list_documents_paginator.paginate(**list_documents_parameters):
                 for document in page["DocumentIdentifiers"]:
-                    if not self.audit_tags or (
-                        "Tags" in document
-                        and is_resource_filtered(document["Tags"], self.audit_tags)
+                    if not self.audit_resources or (
+                        is_resource_filtered(document["Name"], self.audit_resources)
                     ):
                         document_name = document["Name"]
 

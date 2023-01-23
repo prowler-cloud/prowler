@@ -350,7 +350,7 @@ Detailed documentation at https://docs.prowler.cloud
             "--scan-tags",
             nargs="+",
             default=None,
-            help="Scan only resources with specific tags (Key:Value), e.g., Environment:dev Project:prowler",
+            help="Scan only resources with specific tags (Key=Value), e.g., Environment=dev Project=prowler",
         )
 
     def __init_azure_parser__(self):

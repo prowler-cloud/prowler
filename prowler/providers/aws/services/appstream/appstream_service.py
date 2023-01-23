@@ -2,6 +2,7 @@ import threading
 from dataclasses import dataclass
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -11,6 +12,7 @@ class AppStream:
         self.service = "appstream"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.fleets = []
         self.__threading_call__(self.__describe_fleets__)
@@ -33,25 +35,28 @@ class AppStream:
             describe_fleets_paginator = regional_client.get_paginator("describe_fleets")
             for page in describe_fleets_paginator.paginate():
                 for fleet in page["Fleets"]:
-                    self.fleets.append(
-                        Fleet(
-                            arn=fleet["Arn"],
-                            name=fleet["Name"],
-                            max_user_duration_in_seconds=fleet[
-                                "MaxUserDurationInSeconds"
-                            ],
-                            disconnect_timeout_in_seconds=fleet[
-                                "DisconnectTimeoutInSeconds"
-                            ],
-                            idle_disconnect_timeout_in_seconds=fleet[
-                                "IdleDisconnectTimeoutInSeconds"
-                            ],
-                            enable_default_internet_access=fleet[
-                                "EnableDefaultInternetAccess"
-                            ],
-                            region=regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(fleet["Arn"], self.audit_resources)
+                    ):
+                        self.fleets.append(
+                            Fleet(
+                                arn=fleet["Arn"],
+                                name=fleet["Name"],
+                                max_user_duration_in_seconds=fleet[
+                                    "MaxUserDurationInSeconds"
+                                ],
+                                disconnect_timeout_in_seconds=fleet[
+                                    "DisconnectTimeoutInSeconds"
+                                ],
+                                idle_disconnect_timeout_in_seconds=fleet[
+                                    "IdleDisconnectTimeoutInSeconds"
+                                ],
+                                enable_default_internet_access=fleet[
+                                    "EnableDefaultInternetAccess"
+                                ],
+                                region=regional_client.region,
+                            )
                         )
-                    )
 
         except Exception as error:
             logger.error(

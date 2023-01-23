@@ -5,6 +5,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -14,6 +15,7 @@ class CodeArtifact:
         self.service = "codeartifact"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         # repositories is a dictionary containing all the codeartifact service information
         self.repositories = {}
@@ -40,18 +42,21 @@ class CodeArtifact:
             )
             for page in list_repositories_paginator.paginate():
                 for repository in page["repositories"]:
-                    package_name = repository["name"]
-                    package_domain_name = repository["domainName"]
-                    package_domain_owner = repository["domainOwner"]
-                    package_arn = repository["arn"]
-                    # Save Repository
-                    self.repositories[package_name] = Repository(
-                        name=package_name,
-                        arn=package_arn,
-                        domain_name=package_domain_name,
-                        domain_owner=package_domain_owner,
-                        region=regional_client.region,
-                    )
+                    if not self.audit_resources or (
+                        is_resource_filtered(repository["arn"], self.audit_resources)
+                    ):
+                        package_name = repository["name"]
+                        package_domain_name = repository["domainName"]
+                        package_domain_owner = repository["domainOwner"]
+                        package_arn = repository["arn"]
+                        # Save Repository
+                        self.repositories[package_name] = Repository(
+                            name=package_name,
+                            arn=package_arn,
+                            domain_name=package_domain_name,
+                            domain_owner=package_domain_owner,
+                            region=regional_client.region,
+                        )
 
         except Exception as error:
             logger.error(

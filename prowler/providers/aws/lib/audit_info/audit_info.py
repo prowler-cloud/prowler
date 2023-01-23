@@ -21,7 +21,7 @@ current_audit_info = AWS_Audit_Info(
         session_duration=None,
         external_id=None,
     ),
-    audit_tags=None,
+    audit_resources=None,
     audited_regions=None,
     organizations_metadata=None,
 )

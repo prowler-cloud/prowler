@@ -5,6 +5,7 @@ from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -14,6 +15,7 @@ class Glacier:
         self.service = "glacier"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.vaults = {}
         self.__threading_call__(self.__list_vaults__)
@@ -37,13 +39,16 @@ class Glacier:
             list_vaults_paginator = regional_client.get_paginator("list_vaults")
             for page in list_vaults_paginator.paginate():
                 for vault in page["VaultList"]:
-                    vault_name = vault["VaultName"]
-                    vault_arn = vault["VaultARN"]
-                    self.vaults[vault_name] = Vault(
-                        name=vault_name,
-                        arn=vault_arn,
-                        region=regional_client.region,
-                    )
+                    if not self.audit_resources or (
+                        is_resource_filtered(vault["VaultARN"], self.audit_resources)
+                    ):
+                        vault_name = vault["VaultName"]
+                        vault_arn = vault["VaultARN"]
+                        self.vaults[vault_name] = Vault(
+                            name=vault_name,
+                            arn=vault_arn,
+                            region=regional_client.region,
+                        )
 
         except Exception as error:
             logger.error(

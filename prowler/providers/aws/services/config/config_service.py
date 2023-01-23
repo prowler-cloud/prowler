@@ -2,6 +2,7 @@ import threading
 from dataclasses import dataclass
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -11,6 +12,7 @@ class Config:
         self.service = "config"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.recorders = []
         self.__threading_call__(self.__describe_configuration_recorder_status__)
@@ -33,8 +35,12 @@ class Config:
             recorders = regional_client.describe_configuration_recorder_status()[
                 "ConfigurationRecordersStatus"
             ]
-            if recorders:
-                for recorder in recorders:
+            recorders_count = 0
+            for recorder in recorders:
+                if not self.audit_resources or (
+                    is_resource_filtered(recorder["name"], self.audit_resources)
+                ):
+                    recorders_count += 1
                     if "lastStatus" in recorder:
                         self.recorders.append(
                             Recorder(
@@ -54,7 +60,7 @@ class Config:
                             )
                         )
             # No config recorders in region
-            else:
+            if recorders_count == 0:
                 self.recorders.append(
                     Recorder(
                         self.audited_account,

@@ -13,6 +13,7 @@ class EFS:
     def __init__(self, audit_info):
         self.service = "efs"
         self.session = audit_info.audit_session
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.filesystems = []
         self.__threading_call__(self.__describe_file_systems__)
@@ -38,9 +39,8 @@ class EFS:
             )
             for page in describe_efs_paginator.paginate():
                 for efs in page["FileSystems"]:
-                    if not self.audit_tags or (
-                        "Tags" in efs
-                        and is_resource_filtered(efs["Tags"], self.audit_tags)
+                    if not self.audit_resources or (
+                        is_resource_filtered(efs["FileSystemId"], self.audit_resources)
                     ):
                         self.filesystems.append(
                             FileSystem(

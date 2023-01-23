@@ -2,6 +2,7 @@ import threading
 from dataclasses import dataclass
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -11,6 +12,7 @@ class CloudWatch:
         self.service = "cloudwatch"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.region = list(
             generate_regional_clients(
                 self.service, audit_info, global_service=True
@@ -38,15 +40,18 @@ class CloudWatch:
             describe_alarms_paginator = regional_client.get_paginator("describe_alarms")
             for page in describe_alarms_paginator.paginate():
                 for alarm in page["MetricAlarms"]:
-                    self.metric_alarms.append(
-                        MetricAlarm(
-                            alarm["AlarmArn"],
-                            alarm["AlarmName"],
-                            alarm["MetricName"],
-                            alarm["Namespace"],
-                            regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(alarm["AlarmArn"], self.audit_resources)
+                    ):
+                        self.metric_alarms.append(
+                            MetricAlarm(
+                                alarm["AlarmArn"],
+                                alarm["AlarmName"],
+                                alarm["MetricName"],
+                                alarm["Namespace"],
+                                regional_client.region,
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -59,6 +64,7 @@ class Logs:
         self.service = "logs"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.metric_filters = []
         self.log_groups = []
@@ -85,15 +91,18 @@ class Logs:
             )
             for page in describe_metric_filters_paginator.paginate():
                 for filter in page["metricFilters"]:
-                    self.metric_filters.append(
-                        MetricFilter(
-                            filter["filterName"],
-                            filter["metricTransformations"][0]["metricName"],
-                            filter["filterPattern"],
-                            filter["logGroupName"],
-                            regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(filter["filterName"], self.audit_resources)
+                    ):
+                        self.metric_filters.append(
+                            MetricFilter(
+                                filter["filterName"],
+                                filter["metricTransformations"][0]["metricName"],
+                                filter["filterPattern"],
+                                filter["logGroupName"],
+                                regional_client.region,
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -106,22 +115,25 @@ class Logs:
                 "describe_log_groups"
             )
             for page in describe_log_groups_paginator.paginate():
-                for filter in page["logGroups"]:
-                    kms = None
-                    retention_days = 0
-                    if "kmsKeyId" in filter:
-                        kms = filter["kmsKeyId"]
-                    if "retentionInDays" in filter:
-                        retention_days = filter["retentionInDays"]
-                    self.log_groups.append(
-                        LogGroup(
-                            filter["arn"],
-                            filter["logGroupName"],
-                            retention_days,
-                            kms,
-                            regional_client.region,
+                for log_group in page["logGroups"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(log_group["arn"], self.audit_resources)
+                    ):
+                        kms = None
+                        retention_days = 0
+                        if "kmsKeyId" in log_group:
+                            kms = log_group["kmsKeyId"]
+                        if "retentionInDays" in log_group:
+                            retention_days = log_group["retentionInDays"]
+                        self.log_groups.append(
+                            LogGroup(
+                                log_group["arn"],
+                                log_group["logGroupName"],
+                                retention_days,
+                                kms,
+                                regional_client.region,
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

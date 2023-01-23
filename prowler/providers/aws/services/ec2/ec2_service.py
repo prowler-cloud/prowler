@@ -13,7 +13,7 @@ class EC2:
         self.session = audit_info.audit_session
         self.audited_partition = audit_info.audited_partition
         self.audited_account = audit_info.audited_account
-        self.audit_tags = audit_info.audit_tags
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.instances = []
         self.__threading_call__(self.__describe_instances__)
@@ -56,11 +56,10 @@ class EC2:
             for page in describe_instances_paginator.paginate():
                 for reservation in page["Reservations"]:
                     for instance in reservation["Instances"]:
-                        if not self.audit_tags or (
-                            "Tags" in instance
-                            and is_resource_filtered(instance["Tags"], self.audit_tags)
+                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:instance/{instance['InstanceId']}"
+                        if not self.audit_resources or (
+                            is_resource_filtered(arn, self.audit_resources)
                         ):
-                            arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:instance/{instance['InstanceId']}"
                             http_tokens = None
                             http_endpoint = None
                             public_dns = None
@@ -111,11 +110,10 @@ class EC2:
             )
             for page in describe_security_groups_paginator.paginate():
                 for sg in page["SecurityGroups"]:
-                    if not self.audit_tags or (
-                        "Tags" in sg
-                        and is_resource_filtered(sg["Tags"], self.audit_tags)
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:security-group/{sg['GroupId']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
-                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:security-group/{sg['GroupId']}"
                         self.security_groups.append(
                             SecurityGroup(
                                 sg["GroupName"],
@@ -139,11 +137,10 @@ class EC2:
             )
             for page in describe_network_acls_paginator.paginate():
                 for nacl in page["NetworkAcls"]:
-                    if not self.audit_tags or (
-                        "Tags" in nacl
-                        and is_resource_filtered(nacl["Tags"], self.audit_tags)
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:network-acl/{nacl['NetworkAclId']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
-                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:network-acl/{nacl['NetworkAclId']}"
                         self.network_acls.append(
                             NetworkACL(
                                 nacl["NetworkAclId"],
@@ -166,11 +163,10 @@ class EC2:
             encrypted = False
             for page in describe_snapshots_paginator.paginate(OwnerIds=["self"]):
                 for snapshot in page["Snapshots"]:
-                    if not self.audit_tags or (
-                        "Tags" in snapshot
-                        and is_resource_filtered(snapshot["Tags"], self.audit_tags)
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:snapshot/{snapshot['SnapshotId']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
-                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:snapshot/{snapshot['SnapshotId']}"
                         if snapshot["Encrypted"]:
                             encrypted = True
                         self.snapshots.append(
@@ -250,11 +246,10 @@ class EC2:
         try:
             public = False
             for image in regional_client.describe_images(Owners=["self"])["Images"]:
-                if not self.audit_tags or (
-                    "Tags" in image
-                    and is_resource_filtered(image["Tags"], self.audit_tags)
+                arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
+                if not self.audit_resources or (
+                    is_resource_filtered(arn, self.audit_resources)
                 ):
-                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
                     if image["Public"]:
                         public = True
                     self.images.append(
@@ -279,11 +274,10 @@ class EC2:
             )
             for page in describe_volumes_paginator.paginate():
                 for volume in page["Volumes"]:
-                    if not self.audit_tags or (
-                        "Tags" in volume
-                        and is_resource_filtered(volume["Tags"], self.audit_tags)
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:volume/{volume['VolumeId']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
-                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:volume/{volume['VolumeId']}"
                         self.volumes.append(
                             Volume(
                                 volume["VolumeId"],
@@ -301,21 +295,19 @@ class EC2:
         logger.info("EC2 - Describing Elastic IPs...")
         try:
             for address in regional_client.describe_addresses()["Addresses"]:
-                if not self.audit_tags or (
-                    "Tags" in address
-                    and is_resource_filtered(address["Tags"], self.audit_tags)
+                public_ip = None
+                association_id = None
+                allocation_id = None
+                if "PublicIp" in address:
+                    public_ip = address["PublicIp"]
+                if "AssociationId" in address:
+                    association_id = address["AssociationId"]
+                if "AllocationId" in address:
+                    allocation_id = address["AllocationId"]
+                elastic_ip_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:eip-allocation/{allocation_id}"
+                if not self.audit_resources or (
+                    is_resource_filtered(elastic_ip_arn, self.audit_resources)
                 ):
-                    public_ip = None
-                    association_id = None
-                    allocation_id = None
-                    if "PublicIp" in address:
-                        public_ip = address["PublicIp"]
-                    if "AssociationId" in address:
-                        association_id = address["AssociationId"]
-                    if "AllocationId" in address:
-                        allocation_id = address["AllocationId"]
-                    elastic_ip_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:eip-allocation/{allocation_id}"
-
                     self.elastic_ips.append(
                         ElasticIP(
                             public_ip,

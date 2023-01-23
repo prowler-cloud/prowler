@@ -123,16 +123,6 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         current_audit_info.profile = input_profile
         current_audit_info.audited_regions = input_regions
 
-        # Parse Scan Tags
-        input_scan_tags = arguments.get("scan_tags")
-        scan_tags = []
-        if input_scan_tags:
-            for tag in input_scan_tags:
-                key = tag.split(":")[0]
-                value = tag.split(":")[1]
-                scan_tags.append({"Key": key, "Value": value})
-        current_audit_info.audit_tags = scan_tags
-
         logger.info("Generating original session ...")
         # Create an global original session using only profile/basic credentials info
         aws_provider = AWS_Provider(current_audit_info)
@@ -246,6 +236,25 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         if not arguments.get("only_logs"):
             self.print_audit_credentials(current_audit_info)
 
+        # Parse Scan Tags
+        input_scan_tags = arguments.get("scan_tags")
+        scan_tags = []
+        if input_scan_tags:
+            for tag in input_scan_tags:
+                key = tag.split("=")[0]
+                value = tag.split("=")[1]
+                scan_tags.append({"Key": key, "Values": [value]})
+            # Get Resources with scan_tags for all regions
+            tagged_resources = []
+            for region in current_audit_info.audited_regions:
+                client = current_audit_info.audit_session.client(
+                    "resourcegroupstaggingapi", region_name=region
+                )
+                get_resources_paginator = client.get_paginator("get_resources")
+                for page in get_resources_paginator.paginate(TagFilters=scan_tags):
+                    for resource in page["ResourceTagMappingList"]:
+                        tagged_resources.append(resource["ResourceARN"])
+            current_audit_info.audit_resources = tagged_resources
         return current_audit_info
 
     def set_azure_audit_info(self, arguments) -> Azure_Audit_Info:

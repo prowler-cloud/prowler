@@ -2,6 +2,7 @@ import threading
 from dataclasses import dataclass
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -11,6 +12,7 @@ class DynamoDB:
         self.service = "dynamodb"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.tables = []
         self.__threading_call__(self.__list_tables__)
@@ -35,15 +37,18 @@ class DynamoDB:
             list_tables_paginator = regional_client.get_paginator("list_tables")
             for page in list_tables_paginator.paginate():
                 for table in page["TableNames"]:
-                    self.tables.append(
-                        Table(
-                            arn="",
-                            name=table,
-                            encryption_type=None,
-                            kms_arn=None,
-                            region=regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(table, self.audit_resources)
+                    ):
+                        self.tables.append(
+                            Table(
+                                arn="",
+                                name=table,
+                                encryption_type=None,
+                                kms_arn=None,
+                                region=regional_client.region,
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -96,6 +101,7 @@ class DAX:
         self.service = "dax"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.clusters = []
         self.__threading_call__(self.__describe_clusters__)
@@ -120,18 +126,23 @@ class DAX:
             )
             for page in describe_clusters_paginator.paginate():
                 for cluster in page["Clusters"]:
-                    encryption = False
-                    if "SSEDescription" in cluster:
-                        if cluster["SSEDescription"]["Status"] == "ENABLED":
-                            encryption = True
-                    self.clusters.append(
-                        Cluster(
-                            cluster["ClusterArn"],
-                            cluster["ClusterName"],
-                            encryption,
-                            regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            cluster["ClusterArn"], self.audit_resources
                         )
-                    )
+                    ):
+                        encryption = False
+                        if "SSEDescription" in cluster:
+                            if cluster["SSEDescription"]["Status"] == "ENABLED":
+                                encryption = True
+                        self.clusters.append(
+                            Cluster(
+                                cluster["ClusterArn"],
+                                cluster["ClusterName"],
+                                encryption,
+                                regional_client.region,
+                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

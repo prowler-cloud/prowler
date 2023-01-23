@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from json import loads
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -11,6 +12,7 @@ class ECR:
     def __init__(self, audit_info):
         self.service = "ecr"
         self.session = audit_info.audit_session
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.repositories = []
         self.__threading_call__(self.__describe_repositories__)
@@ -38,19 +40,24 @@ class ECR:
             )
             for page in describe_ecr_paginator.paginate():
                 for repository in page["repositories"]:
-                    self.repositories.append(
-                        Repository(
-                            name=repository["repositoryName"],
-                            arn=repository["repositoryArn"],
-                            region=regional_client.region,
-                            scan_on_push=repository["imageScanningConfiguration"][
-                                "scanOnPush"
-                            ],
-                            policy=None,
-                            images_details=[],
-                            lyfecicle_policy=None,
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            repository["repositoryArn"], self.audit_resources
                         )
-                    )
+                    ):
+                        self.repositories.append(
+                            Repository(
+                                name=repository["repositoryName"],
+                                arn=repository["repositoryArn"],
+                                region=regional_client.region,
+                                scan_on_push=repository["imageScanningConfiguration"][
+                                    "scanOnPush"
+                                ],
+                                policy=None,
+                                images_details=[],
+                                lyfecicle_policy=None,
+                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

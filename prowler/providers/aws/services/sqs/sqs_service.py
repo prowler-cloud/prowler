@@ -4,6 +4,7 @@ from json import loads
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -12,6 +13,7 @@ class SQS:
     def __init__(self, audit_info):
         self.service = "sqs"
         self.session = audit_info.audit_session
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.queues = []
         self.__threading_call__(self.__list_queues__)
@@ -36,12 +38,15 @@ class SQS:
             for page in list_queues_paginator.paginate():
                 if "QueueUrls" in page:
                     for queue in page["QueueUrls"]:
-                        self.queues.append(
-                            Queue(
-                                id=queue,
-                                region=regional_client.region,
+                        if not self.audit_resources or (
+                            is_resource_filtered(queue, self.audit_resources)
+                        ):
+                            self.queues.append(
+                                Queue(
+                                    id=queue,
+                                    region=regional_client.region,
+                                )
                             )
-                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

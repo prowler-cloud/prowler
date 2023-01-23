@@ -13,6 +13,7 @@ class VPC:
         self.service = "ec2"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.vpcs = []
         self.vpc_peering_connections = []
@@ -44,9 +45,8 @@ class VPC:
             describe_vpcs_paginator = regional_client.get_paginator("describe_vpcs")
             for page in describe_vpcs_paginator.paginate():
                 for vpc in page["Vpcs"]:
-                    if not self.audit_tags or (
-                        "Tags" in vpc
-                        and is_resource_filtered(vpc["Tags"], self.audit_tags)
+                    if not self.audit_resources or (
+                        is_resource_filtered(vpc["VpcId"], self.audit_resources)
                     ):
                         self.vpcs.append(
                             VPCs(
@@ -69,9 +69,10 @@ class VPC:
             )
             for page in describe_vpc_peering_connections_paginator.paginate():
                 for conn in page["VpcPeeringConnections"]:
-                    if not self.audit_tags or (
-                        "Tags" in conn
-                        and is_resource_filtered(conn["Tags"], self.audit_tags)
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            conn["VpcPeeringConnectionId"], self.audit_resources
+                        )
                     ):
                         self.vpc_peering_connections.append(
                             VpcPeeringConnection(
@@ -149,9 +150,10 @@ class VPC:
             )
             for page in describe_vpc_endpoints_paginator.paginate():
                 for endpoint in page["VpcEndpoints"]:
-                    if not self.audit_tags or (
-                        "Tags" in endpoint
-                        and is_resource_filtered(endpoint["Tags"], self.audit_tags)
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            endpoint["VpcEndpointId"], self.audit_resources
+                        )
                     ):
                         endpoint_policy = None
                         if endpoint.get("PolicyDocument"):
@@ -180,9 +182,10 @@ class VPC:
             for page in describe_vpc_endpoint_services_paginator.paginate():
                 for endpoint in page["ServiceDetails"]:
                     if endpoint["Owner"] != "amazon":
-                        if not self.audit_tags or (
-                            "Tags" in endpoint
-                            and is_resource_filtered(endpoint["Tags"], self.audit_tags)
+                        if not self.audit_resources or (
+                            is_resource_filtered(
+                                endpoint["ServiceId"], self.audit_resources
+                            )
                         ):
                             self.vpc_endpoint_services.append(
                                 VpcEndpointService(

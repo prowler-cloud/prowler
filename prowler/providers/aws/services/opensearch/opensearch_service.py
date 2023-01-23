@@ -4,6 +4,7 @@ from json import loads
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -12,6 +13,7 @@ class OpenSearchService:
     def __init__(self, audit_info):
         self.service = "opensearch"
         self.session = audit_info.audit_session
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.opensearch_domains = []
         self.__threading_call__(self.__list_domain_names__)
@@ -35,11 +37,14 @@ class OpenSearchService:
         try:
             domains = regional_client.list_domain_names()
             for domain in domains["DomainNames"]:
-                self.opensearch_domains.append(
-                    OpenSearchDomain(
-                        name=domain["DomainName"], region=regional_client.region
+                if not self.audit_resources or (
+                    is_resource_filtered(domain["DomainName"], self.audit_resources)
+                ):
+                    self.opensearch_domains.append(
+                        OpenSearchDomain(
+                            name=domain["DomainName"], region=regional_client.region
+                        )
                     )
-                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

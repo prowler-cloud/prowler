@@ -12,6 +12,7 @@ class AutoScaling:
         self.service = "autoscaling"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.launch_configurations = []
         self.__threading_call__(self.__describe_launch_configurations__)
@@ -36,9 +37,11 @@ class AutoScaling:
             )
             for page in describe_launch_configurations_paginator.paginate():
                 for configuration in page["LaunchConfigurations"]:
-                    if not self.audit_tags or (
-                        "Tags" in configuration
-                        and is_resource_filtered(configuration["Tags"], self.audit_tags)
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            configuration["LaunchConfigurationARN"],
+                            self.audit_resources,
+                        )
                     ):
                         self.launch_configurations.append(
                             LaunchConfiguration(

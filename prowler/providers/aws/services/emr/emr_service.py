@@ -4,6 +4,7 @@ from enum import Enum
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -13,6 +14,7 @@ class EMR:
         self.service = "emr"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.clusters = {}
         self.block_public_access_configuration = {}
@@ -38,18 +40,23 @@ class EMR:
             list_clusters_paginator = regional_client.get_paginator("list_clusters")
             for page in list_clusters_paginator.paginate():
                 for cluster in page["Clusters"]:
-                    cluster_name = cluster["Name"]
-                    cluster_id = cluster["Id"]
-                    cluster_arn = cluster["ClusterArn"]
-                    cluster_status = cluster["Status"]["State"]
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            cluster["ClusterArn"], self.audit_resources
+                        )
+                    ):
+                        cluster_name = cluster["Name"]
+                        cluster_id = cluster["Id"]
+                        cluster_arn = cluster["ClusterArn"]
+                        cluster_status = cluster["Status"]["State"]
 
-                    self.clusters[cluster_id] = Cluster(
-                        id=cluster_id,
-                        name=cluster_name,
-                        arn=cluster_arn,
-                        status=cluster_status,
-                        region=regional_client.region,
-                    )
+                        self.clusters[cluster_id] = Cluster(
+                            id=cluster_id,
+                            name=cluster_name,
+                            arn=cluster_arn,
+                            status=cluster_status,
+                            region=regional_client.region,
+                        )
 
         except Exception as error:
             logger.error(

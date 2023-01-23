@@ -3,6 +3,7 @@ import threading
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -11,6 +12,7 @@ class WAFv2:
     def __init__(self, audit_info):
         self.service = "wafv2"
         self.session = audit_info.audit_session
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.web_acls = []
         self.__threading_call__(self.__list_web_acls__)
@@ -32,15 +34,18 @@ class WAFv2:
         logger.info("WAFv2 - Listing Regional Web ACLs...")
         try:
             for wafv2 in regional_client.list_web_acls(Scope="REGIONAL")["WebACLs"]:
-                self.web_acls.append(
-                    WebAclv2(
-                        arn=wafv2["ARN"],
-                        name=wafv2["Name"],
-                        id=wafv2["Id"],
-                        albs=[],
-                        region=regional_client.region,
+                if not self.audit_resources or (
+                    is_resource_filtered(wafv2["ARN"], self.audit_resources)
+                ):
+                    self.web_acls.append(
+                        WebAclv2(
+                            arn=wafv2["ARN"],
+                            name=wafv2["Name"],
+                            id=wafv2["Id"],
+                            albs=[],
+                            region=regional_client.region,
+                        )
                     )
-                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

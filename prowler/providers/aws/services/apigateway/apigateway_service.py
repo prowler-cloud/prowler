@@ -12,6 +12,7 @@ class APIGateway:
         self.service = "apigateway"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.audited_partition = audit_info.audited_partition
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.rest_apis = []
@@ -38,11 +39,10 @@ class APIGateway:
             get_rest_apis_paginator = regional_client.get_paginator("get_rest_apis")
             for page in get_rest_apis_paginator.paginate():
                 for apigw in page["items"]:
-                    if not self.audit_tags or (
-                        "Tags" in apigw
-                        and is_resource_filtered(apigw["tags"], self.audit_tags)
+                    arn = f"arn:{self.audited_partition}:apigateway:{regional_client.region}::/apis/{apigw['id']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
-                        arn = f"arn:{self.audited_partition}:apigateway:{regional_client.region}::/apis/{apigw['id']}"
                         self.rest_apis.append(
                             RestAPI(
                                 apigw["id"],

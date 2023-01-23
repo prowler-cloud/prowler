@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -12,6 +13,7 @@ class ELBv2:
     def __init__(self, audit_info):
         self.service = "elbv2"
         self.session = audit_info.audit_session
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.loadbalancersv2 = []
         self.__threading_call__(self.__describe_load_balancers__)
@@ -40,17 +42,22 @@ class ELBv2:
             )
             for page in describe_elbv2_paginator.paginate():
                 for elbv2 in page["LoadBalancers"]:
-                    self.loadbalancersv2.append(
-                        LoadBalancerv2(
-                            name=elbv2["LoadBalancerName"],
-                            dns=elbv2["DNSName"],
-                            region=regional_client.region,
-                            arn=elbv2["LoadBalancerArn"],
-                            scheme=elbv2["Scheme"],
-                            type=elbv2["Type"],
-                            listeners=[],
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            elbv2["LoadBalancerArn"], self.audit_resources
                         )
-                    )
+                    ):
+                        self.loadbalancersv2.append(
+                            LoadBalancerv2(
+                                name=elbv2["LoadBalancerName"],
+                                dns=elbv2["DNSName"],
+                                region=regional_client.region,
+                                arn=elbv2["LoadBalancerArn"],
+                                scheme=elbv2["Scheme"],
+                                type=elbv2["Type"],
+                                listeners=[],
+                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

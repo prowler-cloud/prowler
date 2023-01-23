@@ -30,6 +30,7 @@ class IAM:
         self.service = "iam"
         self.session = audit_info.audit_session
         self.account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.partition = audit_info.audited_partition
         self.client = self.session.client(self.service)
         global_client = generate_regional_clients(
@@ -71,9 +72,8 @@ class IAM:
             roles = []
             for page in get_roles_paginator.paginate():
                 for role in page["Roles"]:
-                    if not self.audit_tags or (
-                        "Tags" in role
-                        and is_resource_filtered(role["Tags"], self.audit_tags)
+                    if not self.audit_resources or (
+                        is_resource_filtered(role["Arn"], self.audit_resources)
                     ):
                         roles.append(
                             Role(
@@ -120,7 +120,10 @@ class IAM:
             groups = []
             for page in get_groups_paginator.paginate():
                 for group in page["Groups"]:
-                    groups.append(Group(group["GroupName"], group["Arn"]))
+                    if not self.audit_resources or (
+                        is_resource_filtered(group["Arn"], self.audit_resources)
+                    ):
+                        groups.append(Group(group["GroupName"], group["Arn"]))
 
             return groups
 
@@ -138,10 +141,9 @@ class IAM:
             # Use --scope Local to list only Customer Managed Policies
             for page in get_customer_managed_policies_paginator.paginate(Scope="Local"):
                 for customer_managed_policy in page["Policies"]:
-                    if not self.audit_tags or (
-                        "Tags" in customer_managed_policy
-                        and is_resource_filtered(
-                            customer_managed_policy["Tags"], self.audit_tags
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            customer_managed_policy["Arn"], self.audit_resources
                         )
                     ):
                         customer_managed_policies.append(customer_managed_policy)
@@ -219,9 +221,8 @@ class IAM:
             users = []
             for page in get_users_paginator.paginate():
                 for user in page["Users"]:
-                    if not self.audit_tags or (
-                        "Tags" in user
-                        and is_resource_filtered(user["Tags"], self.audit_tags)
+                    if not self.audit_resources or (
+                        is_resource_filtered(user["Arn"], self.audit_resources)
                     ):
                         if "PasswordLastUsed" not in user:
                             users.append(User(user["UserName"], user["Arn"], None))
@@ -249,11 +250,7 @@ class IAM:
             mfa_devices = []
             for page in list_virtual_mfa_devices_paginator.paginate():
                 for mfa_device in page["VirtualMFADevices"]:
-                    if not self.audit_tags or (
-                        "Tags" in mfa_device
-                        and is_resource_filtered(mfa_device["Tags"], self.audit_tags)
-                    ):
-                        mfa_devices.append(mfa_device)
+                    mfa_devices.append(mfa_device)
 
             return mfa_devices
 
@@ -384,7 +381,10 @@ class IAM:
             list_policies_paginator = self.client.get_paginator("list_policies")
             for page in list_policies_paginator.paginate(Scope="Local"):
                 for policy in page["Policies"]:
-                    policies.append(policy)
+                    if not self.audit_resources or (
+                        is_resource_filtered(policy["Arn"], self.audit_resources)
+                    ):
+                        policies.append(policy)
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -425,14 +425,17 @@ class IAM:
             for certificate in self.client.list_server_certificates()[
                 "ServerCertificateMetadataList"
             ]:
-                server_certificates.append(
-                    Certificate(
-                        certificate["ServerCertificateName"],
-                        certificate["ServerCertificateId"],
-                        certificate["Arn"],
-                        certificate["Expiration"],
+                if not self.audit_resources or (
+                    is_resource_filtered(certificate["Arn"], self.audit_resources)
+                ):
+                    server_certificates.append(
+                        Certificate(
+                            certificate["ServerCertificateName"],
+                            certificate["ServerCertificateId"],
+                            certificate["Arn"],
+                            certificate["Expiration"],
+                        )
                     )
-                )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
