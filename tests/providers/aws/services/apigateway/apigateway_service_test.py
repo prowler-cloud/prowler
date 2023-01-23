@@ -28,7 +28,6 @@ class Test_APIGateway_Service:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
-            audit_resources=None,
         )
         return audit_info
 

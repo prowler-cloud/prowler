@@ -27,6 +27,7 @@ mock_current_audit_info = AWS_Audit_Info(
     assumed_role_info=None,
     audited_regions=["eu-west-2", "eu-west-1"],
     organizations_metadata=None,
+    audit_resources=None,
 )
 
 mock_azure_audit_info = Azure_Audit_Info(
