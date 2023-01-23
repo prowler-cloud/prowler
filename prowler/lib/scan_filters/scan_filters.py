@@ -1,7 +1,7 @@
 from prowler.lib.logger import logger
 
 
-def is_resource_filtered(resource: str, audit_resources: list):
+def is_resource_filtered(resource: str, audit_resources: list) -> bool:
     """
     Check if it is a tags-based
 
