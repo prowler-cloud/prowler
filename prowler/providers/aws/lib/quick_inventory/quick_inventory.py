@@ -139,6 +139,10 @@ def create_inventory_table(resources: list) -> dict:
 
         if service == "s3":
             resource_type = "bucket"
+        elif service == "sns":
+            resource_type = "topic"
+        elif service == "sqs":
+            resource_type = "queue"
         else:
             resource_type = resource.split(":")[5].split("/")[0]
         if service not in resources_type:
