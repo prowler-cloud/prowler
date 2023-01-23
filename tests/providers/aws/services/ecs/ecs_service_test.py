@@ -39,6 +39,7 @@ class Test_ECS_Service:
             assumed_role_info=None,
             audited_regions=None,
             organizations_metadata=None,
+            audit_resources=None,
         )
         return audit_info
 

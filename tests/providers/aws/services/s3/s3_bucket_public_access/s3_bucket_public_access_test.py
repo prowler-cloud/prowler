@@ -30,6 +30,7 @@ class Test_s3_bucket_public_access:
             assumed_role_info=None,
             audited_regions=None,
             organizations_metadata=None,
+            audit_resources=None,
         )
         return audit_info
 

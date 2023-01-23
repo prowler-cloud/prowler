@@ -36,6 +36,7 @@ class Test_EC2_Service:
             assumed_role_info=None,
             audited_regions=["eu-west-1", "us-east-1"],
             organizations_metadata=None,
+            audit_resources=None,
         )
         return audit_info
 

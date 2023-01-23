@@ -42,6 +42,7 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             assumed_role_info=None,
             audited_regions=None,
             organizations_metadata=None,
+            audit_resources=None,
         )
         return audit_info
 

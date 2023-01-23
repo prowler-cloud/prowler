@@ -81,6 +81,7 @@ class Test_Outputs:
             assumed_role_info=None,
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,
+            audit_resources=None,
         )
         test_output_modes = [
             ["csv"],
@@ -258,6 +259,7 @@ class Test_Outputs:
             assumed_role_info=None,
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,
+            audit_resources=None,
         )
         finding = Check_Report(
             load_check_metadata(
@@ -327,6 +329,7 @@ class Test_Outputs:
             assumed_role_info=None,
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,
+            audit_resources=None,
         )
         # Creat mock bucket
         bucket_name = "test_bucket"
@@ -429,6 +432,7 @@ class Test_Outputs:
             assumed_role_info=None,
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,
+            audit_resources=None,
         )
         finding = Check_Report(
             load_check_metadata(

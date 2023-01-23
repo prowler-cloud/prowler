@@ -56,6 +56,7 @@ class Test_AWS_Provider:
             ),
             audited_regions=audited_regions,
             organizations_metadata=None,
+            audit_resources=None,
         )
 
         # Call assume_role
@@ -109,6 +110,7 @@ class Test_AWS_Provider:
             assumed_role_info=None,
             audited_regions=audited_regions,
             organizations_metadata=None,
+            audit_resources=None,
         )
         generate_regional_clients_response = generate_regional_clients(
             "ec2", audit_info
@@ -137,6 +139,7 @@ class Test_AWS_Provider:
             assumed_role_info=None,
             audited_regions=audited_regions,
             organizations_metadata=None,
+            audit_resources=None,
         )
         generate_regional_clients_response = generate_regional_clients(
             "route53", audit_info, global_service=True
@@ -164,6 +167,7 @@ class Test_AWS_Provider:
             assumed_role_info=None,
             audited_regions=audited_regions,
             organizations_metadata=None,
+            audit_resources=None,
         )
         generate_regional_clients_response = generate_regional_clients(
             "shield", audit_info, global_service=True
