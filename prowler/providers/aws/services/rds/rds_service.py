@@ -50,32 +50,32 @@ class RDS:
                             instance["DBInstanceIdentifier"], self.audit_resources
                         )
                     ):
-                      if instance["Engine"] != "docdb":
-                          self.db_instances.append(
-                              DBInstance(
-                                  id=instance["DBInstanceIdentifier"],
-                                  endpoint=instance["Endpoint"]["Address"],
-                                  engine=instance["Engine"],
-                                  status=instance["DBInstanceStatus"],
-                                  public=instance["PubliclyAccessible"],
-                                  encrypted=instance["StorageEncrypted"],
-                                  auto_minor_version_upgrade=instance[
-                                      "AutoMinorVersionUpgrade"
-                                  ],
-                                  backup_retention_period=instance.get(
-                                      "BackupRetentionPeriod"
-                                  ),
-                                  cloudwatch_logs=instance.get(
-                                      "EnabledCloudwatchLogsExports"
-                                  ),
-                                  deletion_protection=instance["DeletionProtection"],
-                                  enhanced_monitoring_arn=instance.get(
-                                      "EnhancedMonitoringResourceArn"
-                                  ),
-                                  multi_az=instance["MultiAZ"],
-                                  region=regional_client.region,
-                              )
-                          )
+                        if instance["Engine"] != "docdb":
+                            self.db_instances.append(
+                                DBInstance(
+                                    id=instance["DBInstanceIdentifier"],
+                                    endpoint=instance["Endpoint"]["Address"],
+                                    engine=instance["Engine"],
+                                    status=instance["DBInstanceStatus"],
+                                    public=instance["PubliclyAccessible"],
+                                    encrypted=instance["StorageEncrypted"],
+                                    auto_minor_version_upgrade=instance[
+                                        "AutoMinorVersionUpgrade"
+                                    ],
+                                    backup_retention_period=instance.get(
+                                        "BackupRetentionPeriod"
+                                    ),
+                                    cloudwatch_logs=instance.get(
+                                        "EnabledCloudwatchLogsExports"
+                                    ),
+                                    deletion_protection=instance["DeletionProtection"],
+                                    enhanced_monitoring_arn=instance.get(
+                                        "EnhancedMonitoringResourceArn"
+                                    ),
+                                    multi_az=instance["MultiAZ"],
+                                    region=regional_client.region,
+                                )
+                            )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -94,14 +94,14 @@ class RDS:
                             snapshot["DBSnapshotIdentifier"], self.audit_resources
                         )
                     ):
-                      if snapshot["Engine"] != "docdb":
-                          self.db_snapshots.append(
-                              DBSnapshot(
-                                  id=snapshot["DBSnapshotIdentifier"],
-                                  instance_id=snapshot["DBInstanceIdentifier"],
-                                  region=regional_client.region,
-                              )
-                          )
+                        if snapshot["Engine"] != "docdb":
+                            self.db_snapshots.append(
+                                DBSnapshot(
+                                    id=snapshot["DBSnapshotIdentifier"],
+                                    instance_id=snapshot["DBInstanceIdentifier"],
+                                    region=regional_client.region,
+                                )
+                            )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -138,14 +138,14 @@ class RDS:
                             self.audit_resources,
                         )
                     ):
-                      if snapshot["Engine"] != "docdb":
-                          self.db_cluster_snapshots.append(
-                              ClusterSnapshot(
-                                  id=snapshot["DBClusterSnapshotIdentifier"],
-                                  cluster_id=snapshot["DBClusterIdentifier"],
-                                  region=regional_client.region,
-                              )
-                          )
+                        if snapshot["Engine"] != "docdb":
+                            self.db_cluster_snapshots.append(
+                                ClusterSnapshot(
+                                    id=snapshot["DBClusterSnapshotIdentifier"],
+                                    cluster_id=snapshot["DBClusterIdentifier"],
+                                    region=regional_client.region,
+                                )
+                            )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
