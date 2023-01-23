@@ -25,15 +25,15 @@ class iam_disable_90_days_credentials(Check):
                 )
                 if time_since_insertion.days > maximum_expiration_days:
                     report.status = "FAIL"
-                    report.status_extended = f"User {user.name} has not logged into the console in the past 90 days."
+                    report.status_extended = f"User {user.name} has not logged in to the console in the past 90 days."
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"User {user.name} has logged into the console in the past 90 days."
+                    report.status_extended = f"User {user.name} has logged in to the console in the past 90 days."
             else:
                 report.status = "PASS"
 
                 report.status_extended = (
-                    f"User {user.name} has not a console password or is unused."
+                    f"User {user.name} does not have a console password or is unused."
                 )
             # Append report
             findings.append(report)
