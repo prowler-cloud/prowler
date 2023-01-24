@@ -52,7 +52,7 @@ class IAM:
             self.__get_entities_attached_to_support_roles__()
         )
         self.policies = self.__list_policies__()
-        self.list_policies_version = self.__list_policies_version__(self.policies)
+        self.__list_policies_version__(self.policies)
         self.saml_providers = self.__list_saml_providers__()
         self.server_certificates = self.__list_server_certificates__()
 
@@ -336,24 +336,22 @@ class IAM:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
+        else:
             return policies
 
     def __list_policies_version__(self, policies):
         try:
-            policies_version = []
+            pass
 
             for policy in policies:
                 policy_version = self.client.get_policy_version(
                     PolicyArn=policy["Arn"], VersionId=policy["DefaultVersionId"]
                 )
-                policies_version.append(policy_version["PolicyVersion"]["Document"])
+                policy["PolicyDocument"] = policy_version["PolicyVersion"]["Document"]
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return policies_version
 
     def __list_saml_providers__(self):
         try:
