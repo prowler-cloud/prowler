@@ -314,7 +314,7 @@ Resources:
                 python: 3.9
               commands:
                 - echo "Installing Prowler..."
-                - pip3 install .
+                - pip3 install prowler
             build:
               commands:
                 - echo "Running Prowler as ./prowler $PROWLER_OPTIONS"
