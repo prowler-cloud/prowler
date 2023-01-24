@@ -13,12 +13,12 @@ class iam_password_policy_lowercase(Check):
             # Check if lowercase flag is set
             if iam_client.password_policy.lowercase:
                 report.status = "PASS"
-                report.status_extended = "IAM password policy requires at least one lowercase letter."
+                report.status_extended = (
+                    "IAM password policy requires at least one lowercase letter."
+                )
             else:
                 report.status = "FAIL"
-                report.status_extended = (
-                    "IAM password policy does not require at least one lowercase letter."
-                )
+                report.status_extended = "IAM password policy does not require at least one lowercase letter."
         else:
             report.status = "FAIL"
             report.status_extended = "Password policy cannot be found"

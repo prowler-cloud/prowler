@@ -21,7 +21,9 @@ class iam_rotate_access_key_90_days(Check):
                 and user["access_key_2_last_rotated"] == "N/A"
             ):
                 report.status = "PASS"
-                report.status_extended = f"User {user['user']} does not have access keys."
+                report.status_extended = (
+                    f"User {user['user']} does not have access keys."
+                )
             else:
                 old_access_keys = False
                 if user["access_key_1_last_rotated"] != "N/A":
@@ -50,9 +52,7 @@ class iam_rotate_access_key_90_days(Check):
                         report.status_extended = f"User {user['user']} has not rotated access key 2 in over 90 days ({access_key_2_last_rotated.days} days)."
                 if not old_access_keys:
                     report.status = "PASS"
-                    report.status_extended = (
-                        f"User {user['user']} does not have access keys older than 90 days."
-                    )
+                    report.status_extended = f"User {user['user']} does not have access keys older than 90 days."
             findings.append(report)
 
         return findings

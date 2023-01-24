@@ -22,7 +22,9 @@ class iam_root_hardware_mfa_enabled(Check):
                         report.status_extended = "Root account has a virtual MFA instead of a hardware MFA device enabled."
                 if not virtual_mfa:
                     report.status = "PASS"
-                    report.status_extended = "Root account has a hardware MFA device enabled."
+                    report.status_extended = (
+                        "Root account has a hardware MFA device enabled."
+                    )
             else:
                 report.status = "FAIL"
                 report.status_extended = "MFA is not enabled for root account."
