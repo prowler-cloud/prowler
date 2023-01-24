@@ -317,7 +317,7 @@ Resources:
                 - pip3 install prowler
             build:
               commands:
-                - echo "Running Prowler as ./prowler $PROWLER_OPTIONS"
+                - echo "Running Prowler as prowler $PROWLER_OPTIONS"
                 - prowler $PROWLER_OPTIONS
             post_build:
               commands:
