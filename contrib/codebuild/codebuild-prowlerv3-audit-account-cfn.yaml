@@ -303,7 +303,6 @@ Resources:
       ConcurrentBuildLimit: 1
       Source:
         GitCloneDepth: 1
-        Location: https://github.com/prowler-cloud/prowler
         Type: NO_SOURCE
         ReportBuildStatus: false
         BuildSpec: |
