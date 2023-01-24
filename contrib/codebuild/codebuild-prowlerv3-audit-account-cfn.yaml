@@ -302,9 +302,7 @@ Resources:
         Type: NO_ARTIFACTS
       ConcurrentBuildLimit: 1
       Source:
-        GitCloneDepth: 1
         Type: NO_SOURCE
-        ReportBuildStatus: false
         BuildSpec: |
           version: 0.2
           phases:
