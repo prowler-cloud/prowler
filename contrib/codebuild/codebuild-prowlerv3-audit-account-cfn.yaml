@@ -313,7 +313,7 @@ Resources:
               runtime-versions:
                 python: 3.9
               commands:
-                - echo "Installing Prowler and dependencies..."
+                - echo "Installing Prowler..."
                 - pip3 install .
             build:
               commands:
