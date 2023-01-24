@@ -304,7 +304,7 @@ Resources:
       Source:
         GitCloneDepth: 1
         Location: https://github.com/prowler-cloud/prowler
-        Type: GITHUB
+        Type: NO_SOURCE
         ReportBuildStatus: false
         BuildSpec: |
           version: 0.2
