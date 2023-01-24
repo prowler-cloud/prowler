@@ -40,8 +40,6 @@ class IAM:
         self.roles = self.__get_roles__()
         self.account_summary = self.__get_account_summary__()
         self.virtual_mfa_devices = self.__list_virtual_mfa_devices__()
-        self.customer_managed_policies = self.__get_customer_managed_policies__()
-        self.__get_customer_managed_policies_version__(self.customer_managed_policies)
         self.credential_report = self.__get_credential_report__()
         self.groups = self.__get_groups__()
         self.__get_group_users__()
@@ -118,36 +116,6 @@ class IAM:
                     groups.append(Group(group["GroupName"], group["Arn"]))
 
             return groups
-
-    def __get_customer_managed_policies__(self):
-        try:
-            get_customer_managed_policies_paginator = self.client.get_paginator(
-                "list_policies"
-            )
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        else:
-            customer_managed_policies = []
-            # Use --scope Local to list only Customer Managed Policies
-            for page in get_customer_managed_policies_paginator.paginate(Scope="Local"):
-                for customer_managed_policy in page["Policies"]:
-                    customer_managed_policies.append(customer_managed_policy)
-
-            return customer_managed_policies
-
-    def __get_customer_managed_policies_version__(self, customer_managed_policies):
-        try:
-            for policy in customer_managed_policies:
-                response = self.client.get_policy_version(
-                    PolicyArn=policy["Arn"], VersionId=policy["DefaultVersionId"]
-                )
-                policy["PolicyDocument"] = response["PolicyVersion"]["Document"]
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
 
     def __get_account_summary__(self):
         try:
