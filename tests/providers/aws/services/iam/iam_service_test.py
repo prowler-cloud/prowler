@@ -570,10 +570,10 @@ class Test_IAM_Service:
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
 
-        assert len(iam.list_policies_version) == 1
-        assert iam.list_policies_version[0]["Statement"][0]["Effect"] == "Allow"
-        assert iam.list_policies_version[0]["Statement"][0]["Action"] == "*"
-        assert iam.list_policies_version[0]["Statement"][0]["Resource"] == "*"
+        assert len(iam.policies) == 1
+        assert iam.policies[0]["PolicyDocument"]["Statement"][0]["Effect"] == "Allow"
+        assert iam.policies[0]["PolicyDocument"]["Statement"][0]["Action"] == "*"
+        assert iam.policies[0]["PolicyDocument"]["Statement"][0]["Resource"] == "*"
 
     # Test IAM List SAML Providers
     @mock_iam
