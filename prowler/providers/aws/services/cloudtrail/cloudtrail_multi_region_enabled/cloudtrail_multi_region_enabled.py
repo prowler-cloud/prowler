@@ -45,7 +45,6 @@ class cloudtrail_multi_region_enabled(Check):
                 )
                 report.resource_arn = "No trails"
                 report.resource_id = "No trails"
-                report.region = cloudtrail_client.region
                 findings.append(report)
 
         return findings
