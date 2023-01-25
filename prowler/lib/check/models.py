@@ -63,8 +63,9 @@ class Check(ABC, Check_Metadata_Model):
     def __init__(self, **data):
         """Check's init function. Calls the CheckMetadataModel init."""
         # Parse the Check's metadata file
-        metadata_file = os.path.abspath(sys.modules[self.__module__].__file__).replace(
-            ".py", ".metadata.json"
+        metadata_file = (
+            os.path.abspath(sys.modules[self.__module__].__file__)[:-3]
+            + ".metadata.json"
         )
         # Store it to validate them with Pydantic
         data = Check_Metadata_Model.parse_file(metadata_file).dict()

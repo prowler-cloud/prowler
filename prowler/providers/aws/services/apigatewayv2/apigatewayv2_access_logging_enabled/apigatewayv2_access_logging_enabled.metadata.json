@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "apigatewayv2_access_logging_enabled",
-  "CheckTitle": "Check if API Gateway V2 has configured authorizers.",
+  "CheckTitle": "Ensure API Gateway V2 has Access Logging enabled.",
   "CheckType": [
     "IAM"
   ],
@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayV2Api",
-  "Description": "Check if API Gateway V2 has configured authorizers.",
+  "Description": "Ensure API Gateway V2 has Access Logging enabled.",
   "Risk": "If no authorizer is enabled anyone can use the service.",
   "RelatedUrl": "",
   "Remediation": {

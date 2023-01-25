@@ -42,8 +42,6 @@ class IAM:
         self.roles = self.__get_roles__()
         self.account_summary = self.__get_account_summary__()
         self.virtual_mfa_devices = self.__list_virtual_mfa_devices__()
-        self.customer_managed_policies = self.__get_customer_managed_policies__()
-        self.__get_customer_managed_policies_version__(self.customer_managed_policies)
         self.credential_report = self.__get_credential_report__()
         self.groups = self.__get_groups__()
         self.__get_group_users__()
@@ -56,7 +54,7 @@ class IAM:
             self.__get_entities_attached_to_support_roles__()
         )
         self.policies = self.__list_policies__()
-        self.list_policies_version = self.__list_policies_version__(self.policies)
+        self.__list_policies_version__(self.policies)
         self.saml_providers = self.__list_saml_providers__()
         self.server_certificates = self.__list_server_certificates__()
 
@@ -91,23 +89,22 @@ class IAM:
 
     def __get_credential_report__(self):
         report_is_completed = False
-        while not report_is_completed:
-            try:
+        try:
+            while not report_is_completed:
                 report_status = self.client.generate_credential_report()
-            except Exception as error:
-                logger.error(
-                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-            else:
                 if report_status["State"] == "COMPLETE":
                     report_is_completed = True
-
-        # Convert credential report to list of dictionaries
-        credential = self.client.get_credential_report()["Content"].decode("utf-8")
-        credential_lines = credential.split("\n")
-        csv_reader = csv.DictReader(credential_lines, delimiter=",")
-        credential_list = list(csv_reader)
-        return credential_list
+            # Convert credential report to list of dictionaries
+            credential = self.client.get_credential_report()["Content"].decode("utf-8")
+            credential_lines = credential.split("\n")
+            csv_reader = csv.DictReader(credential_lines, delimiter=",")
+            credential_list = list(csv_reader)
+            return credential_list
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return []
 
     def __get_groups__(self):
         try:
@@ -126,41 +123,6 @@ class IAM:
                         groups.append(Group(group["GroupName"], group["Arn"]))
 
             return groups
-
-    def __get_customer_managed_policies__(self):
-        try:
-            get_customer_managed_policies_paginator = self.client.get_paginator(
-                "list_policies"
-            )
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        else:
-            customer_managed_policies = []
-            # Use --scope Local to list only Customer Managed Policies
-            for page in get_customer_managed_policies_paginator.paginate(Scope="Local"):
-                for customer_managed_policy in page["Policies"]:
-                    if not self.audit_resources or (
-                        is_resource_filtered(
-                            customer_managed_policy["Arn"], self.audit_resources
-                        )
-                    ):
-                        customer_managed_policies.append(customer_managed_policy)
-
-            return customer_managed_policies
-
-    def __get_customer_managed_policies_version__(self, customer_managed_policies):
-        try:
-            for policy in customer_managed_policies:
-                response = self.client.get_policy_version(
-                    PolicyArn=policy["Arn"], VersionId=policy["DefaultVersionId"]
-                )
-                policy["PolicyDocument"] = response["PolicyVersion"]["Document"]
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
 
     def __get_account_summary__(self):
         try:
@@ -389,24 +351,22 @@ class IAM:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
+        else:
             return policies
 
     def __list_policies_version__(self, policies):
         try:
-            policies_version = []
+            pass
 
             for policy in policies:
                 policy_version = self.client.get_policy_version(
                     PolicyArn=policy["Arn"], VersionId=policy["DefaultVersionId"]
                 )
-                policies_version.append(policy_version["PolicyVersion"]["Document"])
+                policy["PolicyDocument"] = policy_version["PolicyVersion"]["Document"]
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return policies_version
 
     def __list_saml_providers__(self):
         try:

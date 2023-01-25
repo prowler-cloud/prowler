@@ -31,7 +31,7 @@ class Test_iam_user_mfa_enabled_console_access_test:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"User {user} has not Console Password enabled."
+                == f"User {user} does not have Console Password enabled."
             )
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
@@ -62,7 +62,7 @@ class Test_iam_user_mfa_enabled_console_access_test:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"User {user} has not Console Password enabled."
+                == f"User {user} does not have Console Password enabled."
             )
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn

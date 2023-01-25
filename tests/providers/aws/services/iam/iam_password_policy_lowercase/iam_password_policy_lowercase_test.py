@@ -1,3 +1,4 @@
+from re import search
 from unittest import mock
 
 from boto3 import client
@@ -14,6 +15,8 @@ class Test_iam_password_policy_lowercase:
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_password_policy_lowercase.iam_password_policy_lowercase.iam_client",
             new=IAM(current_audit_info),
@@ -26,6 +29,11 @@ class Test_iam_password_policy_lowercase:
             check = iam_password_policy_lowercase()
             result = check.execute()
             assert result[0].status == "FAIL"
+            assert search(
+                "IAM password policy does not require at least one lowercase letter.",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == "password_policy"
 
     @mock_iam
     def test_iam_password_policy_lowercase_flag(self):
@@ -35,6 +43,8 @@ class Test_iam_password_policy_lowercase:
 
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
+
+        current_audit_info.audited_partition = "aws"
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_password_policy_lowercase.iam_password_policy_lowercase.iam_client",
@@ -48,3 +58,8 @@ class Test_iam_password_policy_lowercase:
             check = iam_password_policy_lowercase()
             result = check.execute()
             assert result[0].status == "PASS"
+            assert search(
+                "IAM password policy requires at least one lowercase letter.",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == "password_policy"

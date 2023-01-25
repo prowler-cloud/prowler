@@ -1,4 +1,3 @@
-import json
 from json import dumps
 
 from boto3 import client, session
@@ -297,65 +296,6 @@ class Test_IAM_Service:
         iam = IAM(audit_info)
         assert len(iam.users) == len(iam_client.list_users()["Users"])
 
-    # Test IAM Get Customer Managed Policies
-    @mock_iam
-    def test__get_customer_managed_policies__(self):
-        # Generate IAM Client
-        iam_client = client("iam")
-        # Create a new IAM Policy
-        policy_document = """
-{
-  "Version": "2012-10-17",
-  "Statement":
-    {
-      "Effect": "Allow",
-      "Action": "s3:ListBucket",
-      "Resource": "arn:aws:s3:::example_bucket"
-    }
-}
-"""
-        iam_client.create_policy(
-            PolicyName="policy1",
-            PolicyDocument=policy_document,
-        )
-        # IAM client for this test class
-        audit_info = self.set_mocked_audit_info()
-        iam = IAM(audit_info)
-        assert len(iam.customer_managed_policies) == len(
-            iam_client.list_policies(Scope="Local")["Policies"]
-        )
-
-    # Test IAM Get Customer Managed Policies Version
-    @mock_iam
-    def test__get_customer_managed_policies_version__(self):
-        # Generate IAM Client
-        iam_client = client("iam")
-        # Create a new IAM Policy
-        policy_document = """
-{
-  "Version": "2012-10-17",
-  "Statement":
-    {
-      "Effect": "Allow",
-      "Action": "s3:ListBucket",
-      "Resource": "arn:aws:s3:::example_bucket"
-    }
-}
-"""
-        iam_client.create_policy(
-            PolicyName="policy1",
-            PolicyDocument=policy_document,
-        )
-
-        # IAM client for this test class
-        audit_info = self.set_mocked_audit_info()
-        iam = IAM(audit_info)
-
-        assert len(iam.customer_managed_policies) == 1
-        assert iam.customer_managed_policies[0]["PolicyDocument"] == json.loads(
-            policy_document
-        )
-
     # Test IAM Get Account Summary
     @mock_iam
     def test__get_account_summary__(self):
@@ -631,10 +571,10 @@ class Test_IAM_Service:
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
 
-        assert len(iam.list_policies_version) == 1
-        assert iam.list_policies_version[0]["Statement"][0]["Effect"] == "Allow"
-        assert iam.list_policies_version[0]["Statement"][0]["Action"] == "*"
-        assert iam.list_policies_version[0]["Statement"][0]["Resource"] == "*"
+        assert len(iam.policies) == 1
+        assert iam.policies[0]["PolicyDocument"]["Statement"][0]["Effect"] == "Allow"
+        assert iam.policies[0]["PolicyDocument"]["Statement"][0]["Action"] == "*"
+        assert iam.policies[0]["PolicyDocument"]["Statement"][0]["Resource"] == "*"
 
     # Test IAM List SAML Providers
     @mock_iam

@@ -20,6 +20,8 @@ class Test_iam_user_two_active_access_key:
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_user_two_active_access_key.iam_user_two_active_access_key.iam_client",
             new=IAM(current_audit_info),
@@ -52,6 +54,8 @@ class Test_iam_user_two_active_access_key:
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_user_two_active_access_key.iam_user_two_active_access_key.iam_client",
             new=IAM(current_audit_info),
@@ -69,7 +73,8 @@ class Test_iam_user_two_active_access_key:
             assert result[0].resource_id == user
             assert result[0].resource_arn == user_arn
             assert search(
-                f"User {user} has not 2 active access keys.", result[0].status_extended
+                f"User {user} does not have 2 active access keys.",
+                result[0].status_extended,
             )
 
     @mock_iam
@@ -82,6 +87,8 @@ class Test_iam_user_two_active_access_key:
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_user_two_active_access_key.iam_user_two_active_access_key.iam_client",
             new=IAM(current_audit_info),
@@ -99,13 +106,16 @@ class Test_iam_user_two_active_access_key:
             assert result[0].resource_id == user
             assert result[0].resource_arn == user_arn
             assert search(
-                f"User {user} has not 2 active access keys.", result[0].status_extended
+                f"User {user} does not have 2 active access keys.",
+                result[0].status_extended,
             )
 
     @mock_iam
     def test_iam_no_users(self):
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
+
+        current_audit_info.audited_partition = "aws"
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_user_two_active_access_key.iam_user_two_active_access_key.iam_client",

@@ -24,7 +24,7 @@ class iam_user_two_active_access_key(Check):
                 else:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"User {user['user']} has not 2 active access keys."
+                        f"User {user['user']} does not have 2 active access keys."
                     )
                 findings.append(report)
         except Exception as error:
