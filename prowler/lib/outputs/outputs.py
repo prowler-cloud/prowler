@@ -32,7 +32,7 @@ def stdout_report(finding, color, verbose, is_quiet):
     if finding.check_metadata.Provider == "azure":
         details = finding.check_metadata.ServiceName
 
-    if verbose:
+    if verbose and not (is_quiet and finding.status != "FAIL"):
         print(
             f"\t{color}{finding.status}{Style.RESET_ALL} {details}: {finding.status_extended}"
         )
