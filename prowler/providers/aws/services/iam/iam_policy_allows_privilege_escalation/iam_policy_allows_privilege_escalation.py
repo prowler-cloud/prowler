@@ -60,7 +60,7 @@ class iam_policy_allows_privilege_escalation(Check):
             "datapipeline:*",
         }
         findings = []
-        for policy in iam_client.customer_managed_policies:
+        for policy in iam_client.policies:
             report = Check_Report_AWS(self.metadata())
             report.resource_id = policy["PolicyName"]
             report.resource_arn = policy["Arn"]
