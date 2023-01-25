@@ -86,23 +86,22 @@ class IAM:
 
     def __get_credential_report__(self):
         report_is_completed = False
-        while not report_is_completed:
-            try:
+        try:
+            while not report_is_completed:
                 report_status = self.client.generate_credential_report()
-            except Exception as error:
-                logger.error(
-                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-            else:
                 if report_status["State"] == "COMPLETE":
                     report_is_completed = True
-
-        # Convert credential report to list of dictionaries
-        credential = self.client.get_credential_report()["Content"].decode("utf-8")
-        credential_lines = credential.split("\n")
-        csv_reader = csv.DictReader(credential_lines, delimiter=",")
-        credential_list = list(csv_reader)
-        return credential_list
+            # Convert credential report to list of dictionaries
+            credential = self.client.get_credential_report()["Content"].decode("utf-8")
+            credential_lines = credential.split("\n")
+            csv_reader = csv.DictReader(credential_lines, delimiter=",")
+            credential_list = list(csv_reader)
+            return credential_list
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return []
 
     def __get_groups__(self):
         try:
