@@ -33,7 +33,7 @@ class Test_iam_disable_30_days_credentials_test:
             result = check.execute()
             assert result[0].status == "PASS"
             assert search(
-                f"User {user} has logged into the console in the past 30 days.",
+                f"User {user} has logged in to the console in the past 30 days.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == user
@@ -65,7 +65,7 @@ class Test_iam_disable_30_days_credentials_test:
             result = check.execute()
             assert result[0].status == "FAIL"
             assert search(
-                f"User {user} has not logged into the console in the past 30 days.",
+                f"User {user} has not logged in to the console in the past 30 days.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == user
@@ -96,7 +96,7 @@ class Test_iam_disable_30_days_credentials_test:
             result = check.execute()
             assert result[0].status == "PASS"
             assert search(
-                f"User {user} has not a console password or is unused.",
+                f"User {user} does not have a console password or is unused.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == user

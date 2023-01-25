@@ -14,6 +14,8 @@ class Test_iam_user_hardware_mfa_enabled_test:
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_user_hardware_mfa_enabled.iam_user_hardware_mfa_enabled.iam_client",
             new=IAM(current_audit_info),
@@ -28,7 +30,7 @@ class Test_iam_user_hardware_mfa_enabled_test:
 
             assert result[0].status == "FAIL"
             assert search(
-                f"User {user} has not any type of MFA enabled.",
+                f"User {user} does not have any type of MFA enabled.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == user
@@ -41,6 +43,8 @@ class Test_iam_user_hardware_mfa_enabled_test:
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM, MFADevice
+
+        current_audit_info.audited_partition = "aws"
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_user_hardware_mfa_enabled.iam_user_hardware_mfa_enabled.iam_client",
@@ -62,7 +66,7 @@ class Test_iam_user_hardware_mfa_enabled_test:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"User {user} has a virtual MFA instead of a hardware MFA enabled.",
+                f"User {user} has a virtual MFA instead of a hardware MFA device enabled.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == user
@@ -75,6 +79,8 @@ class Test_iam_user_hardware_mfa_enabled_test:
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM, MFADevice
+
+        current_audit_info.audited_partition = "aws"
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_user_hardware_mfa_enabled.iam_user_hardware_mfa_enabled.iam_client",
@@ -96,7 +102,7 @@ class Test_iam_user_hardware_mfa_enabled_test:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"User {user} has a virtual MFA instead of a hardware MFA enabled.",
+                f"User {user} has a virtual MFA instead of a hardware MFA device enabled.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == user
