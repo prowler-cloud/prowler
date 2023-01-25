@@ -316,6 +316,7 @@ def execute_checks(
     audit_output_options: Provider_Output_Options,
 ) -> list:
     all_findings = []
+    executed_checks_counter = 0
     # Execution with the --only-logs flag
     if audit_output_options.only_logs:
         for check_name in checks_to_execute:
@@ -352,10 +353,17 @@ def execute_checks(
             enrich_print=False,
         ) as bar:
             for check_name in checks_to_execute:
+                # Add 1 to the counter of executed checks
+                executed_checks_counter += 1
                 # Recover service from check name
                 service = check_name.split("_")[0]
                 bar.title = (
                     f"-> Scanning {orange_color}{service}{Style.RESET_ALL} service"
+                )
+                audit_info.audit_metadata.checks_progress = (
+                    100
+                    * executed_checks_counter
+                    / audit_info.audit_metadata.checks_launched
                 )
                 try:
                     check_findings = execute(
