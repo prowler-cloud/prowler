@@ -14,12 +14,12 @@ class iam_password_policy_symbol(Check):
             if iam_client.password_policy.symbols:
                 report.status = "PASS"
                 report.status_extended = (
-                    "IAM password policy does not require at least one symbol."
+                    "IAM password policy requires at least one symbol."
                 )
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    "IAM password policy requires at least one symbol."
+                    "IAM password policy does not require at least one symbol."
                 )
         else:
             report.status = "FAIL"

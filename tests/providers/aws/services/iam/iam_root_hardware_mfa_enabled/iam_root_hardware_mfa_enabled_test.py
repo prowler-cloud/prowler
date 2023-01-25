@@ -14,6 +14,8 @@ class Test_iam_root_hardware_mfa_enabled_test:
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled.iam_client",
             new=IAM(current_audit_info),
@@ -29,7 +31,7 @@ class Test_iam_root_hardware_mfa_enabled_test:
             result = check.execute()
             assert result[0].status == "FAIL"
             assert search(
-                "Root account has a virtual MFA instead of a hardware MFA enabled.",
+                "Root account has a virtual MFA instead of a hardware MFA device enabled.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == "root"
@@ -41,6 +43,8 @@ class Test_iam_root_hardware_mfa_enabled_test:
         iam.create_virtual_mfa_device(VirtualMFADeviceName=mfa_device_name)
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
+
+        current_audit_info.audited_partition = "aws"
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled.iam_client",
@@ -57,7 +61,8 @@ class Test_iam_root_hardware_mfa_enabled_test:
             result = check.execute()
             assert result[0].status == "PASS"
             assert search(
-                "Root account has hardware MFA enabled.", result[0].status_extended
+                "Root account has a hardware MFA device enabled.",
+                result[0].status_extended,
             )
             assert result[0].resource_id == "root"
             assert (

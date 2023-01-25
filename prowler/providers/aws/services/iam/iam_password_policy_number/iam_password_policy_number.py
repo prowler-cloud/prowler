@@ -14,12 +14,12 @@ class iam_password_policy_number(Check):
             if iam_client.password_policy.numbers:
                 report.status = "PASS"
                 report.status_extended = (
-                    "IAM password policy does not require at least one number"
+                    "IAM password policy requires at least one number."
                 )
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    "IAM password policy require at least one number."
+                    "IAM password policy does not require at least one number."
                 )
         else:
             report.status = "FAIL"

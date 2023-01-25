@@ -15,6 +15,8 @@ class Test_iam_rotate_access_key_90_days_test:
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
 
+        current_audit_info.audited_partition = "aws"
+
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
             new=IAM(current_audit_info),
@@ -29,7 +31,9 @@ class Test_iam_rotate_access_key_90_days_test:
             check = iam_rotate_access_key_90_days()
             result = check.execute()
             assert result[0].status == "PASS"
-            assert result[0].status_extended == f"User {user} has not access keys."
+            assert (
+                result[0].status_extended == f"User {user} does not have access keys."
+            )
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
 
@@ -44,6 +48,8 @@ class Test_iam_rotate_access_key_90_days_test:
 
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
+
+        current_audit_info.audited_partition = "aws"
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
@@ -78,6 +84,8 @@ class Test_iam_rotate_access_key_90_days_test:
 
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.iam.iam_service import IAM
+
+        current_audit_info.audited_partition = "aws"
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
