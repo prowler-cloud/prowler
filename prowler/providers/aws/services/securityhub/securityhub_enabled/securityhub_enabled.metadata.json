@@ -8,7 +8,7 @@
   "ServiceName": "securityhub",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:securityhub:region:account-id:hub/hub-id",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "AwsSecurityHubHub",
   "Description": "Check if Security Hub is enabled and its standard subscriptions.",
   "Risk": "AWS Security Hub gives you a comprehensive view of your security alerts and security posture across your AWS accounts.",

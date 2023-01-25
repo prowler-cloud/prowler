@@ -6,7 +6,7 @@
   "ServiceName": "guardduty",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "AwsGuardDutyDetector",
   "Description": "Check if GuardDuty is enabled",
   "Risk": "Amazon GuardDuty is a continuous security monitoring service that analyzes and processes several datasources.",
