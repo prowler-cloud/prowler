@@ -75,7 +75,7 @@ python prowler.py -v
 
 # 📖 Documentation
 
-The full documentation now can be found at [https://docs.prowler.cloud](https://docs.prowler.cloud)
+The full documentation can now be found at [https://docs.prowler.cloud](https://docs.prowler.cloud)
 
 
 # 📐✏️ High level architecture
