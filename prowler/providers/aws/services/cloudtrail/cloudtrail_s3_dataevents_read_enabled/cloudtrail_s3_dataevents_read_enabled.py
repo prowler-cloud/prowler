@@ -22,8 +22,10 @@ class cloudtrail_s3_dataevents_read_enabled(Check):
                 ):
                     for resource in data_event["DataResources"]:
                         if "AWS::S3::Object" == resource["Type"] and (
-                            "arn:aws:s3" in resource["Values"]
-                            or "arn:aws:s3:::*/*" in resource["Values"]
+                            f"arn:{cloudtrail_client.audited_partition}:s3"
+                            in resource["Values"]
+                            or f"arn:{cloudtrail_client.audited_partition}:s3:::*/*"
+                            in resource["Values"]
                         ):
                             report.region = trail.region
                             report.resource_id = trail.name
