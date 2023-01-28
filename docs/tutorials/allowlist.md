@@ -103,7 +103,7 @@ def handler(event, context):
   checks = {}
   checks["vpc_flow_logs_enabled"] = { "Regions": [ "*" ], "Resources": [ "" ] }
 
-  al = { "Allowlist": { "Accounts": { "*": { "Checks": allow_list } } } }
+  al = { "Allowlist": { "Accounts": { "*": { "Checks": checks } } } }
   return al
 ```
 
