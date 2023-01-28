@@ -74,3 +74,36 @@ prowler aws -w arn:aws:dynamodb:<region_name>:<account_id>:table/<table_name>
 <img src="../img/allowlist-row.png"/>
 
 > Make sure that the used AWS credentials have `dynamodb:PartiQLSelect` permissions in the table.
+
+### AWS Lambda ARN
+
+Passing an AWS Lambda ARN:
+
+```
+prowler aws -w arn:aws:lambda:REGION:ACCOUNT_ID:function:FUNCTION_NAME
+```
+
+Make sure that the credentials that Prowler uses can invoke the Lambda Function:
+
+```
+        - PolicyName: GetAllowList
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action: 'lambda:InvokeFunction'
+                Effect: Allow
+                Resource: arn:aws:lambda:REGION:ACCOUNT_ID:function:FUNCTION_NAME
+```
+
+The Lambda Function can then generate an Allowlist dynamically. Here is the code an example Python Lambda Function that 
+generates an Allowlist
+
+```
+def handler(event, context):
+  checks = {}
+  checks["vpc_flow_logs_enabled"] = { "Regions": [ "*" ], "Resources": [ "" ] }
+
+  al = { "Allowlist": { "Accounts": { "*": { "Checks": allow_list } } } }
+  return al
+```
+
