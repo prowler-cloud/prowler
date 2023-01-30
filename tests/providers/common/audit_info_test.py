@@ -3,7 +3,13 @@ import json
 import boto3
 import sure  # noqa
 from mock import patch
-from moto import mock_iam, mock_organizations, mock_sts
+from moto import (
+    mock_ec2,
+    mock_iam,
+    mock_organizations,
+    mock_resourcegroupstaggingapi,
+    mock_sts,
+)
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.azure.azure_provider import Azure_Provider
@@ -11,8 +17,13 @@ from prowler.providers.azure.lib.audit_info.models import (
     Azure_Audit_Info,
     Azure_Identity_Info,
 )
-from prowler.providers.common.audit_info import Audit_Info, set_provider_audit_info
+from prowler.providers.common.audit_info import (
+    Audit_Info,
+    get_tagged_resources,
+    set_provider_audit_info,
+)
 
+EXAMPLE_AMI_ID = "ami-12c6146b"
 ACCOUNT_ID = 123456789012
 mock_current_audit_info = AWS_Audit_Info(
     original_session=None,
@@ -199,3 +210,40 @@ class Test_Set_Audit_Info:
 
         audit_info = set_provider_audit_info(provider, arguments)
         assert isinstance(audit_info, Azure_Audit_Info)
+
+    @mock_resourcegroupstaggingapi
+    @mock_ec2
+    def test_get_tagged_resources(self):
+        client = boto3.client("ec2", region_name="eu-central-1")
+        instances = client.run_instances(
+            ImageId=EXAMPLE_AMI_ID,
+            MinCount=1,
+            MaxCount=1,
+            InstanceType="t2.micro",
+            TagSpecifications=[
+                {
+                    "ResourceType": "instance",
+                    "Tags": [
+                        {"Key": "MY_TAG1", "Value": "MY_VALUE1"},
+                        {"Key": "MY_TAG2", "Value": "MY_VALUE2"},
+                    ],
+                },
+                {
+                    "ResourceType": "instance",
+                    "Tags": [{"Key": "ami", "Value": "test"}],
+                },
+            ],
+        )
+        instance_id = instances["Instances"][0]["InstanceId"]
+        image_id = client.create_image(Name="testami", InstanceId=instance_id)[
+            "ImageId"
+        ]
+        client.create_tags(Resources=[image_id], Tags=[{"Key": "ami", "Value": "test"}])
+
+        mock_current_audit_info.audited_regions = ["eu-central-1"]
+        mock_current_audit_info.audit_session = boto3.session.Session()
+        assert len(get_tagged_resources(["ami=test"], mock_current_audit_info)) == 2
+        assert (
+            len(get_tagged_resources(["MY_TAG1=MY_VALUE1"], mock_current_audit_info))
+            == 1
+        )

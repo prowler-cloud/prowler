@@ -238,7 +238,9 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
 
         # Parse Scan Tags
         input_scan_tags = arguments.get("scan_tags")
-        current_audit_info.audit_resources = get_tagged_resources(input_scan_tags)
+        current_audit_info.audit_resources = get_tagged_resources(
+            input_scan_tags, current_audit_info
+        )
         return current_audit_info
 
     def set_azure_audit_info(self, arguments) -> Azure_Audit_Info:
@@ -292,7 +294,7 @@ def set_provider_audit_info(provider: str, arguments: dict):
         return provider_audit_info
 
 
-def get_tagged_resources(input_scan_tags: list):
+def get_tagged_resources(input_scan_tags: list, current_audit_info: AWS_Audit_Info):
     """
     get_tagged_resources get the resources that have the tags input by the user and are going to be scanned
     """

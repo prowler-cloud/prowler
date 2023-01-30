@@ -23,7 +23,7 @@ def parse_allowlist_file(audit_info, allowlist_file):
                 s3_client.get_object(Bucket=bucket, Key=key)["Body"]
             )["Allowlist"]
         # Check if file is a Lambda Function ARN
-        elif re.search("^arn:(\w+):lambda:", allowlist_file):
+        elif re.search(r"^arn:(\w+):lambda:", allowlist_file):
             lambda_region = allowlist_file.split(":")[3]
             lambda_client = audit_info.audit_session.client(
                 "lambda", region_name=lambda_region
