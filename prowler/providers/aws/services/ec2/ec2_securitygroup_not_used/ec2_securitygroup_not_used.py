@@ -6,6 +6,7 @@ class ec2_securitygroup_not_used(Check):
     def execute(self):
         findings = []
         for security_group in ec2_client.security_groups:
+            # Default security groups can not be deleted, so ignore them
             if security_group.name != "default":
                 report = Check_Report_AWS(self.metadata())
                 report.region = security_group.region
