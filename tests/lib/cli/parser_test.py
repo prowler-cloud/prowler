@@ -54,6 +54,7 @@ class Test_Parser:
         assert not parsed.output_bucket_no_assume
         assert not parsed.shodan
         assert not parsed.allowlist_file
+        assert not parsed.scan_tags
 
     def test_default_parser_no_arguments_azure(self):
         provider = "azure"
@@ -794,6 +795,24 @@ class Test_Parser:
         command = [prowler_command, argument, allowlist_file]
         parsed = self.parser.parse(command)
         assert parsed.allowlist_file == allowlist_file
+
+    def test_aws_parser_scan_tags_short(self):
+        argument = "-t"
+        scan_tag = "Key=Value"
+        command = [prowler_command, argument, scan_tag]
+        parsed = self.parser.parse(command)
+        assert len(parsed.scan_tags) == 1
+        assert scan_tag in parsed.scan_tags
+
+    def test_aws_parser_scan_tags_long(self):
+        argument = "--scan-tags"
+        scan_tag1 = "Key=Value"
+        scan_tag2 = "Key2=Value2"
+        command = [prowler_command, argument, scan_tag1, scan_tag2]
+        parsed = self.parser.parse(command)
+        assert len(parsed.scan_tags) == 2
+        assert scan_tag1 in parsed.scan_tags
+        assert scan_tag2 in parsed.scan_tags
 
     def test_parser_azure_auth_sp(self):
         argument = "--sp-env-auth"
