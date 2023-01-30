@@ -174,8 +174,13 @@ class Test_Set_Audit_Info:
             "browser_auth": None,
             "managed_entity_auth": None,
         }
+        checks_to_execute = {
+            "elbv2_waf_acl_attached",
+            "ec2_securitygroup_in_use_without_ingress_filtering",
+            "iam_policy_no_administrative_privileges",
+        }
 
-        audit_info = set_provider_audit_info(provider, arguments)
+        audit_info = set_provider_audit_info(provider, arguments, checks_to_execute)
         assert isinstance(audit_info, AWS_Audit_Info)
 
     @patch(
@@ -200,8 +205,13 @@ class Test_Set_Audit_Info:
             "browser_auth": None,
             "managed_entity_auth": None,
         }
+        checks_to_execute = {
+            "elbv2_waf_acl_attached",
+            "ec2_securitygroup_in_use_without_ingress_filtering",
+            "iam_policy_no_administrative_privileges",
+        }
 
-        audit_info = set_provider_audit_info(provider, arguments)
+        audit_info = set_provider_audit_info(provider, arguments, checks_to_execute)
         assert isinstance(audit_info, Azure_Audit_Info)
 
     def test_get_metadata_audit(self):
@@ -212,5 +222,5 @@ class Test_Set_Audit_Info:
         }
         metadata = get_metadata_audit(checks_to_execute)
         assert metadata.services_scanned == 3
-        assert metadata.checks_launched == 3
-        assert metadata.checks_progress == 0
+        assert metadata.expected_checks == 3
+        assert metadata.completed_checks == 0

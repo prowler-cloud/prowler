@@ -308,8 +308,8 @@ def get_metadata_audit(checks_to_execute: set) -> Audit_Metadata:
 
     metadata = Audit_Metadata(
         services_scanned=len(services),
-        checks_launched=checks_counter,
-        checks_progress=0,
+        expected_checks=checks_counter,
+        completed_checks=0,
     )
 
     return metadata

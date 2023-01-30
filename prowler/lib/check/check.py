@@ -405,8 +405,8 @@ def execute(
     c = check_to_execute()
     # Run check
     check_findings = run_check(c, audit_output_options)
-    audit_info.audit_metadata.checks_progress = (
-        100 * executed_checks_counter / audit_info.audit_metadata.checks_launched
+    audit_info.audit_metadata.completed_checks = (
+        100 * executed_checks_counter / audit_info.audit_metadata.expected_checks
     )
     report(check_findings, audit_output_options, audit_info)
 
