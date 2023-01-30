@@ -39,11 +39,20 @@ def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "ListFindings":
         # If we only want to count the number of findings
         # we return a list of values just to count them
-        return {"findings": [0, 1, 2]}
+        return {
+            "findings": [
+                {
+                    "id": "test_id1",
+                }
+            ]
+        }
+    if operation_name == "GetFinding":
+        # If we only want to count the number of findings
+        # we return a list of values just to count them
+        return {"finding": {"id": "test_id1", "status": "ARCHIVED"}}
     return make_api_call(self, operation_name, kwarg)
 
 
-# Mock generate_regional_clients()
 def mock_generate_regional_clients(service, audit_info):
     regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
     regional_client.region = AWS_REGION
@@ -92,4 +101,6 @@ class Test_AccessAnalyzer_Service:
         current_audit_info.audited_partition = "aws"
         access_analyzer = AccessAnalyzer(current_audit_info)
         assert len(access_analyzer.analyzers) == 1
-        assert access_analyzer.analyzers[0].findings_count == 3
+        assert len(access_analyzer.analyzers[0].findings) == 1
+        assert access_analyzer.analyzers[0].findings[0].status == "ARCHIVED"
+        assert access_analyzer.analyzers[0].findings[0].id == "test_id1"

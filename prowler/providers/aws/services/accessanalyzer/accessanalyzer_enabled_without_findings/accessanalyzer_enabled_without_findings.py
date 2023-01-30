@@ -11,21 +11,28 @@ class accessanalyzer_enabled_without_findings(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = analyzer.region
             if analyzer.status == "ACTIVE":
-                if analyzer.findings_count > 0:
-                    report.status = "FAIL"
-                    report.status_extended = f"IAM Access Analyzer {analyzer.name} has {analyzer.findings_count} active findings"
-                    report.resource_id = analyzer.name
-                    report.resource_arn = analyzer.arn
-                else:
-                    report.status = "PASS"
-                    report.status_extended = (
-                        f"IAM Access Analyzer {analyzer.name} has no active findings"
-                    )
-                    report.resource_id = analyzer.name
-                    report.resource_arn = analyzer.arn
+                report.status = "PASS"
+                report.status_extended = (
+                    f"IAM Access Analyzer {analyzer.name} does not have active findings"
+                )
+                report.resource_id = analyzer.name
+                report.resource_arn = analyzer.arn
+                if len(analyzer.findings) != 0:
+                    active_finding_counter = 0
+                    for finding in analyzer.findings:
+                        if finding.status == "ACTIVE":
+                            active_finding_counter += 1
+
+                    if active_finding_counter > 0:
+                        report.status = "FAIL"
+                        report.status_extended = f"IAM Access Analyzer {analyzer.name} has {active_finding_counter} active findings"
+                        report.resource_id = analyzer.name
+                        report.resource_arn = analyzer.arn
             elif analyzer.status == "NOT_AVAILABLE":
                 report.status = "FAIL"
-                report.status_extended = "IAM Access Analyzer is not enabled"
+                report.status_extended = (
+                    f"IAM Access Analyzer {analyzer.name} is not enabled"
+                )
                 report.resource_id = analyzer.name
             else:
                 report.status = "FAIL"

@@ -1,5 +1,6 @@
 import threading
-from dataclasses import dataclass
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import generate_regional_clients
@@ -15,6 +16,7 @@ class AccessAnalyzer:
         self.analyzers = []
         self.__threading_call__(self.__list_analyzers__)
         self.__list_findings__()
+        self.__get_finding_status__()
 
     def __get_session__(self):
         return self.session
@@ -38,13 +40,12 @@ class AccessAnalyzer:
                 for analyzer in page["analyzers"]:
                     self.analyzers.append(
                         Analyzer(
-                            analyzer["arn"],
-                            analyzer["name"],
-                            analyzer["status"],
-                            0,
-                            str(analyzer["tags"]),
-                            analyzer["type"],
-                            regional_client.region,
+                            arn=analyzer["arn"],
+                            name=analyzer["name"],
+                            status=analyzer["status"],
+                            tags=str(analyzer["tags"]),
+                            type=analyzer["type"],
+                            region=regional_client.region,
                         )
                     )
             # No analyzers in region
@@ -56,10 +57,26 @@ class AccessAnalyzer:
                         "NOT_AVAILABLE",
                         "",
                         "",
-                        "",
                         regional_client.region,
                     )
                 )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_finding_status__(self):
+        logger.info("AccessAnalyzer - Get Finding status...")
+        try:
+            for analyzer in self.analyzers:
+                if analyzer.status != "NOT_AVAILABLE":
+                    regional_client = self.regional_clients[analyzer.region]
+                    for finding in analyzer.findings:
+                        finding_information = regional_client.get_finding(
+                            analyzerArn=analyzer.arn, id=finding.id
+                        )
+                        finding.status = finding_information["finding"]["status"]
 
         except Exception as error:
             logger.error(
@@ -71,7 +88,6 @@ class AccessAnalyzer:
         try:
             for analyzer in self.analyzers:
                 if analyzer.status != "NOT_AVAILABLE":
-                    findings_count = 0
                     regional_client = self.regional_clients[analyzer.region]
                     list_findings_paginator = regional_client.get_paginator(
                         "list_findings"
@@ -79,8 +95,8 @@ class AccessAnalyzer:
                     for page in list_findings_paginator.paginate(
                         analyzerArn=analyzer.arn
                     ):
-                        findings_count += len(page["findings"])
-                    analyzer.findings_count = findings_count
+                        for finding in page["findings"]:
+                            analyzer.findings.append(Finding(id=finding["id"]))
 
         except Exception as error:
             logger.error(
@@ -88,30 +104,16 @@ class AccessAnalyzer:
             )
 
 
-@dataclass
-class Analyzer:
+class Finding(BaseModel):
+    id: str
+    status: str = ""
+
+
+class Analyzer(BaseModel):
     arn: str
     name: str
     status: str
-    findings_count: int
+    findings: list[Finding] = []
     tags: str
     type: str
     region: str
-
-    def __init__(
-        self,
-        arn,
-        name,
-        status,
-        findings_count,
-        tags,
-        type,
-        region,
-    ):
-        self.arn = arn
-        self.name = name
-        self.status = status
-        self.findings_count = findings_count
-        self.tags = tags
-        self.type = type
-        self.region = region
