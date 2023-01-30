@@ -102,7 +102,10 @@ class Test_accessanalyzer_enabled_without_findings:
 
             assert len(result) == 2
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == "IAM Access Analyzer is not enabled"
+            assert (
+                result[0].status_extended
+                == "IAM Access Analyzer Test Analyzer is not enabled"
+            )
             assert result[0].resource_id == "Test Analyzer"
             assert result[0].region == "eu-west-1"
             assert result[1].status == "FAIL"
