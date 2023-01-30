@@ -360,14 +360,14 @@ def execute_checks(
                 bar.title = (
                     f"-> Scanning {orange_color}{service}{Style.RESET_ALL} service"
                 )
-                audit_info.audit_metadata.checks_progress = (
-                    100
-                    * executed_checks_counter
-                    / audit_info.audit_metadata.checks_launched
-                )
                 try:
                     check_findings = execute(
-                        service, check_name, provider, audit_output_options, audit_info
+                        service,
+                        check_name,
+                        provider,
+                        audit_output_options,
+                        audit_info,
+                        executed_checks_counter,
                     )
                     all_findings.extend(check_findings)
                     bar()
@@ -393,6 +393,7 @@ def execute(
     provider: str,
     audit_output_options: Provider_Output_Options,
     audit_info: AWS_Audit_Info,
+    executed_checks_counter: int,
 ):
     # Import check module
     check_module_path = (
@@ -404,6 +405,9 @@ def execute(
     c = check_to_execute()
     # Run check
     check_findings = run_check(c, audit_output_options)
+    audit_info.audit_metadata.checks_progress = (
+        100 * executed_checks_counter / audit_info.audit_metadata.checks_launched
+    )
     report(check_findings, audit_output_options, audit_info)
 
     return check_findings
