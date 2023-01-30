@@ -46,7 +46,7 @@ class iam_avoid_root_usage(Check):
                                 "%Y-%m-%dT%H:%M:%S+00:00",
                             )
                         ).days
-                    if days_since_accessed > maximum_access_days:
+                    if maximum_access_days >= days_since_accessed:
                         report.status = "FAIL"
                         report.status_extended = f"Root user in the account was last accessed {days_since_accessed} days ago."
                     else:
