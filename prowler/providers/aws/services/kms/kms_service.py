@@ -63,6 +63,7 @@ class KMS:
                 key.state = response["KeyMetadata"]["KeyState"]
                 key.origin = response["KeyMetadata"]["Origin"]
                 key.manager = response["KeyMetadata"]["KeyManager"]
+                key.spec = response["KeyMetadata"]["CustomerMasterKeySpec"]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -107,6 +108,7 @@ class Key:
     manager: str
     rotation_enabled: bool
     policy: dict
+    spec: str
     region: str
 
     def __init__(

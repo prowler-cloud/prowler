@@ -22,6 +22,17 @@ def parse_allowlist_file(audit_info, allowlist_file):
             allowlist = yaml.safe_load(
                 s3_client.get_object(Bucket=bucket, Key=key)["Body"]
             )["Allowlist"]
+        # Check if file is a Lambda Function ARN
+        elif re.search("^arn:(\w+):lambda:", allowlist_file):
+            lambda_region = allowlist_file.split(":")[3]
+            lambda_client = audit_info.audit_session.client(
+                "lambda", region_name=lambda_region
+            )
+            lambda_response = lambda_client.invoke(
+                FunctionName=allowlist_file, InvocationType="RequestResponse"
+            )
+            lambda_payload = lambda_response["Payload"].read()
+            allowlist = yaml.safe_load(lambda_payload)["Allowlist"]
         # Check if file is a DynamoDB ARN
         elif re.search(
             r"^arn:aws(-cn|-us-gov)?:dynamodb:[a-z]{2}-[a-z-]+-[1-9]{1}:[0-9]{12}:table\/[a-zA-Z0-9._-]+$",
@@ -61,13 +72,13 @@ def parse_allowlist_file(audit_info, allowlist_file):
         else:
             with open(allowlist_file) as f:
                 allowlist = yaml.safe_load(f)["Allowlist"]
-                try:
-                    allowlist_schema.validate(allowlist)
-                except Exception as error:
-                    logger.critical(
-                        f"{error.__class__.__name__} -- Allowlist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
-                    )
-                    sys.exit()
+        try:
+            allowlist_schema.validate(allowlist)
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__} -- Allowlist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
+            )
+            sys.exit()
         return allowlist
     except Exception as error:
         logger.critical(

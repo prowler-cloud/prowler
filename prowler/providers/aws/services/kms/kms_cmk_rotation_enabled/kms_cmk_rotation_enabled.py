@@ -9,7 +9,11 @@ class kms_cmk_rotation_enabled(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = key.region
             # Only check enabled CMKs keys
-            if key.manager == "CUSTOMER" and key.state == "Enabled":
+            if (
+                key.manager == "CUSTOMER"
+                and key.state == "Enabled"
+                and "SYMMETRIC" in key.spec
+            ):
                 if key.rotation_enabled:
                     report.status = "PASS"
                     report.status_extended = (

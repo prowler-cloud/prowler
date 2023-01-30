@@ -341,7 +341,7 @@ Detailed documentation at https://docs.prowler.cloud
             "--allowlist-file",
             nargs="?",
             default=None,
-            help="Path for allowlist yaml file. See example prowler/config/allowlist.yaml for reference and format. It also accepts AWS DynamoDB Table ARN or S3 URI, see more in https://docs.prowler.cloud/en/latest/tutorials/allowlist/",
+            help="Path for allowlist yaml file. See example prowler/config/allowlist.yaml for reference and format. It also accepts AWS DynamoDB Table or Lambda ARNs or S3 URIs, see more in https://docs.prowler.cloud/en/latest/tutorials/allowlist/",
         )
         # Allowlist
         audit_tags_subparser = aws_parser.add_argument_group("Tags-based Scan")
