@@ -77,7 +77,7 @@ prowler aws -w arn:aws:dynamodb:<region_name>:<account_id>:table/<table_name>
 
 ### AWS Lambda ARN
 
-Passing an AWS Lambda ARN:
+You will need to pass the AWS Lambda Function ARN:
 
 ```
 prowler aws -w arn:aws:lambda:REGION:ACCOUNT_ID:function:FUNCTION_NAME
@@ -86,17 +86,17 @@ prowler aws -w arn:aws:lambda:REGION:ACCOUNT_ID:function:FUNCTION_NAME
 Make sure that the credentials that Prowler uses can invoke the Lambda Function:
 
 ```
-        - PolicyName: GetAllowList
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Action: 'lambda:InvokeFunction'
-                Effect: Allow
-                Resource: arn:aws:lambda:REGION:ACCOUNT_ID:function:FUNCTION_NAME
+- PolicyName: GetAllowList
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      - Action: 'lambda:InvokeFunction'
+        Effect: Allow
+        Resource: arn:aws:lambda:REGION:ACCOUNT_ID:function:FUNCTION_NAME
 ```
 
-The Lambda Function can then generate an Allowlist dynamically. Here is the code an example Python Lambda Function that 
-generates an Allowlist
+The Lambda Function can then generate an Allowlist dynamically. Here is the code an example Python Lambda Function that
+generates an Allowlist:
 
 ```
 def handler(event, context):
@@ -106,4 +106,3 @@ def handler(event, context):
   al = { "Allowlist": { "Accounts": { "*": { "Checks": checks } } } }
   return al
 ```
-
