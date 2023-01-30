@@ -18,15 +18,15 @@ class iam_policy_no_administrative_privileges(Check):
             else:
                 policy_statements = policy["PolicyDocument"]["Statement"]
             for statement in policy_statements:
+                # Check policies with "Effect": "Allow" with "Action": "*" over "Resource": "*".
                 if (
                     statement["Effect"] == "Allow"
                     and "Action" in statement
-                    and "*" in statement["Action"]
-                    and "*" in statement["Resource"]
+                    and (statement["Action"] == "*" or statement["Action"] == ["*"])
+                    and (statement["Resource"] == "*" or statement["Resource"] == ["*"])
                 ):
                     report.status = "FAIL"
                     report.status_extended = f"Policy {policy['PolicyName']} allows '*:*' administrative privileges"
                     break
-
             findings.append(report)
         return findings

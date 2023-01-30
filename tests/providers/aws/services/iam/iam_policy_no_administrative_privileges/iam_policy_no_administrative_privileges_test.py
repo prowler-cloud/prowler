@@ -83,7 +83,7 @@ class Test_iam_policy_no_administrative_privileges_test:
         policy_document_non_administrative = {
             "Version": "2012-10-17",
             "Statement": [
-                {"Effect": "Allow", "Action": "logs:CreateLogGroup", "Resource": "*"},
+                {"Effect": "Allow", "Action": "logs:*", "Resource": "*"},
             ],
         }
         policy_name_administrative = "policy2"
