@@ -61,13 +61,13 @@ def parse_allowlist_file(audit_info, allowlist_file):
         else:
             with open(allowlist_file) as f:
                 allowlist = yaml.safe_load(f)["Allowlist"]
-                try:
-                    allowlist_schema.validate(allowlist)
-                except Exception as error:
-                    logger.critical(
-                        f"{error.__class__.__name__} -- Allowlist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
-                    )
-                    sys.exit()
+        try:
+            allowlist_schema.validate(allowlist)
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__} -- Allowlist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
+            )
+            sys.exit()
         return allowlist
     except Exception as error:
         logger.critical(
