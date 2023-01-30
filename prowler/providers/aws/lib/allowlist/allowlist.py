@@ -25,8 +25,12 @@ def parse_allowlist_file(audit_info, allowlist_file):
         # Check if file is a Lambda Function ARN
         elif re.search("^arn:(\w+):lambda:", allowlist_file):
             lambda_region = allowlist_file.split(":")[3]
-            lambda_client = audit_info.audit_session.client("lambda", region_name=lambda_region)
-            lambda_response = lambda_client.invoke(FunctionName=allowlist_file, InvocationType="RequestResponse")
+            lambda_client = audit_info.audit_session.client(
+                "lambda", region_name=lambda_region
+            )
+            lambda_response = lambda_client.invoke(
+                FunctionName=allowlist_file, InvocationType="RequestResponse"
+            )
             lambda_payload = lambda_response["Payload"].read()
             allowlist = yaml.safe_load(lambda_payload)["Allowlist"]
         # Check if file is a DynamoDB ARN
