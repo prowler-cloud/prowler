@@ -11,11 +11,7 @@ from prowler.providers.azure.lib.audit_info.models import (
     Azure_Audit_Info,
     Azure_Identity_Info,
 )
-from prowler.providers.common.audit_info import (
-    Audit_Info,
-    get_metadata_audit,
-    set_provider_audit_info,
-)
+from prowler.providers.common.audit_info import Audit_Info, set_provider_audit_info
 
 ACCOUNT_ID = 123456789012
 mock_current_audit_info = AWS_Audit_Info(
@@ -211,16 +207,5 @@ class Test_Set_Audit_Info:
             "iam_policy_no_administrative_privileges",
         }
 
-        audit_info = set_provider_audit_info(provider, arguments, checks_to_execute)
+        audit_info = set_provider_audit_info(provider, arguments)
         assert isinstance(audit_info, Azure_Audit_Info)
-
-    def test_get_metadata_audit(self):
-        checks_to_execute = {
-            "elbv2_waf_acl_attached",
-            "ec2_securitygroup_in_use_without_ingress_filtering",
-            "iam_policy_no_administrative_privileges",
-        }
-        metadata = get_metadata_audit(checks_to_execute)
-        assert metadata.services_scanned == 3
-        assert metadata.expected_checks == 3
-        assert metadata.completed_checks == 0

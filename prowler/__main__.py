@@ -131,7 +131,7 @@ def prowler():
         sys.exit()
 
     # Set the audit info based on the selected provider
-    audit_info = set_provider_audit_info(provider, args.__dict__, checks_to_execute)
+    audit_info = set_provider_audit_info(provider, args.__dict__)
 
     # Parse content from Allowlist file and get it, if necessary, from S3
     if provider == "aws" and args.allowlist_file:

@@ -16,7 +16,6 @@ from prowler.providers.aws.lib.audit_info.models import (
 from prowler.providers.azure.azure_provider import Azure_Provider
 from prowler.providers.azure.lib.audit_info.audit_info import azure_audit_info
 from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
 
 
 class Audit_Info:
@@ -93,7 +92,7 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
             )
             return organizations_info
 
-    def set_aws_audit_info(self, arguments, checks_to_execute) -> AWS_Audit_Info:
+    def set_aws_audit_info(self, arguments) -> AWS_Audit_Info:
         """
         set_aws_audit_info returns the AWS_Audit_Info
         """
@@ -237,11 +236,9 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         if not arguments.get("only_logs"):
             self.print_audit_credentials(current_audit_info)
 
-        current_audit_info.audit_metadata = get_metadata_audit(checks_to_execute)
-
         return current_audit_info
 
-    def set_azure_audit_info(self, arguments, checks_to_execute) -> Azure_Audit_Info:
+    def set_azure_audit_info(self, arguments) -> Azure_Audit_Info:
         """
         set_azure_audit_info returns the Azure_Audit_Info
         """
@@ -272,20 +269,17 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         )
         azure_audit_info.credentials = azure_provider.get_credentials()
         azure_audit_info.identity = azure_provider.get_identity()
-        azure_audit_info.audit_metadata = get_metadata_audit(checks_to_execute)
 
         return azure_audit_info
 
 
-def set_provider_audit_info(provider: str, arguments: dict, checks_to_execute: set):
+def set_provider_audit_info(provider: str, arguments: dict):
     """
     set_provider_audit_info configures automatically the audit session based on the selected provider and returns the audit_info object.
     """
     try:
         provider_set_audit_info = f"set_{provider}_audit_info"
-        provider_audit_info = getattr(Audit_Info(), provider_set_audit_info)(
-            arguments, checks_to_execute
-        )
+        provider_audit_info = getattr(Audit_Info(), provider_set_audit_info)(arguments)
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -293,23 +287,3 @@ def set_provider_audit_info(provider: str, arguments: dict, checks_to_execute: s
         sys.exit()
     else:
         return provider_audit_info
-
-
-def get_metadata_audit(checks_to_execute: set) -> Audit_Metadata:
-    """
-    get_services_scanned retrieve the number of services covered in a scan
-    """
-    services = set()
-    checks_counter = 0
-    for check in checks_to_execute:
-        service = check.split("_")[0]
-        services.add(service)
-        checks_counter += 1
-
-    metadata = Audit_Metadata(
-        services_scanned=len(services),
-        expected_checks=checks_counter,
-        completed_checks=0,
-    )
-
-    return metadata

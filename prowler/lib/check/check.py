@@ -24,6 +24,7 @@ except Exception:
 
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import Provider_Output_Options
 
 
@@ -317,14 +318,26 @@ def execute_checks(
 ) -> list:
     all_findings = []
     executed_checks_counter = 0
+    services_executed = set()
+    checks_executed = set()
+    total_checks_to_execute = len(checks_to_execute)
     # Execution with the --only-logs flag
     if audit_output_options.only_logs:
         for check_name in checks_to_execute:
+            # Add 1 to the counter of executed checks
+            executed_checks_counter += 1
             # Recover service from check name
             service = check_name.split("_")[0]
             try:
                 check_findings = execute(
-                    service, check_name, provider, audit_output_options, audit_info
+                    service,
+                    check_name,
+                    provider,
+                    audit_output_options,
+                    audit_info,
+                    services_executed,
+                    checks_executed,
+                    total_checks_to_execute,
                 )
                 all_findings.extend(check_findings)
 
@@ -368,6 +381,9 @@ def execute_checks(
                         audit_output_options,
                         audit_info,
                         executed_checks_counter,
+                        services_executed,
+                        checks_executed,
+                        total_checks_to_execute,
                     )
                     all_findings.extend(check_findings)
                     bar()
@@ -388,12 +404,15 @@ def execute_checks(
 
 
 def execute(
-    service,
+    service: str,
     check_name: str,
     provider: str,
     audit_output_options: Provider_Output_Options,
     audit_info: AWS_Audit_Info,
     executed_checks_counter: int,
+    services_executed: set,
+    checks_executed: set,
+    total_checks_to_execute: int,
 ):
     # Import check module
     check_module_path = (
@@ -405,8 +424,13 @@ def execute(
     c = check_to_execute()
     # Run check
     check_findings = run_check(c, audit_output_options)
-    audit_info.audit_metadata.completed_checks = (
-        100 * executed_checks_counter / audit_info.audit_metadata.expected_checks
+    services_executed.add(service)
+    checks_executed.add(check_name)
+    audit_info.audit_metadata = Audit_Metadata(
+        services_scanned=len(services_executed),
+        expected_checks=total_checks_to_execute,
+        completed_checks=len(checks_executed),
+        audit_progress=100 * executed_checks_counter / total_checks_to_execute,
     )
     report(check_findings, audit_output_options, audit_info)
 
