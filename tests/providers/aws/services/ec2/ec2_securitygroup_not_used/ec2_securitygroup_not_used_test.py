@@ -33,19 +33,18 @@ class Test_ec2_securitygroup_not_used:
             check = ec2_securitygroup_not_used()
             result = check.execute()
 
-            # One default sg per region
-            assert len(result) == 3
-            # All are unused by default
-            assert result[0].status == "FAIL"
+            # Default sg per region are excluded
+            assert len(result) == 0
 
     @mock_ec2
-    def test_ec2_unused_default_sg(self):
+    def test_ec2_unused_sg(self):
         # Create EC2 Mocked Resources
+        ec2 = resource("ec2", AWS_REGION)
         ec2_client = client("ec2", region_name=AWS_REGION)
-        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        default_sg_id = ec2_client.describe_security_groups(GroupNames=["default"])[
-            "SecurityGroups"
-        ][0]["GroupId"]
+        vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        sg = ec2.create_security_group(
+            GroupName="test-sg", Description="test", VpcId=vpc_id
+        )
 
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -65,39 +64,30 @@ class Test_ec2_securitygroup_not_used:
             check = ec2_securitygroup_not_used()
             result = check.execute()
 
-            # One default sg per region
-            assert len(result) == 3
-            # Search changed sg
-            for sg in result:
-                if sg.resource_id == default_sg_id:
-                    assert sg.status == "FAIL"
-                    assert search(
-                        "it is not being used",
-                        sg.status_extended,
-                    )
-                    assert (
-                        sg.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
-                    )
+            # One custom sg
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert search(
+                "it is not being used",
+                result[0].status_extended,
+            )
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{sg.id}"
+            )
 
     @mock_ec2
     def test_ec2_used_default_sg(self):
         # Create EC2 Mocked Resources
+        ec2 = resource("ec2", AWS_REGION)
         ec2_client = client("ec2", region_name=AWS_REGION)
-        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        default_sg_id = ec2_client.describe_security_groups(GroupNames=["default"])[
-            "SecurityGroups"
-        ][0]["GroupId"]
-
-        ec2 = resource("ec2", region_name=AWS_REGION)
-        ec2.create_instances(
-            ImageId=EXAMPLE_AMI_ID,
-            MinCount=1,
-            MaxCount=1,
-            SecurityGroupIds=[
-                default_sg_id,
-            ],
+        vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        sg = ec2.create_security_group(
+            GroupName="test-sg", Description="test", VpcId=vpc_id
         )
+        subnet = ec2.create_subnet(VpcId=vpc_id, CidrBlock="10.0.0.0/18")
+        subnet.create_network_interface(Groups=[sg.id])
+
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -116,17 +106,14 @@ class Test_ec2_securitygroup_not_used:
             check = ec2_securitygroup_not_used()
             result = check.execute()
 
-            # One default sg per region
-            assert len(result) == 3
-            # Search changed sg
-            for sg in result:
-                if sg.resource_id == default_sg_id:
-                    assert sg.status == "PASS"
-                    assert search(
-                        "it is being used",
-                        sg.status_extended,
-                    )
-                    assert (
-                        sg.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
-                    )
+            # One custom sg
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert search(
+                "it is being used",
+                result[0].status_extended,
+            )
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{sg.id}"
+            )
