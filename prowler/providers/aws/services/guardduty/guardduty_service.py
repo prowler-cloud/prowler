@@ -3,6 +3,7 @@ import threading
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -11,6 +12,7 @@ class GuardDuty:
     def __init__(self, audit_info):
         self.service = "guardduty"
         self.session = audit_info.audit_session
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.detectors = []
         self.__threading_call__(self.__list_detectors__)
@@ -35,9 +37,12 @@ class GuardDuty:
             list_detectors_paginator = regional_client.get_paginator("list_detectors")
             for page in list_detectors_paginator.paginate():
                 for detector in page["DetectorIds"]:
-                    self.detectors.append(
-                        Detector(id=detector, region=regional_client.region)
-                    )
+                    if not self.audit_resources or (
+                        is_resource_filtered(detector, self.audit_resources)
+                    ):
+                        self.detectors.append(
+                            Detector(id=detector, region=regional_client.region)
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

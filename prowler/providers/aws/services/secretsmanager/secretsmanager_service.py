@@ -3,6 +3,7 @@ import threading
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -12,6 +13,7 @@ class SecretsManager:
         self.service = "secretsmanager"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.secrets = {}
         self.__threading_call__(self.__list_secrets__)
@@ -34,15 +36,18 @@ class SecretsManager:
             list_secrets_paginator = regional_client.get_paginator("list_secrets")
             for page in list_secrets_paginator.paginate():
                 for secret in page["SecretList"]:
-                    self.secrets[secret["Name"]] = Secret(
-                        arn=secret["ARN"],
-                        name=secret["Name"],
-                        region=regional_client.region,
-                    )
-                    if "RotationEnabled" in secret:
-                        self.secrets[secret["Name"]].rotation_enabled = secret[
-                            "RotationEnabled"
-                        ]
+                    if not self.audit_resources or (
+                        is_resource_filtered(secret["ARN"], self.audit_resources)
+                    ):
+                        self.secrets[secret["Name"]] = Secret(
+                            arn=secret["ARN"],
+                            name=secret["Name"],
+                            region=regional_client.region,
+                        )
+                        if "RotationEnabled" in secret:
+                            self.secrets[secret["Name"]].rotation_enabled = secret[
+                                "RotationEnabled"
+                            ]
 
         except Exception as error:
             logger.error(

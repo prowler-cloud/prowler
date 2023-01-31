@@ -3,6 +3,7 @@ import threading
 from dataclasses import dataclass
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -13,6 +14,7 @@ class S3:
         self.session = audit_info.audit_session
         self.client = self.session.client(self.service)
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.audited_partition = audit_info.audited_partition
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.buckets = self.__list_buckets__(audit_info)
@@ -50,12 +52,17 @@ class S3:
                         bucket_region = "us-east-1"
                     # Arn
                     arn = f"arn:{self.audited_partition}:s3:::{bucket['Name']}"
-                    # Check if there are filter regions
-                    if audit_info.audited_regions:
-                        if bucket_region in audit_info.audited_regions:
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
+                    ):
+                        # Check if there are filter regions
+                        if audit_info.audited_regions:
+                            if bucket_region in audit_info.audited_regions:
+                                buckets.append(
+                                    Bucket(bucket["Name"], arn, bucket_region)
+                                )
+                        else:
                             buckets.append(Bucket(bucket["Name"], arn, bucket_region))
-                    else:
-                        buckets.append(Bucket(bucket["Name"], arn, bucket_region))
                 except Exception as error:
                     logger.error(
                         f"{bucket_region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

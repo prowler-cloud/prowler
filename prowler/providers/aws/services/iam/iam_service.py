@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -29,6 +30,7 @@ class IAM:
         self.service = "iam"
         self.session = audit_info.audit_session
         self.account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.partition = audit_info.audited_partition
         self.client = self.session.client(self.service)
         global_client = generate_regional_clients(
@@ -68,14 +70,17 @@ class IAM:
             roles = []
             for page in get_roles_paginator.paginate():
                 for role in page["Roles"]:
-                    roles.append(
-                        Role(
-                            name=role["RoleName"],
-                            arn=role["Arn"],
-                            assume_role_policy=role["AssumeRolePolicyDocument"],
-                            is_service_role=is_service_role(role),
+                    if not self.audit_resources or (
+                        is_resource_filtered(role["Arn"], self.audit_resources)
+                    ):
+                        roles.append(
+                            Role(
+                                name=role["RoleName"],
+                                arn=role["Arn"],
+                                assume_role_policy=role["AssumeRolePolicyDocument"],
+                                is_service_role=is_service_role(role),
+                            )
                         )
-                    )
             return roles
         except Exception as error:
             logger.error(
@@ -112,7 +117,10 @@ class IAM:
             groups = []
             for page in get_groups_paginator.paginate():
                 for group in page["Groups"]:
-                    groups.append(Group(group["GroupName"], group["Arn"]))
+                    if not self.audit_resources or (
+                        is_resource_filtered(group["Arn"], self.audit_resources)
+                    ):
+                        groups.append(Group(group["GroupName"], group["Arn"]))
 
             return groups
 
@@ -175,14 +183,19 @@ class IAM:
             users = []
             for page in get_users_paginator.paginate():
                 for user in page["Users"]:
-                    if "PasswordLastUsed" not in user:
-                        users.append(User(user["UserName"], user["Arn"], None))
-                    else:
-                        users.append(
-                            User(
-                                user["UserName"], user["Arn"], user["PasswordLastUsed"]
+                    if not self.audit_resources or (
+                        is_resource_filtered(user["Arn"], self.audit_resources)
+                    ):
+                        if "PasswordLastUsed" not in user:
+                            users.append(User(user["UserName"], user["Arn"], None))
+                        else:
+                            users.append(
+                                User(
+                                    user["UserName"],
+                                    user["Arn"],
+                                    user["PasswordLastUsed"],
+                                )
                             )
-                        )
 
             return users
 
@@ -330,7 +343,10 @@ class IAM:
             list_policies_paginator = self.client.get_paginator("list_policies")
             for page in list_policies_paginator.paginate(Scope="Local"):
                 for policy in page["Policies"]:
-                    policies.append(policy)
+                    if not self.audit_resources or (
+                        is_resource_filtered(policy["Arn"], self.audit_resources)
+                    ):
+                        policies.append(policy)
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -369,14 +385,17 @@ class IAM:
             for certificate in self.client.list_server_certificates()[
                 "ServerCertificateMetadataList"
             ]:
-                server_certificates.append(
-                    Certificate(
-                        certificate["ServerCertificateName"],
-                        certificate["ServerCertificateId"],
-                        certificate["Arn"],
-                        certificate["Expiration"],
+                if not self.audit_resources or (
+                    is_resource_filtered(certificate["Arn"], self.audit_resources)
+                ):
+                    server_certificates.append(
+                        Certificate(
+                            certificate["ServerCertificateName"],
+                            certificate["ServerCertificateId"],
+                            certificate["Arn"],
+                            certificate["Expiration"],
+                        )
                     )
-                )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

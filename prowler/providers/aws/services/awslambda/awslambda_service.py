@@ -10,6 +10,7 @@ from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -19,6 +20,7 @@ class Lambda:
         self.service = "lambda"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.functions = {}
         self.__threading_call__(self.__list_functions__)
@@ -44,18 +46,23 @@ class Lambda:
             list_functions_paginator = regional_client.get_paginator("list_functions")
             for page in list_functions_paginator.paginate():
                 for function in page["Functions"]:
-                    lambda_name = function["FunctionName"]
-                    lambda_arn = function["FunctionArn"]
-                    lambda_runtime = function["Runtime"]
-                    self.functions[lambda_name] = Function(
-                        name=lambda_name,
-                        arn=lambda_arn,
-                        runtime=lambda_runtime,
-                        region=regional_client.region,
-                    )
-                    if "Environment" in function:
-                        lambda_environment = function["Environment"]["Variables"]
-                        self.functions[lambda_name].environment = lambda_environment
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            function["FunctionArn"], self.audit_resources
+                        )
+                    ):
+                        lambda_name = function["FunctionName"]
+                        lambda_arn = function["FunctionArn"]
+                        lambda_runtime = function["Runtime"]
+                        self.functions[lambda_name] = Function(
+                            name=lambda_name,
+                            arn=lambda_arn,
+                            runtime=lambda_runtime,
+                            region=regional_client.region,
+                        )
+                        if "Environment" in function:
+                            lambda_environment = function["Environment"]["Variables"]
+                            self.functions[lambda_name].environment = lambda_environment
 
         except Exception as error:
             logger.error(

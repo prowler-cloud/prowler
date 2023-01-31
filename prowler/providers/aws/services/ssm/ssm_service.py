@@ -5,6 +5,7 @@ from enum import Enum
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -14,6 +15,7 @@ class SSM:
         self.service = "ssm"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.documents = {}
         self.compliance_resources = {}
@@ -53,12 +55,15 @@ class SSM:
             list_documents_paginator = regional_client.get_paginator("list_documents")
             for page in list_documents_paginator.paginate(**list_documents_parameters):
                 for document in page["DocumentIdentifiers"]:
-                    document_name = document["Name"]
+                    if not self.audit_resources or (
+                        is_resource_filtered(document["Name"], self.audit_resources)
+                    ):
+                        document_name = document["Name"]
 
-                    self.documents[document_name] = Document(
-                        name=document_name,
-                        region=regional_client.region,
-                    )
+                        self.documents[document_name] = Document(
+                            name=document_name,
+                            region=regional_client.region,
+                        )
 
         except Exception as error:
             logger.error(

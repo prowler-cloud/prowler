@@ -3,6 +3,7 @@ import threading
 from dataclasses import dataclass
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -12,6 +13,7 @@ class KMS:
         self.service = "kms"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.keys = []
         self.__threading_call__(self.__list_keys__)
@@ -37,13 +39,16 @@ class KMS:
             list_keys_paginator = regional_client.get_paginator("list_keys")
             for page in list_keys_paginator.paginate():
                 for key in page["Keys"]:
-                    self.keys.append(
-                        Key(
-                            key["KeyId"],
-                            key["KeyArn"],
-                            regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(key["KeyArn"], self.audit_resources)
+                    ):
+                        self.keys.append(
+                            Key(
+                                key["KeyId"],
+                                key["KeyArn"],
+                                regional_client.region,
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"

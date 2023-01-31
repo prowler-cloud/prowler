@@ -3,6 +3,7 @@ import threading
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -11,6 +12,7 @@ class EKS:
     def __init__(self, audit_info):
         self.service = "eks"
         self.session = audit_info.audit_session
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.clusters = []
         self.__threading_call__(self.__list_clusters__)
@@ -34,12 +36,15 @@ class EKS:
             list_clusters_paginator = regional_client.get_paginator("list_clusters")
             for page in list_clusters_paginator.paginate():
                 for cluster in page["clusters"]:
-                    self.clusters.append(
-                        EKSCluster(
-                            name=cluster,
-                            region=regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(cluster, self.audit_resources)
+                    ):
+                        self.clusters.append(
+                            EKSCluster(
+                                name=cluster,
+                                region=regional_client.region,
+                            )
                         )
-                    )
 
         except Exception as error:
             logger.error(

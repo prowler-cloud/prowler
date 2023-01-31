@@ -4,6 +4,7 @@ from re import sub
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -12,6 +13,7 @@ class ECS:
     def __init__(self, audit_info):
         self.service = "ecs"
         self.session = audit_info.audit_session
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.task_definitions = []
         self.__threading_call__(self.__list_task_definitions__)
@@ -36,16 +38,19 @@ class ECS:
             list_ecs_paginator = regional_client.get_paginator("list_task_definitions")
             for page in list_ecs_paginator.paginate():
                 for task_definition in page["taskDefinitionArns"]:
-                    self.task_definitions.append(
-                        TaskDefinition(
-                            # we want the family name without the revision
-                            name=sub(":.*", "", task_definition.split("/")[1]),
-                            arn=task_definition,
-                            revision=task_definition.split(":")[-1],
-                            region=regional_client.region,
-                            environment_variables=[],
+                    if not self.audit_resources or (
+                        is_resource_filtered(task_definition, self.audit_resources)
+                    ):
+                        self.task_definitions.append(
+                            TaskDefinition(
+                                # we want the family name without the revision
+                                name=sub(":.*", "", task_definition.split("/")[1]),
+                                arn=task_definition,
+                                revision=task_definition.split(":")[-1],
+                                region=regional_client.region,
+                                environment_variables=[],
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

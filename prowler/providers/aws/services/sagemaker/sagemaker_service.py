@@ -3,6 +3,7 @@ import threading
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -11,6 +12,7 @@ class SageMaker:
     def __init__(self, audit_info):
         self.service = "sagemaker"
         self.session = audit_info.audit_session
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.sagemaker_notebook_instances = []
         self.sagemaker_models = []
@@ -42,13 +44,19 @@ class SageMaker:
             )
             for page in list_notebook_instances_paginator.paginate():
                 for notebook_instance in page["NotebookInstances"]:
-                    self.sagemaker_notebook_instances.append(
-                        NotebookInstance(
-                            name=notebook_instance["NotebookInstanceName"],
-                            region=regional_client.region,
-                            arn=notebook_instance["NotebookInstanceArn"],
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            notebook_instance["NotebookInstanceArn"],
+                            self.audit_resources,
                         )
-                    )
+                    ):
+                        self.sagemaker_notebook_instances.append(
+                            NotebookInstance(
+                                name=notebook_instance["NotebookInstanceName"],
+                                region=regional_client.region,
+                                arn=notebook_instance["NotebookInstanceArn"],
+                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -60,13 +68,16 @@ class SageMaker:
             list_models_paginator = regional_client.get_paginator("list_models")
             for page in list_models_paginator.paginate():
                 for model in page["Models"]:
-                    self.sagemaker_models.append(
-                        Model(
-                            name=model["ModelName"],
-                            region=regional_client.region,
-                            arn=model["ModelArn"],
+                    if not self.audit_resources or (
+                        is_resource_filtered(model["ModelArn"], self.audit_resources)
+                    ):
+                        self.sagemaker_models.append(
+                            Model(
+                                name=model["ModelName"],
+                                region=regional_client.region,
+                                arn=model["ModelArn"],
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -80,13 +91,18 @@ class SageMaker:
             )
             for page in list_training_jobs_paginator.paginate():
                 for training_job in page["TrainingJobSummaries"]:
-                    self.sagemaker_training_jobs.append(
-                        TrainingJob(
-                            name=training_job["TrainingJobName"],
-                            region=regional_client.region,
-                            arn=training_job["TrainingJobArn"],
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            training_job["TrainingJobArn"], self.audit_resources
                         )
-                    )
+                    ):
+                        self.sagemaker_training_jobs.append(
+                            TrainingJob(
+                                name=training_job["TrainingJobName"],
+                                region=regional_client.region,
+                                arn=training_job["TrainingJobArn"],
+                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

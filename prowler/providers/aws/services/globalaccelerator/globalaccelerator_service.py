@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 
 
 ################### GlobalAccelerator
@@ -9,6 +10,7 @@ class GlobalAccelerator:
         self.service = "globalaccelerator"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.accelerators = {}
         if audit_info.audited_partition == "aws":
             # Global Accelerator is a global service that supports endpoints in multiple AWS Regions
@@ -27,15 +29,20 @@ class GlobalAccelerator:
             list_accelerators_paginator = self.client.get_paginator("list_accelerators")
             for page in list_accelerators_paginator.paginate():
                 for accelerator in page["Accelerators"]:
-                    accelerator_arn = accelerator["AcceleratorArn"]
-                    accelerator_name = accelerator["Name"]
-                    enabled = accelerator["Enabled"]
-                    self.accelerators[accelerator_name] = Accelerator(
-                        name=accelerator_name,
-                        arn=accelerator_arn,
-                        region=self.region,
-                        enabled=enabled,
-                    )
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            accelerator["AcceleratorArn"], self.audit_resources
+                        )
+                    ):
+                        accelerator_arn = accelerator["AcceleratorArn"]
+                        accelerator_name = accelerator["Name"]
+                        enabled = accelerator["Enabled"]
+                        self.accelerators[accelerator_name] = Accelerator(
+                            name=accelerator_name,
+                            arn=accelerator_arn,
+                            region=self.region,
+                            enabled=enabled,
+                        )
 
         except Exception as error:
             logger.error(

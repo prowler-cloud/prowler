@@ -6,6 +6,7 @@ from typing import Union
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -15,6 +16,7 @@ class DirectoryService:
         self.service = "ds"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.directories = {}
         self.__threading_call__(self.__describe_directories__)
@@ -43,31 +45,36 @@ class DirectoryService:
             )
             for page in describe_fleets_paginator.paginate():
                 for directory in page["DirectoryDescriptions"]:
-                    directory_id = directory["DirectoryId"]
-                    directory_name = directory["Name"]
-                    directory_type = directory["Type"]
-                    # Radius Configuration
-                    radius_authentication_protocol = (
-                        directory["RadiusSettings"]["AuthenticationProtocol"]
-                        if "RadiusSettings" in directory
-                        else None
-                    )
-                    radius_status = (
-                        directory["RadiusStatus"]
-                        if "RadiusStatus" in directory
-                        else None
-                    )
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            directory["DirectoryId"], self.audit_resources
+                        )
+                    ):
+                        directory_id = directory["DirectoryId"]
+                        directory_name = directory["Name"]
+                        directory_type = directory["Type"]
+                        # Radius Configuration
+                        radius_authentication_protocol = (
+                            directory["RadiusSettings"]["AuthenticationProtocol"]
+                            if "RadiusSettings" in directory
+                            else None
+                        )
+                        radius_status = (
+                            directory["RadiusStatus"]
+                            if "RadiusStatus" in directory
+                            else None
+                        )
 
-                    self.directories[directory_id] = Directory(
-                        name=directory_name,
-                        id=directory_id,
-                        type=directory_type,
-                        region=regional_client.region,
-                        radius_settings=RadiusSettings(
-                            authentication_protocol=radius_authentication_protocol,
-                            status=radius_status,
-                        ),
-                    )
+                        self.directories[directory_id] = Directory(
+                            name=directory_name,
+                            id=directory_id,
+                            type=directory_type,
+                            region=regional_client.region,
+                            radius_settings=RadiusSettings(
+                                authentication_protocol=radius_authentication_protocol,
+                                status=radius_status,
+                            ),
+                        )
 
         except Exception as error:
             logger.error(

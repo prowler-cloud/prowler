@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -10,6 +11,7 @@ class Route53:
         self.service = "route53"
         self.session = audit_info.audit_session
         self.audited_partition = audit_info.audited_partition
+        self.audit_resources = audit_info.audit_resources
         self.hosted_zones = {}
         global_client = generate_regional_clients(
             self.service, audit_info, global_service=True
@@ -30,16 +32,20 @@ class Route53:
             for page in list_hosted_zones_paginator.paginate():
                 for hosted_zone in page["HostedZones"]:
                     hosted_zone_id = hosted_zone["Id"].replace("/hostedzone/", "")
-                    hosted_zone_name = hosted_zone["Name"]
-                    private_zone = hosted_zone["Config"]["PrivateZone"]
+                    arn = f"arn:{self.audited_partition}:route53:::{hosted_zone_id}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
+                    ):
+                        hosted_zone_name = hosted_zone["Name"]
+                        private_zone = hosted_zone["Config"]["PrivateZone"]
 
-                    self.hosted_zones[hosted_zone_id] = HostedZone(
-                        id=hosted_zone_id,
-                        name=hosted_zone_name,
-                        private_zone=private_zone,
-                        arn=f"arn:{self.audited_partition}:route53:::{hosted_zone_id}",
-                        region=self.region,
-                    )
+                        self.hosted_zones[hosted_zone_id] = HostedZone(
+                            id=hosted_zone_id,
+                            name=hosted_zone_name,
+                            private_zone=private_zone,
+                            arn=arn,
+                            region=self.region,
+                        )
 
         except Exception as error:
             logger.error(

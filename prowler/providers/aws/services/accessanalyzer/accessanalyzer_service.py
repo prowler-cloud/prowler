@@ -3,6 +3,7 @@ import threading
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -12,6 +13,7 @@ class AccessAnalyzer:
         self.service = "accessanalyzer"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.analyzers = []
         self.__threading_call__(self.__list_analyzers__)
@@ -36,18 +38,21 @@ class AccessAnalyzer:
             list_analyzers_paginator = regional_client.get_paginator("list_analyzers")
             analyzer_count = 0
             for page in list_analyzers_paginator.paginate():
-                analyzer_count += len(page["analyzers"])
                 for analyzer in page["analyzers"]:
-                    self.analyzers.append(
-                        Analyzer(
-                            arn=analyzer["arn"],
-                            name=analyzer["name"],
-                            status=analyzer["status"],
-                            tags=str(analyzer["tags"]),
-                            type=analyzer["type"],
-                            region=regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(analyzer["arn"], self.audit_resources)
+                    ):
+                        analyzer_count += 1
+                        self.analyzers.append(
+                            Analyzer(
+                                arn=analyzer["arn"],
+                                name=analyzer["name"],
+                                status=analyzer["status"],
+                                tags=str(analyzer["tags"]),
+                                type=analyzer["type"],
+                                region=regional_client.region,
+                            )
                         )
-                    )
             # No analyzers in region
             if analyzer_count == 0:
                 self.analyzers.append(

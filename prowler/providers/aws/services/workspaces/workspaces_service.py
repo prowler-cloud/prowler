@@ -3,6 +3,7 @@ import threading
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -11,6 +12,7 @@ class WorkSpaces:
     def __init__(self, audit_info):
         self.service = "workspaces"
         self.session = audit_info.audit_session
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.workspaces = []
         self.__threading_call__(self.__describe_workspaces__)
@@ -35,20 +37,25 @@ class WorkSpaces:
             )
             for page in describe_workspaces_paginator.paginate():
                 for workspace in page["Workspaces"]:
-                    workspace_to_append = WorkSpace(
-                        id=workspace["WorkspaceId"], region=regional_client.region
-                    )
-                    if (
-                        "UserVolumeEncryptionEnabled" in workspace
-                        and workspace["UserVolumeEncryptionEnabled"]
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            workspace["WorkspaceId"], self.audit_resources
+                        )
                     ):
-                        workspace_to_append.user_volume_encryption_enabled = True
-                    if (
-                        "RootVolumeEncryptionEnabled" in workspace
-                        and workspace["RootVolumeEncryptionEnabled"]
-                    ):
-                        workspace_to_append.root_volume_encryption_enabled = True
-                    self.workspaces.append(workspace_to_append)
+                        workspace_to_append = WorkSpace(
+                            id=workspace["WorkspaceId"], region=regional_client.region
+                        )
+                        if (
+                            "UserVolumeEncryptionEnabled" in workspace
+                            and workspace["UserVolumeEncryptionEnabled"]
+                        ):
+                            workspace_to_append.user_volume_encryption_enabled = True
+                        if (
+                            "RootVolumeEncryptionEnabled" in workspace
+                            and workspace["RootVolumeEncryptionEnabled"]
+                        ):
+                            workspace_to_append.root_volume_encryption_enabled = True
+                        self.workspaces.append(workspace_to_append)
 
         except Exception as error:
             logger.error(

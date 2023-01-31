@@ -2,6 +2,7 @@ import threading
 from dataclasses import dataclass
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -11,6 +12,7 @@ class SecurityHub:
         self.service = "securityhub"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.securityhubs = []
         self.__threading_call__(self.__describe_hub__)
@@ -51,16 +53,29 @@ class SecurityHub:
             else:
                 # SecurityHub is active so get HubArn
                 hub_arn = regional_client.describe_hub()["HubArn"]
-                hub_id = hub_arn.split("/")[1]
-                self.securityhubs.append(
-                    SecurityHubHub(
-                        hub_arn,
-                        hub_id,
-                        "ACTIVE",
-                        standards,
-                        regional_client.region,
+                if not self.audit_resources or (
+                    is_resource_filtered(hub_arn, self.audit_resources)
+                ):
+                    hub_id = hub_arn.split("/")[1]
+                    self.securityhubs.append(
+                        SecurityHubHub(
+                            hub_arn,
+                            hub_id,
+                            "ACTIVE",
+                            standards,
+                            regional_client.region,
+                        )
                     )
-                )
+                else:
+                    self.securityhubs.append(
+                        SecurityHubHub(
+                            "",
+                            "Security Hub",
+                            "NOT_AVAILABLE",
+                            "",
+                            regional_client.region,
+                        )
+                    )
 
         except Exception as error:
             # Check if Account is subscribed to Security Hub

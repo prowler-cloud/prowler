@@ -3,6 +3,7 @@ import threading
 from dataclasses import dataclass
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -12,6 +13,7 @@ class VPC:
         self.service = "ec2"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.vpcs = []
         self.vpc_peering_connections = []
@@ -43,14 +45,17 @@ class VPC:
             describe_vpcs_paginator = regional_client.get_paginator("describe_vpcs")
             for page in describe_vpcs_paginator.paginate():
                 for vpc in page["Vpcs"]:
-                    self.vpcs.append(
-                        VPCs(
-                            vpc["VpcId"],
-                            vpc["IsDefault"],
-                            vpc["CidrBlock"],
-                            regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(vpc["VpcId"], self.audit_resources)
+                    ):
+                        self.vpcs.append(
+                            VPCs(
+                                vpc["VpcId"],
+                                vpc["IsDefault"],
+                                vpc["CidrBlock"],
+                                regional_client.region,
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -64,16 +69,21 @@ class VPC:
             )
             for page in describe_vpc_peering_connections_paginator.paginate():
                 for conn in page["VpcPeeringConnections"]:
-                    self.vpc_peering_connections.append(
-                        VpcPeeringConnection(
-                            conn["VpcPeeringConnectionId"],
-                            conn["AccepterVpcInfo"]["VpcId"],
-                            conn["AccepterVpcInfo"]["CidrBlock"],
-                            conn["RequesterVpcInfo"]["VpcId"],
-                            conn["RequesterVpcInfo"]["CidrBlock"],
-                            regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            conn["VpcPeeringConnectionId"], self.audit_resources
                         )
-                    )
+                    ):
+                        self.vpc_peering_connections.append(
+                            VpcPeeringConnection(
+                                conn["VpcPeeringConnectionId"],
+                                conn["AccepterVpcInfo"]["VpcId"],
+                                conn["AccepterVpcInfo"]["CidrBlock"],
+                                conn["RequesterVpcInfo"]["VpcId"],
+                                conn["RequesterVpcInfo"]["CidrBlock"],
+                                regional_client.region,
+                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -140,19 +150,24 @@ class VPC:
             )
             for page in describe_vpc_endpoints_paginator.paginate():
                 for endpoint in page["VpcEndpoints"]:
-                    endpoint_policy = None
-                    if endpoint.get("PolicyDocument"):
-                        endpoint_policy = json.loads(endpoint["PolicyDocument"])
-                    self.vpc_endpoints.append(
-                        VpcEndpoint(
-                            endpoint["VpcEndpointId"],
-                            endpoint["VpcId"],
-                            endpoint["State"],
-                            endpoint_policy,
-                            endpoint["OwnerId"],
-                            regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            endpoint["VpcEndpointId"], self.audit_resources
                         )
-                    )
+                    ):
+                        endpoint_policy = None
+                        if endpoint.get("PolicyDocument"):
+                            endpoint_policy = json.loads(endpoint["PolicyDocument"])
+                        self.vpc_endpoints.append(
+                            VpcEndpoint(
+                                endpoint["VpcEndpointId"],
+                                endpoint["VpcId"],
+                                endpoint["State"],
+                                endpoint_policy,
+                                endpoint["OwnerId"],
+                                regional_client.region,
+                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -167,14 +182,19 @@ class VPC:
             for page in describe_vpc_endpoint_services_paginator.paginate():
                 for endpoint in page["ServiceDetails"]:
                     if endpoint["Owner"] != "amazon":
-                        self.vpc_endpoint_services.append(
-                            VpcEndpointService(
-                                endpoint["ServiceId"],
-                                endpoint["ServiceName"],
-                                endpoint["Owner"],
-                                regional_client.region,
+                        if not self.audit_resources or (
+                            is_resource_filtered(
+                                endpoint["ServiceId"], self.audit_resources
                             )
-                        )
+                        ):
+                            self.vpc_endpoint_services.append(
+                                VpcEndpointService(
+                                    endpoint["ServiceId"],
+                                    endpoint["ServiceName"],
+                                    endpoint["Owner"],
+                                    regional_client.region,
+                                )
+                            )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

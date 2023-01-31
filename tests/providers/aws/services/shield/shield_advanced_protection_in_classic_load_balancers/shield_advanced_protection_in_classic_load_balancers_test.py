@@ -29,6 +29,7 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
             assumed_role_info=None,
             audited_regions=None,
             organizations_metadata=None,
+            audit_resources=None,
         )
         return audit_info
 

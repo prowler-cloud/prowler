@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -13,6 +14,7 @@ class Glue:
         self.service = "glue"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.connections = []
         self.__threading_call__(self.__get_connections__)
@@ -45,14 +47,17 @@ class Glue:
             get_connections_paginator = regional_client.get_paginator("get_connections")
             for page in get_connections_paginator.paginate():
                 for conn in page["ConnectionList"]:
-                    self.connections.append(
-                        Connection(
-                            name=conn["Name"],
-                            type=conn["ConnectionType"],
-                            properties=conn["ConnectionProperties"],
-                            region=regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(conn["Name"], self.audit_resources)
+                    ):
+                        self.connections.append(
+                            Connection(
+                                name=conn["Name"],
+                                type=conn["ConnectionType"],
+                                properties=conn["ConnectionProperties"],
+                                region=regional_client.region,
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -66,13 +71,18 @@ class Glue:
             )
             for page in get_dev_endpoints_paginator.paginate():
                 for endpoint in page["DevEndpoints"]:
-                    self.dev_endpoints.append(
-                        DevEndpoint(
-                            name=endpoint["EndpointName"],
-                            security=endpoint.get("SecurityConfiguration"),
-                            region=regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            endpoint["EndpointName"], self.audit_resources
                         )
-                    )
+                    ):
+                        self.dev_endpoints.append(
+                            DevEndpoint(
+                                name=endpoint["EndpointName"],
+                                security=endpoint.get("SecurityConfiguration"),
+                                region=regional_client.region,
+                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -84,14 +94,17 @@ class Glue:
             get_jobs_paginator = regional_client.get_paginator("get_jobs")
             for page in get_jobs_paginator.paginate():
                 for job in page["Jobs"]:
-                    self.jobs.append(
-                        Job(
-                            name=job["Name"],
-                            security=job.get("SecurityConfiguration"),
-                            arguments=job.get("DefaultArguments"),
-                            region=regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(job["Name"], self.audit_resources)
+                    ):
+                        self.jobs.append(
+                            Job(
+                                name=job["Name"],
+                                security=job.get("SecurityConfiguration"),
+                                arguments=job.get("DefaultArguments"),
+                                region=regional_client.region,
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -105,30 +118,33 @@ class Glue:
             )
             for page in get_security_configurations_paginator.paginate():
                 for config in page["SecurityConfigurations"]:
-                    self.security_configs.append(
-                        SecurityConfig(
-                            name=config["Name"],
-                            s3_encryption=config["EncryptionConfiguration"][
-                                "S3Encryption"
-                            ][0]["S3EncryptionMode"],
-                            s3_key_arn=config["EncryptionConfiguration"][
-                                "S3Encryption"
-                            ][0].get("KmsKeyArn"),
-                            cw_encryption=config["EncryptionConfiguration"][
-                                "CloudWatchEncryption"
-                            ]["CloudWatchEncryptionMode"],
-                            cw_key_arn=config["EncryptionConfiguration"][
-                                "CloudWatchEncryption"
-                            ].get("KmsKeyArn"),
-                            jb_encryption=config["EncryptionConfiguration"][
-                                "JobBookmarksEncryption"
-                            ]["JobBookmarksEncryptionMode"],
-                            jb_key_arn=config["EncryptionConfiguration"][
-                                "JobBookmarksEncryption"
-                            ].get("KmsKeyArn"),
-                            region=regional_client.region,
+                    if not self.audit_resources or (
+                        is_resource_filtered(config["Name"], self.audit_resources)
+                    ):
+                        self.security_configs.append(
+                            SecurityConfig(
+                                name=config["Name"],
+                                s3_encryption=config["EncryptionConfiguration"][
+                                    "S3Encryption"
+                                ][0]["S3EncryptionMode"],
+                                s3_key_arn=config["EncryptionConfiguration"][
+                                    "S3Encryption"
+                                ][0].get("KmsKeyArn"),
+                                cw_encryption=config["EncryptionConfiguration"][
+                                    "CloudWatchEncryption"
+                                ]["CloudWatchEncryptionMode"],
+                                cw_key_arn=config["EncryptionConfiguration"][
+                                    "CloudWatchEncryption"
+                                ].get("KmsKeyArn"),
+                                jb_encryption=config["EncryptionConfiguration"][
+                                    "JobBookmarksEncryption"
+                                ]["JobBookmarksEncryptionMode"],
+                                jb_key_arn=config["EncryptionConfiguration"][
+                                    "JobBookmarksEncryption"
+                                ].get("KmsKeyArn"),
+                                region=regional_client.region,
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -138,14 +154,17 @@ class Glue:
         logger.info("Glue - Search Tables...")
         try:
             for table in regional_client.search_tables()["TableList"]:
-                self.tables.append(
-                    Table(
-                        name=table["Name"],
-                        database=table["DatabaseName"],
-                        catalog=table["CatalogId"],
-                        region=regional_client.region,
+                if not self.audit_resources or (
+                    is_resource_filtered(table["Name"], self.audit_resources)
+                ):
+                    self.tables.append(
+                        Table(
+                            name=table["Name"],
+                            database=table["DatabaseName"],
+                            catalog=table["CatalogId"],
+                            region=regional_client.region,
+                        )
                     )
-                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

@@ -42,5 +42,6 @@ class AWS_Audit_Info:
     credentials: AWS_Credentials
     assumed_role_info: AWS_Assume_Role
     audited_regions: list
+    audit_resources: list
     organizations_metadata: AWS_Organizations_Info
     audit_metadata: Optional[Any] = None

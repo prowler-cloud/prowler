@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -11,6 +12,7 @@ class CloudFront:
         self.service = "cloudfront"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         global_client = generate_regional_clients(
             self.service, audit_info, global_service=True
         )
@@ -34,16 +36,19 @@ class CloudFront:
             for page in list_ditributions_paginator.paginate():
                 if "Items" in page["DistributionList"]:
                     for item in page["DistributionList"]["Items"]:
-                        distribution_id = item["Id"]
-                        distribution_arn = item["ARN"]
-                        origins = item["Origins"]["Items"]
-                        distribution = Distribution(
-                            arn=distribution_arn,
-                            id=distribution_id,
-                            origins=origins,
-                            region=region,
-                        )
-                        distributions[distribution_id] = distribution
+                        if not self.audit_resources or (
+                            is_resource_filtered(item["ARN"], self.audit_resources)
+                        ):
+                            distribution_id = item["Id"]
+                            distribution_arn = item["ARN"]
+                            origins = item["Origins"]["Items"]
+                            distribution = Distribution(
+                                arn=distribution_arn,
+                                id=distribution_id,
+                                origins=origins,
+                                region=region,
+                            )
+                            distributions[distribution_id] = distribution
 
             return distributions
 

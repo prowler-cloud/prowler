@@ -343,6 +343,15 @@ Detailed documentation at https://docs.prowler.cloud
             default=None,
             help="Path for allowlist yaml file. See example prowler/config/allowlist.yaml for reference and format. It also accepts AWS DynamoDB Table or Lambda ARNs or S3 URIs, see more in https://docs.prowler.cloud/en/latest/tutorials/allowlist/",
         )
+        # Allowlist
+        audit_tags_subparser = aws_parser.add_argument_group("Tags-based Scan")
+        audit_tags_subparser.add_argument(
+            "-t",
+            "--scan-tags",
+            nargs="+",
+            default=None,
+            help="Scan only resources with specific tags (Key=Value), e.g., Environment=dev Project=prowler",
+        )
 
     def __init_azure_parser__(self):
         """Init the Azure Provider CLI parser"""

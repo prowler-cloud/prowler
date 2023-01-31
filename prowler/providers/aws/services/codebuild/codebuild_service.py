@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
@@ -13,6 +14,7 @@ class Codebuild:
         self.service = "codebuild"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.projects = []
         self.__threading_call__(self.__list_projects__)
@@ -36,14 +38,17 @@ class Codebuild:
             list_projects_paginator = regional_client.get_paginator("list_projects")
             for page in list_projects_paginator.paginate():
                 for project in page["projects"]:
-                    self.projects.append(
-                        CodebuildProject(
-                            name=project,
-                            region=regional_client.region,
-                            last_invoked_time=None,
-                            buildspec=None,
+                    if not self.audit_resources or (
+                        is_resource_filtered(project, self.audit_resources)
+                    ):
+                        self.projects.append(
+                            CodebuildProject(
+                                name=project,
+                                region=regional_client.region,
+                                last_invoked_time=None,
+                                buildspec=None,
+                            )
                         )
-                    )
 
         except Exception as error:
             logger.error(

@@ -29,6 +29,7 @@ class Test_s3_account_level_public_access_blocks:
             assumed_role_info=None,
             audited_regions=None,
             organizations_metadata=None,
+            audit_resources=None,
         )
         return audit_info
 
