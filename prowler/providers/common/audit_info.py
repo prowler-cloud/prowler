@@ -241,6 +241,10 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         current_audit_info.audit_resources = get_tagged_resources(
             input_scan_tags, current_audit_info
         )
+
+        # Parse Input Resource ARNs
+        current_audit_info.audit_resources = arguments.get("resource_arns")
+
         return current_audit_info
 
     def set_azure_audit_info(self, arguments) -> Azure_Audit_Info:
