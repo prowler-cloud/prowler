@@ -5,7 +5,11 @@ from boto3 import client, session
 from colorama import Fore, Style
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import AWS_Provider, assume_role
+from prowler.providers.aws.aws_provider import (
+    AWS_Provider,
+    assume_role,
+    generate_regional_clients,
+)
 from prowler.providers.aws.lib.arn.arn import arn_parsing
 from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.lib.audit_info.models import (
@@ -237,13 +241,15 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
             self.print_audit_credentials(current_audit_info)
 
         # Parse Scan Tags
-        input_resource_tags = arguments.get("resource_tags")
-        current_audit_info.audit_resources = get_tagged_resources(
-            input_resource_tags, current_audit_info
-        )
+        if arguments.get("resource_tags"):
+            input_resource_tags = arguments.get("resource_tags")
+            current_audit_info.audit_resources = get_tagged_resources(
+                input_resource_tags, current_audit_info
+            )
 
         # Parse Input Resource ARNs
-        current_audit_info.audit_resources = arguments.get("resource_arn")
+        if arguments.get("resource_arn"):
+            current_audit_info.audit_resources = arguments.get("resource_arn")
 
         return current_audit_info
 
@@ -305,20 +311,23 @@ def get_tagged_resources(input_resource_tags: list, current_audit_info: AWS_Audi
     try:
         resource_tags = []
         tagged_resources = []
-        if input_resource_tags:
-            for tag in input_resource_tags:
-                key = tag.split("=")[0]
-                value = tag.split("=")[1]
-                resource_tags.append({"Key": key, "Values": [value]})
-            # Get Resources with resource_tags for all regions
-            for region in current_audit_info.audited_regions:
-                client = current_audit_info.audit_session.client(
-                    "resourcegroupstaggingapi", region_name=region
-                )
-                get_resources_paginator = client.get_paginator("get_resources")
+        for tag in input_resource_tags:
+            key = tag.split("=")[0]
+            value = tag.split("=")[1]
+            resource_tags.append({"Key": key, "Values": [value]})
+        # Get Resources with resource_tags for all regions
+        for regional_client in generate_regional_clients(
+            "resourcegroupstaggingapi", current_audit_info
+        ).values():
+            try:
+                get_resources_paginator = regional_client.get_paginator("get_resources")
                 for page in get_resources_paginator.paginate(TagFilters=resource_tags):
                     for resource in page["ResourceTagMappingList"]:
                         tagged_resources.append(resource["ResourceARN"])
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

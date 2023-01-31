@@ -28,7 +28,15 @@ def load_checks_to_execute(
     if audit_info.audit_resources:
         service_list = []
         for resource in audit_info.audit_resources:
-            service_list.append(resource.split(":")[2])
+            service = resource.split(":")[2]
+            # Parse services when they are different in the ARNs
+            if service == "lambda":
+                service = "awslambda"
+            if service == "elasticloadbalancing":
+                service = "elb"
+            elif service == "logs":
+                service = "cloudwatch"
+            service_list.append(service)
 
     # Handle if there are checks passed using -c/--checks
     if check_list:
