@@ -1,18 +1,18 @@
-from prowler.providers.common.outputs import (
-    Aws_Output_Options,
-    Azure_Output_Options,
-    set_provider_output_options,
-)
+from argparse import Namespace
 
+from boto3 import session
+from mock import patch
 
 from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.azure.lib.audit_info.audit_info import (
     Azure_Audit_Info,
     Azure_Identity_Info,
 )
-from boto3 import session
-from mock import patch
-from argparse import Namespace
+from prowler.providers.common.outputs import (
+    Aws_Output_Options,
+    Azure_Output_Options,
+    set_provider_output_options,
+)
 
 AWS_ACCOUNT_NUMBER = "012345678912"
 DATETIME = "20230101120000"
@@ -30,7 +30,9 @@ def mock_change_config_var(*_):
 class Test_Common_Output_Options:
     # Mocked Azure Audit Info
     def set_mocked_azure_audit_info(self):
-        audit_info = Azure_Audit_Info(credentials=None, identity=Azure_Identity_Info())
+        audit_info = Azure_Audit_Info(
+            credentials=None, identity=Azure_Identity_Info(), audit_metadata=None
+        )
         return audit_info
 
     # Mocked AWS Audit Info
