@@ -363,8 +363,7 @@ Detailed documentation at https://docs.prowler.cloud
             help="Scan only resources with specific AWS Tags (Key=Value), e.g., Environment=dev Project=prowler",
         )
         aws_based_scans_parser.add_argument(
-            "-r",
-            "--resource-arns",
+            "--resource-arn",
             nargs="+",
             type=arn_type,
             default=None,
