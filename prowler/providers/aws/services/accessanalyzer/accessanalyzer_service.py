@@ -52,12 +52,12 @@ class AccessAnalyzer:
             if analyzer_count == 0:
                 self.analyzers.append(
                     Analyzer(
-                        "",
-                        self.audited_account,
-                        "NOT_AVAILABLE",
-                        "",
-                        "",
-                        regional_client.region,
+                        arn="",
+                        name=self.audited_account,
+                        status="NOT_AVAILABLE",
+                        tags="",
+                        type="",
+                        region=regional_client.region,
                     )
                 )
 
