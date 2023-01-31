@@ -816,6 +816,14 @@ class Test_Parser:
         assert resource_arn1 in parsed.resource_arn
         assert resource_arn2 in parsed.resource_arn
 
+    def test_aws_parser_wrong_resource_arn(self):
+        argument = "--resource-arn"
+        resource_arn = "arn:azure:iam::account:user/test"
+        command = [prowler_command, argument, resource_arn]
+        with pytest.raises(SystemExit) as ex:
+            self.parser.parse(command)
+        assert ex.type == SystemExit
+
     def test_parser_azure_auth_sp(self):
         argument = "--sp-env-auth"
         command = [prowler_command, "azure", argument]
