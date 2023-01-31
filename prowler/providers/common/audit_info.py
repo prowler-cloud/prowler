@@ -297,22 +297,28 @@ def set_provider_audit_info(provider: str, arguments: dict):
 def get_tagged_resources(input_scan_tags: list, current_audit_info: AWS_Audit_Info):
     """
     get_tagged_resources returns a list of the resources that are going to be scanned based on the given input tags
-    ```
     """
-    scan_tags = []
-    tagged_resources = []
-    if input_scan_tags:
-        for tag in input_scan_tags:
-            key = tag.split("=")[0]
-            value = tag.split("=")[1]
-            scan_tags.append({"Key": key, "Values": [value]})
-        # Get Resources with scan_tags for all regions
-        for region in current_audit_info.audited_regions:
-            client = current_audit_info.audit_session.client(
-                "resourcegroupstaggingapi", region_name=region
-            )
-            get_resources_paginator = client.get_paginator("get_resources")
-            for page in get_resources_paginator.paginate(TagFilters=scan_tags):
-                for resource in page["ResourceTagMappingList"]:
-                    tagged_resources.append(resource["ResourceARN"])
-    return tagged_resources
+    try:
+        scan_tags = []
+        tagged_resources = []
+        if input_scan_tags:
+            for tag in input_scan_tags:
+                key = tag.split("=")[0]
+                value = tag.split("=")[1]
+                scan_tags.append({"Key": key, "Values": [value]})
+            # Get Resources with scan_tags for all regions
+            for region in current_audit_info.audited_regions:
+                client = current_audit_info.audit_session.client(
+                    "resourcegroupstaggingapi", region_name=region
+                )
+                get_resources_paginator = client.get_paginator("get_resources")
+                for page in get_resources_paginator.paginate(TagFilters=scan_tags):
+                    for resource in page["ResourceTagMappingList"]:
+                        tagged_resources.append(resource["ResourceARN"])
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+        sys.exit()
+    else:
+        return tagged_resources
