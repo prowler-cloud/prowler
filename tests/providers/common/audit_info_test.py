@@ -39,10 +39,11 @@ mock_current_audit_info = AWS_Audit_Info(
     audited_regions=["eu-west-2", "eu-west-1"],
     organizations_metadata=None,
     audit_resources=None,
+    audit_metadata=None,
 )
 
 mock_azure_audit_info = Azure_Audit_Info(
-    credentials=None, identity=Azure_Identity_Info()
+    credentials=None, identity=Azure_Identity_Info(), audit_metadata=None
 )
 
 mock_set_audit_info = Audit_Info()

@@ -30,7 +30,9 @@ def mock_change_config_var(*_):
 class Test_Common_Output_Options:
     # Mocked Azure Audit Info
     def set_mocked_azure_audit_info(self):
-        audit_info = Azure_Audit_Info(credentials=None, identity=Azure_Identity_Info())
+        audit_info = Azure_Audit_Info(
+            credentials=None, identity=Azure_Identity_Info(), audit_metadata=None
+        )
         return audit_info
 
     # Mocked AWS Audit Info

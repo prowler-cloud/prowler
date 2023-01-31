@@ -24,4 +24,5 @@ current_audit_info = AWS_Audit_Info(
     audit_resources=None,
     audited_regions=None,
     organizations_metadata=None,
+    audit_metadata=None,
 )

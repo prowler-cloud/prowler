@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, Optional
 
 from boto3 import session
 
@@ -43,3 +44,4 @@ class AWS_Audit_Info:
     audited_regions: list
     audit_resources: list
     organizations_metadata: AWS_Organizations_Info
+    audit_metadata: Optional[Any] = None
