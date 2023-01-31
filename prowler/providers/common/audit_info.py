@@ -296,7 +296,8 @@ def set_provider_audit_info(provider: str, arguments: dict):
 
 def get_tagged_resources(input_scan_tags: list, current_audit_info: AWS_Audit_Info):
     """
-    get_tagged_resources get the resources that have the tags input by the user and are going to be scanned
+    get_tagged_resources returns a list of the resources that are going to be scanned based on the given input tags
+    ```
     """
     scan_tags = []
     tagged_resources = []

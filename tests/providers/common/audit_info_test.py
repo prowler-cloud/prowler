@@ -243,7 +243,16 @@ class Test_Set_Audit_Info:
         mock_current_audit_info.audited_regions = ["eu-central-1"]
         mock_current_audit_info.audit_session = boto3.session.Session()
         assert len(get_tagged_resources(["ami=test"], mock_current_audit_info)) == 2
+        assert image_id in str(
+            get_tagged_resources(["ami=test"], mock_current_audit_info)
+        )
+        assert instance_id in str(
+            get_tagged_resources(["ami=test"], mock_current_audit_info)
+        )
         assert (
             len(get_tagged_resources(["MY_TAG1=MY_VALUE1"], mock_current_audit_info))
             == 1
+        )
+        assert instance_id in str(
+            get_tagged_resources(["MY_TAG1=MY_VALUE1"], mock_current_audit_info)
         )
