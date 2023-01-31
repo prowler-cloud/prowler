@@ -317,15 +317,12 @@ def execute_checks(
     audit_output_options: Provider_Output_Options,
 ) -> list:
     all_findings = []
-    executed_checks_counter = 0
     services_executed = set()
     checks_executed = set()
     total_checks_to_execute = len(checks_to_execute)
     # Execution with the --only-logs flag
     if audit_output_options.only_logs:
         for check_name in checks_to_execute:
-            # Add 1 to the counter of executed checks
-            executed_checks_counter += 1
             # Recover service from check name
             service = check_name.split("_")[0]
             try:
@@ -366,8 +363,6 @@ def execute_checks(
             enrich_print=False,
         ) as bar:
             for check_name in checks_to_execute:
-                # Add 1 to the counter of executed checks
-                executed_checks_counter += 1
                 # Recover service from check name
                 service = check_name.split("_")[0]
                 bar.title = (
@@ -380,7 +375,6 @@ def execute_checks(
                         provider,
                         audit_output_options,
                         audit_info,
-                        executed_checks_counter,
                         services_executed,
                         checks_executed,
                         total_checks_to_execute,
@@ -409,7 +403,6 @@ def execute(
     provider: str,
     audit_output_options: Provider_Output_Options,
     audit_info: AWS_Audit_Info,
-    executed_checks_counter: int,
     services_executed: set,
     checks_executed: set,
     total_checks_to_execute: int,
@@ -430,7 +423,7 @@ def execute(
         services_scanned=len(services_executed),
         expected_checks=total_checks_to_execute,
         completed_checks=len(checks_executed),
-        audit_progress=100 * executed_checks_counter / total_checks_to_execute,
+        audit_progress=100 * len(checks_executed) / total_checks_to_execute,
     )
     report(check_findings, audit_output_options, audit_info)
 
