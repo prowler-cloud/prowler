@@ -356,8 +356,7 @@ Detailed documentation at https://docs.prowler.cloud
             aws_based_scans_subparser.add_mutually_exclusive_group()
         )
         aws_based_scans_parser.add_argument(
-            "-t",
-            "--scan-tags",
+            "--resource-tags",
             nargs="+",
             default=None,
             help="Scan only resources with specific AWS Tags (Key=Value), e.g., Environment=dev Project=prowler",

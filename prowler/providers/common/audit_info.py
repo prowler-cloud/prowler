@@ -237,13 +237,13 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
             self.print_audit_credentials(current_audit_info)
 
         # Parse Scan Tags
-        input_scan_tags = arguments.get("scan_tags")
+        input_resource_tags = arguments.get("resource_tags")
         current_audit_info.audit_resources = get_tagged_resources(
-            input_scan_tags, current_audit_info
+            input_resource_tags, current_audit_info
         )
 
         # Parse Input Resource ARNs
-        current_audit_info.audit_resources = arguments.get("resource_arns")
+        current_audit_info.audit_resources = arguments.get("resource_arn")
 
         return current_audit_info
 
@@ -298,25 +298,25 @@ def set_provider_audit_info(provider: str, arguments: dict):
         return provider_audit_info
 
 
-def get_tagged_resources(input_scan_tags: list, current_audit_info: AWS_Audit_Info):
+def get_tagged_resources(input_resource_tags: list, current_audit_info: AWS_Audit_Info):
     """
     get_tagged_resources returns a list of the resources that are going to be scanned based on the given input tags
     """
     try:
-        scan_tags = []
+        resource_tags = []
         tagged_resources = []
-        if input_scan_tags:
-            for tag in input_scan_tags:
+        if input_resource_tags:
+            for tag in input_resource_tags:
                 key = tag.split("=")[0]
                 value = tag.split("=")[1]
-                scan_tags.append({"Key": key, "Values": [value]})
-            # Get Resources with scan_tags for all regions
+                resource_tags.append({"Key": key, "Values": [value]})
+            # Get Resources with resource_tags for all regions
             for region in current_audit_info.audited_regions:
                 client = current_audit_info.audit_session.client(
                     "resourcegroupstaggingapi", region_name=region
                 )
                 get_resources_paginator = client.get_paginator("get_resources")
-                for page in get_resources_paginator.paginate(TagFilters=scan_tags):
+                for page in get_resources_paginator.paginate(TagFilters=resource_tags):
                     for resource in page["ResourceTagMappingList"]:
                         tagged_resources.append(resource["ResourceARN"])
     except Exception as error:
