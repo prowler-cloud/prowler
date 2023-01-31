@@ -170,13 +170,8 @@ class Test_Set_Audit_Info:
             "browser_auth": None,
             "managed_entity_auth": None,
         }
-        checks_to_execute = {
-            "elbv2_waf_acl_attached",
-            "ec2_securitygroup_in_use_without_ingress_filtering",
-            "iam_policy_no_administrative_privileges",
-        }
 
-        audit_info = set_provider_audit_info(provider, arguments, checks_to_execute)
+        audit_info = set_provider_audit_info(provider, arguments)
         assert isinstance(audit_info, AWS_Audit_Info)
 
     @patch(
@@ -200,11 +195,6 @@ class Test_Set_Audit_Info:
             "sp_env_auth": None,
             "browser_auth": None,
             "managed_entity_auth": None,
-        }
-        checks_to_execute = {
-            "elbv2_waf_acl_attached",
-            "ec2_securitygroup_in_use_without_ingress_filtering",
-            "iam_policy_no_administrative_privileges",
         }
 
         audit_info = set_provider_audit_info(provider, arguments)
