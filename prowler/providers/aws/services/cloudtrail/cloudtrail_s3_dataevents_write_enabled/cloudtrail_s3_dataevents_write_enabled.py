@@ -15,23 +15,36 @@ class cloudtrail_s3_dataevents_write_enabled(Check):
         report.status_extended = "No CloudTrail trails have a data event to record all S3 object-level API operations."
         for trail in cloudtrail_client.trails:
             for data_event in trail.data_events:
-                # Check if trail has a data event for all S3 Buckets for write
-                if (
-                    data_event["ReadWriteType"] == "All"
-                    or data_event["ReadWriteType"] == "WriteOnly"
-                ):
-                    for resource in data_event["DataResources"]:
-                        if "AWS::S3::Object" == resource["Type"] and (
-                            f"arn:{cloudtrail_client.audited_partition}:s3"
-                            in resource["Values"]
-                            or f"arn:{cloudtrail_client.audited_partition}:s3:::*/*"
-                            in resource["Values"]
+                # classic event selectors
+                if not data_event.is_advanced:
+                    # Check if trail has a data event for all S3 Buckets for write
+                    if (
+                        data_event.event_selector["ReadWriteType"] == "All"
+                        or data_event.event_selector["ReadWriteType"] == "WriteOnly"
+                    ):
+                        for resource in data_event.event_selector["DataResources"]:
+                            if "AWS::S3::Object" == resource["Type"] and (
+                                f"arn:{cloudtrail_client.audited_partition}:s3"
+                                in resource["Values"]
+                                or f"arn:{cloudtrail_client.audited_partition}:s3:::*/*"
+                                in resource["Values"]
+                            ):
+                                report.region = trail.region
+                                report.resource_id = trail.name
+                                report.resource_arn = trail.arn
+                                report.status = "PASS"
+                                report.status_extended = f"Trail {trail.name} has a classic data event selector to record all S3 object-level API operations."
+                # advanced event selectors
+                elif data_event.is_advanced:
+                    for field_selector in data_event.event_selector["FieldSelectors"]:
+                        if (
+                            field_selector["Field"] == "resources.type"
+                            and field_selector["Equals"][0] == "AWS::S3::Object"
                         ):
                             report.region = trail.region
                             report.resource_id = trail.name
                             report.resource_arn = trail.arn
                             report.status = "PASS"
-                            report.status_extended = f"Trail {trail.name} have a data event to record all S3 object-level API operations."
-
+                            report.status_extended = f"Trail {trail.name} has an advanced data event selector to record all S3 object-level API operations."
         findings.append(report)
         return findings
