@@ -1,6 +1,6 @@
 import sure  # noqa
 
-from prowler.providers.aws.lib.arn.arn import arn_parsing
+from prowler.providers.aws.lib.arn.arn import arn_parsing, is_valid_arn
 
 ACCOUNT_ID = "123456789012"
 RESOURCE_TYPE = "role"
@@ -31,3 +31,11 @@ class Test_ARN_Parsing:
             parsed_arn.account_id.should.equal(test["expected"]["account_id"])
             parsed_arn.resource_type.should.equal(test["expected"]["resource_type"])
             parsed_arn.resource.should.equal(test["expected"]["resource"])
+
+    def test_is_valid_arn(self):
+        assert is_valid_arn("arn:aws:iam::012345678910:user/test")
+        assert is_valid_arn("arn:aws-cn:ec2:us-east-1:123456789012:vpc/vpc-12345678")
+        assert is_valid_arn("arn:aws-us-gov:s3:::bucket")
+        assert not is_valid_arn("arn:azure:::012345678910:user/test")
+        assert not is_valid_arn("arn:aws:iam::account:user/test")
+        assert not is_valid_arn("arn:aws:::012345678910:resource")

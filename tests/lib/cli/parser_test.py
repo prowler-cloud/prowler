@@ -54,7 +54,7 @@ class Test_Parser:
         assert not parsed.output_bucket_no_assume
         assert not parsed.shodan
         assert not parsed.allowlist_file
-        assert not parsed.scan_tags
+        assert not parsed.resource_tags
 
     def test_default_parser_no_arguments_azure(self):
         provider = "azure"
@@ -796,23 +796,33 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.allowlist_file == allowlist_file
 
-    def test_aws_parser_scan_tags_short(self):
-        argument = "-t"
-        scan_tag = "Key=Value"
-        command = [prowler_command, argument, scan_tag]
-        parsed = self.parser.parse(command)
-        assert len(parsed.scan_tags) == 1
-        assert scan_tag in parsed.scan_tags
-
-    def test_aws_parser_scan_tags_long(self):
-        argument = "--scan-tags"
+    def test_aws_parser_resource_tags(self):
+        argument = "--resource-tags"
         scan_tag1 = "Key=Value"
         scan_tag2 = "Key2=Value2"
         command = [prowler_command, argument, scan_tag1, scan_tag2]
         parsed = self.parser.parse(command)
-        assert len(parsed.scan_tags) == 2
-        assert scan_tag1 in parsed.scan_tags
-        assert scan_tag2 in parsed.scan_tags
+        assert len(parsed.resource_tags) == 2
+        assert scan_tag1 in parsed.resource_tags
+        assert scan_tag2 in parsed.resource_tags
+
+    def test_aws_parser_resource_arn(self):
+        argument = "--resource-arn"
+        resource_arn1 = "arn:aws:iam::012345678910:user/test"
+        resource_arn2 = "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-12345678"
+        command = [prowler_command, argument, resource_arn1, resource_arn2]
+        parsed = self.parser.parse(command)
+        assert len(parsed.resource_arn) == 2
+        assert resource_arn1 in parsed.resource_arn
+        assert resource_arn2 in parsed.resource_arn
+
+    def test_aws_parser_wrong_resource_arn(self):
+        argument = "--resource-arn"
+        resource_arn = "arn:azure:iam::account:user/test"
+        command = [prowler_command, argument, resource_arn]
+        with pytest.raises(SystemExit) as ex:
+            self.parser.parse(command)
+        assert ex.type == SystemExit
 
     def test_parser_azure_auth_sp(self):
         argument = "--sp-env-auth"
