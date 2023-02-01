@@ -7,7 +7,8 @@ from prowler.providers.aws.aws_provider import get_aws_available_regions
 from prowler.providers.aws.lib.arn.arn import is_valid_arn
 
 
-def arn_type(arn: str):
+def arn_type(arn: str) -> bool:
+    """arn_type returns a string ARN if it is valid and raises an argparse.ArgumentError if not."""
     if not is_valid_arn(arn):
         raise argparse.ArgumentError("Invalid ARN")
     return arn
