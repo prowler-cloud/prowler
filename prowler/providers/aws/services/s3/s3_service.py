@@ -38,8 +38,8 @@ class S3:
 
     def __list_buckets__(self, audit_info):
         logger.info("S3 - Listing buckets...")
+        buckets = []
         try:
-            buckets = []
             list_buckets = self.client.list_buckets()
             for bucket in list_buckets["Buckets"]:
                 try:
@@ -60,11 +60,11 @@ class S3:
                     logger.error(
                         f"{bucket_region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
-            return buckets
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        return buckets
 
     def __get_bucket_versioning__(self, bucket):
         logger.info("S3 - Get buckets versioning...")

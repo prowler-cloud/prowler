@@ -46,7 +46,9 @@ class Lambda:
                 for function in page["Functions"]:
                     lambda_name = function["FunctionName"]
                     lambda_arn = function["FunctionArn"]
-                    lambda_runtime = function["Runtime"]
+                    lambda_runtime = None
+                    if "Runtime" in function:
+                        lambda_runtime = function["Runtime"]
                     self.functions[lambda_name] = Function(
                         name=lambda_name,
                         arn=lambda_arn,

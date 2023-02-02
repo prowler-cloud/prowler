@@ -72,9 +72,14 @@ class EMR:
                     master_node_security_group = cluster_info["Cluster"][
                         "Ec2InstanceAttributes"
                     ]["EmrManagedMasterSecurityGroup"]
-                    master_node_additional_security_groups = cluster_info["Cluster"][
-                        "Ec2InstanceAttributes"
-                    ]["AdditionalMasterSecurityGroups"]
+                    master_node_additional_security_groups = None
+                    if (
+                        "AdditionalMasterSecurityGroups"
+                        in cluster_info["Cluster"]["Ec2InstanceAttributes"]
+                    ):
+                        master_node_additional_security_groups = cluster_info[
+                            "Cluster"
+                        ]["Ec2InstanceAttributes"]["AdditionalMasterSecurityGroups"]
                     self.clusters[cluster.id].master = Node(
                         security_group_id=master_node_security_group,
                         additional_security_groups_id=master_node_additional_security_groups,

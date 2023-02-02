@@ -38,11 +38,14 @@ class CloudWatch:
             describe_alarms_paginator = regional_client.get_paginator("describe_alarms")
             for page in describe_alarms_paginator.paginate():
                 for alarm in page["MetricAlarms"]:
+                    metric_name = None
+                    if "MetricName" in alarm:
+                        metric_name = alarm["MetricName"]
                     self.metric_alarms.append(
                         MetricAlarm(
                             alarm["AlarmArn"],
                             alarm["AlarmName"],
-                            alarm["MetricName"],
+                            metric_name,
                             alarm["Namespace"],
                             regional_client.region,
                         )
