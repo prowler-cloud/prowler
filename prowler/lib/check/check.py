@@ -2,6 +2,7 @@ import functools
 import importlib
 import os
 import sys
+import traceback
 from pkgutil import walk_packages
 from types import ModuleType
 
@@ -304,7 +305,7 @@ def run_check(check: Check, output_options: Provider_Output_Options) -> list:
                 f"Something went wrong in {check.CheckID}, please use --log-level ERROR"
             )
         logger.error(
-            f"{check.CheckID} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            f"{check.CheckID} -- {error.__class__.__name__}[{traceback.extract_tb(error.__traceback__)[-1].lineno}]: {error}"
         )
     finally:
         return findings
