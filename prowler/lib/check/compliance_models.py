@@ -53,21 +53,21 @@ class General_Compliance_Requirements(BaseModel):
     """General Compliance Requirements"""
 
     ItemId: str
-    Section: str
+    Section: Optional[str]
     SubSection: Optional[str]
     SubGroup: Optional[str]
     Service: str
     Soc_Type: Optional[str]
 
 
-class CIS_Requirements_Profile(str, Enum):
+class CIS_Requirements_Profile(str):
     """CIS Requirements Profile"""
 
     Level_1 = "Level 1"
     Level_2 = "Level 2"
 
 
-class CIS_Requirements_AssessmentStatus(str, Enum):
+class CIS_Requirements_AssessmentStatus(str):
     """CIS Requirements Assessment Status"""
 
     Manual = "Manual"
@@ -79,8 +79,8 @@ class CIS_Requirements(BaseModel):
     """CIS Requirements"""
 
     Section: str
-    Profile: list[CIS_Requirements_Profile]
-    AssessmentStatus: list[CIS_Requirements_AssessmentStatus]
+    Profile: CIS_Requirements_Profile
+    AssessmentStatus: CIS_Requirements_AssessmentStatus
     Description: str
     RationaleStatement: str
     ImpactStatement: str
@@ -96,9 +96,7 @@ class Compliance_Requirement(BaseModel):
 
     Id: str
     Description: str
-    Attributes: Optional[
-        list[Union[CIS_Requirements, ENS_Requirements, General_Compliance_Requirements]]
-    ]
+    Attributes: list[Union[CIS_Requirements, ENS_Requirements, General_Compliance_Requirements]]
     Checks: List[str]
 
 

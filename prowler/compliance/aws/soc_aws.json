@@ -11,9 +11,11 @@
         {
           "ItemId": "cc_1_1",
           "Section": "CC1.0 - Common Criteria Related to Control Environment",
-          "Service": "aws"
+          "Service": "aws",
+          "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_1_2",
@@ -26,7 +28,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_1_3",
@@ -61,7 +64,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_1_5",
@@ -74,7 +78,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_2_1",
@@ -106,7 +111,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_2_3",
@@ -119,7 +125,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_3_1",
@@ -170,7 +177,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_3_4",
@@ -199,7 +207,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_4_2",
@@ -229,7 +238,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_5_2",
@@ -242,7 +252,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_5_3",
@@ -255,7 +266,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_6_1",
@@ -316,7 +328,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_6_5",
@@ -329,7 +342,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_6_6",
@@ -526,7 +540,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_8_1",
@@ -557,7 +572,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_9_2",
@@ -570,7 +586,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_a_1_1",
@@ -583,7 +600,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_a_1_2",
@@ -639,7 +657,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "cc_c_1_1",
@@ -685,7 +704,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_2_1",
@@ -698,7 +718,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_3_1",
@@ -711,7 +732,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_3_2",
@@ -724,7 +746,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_4_1",
@@ -737,7 +760,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_4_2",
@@ -750,7 +774,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_4_3",
@@ -763,7 +788,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_5_1",
@@ -776,7 +802,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_5_2",
@@ -789,7 +816,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_6_1",
@@ -802,7 +830,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_6_2",
@@ -815,7 +844,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_6_3",
@@ -828,7 +858,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_6_4",
@@ -841,7 +872,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_6_5",
@@ -854,7 +886,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_6_6",
@@ -867,7 +900,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_6_7",
@@ -880,7 +914,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_7_1",
@@ -893,7 +928,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     },
     {
       "Id": "p_8_1",
@@ -906,7 +942,8 @@
           "Service": "aws",
           "Soc_Type": "manual"
         }
-      ]
+      ],
+      "Checks": [ ]
     }
   ]
 }
