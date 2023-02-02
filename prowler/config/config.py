@@ -9,7 +9,7 @@ from prowler.lib.logger import logger
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-prowler_version = "3.1.2"
+prowler_version = "3.1.1"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 html_logo_img = "https://user-images.githubusercontent.com/3985464/113734260-7ba06900-96fb-11eb-82bc-d4f68a1e2710.png"
 
@@ -18,7 +18,7 @@ banner_color = "\033[1;92m"
 
 # Compliance
 compliance_specification_dir = "./compliance"
-
+available_compliance_frameworks = ["ens_rd2022_aws", "cis_1.4_aws", "cis_1.5_aws"]
 # AWS services-regions matrix json
 aws_services_json_file = "aws_regions_by_service.json"
 

@@ -1,6 +1,6 @@
 import sys
 from enum import Enum
-from typing import Any, List, Optional, Union
+from typing import List, Optional, Union
 
 from pydantic import BaseModel, ValidationError
 
@@ -27,15 +27,67 @@ class ENS_Requirements_Dimensiones(str, Enum):
     disponibilidad = "disponibilidad"
 
 
+class ENS_Requirements_Tipos(str, Enum):
+    """ENS Requirements  Tipos"""
+
+    refuerzo = "refuerzo"
+    requisito = "requisito"
+    recomendacion = "recomendacion"
+    medida = "medida"
+
+
 class ENS_Requirements(BaseModel):
     """ENS V3 Framework Requirements"""
 
-    IdGrupoControl: str
+    IdGrupoControl: Optional[str]
     Marco: str
     Categoria: str
-    Descripcion_Control: str
-    Nivel: list[ENS_Requirements_Nivel]
+    DescripcionControl: str
+    Tipo: ENS_Requirements_Tipos
+    Nivel: ENS_Requirements_Nivel
     Dimensiones: list[ENS_Requirements_Dimensiones]
+
+
+# General Compliance Requirements
+class General_Compliance_Requirements(BaseModel):
+    """General Compliance Requirements"""
+
+    ItemId: str
+    Section: str
+    SubSection: Optional[str]
+    SubGroup: Optional[str]
+    Service: str
+    Soc_Type: Optional[str]
+
+
+class CIS_Requirements_Profile(str, Enum):
+    """CIS Requirements Profile"""
+
+    Level_1 = "Level 1"
+    Level_2 = "Level 2"
+
+
+class CIS_Requirements_AssessmentStatus(str, Enum):
+    """CIS Requirements Assessment Status"""
+
+    Manual = "Manual"
+    Automated = "Automated"
+
+
+# CIS Requirements
+class CIS_Requirements(BaseModel):
+    """CIS Requirements"""
+
+    Section: str
+    Profile: list[CIS_Requirements_Profile]
+    AssessmentStatus: list[CIS_Requirements_AssessmentStatus]
+    Description: str
+    RationaleStatement: str
+    ImpactStatement: str
+    RemediationProcedure: str
+    AuditProcedure: str
+    AdditionalInformation: str
+    References: str
 
 
 # Base Compliance Model
@@ -44,7 +96,9 @@ class Compliance_Requirement(BaseModel):
 
     Id: str
     Description: str
-    Attributes: list[Union[ENS_Requirements, Any]]
+    Attributes: Optional[
+        list[Union[CIS_Requirements, ENS_Requirements, General_Compliance_Requirements]]
+    ]
     Checks: List[str]
 
 
