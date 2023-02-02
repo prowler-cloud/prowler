@@ -43,11 +43,14 @@ class CloudWatch:
                     if not self.audit_resources or (
                         is_resource_filtered(alarm["AlarmArn"], self.audit_resources)
                     ):
+                        metric_name = None
+                        if "MetricName" in alarm:
+                            metric_name = alarm["MetricName"]
                         self.metric_alarms.append(
                             MetricAlarm(
                                 alarm["AlarmArn"],
                                 alarm["AlarmName"],
-                                alarm["MetricName"],
+                                metric_name,
                                 alarm["Namespace"],
                                 regional_client.region,
                             )
