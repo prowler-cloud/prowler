@@ -84,7 +84,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -228,7 +227,6 @@
         "iam_group_not_empty NOT IMPLEMENTED",
         "iam_policy_no_administrative_privileges",
         "iam_user_in_group NOT IMPLEMENTED",
-        "iam_user_no_inline_attached_policies NOT IMPLEMENTED"
       ]
     },
     {
@@ -274,7 +272,6 @@
         "sagemaker_endpoint_configuration_encryption_at_rest_enabled NOT IMPLEMENTED",
         "sagemaker_notebook_instance_encryption_enabled",
         "sns_topics_kms_encryption_at_rest_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -292,7 +289,6 @@
         "iam_group_not_empty NOT IMPLEMENTED",
         "iam_policy_no_administrative_privileges",
         "iam_user_in_group NOT IMPLEMENTED",
-        "iam_user_no_inline_attached_policies NOT IMPLEMENTED"
       ]
     },
     {
@@ -461,7 +457,6 @@
         "redshift_cluster_automated_snapshot",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -500,7 +495,6 @@
         "redshift_cluster_automated_snapshot",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -539,7 +533,6 @@
         "redshift_cluster_automated_snapshot",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -578,7 +571,6 @@
         "redshift_cluster_automated_snapshot",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -751,7 +743,6 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {

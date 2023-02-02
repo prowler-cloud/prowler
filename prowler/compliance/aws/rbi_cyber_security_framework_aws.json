@@ -76,7 +76,6 @@
         "vpc_igw_attached_to_authorized_vpc NOT IMPLEMENTED",
         "vpc_route_table_restrict_public_access_to_igw NOT IMPLEMENTED",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -131,7 +130,6 @@
         "iam_policy_attached_only_to_group_or_roles",
         "iam_policy_no_administrative_privileges",
         "iam_no_root_access_key",
-        "iam_user_no_inline_attached_policies NOT IMPLEMENTED"
       ]
     },
     {
@@ -187,7 +185,6 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {

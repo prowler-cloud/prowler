@@ -198,7 +198,6 @@
         "emr_cluster_kerberos_enabled NOT IMPLEMENTED",
         "iam_group_not_empty NOT IMPLEMENTED",
         "iam_policy_no_administrative_privileges",
-        "iam_user_no_inline_attached_policies NOT IMPLEMENTED"
       ]
     },
     {
@@ -301,7 +300,6 @@
         }
       ],
       "Checks": [
-        "vpc_igw_attached_to_authorized_vpc NOT IMPLEMENTED"
       ]
     },
     {
@@ -353,7 +351,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -379,7 +376,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -458,7 +454,6 @@
         }
       ],
       "Checks": [
-        "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -515,7 +510,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -631,7 +625,6 @@
         "elasticache_redis_cluster_automatic_backup_retention_15_days NOT IMPLEMENTED",
         "rds_instance_backup_enabled",
         "rds_instance_backup_enabled",
-        "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -659,7 +652,6 @@
         "rds_instance_multi_az",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -777,7 +769,6 @@
         }
       ],
       "Checks": [
-        "codebuild_project_plaintext_env_variables_no_sensitive_aws_values NOT IMPLEMENTED"
       ]
     },
     {
@@ -911,7 +902,6 @@
         }
       ],
       "Checks": [
-        "ebs_attached_volume_delete_on_termination_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -931,7 +921,6 @@
         "elb_classic_lb_cross_zone_load_balancing_enabled NOT IMPLEMENTED",
         "rds_instance_deletion_protection",
         "rds_instance_multi_az",
-        "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1009,7 +998,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1069,7 +1057,6 @@
       "Checks": [
         "acm_certificates_expiration_check",
         "kms_cmk_rotation_enabled",
-        "kms_key_not_pending_deletion NOT IMPLEMENTED"
       ]
     },
     {
@@ -1101,7 +1088,6 @@
       "Checks": [
         "elb_application_lb_drop_http_headers NOT IMPLEMENTED",
         "elb_application_lb_redirect_http_request_to_https NOT IMPLEMENTED",
-        "elb_classic_lb_use_tls_https_listeners NOT IMPLEMENTED"
       ]
     },
     {
@@ -1274,7 +1260,6 @@
         "guardduty_is_enabled",
         "guardduty_no_high_severity_findings",
         "securityhub_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {

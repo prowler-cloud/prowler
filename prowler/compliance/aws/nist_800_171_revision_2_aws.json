@@ -49,7 +49,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -98,7 +97,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -157,7 +155,6 @@
         "iam_user_no_inline_attached_policies NOT IMPLEMENTED",
         "iam_disable_90_days_credentials",
         "rds_db_cluster_iam_authentication_enabled NOT IMPLEMENTED",
-        "rds_db_instance_iam_authentication_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -182,7 +179,6 @@
         "iam_disable_90_days_credentials",
         "rds_db_cluster_iam_authentication_enabled NOT IMPLEMENTED",
         "rds_db_instance_iam_authentication_enabled NOT IMPLEMENTED",
-        "s3_bucket_policy_restricts_cross_account_permission_changes NOT IMPLEMENTED"
       ]
     },
     {
@@ -217,7 +213,6 @@
         "iam_group_not_empty NOT IMPLEMENTED",
         "iam_policy_no_administrative_privileges",
         "iam_no_root_access_key",
-        "iam_user_in_group NOT IMPLEMENTED"
       ]
     },
     {
@@ -242,7 +237,6 @@
         "rds_instance_integration_cloudwatch_logs",
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -343,7 +337,6 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -392,7 +385,6 @@
         "redshift_cluster_encryption_in_transit_enabled NOT IMPLEMENTED",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -490,7 +482,6 @@
         "ec2_instance_managed_by_ssm",
         "ec2_instance_older_than_specific_days",
         "ssm_managed_compliant_patching",
-        "vpc_security_group_associated_to_eni NOT IMPLEMENTED"
       ]
     },
     {
@@ -714,7 +705,6 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -744,7 +734,6 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -844,7 +833,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -916,7 +904,6 @@
       ],
       "Checks": [
         "iam_policy_no_administrative_privileges",
-        "iam_user_in_group NOT IMPLEMENTED"
       ]
     },
     {
@@ -931,7 +918,6 @@
         }
       ],
       "Checks": [
-        "ebs_volume_unused NOT IMPLEMENTED"
       ]
     },
     {
@@ -974,7 +960,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1061,7 +1046,6 @@
         "elb_application_lb_drop_http_headers NOT IMPLEMENTED",
         "elb_application_lb_redirect_http_request_to_https NOT IMPLEMENTED",
         "elb_ssl_listeners",
-        "elb_classic_lb_use_tls_https_listeners NOT IMPLEMENTED"
       ]
     },
     {
@@ -1126,7 +1110,6 @@
         "securityhub_enabled",
         "ssm_managed_compliant_patching",
         "ssm_managed_compliant_patching",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1184,7 +1167,6 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1210,7 +1192,6 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     }
   ]

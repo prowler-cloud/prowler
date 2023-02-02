@@ -30,7 +30,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -181,7 +180,6 @@
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -249,7 +247,6 @@
         "iam_policy_attached_only_to_group_or_roles",
         "iam_policy_no_administrative_privileges",
         "iam_user_in_group NOT IMPLEMENTED",
-        "iam_user_no_inline_attached_policies NOT IMPLEMENTED"
       ]
     },
     {
@@ -305,7 +302,6 @@
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -378,7 +374,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -410,7 +405,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -442,7 +436,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -474,7 +467,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -506,7 +498,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -538,7 +529,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -570,7 +560,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -602,7 +591,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -633,7 +621,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -665,7 +652,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -729,7 +715,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -761,7 +746,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -793,7 +777,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -832,7 +815,6 @@
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -863,7 +845,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -918,7 +899,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -966,7 +946,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -998,7 +977,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -1030,7 +1008,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -1091,7 +1068,6 @@
         "vpc_route_table_restrict_public_access_to_igw NOT IMPLEMENTED",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1140,7 +1116,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1171,7 +1146,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -1227,7 +1201,6 @@
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1264,7 +1237,6 @@
         "iam_policy_attached_only_to_group_or_roles",
         "iam_policy_no_administrative_privileges",
         "iam_user_in_group NOT IMPLEMENTED",
-        "iam_user_no_inline_attached_policies NOT IMPLEMENTED"
       ]
     },
     {
@@ -1398,7 +1370,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1434,7 +1405,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1490,7 +1460,6 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1526,7 +1495,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1562,7 +1530,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1592,7 +1559,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -1641,7 +1607,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1685,7 +1650,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1712,7 +1676,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1739,7 +1702,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1766,7 +1728,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1793,7 +1754,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1819,7 +1779,6 @@
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1885,7 +1844,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1913,7 +1871,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1963,7 +1920,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1991,7 +1947,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -2034,7 +1989,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -2149,7 +2103,6 @@
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -2207,7 +2160,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -2234,7 +2186,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -2262,7 +2213,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -2289,7 +2239,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -2327,7 +2276,6 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -2354,7 +2302,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -2392,7 +2339,6 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -2430,7 +2376,6 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -2457,7 +2402,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -2575,7 +2519,6 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -2816,7 +2759,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -2844,7 +2786,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -3209,7 +3150,6 @@
         "elb_classic_lb_cross_zone_load_balancing_enabled NOT IMPLEMENTED",
         "rds_instance_deletion_protection",
         "rds_instance_multi_az",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -3231,7 +3171,6 @@
         "elb_classic_lb_cross_zone_load_balancing_enabled NOT IMPLEMENTED",
         "rds_instance_deletion_protection",
         "rds_instance_multi_az",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -3277,7 +3216,6 @@
         "elb_classic_lb_cross_zone_load_balancing_enabled NOT IMPLEMENTED",
         "rds_instance_deletion_protection",
         "rds_instance_multi_az",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -3299,7 +3237,6 @@
         "elb_classic_lb_cross_zone_load_balancing_enabled NOT IMPLEMENTED",
         "rds_instance_deletion_protection",
         "rds_instance_multi_az",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -3321,7 +3258,6 @@
         "elb_classic_lb_cross_zone_load_balancing_enabled NOT IMPLEMENTED",
         "rds_instance_deletion_protection",
         "rds_instance_multi_az",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -3342,7 +3278,6 @@
         "elb_classic_lb_cross_zone_load_balancing_enabled NOT IMPLEMENTED",
         "rds_instance_deletion_protection",
         "rds_instance_multi_az",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -3363,7 +3298,6 @@
         "elb_classic_lb_cross_zone_load_balancing_enabled NOT IMPLEMENTED",
         "rds_instance_deletion_protection",
         "rds_instance_multi_az",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -3395,7 +3329,6 @@
         "redshift_cluster_automated_snapshot",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -3414,7 +3347,6 @@
         "dynamodb_table_auto_scaling_enabled NOT IMPLEMENTED",
         "elb_classic_lb_cross_zone_load_balancing_enabled NOT IMPLEMENTED",
         "rds_instance_multi_az",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -3491,7 +3423,6 @@
         "redshift_cluster_automated_snapshot",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -3652,7 +3583,6 @@
         "redshift_cluster_automated_snapshot",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -4190,7 +4120,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -4228,7 +4157,6 @@
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -4318,7 +4246,6 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -4357,7 +4284,6 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -4450,7 +4376,6 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -4730,7 +4655,6 @@
         "redshift_cluster_automatic_upgrades",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -4817,7 +4741,6 @@
         "elb_classic_lb_cross_zone_load_balancing_enabled NOT IMPLEMENTED",
         "lambda_function_concurrent_execution_limit_configured NOT IMPLEMENTED",
         "rds_instance_multi_az",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -4849,7 +4772,6 @@
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -4882,7 +4804,6 @@
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -4983,7 +4904,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5016,7 +4936,6 @@
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5043,7 +4962,6 @@
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5079,7 +4997,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5115,7 +5032,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5151,7 +5067,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5183,7 +5098,6 @@
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5219,7 +5133,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5256,7 +5169,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5288,7 +5200,6 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5320,7 +5231,6 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5352,7 +5262,6 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5384,7 +5293,6 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5420,7 +5328,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5453,7 +5360,6 @@
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5489,7 +5395,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5673,7 +5578,6 @@
       ],
       "Checks": [
         "kms_cmk_rotation_enabled",
-        "kms_key_not_pending_deletion NOT IMPLEMENTED"
       ]
     },
     {
@@ -5690,7 +5594,6 @@
       ],
       "Checks": [
         "kms_cmk_rotation_enabled",
-        "kms_key_not_pending_deletion NOT IMPLEMENTED"
       ]
     },
     {
@@ -5707,7 +5610,6 @@
       ],
       "Checks": [
         "kms_cmk_rotation_enabled",
-        "kms_key_not_pending_deletion NOT IMPLEMENTED"
       ]
     },
     {
@@ -5786,7 +5688,6 @@
         "elb_classic_lb_cross_zone_load_balancing_enabled NOT IMPLEMENTED",
         "rds_instance_deletion_protection",
         "rds_instance_multi_az",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -5838,7 +5739,6 @@
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_unused_90_day NOT IMPLEMENTED"
       ]
     },
     {
@@ -5889,7 +5789,6 @@
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -5956,7 +5855,6 @@
         "dynamodb_table_auto_scaling_enabled NOT IMPLEMENTED",
         "elb_classic_lb_cross_zone_load_balancing_enabled NOT IMPLEMENTED",
         "rds_instance_multi_az",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -6480,7 +6378,6 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -6735,7 +6632,6 @@
         "redshift_cluster_automated_snapshot",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -6767,7 +6663,6 @@
         "s3_bucket_default_encryption",
         "sagemaker_endpoint_configuration_encryption_at_rest_enabled NOT IMPLEMENTED",
         "sagemaker_notebook_instance_encryption_enabled",
-        "secretsmanager_secret_encrypted_with_kms_cmk NOT IMPLEMENTED"
       ]
     }
   ]

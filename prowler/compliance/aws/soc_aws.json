@@ -49,8 +49,7 @@
         "iam_policy_no_administrative_privileges",
         "iam_user_in_group NOT IMPLEMENTED",
         "iam_user_no_inline_attached_policies NOT IMPLEMENTED",
-        "iam_disable_90_days_credentials",
-        "rds_db_instance_iam_authentication_enabled NOT IMPLEMENTED"
+        "iam_disable_90_days_credentials"
       ]
     },
     {
@@ -481,8 +480,7 @@
         "s3_bucket_server_access_logging_enabled",
         "cloudwatch_log_group_retention_policy_specific_days_enabled",
         "vpc_flow_logs_enabled",
-        "guardduty_no_high_severity_findings",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
+        "guardduty_no_high_severity_findings"
       ]
     },
     {
@@ -557,8 +555,7 @@
       ],
       "Checks": [
         "config_recorder_all_regions_enabled",
-        "codebuild_project_source_repo_oauth_configured NOT IMPLEMENTED",
-        "codebuild_project_plaintext_env_variables_no_sensitive_aws_values NOT IMPLEMENTED"
+        "codebuild_project_source_repo_oauth_configured NOT IMPLEMENTED"
       ]
     },
     {
@@ -642,8 +639,7 @@
         "rds_instance_backup_enabled",
         "redshift_cluster_automated_snapshot",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
-        "s3_bucket_object_versioning",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
+        "s3_bucket_object_versioning"
       ]
     },
     {

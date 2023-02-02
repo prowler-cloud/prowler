@@ -65,7 +65,6 @@
             "rds_instance_backup_enabled",
             "rds_instance_multi_az",
             "redshift_cluster_automated_snapshot",
-            "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED"
         ]
       },
       {
@@ -114,7 +113,6 @@
             "s3_bucket_server_access_logging_enabled",
             "s3_bucket_object_lock_enabled NOT IMPLEMENTED",
             "vpc_flow_logs_enabled",
-            "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
         ]
       },
       {
@@ -289,7 +287,6 @@
             "rds_instance_integration_cloudwatch_logs",
             "s3_bucket_server_access_logging_enabled",
             "vpc_flow_logs_enabled",
-            "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
         ]
       },
       {
@@ -317,7 +314,6 @@
             "redshift_cluster_kms_enabled NOT IMPLEMENTED",
             "s3_bucket_server_access_logging_enabled",
             "vpc_flow_logs_enabled",
-            "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
         ]
       },
       {
@@ -438,7 +434,6 @@
             "iam_policy_no_administrative_privileges",
             "iam_no_root_access_key",
             "iam_user_in_group NOT IMPLEMENTED",
-            "iam_user_no_inline_attached_policies NOT IMPLEMENTED"
         ]
       },
       {
@@ -551,7 +546,6 @@
             "iam_policy_no_administrative_privileges",
             "iam_group_not_empty NOT IMPLEMENTED",
             "iam_policy_no_administrative_privileges",
-            "iam_user_in_group NOT IMPLEMENTED"
         ]
       },
       {
@@ -569,7 +563,6 @@
         "Checks": [
             "iam_policy_no_administrative_privileges",
             "iam_policy_no_administrative_privileges",
-            "iam_user_in_group NOT IMPLEMENTED"
         ]
       },
       {
@@ -701,7 +694,6 @@
             "ec2_networkacl_allow_ingress_any_port",
             "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
             "ec2_networkacl_allow_ingress_any_port",
-            "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
         ]
       },
       {
@@ -743,7 +735,6 @@
             "cloudtrail_cloudwatch_logging_enabled",
             "elbv2_logging_enabled elb_logging_enabled",
             "vpc_flow_logs_enabled",
-            "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
         ]
       },
       {
@@ -802,7 +793,6 @@
             "iam_policy_attached_only_to_group_or_roles",
             "iam_policy_no_administrative_privileges",
             "iam_user_in_group NOT IMPLEMENTED",
-            "iam_user_no_inline_attached_policies NOT IMPLEMENTED"
         ]
       },
       {
@@ -819,7 +809,6 @@
         ],
         "Checks": [
             "codebuild_project_plaintext_env_variables_no_sensitive_aws_values NOT IMPLEMENTED",
-            "codebuild_project_source_repo_oauth_configured NOT IMPLEMENTED"
         ]
       },
       {
@@ -875,7 +864,6 @@
           }
         ],
         "Checks": [
-            "lambda_function_dead_letter_queue_configured NOT IMPLEMENTED"
         ]
       },
       {
@@ -906,7 +894,6 @@
             "redshift_cluster_kms_enabled NOT IMPLEMENTED",
             "s3_bucket_server_access_logging_enabled",
             "securityhub_enabled",
-            "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
         ]
       },
       {
@@ -958,7 +945,6 @@
             "rds_instance_backup_enabled",
             "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
             "s3_bucket_object_versioning",
-            "vpc_vpn_tunnel_up NOT IMPLEMENTED"
         ]
       }
 

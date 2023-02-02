@@ -129,7 +129,6 @@
           "sagemaker_endpoint_configuration_encryption_at_rest_enabled NOT IMPLEMENTED",
           "sagemaker_notebook_instance_encryption_enabled",
           "sns_topics_kms_encryption_at_rest_enabled",
-          "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
           ]
       }
     ]

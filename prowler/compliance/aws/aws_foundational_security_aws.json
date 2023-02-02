@@ -47,9 +47,7 @@
       "Checks": [
         "apigateway_logging_enabled",
         "apigateway_client_certificate_enabled",
-        "apigateway_rest_api_stage_xray_tracing_enabled NOT IMPLEMENTED",
         "apigateway_waf_acl_attached",
-        "apigateway_stage_cache_encryption_at_rest_enabled NOT IMPLEMENTED",
         "apigatewayv2_authorizers_enabled",
         "apigatewayv2_access_logging_enabled"
       ]
@@ -66,13 +64,7 @@
         }
       ],
       "Checks": [
-        "autoscaling_group_with_lb_use_health_check NOT IMPLEMENTED",
-        "autoscaling_group_multiple_az_configured NOT IMPLEMENTED",
-        "autoscaling_launch_config_requires_imdsv2 NOT IMPLEMENTED",
-        "autoscaling_launch_config_hop_limit NOT IMPLEMENTED",
-        "autoscaling_launch_config_public_ip_disabled NOT IMPLEMENTED",
-        "autoscaling_use_multiple_instance_types_in_multiple_az NOT IMPLEMENTED",
-        "autoscaling_group_uses_ec2_launch_template NOT IMPLEMENTED"
+       
       ]
     },
     {
@@ -86,9 +78,7 @@
           "Service": "cloudformation"
         }
       ],
-      "Checks": [
-        "cloudformation_stack_notifications_enabled NOT IMPLEMENTED"
-      ]
+      "Checks": [ ]
     },
     {
       "Id": "cloudfront",
@@ -102,17 +92,11 @@
         }
       ],
       "Checks": [
-        "cloudfront_distribution_default_root_object_configured NOT IMPLEMENTED",
-        "cloudfront_distribution_origin_access_identity_enabled NOT IMPLEMENTED",
         "cloudfront_distributions_https_enabled",
-        "cloudfront_distribution_configured_with_origin_failover NOT IMPLEMENTED",
         "cloudfront_distributions_logging_enabled",
         "cloudfront_distributions_using_waf",
-        "cloudfront_distribution_use_custom_ssl_certificate NOT IMPLEMENTED",
         "cloudfront_distributions_field_level_encryption_enabled",
-        "cloudfront_distribution_custom_origins_encryption_in_transit_enabled NOT IMPLEMENTED",
-        "cloudfront_distributions_using_deprecated_ssl_protocols",
-        "cloudfront_distribution_no_non_existent_s3_origin NOT IMPLEMENTED"
+        "cloudfront_distributions_using_deprecated_ssl_protocols"
       ]
     },
     {
@@ -144,13 +128,7 @@
           "Service": "codebuild"
         }
       ],
-      "Checks": [
-        "codebuild_project_source_repo_oauth_configured NOT IMPLEMENTED",
-        "codebuild_project_plaintext_env_variables_no_sensitive_aws_values NOT IMPLEMENTED",
-        "codebuild_project_s3_logs_encryption_enabled NOT IMPLEMENTED",
-        "codebuild_project_logging_enabled NOT IMPLEMENTED",
-        "codebuild_project_environment_privileged_mode_disabled NOT IMPLEMENTED"
-      ]
+      "Checks": [ ]
     },
     {
       "Id": "config",
@@ -179,7 +157,6 @@
         }
       ],
       "Checks": [
-        "dms_replication_instance_not_publicly_accessible NOT IMPLEMENTED"
       ]
     },
     {
@@ -194,7 +171,6 @@
         }
       ],
       "Checks": [
-        "dynamodb_table_auto_scaling_enabled NOT IMPLEMENTED",
         "dynamodb_tables_pitr_enabled",
         "dynamodb_accelerator_cluster_encryption_enabled"
       ]
@@ -219,17 +195,8 @@
         "ec2_ebs_default_encryption",
         "ec2_instance_imdsv2_enabled",
         "ec2_instance_public_ip",
-        "vpc_configured_to_use_vpc_endpoints NOT IMPLEMENTED",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED",
-        "vpc_network_acl_unused NOT IMPLEMENTED",
-        "ec2_instance_not_use_multiple_enis NOT IMPLEMENTED",
-        "vpc_security_group_allows_ingress_authorized_ports NOT IMPLEMENTED",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_network_acl_remote_administration NOT IMPLEMENTED",
-        "ec2_securitygroup_not_used",
-        "ec2_transit_gateway_auto_cross_account_attachment_disabled NOT IMPLEMENTED",
-        "ec2_instance_virtualization_type_no_paravirtual NOT IMPLEMENTED",
-        "ec2_instance_no_amazon_key_pair NOT IMPLEMENTED"
+        "ec2_securitygroup_not_used"
       ]
     },
     {
@@ -245,7 +212,6 @@
       ],
       "Checks": [
         "ecr_repositories_scan_images_on_push_enabled",
-        "ecr_repository_tag_immutability_enabled NOT IMPLEMENTED",
         "ecr_repositories_lifecycle_policy_enabled"
       ]
     },
@@ -261,14 +227,7 @@
         }
       ],
       "Checks": [
-        "ecs_task_definition_user_for_host_mode_check NOT IMPLEMENTED",
-        "ecs_service_not_publicly_accessible NOT IMPLEMENTED",
-        "ecs_task_definition_no_host_pid_mode NOT IMPLEMENTED",
-        "ecs_task_definition_container_non_privileged NOT IMPLEMENTED",
-        "ecs_task_definition_container_readonly_root_filesystem NOT IMPLEMENTED",
-        "ecs_task_definitions_no_environment_secrets",
-        "ecs_service_fargate_using_latest_platform_version NOT IMPLEMENTED",
-        "ecs_cluster_container_insights_enabled NOT IMPLEMENTED"
+        "ecs_task_definitions_no_environment_secrets"
       ]
     },
     {
@@ -284,9 +243,7 @@
       ],
       "Checks": [
         "efs_encryption_at_rest_enabled",
-        "efs_have_backup_enabled",
-        "efs_access_point_enforce_root_directory NOT IMPLEMENTED",
-        "efs_access_point_enforce_user_identity NOT IMPLEMENTED"
+        "efs_have_backup_enabled"
       ]
     },
     {
@@ -301,7 +258,6 @@
         }
       ],
       "Checks": [
-        "eks_cluster_with_latest_kubernetes_version NOT IMPLEMENTED"
       ]
     },
     {
@@ -316,7 +272,6 @@
         }
       ],
       "Checks": [
-        "elastic_beanstalk_enhanced_health_reporting_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -331,15 +286,9 @@
         }
       ],
       "Checks": [
-        "elb_classic_lb_use_tls_https_listeners NOT IMPLEMENTED",
-        "elb_application_lb_drop_http_headers NOT IMPLEMENTED",
         "elbv2_logging_enabled elb_logging_enabled",
         "elbv2_deletion_protection",
-        "ec2_classic_lb_connection_draining_enabled NOT IMPLEMENTED",
-        "elb_classic_lb_multiple_az_configured NOT IMPLEMENTED",
-        "elbv2_desync_mitigation_mode",
-        "elb_application_gateway_network_lb_multiple_az_configured NOT IMPLEMENTED",
-        "elb_classic_lb_desync_mitigation_mode NOT IMPLEMENTED"
+        "elbv2_desync_mitigation_mode"
       ]
     },
     {
@@ -354,7 +303,6 @@
         }
       ],
       "Checks": [
-        "elb_application_lb_redirect_http_request_to_https NOT IMPLEMENTED"
       ]
     },
     {
@@ -385,12 +333,9 @@
       ],
       "Checks": [
         "opensearch_service_domains_encryption_at_rest_enabled",
-        "es_domain_in_vpc NOT IMPLEMENTED",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "opensearch_service_domains_audit_logging_enabled",
         "opensearch_service_domains_audit_logging_enabled",
-        "es_domain_data_nodes_min_3 NOT IMPLEMENTED",
-        "es_domain_dedicated_master_nodes_min_3 NOT IMPLEMENTED",
         "opensearch_service_domains_https_communications_enforced"
       ]
     },
@@ -422,7 +367,6 @@
       ],
       "Checks": [
         "iam_policy_no_administrative_privileges",
-        "iam_user_no_inline_attached_policies NOT IMPLEMENTED",
         "iam_rotate_access_key_90_days",
         "iam_no_root_access_key",
         "iam_user_mfa_enabled_console_access",
@@ -444,7 +388,6 @@
         }
       ],
       "Checks": [
-        "kinesis_stream_server_side_encryption_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -459,9 +402,6 @@
         }
       ],
       "Checks": [
-        "kms_key_decryption_restricted_in_iam_customer_managed_policy NOT IMPLEMENTED",
-        "kms_key_decryption_restricted_in_iam_inline_policy NOT IMPLEMENTED",
-        "kms_key_not_pending_deletion NOT IMPLEMENTED"
       ]
     },
     {
@@ -477,9 +417,7 @@
       ],
       "Checks": [
         "awslambda_function_url_public",
-        "awslambda_function_using_supported_runtimes",
-        "lambda_function_dead_letter_queue_configured NOT IMPLEMENTED",
-        "lambda_function_multiple_az_configured NOT IMPLEMENTED"
+        "awslambda_function_using_supported_runtimes"
       ]
     },
     {
@@ -494,10 +432,6 @@
         }
       ],
       "Checks": [
-        "networkfirewall_firewall_policy_rule_group_not_empty NOT IMPLEMENTED",
-        "networkfirewall_firewall_policy_default_stateless_action_check_full_packets NOT IMPLEMENTED",
-        "networkfirewall_firewall_policy_default_stateless_action_check_fragmented_packets NOT IMPLEMENTED",
-        "networkfirewall_stateless_rule_group_not_empty NOT IMPLEMENTED"
       ]
     },
     {
@@ -533,24 +467,10 @@
         "rds_instance_storage_encrypted",
         "rds_instance_multi_az",
         "rds_instance_enhanced_monitoring_enabled",
-        "rds_db_cluster_deletion_protection_enabled NOT IMPLEMENTED",
         "rds_instance_deletion_protection",
         "rds_instance_integration_cloudwatch_logs",
-        "rds_db_instance_iam_authentication_enabled NOT IMPLEMENTED",
-        "rds_db_cluster_iam_authentication_enabled NOT IMPLEMENTED",
         "rds_instance_minor_version_upgrade_enabled",
-        "rds_db_cluster_aurora_backtracking_enabled NOT IMPLEMENTED",
-        "rds_instance_multi_az",
-        "rds_db_cluster_copy_tags_to_snapshot_enabled NOT IMPLEMENTED",
-        "rds_db_instance_copy_tags_to_snapshot_enabled NOT IMPLEMENTED",
-        "rds_db_instance_in_vpc NOT IMPLEMENTED",
-        "rds_db_cluster_events_subscription NOT IMPLEMENTED",
-        "rds_db_instance_events_subscription NOT IMPLEMENTED",
-        "rds_db_parameter_group_events_subscription NOT IMPLEMENTED",
-        "rds_db_security_group_events_subscription NOT IMPLEMENTED",
-        "rds_db_instance_and_cluster_no_default_port NOT IMPLEMENTED",
-        "rds_db_cluster_no_default_admin_name NOT IMPLEMENTED",
-        "rds_db_instance_no_default_admin_name NOT IMPLEMENTED"
+        "rds_instance_multi_az"
       ]
     },
     {
@@ -566,13 +486,9 @@
       ],
       "Checks": [
         "redshift_cluster_public_access",
-        "redshift_cluster_encryption_in_transit_enabled NOT IMPLEMENTED",
         "redshift_cluster_automated_snapshot",
         "redshift_cluster_automated_snapshot",
-        "redshift_cluster_automatic_upgrades",
-        "redshift_cluster_enhanced_vpc_routing_enabled NOT IMPLEMENTED",
-        "redshift_cluster_no_default_admin_name NOT IMPLEMENTED",
-        "redshift_cluster_no_default_database_name NOT IMPLEMENTED"
+        "redshift_cluster_automatic_upgrades"
       ]
     },
     {
@@ -592,11 +508,9 @@
         "s3_bucket_policy_public_write_access",
         "s3_bucket_default_encryption",
         "s3_bucket_secure_transport_policy",
-        "s3_bucket_policy_restricts_cross_account_permission_changes NOT IMPLEMENTED",
         "s3_bucket_public_access",
         "s3_bucket_server_access_logging_enabled",
         "s3_bucket_object_versioning",
-        "s3_bucket_event_notifications_enabled NOT IMPLEMENTED",
         "s3_bucket_acl_prohibited"
       ]
     },
@@ -630,8 +544,6 @@
       ],
       "Checks": [
         "secretsmanager_automatic_rotation_enabled",
-        "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
-        "secretsmanager_secret_last_used_1_day NOT IMPLEMENTED",
         "secretsmanager_automatic_rotation_enabled"
       ]
     },
@@ -647,8 +559,7 @@
         }
       ],
       "Checks": [
-        "sns_topics_kms_encryption_at_rest_enabled",
-        "sns_topic_notification_delivery_status_enabled NOT IMPLEMENTED"
+        "sns_topics_kms_encryption_at_rest_enabled"
       ]
     },
     {
@@ -695,10 +606,6 @@
         }
       ],
       "Checks": [
-        "waf_rule_condition_attached NOT IMPLEMENTED",
-        "waf_rule_group_rule_attached NOT IMPLEMENTED",
-        "waf_web_acl_rule_attached NOT IMPLEMENTED",
-        "wafv2_web_acl_rule_attached NOT IMPLEMENTED"
       ]
     }
   ]

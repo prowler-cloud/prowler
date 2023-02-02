@@ -15,7 +15,7 @@
         }
       ],
       "Checks": [
-        "ec2_instance_ebs_optimized NOT IMPLEMENTED"
+       
       ]
     },
     {
@@ -30,7 +30,7 @@
         }
       ],
       "Checks": [
-        "ebs_attached_volume_delete_on_termination_enabled NOT IMPLEMENTED"
+        
       ]
     },
     {

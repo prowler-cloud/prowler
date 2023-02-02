@@ -115,7 +115,6 @@
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "codebuild_project_source_repo_oauth_configured NOT IMPLEMENTED",
-        "lambda_function_dead_letter_queue_configured NOT IMPLEMENTED"
       ]
     },
     {
@@ -244,7 +243,6 @@
         "guardduty_is_enabled",
         "guardduty_no_high_severity_findings",
         "securityhub_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -317,7 +315,6 @@
         "guardduty_is_enabled",
         "guardduty_no_high_severity_findings",
         "securityhub_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -406,7 +403,6 @@
       ],
       "Checks": [
         "autoscaling_group_with_lb_use_health_check NOT IMPLEMENTED",
-        "dynamodb_table_auto_scaling_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -422,7 +418,6 @@
         }
       ],
       "Checks": [
-        "iam_user_in_group NOT IMPLEMENTED"
       ]
     },
     {
@@ -446,7 +441,6 @@
         "rds_instance_multi_az",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -597,7 +591,6 @@
         "iam_user_no_inline_attached_policies NOT IMPLEMENTED",
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
-        "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED"
       ]
     },
     {
@@ -802,7 +795,6 @@
         "ec2_instance_managed_by_ssm",
         "ssm_managed_compliant_patching",
         "ec2_elastic_ip_unassgined",
-        "vpc_security_group_associated_to_eni NOT IMPLEMENTED"
       ]
     },
     {
@@ -826,7 +818,6 @@
         "rds_instance_multi_az",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -1004,7 +995,6 @@
         }
       ],
       "Checks": [
-        "ec2_instance_ebs_optimized NOT IMPLEMENTED"
       ]
     },
     {
@@ -1034,7 +1024,6 @@
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -1073,7 +1062,6 @@
         "redshift_cluster_automated_snapshot",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -1203,7 +1191,6 @@
         "rds_instance_multi_az",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -1243,7 +1230,6 @@
         "redshift_cluster_automated_snapshot",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -1315,7 +1301,6 @@
         "redshift_cluster_automated_snapshot",
         "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     }
   ]

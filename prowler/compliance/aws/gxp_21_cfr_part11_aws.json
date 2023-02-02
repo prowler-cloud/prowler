@@ -37,7 +37,6 @@
         "s3_bucket_object_versioning",
         "ssm_managed_compliant_patching",
         "ssm_managed_compliant_patching",
-        "vpc_vpn_tunnel_up NOT IMPLEMENTED"
       ]
     },
     {
@@ -133,7 +132,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -162,7 +160,6 @@
         "redshift_cluster_kms_enabled NOT IMPLEMENTED",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -235,7 +232,6 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port",
-        "vpc_subnet_auto_assign_public_ip_disabled NOT IMPLEMENTED"
       ]
     },
     {
@@ -379,7 +375,6 @@
         "iam_rotate_access_key_90_days",
         "iam_disable_90_days_credentials",
         "secretsmanager_automatic_rotation_enabled",
-        "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED"
       ]
     },
     {

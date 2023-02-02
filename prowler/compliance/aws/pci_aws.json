@@ -14,7 +14,6 @@
           }
         ],
         "Checks": [
-            "autoscaling_group_with_lb_use_health_check NOT IMPLEMENTED"
         ]
       },
       {
@@ -46,7 +45,6 @@
         ],
         "Checks": [
             "codebuild_project_source_repo_oauth_configured NOT IMPLEMENTED",
-            "codebuild_project_plaintext_env_variables_no_sensitive_aws_values NOT IMPLEMENTED"
         ]
       },
       {
@@ -88,7 +86,6 @@
           }
         ],
         "Checks": [
-            "dms_replication_instance_not_publicly_accessible NOT IMPLEMENTED"
         ]
       },
       {
@@ -122,7 +119,6 @@
           }
         ],
         "Checks": [
-            "elb_application_lb_redirect_http_request_to_https NOT IMPLEMENTED"
         ]
       },
       {
