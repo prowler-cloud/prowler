@@ -38,7 +38,7 @@ def send_to_security_hub(
                 security_hub_client.list_enabled_products_for_import()
             ):
                 logger.error(
-                    f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://github.com/prowler-cloud/prowler/#security-hub-integration"
+                    f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://docs.prowler.cloud/en/latest/tutorials/aws/securityhub/"
                 )
             else:
                 # Send finding to Security Hub
