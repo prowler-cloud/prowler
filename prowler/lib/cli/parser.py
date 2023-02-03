@@ -2,7 +2,11 @@ import argparse
 import sys
 from argparse import RawTextHelpFormatter
 
-from prowler.config.config import default_output_directory, prowler_version, available_compliance_frameworks
+from prowler.config.config import (
+    available_compliance_frameworks,
+    default_output_directory,
+    prowler_version,
+)
 from prowler.providers.aws.aws_provider import get_aws_available_regions
 from prowler.providers.aws.lib.arn.arn import is_valid_arn
 
@@ -234,7 +238,7 @@ Detailed documentation at https://docs.prowler.cloud
             "--list-compliance-requirements",
             nargs="+",
             help="List compliance requirements for a given requirement",
-            choices= available_compliance_frameworks,
+            choices=available_compliance_frameworks,
         )
         list_group.add_argument(
             "--list-categories",

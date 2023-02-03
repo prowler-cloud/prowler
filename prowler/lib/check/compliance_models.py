@@ -96,7 +96,9 @@ class Compliance_Requirement(BaseModel):
 
     Id: str
     Description: str
-    Attributes: list[Union[CIS_Requirements, ENS_Requirements, Generic_Compliance_Requirements]]
+    Attributes: list[
+        Union[CIS_Requirements, ENS_Requirements, Generic_Compliance_Requirements]
+    ]
     Checks: List[str]
 
 

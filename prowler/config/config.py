@@ -18,7 +18,28 @@ banner_color = "\033[1;92m"
 
 # Compliance
 compliance_specification_dir = "./compliance"
-available_compliance_frameworks = ["ens_rd2022_aws", "cis_1.4_aws", "cis_1.5_aws", "aws_audit_manager_control_tower_guardrails_aws", "aws_foundational_security_aws", "cisa_aws", "fedramp_low_4_aws", "fedramp_moderate_4_aws", "ffiec_aws", "gdpr_aws", "gpx_eu_annex21_aws", "gxp_21_cfr_part11_aws", "hipaa_aws", "nist_800_53_revision_4_aws", "nist_800_53_revision_5_aws", "nist_800_171_revision_2_aws", "nist_cybersecurity_framework_aws", "pci_aws", "rbi_cyber_security_framework_aws", "soc2_aws"]
+available_compliance_frameworks = [
+    "ens_rd2022_aws",
+    "cis_1.4_aws",
+    "cis_1.5_aws",
+    "aws_audit_manager_control_tower_guardrails_aws",
+    "aws_foundational_security_aws",
+    "cisa_aws",
+    "fedramp_low_4_aws",
+    "fedramp_moderate_4_aws",
+    "ffiec_aws",
+    "gdpr_aws",
+    "gpx_eu_annex21_aws",
+    "gxp_21_cfr_part11_aws",
+    "hipaa_aws",
+    "nist_800_53_revision_4_aws",
+    "nist_800_53_revision_5_aws",
+    "nist_800_171_revision_2_aws",
+    "nist_cybersecurity_framework_aws",
+    "pci_aws",
+    "rbi_cyber_security_framework_aws",
+    "soc2_aws",
+]
 # AWS services-regions matrix json
 aws_services_json_file = "aws_regions_by_service.json"
 
