@@ -21,8 +21,12 @@ class efs_not_publicly_accessible(Check):
                 for statement in fs.policy["Statement"]:
                     if statement["Effect"] == "Allow":
                         if (
-                            statement["Principal"]["AWS"] == "*"
-                            or statement["Principal"] == "*"
+                            ("Principal" in statement and statement["Principal"] == "*")
+                            or (
+                                "Principal" in statement
+                                and "AWS" in statement["Principal"]
+                                and statement["Principal"]["AWS"] == "*"
+                            )
                             or (
                                 "CanonicalUser" in statement["Principal"]
                                 and statement["Principal"]["CanonicalUser"] == "*"
