@@ -39,7 +39,7 @@ class ENS_Requirements_Tipos(str, Enum):
 class ENS_Requirements(BaseModel):
     """ENS V3 Framework Requirements"""
 
-    IdGrupoControl: Optional[str]
+    IdGrupoControl: str
     Marco: str
     Categoria: str
     DescripcionControl: str
@@ -48,9 +48,9 @@ class ENS_Requirements(BaseModel):
     Dimensiones: list[ENS_Requirements_Dimensiones]
 
 
-# General Compliance Requirements
-class General_Compliance_Requirements(BaseModel):
-    """General Compliance Requirements"""
+# Generic Compliance Requirements
+class Generic_Compliance_Requirements(BaseModel):
+    """Generic Compliance Requirements"""
 
     ItemId: str
     Section: Optional[str]
@@ -96,7 +96,7 @@ class Compliance_Requirement(BaseModel):
 
     Id: str
     Description: str
-    Attributes: list[Union[CIS_Requirements, ENS_Requirements, General_Compliance_Requirements]]
+    Attributes: list[Union[CIS_Requirements, ENS_Requirements, Generic_Compliance_Requirements]]
     Checks: List[str]
 
 

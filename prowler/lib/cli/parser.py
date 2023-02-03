@@ -2,12 +2,16 @@ import argparse
 import sys
 from argparse import RawTextHelpFormatter
 
-from prowler.config.config import (
-    available_compliance_frameworks,
-    default_output_directory,
-    prowler_version,
-)
+from prowler.config.config import default_output_directory, prowler_version, available_compliance_frameworks
 from prowler.providers.aws.aws_provider import get_aws_available_regions
+from prowler.providers.aws.lib.arn.arn import is_valid_arn
+
+
+def arn_type(arn: str) -> bool:
+    """arn_type returns a string ARN if it is valid and raises an argparse.ArgumentError if not."""
+    if not is_valid_arn(arn):
+        raise argparse.ArgumentError("Invalid ARN")
+    return arn
 
 
 class ProwlerArgumentParser:
@@ -20,7 +24,6 @@ class ProwlerArgumentParser:
             epilog="""
 To see the different available options on a specific provider, run:
     prowler {provider} -h|--help
-
 Detailed documentation at https://docs.prowler.cloud
 """,
         )
@@ -231,7 +234,7 @@ Detailed documentation at https://docs.prowler.cloud
             "--list-compliance-requirements",
             nargs="+",
             help="List compliance requirements for a given requirement",
-            choices=available_compliance_frameworks,
+            choices= available_compliance_frameworks,
         )
         list_group.add_argument(
             "--list-categories",
@@ -345,7 +348,25 @@ Detailed documentation at https://docs.prowler.cloud
             "--allowlist-file",
             nargs="?",
             default=None,
-            help="Path for allowlist yaml file. See example prowler/config/allowlist.yaml for reference and format. It also accepts AWS DynamoDB Table ARN or S3 URI, see more in https://docs.prowler.cloud/en/latest/tutorials/allowlist/",
+            help="Path for allowlist yaml file. See example prowler/config/allowlist.yaml for reference and format. It also accepts AWS DynamoDB Table or Lambda ARNs or S3 URIs, see more in https://docs.prowler.cloud/en/latest/tutorials/allowlist/",
+        )
+        # Based Scans
+        aws_based_scans_subparser = aws_parser.add_argument_group("AWS Based Scans")
+        aws_based_scans_parser = (
+            aws_based_scans_subparser.add_mutually_exclusive_group()
+        )
+        aws_based_scans_parser.add_argument(
+            "--resource-tags",
+            nargs="+",
+            default=None,
+            help="Scan only resources with specific AWS Tags (Key=Value), e.g., Environment=dev Project=prowler",
+        )
+        aws_based_scans_parser.add_argument(
+            "--resource-arn",
+            nargs="+",
+            type=arn_type,
+            default=None,
+            help="Scan only resources with specific AWS Resource ARNs, e.g., arn:aws:iam::012345678910:user/test arn:aws:ec2:us-east-1:123456789012:vpc/vpc-12345678",
         )
 
     def __init_azure_parser__(self):

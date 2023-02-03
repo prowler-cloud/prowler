@@ -19,9 +19,7 @@
         "guardduty_is_enabled",
         "iam_password_policy_reuse_24",
         "iam_rotate_access_key_90_days",
-        "iam_user_in_group NOT IMPLEMENTED",
         "iam_disable_90_days_credentials",
-        "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
         "securityhub_enabled"
       ]
     },
@@ -100,21 +98,16 @@
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
-        "emr_cluster_kerberos_enabled NOT IMPLEMENTED",
         "guardduty_is_enabled",
         "iam_password_policy_reuse_24",
-        "iam_group_not_empty NOT IMPLEMENTED",
         "iam_policy_no_administrative_privileges",
         "iam_root_mfa_enabled",
         "iam_no_root_access_key",
         "iam_rotate_access_key_90_days",
-        "iam_user_in_group NOT IMPLEMENTED",
-        "iam_user_no_inline_attached_policies NOT IMPLEMENTED",
         "iam_disable_90_days_credentials",
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
-        "secretsmanager_secret_rotated_as_scheduled NOT IMPLEMENTED",
         "securityhub_enabled"
       ]
     },
@@ -130,14 +123,9 @@
         }
       ],
       "Checks": [
-        "dms_replication_instance_not_publicly_accessible NOT IMPLEMENTED",
         "ec2_ebs_public_snapshot",
-        "emr_cluster_kerberos_enabled NOT IMPLEMENTED",
-        "iam_group_not_empty NOT IMPLEMENTED",
         "iam_policy_no_administrative_privileges",
         "iam_no_root_access_key",
-        "iam_user_in_group NOT IMPLEMENTED",
-        "iam_user_no_inline_attached_policies NOT IMPLEMENTED",
         "iam_disable_90_days_credentials",
         "awslambda_function_url_public",
         "rds_snapshots_public_access",
@@ -161,12 +149,9 @@
       ],
       "Checks": [
         "acm_certificates_expiration_check",
-        "dms_replication_instance_not_publicly_accessible NOT IMPLEMENTED",
         "ec2_ebs_public_snapshot",
-        "ec2_instance_in_vpc NOT IMPLEMENTED",
         "ec2_instance_public_ip",
         "emr_cluster_master_nodes_no_public_ip",
-        "es_domain_in_vpc NOT IMPLEMENTED",
         "awslambda_function_not_publicly_accessible",
         "awslambda_function_url_public",
         "rds_instance_no_public_access",
@@ -177,7 +162,6 @@
         "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "ec2_securitygroup_default_restrict_traffic",
-        "vpc_igw_attached_to_authorized_vpc NOT IMPLEMENTED",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port"
@@ -195,9 +179,7 @@
         }
       ],
       "Checks": [
-        "emr_cluster_kerberos_enabled NOT IMPLEMENTED",
-        "iam_group_not_empty NOT IMPLEMENTED",
-        "iam_policy_no_administrative_privileges",
+        "iam_policy_no_administrative_privileges"
       ]
     },
     {
@@ -228,18 +210,12 @@
         }
       ],
       "Checks": [
-        "codebuild_project_plaintext_env_variables_no_sensitive_aws_values NOT IMPLEMENTED",
-        "dms_replication_instance_not_publicly_accessible NOT IMPLEMENTED",
         "ec2_ebs_public_snapshot",
         "ec2_instance_public_ip",
         "ec2_instance_imdsv2_enabled",
-        "emr_cluster_kerberos_enabled NOT IMPLEMENTED",
-        "iam_group_not_empty NOT IMPLEMENTED",
         "iam_policy_attached_only_to_group_or_roles",
         "iam_policy_no_administrative_privileges",
         "iam_no_root_access_key",
-        "iam_user_in_group NOT IMPLEMENTED",
-        "iam_user_no_inline_attached_policies NOT IMPLEMENTED",
         "iam_disable_90_days_credentials",
         "awslambda_function_url_public",
         "rds_instance_no_public_access",
@@ -280,11 +256,7 @@
       ],
       "Checks": [
         "acm_certificates_expiration_check",
-        "elb_application_lb_drop_http_headers NOT IMPLEMENTED",
-        "elb_application_lb_redirect_http_request_to_https NOT IMPLEMENTED",
         "elb_ssl_listeners",
-        "elb_classic_lb_use_tls_https_listeners NOT IMPLEMENTED",
-        "redshift_cluster_encryption_in_transit_enabled NOT IMPLEMENTED",
         "s3_bucket_secure_transport_policy"
       ]
     },
@@ -314,7 +286,6 @@
         }
       ],
       "Checks": [
-        "dms_replication_instance_not_publicly_accessible NOT IMPLEMENTED",
         "ec2_ebs_public_snapshot",
         "ec2_instance_public_ip",
         "emr_cluster_master_nodes_no_public_ip",
@@ -350,7 +321,7 @@
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
-        "vpc_flow_logs_enabled",
+        "vpc_flow_logs_enabled"
       ]
     },
     {
@@ -375,7 +346,7 @@
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
-        "vpc_flow_logs_enabled",
+        "vpc_flow_logs_enabled"
       ]
     },
     {
@@ -509,7 +480,7 @@
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
-        "vpc_flow_logs_enabled",
+        "vpc_flow_logs_enabled"
       ]
     },
     {
@@ -548,7 +519,6 @@
       ],
       "Checks": [
         "cloudtrail_multi_region_enabled",
-        "ebs_attached_volume_delete_on_termination_enabled NOT IMPLEMENTED",
         "ec2_instance_managed_by_ssm",
         "ec2_instance_older_than_specific_days",
         "elbv2_deletion_protection",
@@ -618,13 +588,10 @@
         }
       ],
       "Checks": [
-        "dynamodb_table_in_backup_plan NOT IMPLEMENTED",
         "dynamodb_tables_pitr_enabled",
-        "ebs_volume_in_backup_plan NOT IMPLEMENTED",
         "efs_have_backup_enabled",
-        "elasticache_redis_cluster_automatic_backup_retention_15_days NOT IMPLEMENTED",
         "rds_instance_backup_enabled",
-        "rds_instance_backup_enabled",
+        "rds_instance_backup_enabled"
       ]
     },
     {
@@ -639,19 +606,13 @@
         }
       ],
       "Checks": [
-        "dynamodb_table_auto_scaling_enabled NOT IMPLEMENTED",
-        "dynamodb_table_in_backup_plan NOT IMPLEMENTED",
         "dynamodb_tables_pitr_enabled",
-        "ebs_volume_in_backup_plan NOT IMPLEMENTED",
         "efs_have_backup_enabled",
-        "elasticache_redis_cluster_automatic_backup_retention_15_days NOT IMPLEMENTED",
         "elbv2_deletion_protection",
-        "elb_classic_lb_cross_zone_load_balancing_enabled NOT IMPLEMENTED",
         "rds_instance_backup_enabled",
         "rds_instance_backup_enabled",
         "rds_instance_multi_az",
-        "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
-        "s3_bucket_object_versioning",
+        "s3_bucket_object_versioning"
       ]
     },
     {
@@ -851,8 +812,6 @@
         }
       ],
       "Checks": [
-        "codebuild_project_plaintext_env_variables_no_sensitive_aws_values NOT IMPLEMENTED",
-        "codebuild_project_source_repo_oauth_configured NOT IMPLEMENTED",
         "ec2_instance_managed_by_ssm"
       ]
     },
@@ -886,7 +845,6 @@
         }
       ],
       "Checks": [
-        "iam_group_not_empty NOT IMPLEMENTED",
         "iam_policy_no_administrative_privileges"
       ]
     },
@@ -916,11 +874,8 @@
         }
       ],
       "Checks": [
-        "autoscaling_group_with_lb_use_health_check NOT IMPLEMENTED",
-        "dynamodb_table_auto_scaling_enabled NOT IMPLEMENTED",
-        "elb_classic_lb_cross_zone_load_balancing_enabled NOT IMPLEMENTED",
         "rds_instance_deletion_protection",
-        "rds_instance_multi_az",
+        "rds_instance_multi_az"
       ]
     },
     {
@@ -936,12 +891,9 @@
         }
       ],
       "Checks": [
-        "dms_replication_instance_not_publicly_accessible NOT IMPLEMENTED",
         "ec2_ebs_public_snapshot",
-        "ec2_instance_in_vpc NOT IMPLEMENTED",
         "ec2_instance_public_ip",
         "emr_cluster_master_nodes_no_public_ip",
-        "es_domain_in_vpc NOT IMPLEMENTED",
         "awslambda_function_not_publicly_accessible",
         "awslambda_function_url_public",
         "rds_instance_no_public_access",
@@ -952,7 +904,6 @@
         "s3_account_level_public_access_blocks",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "ec2_securitygroup_default_restrict_traffic",
-        "vpc_igw_attached_to_authorized_vpc NOT IMPLEMENTED",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port"
@@ -970,23 +921,16 @@
         }
       ],
       "Checks": [
-        "dms_replication_instance_not_publicly_accessible NOT IMPLEMENTED",
         "ec2_ebs_public_snapshot",
-        "ec2_instance_in_vpc NOT IMPLEMENTED",
         "ec2_instance_public_ip",
-        "elb_application_lb_drop_http_headers NOT IMPLEMENTED",
-        "elb_application_lb_redirect_http_request_to_https NOT IMPLEMENTED",
         "elbv2_waf_acl_attached",
         "elb_ssl_listeners",
-        "elb_classic_lb_use_tls_https_listeners NOT IMPLEMENTED",
         "emr_cluster_master_nodes_no_public_ip",
-        "es_domain_in_vpc NOT IMPLEMENTED",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "awslambda_function_not_publicly_accessible",
         "awslambda_function_url_public",
         "rds_instance_no_public_access",
         "rds_snapshots_public_access",
-        "redshift_cluster_encryption_in_transit_enabled NOT IMPLEMENTED",
         "redshift_cluster_public_access",
         "s3_bucket_secure_transport_policy",
         "s3_bucket_public_access",
@@ -994,10 +938,9 @@
         "s3_account_level_public_access_blocks",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "ec2_securitygroup_default_restrict_traffic",
-        "vpc_igw_attached_to_authorized_vpc NOT IMPLEMENTED",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_networkacl_allow_ingress_any_port"
       ]
     },
     {
@@ -1013,12 +956,8 @@
         }
       ],
       "Checks": [
-        "elb_application_lb_drop_http_headers NOT IMPLEMENTED",
-        "elb_application_lb_redirect_http_request_to_https NOT IMPLEMENTED",
         "elb_ssl_listeners",
-        "elb_classic_lb_use_tls_https_listeners NOT IMPLEMENTED",
         "opensearch_service_domains_node_to_node_encryption_enabled",
-        "redshift_cluster_encryption_in_transit_enabled NOT IMPLEMENTED",
         "s3_bucket_secure_transport_policy"
       ]
     },
@@ -1034,12 +973,8 @@
         }
       ],
       "Checks": [
-        "elb_application_lb_drop_http_headers NOT IMPLEMENTED",
-        "elb_application_lb_redirect_http_request_to_https NOT IMPLEMENTED",
         "elb_ssl_listeners",
-        "elb_classic_lb_use_tls_https_listeners NOT IMPLEMENTED",
         "opensearch_service_domains_node_to_node_encryption_enabled",
-        "redshift_cluster_encryption_in_transit_enabled NOT IMPLEMENTED",
         "s3_bucket_secure_transport_policy"
       ]
     },
@@ -1056,7 +991,7 @@
       ],
       "Checks": [
         "acm_certificates_expiration_check",
-        "kms_cmk_rotation_enabled",
+        "kms_cmk_rotation_enabled"
       ]
     },
     {
@@ -1086,8 +1021,6 @@
         }
       ],
       "Checks": [
-        "elb_application_lb_drop_http_headers NOT IMPLEMENTED",
-        "elb_application_lb_redirect_http_request_to_https NOT IMPLEMENTED",
       ]
     },
     {
@@ -1102,20 +1035,16 @@
         }
       ],
       "Checks": [
-        "apigateway_stage_cache_encryption_at_rest_enabled NOT IMPLEMENTED",
         "cloudtrail_kms_encryption_enabled",
         "ec2_ebs_volume_encryption",
         "ec2_ebs_default_encryption",
         "efs_encryption_at_rest_enabled",
         "opensearch_service_domains_encryption_at_rest_enabled",
-        "kms_key_not_pending_deletion NOT IMPLEMENTED",
         "cloudwatch_log_group_kms_encryption_enabled",
         "rds_instance_storage_encrypted",
         "rds_instance_storage_encrypted",
         "redshift_cluster_audit_logging",
         "s3_bucket_default_encryption",
-        "s3_bucket_object_lock_enabled NOT IMPLEMENTED",
-        "sagemaker_endpoint_configuration_encryption_at_rest_enabled NOT IMPLEMENTED",
         "sagemaker_notebook_instance_encryption_enabled",
         "sns_topics_kms_encryption_at_rest_enabled"
       ]
@@ -1259,7 +1188,7 @@
         "elbv2_waf_acl_attached",
         "guardduty_is_enabled",
         "guardduty_no_high_severity_findings",
-        "securityhub_enabled",
+        "securityhub_enabled"
       ]
     },
     {
@@ -1308,11 +1237,8 @@
       ],
       "Checks": [
         "cloudwatch_log_group_retention_policy_specific_days_enabled",
-        "dynamodb_table_in_backup_plan NOT IMPLEMENTED",
         "dynamodb_tables_pitr_enabled",
-        "ebs_volume_in_backup_plan NOT IMPLEMENTED",
         "efs_have_backup_enabled",
-        "elasticache_redis_cluster_automatic_backup_retention_15_days NOT IMPLEMENTED",
         "rds_instance_backup_enabled",
         "rds_instance_backup_enabled",
         "s3_bucket_object_versioning"

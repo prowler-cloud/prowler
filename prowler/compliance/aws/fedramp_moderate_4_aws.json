@@ -452,7 +452,8 @@
       "Checks": [
         "apigateway_logging_enabled",
         "cloudtrail_multi_region_enabled",
-        "cloudtrail_s3_dataevents_read_enabled cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudwatch_changes_to_network_acls_alarm_configured",
@@ -577,7 +578,8 @@
       ],
       "Checks": [
         "cloudtrail_multi_region_enabled",
-        "cloudtrail_s3_dataevents_read_enabled cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudwatch_changes_to_network_acls_alarm_configured",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
@@ -1094,12 +1096,9 @@
       ],
       "Checks": [
         "apigateway_client_certificate_enabled",
-        "elb_application_lb_redirect_http_request_to_https NOT IMPLEMENTED",
         "elbv2_insecure_ssl_ciphers",
         "elb_ssl_listeners",
-        "elb_classic_lb_use_tls_https_listeners NOT IMPLEMENTED",
         "opensearch_service_domains_node_to_node_encryption_enabled",
-        "redshift_cluster_encryption_in_transit_enabled NOT IMPLEMENTED",
         "s3_bucket_secure_transport_policy"
       ]
     },
@@ -1116,12 +1115,9 @@
       ],
       "Checks": [
         "apigateway_client_certificate_enabled",
-        "elb_application_lb_redirect_http_request_to_https NOT IMPLEMENTED",
         "elbv2_insecure_ssl_ciphers",
         "elb_ssl_listeners",
-        "elb_classic_lb_use_tls_https_listeners NOT IMPLEMENTED",
         "opensearch_service_domains_node_to_node_encryption_enabled",
-        "redshift_cluster_encryption_in_transit_enabled NOT IMPLEMENTED",
         "s3_bucket_secure_transport_policy"
       ]
     },
@@ -1153,10 +1149,7 @@
         }
       ],
       "Checks": [
-        "kms_key_not_pending_deletion NOT IMPLEMENTED",
-        "redshift_cluster_kms_enabled NOT IMPLEMENTED",
         "s3_bucket_default_encryption",
-        "sagemaker_endpoint_configuration_encryption_at_rest_enabled NOT IMPLEMENTED",
         "sagemaker_notebook_instance_encryption_enabled",
         "sns_topics_kms_encryption_at_rest_enabled"
       ]
@@ -1174,11 +1167,8 @@
       ],
       "Checks": [
         "apigateway_client_certificate_enabled",
-        "elb_application_lb_redirect_http_request_to_https NOT IMPLEMENTED",
         "elb_ssl_listeners",
-        "elb_classic_lb_use_tls_https_listeners NOT IMPLEMENTED",
         "opensearch_service_domains_node_to_node_encryption_enabled",
-        "redshift_cluster_encryption_in_transit_enabled NOT IMPLEMENTED",
         "s3_bucket_secure_transport_policy"
       ]
     },
@@ -1194,22 +1184,17 @@
         }
       ],
       "Checks": [
-        "apigateway_stage_cache_encryption_at_rest_enabled NOT IMPLEMENTED",
         "cloudtrail_kms_encryption_enabled",
         "ec2_ebs_volume_encryption",
         "ec2_ebs_volume_encryption",
         "efs_encryption_at_rest_enabled",
         "opensearch_service_domains_encryption_at_rest_enabled",
-        "kms_key_not_pending_deletion NOT IMPLEMENTED",
         "cloudwatch_log_group_kms_encryption_enabled",
         "rds_instance_storage_encrypted",
         "rds_instance_storage_encrypted",
         "redshift_cluster_audit_logging",
-        "redshift_cluster_kms_enabled NOT IMPLEMENTED",
         "s3_bucket_default_encryption",
         "s3_bucket_default_encryption",
-        "s3_bucket_object_lock_enabled NOT IMPLEMENTED",
-        "sagemaker_endpoint_configuration_encryption_at_rest_enabled NOT IMPLEMENTED",
         "sagemaker_notebook_instance_encryption_enabled",
         "sns_topics_kms_encryption_at_rest_enabled"
       ]
@@ -1284,7 +1269,8 @@
       ],
       "Checks": [
         "cloudtrail_multi_region_enabled",
-        "cloudtrail_s3_dataevents_read_enabled cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudwatch_changes_to_network_acls_alarm_configured",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
@@ -1310,7 +1296,8 @@
       ],
       "Checks": [
         "cloudtrail_multi_region_enabled",
-        "cloudtrail_s3_dataevents_read_enabled cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudwatch_changes_to_network_acls_alarm_configured",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
@@ -1336,7 +1323,8 @@
       ],
       "Checks": [
         "cloudtrail_multi_region_enabled",
-        "cloudtrail_s3_dataevents_read_enabled cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudwatch_changes_to_network_acls_alarm_configured",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
@@ -1419,16 +1407,10 @@
         }
       ],
       "Checks": [
-        "backup_plan_min_retention_35_days NOT IMPLEMENTED",
         "cloudwatch_log_group_retention_policy_specific_days_enabled",
         "dynamodb_tables_pitr_enabled",
         "dynamodb_tables_pitr_enabled",
-        "ebs_volume_protected_by_backup_plan NOT IMPLEMENTED",
-        "ec2_instance_protected_by_backup_plan NOT IMPLEMENTED",
         "efs_have_backup_enabled",
-        "elasticache_redis_cluster_automatic_backup_retention_15_days NOT IMPLEMENTED",
-        "fsx_file_system_protected_by_backup_plan NOT IMPLEMENTED",
-        "rds_db_cluster_aurora_protected_by_backup_plan NOT IMPLEMENTED",
         "rds_instance_backup_enabled",
         "rds_instance_backup_enabled",
         "redshift_cluster_automated_snapshot",

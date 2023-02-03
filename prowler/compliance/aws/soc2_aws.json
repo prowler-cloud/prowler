@@ -44,11 +44,8 @@
         }
       ],
       "Checks": [
-        "iam_group_not_empty NOT IMPLEMENTED",
         "iam_policy_attached_only_to_group_or_roles",
         "iam_policy_no_administrative_privileges",
-        "iam_user_in_group NOT IMPLEMENTED",
-        "iam_user_no_inline_attached_policies NOT IMPLEMENTED",
         "iam_disable_90_days_credentials"
       ]
     },
@@ -430,24 +427,20 @@
         "cloudwatch_changes_to_network_gateways_alarm_configured",
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
-        "cloudtrail_s3_dataevents_read_enabled cloudtrail_s3_dataevents_write_enabled",
-        "lambda_function_dead_letter_queue_configured NOT IMPLEMENTED",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
         "elbv2_logging_enabled elb_logging_enabled",
         "s3_bucket_server_access_logging_enabled",
         "rds_instance_integration_cloudwatch_logs",
-        "wafv2_web_acl_logging_enabled NOT IMPLEMENTED",
         "cloudtrail_multi_region_enabled",
-        "codebuild_project_plaintext_env_variables_no_sensitive_aws_values NOT IMPLEMENTED",
         "securityhub_enabled",
         "cloudwatch_log_group_retention_policy_specific_days_enabled",
         "cloudtrail_multi_region_enabled",
         "redshift_cluster_audit_logging",
         "vpc_flow_logs_enabled",
         "ec2_instance_imdsv2_enabled",
-        "codebuild_project_source_repo_oauth_configured NOT IMPLEMENTED",
         "guardduty_is_enabled",
         "apigateway_logging_enabled",
-        "lambda_function_concurrent_execution_limit_configured NOT IMPLEMENTED",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
       ]
     },
@@ -469,7 +462,6 @@
         "cloudtrail_cloudwatch_logging_enabled",
         "guardduty_is_enabled",
         "apigateway_logging_enabled",
-        "lambda_function_dead_letter_queue_configured NOT IMPLEMENTED",
         "rds_instance_integration_cloudwatch_logs",
         "securityhub_enabled",
         "cloudwatch_changes_to_network_acls_alarm_configured",
@@ -496,33 +488,20 @@
         }
       ],
       "Checks": [
-        "backup_plan_min_retention_35_days NOT IMPLEMENTED",
-        "backup_recovery_point_encryption_enabled NOT IMPLEMENTED",
-        "backup_recovery_point_manual_deletion_disabled NOT IMPLEMENTED",
         "cloudwatch_changes_to_network_acls_alarm_configured",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
-        "dynamodb_table_in_backup_plan NOT IMPLEMENTED",
         "dynamodb_tables_pitr_enabled",
         "dynamodb_tables_pitr_enabled",
-        "ebs_volume_in_backup_plan NOT IMPLEMENTED",
-        "ebs_volume_protected_by_backup_plan NOT IMPLEMENTED",
-        "ec2_instance_ebs_optimized NOT IMPLEMENTED",
-        "ec2_instance_protected_by_backup_plan NOT IMPLEMENTED",
         "efs_have_backup_enabled",
         "efs_have_backup_enabled",
-        "elasticache_redis_cluster_automatic_backup_retention_15_days NOT IMPLEMENTED",
-        "fsx_file_system_protected_by_backup_plan NOT IMPLEMENTED",
         "guardduty_is_enabled",
         "guardduty_no_high_severity_findings",
-        "lambda_function_dead_letter_queue_configured NOT IMPLEMENTED",
-        "rds_db_cluster_aurora_protected_by_backup_plan NOT IMPLEMENTED",
         "rds_instance_backup_enabled",
         "rds_instance_backup_enabled",
         "rds_instance_backup_enabled",
         "redshift_cluster_automated_snapshot",
-        "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning",
         "securityhub_enabled"
       ]
@@ -554,8 +533,7 @@
         }
       ],
       "Checks": [
-        "config_recorder_all_regions_enabled",
-        "codebuild_project_source_repo_oauth_configured NOT IMPLEMENTED"
+        "config_recorder_all_regions_enabled"
       ]
     },
     {
@@ -614,31 +592,19 @@
       ],
       "Checks": [
         "apigateway_logging_enabled",
-        "backup_plan_min_retention_35_days NOT IMPLEMENTED",
-        "backup_recovery_point_encryption_enabled NOT IMPLEMENTED",
-        "backup_recovery_point_manual_deletion_disabled NOT IMPLEMENTED",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
-        "dynamodb_table_in_backup_plan NOT IMPLEMENTED",
         "dynamodb_tables_pitr_enabled",
         "dynamodb_tables_pitr_enabled",
-        "ebs_volume_in_backup_plan NOT IMPLEMENTED",
-        "ebs_volume_protected_by_backup_plan NOT IMPLEMENTED",
-        "ec2_instance_ebs_optimized NOT IMPLEMENTED",
-        "ec2_instance_protected_by_backup_plan NOT IMPLEMENTED",
         "efs_have_backup_enabled",
         "efs_have_backup_enabled",
-        "elasticache_redis_cluster_automatic_backup_retention_15_days NOT IMPLEMENTED",
         "elbv2_logging_enabled elb_logging_enabled",
-        "fsx_file_system_protected_by_backup_plan NOT IMPLEMENTED",
-        "rds_db_cluster_aurora_protected_by_backup_plan NOT IMPLEMENTED",
         "rds_instance_backup_enabled",
         "rds_instance_backup_enabled",
         "rds_instance_integration_cloudwatch_logs",
         "rds_instance_backup_enabled",
         "redshift_cluster_automated_snapshot",
-        "s3_bucket_cross_region_replication_enabled NOT IMPLEMENTED",
         "s3_bucket_object_versioning"
       ]
     },
@@ -669,7 +635,6 @@
         }
       ],
       "Checks": [
-        "s3_bucket_object_lock_enabled NOT IMPLEMENTED",
         "rds_instance_deletion_protection"
       ]
     },
