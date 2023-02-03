@@ -5,6 +5,7 @@ import sys
 import traceback
 from pkgutil import walk_packages
 from types import ModuleType
+from typing import Any
 
 from alive_progress import alive_bar
 from colorama import Fore, Style
@@ -24,7 +25,6 @@ except Exception:
     sys.exit()
 
 from prowler.lib.utils.utils import open_file, parse_json_file
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import Provider_Output_Options
 
@@ -314,13 +314,23 @@ def run_check(check: Check, output_options: Provider_Output_Options) -> list:
 def execute_checks(
     checks_to_execute: list,
     provider: str,
-    audit_info: AWS_Audit_Info,
+    audit_info: Any,
     audit_output_options: Provider_Output_Options,
 ) -> list:
+    # List to store all the check's findings
     all_findings = []
+    # Services and checks executed for the Audit Status
     services_executed = set()
     checks_executed = set()
-    total_checks_to_execute = len(checks_to_execute)
+
+    # Initialize the Audit Metadata
+    audit_info.audit_metadata = Audit_Metadata(
+        services_scanned=0,
+        expected_checks=checks_to_execute,
+        completed_checks=0,
+        audit_progress=0,
+    )
+
     # Execution with the --only-logs flag
     if audit_output_options.only_logs:
         for check_name in checks_to_execute:
@@ -335,7 +345,6 @@ def execute_checks(
                     audit_info,
                     services_executed,
                     checks_executed,
-                    total_checks_to_execute,
                 )
                 all_findings.extend(check_findings)
 
@@ -378,7 +387,6 @@ def execute_checks(
                         audit_info,
                         services_executed,
                         checks_executed,
-                        total_checks_to_execute,
                     )
                     all_findings.extend(check_findings)
                     bar()
@@ -403,10 +411,9 @@ def execute(
     check_name: str,
     provider: str,
     audit_output_options: Provider_Output_Options,
-    audit_info: AWS_Audit_Info,
+    audit_info: Any,
     services_executed: set,
     checks_executed: set,
-    total_checks_to_execute: int,
 ):
     # Import check module
     check_module_path = (
@@ -416,16 +423,40 @@ def execute(
     # Recover functions from check
     check_to_execute = getattr(lib, check_name)
     c = check_to_execute()
+
     # Run check
     check_findings = run_check(c, audit_output_options)
+
+    # Update Audit Status
     services_executed.add(service)
     checks_executed.add(check_name)
-    audit_info.audit_metadata = Audit_Metadata(
-        services_scanned=len(services_executed),
-        expected_checks=total_checks_to_execute,
-        completed_checks=len(checks_executed),
-        audit_progress=100 * len(checks_executed) / total_checks_to_execute,
+    audit_info.audit_metadata = update_audit_metadata(
+        audit_info.audit_metadata, services_executed, checks_executed
     )
+
+    # Report the check's findings
     report(check_findings, audit_output_options, audit_info)
 
     return check_findings
+
+
+def update_audit_metadata(
+    audit_metadata: Audit_Metadata, services_executed: set, checks_executed: set
+) -> Audit_Metadata:
+    """update_audit_metadata returns the audit_metadata updated with the new status
+
+    Updates the given audit_metadata using the length of the services_executed and checks_executed
+    """
+    try:
+        audit_metadata.services_scanned = len(services_executed)
+        audit_metadata.completed_checks = len(checks_executed)
+        audit_metadata.audit_progress = (
+            100 * len(checks_executed) / len(audit_metadata.expected_checks)
+        )
+
+        return audit_metadata
+
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
