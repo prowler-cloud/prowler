@@ -5,7 +5,7 @@ on:
     types: [published]
 
 env:
-  GITHUB_BRANCH: master
+  GITHUB_BRANCH: ${{ github.event.release.tag_name }}
 
 jobs:
   release-prowler-job:
