@@ -24,7 +24,7 @@ azure-mgmt-storage = "21.0.0"
 
 [dev-packages]
 black = "22.10.0"
-pylint = "2.16.0"
+pylint = "2.16.1"
 flake8 = "5.0.4"
 bandit = "1.7.4"
 safety = "2.3.1"

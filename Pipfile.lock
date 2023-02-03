@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "e5c8d68746c19e163fd27035fc8643b7793a59b715ebfb270c33ebe0487abf9b"
+            "sha256": "c0346590c073c6c3a9574496d328cd42eec2025990532f54c2a1b167c0bf0c79"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -1052,7 +1052,7 @@
                 "sha256:8bef7dde241278824a6d83f44a544709b065191b95b6e50894bdc722fcba0504",
                 "sha256:f84c2818376e66cf843d497486ea8fed8700b340f308f076c6fb1229dff318b6"
             ],
-            "markers": "python_full_version >= '3.8.0'",
+            "markers": "python_version >= '3.8'",
             "version": "==5.12.0"
         },
         "jinja2": {
@@ -1305,11 +1305,11 @@
         },
         "pylint": {
             "hashes": [
-                "sha256:43ee36c9b690507ef9429ce1802bdc4dcde49454c3d665e39c23791567019c0a",
-                "sha256:55e5cf00601c4cfe2e9404355c743a14e63be85df7409da7e482ebde5f9f14a1"
+                "sha256:bad9d7c36037f6043a1e848a43004dfd5ea5ceb05815d713ba56ca4503a9fe37",
+                "sha256:ffe7fa536bb38ba35006a7c8a6d2efbfdd3d95bbf21199cad31f76b1c50aaf30"
             ],
             "index": "pypi",
-            "version": "==2.16.0"
+            "version": "==2.16.1"
         },
         "pyparsing": {
             "hashes": [
@@ -1531,7 +1531,7 @@
                 "sha256:7f8aeb6e3f90f96832c301bff21a7eb5eefbe894c88c506483d355565d88cc1a",
                 "sha256:aa6436565c069b2946fe4ebff07f5041e0c8bf18c7376dd29edf80cf7d524e4e"
             ],
-            "markers": "python_full_version >= '3.8.0'",
+            "markers": "python_version >= '3.8'",
             "version": "==4.1.1"
         },
         "sure": {
@@ -1567,10 +1567,10 @@
         },
         "types-toml": {
             "hashes": [
-                "sha256:171bdb3163d79a520560f24ba916a9fc9bff81659c5448a9fea89240923722be",
-                "sha256:b7b5c4977f96ab7b5ac06d8a6590d17c0bf252a96efc03b109c2711fb3e0eafd"
+                "sha256:3cf6a09449527b087b6c800a9d6d2dd22faf15fd47006542da7c9c3d067a6ced",
+                "sha256:51d428666b30e9cc047791f440d0f11a82205e789c40debbb86f3add7472cf3e"
             ],
-            "version": "==0.10.8.1"
+            "version": "==0.10.8.2"
         },
         "typing-extensions": {
             "hashes": [
