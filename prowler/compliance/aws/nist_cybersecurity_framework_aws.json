@@ -20,7 +20,8 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "ec2_securitygroup_default_restrict_traffic",
@@ -66,7 +67,8 @@
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled"
@@ -89,7 +91,8 @@
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "guardduty_is_enabled",
         "guardduty_no_high_severity_findings",
         "s3_bucket_server_access_logging_enabled",
@@ -133,7 +136,8 @@
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "guardduty_is_enabled",
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
@@ -279,7 +283,8 @@
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "guardduty_is_enabled",
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
@@ -377,7 +382,8 @@
         "apigateway_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_multi_region_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled"
@@ -395,8 +401,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "am_6",
@@ -410,8 +415,7 @@
           "Service": "iam"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "be_5",
@@ -793,7 +797,8 @@
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
         "ec2_ebs_public_snapshot",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "guardduty_is_enabled",
         "awslambda_function_url_public",
         "rds_instance_no_public_access",
@@ -942,8 +947,7 @@
           "Service": "ec2"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "ip_8",
@@ -1051,7 +1055,8 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled"
       ]

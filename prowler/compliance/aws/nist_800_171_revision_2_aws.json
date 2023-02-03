@@ -195,7 +195,8 @@
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "guardduty_is_enabled",
         "rds_instance_integration_cloudwatch_logs",
         "s3_bucket_server_access_logging_enabled",
@@ -284,7 +285,8 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudwatch_log_group_retention_policy_specific_days_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "guardduty_is_enabled",
         "rds_instance_integration_cloudwatch_logs",
         "s3_bucket_server_access_logging_enabled",
@@ -751,7 +753,8 @@
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_log_file_validation_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "elbv2_waf_acl_attached",
         "elb_ssl_listeners",
         "guardduty_is_enabled",
@@ -831,8 +834,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "3_13_5",
@@ -1054,7 +1056,8 @@
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "guardduty_is_enabled",
         "rds_instance_integration_cloudwatch_logs",
         "s3_bucket_server_access_logging_enabled",
@@ -1079,7 +1082,8 @@
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "guardduty_is_enabled",
         "rds_instance_integration_cloudwatch_logs",
         "s3_bucket_server_access_logging_enabled",

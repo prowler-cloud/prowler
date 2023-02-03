@@ -15,7 +15,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_1_2",
@@ -29,7 +29,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_1_3",
@@ -61,7 +61,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_1_5",
@@ -75,7 +75,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_2_1",
@@ -108,7 +108,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_2_3",
@@ -122,7 +122,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_3_1",
@@ -174,7 +174,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_3_4",
@@ -204,7 +204,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_4_2",
@@ -235,7 +235,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_5_2",
@@ -249,7 +249,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_5_3",
@@ -263,7 +263,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_6_1",
@@ -325,7 +325,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_6_5",
@@ -339,7 +339,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_6_6",
@@ -429,7 +429,8 @@
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "s3_bucket_server_access_logging_enabled",
         "rds_instance_integration_cloudwatch_logs",
         "cloudtrail_multi_region_enabled",
@@ -468,7 +469,8 @@
         "cloudwatch_changes_to_network_gateways_alarm_configured",
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "s3_bucket_server_access_logging_enabled",
         "cloudwatch_log_group_retention_policy_specific_days_enabled",
         "vpc_flow_logs_enabled",
@@ -518,7 +520,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_8_1",
@@ -548,7 +550,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_9_2",
@@ -562,7 +564,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_a_1_1",
@@ -576,7 +578,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_a_1_2",
@@ -599,7 +601,8 @@
         "dynamodb_tables_pitr_enabled",
         "efs_have_backup_enabled",
         "efs_have_backup_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "rds_instance_backup_enabled",
         "rds_instance_backup_enabled",
         "rds_instance_integration_cloudwatch_logs",
@@ -620,7 +623,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cc_c_1_1",
@@ -666,7 +669,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_2_1",
@@ -680,7 +683,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_3_1",
@@ -694,7 +697,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_3_2",
@@ -708,7 +711,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_4_1",
@@ -722,7 +725,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_4_2",
@@ -736,7 +739,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_4_3",
@@ -750,7 +753,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_5_1",
@@ -764,7 +767,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_5_2",
@@ -778,7 +781,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_6_1",
@@ -792,7 +795,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_6_2",
@@ -806,7 +809,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_6_3",
@@ -820,7 +823,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_6_4",
@@ -834,7 +837,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_6_5",
@@ -848,7 +851,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_6_6",
@@ -862,7 +865,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_6_7",
@@ -876,7 +879,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_7_1",
@@ -890,7 +893,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "p_8_1",
@@ -904,7 +907,7 @@
           "Soc_Type": "manual"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     }
   ]
 }

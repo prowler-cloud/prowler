@@ -271,8 +271,7 @@
           "Service": "vpc"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "ac_21",
@@ -317,7 +316,8 @@
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
@@ -342,7 +342,8 @@
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
@@ -424,8 +425,7 @@
           "Service": "s3"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "au_9",
@@ -476,7 +476,8 @@
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
@@ -729,8 +730,7 @@
           "Service": "codebuild"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "ir_4_1",
@@ -859,8 +859,7 @@
           "Service": "ebs"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "sc_5",
@@ -1020,8 +1019,7 @@
           "Service": "elb"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "sc_28",

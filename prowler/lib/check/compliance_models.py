@@ -1,6 +1,6 @@
 import sys
 from enum import Enum
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 from pydantic import BaseModel, ValidationError
 
@@ -99,7 +99,7 @@ class Compliance_Requirement(BaseModel):
     Attributes: list[
         Union[CIS_Requirements, ENS_Requirements, Generic_Compliance_Requirements]
     ]
-    Checks: List[str]
+    Checks: list[str]
 
 
 class Compliance_Base_Model(BaseModel):

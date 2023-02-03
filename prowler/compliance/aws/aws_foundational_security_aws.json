@@ -63,9 +63,7 @@
           "Service": "autoscaling"
         }
       ],
-      "Checks": [
-       
-      ]
+      "Checks": []
     },
     {
       "Id": "cloudformation",
@@ -78,7 +76,7 @@
           "Service": "cloudformation"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "cloudfront",
@@ -128,7 +126,7 @@
           "Service": "codebuild"
         }
       ],
-      "Checks": [ ]
+      "Checks": []
     },
     {
       "Id": "config",
@@ -156,8 +154,7 @@
           "Service": "dms"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "dynamodb",
@@ -257,8 +254,7 @@
           "Service": "eks"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "elastic-beanstalk",
@@ -271,8 +267,7 @@
           "Service": "elasticbeanstalk"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "elb",
@@ -286,7 +281,8 @@
         }
       ],
       "Checks": [
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "elbv2_deletion_protection",
         "elbv2_desync_mitigation_mode"
       ]
@@ -302,8 +298,7 @@
           "Service": "elbv2"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "emr",
@@ -387,8 +382,7 @@
           "Service": "kinesis"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "kms",
@@ -401,8 +395,7 @@
           "Service": "kms"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "lambda",
@@ -431,8 +424,7 @@
           "Service": "network-firewall"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "opensearch",
@@ -605,8 +597,7 @@
           "Service": "waf"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     }
   ]
 }

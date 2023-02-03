@@ -405,7 +405,8 @@
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
@@ -430,7 +431,8 @@
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
@@ -461,7 +463,8 @@
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "cloudwatch_log_group_retention_policy_specific_days_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "guardduty_is_enabled",
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
@@ -557,7 +560,8 @@
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
-        "elbv2_logging_enabled elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
@@ -824,8 +828,7 @@
           "Service": "codebuild"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "ir-4-1",
@@ -840,7 +843,10 @@
         }
       ],
       "Checks": [
-        "cloudwatch_changes_to_network_acls_alarm_configured cloudwatch_changes_to_network_gateways_alarm_configured cloudwatch_changes_to_network_route_tables_alarm_configured cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
         "guardduty_is_enabled",
         "guardduty_no_high_severity_findings",
         "securityhub_enabled"
@@ -859,7 +865,10 @@
         }
       ],
       "Checks": [
-        "cloudwatch_changes_to_network_acls_alarm_configured cloudwatch_changes_to_network_gateways_alarm_configured cloudwatch_changes_to_network_route_tables_alarm_configured cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
         "guardduty_is_enabled",
         "guardduty_no_high_severity_findings",
         "securityhub_enabled"
