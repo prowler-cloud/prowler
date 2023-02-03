@@ -12,6 +12,7 @@ from prowler.lib.check.check import (
     list_services,
     parse_checks_from_file,
     recover_checks_from_provider,
+    update_audit_metadata,
 )
 from prowler.lib.check.models import load_check_metadata
 
@@ -317,3 +318,56 @@ class Test_Check:
     #             )
     #             == test_case["expected"]
     #         )
+
+    def test_update_audit_metadata_complete(self):
+        from prowler.providers.common.models import Audit_Metadata
+
+        # Set the expected checks to run
+        expected_checks = ["iam_administrator_access_with_mfa"]
+        services_executed = {"iam"}
+        checks_executed = {"iam_administrator_access_with_mfa"}
+
+        # Set an empty Audit_Metadata
+        audit_metadata = Audit_Metadata(
+            services_scanned=0,
+            expected_checks=expected_checks,
+            completed_checks=0,
+            audit_progress=0,
+        )
+
+        audit_metadata = update_audit_metadata(
+            audit_metadata, services_executed, checks_executed
+        )
+
+        assert audit_metadata.audit_progress == float(100)
+        assert audit_metadata.services_scanned == 1
+        assert audit_metadata.expected_checks == expected_checks
+        assert audit_metadata.completed_checks == 1
+
+    def test_update_audit_metadata_50(self):
+        from prowler.providers.common.models import Audit_Metadata
+
+        # Set the expected checks to run
+        expected_checks = [
+            "iam_administrator_access_with_mfa",
+            "iam_support_role_created",
+        ]
+        services_executed = {"iam"}
+        checks_executed = {"iam_administrator_access_with_mfa"}
+
+        # Set an empty Audit_Metadata
+        audit_metadata = Audit_Metadata(
+            services_scanned=0,
+            expected_checks=expected_checks,
+            completed_checks=0,
+            audit_progress=0,
+        )
+
+        audit_metadata = update_audit_metadata(
+            audit_metadata, services_executed, checks_executed
+        )
+
+        assert audit_metadata.audit_progress == float(50)
+        assert audit_metadata.services_scanned == 1
+        assert audit_metadata.expected_checks == expected_checks
+        assert audit_metadata.completed_checks == 1
