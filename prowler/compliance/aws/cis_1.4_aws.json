@@ -1,5 +1,6 @@
 {
   "Framework": "CIS-AWS",
+  "Provider": "AWS",
   "Version": "1.4",
   "Requirements": [
     {

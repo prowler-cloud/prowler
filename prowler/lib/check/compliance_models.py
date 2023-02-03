@@ -1,6 +1,6 @@
 import sys
 from enum import Enum
-from typing import Any, List, Optional, Union
+from typing import Any, List, Union
 
 from pydantic import BaseModel, ValidationError
 
@@ -52,7 +52,7 @@ class Compliance_Base_Model(BaseModel):
     """Compliance_Base_Model holds the base model for every compliance framework"""
 
     Framework: str
-    Provider: Optional[str]
+    Provider: str
     Version: str
     Requirements: list[Compliance_Requirement]
 

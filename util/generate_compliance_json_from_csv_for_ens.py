@@ -36,7 +36,7 @@ with open(file_name, newline="", encoding="utf-8") as f:
             "Nivel": nivelvalue,
             "Tipo": row[9],
             "Dimensiones": list(map(str.strip, row[6].split(","))),
-            "ModoEjecucion": row[11]
+            "ModoEjecucion": row[11],
         }
         output["Requirements"].append(
             {
