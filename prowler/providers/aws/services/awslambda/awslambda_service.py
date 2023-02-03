@@ -22,7 +22,15 @@ class Lambda:
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.functions = {}
         self.__threading_call__(self.__list_functions__)
-        self.__threading_call__(self.__get_function__)
+
+        # We only want to retrieve the Lambda code if the
+        # awslambda_function_no_secrets_in_code check is set
+        if (
+            "awslambda_function_no_secrets_in_code"
+            in audit_info.audit_metadata.expected_checks
+        ):
+            self.__threading_call__(self.__get_function__)
+
         self.__threading_call__(self.__get_policy__)
         self.__threading_call__(self.__get_function_url_config__)
 

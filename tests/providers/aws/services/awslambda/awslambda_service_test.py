@@ -10,9 +10,9 @@ from boto3 import client, resource, session
 from moto import mock_iam, mock_lambda, mock_s3
 from moto.core import DEFAULT_ACCOUNT_ID
 
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.awslambda.awslambda_service import AuthType, Lambda
+from prowler.providers.common.models import Audit_Metadata
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -74,22 +74,30 @@ class Test_Lambda_Service:
             assumed_role_info=None,
             audited_regions=None,
             organizations_metadata=None,
+            audit_resources=None,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                # We need to set this check to call __list_functions__
+                expected_checks=["awslambda_function_no_secrets_in_code"],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 
     # Test Lambda Client
     def test__get_client__(self):
-        awslambda = Lambda(current_audit_info)
+        awslambda = Lambda(self.set_mocked_audit_info())
         assert awslambda.regional_clients[AWS_REGION].__class__.__name__ == "Lambda"
 
     # Test Lambda Session
     def test__get_session__(self):
-        awslambda = Lambda(current_audit_info)
+        awslambda = Lambda(self.set_mocked_audit_info())
         assert awslambda.session.__class__.__name__ == "Session"
 
     # Test Lambda Service
     def test__get_service__(self):
-        awslambda = Lambda(current_audit_info)
+        awslambda = Lambda(self.set_mocked_audit_info())
         assert awslambda.service == "lambda"
 
     @mock_lambda
