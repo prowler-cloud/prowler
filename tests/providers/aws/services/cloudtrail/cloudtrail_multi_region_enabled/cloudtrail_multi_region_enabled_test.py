@@ -27,7 +27,6 @@ class Test_cloudtrail_multi_region_enabled:
             assumed_role_info=None,
             audited_regions=["us-east-1", "eu-west-1"],
             organizations_metadata=None,
-            audit_resources=None,
         )
         return audit_info
 

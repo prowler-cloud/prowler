@@ -74,7 +74,6 @@ class Test_Lambda_Service:
             assumed_role_info=None,
             audited_regions=None,
             organizations_metadata=None,
-            audit_resources=None,
             audit_metadata=Audit_Metadata(
                 services_scanned=0,
                 # We need to set this check to call __list_functions__

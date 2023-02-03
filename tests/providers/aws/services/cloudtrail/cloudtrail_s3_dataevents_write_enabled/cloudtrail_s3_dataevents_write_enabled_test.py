@@ -27,7 +27,6 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
             assumed_role_info=None,
             audited_regions=["us-east-1"],
             organizations_metadata=None,
-            audit_resources=None,
         )
         return audit_info
 
