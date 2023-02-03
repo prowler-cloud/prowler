@@ -45,7 +45,8 @@ class s3_bucket_public_access(Check):
                     if bucket.policy:
                         for statement in bucket.policy["Statement"]:
                             if (
-                                "*" == statement["Principal"]
+                                "Principal" in statement
+                                and "*" == statement["Principal"]
                                 and statement["Effect"] == "Allow"
                             ):
                                 report.status = "FAIL"
