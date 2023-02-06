@@ -139,6 +139,12 @@ Detailed documentation at https://docs.prowler.cloud
             help="Display detailed information about findings",
         )
         common_outputs_parser.add_argument(
+            "-z",
+            "--ignore-exit-code-3",
+            action="store_true",
+            help="Failed checks do not trigger exit code 3",
+        )
+        common_outputs_parser.add_argument(
             "-b", "--no-banner", action="store_true", help="Hide Prowler banner"
         )
 

@@ -146,6 +146,16 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.quiet
 
+    def test_root_parser_exit_code_3_short(self):
+        command = [prowler_command, "-z"]
+        parsed = self.parser.parse(command)
+        assert parsed.ignore_exit_code_3
+
+    def test_root_parser_exit_code_3_long(self):
+        command = [prowler_command, "--ignore-exit-code-3"]
+        parsed = self.parser.parse(command)
+        assert parsed.ignore_exit_code_3
+
     def test_root_parser_default_output_modes(self):
         command = [prowler_command]
         parsed = self.parser.parse(command)
