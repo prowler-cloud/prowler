@@ -100,7 +100,11 @@ class OpenSearchService:
                         domain.endpoint_vpc = describe_domain["DomainStatus"][
                             "Endpoints"
                         ]["vpc"]
-                domain.vpc_id = describe_domain["DomainStatus"]["VPCOptions"]["VPCId"]
+                domain.vpc_id = None
+                if "VPCOptions" in describe_domain["DomainStatus"]:
+                    domain.vpc_id = describe_domain["DomainStatus"]["VPCOptions"][
+                        "VPCId"
+                    ]
                 domain.cognito_options = describe_domain["DomainStatus"][
                     "CognitoOptions"
                 ]["Enabled"]
