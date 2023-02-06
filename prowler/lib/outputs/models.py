@@ -318,6 +318,7 @@ class Check_Output_CSV_ENS_RD2022(BaseModel):
     """
 
     Provider: str
+    Description: str
     AccountId: str
     Region: str
     AssessmentDate: str
@@ -342,6 +343,7 @@ class Check_Output_CSV_CIS(BaseModel):
     """
 
     Provider: str
+    Description: str
     AccountId: str
     Region: str
     AssessmentDate: str
@@ -369,6 +371,7 @@ class Check_Output_CSV_Generic_Compliance(BaseModel):
     """
 
     Provider: str
+    Description: str
     AccountId: str
     Region: str
     AssessmentDate: str

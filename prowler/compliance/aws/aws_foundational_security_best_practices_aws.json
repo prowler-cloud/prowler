@@ -2,6 +2,7 @@
   "Framework": "AWS-Foundational-Security-Best-Practices",
   "Version": "",
   "Provider": "AWS",
+  "Description": "The AWS Foundational Security Best Practices standard is a set of controls that detect when your deployed accounts and resources deviate from security best practices.",
   "Requirements": [
     {
       "Id": "account",

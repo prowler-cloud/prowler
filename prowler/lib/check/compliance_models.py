@@ -108,6 +108,7 @@ class Compliance_Base_Model(BaseModel):
     Framework: str
     Provider: Optional[str]
     Version: str
+    Description: str
     Requirements: list[Compliance_Requirement]
 
 

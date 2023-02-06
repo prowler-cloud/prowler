@@ -34,6 +34,7 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                     for attribute in requirement.Attributes:
                         compliance_row = Check_Output_CSV_ENS_RD2022(
                             Provider=finding.check_metadata.Provider,
+                            Description=compliance.Description,
                             AccountId=audit_info.audited_account,
                             Region=finding.region,
                             AssessmentDate=timestamp.isoformat(),
@@ -70,6 +71,7 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                         for attribute in requirement.Attributes:
                             compliance_row = Check_Output_CSV_CIS(
                                 Provider=finding.check_metadata.Provider,
+                                Description=compliance.Description,
                                 AccountId=audit_info.audited_account,
                                 Region=finding.region,
                                 AssessmentDate=timestamp.isoformat(),
@@ -108,6 +110,7 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                         for attribute in requirement.Attributes:
                             compliance_row = Check_Output_CSV_Generic_Compliance(
                                 Provider=finding.check_metadata.Provider,
+                                Description=compliance.Description,
                                 AccountId=audit_info.audited_account,
                                 Region=finding.region,
                                 AssessmentDate=timestamp.isoformat(),
@@ -129,8 +132,6 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                     )
 
             if compliance_row:
-                print(csv_header)
-                print(compliance_output)
                 csv_writer = DictWriter(
                     file_descriptors[compliance_output],
                     fieldnames=csv_header,
