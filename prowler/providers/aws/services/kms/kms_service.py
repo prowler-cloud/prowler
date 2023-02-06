@@ -73,7 +73,7 @@ class KMS:
         logger.info("KMS - Get Key Rotation Status...")
         try:
             for key in self.keys:
-                if "EXTERNAL" not in key.origin:
+                if "EXTERNAL" not in key.origin and "AWS" not in key.manager:
                     regional_client = self.regional_clients[key.region]
                     key.rotation_enabled = regional_client.get_key_rotation_status(
                         KeyId=key.id
