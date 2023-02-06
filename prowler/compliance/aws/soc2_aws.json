@@ -1,6 +1,6 @@
 {
-  "Framework": "SOC",
-  "Version": "2",
+  "Framework": "SOC2",
+  "Version": "",
   "Provider": "AWS",
   "Requirements": [
     {

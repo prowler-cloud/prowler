@@ -9,93 +9,138 @@ from prowler.lib.logger import logger
 from prowler.lib.outputs.models import (
     Check_Output_CSV_CIS,
     Check_Output_CSV_ENS_RD2022,
+    Check_Output_CSV_Generic_Compliance,
     generate_csv_fields,
 )
 
 
 def fill_compliance(output_options, finding, audit_info, file_descriptors):
-    # We have to retrieve all the check's compliance requirements
-    check_compliance = output_options.bulk_checks_metadata[
-        finding.check_metadata.CheckID
-    ].Compliance
-    csv_header = compliance_row = compliance_output = None
-    for compliance in check_compliance:
-        if (
-            compliance.Framework == "ENS"
-            and compliance.Version == "RD2022"
-            and "ens_rd2022_aws" in output_options.output_modes
-        ):
-            compliance_output = "ens_rd2022_aws"
-            for requirement in compliance.Requirements:
-                requirement_description = requirement.Description
-                requirement_id = requirement.Id
-                for attribute in requirement.Attributes:
-                    compliance_row = Check_Output_CSV_ENS_RD2022(
-                        Provider=finding.check_metadata.Provider,
-                        AccountId=audit_info.audited_account,
-                        Region=finding.region,
-                        AssessmentDate=timestamp.isoformat(),
-                        Requirements_Id=requirement_id,
-                        Requirements_Description=requirement_description,
-                        Requirements_Attributes_IdGrupoControl=attribute.IdGrupoControl,
-                        Requirements_Attributes_Marco=attribute.Marco,
-                        Requirements_Attributes_Categoria=attribute.Categoria,
-                        Requirements_Attributes_DescripcionControl=attribute.DescripcionControl,
-                        Requirements_Attributes_Nivel=attribute.Nivel,
-                        Requirements_Attributes_Tipo=attribute.Tipo,
-                        Requirements_Attributes_Dimensiones=",".join(
-                            attribute.Dimensiones
-                        ),
-                        Status=finding.status,
-                        StatusExtended=finding.status_extended,
-                        ResourceId=finding.resource_id,
-                        CheckId=finding.check_metadata.CheckID,
-                    )
-
-            csv_header = generate_csv_fields(Check_Output_CSV_ENS_RD2022)
-
-        elif compliance.Framework == "CIS-AWS" and "cis" in str(
-            output_options.output_modes
-        ):
-            # Only with the version of CIS that was selected
-            if "cis_" + compliance.Version + "_aws" in str(output_options.output_modes):
-                compliance_output = "cis_" + compliance.Version + "_aws"
+    try:
+        # We have to retrieve all the check's compliance requirements
+        check_compliance = output_options.bulk_checks_metadata[
+            finding.check_metadata.CheckID
+        ].Compliance
+        for compliance in check_compliance:
+            csv_header = compliance_row = compliance_output = None
+            if (
+                compliance.Framework == "ENS"
+                and compliance.Version == "RD2022"
+                and "ens_rd2022_aws" in output_options.output_modes
+            ):
+                compliance_output = "ens_rd2022_aws"
                 for requirement in compliance.Requirements:
                     requirement_description = requirement.Description
                     requirement_id = requirement.Id
                     for attribute in requirement.Attributes:
-                        compliance_row = Check_Output_CSV_CIS(
+                        compliance_row = Check_Output_CSV_ENS_RD2022(
                             Provider=finding.check_metadata.Provider,
                             AccountId=audit_info.audited_account,
                             Region=finding.region,
                             AssessmentDate=timestamp.isoformat(),
                             Requirements_Id=requirement_id,
                             Requirements_Description=requirement_description,
-                            Requirements_Attributes_Section=attribute.Section,
-                            Requirements_Attributes_Profile=attribute.Profile,
-                            Requirements_Attributes_AssessmentStatus=attribute.AssessmentStatus,
-                            Requirements_Attributes_Description=attribute.Description,
-                            Requirements_Attributes_RationaleStatement=attribute.RationaleStatement,
-                            Requirements_Attributes_ImpactStatement=attribute.ImpactStatement,
-                            Requirements_Attributes_RemediationProcedure=attribute.RemediationProcedure,
-                            Requirements_Attributes_AuditProcedure=attribute.AuditProcedure,
-                            Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
-                            Requirements_Attributes_References=attribute.References,
+                            Requirements_Attributes_IdGrupoControl=attribute.IdGrupoControl,
+                            Requirements_Attributes_Marco=attribute.Marco,
+                            Requirements_Attributes_Categoria=attribute.Categoria,
+                            Requirements_Attributes_DescripcionControl=attribute.DescripcionControl,
+                            Requirements_Attributes_Nivel=attribute.Nivel,
+                            Requirements_Attributes_Tipo=attribute.Tipo,
+                            Requirements_Attributes_Dimensiones=",".join(
+                                attribute.Dimensiones
+                            ),
                             Status=finding.status,
                             StatusExtended=finding.status_extended,
                             ResourceId=finding.resource_id,
                             CheckId=finding.check_metadata.CheckID,
                         )
 
-                csv_header = generate_csv_fields(Check_Output_CSV_CIS)
+                csv_header = generate_csv_fields(Check_Output_CSV_ENS_RD2022)
 
-        if compliance_row:
-            csv_writer = DictWriter(
-                file_descriptors[compliance_output],
-                fieldnames=csv_header,
-                delimiter=";",
-            )
-            csv_writer.writerow(compliance_row.__dict__)
+            elif compliance.Framework == "CIS" and "cis_" in str(
+                output_options.output_modes
+            ):
+                # Only with the version of CIS that was selected
+                if "cis_" + compliance.Version + "_aws" in str(
+                    output_options.output_modes
+                ):
+                    compliance_output = "cis_" + compliance.Version + "_aws"
+                    for requirement in compliance.Requirements:
+                        requirement_description = requirement.Description
+                        requirement_id = requirement.Id
+                        for attribute in requirement.Attributes:
+                            compliance_row = Check_Output_CSV_CIS(
+                                Provider=finding.check_metadata.Provider,
+                                AccountId=audit_info.audited_account,
+                                Region=finding.region,
+                                AssessmentDate=timestamp.isoformat(),
+                                Requirements_Id=requirement_id,
+                                Requirements_Description=requirement_description,
+                                Requirements_Attributes_Section=attribute.Section,
+                                Requirements_Attributes_Profile=attribute.Profile,
+                                Requirements_Attributes_AssessmentStatus=attribute.AssessmentStatus,
+                                Requirements_Attributes_Description=attribute.Description,
+                                Requirements_Attributes_RationaleStatement=attribute.RationaleStatement,
+                                Requirements_Attributes_ImpactStatement=attribute.ImpactStatement,
+                                Requirements_Attributes_RemediationProcedure=attribute.RemediationProcedure,
+                                Requirements_Attributes_AuditProcedure=attribute.AuditProcedure,
+                                Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
+                                Requirements_Attributes_References=attribute.References,
+                                Status=finding.status,
+                                StatusExtended=finding.status_extended,
+                                ResourceId=finding.resource_id,
+                                CheckId=finding.check_metadata.CheckID,
+                            )
+
+                    csv_header = generate_csv_fields(Check_Output_CSV_CIS)
+
+            else:
+                compliance_output = compliance.Framework
+                if compliance.Version != "":
+                    compliance_output += "_" + compliance.Version
+                if compliance.Provider != "":
+                    compliance_output += "_" + compliance.Provider
+
+                compliance_output = compliance_output.lower().replace("-", "_")
+                if compliance_output in output_options.output_modes:
+                    for requirement in compliance.Requirements:
+                        requirement_description = requirement.Description
+                        requirement_id = requirement.Id
+                        for attribute in requirement.Attributes:
+                            compliance_row = Check_Output_CSV_Generic_Compliance(
+                                Provider=finding.check_metadata.Provider,
+                                AccountId=audit_info.audited_account,
+                                Region=finding.region,
+                                AssessmentDate=timestamp.isoformat(),
+                                Requirements_Id=requirement_id,
+                                Requirements_Description=requirement_description,
+                                Requirements_Attributes_Section=attribute.Section,
+                                Requirements_Attributes_SubSection=attribute.SubSection,
+                                Requirements_Attributes_SubGroup=attribute.SubGroup,
+                                Requirements_Attributes_Service=attribute.Service,
+                                Requirements_Attributes_Soc_Type=attribute.Soc_Type,
+                                Status=finding.status,
+                                StatusExtended=finding.status_extended,
+                                ResourceId=finding.resource_id,
+                                CheckId=finding.check_metadata.CheckID,
+                            )
+
+                    csv_header = generate_csv_fields(
+                        Check_Output_CSV_Generic_Compliance
+                    )
+
+            if compliance_row:
+                print(csv_header)
+                print(compliance_output)
+                csv_writer = DictWriter(
+                    file_descriptors[compliance_output],
+                    fieldnames=csv_header,
+                    delimiter=";",
+                )
+                csv_writer.writerow(compliance_row.__dict__)
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
 
 def display_compliance_table(
@@ -207,7 +252,7 @@ def display_compliance_table(
                 print(
                     f" - CSV: {output_directory}/{output_filename}_{compliance_framework[0]}.csv\n"
                 )
-        if "cis_1." in str(compliance_framework):
+        elif "cis_1." in str(compliance_framework):
             sections = {}
             cis_compliance_table = {
                 "Provider": [],
@@ -220,7 +265,7 @@ def display_compliance_table(
                 check = bulk_checks_metadata[finding.check_metadata.CheckID]
                 check_compliances = check.Compliance
                 for compliance in check_compliances:
-                    if compliance.Framework == "CIS-AWS" and compliance.Version in str(
+                    if compliance.Framework == "CIS" and compliance.Version in str(
                         compliance_framework
                     ):
                         compliance_version = compliance.Version
@@ -301,6 +346,11 @@ def display_compliance_table(
                 print(
                     f" - CSV: {output_directory}/{output_filename}_{compliance_framework[0]}.csv\n"
                 )
+        else:
+            print(f"\nDetailed results of {compliance_framework[0].upper()} are in:")
+            print(
+                f" - CSV: {output_directory}/{output_filename}_{compliance_framework[0]}.csv\n"
+            )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"

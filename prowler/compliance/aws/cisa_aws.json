@@ -1,5 +1,5 @@
 {
-  "Framework": "CISA-AWS",
+  "Framework": "CISA",
   "Version": "",
   "Provider": "AWS",
   "Requirements": [
@@ -342,8 +342,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-      ]
+      "Checks": []
     },
     {
       "Id": "your-crisis-response-2",

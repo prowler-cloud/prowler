@@ -1,5 +1,5 @@
 {
-  "Framework": "(CSF)NIST-Cybersecurity-Framework",
+  "Framework": "NIST-CSF",
   "Version": "1.1",
   "Provider": "AWS",
   "Requirements": [

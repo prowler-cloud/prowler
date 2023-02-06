@@ -1,5 +1,5 @@
 {
-  "Framework": "General-Data-Protection-Regulation(GDPR)",
+  "Framework": "GDPR",
   "Version": "",
   "Provider": "AWS",
   "Requirements": [

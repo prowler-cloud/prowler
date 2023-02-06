@@ -338,7 +338,7 @@ class Check_Output_CSV_ENS_RD2022(BaseModel):
 
 class Check_Output_CSV_CIS(BaseModel):
     """
-    Check_Output_CSV_ENS_RD2022 generates a finding's output in CSV CIS format.
+    Check_Output_CSV_CIS generates a finding's output in CSV CIS format.
     """
 
     Provider: str
@@ -357,6 +357,28 @@ class Check_Output_CSV_CIS(BaseModel):
     Requirements_Attributes_AuditProcedure: str
     Requirements_Attributes_AdditionalInformation: str
     Requirements_Attributes_References: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    CheckId: str
+
+
+class Check_Output_CSV_Generic_Compliance(BaseModel):
+    """
+    Check_Output_CSV_Generic_Compliance generates a finding's output in CSV Generic Compliance format.
+    """
+
+    Provider: str
+    AccountId: str
+    Region: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Description: str
+    Requirements_Attributes_Section: Optional[str]
+    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_SubGroup: Optional[str]
+    Requirements_Attributes_Service: str
+    Requirements_Attributes_Soc_Type: Optional[str]
     Status: str
     StatusExtended: str
     ResourceId: str

@@ -1,6 +1,6 @@
 {
   "Framework": "FedRamp-Moderate-Revision-4",
-  "Version": "4",
+  "Version": "",
   "Provider": "AWS",
   "Requirements": [
     {
