@@ -1,5 +1,6 @@
 import threading
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -163,7 +164,7 @@ class ClusterStatus(Enum):
 
 class Node(BaseModel):
     security_group_id: str = ""
-    additional_security_groups_id: list[str] = []
+    additional_security_groups_id: Optional[list[str]] = []
 
 
 class Cluster(BaseModel):
