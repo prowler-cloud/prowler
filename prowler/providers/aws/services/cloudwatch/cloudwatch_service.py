@@ -1,5 +1,6 @@
 import threading
 from dataclasses import dataclass
+from typing import Optional
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -46,12 +47,15 @@ class CloudWatch:
                         metric_name = None
                         if "MetricName" in alarm:
                             metric_name = alarm["MetricName"]
+                        namespace = None
+                        if "Namespace" in alarm:
+                            namespace = alarm["Namespace"]
                         self.metric_alarms.append(
                             MetricAlarm(
                                 alarm["AlarmArn"],
                                 alarm["AlarmName"],
                                 metric_name,
-                                alarm["Namespace"],
+                                namespace,
                                 regional_client.region,
                             )
                         )
@@ -147,8 +151,8 @@ class Logs:
 class MetricAlarm:
     arn: str
     name: str
-    metric: str
-    name_space: str
+    metric: Optional[str]
+    name_space: Optional[str]
     region: str
 
     def __init__(
