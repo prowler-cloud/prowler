@@ -124,3 +124,32 @@ class Test_awslambda_function_using_supported_runtimes:
                 result[0].status_extended
                 == f"Lambda function {function_name} is using {function_runtime} which is supported"
             )
+
+    def test_function_no_runtime(self):
+        lambda_client = mock.MagicMock
+        function_name = "test-lambda"
+        function_arn = (
+            f"arn:aws:lambda:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
+        )
+        lambda_client.functions = {
+            "function_name": Function(
+                name=function_name, arn=function_arn, region=AWS_REGION
+            )
+        }
+
+        with mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
+            new=lambda_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes.get_config_var",
+            new=mock_get_config_var,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes import (
+                awslambda_function_using_supported_runtimes,
+            )
+
+            check = awslambda_function_using_supported_runtimes()
+            result = check.execute()
+
+            assert len(result) == 0

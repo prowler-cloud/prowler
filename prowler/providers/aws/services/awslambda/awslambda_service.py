@@ -3,7 +3,7 @@ import json
 import threading
 import zipfile
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 import requests
 from botocore.client import ClientError
@@ -59,17 +59,15 @@ class Lambda:
                             function["FunctionArn"], self.audit_resources
                         )
                     ):
-                        lambda_runtime = None
-                        if "Runtime" in function:
-                            lambda_runtime = function["Runtime"]
                         lambda_name = function["FunctionName"]
                         lambda_arn = function["FunctionArn"]
                         self.functions[lambda_name] = Function(
                             name=lambda_name,
                             arn=lambda_arn,
-                            runtime=lambda_runtime,
                             region=regional_client.region,
                         )
+                        if "Runtime" in function:
+                            self.functions[lambda_name].runtime = function["Runtime"]
                         if "Environment" in function:
                             lambda_environment = function["Environment"]["Variables"]
                             self.functions[lambda_name].environment = lambda_environment
@@ -179,7 +177,7 @@ class URLConfig(BaseModel):
 class Function(BaseModel):
     name: str
     arn: str
-    runtime: str
+    runtime: Optional[str]
     environment: dict = None
     region: str
     policy: dict = None

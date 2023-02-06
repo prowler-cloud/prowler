@@ -7,18 +7,19 @@ class awslambda_function_using_supported_runtimes(Check):
     def execute(self):
         findings = []
         for function in awslambda_client.functions.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = function.region
-            report.resource_id = function.name
-            report.resource_arn = function.arn
+            if function.runtime:
+                report = Check_Report_AWS(self.metadata())
+                report.region = function.region
+                report.resource_id = function.name
+                report.resource_arn = function.arn
 
-            if function.runtime in get_config_var("obsolete_lambda_runtimes"):
-                report.status = "FAIL"
-                report.status_extended = f"Lambda function {function.name} is using {function.runtime} which is obsolete"
-            else:
-                report.status = "PASS"
-                report.status_extended = f"Lambda function {function.name} is using {function.runtime} which is supported"
+                if function.runtime in get_config_var("obsolete_lambda_runtimes"):
+                    report.status = "FAIL"
+                    report.status_extended = f"Lambda function {function.name} is using {function.runtime} which is obsolete"
+                else:
+                    report.status = "PASS"
+                    report.status_extended = f"Lambda function {function.name} is using {function.runtime} which is supported"
 
-            findings.append(report)
+                findings.append(report)
 
         return findings
