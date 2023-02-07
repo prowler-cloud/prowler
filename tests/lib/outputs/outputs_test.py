@@ -1,5 +1,4 @@
 import os
-import pathlib
 from os import path, remove
 from unittest import mock
 
@@ -337,9 +336,7 @@ class Test_Outputs:
         client.create_bucket(Bucket=bucket_name)
         # Create mock csv output file
         fixtures_dir = "fixtures"
-        output_directory = (
-            f"{pathlib.Path().absolute()}/tests/lib/outputs/{fixtures_dir}"
-        )
+        output_directory = f"tests/lib/outputs/{fixtures_dir}"
         output_mode = "csv"
         filename = f"prowler-output-{input_audit_info.audited_account}"
         # Send mock csv file to mock S3 Bucket
@@ -354,7 +351,12 @@ class Test_Outputs:
         assert (
             client.get_object(
                 Bucket=bucket_name,
-                Key=fixtures_dir + "/" + output_mode + "/" + filename + csv_file_suffix,
+                Key=output_directory
+                + "/"
+                + output_mode
+                + "/"
+                + filename
+                + csv_file_suffix,
             )["ContentType"]
             == "binary/octet-stream"
         )

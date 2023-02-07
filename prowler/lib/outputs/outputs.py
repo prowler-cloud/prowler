@@ -197,9 +197,12 @@ def send_to_s3_bucket(
         elif output_mode == "html":
             filename = f"{output_filename}{html_file_suffix}"
         logger.info(f"Sending outputs to S3 bucket {output_bucket}")
+        bucket_remote_dir = output_directory
+        if "prowler/" in output_directory:  # Check if it is not a custom directory
+            bucket_remote_dir = output_directory.partition("prowler/")[-1]
         file_name = output_directory + "/" + filename
         bucket_name = output_bucket
-        object_name = output_directory + "/" + output_mode + "/" + filename
+        object_name = bucket_remote_dir + "/" + output_mode + "/" + filename
         s3_client = audit_session.client("s3")
         s3_client.upload_file(file_name, bucket_name, object_name)
 
