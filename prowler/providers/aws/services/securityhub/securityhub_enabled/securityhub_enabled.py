@@ -12,9 +12,13 @@ class securityhub_enabled(Check):
             report.region = securityhub.region
             if securityhub.status == "ACTIVE":
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Security Hub is enabled with standards {securityhub.standards}"
-                )
+                if securityhub.standards:
+                    report.status_extended = f"Security Hub is enabled with standards: {securityhub.standards}"
+                elif securityhub.integrations:
+                    report.status_extended = f"Security Hub is enabled without standards but with integrations: {securityhub.integrations}"
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = "Security Hub is enabled but without any standard or integration"
             else:
                 report.status = "FAIL"
                 report.status_extended = "Security Hub is not enabled"
