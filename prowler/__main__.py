@@ -219,6 +219,10 @@ def prowler():
                 audit_output_options.output_directory,
             )
 
+    # If there are failed findings exit code 3, except if -z is input
+    if not args.ignore_exit_code_3 and stats["total_fail"] > 0:
+        sys.exit(3)
+
 
 if __name__ == "__main__":
     prowler()
