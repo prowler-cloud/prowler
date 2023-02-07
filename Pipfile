@@ -35,7 +35,7 @@ openapi-spec-validator = "0.5.4"
 pytest = "7.2.1"
 pytest-xdist = "2.5.0"
 coverage = "7.1.0"
-sure = "2.0.0"
+sure = "2.0.1"
 freezegun = "1.2.1"
 
 [requires]
