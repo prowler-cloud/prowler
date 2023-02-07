@@ -1,7 +1,7 @@
 import threading
-from dataclasses import dataclass
 
 from botocore.client import ClientError
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -42,12 +42,12 @@ class SecurityHub:
                 if e.response["Error"]["Code"] == "InvalidAccessException":
                     self.securityhubs.append(
                         SecurityHubHub(
-                            "",
-                            "Security Hub",
-                            "NOT_AVAILABLE",
-                            "",
-                            "",
-                            regional_client.region,
+                            arn="",
+                            id="Security Hub",
+                            status="NOT_AVAILABLE",
+                            standards="",
+                            integrations="",
+                            region=regional_client.region,
                         )
                     )
             else:
@@ -76,24 +76,24 @@ class SecurityHub:
                                 integrations += f"{integration.split('/')[-1]} "
                     self.securityhubs.append(
                         SecurityHubHub(
-                            hub_arn,
-                            hub_id,
-                            "ACTIVE",
-                            standards,
-                            integrations,
-                            regional_client.region,
+                            arn=hub_arn,
+                            id=hub_id,
+                            status="ACTIVE",
+                            standards=standards,
+                            integrations=integrations,
+                            region=regional_client.region,
                         )
                     )
                 else:
                     # SecurityHub is filtered
                     self.securityhubs.append(
                         SecurityHubHub(
-                            "",
-                            "Security Hub",
-                            "NOT_AVAILABLE",
-                            "",
-                            "",
-                            regional_client.region,
+                            arn="",
+                            id="Security Hub",
+                            status="NOT_AVAILABLE",
+                            standards="",
+                            integrations="",
+                            region=regional_client.region,
                         )
                     )
 
@@ -103,27 +103,10 @@ class SecurityHub:
             )
 
 
-@dataclass
-class SecurityHubHub:
+class SecurityHubHub(BaseModel):
     arn: str
     id: str
     status: str
     standards: str
     integrations: str
     region: str
-
-    def __init__(
-        self,
-        arn,
-        id,
-        status,
-        standards,
-        integrations,
-        region,
-    ):
-        self.arn = arn
-        self.id = id
-        self.status = status
-        self.standards = standards
-        self.integrations = integrations
-        self.region = region

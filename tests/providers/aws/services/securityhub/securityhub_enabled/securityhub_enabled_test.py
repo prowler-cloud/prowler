@@ -10,12 +10,12 @@ class Test_accessanalyzer_enabled_without_findings:
         securityhub_client = mock.MagicMock
         securityhub_client.securityhubs = [
             SecurityHubHub(
-                "",
-                "Security Hub",
-                "NOT_AVAILABLE",
-                "",
-                "",
-                "eu-west-1",
+                arn="",
+                id="Security Hub",
+                status="NOT_AVAILABLE",
+                standards="",
+                integrations="",
+                region="eu-west-1",
             )
         ]
         with mock.patch(
@@ -38,12 +38,12 @@ class Test_accessanalyzer_enabled_without_findings:
         securityhub_client = mock.MagicMock
         securityhub_client.securityhubs = [
             SecurityHubHub(
-                "arn:aws:securityhub:us-east-1:0123456789012:hub/default",
-                "default",
-                "ACTIVE",
-                "cis-aws-foundations-benchmark/v/1.2.0",
-                "",
-                "eu-west-1",
+                arn="arn:aws:securityhub:us-east-1:0123456789012:hub/default",
+                id="default",
+                status="ACTIVE",
+                standards="cis-aws-foundations-benchmark/v/1.2.0",
+                integrations="",
+                region="eu-west-1",
             )
         ]
         with mock.patch(
@@ -69,12 +69,12 @@ class Test_accessanalyzer_enabled_without_findings:
         securityhub_client = mock.MagicMock
         securityhub_client.securityhubs = [
             SecurityHubHub(
-                "arn:aws:securityhub:us-east-1:0123456789012:hub/default",
-                "default",
-                "ACTIVE",
-                "",
-                "prowler",
-                "eu-west-1",
+                arn="arn:aws:securityhub:us-east-1:0123456789012:hub/default",
+                id="default",
+                status="ACTIVE",
+                standards="",
+                integrations="prowler",
+                region="eu-west-1",
             )
         ]
         with mock.patch(
@@ -100,12 +100,12 @@ class Test_accessanalyzer_enabled_without_findings:
         securityhub_client = mock.MagicMock
         securityhub_client.securityhubs = [
             SecurityHubHub(
-                "arn:aws:securityhub:us-east-1:0123456789012:hub/default",
-                "default",
-                "ACTIVE",
-                "",
-                "",
-                "eu-west-1",
+                arn="arn:aws:securityhub:us-east-1:0123456789012:hub/default",
+                id="default",
+                status="ACTIVE",
+                standards="",
+                integrations="",
+                region="eu-west-1",
             )
         ]
         with mock.patch(
