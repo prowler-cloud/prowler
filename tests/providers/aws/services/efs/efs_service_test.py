@@ -1,3 +1,4 @@
+import json
 from unittest.mock import patch
 
 import botocore
@@ -34,7 +35,7 @@ filesystem_policy = {
 
 def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "DescribeFileSystemPolicy":
-        return {"FileSystemId": file_system_id, "Policy": filesystem_policy}
+        return {"FileSystemId": file_system_id, "Policy": json.dumps(filesystem_policy)}
     if operation_name == "DescribeBackupPolicy":
         return {"BackupPolicy": {"Status": backup_policy_status}}
     return make_api_call(self, operation_name, kwarg)
