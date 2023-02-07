@@ -47,17 +47,17 @@ class ELBv2:
                             elbv2["LoadBalancerArn"], self.audit_resources
                         )
                     ):
-                        self.loadbalancersv2.append(
-                            LoadBalancerv2(
-                                name=elbv2["LoadBalancerName"],
-                                dns=elbv2["DNSName"],
-                                region=regional_client.region,
-                                arn=elbv2["LoadBalancerArn"],
-                                scheme=elbv2["Scheme"],
-                                type=elbv2["Type"],
-                                listeners=[],
-                            )
+                        lb = LoadBalancerv2(
+                            name=elbv2["LoadBalancerName"],
+                            region=regional_client.region,
+                            arn=elbv2["LoadBalancerArn"],
+                            type=elbv2["Type"],
+                            listeners=[],
                         )
+                        if elbv2["Type"] != "gateway":
+                            lb.dns = elbv2["DNSName"]
+                            lb.scheme = elbv2["Scheme"]
+                        self.loadbalancersv2.append(lb)
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -78,16 +78,19 @@ class ELBv2:
                             port = 0
                             if "Port" in listener:
                                 port = listener["Port"]
-                            lb.listeners.append(
-                                Listenerv2(
-                                    region=regional_client.region,
-                                    arn=listener["ListenerArn"],
-                                    port=port,
-                                    protocol=listener["Protocol"],
-                                    ssl_policy=listener.get("SslPolicy"),
-                                    rules=[],
-                                )
+
+                            listener_obj = Listenerv2(
+                                region=regional_client.region,
+                                arn=listener["ListenerArn"],
+                                port=port,
+                                ssl_policy=listener.get("SslPolicy"),
+                                rules=[],
                             )
+                            if "Protocol" in listener:
+                                listener_obj.protocol = listener["Protocol"]
+
+                            lb.listeners.append(listener_obj)
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -150,20 +153,20 @@ class Listenerv2(BaseModel):
     arn: str
     region: str
     port: int
-    protocol: str
+    protocol: Optional[str]
     ssl_policy: Optional[str]
     rules: list[ListenerRule]
 
 
 class LoadBalancerv2(BaseModel):
     name: str
-    dns: str
     arn: str
     region: str
-    scheme: str
     type: str
     access_logs: Optional[str]
     desync_mitigation_mode: Optional[str]
     deletion_protection: Optional[str]
+    dns: Optional[str]
     drop_invalid_header_fields: Optional[str]
     listeners: list[Listenerv2]
+    scheme: Optional[str]
