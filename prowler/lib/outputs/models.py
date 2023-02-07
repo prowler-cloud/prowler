@@ -246,7 +246,7 @@ def generate_provider_output_json(provider: str, finding, audit_info, mode: str,
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
-        sys.exit()
+        sys.exit(1)
     else:
         return finding_output
 

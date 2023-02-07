@@ -261,7 +261,7 @@ def fill_html_overview_statistics(stats, output_filename, output_directory):
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
-        sys.exit()
+        sys.exit(1)
 
 
 def add_html_footer(output_filename, output_directory):
@@ -364,4 +364,4 @@ def add_html_footer(output_filename, output_directory):
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
-        sys.exit()
+        sys.exit(1)

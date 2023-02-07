@@ -22,7 +22,7 @@ try:
 except KeyError:
     from prowler.lib.outputs.outputs import report
 except Exception:
-    sys.exit()
+    sys.exit(1)
 
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.common.models import Audit_Metadata
@@ -198,7 +198,7 @@ def print_checks(
             logger.critical(
                 f"Check {error} was not found for the {provider.upper()} provider"
             )
-            sys.exit()
+            sys.exit(1)
 
     print(
         f"\nThere are {Fore.YELLOW}{len(check_list)}{Style.RESET_ALL} available checks.\n"
@@ -252,10 +252,10 @@ def recover_checks_from_provider(provider: str, service: str = None) -> list[tup
                 checks.append(check_info)
     except ModuleNotFoundError:
         logger.critical(f"Service {service} was not found for the {provider} provider.")
-        sys.exit()
+        sys.exit(1)
     except Exception as e:
         logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")
-        sys.exit()
+        sys.exit(1)
     else:
         return checks
 
@@ -354,7 +354,7 @@ def execute_checks(
                 logger.critical(
                     f"Check '{check_name}' was not found for the {provider.upper()} provider"
                 )
-                sys.exit()
+                sys.exit(1)
             except Exception as error:
                 logger.error(
                     f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -397,7 +397,7 @@ def execute_checks(
                         f"Check '{check_name}' was not found for the {provider.upper()} provider"
                     )
                     bar.title = f"-> {Fore.RED}Scan was aborted!{Style.RESET_ALL}"
-                    sys.exit()
+                    sys.exit(1)
                 except Exception as error:
                     logger.error(
                         f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

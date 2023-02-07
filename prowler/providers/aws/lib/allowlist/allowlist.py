@@ -78,13 +78,13 @@ def parse_allowlist_file(audit_info, allowlist_file):
             logger.critical(
                 f"{error.__class__.__name__} -- Allowlist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
             )
-            sys.exit()
+            sys.exit(1)
         return allowlist
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit()
+        sys.exit(1)
 
 
 def is_allowlisted(allowlist, audited_account, check, region, resource):
@@ -106,7 +106,7 @@ def is_allowlisted(allowlist, audited_account, check, region, resource):
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit()
+        sys.exit(1)
 
 
 def is_allowlisted_in_check(allowlist, audited_account, check, region, resource):
@@ -129,7 +129,7 @@ def is_allowlisted_in_check(allowlist, audited_account, check, region, resource)
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit()
+        sys.exit(1)
 
 
 def is_allowlisted_in_region(allowlist, audited_account, check, region, resource):
@@ -158,4 +158,4 @@ def is_allowlisted_in_region(allowlist, audited_account, check, region, resource
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit()
+        sys.exit(1)
