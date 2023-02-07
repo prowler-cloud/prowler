@@ -26,20 +26,25 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                     else:
                         principals = statement["Principal"]["AWS"]
                     for principal_arn in principals:
-                        account_id = principal_arn.split(":")[4]
                         report = Check_Report_AWS(self.metadata())
                         report.region = endpoint.region
-                        if (
-                            account_id in trusted_account_ids
-                            or account_id in vpc_client.audited_account
-                        ):
-                            report.status = "PASS"
-                            report.status_extended = f"Found trusted account {account_id} in VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id}."
+                        if principal_arn == "*":
+                            report.status = "FAIL"
+                            report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} has full access."
                             report.resource_id = endpoint.id
                         else:
-                            report.status = "FAIL"
-                            report.status_extended = f"Found untrusted account {account_id} in VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id}."
-                            report.resource_id = endpoint.id
+                            account_id = principal_arn.split(":")[4]
+                            if (
+                                account_id in trusted_account_ids
+                                or account_id in vpc_client.audited_account
+                            ):
+                                report.status = "PASS"
+                                report.status_extended = f"Found trusted account {account_id} in VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id}."
+                                report.resource_id = endpoint.id
+                            else:
+                                report.status = "FAIL"
+                                report.status_extended = f"Found untrusted account {account_id} in VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id}."
+                                report.resource_id = endpoint.id
                         findings.append(report)
 
         return findings
