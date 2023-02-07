@@ -337,7 +337,6 @@ class Test_Outputs:
         # Create mock csv output file
         fixtures_dir = "tests/lib/outputs/fixtures"
         output_directory = getcwd() + "/" + fixtures_dir
-        print(output_directory)
         output_mode = "csv"
         filename = f"prowler-output-{input_audit_info.audited_account}"
         # Send mock csv file to mock S3 Bucket
