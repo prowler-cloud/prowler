@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "c0346590c073c6c3a9574496d328cd42eec2025990532f54c2a1b167c0bf0c79"
+            "sha256": "70a5c54e497790e3df4175d1a1e57814818eecc7d190a3482ff85ee9a1b88f43"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -49,11 +49,11 @@
         },
         "azure-core": {
             "hashes": [
-                "sha256:986bfd8687889782d79481d4c5d0af04ab4a18ca2f210364804a88e4eaa1586a",
-                "sha256:df306e6e4abc145610ca6744aef943129a6fd7a11977e56731f69ac0e00724f9"
+                "sha256:acbd0daa9675ce88623da35c80d819cdafa91731dee6b2695c64d7ca9da82db4",
+                "sha256:f7bad0a7b4d800d6e73733ea7e13a616016221ac111ff9a344fe4cba41e51bbe"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==1.26.2"
+            "version": "==1.26.3"
         },
         "azure-identity": {
             "hashes": [
@@ -628,11 +628,11 @@
         },
         "xlsxwriter": {
             "hashes": [
-                "sha256:1239958b12da12be6abf05b32f64ff162eb75fff0fdf00d901ca0f46dc0557cf",
-                "sha256:d79dadac9dcbff3c24281764b052b46bcdb391f3184f337c4c4e6ed8d2738d7d"
+                "sha256:ec77335fb118c36bc5ed1c89e33904d649e4989df2d7980f7d6a9dd95ee5874e",
+                "sha256:f5c7491b8450cf49968428f062355de16c9140aa24eafc466c9dfe107610bd44"
             ],
             "markers": "python_version >= '3.6'",
-            "version": "==3.0.7"
+            "version": "==3.0.8"
         }
     },
     "develop": {
@@ -1203,26 +1203,27 @@
         },
         "moto": {
             "hashes": [
-                "sha256:6c45755e541a85e5382f809c75255d0b6335de334e7e8eb717f8fdc755830a8c",
-                "sha256:c4df7ae86f7cdd8ffcb2fcf55a45a7ab9f854ec631f1b9c82b1f47ae8c033326"
+                "sha256:1b361ece638c74a657325378a259276f368aafce2f8be84f8143e69fa93ce8ec",
+                "sha256:63431733d2a02c7bd652ad71ec1da442a0e0d580cbac5eeb50d440a2ce066eac"
             ],
             "index": "pypi",
-            "version": "==4.1.1"
+            "version": "==4.1.2"
         },
         "mypy-extensions": {
             "hashes": [
-                "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d",
-                "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"
+                "sha256:4392f6c0eb8a5668a69e23d168ffa70f0be9ccfd32b5cc2d26a34ae5b844552d",
+                "sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782"
             ],
-            "version": "==0.4.3"
+            "markers": "python_version >= '3.5'",
+            "version": "==1.0.0"
         },
         "openapi-schema-validator": {
             "hashes": [
-                "sha256:6613714d6a9aee10b4268c47ba85b5b0b3ce87ac0e51e6b290e837994a6c61b7",
-                "sha256:a7978f231244e167819607e15f821546a381e469577de47428cb3fe5af59c737"
+                "sha256:6940dba9f4906c97078fea6fd9d5a3a3384207db368c4e32f6af6abd7c5c560b",
+                "sha256:f1eff2a7936546a3ce62b88a17d09de93c9bd229cbc43cb696c988a61a382548"
             ],
             "markers": "python_version >= '3.7' and python_full_version < '4.0.0'",
-            "version": "==0.4.2"
+            "version": "==0.4.3"
         },
         "openapi-spec-validator": {
             "hashes": [
@@ -1266,11 +1267,11 @@
         },
         "platformdirs": {
             "hashes": [
-                "sha256:83c8f6d04389165de7c9b6f0c682439697887bca0aa2f1c87ef1826be3584490",
-                "sha256:e1fea1fe471b9ff8332e229df3cb7de4f53eeea4998d3b6bfff542115e998bd2"
+                "sha256:8a1228abb1ef82d788f74139988b137e78692984ec7b08eaa6c65f1723af28f9",
+                "sha256:b1d5eb14f221506f50d6604a561f4c5786d9e80355219694a1b244bcd96f4567"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==2.6.2"
+            "version": "==3.0.0"
         },
         "pluggy": {
             "hashes": [
@@ -1438,6 +1439,14 @@
             "markers": "python_version >= '3.7'",
             "version": "==0.22.0"
         },
+        "rfc3339-validator": {
+            "hashes": [
+                "sha256:138a2abdf93304ad60530167e51d2dfb9549521a836871b88d7f4695d0022f6b",
+                "sha256:24f6ec1eda14ef823da9e36ec7113124b39c04d50a4d3d3a3c2859577e7791fa"
+            ],
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'",
+            "version": "==0.1.4"
+        },
         "ruamel.yaml": {
             "hashes": [
                 "sha256:742b35d3d665023981bd6d16b3d24248ce5df75fdb4e2924e93a05c1f8b61ca7",
@@ -1598,11 +1607,11 @@
         },
         "websocket-client": {
             "hashes": [
-                "sha256:561ca949e5bbb5d33409a37235db55c279235c78ee407802f1d2314fff8a8536",
-                "sha256:fb5d81b95d350f3a54838ebcb4c68a5353bbd1412ae8f068b1e5280faeb13074"
+                "sha256:3f09e6d8230892547132177f575a4e3e73cfdf06526e20cc02aa1c3b47184d40",
+                "sha256:cdf5877568b7e83aa7cf2244ab56a3213de587bbe0ce9d8b9600fc77b455d89e"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==1.5.0"
+            "version": "==1.5.1"
         },
         "werkzeug": {
             "hashes": [
