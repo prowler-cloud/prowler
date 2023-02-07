@@ -54,7 +54,7 @@ class AWS_Provider:
                 return session.Session(profile_name=audit_info.profile)
         except Exception as error:
             logger.critical(f"{error.__class__.__name__} -- {error}")
-            sys.exit()
+            sys.exit(1)
 
     # Refresh credentials method using assume role
     # This method is called "adding ()" to the name, so it cannot accept arguments
@@ -97,7 +97,7 @@ def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) ->
             )
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")
-        sys.exit()
+        sys.exit(1)
 
     else:
         return assumed_credentials

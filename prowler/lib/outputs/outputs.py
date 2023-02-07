@@ -208,7 +208,7 @@ def send_to_s3_bucket(
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
-        sys.exit()
+        sys.exit(1)
 
 
 def extract_findings_statistics(findings: list) -> dict:

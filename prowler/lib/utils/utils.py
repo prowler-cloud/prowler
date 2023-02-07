@@ -15,7 +15,7 @@ def open_file(input_file: str, mode: str = "r") -> TextIOWrapper:
         logger.critical(
             f"{input_file}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]"
         )
-        sys.exit()
+        sys.exit(1)
     else:
         return f
 
@@ -28,7 +28,7 @@ def parse_json_file(input_file: TextIOWrapper) -> Any:
         logger.critical(
             f"{input_file.name}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]"
         )
-        sys.exit()
+        sys.exit(1)
     else:
         return json_file
 
@@ -41,7 +41,7 @@ def file_exists(filename: str):
         logger.critical(
             f"{exists_filename.name}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]"
         )
-        sys.exit()
+        sys.exit(1)
     else:
         return exists_filename
 

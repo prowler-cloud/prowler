@@ -80,4 +80,4 @@ def close_json(output_filename, output_directory, mode):
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
-        sys.exit()
+        sys.exit(1)

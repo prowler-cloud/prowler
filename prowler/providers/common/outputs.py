@@ -24,7 +24,7 @@ def set_provider_output_options(
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
-        sys.exit()
+        sys.exit(1)
     else:
         return provider_output_options
 

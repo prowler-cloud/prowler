@@ -70,6 +70,6 @@ def load_compliance_framework(
         logger.critical(
             f"Compliance Framework Specification from {compliance_specification_file} is not valid: {error}"
         )
-        sys.exit()
+        sys.exit(1)
     else:
         return compliance_framework

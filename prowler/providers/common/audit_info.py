@@ -32,7 +32,7 @@ class Audit_Info:
             caller_identity = validate_credentials_client.get_caller_identity()
         except Exception as error:
             logger.critical(f"{error.__class__.__name__} -- {error}")
-            sys.exit()
+            sys.exit(1)
         else:
             return caller_identity
 
@@ -79,7 +79,7 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
             )
         except Exception as error:
             logger.critical(f"{error.__class__.__name__} -- {error}")
-            sys.exit()
+            sys.exit(1)
         else:
             # Convert Tags dictionary to String
             account_details_tags = ""
@@ -162,7 +162,7 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
 
             except Exception as error:
                 logger.critical(f"{error.__class__.__name__} -- {error}")
-                sys.exit()
+                sys.exit(1)
 
             else:
                 logger.info(
@@ -195,7 +195,7 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
 
             except Exception as error:
                 logger.critical(f"{error.__class__.__name__} -- {error}")
-                sys.exit()
+                sys.exit(1)
 
             else:
                 logger.info(
@@ -299,7 +299,7 @@ def set_provider_audit_info(provider: str, arguments: dict):
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
-        sys.exit()
+        sys.exit(1)
     else:
         return provider_audit_info
 
@@ -332,6 +332,6 @@ def get_tagged_resources(input_resource_tags: list, current_audit_info: AWS_Audi
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
-        sys.exit()
+        sys.exit(1)
     else:
         return tagged_resources
