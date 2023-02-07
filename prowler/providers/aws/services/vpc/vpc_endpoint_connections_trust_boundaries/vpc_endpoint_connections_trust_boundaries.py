@@ -10,7 +10,11 @@ class vpc_endpoint_connections_trust_boundaries(Check):
         trusted_account_ids = get_config_var("trusted_account_ids")
         for endpoint in vpc_client.vpc_endpoints:
             # Check VPC endpoint policy
-            for statement in endpoint.policy_document["Statement"]:
+            policy_statements = []
+            if endpoint.policy_document is not None:
+                policy_statements = endpoint.policy_document["Statement"]
+
+            for statement in policy_statements:
                 if "*" == statement["Principal"]:
                     report = Check_Report_AWS(self.metadata())
                     report.region = endpoint.region
