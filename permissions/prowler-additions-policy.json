@@ -18,7 +18,6 @@
         "lambda:GetFunction*",
         "macie2:GetMacieSession",
         "s3:GetAccountPublicAccessBlock",
-        "s3:GetPublicAccessBlock",
         "shield:DescribeProtection",
         "shield:GetSubscriptionState",
         "ssm:GetDocument",
