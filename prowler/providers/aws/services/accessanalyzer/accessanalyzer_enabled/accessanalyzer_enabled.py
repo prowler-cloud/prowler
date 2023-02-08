@@ -4,7 +4,7 @@ from prowler.providers.aws.services.accessanalyzer.accessanalyzer_client import 
 )
 
 
-class accessanalyzer_enabled_without_findings(Check):
+class accessanalyzer_enabled(Check):
     def execute(self):
         findings = []
         for analyzer in accessanalyzer_client.analyzers:
@@ -13,21 +13,11 @@ class accessanalyzer_enabled_without_findings(Check):
             if analyzer.status == "ACTIVE":
                 report.status = "PASS"
                 report.status_extended = (
-                    f"IAM Access Analyzer {analyzer.name} does not have active findings"
+                    f"IAM Access Analyzer {analyzer.name} is enabled"
                 )
                 report.resource_id = analyzer.name
                 report.resource_arn = analyzer.arn
-                if len(analyzer.findings) != 0:
-                    active_finding_counter = 0
-                    for finding in analyzer.findings:
-                        if finding.status == "ACTIVE":
-                            active_finding_counter += 1
 
-                    if active_finding_counter > 0:
-                        report.status = "FAIL"
-                        report.status_extended = f"IAM Access Analyzer {analyzer.name} has {active_finding_counter} active findings"
-                        report.resource_id = analyzer.name
-                        report.resource_arn = analyzer.arn
             elif analyzer.status == "NOT_AVAILABLE":
                 report.status = "FAIL"
                 report.status_extended = (
