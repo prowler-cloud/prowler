@@ -258,7 +258,7 @@
       "Id": "1.20",
       "Description": "Ensure that IAM Access analyzer is enabled for all regions",
       "Checks": [
-        "accessanalyzer_enabled_without_findings"
+        "accessanalyzer_enabled"
       ],
       "Attributes": [
         {
