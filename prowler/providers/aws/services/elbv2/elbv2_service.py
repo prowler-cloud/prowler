@@ -54,8 +54,9 @@ class ELBv2:
                             type=elbv2["Type"],
                             listeners=[],
                         )
-                        if elbv2["Type"] != "gateway":
+                        if "DNSName" in elbv2:
                             lb.dns = elbv2["DNSName"]
+                        if "Scheme" in elbv2:
                             lb.scheme = elbv2["Scheme"]
                         self.loadbalancersv2.append(lb)
         except Exception as error:
