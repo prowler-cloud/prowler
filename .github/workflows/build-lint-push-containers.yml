@@ -10,7 +10,7 @@ on:
       - "docs/**"
 
   release:
-    types: [published, edited]
+    types: [published]
 
 env:
   AWS_REGION_STG: eu-west-1
