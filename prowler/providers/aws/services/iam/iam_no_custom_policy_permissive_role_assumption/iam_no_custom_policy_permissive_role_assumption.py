@@ -20,15 +20,26 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
                 if (
                     statement["Effect"] == "Allow"
                     and "Action" in statement
-                    and (
-                        "sts:AssumeRole" in statement["Action"]
-                        or "sts:*" in statement["Action"]
-                        or "*" in statement["Action"]
-                    )
                     and "*" in statement["Resource"]
                 ):
-                    report.status = "FAIL"
-                    report.status_extended = f"Custom Policy {policy['PolicyName']} allows permissive STS Role assumption"
+                    if type(statement["Action"]) == list:
+                        for action in statement["Action"]:
+                            if (
+                                action == "sts:AssumeRole"
+                                or action == "sts:*"
+                                or action == "*"
+                            ):
+                                report.status = "FAIL"
+                                report.status_extended = f"Custom Policy {policy['PolicyName']} allows permissive STS Role assumption"
+                                break
+                    else:
+                        if (
+                            statement["Action"] == "sts:AssumeRole"
+                            or statement["Action"] == "sts:*"
+                            or statement["Action"] == "*"
+                        ):
+                            report.status = "FAIL"
+                            report.status_extended = f"Custom Policy {policy['PolicyName']} allows permissive STS Role assumption"
                     break
 
             findings.append(report)
