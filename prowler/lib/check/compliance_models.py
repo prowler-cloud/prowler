@@ -11,10 +11,10 @@ from prowler.lib.logger import logger
 class ENS_Requirements_Nivel(str, Enum):
     """ENS V3 Requirements Level"""
 
+    opcional = "opcional"
     bajo = "bajo"
     medio = "medio"
     alto = "alto"
-    pytec = "pytec"
 
 
 class ENS_Requirements_Dimensiones(str, Enum):

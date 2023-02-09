@@ -4,7 +4,7 @@ from csv import DictWriter
 from colorama import Fore, Style
 from tabulate import tabulate
 
-from prowler.config.config import timestamp
+from prowler.config.config import timestamp, orange_color
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import (
     Check_Output_CSV_CIS,
@@ -158,10 +158,10 @@ def display_compliance_table(
                 "Proveedor": [],
                 "Marco/Categoria": [],
                 "Estado": [],
-                "PYTEC": [],
                 "Alto": [],
                 "Medio": [],
                 "Bajo": [],
+                "Opcional": [],
             }
             pass_count = fail_count = 0
             for finding in findings:
@@ -185,7 +185,7 @@ def display_compliance_table(
                                 if marco_categoria not in marcos:
                                     marcos[marco_categoria] = {
                                         "Estado": f"{Fore.GREEN}CUMPLE{Style.RESET_ALL}",
-                                        "Pytec": 0,
+                                        "Opcional": 0,
                                         "Alto": 0,
                                         "Medio": 0,
                                         "Bajo": 0,
@@ -197,8 +197,8 @@ def display_compliance_table(
                                     ] = f"{Fore.RED}NO CUMPLE{Style.RESET_ALL}"
                                 elif finding.status == "PASS":
                                     pass_count += 1
-                                if attribute.Nivel == "pytec":
-                                    marcos[marco_categoria]["Pytec"] += 1
+                                if attribute.Nivel == "opcional":
+                                    marcos[marco_categoria]["Opcional"] += 1
                                 elif attribute.Nivel == "alto":
                                     marcos[marco_categoria]["Alto"] += 1
                                 elif attribute.Nivel == "medio":
@@ -211,17 +211,17 @@ def display_compliance_table(
                 ens_compliance_table["Proveedor"].append("aws")
                 ens_compliance_table["Marco/Categoria"].append(marco)
                 ens_compliance_table["Estado"].append(marcos[marco]["Estado"])
-                ens_compliance_table["PYTEC"].append(
-                    f"{Fore.LIGHTRED_EX}{marcos[marco]['Pytec']}{Style.RESET_ALL}"
+                ens_compliance_table["Opcional"].append(
+                    f"{Fore.BLUE}{marcos[marco]['Opcional']}{Style.RESET_ALL}"
                 )
                 ens_compliance_table["Alto"].append(
-                    f"{Fore.RED}{marcos[marco]['Alto']}{Style.RESET_ALL}"
+                    f"{Fore.LIGHTRED_EX}{marcos[marco]['Alto']}{Style.RESET_ALL}"
                 )
                 ens_compliance_table["Medio"].append(
-                    f"{Fore.YELLOW}{marcos[marco]['Medio']}{Style.RESET_ALL}"
+                    f"{orange_color}{marcos[marco]['Medio']}{Style.RESET_ALL}"
                 )
                 ens_compliance_table["Bajo"].append(
-                    f"{Fore.BLUE}{marcos[marco]['Bajo']}{Style.RESET_ALL}"
+                    f"{Fore.YELLOW}{marcos[marco]['Bajo']}{Style.RESET_ALL}"
                 )
             if fail_count + pass_count < 0:
                 print(
