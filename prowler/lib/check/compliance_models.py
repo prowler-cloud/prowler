@@ -11,10 +11,10 @@ from prowler.lib.logger import logger
 class ENS_Requirements_Nivel(str, Enum):
     """ENS V3 Requirements Level"""
 
+    opcional = "opcional"
     bajo = "bajo"
     medio = "medio"
     alto = "alto"
-    pytec = "pytec"
 
 
 class ENS_Requirements_Dimensiones(str, Enum):
@@ -106,7 +106,7 @@ class Compliance_Base_Model(BaseModel):
     """Compliance_Base_Model holds the base model for every compliance framework"""
 
     Framework: str
-    Provider: Optional[str]
+    Provider: str
     Version: str
     Description: str
     Requirements: list[Compliance_Requirement]

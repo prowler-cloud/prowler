@@ -15,9 +15,11 @@ with open(file_name, newline="", encoding="utf-8") as f:
     reader = csv.reader(f, delimiter=",")
     for row in reader:
         niveles = list(map(str.strip, row[5].split(",")))
-        if "pytec" in niveles:
-            nivelvalue = "pytec"
-        elif "alto" in niveles:
+        # Use of pytec/CPSTIC levels is under clarification, disabling temporarily
+        # if "pytec" in niveles:
+        #     nivelvalue = "pytec"
+        # el
+        if "alto" in niveles:
             nivelvalue = "alto"
         elif "medio" in niveles:
             nivelvalue = "medio"
@@ -27,12 +29,14 @@ with open(file_name, newline="", encoding="utf-8") as f:
             nivelvalue = "bajo"
 
         attribute = {
+            "IdGrupoControl": row[10],
             "Marco": row[2],
             "Categoria": row[3],
             "DescripcionControl": row[4],
             "Nivel": nivelvalue,
             "Tipo": row[9],
             "Dimensiones": list(map(str.strip, row[6].split(","))),
+            "ModoEjecucion": row[11],
         }
         output["Requirements"].append(
             {
