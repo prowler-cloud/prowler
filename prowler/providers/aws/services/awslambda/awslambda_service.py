@@ -87,12 +87,13 @@ class Lambda:
                     function_information = regional_client.get_function(
                         FunctionName=function.name
                     )
-                    code_location_uri = function_information["Code"]["Location"]
-                    raw_code_zip = requests.get(code_location_uri).content
-                    self.functions[function.name].code = LambdaCode(
-                        location=code_location_uri,
-                        code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
-                    )
+                    if "Location" in function_information["Code"]:
+                        code_location_uri = function_information["Code"]["Location"]
+                        raw_code_zip = requests.get(code_location_uri).content
+                        self.functions[function.name].code = LambdaCode(
+                            location=code_location_uri,
+                            code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
+                        )
 
         except Exception as error:
             logger.error(
