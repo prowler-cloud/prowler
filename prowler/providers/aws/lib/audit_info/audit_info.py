@@ -10,7 +10,7 @@ current_audit_info = AWS_Audit_Info(
         profile_name=None,
         botocore_session=None,
     ),
-    # Default standard retrie config
+    # Default standard retrier config
     # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html
     session_config=Config(retries={"max_attempts": 3, "mode": "standard"}),
     audited_account=None,
