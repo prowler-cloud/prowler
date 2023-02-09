@@ -2,10 +2,15 @@ import sys
 
 from arnparse import arnparse
 from boto3 import client, session
+from botocore.config import Config
 from colorama import Fore, Style
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import AWS_Provider, assume_role
+from prowler.providers.aws.aws_provider import (
+    AWS_Provider,
+    assume_role,
+    generate_regional_clients,
+)
 from prowler.providers.aws.lib.arn.arn import arn_parsing
 from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.lib.audit_info.models import (
@@ -28,7 +33,7 @@ class Audit_Info:
             caller_identity = validate_credentials_client.get_caller_identity()
         except Exception as error:
             logger.critical(f"{error.__class__.__name__} -- {error}")
-            sys.exit()
+            sys.exit(1)
         else:
             return caller_identity
 
@@ -75,7 +80,7 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
             )
         except Exception as error:
             logger.critical(f"{error.__class__.__name__} -- {error}")
-            sys.exit()
+            sys.exit(1)
         else:
             # Convert Tags dictionary to String
             account_details_tags = ""
@@ -119,6 +124,20 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         # Assumed AWS session
         assumed_session = None
 
+        # Set the maximum retries for the standard retrier config
+        aws_retries_max_attempts = arguments.get("aws_retries_max_attempts")
+        if aws_retries_max_attempts:
+            # Create the new config
+            config = Config(
+                retries={
+                    "max_attempts": aws_retries_max_attempts,
+                    "mode": "standard",
+                }
+            )
+            # Merge the new configuration
+            new_boto3_config = current_audit_info.session_config.merge(config)
+            current_audit_info.session_config = new_boto3_config
+
         # Setting session
         current_audit_info.profile = input_profile
         current_audit_info.audited_regions = input_regions
@@ -158,7 +177,7 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
 
             except Exception as error:
                 logger.critical(f"{error.__class__.__name__} -- {error}")
-                sys.exit()
+                sys.exit(1)
 
             else:
                 logger.info(
@@ -191,7 +210,7 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
 
             except Exception as error:
                 logger.critical(f"{error.__class__.__name__} -- {error}")
-                sys.exit()
+                sys.exit(1)
 
             else:
                 logger.info(
@@ -237,10 +256,16 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
             self.print_audit_credentials(current_audit_info)
 
         # Parse Scan Tags
-        input_scan_tags = arguments.get("scan_tags")
-        current_audit_info.audit_resources = get_tagged_resources(
-            input_scan_tags, current_audit_info
-        )
+        if arguments.get("resource_tags"):
+            input_resource_tags = arguments.get("resource_tags")
+            current_audit_info.audit_resources = get_tagged_resources(
+                input_resource_tags, current_audit_info
+            )
+
+        # Parse Input Resource ARNs
+        if arguments.get("resource_arn"):
+            current_audit_info.audit_resources = arguments.get("resource_arn")
+
         return current_audit_info
 
     def set_azure_audit_info(self, arguments) -> Azure_Audit_Info:
@@ -289,36 +314,39 @@ def set_provider_audit_info(provider: str, arguments: dict):
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
-        sys.exit()
+        sys.exit(1)
     else:
         return provider_audit_info
 
 
-def get_tagged_resources(input_scan_tags: list, current_audit_info: AWS_Audit_Info):
+def get_tagged_resources(input_resource_tags: list, current_audit_info: AWS_Audit_Info):
     """
     get_tagged_resources returns a list of the resources that are going to be scanned based on the given input tags
     """
     try:
-        scan_tags = []
+        resource_tags = []
         tagged_resources = []
-        if input_scan_tags:
-            for tag in input_scan_tags:
-                key = tag.split("=")[0]
-                value = tag.split("=")[1]
-                scan_tags.append({"Key": key, "Values": [value]})
-            # Get Resources with scan_tags for all regions
-            for region in current_audit_info.audited_regions:
-                client = current_audit_info.audit_session.client(
-                    "resourcegroupstaggingapi", region_name=region
-                )
-                get_resources_paginator = client.get_paginator("get_resources")
-                for page in get_resources_paginator.paginate(TagFilters=scan_tags):
+        for tag in input_resource_tags:
+            key = tag.split("=")[0]
+            value = tag.split("=")[1]
+            resource_tags.append({"Key": key, "Values": [value]})
+        # Get Resources with resource_tags for all regions
+        for regional_client in generate_regional_clients(
+            "resourcegroupstaggingapi", current_audit_info
+        ).values():
+            try:
+                get_resources_paginator = regional_client.get_paginator("get_resources")
+                for page in get_resources_paginator.paginate(TagFilters=resource_tags):
                     for resource in page["ResourceTagMappingList"]:
                         tagged_resources.append(resource["ResourceARN"])
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
-        sys.exit()
+        sys.exit(1)
     else:
         return tagged_resources

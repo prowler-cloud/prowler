@@ -45,14 +45,16 @@ class s3_bucket_public_access(Check):
                     if bucket.policy:
                         for statement in bucket.policy["Statement"]:
                             if (
-                                "*" == statement["Principal"]
+                                "Principal" in statement
+                                and "*" == statement["Principal"]
                                 and statement["Effect"] == "Allow"
                             ):
                                 report.status = "FAIL"
                                 report.status_extended = f"S3 Bucket {bucket.name} has public access due to bucket policy."
                             else:
                                 if (
-                                    "AWS" in statement["Principal"]
+                                    "Principal" in statement
+                                    and "AWS" in statement["Principal"]
                                     and statement["Effect"] == "Allow"
                                 ):
                                     if type(statement["Principal"]["AWS"]) == str:

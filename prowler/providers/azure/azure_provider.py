@@ -57,7 +57,7 @@ class Azure_Provider:
                 logger.critical(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                 )
-                sys.exit()
+                sys.exit(1)
         else:
             credentials = InteractiveBrowserCredential()
 
@@ -72,7 +72,7 @@ class Azure_Provider:
                 logger.critical(
                     f"Azure provider: Missing environment variable {env_var} needed to autenticate against Azure"
                 )
-                sys.exit()
+                sys.exit(1)
 
     def __set_identity_info__(
         self,
@@ -170,7 +170,7 @@ class Azure_Provider:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
-            sys.exit()
+            sys.exit(1)
 
         return identity
 

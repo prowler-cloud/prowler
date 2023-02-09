@@ -31,7 +31,7 @@ class accessanalyzer_enabled_without_findings(Check):
             elif analyzer.status == "NOT_AVAILABLE":
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"IAM Access Analyzer {analyzer.name} is not enabled"
+                    f"IAM Access Analyzer in account {analyzer.name} is not enabled"
                 )
                 report.resource_id = analyzer.name
             else:

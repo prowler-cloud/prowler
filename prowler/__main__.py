@@ -99,6 +99,9 @@ def prowler():
             )
             sys.exit()
 
+    # Set the audit info based on the selected provider
+    audit_info = set_provider_audit_info(provider, args.__dict__)
+
     # Load checks to execute
     checks_to_execute = load_checks_to_execute(
         bulk_checks_metadata,
@@ -110,13 +113,14 @@ def prowler():
         compliance_framework,
         categories,
         provider,
+        audit_info,
     )
 
     # Exclude checks if -e/--excluded-checks
     if excluded_checks:
         checks_to_execute = exclude_checks_to_run(checks_to_execute, excluded_checks)
 
-    # Exclude services if -s/--excluded-services
+    # Exclude services if --excluded-services
     if excluded_services:
         checks_to_execute = exclude_services_to_run(
             checks_to_execute, excluded_services, provider
@@ -129,9 +133,6 @@ def prowler():
     if args.list_checks:
         print_checks(provider, checks_to_execute, bulk_checks_metadata)
         sys.exit()
-
-    # Set the audit info based on the selected provider
-    audit_info = set_provider_audit_info(provider, args.__dict__)
 
     # Parse content from Allowlist file and get it, if necessary, from S3
     if provider == "aws" and args.allowlist_file:
@@ -217,6 +218,10 @@ def prowler():
                 audit_output_options.output_filename,
                 audit_output_options.output_directory,
             )
+
+    # If there are failed findings exit code 3, except if -z is input
+    if not args.ignore_exit_code_3 and stats["total_fail"] > 0:
+        sys.exit(3)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 import threading
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -79,9 +80,14 @@ class EMR:
                     master_node_security_group = cluster_info["Cluster"][
                         "Ec2InstanceAttributes"
                     ]["EmrManagedMasterSecurityGroup"]
-                    master_node_additional_security_groups = cluster_info["Cluster"][
-                        "Ec2InstanceAttributes"
-                    ]["AdditionalMasterSecurityGroups"]
+                    master_node_additional_security_groups = None
+                    if (
+                        "AdditionalMasterSecurityGroups"
+                        in cluster_info["Cluster"]["Ec2InstanceAttributes"]
+                    ):
+                        master_node_additional_security_groups = cluster_info[
+                            "Cluster"
+                        ]["Ec2InstanceAttributes"]["AdditionalMasterSecurityGroups"]
                     self.clusters[cluster.id].master = Node(
                         security_group_id=master_node_security_group,
                         additional_security_groups_id=master_node_additional_security_groups,
@@ -91,9 +97,13 @@ class EMR:
                     slave_node_security_group = cluster_info["Cluster"][
                         "Ec2InstanceAttributes"
                     ]["EmrManagedSlaveSecurityGroup"]
-                    slave_node_additional_security_groups = cluster_info["Cluster"][
-                        "Ec2InstanceAttributes"
-                    ]["AdditionalSlaveSecurityGroups"]
+                    if (
+                        "AdditionalSlaveSecurityGroups"
+                        in cluster_info["Cluster"]["Ec2InstanceAttributes"]
+                    ):
+                        slave_node_additional_security_groups = cluster_info["Cluster"][
+                            "Ec2InstanceAttributes"
+                        ]["AdditionalSlaveSecurityGroups"]
                     self.clusters[cluster.id].slave = Node(
                         security_group_id=slave_node_security_group,
                         additional_security_groups_id=slave_node_additional_security_groups,
@@ -158,7 +168,7 @@ class ClusterStatus(Enum):
 
 class Node(BaseModel):
     security_group_id: str = ""
-    additional_security_groups_id: list[str] = []
+    additional_security_groups_id: Optional[list[str]] = []
 
 
 class Cluster(BaseModel):

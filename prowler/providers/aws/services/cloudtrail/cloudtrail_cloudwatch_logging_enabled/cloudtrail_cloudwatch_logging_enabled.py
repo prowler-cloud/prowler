@@ -38,9 +38,9 @@ class cloudtrail_cloudwatch_logging_enabled(Check):
                 else:
                     report.status = "FAIL"
                     if trail.is_multiregion:
-                        report.status_extended = f"Multiregion trail {trail.name} is not configured to deliver logs"
+                        report.status_extended = f"Multiregion trail {trail.name} is not logging in the last 24h or not configured to deliver logs"
                     else:
-                        report.status_extended = f"Single region trail {trail.name} is not configured to deliver logs"
+                        report.status_extended = f"Single region trail {trail.name} is not logging in the last 24h or not configured to deliver logs"
                 findings.append(report)
 
         return findings

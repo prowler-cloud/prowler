@@ -34,6 +34,7 @@ def update_checks_metadata_with_compliance(
                             Framework=framework.Framework,
                             Provider=framework.Provider,
                             Version=framework.Version,
+                            Description=framework.Description,
                             Requirements=compliance_requirements,
                         )
                         # Include the compliance framework for the check
@@ -43,4 +44,4 @@ def update_checks_metadata_with_compliance(
         return bulk_checks_metadata
     except Exception as e:
         logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
-        sys.exit()
+        sys.exit(1)

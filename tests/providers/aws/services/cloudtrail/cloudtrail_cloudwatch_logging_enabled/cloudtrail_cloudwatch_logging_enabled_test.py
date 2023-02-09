@@ -220,15 +220,15 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                     assert report.resource_id == trail_name_us
                     assert report.resource_arn == trail_us["TrailARN"]
                     assert report.status == "PASS"
-                    assert search(
-                        report.status_extended,
-                        f"Single region trail {trail_name_us} has been logging the last 24h",
+                    assert (
+                        report.status_extended
+                        == f"Single region trail {trail_name_us} has been logging the last 24h"
                     )
                 if report.resource_id == trail_name_eu:
                     assert report.resource_id == trail_name_eu
                     assert report.resource_arn == trail_eu["TrailARN"]
                     assert report.status == "FAIL"
-                    assert search(
-                        report.status_extended,
-                        f"Single region trail {trail_name_eu} is not configured to deliver logs",
+                    assert (
+                        report.status_extended
+                        == f"Single region trail {trail_name_eu} is not logging in the last 24h or not configured to deliver logs"
                     )

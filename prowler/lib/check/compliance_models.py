@@ -1,6 +1,6 @@
 import sys
 from enum import Enum
-from typing import Any, List, Union
+from typing import Optional, Union
 
 from pydantic import BaseModel, ValidationError
 
@@ -27,15 +27,67 @@ class ENS_Requirements_Dimensiones(str, Enum):
     disponibilidad = "disponibilidad"
 
 
+class ENS_Requirements_Tipos(str, Enum):
+    """ENS Requirements  Tipos"""
+
+    refuerzo = "refuerzo"
+    requisito = "requisito"
+    recomendacion = "recomendacion"
+    medida = "medida"
+
+
 class ENS_Requirements(BaseModel):
     """ENS V3 Framework Requirements"""
 
     IdGrupoControl: str
     Marco: str
     Categoria: str
-    Descripcion_Control: str
-    Nivel: list[ENS_Requirements_Nivel]
+    DescripcionControl: str
+    Tipo: ENS_Requirements_Tipos
+    Nivel: ENS_Requirements_Nivel
     Dimensiones: list[ENS_Requirements_Dimensiones]
+
+
+# Generic Compliance Requirements
+class Generic_Compliance_Requirements(BaseModel):
+    """Generic Compliance Requirements"""
+
+    ItemId: str
+    Section: Optional[str]
+    SubSection: Optional[str]
+    SubGroup: Optional[str]
+    Service: str
+    Soc_Type: Optional[str]
+
+
+class CIS_Requirements_Profile(str):
+    """CIS Requirements Profile"""
+
+    Level_1 = "Level 1"
+    Level_2 = "Level 2"
+
+
+class CIS_Requirements_AssessmentStatus(str):
+    """CIS Requirements Assessment Status"""
+
+    Manual = "Manual"
+    Automated = "Automated"
+
+
+# CIS Requirements
+class CIS_Requirements(BaseModel):
+    """CIS Requirements"""
+
+    Section: str
+    Profile: CIS_Requirements_Profile
+    AssessmentStatus: CIS_Requirements_AssessmentStatus
+    Description: str
+    RationaleStatement: str
+    ImpactStatement: str
+    RemediationProcedure: str
+    AuditProcedure: str
+    AdditionalInformation: str
+    References: str
 
 
 # Base Compliance Model
@@ -44,8 +96,10 @@ class Compliance_Requirement(BaseModel):
 
     Id: str
     Description: str
-    Attributes: list[Union[ENS_Requirements, Any]]
-    Checks: List[str]
+    Attributes: list[
+        Union[CIS_Requirements, ENS_Requirements, Generic_Compliance_Requirements]
+    ]
+    Checks: list[str]
 
 
 class Compliance_Base_Model(BaseModel):
@@ -54,6 +108,7 @@ class Compliance_Base_Model(BaseModel):
     Framework: str
     Provider: str
     Version: str
+    Description: str
     Requirements: list[Compliance_Requirement]
 
 
@@ -70,6 +125,6 @@ def load_compliance_framework(
         logger.critical(
             f"Compliance Framework Specification from {compliance_specification_file} is not valid: {error}"
         )
-        sys.exit()
+        sys.exit(1)
     else:
         return compliance_framework

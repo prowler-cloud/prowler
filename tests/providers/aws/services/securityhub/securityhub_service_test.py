@@ -30,6 +30,12 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
             ]
         }
+    if operation_name == "ListEnabledProductsForImport":
+        return {
+            "ProductSubscriptions": [
+                "arn:aws:securityhub:us-east-1:0123456789012:product-subscription/prowler/prowler",
+            ]
+        }
     if operation_name == "DescribeHub":
         return {
             "HubArn": "arn:aws:securityhub:us-east-1:0123456789012:hub/default",
@@ -74,4 +80,5 @@ class Test_SecurityHub_Service:
             == "arn:aws:securityhub:us-east-1:0123456789012:hub/default"
         )
         assert securityhub.securityhubs[0].id == "default"
-        assert securityhub.securityhubs[0].standards == " cis-aws-foundations-benchmark"
+        assert securityhub.securityhubs[0].standards == "cis-aws-foundations-benchmark "
+        assert securityhub.securityhubs[0].integrations == "prowler "

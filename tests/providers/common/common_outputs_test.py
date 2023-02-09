@@ -38,6 +38,7 @@ class Test_Common_Output_Options:
     # Mocked AWS Audit Info
     def set_mocked_aws_audit_info(self):
         audit_info = AWS_Audit_Info(
+            session_config=None,
             original_session=None,
             audit_session=session.Session(
                 profile_name=None,

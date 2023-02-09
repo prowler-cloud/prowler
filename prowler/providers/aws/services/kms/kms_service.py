@@ -71,21 +71,22 @@ class KMS:
 
     def __get_key_rotation_status__(self):
         logger.info("KMS - Get Key Rotation Status...")
-        for key in self.keys:
-            try:
-                regional_client = self.regional_clients[key.region]
-                key.rotation_enabled = regional_client.get_key_rotation_status(
-                    KeyId=key.id
-                )["KeyRotationEnabled"]
-            except Exception as error:
-                logger.error(
-                    f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
-                )
+        try:
+            for key in self.keys:
+                if "EXTERNAL" not in key.origin and "AWS" not in key.manager:
+                    regional_client = self.regional_clients[key.region]
+                    key.rotation_enabled = regional_client.get_key_rotation_status(
+                        KeyId=key.id
+                    )["KeyRotationEnabled"]
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
 
     def __get_key_policy__(self):
         logger.info("KMS - Get Key Policy...")
-        for key in self.keys:
-            try:
+        try:
+            for key in self.keys:
                 if key.manager == "CUSTOMER":  # only customer KMS have policies
                     regional_client = self.regional_clients[key.region]
                     key.policy = json.loads(
@@ -93,10 +94,10 @@ class KMS:
                             KeyId=key.id, PolicyName="default"
                         )["Policy"]
                     )
-            except Exception as error:
-                logger.error(
-                    f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
-                )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
 
 
 @dataclass

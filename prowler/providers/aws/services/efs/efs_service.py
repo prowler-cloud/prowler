@@ -1,3 +1,4 @@
+import json
 import threading
 from dataclasses import dataclass
 
@@ -74,7 +75,7 @@ class EFS:
                                 FileSystemId=filesystem.id
                             )
                             if "Policy" in fs_policy:
-                                filesystem.policy = fs_policy["Policy"]
+                                filesystem.policy = json.loads(fs_policy["Policy"])
                         except ClientError as e:
                             if e.response["Error"]["Code"] == "PolicyNotFound":
                                 filesystem.policy = {}

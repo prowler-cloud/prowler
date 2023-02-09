@@ -30,7 +30,7 @@ class Test_accessanalyzer_enabled_without_findings:
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn="",
-                name="Test Analyzer",
+                name="012345678910",
                 status="NOT_AVAILABLE",
                 tags="",
                 type="",
@@ -52,16 +52,16 @@ class Test_accessanalyzer_enabled_without_findings:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "IAM Access Analyzer Test Analyzer is not enabled"
+                == "IAM Access Analyzer in account 012345678910 is not enabled"
             )
-            assert result[0].resource_id == "Test Analyzer"
+            assert result[0].resource_id == "012345678910"
 
     def test_two_analyzers(self):
         accessanalyzer_client = mock.MagicMock
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn="",
-                name="Test Analyzer",
+                name="012345678910",
                 status="NOT_AVAILABLE",
                 tags="",
                 type="",
@@ -104,9 +104,9 @@ class Test_accessanalyzer_enabled_without_findings:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "IAM Access Analyzer Test Analyzer is not enabled"
+                == "IAM Access Analyzer in account 012345678910 is not enabled"
             )
-            assert result[0].resource_id == "Test Analyzer"
+            assert result[0].resource_id == "012345678910"
             assert result[0].region == "eu-west-1"
             assert result[1].status == "FAIL"
             assert (
@@ -155,7 +155,7 @@ class Test_accessanalyzer_enabled_without_findings:
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn="",
-                name="Test Analyzer",
+                name="012345678910",
                 status="NOT_AVAILABLE",
                 tags="",
                 type="",
@@ -179,7 +179,7 @@ class Test_accessanalyzer_enabled_without_findings:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "IAM Access Analyzer Test Analyzer is not enabled"
+                == "IAM Access Analyzer in account 012345678910 is not enabled"
             )
-            assert result[0].resource_id == "Test Analyzer"
+            assert result[0].resource_id == "012345678910"
             assert result[0].region == "eu-west-1"

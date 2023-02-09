@@ -1,7 +1,7 @@
 import importlib
 import sys
 from dataclasses import dataclass
-from os import mkdir
+from os import makedirs
 from os.path import isdir
 
 from prowler.config.config import change_config_var, output_file_timestamp
@@ -24,7 +24,7 @@ def set_provider_output_options(
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
-        sys.exit()
+        sys.exit(1)
     else:
         return provider_output_options
 
@@ -52,7 +52,7 @@ class Provider_Output_Options:
         if arguments.output_directory:
             if not isdir(arguments.output_directory):
                 if arguments.output_modes:
-                    mkdir(arguments.output_directory)
+                    makedirs(arguments.output_directory)
 
 
 class Azure_Output_Options(Provider_Output_Options):

@@ -24,18 +24,18 @@ azure-mgmt-storage = "21.0.0"
 
 [dev-packages]
 black = "22.10.0"
-pylint = "2.15.10"
+pylint = "2.16.1"
 flake8 = "5.0.4"
 bandit = "1.7.4"
 safety = "2.3.1"
 vulture = "2.7"
-moto = "4.1.1"
+moto = "4.1.2"
 docker = "6.0.0"
-openapi-spec-validator = "0.5.2"
+openapi-spec-validator = "0.5.5"
 pytest = "7.2.1"
-pytest-xdist = "2.5.0"
+pytest-xdist = "3.2.0"
 coverage = "7.1.0"
-sure = "2.0.0"
+sure = "2.0.1"
 freezegun = "1.2.1"
 
 [requires]

@@ -1,3 +1,4 @@
+import json
 from unittest.mock import patch
 
 import botocore
@@ -34,7 +35,7 @@ filesystem_policy = {
 
 def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "DescribeFileSystemPolicy":
-        return {"FileSystemId": file_system_id, "Policy": filesystem_policy}
+        return {"FileSystemId": file_system_id, "Policy": json.dumps(filesystem_policy)}
     if operation_name == "DescribeBackupPolicy":
         return {"BackupPolicy": {"Status": backup_policy_status}}
     return make_api_call(self, operation_name, kwarg)
@@ -55,6 +56,7 @@ def mock_generate_regional_clients(service, audit_info):
 class Test_EFS:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
+            session_config=None,
             original_session=None,
             audit_session=session.Session(
                 profile_name=None,

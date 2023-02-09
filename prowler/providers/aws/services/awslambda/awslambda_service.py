@@ -3,7 +3,7 @@ import json
 import threading
 import zipfile
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 import requests
 from botocore.client import ClientError
@@ -24,7 +24,15 @@ class Lambda:
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.functions = {}
         self.__threading_call__(self.__list_functions__)
-        self.__threading_call__(self.__get_function__)
+
+        # We only want to retrieve the Lambda code if the
+        # awslambda_function_no_secrets_in_code check is set
+        if (
+            "awslambda_function_no_secrets_in_code"
+            in audit_info.audit_metadata.expected_checks
+        ):
+            self.__threading_call__(self.__get_function__)
+
         self.__threading_call__(self.__get_policy__)
         self.__threading_call__(self.__get_function_url_config__)
 
@@ -53,13 +61,13 @@ class Lambda:
                     ):
                         lambda_name = function["FunctionName"]
                         lambda_arn = function["FunctionArn"]
-                        lambda_runtime = function["Runtime"]
                         self.functions[lambda_name] = Function(
                             name=lambda_name,
                             arn=lambda_arn,
-                            runtime=lambda_runtime,
                             region=regional_client.region,
                         )
+                        if "Runtime" in function:
+                            self.functions[lambda_name].runtime = function["Runtime"]
                         if "Environment" in function:
                             lambda_environment = function["Environment"]["Variables"]
                             self.functions[lambda_name].environment = lambda_environment
@@ -79,12 +87,13 @@ class Lambda:
                     function_information = regional_client.get_function(
                         FunctionName=function.name
                     )
-                    code_location_uri = function_information["Code"]["Location"]
-                    raw_code_zip = requests.get(code_location_uri).content
-                    self.functions[function.name].code = LambdaCode(
-                        location=code_location_uri,
-                        code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
-                    )
+                    if "Location" in function_information["Code"]:
+                        code_location_uri = function_information["Code"]["Location"]
+                        raw_code_zip = requests.get(code_location_uri).content
+                        self.functions[function.name].code = LambdaCode(
+                            location=code_location_uri,
+                            code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
+                        )
 
         except Exception as error:
             logger.error(
@@ -169,7 +178,7 @@ class URLConfig(BaseModel):
 class Function(BaseModel):
     name: str
     arn: str
-    runtime: str
+    runtime: Optional[str]
     environment: dict = None
     region: str
     policy: dict = None

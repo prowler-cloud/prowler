@@ -4,6 +4,7 @@ import sys
 from colorama import Fore, Style
 
 from prowler.config.config import (
+    available_compliance_frameworks,
     csv_file_suffix,
     html_file_suffix,
     json_asff_file_suffix,
@@ -82,9 +83,9 @@ def report(check_findings, output_options, audit_info):
                     if not (finding.status != "FAIL" and output_options.is_quiet):
                         # AWS specific outputs
                         if finding.check_metadata.Provider == "aws":
-                            if (
-                                "ens_rd2022_aws" in output_options.output_modes
-                                or "cis" in str(output_options.output_modes)
+                            if any(
+                                compliance in output_options.output_modes
+                                for compliance in available_compliance_frameworks
                             ):
                                 fill_compliance(
                                     output_options,
@@ -197,7 +198,9 @@ def send_to_s3_bucket(
         elif output_mode == "html":
             filename = f"{output_filename}{html_file_suffix}"
         logger.info(f"Sending outputs to S3 bucket {output_bucket}")
-        bucket_remote_dir = output_directory.split("/")[-1]
+        bucket_remote_dir = output_directory
+        while "prowler/" in bucket_remote_dir:  # Check if it is not a custom directory
+            bucket_remote_dir = bucket_remote_dir.partition("prowler/")[-1]
         file_name = output_directory + "/" + filename
         bucket_name = output_bucket
         object_name = bucket_remote_dir + "/" + output_mode + "/" + filename
@@ -208,7 +211,7 @@ def send_to_s3_bucket(
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
-        sys.exit()
+        sys.exit(1)
 
 
 def extract_findings_statistics(findings: list) -> dict:

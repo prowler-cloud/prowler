@@ -2,8 +2,20 @@ import argparse
 import sys
 from argparse import RawTextHelpFormatter
 
-from prowler.config.config import default_output_directory, prowler_version
+from prowler.config.config import (
+    available_compliance_frameworks,
+    default_output_directory,
+    prowler_version,
+)
 from prowler.providers.aws.aws_provider import get_aws_available_regions
+from prowler.providers.aws.lib.arn.arn import is_valid_arn
+
+
+def arn_type(arn: str) -> bool:
+    """arn_type returns a string ARN if it is valid and raises an argparse.ArgumentError if not."""
+    if not is_valid_arn(arn):
+        raise argparse.ArgumentError("Invalid ARN")
+    return arn
 
 
 class ProwlerArgumentParser:
@@ -16,7 +28,6 @@ class ProwlerArgumentParser:
             epilog="""
 To see the different available options on a specific provider, run:
     prowler {provider} -h|--help
-
 Detailed documentation at https://docs.prowler.cloud
 """,
         )
@@ -131,6 +142,12 @@ Detailed documentation at https://docs.prowler.cloud
             help="Display detailed information about findings",
         )
         common_outputs_parser.add_argument(
+            "-z",
+            "--ignore-exit-code-3",
+            action="store_true",
+            help="Failed checks do not trigger exit code 3",
+        )
+        common_outputs_parser.add_argument(
             "-b", "--no-banner", action="store_true", help="Hide Prowler banner"
         )
 
@@ -198,7 +215,7 @@ Detailed documentation at https://docs.prowler.cloud
             "--compliance",
             nargs="+",
             help="Compliance Framework to check against for. The format should be the following: framework_version_provider (e.g.: ens_rd2022_aws)",
-            choices=["ens_rd2022_aws", "cis_1.4_aws", "cis_1.5_aws"],
+            choices=available_compliance_frameworks,
         )
         group.add_argument(
             "--categories",
@@ -227,7 +244,7 @@ Detailed documentation at https://docs.prowler.cloud
             "--list-compliance-requirements",
             nargs="+",
             help="List compliance requirements for a given requirement",
-            choices=["ens_rd2022_aws", "cis_1.4_aws", "cis_1.5_aws"],
+            choices=available_compliance_frameworks,
         )
         list_group.add_argument(
             "--list-categories",
@@ -343,14 +360,33 @@ Detailed documentation at https://docs.prowler.cloud
             default=None,
             help="Path for allowlist yaml file. See example prowler/config/allowlist.yaml for reference and format. It also accepts AWS DynamoDB Table or Lambda ARNs or S3 URIs, see more in https://docs.prowler.cloud/en/latest/tutorials/allowlist/",
         )
-        # Allowlist
-        audit_tags_subparser = aws_parser.add_argument_group("Tags-based Scan")
-        audit_tags_subparser.add_argument(
-            "-t",
-            "--scan-tags",
+        # Based Scans
+        aws_based_scans_subparser = aws_parser.add_argument_group("AWS Based Scans")
+        aws_based_scans_parser = (
+            aws_based_scans_subparser.add_mutually_exclusive_group()
+        )
+        aws_based_scans_parser.add_argument(
+            "--resource-tags",
             nargs="+",
             default=None,
-            help="Scan only resources with specific tags (Key=Value), e.g., Environment=dev Project=prowler",
+            help="Scan only resources with specific AWS Tags (Key=Value), e.g., Environment=dev Project=prowler",
+        )
+        aws_based_scans_parser.add_argument(
+            "--resource-arn",
+            nargs="+",
+            type=arn_type,
+            default=None,
+            help="Scan only resources with specific AWS Resource ARNs, e.g., arn:aws:iam::012345678910:user/test arn:aws:ec2:us-east-1:123456789012:vpc/vpc-12345678",
+        )
+
+        # Boto3 Config
+        boto3_config_subparser = aws_parser.add_argument_group("Boto3 Config")
+        boto3_config_subparser.add_argument(
+            "--aws-retries-max-attempts",
+            nargs="?",
+            default=None,
+            type=int,
+            help="Set the maximum attemps for the Boto3 standard retrier config (Default: 3)",
         )
 
     def __init_azure_parser__(self):

@@ -11,6 +11,24 @@ Currently, the available frameworks are:
 - `cis_1.4_aws`
 - `cis_1.5_aws`
 - `ens_rd2022_aws`
+- `aws_audit_manager_control_tower_guardrails_aws`
+- `aws_foundational_security_best_practices_aws`
+- `cisa_aws`
+- `fedramp_low_revision_4_aws`
+- `fedramp_moderate_revision_4_aws`
+- `ffiec_aws`
+- `gdpr_aws`
+- `gxp_eu_annex_11_aws`
+- `gxp_21_cfr_part_11_aws`
+- `hipaa_aws`
+- `nist_800_53_revision_4_aws`
+- `nist_800_53_revision_5_aws`
+- `nist_800_171_revision_2_aws`
+- `nist_csf_1.1_aws`
+- `pci_3.2.1_aws`
+- `rbi_cyber_security_framework_aws`
+- `soc2_aws`
+
 
 ## List Requirements of Compliance Frameworks
 For each compliance framework, you can use option `--list-compliance-requirements` to list its requirements:
