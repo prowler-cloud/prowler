@@ -12,6 +12,7 @@ AWS_ACCOUNT_NUMBER = 123456789012
 class Test_cloudtrail_multi_region_enabled:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
+            session_config=None,
             original_session=None,
             audit_session=session.Session(
                 profile_name=None,

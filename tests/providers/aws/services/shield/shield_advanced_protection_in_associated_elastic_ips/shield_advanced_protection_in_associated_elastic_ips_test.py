@@ -27,6 +27,7 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
     # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
+            session_config=None,
             original_session=None,
             audit_session=session.Session(
                 profile_name=None,

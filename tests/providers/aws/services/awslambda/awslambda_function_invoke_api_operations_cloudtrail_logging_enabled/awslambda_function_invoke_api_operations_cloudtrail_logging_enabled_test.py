@@ -27,6 +27,7 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
     # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
+            session_config=None,
             original_session=None,
             audit_session=session.Session(
                 profile_name=None,

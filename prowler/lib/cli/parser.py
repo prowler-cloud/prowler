@@ -379,6 +379,16 @@ Detailed documentation at https://docs.prowler.cloud
             help="Scan only resources with specific AWS Resource ARNs, e.g., arn:aws:iam::012345678910:user/test arn:aws:ec2:us-east-1:123456789012:vpc/vpc-12345678",
         )
 
+        # Boto3 Config
+        boto3_config_subparser = aws_parser.add_argument_group("Boto3 Config")
+        boto3_config_subparser.add_argument(
+            "--aws-retries-max-attempts",
+            nargs="?",
+            default=None,
+            type=int,
+            help="Set the maximum attemps for the Boto3 standard retrier config (Default: 3)",
+        )
+
     def __init_azure_parser__(self):
         """Init the Azure Provider CLI parser"""
         azure_parser = self.subparsers.add_parser(

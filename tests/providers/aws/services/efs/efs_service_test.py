@@ -56,6 +56,7 @@ def mock_generate_regional_clients(service, audit_info):
 class Test_EFS:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
+            session_config=None,
             original_session=None,
             audit_session=session.Session(
                 profile_name=None,

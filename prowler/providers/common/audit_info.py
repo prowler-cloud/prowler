@@ -2,6 +2,7 @@ import sys
 
 from arnparse import arnparse
 from boto3 import client, session
+from botocore.config import Config
 from colorama import Fore, Style
 
 from prowler.lib.logger import logger
@@ -122,6 +123,20 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
 
         # Assumed AWS session
         assumed_session = None
+
+        # Set the maximum retries for the standard retrier config
+        aws_retries_max_attempts = arguments.get("aws_retries_max_attempts")
+        if aws_retries_max_attempts:
+            # Create the new config
+            config = Config(
+                retries={
+                    "max_attempts": aws_retries_max_attempts,
+                    "mode": "standard",
+                }
+            )
+            # Merge the new configuration
+            new_boto3_config = current_audit_info.session_config.merge(config)
+            current_audit_info.session_config = new_boto3_config
 
         # Setting session
         current_audit_info.profile = input_profile

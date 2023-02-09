@@ -834,6 +834,13 @@ class Test_Parser:
             self.parser.parse(command)
         assert ex.type == SystemExit
 
+    def test_aws_parser_aws_retries_max_attempts(self):
+        argument = "--aws-retries-max-attempts"
+        max_retries = "10"
+        command = [prowler_command, argument, max_retries]
+        parsed = self.parser.parse(command)
+        assert parsed.aws_retries_max_attempts == int(max_retries)
+
     def test_parser_azure_auth_sp(self):
         argument = "--sp-env-auth"
         command = [prowler_command, "azure", argument]

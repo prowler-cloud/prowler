@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Any, Optional
 
 from boto3 import session
+from botocore.config import Config
 
 
 @dataclass
@@ -33,6 +34,8 @@ class AWS_Organizations_Info:
 class AWS_Audit_Info:
     original_session: session.Session
     audit_session: session.Session
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html
+    session_config: Config
     audited_account: int
     audited_identity_arn: str
     audited_user_id: str
