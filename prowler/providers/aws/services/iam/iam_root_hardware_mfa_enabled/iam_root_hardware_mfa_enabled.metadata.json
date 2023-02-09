@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "iam_root_hardware_mfa_enabled",
-  "CheckTitle": "Ensure hardware MFA is enabled for the root account",
+  "CheckTitle": "Ensure only hardware MFA is enabled for the root account",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -12,8 +12,8 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
   "ResourceType": "AwsIamUser",
-  "Description": "Ensure hardware MFA is enabled for the root account",
-  "Risk": "The root account is the most privileged user in an AWS account. MFA adds an extra layer of protection on top of a user name and password. With MFA enabled when a user signs in to an AWS website they will be prompted for their user name and password as well as for an authentication code from their AWS MFA device. For Level 2 it is recommended that the root account be protected with a hardware MFA.",
+  "Description": "Ensure only hardware MFA is enabled for the root account",
+  "Risk": "The root account is the most privileged user in an AWS account. MFA adds an extra layer of protection on top of a user name and password. With MFA enabled when a user signs in to an AWS website they will be prompted for their user name and password as well as for an authentication code from their AWS MFA device. For Level 2 it is recommended that the root account be protected with only a hardware MFA.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
