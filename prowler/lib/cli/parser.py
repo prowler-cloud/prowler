@@ -2,7 +2,11 @@ import argparse
 import sys
 from argparse import RawTextHelpFormatter
 
-from prowler.config.config import default_output_directory, prowler_version
+from prowler.config.config import (
+    available_compliance_frameworks,
+    default_output_directory,
+    prowler_version,
+)
 from prowler.providers.aws.aws_provider import get_aws_available_regions
 from prowler.providers.aws.lib.arn.arn import is_valid_arn
 
@@ -24,7 +28,6 @@ class ProwlerArgumentParser:
             epilog="""
 To see the different available options on a specific provider, run:
     prowler {provider} -h|--help
-
 Detailed documentation at https://docs.prowler.cloud
 """,
         )
@@ -212,7 +215,7 @@ Detailed documentation at https://docs.prowler.cloud
             "--compliance",
             nargs="+",
             help="Compliance Framework to check against for. The format should be the following: framework_version_provider (e.g.: ens_rd2022_aws)",
-            choices=["ens_rd2022_aws", "cis_1.4_aws", "cis_1.5_aws"],
+            choices=available_compliance_frameworks,
         )
         group.add_argument(
             "--categories",
@@ -241,7 +244,7 @@ Detailed documentation at https://docs.prowler.cloud
             "--list-compliance-requirements",
             nargs="+",
             help="List compliance requirements for a given requirement",
-            choices=["ens_rd2022_aws", "cis_1.4_aws", "cis_1.5_aws"],
+            choices=available_compliance_frameworks,
         )
         list_group.add_argument(
             "--list-categories",
