@@ -68,6 +68,7 @@ class Test_Outputs:
         audited_account = AWS_ACCOUNT_ID
         output_directory = f"{os.path.dirname(os.path.realpath(__file__))}"
         audit_info = AWS_Audit_Info(
+            session_config=None,
             original_session=None,
             audit_session=None,
             audited_account=AWS_ACCOUNT_ID,
@@ -202,6 +203,7 @@ class Test_Outputs:
 
     # def test_fill_json(self):
     #     input_audit_info = AWS_Audit_Info(
+    session_config = (None,)
     #         original_session=None,
     #         audit_session=None,
     #         audited_account=AWS_ACCOUNT_ID,
@@ -246,6 +248,7 @@ class Test_Outputs:
 
     def test_fill_json_asff(self):
         input_audit_info = AWS_Audit_Info(
+            session_config=None,
             original_session=None,
             audit_session=None,
             audited_account=AWS_ACCOUNT_ID,
@@ -316,6 +319,7 @@ class Test_Outputs:
         )
         # Create mock audit_info
         input_audit_info = AWS_Audit_Info(
+            session_config=None,
             original_session=None,
             audit_session=session,
             audited_account=AWS_ACCOUNT_ID,
@@ -364,6 +368,7 @@ class Test_Outputs:
         )
         # Create mock audit_info
         input_audit_info = AWS_Audit_Info(
+            session_config=None,
             original_session=None,
             audit_session=session,
             audited_account=AWS_ACCOUNT_ID,
@@ -470,6 +475,7 @@ class Test_Outputs:
             region_name="eu-west-1",
         )
         input_audit_info = AWS_Audit_Info(
+            session_config=None,
             original_session=None,
             audit_session=session,
             audited_account=AWS_ACCOUNT_ID,

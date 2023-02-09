@@ -40,6 +40,7 @@ class Test_AWS_Provider:
 
         # Fulfil the input session object for Prowler
         audit_info = AWS_Audit_Info(
+            session_config=None,
             original_session=session,
             audit_session=None,
             audited_account=None,
@@ -98,6 +99,7 @@ class Test_AWS_Provider:
         audited_regions = ["eu-west-1", "us-east-1"]
         # Fulfil the input session object for Prowler
         audit_info = AWS_Audit_Info(
+            session_config=None,
             original_session=None,
             audit_session=session,
             audited_account=None,
@@ -127,6 +129,7 @@ class Test_AWS_Provider:
         profile_region = "us-east-1"
         # Fulfil the input session object for Prowler
         audit_info = AWS_Audit_Info(
+            session_config=None,
             original_session=None,
             audit_session=session,
             audited_account=None,
@@ -155,6 +158,7 @@ class Test_AWS_Provider:
         audited_regions = ["cn-northwest-1", "cn-north-1"]
         # Fulfil the input session object for Prowler
         audit_info = AWS_Audit_Info(
+            session_config=None,
             original_session=None,
             audit_session=session,
             audited_account=None,

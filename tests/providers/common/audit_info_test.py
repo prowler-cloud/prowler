@@ -26,6 +26,7 @@ from prowler.providers.common.audit_info import (
 EXAMPLE_AMI_ID = "ami-12c6146b"
 ACCOUNT_ID = 123456789012
 mock_current_audit_info = AWS_Audit_Info(
+    session_config=None,
     original_session=None,
     audit_session=None,
     audited_account="123456789012",

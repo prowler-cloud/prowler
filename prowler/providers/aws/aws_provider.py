@@ -130,7 +130,7 @@ def generate_regional_clients(
                 regions = regions[:1]
         for region in regions:
             regional_client = audit_info.audit_session.client(
-                service, region_name=region
+                service, region_name=region, config=audit_info.session_config
             )
             regional_client.region = region
             regional_clients[region] = regional_client
