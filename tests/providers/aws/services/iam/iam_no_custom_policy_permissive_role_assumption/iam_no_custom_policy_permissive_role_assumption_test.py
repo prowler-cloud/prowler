@@ -165,7 +165,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
         policy_document_non_permissive = {
             "Version": "2012-10-17",
             "Statement": [
-                {"Effect": "Allow", "Action": "logs:CreateLogGroup", "Resource": "*"},
+                {"Effect": "Allow", "Action": "logs:*", "Resource": "*"},
             ],
         }
         policy_name_permissive = "policy2"
