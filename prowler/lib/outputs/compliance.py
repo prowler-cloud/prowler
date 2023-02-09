@@ -14,6 +14,21 @@ from prowler.lib.outputs.models import (
 )
 
 
+def add_manual_controls(output_options, audit_info, file_descriptors):
+    try:
+        # Check if MANUAL control was already added to output
+        if "manual_check" in output_options.bulk_checks_metadata:
+            manual_finding = output_options.bulk_checks_metadata["manual_check"]
+            fill_compliance(
+                output_options, manual_finding, audit_info, file_descriptors
+            )
+            del output_options.bulk_checks_metadata["manual_check"]
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+
+
 def fill_compliance(output_options, finding, audit_info, file_descriptors):
     try:
         # We have to retrieve all the check's compliance requirements
