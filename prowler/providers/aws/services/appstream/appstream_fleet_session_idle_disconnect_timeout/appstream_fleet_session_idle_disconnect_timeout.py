@@ -22,6 +22,7 @@ class appstream_fleet_session_idle_disconnect_timeout(Check):
 
             if (
                 fleet.idle_disconnect_timeout_in_seconds
+                and fleet.idle_disconnect_timeout_in_seconds
                 <= max_idle_disconnect_timeout_in_seconds
             ):
                 report.status = "PASS"

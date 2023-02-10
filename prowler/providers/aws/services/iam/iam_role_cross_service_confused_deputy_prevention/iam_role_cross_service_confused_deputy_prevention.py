@@ -52,7 +52,7 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                                 and "aws:SourceArn" in statement["Condition"]["ArnLike"]
                                 and iam_client.account
                                 in str(
-                                    statement["Condition"]["ArnEquals"]["aws:SourceArn"]
+                                    statement["Condition"]["ArnLike"]["aws:SourceArn"]
                                 )
                             )
                         )

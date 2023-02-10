@@ -48,7 +48,9 @@ class S3:
                     bucket_region = self.client.get_bucket_location(
                         Bucket=bucket["Name"]
                     )["LocationConstraint"]
-                    if not bucket_region:  # If us-east-1, bucket_region is none
+                    if bucket_region == "EU":  # If EU, bucket_region is eu-west-1
+                        bucket_region = "eu-west-1"
+                    if not bucket_region:  # If Nonce, bucket_region is us-east-1
                         bucket_region = "us-east-1"
                     # Arn
                     arn = f"arn:{self.audited_partition}:s3:::{bucket['Name']}"

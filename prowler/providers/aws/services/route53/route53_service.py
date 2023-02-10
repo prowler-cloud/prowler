@@ -129,7 +129,7 @@ class Route53Domains:
             for domain in self.domains.values():
                 domain_detail = self.client.get_domain_detail(DomainName=domain.name)
                 self.domains[domain.name].admin_privacy = domain_detail["AdminPrivacy"]
-                self.domains[domain.name].status_list = domain_detail["StatusList"]
+                self.domains[domain.name].status_list = domain_detail.get("StatusList")
 
         except Exception as error:
             logger.error(

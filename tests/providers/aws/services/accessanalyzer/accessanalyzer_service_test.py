@@ -28,7 +28,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                 {
                     "arn": "ARN",
                     "name": "Test Analyzer",
-                    "status": "Enabled",
+                    "status": "ACTIVE",
                     "findings": 0,
                     "tags": "",
                     "type": "ACCOUNT",
@@ -91,7 +91,7 @@ class Test_AccessAnalyzer_Service:
         assert len(access_analyzer.analyzers) == 1
         assert access_analyzer.analyzers[0].arn == "ARN"
         assert access_analyzer.analyzers[0].name == "Test Analyzer"
-        assert access_analyzer.analyzers[0].status == "Enabled"
+        assert access_analyzer.analyzers[0].status == "ACTIVE"
         assert access_analyzer.analyzers[0].tags == ""
         assert access_analyzer.analyzers[0].type == "ACCOUNT"
         assert access_analyzer.analyzers[0].region == AWS_REGION
