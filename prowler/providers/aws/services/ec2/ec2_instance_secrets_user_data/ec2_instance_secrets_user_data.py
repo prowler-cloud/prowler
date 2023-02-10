@@ -1,5 +1,6 @@
 import os
 import tempfile
+import zlib
 from base64 import b64decode
 
 from detect_secrets import SecretsCollection
@@ -20,7 +21,13 @@ class ec2_instance_secrets_user_data(Check):
 
             if instance.user_data:
                 temp_user_data_file = tempfile.NamedTemporaryFile(delete=False)
-                user_data = b64decode(instance.user_data).decode("utf-8")
+                user_data = b64decode(instance.user_data)
+                if user_data[0:2] == b"\x1f\x8b":  # GZIP magic number
+                    user_data = zlib.decompress(user_data, zlib.MAX_WBITS | 32).decode(
+                        "utf-8"
+                    )
+                else:
+                    user_data = user_data.decode("utf-8")
 
                 temp_user_data_file.write(
                     bytes(user_data, encoding="raw_unicode_escape")
