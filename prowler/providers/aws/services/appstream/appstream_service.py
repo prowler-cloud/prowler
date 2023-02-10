@@ -73,3 +73,4 @@ class Fleet(BaseModel):
     disconnect_timeout_in_seconds: int
     idle_disconnect_timeout_in_seconds: Optional[int]
     enable_default_internet_access: bool
+    region: str
