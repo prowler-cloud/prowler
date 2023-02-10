@@ -12,7 +12,7 @@ from prowler.config.config import (
     orange_color,
 )
 from prowler.lib.logger import logger
-from prowler.lib.outputs.compliance import fill_compliance
+from prowler.lib.outputs.compliance import add_manual_controls, fill_compliance
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.html import fill_html
 from prowler.lib.outputs.json import fill_json_asff
@@ -90,6 +90,12 @@ def report(check_findings, output_options, audit_info):
                                 fill_compliance(
                                     output_options,
                                     finding,
+                                    audit_info,
+                                    file_descriptors,
+                                )
+
+                                add_manual_controls(
+                                    output_options,
                                     audit_info,
                                     file_descriptors,
                                 )
