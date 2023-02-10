@@ -1,6 +1,8 @@
 import json
 import threading
-from dataclasses import dataclass
+from typing import Optional
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -17,9 +19,10 @@ class KMS:
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.keys = []
         self.__threading_call__(self.__list_keys__)
-        self.__describe_key__()
-        self.__get_key_rotation_status__()
-        self.__get_key_policy__()
+        if self.keys:
+            self.__describe_key__()
+            self.__get_key_rotation_status__()
+            self.__get_key_policy__()
 
     def __get_session__(self):
         return self.session
@@ -44,9 +47,9 @@ class KMS:
                     ):
                         self.keys.append(
                             Key(
-                                key["KeyId"],
-                                key["KeyArn"],
-                                regional_client.region,
+                                id=key["KeyId"],
+                                arn=key["KeyArn"],
+                                region=regional_client.region,
                             )
                         )
         except Exception as error:
@@ -100,29 +103,13 @@ class KMS:
             )
 
 
-@dataclass
-class Key:
+class Key(BaseModel):
     id: str
     arn: str
-    state: str
-    origin: str
-    manager: str
-    rotation_enabled: bool
-    policy: dict
-    spec: str
+    state: Optional[str]
+    origin: Optional[str]
+    manager: Optional[str]
+    rotation_enabled: Optional[bool]
+    policy: Optional[dict]
+    spec: Optional[str]
     region: str
-
-    def __init__(
-        self,
-        id,
-        arn,
-        region,
-    ):
-        self.id = id
-        self.arn = arn
-        self.state = None
-        self.origin = None
-        self.manager = None
-        self.rotation_enabled = False
-        self.policy = {}
-        self.region = region

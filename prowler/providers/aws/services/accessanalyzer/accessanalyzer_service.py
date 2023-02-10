@@ -75,7 +75,7 @@ class AccessAnalyzer:
         logger.info("AccessAnalyzer - Get Finding status...")
         try:
             for analyzer in self.analyzers:
-                if analyzer.status != "NOT_AVAILABLE":
+                if analyzer.status == "ACTIVE":
                     regional_client = self.regional_clients[analyzer.region]
                     for finding in analyzer.findings:
                         finding_information = regional_client.get_finding(
@@ -92,7 +92,7 @@ class AccessAnalyzer:
         logger.info("AccessAnalyzer - Listing Findings per Analyzer...")
         try:
             for analyzer in self.analyzers:
-                if analyzer.status != "NOT_AVAILABLE":
+                if analyzer.status == "ACTIVE":
                     regional_client = self.regional_clients[analyzer.region]
                     list_findings_paginator = regional_client.get_paginator(
                         "list_findings"

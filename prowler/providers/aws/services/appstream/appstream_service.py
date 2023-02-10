@@ -1,5 +1,7 @@
 import threading
-from dataclasses import dataclass
+from typing import Optional
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -48,9 +50,9 @@ class AppStream:
                                 disconnect_timeout_in_seconds=fleet[
                                     "DisconnectTimeoutInSeconds"
                                 ],
-                                idle_disconnect_timeout_in_seconds=fleet[
+                                idle_disconnect_timeout_in_seconds=fleet.get(
                                     "IdleDisconnectTimeoutInSeconds"
-                                ],
+                                ),
                                 enable_default_internet_access=fleet[
                                     "EnableDefaultInternetAccess"
                                 ],
@@ -64,29 +66,10 @@ class AppStream:
             )
 
 
-@dataclass
-class Fleet:
+class Fleet(BaseModel):
     arn: str
     name: str
     max_user_duration_in_seconds: int
     disconnect_timeout_in_seconds: int
-    idle_disconnect_timeout_in_seconds: int
+    idle_disconnect_timeout_in_seconds: Optional[int]
     enable_default_internet_access: bool
-
-    def __init__(
-        self,
-        arn,
-        name,
-        max_user_duration_in_seconds,
-        disconnect_timeout_in_seconds,
-        idle_disconnect_timeout_in_seconds,
-        enable_default_internet_access,
-        region,
-    ):
-        self.arn = arn
-        self.name = name
-        self.max_user_duration_in_seconds = max_user_duration_in_seconds
-        self.disconnect_timeout_in_seconds = disconnect_timeout_in_seconds
-        self.idle_disconnect_timeout_in_seconds = idle_disconnect_timeout_in_seconds
-        self.enable_default_internet_access = enable_default_internet_access
-        self.region = region
