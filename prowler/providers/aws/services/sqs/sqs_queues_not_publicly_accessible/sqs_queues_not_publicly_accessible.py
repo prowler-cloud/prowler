@@ -16,7 +16,7 @@ class sqs_queues_not_publicly_accessible(Check):
                 for statement in queue.policy["Statement"]:
                     # Only check allow statements
                     if statement["Effect"] == "Allow":
-                        if (
+                        if ("Principal" in statement and (
                             "*" in statement["Principal"]
                             or (
                                 "AWS" in statement["Principal"]
@@ -26,7 +26,7 @@ class sqs_queues_not_publicly_accessible(Check):
                                 "CanonicalUser" in statement["Principal"]
                                 and "*" in statement["Principal"]["CanonicalUser"]
                             )
-                        ):
+                        )):
                             if "Condition" not in statement:
                                 report.status = "FAIL"
                                 report.status_extended = (
