@@ -7,44 +7,33 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
 class cloudtrail_multi_region_enabled(Check):
     def execute(self):
         findings = []
-        actual_region = None
-        for trail in cloudtrail_client.trails:
+        for region in cloudtrail_client.regional_clients.keys():
             report = Check_Report_AWS(self.metadata())
-            report.region = trail.region
-            if trail.name:  # Check if there are trails in region
-                # Check if region has changed and add report of previous region
-                if actual_region != trail.region:
-                    if report:  # Check if it not the beginning
-                        findings.append(report)
-                trail_in_region = False
-                if not trail_in_region:
+            report.region = region
+            for trail in cloudtrail_client.trails:
+                if trail.region == region:
                     if trail.is_logging:
                         report.status = "PASS"
+                        report.resource_id = trail.name
+                        report.resource_arn = trail.arn
                         if trail.is_multiregion:
                             report.status_extended = (
                                 f"Trail {trail.name} is multiregion and it is logging"
                             )
                         else:
                             report.status_extended = f"Trail {trail.name} is not multiregion and it is logging"
-                        report.resource_id = trail.name
-                        report.resource_arn = trail.arn
-                        trail_in_region = True  # Trail enabled in region
+                        # Since there exists a logging trail in that region there is no point in checking the reamaining trails
+                        # Store the finding and exit the loop
+                        findings.append(report)
+                        break
                     else:
                         report.status = "FAIL"
                         report.status_extended = (
                             "No CloudTrail trails enabled and logging were found"
                         )
-                        report.region = cloudtrail_client.region
                         report.resource_arn = "No trails"
                         report.resource_id = "No trails"
-                actual_region = trail.region
-            else:
-                report.status = "FAIL"
-                report.status_extended = (
-                    "No CloudTrail trails enabled and logging were found"
-                )
-                report.resource_arn = "No trails"
-                report.resource_id = "No trails"
+            # If there are no trails logging it is needed to store the FAIL once all the trails have been checked
+            if report.status == "FAIL":
                 findings.append(report)
-
         return findings
