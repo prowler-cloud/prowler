@@ -72,32 +72,33 @@ class iam_policy_allows_privilege_escalation(Check):
             denied_not_actions = set()
 
             # Recover all policy actions
-            if type(policy["PolicyDocument"]["Statement"]) != list:
-                policy_statements = [policy["PolicyDocument"]["Statement"]]
-            else:
-                policy_statements = policy["PolicyDocument"]["Statement"]
-            for statements in policy_statements:
-                # Recover allowed actions
-                if statements["Effect"] == "Allow":
-                    if "Action" in statements:
-                        if type(statements["Action"]) is str:
-                            allowed_actions = {statements["Action"]}
-                        if type(statements["Action"]) is list:
-                            allowed_actions = set(statements["Action"])
+            if policy.get("PolicyDocument"):
+                if type(policy["PolicyDocument"]["Statement"]) != list:
+                    policy_statements = [policy["PolicyDocument"]["Statement"]]
+                else:
+                    policy_statements = policy["PolicyDocument"]["Statement"]
+                for statements in policy_statements:
+                    # Recover allowed actions
+                    if statements["Effect"] == "Allow":
+                        if "Action" in statements:
+                            if type(statements["Action"]) is str:
+                                allowed_actions = {statements["Action"]}
+                            if type(statements["Action"]) is list:
+                                allowed_actions = set(statements["Action"])
 
-                # Recover denied actions
-                if statements["Effect"] == "Deny":
-                    if "Action" in statements:
-                        if type(statements["Action"]) is str:
-                            denied_actions = {statements["Action"]}
-                        if type(statements["Action"]) is list:
-                            denied_actions = set(statements["Action"])
+                    # Recover denied actions
+                    if statements["Effect"] == "Deny":
+                        if "Action" in statements:
+                            if type(statements["Action"]) is str:
+                                denied_actions = {statements["Action"]}
+                            if type(statements["Action"]) is list:
+                                denied_actions = set(statements["Action"])
 
-                    if "NotAction" in statements:
-                        if type(statements["NotAction"]) is str:
-                            denied_not_actions = {statements["NotAction"]}
-                        if type(statements["NotAction"]) is list:
-                            denied_not_actions = set(statements["NotAction"])
+                        if "NotAction" in statements:
+                            if type(statements["NotAction"]) is str:
+                                denied_not_actions = {statements["NotAction"]}
+                            if type(statements["NotAction"]) is list:
+                                denied_not_actions = set(statements["NotAction"])
 
             # First, we need to perform a left join with ALLOWED_ACTIONS and DENIED_ACTIONS
             left_actions = allowed_actions.difference(denied_actions)

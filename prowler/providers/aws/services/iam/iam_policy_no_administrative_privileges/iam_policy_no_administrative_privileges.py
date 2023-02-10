@@ -12,21 +12,25 @@ class iam_policy_no_administrative_privileges(Check):
             report.resource_id = policy["PolicyName"]
             report.status = "PASS"
             report.status_extended = f"Policy {policy['PolicyName']} does not allow '*:*' administrative privileges"
-            # Check the statements, if one includes *:* stop iterating over the rest
-            if type(policy["PolicyDocument"]["Statement"]) != list:
-                policy_statements = [policy["PolicyDocument"]["Statement"]]
-            else:
-                policy_statements = policy["PolicyDocument"]["Statement"]
-            for statement in policy_statements:
-                # Check policies with "Effect": "Allow" with "Action": "*" over "Resource": "*".
-                if (
-                    statement["Effect"] == "Allow"
-                    and "Action" in statement
-                    and (statement["Action"] == "*" or statement["Action"] == ["*"])
-                    and (statement["Resource"] == "*" or statement["Resource"] == ["*"])
-                ):
-                    report.status = "FAIL"
-                    report.status_extended = f"Policy {policy['PolicyName']} allows '*:*' administrative privileges"
-                    break
+            if policy.get("PolicyDocument"):
+                # Check the statements, if one includes *:* stop iterating over the rest
+                if type(policy["PolicyDocument"]["Statement"]) != list:
+                    policy_statements = [policy["PolicyDocument"]["Statement"]]
+                else:
+                    policy_statements = policy["PolicyDocument"]["Statement"]
+                for statement in policy_statements:
+                    # Check policies with "Effect": "Allow" with "Action": "*" over "Resource": "*".
+                    if (
+                        statement["Effect"] == "Allow"
+                        and "Action" in statement
+                        and (statement["Action"] == "*" or statement["Action"] == ["*"])
+                        and (
+                            statement["Resource"] == "*"
+                            or statement["Resource"] == ["*"]
+                        )
+                    ):
+                        report.status = "FAIL"
+                        report.status_extended = f"Policy {policy['PolicyName']} allows '*:*' administrative privileges"
+                        break
             findings.append(report)
         return findings
