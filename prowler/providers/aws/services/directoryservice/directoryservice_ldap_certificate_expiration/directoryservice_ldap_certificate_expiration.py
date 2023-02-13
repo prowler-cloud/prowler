@@ -22,7 +22,7 @@ class directoryservice_ldap_certificate_expiration(Check):
                     certificate.expiry_date_time
                     - datetime.now(
                         certificate.expiry_date_time.tz_info
-                        if certificate.expiry_date_time.tz_info
+                        if hasattr(certificate.expiry_date_time, "tz_info")
                         else None
                     )
                 ).days
