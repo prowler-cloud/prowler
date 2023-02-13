@@ -44,7 +44,10 @@ mock_current_audit_info = AWS_Audit_Info(
 )
 
 mock_azure_audit_info = Azure_Audit_Info(
-    credentials=None, identity=Azure_Identity_Info(), audit_metadata=None
+    credentials=None,
+    identity=Azure_Identity_Info(),
+    audit_metadata=None,
+    audit_resources=None,
 )
 
 mock_set_audit_info = Audit_Info()
