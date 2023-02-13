@@ -480,6 +480,7 @@ def recover_checks_from_service(service_list: list, provider: str) -> list:
 
 
 def exclude_checks_from_input_arn(audit_resources: list, provider: str) -> set:
+    """exclude_checks_from_input_arn gets the list of checks from the input arns"""
     checks_from_arn = set()
     # Handle if there are audit resources so only their services are executed
     if audit_resources:
