@@ -24,9 +24,9 @@ ENV PATH="$HOME/.local/bin:$PATH"
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir .
 
-# Remove Prowler directory
+# Remove Prowler directory and build files
 USER 0
-RUN rm -rf /home/prowler/prowler /home/prowler/pyproject.toml
+RUN rm -rf /home/prowler/prowler /home/prowler/pyproject.toml /home/prowler/build /home/prowler/prowler_cloud.egg-info
 
 USER prowler
 ENTRYPOINT ["prowler"]
