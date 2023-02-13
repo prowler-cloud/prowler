@@ -164,12 +164,8 @@ def print_compliance_frameworks(
     bulk_compliance_frameworks: dict,
 ):
     frameworks_num = len(bulk_compliance_frameworks.keys())
-    plural_string = (
-        f"There are {Fore.YELLOW}{frameworks_num}{Style.RESET_ALL} available Compliance Frameworks: \n",
-    )
-    singular_string = (
-        f"There is {Fore.YELLOW}{frameworks_num}{Style.RESET_ALL} available Compliance Framework: \n",
-    )
+    plural_string = f"There are {Fore.YELLOW}{frameworks_num}{Style.RESET_ALL} available Compliance Frameworks: \n"
+    singular_string = f"There is {Fore.YELLOW}{frameworks_num}{Style.RESET_ALL} available Compliance Framework: \n"
     message = plural_string if frameworks_num > 1 else singular_string
 
     print(message)
@@ -218,10 +214,10 @@ def print_checks(
 
     checks_num = len(check_list)
     plural_string = (
-        f"\nThere are {Fore.YELLOW}{checks_num}{Style.RESET_ALL} available checks.\n",
+        f"\nThere are {Fore.YELLOW}{checks_num}{Style.RESET_ALL} available checks.\n"
     )
     singular_string = (
-        f"\nThere is {Fore.YELLOW}{checks_num}{Style.RESET_ALL} available check.\n",
+        f"\nThere is {Fore.YELLOW}{checks_num}{Style.RESET_ALL} available check.\n"
     )
 
     message = plural_string if checks_num > 1 else singular_string
