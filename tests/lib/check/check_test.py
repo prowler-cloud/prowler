@@ -6,9 +6,9 @@ from pkgutil import ModuleInfo
 from mock import patch
 
 from prowler.lib.check.check import (
-    exclude_checks_from_input_arn,
     exclude_checks_to_run,
     exclude_services_to_run,
+    get_checks_from_input_arn,
     list_modules,
     list_services,
     parse_checks_from_file,
@@ -285,7 +285,7 @@ class Test_Check:
         "prowler.lib.check.check.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_lambda_service,
     )
-    def test_exclude_checks_from_input_arn(self):
+    def test_get_checks_from_input_arn(self):
         audit_resources = ["arn:aws:lambda:us-east-1:123456789:function:test-lambda"]
         provider = "aws"
         expected_checks = {
@@ -293,7 +293,7 @@ class Test_Check:
             "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
             "awslambda_function_no_secrets_in_code",
         }
-        recovered_checks = exclude_checks_from_input_arn(audit_resources, provider)
+        recovered_checks = get_checks_from_input_arn(audit_resources, provider)
         assert recovered_checks == expected_checks
 
     # def test_parse_checks_from_compliance_framework_two(self):

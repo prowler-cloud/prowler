@@ -7,10 +7,10 @@ from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
     bulk_load_compliance_frameworks,
-    exclude_checks_from_input_arn,
     exclude_checks_to_run,
     exclude_services_to_run,
     execute_checks,
+    get_checks_from_input_arn,
     list_categories,
     list_services,
     print_categories,
@@ -136,7 +136,7 @@ def prowler():
 
     # Once the audit_info is set and we have the eventual checks from arn, it is time to exclude the others
     if audit_info.audit_resources:
-        checks_to_execute = exclude_checks_from_input_arn(
+        checks_to_execute = get_checks_from_input_arn(
             audit_info.audit_resources, provider
         )
 
