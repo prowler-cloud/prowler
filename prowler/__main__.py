@@ -10,6 +10,7 @@ from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
     execute_checks,
+    get_checks_from_input_arn,
     list_categories,
     list_services,
     print_categories,
@@ -99,9 +100,6 @@ def prowler():
             )
             sys.exit()
 
-    # Set the audit info based on the selected provider
-    audit_info = set_provider_audit_info(provider, args.__dict__)
-
     # Load checks to execute
     checks_to_execute = load_checks_to_execute(
         bulk_checks_metadata,
@@ -113,7 +111,6 @@ def prowler():
         compliance_framework,
         categories,
         provider,
-        audit_info,
     )
 
     # Exclude checks if -e/--excluded-checks
@@ -133,6 +130,15 @@ def prowler():
     if args.list_checks:
         print_checks(provider, checks_to_execute, bulk_checks_metadata)
         sys.exit()
+
+    # Set the audit info based on the selected provider
+    audit_info = set_provider_audit_info(provider, args.__dict__)
+
+    # Once the audit_info is set and we have the eventual checks from arn, it is time to exclude the others
+    if audit_info.audit_resources:
+        checks_to_execute = get_checks_from_input_arn(
+            audit_info.audit_resources, provider
+        )
 
     # Parse content from Allowlist file and get it, if necessary, from S3
     if provider == "aws" and args.allowlist_file:

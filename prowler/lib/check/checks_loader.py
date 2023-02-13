@@ -2,9 +2,9 @@ from prowler.lib.check.check import (
     parse_checks_from_compliance_framework,
     parse_checks_from_file,
     recover_checks_from_provider,
+    recover_checks_from_service,
 )
 from prowler.lib.logger import logger
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
 # Generate the list of checks to execute
@@ -19,24 +19,9 @@ def load_checks_to_execute(
     compliance_frameworks: list,
     categories: set,
     provider: str,
-    audit_info: AWS_Audit_Info,
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and input arguments specified"""
     checks_to_execute = set()
-
-    # Handle if there are audit resources so only their services are executed
-    if audit_info.audit_resources:
-        service_list = []
-        for resource in audit_info.audit_resources:
-            service = resource.split(":")[2]
-            # Parse services when they are different in the ARNs
-            if service == "lambda":
-                service = "awslambda"
-            if service == "elasticloadbalancing":
-                service = "elb"
-            elif service == "logs":
-                service = "cloudwatch"
-            service_list.append(service)
 
     # Handle if there are checks passed using -c/--checks
     if check_list:
@@ -59,19 +44,7 @@ def load_checks_to_execute(
 
     # Handle if there are services passed using -s/--services
     elif service_list:
-        # Loaded dynamically from modules within provider/services
-        for service in service_list:
-            modules = recover_checks_from_provider(provider, service)
-            if not modules:
-                logger.error(f"Service '{service}' does not have checks.")
-            else:
-                for check_module in modules:
-                    # Recover check name and module name from import path
-                    # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
-                    check_name = check_module[0].split(".")[-1]
-                    # If the service is present in the group list passed as parameters
-                    # if service_name in group_list: checks_to_execute.add(check_name)
-                    checks_to_execute.add(check_name)
+        checks_to_execute = recover_checks_from_service(service_list, provider)
 
     # Handle if there are compliance frameworks passed using --compliance
     elif compliance_frameworks:

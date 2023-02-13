@@ -371,7 +371,6 @@ def execute_checks(
 
             # If check does not exists in the provider or is from another provider
             except ModuleNotFoundError:
-
                 logger.critical(
                     f"Check '{check_name}' was not found for the {provider.upper()} provider"
                 )
@@ -486,3 +485,44 @@ def update_audit_metadata(
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
+
+
+def recover_checks_from_service(service_list: list, provider: str) -> list:
+    checks = set()
+    for service in service_list:
+        modules = recover_checks_from_provider(provider, service)
+        if not modules:
+            logger.error(f"Service '{service}' does not have checks.")
+
+        else:
+            for check_module in modules:
+                # Recover check name and module name from import path
+                # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
+                check_name = check_module[0].split(".")[-1]
+                # If the service is present in the group list passed as parameters
+                # if service_name in group_list: checks_from_arn.add(check_name)
+                checks.add(check_name)
+    return checks
+
+
+def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
+    """get_checks_from_input_arn gets the list of checks from the input arns"""
+    checks_from_arn = set()
+    # Handle if there are audit resources so only their services are executed
+    if audit_resources:
+        service_list = []
+        for resource in audit_resources:
+            service = resource.split(":")[2]
+            # Parse services when they are different in the ARNs
+            if service == "lambda":
+                service = "awslambda"
+            if service == "elasticloadbalancing":
+                service = "elb"
+            elif service == "logs":
+                service = "cloudwatch"
+            service_list.append(service)
+
+        checks_from_arn = recover_checks_from_service(service_list, provider)
+
+    # Return final checks list
+    return checks_from_arn
