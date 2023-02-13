@@ -31,7 +31,10 @@ class Test_Common_Output_Options:
     # Mocked Azure Audit Info
     def set_mocked_azure_audit_info(self):
         audit_info = Azure_Audit_Info(
-            credentials=None, identity=Azure_Identity_Info(), audit_metadata=None
+            credentials=None,
+            identity=Azure_Identity_Info(),
+            audit_metadata=None,
+            audit_resources=None,
         )
         return audit_info
 

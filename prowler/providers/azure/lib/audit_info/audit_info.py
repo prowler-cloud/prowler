@@ -4,5 +4,8 @@ from prowler.providers.azure.lib.audit_info.models import (
 )
 
 azure_audit_info = Azure_Audit_Info(
-    credentials=None, identity=Azure_Identity_Info(), audit_metadata=None
+    credentials=None,
+    identity=Azure_Identity_Info(),
+    audit_resources=None,
+    audit_metadata=None,
 )
