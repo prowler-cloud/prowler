@@ -149,7 +149,6 @@ def print_services(service_list: set):
     plural_string = (
         f"There are {Fore.YELLOW}{services_num}{Style.RESET_ALL} available services: \n"
     )
-
     singular_string = (
         f"There is {Fore.YELLOW}{services_num}{Style.RESET_ALL} available service: \n"
     )
