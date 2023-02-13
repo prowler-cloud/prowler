@@ -2180,6 +2180,19 @@
         "aws-us-gov": []
       }
     },
+    "connectcampaigns": {
+      "regions": {
+        "aws": [
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "connectcases": {
       "regions": {
         "aws": [
@@ -7564,12 +7577,12 @@
           "ca-central-1",
           "eu-west-2",
           "me-central-1",
-          "us-west-1",
           "ap-northeast-2",
           "ap-northeast-3",
           "ap-southeast-2",
           "eu-north-1",
           "sa-east-1",
+          "us-west-1",
           "us-west-2"
         ],
         "aws-cn": [
@@ -7577,7 +7590,8 @@
           "cn-north-1"
         ],
         "aws-us-gov": [
-          "us-gov-west-1"
+          "us-gov-west-1",
+          "us-gov-east-1"
         ]
       }
     },
