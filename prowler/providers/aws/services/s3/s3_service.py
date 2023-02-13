@@ -67,7 +67,7 @@ class S3:
                             buckets.append(Bucket(bucket["Name"], arn, bucket_region))
                 except Exception as error:
                     logger.error(
-                        f"{bucket_region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        f"{bucket} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
             logger.error(

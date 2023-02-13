@@ -20,8 +20,8 @@ class CloudFront:
         if global_client:
             self.client = list(global_client.values())[0]
             self.region = self.client.region
-            self.distributions = self.__list_distributions__(self.client, self.region)
-            self.distributions = self.__get_distribution_config__(
+            self.__list_distributions__(self.client, self.region)
+            self.__get_distribution_config__(
                 self.client, self.distributions, self.region
             )
 
@@ -30,7 +30,6 @@ class CloudFront:
 
     def __list_distributions__(self, client, region) -> dict:
         logger.info("CloudFront - Listing Distributions...")
-        distributions = {}
         try:
             list_ditributions_paginator = client.get_paginator("list_distributions")
             for page in list_ditributions_paginator.paginate():
@@ -48,9 +47,7 @@ class CloudFront:
                                 origins=origins,
                                 region=region,
                             )
-                            distributions[distribution_id] = distribution
-
-            return distributions
+                            self.distributions[distribution_id] = distribution
 
         except Exception as error:
             logger.error(
@@ -99,8 +96,6 @@ class CloudFront:
             logger.error(
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return distributions
 
 
 class OriginsSSLProtocols(Enum):

@@ -69,7 +69,9 @@ class Lambda:
                         if "Runtime" in function:
                             self.functions[lambda_name].runtime = function["Runtime"]
                         if "Environment" in function:
-                            lambda_environment = function["Environment"]["Variables"]
+                            lambda_environment = function["Environment"].get(
+                                "Variables"
+                            )
                             self.functions[lambda_name].environment = lambda_environment
 
         except Exception as error:
