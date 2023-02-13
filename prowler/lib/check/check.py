@@ -479,9 +479,7 @@ def recover_checks_from_service(service_list: list, provider: str) -> list:
     return checks
 
 
-def exclude_checks_from_input_arn(
-    checks_to_execute: set, audit_resources: list, provider: str
-) -> set:
+def exclude_checks_from_input_arn(audit_resources: list, provider: str) -> set:
     checks_from_arn = set()
     # Handle if there are audit resources so only their services are executed
     if audit_resources:
@@ -498,12 +496,6 @@ def exclude_checks_from_input_arn(
             service_list.append(service)
 
         checks_from_arn = recover_checks_from_service(service_list, provider)
-        # Time to iterate over the general loaded checks to exclude those that don't match the input options
-        # The copy is needed since you cant change the size of the set while iterating over it
-        # Changes will be done on original set
-        for check in checks_to_execute.copy():
-            if check not in checks_from_arn:
-                checks_to_execute.remove(check)
 
     # Return final checks list
-    return checks_to_execute
+    return checks_from_arn

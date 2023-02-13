@@ -135,9 +135,10 @@ def prowler():
     audit_info = set_provider_audit_info(provider, args.__dict__)
 
     # Once the audit_info is set and we have the eventual checks from arn, it is time to exclude the others
-    checks_to_execute = exclude_checks_from_input_arn(
-        checks_to_execute, audit_info.audit_resources, provider
-    )
+    if audit_info.audit_resources:
+        checks_to_execute = exclude_checks_from_input_arn(
+            audit_info.audit_resources, provider
+        )
 
     # Parse content from Allowlist file and get it, if necessary, from S3
     if provider == "aws" and args.allowlist_file:

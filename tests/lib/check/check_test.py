@@ -286,13 +286,6 @@ class Test_Check:
         new=mock_recover_checks_from_aws_provider_lambda_service,
     )
     def test_exclude_checks_from_input_arn(self):
-        checks_to_execute = {
-            "accessanalyzer_enabled_without_findings",
-            "awslambda_function_url_cors_policy",
-            "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
-            "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
-            "awslambda_function_no_secrets_in_code",
-        }
         audit_resources = ["arn:aws:lambda:us-east-1:123456789:function:test-lambda"]
         provider = "aws"
         expected_checks = {
@@ -300,9 +293,7 @@ class Test_Check:
             "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
             "awslambda_function_no_secrets_in_code",
         }
-        recovered_checks = exclude_checks_from_input_arn(
-            checks_to_execute, audit_resources, provider
-        )
+        recovered_checks = exclude_checks_from_input_arn(audit_resources, provider)
         assert recovered_checks == expected_checks
 
     # def test_parse_checks_from_compliance_framework_two(self):
