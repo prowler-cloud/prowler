@@ -136,17 +136,28 @@ def list_categories(provider: str, bulk_checks_metadata: dict) -> set():
 
 
 def print_categories(categories: set):
-    print(
-        f"There are {Fore.YELLOW}{len(categories)}{Style.RESET_ALL} available categories: \n"
-    )
+    categories_num = len(categories)
+    plural_string = f"There are {Fore.YELLOW}{categories_num}{Style.RESET_ALL} available categories: \n"
+    singular_string = f"There is {Fore.YELLOW}{categories_num}{Style.RESET_ALL} available category: \n"
+
+    message = plural_string if categories_num > 1 else singular_string
+    print(message)
     for category in categories:
         print(f"- {category}")
 
 
 def print_services(service_list: set):
-    print(
-        f"There are {Fore.YELLOW}{len(service_list)}{Style.RESET_ALL} available services: \n"
+    services_num = len(service_list)
+    plural_string = (
+        f"There are {Fore.YELLOW}{services_num}{Style.RESET_ALL} available services: \n"
     )
+    singular_string = (
+        f"There is {Fore.YELLOW}{services_num}{Style.RESET_ALL} available service: \n"
+    )
+
+    message = plural_string if services_num > 1 else singular_string
+    print(message)
+
     for service in service_list:
         print(f"- {service}")
 
@@ -154,9 +165,12 @@ def print_services(service_list: set):
 def print_compliance_frameworks(
     bulk_compliance_frameworks: dict,
 ):
-    print(
-        f"There are {Fore.YELLOW}{len(bulk_compliance_frameworks.keys())}{Style.RESET_ALL} available Compliance Frameworks: \n"
-    )
+    frameworks_num = len(bulk_compliance_frameworks.keys())
+    plural_string = f"There are {Fore.YELLOW}{frameworks_num}{Style.RESET_ALL} available Compliance Frameworks: \n"
+    singular_string = f"There is {Fore.YELLOW}{frameworks_num}{Style.RESET_ALL} available Compliance Framework: \n"
+    message = plural_string if frameworks_num > 1 else singular_string
+
+    print(message)
     for framework in bulk_compliance_frameworks.keys():
         print(f"\t- {Fore.YELLOW}{framework}{Style.RESET_ALL}")
 
@@ -200,9 +214,16 @@ def print_checks(
             )
             sys.exit(1)
 
-    print(
-        f"\nThere are {Fore.YELLOW}{len(check_list)}{Style.RESET_ALL} available checks.\n"
+    checks_num = len(check_list)
+    plural_string = (
+        f"\nThere are {Fore.YELLOW}{checks_num}{Style.RESET_ALL} available checks.\n"
     )
+    singular_string = (
+        f"\nThere is {Fore.YELLOW}{checks_num}{Style.RESET_ALL} available check.\n"
+    )
+
+    message = plural_string if checks_num > 1 else singular_string
+    print(message)
 
 
 # Parse checks from compliance frameworks specification
@@ -361,8 +382,13 @@ def execute_checks(
                 )
     else:
         # Default execution
+        checks_num = len(checks_to_execute)
+        plural_string = "checks"
+        singular_string = "check"
+
+        check_noun = plural_string if checks_num > 1 else singular_string
         print(
-            f"{Style.BRIGHT}Executing {len(checks_to_execute)} checks, please wait...{Style.RESET_ALL}\n"
+            f"{Style.BRIGHT}Executing {checks_num} {check_noun}, please wait...{Style.RESET_ALL}\n"
         )
         with alive_bar(
             total=len(checks_to_execute),
