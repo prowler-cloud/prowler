@@ -6,12 +6,14 @@ from pkgutil import ModuleInfo
 from mock import patch
 
 from prowler.lib.check.check import (
+    exclude_checks_from_input_arn,
     exclude_checks_to_run,
     exclude_services_to_run,
     list_modules,
     list_services,
     parse_checks_from_file,
     recover_checks_from_provider,
+    recover_checks_from_service,
     update_audit_metadata,
 )
 from prowler.lib.check.models import load_check_metadata
@@ -100,6 +102,23 @@ def mock_recover_checks_from_aws_provider(*_):
         (
             "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
             "/root_dir/fake_path/ec2/ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        ),
+    ]
+
+
+def mock_recover_checks_from_aws_provider_lambda_service(*_):
+    return [
+        (
+            "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
+            "/root_dir/fake_path/awslambda/awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
+        ),
+        (
+            "awslambda_function_url_cors_policy",
+            "/root_dir/fake_path/awslambda/awslambda_function_url_cors_policy",
+        ),
+        (
+            "awslambda_function_no_secrets_in_code",
+            "/root_dir/fake_path/awslambda/awslambda_function_no_secrets_in_code",
         ),
     ]
 
@@ -246,6 +265,45 @@ class Test_Check:
         service = "storage"
         expected_modules = list_modules(provider, service)
         assert expected_modules == expected_packages
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider,
+    )
+    def test_recover_checks_from_service(self):
+        service_list = ["accessanalyzer", "awslambda", "ec2"]
+        provider = "aws"
+        expected_checks = {
+            "accessanalyzer_enabled_without_findings",
+            "awslambda_function_url_cors_policy",
+            "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        }
+        recovered_checks = recover_checks_from_service(service_list, provider)
+        assert recovered_checks == expected_checks
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_lambda_service,
+    )
+    def test_exclude_checks_from_input_arn(self):
+        checks_to_execute = {
+            "accessanalyzer_enabled_without_findings",
+            "awslambda_function_url_cors_policy",
+            "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+            "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
+            "awslambda_function_no_secrets_in_code",
+        }
+        audit_resources = ["arn:aws:lambda:us-east-1:123456789:function:test-lambda"]
+        provider = "aws"
+        expected_checks = {
+            "awslambda_function_url_cors_policy",
+            "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
+            "awslambda_function_no_secrets_in_code",
+        }
+        recovered_checks = exclude_checks_from_input_arn(
+            checks_to_execute, audit_resources, provider
+        )
+        assert recovered_checks == expected_checks
 
     # def test_parse_checks_from_compliance_framework_two(self):
     #     test_case = {
