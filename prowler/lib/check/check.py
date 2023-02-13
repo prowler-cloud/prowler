@@ -133,24 +133,12 @@ def list_categories(provider: str, bulk_checks_metadata: dict) -> set():
     return available_categories
 
 
-def noun_plural_or_singular_string(
-    noun_count: int,
-    plural_string: str,
-    singular_string: str,
-) -> str:
-    if noun_count == 1:
-        return singular_string
-    else:
-        return plural_string
-
-
 def print_categories(categories: set):
     categories_num = len(categories)
-    message = noun_plural_or_singular_string(
-        noun_count=categories_num,
-        plural_string=f"There are {Fore.YELLOW}{categories_num}{Style.RESET_ALL} available categories: \n",
-        singular_string=f"There is {Fore.YELLOW}{categories_num}{Style.RESET_ALL} available category: \n",
-    )
+    plural_string = f"There are {Fore.YELLOW}{categories_num}{Style.RESET_ALL} available categories: \n"
+    singular_string = f"There is {Fore.YELLOW}{categories_num}{Style.RESET_ALL} available category: \n"
+
+    message = plural_string if categories_num > 1 else singular_string
     print(message)
     for category in categories:
         print(f"- {category}")
@@ -158,12 +146,17 @@ def print_categories(categories: set):
 
 def print_services(service_list: set):
     services_num = len(service_list)
-    message = noun_plural_or_singular_string(
-        noun_count=services_num,
-        plural_string=f"There are {Fore.YELLOW}{services_num}{Style.RESET_ALL} available services: \n",
-        singular_string=f"There is {Fore.YELLOW}{services_num}{Style.RESET_ALL} available service: \n",
+    plural_string = (
+        f"There are {Fore.YELLOW}{services_num}{Style.RESET_ALL} available services: \n"
     )
+
+    singular_string = (
+        f"There is {Fore.YELLOW}{services_num}{Style.RESET_ALL} available service: \n"
+    )
+
+    message = plural_string if services_num > 1 else singular_string
     print(message)
+
     for service in service_list:
         print(f"- {service}")
 
@@ -172,11 +165,14 @@ def print_compliance_frameworks(
     bulk_compliance_frameworks: dict,
 ):
     frameworks_num = len(bulk_compliance_frameworks.keys())
-    message = noun_plural_or_singular_string(
-        noun_count=frameworks_num,
-        plural_string=f"There are {Fore.YELLOW}{frameworks_num}{Style.RESET_ALL} available Compliance Frameworks: \n",
-        singular_string=f"There is {Fore.YELLOW}{frameworks_num}{Style.RESET_ALL} available Compliance Framework: \n",
+    plural_string = (
+        f"There are {Fore.YELLOW}{frameworks_num}{Style.RESET_ALL} available Compliance Frameworks: \n",
     )
+    singular_string = (
+        f"There is {Fore.YELLOW}{frameworks_num}{Style.RESET_ALL} available Compliance Framework: \n",
+    )
+    message = plural_string if frameworks_num > 1 else singular_string
+
     print(message)
     for framework in bulk_compliance_frameworks.keys():
         print(f"\t- {Fore.YELLOW}{framework}{Style.RESET_ALL}")
@@ -222,11 +218,14 @@ def print_checks(
             sys.exit()
 
     checks_num = len(check_list)
-    message = noun_plural_or_singular_string(
-        noun_count=checks_num,
-        plural_string=f"\nThere are {Fore.YELLOW}{checks_num}{Style.RESET_ALL} available checks.\n",
-        singular_string=f"\nThere is {Fore.YELLOW}{checks_num}{Style.RESET_ALL} available check.\n",
+    plural_string = (
+        f"\nThere are {Fore.YELLOW}{checks_num}{Style.RESET_ALL} available checks.\n",
     )
+    singular_string = (
+        f"\nThere is {Fore.YELLOW}{checks_num}{Style.RESET_ALL} available check.\n",
+    )
+
+    message = plural_string if checks_num > 1 else singular_string
     print(message)
 
 
@@ -368,11 +367,10 @@ def execute_checks(
     else:
         # Default execution
         checks_num = len(checks_to_execute)
-        check_noun = noun_plural_or_singular_string(
-            noun_count=checks_num,
-            plural_string="checks",
-            singular_string="check",
-        )
+        plural_string = "checks"
+        singular_string = "check"
+
+        check_noun = plural_string if checks_num > 1 else singular_string
         print(
             f"{Style.BRIGHT}Executing {checks_num} {check_noun}, please wait...{Style.RESET_ALL}\n"
         )
