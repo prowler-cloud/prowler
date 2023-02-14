@@ -66,9 +66,10 @@ class Codebuild:
                             if len(ids["ids"]) > 0:
                                 builds = client.batch_get_builds(ids=[ids["ids"][0]])
                                 if "builds" in builds:
-                                    project.last_invoked_time = builds["builds"][0][
-                                        "endTime"
-                                    ]
+                                    if "endTime" in builds["builds"][0]:
+                                        project.last_invoked_time = builds["builds"][0][
+                                            "endTime"
+                                        ]
 
                         projects = client.batch_get_projects(names=[project.name])[
                             "projects"
@@ -86,7 +87,7 @@ class Codebuild:
 class CodebuildProject:
     name: str
     region: str
-    last_invoked_time: datetime
+    last_invoked_time: Optional[datetime.datetime]
     buildspec: Optional[str]
 
     def __init__(self, name, region, last_invoked_time, buildspec):
