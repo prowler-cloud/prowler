@@ -37,6 +37,7 @@ nav:
       - Logging: tutorials/logging.md
       - Allowlist: tutorials/allowlist.md
       - Pentesting: tutorials/pentesting.md
+      - Developer Guide: tutorials/developer-guide.md
       - AWS:
           - Assume Role: tutorials/aws/role-assumption.md
           - AWS Security Hub: tutorials/aws/securityhub.md
@@ -50,6 +51,7 @@ nav:
       - Azure:
           - Authentication: tutorials/azure/authentication.md
           - Subscriptions: tutorials/azure/subscriptions.md
+  - Developer Guide: tutorials/developer-guide.md
   - Security: security.md
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md
