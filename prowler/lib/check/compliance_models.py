@@ -107,19 +107,18 @@ class Compliance_Base_Model(BaseModel):
 
     Framework: str
     Provider: str
-    Version: str
+    Version: Optional[str]
     Description: str
     Requirements: list[Compliance_Requirement]
 
     @root_validator(pre=True)
-    def framework_provider_and_version_must_not_be_empty(cls, values):
-        framework, provider, version = (
+    def framework_and_provider_must_not_be_empty(cls, values):
+        framework, provider = (
             values.get("Framework"),
             values.get("Provider"),
-            values.get("Version"),
         )
-        if framework == "" or provider == "" or version == "":
-            raise ValueError("Framework, Provider or Version must not be empty")
+        if framework == "" or provider == "":
+            raise ValueError("Framework or Provider must not be empty")
         return values
 
 

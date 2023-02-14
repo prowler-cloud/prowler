@@ -179,17 +179,18 @@ def print_compliance_requirements(
     bulk_compliance_frameworks: dict, compliance_frameworks: list
 ):
     for compliance_framework in compliance_frameworks:
-        for compliance in bulk_compliance_frameworks.values():
-            # Workaround until we have more Compliance Frameworks
-            split_compliance = compliance_framework.split("_")
-            framework = split_compliance[0].upper()
-            version = split_compliance[1].upper()
-            provider = split_compliance[2].upper()
-            if framework in compliance.Framework and compliance.Version == version:
+        for key in bulk_compliance_frameworks.keys():
+            framework = bulk_compliance_frameworks[key].Framework
+            provider = bulk_compliance_frameworks[key].Provider
+            version = bulk_compliance_frameworks[key].Version
+            requirements = bulk_compliance_frameworks[key].Requirements
+            # We can list the compliance requirements for a given framework using the
+            # bulk_compliance_frameworks keys since they are the compliance specification file name
+            if compliance_framework == key:
                 print(
                     f"Listing {framework} {version} {provider} Compliance Requirements:\n"
                 )
-                for requirement in compliance.Requirements:
+                for requirement in requirements:
                     checks = ""
                     for check in requirement.Checks:
                         checks += f" {Fore.YELLOW}\t\t{check}\n{Style.RESET_ALL}"
