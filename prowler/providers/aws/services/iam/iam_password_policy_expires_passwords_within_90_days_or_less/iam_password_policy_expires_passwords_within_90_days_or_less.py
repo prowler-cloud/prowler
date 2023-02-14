@@ -12,7 +12,7 @@ class iam_password_policy_expires_passwords_within_90_days_or_less(Check):
         if iam_client.password_policy:
             # Check if password policy expiration exists
             if iam_client.password_policy.max_age:
-                if iam_client.password_policy.max_age < 90:
+                if iam_client.password_policy.max_age <= 90:
                     report.status = "PASS"
                     report.status_extended = f"Password expiration is set lower than 90 days ({iam_client.password_policy.max_age} days)."
                 else:
