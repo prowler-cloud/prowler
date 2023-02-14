@@ -112,7 +112,8 @@ class Compliance_Base_Model(BaseModel):
     Requirements: list[Compliance_Requirement]
 
     @root_validator(pre=True)
-    def framework_and_provider_must_not_be_empty(cls, values):
+    # noqa: F841 - since vulture raises unused variable 'cls'
+    def framework_and_provider_must_not_be_empty(cls, values):  # noqa: F841
         framework, provider = (
             values.get("Framework"),
             values.get("Provider"),
