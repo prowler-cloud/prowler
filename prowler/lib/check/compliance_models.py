@@ -2,7 +2,7 @@ import sys
 from enum import Enum
 from typing import Optional, Union
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, root_validator
 
 from prowler.lib.logger import logger
 
@@ -110,6 +110,17 @@ class Compliance_Base_Model(BaseModel):
     Version: str
     Description: str
     Requirements: list[Compliance_Requirement]
+
+    @root_validator(pre=True)
+    def framework_provider_and_version_must_not_be_empty(cls, values):
+        framework, provider, version = (
+            values.get("Framework"),
+            values.get("Provider"),
+            values.get("Version"),
+        )
+        if framework == "" or provider == "" or version == "":
+            raise ValueError("Framework, Provider or Version must not be empty")
+        return values
 
 
 # Testing Pending
