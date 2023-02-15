@@ -216,14 +216,15 @@ def prowler():
         )
 
         if compliance_framework and findings:
-            # Display compliance table
-            display_compliance_table(
-                findings,
-                bulk_checks_metadata,
-                compliance_framework,
-                audit_output_options.output_filename,
-                audit_output_options.output_directory,
-            )
+            for compliance in compliance_framework:
+                # Display compliance table
+                display_compliance_table(
+                    findings,
+                    bulk_checks_metadata,
+                    compliance,
+                    audit_output_options.output_filename,
+                    audit_output_options.output_directory,
+                )
 
     # If there are failed findings exit code 3, except if -z is input
     if not args.ignore_exit_code_3 and stats["total_fail"] > 0:
