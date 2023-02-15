@@ -79,6 +79,11 @@ class S3:
         logger.info("S3 - Get buckets versioning...")
         try:
             regional_client = self.regional_clients[bucket.region]
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        try:
             bucket_versioning = regional_client.get_bucket_versioning(
                 Bucket=bucket.name
             )
@@ -97,6 +102,11 @@ class S3:
         logger.info("S3 - Get buckets encryption...")
         try:
             regional_client = self.regional_clients[bucket.region]
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        try:
             bucket.encryption = regional_client.get_bucket_encryption(
                 Bucket=bucket.name
             )["ServerSideEncryptionConfiguration"]["Rules"][0][
@@ -116,6 +126,11 @@ class S3:
         logger.info("S3 - Get buckets logging...")
         try:
             regional_client = self.regional_clients[bucket.region]
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        try:
             bucket_logging = regional_client.get_bucket_logging(Bucket=bucket.name)
             if "LoggingEnabled" in bucket_logging:
                 bucket.logging = True
@@ -131,6 +146,11 @@ class S3:
         logger.info("S3 - Get buckets public access block...")
         try:
             regional_client = self.regional_clients[bucket.region]
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        try:
             bucket.public_access_block = PublicAccessBlock(
                 regional_client.get_public_access_block(Bucket=bucket.name)[
                     "PublicAccessBlockConfiguration"
@@ -157,6 +177,11 @@ class S3:
         try:
             grantees = []
             regional_client = self.regional_clients[bucket.region]
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        try:
             acl_grants = regional_client.get_bucket_acl(Bucket=bucket.name)["Grants"]
             for grant in acl_grants:
                 grantee = ACL_Grantee(type=grant["Grantee"]["Type"])
@@ -179,6 +204,11 @@ class S3:
         logger.info("S3 - Get buckets policy...")
         try:
             regional_client = self.regional_clients[bucket.region]
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        try:
             bucket.policy = json.loads(
                 regional_client.get_bucket_policy(Bucket=bucket.name)["Policy"]
             )
@@ -194,6 +224,11 @@ class S3:
         logger.info("S3 - Get buckets ownership controls...")
         try:
             regional_client = self.regional_clients[bucket.region]
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        try:
             bucket.ownership = regional_client.get_bucket_ownership_controls(
                 Bucket=bucket.name
             )["OwnershipControls"]["Rules"][0]["ObjectOwnership"]
