@@ -90,7 +90,7 @@ class Test_RDS_Service:
         assert rds.db_instances[0].id == "db-master-1"
         assert rds.db_instances[0].region == AWS_REGION
         assert (
-            rds.db_instances[0].endpoint
+            rds.db_instances[0].endpoint["Address"]
             == "db-master-1.aaaaaaaaaa.us-east-1.rds.amazonaws.com"
         )
         assert rds.db_instances[0].status == "available"
