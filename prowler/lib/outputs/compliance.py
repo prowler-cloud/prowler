@@ -4,7 +4,7 @@ from csv import DictWriter
 from colorama import Fore, Style
 from tabulate import tabulate
 
-from prowler.config.config import timestamp, orange_color
+from prowler.config.config import orange_color, timestamp
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import (
     Check_Output_CSV_CIS,
@@ -167,7 +167,7 @@ def display_compliance_table(
     output_directory: str,
 ):
     try:
-        if "ens_rd2022_aws" in compliance_framework:
+        if "ens_rd2022_aws" == compliance_framework:
             marcos = {}
             ens_compliance_table = {
                 "Proveedor": [],
@@ -266,9 +266,9 @@ def display_compliance_table(
                 )
                 print(f"\nResultados detallados de {compliance_fm} en:")
                 print(
-                    f" - CSV: {output_directory}/{output_filename}_{compliance_framework[0]}.csv\n"
+                    f" - CSV: {output_directory}/{output_filename}_{compliance_framework}.csv\n"
                 )
-        elif "cis_1." in str(compliance_framework):
+        elif "cis_1." in compliance_framework:
             sections = {}
             cis_compliance_table = {
                 "Provider": [],
@@ -281,8 +281,9 @@ def display_compliance_table(
                 check = bulk_checks_metadata[finding.check_metadata.CheckID]
                 check_compliances = check.Compliance
                 for compliance in check_compliances:
-                    if compliance.Framework == "CIS" and compliance.Version in str(
-                        compliance_framework
+                    if (
+                        compliance.Framework == "CIS"
+                        and compliance.Version in compliance_framework
                     ):
                         compliance_version = compliance.Version
                         compliance_fm = compliance.Framework
@@ -360,12 +361,12 @@ def display_compliance_table(
                 )
                 print(f"\nDetailed results of {compliance_fm} are in:")
                 print(
-                    f" - CSV: {output_directory}/{output_filename}_{compliance_framework[0]}.csv\n"
+                    f" - CSV: {output_directory}/{output_filename}_{compliance_framework}.csv\n"
                 )
         else:
-            print(f"\nDetailed results of {compliance_framework[0].upper()} are in:")
+            print(f"\nDetailed results of {compliance_framework.upper()} are in:")
             print(
-                f" - CSV: {output_directory}/{output_filename}_{compliance_framework[0]}.csv\n"
+                f" - CSV: {output_directory}/{output_filename}_{compliance_framework}.csv\n"
             )
     except Exception as error:
         logger.critical(

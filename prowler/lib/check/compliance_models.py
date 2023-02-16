@@ -2,7 +2,7 @@ import sys
 from enum import Enum
 from typing import Optional, Union
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, root_validator
 
 from prowler.lib.logger import logger
 
@@ -107,9 +107,20 @@ class Compliance_Base_Model(BaseModel):
 
     Framework: str
     Provider: str
-    Version: str
+    Version: Optional[str]
     Description: str
     Requirements: list[Compliance_Requirement]
+
+    @root_validator(pre=True)
+    # noqa: F841 - since vulture raises unused variable 'cls'
+    def framework_and_provider_must_not_be_empty(cls, values):  # noqa: F841
+        framework, provider = (
+            values.get("Framework"),
+            values.get("Provider"),
+        )
+        if framework == "" or provider == "":
+            raise ValueError("Framework or Provider must not be empty")
+        return values
 
 
 # Testing Pending
