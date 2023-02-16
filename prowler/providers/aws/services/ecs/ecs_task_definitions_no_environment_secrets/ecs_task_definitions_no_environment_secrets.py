@@ -20,8 +20,8 @@ class ecs_task_definitions_no_environment_secrets(Check):
             report.status = "PASS"
             report.status_extended = f"No secrets found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision}"
             if task_definition.environment_variables:
+                dump_env_vars = {}
                 for env_var in task_definition.environment_variables:
-                    dump_env_vars = {}
                     dump_env_vars.update({env_var.name: env_var.value})
 
                 temp_env_data_file = tempfile.NamedTemporaryFile(delete=False)
