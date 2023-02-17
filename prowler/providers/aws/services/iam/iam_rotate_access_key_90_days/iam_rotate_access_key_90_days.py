@@ -26,7 +26,10 @@ class iam_rotate_access_key_90_days(Check):
                 )
             else:
                 old_access_keys = False
-                if user["access_key_1_last_rotated"] != "N/A":
+                if (
+                    user["access_key_1_last_rotated"] != "N/A"
+                    and user["access_key_1_active"] == "true"
+                ):
                     access_key_1_last_rotated = (
                         datetime.datetime.now()
                         - datetime.datetime.strptime(
@@ -38,7 +41,10 @@ class iam_rotate_access_key_90_days(Check):
                         old_access_keys = True
                         report.status = "FAIL"
                         report.status_extended = f"User {user['user']} has not rotated access key 1 in over 90 days ({access_key_1_last_rotated.days} days)."
-                if user["access_key_2_last_rotated"] != "N/A":
+                if (
+                    user["access_key_2_last_rotated"] != "N/A"
+                    and user["access_key_2_active"] == "true"
+                ):
                     access_key_2_last_rotated = (
                         datetime.datetime.now()
                         - datetime.datetime.strptime(
