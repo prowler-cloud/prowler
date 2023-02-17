@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 colorama = "0.4.4"
-boto3 = "1.26.71"
+boto3 = "1.26.72"
 arnparse = "0.0.2"
 botocore = "1.29.72"
 pydantic = "1.10.5"
