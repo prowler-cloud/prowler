@@ -41,7 +41,6 @@ class iam_disable_45_days_credentials(Check):
             report.region = iam_client.region
             report.resource_id = user["user"]
             report.resource_arn = user["arn"]
-            print(user)
             if (
                 user["access_key_1_active"] != "true"
                 and user["access_key_2_active"] != "true"
