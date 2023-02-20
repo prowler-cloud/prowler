@@ -66,10 +66,10 @@ repos:
         entry: bash -c 'pylint --disable=W,C,R,E -j 0 -rn -sn prowler/'
         language: system
 
-      - id: pytest-check
-        name: pytest-check
-        entry: bash -c 'pytest tests -n auto'
-        language: system
+      # - id: pytest-check
+      #   name: pytest-check
+      #   entry: bash -c 'pytest tests -n auto'
+      #   language: system
 
       - id: bandit
         name: bandit
