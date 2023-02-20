@@ -316,6 +316,11 @@ Detailed documentation at https://docs.prowler.cloud
             action="store_true",
             help="Send check output to AWS Security Hub",
         )
+        aws_security_hub_subparser.add_argument(
+            "--skip-sh-update",
+            action="store_true",
+            help="Skip updating previous findings of Prowler in Security Hub",
+        )
         # AWS Quick Inventory
         aws_quick_inventory_subparser = aws_parser.add_argument_group("Quick Inventory")
         aws_quick_inventory_subparser.add_argument(
