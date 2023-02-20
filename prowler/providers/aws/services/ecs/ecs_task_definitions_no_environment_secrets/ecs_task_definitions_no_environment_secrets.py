@@ -26,7 +26,7 @@ class ecs_task_definitions_no_environment_secrets(Check):
 
                 temp_env_data_file = tempfile.NamedTemporaryFile(delete=False)
 
-                env_data = dumps(dump_env_vars, indent=2)
+                env_data = dumps(dump_env_vars)
                 temp_env_data_file.write(bytes(env_data, encoding="raw_unicode_escape"))
                 temp_env_data_file.close()
 
@@ -34,16 +34,9 @@ class ecs_task_definitions_no_environment_secrets(Check):
                 with default_settings():
                     secrets.scan_file(temp_env_data_file.name)
 
-                detect_secrets_output = secrets.json()
-                if detect_secrets_output:
-                    secrets_string = ", ".join(
-                        [
-                            f"{secret['type']} on line {secret['line_number']}"
-                            for secret in detect_secrets_output[temp_env_data_file.name]
-                        ]
-                    )
+                if secrets.json():
                     report.status = "FAIL"
-                    report.status_extended = f"Potential secret found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision}. {secrets_string}"
+                    report.status_extended = f"Potential secret found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision}"
 
                 os.remove(temp_env_data_file.name)
 
