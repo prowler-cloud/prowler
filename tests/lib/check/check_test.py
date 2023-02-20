@@ -288,11 +288,11 @@ class Test_Check:
     def test_get_checks_from_input_arn(self):
         audit_resources = ["arn:aws:lambda:us-east-1:123456789:function:test-lambda"]
         provider = "aws"
-        expected_checks = {
-            "awslambda_function_url_cors_policy",
+        expected_checks = [
             "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
             "awslambda_function_no_secrets_in_code",
-        }
+            "awslambda_function_url_cors_policy",
+        ]
         recovered_checks = get_checks_from_input_arn(audit_resources, provider)
         assert recovered_checks == expected_checks
 
