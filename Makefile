@@ -24,11 +24,11 @@ lint: ## Lint Code
 
 ##@ PyPI
 pypi-clean: ## Delete the distribution files
-	rm -rf ./dist && rm -rf ./build && rm -rf prowler_cloud.egg-info
+	rm -rf ./dist && rm -rf ./build && rm -rf prowler.egg-info
 
 pypi-build: ## Build package
 	$(MAKE) pypi-clean && \
-	python3 -m build
+	poetry build
 
 pypi-upload: ## Upload package
 	python3 -m twine upload --repository pypi dist/*
