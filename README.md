@@ -45,7 +45,7 @@ For Prowler v2 Documentation, please go to https://github.com/prowler-cloud/prow
 Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python >= 3.9:
 
 ```console
-pip install prowler
+pip install 'prowler[aws,azure,all]'
 prowler -v
 ```
 
@@ -64,13 +64,13 @@ The container images are available here:
 
 ## From Github
 
-Python >= 3.9 is required with pip and pipenv:
+Python >= 3.9 is required with pip and poetry:
 
 ```
 git clone https://github.com/prowler-cloud/prowler
 cd prowler
-pipenv shell
-pipenv install
+poetry shell
+poetry install --with aws,azure
 python prowler.py -v
 ```
 
