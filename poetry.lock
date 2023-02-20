@@ -6,7 +6,7 @@ aws = ["arnparse", "boto3", "botocore", "detect-secrets", "shodan"]
 azure = ["azure-identity", "azure-storage-blob", "msgraph-core", "azure-mgmt-subscription", "azure-mgmt-authorization", "azure-mgmt-security", "azure-mgmt-storage"]
 
 [metadata]
-content-hash = "b70a11f882494f49fe436a590e408a64880e399b015c886f49b82e6c04c2de64"
+content-hash = "5c466811cdc5f5de98fd6ff2aa12e8a1ce4b1aab7ad83fc25ed90498375e6f6d"
 lock-version = "2.0"
 python-versions = "^3.9"
 
@@ -1335,13 +1335,16 @@ requests = ["requests"]
 category = "dev"
 description = "Core utilities for Python packages"
 files = [
-  {file = "packaging-23.0-py3-none-any.whl", hash = "sha256:714ac14496c3e68c99c29b00845f7a2b85f3bb6f1078fd9f72fd20f0570002b2"},
-  {file = "packaging-23.0.tar.gz", hash = "sha256:b6ad297f8907de0fa2fe1ccbd26fdaf387f5f47c7275fedf8cce89f99446cf97"}
+  {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},
+  {file = "packaging-21.3.tar.gz", hash = "sha256:dd47c42927d89ab911e606518907cc2d3a1f38bbd026385970643f9c5b8ecfeb"}
 ]
 name = "packaging"
 optional = false
-python-versions = ">=3.7"
-version = "23.0"
+python-versions = ">=3.6"
+version = "21.3"
+
+[package.dependencies]
+pyparsing = ">=2.0.2,<3.0.5 || >3.0.5"
 
 [[package]]
 category = "dev"
@@ -1570,6 +1573,21 @@ typing-extensions = {version = ">=3.10.0", markers = "python_version < \"3.10\""
 [package.extras]
 spelling = ["pyenchant (>=3.2,<4.0)"]
 testutils = ["gitpython (>3)"]
+
+[[package]]
+category = "dev"
+description = "pyparsing module - Classes and methods to define and execute parsing grammars"
+files = [
+  {file = "pyparsing-3.0.9-py3-none-any.whl", hash = "sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc"},
+  {file = "pyparsing-3.0.9.tar.gz", hash = "sha256:2b020ecf7d21b687f219b71ecad3631f644a47f01403fa1d1036b0c6416d70fb"}
+]
+name = "pyparsing"
+optional = false
+python-versions = ">=3.6.8"
+version = "3.0.9"
+
+[package.extras]
+diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 category = "dev"
@@ -1904,18 +1922,18 @@ crt = ["botocore[crt] (>=1.20.29,<2.0a.0)"]
 category = "dev"
 description = "Checks installed dependencies for known vulnerabilities and licenses."
 files = [
-  {file = "safety-2.3.1-py3-none-any.whl", hash = "sha256:8f098d12b607db2756886280e85c28ece8db1bba4f45fc5f981f4663217bd619"},
-  {file = "safety-2.3.1.tar.gz", hash = "sha256:6e6fcb7d4e8321098cf289f59b65051cafd3467f089c6e57c9f894ae32c23b71"}
+  {file = "safety-2.3.5-py3-none-any.whl", hash = "sha256:2227fcac1b22b53c1615af78872b48348661691450aa25d6704a5504dbd1f7e2"},
+  {file = "safety-2.3.5.tar.gz", hash = "sha256:a60c11f8952f412cbb165d70cb1f673a3b43a2ba9a93ce11f97e6a4de834aa3a"}
 ]
 name = "safety"
 optional = false
 python-versions = "*"
-version = "2.3.1"
+version = "2.3.5"
 
 [package.dependencies]
 Click = ">=8.0.2"
 dparse = ">=0.6.2"
-packaging = ">=21.0"
+packaging = ">=21.0,<22.0"
 requests = "*"
 "ruamel.yaml" = ">=0.17.21"
 setuptools = ">=19.3"
