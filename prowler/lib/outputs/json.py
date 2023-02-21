@@ -31,7 +31,7 @@ def fill_json_asff(finding_output, audit_info, finding):
     ) = finding_output.CreatedAt = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
     finding_output.Severity = Severity(Label=finding.check_metadata.Severity.upper())
     finding_output.Title = finding.check_metadata.CheckTitle
-    finding_output.Description = finding.check_metadata.Description
+    finding_output.Description = finding.status_extended
     finding_output.Resources = [
         Resource(
             Id=finding.resource_arn,
