@@ -46,7 +46,7 @@ class awslambda_function_no_secrets_in_variables(Check):
                         ]
                     )
                     report.status = "FAIL"
-                    report.status_extended = f"Potential secret found in Lambda function {function.name} variables. {secrets_string}"
+                    report.status_extended = f"Potential secret found in Lambda function {function.name} variables -> {secrets_string}"
 
                 os.remove(temp_env_data_file.name)
 

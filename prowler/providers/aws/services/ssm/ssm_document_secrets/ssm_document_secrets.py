@@ -43,7 +43,7 @@ class ssm_document_secrets(Check):
                         ]
                     )
                     report.status = "FAIL"
-                    report.status_extended = f"Potential secret found in SSM Document {document.name}. {secrets_string}"
+                    report.status_extended = f"Potential secret found in SSM Document {document.name} -> {secrets_string}"
 
                 os.remove(temp_env_data_file.name)
 
