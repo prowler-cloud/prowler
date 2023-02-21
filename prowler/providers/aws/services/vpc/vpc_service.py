@@ -1,6 +1,8 @@
 import json
 import threading
-from dataclasses import dataclass
+from typing import Optional
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -50,10 +52,10 @@ class VPC:
                     ):
                         self.vpcs.append(
                             VPCs(
-                                vpc["VpcId"],
-                                vpc["IsDefault"],
-                                vpc["CidrBlock"],
-                                regional_client.region,
+                                id=vpc["VpcId"],
+                                default=vpc["IsDefault"],
+                                cidr_block=vpc["CidrBlock"],
+                                region=regional_client.region,
                             )
                         )
         except Exception as error:
@@ -74,14 +76,17 @@ class VPC:
                             conn["VpcPeeringConnectionId"], self.audit_resources
                         )
                     ):
+                        conn["AccepterVpcInfo"]["CidrBlock"] = None
                         self.vpc_peering_connections.append(
                             VpcPeeringConnection(
-                                conn["VpcPeeringConnectionId"],
-                                conn["AccepterVpcInfo"]["VpcId"],
-                                conn["AccepterVpcInfo"]["CidrBlock"],
-                                conn["RequesterVpcInfo"]["VpcId"],
-                                conn["RequesterVpcInfo"]["CidrBlock"],
-                                regional_client.region,
+                                id=conn["VpcPeeringConnectionId"],
+                                accepter_vpc=conn["AccepterVpcInfo"]["VpcId"],
+                                accepter_cidr=conn["AccepterVpcInfo"].get("CidrBlock"),
+                                requester_vpc=conn["RequesterVpcInfo"]["VpcId"],
+                                requester_cidr=conn["RequesterVpcInfo"].get(
+                                    "CidrBlock"
+                                ),
+                                region=regional_client.region,
                             )
                         )
         except Exception as error:
@@ -113,8 +118,8 @@ class VPC:
                                 destination_cidrs.append(route["DestinationCidrBlock"])
                     conn.route_tables.append(
                         Route(
-                            route_table["RouteTableId"],
-                            destination_cidrs,
+                            id=route_table["RouteTableId"],
+                            destination_cidrs=destination_cidrs,
                         )
                     )
         except Exception as error:
@@ -160,12 +165,12 @@ class VPC:
                             endpoint_policy = json.loads(endpoint["PolicyDocument"])
                         self.vpc_endpoints.append(
                             VpcEndpoint(
-                                endpoint["VpcEndpointId"],
-                                endpoint["VpcId"],
-                                endpoint["State"],
-                                endpoint_policy,
-                                endpoint["OwnerId"],
-                                regional_client.region,
+                                id=endpoint["VpcEndpointId"],
+                                vpc_id=endpoint["VpcId"],
+                                state=endpoint["State"],
+                                policy_document=endpoint_policy,
+                                owner_id=endpoint["OwnerId"],
+                                region=regional_client.region,
                             )
                         )
         except Exception as error:
@@ -189,10 +194,10 @@ class VPC:
                         ):
                             self.vpc_endpoint_services.append(
                                 VpcEndpointService(
-                                    endpoint["ServiceId"],
-                                    endpoint["ServiceName"],
-                                    endpoint["Owner"],
-                                    regional_client.region,
+                                    id=endpoint["ServiceId"],
+                                    service=endpoint["ServiceName"],
+                                    owner_id=endpoint["Owner"],
+                                    region=regional_client.region,
                                 )
                             )
         except Exception as error:
@@ -217,114 +222,41 @@ class VPC:
             logger.error(f"{error.__class__.__name__}: {error}")
 
 
-@dataclass
-class VPCs:
+class VPCs(BaseModel):
     id: str
     default: bool
     cidr_block: str
-    flow_log: bool
+    flow_log: bool = False
     region: str
 
-    def __init__(
-        self,
-        id,
-        default,
-        cidr_block,
-        region,
-    ):
-        self.id = id
-        self.default = default
-        self.cidr_block = cidr_block
-        self.flow_log = False
-        self.region = region
 
-
-@dataclass
-class Route:
+class Route(BaseModel):
     id: str
     destination_cidrs: list[str]
 
-    def __init__(
-        self,
-        id,
-        destination_cidrs,
-    ):
-        self.id = id
-        self.destination_cidrs = destination_cidrs
 
-
-@dataclass
-class VpcPeeringConnection:
+class VpcPeeringConnection(BaseModel):
     id: str
     accepter_vpc: str
-    accepter_cidr: str
+    accepter_cidr: Optional[str]
     requester_vpc: str
-    requester_cidr: str
-    route_tables: list[Route]
+    requester_cidr: Optional[str]
+    route_tables: list[Route] = []
     region: str
 
-    def __init__(
-        self,
-        id,
-        accepter_vpc,
-        accepter_cidr,
-        requester_vpc,
-        requester_cidr,
-        region,
-    ):
-        self.id = id
-        self.accepter_vpc = accepter_vpc
-        self.accepter_cidr = accepter_cidr
-        self.requester_vpc = requester_vpc
-        self.requester_cidr = requester_cidr
-        self.route_tables = []
-        self.region = region
 
-
-@dataclass
-class VpcEndpoint:
+class VpcEndpoint(BaseModel):
     id: str
     vpc_id: str
     state: str
     policy_document: dict
-    owner_id: list[Route]
+    owner_id: str
     region: str
 
-    def __init__(
-        self,
-        id,
-        vpc_id,
-        state,
-        policy_document,
-        owner_id,
-        region,
-    ):
-        self.id = id
-        self.vpc_id = vpc_id
-        self.state = state
-        self.policy_document = policy_document
-        self.owner_id = owner_id
-        self.route_tables = []
-        self.region = region
 
-
-@dataclass
-class VpcEndpointService:
+class VpcEndpointService(BaseModel):
     id: str
     service: str
     owner_id: str
-    allowed_principals: list
+    allowed_principals: list = []
     region: str
-
-    def __init__(
-        self,
-        id,
-        service,
-        owner_id,
-        region,
-    ):
-        self.id = id
-        self.service = service
-        self.owner_id = owner_id
-        self.allowed_principals = []
-        self.region = region
