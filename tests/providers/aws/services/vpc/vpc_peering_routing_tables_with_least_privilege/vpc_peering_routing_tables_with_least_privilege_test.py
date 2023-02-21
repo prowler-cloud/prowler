@@ -75,8 +75,8 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
 
             service_client.vpc_peering_connections[0].route_tables = [
                 Route(
-                    main_route_table_id,
-                    ["10.12.23.44/32"],
+                    id=main_route_table_id,
+                    destination_cidrs=["10.12.23.44/32"],
                 )
             ]
             check = vpc_peering_routing_tables_with_least_privilege()
@@ -138,8 +138,8 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
 
             service_client.vpc_peering_connections[0].route_tables = [
                 Route(
-                    main_route_table_id,
-                    ["10.0.0.0/16"],
+                    id=main_route_table_id,
+                    destination_cidrs=["10.0.0.0/16"],
                 )
             ]
             check = vpc_peering_routing_tables_with_least_privilege()

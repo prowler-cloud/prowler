@@ -54,7 +54,7 @@ class RDS:
                             self.db_instances.append(
                                 DBInstance(
                                     id=instance["DBInstanceIdentifier"],
-                                    endpoint=instance["Endpoint"]["Address"],
+                                    endpoint=instance.get("Endpoint"),
                                     engine=instance["Engine"],
                                     status=instance["DBInstanceStatus"],
                                     public=instance["PubliclyAccessible"],
@@ -171,7 +171,7 @@ class RDS:
 
 class DBInstance(BaseModel):
     id: str
-    endpoint: str
+    endpoint: Optional[dict]
     engine: str
     status: str
     public: bool
