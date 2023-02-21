@@ -45,7 +45,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
     _Commands_:
 
     ``` bash
-    pip install 'prowler[aws,azure,all]'
+    pip install prowler
     prowler -v
     ```
 
