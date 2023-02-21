@@ -70,7 +70,7 @@ Python >= 3.9 is required with pip and poetry:
 git clone https://github.com/prowler-cloud/prowler
 cd prowler
 poetry shell
-poetry install --with aws,azure
+poetry install
 python prowler.py -v
 ```
 

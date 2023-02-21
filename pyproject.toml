@@ -26,28 +26,23 @@ version = "3.2.0"
 
 [tool.poetry.dependencies]
 alive-progress = "2.4.1"
-arnparse = {version = "0.0.2", optional = true}
-azure-identity = {version = "1.12.0", optional = true}
-azure-mgmt-authorization = {version = "3.0.0", optional = true}
-azure-mgmt-security = {version = "3.0.0", optional = true}
-azure-mgmt-storage = {version = "21.0.0", optional = true}
-azure-mgmt-subscription = {version = "3.1.1", optional = true}
-azure-storage-blob = {version = "12.14.1", optional = true}
-boto3 = {version = "1.26.74", optional = true}
-botocore = {version = "1.29.74", optional = true}
+arnparse = "0.0.2"
+azure-identity = "1.12.0"
+azure-mgmt-authorization = "3.0.0"
+azure-mgmt-security = "3.0.0"
+azure-mgmt-storage = "21.0.0"
+azure-mgmt-subscription = "3.1.1"
+azure-storage-blob = "12.14.1"
+boto3 = "1.26.74"
+botocore = "1.29.74"
 colorama = "0.4.5"
-detect-secrets = {version = "1.4.0", optional = true}
-msgraph-core = {version = "0.2.2", optional = true}
+detect-secrets = "1.4.0"
+msgraph-core = "0.2.2"
 pydantic = "1.10.5"
 python = "^3.9"
 schema = "0.7.5"
-shodan = {version = "1.28.0", optional = true}
+shodan = "1.28.0"
 tabulate = "0.9.0"
-
-[tool.poetry.extras]
-all = ["python", "colorama", "pydantic", "schema", "alive-progress", "tabulate", "arnparse", "boto3", "botocore", "detect-secrets", "shodan", "azure-identity", "azure-storage-blob", "msgraph-core", "azure-mgmt-subscription", "azure-mgmt-authorization", "azure-mgmt-security", "azure-mgmt-storage"]
-aws = ["arnparse", "boto3", "botocore", "detect-secrets", "shodan"]
-azure = ["azure-identity", "azure-storage-blob", "msgraph-core", "azure-mgmt-subscription", "azure-mgmt-authorization", "azure-mgmt-security", "azure-mgmt-storage"]
 
 [tool.poetry.group.dev.dependencies]
 bandit = "1.7.4"
