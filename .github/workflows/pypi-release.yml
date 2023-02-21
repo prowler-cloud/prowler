@@ -26,7 +26,7 @@ jobs:
           pip install build toml --upgrade
       - name: Build package
         run: |
-          poetry version ${{ github.ref_name }}
+          poetry version ${{ env.GITHUB_BRANCH }}
           poetry build
       - name: Publish prowler package to PyPI
         run: |
