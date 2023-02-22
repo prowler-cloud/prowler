@@ -11,6 +11,8 @@ env:
 jobs:
   release-prowler-job:
     runs-on: ubuntu-latest
+    env:
+      POETRY_VIRTUALENVS_CREATE: "false"
     name: Release Prowler to PyPI
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -23,9 +25,8 @@ jobs:
           python-version: 3.9 #install the python needed
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry install
+          pipx install poetry
+          pipx inject poetry poetry-bumpversion
       - name: Change version and Build package
         run: |
           poetry version ${{ env.RELEASE_TAG }}
