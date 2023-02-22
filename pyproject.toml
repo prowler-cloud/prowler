@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "prowler-cloud"
 # https://peps.python.org/pep-0440/
-version = "3.2.0"
+version = "3.2.1"
 authors = [{ name = "Toni de la Fuente", email = "toni@blyx.com" }]
 maintainers = [
   { name = "Sergio Garcia", email = "sergio@verica.io" },

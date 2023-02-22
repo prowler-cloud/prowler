@@ -163,8 +163,8 @@ class Test_VPC_Service:
         vpc = VPC(audit_info)
         vpc.vpc_peering_connections[0].route_tables = [
             Route(
-                main_route_table_id,
-                ["10.0.0.4/24"],
+                id=main_route_table_id,
+                destination_cidrs=["10.0.0.4/24"],
             )
         ]
         assert len(vpc.vpc_peering_connections[0].route_tables) == 1

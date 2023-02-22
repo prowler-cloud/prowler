@@ -2,6 +2,8 @@ import json
 import threading
 from dataclasses import dataclass
 
+from botocore.client import ClientError
+
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
@@ -44,35 +46,38 @@ class S3:
         try:
             list_buckets = self.client.list_buckets()
             for bucket in list_buckets["Buckets"]:
-                try:
-                    bucket_region = self.client.get_bucket_location(
-                        Bucket=bucket["Name"]
-                    )["LocationConstraint"]
-                    if bucket_region == "EU":  # If EU, bucket_region is eu-west-1
-                        bucket_region = "eu-west-1"
-                    if not bucket_region:  # If Nonce, bucket_region is us-east-1
-                        bucket_region = "us-east-1"
-                    # Arn
-                    arn = f"arn:{self.audited_partition}:s3:::{bucket['Name']}"
-                    if not self.audit_resources or (
-                        is_resource_filtered(arn, self.audit_resources)
-                    ):
-                        # Check if there are filter regions
-                        if audit_info.audited_regions:
-                            if bucket_region in audit_info.audited_regions:
-                                buckets.append(
-                                    Bucket(bucket["Name"], arn, bucket_region)
-                                )
-                        else:
+                bucket_region = self.client.get_bucket_location(Bucket=bucket["Name"])[
+                    "LocationConstraint"
+                ]
+                if bucket_region == "EU":  # If EU, bucket_region is eu-west-1
+                    bucket_region = "eu-west-1"
+                if not bucket_region:  # If Nonce, bucket_region is us-east-1
+                    bucket_region = "us-east-1"
+                # Arn
+                arn = f"arn:{self.audited_partition}:s3:::{bucket['Name']}"
+                if not self.audit_resources or (
+                    is_resource_filtered(arn, self.audit_resources)
+                ):
+                    # Check if there are filter regions
+                    if audit_info.audited_regions:
+                        if bucket_region in audit_info.audited_regions:
                             buckets.append(Bucket(bucket["Name"], arn, bucket_region))
-                except Exception as error:
-                    logger.error(
-                        f"{bucket} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+                    else:
+                        buckets.append(Bucket(bucket["Name"], arn, bucket_region))
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if bucket:
+                logger.error(
+                    f"{bucket} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         return buckets
 
     def __get_bucket_versioning__(self, bucket):
@@ -89,9 +94,14 @@ class S3:
                 if "Enabled" == bucket_versioning["MFADelete"]:
                     bucket.mfa_delete = True
         except Exception as error:
-            logger.error(
-                f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if bucket.region:
+                logger.error(
+                    f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_bucket_encryption__(self, bucket):
         logger.info("S3 - Get buckets encryption...")
@@ -107,9 +117,13 @@ class S3:
         except Exception as error:
             if "ServerSideEncryptionConfigurationNotFoundError" in str(error):
                 bucket.encryption = None
-            else:
+            elif regional_client:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
     def __get_bucket_logging__(self, bucket):
@@ -123,9 +137,14 @@ class S3:
                     "TargetBucket"
                 ]
         except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if regional_client:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_public_access_block__(self, bucket):
         logger.info("S3 - Get buckets public access block...")
@@ -148,9 +167,14 @@ class S3:
                     }
                 )
             else:
-                logger.error(
-                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+                if regional_client:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                else:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
 
     def __get_bucket_acl__(self, bucket):
         logger.info("S3 - Get buckets acl...")
@@ -171,9 +195,14 @@ class S3:
                 grantees.append(grantee)
             bucket.acl_grantees = grantees
         except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if regional_client:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_bucket_policy__(self, bucket):
         logger.info("S3 - Get buckets policy...")
@@ -186,9 +215,14 @@ class S3:
             if "NoSuchBucketPolicy" in str(error):
                 bucket.policy = {}
             else:
-                logger.error(
-                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+                if regional_client:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                else:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
 
     def __get_bucket_ownership_controls__(self, bucket):
         logger.info("S3 - Get buckets ownership controls...")
@@ -201,9 +235,14 @@ class S3:
             if "OwnershipControlsNotFoundError" in str(error):
                 bucket.ownership = None
             else:
-                logger.error(
-                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+                if regional_client:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                else:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
 
 
 ################## S3Control

@@ -76,7 +76,7 @@ class Test_awslambda_function_no_secrets_in_code:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in Lambda function {function_name} code"
+                == f"Potential secret found in Lambda function {function_name} code -> lambda_function.py: Secret Keyword on line 3"
             )
 
     def test_function_code_without_secrets(self):

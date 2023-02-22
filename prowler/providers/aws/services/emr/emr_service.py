@@ -110,16 +110,19 @@ class EMR:
                     )
 
                     # Save MasterPublicDnsName
-                    master_public_dns_name = cluster_info["Cluster"][
+                    master_public_dns_name = cluster_info["Cluster"].get(
                         "MasterPublicDnsName"
-                    ]
+                    )
                     self.clusters[
                         cluster.id
                     ].master_public_dns_name = master_public_dns_name
                     # Set cluster Public/Private
                     # Public EMR cluster have their DNS ending with .amazonaws.com
                     # while private ones have format of ip-xxx-xx-xx.us-east-1.compute.internal.
-                    if ".amazonaws.com" in master_public_dns_name:
+                    if (
+                        master_public_dns_name
+                        and ".amazonaws.com" in master_public_dns_name
+                    ):
                         self.clusters[cluster.id].public = True
 
         except Exception as error:

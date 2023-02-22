@@ -59,6 +59,7 @@ class Test_iam_rotate_access_key_90_days_test:
                 iam_rotate_access_key_90_days,
             )
 
+            service_client.credential_report[0]["access_key_1_active"] = "true"
             service_client.credential_report[0][
                 "access_key_1_last_rotated"
             ] = credentials_last_rotated
@@ -95,6 +96,7 @@ class Test_iam_rotate_access_key_90_days_test:
                 iam_rotate_access_key_90_days,
             )
 
+            service_client.credential_report[0]["access_key_2_active"] = "true"
             service_client.credential_report[0][
                 "access_key_2_last_rotated"
             ] = credentials_last_rotated

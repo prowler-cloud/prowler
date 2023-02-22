@@ -20,13 +20,13 @@ class ecs_task_definitions_no_environment_secrets(Check):
             report.status = "PASS"
             report.status_extended = f"No secrets found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision}"
             if task_definition.environment_variables:
+                dump_env_vars = {}
                 for env_var in task_definition.environment_variables:
-                    dump_env_vars = {}
                     dump_env_vars.update({env_var.name: env_var.value})
 
                 temp_env_data_file = tempfile.NamedTemporaryFile(delete=False)
 
-                env_data = dumps(dump_env_vars)
+                env_data = dumps(dump_env_vars, indent=2)
                 temp_env_data_file.write(bytes(env_data, encoding="raw_unicode_escape"))
                 temp_env_data_file.close()
 
@@ -34,9 +34,16 @@ class ecs_task_definitions_no_environment_secrets(Check):
                 with default_settings():
                     secrets.scan_file(temp_env_data_file.name)
 
-                if secrets.json():
+                detect_secrets_output = secrets.json()
+                if detect_secrets_output:
+                    secrets_string = ", ".join(
+                        [
+                            f"{secret['type']} on line {secret['line_number']}"
+                            for secret in detect_secrets_output[temp_env_data_file.name]
+                        ]
+                    )
                     report.status = "FAIL"
-                    report.status_extended = f"Potential secret found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision}"
+                    report.status_extended = f"Potential secret found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision} -> {secrets_string}"
 
                 os.remove(temp_env_data_file.name)
 

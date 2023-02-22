@@ -50,7 +50,6 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
                     or region == "us-gov-west-1"
                     or region == "cn-north-1"
                 ):
-
                     get_roles_paginator = iam_client.get_paginator("list_roles")
                     for page in get_roles_paginator.paginate():
                         for role in page["Roles"]:
@@ -117,7 +116,6 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
 
 
 def create_inventory_table(resources: list) -> dict:
-
     services = {}
     # { "S3":
     #       123,
@@ -143,6 +141,14 @@ def create_inventory_table(resources: list) -> dict:
             resource_type = "topic"
         elif service == "sqs":
             resource_type = "queue"
+        elif service == "apigateway":
+            split_parts = resource.split(":")[5].split("/")
+            if "integration" in split_parts and "responses" in split_parts:
+                resource_type = "restapis-resources-methods-integration-response"
+            elif "documentation" in split_parts and "parts" in split_parts:
+                resource_type = "restapis-documentation-parts"
+            else:
+                resource_type = resource.split(":")[5].split("/")[1]
         else:
             resource_type = resource.split(":")[5].split("/")[0]
         if service not in resources_type:
@@ -171,7 +177,6 @@ def create_inventory_table(resources: list) -> dict:
 
 
 def create_output(resources: list, audit_info: AWS_Audit_Info, output_directory: str):
-
     json_output = []
     output_file = f"{output_directory}/prowler-inventory-{audit_info.audited_account}-{output_file_timestamp}"
 

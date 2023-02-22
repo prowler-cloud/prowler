@@ -738,6 +738,12 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.security_hub
 
+    def test_aws_parser_skip_sh_update(self):
+        argument = "--skip-sh-update"
+        command = [prowler_command, argument]
+        parsed = self.parser.parse(command)
+        assert parsed.skip_sh_update
+
     def test_aws_parser_quick_inventory_short(self):
         argument = "-i"
         command = [prowler_command, argument]

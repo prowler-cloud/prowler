@@ -291,7 +291,7 @@ class Test_Outputs:
         ) = expected.CreatedAt = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
         expected.Severity = Severity(Label=finding.check_metadata.Severity.upper())
         expected.Title = finding.check_metadata.CheckTitle
-        expected.Description = finding.check_metadata.Description
+        expected.Description = finding.status_extended
         expected.Resources = [
             Resource(
                 Id="test-arn",

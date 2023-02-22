@@ -36,3 +36,12 @@ or for only one filtered region like eu-west-1:
 Once you run findings for first time you will be able to see Prowler findings in Findings section:
 
 ![Screenshot 2020-10-29 at 10 29 05 PM](https://user-images.githubusercontent.com/3985464/97634676-66c9f600-1a36-11eb-9341-70feb06f6331.png)
+
+## Skip sending updates of findings to Security Hub
+
+By default, Prowler archives all its findings in Security Hub that have not appeared in the last scan.
+You can skip this logic by using the option `--skip-sh-update` so Prowler will not archive older findings:
+
+```sh
+./prowler -S --skip-sh-update
+```

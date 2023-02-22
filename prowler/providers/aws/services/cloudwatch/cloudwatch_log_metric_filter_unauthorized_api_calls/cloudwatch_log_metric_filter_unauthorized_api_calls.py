@@ -12,7 +12,7 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_metric_filter_unauthorized_api_calls(Check):
     def execute(self):
-        pattern = r"\$\.errorCode\s*=\s*\*UnauthorizedOperation.+\$\.errorCode\s*=\s*AccessDenied\*"
+        pattern = r"\$\.errorCode\s*=\s*.?\*UnauthorizedOperation.+\$\.errorCode\s*=\s*.?AccessDenied\*.?"
         findings = []
         report = Check_Report_AWS(self.metadata())
         report.status = "FAIL"
