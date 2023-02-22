@@ -25,10 +25,10 @@ classifiers = [
 # https://peps.python.org/pep-0631/
 dependencies = [
   "colorama ~=0.4.4",
-  "boto3 ~=1.26.17",
+  "boto3 ~=1.26.76",
   "arnparse ~=0.0.2",
-  "botocore ~=1.29.18",
-  "pydantic ~=1.9.1",
+  "botocore ~=1.29.76",
+  "pydantic ~=1.10.5",
   "schema ~=0.7.5",
   "shodan ~=1.28.0",
   "detect-secrets ~=1.4.0",
