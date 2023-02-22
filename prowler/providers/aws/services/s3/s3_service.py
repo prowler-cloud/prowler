@@ -2,6 +2,8 @@ import json
 import threading
 from dataclasses import dataclass
 
+from botocore.client import ClientError
+
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
@@ -62,6 +64,11 @@ class S3:
                             buckets.append(Bucket(bucket["Name"], arn, bucket_region))
                     else:
                         buckets.append(Bucket(bucket["Name"], arn, bucket_region))
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             if bucket:
                 logger.error(

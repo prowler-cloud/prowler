@@ -9,7 +9,7 @@
   "SubServiceName": "route_table",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsEc2Vpc",
+  "ResourceType": "AwsEc2VpcPeeringConnection",
   "Description": "Ensure routing tables for VPC peering are least access.",
   "Risk": "Being highly selective in peering routing tables is a very effective way of minimizing the impact of breach as resources outside of these routes are inaccessible to the peered VPC.",
   "RelatedUrl": "",
