@@ -5,7 +5,8 @@ on:
     types: [published]
 
 env:
-  GITHUB_BRANCH: ${{ github.event.release.tag_name }}
+  RELEASE_TAG: ${{ github.event.release.tag_name }}
+  GITHUB_BRANCH: master
 
 jobs:
   release-prowler-job:
@@ -24,11 +25,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install poetry
+          poetry install
       - name: Change version and Build package
         run: |
-          poetry version ${{ env.GITHUB_BRANCH }}
-          git commit -m "Release version" --no-verify
-          git push
+          poetry version ${{ env.RELEASE_TAG }}
+          git config user.name "github-actions"
+          git config user.email "<noreply@github.com>"
+          git add .
+          git commit -m "chore(release): ${{ env.RELEASE_TAG }}" --no-verify
+          git tag -fa ${{ env.RELEASE_TAG }} -m "chore(release): ${{ env.RELEASE_TAG }}"
+          git push -f origin ${{ env.RELEASE_TAG }}
           poetry build
       - name: Publish prowler package to PyPI
         run: |
@@ -48,14 +54,14 @@ jobs:
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore(release): update prowler_version config variable."
-          branch: ${{ env.GITHUB_BRANCH }}
+          commit-message: "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}."
+          branch: release-${{ env.RELEASE_TAG }}
           labels: "status/waiting-for-revision, severity/low"
-          title: "chore(release): update prowler_version config variable."
+          title: "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}"
           body: |
             ### Description
 
-            This PR updates prowler_version config variable.
+            This PR updates Prowler Version to ${{ env.RELEASE_TAG }}.
 
             ### License
 
