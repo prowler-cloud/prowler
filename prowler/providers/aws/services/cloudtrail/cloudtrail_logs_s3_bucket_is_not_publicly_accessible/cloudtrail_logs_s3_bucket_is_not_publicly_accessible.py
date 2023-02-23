@@ -10,6 +10,7 @@ class cloudtrail_logs_s3_bucket_is_not_publicly_accessible(Check):
         findings = []
         for trail in cloudtrail_client.trails:
             if trail.name:
+                trail_bucket_is_in_account = False
                 trail_bucket = trail.s3_bucket
                 report = Check_Report_AWS(self.metadata())
                 report.region = trail.region
@@ -23,19 +24,23 @@ class cloudtrail_logs_s3_bucket_is_not_publicly_accessible(Check):
                 for bucket in s3_client.buckets:
                     # Here we need to ensure that acl_grantee is filled since if we don't have permissions to query the api for a concrete region
                     # (for example due to a SCP) we are going to try access an attribute from a None type
-                    if trail_bucket == bucket.name and bucket.acl_grantees:
-                        for grant in bucket.acl_grantees:
-                            if (
-                                grant.URI
-                                == "http://acs.amazonaws.com/groups/global/AllUsers"
-                            ):
-                                report.status = "FAIL"
-                                if trail.is_multiregion:
-                                    report.status_extended = f"S3 Bucket {trail_bucket} from multiregion trail {trail.name} is publicly accessible"
-                                else:
-                                    report.status_extended = f"S3 Bucket {trail_bucket} from single region trail {trail.name} is publicly accessible"
-                                break
-
+                    if trail_bucket == bucket.name:
+                        trail_bucket_is_in_account = True
+                        if bucket.acl_grantees:
+                            for grant in bucket.acl_grantees:
+                                if (
+                                    grant.URI
+                                    == "http://acs.amazonaws.com/groups/global/AllUsers"
+                                ):
+                                    report.status = "FAIL"
+                                    if trail.is_multiregion:
+                                        report.status_extended = f"S3 Bucket {trail_bucket} from multiregion trail {trail.name} is publicly accessible"
+                                    else:
+                                        report.status_extended = f"S3 Bucket {trail_bucket} from single region trail {trail.name} is publicly accessible"
+                                    break
+                # check if trail bucket is a cross account bucket
+                if not trail_bucket_is_in_account:
+                    report.status_extended = f"Trail {trail.name} bucket ({trail_bucket}) is a cross-account bucket in another account out of Prowler's permissions scope, please check it manually"
                 findings.append(report)
 
         return findings
