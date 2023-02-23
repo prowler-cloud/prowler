@@ -12,7 +12,10 @@ class cloudfront_distributions_field_level_encryption_enabled(Check):
             report.region = distribution.region
             report.resource_arn = distribution.arn
             report.resource_id = distribution.id
-            if distribution.default_cache_config.field_level_encryption_id:
+            if (
+                distribution.default_cache_config
+                and distribution.default_cache_config.field_level_encryption_id
+            ):
                 report.status = "PASS"
                 report.status_extended = f"CloudFront Distribution {distribution.id} has Field Level Encryption enabled"
             else:
