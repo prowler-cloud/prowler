@@ -21,6 +21,7 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
                     if (
                         statement["Effect"] == "Allow"
                         and "Action" in statement
+                        and "Resource" in statement
                         and "*" in statement["Resource"]
                     ):
                         if type(statement["Action"]) == list:
