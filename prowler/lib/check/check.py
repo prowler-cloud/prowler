@@ -511,19 +511,61 @@ def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
     checks_from_arn = set()
     # Handle if there are audit resources so only their services are executed
     if audit_resources:
-        service_list = []
+        services_without_subservices = ["guardduty", "kms", "s3", "elb"]
+        service_list = set()
+        sub_service_list = set()
         for resource in audit_resources:
             service = resource.split(":")[2]
-            # Parse services when they are different in the ARNs
-            if service == "lambda":
-                service = "awslambda"
-            if service == "elasticloadbalancing":
-                service = "elb"
-            elif service == "logs":
-                service = "cloudwatch"
-            service_list.append(service)
+            sub_service = resource.split(":")[5].split("/")[0].replace("-", "_")
 
-        checks_from_arn = recover_checks_from_service(service_list, provider)
+            if (
+                service != "wafv2" and service != "waf"
+            ):  # WAF Services does not have checks
+                # Parse services when they are different in the ARNs
+                if service == "lambda":
+                    service = "awslambda"
+                if service == "elasticloadbalancing":
+                    service = "elb"
+                elif service == "logs":
+                    service = "cloudwatch"
+                service_list.add(service)
+
+                # Get subservices to execute only applicable checks
+                if service not in services_without_subservices:
+                    # Parse some specific subservices
+                    if service == "ec2":
+                        if sub_service == "security_group":
+                            sub_service = "securitygroup"
+                        if sub_service == "network_acl":
+                            sub_service = "networkacl"
+                        if sub_service == "image":
+                            sub_service = "ami"
+                    if service == "rds":
+                        if sub_service == "cluster_snapshot":
+                            sub_service = "snapshot"
+                    sub_service_list.add(sub_service)
+                else:
+                    sub_service_list.add(service)
+
+        checks = recover_checks_from_service(service_list, provider)
+
+        # Filter only checks with audited subservices
+        for check in checks:
+            if any(sub_service in check for sub_service in sub_service_list):
+                if not (sub_service == "policy" and "password_policy" in check):
+                    checks_from_arn.add(check)
 
     # Return final checks list
-    return checks_from_arn
+    return sorted(checks_from_arn)
+
+
+def get_regions_from_audit_resources(audit_resources: list) -> list:
+    """get_regions_from_audit_resources gets the regions from the audit resources arns"""
+    audited_regions = []
+    for resource in audit_resources:
+        region = resource.split(":")[3]
+        if region and region not in audited_regions:  # Check if arn has a region
+            audited_regions.append(region)
+    if audited_regions:
+        return audited_regions
+    return None
