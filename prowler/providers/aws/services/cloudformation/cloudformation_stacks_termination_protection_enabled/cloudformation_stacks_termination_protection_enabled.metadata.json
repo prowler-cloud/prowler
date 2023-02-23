@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-protect-stacks.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws cloudformation update-termination-protection --region us-east-1 --stack-name <STACK_NAME> --enable-termination-protection",
+      "CLI": "aws cloudformation update-termination-protection --region <REGION_NAME> --stack-name <STACK_NAME> --enable-termination-protection",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
