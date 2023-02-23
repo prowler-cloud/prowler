@@ -17,7 +17,7 @@ build:
       # Tell poetry to not use a virtual environment
       - poetry config virtualenvs.create false
     post_install:
-      - poetry install
+      - poetry install -E docs
 
 mkdocs:
   configuration: mkdocs.yml

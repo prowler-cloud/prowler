@@ -37,14 +37,17 @@ boto3 = "1.26.74"
 botocore = "1.29.74"
 colorama = "0.4.5"
 detect-secrets = "1.4.0"
-mkdocs = "1.4.2"
-mkdocs-material = "8.2.1"
+mkdocs = {version = "1.4.2", optional = true}
+mkdocs-material = {version = "8.2.1", optional = true}
 msgraph-core = "0.2.2"
 pydantic = "1.10.5"
 python = "^3.9"
 schema = "0.7.5"
 shodan = "1.28.0"
 tabulate = "0.9.0"
+
+[tool.poetry.extras]
+docs = ["mkdocs", "mkdocs-material"]
 
 [tool.poetry.group.dev.dependencies]
 bandit = "1.7.4"
