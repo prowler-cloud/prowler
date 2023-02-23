@@ -1,33 +1,31 @@
 {
   "Provider": "aws",
-  "CheckID": "s3_bucket_public_access",
-  "CheckTitle": "Ensure there are no S3 buckets open to Everyone or Any AWS user.",
+  "CheckID": "s3_bucket_level_public_access_block",
+  "CheckTitle": "Check S3 Bucket Level Public Access Block.",
   "CheckType": [
     "Data Protection"
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "critical",
+  "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
-  "Description": "Ensure there are no S3 buckets open to Everyone or Any AWS user.",
-  "Risk": "Even if you enable all possible bucket ACL options available in the Amazon S3 console the ACL alone does not allow everyone to download objects from your bucket. Depending on which option you select any user could perform some actions.",
-  "RelatedUrl": "",
+  "Description": "Check S3 Bucket Level Public Access Block.",
+  "Risk": "Public access policies may be applied to sensitive data buckets.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws s3api put-public-access-block --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true --bucket <bucket_name>",
+      "CLI": "aws s3api put-public-access-block --region <REGION_NAME> --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true --bucket <BUCKET_NAME>",
       "NativeIaC": "",
       "Other": "https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3/block-public-access",
-      "Terraform": "https://docs.bridgecrew.io/docs/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached#terraform"
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_s3_20#terraform"
     },
     "Recommendation": {
-      "Text": "You can enable block public access settings only for access points, buckets and AWS accounts. Amazon S3 does not support block public access settings on a per-object basis. When you apply block public access settings to an account; the settings apply to all AWS Regions globally. The settings might not take effect in all Regions immediately or simultaneously, but they eventually propagate to all Regions.",
+      "Text": "You can enable Public Access Block at the bucket level to prevent the exposure of your data stored in S3.",
       "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
     }
   },
-  "Categories": [
-    "internet-exposed"
-  ],
+  "Categories": [],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"
