@@ -32,7 +32,7 @@ jobs:
           poetry version ${{ env.RELEASE_TAG }}
           git config user.name "github-actions"
           git config user.email "<noreply@github.com>"
-          git add .
+          git add prowler/config/config.py pyproject.toml
           git commit -m "chore(release): ${{ env.RELEASE_TAG }}" --no-verify
           git tag -fa ${{ env.RELEASE_TAG }} -m "chore(release): ${{ env.RELEASE_TAG }}"
           git push -f origin ${{ env.RELEASE_TAG }}
