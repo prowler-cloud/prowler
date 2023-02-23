@@ -76,7 +76,12 @@ class KMS:
         logger.info("KMS - Get Key Rotation Status...")
         try:
             for key in self.keys:
-                if "EXTERNAL" not in key.origin and "AWS" not in key.manager:
+                if (
+                    key.origin
+                    and key.manager
+                    and "EXTERNAL" not in key.origin
+                    and "AWS" not in key.manager
+                ):
                     regional_client = self.regional_clients[key.region]
                     key.rotation_enabled = regional_client.get_key_rotation_status(
                         KeyId=key.id
@@ -90,7 +95,9 @@ class KMS:
         logger.info("KMS - Get Key Policy...")
         try:
             for key in self.keys:
-                if key.manager == "CUSTOMER":  # only customer KMS have policies
+                if (
+                    key.manager and key.manager == "CUSTOMER"
+                ):  # only customer KMS have policies
                     regional_client = self.regional_clients[key.region]
                     key.policy = json.loads(
                         regional_client.get_key_policy(
