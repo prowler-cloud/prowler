@@ -44,6 +44,7 @@ jobs:
       - name: Replicate PyPi Package
         run: |
           rm -rf ./dist && rm -rf ./build && rm -rf prowler.egg-info
+          pip install toml
           python util/replicate_pypi_package.py
           poetry build
       - name: Publish prowler-cloud package to PyPI
