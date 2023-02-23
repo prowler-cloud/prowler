@@ -60,7 +60,7 @@ jobs:
         run: |
           pipx install poetry
           pipx inject poetry poetry-bumpversion
-      - name: Build package
+      - name: Update Prowler version
         run: |
           poetry version ${{ github.event.release.tag_name }}
       - name: Set up Docker Buildx
