@@ -13,6 +13,13 @@ repos:
       - id: pretty-format-json
         args: ["--autofix", --no-sort-keys, --no-ensure-ascii]
 
+  ## TOML
+  - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+    rev: v2.7.0
+    hooks:
+      - id: pretty-format-toml
+        args: [--autofix]
+
   ## BASH
   - repo: https://github.com/koalaman/shellcheck-precommit
     rev: v0.9.0

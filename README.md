@@ -64,13 +64,13 @@ The container images are available here:
 
 ## From Github
 
-Python >= 3.9 is required with pip and pipenv:
+Python >= 3.9 is required with pip and poetry:
 
 ```
 git clone https://github.com/prowler-cloud/prowler
 cd prowler
-pipenv shell
-pipenv install
+poetry shell
+poetry install
 python prowler.py -v
 ```
 
