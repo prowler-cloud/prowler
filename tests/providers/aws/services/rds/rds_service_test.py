@@ -69,6 +69,11 @@ class Test_RDS_Service:
     @mock_rds
     def test__describe_db_instances__(self):
         conn = client("rds", region_name=AWS_REGION)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.postgres9.3",
+            Description="test parameter group",
+        )
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
@@ -82,6 +87,7 @@ class Test_RDS_Service:
             BackupRetentionPeriod=10,
             EnableCloudwatchLogsExports=["audit", "error"],
             MultiAZ=True,
+            DBParameterGroupName="test",
         )
         # RDS client for this test class
         audit_info = self.set_mocked_audit_info()
@@ -101,6 +107,44 @@ class Test_RDS_Service:
         assert rds.db_instances[0].deletion_protection
         assert rds.db_instances[0].auto_minor_version_upgrade
         assert rds.db_instances[0].multi_az
+        assert "test" in rds.db_instances[0].parameter_groups
+
+    @mock_rds
+    def test__describe_db_parameters__(self):
+        conn = client("rds", region_name=AWS_REGION)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.postgres9.3",
+            Description="test parameter group",
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-master-1",
+            AllocatedStorage=10,
+            Engine="postgres",
+            DBName="staging-postgres",
+            DBInstanceClass="db.m1.small",
+            DBParameterGroupName="test",
+        )
+
+        conn.modify_db_parameter_group(
+            DBParameterGroupName="test",
+            Parameters=[
+                {
+                    "ParameterName": "rds.force_ssl",
+                    "ParameterValue": "1",
+                    "ApplyMethod": "immediate",
+                },
+            ],
+        )
+        # RDS client for this test class
+        audit_info = self.set_mocked_audit_info()
+        rds = RDS(audit_info)
+        assert len(rds.db_instances) == 1
+        assert rds.db_instances[0].id == "db-master-1"
+        assert rds.db_instances[0].region == AWS_REGION
+        for parameter in rds.db_instances[0].parameters:
+            if parameter["ParameterName"] == "rds.force_ssl":
+                assert parameter["ParameterValue"] == "1"
 
     # Test RDS Describe DB Snapshots
     @mock_rds

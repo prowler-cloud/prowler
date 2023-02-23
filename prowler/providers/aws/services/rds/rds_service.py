@@ -20,6 +20,7 @@ class RDS:
         self.db_snapshots = []
         self.db_cluster_snapshots = []
         self.__threading_call__(self.__describe_db_instances__)
+        self.__threading_call__(self.__describe_db_parameters__)
         self.__threading_call__(self.__describe_db_snapshots__)
         self.__threading_call__(self.__describe_db_snapshot_attributes__)
         self.__threading_call__(self.__describe_db_cluster_snapshots__)
@@ -72,10 +73,34 @@ class RDS:
                                     enhanced_monitoring_arn=instance.get(
                                         "EnhancedMonitoringResourceArn"
                                     ),
+                                    parameter_groups=[
+                                        item["DBParameterGroupName"]
+                                        for item in instance["DBParameterGroups"]
+                                    ],
                                     multi_az=instance["MultiAZ"],
                                     region=regional_client.region,
                                 )
                             )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __describe_db_parameters__(self, regional_client):
+        logger.info("RDS - Describe DB Parameters...")
+        try:
+            for instance in self.db_instances:
+                if instance.region == regional_client.region:
+                    for parameter_group in instance.parameter_groups:
+                        describe_db_parameters_paginator = (
+                            regional_client.get_paginator("describe_db_parameters")
+                        )
+                        for page in describe_db_parameters_paginator.paginate(
+                            DBParameterGroupName=parameter_group
+                        ):
+                            for parameter in page["Parameters"]:
+                                instance.parameters.append(parameter)
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -182,6 +207,8 @@ class DBInstance(BaseModel):
     auto_minor_version_upgrade: bool
     enhanced_monitoring_arn: Optional[str]
     multi_az: bool
+    parameter_groups: list[str] = []
+    parameters: list[dict] = []
     region: str
 
 
