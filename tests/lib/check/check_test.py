@@ -9,6 +9,7 @@ from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
     get_checks_from_input_arn,
+    get_regions_from_audit_resources,
     list_modules,
     list_services,
     parse_checks_from_file,
@@ -295,6 +296,19 @@ class Test_Check:
         ]
         recovered_checks = get_checks_from_input_arn(audit_resources, provider)
         assert recovered_checks == expected_checks
+
+    def test_get_regions_from_audit_resources(self):
+        audit_resources = [
+            "arn:aws:lambda:us-east-1:123456789:function:test-lambda",
+            "arn:aws:iam::106908755756:policy/test",
+            "arn:aws:ec2:eu-west-1:106908755756:security-group/sg-test",
+        ]
+        expected_regions = [
+            "us-east-1",
+            "eu-west-1",
+        ]
+        recovered_regions = get_regions_from_audit_resources(audit_resources)
+        assert recovered_regions == expected_regions
 
     # def test_parse_checks_from_compliance_framework_two(self):
     #     test_case = {

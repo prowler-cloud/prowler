@@ -11,6 +11,7 @@ from prowler.lib.check.check import (
     exclude_services_to_run,
     execute_checks,
     get_checks_from_input_arn,
+    get_regions_from_audit_resources,
     list_categories,
     list_services,
     print_categories,
@@ -136,6 +137,9 @@ def prowler():
 
     # Once the audit_info is set and we have the eventual checks from arn, it is time to exclude the others
     if audit_info.audit_resources:
+        audit_info.audited_regions = get_regions_from_audit_resources(
+            audit_info.audit_resources
+        )
         checks_to_execute = get_checks_from_input_arn(
             audit_info.audit_resources, provider
         )

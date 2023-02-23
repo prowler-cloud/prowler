@@ -552,7 +552,20 @@ def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
         # Filter only checks with audited subservices
         for check in checks:
             if any(sub_service in check for sub_service in sub_service_list):
-                checks_from_arn.add(check)
+                if not (sub_service == "policy" and "password_policy" in check):
+                    checks_from_arn.add(check)
 
     # Return final checks list
     return sorted(checks_from_arn)
+
+
+def get_regions_from_audit_resources(audit_resources: list) -> list:
+    """get_regions_from_audit_resources gets the regions from the audit resources arns"""
+    audited_regions = []
+    for resource in audit_resources:
+        region = resource.split(":")[3]
+        if region and region not in audited_regions:  # Check if arn has a region
+            audited_regions.append(region)
+    if audited_regions:
+        return audited_regions
+    return None
