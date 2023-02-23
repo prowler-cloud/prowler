@@ -1630,6 +1630,13 @@
         ]
       }
     },
+    "cloudtrail-data": {
+      "regions": {
+        "aws": [],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "cloudwatch": {
       "regions": {
         "aws": [
