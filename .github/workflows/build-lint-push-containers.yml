@@ -52,15 +52,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: setup python
+      - name: setup python (release)
+        if: github.event_name == 'release'
         uses: actions/setup-python@v2
         with:
           python-version: 3.9 #install the python needed
-      - name: Install dependencies
+      - name: Install dependencies (release)
+        if: github.event_name == 'release'
         run: |
           pipx install poetry
           pipx inject poetry poetry-bumpversion
-      - name: Update Prowler version
+      - name: Update Prowler version (release)
+        if: github.event_name == 'release'
         run: |
           poetry version ${{ github.event.release.tag_name }}
       - name: Set up Docker Buildx
