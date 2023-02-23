@@ -16,6 +16,7 @@ USER prowler
 WORKDIR /home/prowler
 COPY prowler/ /home/prowler/prowler/
 COPY pyproject.toml /home/prowler
+COPY README.md /home/prowler
 
 # Install dependencies
 ENV HOME='/home/prowler'
@@ -26,7 +27,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Remove Prowler directory and build files
 USER 0
-RUN rm -rf /home/prowler/prowler /home/prowler/pyproject.toml /home/prowler/build /home/prowler/prowler_cloud.egg-info
+RUN rm -rf /home/prowler/prowler /home/prowler/pyproject.toml /home/prowler/README.md /home/prowler/build /home/prowler/prowler.egg-info
 
 USER prowler
 ENTRYPOINT ["prowler"]
