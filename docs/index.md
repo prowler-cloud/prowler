@@ -5,7 +5,7 @@
 
 # Prowler Documentation
 
-**Welcome to [Prowler Open Source v3](https://github.com/prowler-cloud/prowler/) Documentation!** 📄 
+**Welcome to [Prowler Open Source v3](https://github.com/prowler-cloud/prowler/) Documentation!** 📄
 
 For **Prowler v2 Documentation**, please go [here](https://github.com/prowler-cloud/prowler/tree/2.12.0) to the branch and its README.md.
 
@@ -118,7 +118,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
     ./configure --enable-optimizations
     sudo make altinstall
     python3.9 --version
-    cd 
+    cd
     ```
     _Commands_:
 

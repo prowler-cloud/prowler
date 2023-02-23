@@ -1,3 +1,0 @@
-# Documentation static site generator & deployment tool
-mkdocs>=1.3.0
-mkdocs-material>=8.2.1
