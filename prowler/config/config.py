@@ -26,7 +26,7 @@ with os.scandir(compliance_aws_dir) as files:
         for file in files
         if file.is_file()
         and file.name.endswith(".json")
-        and available_compliance_frameworks.append(file.name.split(".")[0])
+        and available_compliance_frameworks.append(file.name.split(".j")[0])
     ]
 
 # AWS services-regions matrix json
