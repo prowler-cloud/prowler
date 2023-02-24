@@ -215,20 +215,24 @@ msrest = ">=0.7.1"
 
 [[package]]
 name = "azure-storage-blob"
-version = "12.14.1"
+version = "12.15.0"
 description = "Microsoft Azure Blob Storage Client Library for Python"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "azure-storage-blob-12.14.1.zip", hash = "sha256:860d4d82985a4bfc7d3271e71275af330f54f330a754355435a7ba749ccde997"},
-    {file = "azure_storage_blob-12.14.1-py3-none-any.whl", hash = "sha256:52b84658e8df7853a3cf1c563814655b5028b979b2a87905b92aa6bb30be240e"},
+    {file = "azure-storage-blob-12.15.0.zip", hash = "sha256:f8b8d582492740ab16744455408342fb8e4c8897b64a8a3fc31743844722c2f2"},
+    {file = "azure_storage_blob-12.15.0-py3-none-any.whl", hash = "sha256:08d8807c577c63a436740627927c1a03a97c963efc29af5c818aed906590e1cf"},
 ]
 
 [package.dependencies]
-azure-core = ">=1.24.2,<2.0.0"
+azure-core = ">=1.26.0,<2.0.0"
 cryptography = ">=2.1.4"
-msrest = ">=0.7.1"
+isodate = ">=0.6.1"
+typing-extensions = ">=4.0.1"
+
+[package.extras]
+aio = ["azure-core[aio] (>=1.26.0,<2.0.0)"]
 
 [[package]]
 name = "bandit"
@@ -2513,4 +2517,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "bcff4e89339856fff46d6f8ef34afd70a2238de5d4a1b1bd0c976a711f032abd"
+content-hash = "bf209121d8f5364e748377bb026e4a0092cac76febd94d9ce71ef33e134df749"
