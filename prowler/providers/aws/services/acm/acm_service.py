@@ -1,7 +1,9 @@
 import threading
-from dataclasses import dataclass
+from datetime import datetime
+from typing import Optional
 
-from prowler.config.config import timestamp_utc
+from pydantic import BaseModel
+
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
@@ -44,14 +46,29 @@ class ACM:
                             certificate["CertificateArn"], self.audit_resources
                         )
                     ):
+                        if "NotAfter" in certificate:
+                            # We need to get the TZ info to be able to do the math
+                            certificate_expiration_time = (
+                                certificate["NotAfter"]
+                                - datetime.now(
+                                    certificate["NotAfter"].tz_info
+                                    if hasattr(certificate["NotAfter"], "tz_info")
+                                    else None
+                                )
+                            ).days
+                        else:
+                            certificate_expiration_time = 0
                         self.certificates.append(
                             Certificate(
-                                certificate["CertificateArn"],
-                                certificate["DomainName"],
-                                False,
-                                regional_client.region,
+                                arn=certificate["CertificateArn"],
+                                name=certificate["DomainName"],
+                                type=certificate["Type"],
+                                expiration_days=certificate_expiration_time,
+                                transparency_logging=False,
+                                region=regional_client.region,
                             )
                         )
+                        print(self.certificates)
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -65,13 +82,6 @@ class ACM:
                 response = regional_client.describe_certificate(
                     CertificateArn=certificate.arn
                 )["Certificate"]
-                certificate.type = response["Type"]
-                if "NotAfter" in response:
-                    certificate.expiration_days = (
-                        response["NotAfter"] - timestamp_utc
-                    ).days
-                else:
-                    certificate.expiration_days = 0
                 if (
                     response["Options"]["CertificateTransparencyLoggingPreference"]
                     == "ENABLED"
@@ -83,23 +93,10 @@ class ACM:
             )
 
 
-@dataclass
-class Certificate:
+class Certificate(BaseModel):
     arn: str
     name: str
     type: str
     expiration_days: int
-    transparency_logging: bool
+    transparency_logging: Optional[bool]
     region: str
-
-    def __init__(
-        self,
-        arn,
-        name,
-        transparency_logging,
-        region,
-    ):
-        self.arn = arn
-        self.name = name
-        self.transparency_logging = transparency_logging
-        self.region = region
