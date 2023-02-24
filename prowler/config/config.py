@@ -20,8 +20,14 @@ banner_color = "\033[1;92m"
 compliance_specification_dir = "./compliance"
 compliance_aws_dir = "./prowler/compliance/aws"
 available_compliance_frameworks = []
-with os.scandir(compliance_aws_dir) as ficheros:
-    ficheros = [fichero.name for fichero in ficheros if fichero.is_file() and fichero.name.endswith('.json') and available_compliance_frameworks.append(fichero.name.split(".")[0])]
+with os.scandir(compliance_aws_dir) as files:
+    files = [
+        file.name
+        for file in files
+        if file.is_file()
+        and file.name.endswith(".json")
+        and available_compliance_frameworks.append(file.name.split(".")[0])
+    ]
 
 # AWS services-regions matrix json
 aws_services_json_file = "aws_regions_by_service.json"
