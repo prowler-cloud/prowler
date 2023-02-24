@@ -79,7 +79,7 @@ class EMR:
                     # Master Node Security Groups
                     master_node_security_group = cluster_info["Cluster"][
                         "Ec2InstanceAttributes"
-                    ]["EmrManagedMasterSecurityGroup"]
+                    ].get("EmrManagedMasterSecurityGroup")
                     master_node_additional_security_groups = None
                     if (
                         "AdditionalMasterSecurityGroups"
@@ -171,7 +171,7 @@ class ClusterStatus(Enum):
 
 
 class Node(BaseModel):
-    security_group_id: str = ""
+    security_group_id: Optional[str] = ""
     additional_security_groups_id: Optional[list[str]] = []
 
 

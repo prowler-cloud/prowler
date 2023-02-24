@@ -249,7 +249,7 @@ class VpcEndpoint(BaseModel):
     id: str
     vpc_id: str
     state: str
-    policy_document: dict
+    policy_document: Optional[dict]
     owner_id: str
     region: str
 

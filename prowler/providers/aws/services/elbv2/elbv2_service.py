@@ -1,6 +1,7 @@
 import threading
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -137,7 +138,11 @@ class ELBv2:
                                     conditions=rule["Conditions"],
                                 )
                             )
-
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "ListenerNotFound":
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
