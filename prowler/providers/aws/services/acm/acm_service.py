@@ -51,8 +51,8 @@ class ACM:
                             certificate_expiration_time = (
                                 certificate["NotAfter"]
                                 - datetime.now(
-                                    certificate["NotAfter"].tz_info
-                                    if hasattr(certificate["NotAfter"], "tz_info")
+                                    certificate["NotAfter"].tzinfo
+                                    if hasattr(certificate["NotAfter"], "tzinfo")
                                     else None
                                 )
                             ).days
@@ -68,7 +68,6 @@ class ACM:
                                 region=regional_client.region,
                             )
                         )
-                        print(self.certificates)
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
