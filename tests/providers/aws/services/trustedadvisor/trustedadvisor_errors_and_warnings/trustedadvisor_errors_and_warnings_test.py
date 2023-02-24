@@ -16,6 +16,7 @@ class Test_trustedadvisor_errors_and_warnings:
         trustedadvisor_client.checks = []
         trustedadvisor_client.enabled = False
         trustedadvisor_client.account = AWS_ACCOUNT_NUMBER
+        trustedadvisor_client.region = AWS_REGION
         with mock.patch(
             "prowler.providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
             trustedadvisor_client,

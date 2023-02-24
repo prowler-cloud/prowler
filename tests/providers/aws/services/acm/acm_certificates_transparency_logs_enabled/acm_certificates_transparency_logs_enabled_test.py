@@ -1,29 +1,51 @@
+import uuid
 from unittest import mock
 
-from boto3 import client
-from moto import mock_acm
+from prowler.providers.aws.services.acm.acm_service import Certificate
 
 AWS_REGION = "us-east-1"
+AWS_ACCOUNT_NUMBER = 123456789012
 
 
 class Test_acm_certificates_transparency_logs_enabled:
-    @mock_acm
-    def test_acm_certificate_with_logging(self):
-        # Generate ACM Client
-        acm_client = client("acm", region_name=AWS_REGION)
-        # Request ACM certificate
-        certificate = acm_client.request_certificate(
-            DomainName="test.com",
-            Options={"CertificateTransparencyLoggingPreference": "ENABLED"},
-        )
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
-        from prowler.providers.aws.services.acm.acm_service import ACM
-
-        current_audit_info.audited_partition = "aws"
+    def test_no_acm_certificates(self):
+        acm_client = mock.MagicMock
+        acm_client.certificates = []
 
         with mock.patch(
-            "prowler.providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled.acm_client",
-            new=ACM(current_audit_info),
+            "prowler.providers.aws.services.acm.acm_service.ACM",
+            new=acm_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled import (
+                acm_certificates_transparency_logs_enabled,
+            )
+
+            check = acm_certificates_transparency_logs_enabled()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    def test_acm_certificate_with_logging(self):
+        certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{str(uuid.uuid4())}"
+        certificate_name = "test-certificate.com"
+        certificate_type = "AMAZON_ISSUED"
+
+        acm_client = mock.MagicMock
+        acm_client.certificates = [
+            Certificate(
+                arn=certificate_arn,
+                name=certificate_name,
+                type=certificate_type,
+                expiration_days=365,
+                transparency_logging=True,
+                region=AWS_REGION,
+            )
+        ]
+
+        with mock.patch(
+            "prowler.providers.aws.services.acm.acm_service.ACM",
+            new=acm_client,
         ):
             # Test Check
             from prowler.providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled import (
@@ -37,35 +59,38 @@ class Test_acm_certificates_transparency_logs_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "ACM Certificate for test.com has Certificate Transparency logging enabled."
+                == f"ACM Certificate for {certificate_name} has Certificate Transparency logging enabled."
             )
-            assert result[0].resource_id == "test.com"
-            assert result[0].resource_arn == certificate["CertificateArn"]
+            assert result[0].resource_id == certificate_name
+            assert result[0].resource_arn == certificate_arn
+            assert result[0].region == AWS_REGION
 
-    @mock_acm
     def test_acm_certificate_without_logging(self):
-        # Generate ACM Client
-        acm_client = client("acm", region_name=AWS_REGION)
-        # Request ACM certificate
-        certificate = acm_client.request_certificate(
-            DomainName="test.com",
-            Options={"CertificateTransparencyLoggingPreference": "ENABLED"},
-        )
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
-        from prowler.providers.aws.services.acm.acm_service import ACM
+        certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{str(uuid.uuid4())}"
+        certificate_name = "test-certificate.com"
+        certificate_type = "AMAZON_ISSUED"
 
-        current_audit_info.audited_partition = "aws"
+        acm_client = mock.MagicMock
+        acm_client.certificates = [
+            Certificate(
+                arn=certificate_arn,
+                name=certificate_name,
+                type=certificate_type,
+                expiration_days=365,
+                transparency_logging=False,
+                region=AWS_REGION,
+            )
+        ]
 
         with mock.patch(
-            "prowler.providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled.acm_client",
-            new=ACM(current_audit_info),
-        ) as service_client:
+            "prowler.providers.aws.services.acm.acm_service.ACM",
+            new=acm_client,
+        ):
             # Test Check
             from prowler.providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled import (
                 acm_certificates_transparency_logs_enabled,
             )
 
-            service_client.certificates[0].transparency_logging = False
             check = acm_certificates_transparency_logs_enabled()
             result = check.execute()
 
@@ -73,41 +98,8 @@ class Test_acm_certificates_transparency_logs_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "ACM Certificate for test.com has Certificate Transparency logging disabled."
+                == f"ACM Certificate for {certificate_name} has Certificate Transparency logging disabled."
             )
-            assert result[0].resource_id == "test.com"
-            assert result[0].resource_arn == certificate["CertificateArn"]
-
-    @mock_acm
-    def test_acm_default_certificate(self):
-        # Generate ACM Client
-        acm_client = client("acm", region_name=AWS_REGION)
-        # Request ACM certificate
-        certificate = acm_client.request_certificate(
-            DomainName="test.com",
-        )
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
-        from prowler.providers.aws.services.acm.acm_service import ACM
-
-        current_audit_info.audited_partition = "aws"
-
-        with mock.patch(
-            "prowler.providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled.acm_client",
-            new=ACM(current_audit_info),
-        ):
-            # Test Check
-            from prowler.providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled import (
-                acm_certificates_transparency_logs_enabled,
-            )
-
-            check = acm_certificates_transparency_logs_enabled()
-            result = check.execute()
-
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == "ACM Certificate for test.com has Certificate Transparency logging enabled."
-            )
-            assert result[0].resource_id == "test.com"
-            assert result[0].resource_arn == certificate["CertificateArn"]
+            assert result[0].resource_id == certificate_name
+            assert result[0].resource_arn == certificate_arn
+            assert result[0].region == AWS_REGION
