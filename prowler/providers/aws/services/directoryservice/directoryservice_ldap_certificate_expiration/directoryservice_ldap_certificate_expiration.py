@@ -21,8 +21,8 @@ class directoryservice_ldap_certificate_expiration(Check):
                 remaining_days_to_expire = (
                     certificate.expiry_date_time
                     - datetime.now(
-                        certificate.expiry_date_time.tz_info
-                        if hasattr(certificate.expiry_date_time, "tz_info")
+                        certificate.expiry_date_time.tzinfo
+                        if hasattr(certificate.expiry_date_time, "tzinfo")
                         else None
                     )
                 ).days
