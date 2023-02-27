@@ -41,16 +41,6 @@ jobs:
         run: |
           poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
           poetry publish
-      - name: Replicate PyPi Package
-        run: |
-          rm -rf ./dist && rm -rf ./build && rm -rf prowler.egg-info
-          pip install toml
-          python util/replicate_pypi_package.py
-          poetry build
-      - name: Publish prowler-cloud package to PyPI
-        run: |
-          poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
-          poetry publish
       # Create pull request with new version
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
@@ -68,3 +58,13 @@ jobs:
             ### License
 
             By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+      - name: Replicate PyPi Package
+        run: |
+          rm -rf ./dist && rm -rf ./build && rm -rf prowler.egg-info
+          pip install toml
+          python util/replicate_pypi_package.py
+          poetry build
+      - name: Publish prowler-cloud package to PyPI
+        run: |
+          poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
+          poetry publish
