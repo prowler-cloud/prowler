@@ -45,7 +45,7 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PROWLER_ACCESS_TOKEN }}
           commit-message: "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}."
           branch: release-${{ env.RELEASE_TAG }}
           labels: "status/waiting-for-revision, severity/low"
