@@ -22,7 +22,7 @@ packages = [
   {include = "prowler"}
 ]
 readme = "README.md"
-version = "3.2.3"
+version = "3.2.4"
 
 [tool.poetry.dependencies]
 alive-progress = "3.0.1"
