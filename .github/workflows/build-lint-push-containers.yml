@@ -71,6 +71,9 @@ jobs:
       - name: Build
         uses: docker/build-push-action@v2
         with:
+          # Use local context to get changes
+          # https://github.com/docker/build-push-action#path-context
+          context: .
           # Without pushing to registries
           push: false
           tags: ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }}
