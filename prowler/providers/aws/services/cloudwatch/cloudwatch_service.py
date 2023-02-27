@@ -1,4 +1,5 @@
 import threading
+from datetime import datetime, timezone
 from typing import Optional
 
 from pydantic import BaseModel
@@ -214,3 +215,20 @@ class LogGroup(BaseModel):
     log_streams: dict[
         str, list[str]
     ] = {}  # Log stream name as the key, array of events as the value
+
+
+def convert_to_cloudwatch_timestamp_format(epoch_time):
+    date_time = datetime.fromtimestamp(
+        epoch_time / 1000, datetime.now(timezone.utc).astimezone().tzinfo
+    )
+    datetime_str = date_time.strftime(
+        "%Y-%m-%dT%H:%M:%S.!%f!%z"
+    )  # use exclamation marks as placeholders to convert datetime str to cloudwatch timestamp str
+    datetime_parts = datetime_str.split("!")
+    return (
+        datetime_parts[0]
+        + datetime_parts[1][:-3]
+        + datetime_parts[2][:-2]
+        + ":"
+        + datetime_parts[2][-2:]
+    )  # Removes the microseconds, and places a ':' character in the timezone offset

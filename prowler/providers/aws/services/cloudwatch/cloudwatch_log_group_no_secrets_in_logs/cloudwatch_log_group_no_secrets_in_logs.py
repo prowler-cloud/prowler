@@ -1,14 +1,9 @@
-import os
-import tempfile
-from datetime import datetime, timezone
 from json import dumps, loads
 
-from detect_secrets import SecretsCollection
-from detect_secrets.settings import default_settings
-
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
-    cloudwatch_client,
+from prowler.lib.utils.utils import detect_secrets_scan
+from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
+    convert_to_cloudwatch_timestamp_format,
 )
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
@@ -20,8 +15,9 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
             report = Check_Report_AWS(self.metadata())
             report.status = "PASS"
             report.status_extended = f"No secrets found in {log_group.name} log group."
-            report.region = cloudwatch_client.region
-            report.resource_id = log_group.arn
+            report.region = log_group.region
+            report.resource_id = log_group.name
+            report.resource_arn = log_group.arn
             log_group_secrets = []
             if log_group.log_streams:
                 for log_stream_name in log_group.log_streams:
@@ -87,41 +83,6 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                 report.status_extended = f"Potential secrets found in log group {log_group.name} {secrets_string}"
             findings.append(report)
         return findings
-
-
-def convert_to_cloudwatch_timestamp_format(epoch_time):
-    date_time = datetime.fromtimestamp(
-        epoch_time / 1000, datetime.now(timezone.utc).astimezone().tzinfo
-    )
-    datetime_str = date_time.strftime(
-        "%Y-%m-%dT%H:%M:%S.!%f!%z"
-    )  # use exclamation marks as placeholders to convert datetime str to cloudwatch timestamp str
-    datetime_parts = datetime_str.split("!")
-    return (
-        datetime_parts[0]
-        + datetime_parts[1][:-3]
-        + datetime_parts[2][:-2]
-        + ":"
-        + datetime_parts[2][-2:]
-    )  # Removes the microseconds, and places a ':' character in the timezone offset
-
-
-def detect_secrets_scan(data):
-    # Should move this to the utils file, but will leave that for a merge request after this one is accepted
-    temp_data_file = tempfile.NamedTemporaryFile(delete=False)
-    temp_data_file.write(bytes(data, encoding="raw_unicode_escape"))
-    temp_data_file.close()
-
-    secrets = SecretsCollection()
-    with default_settings():
-        secrets.scan_file(temp_data_file.name)
-    os.remove(temp_data_file.name)
-
-    detect_secrets_output = secrets.json()
-    if detect_secrets_output:
-        return detect_secrets_output[temp_data_file.name]
-    else:
-        return None
 
 
 class SecretsDict(dict):
