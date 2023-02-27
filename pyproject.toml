@@ -2,13 +2,25 @@
 build-backend = "poetry.core.masonry.api"
 requires = ["poetry-core"]
 
+# https://peps.python.org/pep-0621/
 [tool.poetry]
 authors = ["Toni de la Fuente <toni@blyx.com>"]
-classifiers = ["Programming Language :: Python :: 3", "Programming Language :: Python :: 3.9", "License :: OSI Approved :: Apache Software License"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "License :: OSI Approved :: Apache Software License"
+]
 description = "Prowler is an Open Source security tool to perform Cloud Security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains more than 240 controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks."
 license = "Apache-2.0"
-maintainers = ["Sergio Garcia <sergio@verica.io>", "Nacho Rivera <nacho@verica.io>", "Pepe Fagoaga <pepe@verica.io>"]
+maintainers = [
+  "Sergio Garcia <sergio@verica.io>",
+  "Nacho Rivera <nacho@verica.io>",
+  "Pepe Fagoaga <pepe@verica.io>"
+]
 name = "prowler"
+packages = [
+  {include = "prowler"}
+]
 readme = "README.md"
 version = "3.2.3"
 
@@ -25,20 +37,14 @@ boto3 = "1.26.79"
 botocore = "1.29.79"
 colorama = "0.4.6"
 detect-secrets = "1.4.0"
+mkdocs = {version = "1.4.2", optional = true}
+mkdocs-material = {version = "9.0.14", optional = true}
 msgraph-core = "0.2.2"
 pydantic = "1.10.5"
 python = "^3.9"
 schema = "0.7.5"
 shodan = "1.28.0"
 tabulate = "0.9.0"
-
-[tool.poetry.dependencies.mkdocs]
-optional = true
-version = "1.4.2"
-
-[tool.poetry.dependencies.mkdocs-material]
-optional = true
-version = "9.0.14"
 
 [tool.poetry.extras]
 docs = ["mkdocs", "mkdocs-material"]
@@ -59,24 +65,23 @@ safety = "2.3.5"
 sure = "2.0.1"
 vulture = "2.7"
 
-[[tool.poetry.packages]]
-include = "prowler"
-
 [tool.poetry.scripts]
 prowler = "prowler.__main__:prowler"
 
 [tool.poetry.urls]
-Changelog = "https://github.com/prowler-cloud/prowler/releases"
-Documentation = "https://docs.prowler.cloud"
-Homepage = "https://github.com/prowler-cloud/prowler"
+"Changelog" = "https://github.com/prowler-cloud/prowler/releases"
+"Documentation" = "https://docs.prowler.cloud"
+"Homepage" = "https://github.com/prowler-cloud/prowler"
 "Issue tracker" = "https://github.com/prowler-cloud/prowler/issues"
 
 [tool.poetry-version-plugin]
 source = "init"
 
 [tool.poetry_bumpversion.file."prowler/config/config.py"]
-replace = "prowler_version = \"{new_version}\""
-search = "prowler_version = \"{current_version}\""
+replace = 'prowler_version = "{new_version}"'
+search = 'prowler_version = "{current_version}"'
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = [
+  "."
+]
