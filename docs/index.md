@@ -92,6 +92,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
     _Requirements for Developers_:
 
     * AWS and/or Azure credentials
+    * `git`, `Python >= 3.9`, `pip` and `poetry` installed (`pip install poetry`)
 
     _Commands_:
 
