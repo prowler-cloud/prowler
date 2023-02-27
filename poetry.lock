@@ -324,14 +324,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.29.78"
+version = "1.29.79"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 files = [
-    {file = "botocore-1.29.78-py3-none-any.whl", hash = "sha256:656ac8822a1b6c887a8efe1172bcefa9c9c450face26dc39998a249e8c340a23"},
-    {file = "botocore-1.29.78.tar.gz", hash = "sha256:2bee6ed037590ef1e4884d944486232871513915f12a8590c63e3bb6046479bf"},
+    {file = "botocore-1.29.79-py3-none-any.whl", hash = "sha256:5f254f019e8641f8b2ba6dddc1f7541e8c6d25d976802392710b2fc4bac925b1"},
+    {file = "botocore-1.29.79.tar.gz", hash = "sha256:c7ded44062bed3b928944cfb09e1578ed3fed0e4c98de4f233f3c2056a8d491e"},
 ]
 
 [package.dependencies]
@@ -2618,4 +2618,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "483d22b24968cd41c80f577408a4db0f74a0a92fb86ef77bc3678875583d2130"
+content-hash = "f6c3ccd6dcdb9a8e98374aed3269d58346cf6d21fadcb3dc636592eb6ff773a9"

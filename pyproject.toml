@@ -34,7 +34,7 @@ azure-mgmt-storage = "21.0.0"
 azure-mgmt-subscription = "3.1.1"
 azure-storage-blob = "12.15.0"
 boto3 = "1.26.74"
-botocore = "1.29.78"
+botocore = "1.29.79"
 colorama = "0.4.6"
 detect-secrets = "1.4.0"
 mkdocs = {version = "1.4.2", optional = true}
