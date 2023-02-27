@@ -13,7 +13,7 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 
-class cloudwatch_no_secerts_in_logs(Check):
+class cloudwatch_log_group_no_secrets_in_logs(Check):
     def execute(self):
         findings = []
         for log_group in logs_client.log_groups:
@@ -51,7 +51,7 @@ class cloudwatch_no_secerts_in_logs(Check):
                                 log_event_data = dumps(
                                     loads(flagged_event["message"]), indent=2
                                 )
-                            except:
+                            except Exception:
                                 log_event_data = dumps(
                                     flagged_event["message"], indent=2
                                 )
@@ -74,19 +74,17 @@ class cloudwatch_no_secerts_in_logs(Check):
                     if log_stream_secrets:
                         secrets_string = "; ".join(
                             [
-                                f"At {timestamp} - {log_stream_secrets[timestamp].to_string()}"
+                                f"at {timestamp} - {log_stream_secrets[timestamp].to_string()}"
                                 for timestamp in log_stream_secrets
                             ]
                         )
                         log_group_secrets.append(
-                            f"In log stream {log_stream_name}: {secrets_string}"
+                            f"in log stream {log_stream_name} {secrets_string}"
                         )
             if log_group_secrets:
-                secrets_string = ". ".join(log_group_secrets)
+                secrets_string = "; ".join(log_group_secrets)
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Potential secrets found in log group. {secrets_string}"
-                )
+                report.status_extended = f"Potential secrets found in log group {log_group.name} {secrets_string}"
             findings.append(report)
         return findings
 
@@ -139,7 +137,7 @@ class SecretsDict(dict):
     def to_string(self):
         return ", ".join(
             [
-                f"{','.join(secret_types)} on line {line_number}"
+                f"{', '.join(secret_types)} on line {line_number}"
                 for line_number, secret_types in sorted(self.items())
             ]
         )
