@@ -18,28 +18,17 @@ banner_color = "\033[1;92m"
 
 # Compliance
 compliance_specification_dir = "./compliance"
-available_compliance_frameworks = [
-    "ens_rd2022_aws",
-    "cis_1.4_aws",
-    "cis_1.5_aws",
-    "aws_audit_manager_control_tower_guardrails_aws",
-    "aws_foundational_security_best_practices_aws",
-    "cisa_aws",
-    "fedramp_low_revision_4_aws",
-    "fedramp_moderate_revision_4_aws",
-    "ffiec_aws",
-    "gdpr_aws",
-    "gxp_eu_annex_11_aws",
-    "gxp_21_cfr_part_11_aws",
-    "hipaa_aws",
-    "nist_800_53_revision_4_aws",
-    "nist_800_53_revision_5_aws",
-    "nist_800_171_revision_2_aws",
-    "nist_csf_1.1_aws",
-    "pci_3.2.1_aws",
-    "rbi_cyber_security_framework_aws",
-    "soc2_aws",
-]
+compliance_aws_dir = "./prowler/compliance/aws"
+available_compliance_frameworks = []
+with os.scandir(compliance_aws_dir) as files:
+    files = [
+        file.name
+        for file in files
+        if file.is_file()
+        and file.name.endswith(".json")
+        and available_compliance_frameworks.append(file.name.removesuffix(".json"))
+    ]
+
 # AWS services-regions matrix json
 aws_services_json_file = "aws_regions_by_service.json"
 
