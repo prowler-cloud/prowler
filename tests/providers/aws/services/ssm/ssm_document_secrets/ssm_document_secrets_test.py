@@ -59,7 +59,7 @@ class Test_ssm_documents_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in SSM Document {document_name}"
+                == f"Potential secret found in SSM Document {document_name} -> Secret Keyword on line 2"
             )
 
     def test_document_no_secrets(self):

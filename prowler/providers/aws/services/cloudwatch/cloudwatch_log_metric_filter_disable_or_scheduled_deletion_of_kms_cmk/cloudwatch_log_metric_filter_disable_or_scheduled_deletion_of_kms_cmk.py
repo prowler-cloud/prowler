@@ -12,7 +12,7 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk(Check):
     def execute(self):
-        pattern = r"\$\.eventSource\s*=\s*kms.amazonaws.com.+\$\.eventName\s*=\s*DisableKey.+\$\.eventName\s*=\s*ScheduleKeyDeletion"
+        pattern = r"\$\.eventSource\s*=\s*.?kms.amazonaws.com.+\$\.eventName\s*=\s*.?DisableKey.+\$\.eventName\s*=\s*.?ScheduleKeyDeletion.?"
         findings = []
         report = Check_Report_AWS(self.metadata())
         report.status = "FAIL"

@@ -27,7 +27,8 @@ class awslambda_function_no_secrets_in_variables(Check):
                 temp_env_data_file = tempfile.NamedTemporaryFile(delete=False)
                 temp_env_data_file.write(
                     bytes(
-                        json.dumps(function.environment, indent=2), encoding="raw_unicode_escape"
+                        json.dumps(function.environment, indent=2),
+                        encoding="raw_unicode_escape",
                     )
                 )
                 temp_env_data_file.close()
@@ -38,9 +39,14 @@ class awslambda_function_no_secrets_in_variables(Check):
                 detect_secrets_output = secrets.json()
                 if detect_secrets_output:
                     environment_variable_names = list(function.environment.keys())
-                    secrets_string = ', '.join([f"{secret['type']} in variable {environment_variable_names[int(secret['line_number'])-2]}" for secret in detect_secrets_output[temp_env_data_file.name]])
+                    secrets_string = ", ".join(
+                        [
+                            f"{secret['type']} in variable {environment_variable_names[int(secret['line_number'])-2]}"
+                            for secret in detect_secrets_output[temp_env_data_file.name]
+                        ]
+                    )
                     report.status = "FAIL"
-                    report.status_extended = f"Potential secret found in Lambda function {function.name} variables. {secrets_string}"
+                    report.status_extended = f"Potential secret found in Lambda function {function.name} variables -> {secrets_string}"
 
                 os.remove(temp_env_data_file.name)
 

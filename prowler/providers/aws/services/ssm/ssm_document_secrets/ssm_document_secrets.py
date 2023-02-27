@@ -24,21 +24,26 @@ class ssm_document_secrets(Check):
             if document.content:
                 temp_env_data_file = tempfile.NamedTemporaryFile(delete=False)
                 temp_env_data_file.write(
-                    bytes(json.dumps(document.content, indent=2), encoding="raw_unicode_escape")
+                    bytes(
+                        json.dumps(document.content, indent=2),
+                        encoding="raw_unicode_escape",
+                    )
                 )
                 temp_env_data_file.close()
                 secrets = SecretsCollection()
                 with default_settings():
                     secrets.scan_file(temp_env_data_file.name)
 
-
                 detect_secrets_output = secrets.json()
                 if detect_secrets_output:
-                    secrets_string = ', '.join([f"{secret['type']} on line {secret['line_number']}" for secret in detect_secrets_output[temp_env_data_file.name]])
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"Potential secret found in SSM Document {document.name}. {secrets_string}"
+                    secrets_string = ", ".join(
+                        [
+                            f"{secret['type']} on line {secret['line_number']}"
+                            for secret in detect_secrets_output[temp_env_data_file.name]
+                        ]
                     )
+                    report.status = "FAIL"
+                    report.status_extended = f"Potential secret found in SSM Document {document.name} -> {secrets_string}"
 
                 os.remove(temp_env_data_file.name)
 

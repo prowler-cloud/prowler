@@ -148,6 +148,7 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
         )
+        from prowler.providers.aws.services.s3.s3_service import S3
 
         current_audit_info.audited_partition = "aws"
 
@@ -155,19 +156,71 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
-            # Test Check
-            from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible import (
-                cloudtrail_logs_s3_bucket_is_not_publicly_accessible,
-            )
+            with mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.s3_client",
+                new=S3(current_audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible import (
+                    cloudtrail_logs_s3_bucket_is_not_publicly_accessible,
+                )
 
-            check = cloudtrail_logs_s3_bucket_is_not_publicly_accessible()
-            result = check.execute()
+                check = cloudtrail_logs_s3_bucket_is_not_publicly_accessible()
+                result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert result[0].resource_id == trail_name_us
-            assert result[0].resource_arn == trail_us["TrailARN"]
-            assert search(
-                result[0].status_extended,
-                f"S3 Bucket {bucket_name_us} from single region trail {trail_name_us} is not publicly accessible",
-            )
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert result[0].resource_id == trail_name_us
+                assert result[0].resource_arn == trail_us["TrailARN"]
+                assert search(
+                    result[0].status_extended,
+                    f"S3 Bucket {bucket_name_us} from single region trail {trail_name_us} is not publicly accessible",
+                )
+
+    @mock_cloudtrail
+    @mock_s3
+    def test_trail_bucket_cross_account(self):
+        cloudtrail_client = client("cloudtrail", region_name="us-east-1")
+        s3_client = client("s3", region_name="us-east-1")
+        trail_name_us = "trail_test_us"
+        bucket_name_us = "bucket_test_us"
+        s3_client.create_bucket(Bucket=bucket_name_us)
+        trail_us = cloudtrail_client.create_trail(
+            Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
+        )
+
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        current_audit_info.audited_partition = "aws"
+
+        with mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
+            new=Cloudtrail(current_audit_info),
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.s3_client",
+                new=S3(current_audit_info),
+            ) as s3_client:
+                # Test Check
+                from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible import (
+                    cloudtrail_logs_s3_bucket_is_not_publicly_accessible,
+                )
+
+                # Empty s3 buckets to simulate the bucket is in another account
+                s3_client.buckets = []
+
+                check = cloudtrail_logs_s3_bucket_is_not_publicly_accessible()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert result[0].resource_id == trail_name_us
+                assert result[0].resource_arn == trail_us["TrailARN"]
+                assert search(
+                    "is a cross-account bucket in another account out of Prowler's permissions scope",
+                    result[0].status_extended,
+                )

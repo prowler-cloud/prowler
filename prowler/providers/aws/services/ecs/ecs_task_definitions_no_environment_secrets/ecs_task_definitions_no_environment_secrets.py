@@ -43,7 +43,7 @@ class ecs_task_definitions_no_environment_secrets(Check):
                         ]
                     )
                     report.status = "FAIL"
-                    report.status_extended = f"Potential secret found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision}. {secrets_string}"
+                    report.status_extended = f"Potential secret found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision} -> {secrets_string}"
 
                 os.remove(temp_env_data_file.name)
 

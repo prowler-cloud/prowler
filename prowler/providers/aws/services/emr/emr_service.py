@@ -79,7 +79,7 @@ class EMR:
                     # Master Node Security Groups
                     master_node_security_group = cluster_info["Cluster"][
                         "Ec2InstanceAttributes"
-                    ]["EmrManagedMasterSecurityGroup"]
+                    ].get("EmrManagedMasterSecurityGroup")
                     master_node_additional_security_groups = None
                     if (
                         "AdditionalMasterSecurityGroups"
@@ -97,6 +97,7 @@ class EMR:
                     slave_node_security_group = cluster_info["Cluster"][
                         "Ec2InstanceAttributes"
                     ]["EmrManagedSlaveSecurityGroup"]
+                    slave_node_additional_security_groups = []
                     if (
                         "AdditionalSlaveSecurityGroups"
                         in cluster_info["Cluster"]["Ec2InstanceAttributes"]
@@ -110,16 +111,19 @@ class EMR:
                     )
 
                     # Save MasterPublicDnsName
-                    master_public_dns_name = cluster_info["Cluster"][
+                    master_public_dns_name = cluster_info["Cluster"].get(
                         "MasterPublicDnsName"
-                    ]
+                    )
                     self.clusters[
                         cluster.id
                     ].master_public_dns_name = master_public_dns_name
                     # Set cluster Public/Private
                     # Public EMR cluster have their DNS ending with .amazonaws.com
                     # while private ones have format of ip-xxx-xx-xx.us-east-1.compute.internal.
-                    if ".amazonaws.com" in master_public_dns_name:
+                    if (
+                        master_public_dns_name
+                        and ".amazonaws.com" in master_public_dns_name
+                    ):
                         self.clusters[cluster.id].public = True
 
         except Exception as error:
@@ -167,7 +171,7 @@ class ClusterStatus(Enum):
 
 
 class Node(BaseModel):
-    security_group_id: str = ""
+    security_group_id: Optional[str] = ""
     additional_security_groups_id: Optional[list[str]] = []
 
 

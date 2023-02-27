@@ -14,7 +14,7 @@ class cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_change
     Check
 ):
     def execute(self):
-        pattern = r"\$\.eventName\s*=\s*CreateTrail.+\$\.eventName\s*=\s*UpdateTrail.+\$\.eventName\s*=\s*DeleteTrail.+\$\.eventName\s*=\s*StartLogging.+\$\.eventName\s*=\s*StopLogging"
+        pattern = r"\$\.eventName\s*=\s*.?CreateTrail.+\$\.eventName\s*=\s*.?UpdateTrail.+\$\.eventName\s*=\s*.?DeleteTrail.+\$\.eventName\s*=\s*.?StartLogging.+\$\.eventName\s*=\s*.?StopLogging.?"
         findings = []
         report = Check_Report_AWS(self.metadata())
         report.status = "FAIL"

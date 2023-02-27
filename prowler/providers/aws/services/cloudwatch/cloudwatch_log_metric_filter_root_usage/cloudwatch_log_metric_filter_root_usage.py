@@ -12,7 +12,7 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_metric_filter_root_usage(Check):
     def execute(self):
-        pattern = r"\$\.userIdentity\.type\s*=\s*Root.+\$\.userIdentity\.invokedBy NOT EXISTS.+\$\.eventType\s*!=\s*AwsServiceEvent"
+        pattern = r"\$\.userIdentity\.type\s*=\s*.?Root.+\$\.userIdentity\.invokedBy NOT EXISTS.+\$\.eventType\s*!=\s*.?AwsServiceEvent.?"
         findings = []
         report = Check_Report_AWS(self.metadata())
         report.status = "FAIL"
