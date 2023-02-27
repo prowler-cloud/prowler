@@ -10,8 +10,16 @@ class Test_cloudwatch_log_group_kms_encryption_enabled:
     def test_cloudwatch_no_log_groups(self):
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
+        from prowler.providers.common.models import Audit_Metadata
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audit_metadata = Audit_Metadata(
+            services_scanned=0,
+            # We need to set this check to call __describe_log_groups__
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
+            completed_checks=0,
+            audit_progress=0,
+        )
 
         with mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_kms_encryption_enabled.cloudwatch_log_group_kms_encryption_enabled.logs_client",
@@ -37,8 +45,16 @@ class Test_cloudwatch_log_group_kms_encryption_enabled:
         )
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
+        from prowler.providers.common.models import Audit_Metadata
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audit_metadata = Audit_Metadata(
+            services_scanned=0,
+            # We need to set this check to call __describe_log_groups__
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
+            completed_checks=0,
+            audit_progress=0,
+        )
 
         with mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_kms_encryption_enabled.cloudwatch_log_group_kms_encryption_enabled.logs_client",
@@ -68,8 +84,16 @@ class Test_cloudwatch_log_group_kms_encryption_enabled:
         logs_client.create_log_group(logGroupName="test", kmsKeyId="test_kms_id")
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
+        from prowler.providers.common.models import Audit_Metadata
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audit_metadata = Audit_Metadata(
+            services_scanned=0,
+            # We need to set this check to call __describe_log_groups__
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
+            completed_checks=0,
+            audit_progress=0,
+        )
 
         with mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_kms_encryption_enabled.cloudwatch_log_group_kms_encryption_enabled.logs_client",

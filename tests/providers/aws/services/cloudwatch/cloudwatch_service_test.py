@@ -3,6 +3,7 @@ from moto import mock_cloudwatch
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.cloudwatch.cloudwatch_service import CloudWatch
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = 123456789012
 AWS_REGION = "us-east-1"
@@ -29,6 +30,13 @@ class Test_CloudWatch_Service:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                # We need to set this check to call __describe_log_groups__
+                expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 
