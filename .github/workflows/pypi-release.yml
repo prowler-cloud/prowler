@@ -58,6 +58,13 @@ jobs:
             ### License
 
             By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+      # Create pull request to github.com/Homebrew/homebrew-core to update prowler formula
+      - name: Bump Homebrew formula
+        uses: mislav/bump-homebrew-formula-action@v2
+        with:
+          formula-name: prowler
+        env:
+          COMMITTER_TOKEN: ${{ secrets.PROWLER_ACCESS_TOKEN }}
       - name: Replicate PyPi Package
         run: |
           rm -rf ./dist && rm -rf ./build && rm -rf prowler.egg-info
