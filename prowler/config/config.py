@@ -17,8 +17,8 @@ orange_color = "\033[38;5;208m"
 banner_color = "\033[1;92m"
 
 # Compliance
-compliance_specification_dir = "./compliance"
-compliance_aws_dir = "./prowler/compliance/aws"
+actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+compliance_aws_dir = f"{actual_directory}/../compliance/aws"
 available_compliance_frameworks = []
 with os.scandir(compliance_aws_dir) as files:
     files = [
