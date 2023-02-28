@@ -48,7 +48,6 @@ class Check_Metadata_Model(BaseModel):
     RelatedUrl: str
     Remediation: Remediation
     Categories: list[str]
-    Tags: dict
     DependsOn: list[str]
     RelatedTo: list[str]
     Notes: str

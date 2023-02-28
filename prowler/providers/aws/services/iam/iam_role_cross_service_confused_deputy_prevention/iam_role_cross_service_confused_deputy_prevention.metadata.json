@@ -26,10 +26,6 @@
   "Categories": [
     "trustboundaries"
   ],
-  "Tags": {
-    "Tag1Key": "value",
-    "Tag2Key": "value"
-  },
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "CAF Security Epic: IAM"
