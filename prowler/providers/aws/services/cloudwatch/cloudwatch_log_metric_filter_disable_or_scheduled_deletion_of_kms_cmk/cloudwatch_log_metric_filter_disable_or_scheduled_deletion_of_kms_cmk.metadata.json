@@ -26,10 +26,6 @@
     }
   },
   "Categories": [],
-  "Tags": {
-    "Tag1Key": "value",
-    "Tag2Key": "value"
-  },
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Logging and Monitoring"
