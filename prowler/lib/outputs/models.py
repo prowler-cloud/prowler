@@ -235,6 +235,7 @@ def generate_provider_output_json(provider: str, finding, audit_info, mode: str,
             finding_output.Region = finding.region
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceArn = finding.resource_arn
+            finding_output.ResourceTags = finding.resource_tags
             finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
 
             if audit_info.organizations_metadata:
@@ -293,6 +294,7 @@ class Aws_Check_Output_JSON(Check_Output_JSON):
     Region: str = ""
     ResourceId: str = ""
     ResourceArn: str = ""
+    ResourceTags: list = []
 
     def __init__(self, **metadata):
         super().__init__(**metadata)
@@ -300,7 +302,7 @@ class Aws_Check_Output_JSON(Check_Output_JSON):
 
 class Azure_Check_Output_JSON(Check_Output_JSON):
     """
-    Aws_Check_Output_JSON generates a finding's output in JSON format for the AWS provider.
+    Azure_Check_Output_JSON generates a finding's output in JSON format for the AWS provider.
     """
 
     Tenant_Domain: str = ""

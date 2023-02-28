@@ -1,6 +1,8 @@
 import threading
-from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Optional
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -52,11 +54,11 @@ class CloudWatch:
                             namespace = alarm["Namespace"]
                         self.metric_alarms.append(
                             MetricAlarm(
-                                alarm["AlarmArn"],
-                                alarm["AlarmName"],
-                                metric_name,
-                                namespace,
-                                regional_client.region,
+                                arn=alarm["AlarmArn"],
+                                name=alarm["AlarmName"],
+                                metric=metric_name,
+                                name_space=namespace,
+                                region=regional_client.region,
                             )
                         )
         except Exception as error:
@@ -77,6 +79,14 @@ class Logs:
         self.log_groups = []
         self.__threading_call__(self.__describe_metric_filters__)
         self.__threading_call__(self.__describe_log_groups__)
+        if (
+            "cloudwatch_log_group_no_secrets_in_logs"
+            in audit_info.audit_metadata.expected_checks
+        ):
+            self.events_per_log_group_threshold = (
+                1000  # The threshold for number of events to return per log group.
+            )
+            self.__threading_call__(self.__get_log_events__)
 
     def __get_session__(self):
         return self.session
@@ -91,7 +101,7 @@ class Logs:
             t.join()
 
     def __describe_metric_filters__(self, regional_client):
-        logger.info("CloudWatch Logs- Describing metric filters...")
+        logger.info("CloudWatch Logs - Describing metric filters...")
         try:
             describe_metric_filters_paginator = regional_client.get_paginator(
                 "describe_metric_filters"
@@ -103,11 +113,11 @@ class Logs:
                     ):
                         self.metric_filters.append(
                             MetricFilter(
-                                filter["filterName"],
-                                filter["metricTransformations"][0]["metricName"],
-                                filter["filterPattern"],
-                                filter["logGroupName"],
-                                regional_client.region,
+                                name=filter["filterName"],
+                                metric=filter["metricTransformations"][0]["metricName"],
+                                pattern=filter["filterPattern"],
+                                log_group=filter["logGroupName"],
+                                region=regional_client.region,
                             )
                         )
         except Exception as error:
@@ -116,7 +126,7 @@ class Logs:
             )
 
     def __describe_log_groups__(self, regional_client):
-        logger.info("CloudWatch Logs- Describing log groups...")
+        logger.info("CloudWatch Logs - Describing log groups...")
         try:
             describe_log_groups_paginator = regional_client.get_paginator(
                 "describe_log_groups"
@@ -134,11 +144,11 @@ class Logs:
                             retention_days = log_group["retentionInDays"]
                         self.log_groups.append(
                             LogGroup(
-                                log_group["arn"],
-                                log_group["logGroupName"],
-                                retention_days,
-                                kms,
-                                regional_client.region,
+                                arn=log_group["arn"],
+                                name=log_group["logGroupName"],
+                                retention_days=retention_days,
+                                kms_id=kms,
+                                region=regional_client.region,
                             )
                         )
         except Exception as error:
@@ -146,71 +156,79 @@ class Logs:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __get_log_events__(self, regional_client):
+        regional_log_groups = [
+            log_group
+            for log_group in self.log_groups
+            if log_group.region == regional_client.region
+        ]
+        total_log_groups = len(regional_log_groups)
+        logger.info(
+            f"CloudWatch Logs - Retrieving log events for {total_log_groups} log groups in {regional_client.region}..."
+        )
+        try:
+            for count, log_group in enumerate(regional_log_groups, start=1):
+                events = regional_client.filter_log_events(
+                    logGroupName=log_group.name,
+                    limit=self.events_per_log_group_threshold,
+                )["events"]
+                for event in events:
+                    if event["logStreamName"] not in log_group.log_streams:
+                        log_group.log_streams[event["logStreamName"]] = []
+                    log_group.log_streams[event["logStreamName"]].append(event)
+                if count % 10 == 0:
+                    logger.info(
+                        f"CloudWatch Logs - Retrieved log events for {count}/{total_log_groups} log groups in {regional_client.region}..."
+                    )
 
-@dataclass
-class MetricAlarm:
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        logger.info(
+            f"CloudWatch Logs - Finished retrieving log events in {regional_client.region}..."
+        )
+
+
+class MetricAlarm(BaseModel):
     arn: str
     name: str
     metric: Optional[str]
     name_space: Optional[str]
     region: str
 
-    def __init__(
-        self,
-        arn,
-        name,
-        metric,
-        name_space,
-        region,
-    ):
-        self.arn = arn
-        self.name = name
-        self.metric = metric
-        self.name_space = name_space
-        self.region = region
 
-
-@dataclass
-class MetricFilter:
+class MetricFilter(BaseModel):
     name: str
     metric: str
     pattern: str
     log_group: str
     region: str
 
-    def __init__(
-        self,
-        name,
-        metric,
-        pattern,
-        log_group,
-        region,
-    ):
-        self.name = name
-        self.metric = metric
-        self.pattern = pattern
-        self.log_group = log_group
-        self.region = region
 
-
-@dataclass
-class LogGroup:
+class LogGroup(BaseModel):
     arn: str
     name: str
     retention_days: int
-    kms_id: str
+    kms_id: Optional[str]
     region: str
+    log_streams: dict[
+        str, list[str]
+    ] = {}  # Log stream name as the key, array of events as the value
 
-    def __init__(
-        self,
-        arn,
-        name,
-        retention_days,
-        kms_id,
-        region,
-    ):
-        self.arn = arn
-        self.name = name
-        self.retention_days = retention_days
-        self.kms_id = kms_id
-        self.region = region
+
+def convert_to_cloudwatch_timestamp_format(epoch_time):
+    date_time = datetime.fromtimestamp(
+        epoch_time / 1000, datetime.now(timezone.utc).astimezone().tzinfo
+    )
+    datetime_str = date_time.strftime(
+        "%Y-%m-%dT%H:%M:%S.!%f!%z"
+    )  # use exclamation marks as placeholders to convert datetime str to cloudwatch timestamp str
+    datetime_parts = datetime_str.split("!")
+    return (
+        datetime_parts[0]
+        + datetime_parts[1][:-3]
+        + datetime_parts[2][:-2]
+        + ":"
+        + datetime_parts[2][-2:]
+    )  # Removes the microseconds, and places a ':' character in the timezone offset

@@ -48,7 +48,7 @@ class AccessAnalyzer:
                                 arn=analyzer["arn"],
                                 name=analyzer["name"],
                                 status=analyzer["status"],
-                                tags=str(analyzer["tags"]),
+                                tags=[analyzer["tags"]],
                                 type=analyzer["type"],
                                 region=regional_client.region,
                             )
@@ -119,6 +119,6 @@ class Analyzer(BaseModel):
     name: str
     status: str
     findings: list[Finding] = []
-    tags: str
+    tags: list
     type: str
     region: str
