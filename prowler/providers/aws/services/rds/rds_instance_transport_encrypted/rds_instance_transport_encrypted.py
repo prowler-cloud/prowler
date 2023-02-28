@@ -5,7 +5,7 @@ from prowler.providers.aws.services.rds.rds_client import rds_client
 class rds_instance_transport_encrypted(Check):
     def execute(self):
         findings = []
-        supported_engines = ["sqlserver-ex", "postgres"]
+        supported_engines = ["sqlserver", "postgres"]
         for db_instance in rds_client.db_instances:
             report = Check_Report_AWS(self.metadata())
             report.region = db_instance.region
@@ -15,7 +15,7 @@ class rds_instance_transport_encrypted(Check):
                 f"RDS Instance {db_instance.id} connections are not encrypted."
             )
             # Check only RDS SQL Server or PostgreSQL engines
-            if db_instance.engine in supported_engines:
+            if any(engine in db_instance.engine for engine in supported_engines):
                 for parameter in db_instance.parameters:
                     if (
                         parameter["ParameterName"] == "rds.force_ssl"
