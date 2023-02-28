@@ -21,6 +21,7 @@ class cloudformation_outputs_find_secrets(Check):
             report.region = stack.region
             report.resource_id = stack.name
             report.resource_arn = stack.arn
+            report.resource_tags = stack.tags
             report.status = "PASS"
             report.status_extended = f"No secrets found in Stack {stack.name} Outputs."
             if stack.outputs:

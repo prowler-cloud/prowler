@@ -1,5 +1,6 @@
 import threading
-from dataclasses import dataclass
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -50,6 +51,7 @@ class CloudFormation:
                             Stack(
                                 arn=stack["StackId"],
                                 name=stack["StackName"],
+                                tags=stack.get("Tags"),
                                 outputs=outputs,
                                 region=regional_client.region,
                             )
@@ -82,8 +84,7 @@ class CloudFormation:
             )
 
 
-@dataclass
-class Stack:
+class Stack(BaseModel):
     """Stack holds a CloudFormation Stack"""
 
     arn: str
@@ -92,25 +93,11 @@ class Stack:
     """Stacks[].StackName"""
     outputs: list[str]
     """Stacks[].Outputs"""
-    enable_termination_protection: bool
+    enable_termination_protection: bool = False
     """Stacks[].EnableTerminationProtection"""
-    root_nested_stack: str
+    root_nested_stack: str = ""
     """Stacks[].RootId"""
-    is_nested_stack: str
+    is_nested_stack: bool = False
     """True if the Stack is a Nested Stack"""
+    tags: list = []
     region: str
-
-    def __init__(
-        self,
-        arn,
-        name,
-        outputs,
-        region,
-    ):
-        self.arn = arn
-        self.name = name
-        self.outputs = outputs
-        self.enable_termination_protection = False
-        self.is_nested_stack = False
-        self.root_nested_stack = ""
-        self.region = region
