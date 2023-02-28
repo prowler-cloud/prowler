@@ -93,6 +93,7 @@ class Logs:
         self.log_groups = []
         self.__threading_call__(self.__describe_metric_filters__)
         self.__threading_call__(self.__describe_log_groups__)
+        self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -165,16 +166,10 @@ class Logs:
     def __list_tags_for_resource__(self):
         logger.info("CloudWatch Logs - List Tags...")
         try:
-            for metric_filter in self.metric_filters:
-                regional_client = self.regional_clients[metric_filter.region]
-                response = regional_client.list_tags_for_resource(
-                    resourceArn=metric_filter.arn
-                )["tags"]
-                metric_filter.tags = [response]
             for log_group in self.log_groups:
                 regional_client = self.regional_clients[log_group.region]
                 response = regional_client.list_tags_for_resource(
-                    resourceArn=log_group.arn
+                    resourceArn=log_group.arn.replace(":*", "")  # Remove the tailing :*
                 )["tags"]
                 log_group.tags = [response]
         except Exception as error:
@@ -198,7 +193,6 @@ class MetricFilter(BaseModel):
     pattern: str
     log_group: str
     region: str
-    tags: list = []
 
 
 class LogGroup(BaseModel):
