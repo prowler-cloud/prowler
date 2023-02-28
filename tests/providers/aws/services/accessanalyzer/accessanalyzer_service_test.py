@@ -92,7 +92,7 @@ class Test_AccessAnalyzer_Service:
         assert access_analyzer.analyzers[0].arn == "ARN"
         assert access_analyzer.analyzers[0].name == "Test Analyzer"
         assert access_analyzer.analyzers[0].status == "ACTIVE"
-        assert access_analyzer.analyzers[0].tags == ""
+        assert access_analyzer.analyzers[0].tags == [""]
         assert access_analyzer.analyzers[0].type == "ACCOUNT"
         assert access_analyzer.analyzers[0].region == AWS_REGION
 

@@ -18,6 +18,7 @@ class AppStream:
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.fleets = []
         self.__threading_call__(self.__describe_fleets__)
+        self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -65,6 +66,20 @@ class AppStream:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_tags_for_resource__(self):
+        logger.info("AppStream - List Tags...")
+        try:
+            for fleet in self.fleets:
+                regional_client = self.regional_clients[fleet.region]
+                response = regional_client.list_tags_for_resource(
+                    ResourceArn=fleet.arn
+                )["Tags"]
+                fleet.tags = [response]
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Fleet(BaseModel):
     arn: str
@@ -74,3 +89,4 @@ class Fleet(BaseModel):
     idle_disconnect_timeout_in_seconds: Optional[int]
     enable_default_internet_access: bool
     region: str
+    tags: list = []
