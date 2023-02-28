@@ -15,11 +15,13 @@ class acm_certificates_expiration_check(Check):
                 report.status_extended = f"ACM Certificate for {certificate.name} expires in {certificate.expiration_days} days."
                 report.resource_id = certificate.name
                 report.resource_arn = certificate.arn
+                report.resource_tags = certificate.tags
             else:
                 report.status = "FAIL"
                 report.status_extended = f"ACM Certificate for {certificate.name} is about to expire in {DAYS_TO_EXPIRE_THRESHOLD} days."
                 report.resource_id = certificate.name
                 report.resource_arn = certificate.arn
+                report.resource_tags = certificate.tags
 
             findings.append(report)
         return findings
