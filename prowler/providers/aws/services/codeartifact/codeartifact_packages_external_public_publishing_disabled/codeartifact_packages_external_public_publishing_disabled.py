@@ -16,8 +16,8 @@ class codeartifact_packages_external_public_publishing_disabled(Check):
                 report = Check_Report_AWS(self.metadata())
                 report.region = repository.region
                 report.resource_id = package.name
-                report.resource_arn = package.arn
-                report.resource_tags = package.tags
+                report.resource_arn = repository.arn
+                report.resource_tags = repository.tags
 
                 if package.latest_version.origin.origin_type in (
                     OriginInformationValues.INTERNAL,

@@ -13,6 +13,7 @@ class Test_config_recorder_all_regions_enabled:
         from prowler.providers.aws.services.config.config_service import Config
 
         current_audit_info.audited_partition = "aws"
+        current_audit_info.audited_account = "012345678912"
         current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
 
         with mock.patch(
@@ -44,7 +45,7 @@ class Test_config_recorder_all_regions_enabled:
         from prowler.providers.aws.services.config.config_service import Config
 
         current_audit_info.audited_partition = "aws"
-        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
+        current_audit_info.audited_regions = [AWS_REGION]
 
         with mock.patch(
             "prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled.config_client",
@@ -57,7 +58,7 @@ class Test_config_recorder_all_regions_enabled:
 
             check = config_recorder_all_regions_enabled()
             result = check.execute()
-            assert len(result) == 2
+            assert len(result) == 1
             # Search for the recorder just created
             for recorder in result:
                 if recorder.resource_id:
@@ -85,7 +86,7 @@ class Test_config_recorder_all_regions_enabled:
         from prowler.providers.aws.services.config.config_service import Config
 
         current_audit_info.audited_partition = "aws"
-        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
+        current_audit_info.audited_regions = [AWS_REGION]
 
         with mock.patch(
             "prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled.config_client",
@@ -98,7 +99,7 @@ class Test_config_recorder_all_regions_enabled:
 
             check = config_recorder_all_regions_enabled()
             result = check.execute()
-            assert len(result) == 2
+            assert len(result) == 1
             # Search for the recorder just created
             for recorder in result:
                 if recorder.resource_id:

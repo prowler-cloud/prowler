@@ -89,9 +89,3 @@ class CodebuildProject:
     region: str
     last_invoked_time: Optional[datetime.datetime]
     buildspec: Optional[str]
-
-    def __init__(self, name, region, last_invoked_time, buildspec):
-        self.name = name
-        self.region = region
-        self.last_invoked_time = last_invoked_time
-        self.buildspec = buildspec

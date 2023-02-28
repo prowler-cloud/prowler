@@ -24,6 +24,7 @@ class DirectoryService:
         self.__threading_call__(self.__describe_event_topics__)
         self.__threading_call__(self.__list_certificates__)
         self.__threading_call__(self.__get_snapshot_limits__)
+        self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -199,6 +200,20 @@ class DirectoryService:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_tags_for_resource__(self):
+        logger.info("Directory Service - List Tags...")
+        try:
+            for directory in self.directories.values():
+                regional_client = self.regional_clients[directory.region]
+                response = regional_client.list_tags_for_resource(
+                    ResourceId=directory.id
+                )["Tags"]
+                directory.tags = response
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class SnapshotLimit(BaseModel):
     manual_snapshots_limit: int
@@ -284,3 +299,4 @@ class Directory(BaseModel):
     snapshots_limits: SnapshotLimit = None
     radius_settings: RadiusSettings = None
     region: str
+    tags: list = []

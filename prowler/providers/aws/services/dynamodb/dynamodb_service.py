@@ -1,5 +1,7 @@
 import threading
-from dataclasses import dataclass
+from typing import Optional
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -18,6 +20,7 @@ class DynamoDB:
         self.__threading_call__(self.__list_tables__)
         self.__describe_table__()
         self.__describe_continuous_backups__()
+        self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -94,6 +97,20 @@ class DynamoDB:
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
+    def __list_tags_for_resource__(self):
+        logger.info("DynamoDB - List Tags...")
+        try:
+            for table in self.tables:
+                regional_client = self.regional_clients[table.region]
+                response = regional_client.list_tags_of_resource(ResourceArn=table.arn)[
+                    "Tags"
+                ]
+                table.tags = response
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 ################## DynamoDB DAX
 class DAX:
@@ -105,6 +122,7 @@ class DAX:
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.clusters = []
         self.__threading_call__(self.__describe_clusters__)
+        self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -137,10 +155,10 @@ class DAX:
                                 encryption = True
                         self.clusters.append(
                             Cluster(
-                                cluster["ClusterArn"],
-                                cluster["ClusterName"],
-                                encryption,
-                                regional_client.region,
+                                arn=cluster["ClusterArn"],
+                                name=cluster["ClusterName"],
+                                encryption=encryption,
+                                region=regional_client.region,
                             )
                         )
         except Exception as error:
@@ -148,47 +166,32 @@ class DAX:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_tags_for_resource__(self):
+        logger.info("DAX - List Tags...")
+        try:
+            for cluster in self.clusters:
+                regional_client = self.regional_clients[cluster.region]
+                response = regional_client.list_tags(ResourceName=cluster.name)["Tags"]
+                cluster.tags = response
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
-@dataclass
-class Table:
+
+class Table(BaseModel):
     arn: str
     name: str
-    encryption_type: str
-    kms_arn: str
-    pitr: bool
+    encryption_type: Optional[str]
+    kms_arn: Optional[str]
+    pitr: bool = False
     region: str
-
-    def __init__(
-        self,
-        arn,
-        name,
-        encryption_type,
-        kms_arn,
-        region,
-    ):
-        self.arn = arn
-        self.name = name
-        self.encryption_type = encryption_type
-        self.kms_arn = kms_arn
-        self.pitr = False
-        self.region = region
+    tags: list = []
 
 
-@dataclass
-class Cluster:
+class Cluster(BaseModel):
     arn: str
     name: str
-    encryption: str
+    encryption: bool
     region: str
-
-    def __init__(
-        self,
-        arn,
-        name,
-        encryption,
-        region,
-    ):
-        self.arn = arn
-        self.name = name
-        self.encryption = encryption
-        self.region = region
+    tags: list = []

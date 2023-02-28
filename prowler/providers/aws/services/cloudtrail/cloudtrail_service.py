@@ -140,17 +140,13 @@ class Cloudtrail:
                 # Check if trails are in this region
                 if trail.region == trail.arn.split(":")[3]:
                     regional_client = self.regional_clients[trail.region]
-                    response = regional_client.list_tags(
-                        ResourceIdList=[
-                            trail.arn,
-                        ]
-                    )[
+                    response = regional_client.list_tags(ResourceIdList=[trail.arn])[
                         "ResourceTagList"
                     ][0]
                     trail.tags = response.get("TagsList")
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
