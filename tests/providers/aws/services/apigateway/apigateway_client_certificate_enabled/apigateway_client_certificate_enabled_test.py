@@ -106,7 +106,6 @@ class Test_apigateway_client_certificate_enabled:
 
     @mock_apigateway
     def test_apigateway_one_stage_with_certificate(self):
-
         # Create APIGateway Mocked Resources
         apigateway_client = client("apigateway", region_name=AWS_REGION)
         # Create APIGateway Deployment Stage
@@ -131,8 +130,8 @@ class Test_apigateway_client_certificate_enabled:
 
             service_client.rest_apis[0].stages.append(
                 Stage(
-                    "test",
-                    f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/apis/test-rest-api/stages/test",
+                    name="test",
+                    arn=f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/apis/test-rest-api/stages/test",
                     logging=True,
                     client_certificate=True,
                     waf=True,

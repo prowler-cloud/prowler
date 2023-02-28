@@ -17,6 +17,7 @@ class accessanalyzer_enabled_without_findings(Check):
                 )
                 report.resource_id = analyzer.name
                 report.resource_arn = analyzer.arn
+                report.resource_tags = analyzer.tags
                 if len(analyzer.findings) != 0:
                     active_finding_counter = 0
                     for finding in analyzer.findings:
@@ -28,6 +29,7 @@ class accessanalyzer_enabled_without_findings(Check):
                         report.status_extended = f"IAM Access Analyzer {analyzer.name} has {active_finding_counter} active findings"
                         report.resource_id = analyzer.name
                         report.resource_arn = analyzer.arn
+                        report.resource_tags = analyzer.tags
             elif analyzer.status == "NOT_AVAILABLE":
                 report.status = "FAIL"
                 report.status_extended = (
@@ -41,6 +43,7 @@ class accessanalyzer_enabled_without_findings(Check):
                 )
                 report.resource_id = analyzer.name
                 report.resource_arn = analyzer.arn
+                report.resource_tags = analyzer.tags
             findings.append(report)
 
         return findings
