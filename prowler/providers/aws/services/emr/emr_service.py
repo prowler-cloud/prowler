@@ -96,7 +96,7 @@ class EMR:
                     # Slave Node Security Groups
                     slave_node_security_group = cluster_info["Cluster"][
                         "Ec2InstanceAttributes"
-                    ]["EmrManagedSlaveSecurityGroup"]
+                    ].get("EmrManagedSlaveSecurityGroup")
                     slave_node_additional_security_groups = []
                     if (
                         "AdditionalSlaveSecurityGroups"
