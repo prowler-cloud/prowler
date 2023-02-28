@@ -25,7 +25,9 @@
       "Url": "https://aws.amazon.com/premiumsupport/knowledge-center/ebs-automatic-encryption/"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

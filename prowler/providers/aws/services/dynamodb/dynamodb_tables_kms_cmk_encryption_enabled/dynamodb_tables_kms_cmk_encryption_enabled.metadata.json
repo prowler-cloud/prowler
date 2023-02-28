@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/amazondynamodbdb/latest/developerguide/EncryptionAtRest.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

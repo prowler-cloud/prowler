@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"

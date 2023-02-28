@@ -28,7 +28,8 @@
     }
   },
   "Categories": [
-    "forensics-ready"
+    "forensics-ready",
+    "encryption"
   ],
   "Tags": {
     "Tag1Key": "value",

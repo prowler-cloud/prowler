@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/glue/latest/dg/encrypt-glue-data-catalog.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "Tags": {
     "Tag1Key": "value",
     "Tag2Key": "value"
