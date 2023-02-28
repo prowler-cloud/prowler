@@ -137,6 +137,17 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
             # Merge the new configuration
             new_boto3_config = current_audit_info.session_config.merge(config)
             current_audit_info.session_config = new_boto3_config
+        else:
+            # Use the standard retry mode, and increase max retries from 3 to 5
+            config = Config(
+                retries={
+                    "max_attempts": 5,
+                    "mode": "standard",
+                }
+            )
+            # Merge the new configuration
+            new_boto3_config = current_audit_info.session_config.merge(config)
+            current_audit_info.session_config = new_boto3_config
 
         # Setting session
         current_audit_info.profile = input_profile
