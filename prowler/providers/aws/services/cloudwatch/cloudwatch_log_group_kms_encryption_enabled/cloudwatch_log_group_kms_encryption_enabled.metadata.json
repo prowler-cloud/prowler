@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/cli/latest/reference/logs/associate-kms-key.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

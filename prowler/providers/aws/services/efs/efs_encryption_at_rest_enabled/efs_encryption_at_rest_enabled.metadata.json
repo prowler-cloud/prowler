@@ -27,7 +27,9 @@
       "Url": "https://docs.aws.amazon.com/efs/latest/ug/encryption-at-rest.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

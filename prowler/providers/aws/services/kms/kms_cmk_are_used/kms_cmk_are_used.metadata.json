@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys-determining-usage.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

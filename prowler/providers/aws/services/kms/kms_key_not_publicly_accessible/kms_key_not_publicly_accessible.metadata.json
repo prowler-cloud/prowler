@@ -26,7 +26,8 @@
     }
   },
   "Categories": [
-    "internet-exposed"
+    "internet-exposed",
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [],

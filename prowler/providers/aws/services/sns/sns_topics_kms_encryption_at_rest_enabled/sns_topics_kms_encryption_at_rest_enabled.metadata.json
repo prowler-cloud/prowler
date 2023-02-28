@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/sns/latest/dg/sns-server-side-encryption.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

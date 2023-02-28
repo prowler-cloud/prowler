@@ -28,7 +28,8 @@
     }
   },
   "Categories": [
-    "forensics-ready"
+    "forensics-ready",
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [],

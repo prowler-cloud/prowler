@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Logging and Monitoring"
