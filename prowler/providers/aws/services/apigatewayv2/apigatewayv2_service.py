@@ -1,5 +1,6 @@
 import threading
-from dataclasses import dataclass
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -42,9 +43,10 @@ class ApiGatewayV2:
                     ):
                         self.apis.append(
                             API(
-                                apigw["ApiId"],
-                                regional_client.region,
-                                apigw["Name"],
+                                id=apigw["ApiId"],
+                                region=regional_client.region,
+                                name=apigw["Name"],
+                                tags=[apigw.get("Tags")],
                             )
                         )
         except Exception as error:
@@ -77,8 +79,9 @@ class ApiGatewayV2:
                         logging = True
                     api.stages.append(
                         Stage(
-                            stage["StageName"],
-                            logging,
+                            name=stage["StageName"],
+                            logging=logging,
+                            tags=[stage.get("Tags")],
                         )
                     )
         except Exception as error:
@@ -87,36 +90,16 @@ class ApiGatewayV2:
             )
 
 
-@dataclass
-class Stage:
+class Stage(BaseModel):
     name: str
     logging: bool
-
-    def __init__(
-        self,
-        name,
-        logging,
-    ):
-        self.name = name
-        self.logging = logging
+    tags: list = []
 
 
-@dataclass
-class API:
+class API(BaseModel):
     id: str
     region: str
     name: str
-    authorizer: bool
-    stages: list[Stage]
-
-    def __init__(
-        self,
-        id,
-        region,
-        name,
-    ):
-        self.id = id
-        self.region = region
-        self.name = name
-        self.authorizer = False
-        self.stages = []
+    authorizer: bool = False
+    stages: list[Stage] = []
+    tags: list = []
