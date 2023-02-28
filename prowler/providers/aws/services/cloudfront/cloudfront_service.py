@@ -27,6 +27,7 @@ class CloudFront:
             self.__get_distribution_config__(
                 self.client, self.distributions, self.region
             )
+            self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
