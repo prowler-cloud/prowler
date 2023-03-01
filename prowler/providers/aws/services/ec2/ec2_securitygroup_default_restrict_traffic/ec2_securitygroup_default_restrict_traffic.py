@@ -11,6 +11,7 @@ class ec2_securitygroup_default_restrict_traffic(Check):
             report.region = security_group.region
             report.resource_id = security_group.id
             report.resource_arn = security_group.arn
+            report.resource_tags = security_group.tags
             # Find default security group
             if security_group.name == "default":
                 report.status = "PASS"

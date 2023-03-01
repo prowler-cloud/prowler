@@ -18,7 +18,7 @@ class ec2_instance_secrets_user_data(Check):
             report.region = instance.region
             report.resource_id = instance.id
             report.resource_arn = instance.arn
-
+            report.resource_tags = instance.tags
             if instance.user_data:
                 temp_user_data_file = tempfile.NamedTemporaryFile(delete=False)
                 user_data = b64decode(instance.user_data)
