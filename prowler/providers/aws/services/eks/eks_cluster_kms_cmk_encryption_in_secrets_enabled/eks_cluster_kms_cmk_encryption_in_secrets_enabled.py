@@ -10,6 +10,7 @@ class eks_cluster_kms_cmk_encryption_in_secrets_enabled(Check):
             report.region = cluster.region
             report.resource_id = cluster.name
             report.resource_arn = cluster.arn
+            report.resource_tags = cluster.tags
             report.status = "FAIL"
             report.status_extended = (
                 f"EKS cluster {cluster.name} has not encryption for Kubernetes secrets."

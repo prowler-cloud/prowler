@@ -1,4 +1,5 @@
 import threading
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -91,6 +92,8 @@ class EKS:
                 if "encryptionConfig" in describe_cluster["cluster"]:
                     cluster.encryptionConfig = True
 
+                cluster.tags = [describe_cluster.get("tags")]
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -111,3 +114,4 @@ class EKSCluster(BaseModel):
     endpoint_private_access: bool = None
     public_access_cidrs: list[str] = None
     encryptionConfig: bool = None
+    tags: Optional[list] = []

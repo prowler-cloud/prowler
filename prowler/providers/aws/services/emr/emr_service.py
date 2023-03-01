@@ -125,6 +125,7 @@ class EMR:
                         and ".amazonaws.com" in master_public_dns_name
                     ):
                         self.clusters[cluster.id].public = True
+                    cluster.tags = cluster_info["Cluster"].get("Tags")
 
         except Exception as error:
             logger.error(
@@ -185,3 +186,4 @@ class Cluster(BaseModel):
     slave: Node = Node()
     master_public_dns_name: str = ""
     public: bool = False
+    tags: Optional[list] = []

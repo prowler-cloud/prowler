@@ -12,6 +12,7 @@ class elb_insecure_ssl_ciphers(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = lb.region
             report.resource_id = lb.name
+            report.resource_tags = lb.tags
             report.status = "PASS"
             report.status_extended = (
                 f"ELB {lb.name} has not insecure SSL protocols or ciphers."
