@@ -12,6 +12,7 @@ class opensearch_service_domains_encryption_at_rest_enabled(Check):
             report.region = domain.region
             report.resource_id = domain.name
             report.resource_arn = domain.arn
+            report.resource_tags = domain.tags
             report.status = "PASS"
             report.status_extended = (
                 f"Opensearch domain {domain.name} has encryption at-rest enabled"

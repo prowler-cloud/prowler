@@ -12,6 +12,7 @@ class opensearch_service_domains_updated_to_the_latest_service_software_version(
             report.region = domain.region
             report.resource_id = domain.name
             report.resource_arn = domain.arn
+            report.resource_tags = domain.tags
             report.status = "PASS"
             report.status_extended = f"Opensearch domain {domain.name}  with version {domain.version} does not have internal updates available"
             if domain.update_available:

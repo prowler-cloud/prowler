@@ -1,5 +1,6 @@
 import threading
 from json import loads
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -129,6 +130,20 @@ class OpenSearchService:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_tags__(self):
+        logger.info("OpenSearch - List Tags...")
+        for domain in self.opensearch_domains:
+            try:
+                regional_client = self.regional_clients[domain.region]
+                response = regional_client.list_tags(
+                    ARN=domain.arn,
+                )["TagList"]
+                domain.tags = response
+            except Exception as error:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
 
 class PublishingLoggingOption(BaseModel):
     name: str
@@ -150,3 +165,4 @@ class OpenSearchDomain(BaseModel):
     internal_user_database: bool = None
     update_available: bool = None
     version: str = None
+    tags: Optional[list] = []

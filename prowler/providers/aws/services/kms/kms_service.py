@@ -118,7 +118,6 @@ class KMS:
                 response = regional_client.list_resource_tags(
                     KeyId=key.id,
                 )["Tags"]
-                print(key.id)
                 key.tags = response
             except Exception as error:
                 logger.error(
