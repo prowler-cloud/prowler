@@ -111,6 +111,9 @@ class Test_ECS_Service:
                     ],
                 }
             ],
+            tags=[
+                {"key": "test", "value": "test"},
+            ],
         )
 
         task_definition = ecs_client.register_task_definition(**definition)
@@ -121,6 +124,9 @@ class Test_ECS_Service:
         assert (
             ecs.task_definitions[0].name == task_definition["taskDefinition"]["family"]
         )
+        assert ecs.task_definitions[0].tags == [
+            {"key": "test", "value": "test"},
+        ]
         assert (
             ecs.task_definitions[0].arn
             == task_definition["taskDefinition"]["taskDefinitionArn"]
