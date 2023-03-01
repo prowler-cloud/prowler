@@ -1,6 +1,8 @@
 import threading
-from dataclasses import dataclass
 from json import loads
+from typing import Optional
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -19,6 +21,7 @@ class ECR:
         self.__describe_repository_policies__()
         self.__get_image_details__()
         self.__get_repository_lifecycle_policy__()
+        self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -104,7 +107,6 @@ class ECR:
                     for page in describe_images_paginator.paginate(
                         repositoryName=repository.name
                     ):
-
                         for image in page["imageDetails"]:
                             severity_counts = None
                             last_scan_status = None
@@ -147,61 +149,40 @@ class ECR:
                 f"-- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_tags_for_resource__(self):
+        logger.info("ECR - List Tags...")
+        try:
+            for repository in self.repositories:
+                regional_client = self.regional_clients[repository.region]
+                response = regional_client.list_tags_for_resource(
+                    resourceArn=repository.arn
+                )["tags"]
+                repository.tags = response
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
-@dataclass
-class FindingSeverityCounts:
+
+class FindingSeverityCounts(BaseModel):
     critical: int
     high: int
     medium: int
 
-    def __init__(
-        self,
-        critical,
-        high,
-        medium,
-    ):
-        self.critical = critical
-        self.high = high
-        self.medium = medium
 
-
-@dataclass
-class ImageDetails:
+class ImageDetails(BaseModel):
     latest_tag: str
     latest_digest: str
-    scan_findings_status: str
-    scan_findings_severity_count: FindingSeverityCounts
-
-    def __init__(
-        self,
-        latest_tag,
-        latest_digest,
-        scan_findings_status,
-        scan_findings_severity_count,
-    ):
-        self.latest_tag = latest_tag
-        self.latest_digest = latest_digest
-        self.scan_findings_status = scan_findings_status
-        self.scan_findings_severity_count = scan_findings_severity_count
+    scan_findings_status: Optional[str]
+    scan_findings_severity_count: Optional[FindingSeverityCounts]
 
 
-@dataclass
-class Repository:
+class Repository(BaseModel):
     name: str
     arn: str
     region: str
     scan_on_push: bool
-    policy: dict
-    images_details: list[ImageDetails]
-    lyfecicle_policy: str
-
-    def __init__(
-        self, name, arn, region, scan_on_push, policy, images_details, lyfecicle_policy
-    ):
-        self.name = name
-        self.arn = arn
-        self.region = region
-        self.scan_on_push = scan_on_push
-        self.policy = policy
-        self.images_details = images_details
-        self.lyfecicle_policy = lyfecicle_policy
+    policy: Optional[dict]
+    images_details: Optional[list[ImageDetails]]
+    lyfecicle_policy: Optional[str]
+    tags: Optional[list] = []

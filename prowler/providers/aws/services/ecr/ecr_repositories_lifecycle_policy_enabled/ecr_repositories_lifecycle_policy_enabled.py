@@ -10,6 +10,7 @@ class ecr_repositories_lifecycle_policy_enabled(Check):
             report.region = repository.region
             report.resource_id = repository.name
             report.resource_arn = repository.arn
+            report.resource_tags = repository.tags
             report.status = "FAIL"
             report.status_extended = (
                 f"Repository {repository.name} has no lifecycle policy"
