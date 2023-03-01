@@ -1,4 +1,5 @@
 import threading
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -99,5 +100,5 @@ class Stack(BaseModel):
     """Stacks[].RootId"""
     is_nested_stack: bool = False
     """True if the Stack is a Nested Stack"""
-    tags: list = []
+    tags: Optional[list] = []
     region: str

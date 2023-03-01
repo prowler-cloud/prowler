@@ -27,7 +27,9 @@ class CloudFront:
             self.__get_distribution_config__(
                 self.client, self.distributions, self.region
             )
-            self.__list_tags_for_resource__()
+            self.__list_tags_for_resource__(
+                self.client, self.distributions, self.region
+            )
 
     def __get_session__(self):
         return self.session
@@ -101,18 +103,17 @@ class CloudFront:
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def __list_tags_for_resource__(self, client, distributions, region):
         logger.info("CloudFront - List Tags...")
         try:
-            for distribution in self.distributions.values():
-                regional_client = self.regional_clients[distribution.region]
-                response = regional_client.list_tags_for_resource(
-                    Resource=distribution.arn
-                )["Tags"]
+            for distribution in distributions.values():
+                response = client.list_tags_for_resource(Resource=distribution.arn)[
+                    "Tags"
+                ]
                 distribution.tags = response.get("Items")
         except Exception as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -157,4 +158,4 @@ class Distribution(BaseModel):
     geo_restriction_type: Optional[GeoRestrictionType]
     origins: list
     web_acl_id: str = ""
-    tags: list = []
+    tags: Optional[list] = []

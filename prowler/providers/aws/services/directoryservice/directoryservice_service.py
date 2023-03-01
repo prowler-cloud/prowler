@@ -1,7 +1,7 @@
 import threading
 from datetime import datetime
 from enum import Enum
-from typing import Union
+from typing import Optional, Union
 
 from pydantic import BaseModel
 
@@ -299,4 +299,4 @@ class Directory(BaseModel):
     snapshots_limits: SnapshotLimit = None
     radius_settings: RadiusSettings = None
     region: str
-    tags: list = []
+    tags: Optional[list] = []

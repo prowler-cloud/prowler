@@ -186,7 +186,7 @@ class Table(BaseModel):
     kms_arn: Optional[str]
     pitr: bool = False
     region: str
-    tags: list = []
+    tags: Optional[list] = []
 
 
 class Cluster(BaseModel):
@@ -194,4 +194,4 @@ class Cluster(BaseModel):
     name: str
     encryption: bool
     region: str
-    tags: list = []
+    tags: Optional[list] = []

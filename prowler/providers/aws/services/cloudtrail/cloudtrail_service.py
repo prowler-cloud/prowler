@@ -1,5 +1,6 @@
 import threading
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -168,4 +169,4 @@ class Trail(BaseModel):
     kms_key: str = None
     log_group_arn: str = None
     data_events: list[Event_Selector] = []
-    tags: list = []
+    tags: Optional[list] = []

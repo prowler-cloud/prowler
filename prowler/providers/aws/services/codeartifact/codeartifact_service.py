@@ -150,9 +150,9 @@ class CodeArtifact:
             )
 
     def __list_tags_for_resource__(self):
-        logger.info("CloudWatch - List Tags...")
+        logger.info("CodeArtifact - List Tags...")
         try:
-            for repository in self.repositories:
+            for repository in self.repositories.values():
                 regional_client = self.regional_clients[repository.region]
                 response = regional_client.list_tags_for_resource(
                     resourceArn=repository.arn
@@ -160,7 +160,7 @@ class CodeArtifact:
                 repository.tags = response
         except Exception as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -242,4 +242,4 @@ class Repository(BaseModel):
     domain_owner: str
     packages: list[Package] = []
     region: str
-    tags: list = []
+    tags: Optional[list] = []

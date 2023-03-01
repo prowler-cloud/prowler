@@ -184,7 +184,7 @@ class MetricAlarm(BaseModel):
     metric: Optional[str]
     name_space: Optional[str]
     region: str
-    tags: list = []
+    tags: Optional[list] = []
 
 
 class MetricFilter(BaseModel):
@@ -201,4 +201,4 @@ class LogGroup(BaseModel):
     retention_days: int
     kms_id: Optional[str]
     region: str
-    tags: list = []
+    tags: Optional[list] = []
