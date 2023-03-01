@@ -10,6 +10,7 @@ class guardduty_no_high_severity_findings(Check):
             report.region = detector.region
             report.resource_id = detector.id
             report.resource_arn = detector.arn
+            report.resource_tags = detector.tags
             report.status = "PASS"
             report.status_extended = f"GuardDuty detector {detector.id} does not have high severity findings."
             if len(detector.findings) > 0:

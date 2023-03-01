@@ -33,6 +33,7 @@ class Test_guardduty_is_enabled:
             Detector(
                 id=detector_id,
                 region=AWS_REGION,
+                arn="",
                 status=True,
             )
         )
@@ -58,6 +59,7 @@ class Test_guardduty_is_enabled:
         guardduty_client.detectors.append(
             Detector(
                 id=detector_id,
+                arn="",
                 region=AWS_REGION,
                 status=False,
             )
@@ -84,6 +86,7 @@ class Test_guardduty_is_enabled:
         guardduty_client.detectors.append(
             Detector(
                 id=detector_id,
+                arn="",
                 region=AWS_REGION,
             )
         )
