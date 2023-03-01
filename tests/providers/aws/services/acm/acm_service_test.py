@@ -67,6 +67,14 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "Options": {"CertificateTransparencyLoggingPreference": "DISABLED"},
                 }
             }
+    if operation_name == "ListTagsForCertificate":
+        if kwargs["CertificateArn"] == certificate_arn:
+            return {
+                "Tags": [
+                    {"Key": "test", "Value": "test"},
+                ]
+            }
+
     return make_api_call(self, operation_name, kwargs)
 
 
@@ -163,3 +171,21 @@ class Test_ACM_Service:
         assert acm.certificates[0].expiration_days == 365
         assert acm.certificates[0].transparency_logging is False
         assert acm.certificates[0].region == AWS_REGION
+
+    # Test ACM List Tags
+    # @mock_acm
+    def test__list_tags_for_certificate__(self):
+        # Generate ACM Client
+        # acm_client = client("acm", region_name=AWS_REGION)
+        # Request ACM certificate
+        # certificate = acm_client.request_certificate(
+        #     DomainName="test.com",
+        # )
+
+        # ACM client for this test class
+        audit_info = self.set_mocked_audit_info()
+        acm = ACM(audit_info)
+        assert len(acm.certificates) == 1
+        assert acm.certificates[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
