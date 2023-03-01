@@ -111,7 +111,7 @@ class Certificate(BaseModel):
     arn: str
     name: str
     type: str
-    tags: list = []
+    tags: Optional[list] = []
     expiration_days: int
     transparency_logging: Optional[bool]
     region: str

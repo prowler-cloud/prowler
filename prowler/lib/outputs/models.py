@@ -162,7 +162,7 @@ class Check_Output_CSV(BaseModel):
     severity: str
     resource_type: str
     resource_details: str
-    resource_tags: list
+    resource_tags: Optional[list]
     description: str
     risk: str
     related_url: str

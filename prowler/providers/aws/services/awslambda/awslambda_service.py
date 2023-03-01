@@ -199,4 +199,4 @@ class Function(BaseModel):
     policy: dict = None
     code: LambdaCode = None
     url_config: URLConfig = None
-    tags: list = []
+    tags: Optional[list] = []

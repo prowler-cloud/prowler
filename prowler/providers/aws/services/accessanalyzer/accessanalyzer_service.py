@@ -1,4 +1,5 @@
 import threading
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -119,6 +120,6 @@ class Analyzer(BaseModel):
     name: str
     status: str
     findings: list[Finding] = []
-    tags: list = []
+    tags: Optional[list] = []
     type: str
     region: str

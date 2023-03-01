@@ -89,4 +89,4 @@ class Fleet(BaseModel):
     idle_disconnect_timeout_in_seconds: Optional[int]
     enable_default_internet_access: bool
     region: str
-    tags: list = []
+    tags: Optional[list] = []
