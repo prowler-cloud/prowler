@@ -20,6 +20,7 @@ class OpenSearchService:
         self.__threading_call__(self.__list_domain_names__)
         self.__describe_domain_config__(self.regional_clients)
         self.__describe_domain__(self.regional_clients)
+        self.__list_tags__()
 
     def __get_session__(self):
         return self.session

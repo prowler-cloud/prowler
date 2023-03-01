@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -21,6 +23,7 @@ class Route53:
             self.region = self.client.region
             self.__list_hosted_zones__()
             self.__list_query_logging_configs__()
+            self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -74,6 +77,19 @@ class Route53:
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_tags_for_resource__(self):
+        logger.info("Route53Domains - List Tags...")
+        for hosted_zone in self.hosted_zones.values():
+            try:
+                response = self.client.list_tags_for_resource(
+                    ResourceType="hostedzone", ResourceId=hosted_zone.id
+                )["ResourceTagSet"]
+                hosted_zone.tags = response.get("Tags")
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
 
 class LoggingConfig(BaseModel):
     cloudwatch_log_group_arn: str
@@ -86,6 +102,7 @@ class HostedZone(BaseModel):
     private_zone: bool
     logging_config: LoggingConfig = None
     region: str
+    tags: Optional[list] = []
 
 
 ################## Route53Domains
@@ -102,6 +119,7 @@ class Route53Domains:
             self.client = self.session.client(self.service, self.region)
             self.__list_domains__()
             self.__get_domain_detail__()
+            self.__list_tags_for_domain__()
 
     def __get_session__(self):
         return self.session
@@ -136,9 +154,23 @@ class Route53Domains:
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_tags_for_domain__(self):
+        logger.info("Route53Domains - List Tags...")
+        for domain in self.domains.values():
+            try:
+                response = self.client.list_tags_for_domain(
+                    DomainName=domain.name,
+                )["TagList"]
+                domain.tags = response
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
 
 class Domain(BaseModel):
     name: str
     region: str
     admin_privacy: bool = False
     status_list: list[str] = None
+    tags: Optional[list] = []
