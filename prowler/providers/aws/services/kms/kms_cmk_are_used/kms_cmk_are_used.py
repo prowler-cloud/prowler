@@ -12,6 +12,7 @@ class kms_cmk_are_used(Check):
                 report.region = key.region
                 report.resource_id = key.id
                 report.resource_arn = key.arn
+                report.resource_tags = key.tags
                 if key.state != "Enabled":
                     if key.state == "PendingDeletion":
                         report.status = "PASS"

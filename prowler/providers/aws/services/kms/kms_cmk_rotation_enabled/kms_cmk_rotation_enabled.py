@@ -8,6 +8,7 @@ class kms_cmk_rotation_enabled(Check):
         for key in kms_client.keys:
             report = Check_Report_AWS(self.metadata())
             report.region = key.region
+            report.resource_tags = key.tags
             # Only check enabled CMKs keys
             if (
                 key.manager == "CUSTOMER"

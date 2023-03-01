@@ -23,6 +23,7 @@ class KMS:
             self.__describe_key__()
             self.__get_key_rotation_status__()
             self.__get_key_policy__()
+            self.__list_resource_tags__()
 
     def __get_session__(self):
         return self.session
@@ -109,6 +110,21 @@ class KMS:
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
+    def __list_resource_tags__(self):
+        logger.info("KMS - List Tags...")
+        for key in self.keys:
+            try:
+                regional_client = self.regional_clients[key.region]
+                response = regional_client.list_resource_tags(
+                    KeyId=key.id,
+                )["Tags"]
+                print(key.id)
+                key.tags = response
+            except Exception as error:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
 
 class Key(BaseModel):
     id: str
@@ -120,3 +136,4 @@ class Key(BaseModel):
     policy: Optional[dict]
     spec: Optional[str]
     region: str
+    tags: Optional[list] = []
