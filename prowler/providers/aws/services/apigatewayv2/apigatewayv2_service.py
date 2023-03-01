@@ -1,4 +1,5 @@
 import threading
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -93,7 +94,7 @@ class ApiGatewayV2:
 class Stage(BaseModel):
     name: str
     logging: bool
-    tags: list = []
+    tags: Optional[list] = []
 
 
 class API(BaseModel):
@@ -102,4 +103,4 @@ class API(BaseModel):
     name: str
     authorizer: bool = False
     stages: list[Stage] = []
-    tags: list = []
+    tags: Optional[list] = []

@@ -121,7 +121,7 @@ class Stage(BaseModel):
     logging: bool
     client_certificate: bool
     waf: Optional[str]
-    tags: list = []
+    tags: Optional[list] = []
 
 
 class RestAPI(BaseModel):
@@ -132,4 +132,4 @@ class RestAPI(BaseModel):
     authorizer: bool = False
     public_endpoint: bool = True
     stages: list[Stage] = []
-    tags: list = []
+    tags: Optional[list] = []
