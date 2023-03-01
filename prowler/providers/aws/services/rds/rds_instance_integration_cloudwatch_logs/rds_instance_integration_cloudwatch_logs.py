@@ -9,6 +9,7 @@ class rds_instance_integration_cloudwatch_logs(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = db_instance.region
             report.resource_id = db_instance.id
+            report.resource_tags = db_instance.tags
             if db_instance.cloudwatch_logs:
                 report.status = "PASS"
                 report.status_extended = f"RDS Instance {db_instance.id} is shipping {' '.join(db_instance.cloudwatch_logs)} to CloudWatch Logs."
