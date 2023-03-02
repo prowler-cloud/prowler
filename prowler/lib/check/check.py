@@ -519,7 +519,9 @@ def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
             sub_service = resource.split(":")[5].split("/")[0].replace("-", "_")
 
             if (
-                service != "wafv2" and service != "waf"
+                service != "wafv2"
+                and service != "waf"
+                and service != "servicediscovery"
             ):  # WAF Services does not have checks
                 # Parse services when they are different in the ARNs
                 if service == "lambda":
