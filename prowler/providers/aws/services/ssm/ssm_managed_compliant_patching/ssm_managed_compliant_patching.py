@@ -9,7 +9,7 @@ class ssm_managed_compliant_patching(Check):
         for resource in ssm_client.compliance_resources.values():
             report = Check_Report_AWS(self.metadata())
             report.region = resource.region
-            report.resource_arn = f"arn:aws:ec2:{resource.region}:{ssm_client.audited_account}:instance/{resource.id}"
+            report.resource_arn = resource.arn
             report.resource_id = resource.id
 
             if resource.status == ResourceStatus.COMPLIANT:
