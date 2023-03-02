@@ -1,5 +1,6 @@
 import threading
-from dataclasses import dataclass
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -45,11 +46,11 @@ class AutoScaling:
                     ):
                         self.launch_configurations.append(
                             LaunchConfiguration(
-                                configuration["LaunchConfigurationARN"],
-                                configuration["LaunchConfigurationName"],
-                                configuration["UserData"],
-                                configuration["ImageId"],
-                                regional_client.region,
+                                arn=configuration["LaunchConfigurationARN"],
+                                name=configuration["LaunchConfigurationName"],
+                                user_data=configuration["UserData"],
+                                image_id=configuration["ImageId"],
+                                region=regional_client.region,
                             )
                         )
 
@@ -59,24 +60,9 @@ class AutoScaling:
             )
 
 
-@dataclass
-class LaunchConfiguration:
+class LaunchConfiguration(BaseModel):
     arn: str
     name: str
     user_data: str
-    image_id: int
+    image_id: str
     region: str
-
-    def __init__(
-        self,
-        arn,
-        name,
-        user_data,
-        image_id,
-        region,
-    ):
-        self.arn = arn
-        self.name = name
-        self.image_id = image_id
-        self.user_data = user_data
-        self.region = region
