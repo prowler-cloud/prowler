@@ -1,4 +1,5 @@
 import threading
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -23,6 +24,7 @@ class SageMaker:
         self.__describe_model__(self.regional_clients)
         self.__describe_notebook_instance__(self.regional_clients)
         self.__describe_training_job__(self.regional_clients)
+        self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -190,6 +192,26 @@ class SageMaker:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_tags_for_resource__(self):
+        logger.info("SageMaker - List Tags...")
+        try:
+            for model in self.sagemaker_models:
+                regional_client = self.regional_clients[model.region]
+                response = regional_client.list_tags(ResourceArn=model.arn)["Tags"]
+                model.tags = response
+            for instance in self.sagemaker_notebook_instances:
+                regional_client = self.regional_clients[instance.region]
+                response = regional_client.list_tags(ResourceArn=instance.arn)["Tags"]
+                instance.tags = response
+            for job in self.sagemaker_training_jobs:
+                regional_client = self.regional_clients[job.region]
+                response = regional_client.list_tags(ResourceArn=job.arn)["Tags"]
+                job.tags = response
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class NotebookInstance(BaseModel):
     name: str
@@ -199,6 +221,7 @@ class NotebookInstance(BaseModel):
     subnet_id: str = None
     direct_internet_access: bool = None
     kms_key_id: str = None
+    tags: Optional[list] = []
 
 
 class Model(BaseModel):
@@ -207,6 +230,7 @@ class Model(BaseModel):
     arn: str
     network_isolation: bool = None
     vpc_config_subnets: list[str] = []
+    tags: Optional[list] = []
 
 
 class TrainingJob(BaseModel):
@@ -217,3 +241,4 @@ class TrainingJob(BaseModel):
     volume_kms_key_id: str = None
     network_isolation: bool = None
     vpc_config_subnets: list[str] = []
+    tags: Optional[list] = []
