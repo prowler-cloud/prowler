@@ -1,5 +1,6 @@
 import csv
 import json
+from copy import deepcopy
 
 from alive_progress import alive_bar
 from colorama import Fore, Style
@@ -16,10 +17,10 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
 def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
-    print(
-        f"-=- Running Quick Inventory for AWS Account {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL} -=-\n"
-    )
     resources = []
+    global_resources = []
+    total_resources_per_region = {}
+    iam_was_scanned = False
     # If not inputed regions, check all of them
     if not audit_info.audited_regions:
         # EC2 client for describing all regions
@@ -40,42 +41,43 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
         enrich_print=False,
     ) as bar:
         for region in sorted(audit_info.audited_regions):
-            bar.title = f"-> Scanning {orange_color}{region}{Style.RESET_ALL} region"
+            bar.title = f"Inventorying AWS Account {orange_color}{audit_info.audited_account}{Style.RESET_ALL}"
             resources_in_region = []
+            # {
+            #   eu-west-1: 100,...
+            # }
+
             try:
-                # If us-east-1 get IAM resources from there otherwise see if it is US GovCloud or China
-                iam_client = audit_info.audit_session.client("iam")
-                if (
-                    region == "us-east-1"
-                    or region == "us-gov-west-1"
-                    or region == "cn-north-1"
-                ):
+                # Scan IAM only once
+                if not iam_was_scanned:
+                    iam_client = audit_info.audit_session.client("iam")
                     get_roles_paginator = iam_client.get_paginator("list_roles")
                     for page in get_roles_paginator.paginate():
                         for role in page["Roles"]:
                             # Avoid aws-service-role roles
                             if "aws-service-role" not in role["Arn"]:
-                                resources_in_region.append(role["Arn"])
+                                global_resources.append(role["Arn"])
 
                     get_users_paginator = iam_client.get_paginator("list_users")
                     for page in get_users_paginator.paginate():
                         for user in page["Users"]:
-                            resources_in_region.append(user["Arn"])
+                            global_resources.append(user["Arn"])
 
                     get_groups_paginator = iam_client.get_paginator("list_groups")
                     for page in get_groups_paginator.paginate():
                         for group in page["Groups"]:
-                            resources_in_region.append(group["Arn"])
+                            global_resources.append(group["Arn"])
 
                     get_policies_paginator = iam_client.get_paginator("list_policies")
                     for page in get_policies_paginator.paginate(Scope="Local"):
                         for policy in page["Policies"]:
-                            resources_in_region.append(policy["Arn"])
+                            global_resources.append(policy["Arn"])
 
                     for saml_provider in iam_client.list_saml_providers()[
                         "SAMLProviderList"
                     ]:
-                        resources_in_region.append(saml_provider["Arn"])
+                        global_resources.append(saml_provider["Arn"])
+                    iam_was_scanned = True
 
                 client = audit_info.audit_session.client(
                     "resourcegroupstaggingapi", region_name=region
@@ -86,12 +88,15 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
                 for page in get_resources_paginator.paginate():
                     resources_count += len(page["ResourceTagMappingList"])
                     for resource in page["ResourceTagMappingList"]:
-                        resources_in_region.append(resource["ResourceARN"])
+                        # Check if region is not in ARN --> Global service
+                        if not resource["ResourceARN"].split(":")[3]:
+                            global_resources.append(resource["ResourceARN"])
+                        else:
+                            resources_in_region.append(resource["ResourceARN"])
                 bar()
-                print(
-                    f"Found {Fore.GREEN}{len(resources_in_region)}{Style.RESET_ALL} resources in region {Fore.YELLOW}{region}{Style.RESET_ALL}"
-                )
-                print("\n")
+                if len(resources_in_region) > 0:
+                    total_resources_per_region[region] = len(resources_in_region)
+                bar.text = f"-> Found {Fore.GREEN}{len(resources_in_region)}{Style.RESET_ALL} resources in {region}"
 
             except Exception as error:
                 logger.error(
@@ -102,7 +107,9 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
             resources.extend(resources_in_region)
         bar.title = f"-> {Fore.GREEN}Quick Inventory completed!{Style.RESET_ALL}"
 
-    inventory_table = create_inventory_table(resources)
+    resources.extend(global_resources)
+    total_resources_per_region["global"] = len(global_resources)
+    inventory_table = create_inventory_table(resources, total_resources_per_region)
 
     print(
         f"\nQuick Inventory of AWS Account {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL}:"
@@ -115,7 +122,8 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
     create_output(resources, audit_info, output_directory)
 
 
-def create_inventory_table(resources: list) -> dict:
+def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
+    regions_with_resources = list(resources_in_region.keys())
     services = {}
     # { "S3":
     #       123,
@@ -124,13 +132,30 @@ def create_inventory_table(resources: list) -> dict:
     # }
     resources_type = {}
     # { "S3":
-    #       "Buckets": 13,
+    #       "Buckets":
+    #           eu-west-1: 10,
+    #           eu-west-2: 3,
     #   "IAM":
-    #       "Roles": 143,
-    #       "Users": 22,
+    #       "Roles":
+    #           us-east-1: 143,
+    #       "Users":
+    #           us-west-2: 22,
     # }
+
+    inventory_table = {
+        "Service": [],
+        f"Total\n ({Fore.GREEN}{str(len(resources))}{Style.RESET_ALL})": [],
+        "Total per resource type": [],
+    }
+
+    for region, count in resources_in_region.items():
+        inventory_table[f"{region}\n ({Fore.GREEN}{str(count)}{Style.RESET_ALL})"] = []
+
     for resource in sorted(resources):
         service = resource.split(":")[2]
+        region = resource.split(":")[3]
+        if not region:
+            region = "global"
         if service not in services:
             services[service] = 0
         services[service] += 1
@@ -154,24 +179,46 @@ def create_inventory_table(resources: list) -> dict:
         if service not in resources_type:
             resources_type[service] = {}
         if resource_type not in resources_type[service]:
-            resources_type[service][resource_type] = 0
-        resources_type[service][resource_type] += 1
+            resources_type[service][resource_type] = {}
+        if region not in resources_type[service][resource_type]:
+            resources_type[service][resource_type][region] = 0
+        resources_type[service][resource_type][region] += 1
 
     # Add results to inventory table
-    inventory_table = {
-        "Service": [],
-        "Total": [],
-        "Count per resource types": [],
-    }
     for service in services:
+        pending_regions = deepcopy(regions_with_resources)
+        aux = {}
+        # {
+        #  "region": summary,
+        # }
         summary = ""
         inventory_table["Service"].append(f"{service}")
-        inventory_table["Total"].append(
-            f"{Fore.GREEN}{services[service]}{Style.RESET_ALL}"
-        )
-        for resource_type in resources_type[service]:
-            summary += f"{resource_type} {Fore.GREEN}{resources_type[service][resource_type]}{Style.RESET_ALL}\n"
-        inventory_table["Count per resource types"].append(summary)
+        inventory_table[
+            f"Total\n ({Fore.GREEN}{str(len(resources))}{Style.RESET_ALL})"
+        ].append(f"{Fore.GREEN}{services[service]}{Style.RESET_ALL}")
+        for resource_type, regions in resources_type[service].items():
+            summary += f"{resource_type} {Fore.GREEN}{str(sum(regions.values()))}{Style.RESET_ALL}\n"
+            # Check if region does not have resource type
+            for region in pending_regions:
+                if region not in aux:
+                    aux[region] = ""
+                if region not in regions:
+                    aux[region] += "-\n"
+            for region, count in regions.items():
+                aux[region] += f"{Fore.GREEN}{str(count)}{Style.RESET_ALL}\n"
+        # Add Total per resource type
+        inventory_table["Total per resource type"].append(summary)
+        # Add Total per region
+        for region, text in aux.items():
+            inventory_table[
+                f"{region}\n ({Fore.GREEN}{str(resources_in_region[region])}{Style.RESET_ALL})"
+            ].append(text)
+            if region in pending_regions:
+                pending_regions.remove(region)
+        for region_without_resource in pending_regions:
+            inventory_table[
+                f"{region_without_resource}\n ({Fore.GREEN}{str(resources_in_region[region_without_resource])}{Style.RESET_ALL})"
+            ].append("-")
 
     return inventory_table
 
