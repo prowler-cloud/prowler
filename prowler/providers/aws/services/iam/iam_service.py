@@ -59,6 +59,7 @@ class IAM:
         self.__list_policies_version__(self.policies)
         self.saml_providers = self.__list_saml_providers__()
         self.server_certificates = self.__list_server_certificates__()
+        self.__list_tags_for_resource__()
 
     def __get_client__(self):
         return self.client
@@ -408,6 +409,20 @@ class IAM:
         finally:
             return server_certificates
 
+    def __list_tags_for_resource__(self):
+        logger.info("IAM - List Tags...")
+        try:
+            for role in self.roles:
+                response = self.client.list_role_tags(RoleName=role.name)["Tags"]
+                role.tags = response
+            for user in self.users:
+                response = self.client.list_user_tags(UserName=user.name)["Tags"]
+                user.tags = response
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class MFADevice(BaseModel):
     serial_number: str
@@ -421,6 +436,7 @@ class User(BaseModel):
     password_last_used: Optional[datetime]
     attached_policies: list[dict] = []
     inline_policies: list[str] = []
+    tags: Optional[list] = []
 
 
 class Role(BaseModel):
@@ -428,6 +444,7 @@ class Role(BaseModel):
     arn: str
     assume_role_policy: dict
     is_service_role: bool
+    tags: Optional[list] = []
 
 
 class Group(BaseModel):
