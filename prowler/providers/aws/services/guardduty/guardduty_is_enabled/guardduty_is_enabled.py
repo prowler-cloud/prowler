@@ -10,6 +10,7 @@ class guardduty_is_enabled(Check):
             report.region = detector.region
             report.resource_id = detector.id
             report.resource_arn = detector.arn
+            report.resource_tags = detector.tags
             report.status = "PASS"
             report.status_extended = f"GuardDuty detector {detector.id} enabled"
             if detector.status is None:

@@ -9,6 +9,7 @@ class rds_instance_enhanced_monitoring_enabled(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = db_instance.region
             report.resource_id = db_instance.id
+            report.resource_tags = db_instance.tags
             if db_instance.enhanced_monitoring_arn:
                 report.status = "PASS"
                 report.status_extended = (

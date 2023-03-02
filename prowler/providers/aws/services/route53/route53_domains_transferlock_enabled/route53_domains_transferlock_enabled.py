@@ -12,7 +12,7 @@ class route53_domains_transferlock_enabled(Check):
             report = Check_Report_AWS(self.metadata())
             report.resource_id = domain.name
             report.region = domain.region
-
+            report.resource_tags = domain.tags
             if domain.status_list and "clientTransferProhibited" in domain.status_list:
                 report.status = "PASS"
                 report.status_extended = (

@@ -82,6 +82,12 @@ def mock_make_api_call(self, operation_name, kwarg):
                 "AdvancedSecurityOptions": {"InternalUserDatabaseEnabled": True},
             }
         }
+    if operation_name == "ListTags":
+        return {
+            "TagList": [
+                {"Key": "test", "Value": "test"},
+            ]
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -183,3 +189,6 @@ class Test_OpenSearchService_Service:
         assert opensearch.opensearch_domains[0].internal_user_database
         assert opensearch.opensearch_domains[0].update_available
         assert opensearch.opensearch_domains[0].version == "opensearch-version1"
+        assert opensearch.opensearch_domains[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]

@@ -1,4 +1,5 @@
 import threading
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -45,6 +46,7 @@ class Redshift:
                         cluster_to_append = Cluster(
                             id=cluster["ClusterIdentifier"],
                             region=regional_client.region,
+                            tags=cluster.get("Tags"),
                         )
                         if (
                             "PubliclyAccessible" in cluster
@@ -114,3 +116,4 @@ class Cluster(BaseModel):
     logging_enabled: bool = None
     bucket: str = None
     cluster_snapshots: bool = None
+    tags: Optional[list] = []

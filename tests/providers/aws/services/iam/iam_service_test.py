@@ -247,10 +247,16 @@ class Test_IAM_Service:
         service_role = iam_client.create_role(
             RoleName="test-1",
             AssumeRolePolicyDocument=dumps(service_policy_document),
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
         )["Role"]
         role = iam_client.create_role(
             RoleName="test-2",
             AssumeRolePolicyDocument=dumps(policy_document),
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
         )["Role"]
 
         # IAM client for this test class
@@ -258,6 +264,12 @@ class Test_IAM_Service:
         iam = IAM(audit_info)
 
         assert len(iam.roles) == len(iam_client.list_roles()["Roles"])
+        assert iam.roles[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
+        assert iam.roles[1].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
         assert is_service_role(service_role)
         assert not is_service_role(role)
 
@@ -287,15 +299,27 @@ class Test_IAM_Service:
         # Create 2 IAM Users
         iam_client.create_user(
             UserName="user1",
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
         )
         iam_client.create_user(
             UserName="user2",
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
         )
 
         # IAM client for this test class
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
         assert len(iam.users) == len(iam_client.list_users()["Users"])
+        assert iam.users[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
+        assert iam.users[1].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     # Test IAM Get Account Summary
     @mock_iam

@@ -54,6 +54,9 @@ def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "GetVaultAccessPolicy":
         return {"policy": {"Policy": json.dumps(vault_json_policy)}}
 
+    if operation_name == "ListTagsForVault":
+        return {"Tags": {"test": "test"}}
+
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -99,6 +102,7 @@ class Test_Glacier_Service:
             == f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
         )
         assert glacier.vaults[vault_name].region == AWS_REGION
+        assert glacier.vaults[vault_name].tags == [{"test": "test"}]
 
     def test__get_vault_access_policy__(self):
         # Set partition for the service

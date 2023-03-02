@@ -1,5 +1,6 @@
 import json
 import threading
+from typing import Optional
 
 from botocore.client import ClientError
 from pydantic import BaseModel
@@ -20,6 +21,7 @@ class Glacier:
         self.vaults = {}
         self.__threading_call__(self.__list_vaults__)
         self.__threading_call__(self.__get_vault_access_policy__)
+        self.__list_tags_for_vault__()
 
     def __get_session__(self):
         return self.session
@@ -79,9 +81,24 @@ class Glacier:
                 f" {error}"
             )
 
+    def __list_tags_for_vault__(self):
+        logger.info("Glacier - List Tags...")
+        try:
+            for vault in self.vaults.values():
+                regional_client = self.regional_clients[vault.region]
+                response = regional_client.list_tags_for_vault(vaultName=vault.name)[
+                    "Tags"
+                ]
+                vault.tags = [response]
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Vault(BaseModel):
     name: str
     arn: str
     region: str
     access_policy: dict = {}
+    tags: Optional[list] = []

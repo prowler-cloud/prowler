@@ -10,7 +10,7 @@ class glacier_vaults_policy_public_access(Check):
             report.region = vault.region
             report.resource_id = vault.name
             report.resource_arn = vault.arn
-
+            report.resource_tags = vault.tags
             report.status = "PASS"
             report.status_extended = (
                 f"Vault {vault.name} has policy which does not allow access to everyone"
@@ -19,10 +19,8 @@ class glacier_vaults_policy_public_access(Check):
             public_access = False
             if vault.access_policy:
                 for statement in vault.access_policy["Statement"]:
-
                     # Only check allow statements
                     if statement["Effect"] == "Allow":
-
                         if (
                             "*" in statement["Principal"]
                             or (

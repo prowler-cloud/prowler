@@ -8,8 +8,8 @@ class Test_macie_is_enabled:
         macie_client = mock.MagicMock
         macie_client.sessions = [
             Session(
-                "DISABLED",
-                "eu-west-1",
+                status="DISABLED",
+                region="eu-west-1",
             )
         ]
         with mock.patch(
@@ -33,8 +33,8 @@ class Test_macie_is_enabled:
         macie_client = mock.MagicMock
         macie_client.sessions = [
             Session(
-                "ENABLED",
-                "eu-west-1",
+                status="ENABLED",
+                region="eu-west-1",
             )
         ]
         with mock.patch(
@@ -58,8 +58,8 @@ class Test_macie_is_enabled:
         macie_client = mock.MagicMock
         macie_client.sessions = [
             Session(
-                "PAUSED",
-                "eu-west-1",
+                status="PAUSED",
+                region="eu-west-1",
             )
         ]
         with mock.patch(

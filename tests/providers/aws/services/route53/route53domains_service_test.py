@@ -28,6 +28,12 @@ def mock_make_api_call(self, operation_name, kwarg):
             ],
             "NextPageMarker": "string",
         }
+    if operation_name == "ListTagsForDomain":
+        return {
+            "TagList": [
+                {"Key": "test", "Value": "test"},
+            ]
+        }
     if operation_name == "GetDomainDetail":
         return {
             "DomainName": "test.domain.com",
@@ -117,3 +123,6 @@ class Test_Route53_Service:
             "clientTransferProhibited"
             in route53domains.domains[domain_name].status_list
         )
+        assert route53domains.domains[domain_name].tags == [
+            {"Key": "test", "Value": "test"},
+        ]

@@ -12,6 +12,7 @@ class opensearch_service_domains_use_cognito_authentication_for_kibana(Check):
             report.region = domain.region
             report.resource_id = domain.name
             report.resource_arn = domain.arn
+            report.resource_tags = domain.tags
             report.status = "PASS"
             report.status_extended = f"Opensearch domain {domain.name} has Amazon Cognito authentication for Kibana enabled"
             if not domain.cognito_options:

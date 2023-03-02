@@ -16,6 +16,8 @@ make_api_call = botocore.client.BaseClient._make_api_call
 def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "ListFindings":
         return {"FindingIds": ["86c1d16c9ec63f634ccd087ae0d427ba1"]}
+    if operation_name == "ListTagsForResource":
+        return {"Tags": {"test": "test"}}
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -77,7 +79,7 @@ class Test_GuardDuty_Service:
     # Test GuardDuty session
     def test__list_detectors__(self):
         guardduty_client = client("guardduty", region_name=AWS_REGION)
-        response = guardduty_client.create_detector(Enable=True)
+        response = guardduty_client.create_detector(Enable=True, Tags={"test": "test"})
 
         audit_info = self.set_mocked_audit_info()
         guardduty = GuardDuty(audit_info)
@@ -85,6 +87,7 @@ class Test_GuardDuty_Service:
         assert len(guardduty.detectors) == 1
         assert guardduty.detectors[0].id == response["DetectorId"]
         assert guardduty.detectors[0].region == AWS_REGION
+        assert guardduty.detectors[0].tags == [{"test": "test"}]
 
     @mock_guardduty
     # Test GuardDuty session
