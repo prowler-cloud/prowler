@@ -12,6 +12,7 @@ class workspaces_volume_encryption_enabled(Check):
             report.region = workspace.region
             report.resource_id = workspace.id
             report.resource_arn = workspace.arn
+            report.resource_tags = workspace.tags
             report.status = "PASS"
             report.status_extended = f"WorkSpaces workspace {workspace.id} without root or user unencrypted volumes"
             if not workspace.user_volume_encryption_enabled:
