@@ -98,10 +98,15 @@ jobs:
     needs: container-build-push
     runs-on: ubuntu-latest
     steps:
+      - name: Get latest commit info
+        if: github.event_name == 'push'
+        run: |
+          LATEST_COMMIT_HASH=$(echo ${{ github.event.before }} | cut -b -6)
+          echo "LATEST_COMMIT_HASH=${LATEST_COMMIT_HASH}" >> $GITHUB_ENV
       - name: Dispatch event for latest
         if: github.event_name == 'push'
         run: |
-          curl https://api.github.com/repos/${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}/dispatches -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" --data '{"event_type":"dispatch","client_payload":{"version":"latest"}'
+          curl https://api.github.com/repos/${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}/dispatches -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" --data '{"event_type":"dispatch","client_payload":{"version":"latest", "tag": "${{ env.LATEST_COMMIT_HASH }}"}}'
       - name: Dispatch event for release
         if: github.event_name == 'release'
         run: |
