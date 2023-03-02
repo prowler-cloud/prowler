@@ -14,6 +14,7 @@ class directoryservice_directory_snapshots_limit(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = directory.region
             report.resource_id = directory.id
+            report.resource_tags = directory.tags
             if directory.snapshots_limits:
                 if directory.snapshots_limits.manual_snapshots_limit_reached:
                     report.status = "FAIL"

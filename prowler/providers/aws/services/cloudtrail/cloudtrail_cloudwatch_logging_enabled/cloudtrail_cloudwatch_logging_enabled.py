@@ -17,6 +17,7 @@ class cloudtrail_cloudwatch_logging_enabled(Check):
                 report.region = trail.region
                 report.resource_id = trail.name
                 report.resource_arn = trail.arn
+                report.resource_tags = trail.tags
                 report.status = "PASS"
                 if trail.is_multiregion:
                     report.status_extended = (

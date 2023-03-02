@@ -15,6 +15,7 @@ class directoryservice_radius_server_security_protocol(Check):
                 report = Check_Report_AWS(self.metadata())
                 report.region = directory.region
                 report.resource_id = directory.id
+                report.resource_tags = directory.tags
                 if (
                     directory.radius_settings.authentication_protocol
                     == AuthenticationProtocol.MS_CHAPv2

@@ -15,6 +15,7 @@ class cloudfront_distributions_https_enabled(Check):
             report.region = distribution.region
             report.resource_arn = distribution.arn
             report.resource_id = distribution.id
+            report.resource_tags = distribution.tags
             if (
                 distribution.default_cache_config
                 and distribution.default_cache_config.viewer_protocol_policy

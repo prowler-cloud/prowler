@@ -17,6 +17,7 @@ class directoryservice_ldap_certificate_expiration(Check):
                 report = Check_Report_AWS(self.metadata())
                 report.region = directory.region
                 report.resource_id = certificate.id
+                report.resource_tags = directory.tags
 
                 remaining_days_to_expire = (
                     certificate.expiry_date_time
