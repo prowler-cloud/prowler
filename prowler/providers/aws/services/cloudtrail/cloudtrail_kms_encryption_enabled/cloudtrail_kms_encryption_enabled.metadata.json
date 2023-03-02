@@ -28,12 +28,9 @@
     }
   },
   "Categories": [
-    "forensics-ready"
+    "forensics-ready",
+    "encryption"
   ],
-  "Tags": {
-    "Tag1Key": "value",
-    "Tag2Key": "value"
-  },
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
