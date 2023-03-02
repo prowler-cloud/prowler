@@ -15,36 +15,17 @@ on:
 env:
   AWS_REGION_STG: eu-west-1
   AWS_REGION_PLATFORM: eu-west-1
-  AWS_REGION_PRO: us-east-1
+  AWS_REGION: us-east-1
   IMAGE_NAME: prowler
   LATEST_TAG: latest
   STABLE_TAG: stable
   TEMPORARY_TAG: temporary
   DOCKERFILE_PATH: ./Dockerfile
+  PYTHON_VERSION: 3.9
 
 jobs:
-  # Lint Dockerfile using Hadolint
-  # dockerfile-linter:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     -
-  #       name: Checkout
-  #       uses: actions/checkout@v3
-  #     -
-  #       name: Install Hadolint
-  #       run: |
-  #         VERSION=$(curl --silent "https://api.github.com/repos/hadolint/hadolint/releases/latest" | \
-  #           grep '"tag_name":' | \
-  #           sed -E 's/.*"v([^"]+)".*/\1/' \
-  #           ) && curl -L -o /tmp/hadolint https://github.com/hadolint/hadolint/releases/download/v${VERSION}/hadolint-Linux-x86_64 \
-  #           && chmod +x /tmp/hadolint
-  #     -
-  #       name: Run Hadolint
-  #       run: |
-  #         /tmp/hadolint util/Dockerfile
-
   # Build Prowler OSS container
-  container-build:
+  container-build-push:
     # needs: dockerfile-linter
     runs-on: ubuntu-latest
     env:
@@ -52,90 +33,30 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: setup python (release)
+
+      - name: Setup python (release)
         if: github.event_name == 'release'
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9 #install the python needed
+          python-version: ${{ env.PYTHON_VERSION }}
+
       - name: Install dependencies (release)
         if: github.event_name == 'release'
         run: |
           pipx install poetry
           pipx inject poetry poetry-bumpversion
+
       - name: Update Prowler version (release)
         if: github.event_name == 'release'
         run: |
           poetry version ${{ github.event.release.tag_name }}
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Build
-        uses: docker/build-push-action@v2
-        with:
-          # Use local context to get changes
-          # https://github.com/docker/build-push-action#path-context
-          context: .
-          # Without pushing to registries
-          push: false
-          tags: ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }}
-          file: ${{ env.DOCKERFILE_PATH }}
-          outputs: type=docker,dest=/tmp/${{ env.IMAGE_NAME }}.tar
-      - name: Share image between jobs
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ env.IMAGE_NAME }}.tar
-          path: /tmp/${{ env.IMAGE_NAME }}.tar
 
-  # Lint Prowler OSS container using Dockle
-  # container-linter:
-  #   needs: container-build
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     -
-  #       name: Get container image from shared
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         name: ${{ env.IMAGE_NAME }}.tar
-  #         path: /tmp
-  #     -
-  #       name: Load Docker image
-  #       run: |
-  #         docker load --input /tmp/${{ env.IMAGE_NAME }}.tar
-  #         docker image ls -a
-  #     -
-  #       name: Install Dockle
-  #       run: |
-  #         VERSION=$(curl --silent "https://api.github.com/repos/goodwithtech/dockle/releases/latest" | \
-  #           grep '"tag_name":' | \
-  #           sed -E 's/.*"v([^"]+)".*/\1/' \
-  #           ) && curl -L -o dockle.deb https://github.com/goodwithtech/dockle/releases/download/v${VERSION}/dockle_${VERSION}_Linux-64bit.deb \
-  #           && sudo dpkg -i dockle.deb && rm dockle.deb
-  #     -
-  #       name: Run Dockle
-  #       run: dockle ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }}
-
-  # Push Prowler OSS container to registries
-  container-push:
-    # needs: container-linter
-    needs: container-build
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read # This is required for actions/checkout
-    steps:
-      - name: Get container image from shared
-        uses: actions/download-artifact@v2
-        with:
-          name: ${{ env.IMAGE_NAME }}.tar
-          path: /tmp
-      - name: Load Docker image
-        run: |
-          docker load --input /tmp/${{ env.IMAGE_NAME }}.tar
-          docker image ls -a
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Login to Public ECR
         uses: docker/login-action@v2
         with:
@@ -143,49 +64,38 @@ jobs:
           username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
           password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
         env:
-          AWS_REGION: ${{ env.AWS_REGION_PRO }}
+          AWS_REGION: ${{ env.AWS_REGION }}
 
-      - name: Tag (latest)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build container image (latest)
         if: github.event_name == 'push'
-        run: |
-          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
-          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
-
-      - # Push to master branch - push "latest" tag
-        name: Push (latest)
-        if: github.event_name == 'push'
-        run: |
-          docker push ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
-          docker push ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
-
-      - # Tag the new release (stable and release tag)
-        name: Tag (release)
-        if: github.event_name == 'release'
-        run: |
-          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
-          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
-
-          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
-          docker tag ${{ env.IMAGE_NAME }}:${{ env.TEMPORARY_TAG }} ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
-
-      - # Push the new release (stable and release tag)
-        name: Push (release)
-        if: github.event_name == 'release'
-        run: |
-          docker push ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
-          docker push ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
-
-          docker push ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
-          docker push ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
-
-      - name: Delete artifacts
-        if: always()
-        uses: geekyeggo/delete-artifact@v1
+        uses: docker/build-push-action@v2
         with:
-          name: ${{ env.IMAGE_NAME }}.tar
+          push: push
+          tags: |
+            ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
+            ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
+          file: ${{ env.DOCKERFILE_PATH }}
+
+      - name: Build container image (release)
+        if: github.event_name == 'release'
+        uses: docker/build-push-action@v2
+        with:
+          # Use local context to get changes
+          # https://github.com/docker/build-push-action#path-context
+          context: .
+          push: push
+          tags: |
+            ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+            ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
+            ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+            ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
+          file: ${{ env.DOCKERFILE_PATH }}
 
   dispatch-action:
-    needs: container-push
+    needs: container-build-push
     runs-on: ubuntu-latest
     steps:
       - name: Dispatch event for latest
