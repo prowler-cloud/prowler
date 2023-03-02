@@ -533,7 +533,7 @@
       "Id": "2.1.5",
       "Description": "Ensure that S3 Buckets are configured with 'Block public access (bucket settings)'",
       "Checks": [
-        "s3_account_level_public_access_blocks"
+        "s3_bucket_level_public_access_block"
       ],
       "Attributes": [
         {
