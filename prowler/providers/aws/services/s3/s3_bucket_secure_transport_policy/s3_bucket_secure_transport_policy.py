@@ -10,6 +10,7 @@ class s3_bucket_secure_transport_policy(Check):
             report.region = bucket.region
             report.resource_id = bucket.name
             report.resource_arn = bucket.arn
+            report.resource_tags = bucket.tags
             # Check if bucket policy enforces SSL
             if not bucket.policy:
                 report.status = "FAIL"

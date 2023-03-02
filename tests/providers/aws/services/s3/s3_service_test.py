@@ -333,6 +333,31 @@ class Test_S3_Service:
         assert s3.buckets[0].public_access_block.block_public_policy
         assert s3.buckets[0].public_access_block.restrict_public_buckets
 
+    # Test S3 Get Bucket Tagging
+    @mock_s3
+    def test__get_bucket_tagging__(self):
+        # Generate S3 Client
+        s3_client = client("s3")
+        # Create S3 Bucket
+        bucket_name = "test-bucket"
+        s3_client.create_bucket(Bucket=bucket_name)
+        s3_client.put_bucket_tagging(
+            Bucket=bucket_name,
+            Tagging={
+                "TagSet": [
+                    {"Key": "test", "Value": "test"},
+                ]
+            },
+        )
+        # S3 client for this test class
+        audit_info = self.set_mocked_audit_info()
+        s3 = S3(audit_info)
+
+        assert len(s3.buckets) == 1
+        assert s3.buckets[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
+
     # Test S3 Control Account Get Public Access Block
     @mock_s3control
     def test__get_public_access_block__s3_control(self):
