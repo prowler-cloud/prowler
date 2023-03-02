@@ -10,6 +10,7 @@ class s3_bucket_level_public_access_block(Check):
             report.region = bucket.region
             report.resource_id = bucket.name
             report.resource_arn = bucket.arn
+            report.resource_tags = bucket.tags
             report.status = "PASS"
             report.status_extended = (
                 f"Block Public Access is configured for the S3 Bucket {bucket.name}."

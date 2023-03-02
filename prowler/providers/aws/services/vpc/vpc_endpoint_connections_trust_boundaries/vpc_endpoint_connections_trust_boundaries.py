@@ -18,6 +18,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                         report.status = "FAIL"
                         report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} has full access."
                         report.resource_id = endpoint.id
+                        report.resource_tags = endpoint.tags
                         findings.append(report)
                         break
 
@@ -33,6 +34,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                                 report.status = "FAIL"
                                 report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} has full access."
                                 report.resource_id = endpoint.id
+                                report.resource_tags = endpoint.tags
                             else:
                                 account_id = principal_arn.split(":")[4]
                                 if (
@@ -42,10 +44,12 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                                     report.status = "PASS"
                                     report.status_extended = f"Found trusted account {account_id} in VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id}."
                                     report.resource_id = endpoint.id
+                                    report.resource_tags = endpoint.tags
                                 else:
                                     report.status = "FAIL"
                                     report.status_extended = f"Found untrusted account {account_id} in VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id}."
                                     report.resource_id = endpoint.id
+                                    report.resource_tags = endpoint.tags
                             findings.append(report)
 
         return findings

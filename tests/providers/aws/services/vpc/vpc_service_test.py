@@ -73,13 +73,28 @@ class Test_VPC_Service:
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION)
         # Create VPC
-        vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
+        vpc = ec2_client.create_vpc(
+            CidrBlock="10.0.0.0/16",
+            TagSpecifications=[
+                {
+                    "ResourceType": "vpc",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                },
+            ],
+        )["Vpc"]
         # VPC client for this test class
         audit_info = self.set_mocked_audit_info()
         vpc = VPC(audit_info)
         assert (
             len(vpc.vpcs) == 3
         )  # Number of AWS regions + created VPC, one default VPC per region
+        for vpc in vpc.vpcs:
+            if vpc.cidr_block == "10.0.0.0/16":
+                assert vpc.tags == [
+                    {"Key": "test", "Value": "test"},
+                ]
 
     # Test VPC Describe Flow Logs
     @mock_ec2
@@ -115,7 +130,16 @@ class Test_VPC_Service:
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
         peer_vpc = ec2_client.create_vpc(CidrBlock="11.0.0.0/16")
         vpc_pcx = ec2_client.create_vpc_peering_connection(
-            VpcId=vpc["Vpc"]["VpcId"], PeerVpcId=peer_vpc["Vpc"]["VpcId"]
+            VpcId=vpc["Vpc"]["VpcId"],
+            PeerVpcId=peer_vpc["Vpc"]["VpcId"],
+            TagSpecifications=[
+                {
+                    "ResourceType": "vpc-peering-connection",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                },
+            ],
         )
         vpc_pcx_id = vpc_pcx["VpcPeeringConnection"]["VpcPeeringConnectionId"]
 
@@ -127,6 +151,9 @@ class Test_VPC_Service:
         vpc = VPC(audit_info)
         assert len(vpc.vpc_peering_connections) == 1
         assert vpc.vpc_peering_connections[0].id == vpc_pcx_id
+        assert vpc.vpc_peering_connections[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     # Test VPC Describe VPC Peering connections
     @mock_ec2
@@ -196,12 +223,23 @@ class Test_VPC_Service:
                     ]
                 }
             ),
+            TagSpecifications=[
+                {
+                    "ResourceType": "vpc-endpoint",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                },
+            ],
         )["VpcEndpoint"]["VpcEndpointId"]
         # VPC client for this test class
         audit_info = self.set_mocked_audit_info()
         vpc = VPC(audit_info)
         assert len(vpc.vpc_endpoints) == 1
         assert vpc.vpc_endpoints[0].id == endpoint
+        assert vpc.vpc_endpoints[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     # Test VPC Describe VPC Endpoint Services
     @mock_ec2
@@ -228,7 +266,15 @@ class Test_VPC_Service:
         )["LoadBalancers"][0]["LoadBalancerArn"]
 
         _ = ec2_client.create_vpc_endpoint_service_configuration(
-            NetworkLoadBalancerArns=[lb_arn]
+            NetworkLoadBalancerArns=[lb_arn],
+            TagSpecifications=[
+                {
+                    "ResourceType": "vpc-endpoint-service-configuration",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                },
+            ],
         )
         # VPC client for this test class
         audit_info = self.set_mocked_audit_info()

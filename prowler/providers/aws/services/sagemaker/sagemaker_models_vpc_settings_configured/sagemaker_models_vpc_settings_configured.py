@@ -10,6 +10,7 @@ class sagemaker_models_vpc_settings_configured(Check):
             report.region = model.region
             report.resource_id = model.name
             report.resource_arn = model.arn
+            report.resource_tags = model.tags
             report.status = "PASS"
             report.status_extended = (
                 f"Sagemaker notebook instance {model.name} has VPC settings enabled"

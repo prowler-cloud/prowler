@@ -1,5 +1,6 @@
 import threading
 from json import loads
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -18,6 +19,7 @@ class SNS:
         self.topics = []
         self.__threading_call__(self.__list_topics__)
         self.__get_topic_attributes__(self.regional_clients)
+        self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -73,6 +75,20 @@ class SNS:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_tags_for_resource__(self):
+        logger.info("SNS - List Tags...")
+        try:
+            for topic in self.topics:
+                regional_client = self.regional_clients[topic.region]
+                response = regional_client.list_tags_for_resource(
+                    ResourceArn=topic.arn
+                )["Tags"]
+                topic.tags = response
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Topic(BaseModel):
     name: str
@@ -80,3 +96,4 @@ class Topic(BaseModel):
     region: str
     policy: dict = None
     kms_master_key_id: str = None
+    tags: Optional[list] = []

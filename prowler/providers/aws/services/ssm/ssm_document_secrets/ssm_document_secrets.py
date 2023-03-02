@@ -15,9 +15,9 @@ class ssm_document_secrets(Check):
         for document in ssm_client.documents.values():
             report = Check_Report_AWS(self.metadata())
             report.region = document.region
-            report.resource_arn = f"arn:aws:ssm:{document.region}:{ssm_client.audited_account}:document/{document.name}"
+            report.resource_arn = document.arn
             report.resource_id = document.name
-
+            report.resource_tags = document.tags
             report.status = "PASS"
             report.status_extended = f"No secrets found in SSM Document {document.name}"
 

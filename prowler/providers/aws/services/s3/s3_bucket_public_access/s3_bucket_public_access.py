@@ -25,6 +25,7 @@ class s3_bucket_public_access(Check):
                 report.region = bucket.region
                 report.resource_id = bucket.name
                 report.resource_arn = bucket.arn
+                report.resource_tags = bucket.tags
                 report.status = "PASS"
                 report.status_extended = f"S3 Bucket {bucket.name} is not public."
                 if not (

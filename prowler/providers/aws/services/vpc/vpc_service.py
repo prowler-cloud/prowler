@@ -56,6 +56,7 @@ class VPC:
                                 default=vpc["IsDefault"],
                                 cidr_block=vpc["CidrBlock"],
                                 region=regional_client.region,
+                                tags=vpc.get("Tags"),
                             )
                         )
         except Exception as error:
@@ -87,6 +88,7 @@ class VPC:
                                     "CidrBlock"
                                 ),
                                 region=regional_client.region,
+                                tags=conn.get("Tags"),
                             )
                         )
         except Exception as error:
@@ -171,6 +173,7 @@ class VPC:
                                 policy_document=endpoint_policy,
                                 owner_id=endpoint["OwnerId"],
                                 region=regional_client.region,
+                                tags=endpoint.get("Tags"),
                             )
                         )
         except Exception as error:
@@ -198,6 +201,7 @@ class VPC:
                                     service=endpoint["ServiceName"],
                                     owner_id=endpoint["Owner"],
                                     region=regional_client.region,
+                                    tags=endpoint.get("Tags"),
                                 )
                             )
         except Exception as error:
@@ -228,6 +232,7 @@ class VPCs(BaseModel):
     cidr_block: str
     flow_log: bool = False
     region: str
+    tags: Optional[list] = []
 
 
 class Route(BaseModel):
@@ -243,6 +248,7 @@ class VpcPeeringConnection(BaseModel):
     requester_cidr: Optional[str]
     route_tables: list[Route] = []
     region: str
+    tags: Optional[list] = []
 
 
 class VpcEndpoint(BaseModel):
@@ -252,6 +258,7 @@ class VpcEndpoint(BaseModel):
     policy_document: Optional[dict]
     owner_id: str
     region: str
+    tags: Optional[list] = []
 
 
 class VpcEndpointService(BaseModel):
@@ -260,3 +267,4 @@ class VpcEndpointService(BaseModel):
     owner_id: str
     allowed_principals: list = []
     region: str
+    tags: Optional[list] = []

@@ -10,6 +10,7 @@ class s3_bucket_acl_prohibited(Check):
             report.region = bucket.region
             report.resource_id = bucket.name
             report.resource_arn = bucket.arn
+            report.resource_tags = bucket.tags
             report.status = "FAIL"
             report.status_extended = f"S3 Bucket {bucket.name} has bucket ACLs enabled."
             if bucket.ownership:
