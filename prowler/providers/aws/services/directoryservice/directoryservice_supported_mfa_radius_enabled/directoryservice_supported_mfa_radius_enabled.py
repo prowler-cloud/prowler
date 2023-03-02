@@ -15,6 +15,7 @@ class directoryservice_supported_mfa_radius_enabled(Check):
                 report = Check_Report_AWS(self.metadata())
                 report.region = directory.region
                 report.resource_id = directory.id
+                report.resource_tags = directory.tags
                 if directory.radius_settings.status == RadiusStatus.Completed:
                     report.status = "PASS"
                     report.status_extended = (

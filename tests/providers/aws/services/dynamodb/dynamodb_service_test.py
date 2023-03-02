@@ -121,6 +121,9 @@ class Test_DynamoDB_Service:
                 {"AttributeName": "app", "KeyType": "RANGE"},
             ],
             BillingMode="PAY_PER_REQUEST",
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
         )["TableDescription"]
         # DynamoDB client for this test class
         audit_info = self.set_mocked_audit_info()
@@ -129,6 +132,9 @@ class Test_DynamoDB_Service:
         assert dynamo.tables[0].arn == table["TableArn"]
         assert dynamo.tables[0].name == "test1"
         assert dynamo.tables[0].region == AWS_REGION
+        assert dynamo.tables[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     # Test DynamoDB Describe Table
     @mock_dynamodb
@@ -174,6 +180,9 @@ class Test_DynamoDB_Service:
             ReplicationFactor=3,
             IamRoleArn=iam_role_arn,
             SSESpecification={"Enabled": True},
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
         )
         dax_client.create_cluster(
             ClusterName="daxcluster2",
@@ -181,6 +190,9 @@ class Test_DynamoDB_Service:
             ReplicationFactor=3,
             IamRoleArn=iam_role_arn,
             SSESpecification={"Enabled": True},
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
         )
         # DAX client for this test class
         audit_info = self.set_mocked_audit_info()
@@ -190,3 +202,9 @@ class Test_DynamoDB_Service:
         assert dax.clusters[1].name == "daxcluster2"
         assert dax.clusters[0].region == AWS_REGION
         assert dax.clusters[1].region == AWS_REGION
+        assert dax.clusters[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
+        assert dax.clusters[1].tags == [
+            {"Key": "test", "Value": "test"},
+        ]

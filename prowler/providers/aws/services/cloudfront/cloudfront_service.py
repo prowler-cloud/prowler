@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 from enum import Enum
+from typing import Optional
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -22,6 +25,9 @@ class CloudFront:
             self.region = self.client.region
             self.__list_distributions__(self.client, self.region)
             self.__get_distribution_config__(
+                self.client, self.distributions, self.region
+            )
+            self.__list_tags_for_resource__(
                 self.client, self.distributions, self.region
             )
 
@@ -97,6 +103,19 @@ class CloudFront:
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_tags_for_resource__(self, client, distributions, region):
+        logger.info("CloudFront - List Tags...")
+        try:
+            for distribution in distributions.values():
+                response = client.list_tags_for_resource(Resource=distribution.arn)[
+                    "Tags"
+                ]
+                distribution.tags = response.get("Items")
+        except Exception as error:
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class OriginsSSLProtocols(Enum):
     SSLv3 = "SSLv3"
@@ -128,35 +147,15 @@ class DefaultCacheConfigBehaviour:
     field_level_encryption_id: str
 
 
-@dataclass
-class Distribution:
+class Distribution(BaseModel):
     """Distribution holds a CloudFront Distribution with the required information to run the rela"""
 
     arn: str
     id: str
     region: str
-    logging_enabled: bool
-    default_cache_config: DefaultCacheConfigBehaviour
-    geo_restriction_type: GeoRestrictionType
+    logging_enabled: bool = False
+    default_cache_config: Optional[DefaultCacheConfigBehaviour]
+    geo_restriction_type: Optional[GeoRestrictionType]
     origins: list
-    web_acl_id: str
-
-    def __init__(
-        self,
-        arn,
-        id,
-        region,
-        origins,
-        logging_enabled=False,
-        default_cache_config=None,
-        geo_restriction_type=None,
-        web_acl_id="",
-    ):
-        self.arn = arn
-        self.id = id
-        self.region = region
-        self.logging_enabled = logging_enabled
-        self.default_cache_config = default_cache_config
-        self.geo_restriction_type = geo_restriction_type
-        self.origins = origins
-        self.web_acl_id = web_acl_id
+    web_acl_id: str = ""
+    tags: Optional[list] = []

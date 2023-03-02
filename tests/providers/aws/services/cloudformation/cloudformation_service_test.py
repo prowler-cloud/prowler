@@ -210,3 +210,7 @@ class Test_CloudFormation_Service:
         assert cloudformation.stacks[0].is_nested_stack is False
         assert cloudformation.stacks[0].root_nested_stack == ""
         assert cloudformation.stacks[0].region == AWS_REGION
+        assert cloudformation.stacks[0].tags == [
+            {"Key": "Tag1", "Value": "Value1"},
+            {"Key": "Tag2", "Value": "Value2"},
+        ]

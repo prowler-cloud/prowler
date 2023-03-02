@@ -9,6 +9,7 @@ class dynamodb_tables_pitr_enabled(Check):
             report = Check_Report_AWS(self.metadata())
             report.resource_id = table.name
             report.resource_arn = table.arn
+            report.resource_tags = table.tags
             report.region = table.region
             report.status = "FAIL"
             report.status_extended = f"DynamoDB table {table.name} does not have point-in-time recovery enabled."

@@ -1,6 +1,7 @@
 import threading
-from dataclasses import dataclass
 from typing import Optional
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -22,6 +23,7 @@ class CloudWatch:
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.metric_alarms = []
         self.__threading_call__(self.__describe_alarms__)
+        self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -52,13 +54,27 @@ class CloudWatch:
                             namespace = alarm["Namespace"]
                         self.metric_alarms.append(
                             MetricAlarm(
-                                alarm["AlarmArn"],
-                                alarm["AlarmName"],
-                                metric_name,
-                                namespace,
-                                regional_client.region,
+                                arn=alarm["AlarmArn"],
+                                name=alarm["AlarmName"],
+                                metric=metric_name,
+                                name_space=namespace,
+                                region=regional_client.region,
                             )
                         )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __list_tags_for_resource__(self):
+        logger.info("CloudWatch - List Tags...")
+        try:
+            for metric_alarm in self.metric_alarms:
+                regional_client = self.regional_clients[metric_alarm.region]
+                response = regional_client.list_tags_for_resource(
+                    ResourceARN=metric_alarm.arn
+                )["Tags"]
+                metric_alarm.tags = response
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -77,6 +93,7 @@ class Logs:
         self.log_groups = []
         self.__threading_call__(self.__describe_metric_filters__)
         self.__threading_call__(self.__describe_log_groups__)
+        self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -103,11 +120,11 @@ class Logs:
                     ):
                         self.metric_filters.append(
                             MetricFilter(
-                                filter["filterName"],
-                                filter["metricTransformations"][0]["metricName"],
-                                filter["filterPattern"],
-                                filter["logGroupName"],
-                                regional_client.region,
+                                name=filter["filterName"],
+                                metric=filter["metricTransformations"][0]["metricName"],
+                                pattern=filter["filterPattern"],
+                                log_group=filter["logGroupName"],
+                                region=regional_client.region,
                             )
                         )
         except Exception as error:
@@ -134,11 +151,11 @@ class Logs:
                             retention_days = log_group["retentionInDays"]
                         self.log_groups.append(
                             LogGroup(
-                                log_group["arn"],
-                                log_group["logGroupName"],
-                                retention_days,
-                                kms,
-                                regional_client.region,
+                                arn=log_group["arn"],
+                                name=log_group["logGroupName"],
+                                retention_days=retention_days,
+                                kms_id=kms,
+                                region=regional_client.region,
                             )
                         )
         except Exception as error:
@@ -146,71 +163,42 @@ class Logs:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_tags_for_resource__(self):
+        logger.info("CloudWatch Logs - List Tags...")
+        try:
+            for log_group in self.log_groups:
+                regional_client = self.regional_clients[log_group.region]
+                response = regional_client.list_tags_for_resource(
+                    resourceArn=log_group.arn.replace(":*", "")  # Remove the tailing :*
+                )["tags"]
+                log_group.tags = [response]
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
-@dataclass
-class MetricAlarm:
+
+class MetricAlarm(BaseModel):
     arn: str
     name: str
     metric: Optional[str]
     name_space: Optional[str]
     region: str
-
-    def __init__(
-        self,
-        arn,
-        name,
-        metric,
-        name_space,
-        region,
-    ):
-        self.arn = arn
-        self.name = name
-        self.metric = metric
-        self.name_space = name_space
-        self.region = region
+    tags: Optional[list] = []
 
 
-@dataclass
-class MetricFilter:
+class MetricFilter(BaseModel):
     name: str
     metric: str
     pattern: str
     log_group: str
     region: str
 
-    def __init__(
-        self,
-        name,
-        metric,
-        pattern,
-        log_group,
-        region,
-    ):
-        self.name = name
-        self.metric = metric
-        self.pattern = pattern
-        self.log_group = log_group
-        self.region = region
 
-
-@dataclass
-class LogGroup:
+class LogGroup(BaseModel):
     arn: str
     name: str
     retention_days: int
-    kms_id: str
+    kms_id: Optional[str]
     region: str
-
-    def __init__(
-        self,
-        arn,
-        name,
-        retention_days,
-        kms_id,
-        region,
-    ):
-        self.arn = arn
-        self.name = name
-        self.retention_days = retention_days
-        self.kms_id = kms_id
-        self.region = region
+    tags: Optional[list] = []

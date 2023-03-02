@@ -92,7 +92,12 @@ def mock_make_api_call(self, operation_name, kwarg):
                 "ManualSnapshotsLimitReached": True,
             }
         }
-
+    if operation_name == "ListTagsForResource":
+        return {
+            "Tags": [
+                {"Key": "string", "Value": "string"},
+            ],
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -145,6 +150,9 @@ class Test_DirectoryService_Service:
         )
         assert directoryservice.directories["d-12345a1b2"].name == "test-directory"
         assert directoryservice.directories["d-12345a1b2"].region == AWS_REGION
+        assert directoryservice.directories["d-12345a1b2"].tags == [
+            {"Key": "string", "Value": "string"},
+        ]
         assert (
             directoryservice.directories[
                 "d-12345a1b2"
