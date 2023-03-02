@@ -16,10 +16,12 @@ class apigatewayv2_authorizers_enabled(Check):
                     f"API Gateway V2 {api.name} ID {api.id} has authorizer configured."
                 )
                 report.resource_id = api.name
+                report.resource_tags = api.tags
             else:
                 report.status = "FAIL"
                 report.status_extended = f"API Gateway V2 {api.name} ID {api.id} has not authorizer configured."
                 report.resource_id = api.name
+                report.resource_tags = api.tags
             findings.append(report)
 
         return findings

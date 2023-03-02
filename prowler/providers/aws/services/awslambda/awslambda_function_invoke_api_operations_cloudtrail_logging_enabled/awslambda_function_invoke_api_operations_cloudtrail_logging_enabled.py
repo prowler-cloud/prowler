@@ -13,6 +13,7 @@ class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check)
             report.region = function.region
             report.resource_id = function.name
             report.resource_arn = function.arn
+            report.resource_tags = function.tags
 
             report.status = "FAIL"
             report.status_extended = (

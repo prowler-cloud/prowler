@@ -10,6 +10,7 @@ class awslambda_function_not_publicly_accessible(Check):
             report.region = function.region
             report.resource_id = function.name
             report.resource_arn = function.arn
+            report.resource_tags = function.tags
 
             report.status = "PASS"
             report.status_extended = f"Lambda function {function.name} has a policy resource-based policy not public"

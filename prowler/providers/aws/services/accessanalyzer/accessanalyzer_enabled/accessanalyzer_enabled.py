@@ -17,6 +17,7 @@ class accessanalyzer_enabled(Check):
                 )
                 report.resource_id = analyzer.name
                 report.resource_arn = analyzer.arn
+                report.resource_tags = analyzer.tags
 
             elif analyzer.status == "NOT_AVAILABLE":
                 report.status = "FAIL"
@@ -31,6 +32,7 @@ class accessanalyzer_enabled(Check):
                 )
                 report.resource_id = analyzer.name
                 report.resource_arn = analyzer.arn
+                report.resource_tags = analyzer.tags
             findings.append(report)
 
         return findings

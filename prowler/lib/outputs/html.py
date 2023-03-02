@@ -187,6 +187,7 @@ def add_html_header(file_descriptor, audit_info):
                     <th scope="col">Region</th>
                     <th style="width:20%" scope="col">Check Title</th>
                     <th scope="col">Resource ID</th>
+                    <th scope="col">Resource Tags</th>
                     <th style="width:15%" scope="col">Check Description</th>
                     <th scope="col">Check ID</th>
                     <th scope="col">Status Extended</th>
@@ -221,6 +222,7 @@ def fill_html(file_descriptor, finding):
                 <td>{finding.region}</td>
                 <td>{finding.check_metadata.CheckTitle}</td>
                 <td>{finding.resource_id.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>
+                <td>{str(finding.resource_tags)}</td>
                 <td>{finding.check_metadata.Description}</td>
                 <td>{finding.check_metadata.CheckID.replace("_", "<wbr>_")}</td>
                 <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>

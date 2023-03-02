@@ -12,6 +12,7 @@ class awslambda_function_using_supported_runtimes(Check):
                 report.region = function.region
                 report.resource_id = function.name
                 report.resource_arn = function.arn
+                report.resource_tags = function.tags
 
                 if function.runtime in get_config_var("obsolete_lambda_runtimes"):
                     report.status = "FAIL"
