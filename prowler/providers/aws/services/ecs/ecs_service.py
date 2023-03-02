@@ -1,5 +1,6 @@
 import threading
 from re import sub
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -34,7 +35,6 @@ class ECS:
     def __list_task_definitions__(self, regional_client):
         logger.info("ECS - Listing Task Definitions...")
         try:
-
             list_ecs_paginator = regional_client.get_paginator("list_task_definitions")
             for page in list_ecs_paginator.paginate():
                 for task_definition in page["taskDefinitionArns"]:
@@ -61,9 +61,15 @@ class ECS:
         try:
             for task_definition in self.task_definitions:
                 client = self.regional_clients[task_definition.region]
-                container_definitions = client.describe_task_definition(
-                    taskDefinition=task_definition.arn
-                )["taskDefinition"]["containerDefinitions"]
+                response = client.describe_task_definition(
+                    taskDefinition=task_definition.arn,
+                    include=[
+                        "TAGS",
+                    ],
+                )
+                container_definitions = response["taskDefinition"][
+                    "containerDefinitions"
+                ]
                 for container in container_definitions:
                     if "environment" in container:
                         for env_var in container["environment"]:
@@ -72,6 +78,7 @@ class ECS:
                                     name=env_var["name"], value=env_var["value"]
                                 )
                             )
+                task_definition.tags = response.get("tags")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -89,3 +96,4 @@ class TaskDefinition(BaseModel):
     revision: str
     region: str
     environment_variables: list[ContainerEnvVariable]
+    tags: Optional[list] = []

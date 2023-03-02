@@ -9,6 +9,7 @@ class elb_logging_enabled(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = lb.region
             report.resource_id = lb.name
+            report.resource_tags = lb.tags
             report.status = "FAIL"
             report.status_extended = f"ELB {lb.name} has not configured access logs."
             if lb.access_logs:

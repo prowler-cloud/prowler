@@ -91,12 +91,19 @@ class Test_EFS:
     def test__describe_file_systems__(self):
         efs_client = client("efs", AWS_REGION)
         efs = efs_client.create_file_system(
-            CreationToken=creation_token, Encrypted=True
+            CreationToken=creation_token,
+            Encrypted=True,
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
         )
         filesystem = EFS(self.set_mocked_audit_info())
         assert len(filesystem.filesystems) == 1
         assert filesystem.filesystems[0].id == efs["FileSystemId"]
         assert filesystem.filesystems[0].encrypted == efs["Encrypted"]
+        assert filesystem.filesystems[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     @mock_efs
     # Test EFS describe file systems

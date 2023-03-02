@@ -10,6 +10,7 @@ class elbv2_listeners_underneath(Check):
             report.region = lb.region
             report.resource_id = lb.name
             report.resource_arn = lb.arn
+            report.resource_tags = lb.tags
             report.status = "PASS"
             report.status_extended = f"ELBv2 {lb.name} has listeners underneath."
             if len(lb.listeners) == 0:

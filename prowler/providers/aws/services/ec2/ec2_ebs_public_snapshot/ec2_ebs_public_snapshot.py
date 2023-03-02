@@ -9,6 +9,7 @@ class ec2_ebs_public_snapshot(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = snapshot.region
             report.resource_arn = snapshot.arn
+            report.resource_tags = snapshot.tags
             if not snapshot.public:
                 report.status = "PASS"
                 report.status_extended = f"EBS Snapshot {snapshot.id} is not Public."

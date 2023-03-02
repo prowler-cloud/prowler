@@ -13,6 +13,7 @@ class elbv2_waf_acl_attached(Check):
                 report.region = lb.region
                 report.resource_id = lb.name
                 report.resource_arn = lb.arn
+                report.resource_tags = lb.tags
                 report.status = "FAIL"
                 report.status_extended = (
                     f"ELBv2 ALB {lb.name} is not protected by WAF Web ACL."

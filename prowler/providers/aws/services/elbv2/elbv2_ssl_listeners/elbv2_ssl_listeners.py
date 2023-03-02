@@ -11,6 +11,7 @@ class elbv2_ssl_listeners(Check):
                 report.region = lb.region
                 report.resource_id = lb.name
                 report.resource_arn = lb.arn
+                report.resource_tags = lb.tags
                 report.status = "PASS"
                 report.status_extended = (
                     f"ELBv2 ALB {lb.name} has HTTPS listeners only."

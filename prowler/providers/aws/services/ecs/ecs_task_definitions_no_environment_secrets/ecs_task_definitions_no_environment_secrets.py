@@ -17,6 +17,7 @@ class ecs_task_definitions_no_environment_secrets(Check):
             report.region = task_definition.region
             report.resource_id = f"{task_definition.name}:{task_definition.revision}"
             report.resource_arn = task_definition.arn
+            report.resource_tags = task_definition.tags
             report.status = "PASS"
             report.status_extended = f"No secrets found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision}"
             if task_definition.environment_variables:

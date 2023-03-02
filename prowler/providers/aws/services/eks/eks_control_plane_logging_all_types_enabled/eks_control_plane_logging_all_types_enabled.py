@@ -10,6 +10,7 @@ class eks_control_plane_logging_all_types_enabled(Check):
             report.region = cluster.region
             report.resource_id = cluster.name
             report.resource_arn = cluster.arn
+            report.resource_tags = cluster.tags
             report.status = "FAIL"
             report.status_extended = (
                 f"Control plane logging is not enabled for EKS cluster {cluster.name}"

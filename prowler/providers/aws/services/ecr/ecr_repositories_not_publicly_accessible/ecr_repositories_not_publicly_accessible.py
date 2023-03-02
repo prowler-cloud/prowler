@@ -10,6 +10,7 @@ class ecr_repositories_not_publicly_accessible(Check):
             report.region = repository.region
             report.resource_id = repository.name
             report.resource_arn = repository.arn
+            report.resource_tags = repository.tags
             report.status = "PASS"
             report.status_extended = f"Repository {repository.name} is not open"
             if repository.policy:

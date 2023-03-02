@@ -118,6 +118,9 @@ class Test_ECR_Service:
         ecr_client.create_repository(
             repositoryName=repo_name,
             imageScanningConfiguration={"scanOnPush": True},
+            tags=[
+                {"Key": "test", "Value": "test"},
+            ],
         )
         audit_info = self.set_mocked_audit_info()
         ecr = ECR(audit_info)
@@ -125,6 +128,9 @@ class Test_ECR_Service:
         assert ecr.repositories[0].name == repo_name
         assert ecr.repositories[0].arn == repo_arn
         assert ecr.repositories[0].scan_on_push
+        assert ecr.repositories[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     # Test describe ECR repository policies
     @mock_ecr
