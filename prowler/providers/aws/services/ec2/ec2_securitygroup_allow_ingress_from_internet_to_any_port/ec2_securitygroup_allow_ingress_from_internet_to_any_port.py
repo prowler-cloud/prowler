@@ -14,7 +14,6 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port(Check):
             report.resource_id = security_group.id
             report.resource_arn = security_group.arn
             report.resource_tags = security_group.tags
-            report.resource_tags = security_group.tags
             # Loop through every security group's ingress rule and check it
             for ingress_rule in security_group.ingress_rules:
                 if check_security_group(ingress_rule, "-1", any_address=True):
