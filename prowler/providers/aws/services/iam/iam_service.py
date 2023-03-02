@@ -1,6 +1,6 @@
 import csv
 from datetime import datetime
-from typing import Any, Optional
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -417,7 +417,7 @@ class User(BaseModel):
     name: str
     arn: str
     mfa_devices: list[MFADevice] = []
-    password_last_used: Optional[Any]
+    password_last_used: Optional[datetime]
     attached_policies: list[dict] = []
     inline_policies: list[str] = []
 
@@ -444,9 +444,9 @@ class PasswordPolicy(BaseModel):
     lowercase: bool
     allow_change: bool
     expiration: bool
-    max_age: Optional[Any]
-    reuse_prevention: Optional[Any]
-    hard_expiry: Optional[Any]
+    max_age: Optional[int]
+    reuse_prevention: Optional[int]
+    hard_expiry: Optional[bool]
 
 
 class Certificate(BaseModel):
