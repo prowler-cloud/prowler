@@ -91,8 +91,7 @@ class EKS:
                     ]["publicAccessCidrs"]
                 if "encryptionConfig" in describe_cluster["cluster"]:
                     cluster.encryptionConfig = True
-
-                cluster.tags = [describe_cluster.get("tags")]
+                cluster.tags = [describe_cluster["cluster"].get("tags")]
 
         except Exception as error:
             logger.error(
