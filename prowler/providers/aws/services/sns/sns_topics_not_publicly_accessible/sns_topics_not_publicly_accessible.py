@@ -10,6 +10,7 @@ class sns_topics_not_publicly_accessible(Check):
             report.region = topic.region
             report.resource_id = topic.name
             report.resource_arn = topic.arn
+            report.resource_tags = topic.tags
             report.status = "PASS"
             report.status_extended = f"SNS topic {topic.name} without public access"
             if topic.policy:

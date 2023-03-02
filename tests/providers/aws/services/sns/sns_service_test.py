@@ -94,7 +94,12 @@ class Test_SNS_Service:
     # Test SNS session
     def test__list_topics__(self):
         sns_client = client("sns", region_name=AWS_REGION)
-        sns_client.create_topic(Name=topic_name)
+        sns_client.create_topic(
+            Name=topic_name,
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
+        )
 
         audit_info = self.set_mocked_audit_info()
         sns = SNS(audit_info)
@@ -106,6 +111,9 @@ class Test_SNS_Service:
             == f"arn:aws:sns:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:{topic_name}"
         )
         assert sns.topics[0].region == AWS_REGION
+        assert sns.topics[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     @mock_sns
     # Test SNS session
