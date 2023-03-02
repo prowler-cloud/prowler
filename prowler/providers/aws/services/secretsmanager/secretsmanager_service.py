@@ -1,4 +1,5 @@
 import threading
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -43,6 +44,7 @@ class SecretsManager:
                             arn=secret["ARN"],
                             name=secret["Name"],
                             region=regional_client.region,
+                            tags=secret.get("Tags"),
                         )
                         if "RotationEnabled" in secret:
                             self.secrets[secret["Name"]].rotation_enabled = secret[
@@ -62,3 +64,4 @@ class Secret(BaseModel):
     name: str
     region: str
     rotation_enabled: bool = False
+    tags: Optional[list] = []
