@@ -139,7 +139,7 @@ class Cloudtrail:
         try:
             for trail in self.trails:
                 # Check if trails are in this region
-                if trail.region == trail.arn.split(":")[3]:
+                if trail.region == trail.home_region:
                     regional_client = self.regional_clients[trail.region]
                     response = regional_client.list_tags(ResourceIdList=[trail.arn])[
                         "ResourceTagList"
