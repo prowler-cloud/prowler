@@ -101,7 +101,7 @@ jobs:
       - name: Get latest commit info
         if: github.event_name == 'push'
         run: |
-          LATEST_COMMIT_HASH=$(echo ${{ github.event.before }} | cut -b -6)
+          LATEST_COMMIT_HASH=$(echo ${{ github.event.head }} | cut -b -6)
           echo "LATEST_COMMIT_HASH=${LATEST_COMMIT_HASH}" >> $GITHUB_ENV
       - name: Dispatch event for latest
         if: github.event_name == 'push'
