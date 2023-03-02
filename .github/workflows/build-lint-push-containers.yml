@@ -73,7 +73,7 @@ jobs:
         if: github.event_name == 'push'
         uses: docker/build-push-action@v2
         with:
-          push: push
+          push: true
           tags: |
             ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
             ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
@@ -86,7 +86,7 @@ jobs:
           # Use local context to get changes
           # https://github.com/docker/build-push-action#path-context
           context: .
-          push: push
+          push: true
           tags: |
             ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
             ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
