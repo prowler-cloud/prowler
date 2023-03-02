@@ -8,6 +8,9 @@ AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 detector_id = str(uuid4())
+detector_arn = (
+    f"arn:aws:guardduty:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:detector/{detector_id}"
+)
 
 
 class Test_guardduty_is_enabled:
@@ -33,7 +36,7 @@ class Test_guardduty_is_enabled:
             Detector(
                 id=detector_id,
                 region=AWS_REGION,
-                arn="",
+                arn=detector_arn,
                 status=True,
             )
         )
@@ -51,7 +54,7 @@ class Test_guardduty_is_enabled:
             assert result[0].status == "PASS"
             assert search("enabled", result[0].status_extended)
             assert result[0].resource_id == detector_id
-            assert result[0].resource_arn == ""
+            assert result[0].resource_arn == detector_arn
 
     def test_guardduty_configured_but_suspended(self):
         guardduty_client = mock.MagicMock
@@ -59,7 +62,7 @@ class Test_guardduty_is_enabled:
         guardduty_client.detectors.append(
             Detector(
                 id=detector_id,
-                arn="",
+                arn=detector_arn,
                 region=AWS_REGION,
                 status=False,
             )
@@ -78,7 +81,7 @@ class Test_guardduty_is_enabled:
             assert result[0].status == "FAIL"
             assert search("configured but suspended", result[0].status_extended)
             assert result[0].resource_id == detector_id
-            assert result[0].resource_arn == ""
+            assert result[0].resource_arn == detector_arn
 
     def test_guardduty_not_configured(self):
         guardduty_client = mock.MagicMock
@@ -86,7 +89,7 @@ class Test_guardduty_is_enabled:
         guardduty_client.detectors.append(
             Detector(
                 id=detector_id,
-                arn="",
+                arn=detector_arn,
                 region=AWS_REGION,
             )
         )
@@ -104,4 +107,4 @@ class Test_guardduty_is_enabled:
             assert result[0].status == "FAIL"
             assert search("not configured", result[0].status_extended)
             assert result[0].resource_id == detector_id
-            assert result[0].resource_arn == ""
+            assert result[0].resource_arn == detector_arn

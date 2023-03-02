@@ -415,6 +415,11 @@ class IAM:
             for role in self.roles:
                 response = self.client.list_role_tags(RoleName=role.name)["Tags"]
                 role.tags = response
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        try:
             for user in self.users:
                 response = self.client.list_user_tags(UserName=user.name)["Tags"]
                 user.tags = response

@@ -96,7 +96,6 @@ class RDS:
                         )
                     ):
                         if snapshot["Engine"] != "docdb":
-                            print(snapshot)
                             self.db_snapshots.append(
                                 DBSnapshot(
                                     id=snapshot["DBSnapshotIdentifier"],
@@ -142,7 +141,6 @@ class RDS:
                         )
                     ):
                         if snapshot["Engine"] != "docdb":
-                            print(snapshot)
                             self.db_cluster_snapshots.append(
                                 ClusterSnapshot(
                                     id=snapshot["DBClusterSnapshotIdentifier"],
