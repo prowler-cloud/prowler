@@ -15,13 +15,5 @@ class iam_check_saml_providers_sts(Check):
                 report.status = "PASS"
                 report.status_extended = f"SAML Provider {provider_name} has been found"
                 findings.append(report)
-        else:
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = ""
-            report.resource_arn = ""
-            report.region = iam_client.region
-            report.status = "FAIL"
-            report.status_extended = "No SAML Providers found"
-            findings.append(report)
 
         return findings

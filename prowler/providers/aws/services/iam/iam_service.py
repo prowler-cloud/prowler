@@ -131,11 +131,13 @@ class IAM:
     def __get_account_summary__(self):
         try:
             account_summary = self.client.get_account_summary()
-            return account_summary
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            account_summary = None
+        finally:
+            return account_summary
 
     def __get_password_policy__(self):
         try:
@@ -205,10 +207,11 @@ class IAM:
 
     def __list_virtual_mfa_devices__(self):
         try:
+            mfa_devices = []
             list_virtual_mfa_devices_paginator = self.client.get_paginator(
                 "list_virtual_mfa_devices"
             )
-            mfa_devices = []
+
             for page in list_virtual_mfa_devices_paginator.paginate():
                 for mfa_device in page["VirtualMFADevices"]:
                     mfa_devices.append(mfa_device)
@@ -360,8 +363,6 @@ class IAM:
 
     def __list_policies_version__(self, policies):
         try:
-            pass
-
             for policy in policies:
                 policy_version = self.client.get_policy_version(
                     PolicyArn=policy["Arn"], VersionId=policy["DefaultVersionId"]
