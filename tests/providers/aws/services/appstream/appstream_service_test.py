@@ -43,6 +43,8 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
             ]
         }
+    if operation_name == "ListTagsForResource":
+        return {"Tags": {"test": "test"}}
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -102,3 +104,13 @@ class Test_AppStream_Service:
         assert appstream.fleets[1].idle_disconnect_timeout_in_seconds == 900
         assert appstream.fleets[1].enable_default_internet_access is True
         assert appstream.fleets[1].region == AWS_REGION
+
+    def test__list_tags_for_resource__(self):
+        # Set partition for the service
+        current_audit_info.audited_partition = "aws"
+        appstream = AppStream(current_audit_info)
+        assert len(appstream.fleets) == 2
+
+        assert appstream.fleets[0].tags == [{"test": "test"}]
+
+        assert appstream.fleets[1].tags == [{"test": "test"}]

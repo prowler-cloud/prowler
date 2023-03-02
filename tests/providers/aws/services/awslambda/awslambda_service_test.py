@@ -137,6 +137,7 @@ class Test_Lambda_Service:
                 "SubnetIds": ["subnet-123abc"],
             },
             Environment={"Variables": {"db-password": "test-password"}},
+            Tags={"test": "test"},
         )
         # Update Lambda Policy
         lambda_policy = {
@@ -217,6 +218,8 @@ class Test_Lambda_Service:
             assert awslambda.functions[
                 lambda_name
             ].url_config.cors_config.allow_origins == ["*"]
+
+            assert awslambda.functions[lambda_name].tags == [{"test": "test"}]
 
             # Pending ZipFile tests
             with tempfile.TemporaryDirectory() as tmp_dir_name:

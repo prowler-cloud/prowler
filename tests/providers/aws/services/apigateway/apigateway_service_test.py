@@ -108,12 +108,15 @@ class Test_APIGateway_Service:
         apigateway_client = client("apigateway", region_name=AWS_REGION)
         # Create private APIGateway Rest API
         apigateway_client.create_rest_api(
-            name="test-rest-api", endpointConfiguration={"types": ["PRIVATE"]}
+            name="test-rest-api",
+            endpointConfiguration={"types": ["PRIVATE"]},
+            tags={"test": "test"},
         )
         # APIGateway client for this test class
         audit_info = self.set_mocked_audit_info()
         apigateway = APIGateway(audit_info)
         assert apigateway.rest_apis[0].public_endpoint is False
+        assert apigateway.rest_apis[0].tags == [{"test": "test"}]
 
     # Test APIGateway Get Stages
     @mock_apigateway
