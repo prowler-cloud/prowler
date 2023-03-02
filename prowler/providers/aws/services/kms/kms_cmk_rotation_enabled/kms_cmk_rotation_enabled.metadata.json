@@ -25,11 +25,9 @@
       "Url": "https://docs.aws.amazon.com/kms/latest/developerguide/rotate-keys.html"
     }
   },
-  "Categories": [],
-  "Tags": {
-    "Tag1Key": "value",
-    "Tag2Key": "value"
-  },
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

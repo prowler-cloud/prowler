@@ -272,7 +272,6 @@ class Check_Output_JSON(BaseModel):
     Severity: str
     ResourceType: str
     ResourceDetails: str = ""
-    Tags: dict
     Description: str
     Risk: str
     RelatedUrl: str
