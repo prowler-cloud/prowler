@@ -80,7 +80,7 @@ jobs:
           file: ${{ env.DOCKERFILE_PATH }}
 
       - name: Build container image (release)
-        if: github.event_name == 'push'
+        if: github.event_name == 'release'
         uses: docker/build-push-action@v2
         with:
           # Use local context to get changes
