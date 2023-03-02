@@ -10,6 +10,7 @@ class eks_control_plane_endpoint_access_restricted(Check):
             report.region = cluster.region
             report.resource_id = cluster.name
             report.resource_arn = cluster.arn
+            report.resource_tags = cluster.tags
             report.status = "PASS"
             report.status_extended = (
                 f"Cluster endpoint access is private for EKS cluster {cluster.name}"

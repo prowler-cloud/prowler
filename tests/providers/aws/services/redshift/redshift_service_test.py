@@ -110,6 +110,9 @@ class Test_Redshift_Service:
             MasterUsername="user",
             MasterUserPassword="password",
             PubliclyAccessible=True,
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
         )
         audit_info = self.set_mocked_audit_info()
         redshift = Redshift(audit_info)
@@ -126,6 +129,9 @@ class Test_Redshift_Service:
             redshift.clusters[0].allow_version_upgrade
             == response["Cluster"]["AllowVersionUpgrade"]
         )
+        assert redshift.clusters[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     @mock_redshift
     def test_describe_logging_status(self):

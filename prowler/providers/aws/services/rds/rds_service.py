@@ -74,6 +74,7 @@ class RDS:
                                     ),
                                     multi_az=instance["MultiAZ"],
                                     region=regional_client.region,
+                                    tags=instance.get("TagList"),
                                 )
                             )
         except Exception as error:
@@ -100,6 +101,7 @@ class RDS:
                                     id=snapshot["DBSnapshotIdentifier"],
                                     instance_id=snapshot["DBInstanceIdentifier"],
                                     region=regional_client.region,
+                                    tags=snapshot.get("TagList"),
                                 )
                             )
         except Exception as error:
@@ -144,6 +146,7 @@ class RDS:
                                     id=snapshot["DBClusterSnapshotIdentifier"],
                                     cluster_id=snapshot["DBClusterIdentifier"],
                                     region=regional_client.region,
+                                    tags=snapshot.get("TagList"),
                                 )
                             )
         except Exception as error:
@@ -183,6 +186,7 @@ class DBInstance(BaseModel):
     enhanced_monitoring_arn: Optional[str]
     multi_az: bool
     region: str
+    tags: Optional[list] = []
 
 
 class DBSnapshot(BaseModel):
@@ -190,6 +194,7 @@ class DBSnapshot(BaseModel):
     instance_id: str
     public: bool = False
     region: str
+    tags: Optional[list] = []
 
 
 class ClusterSnapshot(BaseModel):
@@ -197,3 +202,4 @@ class ClusterSnapshot(BaseModel):
     cluster_id: str
     public: bool = False
     region: str
+    tags: Optional[list] = []

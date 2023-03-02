@@ -11,6 +11,7 @@ class ecr_repositories_scan_vulnerabilities_in_latest_image(Check):
                 report.region = repository.region
                 report.resource_id = repository.name
                 report.resource_arn = repository.arn
+                report.resource_tags = repository.tags
                 report.status = "PASS"
                 report.status_extended = f"ECR repository {repository.name} has imageTag {image.latest_tag} scanned without findings"
                 if not image.scan_findings_status:

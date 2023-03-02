@@ -12,6 +12,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018(
             report.region = security_group.region
             report.resource_id = security_group.id
             report.resource_arn = security_group.arn
+            report.resource_tags = security_group.tags
             report.status = "PASS"
             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has not MongoDB ports 27017 and 27018 open to the Internet."
             # Loop through every security group's ingress rule and check it

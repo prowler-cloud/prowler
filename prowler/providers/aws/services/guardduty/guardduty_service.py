@@ -1,4 +1,5 @@
 import threading
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -12,12 +13,15 @@ class GuardDuty:
     def __init__(self, audit_info):
         self.service = "guardduty"
         self.session = audit_info.audit_session
+        self.audited_account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
+        self.audited_partition = audit_info.audited_partition
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.detectors = []
         self.__threading_call__(self.__list_detectors__)
         self.__get_detector__(self.regional_clients)
         self.__list_findings__(self.regional_clients)
+        self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -40,8 +44,11 @@ class GuardDuty:
                     if not self.audit_resources or (
                         is_resource_filtered(detector, self.audit_resources)
                     ):
+                        arn = f"arn:{self.audited_partition}:guardduty:{regional_client.region}:{self.audited_account}:detector/{detector}"
                         self.detectors.append(
-                            Detector(id=detector, region=regional_client.region)
+                            Detector(
+                                id=detector, arn=arn, region=regional_client.region
+                            )
                         )
         except Exception as error:
             logger.error(
@@ -93,11 +100,25 @@ class GuardDuty:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_tags_for_resource__(self):
+        logger.info("Guardduty - List Tags...")
+        try:
+            for detector in self.detectors:
+                regional_client = self.regional_clients[detector.region]
+                response = regional_client.list_tags_for_resource(
+                    ResourceArn=detector.arn
+                )["Tags"]
+                detector.tags = [response]
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Detector(BaseModel):
     id: str
-    # there is no arn for a guardduty detector but we want it filled for the reports
-    arn: str = ""
+    arn: str
     region: str
     status: bool = None
     findings: list = []
+    tags: Optional[list] = []

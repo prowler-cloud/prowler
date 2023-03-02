@@ -32,6 +32,7 @@ class Test_guardduty_no_high_severity_findings:
         guardduty_client.detectors.append(
             Detector(
                 id=detector_id,
+                arn="",
                 region=AWS_REGION,
             )
         )
@@ -58,7 +59,11 @@ class Test_guardduty_no_high_severity_findings:
         guardduty_client.detectors = []
         guardduty_client.detectors.append(
             Detector(
-                id=detector_id, region=AWS_REGION, status=False, findings=[str(uuid4())]
+                id=detector_id,
+                region=AWS_REGION,
+                arn="",
+                status=False,
+                findings=[str(uuid4())],
             )
         )
         with mock.patch(

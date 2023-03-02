@@ -12,7 +12,7 @@ class route53_domains_privacy_protection_enabled(Check):
             report = Check_Report_AWS(self.metadata())
             report.resource_id = domain.name
             report.region = domain.region
-
+            report.resource_tags = domain.tags
             if domain.admin_privacy:
                 report.status = "PASS"
                 report.status_extended = (

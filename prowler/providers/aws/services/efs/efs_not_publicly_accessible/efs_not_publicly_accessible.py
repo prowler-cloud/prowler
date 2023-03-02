@@ -10,6 +10,7 @@ class efs_not_publicly_accessible(Check):
             report.region = fs.region
             report.resource_id = fs.id
             report.resource_arn = ""
+            report.resource_tags = fs.tags
             report.status = "PASS"
             report.status_extended = (
                 f"EFS {fs.id} has policy which does not allow access to everyone"

@@ -11,6 +11,7 @@ class iam_user_hardware_mfa_enabled(Check):
             report = Check_Report_AWS(self.metadata())
             report.resource_id = user.name
             report.resource_arn = user.arn
+            report.resource_tags = user.tags
             report.region = iam_client.region
             if user.mfa_devices:
                 report.status = "PASS"

@@ -66,8 +66,8 @@ class Test_Macie_Service:
         macie = Macie(current_audit_info)
         macie.sessions = [
             Session(
-                "ENABLED",
-                "eu-west-1",
+                status="ENABLED",
+                region="eu-west-1",
             )
         ]
         assert len(macie.sessions) == 1

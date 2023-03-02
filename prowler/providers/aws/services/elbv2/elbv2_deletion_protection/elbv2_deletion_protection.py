@@ -10,6 +10,7 @@ class elbv2_deletion_protection(Check):
             report.region = lb.region
             report.resource_id = lb.name
             report.resource_arn = lb.arn
+            report.resource_tags = lb.tags
             report.status = "FAIL"
             report.status_extended = f"ELBv2 {lb.name} has not deletion protection."
             if lb.deletion_protection == "true":

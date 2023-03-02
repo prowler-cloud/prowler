@@ -9,6 +9,7 @@ class rds_instance_multi_az(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = db_instance.region
             report.resource_id = db_instance.id
+            report.resource_tags = db_instance.tags
             if db_instance.multi_az:
                 report.status = "PASS"
                 report.status_extended = (

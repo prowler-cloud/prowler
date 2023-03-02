@@ -9,6 +9,7 @@ class rds_snapshots_public_access(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = db_snap.region
             report.resource_id = db_snap.id
+            report.resource_tags = db_snap.tags
             if db_snap.public:
                 report.status = "FAIL"
                 report.status_extended = (
@@ -26,6 +27,7 @@ class rds_snapshots_public_access(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = db_snap.region
             report.resource_id = db_snap.id
+            report.resource_tags = db_snap.tags
             if db_snap.public:
                 report.status = "FAIL"
                 report.status_extended = f"RDS Cluster Snapshot {db_snap.id} is public."

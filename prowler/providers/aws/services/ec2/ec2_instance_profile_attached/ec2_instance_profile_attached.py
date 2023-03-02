@@ -10,6 +10,7 @@ class ec2_instance_profile_attached(Check):
             report.region = instance.region
             report.resource_id = instance.id
             report.resource_arn = instance.arn
+            report.resource_tags = instance.tags
             report.status = "FAIL"
             report.status_extended = f"EC2 Instance {instance.id} not associated with an Instance Profile Role."
             if instance.instance_profile:
