@@ -1,6 +1,5 @@
 import json
 import threading
-from dataclasses import dataclass
 from typing import Optional
 
 from botocore.client import ClientError
@@ -159,21 +158,23 @@ class S3:
         logger.info("S3 - Get buckets public access block...")
         try:
             regional_client = self.regional_clients[bucket.region]
+            public_access_block = regional_client.get_public_access_block(
+                Bucket=bucket.name
+            )["PublicAccessBlockConfiguration"]
             bucket.public_access_block = PublicAccessBlock(
-                regional_client.get_public_access_block(Bucket=bucket.name)[
-                    "PublicAccessBlockConfiguration"
-                ]
+                block_public_acls=public_access_block["BlockPublicAcls"],
+                ignore_public_acls=public_access_block["IgnorePublicAcls"],
+                block_public_policy=public_access_block["BlockPublicPolicy"],
+                restrict_public_buckets=public_access_block["RestrictPublicBuckets"],
             )
         except Exception as error:
             if "NoSuchPublicAccessBlockConfiguration" in str(error):
                 # Set all block as False
                 bucket.public_access_block = PublicAccessBlock(
-                    {
-                        "BlockPublicAcls": False,
-                        "IgnorePublicAcls": False,
-                        "BlockPublicPolicy": False,
-                        "RestrictPublicBuckets": False,
-                    }
+                    block_public_acls=False,
+                    ignore_public_acls=False,
+                    block_public_policy=False,
+                    restrict_public_buckets=False,
                 )
             else:
                 if regional_client:
@@ -295,21 +296,23 @@ class S3Control:
     def __get_public_access_block__(self):
         logger.info("S3 - Get account public access block...")
         try:
+            public_access_block = self.client.get_public_access_block(
+                AccountId=self.audited_account
+            )["PublicAccessBlockConfiguration"]
             return PublicAccessBlock(
-                self.client.get_public_access_block(AccountId=self.audited_account)[
-                    "PublicAccessBlockConfiguration"
-                ]
+                block_public_acls=public_access_block["BlockPublicAcls"],
+                ignore_public_acls=public_access_block["IgnorePublicAcls"],
+                block_public_policy=public_access_block["BlockPublicPolicy"],
+                restrict_public_buckets=public_access_block["RestrictPublicBuckets"],
             )
         except Exception as error:
             if "NoSuchPublicAccessBlockConfiguration" in str(error):
                 # Set all block as False
                 return PublicAccessBlock(
-                    {
-                        "BlockPublicAcls": False,
-                        "IgnorePublicAcls": False,
-                        "BlockPublicPolicy": False,
-                        "RestrictPublicBuckets": False,
-                    }
+                    block_public_acls=False,
+                    ignore_public_acls=False,
+                    block_public_policy=False,
+                    restrict_public_buckets=False,
                 )
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -324,18 +327,11 @@ class ACL_Grantee(BaseModel):
     permission: Optional[str]
 
 
-@dataclass
-class PublicAccessBlock:
+class PublicAccessBlock(BaseModel):
     block_public_acls: bool
     ignore_public_acls: bool
     block_public_policy: bool
     restrict_public_buckets: bool
-
-    def __init__(self, configuration):
-        self.block_public_acls = configuration["BlockPublicAcls"]
-        self.ignore_public_acls = configuration["IgnorePublicAcls"]
-        self.block_public_policy = configuration["BlockPublicPolicy"]
-        self.restrict_public_buckets = configuration["RestrictPublicBuckets"]
 
 
 class Bucket(BaseModel):

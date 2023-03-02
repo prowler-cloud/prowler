@@ -199,10 +199,20 @@ class SageMaker:
                 regional_client = self.regional_clients[model.region]
                 response = regional_client.list_tags(ResourceArn=model.arn)["Tags"]
                 model.tags = response
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        try:
             for instance in self.sagemaker_notebook_instances:
                 regional_client = self.regional_clients[instance.region]
                 response = regional_client.list_tags(ResourceArn=instance.arn)["Tags"]
                 instance.tags = response
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        try:
             for job in self.sagemaker_training_jobs:
                 regional_client = self.regional_clients[job.region]
                 response = regional_client.list_tags(ResourceArn=job.arn)["Tags"]
