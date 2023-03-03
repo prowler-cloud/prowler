@@ -6125,9 +6125,10 @@
           "eu-south-1",
           "eu-west-1",
           "eu-west-2",
-          "us-east-1",
+          "me-central-1",
           "eu-central-1",
           "sa-east-1",
+          "us-east-1",
           "us-west-2"
         ],
         "aws-cn": [],
