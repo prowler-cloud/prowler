@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_instance_transport_encrypted",
+  "CheckTitle": "Check if RDS instances client connections are encrypted (Microsoft SQL Server and PostgreSQL).",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "Severity": "high",
+  "ResourceType": "AwsRdsDbInstance",
+  "Description": "Check if RDS instances client connections are encrypted (Microsoft SQL Server and PostgreSQL).",
+  "Risk": "If not enabled sensitive information at transit is not protected.",
+  "RelatedUrl": "https://aws.amazon.com/premiumsupport/knowledge-center/rds-connect-ssl-connection/",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rds modify-db-parameter-group --region <REGION_NAME> --db-parameter-group-name <PARAMETER_GROUP_NAME> --parameters ParameterName='rds.force_ssl',ParameterValue='1',ApplyMethod='pending-reboot'",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/transport-encryption.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that Microsoft SQL Server and PostgreSQL instances provisioned with Amazon RDS have Transport Encryption feature enabled in order to meet security and compliance requirements.",
+      "Url": "https://aws.amazon.com/premiumsupport/knowledge-center/rds-connect-ssl-connection/"
+    }
+  },
+  "Categories": [ "encryption" ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
