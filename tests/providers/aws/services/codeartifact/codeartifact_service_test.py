@@ -72,6 +72,13 @@ def mock_make_api_call(self, operation_name, kwarg):
             ],
         }
 
+    if operation_name == "ListTagsForResource":
+        return {
+            "tags": [
+                {"key": "test", "value": "test"},
+            ]
+        }
+
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -116,6 +123,9 @@ class Test_CodeArtifact_Service:
         assert codeartifact.repositories
         assert codeartifact.repositories["test-repository"]
         assert codeartifact.repositories["test-repository"].name == "test-repository"
+        assert codeartifact.repositories["test-repository"].tags == [
+            {"key": "test", "value": "test"},
+        ]
         assert (
             codeartifact.repositories["test-repository"].arn
             == f"arn:aws:codebuild:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"

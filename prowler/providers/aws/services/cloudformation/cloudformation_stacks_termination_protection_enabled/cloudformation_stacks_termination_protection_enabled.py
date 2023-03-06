@@ -16,6 +16,7 @@ class cloudformation_stacks_termination_protection_enabled(Check):
                 report.region = stack.region
                 report.resource_id = stack.name
                 report.resource_arn = stack.arn
+                report.resource_tags = stack.tags
 
                 if stack.enable_termination_protection:
                     report.status = "PASS"

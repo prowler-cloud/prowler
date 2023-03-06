@@ -32,6 +32,7 @@ class cloudtrail_s3_dataevents_write_enabled(Check):
                                 report.region = trail.region
                                 report.resource_id = trail.name
                                 report.resource_arn = trail.arn
+                                report.resource_tags = trail.tags
                                 report.status = "PASS"
                                 report.status_extended = f"Trail {trail.name} has a classic data event selector to record all S3 object-level API operations."
                 # advanced event selectors
@@ -44,6 +45,7 @@ class cloudtrail_s3_dataevents_write_enabled(Check):
                             report.region = trail.region
                             report.resource_id = trail.name
                             report.resource_arn = trail.arn
+                            report.resource_tags = trail.tags
                             report.status = "PASS"
                             report.status_extended = f"Trail {trail.name} has an advanced data event selector to record all S3 object-level API operations."
         findings.append(report)

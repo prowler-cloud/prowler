@@ -11,6 +11,7 @@ class directoryservice_directory_monitor_notifications(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = directory.region
             report.resource_id = directory.id
+            report.resource_tags = directory.tags
             if directory.event_topics:
                 report.status = "PASS"
                 report.status_extended = (

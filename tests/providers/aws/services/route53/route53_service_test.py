@@ -18,7 +18,16 @@ def mock_make_api_call(self, operation_name, kwarg):
     """We have to mock every AWS API call using Boto3"""
     if operation_name == "DescribeDirectories":
         return {}
-
+    if operation_name == "ListTagsForResource":
+        return {
+            "ResourceTagSet": {
+                "ResourceType": "hostedzone",
+                "ResourceId": "test",
+                "Tags": [
+                    {"Key": "test", "Value": "test"},
+                ],
+            }
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -107,6 +116,9 @@ class Test_Route53_Service:
             == log_group_arn
         )
         assert route53.hosted_zones[hosted_zone_id].region == AWS_REGION
+        assert route53.hosted_zones[hosted_zone_id].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     @mock_route53
     @mock_logs

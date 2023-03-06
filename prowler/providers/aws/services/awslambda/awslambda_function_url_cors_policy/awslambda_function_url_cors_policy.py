@@ -10,6 +10,7 @@ class awslambda_function_url_cors_policy(Check):
             report.region = function.region
             report.resource_id = function.name
             report.resource_arn = function.arn
+            report.resource_tags = function.tags
             if function.url_config:
                 if "*" in function.url_config.cors_config.allow_origins:
                     report.status = "FAIL"

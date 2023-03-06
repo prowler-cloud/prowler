@@ -12,6 +12,7 @@ class ec2_securitygroup_with_many_ingress_egress_rules(Check):
             report.region = security_group.region
             report.resource_id = security_group.id
             report.resource_arn = security_group.arn
+            report.resource_tags = security_group.tags
             report.status = "PASS"
             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has {len(security_group.ingress_rules)} inbound rules and {len(security_group.egress_rules)} outbound rules"
             if (

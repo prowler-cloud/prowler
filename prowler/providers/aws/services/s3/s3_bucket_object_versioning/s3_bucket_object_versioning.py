@@ -10,6 +10,7 @@ class s3_bucket_object_versioning(Check):
             report.region = bucket.region
             report.resource_id = bucket.name
             report.resource_arn = bucket.arn
+            report.resource_tags = bucket.tags
             if bucket.versioning:
                 report.status = "PASS"
                 report.status_extended = (

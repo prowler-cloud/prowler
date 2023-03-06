@@ -8,6 +8,7 @@ class vpc_peering_routing_tables_with_least_privilege(Check):
         for peer in vpc_client.vpc_peering_connections:
             report = Check_Report_AWS(self.metadata())
             report.region = peer.region
+            report.resource_tags = peer.tags
             comply = True
             # Check each cidr in the peering route table
             for route_table in peer.route_tables:

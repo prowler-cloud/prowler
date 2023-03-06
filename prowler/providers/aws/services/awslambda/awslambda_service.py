@@ -24,6 +24,7 @@ class Lambda:
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.functions = {}
         self.__threading_call__(self.__list_functions__)
+        self.__list_tags_for_resource__()
 
         # We only want to retrieve the Lambda code if the
         # awslambda_function_no_secrets_in_code check is set
@@ -156,6 +157,18 @@ class Lambda:
                 f" {error}"
             )
 
+    def __list_tags_for_resource__(self):
+        logger.info("Lambda - List Tags...")
+        try:
+            for function in self.functions.values():
+                regional_client = self.regional_clients[function.region]
+                response = regional_client.list_tags(Resource=function.arn)["Tags"]
+                function.tags = [response]
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class LambdaCode(BaseModel):
     location: str
@@ -186,3 +199,4 @@ class Function(BaseModel):
     policy: dict = None
     code: LambdaCode = None
     url_config: URLConfig = None
+    tags: Optional[list] = []

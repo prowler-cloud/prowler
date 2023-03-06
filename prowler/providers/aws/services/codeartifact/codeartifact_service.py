@@ -21,6 +21,7 @@ class CodeArtifact:
         self.repositories = {}
         self.__threading_call__(self.__list_repositories__)
         self.__threading_call__(self.__list_packages__)
+        self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -148,6 +149,20 @@ class CodeArtifact:
                 f" {error}"
             )
 
+    def __list_tags_for_resource__(self):
+        logger.info("CodeArtifact - List Tags...")
+        try:
+            for repository in self.repositories.values():
+                regional_client = self.regional_clients[repository.region]
+                response = regional_client.list_tags_for_resource(
+                    resourceArn=repository.arn
+                )["tags"]
+                repository.tags = response
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class RestrictionValues(Enum):
     """Possible values for the package origin restriction"""
@@ -227,3 +242,4 @@ class Repository(BaseModel):
     domain_owner: str
     packages: list[Package] = []
     region: str
+    tags: Optional[list] = []

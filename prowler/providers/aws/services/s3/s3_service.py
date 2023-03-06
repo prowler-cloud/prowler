@@ -1,8 +1,9 @@
 import json
 import threading
-from dataclasses import dataclass
+from typing import Optional
 
 from botocore.client import ClientError
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -27,6 +28,7 @@ class S3:
         self.__threading_call__(self.__get_public_access_block__)
         self.__threading_call__(self.__get_bucket_encryption__)
         self.__threading_call__(self.__get_bucket_ownership_controls__)
+        self.__threading_call__(self.__get_bucket_tagging__)
 
     def __get_session__(self):
         return self.session
@@ -61,9 +63,15 @@ class S3:
                     # Check if there are filter regions
                     if audit_info.audited_regions:
                         if bucket_region in audit_info.audited_regions:
-                            buckets.append(Bucket(bucket["Name"], arn, bucket_region))
+                            buckets.append(
+                                Bucket(
+                                    name=bucket["Name"], arn=arn, region=bucket_region
+                                )
+                            )
                     else:
-                        buckets.append(Bucket(bucket["Name"], arn, bucket_region))
+                        buckets.append(
+                            Bucket(name=bucket["Name"], arn=arn, region=bucket_region)
+                        )
         except ClientError as error:
             if error.response["Error"]["Code"] == "NoSuchBucket":
                 logger.warning(
@@ -72,7 +80,7 @@ class S3:
         except Exception as error:
             if bucket:
                 logger.error(
-                    f"{bucket} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"{bucket['Name']} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
                 logger.error(
@@ -150,21 +158,23 @@ class S3:
         logger.info("S3 - Get buckets public access block...")
         try:
             regional_client = self.regional_clients[bucket.region]
+            public_access_block = regional_client.get_public_access_block(
+                Bucket=bucket.name
+            )["PublicAccessBlockConfiguration"]
             bucket.public_access_block = PublicAccessBlock(
-                regional_client.get_public_access_block(Bucket=bucket.name)[
-                    "PublicAccessBlockConfiguration"
-                ]
+                block_public_acls=public_access_block["BlockPublicAcls"],
+                ignore_public_acls=public_access_block["IgnorePublicAcls"],
+                block_public_policy=public_access_block["BlockPublicPolicy"],
+                restrict_public_buckets=public_access_block["RestrictPublicBuckets"],
             )
         except Exception as error:
             if "NoSuchPublicAccessBlockConfiguration" in str(error):
                 # Set all block as False
                 bucket.public_access_block = PublicAccessBlock(
-                    {
-                        "BlockPublicAcls": False,
-                        "IgnorePublicAcls": False,
-                        "BlockPublicPolicy": False,
-                        "RestrictPublicBuckets": False,
-                    }
+                    block_public_acls=False,
+                    ignore_public_acls=False,
+                    block_public_policy=False,
+                    restrict_public_buckets=False,
                 )
             else:
                 if regional_client:
@@ -244,6 +254,27 @@ class S3:
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
+    def __get_bucket_tagging__(self, bucket):
+        logger.info("S3 - Get buckets logging...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            bucket_tags = regional_client.get_bucket_tagging(Bucket=bucket.name)[
+                "TagSet"
+            ]
+            bucket.tags = bucket_tags
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "NoSuchTagSet":
+                bucket.tags = []
+        except Exception as error:
+            if regional_client:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
 
 ################## S3Control
 class S3Control:
@@ -265,90 +296,55 @@ class S3Control:
     def __get_public_access_block__(self):
         logger.info("S3 - Get account public access block...")
         try:
+            public_access_block = self.client.get_public_access_block(
+                AccountId=self.audited_account
+            )["PublicAccessBlockConfiguration"]
             return PublicAccessBlock(
-                self.client.get_public_access_block(AccountId=self.audited_account)[
-                    "PublicAccessBlockConfiguration"
-                ]
+                block_public_acls=public_access_block["BlockPublicAcls"],
+                ignore_public_acls=public_access_block["IgnorePublicAcls"],
+                block_public_policy=public_access_block["BlockPublicPolicy"],
+                restrict_public_buckets=public_access_block["RestrictPublicBuckets"],
             )
         except Exception as error:
             if "NoSuchPublicAccessBlockConfiguration" in str(error):
                 # Set all block as False
                 return PublicAccessBlock(
-                    {
-                        "BlockPublicAcls": False,
-                        "IgnorePublicAcls": False,
-                        "BlockPublicPolicy": False,
-                        "RestrictPublicBuckets": False,
-                    }
+                    block_public_acls=False,
+                    ignore_public_acls=False,
+                    block_public_policy=False,
+                    restrict_public_buckets=False,
                 )
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
-@dataclass
-class ACL_Grantee:
-    display_name: str
-    ID: str
+class ACL_Grantee(BaseModel):
+    display_name: Optional[str]
+    ID: Optional[str]
     type: str
-    URI: str
-    permission: str
-
-    def __init__(self, type):
-        self.display_name = None
-        self.ID = None
-        self.type = type
-        self.URI = None
-        self.permission = None
+    URI: Optional[str]
+    permission: Optional[str]
 
 
-@dataclass
-class PublicAccessBlock:
+class PublicAccessBlock(BaseModel):
     block_public_acls: bool
     ignore_public_acls: bool
     block_public_policy: bool
     restrict_public_buckets: bool
 
-    def __init__(self, configuration):
-        self.block_public_acls = configuration["BlockPublicAcls"]
-        self.ignore_public_acls = configuration["IgnorePublicAcls"]
-        self.block_public_policy = configuration["BlockPublicPolicy"]
-        self.restrict_public_buckets = configuration["RestrictPublicBuckets"]
 
-
-@dataclass
-class Bucket:
+class Bucket(BaseModel):
     name: str
     arn: str
-    versioning: bool
-    logging: bool
-    public_access_block: PublicAccessBlock
-    acl_grantees: list[ACL_Grantee]
-    policy: dict
-    encryption: str
+    versioning: bool = False
+    logging: bool = False
+    public_access_block: Optional[PublicAccessBlock]
+    acl_grantees: list[ACL_Grantee] = []
+    policy: dict = {}
+    encryption: Optional[str]
     region: str
-    logging_target_bucket: str
-    ownership: str
-    mfa_delete: bool
-
-    def __init__(self, name, arn, region):
-        self.name = name
-        self.arn = arn
-        self.versioning = False
-        self.logging = False
-        # Set all block as False
-        self.public_access_block = PublicAccessBlock(
-            {
-                "BlockPublicAcls": False,
-                "IgnorePublicAcls": False,
-                "BlockPublicPolicy": False,
-                "RestrictPublicBuckets": False,
-            }
-        )
-        self.acl_grantees = []
-        self.policy = {}
-        self.encryption = None
-        self.region = region
-        self.logging_target_bucket = None
-        self.ownership = None
-        self.mfa_delete = False
+    logging_target_bucket: Optional[str]
+    ownership: Optional[str]
+    mfa_delete: bool = False
+    tags: Optional[list] = []

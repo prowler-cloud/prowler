@@ -79,7 +79,7 @@ class EMR:
                     # Master Node Security Groups
                     master_node_security_group = cluster_info["Cluster"][
                         "Ec2InstanceAttributes"
-                    ]["EmrManagedMasterSecurityGroup"]
+                    ].get("EmrManagedMasterSecurityGroup")
                     master_node_additional_security_groups = None
                     if (
                         "AdditionalMasterSecurityGroups"
@@ -96,7 +96,7 @@ class EMR:
                     # Slave Node Security Groups
                     slave_node_security_group = cluster_info["Cluster"][
                         "Ec2InstanceAttributes"
-                    ]["EmrManagedSlaveSecurityGroup"]
+                    ].get("EmrManagedSlaveSecurityGroup")
                     slave_node_additional_security_groups = []
                     if (
                         "AdditionalSlaveSecurityGroups"
@@ -125,6 +125,7 @@ class EMR:
                         and ".amazonaws.com" in master_public_dns_name
                     ):
                         self.clusters[cluster.id].public = True
+                    cluster.tags = cluster_info["Cluster"].get("Tags")
 
         except Exception as error:
             logger.error(
@@ -171,7 +172,7 @@ class ClusterStatus(Enum):
 
 
 class Node(BaseModel):
-    security_group_id: str = ""
+    security_group_id: Optional[str] = ""
     additional_security_groups_id: Optional[list[str]] = []
 
 
@@ -185,3 +186,4 @@ class Cluster(BaseModel):
     slave: Node = Node()
     master_public_dns_name: str = ""
     public: bool = False
+    tags: Optional[list] = []

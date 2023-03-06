@@ -31,7 +31,7 @@ class Test_cloudformation_stacks_termination_protection_enabled:
             Stack(
                 arn="arn:aws:cloudformation:eu-west-1:123456789012:stack/Test-Stack/796c8d26-b390-41d7-a23c-0702c4e78b60",
                 name=stack_name,
-                outputs="",
+                outputs=[],
                 region=AWS_REGION,
             )
         ]
@@ -68,7 +68,7 @@ class Test_cloudformation_stacks_termination_protection_enabled:
             Stack(
                 arn="arn:aws:cloudformation:eu-west-1:123456789012:stack/Test-Stack/796c8d26-b390-41d7-a23c-0702c4e78b60",
                 name=stack_name,
-                outputs="",
+                outputs=[],
                 region=AWS_REGION,
             )
         ]

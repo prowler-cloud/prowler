@@ -12,6 +12,7 @@ class shield_advanced_protection_in_associated_elastic_ips(Check):
                 report.region = shield_client.region
                 report.resource_id = elastic_ip.allocation_id
                 report.resource_arn = elastic_ip.arn
+                report.resource_tags = elastic_ip.tags
                 report.status = "FAIL"
                 report.status_extended = f"Elastic IP {elastic_ip.allocation_id} is not protected by AWS Shield Advanced"
 

@@ -83,6 +83,12 @@ def mock_make_api_call(self, operation_name, kwarg):
             "EnableNetworkIsolation": True,
             "EnableInterContainerTrafficEncryption": True,
         }
+    if operation_name == "ListTags":
+        return {
+            "Tags": [
+                {"Key": "test", "Value": "test"},
+            ],
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -148,6 +154,9 @@ class Test_SageMaker_Service:
         assert sagemaker.sagemaker_notebook_instances[0].name == test_notebook_instance
         assert sagemaker.sagemaker_notebook_instances[0].arn == notebook_instance_arn
         assert sagemaker.sagemaker_notebook_instances[0].region == AWS_REGION
+        assert sagemaker.sagemaker_notebook_instances[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     # Test SageMaker list models
     def test_list_models(self):
@@ -157,6 +166,9 @@ class Test_SageMaker_Service:
         assert sagemaker.sagemaker_models[0].name == test_model
         assert sagemaker.sagemaker_models[0].arn == test_arn_model
         assert sagemaker.sagemaker_models[0].region == AWS_REGION
+        assert sagemaker.sagemaker_models[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     # Test SageMaker list training jobs
     def test_list_training_jobs(self):
@@ -166,6 +178,9 @@ class Test_SageMaker_Service:
         assert sagemaker.sagemaker_training_jobs[0].name == test_training_job
         assert sagemaker.sagemaker_training_jobs[0].arn == test_arn_training_job
         assert sagemaker.sagemaker_training_jobs[0].region == AWS_REGION
+        assert sagemaker.sagemaker_training_jobs[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     # Test SageMaker describe notebook instance
     def test_describe_notebook_instance(self):

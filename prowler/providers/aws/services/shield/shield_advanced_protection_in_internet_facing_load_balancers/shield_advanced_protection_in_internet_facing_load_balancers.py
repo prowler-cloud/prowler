@@ -13,6 +13,7 @@ class shield_advanced_protection_in_internet_facing_load_balancers(Check):
                     report.region = shield_client.region
                     report.resource_id = elbv2.name
                     report.resource_arn = elbv2.arn
+                    report.resource_tags = elbv2.tags
                     report.status = "FAIL"
                     report.status_extended = f"ELBv2 ALB {elbv2.name} is not protected by AWS Shield Advanced"
 

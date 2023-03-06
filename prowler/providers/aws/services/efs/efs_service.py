@@ -1,8 +1,9 @@
 import json
 import threading
-from dataclasses import dataclass
+from typing import Optional
 
 from botocore.client import ClientError
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -50,6 +51,7 @@ class EFS:
                                 policy=None,
                                 backup_policy=None,
                                 encrypted=efs["Encrypted"],
+                                tags=efs.get("Tags"),
                             )
                         )
         except Exception as error:
@@ -85,24 +87,10 @@ class EFS:
             )
 
 
-@dataclass
-class FileSystem:
+class FileSystem(BaseModel):
     id: str
     region: str
-    policy: dict
-    backup_policy: str
+    policy: Optional[dict]
+    backup_policy: Optional[str]
     encrypted: bool
-
-    def __init__(
-        self,
-        id,
-        region,
-        policy,
-        backup_policy,
-        encrypted,
-    ):
-        self.id = id
-        self.region = region
-        self.policy = policy
-        self.backup_policy = backup_policy
-        self.encrypted = encrypted
+    tags: Optional[list] = []

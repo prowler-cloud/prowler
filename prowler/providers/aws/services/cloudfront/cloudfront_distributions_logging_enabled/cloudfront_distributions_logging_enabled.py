@@ -12,9 +12,10 @@ class cloudfront_distributions_logging_enabled(Check):
             report.region = distribution.region
             report.resource_arn = distribution.arn
             report.resource_id = distribution.id
-            if (
-                distribution.logging_enabled
-                or distribution.default_cache_config.realtime_log_config_arn
+            report.resource_tags = distribution.tags
+            if distribution.logging_enabled or (
+                distribution.default_cache_config
+                and distribution.default_cache_config.realtime_log_config_arn
             ):
                 report.status = "PASS"
                 report.status_extended = (

@@ -12,7 +12,7 @@ class secretsmanager_automatic_rotation_enabled(Check):
             report.region = secret.region
             report.resource_id = secret.name
             report.resource_arn = secret.arn
-
+            report.resource_tags = secret.tags
             if secret.rotation_enabled:
                 report.status = "PASS"
                 report.status_extended = (

@@ -1,5 +1,6 @@
 import threading
-from dataclasses import dataclass
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import generate_regional_clients
@@ -32,8 +33,8 @@ class Macie:
         try:
             self.sessions.append(
                 Session(
-                    regional_client.get_macie_session()["status"],
-                    regional_client.region,
+                    status=regional_client.get_macie_session()["status"],
+                    region=regional_client.region,
                 )
             )
 
@@ -41,8 +42,8 @@ class Macie:
             if "Macie is not enabled" in str(error):
                 self.sessions.append(
                     Session(
-                        "DISABLED",
-                        regional_client.region,
+                        status="DISABLED",
+                        region=regional_client.region,
                     )
                 )
             else:
@@ -51,15 +52,6 @@ class Macie:
                 )
 
 
-@dataclass
-class Session:
+class Session(BaseModel):
     status: str
     region: str
-
-    def __init__(
-        self,
-        status,
-        region,
-    ):
-        self.status = status
-        self.region = region

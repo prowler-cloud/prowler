@@ -10,6 +10,7 @@ class redshift_cluster_public_access(Check):
             report.region = cluster.region
             report.resource_id = cluster.id
             report.resource_arn = cluster.arn
+            report.resource_tags = cluster.tags
             report.status = "PASS"
             report.status_extended = (
                 f"Redshift Cluster {cluster.arn} is not publicly accessible"

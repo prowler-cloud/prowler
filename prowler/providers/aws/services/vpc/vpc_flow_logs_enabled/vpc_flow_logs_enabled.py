@@ -8,6 +8,7 @@ class vpc_flow_logs_enabled(Check):
         for vpc in vpc_client.vpcs:
             report = Check_Report_AWS(self.metadata())
             report.region = vpc.region
+            report.resource_tags = vpc.tags
             if vpc.flow_log:
                 report.status = "PASS"
                 report.status_extended = f"VPC {vpc.id} Flow logs are enabled."

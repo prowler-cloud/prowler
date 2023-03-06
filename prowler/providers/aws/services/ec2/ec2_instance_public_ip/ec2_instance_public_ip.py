@@ -9,6 +9,7 @@ class ec2_instance_public_ip(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = instance.region
             report.resource_arn = instance.arn
+            report.resource_tags = instance.tags
             if instance.public_ip:
                 report.status = "FAIL"
                 report.status_extended = f"EC2 Instance {instance.id} has a Public IP: {instance.public_ip} ({instance.public_dns})."

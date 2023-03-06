@@ -13,6 +13,7 @@ class iam_disable_45_days_credentials(Check):
             report = Check_Report_AWS(self.metadata())
             report.resource_id = user.name
             report.resource_arn = user.arn
+            report.resource_tags = user.tags
             report.region = iam_client.region
             if user.password_last_used:
                 time_since_insertion = (

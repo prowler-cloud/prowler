@@ -14,6 +14,7 @@ class kms_key_not_publicly_accessible(Check):
                 report.status_extended = f"KMS key {key.id} is not exposed to Public."
                 report.resource_id = key.id
                 report.resource_arn = key.arn
+                report.resource_tags = key.tags
                 report.region = key.region
                 # If the "Principal" element value is set to { "AWS": "*" } and the policy statement is not using any Condition clauses to filter the access, the selected AWS KMS master key is publicly accessible.
                 if key.policy and "Statement" in key.policy:

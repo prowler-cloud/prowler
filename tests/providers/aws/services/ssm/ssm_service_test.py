@@ -174,6 +174,9 @@ class Test_SSM_Service:
             Name=ssm_document_name,
             DocumentType="Command",
             DocumentFormat="YAML",
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
         )
         # Add permissions
         ssm_client.modify_document_permission(
@@ -189,6 +192,9 @@ class Test_SSM_Service:
         assert ssm.documents[ssm_document_name]
         assert ssm.documents[ssm_document_name].name == ssm_document_name
         assert ssm.documents[ssm_document_name].region == AWS_REGION
+        assert ssm.documents[ssm_document_name].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
         assert ssm.documents[ssm_document_name].content == yaml.safe_load(
             ssm_document_yaml
         )

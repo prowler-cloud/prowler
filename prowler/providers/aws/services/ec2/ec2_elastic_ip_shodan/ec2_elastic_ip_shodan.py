@@ -16,6 +16,7 @@ class ec2_elastic_ip_shodan(Check):
                 report = Check_Report_AWS(self.metadata())
                 report.region = eip.region
                 report.resource_arn = eip.arn
+                report.resource_tags = eip.tags
                 if eip.public_ip:
                     try:
                         shodan_info = api.host(eip.public_ip)

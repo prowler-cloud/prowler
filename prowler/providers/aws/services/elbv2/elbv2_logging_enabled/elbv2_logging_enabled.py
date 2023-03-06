@@ -10,6 +10,7 @@ class elbv2_logging_enabled(Check):
             report.region = lb.region
             report.resource_id = lb.name
             report.resource_arn = lb.arn
+            report.resource_tags = lb.tags
             report.status = "FAIL"
             report.status_extended = (
                 f"ELBv2 ALB {lb.name} has not configured access logs."

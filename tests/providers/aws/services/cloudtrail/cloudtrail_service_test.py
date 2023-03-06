@@ -4,7 +4,7 @@ from moto import mock_cloudtrail, mock_s3
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
 
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_Cloudtrail_Service:
@@ -63,7 +63,6 @@ class Test_Cloudtrail_Service:
     @mock_cloudtrail
     @mock_s3
     def test_describe_trails(self):
-
         cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
         s3_client_us_east_1 = client("s3", region_name="us-east-1")
         cloudtrail_client_eu_west_1 = client("cloudtrail", region_name="eu-west-1")
@@ -78,10 +77,20 @@ class Test_Cloudtrail_Service:
             CreateBucketConfiguration={"LocationConstraint": "eu-west-1"},
         )
         cloudtrail_client_us_east_1.create_trail(
-            Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
+            Name=trail_name_us,
+            S3BucketName=bucket_name_us,
+            IsMultiRegionTrail=False,
+            TagsList=[
+                {"Key": "test", "Value": "test"},
+            ],
         )
         cloudtrail_client_eu_west_1.create_trail(
-            Name=trail_name_eu, S3BucketName=bucket_name_eu, IsMultiRegionTrail=False
+            Name=trail_name_eu,
+            S3BucketName=bucket_name_eu,
+            IsMultiRegionTrail=False,
+            TagsList=[
+                {"Key": "test", "Value": "test"},
+            ],
         )
         audit_info = self.set_mocked_audit_info()
         cloudtrail = Cloudtrail(audit_info)
@@ -101,6 +110,9 @@ class Test_Cloudtrail_Service:
                     trail.s3_bucket == bucket_name_eu
                     or trail.s3_bucket == bucket_name_us
                 )
+                assert trail.tags == [
+                    {"Key": "test", "Value": "test"},
+                ]
 
     @mock_cloudtrail
     @mock_s3

@@ -31,9 +31,6 @@ class Test_ssm_managed_compliant_patching:
     def test_compliance_resources_compliant(self):
         ssm_client = mock.MagicMock
         instance_id = "i-1234567890abcdef0"
-        instance_arn = (
-            f"arn:aws:ec2:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:instance/{instance_id}"
-        )
         ssm_client.audited_account = DEFAULT_ACCOUNT_ID
         ssm_client.compliance_resources = {
             instance_id: ComplianceResource(
@@ -58,7 +55,6 @@ class Test_ssm_managed_compliant_patching:
             assert len(result) == 1
             assert result[0].region == AWS_REGION
             assert result[0].resource_id == instance_id
-            assert result[0].resource_arn == instance_arn
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
@@ -68,9 +64,6 @@ class Test_ssm_managed_compliant_patching:
     def test_compliance_resources_non_compliant(self):
         ssm_client = mock.MagicMock
         instance_id = "i-1234567890abcdef0"
-        instance_arn = (
-            f"arn:aws:ec2:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:instance/{instance_id}"
-        )
         ssm_client.audited_account = DEFAULT_ACCOUNT_ID
         ssm_client.compliance_resources = {
             instance_id: ComplianceResource(
@@ -95,7 +88,6 @@ class Test_ssm_managed_compliant_patching:
             assert len(result) == 1
             assert result[0].region == AWS_REGION
             assert result[0].resource_id == instance_id
-            assert result[0].resource_arn == instance_arn
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended

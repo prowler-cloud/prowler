@@ -102,11 +102,14 @@ class Test_ApiGatewayV2_Service:
         # Generate ApiGatewayV2 Client
         apigatewayv2_client = client("apigatewayv2", region_name=AWS_REGION)
         # Create ApiGatewayV2 API
-        apigatewayv2_client.create_api(Name="test-api", ProtocolType="HTTP")
+        apigatewayv2_client.create_api(
+            Name="test-api", ProtocolType="HTTP", Tags={"test": "test"}
+        )
         # ApiGatewayV2 client for this test class
         audit_info = self.set_mocked_audit_info()
         apigatewayv2 = ApiGatewayV2(audit_info)
         assert len(apigatewayv2.apis) == len(apigatewayv2_client.get_apis()["Items"])
+        assert apigatewayv2.apis[0].tags == [{"test": "test"}]
 
     # Test ApiGatewayV2 Get Authorizers
     @mock_apigatewayv2

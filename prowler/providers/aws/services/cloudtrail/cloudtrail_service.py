@@ -1,5 +1,6 @@
 import threading
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -22,6 +23,7 @@ class Cloudtrail:
         self.__threading_call__(self.__get_trails__)
         self.__get_trail_status__()
         self.__get_event_selectors__()
+        self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -132,6 +134,25 @@ class Cloudtrail:
                 f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_tags_for_resource__(self):
+        logger.info("CloudTrail - List Tags...")
+        try:
+            for trail in self.trails:
+                # Check if trails are in this account and region
+                if (
+                    trail.region == trail.home_region
+                    and self.audited_account in trail.arn
+                ):
+                    regional_client = self.regional_clients[trail.region]
+                    response = regional_client.list_tags(ResourceIdList=[trail.arn])[
+                        "ResourceTagList"
+                    ][0]
+                    trail.tags = response.get("TagsList")
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Event_Selector(BaseModel):
     is_advanced: bool
@@ -151,3 +172,4 @@ class Trail(BaseModel):
     kms_key: str = None
     log_group_arn: str = None
     data_events: list[Event_Selector] = []
+    tags: Optional[list] = []

@@ -16,6 +16,7 @@ class cloudtrail_multi_region_enabled(Check):
                         report.status = "PASS"
                         report.resource_id = trail.name
                         report.resource_arn = trail.arn
+                        report.resource_tags = trail.tags
                         if trail.is_multiregion:
                             report.status_extended = (
                                 f"Trail {trail.name} is multiregion and it is logging"

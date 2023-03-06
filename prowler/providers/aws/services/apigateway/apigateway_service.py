@@ -1,5 +1,7 @@
 import threading
-from dataclasses import dataclass
+from typing import Optional
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -45,10 +47,11 @@ class APIGateway:
                     ):
                         self.rest_apis.append(
                             RestAPI(
-                                apigw["id"],
-                                arn,
-                                regional_client.region,
-                                apigw["name"],
+                                id=apigw["id"],
+                                arn=arn,
+                                region=regional_client.region,
+                                name=apigw["name"],
+                                tags=[apigw.get("tags")],
                             )
                         )
         except Exception as error:
@@ -100,61 +103,33 @@ class APIGateway:
                     arn = f"arn:{self.audited_partition}:apigateway:{regional_client.region}::/apis/{rest_api.id}/stages/{stage['stageName']}"
                     rest_api.stages.append(
                         Stage(
-                            stage["stageName"],
-                            arn,
-                            logging,
-                            client_certificate,
-                            waf,
+                            name=stage["stageName"],
+                            arn=arn,
+                            logging=logging,
+                            client_certificate=client_certificate,
+                            waf=waf,
+                            tags=[stage.get("tags")],
                         )
                     )
         except Exception as error:
             logger.error(f"{error.__class__.__name__}: {error}")
 
 
-@dataclass
-class Stage:
+class Stage(BaseModel):
     name: str
     arn: str
     logging: bool
     client_certificate: bool
-    waf: str
-
-    def __init__(
-        self,
-        name,
-        arn,
-        logging,
-        client_certificate,
-        waf,
-    ):
-        self.name = name
-        self.arn = arn
-        self.logging = logging
-        self.client_certificate = client_certificate
-        self.waf = waf
+    waf: Optional[str]
+    tags: Optional[list] = []
 
 
-@dataclass
-class RestAPI:
+class RestAPI(BaseModel):
     id: str
     arn: str
     region: str
     name: str
-    authorizer: bool
-    public_endpoint: bool
-    stages: list[Stage]
-
-    def __init__(
-        self,
-        id,
-        arn,
-        region,
-        name,
-    ):
-        self.id = id
-        self.arn = arn
-        self.region = region
-        self.name = name
-        self.authorizer = False
-        self.public_endpoint = True
-        self.stages = []
+    authorizer: bool = False
+    public_endpoint: bool = True
+    stages: list[Stage] = []
+    tags: Optional[list] = []

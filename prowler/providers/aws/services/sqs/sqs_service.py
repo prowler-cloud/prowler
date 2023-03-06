@@ -1,5 +1,6 @@
 import threading
 from json import loads
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -18,6 +19,7 @@ class SQS:
         self.queues = []
         self.__threading_call__(self.__list_queues__)
         self.__get_queue_attributes__(self.regional_clients)
+        self.__list_queue_tags__()
 
     def __get_session__(self):
         return self.session
@@ -79,6 +81,20 @@ class SQS:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_queue_tags__(self):
+        logger.info("SQS - List Tags...")
+        try:
+            for queue in self.queues:
+                regional_client = self.regional_clients[queue.region]
+                response = regional_client.list_queue_tags(QueueUrl=queue.id).get(
+                    "Tags"
+                )
+                queue.tags = [response]
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Queue(BaseModel):
     id: str
@@ -86,3 +102,4 @@ class Queue(BaseModel):
     region: str
     policy: dict = None
     kms_key_id: str = None
+    tags: Optional[list] = []

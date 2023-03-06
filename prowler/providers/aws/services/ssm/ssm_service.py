@@ -1,6 +1,7 @@
 import json
 import threading
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -15,6 +16,7 @@ class SSM:
         self.service = "ssm"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audited_partition = audit_info.audited_partition
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.documents = {}
@@ -59,10 +61,12 @@ class SSM:
                         is_resource_filtered(document["Name"], self.audit_resources)
                     ):
                         document_name = document["Name"]
-
+                        document_arn = f"arn:{self.audited_partition}:ssm:{regional_client.region}:{self.audited_account}:document/{document_name}"
                         self.documents[document_name] = Document(
+                            arn=document_arn,
                             name=document_name,
                             region=regional_client.region,
+                            tags=document.get("Tags"),
                         )
 
         except Exception as error:
@@ -141,8 +145,9 @@ class SSM:
             for page in describe_instance_information_paginator.paginate():
                 for item in page["InstanceInformationList"]:
                     resource_id = item["InstanceId"]
-
+                    resource_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:instance/{resource_id}"
                     self.managed_instances[resource_id] = ManagedInstance(
+                        arn=resource_arn,
                         id=resource_id,
                         region=regional_client.region,
                     )
@@ -167,12 +172,15 @@ class ComplianceResource(BaseModel):
 
 
 class Document(BaseModel):
+    arn: str
     name: str
     region: str
     content: dict = None
     account_owners: list[str] = None
+    tags: Optional[list] = []
 
 
 class ManagedInstance(BaseModel):
+    arn: str
     id: str
     region: str

@@ -1,5 +1,7 @@
 import threading
-from dataclasses import dataclass
+from typing import Optional
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -44,29 +46,29 @@ class Config:
                     if "lastStatus" in recorder:
                         self.recorders.append(
                             Recorder(
-                                recorder["name"],
-                                recorder["recording"],
-                                recorder["lastStatus"],
-                                regional_client.region,
+                                name=recorder["name"],
+                                recording=recorder["recording"],
+                                last_status=recorder["lastStatus"],
+                                region=regional_client.region,
                             )
                         )
                     else:
                         self.recorders.append(
                             Recorder(
-                                recorder["name"],
-                                recorder["recording"],
-                                None,
-                                regional_client.region,
+                                name=recorder["name"],
+                                recording=recorder["recording"],
+                                last_status=None,
+                                region=regional_client.region,
                             )
                         )
             # No config recorders in region
             if recorders_count == 0:
                 self.recorders.append(
                     Recorder(
-                        self.audited_account,
-                        None,
-                        None,
-                        regional_client.region,
+                        name=self.audited_account,
+                        recording=None,
+                        last_status=None,
+                        region=regional_client.region,
                     )
                 )
 
@@ -76,21 +78,8 @@ class Config:
             )
 
 
-@dataclass
-class Recorder:
+class Recorder(BaseModel):
     name: str
-    recording: bool
-    last_status: str
+    recording: Optional[bool]
+    last_status: Optional[str]
     region: str
-
-    def __init__(
-        self,
-        name,
-        recording,
-        last_status,
-        region,
-    ):
-        self.name = name
-        self.recording = recording
-        self.last_status = last_status
-        self.region = region
