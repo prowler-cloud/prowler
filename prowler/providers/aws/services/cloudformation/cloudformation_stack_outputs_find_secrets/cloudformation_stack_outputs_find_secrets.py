@@ -10,11 +10,11 @@ from prowler.providers.aws.services.cloudformation.cloudformation_client import 
 )
 
 
-class cloudformation_outputs_find_secrets(Check):
+class cloudformation_stack_outputs_find_secrets(Check):
     """Check if a CloudFormation Stack has secrets in their Outputs"""
 
     def execute(self):
-        """Execute the cloudformation_outputs_find_secrets check"""
+        """Execute the cloudformation_stack_outputs_find_secrets check"""
         findings = []
         for stack in cloudformation_client.stacks:
             report = Check_Report_AWS(self.metadata())

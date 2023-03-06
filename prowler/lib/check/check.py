@@ -517,10 +517,8 @@ def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
         for resource in audit_resources:
             service = resource.split(":")[2]
             sub_service = resource.split(":")[5].split("/")[0].replace("-", "_")
-
-            if (
-                service != "wafv2" and service != "waf"
-            ):  # WAF Services does not have checks
+            # WAF Services does not have checks
+            if service != "wafv2" and service != "waf":
                 # Parse services when they are different in the ARNs
                 if service == "lambda":
                     service = "awslambda"
@@ -528,7 +526,14 @@ def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
                     service = "elb"
                 elif service == "logs":
                     service = "cloudwatch"
-                service_list.add(service)
+                # Check if Prowler has checks in service
+                try:
+                    list_modules(provider, service)
+                except ModuleNotFoundError:
+                    # Service is not supported
+                    pass
+                else:
+                    service_list.add(service)
 
                 # Get subservices to execute only applicable checks
                 if service not in services_without_subservices:

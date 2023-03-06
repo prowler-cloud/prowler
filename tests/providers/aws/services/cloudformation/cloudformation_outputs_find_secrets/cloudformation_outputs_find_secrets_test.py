@@ -6,7 +6,7 @@ from prowler.providers.aws.services.cloudformation.cloudformation_service import
 AWS_REGION = "eu-west-1"
 
 
-class Test_cloudformation_outputs_find_secrets:
+class Test_cloudformation_stack_outputs_find_secrets:
     def test_no_stacks(self):
         cloudformation_client = mock.MagicMock
         cloudformation_client.stacks = []
@@ -15,11 +15,11 @@ class Test_cloudformation_outputs_find_secrets:
             new=cloudformation_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudformation.cloudformation_outputs_find_secrets.cloudformation_outputs_find_secrets import (
-                cloudformation_outputs_find_secrets,
+            from prowler.providers.aws.services.cloudformation.cloudformation_stack_outputs_find_secrets.cloudformation_stack_outputs_find_secrets import (
+                cloudformation_stack_outputs_find_secrets,
             )
 
-            check = cloudformation_outputs_find_secrets()
+            check = cloudformation_stack_outputs_find_secrets()
             result = check.execute()
 
             assert len(result) == 0
@@ -40,11 +40,11 @@ class Test_cloudformation_outputs_find_secrets:
             "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
             cloudformation_client,
         ):
-            from prowler.providers.aws.services.cloudformation.cloudformation_outputs_find_secrets.cloudformation_outputs_find_secrets import (
-                cloudformation_outputs_find_secrets,
+            from prowler.providers.aws.services.cloudformation.cloudformation_stack_outputs_find_secrets.cloudformation_stack_outputs_find_secrets import (
+                cloudformation_stack_outputs_find_secrets,
             )
 
-            check = cloudformation_outputs_find_secrets()
+            check = cloudformation_stack_outputs_find_secrets()
             result = check.execute()
 
             assert len(result) == 1
@@ -76,11 +76,11 @@ class Test_cloudformation_outputs_find_secrets:
             "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
             cloudformation_client,
         ):
-            from prowler.providers.aws.services.cloudformation.cloudformation_outputs_find_secrets.cloudformation_outputs_find_secrets import (
-                cloudformation_outputs_find_secrets,
+            from prowler.providers.aws.services.cloudformation.cloudformation_stack_outputs_find_secrets.cloudformation_stack_outputs_find_secrets import (
+                cloudformation_stack_outputs_find_secrets,
             )
 
-            check = cloudformation_outputs_find_secrets()
+            check = cloudformation_stack_outputs_find_secrets()
             result = check.execute()
 
             assert len(result) == 1
@@ -112,11 +112,11 @@ class Test_cloudformation_outputs_find_secrets:
             "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
             cloudformation_client,
         ):
-            from prowler.providers.aws.services.cloudformation.cloudformation_outputs_find_secrets.cloudformation_outputs_find_secrets import (
-                cloudformation_outputs_find_secrets,
+            from prowler.providers.aws.services.cloudformation.cloudformation_stack_outputs_find_secrets.cloudformation_stack_outputs_find_secrets import (
+                cloudformation_stack_outputs_find_secrets,
             )
 
-            check = cloudformation_outputs_find_secrets()
+            check = cloudformation_stack_outputs_find_secrets()
             result = check.execute()
 
             assert len(result) == 1
