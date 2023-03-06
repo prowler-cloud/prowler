@@ -10,8 +10,6 @@ from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
     execute_checks,
-    get_checks_from_input_arn,
-    get_regions_from_audit_resources,
     list_categories,
     list_services,
     print_categories,
@@ -29,13 +27,16 @@ from prowler.lib.outputs.html import add_html_footer, fill_html_overview_statist
 from prowler.lib.outputs.json import close_json
 from prowler.lib.outputs.outputs import extract_findings_statistics, send_to_s3_bucket
 from prowler.lib.outputs.summary_table import display_summary_table
-from prowler.providers.aws.lib.allowlist.allowlist import parse_allowlist_file
-from prowler.providers.aws.lib.quick_inventory.quick_inventory import quick_inventory
 from prowler.providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
 )
-from prowler.providers.common.audit_info import set_provider_audit_info
+from prowler.providers.common.allowlist import set_provider_allowlist
+from prowler.providers.common.audit_info import (
+    set_provider_audit_info,
+    set_provider_execution_parameters,
+)
 from prowler.providers.common.outputs import set_provider_output_options
+from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
 
 def prowler():
@@ -135,29 +136,21 @@ def prowler():
     # Set the audit info based on the selected provider
     audit_info = set_provider_audit_info(provider, args.__dict__)
 
-    # Once the audit_info is set and we have the eventual checks from arn, it is time to exclude the others
-    if audit_info.audit_resources:
-        audit_info.audited_regions = get_regions_from_audit_resources(
-            audit_info.audit_resources
-        )
-        checks_to_execute = get_checks_from_input_arn(
-            audit_info.audit_resources, provider
-        )
+    # Once the audit_info is set and we have the eventual checks based on the resource identifier,
+    # it is time to check what Prowler's checks are going to be executed
+    checks_to_execute = set_provider_execution_parameters(provider, audit_info)
 
-    # Parse content from Allowlist file and get it, if necessary, from S3
-    if provider == "aws" and args.allowlist_file:
-        allowlist_file = parse_allowlist_file(audit_info, args.allowlist_file)
-    else:
-        allowlist_file = None
+    # Parse Allowlist
+    allowlist_file = set_provider_allowlist(provider, audit_info, args.allowlist_file)
 
-    # Setting output options based on the selected provider
+    # Set output options based on the selected provider
     audit_output_options = set_provider_output_options(
         provider, args, audit_info, allowlist_file, bulk_checks_metadata
     )
 
-    # Quick Inventory for AWS
-    if provider == "aws" and args.quick_inventory:
-        quick_inventory(audit_info, args.output_directory)
+    # Run the quick inventory for the provider
+    if args.quick_inventory:
+        run_provider_quick_inventory(provider, audit_info, args.output_directory)
         sys.exit()
 
     # Execute checks
