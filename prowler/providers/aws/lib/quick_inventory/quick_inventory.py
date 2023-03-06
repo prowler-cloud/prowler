@@ -79,6 +79,23 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
                         global_resources.append(saml_provider["Arn"])
                     iam_was_scanned = True
 
+                # Get regional S3 buckets since none-tagged buckets are not supported by the resourcegroupstaggingapi
+                s3_client = audit_info.audit_session.client("s3", region_name=region)
+                buckets = s3_client.list_buckets()
+                for bucket in buckets["Buckets"]:
+                    bucket_region = s3_client.get_bucket_location(
+                        Bucket=bucket["Name"]
+                    )["LocationConstraint"]
+                    if bucket_region == "EU":  # If EU, bucket_region is eu-west-1
+                        bucket_region = "eu-west-1"
+                    if not bucket_region:  # If None, bucket_region is us-east-1
+                        bucket_region = "us-east-1"
+                    if (
+                        bucket_region == region
+                    ):  # Only add bucket if is in current region
+                        bucket_arn = f"arn:{audit_info.audited_partition}:s3:{region}::{bucket['Name']}"
+                        resources_in_region.append(bucket_arn)
+
                 client = audit_info.audit_session.client(
                     "resourcegroupstaggingapi", region_name=region
                 )
@@ -88,11 +105,13 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
                 for page in get_resources_paginator.paginate():
                     resources_count += len(page["ResourceTagMappingList"])
                     for resource in page["ResourceTagMappingList"]:
-                        # Check if region is not in ARN --> Global service
-                        if not resource["ResourceARN"].split(":")[3]:
-                            global_resources.append(resource["ResourceARN"])
-                        else:
-                            resources_in_region.append(resource["ResourceARN"])
+                        # Avoid adding S3 buckets again:
+                        if resource["ResourceARN"].split(":")[2] != "s3":
+                            # Check if region is not in ARN --> Global service
+                            if not resource["ResourceARN"].split(":")[3]:
+                                global_resources.append(resource["ResourceARN"])
+                            else:
+                                resources_in_region.append(resource["ResourceARN"])
                 bar()
                 if len(resources_in_region) > 0:
                     total_resources_per_region[region] = len(resources_in_region)
@@ -115,8 +134,11 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
         f"\nQuick Inventory of AWS Account {Fore.YELLOW}{audit_info.audited_account}{Style.RESET_ALL}:"
     )
 
-    print(tabulate(inventory_table, headers="keys", tablefmt="rounded_grid"))
-
+    print(
+        tabulate(
+            inventory_table, headers="keys", tablefmt="rounded_grid", stralign="left"
+        )
+    )
     print(f"\nTotal resources found: {Fore.GREEN}{len(resources)}{Style.RESET_ALL}")
 
     create_output(resources, audit_info, output_directory)
@@ -144,12 +166,12 @@ def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
 
     inventory_table = {
         "Service": [],
-        f"Total\n ({Fore.GREEN}{str(len(resources))}{Style.RESET_ALL})": [],
-        "Total per resource type": [],
+        f"Total\n({Fore.GREEN}{str(len(resources))}{Style.RESET_ALL})": [],
+        "Total per\nresource type": [],
     }
 
     for region, count in resources_in_region.items():
-        inventory_table[f"{region}\n ({Fore.GREEN}{str(count)}{Style.RESET_ALL})"] = []
+        inventory_table[f"{region}\n({Fore.GREEN}{str(count)}{Style.RESET_ALL})"] = []
 
     for resource in sorted(resources):
         service = resource.split(":")[2]
@@ -194,7 +216,7 @@ def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
         summary = ""
         inventory_table["Service"].append(f"{service}")
         inventory_table[
-            f"Total\n ({Fore.GREEN}{str(len(resources))}{Style.RESET_ALL})"
+            f"Total\n({Fore.GREEN}{str(len(resources))}{Style.RESET_ALL})"
         ].append(f"{Fore.GREEN}{services[service]}{Style.RESET_ALL}")
         for resource_type, regions in resources_type[service].items():
             summary += f"{resource_type} {Fore.GREEN}{str(sum(regions.values()))}{Style.RESET_ALL}\n"
@@ -207,11 +229,11 @@ def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
             for region, count in regions.items():
                 aux[region] += f"{Fore.GREEN}{str(count)}{Style.RESET_ALL}\n"
         # Add Total per resource type
-        inventory_table["Total per resource type"].append(summary)
+        inventory_table["Total per\nresource type"].append(summary)
         # Add Total per region
         for region, text in aux.items():
             inventory_table[
-                f"{region}\n ({Fore.GREEN}{str(resources_in_region[region])}{Style.RESET_ALL})"
+                f"{region}\n({Fore.GREEN}{str(resources_in_region[region])}{Style.RESET_ALL})"
             ].append(text)
             if region in pending_regions:
                 pending_regions.remove(region)

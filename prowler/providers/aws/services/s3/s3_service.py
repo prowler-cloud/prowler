@@ -53,7 +53,7 @@ class S3:
                 ]
                 if bucket_region == "EU":  # If EU, bucket_region is eu-west-1
                     bucket_region = "eu-west-1"
-                if not bucket_region:  # If Nonce, bucket_region is us-east-1
+                if not bucket_region:  # If None, bucket_region is us-east-1
                     bucket_region = "us-east-1"
                 # Arn
                 arn = f"arn:{self.audited_partition}:s3:::{bucket['Name']}"
