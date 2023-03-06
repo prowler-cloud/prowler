@@ -813,14 +813,14 @@ pyflakes = ">=3.0.0,<3.1.0"
 
 [[package]]
 name = "freezegun"
-version = "1.2.1"
+version = "1.2.2"
 description = "Let your Python tests travel through time"
 category = "dev"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "freezegun-1.2.1-py3-none-any.whl", hash = "sha256:15103a67dfa868ad809a8f508146e396be2995172d25f927e48ce51c0bf5cb09"},
-    {file = "freezegun-1.2.1.tar.gz", hash = "sha256:b4c64efb275e6bc68dc6e771b17ffe0ff0f90b81a2a5189043550b6519926ba4"},
+    {file = "freezegun-1.2.2-py3-none-any.whl", hash = "sha256:ea1b963b993cb9ea195adbd893a48d573fda951b0da64f60883d7e988b606c9f"},
+    {file = "freezegun-1.2.2.tar.gz", hash = "sha256:cd22d1ba06941384410cd967d8a99d5ae2442f57dfafeff2fda5de8dc5c05446"},
 ]
 
 [package.dependencies]
@@ -2611,4 +2611,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "714d7c2193a5bc91d685947e17238d8b5e250d8b78914bc140ffb18b20842b95"
+content-hash = "be2b4d9a56b3f29579f3800fdf6aaae3f6b698b1e7819be68778ec4758a1f484"
