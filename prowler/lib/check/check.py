@@ -122,7 +122,10 @@ def list_services(provider: str) -> set():
     checks_tuple = recover_checks_from_provider(provider)
     for _, check_path in checks_tuple:
         # Format: /absolute_path/prowler/providers/{provider}/services/{service_name}/{check_name}
-        service_name = check_path.split("/")[-2]
+        if os.name == "nt":
+            service_name = check_path.split("\\")[-2]
+        else:
+            service_name = check_path.split("/")[-2]
         available_services.add(service_name)
     return sorted(available_services)
 
