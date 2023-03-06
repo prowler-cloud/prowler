@@ -23,7 +23,7 @@
       "Url": "https://aws.amazon.com/premiumsupport/knowledge-center/rds-connect-ssl-connection/"
     }
   },
-  "Categories": [],
+  "Categories": [ "encryption" ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
