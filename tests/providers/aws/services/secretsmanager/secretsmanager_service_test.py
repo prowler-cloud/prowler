@@ -83,7 +83,11 @@ class Test_SecretsManager_Service:
         secretsmanager_client = client("secretsmanager", region_name=AWS_REGION)
         # Create Secret
         resp = secretsmanager_client.create_secret(
-            Name="test-secret", SecretString="test-secret"
+            Name="test-secret",
+            SecretString="test-secret",
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
         )
         secret_arn = resp["ARN"]
         secret_name = resp["Name"]
@@ -155,3 +159,6 @@ class Test_SecretsManager_Service:
         assert secretsmanager.secrets[secret_name].arn == secret_arn
         assert secretsmanager.secrets[secret_name].region == AWS_REGION
         assert secretsmanager.secrets[secret_name].rotation_enabled is True
+        assert secretsmanager.secrets[secret_name].tags == [
+            {"Key": "test", "Value": "test"},
+        ]

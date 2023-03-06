@@ -10,6 +10,7 @@ class sns_topics_kms_encryption_at_rest_enabled(Check):
             report.region = topic.region
             report.resource_id = topic.name
             report.resource_arn = topic.arn
+            report.resource_tags = topic.tags
             report.status = "PASS"
             report.status_extended = f"SNS topic {topic.arn} is encrypted"
             if not topic.kms_master_key_id:

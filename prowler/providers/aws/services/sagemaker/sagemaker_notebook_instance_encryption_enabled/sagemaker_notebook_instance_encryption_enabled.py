@@ -10,6 +10,7 @@ class sagemaker_notebook_instance_encryption_enabled(Check):
             report.region = notebook_instance.region
             report.resource_id = notebook_instance.name
             report.resource_arn = notebook_instance.arn
+            report.resource_tags = notebook_instance.tags
             report.status = "PASS"
             report.status_extended = f"Sagemaker notebook instance {notebook_instance.name} has data encryption enabled"
             if not notebook_instance.kms_key_id:

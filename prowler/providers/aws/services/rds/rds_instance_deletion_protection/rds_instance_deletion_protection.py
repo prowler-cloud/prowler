@@ -9,6 +9,7 @@ class rds_instance_deletion_protection(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = db_instance.region
             report.resource_id = db_instance.id
+            report.resource_tags = db_instance.tags
             if db_instance.deletion_protection:
                 report.status = "PASS"
                 report.status_extended = (

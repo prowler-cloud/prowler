@@ -12,6 +12,7 @@ class cloudwatch_log_group_retention_policy_specific_days_enabled(Check):
             report.region = log_group.region
             report.resource_id = log_group.name
             report.resource_arn = log_group.arn
+            report.resource_tags = log_group.tags
             if log_group.retention_days < specific_retention_days:
                 report.status = "FAIL"
                 report.status_extended = f"Log Group {log_group.name} has less than {specific_retention_days} days retention period ({log_group.retention_days} days)."

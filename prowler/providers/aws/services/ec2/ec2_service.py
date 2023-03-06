@@ -1,7 +1,9 @@
 import threading
-from dataclasses import dataclass
+from datetime import datetime
+from typing import Optional
 
 from botocore.client import ClientError
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -86,20 +88,21 @@ class EC2:
 
                             self.instances.append(
                                 Instance(
-                                    instance["InstanceId"],
-                                    arn,
-                                    instance["State"]["Name"],
-                                    regional_client.region,
-                                    instance["InstanceType"],
-                                    instance["ImageId"],
-                                    instance["LaunchTime"],
-                                    instance["PrivateDnsName"],
-                                    private_ip,
-                                    public_dns,
-                                    public_ip,
-                                    http_tokens,
-                                    http_endpoint,
-                                    instance_profile,
+                                    id=instance["InstanceId"],
+                                    arn=arn,
+                                    state=instance["State"]["Name"],
+                                    region=regional_client.region,
+                                    type=instance["InstanceType"],
+                                    image_id=instance["ImageId"],
+                                    launch_time=instance["LaunchTime"],
+                                    private_dns=instance["PrivateDnsName"],
+                                    private_ip=private_ip,
+                                    public_dns=public_dns,
+                                    public_ip=public_ip,
+                                    http_tokens=http_tokens,
+                                    http_endpoint=http_endpoint,
+                                    instance_profile=instance_profile,
+                                    tags=instance.get("Tags"),
                                 )
                             )
         except Exception as error:
@@ -121,12 +124,13 @@ class EC2:
                     ):
                         self.security_groups.append(
                             SecurityGroup(
-                                sg["GroupName"],
-                                arn,
-                                regional_client.region,
-                                sg["GroupId"],
-                                sg["IpPermissions"],
-                                sg["IpPermissionsEgress"],
+                                name=sg["GroupName"],
+                                arn=arn,
+                                region=regional_client.region,
+                                id=sg["GroupId"],
+                                ingress_rules=sg["IpPermissions"],
+                                egress_rules=sg["IpPermissionsEgress"],
+                                tags=sg.get("Tags"),
                             )
                         )
         except Exception as error:
@@ -148,10 +152,11 @@ class EC2:
                     ):
                         self.network_acls.append(
                             NetworkACL(
-                                nacl["NetworkAclId"],
-                                arn,
-                                regional_client.region,
-                                nacl["Entries"],
+                                id=nacl["NetworkAclId"],
+                                arn=arn,
+                                region=regional_client.region,
+                                entries=nacl["Entries"],
+                                tags=nacl.get("Tags"),
                             )
                         )
         except Exception as error:
@@ -176,10 +181,11 @@ class EC2:
                             encrypted = True
                         self.snapshots.append(
                             Snapshot(
-                                snapshot["SnapshotId"],
-                                arn,
-                                regional_client.region,
-                                encrypted,
+                                id=snapshot["SnapshotId"],
+                                arn=arn,
+                                region=regional_client.region,
+                                encrypted=encrypted,
+                                tags=snapshot.get("Tags"),
                             )
                         )
         except Exception as error:
@@ -264,11 +270,12 @@ class EC2:
                         public = True
                     self.images.append(
                         Image(
-                            image["ImageId"],
-                            arn,
-                            image["Name"],
-                            public,
-                            regional_client.region,
+                            id=image["ImageId"],
+                            arn=arn,
+                            name=image["Name"],
+                            public=public,
+                            region=regional_client.region,
+                            tags=image.get("Tags"),
                         )
                     )
         except Exception as error:
@@ -290,10 +297,11 @@ class EC2:
                     ):
                         self.volumes.append(
                             Volume(
-                                volume["VolumeId"],
-                                arn,
-                                regional_client.region,
-                                volume["Encrypted"],
+                                id=volume["VolumeId"],
+                                arn=arn,
+                                region=regional_client.region,
+                                encrypted=volume["Encrypted"],
+                                tags=volume.get("Tags"),
                             )
                         )
         except Exception as error:
@@ -320,11 +328,12 @@ class EC2:
                 ):
                     self.elastic_ips.append(
                         ElasticIP(
-                            public_ip,
-                            association_id,
-                            allocation_id,
-                            elastic_ip_arn,
-                            regional_client.region,
+                            public_ip=public_ip,
+                            association_id=association_id,
+                            allocation_id=allocation_id,
+                            arn=elastic_ip_arn,
+                            region=regional_client.region,
+                            tags=address.get("Tags"),
                         )
                     )
         except Exception as error:
@@ -337,10 +346,10 @@ class EC2:
         try:
             self.ebs_encryption_by_default.append(
                 EbsEncryptionByDefault(
-                    regional_client.get_ebs_encryption_by_default()[
+                    status=regional_client.get_ebs_encryption_by_default()[
                         "EbsEncryptionByDefault"
                     ],
-                    regional_client.region,
+                    region=regional_client.region,
                 )
             )
         except Exception as error:
@@ -349,159 +358,79 @@ class EC2:
             )
 
 
-@dataclass
-class Instance:
+class Instance(BaseModel):
     id: str
     arn: str
     state: str
     region: str
     type: str
     image_id: str
-    launch_time: str
+    launch_time: datetime
     private_dns: str
-    private_ip: str
-    public_dns: str
-    public_ip: str
-    user_data: str
-    http_tokens: str
-    http_endpoint: str
-    instance_profile: str
-
-    def __init__(
-        self,
-        id,
-        arn,
-        state,
-        region,
-        type,
-        image_id,
-        launch_time,
-        private_dns,
-        private_ip,
-        public_dns,
-        public_ip,
-        http_tokens,
-        http_endpoint,
-        instance_profile,
-    ):
-        self.id = id
-        self.arn = arn
-        self.state = state
-        self.region = region
-        self.type = type
-        self.image_id = image_id
-        self.launch_time = launch_time
-        self.private_dns = private_dns
-        self.private_ip = private_ip
-        self.public_dns = public_dns
-        self.public_ip = public_ip
-        self.http_tokens = http_tokens
-        self.http_endpoint = http_endpoint
-        self.user_data = None
-        self.instance_profile = instance_profile
+    private_ip: Optional[str]
+    public_dns: Optional[str]
+    public_ip: Optional[str]
+    user_data: Optional[str]
+    http_tokens: Optional[str]
+    http_endpoint: Optional[str]
+    instance_profile: Optional[dict]
+    tags: Optional[list] = []
 
 
-@dataclass
-class Snapshot:
+class Snapshot(BaseModel):
     id: str
     arn: str
     region: str
     encrypted: bool
-    public: bool
-
-    def __init__(self, id, arn, region, encrypted):
-        self.id = id
-        self.arn = arn
-        self.region = region
-        self.encrypted = encrypted
-        self.public = False
+    public: bool = False
+    tags: Optional[list] = []
 
 
-@dataclass
-class Volume:
+class Volume(BaseModel):
     id: str
     arn: str
     region: str
     encrypted: bool
-
-    def __init__(self, id, arn, region, encrypted):
-        self.id = id
-        self.arn = arn
-        self.region = region
-        self.encrypted = encrypted
+    tags: Optional[list] = []
 
 
-@dataclass
-class SecurityGroup:
+class SecurityGroup(BaseModel):
     name: str
     arn: str
     region: str
     id: str
-    network_interfaces: list[str]
+    network_interfaces: list[str] = []
     ingress_rules: list[dict]
     egress_rules: list[dict]
-
-    def __init__(self, name, arn, region, id, ingress_rules, egress_rules):
-        self.name = name
-        self.arn = arn
-        self.region = region
-        self.id = id
-        self.ingress_rules = ingress_rules
-        self.egress_rules = egress_rules
-        self.network_interfaces = []
+    tags: Optional[list] = []
 
 
-@dataclass
-class NetworkACL:
+class NetworkACL(BaseModel):
     id: str
     arn: str
     region: str
     entries: list[dict]
-
-    def __init__(self, id, arn, region, entries):
-        self.id = id
-        self.arn = arn
-        self.region = region
-        self.entries = entries
+    tags: Optional[list] = []
 
 
-@dataclass
-class ElasticIP:
-    public_ip: str
-    association_id: str
+class ElasticIP(BaseModel):
+    public_ip: Optional[str]
+    association_id: Optional[str]
     arn: str
-    allocation_id: str
+    allocation_id: Optional[str]
     region: str
-
-    def __init__(self, public_ip, association_id, allocation_id, arn, region):
-        self.public_ip = public_ip
-        self.association_id = association_id
-        self.allocation_id = allocation_id
-        self.arn = arn
-        self.region = region
+    tags: Optional[list] = []
 
 
-@dataclass
-class Image:
+class Image(BaseModel):
     id: str
     arn: str
     name: str
     public: bool
     region: str
-
-    def __init__(self, id, arn, name, public, region):
-        self.id = id
-        self.arn = arn
-        self.name = name
-        self.public = public
-        self.region = region
+    tags: Optional[list] = []
 
 
-@dataclass
-class EbsEncryptionByDefault:
+class EbsEncryptionByDefault(BaseModel):
     status: bool
     region: str
-
-    def __init__(self, status, region):
-        self.status = status
-        self.region = region

@@ -1,4 +1,5 @@
 import threading
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -48,7 +49,7 @@ class AccessAnalyzer:
                                 arn=analyzer["arn"],
                                 name=analyzer["name"],
                                 status=analyzer["status"],
-                                tags=str(analyzer["tags"]),
+                                tags=[analyzer.get("tags")],
                                 type=analyzer["type"],
                                 region=regional_client.region,
                             )
@@ -60,7 +61,7 @@ class AccessAnalyzer:
                         arn="",
                         name=self.audited_account,
                         status="NOT_AVAILABLE",
-                        tags="",
+                        tags=[],
                         type="",
                         region=regional_client.region,
                     )
@@ -119,6 +120,6 @@ class Analyzer(BaseModel):
     name: str
     status: str
     findings: list[Finding] = []
-    tags: str
+    tags: Optional[list] = []
     type: str
     region: str

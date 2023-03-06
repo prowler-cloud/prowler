@@ -10,6 +10,7 @@ class sagemaker_training_jobs_intercontainer_encryption_enabled(Check):
             report.region = training_job.region
             report.resource_id = training_job.name
             report.resource_arn = training_job.arn
+            report.resource_tags = training_job.tags
             report.status = "PASS"
             report.status_extended = f"Sagemaker training job {training_job.name} has intercontainer encryption enabled"
             if not training_job.container_traffic_encryption:

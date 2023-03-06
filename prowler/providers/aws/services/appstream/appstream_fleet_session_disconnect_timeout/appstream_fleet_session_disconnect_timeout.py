@@ -17,6 +17,7 @@ class appstream_fleet_session_disconnect_timeout(Check):
             report.region = fleet.region
             report.resource_id = fleet.name
             report.resource_arn = fleet.arn
+            report.resource_tags = fleet.tags
 
             if fleet.disconnect_timeout_in_seconds <= max_disconnect_timeout_in_seconds:
                 report.status = "PASS"

@@ -13,6 +13,7 @@ class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check)
             report.region = function.region
             report.resource_id = function.name
             report.resource_arn = function.arn
+            report.resource_tags = function.tags
 
             report.status = "FAIL"
             report.status_extended = (
@@ -21,15 +22,27 @@ class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check)
             lambda_recorded_cloudtrail = False
             for trail in cloudtrail_client.trails:
                 for data_event in trail.data_events:
-                    if "DataResources" in data_event.event_selector:
-                        for resource in data_event.event_selector["DataResources"]:
+                    # classic event selectors
+                    if not data_event.is_advanced:
+                        if "DataResources" in data_event.event_selector:
+                            for resource in data_event.event_selector["DataResources"]:
+                                if resource["Type"] == "AWS::Lambda::Function" and (
+                                    function.arn in resource["Values"]
+                                    or "arn:aws:lambda" in resource["Values"]
+                                ):
+                                    lambda_recorded_cloudtrail = True
+                                    break
+                    elif data_event.is_advanced:
+                        for field_selector in data_event.event_selector[
+                            "FieldSelectors"
+                        ]:
                             if (
-                                resource["Type"] == "AWS::Lambda::Function"
-                                and function.arn in resource["Values"]
+                                field_selector["Field"] == "resources.type"
+                                and field_selector["Equals"][0]
+                                == "AWS::Lambda::Function"
                             ):
                                 lambda_recorded_cloudtrail = True
                                 break
-
                     if lambda_recorded_cloudtrail:
                         break
                 if lambda_recorded_cloudtrail:

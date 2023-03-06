@@ -11,6 +11,7 @@ class awslambda_function_url_public(Check):
             report.region = function.region
             report.resource_id = function.name
             report.resource_arn = function.arn
+            report.resource_tags = function.tags
             if function.url_config:
                 if function.url_config.auth_type == AuthType.AWS_IAM:
                     report.status = "PASS"

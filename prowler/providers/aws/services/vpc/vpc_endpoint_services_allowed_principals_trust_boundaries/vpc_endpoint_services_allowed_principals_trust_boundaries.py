@@ -17,6 +17,7 @@ class vpc_endpoint_services_allowed_principals_trust_boundaries(Check):
                     f"VPC Endpoint Service {service.id} has no allowed principals."
                 )
                 report.resource_id = service.id
+                report.resource_tags = service.tags
                 findings.append(report)
             else:
                 for principal in service.allowed_principals:
@@ -30,10 +31,12 @@ class vpc_endpoint_services_allowed_principals_trust_boundaries(Check):
                         report.status = "PASS"
                         report.status_extended = f"Found trusted account {account_id} in VPC Endpoint Service {service.id}."
                         report.resource_id = service.id
+                        report.resource_tags = service.tags
                     else:
                         report.status = "FAIL"
                         report.status_extended = f"Found untrusted account {account_id} in VPC Endpoint Service {service.id}."
                         report.resource_id = service.id
+                        report.resource_tags = service.tags
                     findings.append(report)
 
         return findings

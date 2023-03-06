@@ -13,6 +13,7 @@ class ec2_securitygroup_allow_wide_open_public_ipv4(Check):
             report.region = security_group.region
             report.resource_id = security_group.id
             report.resource_arn = security_group.arn
+            report.resource_tags = security_group.tags
             report.status = "PASS"
             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has no potential wide-open non-RFC1918 address."
             # Loop through every security group's ingress rule and check it

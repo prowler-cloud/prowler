@@ -34,6 +34,7 @@ class Test_ssm_documents_set_as_public:
         ssm_client.audited_account = DEFAULT_ACCOUNT_ID
         ssm_client.documents = {
             document_name: Document(
+                arn=document_arn,
                 name=document_name,
                 region=AWS_REGION,
                 content="",
@@ -70,6 +71,7 @@ class Test_ssm_documents_set_as_public:
         ssm_client.audited_account = DEFAULT_ACCOUNT_ID
         ssm_client.documents = {
             document_name: Document(
+                arn=document_arn,
                 name=document_name,
                 region=AWS_REGION,
                 content="",

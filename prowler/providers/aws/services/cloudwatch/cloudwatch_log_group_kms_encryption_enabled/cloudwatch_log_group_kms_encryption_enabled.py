@@ -10,6 +10,7 @@ class cloudwatch_log_group_kms_encryption_enabled(Check):
             report.region = log_group.region
             report.resource_id = log_group.name
             report.resource_arn = log_group.arn
+            report.resource_tags = log_group.tags
             if log_group.kms_id:
                 report.status = "PASS"
                 report.status_extended = f"Log Group {log_group.name} does have AWS KMS key {log_group.kms_id} associated."

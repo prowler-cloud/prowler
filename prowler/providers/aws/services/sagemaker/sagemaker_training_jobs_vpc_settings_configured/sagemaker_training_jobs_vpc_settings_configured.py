@@ -10,6 +10,7 @@ class sagemaker_training_jobs_vpc_settings_configured(Check):
             report.region = training_job.region
             report.resource_id = training_job.name
             report.resource_arn = training_job.arn
+            report.resource_tags = training_job.tags
             report.status = "PASS"
             report.status_extended = f"Sagemaker training job {training_job.name} has VPC settings for the training job volume and output enabled"
             if not training_job.vpc_config_subnets:

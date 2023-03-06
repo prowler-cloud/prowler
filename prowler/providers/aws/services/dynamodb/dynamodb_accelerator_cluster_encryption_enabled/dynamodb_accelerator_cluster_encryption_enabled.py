@@ -10,6 +10,7 @@ class dynamodb_accelerator_cluster_encryption_enabled(Check):
             report.resource_id = cluster.name
             report.resource_arn = cluster.arn
             report.region = cluster.region
+            report.resource_tags = cluster.tags
             report.status = "FAIL"
             report.status_extended = f"DynamoDB cluster {cluster.name} does not have encryption at rest enabled."
             if cluster.encryption:

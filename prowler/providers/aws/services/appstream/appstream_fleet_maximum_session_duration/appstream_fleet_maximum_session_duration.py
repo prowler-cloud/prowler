@@ -17,6 +17,7 @@ class appstream_fleet_maximum_session_duration(Check):
             report.region = fleet.region
             report.resource_id = fleet.name
             report.resource_arn = fleet.arn
+            report.resource_tags = fleet.tags
 
             if fleet.max_user_duration_in_seconds < max_session_duration_seconds:
                 report.status = "PASS"

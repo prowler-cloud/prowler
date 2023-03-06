@@ -20,6 +20,7 @@ class ACM:
         self.certificates = []
         self.__threading_call__(self.__list_certificates__)
         self.__describe_certificates__()
+        self.__list_tags_for_certificate__()
 
     def __get_session__(self):
         return self.session
@@ -91,11 +92,26 @@ class ACM:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_tags_for_certificate__(self):
+        logger.info("ACM - List Tags...")
+        try:
+            for certificate in self.certificates:
+                regional_client = self.regional_clients[certificate.region]
+                response = regional_client.list_tags_for_certificate(
+                    CertificateArn=certificate.arn
+                )["Tags"]
+                certificate.tags = response
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Certificate(BaseModel):
     arn: str
     name: str
     type: str
+    tags: Optional[list] = []
     expiration_days: int
     transparency_logging: Optional[bool]
     region: str

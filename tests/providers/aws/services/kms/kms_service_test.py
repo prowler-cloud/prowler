@@ -88,7 +88,11 @@ class Test_ACM_Service:
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION)
         # Create KMS keys
-        key1 = kms_client.create_key()["KeyMetadata"]
+        key1 = kms_client.create_key(
+            Tags=[
+                {"TagKey": "test", "TagValue": "test"},
+            ],
+        )["KeyMetadata"]
         # KMS client for this test class
         audit_info = self.set_mocked_audit_info()
         kms = KMS(audit_info)
@@ -97,6 +101,9 @@ class Test_ACM_Service:
         assert kms.keys[0].state == key1["KeyState"]
         assert kms.keys[0].origin == key1["Origin"]
         assert kms.keys[0].manager == key1["KeyManager"]
+        assert kms.keys[0].tags == [
+            {"TagKey": "test", "TagValue": "test"},
+        ]
 
     # Test KMS Get rotation status
     @mock_kms

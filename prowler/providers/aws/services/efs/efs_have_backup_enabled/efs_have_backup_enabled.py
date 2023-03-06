@@ -10,6 +10,7 @@ class efs_have_backup_enabled(Check):
             report.region = fs.region
             report.resource_id = fs.id
             report.resource_arn = ""
+            report.resource_tags = fs.tags
             report.status = "PASS"
             report.status_extended = f"EFS {fs.id} has backup enabled"
             if fs.backup_policy == "DISABLED" or fs.backup_policy == "DISABLING":

@@ -108,6 +108,9 @@ class Test_EMR_Service:
             Name=cluster_name,
             ServiceRole="EMR_DefaultRole",
             VisibleToAllUsers=True,
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
         )
         cluster_id = emr_client.run_job_flow(**run_job_flow_args)["JobFlowId"]
         # EMR Class
@@ -127,6 +130,9 @@ class Test_EMR_Service:
             == "ec2-184-0-0-1.us-west-1.compute.amazonaws.com"
         )
         assert emr.clusters[cluster_id].public
+        assert emr.clusters[cluster_id].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     @mock_emr
     def test__get_block_public_access_configuration__(self):

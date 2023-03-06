@@ -92,12 +92,14 @@ class Test_EKS_Service:
                 ],
             },
             roleArn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/eks-service-role-AWSServiceRoleForAmazonEKS-J7ONKE3BQ4PI",
+            tags={"test": "test"},
         )
         audit_info = self.set_mocked_audit_info()
         eks = EKS(audit_info)
         assert len(eks.clusters) == 1
         assert eks.clusters[0].name == cluster_name
         assert eks.clusters[0].region == AWS_REGION
+        assert eks.clusters[0].tags == [{"test": "test"}]
 
     # Test EKS describe clusters
     @mock_ec2

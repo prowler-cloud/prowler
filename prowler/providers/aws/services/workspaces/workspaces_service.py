@@ -1,4 +1,5 @@
 import threading
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -16,6 +17,7 @@ class WorkSpaces:
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.workspaces = []
         self.__threading_call__(self.__describe_workspaces__)
+        self.__describe_tags__()
 
     def __get_session__(self):
         return self.session
@@ -62,6 +64,20 @@ class WorkSpaces:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __describe_tags__(self):
+        logger.info("Workspaces - List Tags...")
+        try:
+            for workspace in self.workspaces:
+                regional_client = self.regional_clients[workspace.region]
+                response = regional_client.describe_tags(ResourceId=workspace.id)[
+                    "TagList"
+                ]
+                workspace.tags = response
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class WorkSpace(BaseModel):
     id: str
@@ -69,3 +85,4 @@ class WorkSpace(BaseModel):
     region: str
     user_volume_encryption_enabled: bool = None
     root_volume_encryption_enabled: bool = None
+    tags: Optional[list] = []

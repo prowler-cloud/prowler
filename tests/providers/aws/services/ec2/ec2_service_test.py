@@ -127,6 +127,14 @@ class Test_EC2_Service:
         sg_id = ec2_client.create_security_group(
             Description="test-description",
             GroupName="test-security-group",
+            TagSpecifications=[
+                {
+                    "ResourceType": "security-group",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                },
+            ],
         )["GroupId"]
         # EC2 client for this test class
         audit_info = self.set_mocked_audit_info()
@@ -153,6 +161,9 @@ class Test_EC2_Service:
                         "UserIdGroupPairs": [],
                     }
                 ]
+                assert security_group.tags == [
+                    {"Key": "test", "Value": "test"},
+                ]
 
     # Test EC2 Describe Nacls
     @mock_ec2
@@ -164,6 +175,14 @@ class Test_EC2_Service:
         vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
         nacl_id = ec2_resource.create_network_acl(
             VpcId=vpc_id,
+            TagSpecifications=[
+                {
+                    "ResourceType": "network-acl",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                },
+            ],
         ).id
         # EC2 client for this test class
         audit_info = self.set_mocked_audit_info()
@@ -178,6 +197,9 @@ class Test_EC2_Service:
                     == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:network-acl/{acl.id}"
                 )
                 assert acl.entries == []
+                assert acl.tags == [
+                    {"Key": "test", "Value": "test"},
+                ]
 
     # Test EC2 Describe Snapshots
     @mock_ec2
@@ -193,6 +215,14 @@ class Test_EC2_Service:
         ).id
         snapshot_id = ec2_client.create_snapshot(
             VolumeId=volume_id,
+            TagSpecifications=[
+                {
+                    "ResourceType": "snapshot",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                },
+            ],
         )["SnapshotId"]
         # EC2 client for this test class
         audit_info = self.set_mocked_audit_info()
@@ -207,6 +237,9 @@ class Test_EC2_Service:
                     == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:snapshot/{snapshot.id}"
                 )
                 assert snapshot.region == AWS_REGION
+                assert snapshot.tags == [
+                    {"Key": "test", "Value": "test"},
+                ]
                 assert not snapshot.encrypted
                 assert not snapshot.public
 
@@ -286,7 +319,16 @@ class Test_EC2_Service:
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION)
         allocation_id = ec2_client.allocate_address(
-            Domain="vpc", Address="127.38.43.222"
+            Domain="vpc",
+            Address="127.38.43.222",
+            TagSpecifications=[
+                {
+                    "ResourceType": "elastic-ip",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                },
+            ],
         )["AllocationId"]
         # EC2 client for this test class
         audit_info = self.set_mocked_audit_info()
@@ -296,6 +338,9 @@ class Test_EC2_Service:
             ec2.elastic_ips[0].arn
             == f"arn:aws:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:eip-allocation/{allocation_id}"
         )
+        assert ec2.elastic_ips[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     # Test EC2 Describe Network Interfaces
     @mock_ec2
@@ -310,7 +355,6 @@ class Test_EC2_Service:
             GroupName="test-securitygroup", Description="n/a"
         )
         eni_id = subnet.create_network_interface(Groups=[sg.id]).id
-        print(eni_id)
         ec2_client.modify_network_interface_attribute(
             NetworkInterfaceId=eni_id, Groups=[sg.id]
         )
@@ -383,6 +427,13 @@ class Test_EC2_Service:
         )
         assert not ec2.images[0].public
         assert ec2.images[0].region == AWS_REGION
+        assert ec2.images[0].tags == [
+            {
+                "Key": "Base_AMI_Name",
+                "Value": "Deep Learning Base AMI (Amazon Linux 2) Version 31.0",
+            },
+            {"Key": "OS_Version", "Value": "AWS Linux 2"},
+        ]
 
     # Test EC2 Describe Volumes
     @mock_ec2
@@ -394,7 +445,14 @@ class Test_EC2_Service:
             AvailabilityZone=AWS_REGION,
             Encrypted=False,
             Size=40,
-            TagSpecifications=[],
+            TagSpecifications=[
+                {
+                    "ResourceType": "volume",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                },
+            ],
         )["VolumeId"]
 
         # EC2 client for this test class
@@ -410,3 +468,6 @@ class Test_EC2_Service:
         )
         assert ec2.volumes[0].region == AWS_REGION
         assert not ec2.volumes[0].encrypted
+        assert ec2.volumes[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]

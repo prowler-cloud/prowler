@@ -25,11 +25,9 @@
       "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html"
     }
   },
-  "Categories": [],
-  "Tags": {
-    "Tag1Key": "value",
-    "Tag2Key": "value"
-  },
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

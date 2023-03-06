@@ -34,6 +34,7 @@ class Test_ssm_documents_secrets:
         ssm_client.audited_account = DEFAULT_ACCOUNT_ID
         ssm_client.documents = {
             document_name: Document(
+                arn=document_arn,
                 name=document_name,
                 region=AWS_REGION,
                 content={"db_password": "test-password"},
@@ -71,6 +72,7 @@ class Test_ssm_documents_secrets:
         ssm_client.audited_account = DEFAULT_ACCOUNT_ID
         ssm_client.documents = {
             document_name: Document(
+                arn=document_arn,
                 name=document_name,
                 region=AWS_REGION,
                 content={"profile": "test"},

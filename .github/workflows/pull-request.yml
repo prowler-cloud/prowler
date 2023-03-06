@@ -32,6 +32,9 @@ jobs:
             sed -E 's/.*"v([^"]+)".*/\1/' \
             ) && curl -L -o /tmp/hadolint "https://github.com/hadolint/hadolint/releases/download/v${VERSION}/hadolint-Linux-x86_64" \
             && chmod +x /tmp/hadolint
+      - name: Poetry check
+        run: |
+          poetry lock --check
       - name: Lint with flake8
         run: |
           poetry run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib

@@ -96,12 +96,13 @@ class Test_SQS_Service:
     # Test SQS list queues
     def test__list_queues__(self):
         sqs_client = client("sqs", region_name=AWS_REGION)
-        queue = sqs_client.create_queue(QueueName=test_queue)
+        queue = sqs_client.create_queue(QueueName=test_queue, tags={"test": "test"})
         audit_info = self.set_mocked_audit_info()
         sqs = SQS(audit_info)
         assert len(sqs.queues) == 1
         assert sqs.queues[0].id == queue["QueueUrl"]
         assert sqs.queues[0].region == AWS_REGION
+        assert sqs.queues[0].tags == [{"test": "test"}]
 
     @mock_sqs
     # Test SQS list queues

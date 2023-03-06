@@ -10,6 +10,7 @@ class ecr_repositories_scan_images_on_push_enabled(Check):
             report.region = repository.region
             report.resource_id = repository.name
             report.resource_arn = repository.arn
+            report.resource_tags = repository.tags
             report.status = "PASS"
             report.status_extended = (
                 f"ECR repository {repository.name} has scan on push enabled"

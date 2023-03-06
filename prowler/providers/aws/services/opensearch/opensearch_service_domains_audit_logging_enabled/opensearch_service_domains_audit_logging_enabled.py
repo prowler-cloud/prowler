@@ -12,6 +12,7 @@ class opensearch_service_domains_audit_logging_enabled(Check):
             report.region = domain.region
             report.resource_id = domain.name
             report.resource_arn = domain.arn
+            report.resource_tags = domain.tags
             report.status = "FAIL"
             report.status_extended = (
                 f"Opensearch domain {domain.name} AUDIT_LOGS disabled"

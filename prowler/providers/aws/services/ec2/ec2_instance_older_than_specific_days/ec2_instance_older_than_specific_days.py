@@ -14,6 +14,7 @@ class ec2_instance_older_than_specific_days(Check):
             report.region = instance.region
             report.resource_id = instance.id
             report.resource_arn = instance.arn
+            report.resource_tags = instance.tags
             report.status = "PASS"
             report.status_extended = f"EC2 Instance {instance.id} is not running."
             if instance.state == "running":

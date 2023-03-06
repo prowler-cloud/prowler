@@ -133,6 +133,14 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
                 "ETag": "",
             }
+    if operation_name == "ListTagsForResource":
+        return {
+            "Tags": {
+                "Items": [
+                    {"Key": "test", "Value": "test"},
+                ]
+            }
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -247,3 +255,7 @@ class Test_CloudFront_Service:
             ].default_cache_config.field_level_encryption_id
             == "enabled"
         )
+
+        assert cloudfront.distributions[cloudfront_distribution_id].tags == [
+            {"Key": "test", "Value": "test"},
+        ]

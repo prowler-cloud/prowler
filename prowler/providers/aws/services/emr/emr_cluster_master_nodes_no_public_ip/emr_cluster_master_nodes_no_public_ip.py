@@ -15,7 +15,7 @@ class emr_cluster_master_nodes_no_public_ip(Check):
                 report.region = cluster.region
                 report.resource_id = cluster.id
                 report.resource_arn = cluster.arn
-
+                report.resource_tags = cluster.tags
                 if cluster.public:
                     report.status = "FAIL"
                     report.status_extended = f"EMR Cluster {cluster.id} has a Public IP"

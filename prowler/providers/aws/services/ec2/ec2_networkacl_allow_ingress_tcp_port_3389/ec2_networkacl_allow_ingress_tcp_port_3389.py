@@ -12,6 +12,7 @@ class ec2_networkacl_allow_ingress_tcp_port_3389(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = network_acl.region
             report.resource_arn = network_acl.arn
+            report.resource_tags = network_acl.tags
             # If some entry allows it, that ACL is not securely configured
             if not check_network_acl(network_acl.entries, tcp_protocol, check_port):
                 report.status = "PASS"

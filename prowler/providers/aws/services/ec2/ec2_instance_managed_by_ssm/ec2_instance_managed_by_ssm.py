@@ -10,6 +10,7 @@ class ec2_instance_managed_by_ssm(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = instance.region
             report.resource_arn = instance.arn
+            report.resource_tags = instance.tags
             if not ssm_client.managed_instances.get(instance.id):
                 report.status = "FAIL"
                 report.status_extended = (

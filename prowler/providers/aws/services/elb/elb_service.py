@@ -20,6 +20,7 @@ class ELB:
         self.loadbalancers = []
         self.__threading_call__(self.__describe_load_balancers__)
         self.__threading_call__(self.__describe_load_balancer_attributes__)
+        self.__describe_tags__()
 
     def __get_session__(self):
         return self.session
@@ -85,6 +86,20 @@ class ELB:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __describe_tags__(self):
+        logger.info("ELB - List Tags...")
+        try:
+            for lb in self.loadbalancers:
+                regional_client = self.regional_clients[lb.region]
+                response = regional_client.describe_tags(LoadBalancerNames=[lb.name])[
+                    "TagDescriptions"
+                ][0]
+                lb.tags = response.get("Tags")
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Listener(BaseModel):
     protocol: str
@@ -99,3 +114,4 @@ class LoadBalancer(BaseModel):
     scheme: str
     access_logs: Optional[bool]
     listeners: list[Listener]
+    tags: Optional[list] = []

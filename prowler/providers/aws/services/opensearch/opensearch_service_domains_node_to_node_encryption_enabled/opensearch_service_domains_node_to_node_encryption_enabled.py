@@ -12,6 +12,7 @@ class opensearch_service_domains_node_to_node_encryption_enabled(Check):
             report.region = domain.region
             report.resource_id = domain.name
             report.resource_arn = domain.arn
+            report.resource_tags = domain.tags
             report.status = "PASS"
             report.status_extended = (
                 f"Opensearch domain {domain.name} has node-to-node encryption enabled"

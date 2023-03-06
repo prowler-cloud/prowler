@@ -87,6 +87,23 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
     prowler -v
     ```
 
+=== "GitHub"
+
+    _Requirements for Developers_:
+
+    * AWS and/or Azure credentials
+    * `git`, `Python >= 3.9`, `pip` and `poetry` installed (`pip install poetry`)
+
+    _Commands_:
+
+    ```
+    git clone https://github.com/prowler-cloud/prowler
+    cd prowler
+    poetry shell
+    poetry install
+    python prowler.py -v
+    ```
+
 === "Amazon Linux 2"
 
     _Requirements_:
@@ -100,6 +117,20 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
     ```
     pip3.9 install prowler
     export PATH=$PATH:/home/$HOME/.local/bin/
+    prowler -v
+    ```
+
+=== "Brew"
+
+    _Requirements_:
+
+    * `Brew` installed in your Mac or Linux
+    * AWS and/or Azure credentials
+
+    _Commands_:
+
+    ``` bash
+    brew install prowler
     prowler -v
     ```
 

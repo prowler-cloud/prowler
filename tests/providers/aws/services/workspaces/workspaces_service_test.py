@@ -27,6 +27,12 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
             ],
         }
+    if operation_name == "DescribeTags":
+        return {
+            "TagList": [
+                {"Key": "test", "Value": "test"},
+            ]
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -91,5 +97,8 @@ class Test_WorkSpaces_Service:
         assert len(workspaces.workspaces) == 1
         assert workspaces.workspaces[0].id == workspace_id
         assert workspaces.workspaces[0].region == AWS_REGION
+        assert workspaces.workspaces[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
         assert workspaces.workspaces[0].user_volume_encryption_enabled
         assert workspaces.workspaces[0].root_volume_encryption_enabled

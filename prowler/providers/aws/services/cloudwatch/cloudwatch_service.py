@@ -24,6 +24,7 @@ class CloudWatch:
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.metric_alarms = []
         self.__threading_call__(self.__describe_alarms__)
+        self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -66,6 +67,20 @@ class CloudWatch:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_tags_for_resource__(self):
+        logger.info("CloudWatch - List Tags...")
+        try:
+            for metric_alarm in self.metric_alarms:
+                regional_client = self.regional_clients[metric_alarm.region]
+                response = regional_client.list_tags_for_resource(
+                    ResourceARN=metric_alarm.arn
+                )["Tags"]
+                metric_alarm.tags = response
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 ################## CloudWatch Logs
 class Logs:
@@ -87,6 +102,7 @@ class Logs:
                 1000  # The threshold for number of events to return per log group.
             )
             self.__threading_call__(self.__get_log_events__)
+        self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
@@ -180,14 +196,23 @@ class Logs:
                     logger.info(
                         f"CloudWatch Logs - Retrieved log events for {count}/{total_log_groups} log groups in {regional_client.region}..."
                     )
+        logger.info(
+            f"CloudWatch Logs - Finished retrieving log events in {regional_client.region}..."
+        )
 
+    def __list_tags_for_resource__(self):
+        logger.info("CloudWatch Logs - List Tags...")
+        try:
+            for log_group in self.log_groups:
+                regional_client = self.regional_clients[log_group.region]
+                response = regional_client.list_tags_for_resource(
+                    resourceArn=log_group.arn.replace(":*", "")  # Remove the tailing :*
+                )["tags"]
+                log_group.tags = [response]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        logger.info(
-            f"CloudWatch Logs - Finished retrieving log events in {regional_client.region}..."
-        )
 
 
 class MetricAlarm(BaseModel):
@@ -196,6 +221,7 @@ class MetricAlarm(BaseModel):
     metric: Optional[str]
     name_space: Optional[str]
     region: str
+    tags: Optional[list] = []
 
 
 class MetricFilter(BaseModel):
@@ -215,6 +241,7 @@ class LogGroup(BaseModel):
     log_streams: dict[
         str, list[str]
     ] = {}  # Log stream name as the key, array of events as the value
+    tags: Optional[list] = []
 
 
 def convert_to_cloudwatch_timestamp_format(epoch_time):
