@@ -109,9 +109,8 @@ def exclude_services_to_run(
 # Load checks from checklist.json
 def parse_checks_from_file(input_file: str, provider: str) -> set:
     checks_to_execute = set()
-    f = open_file(input_file)
-    json_file = parse_json_file(f)
-    f.close()
+    with open_file(input_file) as f:
+        json_file = parse_json_file(f)
 
     for check_name in json_file[provider]:
         checks_to_execute.add(check_name)
