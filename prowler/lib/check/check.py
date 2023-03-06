@@ -361,7 +361,7 @@ def execute_checks(
     soft, _ = getrlimit(RLIMIT_NOFILE)
     if soft < 4096:
         logger.warning(
-            f"Prowler may have errors because of your user session maximum open files ({soft}). To solve this issue, increase the shell session limit by running this command `ulimit -n 4096`. More info in https://docs.prowler.cloud/en/latest/troubleshooting/"
+            f"Your session file descriptors limit ({soft} open files) is below 4096. We recommend to increase it to avoid errors. Solve it running this command `ulimit -n 4096`. For more info visit https://docs.prowler.cloud/en/latest/troubleshooting/"
         )
 
     # Execution with the --only-logs flag

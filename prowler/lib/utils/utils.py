@@ -18,7 +18,7 @@ def open_file(input_file: str, mode: str = "r") -> TextIOWrapper:
         f = open(input_file, mode)
     except OSError:
         logger.critical(
-            "Ooops! You reached your user session maximum open files. To solve this issue, increase the shell session limit by running this command `ulimit -n 4096`. More info in https://docs.prowler.cloud/en/latest/troubleshooting/"
+            "Ooops! You reached your user session maximum open files. To solve this issue, increase the shell session limit by running this command `ulimit -n 4096`. For more info visit https://docs.prowler.cloud/en/latest/troubleshooting/"
         )
         sys.exit(1)
     except Exception as e:
