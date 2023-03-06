@@ -1,4 +1,5 @@
 import threading
+from datetime import datetime, timezone
 from typing import Optional
 
 from pydantic import BaseModel
@@ -93,6 +94,14 @@ class Logs:
         self.log_groups = []
         self.__threading_call__(self.__describe_metric_filters__)
         self.__threading_call__(self.__describe_log_groups__)
+        if (
+            "cloudwatch_log_group_no_secrets_in_logs"
+            in audit_info.audit_metadata.expected_checks
+        ):
+            self.events_per_log_group_threshold = (
+                1000  # The threshold for number of events to return per log group.
+            )
+            self.__threading_call__(self.__get_log_events__)
         self.__list_tags_for_resource__()
 
     def __get_session__(self):
@@ -108,7 +117,7 @@ class Logs:
             t.join()
 
     def __describe_metric_filters__(self, regional_client):
-        logger.info("CloudWatch Logs- Describing metric filters...")
+        logger.info("CloudWatch Logs - Describing metric filters...")
         try:
             describe_metric_filters_paginator = regional_client.get_paginator(
                 "describe_metric_filters"
@@ -133,7 +142,7 @@ class Logs:
             )
 
     def __describe_log_groups__(self, regional_client):
-        logger.info("CloudWatch Logs- Describing log groups...")
+        logger.info("CloudWatch Logs - Describing log groups...")
         try:
             describe_log_groups_paginator = regional_client.get_paginator(
                 "describe_log_groups"
@@ -162,6 +171,38 @@ class Logs:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def __get_log_events__(self, regional_client):
+        regional_log_groups = [
+            log_group
+            for log_group in self.log_groups
+            if log_group.region == regional_client.region
+        ]
+        total_log_groups = len(regional_log_groups)
+        logger.info(
+            f"CloudWatch Logs - Retrieving log events for {total_log_groups} log groups in {regional_client.region}..."
+        )
+        try:
+            for count, log_group in enumerate(regional_log_groups, start=1):
+                events = regional_client.filter_log_events(
+                    logGroupName=log_group.name,
+                    limit=self.events_per_log_group_threshold,
+                )["events"]
+                for event in events:
+                    if event["logStreamName"] not in log_group.log_streams:
+                        log_group.log_streams[event["logStreamName"]] = []
+                    log_group.log_streams[event["logStreamName"]].append(event)
+                if count % 10 == 0:
+                    logger.info(
+                        f"CloudWatch Logs - Retrieved log events for {count}/{total_log_groups} log groups in {regional_client.region}..."
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        logger.info(
+            f"CloudWatch Logs - Finished retrieving log events in {regional_client.region}..."
+        )
 
     def __list_tags_for_resource__(self):
         logger.info("CloudWatch Logs - List Tags...")
@@ -201,4 +242,24 @@ class LogGroup(BaseModel):
     retention_days: int
     kms_id: Optional[str]
     region: str
+    log_streams: dict[
+        str, list[str]
+    ] = {}  # Log stream name as the key, array of events as the value
     tags: Optional[list] = []
+
+
+def convert_to_cloudwatch_timestamp_format(epoch_time):
+    date_time = datetime.fromtimestamp(
+        epoch_time / 1000, datetime.now(timezone.utc).astimezone().tzinfo
+    )
+    datetime_str = date_time.strftime(
+        "%Y-%m-%dT%H:%M:%S.!%f!%z"
+    )  # use exclamation marks as placeholders to convert datetime str to cloudwatch timestamp str
+    datetime_parts = datetime_str.split("!")
+    return (
+        datetime_parts[0]
+        + datetime_parts[1][:-3]
+        + datetime_parts[2][:-2]
+        + ":"
+        + datetime_parts[2][-2:]
+    )  # Removes the microseconds, and places a ':' character in the timezone offset
