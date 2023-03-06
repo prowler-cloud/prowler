@@ -1,14 +1,14 @@
 {
   "Provider": "aws",
   "CheckID": "rds_instance_transport_encrypted",
-  "CheckTitle": "Check if RDS instances client connections are encrypted.",
+  "CheckTitle": "Check if RDS instances client connections are encrypted (Microsoft SQL Server and PostgreSQL).",
   "CheckType": [],
   "ServiceName": "rds",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "high",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "Check if RDS instances client connections are encrypted.",
+  "Description": "Check if RDS instances client connections are encrypted (Microsoft SQL Server and PostgreSQL).",
   "Risk": "If not enabled sensitive information at transit is not protected.",
   "RelatedUrl": "https://aws.amazon.com/premiumsupport/knowledge-center/rds-connect-ssl-connection/",
   "Remediation": {
