@@ -4,6 +4,7 @@ import os
 import sys
 import traceback
 from pkgutil import walk_packages
+from resource import RLIMIT_NOFILE, getrlimit
 from types import ModuleType
 from typing import Any
 
@@ -110,6 +111,7 @@ def parse_checks_from_file(input_file: str, provider: str) -> set:
     checks_to_execute = set()
     f = open_file(input_file)
     json_file = parse_json_file(f)
+    f.close()
 
     for check_name in json_file[provider]:
         checks_to_execute.add(check_name)
@@ -355,6 +357,13 @@ def execute_checks(
         completed_checks=0,
         audit_progress=0,
     )
+
+    # Check ulimit for the maximum system open files
+    soft, _ = getrlimit(RLIMIT_NOFILE)
+    if soft < 4096:
+        logger.warning(
+            f"Prowler may have errors because of your user session maximum open files ({soft}). To solve this issue, increase the shell session limit by running this command `ulimit -n 4096`. More info in https://docs.prowler.cloud/en/latest/troubleshooting/"
+        )
 
     # Execution with the --only-logs flag
     if audit_output_options.only_logs:
