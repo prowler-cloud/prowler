@@ -55,10 +55,11 @@ repos:
         exclude: contrib
         args: ["--ignore=E266,W503,E203,E501,W605"]
 
-  - repo: https://github.com/haizaar/check-pipfile-lock
-    rev: v0.0.5
+  - repo: https://github.com/python-poetry/poetry
+    rev: 1.4.0  # add version here
     hooks:
-      - id: check-pipfile-lock
+      - id: poetry-check
+      - id: poetry-lock
 
   - repo: https://github.com/hadolint/hadolint
     rev: v2.12.1-beta
