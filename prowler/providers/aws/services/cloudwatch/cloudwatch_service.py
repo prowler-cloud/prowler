@@ -196,6 +196,10 @@ class Logs:
                     logger.info(
                         f"CloudWatch Logs - Retrieved log events for {count}/{total_log_groups} log groups in {regional_client.region}..."
                     )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         logger.info(
             f"CloudWatch Logs - Finished retrieving log events in {regional_client.region}..."
         )

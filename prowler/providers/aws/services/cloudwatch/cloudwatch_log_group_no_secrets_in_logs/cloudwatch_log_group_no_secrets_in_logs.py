@@ -57,12 +57,10 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                                 event_detect_secrets_output = detect_secrets_scan(
                                     log_event_data
                                 )
-                                [
+                                for secret in event_detect_secrets_output:
                                     log_stream_secrets[cloudwatch_timestamp].add_secret(
                                         secret["line_number"], secret["type"]
                                     )
-                                    for secret in event_detect_secrets_output
-                                ]
                             else:
                                 log_stream_secrets[cloudwatch_timestamp].add_secret(
                                     1, secret["type"]
