@@ -150,7 +150,7 @@ def prowler():
     )
 
     # Run the quick inventory for the provider if available
-    if hasattr(args, "quick_inventory"):
+    if hasattr(args, "quick_inventory") and args.quick_inventory:
         run_provider_quick_inventory(provider, audit_info, args.output_directory)
         sys.exit()
 
