@@ -18,13 +18,13 @@ Before sending findings to Prowler, you will need to perform next steps:
 Once it is enabled, it is as simple as running the command below (for all regions):
 
 ```sh
-./prowler aws -S
+prowler aws -S
 ```
 
 or for only one filtered region like eu-west-1:
 
 ```sh
-./prowler -S -f eu-west-1
+prowler -S -f eu-west-1
 ```
 
 > **Note 1**: It is recommended to send only fails to Security Hub and that is possible adding `-q` to the command.
@@ -43,5 +43,5 @@ By default, Prowler archives all its findings in Security Hub that have not appe
 You can skip this logic by using the option `--skip-sh-update` so Prowler will not archive older findings:
 
 ```sh
-./prowler -S --skip-sh-update
+prowler -S --skip-sh-update
 ```

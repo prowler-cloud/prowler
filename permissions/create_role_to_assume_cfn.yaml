@@ -4,7 +4,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 # aws cloudformation create-stack \
 #  --capabilities CAPABILITY_IAM --capabilities CAPABILITY_NAMED_IAM \
 #  --template-body "file://create_role_to_assume_cfn.yaml" \
-#  --stack-name "ProwlerExecRole" \
+#  --stack-name "ProwlerScanRole" \
 #  --parameters "ParameterKey=AuthorisedARN,ParameterValue=arn:aws:iam::123456789012:root"
 #
 Description: |
@@ -13,7 +13,7 @@ Description: |
   account to assume that role. The role name and the ARN of the trusted user can all be passed
   to the CloudFormation stack as parameters. Then you can run Prowler to perform a security
   assessment with a command like:
-  ./prowler -A <THIS_ACCOUNT_ID> -R ProwlerExecRole
+  prowler --role ProwlerScanRole.ARN
 Parameters:
   AuthorisedARN:
     Description: |
@@ -22,12 +22,12 @@ Parameters:
     Type: String
   ProwlerRoleName:
     Description: |
-      Name of the IAM role that will have these policies attached. Default: ProwlerExecRole
+      Name of the IAM role that will have these policies attached. Default: ProwlerScanRole
     Type: String
-    Default: 'ProwlerExecRole'
+    Default: 'ProwlerScanRole'
 
 Resources:
-  ProwlerExecRole:
+  ProwlerScanRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -42,31 +42,49 @@ Resources:
             #   Bool:
             #     'aws:MultiFactorAuthPresent': true
       # This is 12h that is maximum allowed, Minimum is 3600 = 1h
-      # to take advantage of this use -T like in './prowler -A <ACCOUNT_ID_TO_ASSUME> -R ProwlerExecRole -T 43200 -M text,html'
+      # to take advantage of this use -T like in './prowler --role ProwlerScanRole.ARN -T 43200'
       MaxSessionDuration: 43200
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/SecurityAudit'
         - 'arn:aws:iam::aws:policy/job-function/ViewOnlyAccess'
       RoleName: !Sub ${ProwlerRoleName}
       Policies:
-        - PolicyName: ProwlerExecRoleAdditionalViewPrivileges
+        - PolicyName: ProwlerScanRoleAdditionalViewPrivileges
           PolicyDocument:
             Version : '2012-10-17'
             Statement:
             - Effect: Allow
               Action:
-                - 'ds:ListAuthorizedApplications'
+                - 'account:Get*'
+                - 'appstream:Describe*'
+                - 'appstream:List*'
+                - 'codeartifact:List*'
+                - 'codebuild:BatchGet*'
+                - 'ds:Get*'
+                - 'ds:Describe*'
+                - 'ds:List*'
                 - 'ec2:GetEbsEncryptionByDefault'
                 - 'ecr:Describe*'
                 - 'elasticfilesystem:DescribeBackupPolicy'
                 - 'glue:GetConnections'
-                - 'glue:GetSecurityConfiguration'
+                - 'glue:GetSecurityConfiguration*'
                 - 'glue:SearchTables'
-                - 'lambda:GetFunction'
+                - 'lambda:GetFunction*'
+                - 'macie2:GetMacieSession'
                 - 's3:GetAccountPublicAccessBlock'
                 - 'shield:DescribeProtection'
                 - 'shield:GetSubscriptionState'
+                - 'securityhub:BatchImportFindings'
+                - 'securityhub:GetFindings'
                 - 'ssm:GetDocument'
                 - 'support:Describe*'
                 - 'tag:GetTagKeys'
               Resource: '*'
+        - PolicyName: ProwlerScanRoleAdditionalViewPrivilegesApiGateway
+          PolicyDocument:
+            Version : '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - 'apigateway:GET'
+              Resource: 'arn:aws:apigateway:*::/restapis/*'

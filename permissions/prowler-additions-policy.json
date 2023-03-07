@@ -3,7 +3,9 @@
   "Statement": [
     {
       "Action": [
+        "account:Get*",
         "appstream:Describe*",
+        "appstream:List*",
         "codeartifact:List*",
         "codebuild:BatchGet*",
         "ds:Describe*",
