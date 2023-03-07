@@ -138,18 +138,19 @@ def prowler():
 
     # Once the audit_info is set and we have the eventual checks based on the resource identifier,
     # it is time to check what Prowler's checks are going to be executed
-    checks_to_execute = set_provider_execution_parameters(provider, audit_info)
+    if audit_info.audit_resources:
+        checks_to_execute = set_provider_execution_parameters(provider, audit_info)
 
     # Parse Allowlist
-    allowlist_file = set_provider_allowlist(provider, audit_info, args.allowlist_file)
+    allowlist_file = set_provider_allowlist(provider, audit_info, args)
 
     # Set output options based on the selected provider
     audit_output_options = set_provider_output_options(
         provider, args, audit_info, allowlist_file, bulk_checks_metadata
     )
 
-    # Run the quick inventory for the provider
-    if args.quick_inventory:
+    # Run the quick inventory for the provider if available
+    if hasattr(args, "quick_inventory"):
         run_provider_quick_inventory(provider, audit_info, args.output_directory)
         sys.exit()
 
