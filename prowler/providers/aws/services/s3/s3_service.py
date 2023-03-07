@@ -263,7 +263,7 @@ class S3:
             ]
             bucket.tags = bucket_tags
         except ClientError as error:
-            bucket_tags = []
+            bucket.tags = []
             if error.response["Error"]["Code"] != "NoSuchTagSet":
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
