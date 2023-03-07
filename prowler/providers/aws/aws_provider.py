@@ -110,8 +110,8 @@ def generate_regional_clients(
         regional_clients = {}
         # Get json locally
         actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
-        f = open_file(f"{actual_directory}/{aws_services_json_file}")
-        data = parse_json_file(f)
+        with open_file(f"{actual_directory}/{aws_services_json_file}") as f:
+            data = parse_json_file(f)
         # Check if it is a subservice
         json_regions = data["services"][service]["regions"][
             audit_info.audited_partition
@@ -144,8 +144,8 @@ def generate_regional_clients(
 def get_aws_available_regions():
     try:
         actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
-        f = open_file(f"{actual_directory}/{aws_services_json_file}")
-        data = parse_json_file(f)
+        with open_file(f"{actual_directory}/{aws_services_json_file}") as f:
+            data = parse_json_file(f)
 
         regions = set()
         for service in data["services"].values():
