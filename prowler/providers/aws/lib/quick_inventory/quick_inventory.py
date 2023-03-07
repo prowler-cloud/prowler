@@ -3,6 +3,7 @@ import json
 from copy import deepcopy
 
 from alive_progress import alive_bar
+from botocore.client import ClientError
 from colorama import Fore, Style
 from tabulate import tabulate
 
@@ -50,51 +51,11 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
             try:
                 # Scan IAM only once
                 if not iam_was_scanned:
-                    iam_client = audit_info.audit_session.client("iam")
-                    get_roles_paginator = iam_client.get_paginator("list_roles")
-                    for page in get_roles_paginator.paginate():
-                        for role in page["Roles"]:
-                            # Avoid aws-service-role roles
-                            if "aws-service-role" not in role["Arn"]:
-                                global_resources.append(role["Arn"])
-
-                    get_users_paginator = iam_client.get_paginator("list_users")
-                    for page in get_users_paginator.paginate():
-                        for user in page["Users"]:
-                            global_resources.append(user["Arn"])
-
-                    get_groups_paginator = iam_client.get_paginator("list_groups")
-                    for page in get_groups_paginator.paginate():
-                        for group in page["Groups"]:
-                            global_resources.append(group["Arn"])
-
-                    get_policies_paginator = iam_client.get_paginator("list_policies")
-                    for page in get_policies_paginator.paginate(Scope="Local"):
-                        for policy in page["Policies"]:
-                            global_resources.append(policy["Arn"])
-
-                    for saml_provider in iam_client.list_saml_providers()[
-                        "SAMLProviderList"
-                    ]:
-                        global_resources.append(saml_provider["Arn"])
+                    global_resources.extend(get_iam_resources(audit_info.audit_session))
                     iam_was_scanned = True
 
                 # Get regional S3 buckets since none-tagged buckets are not supported by the resourcegroupstaggingapi
-                s3_client = audit_info.audit_session.client("s3", region_name=region)
-                buckets = s3_client.list_buckets()
-                for bucket in buckets["Buckets"]:
-                    bucket_region = s3_client.get_bucket_location(
-                        Bucket=bucket["Name"]
-                    )["LocationConstraint"]
-                    if bucket_region == "EU":  # If EU, bucket_region is eu-west-1
-                        bucket_region = "eu-west-1"
-                    if not bucket_region:  # If None, bucket_region is us-east-1
-                        bucket_region = "us-east-1"
-                    if (
-                        bucket_region == region
-                    ):  # Only add bucket if is in current region
-                        bucket_arn = f"arn:{audit_info.audited_partition}:s3:{region}::{bucket['Name']}"
-                        resources_in_region.append(bucket_arn)
+                resources_in_region.extend(get_regional_buckets(audit_info, region))
 
                 client = audit_info.audit_session.client(
                     "resourcegroupstaggingapi", region_name=region
@@ -109,9 +70,19 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
                         if resource["ResourceARN"].split(":")[2] != "s3":
                             # Check if region is not in ARN --> Global service
                             if not resource["ResourceARN"].split(":")[3]:
-                                global_resources.append(resource["ResourceARN"])
+                                global_resources.append(
+                                    {
+                                        "arn": resource["ResourceARN"],
+                                        "tags": resource["Tags"],
+                                    }
+                                )
                             else:
-                                resources_in_region.append(resource["ResourceARN"])
+                                resources_in_region.append(
+                                    {
+                                        "arn": resource["ResourceARN"],
+                                        "tags": resource["Tags"],
+                                    }
+                                )
                 bar()
                 if len(resources_in_region) > 0:
                     total_resources_per_region[region] = len(resources_in_region)
@@ -173,9 +144,9 @@ def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
     for region, count in resources_in_region.items():
         inventory_table[f"{region}\n({Fore.GREEN}{str(count)}{Style.RESET_ALL})"] = []
 
-    for resource in sorted(resources):
-        service = resource.split(":")[2]
-        region = resource.split(":")[3]
+    for resource in sorted(resources, key=lambda d: d["arn"]):
+        service = resource["arn"].split(":")[2]
+        region = resource["arn"].split(":")[3]
         if not region:
             region = "global"
         if service not in services:
@@ -189,7 +160,7 @@ def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
         elif service == "sqs":
             resource_type = "queue"
         elif service == "apigateway":
-            split_parts = resource.split(":")[5].split("/")
+            split_parts = resource["arn"].split(":")[5].split("/")
             if "integration" in split_parts and "responses" in split_parts:
                 resource_type = "restapis-resources-methods-integration-response"
             elif "documentation" in split_parts and "parts" in split_parts:
@@ -197,7 +168,7 @@ def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
             else:
                 resource_type = resource.split(":")[5].split("/")[1]
         else:
-            resource_type = resource.split(":")[5].split("/")[0]
+            resource_type = resource["arn"].split(":")[5].split("/")[0]
         if service not in resources_type:
             resources_type[service] = {}
         if resource_type not in resources_type[service]:
@@ -249,30 +220,37 @@ def create_output(resources: list, audit_info: AWS_Audit_Info, output_directory:
     json_output = []
     output_file = f"{output_directory}/prowler-inventory-{audit_info.audited_account}-{output_file_timestamp}"
 
-    for item in sorted(resources):
+    for item in sorted(resources, key=lambda d: d["arn"]):
         resource = {}
         resource["AWS_AccountID"] = audit_info.audited_account
-        resource["AWS_Region"] = item.split(":")[3]
-        resource["AWS_Partition"] = item.split(":")[1]
-        resource["AWS_Service"] = item.split(":")[2]
-        resource["AWS_ResourceType"] = item.split(":")[5].split("/")[0]
+        resource["AWS_Region"] = item["arn"].split(":")[3]
+        resource["AWS_Partition"] = item["arn"].split(":")[1]
+        resource["AWS_Service"] = item["arn"].split(":")[2]
+        resource["AWS_ResourceType"] = item["arn"].split(":")[5].split("/")[0]
         resource["AWS_ResourceID"] = ""
-        if len(item.split("/")) > 1:
-            resource["AWS_ResourceID"] = item.split("/")[-1]
-        elif len(item.split(":")) > 6:
-            resource["AWS_ResourceID"] = item.split(":")[-1]
-        resource["AWS_ResourceARN"] = item
+        if len(item["arn"].split("/")) > 1:
+            resource["AWS_ResourceID"] = item["arn"].split("/")[-1]
+        elif len(item["arn"].split(":")) > 6:
+            resource["AWS_ResourceID"] = item["arn"].split(":")[-1]
+        resource["AWS_ResourceARN"] = item["arn"]
         # Cover S3 case
         if resource["AWS_Service"] == "s3":
             resource["AWS_ResourceType"] = "bucket"
-            resource["AWS_ResourceID"] = item.split(":")[-1]
+            resource["AWS_ResourceID"] = item["arn"].split(":")[-1]
         # Cover WAFv2 case
         if resource["AWS_Service"] == "wafv2":
-            resource["AWS_ResourceType"] = "/".join(item.split(":")[-1].split("/")[:-2])
-            resource["AWS_ResourceID"] = "/".join(item.split(":")[-1].split("/")[2:])
+            resource["AWS_ResourceType"] = "/".join(
+                item["arn"].split(":")[-1].split("/")[:-2]
+            )
+            resource["AWS_ResourceID"] = "/".join(
+                item["arn"].split(":")[-1].split("/")[2:]
+            )
         # Cover Config case
         if resource["AWS_Service"] == "config":
-            resource["AWS_ResourceID"] = "/".join(item.split(":")[-1].split("/")[1:])
+            resource["AWS_ResourceID"] = "/".join(
+                item["arn"].split(":")[-1].split("/")[1:]
+            )
+        resource["AWS_Tags"] = item["tags"]
         json_output.append(resource)
 
     # Serializing json
@@ -298,3 +276,64 @@ def create_output(resources: list, audit_info: AWS_Audit_Info, output_directory:
     print("\nMore details in files:")
     print(f" - CSV: {output_file+csv_file_suffix}")
     print(f" - JSON: {output_file+json_file_suffix}")
+
+
+def get_regional_buckets(audit_info: AWS_Audit_Info, region: str) -> list:
+    regional_buckets = []
+    s3_client = audit_info.audit_session.client("s3", region_name=region)
+    buckets = s3_client.list_buckets()
+    for bucket in buckets["Buckets"]:
+        bucket_region = s3_client.get_bucket_location(Bucket=bucket["Name"])[
+            "LocationConstraint"
+        ]
+        if bucket_region == "EU":  # If EU, bucket_region is eu-west-1
+            bucket_region = "eu-west-1"
+        if not bucket_region:  # If None, bucket_region is us-east-1
+            bucket_region = "us-east-1"
+        if bucket_region == region:  # Only add bucket if is in current region
+            try:
+                bucket_tags = s3_client.get_bucket_tagging(Bucket=bucket["Name"])[
+                    "TagSet"
+                ]
+            except ClientError as error:
+                bucket_tags = []
+                if error.response["Error"]["Code"] != "NoSuchTagSet":
+                    logger.error(
+                        f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+            bucket_arn = (
+                f"arn:{audit_info.audited_partition}:s3:{region}::{bucket['Name']}"
+            )
+            regional_buckets.append({"arn": bucket_arn, "tags": bucket_tags})
+    return regional_buckets
+
+
+def get_iam_resources(session) -> list:
+    iam_resources = []
+    iam_client = session.client("iam")
+    get_roles_paginator = iam_client.get_paginator("list_roles")
+    for page in get_roles_paginator.paginate():
+        for role in page["Roles"]:
+            # Avoid aws-service-role roles
+            if "aws-service-role" not in role["Arn"]:
+                iam_resources.append({"arn": role["Arn"], "tags": role.get("Tags")})
+
+    get_users_paginator = iam_client.get_paginator("list_users")
+    for page in get_users_paginator.paginate():
+        for user in page["Users"]:
+            iam_resources.append({"arn": user["Arn"], "tags": user.get("Tags")})
+
+    get_groups_paginator = iam_client.get_paginator("list_groups")
+    for page in get_groups_paginator.paginate():
+        for group in page["Groups"]:
+            iam_resources.append({"arn": group["Arn"], "tags": []})
+
+    get_policies_paginator = iam_client.get_paginator("list_policies")
+    for page in get_policies_paginator.paginate(Scope="Local"):
+        for policy in page["Policies"]:
+            iam_resources.append({"arn": policy["Arn"], "tags": policy.get("Tags")})
+
+    for saml_provider in iam_client.list_saml_providers()["SAMLProviderList"]:
+        iam_resources.append({"arn": saml_provider["Arn"], "tags": []})
+
+    return iam_resources
