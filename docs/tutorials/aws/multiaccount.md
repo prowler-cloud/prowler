@@ -1,6 +1,6 @@
 # Scan Multiple AWS Accounts
 
-Prowler can scan multiple accounts when it is ejecuted from one account that can assume a role in those given accounts to scan using [Assume Role feature](role-assumption.md) and [AWS Organizations integration feature](organizations.md).
+Prowler can scan multiple accounts when it is executed from one account that can assume a role in those given accounts to scan using [Assume Role feature](role-assumption.md) and [AWS Organizations integration feature](organizations.md).
 
 
 ## Scan multiple specific accounts sequentially
