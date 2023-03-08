@@ -51,7 +51,7 @@ def generate_provider_output_csv(
             data[
                 "finding_unique_id"
             ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
-            data["compliance"] = __unroll_dict__(
+            data["compliance"] = unroll_dict(
                 get_check_compliance(finding, provider, output_options)
             )
             finding_output = output_model(**data)
@@ -65,7 +65,7 @@ def generate_provider_output_csv(
             data[
                 "finding_unique_id"
             ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
-            data["compliance"] = __unroll_dict__(
+            data["compliance"] = unroll_dict(
                 get_check_compliance(finding, provider, output_options)
             )
             finding_output = output_model(**data)
@@ -116,7 +116,7 @@ def fill_common_data_csv(finding: dict) -> dict:
         "severity": finding.check_metadata.Severity,
         "resource_type": finding.check_metadata.ResourceType,
         "resource_details": finding.resource_details,
-        "resource_tags": __unroll_list__(finding.resource_tags),
+        "resource_tags": unroll_list(finding.resource_tags),
         "description": finding.check_metadata.Description,
         "risk": finding.check_metadata.Risk,
         "related_url": finding.check_metadata.RelatedUrl,
@@ -138,15 +138,15 @@ def fill_common_data_csv(finding: dict) -> dict:
         "remediation_recommendation_code_other": (
             finding.check_metadata.Remediation.Code.Other
         ),
-        "categories": __unroll_list__(finding.check_metadata.Categories),
-        "depends_on": __unroll_list__(finding.check_metadata.DependsOn),
-        "related_to": __unroll_list__(finding.check_metadata.RelatedTo),
+        "categories": unroll_list(finding.check_metadata.Categories),
+        "depends_on": unroll_list(finding.check_metadata.DependsOn),
+        "related_to": unroll_list(finding.check_metadata.RelatedTo),
         "notes": finding.check_metadata.Notes,
     }
     return data
 
 
-def __unroll_list__(listed_items: list):
+def unroll_list(listed_items: list):
     unrolled_items = ""
     separator = "|"
     if listed_items:
@@ -164,7 +164,7 @@ def __unroll_list__(listed_items: list):
     return unrolled_items
 
 
-def __unroll_dict__(dict: dict):
+def unroll_dict(dict: dict):
     unrolled_items = ""
     separator = "|"
     for key, value in dict.items():

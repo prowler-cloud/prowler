@@ -9,6 +9,7 @@ from prowler.config.config import (
     timestamp,
 )
 from prowler.lib.logger import logger
+from prowler.lib.outputs.models import get_check_compliance, unroll_dict, unroll_list
 from prowler.lib.utils.utils import open_file
 
 
@@ -194,6 +195,7 @@ def add_html_header(file_descriptor, audit_info):
                     <th scope="col">Risk</th>
                     <th scope="col">Recomendation</th>
                     <th style="width:5%" scope="col">Recomendation URL</th>
+                    <th scope="col">Compliance</th>
                 </tr>
             </thead>
             <tbody>
@@ -205,7 +207,7 @@ def add_html_header(file_descriptor, audit_info):
         )
 
 
-def fill_html(file_descriptor, finding):
+def fill_html(file_descriptor, finding, output_options):
     row_class = "p-3 mb-2 bg-success-custom"
     if finding.status == "INFO":
         row_class = "table-info"
@@ -222,13 +224,14 @@ def fill_html(file_descriptor, finding):
                 <td>{finding.region}</td>
                 <td>{finding.check_metadata.CheckTitle}</td>
                 <td>{finding.resource_id.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>
-                <td>{str(finding.resource_tags)}</td>
+                <td>{unroll_list(finding.resource_tags)}</td>
                 <td>{finding.check_metadata.Description}</td>
                 <td>{finding.check_metadata.CheckID.replace("_", "<wbr>_")}</td>
                 <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>
                 <td><p class="show-read-more">{finding.check_metadata.Risk}</p></td>
                 <td><p class="show-read-more">{finding.check_metadata.Remediation.Recommendation.Text}</p></td>
                 <td><a class="read-more" href="{finding.check_metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
+                <td><p class="show-read-more">{unroll_dict(get_check_compliance(finding, finding.check_metadata.Provider, output_options))}</p></td>
             </tr>
             """
     )
