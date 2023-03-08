@@ -193,6 +193,7 @@ class Test_Outputs:
             "remediation_recommendation_code_terraform",
             "remediation_recommendation_code_cli",
             "remediation_recommendation_code_other",
+            "compliance",
             "categories",
             "depends_on",
             "related_to",

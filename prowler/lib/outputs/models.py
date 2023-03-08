@@ -11,7 +11,23 @@ from prowler.lib.logger import logger
 from prowler.providers.aws.lib.audit_info.models import AWS_Organizations_Info
 
 
-def generate_provider_output_csv(provider: str, finding, audit_info, mode: str, fd):
+def get_check_compliance(finding, provider, output_options):
+    check_compliance = {}
+    # We have to retrieve all the check's compliance requirements
+    for compliance in output_options.bulk_checks_metadata[
+        finding.check_metadata.CheckID
+    ].Compliance:
+        if compliance.Provider == provider.upper():
+            if compliance.Framework not in check_compliance:
+                check_compliance[compliance.Framework] = []
+            for requirement in compliance.Requirements:
+                check_compliance[compliance.Framework].append(requirement.Id)
+    return check_compliance
+
+
+def generate_provider_output_csv(
+    provider: str, finding, audit_info, mode: str, fd, output_options
+):
     """
     set_provider_output_options configures automatically the outputs based on the selected provider and returns the Provider_Output_Options object.
     """
@@ -32,6 +48,9 @@ def generate_provider_output_csv(provider: str, finding, audit_info, mode: str, 
             data[
                 "finding_unique_id"
             ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
+            data["compliance"] = __unroll_dict__(
+                get_check_compliance(finding, provider, output_options)
+            )
             finding_output = output_model(**data)
 
         if provider == "aws":
@@ -43,6 +62,9 @@ def generate_provider_output_csv(provider: str, finding, audit_info, mode: str, 
             data[
                 "finding_unique_id"
             ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
+            data["compliance"] = __unroll_dict__(
+                get_check_compliance(finding, provider, output_options)
+            )
             finding_output = output_model(**data)
 
             if audit_info.organizations_metadata:
@@ -91,7 +113,7 @@ def fill_common_data_csv(finding: dict) -> dict:
         "severity": finding.check_metadata.Severity,
         "resource_type": finding.check_metadata.ResourceType,
         "resource_details": finding.resource_details,
-        "resource_tags": finding.resource_tags,
+        "resource_tags": __unroll_list__(finding.resource_tags),
         "description": finding.check_metadata.Description,
         "risk": finding.check_metadata.Risk,
         "related_url": finding.check_metadata.RelatedUrl,
@@ -124,11 +146,31 @@ def fill_common_data_csv(finding: dict) -> dict:
 def __unroll_list__(listed_items: list):
     unrolled_items = ""
     separator = "|"
-    for item in listed_items:
+    if listed_items:
+        for item in listed_items:
+            if type(item) == dict:
+                item_dict = ""
+                for key, value in item.items():
+                    item_dict += f"{key}: {value} "
+                item = item_dict
+            if not unrolled_items:
+                unrolled_items = f"{item}"
+            else:
+                unrolled_items = f"{unrolled_items} {separator} {item}"
+
+    return unrolled_items
+
+
+def __unroll_dict__(dict: dict):
+    unrolled_items = ""
+    separator = "|"
+    for key, value in dict.items():
+        if type(value) == list:
+            value = ", ".join(value)
         if not unrolled_items:
-            unrolled_items = f"{item}"
+            unrolled_items = f"{key}: {value}"
         else:
-            unrolled_items = f"{unrolled_items}{separator}{item}"
+            unrolled_items = f"{unrolled_items} {separator} {key}: {value}"
 
     return unrolled_items
 
@@ -162,7 +204,7 @@ class Check_Output_CSV(BaseModel):
     severity: str
     resource_type: str
     resource_details: str
-    resource_tags: Optional[list]
+    resource_tags: str
     description: str
     risk: str
     related_url: str
@@ -172,6 +214,7 @@ class Check_Output_CSV(BaseModel):
     remediation_recommendation_code_terraform: str
     remediation_recommendation_code_cli: str
     remediation_recommendation_code_other: str
+    compliance: str
     categories: str
     depends_on: str
     related_to: str
@@ -206,7 +249,9 @@ class Azure_Check_Output_CSV(Check_Output_CSV):
     resource_name: str = ""
 
 
-def generate_provider_output_json(provider: str, finding, audit_info, mode: str, fd):
+def generate_provider_output_json(
+    provider: str, finding, audit_info, mode: str, output_options
+):
     """
     generate_provider_output_json configures automatically the outputs based on the selected provider and returns the Check_Output_JSON object.
     """
@@ -228,6 +273,9 @@ def generate_provider_output_json(provider: str, finding, audit_info, mode: str,
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceName = finding.resource_name
             finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
+            finding_output.Compliance = get_check_compliance(
+                finding, provider, output_options
+            )
 
         if provider == "aws":
             finding_output.Profile = audit_info.profile
@@ -237,6 +285,9 @@ def generate_provider_output_json(provider: str, finding, audit_info, mode: str,
             finding_output.ResourceArn = finding.resource_arn
             finding_output.ResourceTags = finding.resource_tags
             finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
+            finding_output.Compliance = get_check_compliance(
+                finding, provider, output_options
+            )
 
             if audit_info.organizations_metadata:
                 finding_output.OrganizationsInfo = (
@@ -276,6 +327,7 @@ class Check_Output_JSON(BaseModel):
     Risk: str
     RelatedUrl: str
     Remediation: Remediation
+    Compliance: Optional[dict]
     Categories: List[str]
     DependsOn: List[str]
     RelatedTo: List[str]
