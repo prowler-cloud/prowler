@@ -17,11 +17,14 @@ def get_check_compliance(finding, provider, output_options):
     for compliance in output_options.bulk_checks_metadata[
         finding.check_metadata.CheckID
     ].Compliance:
+        compliance_fw = compliance.Framework
+        if compliance.Version:
+            compliance_fw = f"{compliance_fw}-{compliance.Version}"
         if compliance.Provider == provider.upper():
-            if compliance.Framework not in check_compliance:
-                check_compliance[compliance.Framework] = []
+            if compliance_fw not in check_compliance:
+                check_compliance[compliance_fw] = []
             for requirement in compliance.Requirements:
-                check_compliance[compliance.Framework].append(requirement.Id)
+                check_compliance[compliance_fw].append(requirement.Id)
     return check_compliance
 
 
