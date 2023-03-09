@@ -20,9 +20,10 @@ jobs:
         with:
           ref: ${{ env.GITHUB_BRANCH }}
       - name: setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.9 #install the python needed
+          python-version: 3.9
+          cache: 'poetry'
       - name: Install dependencies
         run: |
           pipx install poetry
