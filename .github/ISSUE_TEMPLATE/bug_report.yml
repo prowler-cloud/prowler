@@ -26,7 +26,7 @@ body:
   - type: textarea
     id: actual
     attributes:
-      label: Actual Result with Screenshots or Logs, if helps
+      label: Actual Result with Screenshots or Logs
       description: If applicable, add screenshots to help explain your problem. Also, you can add logs (anonymize them first!). Here a command that may help to share a log `prowler <your arguments> --log-level DEBUG --log-file $(date +%F)_debug.log` then attach here the log file.
     validations:
       required: true
@@ -37,23 +37,61 @@ body:
       options:
         - Cloning the repo (git clone)
         - From pip package
+        - From brew
+        - Docker
+    validations:
+      required: true
   - type: textarea
     id: environment
     attributes:
-      label: Environment
+      label: Environment Resource
       description: From where are you running Prowler?
       placeholder: |-
-        1. Resource: (e.g. EC2 instance, Fargate task, Docker container manually, EKS, Cloud9, CodeBuild, workstation, etc.)
-        2. OS: [e.g. Amazon Linux 2, Mac, Alpine, Windows, etc. ]
-        3. Prowler Version [`prowler --version`]
-        4. Pip version [`pip --version`]
-        5. Others
+        1. EC2 instance, Fargate task, Docker container manually, EKS, Cloud9, CodeBuild, workstation, etc.)
+        2. Fargate task
+        3. Docker container manually
+        4. EKS
+        5. Cloud9
+        6. CodeBuild
+        7. Workstation
+        8. Other(please specify)
+    validations:
+      required: true
+  - type: textarea
+    id: os
+    attributes:
+      label: OS used
+      description: Which OS are you using?
+      placeholder: |-
+        1. Amazon Linux 2
+        2. Mac
+        3. Alpine
+        4. Windows
+        5. Other(please specify)
+    validations:
+      required: true
+  - type: input
+    id: prowler-version
+    attributes:
+      label: Prowler version
+      description: Which Prowler version are you using?
+      placeholder: |-
+        prowler --version
+    validations:
+      required: true
+  - type: input
+    id: pip-version
+    attributes:
+      label: Pip version
+      description: Which pip version are you using?
+      placeholder: |-
+        pip --version
     validations:
       required: true
   - type: textarea
     id: additional
     attributes:
       description: Additional context
-      label: context
+      label: Context
     validations:
       required: false

@@ -1,4 +1,4 @@
-name: Feature request
+name:  💡 Feature Request
 description: Suggest an idea for this project
 labels: ["enhancement", "status/needs-triage"]
 
@@ -7,7 +7,7 @@ body:
   - type: textarea
     id: Problem
     attributes:
-      label: New feature
+      label: New feature motivation
       description: Is your feature request related to a problem? Please describe
       placeholder: |-
         1. A clear and concise description of what the problem is. Ex. I'm always frustrated when
