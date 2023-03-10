@@ -35,10 +35,10 @@ body:
     attributes:
       label: How did you install Prowler?
       options:
-        - Cloning the repo (git clone)
-        - From pip package
-        - From brew
-        - Docker
+        - Cloning the repository from github.com (git clone)
+        - From pip package (pip install prowler)
+        - From brew (brew install prowler)
+        - Docker (docker pull toniblyx/prowler)
     validations:
       required: true
   - type: textarea
@@ -47,9 +47,9 @@ body:
       label: Environment Resource
       description: From where are you running Prowler?
       placeholder: |-
-        1. EC2 instance, Fargate task, Docker container manually, EKS, Cloud9, CodeBuild, workstation, etc.)
+        1. EC2 instance
         2. Fargate task
-        3. Docker container manually
+        3. Docker container locally
         4. EKS
         5. Cloud9
         6. CodeBuild
@@ -64,8 +64,8 @@ body:
       description: Which OS are you using?
       placeholder: |-
         1. Amazon Linux 2
-        2. Mac
-        3. Alpine
+        2. MacOS
+        3. Alpine Linux
         4. Windows
         5. Other(please specify)
     validations:
