@@ -1,0 +1,59 @@
+name: 🐞 Bug Report
+description: Create a report to help us improve
+title: "[Bug]: "
+labels: ["bug", "status/needs-triage"]
+
+body:
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |-
+        1. What command are you running?
+        2. Cloud provider you are launching
+        3. Environment you have like single account, multi-account, organizations, multi or single subsctiption, etc.
+        4. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Result with Screenshots or Logs, if helps
+      description: If applicable, add screenshots to help explain your problem. Also, you can add logs (anonymize them first!). Here a command that may help to share a log `prowler <your arguments> --log-level DEBUG --log-file $(date +%F)_debug.log` then attach here the log file.
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: How did you install Prowler?
+      options:
+        - Cloning the repo (git clone)
+        - From pip package
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: From where are you running Prowler?
+      placeholder: |-
+        1. Resource: (e.g. EC2 instance, Fargate task, Docker container manually, EKS, Cloud9, CodeBuild, workstation, etc.)
+        2. OS: [e.g. Amazon Linux 2, Mac, Alpine, Windows, etc. ]
+        3. Prowler Version [`prowler --version`]
+        4. Pip version [`pip --version`]
+        5. Others
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      description: Additional context
+      label: context
+    validations:
+      required: false
