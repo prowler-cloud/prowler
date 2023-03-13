@@ -38,7 +38,7 @@ botocore = "1.29.86"
 colorama = "0.4.6"
 detect-secrets = "1.4.0"
 mkdocs = {version = "1.4.2", optional = true}
-mkdocs-material = {version = "9.1.1", optional = true}
+mkdocs-material = {version = "9.1.2", optional = true}
 msgraph-core = "0.2.2"
 pydantic = "1.10.5"
 python = "^3.9"
