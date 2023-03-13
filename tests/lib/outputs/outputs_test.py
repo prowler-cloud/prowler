@@ -218,10 +218,21 @@ class Test_Outputs:
             {"Key": "environment", "Value": "dev"},
             {"Key": "terraform", "Value": "true"},
         ]
+        unique_dict_list = [
+            {
+                "test1": "value1",
+                "test2": "value2",
+                "test3": "value3",
+            }
+        ]
         assert unroll_list(list) == "test | test1 | test2"
         assert (
             unroll_list(dict_list)
-            == "Key: name Value: test  | Key: project Value: prowler  | Key: environment Value: dev  | Key: terraform Value: true "
+            == "Key: name Value: test | Key: project Value: prowler | Key: environment Value: dev | Key: terraform Value: true |"
+        )
+        assert (
+            unroll_list(unique_dict_list)
+            == "test1: value1 | test2: value2 | test3: value3"
         )
 
     def test_unroll_dict(self):

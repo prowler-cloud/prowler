@@ -152,11 +152,21 @@ def unroll_list(listed_items: list):
     if listed_items:
         for item in listed_items:
             if type(item) == dict:
-                item_dict = ""
                 for key, value in item.items():
-                    item_dict += f"{key}: {value} "
-                item = item_dict
-            if not unrolled_items:
+                    if not unrolled_items:
+                        unrolled_items = f"{key}: {value}"
+                    else:
+                        if "Key" == key:
+                            unrolled_items = f"{unrolled_items} {key}: {value}"
+                        elif "Value" == key:
+                            unrolled_items = (
+                                f"{unrolled_items} {key}: {value} {separator}"
+                            )
+                        else:
+                            unrolled_items = (
+                                f"{unrolled_items} {separator} {key}: {value}"
+                            )
+            elif not unrolled_items:
                 unrolled_items = f"{item}"
             else:
                 unrolled_items = f"{unrolled_items} {separator} {item}"
@@ -286,7 +296,10 @@ def generate_provider_output_json(
             finding_output.Region = finding.region
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceArn = finding.resource_arn
-            finding_output.ResourceTags = finding.resource_tags
+            if finding.resource_tags == [{}] or finding.resource_tags == [None]:
+                finding_output.ResourceTags = []
+            else:
+                finding_output.ResourceTags = finding.resource_tags
             finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
             finding_output.Compliance = get_check_compliance(
                 finding, provider, output_options
