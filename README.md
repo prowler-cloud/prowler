@@ -19,7 +19,7 @@
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/toniblyx/prowler"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/cloud/build/toniblyx/prowler"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/image-size/toniblyx/prowler"></a>
-  <a href="https://gallery.ecr.aws/o4g1s5r6/prowler"><img width="120" height=19" alt="AWS ECR Gallery" src="https://user-images.githubusercontent.com/3985464/151531396-b6535a68-c907-44eb-95a1-a09508178616.png"></a>
+  <a href="https://gallery.ecr.aws/prowler-cloud/prowler"><img width="120" height=19" alt="AWS ECR Gallery" src="https://user-images.githubusercontent.com/3985464/151531396-b6535a68-c907-44eb-95a1-a09508178616.png"></a>
 </p>
 <p align="center">
   <a href="https://github.com/prowler-cloud/prowler"><img alt="Repo size" src="https://img.shields.io/github/repo-size/prowler-cloud/prowler"></a>
@@ -38,8 +38,13 @@
 
 It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
 
+# 📖 Documentation
+
+The full documentation can now be found at [https://docs.prowler.cloud](https://docs.prowler.cloud)
+    
 ## Looking for Prowler v2 documentation?
 For Prowler v2 Documentation, please go to https://github.com/prowler-cloud/prowler/tree/2.12.1.
+
 # ⚙️ Install
 
 ## Pip package
@@ -49,6 +54,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
 pip install prowler
 prowler -v
 ```
+More details at https://docs.prowler.cloud 
 
 ## Containers
 
@@ -57,11 +63,11 @@ The available versions of Prowler are the following:
 - `latest`: in sync with master branch (bear in mind that it is not a stable version)
 - `<x.y.z>` (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
 - `stable`: this tag always point to the latest release.
-
+    
 The container images are available here:
 
 - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
-- [AWS Public ECR](https://gallery.ecr.aws/o4g1s5r6/prowler)
+- [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
 
 ## From Github
 
@@ -74,11 +80,6 @@ poetry shell
 poetry install
 python prowler.py -v
 ```
-
-# 📖 Documentation
-
-The full documentation can now be found at [https://docs.prowler.cloud](https://docs.prowler.cloud)
-
 
 # 📐✏️ High level architecture
 
