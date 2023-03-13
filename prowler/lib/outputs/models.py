@@ -154,18 +154,25 @@ def unroll_list(listed_items: list):
             if type(item) == dict:
                 for key, value in item.items():
                     if not unrolled_items:
-                        unrolled_items = f"{key}: {value}"
+                        if "Key" != key and "Value" != key:
+                            unrolled_items = f"{key}={value}"
+                        else:
+                            if "Key" == key:
+                                unrolled_items = f"{value}="
+                            else:
+                                unrolled_items = f"{value}"
                     else:
-                        if "Key" == key:
-                            unrolled_items = f"{unrolled_items} {key}: {value}"
-                        elif "Value" == key:
+                        if "Key" != key and "Value" != key:
                             unrolled_items = (
-                                f"{unrolled_items} {key}: {value} {separator}"
+                                f"{unrolled_items} {separator} {key}={value}"
                             )
                         else:
-                            unrolled_items = (
-                                f"{unrolled_items} {separator} {key}: {value}"
-                            )
+                            if "Key" == key:
+                                unrolled_items = (
+                                    f"{unrolled_items} {separator} {value}="
+                                )
+                            else:
+                                unrolled_items = f"{unrolled_items}{value}"
             elif not unrolled_items:
                 unrolled_items = f"{item}"
             else:
@@ -186,6 +193,26 @@ def unroll_dict(dict: dict):
             unrolled_items = f"{unrolled_items} {separator} {key}: {value}"
 
     return unrolled_items
+
+
+def parse_html_string(str: str):
+    string = ""
+    for elem in str.split(" | "):
+        if elem:
+            string += f"\n➤{elem}\n"
+
+    return string
+
+
+def parse_json_tags(tags: list):
+    dict_tags = {}
+    for tag in tags:
+        if "Key" in tag and "Value" in tag:
+            dict_tags[tag["Key"]] = tag["Value"]
+        else:
+            dict_tags.update(tag)
+
+    return dict_tags
 
 
 def generate_csv_fields(format: Any) -> list[str]:
@@ -297,9 +324,9 @@ def generate_provider_output_json(
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceArn = finding.resource_arn
             if finding.resource_tags == [{}] or finding.resource_tags == [None]:
-                finding_output.ResourceTags = []
+                finding_output.ResourceTags = {}
             else:
-                finding_output.ResourceTags = finding.resource_tags
+                finding_output.ResourceTags = parse_json_tags(finding.resource_tags)
             finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
             finding_output.Compliance = get_check_compliance(
                 finding, provider, output_options
