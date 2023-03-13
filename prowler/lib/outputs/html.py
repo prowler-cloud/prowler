@@ -13,7 +13,7 @@ from prowler.lib.outputs.models import (
     get_check_compliance,
     parse_html_string,
     unroll_dict,
-    unroll_list,
+    unroll_tags,
 )
 from prowler.lib.utils.utils import open_file
 
@@ -193,7 +193,7 @@ def add_html_header(file_descriptor, audit_info):
                     <th scope="col">Region</th>
                     <th style="width:20%" scope="col">Check Title</th>
                     <th scope="col">Resource ID</th>
-                    <th scope="col">Resource Tags</th>
+                    <th style="width:5%" scope="col">Resource Tags</th>
                     <th style="width:15%" scope="col">Check Description</th>
                     <th scope="col">Check ID</th>
                     <th scope="col">Status Extended</th>
@@ -229,7 +229,7 @@ def fill_html(file_descriptor, finding, output_options):
                 <td>{finding.region}</td>
                 <td>{finding.check_metadata.CheckTitle}</td>
                 <td>{finding.resource_id.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>
-                <td><p class="show-read-more">{parse_html_string(unroll_list(finding.resource_tags))}</p></td>
+                <td><p class="show-read-more">{parse_html_string(unroll_tags(finding.resource_tags))}</p></td>
                 <td>{finding.check_metadata.Description}</td>
                 <td>{finding.check_metadata.CheckID.replace("_", "<wbr>_")}</td>
                 <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>

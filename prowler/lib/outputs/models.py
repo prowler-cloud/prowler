@@ -116,7 +116,7 @@ def fill_common_data_csv(finding: dict) -> dict:
         "severity": finding.check_metadata.Severity,
         "resource_type": finding.check_metadata.ResourceType,
         "resource_details": finding.resource_details,
-        "resource_tags": unroll_list(finding.resource_tags),
+        "resource_tags": unroll_tags(finding.resource_tags),
         "description": finding.check_metadata.Description,
         "risk": finding.check_metadata.Risk,
         "related_url": finding.check_metadata.RelatedUrl,
@@ -151,9 +151,24 @@ def unroll_list(listed_items: list):
     separator = "|"
     if listed_items:
         for item in listed_items:
+            if not unrolled_items:
+                unrolled_items = f"{item}"
+            else:
+                unrolled_items = f"{unrolled_items} {separator} {item}"
+
+    return unrolled_items
+
+
+def unroll_tags(tags: list):
+    unrolled_items = ""
+    separator = "|"
+    if tags:
+        for item in tags:
+            # Check if there are tags in list
             if type(item) == dict:
                 for key, value in item.items():
                     if not unrolled_items:
+                        # Check the pattern of tags (Key:Value or Key:key/Value:value)
                         if "Key" != key and "Value" != key:
                             unrolled_items = f"{key}={value}"
                         else:
@@ -199,18 +214,19 @@ def parse_html_string(str: str):
     string = ""
     for elem in str.split(" | "):
         if elem:
-            string += f"\n➤{elem}\n"
+            string += f"\n&#x2022;{elem}\n"
 
     return string
 
 
 def parse_json_tags(tags: list):
     dict_tags = {}
-    for tag in tags:
-        if "Key" in tag and "Value" in tag:
-            dict_tags[tag["Key"]] = tag["Value"]
-        else:
-            dict_tags.update(tag)
+    if tags and tags != [{}] and tags != [None]:
+        for tag in tags:
+            if "Key" in tag and "Value" in tag:
+                dict_tags[tag["Key"]] = tag["Value"]
+            else:
+                dict_tags.update(tag)
 
     return dict_tags
 
@@ -323,10 +339,7 @@ def generate_provider_output_json(
             finding_output.Region = finding.region
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceArn = finding.resource_arn
-            if finding.resource_tags == [{}] or finding.resource_tags == [None]:
-                finding_output.ResourceTags = {}
-            else:
-                finding_output.ResourceTags = parse_json_tags(finding.resource_tags)
+            finding_output.ResourceTags = parse_json_tags(finding.resource_tags)
             finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
             finding_output.Compliance = get_check_compliance(
                 finding, provider, output_options
