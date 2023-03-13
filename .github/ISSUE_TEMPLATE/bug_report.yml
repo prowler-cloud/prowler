@@ -12,7 +12,7 @@ body:
       placeholder: |-
         1. What command are you running?
         2. Cloud provider you are launching
-        3. Environment you have like single account, multi-account, organizations, multi or single subsctiption, etc.
+        3. Environment you have like single account, multi-account, organizations, multi or single subscription, etc.
         4. See error
     validations:
       required: true
