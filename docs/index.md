@@ -185,7 +185,7 @@ The available versions of Prowler are the following:
 The container images are available here:
 
 - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
-- [AWS Public ECR](https://gallery.ecr.aws/o4g1s5r6/prowler)
+- [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
 
 ## High level architecture
 

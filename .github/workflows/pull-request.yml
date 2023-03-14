@@ -17,14 +17,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Install poetry
+        run: |
+         python -m pip install --upgrade pip
+         pipx install poetry
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install poetry
           poetry install
           poetry run pip list
           VERSION=$(curl --silent "https://api.github.com/repos/hadolint/hadolint/releases/latest" | \

@@ -77,7 +77,9 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
             ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
-          file: ${{ env.DOCKERFILE_PATH }}
+          file: ${{ env.DOCKERFILE_PATH }}          
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build container image (release)
         if: github.event_name == 'release'
@@ -93,6 +95,8 @@ jobs:
             ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
             ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
           file: ${{ env.DOCKERFILE_PATH }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   dispatch-action:
     needs: container-build-push

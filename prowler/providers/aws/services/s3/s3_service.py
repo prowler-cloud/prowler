@@ -53,7 +53,7 @@ class S3:
                 ]
                 if bucket_region == "EU":  # If EU, bucket_region is eu-west-1
                     bucket_region = "eu-west-1"
-                if not bucket_region:  # If Nonce, bucket_region is us-east-1
+                if not bucket_region:  # If None, bucket_region is us-east-1
                     bucket_region = "us-east-1"
                 # Arn
                 arn = f"arn:{self.audited_partition}:s3:::{bucket['Name']}"
@@ -262,9 +262,12 @@ class S3:
                 "TagSet"
             ]
             bucket.tags = bucket_tags
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "NoSuchTagSet":
-                bucket.tags = []
+        except ClientError as error:
+            bucket.tags = []
+            if error.response["Error"]["Code"] != "NoSuchTagSet":
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             if regional_client:
                 logger.error(

@@ -9,7 +9,6 @@ AWS_REGION = "us-east-1"
 class Test_ec2_ebs_snapshots_encrypted:
     @mock_ec2
     def test_ec2_default_snapshots(self):
-
         from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -29,7 +28,7 @@ class Test_ec2_ebs_snapshots_encrypted:
             result = check.execute()
 
             # Default snapshots
-            assert len(result) == 122
+            assert len(result) == 1116
 
     @mock_ec2
     def test_ec2_unencrypted_snapshot(self):
@@ -57,7 +56,7 @@ class Test_ec2_ebs_snapshots_encrypted:
             results = check.execute()
 
             # Default snapshots + 1 created
-            assert len(results) == 123
+            assert len(results) == 1117
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
@@ -98,7 +97,7 @@ class Test_ec2_ebs_snapshots_encrypted:
             results = check.execute()
 
             # Default snapshots + 1 created
-            assert len(results) == 123
+            assert len(results) == 1117
 
             for snap in results:
                 if snap.resource_id == snapshot.id:

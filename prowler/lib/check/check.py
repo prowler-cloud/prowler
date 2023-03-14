@@ -4,6 +4,7 @@ import os
 import sys
 import traceback
 from pkgutil import walk_packages
+from resource import RLIMIT_NOFILE, getrlimit
 from types import ModuleType
 from typing import Any
 
@@ -108,8 +109,8 @@ def exclude_services_to_run(
 # Load checks from checklist.json
 def parse_checks_from_file(input_file: str, provider: str) -> set:
     checks_to_execute = set()
-    f = open_file(input_file)
-    json_file = parse_json_file(f)
+    with open_file(input_file) as f:
+        json_file = parse_json_file(f)
 
     for check_name in json_file[provider]:
         checks_to_execute.add(check_name)
@@ -355,6 +356,13 @@ def execute_checks(
         completed_checks=0,
         audit_progress=0,
     )
+
+    # Check ulimit for the maximum system open files
+    soft, _ = getrlimit(RLIMIT_NOFILE)
+    if soft < 4096:
+        logger.warning(
+            f"Your session file descriptors limit ({soft} open files) is below 4096. We recommend to increase it to avoid errors. Solve it running this command `ulimit -n 4096`. For more info visit https://docs.prowler.cloud/en/latest/troubleshooting/"
+        )
 
     # Execution with the --only-logs flag
     if audit_output_options.only_logs:

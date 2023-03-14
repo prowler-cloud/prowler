@@ -3081,13 +3081,14 @@
           "us-west-2",
           "ap-northeast-1",
           "ap-south-1",
-          "ap-south-2",
           "ap-southeast-1",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-2",
           "eu-west-3",
           "me-central-1",
-          "us-east-1"
+          "us-east-1",
+          "ap-south-2"
         ],
         "aws-cn": [
           "cn-northwest-1",
@@ -4834,7 +4835,7 @@
           "ap-southeast-2",
           "ap-southeast-3",
           "eu-west-3",
-          "us-east-1",
+          "me-central-1",
           "us-west-2",
           "ap-east-1",
           "ap-northeast-1",
@@ -4844,6 +4845,7 @@
           "eu-south-1",
           "eu-west-2",
           "me-south-1",
+          "us-east-1",
           "us-east-2",
           "ap-southeast-1",
           "ca-central-1",
@@ -7248,24 +7250,27 @@
           "ap-south-1",
           "ap-southeast-3",
           "ca-central-1",
-          "eu-west-2",
           "me-south-1",
           "us-east-1",
           "us-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-southeast-1",
-          "ap-southeast-2",
           "eu-central-1",
           "eu-north-1",
           "eu-south-1",
           "eu-west-1",
-          "eu-west-3",
+          "eu-west-2",
           "us-west-1",
+          "ap-southeast-2",
+          "eu-west-3",
           "sa-east-1",
           "us-west-2"
         ],
-        "aws-cn": [],
+        "aws-cn": [
+          "cn-northwest-1",
+          "cn-north-1"
+        ],
         "aws-us-gov": []
       }
     },
@@ -7368,7 +7373,7 @@
           "us-east-2",
           "ap-southeast-3",
           "eu-central-1",
-          "eu-west-2",
+          "eu-central-2",
           "eu-west-3",
           "me-central-1",
           "me-south-1",
@@ -7380,6 +7385,7 @@
           "ca-central-1",
           "eu-north-1",
           "eu-west-1",
+          "eu-west-2",
           "us-west-1"
         ],
         "aws-cn": [
@@ -7595,9 +7601,38 @@
     },
     "sagemaker-metrics": {
       "regions": {
-        "aws": [],
-        "aws-cn": [],
-        "aws-us-gov": []
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-3",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "sa-east-1",
+          "us-west-1",
+          "ap-northeast-1",
+          "ap-south-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-south-1",
+          "eu-west-1",
+          "me-central-1",
+          "me-south-1",
+          "us-east-1",
+          "ap-northeast-2",
+          "eu-north-1",
+          "eu-west-2",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-west-1",
+          "us-gov-east-1"
+        ]
       }
     },
     "sagemaker-runtime": {
@@ -8085,22 +8120,6 @@
           "cn-northwest-1",
           "cn-north-1"
         ],
-        "aws-us-gov": []
-      }
-    },
-    "simpledb": {
-      "regions": {
-        "aws": [
-          "ap-northeast-1",
-          "ap-southeast-1",
-          "ap-southeast-2",
-          "eu-west-1",
-          "sa-east-1",
-          "us-east-1",
-          "us-west-1",
-          "us-west-2"
-        ],
-        "aws-cn": [],
         "aws-us-gov": []
       }
     },
