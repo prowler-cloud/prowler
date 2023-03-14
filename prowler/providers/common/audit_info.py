@@ -25,6 +25,9 @@ from prowler.providers.aws.lib.resource_api_tagging.resource_api_tagging import 
 from prowler.providers.azure.azure_provider import Azure_Provider
 from prowler.providers.azure.lib.audit_info.audit_info import azure_audit_info
 from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
+from prowler.providers.gcp.gcp_provider import GCP_Provider
+from prowler.providers.gcp.lib.audit_info.audit_info import gcp_audit_info
+from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
 
 class Audit_Info:
@@ -319,6 +322,32 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         azure_audit_info.identity = azure_provider.get_identity()
 
         return azure_audit_info
+
+    def set_gcp_audit_info(self, arguments) -> GCP_Audit_Info:
+        """
+        set_gcp_audit_info returns the GCP_Audit_Info
+        """
+        logger.info("Setting GCP session ...")
+
+        logger.info("Checking if any credentials mode is set ...")
+        user_account_auth = arguments.get("user_account")
+        service_account_auth = arguments.get("service_account")
+        if not user_account_auth and not service_account_auth:
+            raise Exception(
+                "GCP provider requires at least one authentication method set: [--user-account | --service-account]"
+            )
+
+        gcp_provider = GCP_Provider(
+            user_account_auth,
+            service_account_auth,
+        )
+
+        (
+            gcp_audit_info.credentials,
+            gcp_audit_info.project_id,
+        ) = gcp_provider.get_credentials()
+
+        return gcp_audit_info
 
 
 def set_provider_audit_info(provider: str, arguments: dict):

@@ -57,6 +57,7 @@ Detailed documentation at https://docs.prowler.cloud
         # Init Providers Arguments
         self.__init_aws_parser__()
         self.__init_azure_parser__()
+        self.__init_gcp_parser__()
 
     def parse(self, args=None) -> argparse.Namespace:
         """
@@ -430,3 +431,30 @@ Detailed documentation at https://docs.prowler.cloud
             default=[],
             help="Azure subscription ids to be scanned by prowler",
         )
+
+    def __init_gcp_parser__(self):
+        """Init the GCP Provider CLI parser"""
+        gcp_parser = self.subparsers.add_parser(
+            "gcp", parents=[self.common_providers_parser], help="GCP Provider"
+        )
+        # Authentication Modes
+        gcp_auth_subparser = gcp_parser.add_argument_group("Authentication Modes")
+        gcp_auth_modes_group = gcp_auth_subparser.add_mutually_exclusive_group()
+        gcp_auth_modes_group.add_argument(
+            "--user-account",
+            action="store_true",
+            help="Use GCP User Account credentials to log in against GCP",
+        )
+        gcp_auth_modes_group.add_argument(
+            "--service-account",
+            nargs="?",
+            metavar="FILE_PATH",
+            help="Use GCP Service Account with Credentials file to log in against GCP",
+        )
+        # # Scopes
+        # gcp_subscriptions_subparser = gcp_parser.add_argument_group("Scopes")
+        # gcp_subscriptions_subparser.add_argument(
+        #     "--project-id",
+        #     nargs="?",
+        #     help="GCP subscription id to be scanned by prowler",
+        # )

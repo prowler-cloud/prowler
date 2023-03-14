@@ -56,6 +56,19 @@ def generate_provider_output_csv(
             )
             finding_output = output_model(**data)
 
+        if provider == "gcp":
+            data["resource_id"] = finding.resource_id
+            data["resource_name"] = finding.resource_name
+            data["project_id"] = finding.project_id
+            data["region"] = finding.region
+            data[
+                "finding_unique_id"
+            ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.project_id}-{finding.resource_id}"
+            data["compliance"] = unroll_dict(
+                get_check_compliance(finding, provider, output_options)
+            )
+            finding_output = output_model(**data)
+
         if provider == "aws":
             data["profile"] = audit_info.profile
             data["account_id"] = audit_info.audited_account
@@ -305,6 +318,17 @@ class Azure_Check_Output_CSV(Check_Output_CSV):
     resource_name: str = ""
 
 
+class Gcp_Check_Output_CSV(Check_Output_CSV):
+    """
+    Gcp_Check_Output_CSV generates a finding's output in CSV format for the GCP provider.
+    """
+
+    project_id: str = ""
+    region: str = ""
+    resource_id: str = ""
+    resource_name: str = ""
+
+
 def generate_provider_output_json(
     provider: str, finding, audit_info, mode: str, output_options
 ):
@@ -329,6 +353,16 @@ def generate_provider_output_json(
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceName = finding.resource_name
             finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
+            finding_output.Compliance = get_check_compliance(
+                finding, provider, output_options
+            )
+
+        if provider == "gcp":
+            finding_output.ProjectId = audit_info.project_id
+            finding_output.Region = finding.region
+            finding_output.ResourceId = finding.resource_id
+            finding_output.ResourceName = finding.resource_name
+            finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.project_id}-{finding.resource_id}"
             finding_output.Compliance = get_check_compliance(
                 finding, provider, output_options
             )
@@ -416,6 +450,20 @@ class Azure_Check_Output_JSON(Check_Output_JSON):
     Subscription: str = ""
     ResourceId: str = ""
     ResourceName: str = ""
+
+    def __init__(self, **metadata):
+        super().__init__(**metadata)
+
+
+class Gcp_Check_Output_JSON(Check_Output_JSON):
+    """
+    Gcp_Check_Output_JSON generates a finding's output in JSON format for the AWS provider.
+    """
+
+    ProjectId: str = ""
+    ResourceId: str = ""
+    ResourceName: str = ""
+    Region: str = ""
 
     def __init__(self, **metadata):
         super().__init__(**metadata)

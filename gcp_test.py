@@ -10,11 +10,12 @@ from googleapiclient import discovery
 # 3. Gather automatically Compute Engine Credentials
 
 credentials, project_id = auth.default()
+print(type(credentials))
 
 service = discovery.build(
     "iam", "v1", credentials=credentials
 )  # IAM API has to be enabled https://console.developers.google.com/apis/api/iam.googleapis.com/overview?project=6896496431
-
+print(type(service))
 request = service.roles().list()
 while True:
     response = request.execute()
