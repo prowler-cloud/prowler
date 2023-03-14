@@ -189,17 +189,15 @@ def add_html_header(file_descriptor, audit_info):
                 <tr>
                     <th scope="col">Status</th>
                     <th scope="col">Severity</th>
-                    <th style="width:5%" scope="col">Service Name</th>
+                    <th scope="col">Service Name</th>
                     <th scope="col">Region</th>
+                    <th style="width:20%" scope="col">Check ID</th>
                     <th style="width:20%" scope="col">Check Title</th>
                     <th scope="col">Resource ID</th>
-                    <th style="width:5%" scope="col">Resource Tags</th>
-                    <th style="width:15%" scope="col">Check Description</th>
-                    <th scope="col">Check ID</th>
+                    <th scope="col">Resource Tags</th>
                     <th scope="col">Status Extended</th>
                     <th scope="col">Risk</th>
                     <th scope="col">Recomendation</th>
-                    <th style="width:5%" scope="col">Recomendation URL</th>
                     <th scope="col">Compliance</th>
                 </tr>
             </thead>
@@ -227,15 +225,13 @@ def fill_html(file_descriptor, finding, output_options):
                 <td>{finding.check_metadata.Severity}</td>
                 <td>{finding.check_metadata.ServiceName}</td>
                 <td>{finding.region}</td>
+                <td>{finding.check_metadata.CheckID.replace("_", "<wbr>_")}</td>
                 <td>{finding.check_metadata.CheckTitle}</td>
                 <td>{finding.resource_id.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>
-                <td><p class="show-read-more">{parse_html_string(unroll_tags(finding.resource_tags))}</p></td>
-                <td>{finding.check_metadata.Description}</td>
-                <td>{finding.check_metadata.CheckID.replace("_", "<wbr>_")}</td>
+                <td>{parse_html_string(unroll_tags(finding.resource_tags))}</td>
                 <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>
                 <td><p class="show-read-more">{finding.check_metadata.Risk}</p></td>
-                <td><p class="show-read-more">{finding.check_metadata.Remediation.Recommendation.Text}</p></td>
-                <td><a class="read-more" href="{finding.check_metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
+                <td><p class="show-read-more">{finding.check_metadata.Remediation.Recommendation.Text}</p> <a class="read-more" href="{finding.check_metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
                 <td><p class="show-read-more">{parse_html_string(unroll_dict(get_check_compliance(finding, finding.check_metadata.Provider, output_options)))}</p></td>
             </tr>
             """
