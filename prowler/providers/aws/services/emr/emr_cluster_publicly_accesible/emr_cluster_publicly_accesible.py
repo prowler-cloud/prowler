@@ -32,7 +32,10 @@ class emr_cluster_publicly_accesible(Check):
                     master_node_sg_groups = deepcopy(
                         cluster.master.additional_security_groups_id
                     )
-                    master_node_sg_groups.append(cluster.master.security_group_id)
+                    if master_node_sg_groups:
+                        master_node_sg_groups.append(cluster.master.security_group_id)
+                    else:
+                        master_node_sg_groups = [cluster.master.security_group_id]
 
                     master_public_security_groups = []
                     for master_sg in master_node_sg_groups:
