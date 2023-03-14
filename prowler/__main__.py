@@ -80,26 +80,19 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
-    # Load the compliance framework if specified with --compliance
-    # If some compliance argument is specified we have to load it
-    if (
-        args.list_compliance
-        or args.list_compliance_requirements
-        or compliance_framework
-    ):
-        bulk_compliance_frameworks = bulk_load_compliance_frameworks(provider)
-        # Complete checks metadata with the compliance framework specification
-        update_checks_metadata_with_compliance(
-            bulk_compliance_frameworks, bulk_checks_metadata
+    bulk_compliance_frameworks = bulk_load_compliance_frameworks(provider)
+    # Complete checks metadata with the compliance framework specification
+    update_checks_metadata_with_compliance(
+        bulk_compliance_frameworks, bulk_checks_metadata
+    )
+    if args.list_compliance:
+        print_compliance_frameworks(bulk_compliance_frameworks)
+        sys.exit()
+    if args.list_compliance_requirements:
+        print_compliance_requirements(
+            bulk_compliance_frameworks, args.list_compliance_requirements
         )
-        if args.list_compliance:
-            print_compliance_frameworks(bulk_compliance_frameworks)
-            sys.exit()
-        if args.list_compliance_requirements:
-            print_compliance_requirements(
-                bulk_compliance_frameworks, args.list_compliance_requirements
-            )
-            sys.exit()
+        sys.exit()
 
     # Load checks to execute
     checks_to_execute = load_checks_to_execute(
