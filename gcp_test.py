@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 from pprint import pprint
 
+from google import auth
 from googleapiclient import discovery
-from oauth2client.client import GoogleCredentials
 
-# https://cloud.google.com/docs/authentication/appechlication-default-credentials
-# 1. GOOGLE_APPLICATION_CREDENTIALS with path of credentials file
-# 2. gcloud auth application-default login
+# https://cloud.google.com/docs/authentication/application-default-credentials
+# 1. GOOGLE_APPLICATION_CREDENTIALS with path of credentials file (--service-account)
+# 2. gcloud auth application-default login (--user-account)
+# 3. Gather automatically Compute Engine Credentials
 
-credentials = GoogleCredentials.get_application_default()
+credentials, project_id = auth.default()
 
 service = discovery.build(
     "iam", "v1", credentials=credentials
@@ -28,27 +29,27 @@ while True:
     if request is None:
         break
 
-service = discovery.build(
-    "cloudresourcemanager", "v1", credentials=credentials
-)  # CloudResourceManager API has to be enabled https://console.developers.google.com/apis/api/iam.googleapis.com/overview?project=6896496431
+# service = discovery.build(
+#     "cloudresourcemanager", "v1", credentials=credentials
+# )  # CloudResourceManager API has to be enabled https://console.developers.google.com/apis/api/iam.googleapis.com/overview?project=6896496431
 
-request = service.projects().list()
+# request = service.projects().list()
 
-while request is not None:
-    response = request.execute()
+# while request is not None:
+#     response = request.execute()
 
-    for project in response.get("projects", []):
-        pprint(project["projectId"])
+#     for project in response.get("projects", []):
+#         pprint(project["projectId"])
 
-    request = service.projects().list_next(
-        previous_request=request, previous_response=response
-    )
+#     request = service.projects().list_next(
+#         previous_request=request, previous_response=response
+#     )
 
 compute = discovery.build(
     "compute", "v1", credentials=credentials
 )  # Compute API has to be enabled https://console.developers.google.com/apis/api/iam.googleapis.com/overview?project=6896496431
 zones = []
-request = compute.zones().list(project="inbound-theory-306814")
+request = compute.zones().list(project=project_id)
 while request is not None:
     response = request.execute()
 
@@ -62,7 +63,7 @@ while request is not None:
     )
 
 for zone in zones:
-    request = compute.instances().list(project="inbound-theory-306814", zone=zone)
+    request = compute.instances().list(project=project_id, zone=zone)
     while request is not None:
         response = request.execute()
 

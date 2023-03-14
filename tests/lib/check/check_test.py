@@ -8,8 +8,6 @@ from mock import patch
 from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
-    get_checks_from_input_arn,
-    get_regions_from_audit_resources,
     list_modules,
     list_services,
     parse_checks_from_file,
@@ -18,6 +16,10 @@ from prowler.lib.check.check import (
     update_audit_metadata,
 )
 from prowler.lib.check.models import load_check_metadata
+from prowler.providers.aws.aws_provider import (
+    get_checks_from_input_arn,
+    get_regions_from_audit_resources,
+)
 
 expected_packages = [
     ModuleInfo(

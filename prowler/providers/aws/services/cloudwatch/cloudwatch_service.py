@@ -131,7 +131,7 @@ class Logs:
                             MetricFilter(
                                 name=filter["filterName"],
                                 metric=filter["metricTransformations"][0]["metricName"],
-                                pattern=filter["filterPattern"],
+                                pattern=filter.get("filterPattern", ""),
                                 log_group=filter["logGroupName"],
                                 region=regional_client.region,
                             )

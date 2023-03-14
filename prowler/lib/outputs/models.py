@@ -11,7 +11,26 @@ from prowler.lib.logger import logger
 from prowler.providers.aws.lib.audit_info.models import AWS_Organizations_Info
 
 
-def generate_provider_output_csv(provider: str, finding, audit_info, mode: str, fd):
+def get_check_compliance(finding, provider, output_options):
+    check_compliance = {}
+    # We have to retrieve all the check's compliance requirements
+    for compliance in output_options.bulk_checks_metadata[
+        finding.check_metadata.CheckID
+    ].Compliance:
+        compliance_fw = compliance.Framework
+        if compliance.Version:
+            compliance_fw = f"{compliance_fw}-{compliance.Version}"
+        if compliance.Provider == provider.upper():
+            if compliance_fw not in check_compliance:
+                check_compliance[compliance_fw] = []
+            for requirement in compliance.Requirements:
+                check_compliance[compliance_fw].append(requirement.Id)
+    return check_compliance
+
+
+def generate_provider_output_csv(
+    provider: str, finding, audit_info, mode: str, fd, output_options
+):
     """
     set_provider_output_options configures automatically the outputs based on the selected provider and returns the Provider_Output_Options object.
     """
@@ -32,6 +51,9 @@ def generate_provider_output_csv(provider: str, finding, audit_info, mode: str, 
             data[
                 "finding_unique_id"
             ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
+            data["compliance"] = unroll_dict(
+                get_check_compliance(finding, provider, output_options)
+            )
             finding_output = output_model(**data)
 
         if provider == "aws":
@@ -43,6 +65,9 @@ def generate_provider_output_csv(provider: str, finding, audit_info, mode: str, 
             data[
                 "finding_unique_id"
             ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
+            data["compliance"] = unroll_dict(
+                get_check_compliance(finding, provider, output_options)
+            )
             finding_output = output_model(**data)
 
             if audit_info.organizations_metadata:
@@ -91,7 +116,7 @@ def fill_common_data_csv(finding: dict) -> dict:
         "severity": finding.check_metadata.Severity,
         "resource_type": finding.check_metadata.ResourceType,
         "resource_details": finding.resource_details,
-        "resource_tags": finding.resource_tags,
+        "resource_tags": unroll_tags(finding.resource_tags),
         "description": finding.check_metadata.Description,
         "risk": finding.check_metadata.Risk,
         "related_url": finding.check_metadata.RelatedUrl,
@@ -113,24 +138,97 @@ def fill_common_data_csv(finding: dict) -> dict:
         "remediation_recommendation_code_other": (
             finding.check_metadata.Remediation.Code.Other
         ),
-        "categories": __unroll_list__(finding.check_metadata.Categories),
-        "depends_on": __unroll_list__(finding.check_metadata.DependsOn),
-        "related_to": __unroll_list__(finding.check_metadata.RelatedTo),
+        "categories": unroll_list(finding.check_metadata.Categories),
+        "depends_on": unroll_list(finding.check_metadata.DependsOn),
+        "related_to": unroll_list(finding.check_metadata.RelatedTo),
         "notes": finding.check_metadata.Notes,
     }
     return data
 
 
-def __unroll_list__(listed_items: list):
+def unroll_list(listed_items: list):
     unrolled_items = ""
     separator = "|"
-    for item in listed_items:
-        if not unrolled_items:
-            unrolled_items = f"{item}"
-        else:
-            unrolled_items = f"{unrolled_items}{separator}{item}"
+    if listed_items:
+        for item in listed_items:
+            if not unrolled_items:
+                unrolled_items = f"{item}"
+            else:
+                unrolled_items = f"{unrolled_items} {separator} {item}"
 
     return unrolled_items
+
+
+def unroll_tags(tags: list):
+    unrolled_items = ""
+    separator = "|"
+    if tags:
+        for item in tags:
+            # Check if there are tags in list
+            if type(item) == dict:
+                for key, value in item.items():
+                    if not unrolled_items:
+                        # Check the pattern of tags (Key:Value or Key:key/Value:value)
+                        if "Key" != key and "Value" != key:
+                            unrolled_items = f"{key}={value}"
+                        else:
+                            if "Key" == key:
+                                unrolled_items = f"{value}="
+                            else:
+                                unrolled_items = f"{value}"
+                    else:
+                        if "Key" != key and "Value" != key:
+                            unrolled_items = (
+                                f"{unrolled_items} {separator} {key}={value}"
+                            )
+                        else:
+                            if "Key" == key:
+                                unrolled_items = (
+                                    f"{unrolled_items} {separator} {value}="
+                                )
+                            else:
+                                unrolled_items = f"{unrolled_items}{value}"
+            elif not unrolled_items:
+                unrolled_items = f"{item}"
+            else:
+                unrolled_items = f"{unrolled_items} {separator} {item}"
+
+    return unrolled_items
+
+
+def unroll_dict(dict: dict):
+    unrolled_items = ""
+    separator = "|"
+    for key, value in dict.items():
+        if type(value) == list:
+            value = ", ".join(value)
+        if not unrolled_items:
+            unrolled_items = f"{key}: {value}"
+        else:
+            unrolled_items = f"{unrolled_items} {separator} {key}: {value}"
+
+    return unrolled_items
+
+
+def parse_html_string(str: str):
+    string = ""
+    for elem in str.split(" | "):
+        if elem:
+            string += f"\n&#x2022;{elem}\n"
+
+    return string
+
+
+def parse_json_tags(tags: list):
+    dict_tags = {}
+    if tags and tags != [{}] and tags != [None]:
+        for tag in tags:
+            if "Key" in tag and "Value" in tag:
+                dict_tags[tag["Key"]] = tag["Value"]
+            else:
+                dict_tags.update(tag)
+
+    return dict_tags
 
 
 def generate_csv_fields(format: Any) -> list[str]:
@@ -162,7 +260,7 @@ class Check_Output_CSV(BaseModel):
     severity: str
     resource_type: str
     resource_details: str
-    resource_tags: Optional[list]
+    resource_tags: str
     description: str
     risk: str
     related_url: str
@@ -172,6 +270,7 @@ class Check_Output_CSV(BaseModel):
     remediation_recommendation_code_terraform: str
     remediation_recommendation_code_cli: str
     remediation_recommendation_code_other: str
+    compliance: str
     categories: str
     depends_on: str
     related_to: str
@@ -206,7 +305,9 @@ class Azure_Check_Output_CSV(Check_Output_CSV):
     resource_name: str = ""
 
 
-def generate_provider_output_json(provider: str, finding, audit_info, mode: str, fd):
+def generate_provider_output_json(
+    provider: str, finding, audit_info, mode: str, output_options
+):
     """
     generate_provider_output_json configures automatically the outputs based on the selected provider and returns the Check_Output_JSON object.
     """
@@ -228,6 +329,9 @@ def generate_provider_output_json(provider: str, finding, audit_info, mode: str,
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceName = finding.resource_name
             finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
+            finding_output.Compliance = get_check_compliance(
+                finding, provider, output_options
+            )
 
         if provider == "aws":
             finding_output.Profile = audit_info.profile
@@ -235,8 +339,11 @@ def generate_provider_output_json(provider: str, finding, audit_info, mode: str,
             finding_output.Region = finding.region
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceArn = finding.resource_arn
-            finding_output.ResourceTags = finding.resource_tags
+            finding_output.ResourceTags = parse_json_tags(finding.resource_tags)
             finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
+            finding_output.Compliance = get_check_compliance(
+                finding, provider, output_options
+            )
 
             if audit_info.organizations_metadata:
                 finding_output.OrganizationsInfo = (
@@ -276,6 +383,7 @@ class Check_Output_JSON(BaseModel):
     Risk: str
     RelatedUrl: str
     Remediation: Remediation
+    Compliance: Optional[dict]
     Categories: List[str]
     DependsOn: List[str]
     RelatedTo: List[str]

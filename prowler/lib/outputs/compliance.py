@@ -5,6 +5,7 @@ from colorama import Fore, Style
 from tabulate import tabulate
 
 from prowler.config.config import orange_color, timestamp
+from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import (
     Check_Output_CSV_CIS,
@@ -18,7 +19,13 @@ def add_manual_controls(output_options, audit_info, file_descriptors):
     try:
         # Check if MANUAL control was already added to output
         if "manual_check" in output_options.bulk_checks_metadata:
-            manual_finding = output_options.bulk_checks_metadata["manual_check"]
+            manual_finding = Check_Report(
+                output_options.bulk_checks_metadata["manual_check"].json()
+            )
+            manual_finding.status = "INFO"
+            manual_finding.status_extended = "Manual check"
+            manual_finding.resource_id = "manual_check"
+            manual_finding.region = ""
             fill_compliance(
                 output_options, manual_finding, audit_info, file_descriptors
             )

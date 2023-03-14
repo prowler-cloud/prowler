@@ -1,10 +1,12 @@
 import sys
 
+from pydantic import parse_obj_as
+
 from prowler.lib.check.compliance_models import (
     Compliance_Base_Model,
     Compliance_Requirement,
 )
-from prowler.lib.check.models import Check_Report_AWS
+from prowler.lib.check.models import Check_Metadata_Model
 from prowler.lib.logger import logger
 
 
@@ -62,44 +64,33 @@ def update_checks_metadata_with_compliance(
                     # Include the compliance framework for the check
                     check_compliance.append(compliance)
             # Create metadata for Manual Control
-            manual_check_metadata = """{
-                "Provider" : "aws",
-                "CheckID" :  "manual_check",
-                "CheckTitle" : "Manual Check",
-                "CheckType" : [],
-                "ServiceName" : "",
-                "SubServiceName" : "",
-                "ResourceIdTemplate" : "",
-                "Severity" : "",
-                "ResourceType" : "",
-                "Description" : "",
-                "Risk" : "",
-                "RelatedUrl" : "",
+            manual_check_metadata = {
+                "Provider": "aws",
+                "CheckID": "manual_check",
+                "CheckTitle": "Manual Check",
+                "CheckType": [],
+                "ServiceName": "",
+                "SubServiceName": "",
+                "ResourceIdTemplate": "",
+                "Severity": "",
+                "ResourceType": "",
+                "Description": "",
+                "Risk": "",
+                "RelatedUrl": "",
                 "Remediation": {
-                    "Code": {
-                    "CLI": "",
-                    "NativeIaC": "",
-                    "Other": "",
-                    "Terraform": ""
-                    },
-                    "Recommendation": {
-                    "Text": "",
-                    "Url": ""
-                    }
+                    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+                    "Recommendation": {"Text": "", "Url": ""},
                 },
-                "Categories" : [],
-                "Tags" : {},
-                "DependsOn" : [],
-                "RelatedTo" : [],
-                "Notes" : ""
-            }"""
-            manual_check = Check_Report_AWS(manual_check_metadata)
-            manual_check.status = "INFO"
-            manual_check.status_extended = "Manual check"
-            manual_check.resource_id = "manual_check"
-            manual_check.Compliance = check_compliance
+                "Categories": [],
+                "Tags": {},
+                "DependsOn": [],
+                "RelatedTo": [],
+                "Notes": "",
+            }
+            manual_check = parse_obj_as(Check_Metadata_Model, manual_check_metadata)
             # Save it into the check's metadata
             bulk_checks_metadata["manual_check"] = manual_check
+            bulk_checks_metadata["manual_check"].Compliance = check_compliance
 
         return bulk_checks_metadata
     except Exception as e:
