@@ -3081,13 +3081,14 @@
           "us-west-2",
           "ap-northeast-1",
           "ap-south-1",
-          "ap-south-2",
           "ap-southeast-1",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-2",
           "eu-west-3",
           "me-central-1",
-          "us-east-1"
+          "us-east-1",
+          "ap-south-2"
         ],
         "aws-cn": [
           "cn-northwest-1",
