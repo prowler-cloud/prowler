@@ -451,16 +451,22 @@ Detailed documentation at https://docs.prowler.cloud
         # Authentication Modes
         gcp_auth_subparser = gcp_parser.add_argument_group("Authentication Modes")
         gcp_auth_modes_group = gcp_auth_subparser.add_mutually_exclusive_group()
+        # gcp_auth_modes_group.add_argument(
+        #     "--user-account",
+        #     action="store_true",
+        #     help="Use GCP User Account credentials to log in against GCP",
+        # )
+        # gcp_auth_modes_group.add_argument(
+        #     "--service-account",
+        #     nargs="?",
+        #     metavar="FILE_PATH",
+        #     help="Use GCP Service Account with Credentials file to log in against GCP",
+        # )
         gcp_auth_modes_group.add_argument(
-            "--user-account",
-            action="store_true",
-            help="Use GCP User Account credentials to log in against GCP",
-        )
-        gcp_auth_modes_group.add_argument(
-            "--service-account",
+            "--credentials-file",
             nargs="?",
             metavar="FILE_PATH",
-            help="Use GCP Service Account with Credentials file to log in against GCP",
+            help="Authenticate using a Google Service Account Application Credentials JSON file",
         )
         # # Scopes
         # gcp_subscriptions_subparser = gcp_parser.add_argument_group("Scopes")

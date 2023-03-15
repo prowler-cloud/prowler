@@ -1,6 +1,5 @@
 import os
 import pathlib
-import sys
 
 from google import auth
 from googleapiclient import discovery
@@ -15,32 +14,22 @@ from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 class GCP_Provider:
     def __init__(
         self,
-        user_account_auth: str,
-        service_account_auth: str,
+        credentials_file: str,
     ):
         logger.info("Instantiating GCP Provider ...")
-        self.credentials, self.project_id = self.__set_credentials__(
-            user_account_auth, service_account_auth
-        )
+        self.credentials, self.project_id = self.__set_credentials__(credentials_file)
 
-    def __set_credentials__(self, user_account_auth, service_account_auth):
-        if service_account_auth:
-            self.__set_gcp_creds_env_var__(service_account_auth)
-        elif user_account_auth:
-            logger.info("GCP provider: Setting Google Account Credentials...")
-        else:
-            logger.critical(
-                "Failed to authenticate to GCP - no supported authentication method"
-            )
-            sys.exit(1)
+    def __set_credentials__(self, credentials_file):
+        if credentials_file:
+            self.__set_gcp_creds_env_var__(credentials_file)
 
         return auth.default()
 
-    def __set_gcp_creds_env_var__(self, service_account_auth):
+    def __set_gcp_creds_env_var__(self, credentials_file):
         logger.info(
             "GCP provider: Setting GOOGLE_APPLICATION_CREDENTIALS environment variable..."
         )
-        client_secrets_path = os.path.abspath(service_account_auth)
+        client_secrets_path = os.path.abspath(credentials_file)
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = client_secrets_path
 
     def get_credentials(self):

@@ -9,6 +9,7 @@ class CloudResourceManager:
     def __init__(self, audit_info):
         self.service = "cloudresourcemanager"
         self.api_version = "v1"
+        self.region = "global"
         self.project_id = audit_info.project_id
         self.client = generate_client(self.service, self.api_version, audit_info)
         self.bindings = []

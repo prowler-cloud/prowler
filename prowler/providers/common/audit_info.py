@@ -330,16 +330,10 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         logger.info("Setting GCP session ...")
 
         logger.info("Checking if any credentials mode is set ...")
-        user_account_auth = arguments.get("user_account")
-        service_account_auth = arguments.get("service_account")
-        if not user_account_auth and not service_account_auth:
-            raise Exception(
-                "GCP provider requires at least one authentication method set: [--user-account | --service-account]"
-            )
+        credentials_file = arguments.get("credentials_file")
 
         gcp_provider = GCP_Provider(
-            user_account_auth,
-            service_account_auth,
+            credentials_file,
         )
 
         (

@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "Ensure that your Google Compute Engine instances are not configured to have external IP addresses in order to minimize their exposure to the Internet.",
-      "Url": "https://www.cisecurity.org/benchmark/google_cloud_computing_platform/"
+      "Url": "https://cloud.google.com/compute/docs/instances/connecting-to-instance"
     }
   },
   "Categories": [],

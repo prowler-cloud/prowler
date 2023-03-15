@@ -34,14 +34,14 @@ class ComputeEngine:
                             for config in interface.get("accessConfigs", []):
                                 if "natIP" in config:
                                     public_ip = True
-                            self.instances.append(
-                                Instance(
-                                    name=instance["name"],
-                                    id=instance["id"],
-                                    zone=zone,
-                                    public_ip=public_ip,
-                                )
+                        self.instances.append(
+                            Instance(
+                                name=instance["name"],
+                                id=instance["id"],
+                                zone=zone,
+                                public_ip=public_ip,
                             )
+                        )
 
                     request = self.client.instances().list_next(
                         previous_request=request, previous_response=response
