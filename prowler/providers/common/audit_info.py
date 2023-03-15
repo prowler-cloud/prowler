@@ -44,7 +44,7 @@ class Audit_Info:
         else:
             return caller_identity
 
-    def print_audit_credentials(self, audit_info: AWS_Audit_Info):
+    def print_aws_credentials(self, audit_info: AWS_Audit_Info):
         # Beautify audited regions, set "all" if there is no filter region
         regions = (
             ", ".join(audit_info.audited_regions)
@@ -64,6 +64,29 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         # If -A is set, print Assumed Role ARN
         if audit_info.assumed_role_info.role_arn is not None:
             report += f"""Assumed Role ARN: {Fore.YELLOW}[{audit_info.assumed_role_info.role_arn}]{Style.RESET_ALL}
+"""
+        print(report)
+
+    def print_gcp_credentials(self, audit_info: GCP_Audit_Info):
+        # Beautify audited regions, set "all" if there is no filter region
+        zones = (
+            ", ".join(audit_info.audit_zones)
+            if audit_info.audit_zones is not None
+            else "all"
+        )
+        # Beautify audited profile, set "default" if there is no profile set
+        profile = (
+            audit_info.credentials._service_account_email
+            if audit_info.credentials._service_account_email is not None
+            else "default"
+        )
+
+        report = f"""
+This report is being generated using credentials below:
+
+GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}
+GCP Project ID: {Fore.YELLOW}[{audit_info.project_id}]{Style.RESET_ALL}
+GCP Audit Zones: {Fore.YELLOW}[{zones}]{Style.RESET_ALL}
 """
         print(report)
 
@@ -260,7 +283,7 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
             current_audit_info.profile_region = "us-east-1"
 
         if not arguments.get("only_logs"):
-            self.print_audit_credentials(current_audit_info)
+            self.print_aws_credentials(current_audit_info)
 
         # Parse Scan Tags
         if arguments.get("resource_tags"):
@@ -342,6 +365,10 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         ) = gcp_provider.get_credentials()
 
         gcp_audit_info.audit_zones = arguments.get("zone", [])
+
+        if not arguments.get("only_logs"):
+            self.print_gcp_credentials(gcp_audit_info)
+
         return gcp_audit_info
 
 

@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudstorage_bucket_uniform_bucket_level_access",
+  "CheckTitle": "Check for Cloud SQL Database Instances with Public IPs",
+  "CheckType": [],
+  "ServiceName": "cloudstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "DatabaseInstance",
+  "Description": "Check for Cloud SQL Database Instances with Public IPs",
+  "Risk": "To lower the organization's attack surface, Cloud SQL databases should not have public IPs. Private IPs provide improved network security and lower latency for your application.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_sql_11#cli-command",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/sql-database-instances-with-public-ips.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_sql_11#terraform"
+    },
+    "Recommendation": {
+      "Text": "To lower the organization's attack surface, Cloud SQL databases should not have public IPs. Private IPs provide improved network security and lower latency for your application.",
+      "Url": "https://cloud.google.com/sql/docs/mysql/configure-private-ip"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
