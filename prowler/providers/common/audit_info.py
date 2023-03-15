@@ -347,6 +347,7 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
             gcp_audit_info.project_id,
         ) = gcp_provider.get_credentials()
 
+        gcp_audit_info.audit_zones = arguments.get("zone", [])
         return gcp_audit_info
 
 

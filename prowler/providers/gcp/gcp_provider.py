@@ -1,11 +1,14 @@
 import os
+import pathlib
 import sys
 
 from google import auth
 from googleapiclient import discovery
 from googleapiclient.discovery import Resource
 
+from prowler.config.config import gcp_zones_json_file
 from prowler.lib.logger import logger
+from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
 
@@ -55,3 +58,15 @@ def generate_client(
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
+
+
+def get_gcp_available_zones():
+    try:
+        actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        with open_file(f"{actual_directory}/{gcp_zones_json_file}") as f:
+            data = parse_json_file(f)
+
+        return data["zones"]
+    except Exception as error:
+        logger.error(f"{error.__class__.__name__}: {error}")
+        return []

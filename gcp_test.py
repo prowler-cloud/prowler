@@ -12,23 +12,23 @@ from googleapiclient import discovery
 credentials, project_id = auth.default()
 print(type(credentials))
 
-service = discovery.build(
-    "iam", "v1", credentials=credentials
-)  # IAM API has to be enabled https://console.developers.google.com/apis/api/iam.googleapis.com/overview?project=6896496431
-print(type(service))
-request = service.roles().list()
-while True:
-    response = request.execute()
+# service = discovery.build(
+#     "iam", "v1", credentials=credentials
+# )  # IAM API has to be enabled https://console.developers.google.com/apis/api/iam.googleapis.com/overview?project=6896496431
+# print(type(service))
+# request = service.roles().list()
+# while True:
+#     response = request.execute()
 
-    for role in response.get("roles", []):
-        # TODO: Change code below to process each `role` resource:
-        pprint(role["name"])
+#     for role in response.get("roles", []):
+#         # TODO: Change code below to process each `role` resource:
+#         pprint(role["name"])
 
-    request = service.roles().list_next(
-        previous_request=request, previous_response=response
-    )
-    if request is None:
-        break
+#     request = service.roles().list_next(
+#         previous_request=request, previous_response=response
+#     )
+#     if request is None:
+#         break
 
 # service = discovery.build(
 #     "cloudresourcemanager", "v1", credentials=credentials
@@ -63,15 +63,15 @@ while request is not None:
         previous_request=request, previous_response=response
     )
 
-for zone in zones:
-    request = compute.instances().list(project=project_id, zone=zone)
-    while request is not None:
-        response = request.execute()
+# for zone in zones:
+#     request = compute.instances().list(project=project_id, zone=zone)
+#     while request is not None:
+#         response = request.execute()
 
-        for instance in response.get("items", []):
-            # TODO: Change code below to process each `instance` resource:
-            pprint(instance["name"])
+#         for instance in response.get("items", []):
+#             # TODO: Change code below to process each `instance` resource:
+#             pprint(instance["name"])
 
-        request = compute.instances().list_next(
-            previous_request=request, previous_response=response
-        )
+#         request = compute.instances().list_next(
+#             previous_request=request, previous_response=response
+#         )
