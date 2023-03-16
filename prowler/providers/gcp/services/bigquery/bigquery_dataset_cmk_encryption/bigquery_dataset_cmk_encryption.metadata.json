@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "bigquery_dataset_cmk_encryption",
+  "CheckTitle": "Ensure BigQuery datasets are encrypted with Customer-Managed Keys (CMKs).",
+  "CheckType": [],
+  "ServiceName": "bigquery",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Dataset",
+  "Description": "Ensure BigQuery datasets are encrypted with Customer-Managed Keys (CMKs) in order to have a more granular control over data encryption/decryption process.",
+  "Risk": "If you want to have greater control, Customer-managed encryption keys (CMEK) can be used as encryption key management solution for BigQuery Data Sets.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_sql_11#cli-command",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/BigQuery/enable-table-encryption-with-cmks.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-gcp-big-query-tables-are-encrypted-with-customer-supplied-encryption-keys-csek-1#terraform"
+    },
+    "Recommendation": {
+      "Text": "Encrypting datasets with Cloud KMS Customer-Managed Keys (CMKs) will allow for a more granular control over data encryption/decryption process.",
+      "Url": "https://cloud.google.com/bigquery/docs/customer-managed-encryption"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
