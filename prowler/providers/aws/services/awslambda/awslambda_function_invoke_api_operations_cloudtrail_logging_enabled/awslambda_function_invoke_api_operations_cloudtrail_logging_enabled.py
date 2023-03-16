@@ -38,8 +38,7 @@ class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check)
                         ]:
                             if (
                                 field_selector["Field"] == "resources.type"
-                                and field_selector["Equals"][0]
-                                == "AWS::Lambda::Function"
+                                and "AWS::Lambda::Function" in field_selector["Equals"]
                             ):
                                 lambda_recorded_cloudtrail = True
                                 break
@@ -47,7 +46,7 @@ class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check)
                         break
                 if lambda_recorded_cloudtrail:
                     report.status = "PASS"
-                    report.status_extended = f"Lambda function {function.name} is recorded by CloudTrail {trail.name}"
+                    report.status_extended = f"Lambda function {function.name} is recorded by CloudTrail trail {trail.name}"
                     break
             findings.append(report)
 

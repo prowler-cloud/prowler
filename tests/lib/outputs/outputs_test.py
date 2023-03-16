@@ -451,13 +451,17 @@ class Test_Outputs:
 
         expected.Compliance = Compliance(
             Status="PASS" + "ED",
-            RelatedRequirements=finding.check_metadata.CheckType,
+            RelatedRequirements=[],
+            AssociatedStandards=[],
         )
         expected.Remediation = {
             "Recommendation": finding.check_metadata.Remediation.Recommendation
         }
+        output_options = mock.MagicMock()
 
-        assert fill_json_asff(input, input_audit_info, finding) == expected
+        assert (
+            fill_json_asff(input, input_audit_info, finding, output_options) == expected
+        )
 
     @mock_s3
     def test_send_to_s3_bucket(self):
@@ -651,8 +655,8 @@ class Test_Outputs:
         finding.status_extended = "This is a test"
 
         finding_output = Check_Output_JSON_ASFF()
-
-        fill_json_asff(finding_output, input_audit_info, finding)
+        output_options = mock.MagicMock()
+        fill_json_asff(finding_output, input_audit_info, finding, output_options)
 
         assert (
             send_to_security_hub(

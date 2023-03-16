@@ -566,6 +566,7 @@ class Resource(BaseModel):
 class Compliance(BaseModel):
     Status: str
     RelatedRequirements: List[str]
+    AssociatedStandards: List[dict]
 
 
 class Check_Output_JSON_ASFF(BaseModel):

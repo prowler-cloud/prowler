@@ -4,7 +4,6 @@ import os
 import sys
 import traceback
 from pkgutil import walk_packages
-from resource import RLIMIT_NOFILE, getrlimit
 from types import ModuleType
 from typing import Any
 
@@ -357,12 +356,15 @@ def execute_checks(
         audit_progress=0,
     )
 
-    # Check ulimit for the maximum system open files
-    soft, _ = getrlimit(RLIMIT_NOFILE)
-    if soft < 4096:
-        logger.warning(
-            f"Your session file descriptors limit ({soft} open files) is below 4096. We recommend to increase it to avoid errors. Solve it running this command `ulimit -n 4096`. For more info visit https://docs.prowler.cloud/en/latest/troubleshooting/"
-        )
+    if not sys.platform.startswith("win32") or not sys.platform.startswith("cygwin"):
+        from resource import RLIMIT_NOFILE, getrlimit
+
+        # Check ulimit for the maximum system open files
+        soft, _ = getrlimit(RLIMIT_NOFILE)
+        if soft < 4096:
+            logger.warning(
+                f"Your session file descriptors limit ({soft} open files) is below 4096. We recommend to increase it to avoid errors. Solve it running this command `ulimit -n 4096`. For more info visit https://docs.prowler.cloud/en/latest/troubleshooting/"
+            )
 
     # Execution with the --only-logs flag
     if audit_output_options.only_logs:
