@@ -9,7 +9,6 @@ from prowler.config.config import (
 )
 from prowler.providers.aws.aws_provider import get_aws_available_regions
 from prowler.providers.aws.lib.arn.arn import is_valid_arn
-from prowler.providers.gcp.gcp_provider import get_gcp_available_zones
 
 
 def arn_type(arn: str) -> bool:
@@ -439,15 +438,15 @@ Detailed documentation at https://docs.prowler.cloud
             "gcp", parents=[self.common_providers_parser], help="GCP Provider"
         )
         # GCP Zones
-        gcp_zones_subparser = gcp_parser.add_argument_group("GCP Zones")
-        gcp_zones_subparser.add_argument(
-            "-f",
-            "--zone",
-            "--filter-zone",
-            nargs="+",
-            help="GCP zone names to run Prowler against",
-            choices=get_gcp_available_zones(),
-        )
+        # gcp_zones_subparser = gcp_parser.add_argument_group("GCP Zones")
+        # gcp_zones_subparser.add_argument(
+        #     "-f",
+        #     "--zone",
+        #     "--filter-zone",
+        #     nargs="+",
+        #     help="GCP zone names to run Prowler against",
+        #     choices=get_gcp_available_zones(),
+        # )
         # Authentication Modes
         gcp_auth_subparser = gcp_parser.add_argument_group("Authentication Modes")
         gcp_auth_modes_group = gcp_auth_subparser.add_mutually_exclusive_group()

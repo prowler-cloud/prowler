@@ -33,7 +33,7 @@ def stdout_report(finding, color, verbose, is_quiet):
     if finding.check_metadata.Provider == "azure":
         details = finding.check_metadata.ServiceName
     if finding.check_metadata.Provider == "gcp":
-        details = finding.check_metadata.ServiceName
+        details = finding.location
 
     if verbose and not (is_quiet and finding.status != "FAIL"):
         print(

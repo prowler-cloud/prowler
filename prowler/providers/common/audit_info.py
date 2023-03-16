@@ -68,12 +68,6 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         print(report)
 
     def print_gcp_credentials(self, audit_info: GCP_Audit_Info):
-        # Beautify audited regions, set "all" if there is no filter region
-        zones = (
-            ", ".join(audit_info.audit_zones)
-            if audit_info.audit_zones is not None
-            else "all"
-        )
         # Beautify audited profile, set "default" if there is no profile set
         profile = (
             audit_info.credentials._service_account_email
@@ -84,9 +78,7 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         report = f"""
 This report is being generated using credentials below:
 
-GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}
-GCP Project ID: {Fore.YELLOW}[{audit_info.project_id}]{Style.RESET_ALL}
-GCP Audit Zones: {Fore.YELLOW}[{zones}]{Style.RESET_ALL}
+GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project ID: {Fore.YELLOW}[{audit_info.project_id}]{Style.RESET_ALL}
 """
         print(report)
 
@@ -363,8 +355,6 @@ GCP Audit Zones: {Fore.YELLOW}[{zones}]{Style.RESET_ALL}
             gcp_audit_info.credentials,
             gcp_audit_info.project_id,
         ) = gcp_provider.get_credentials()
-
-        gcp_audit_info.audit_zones = arguments.get("zone", [])
 
         if not arguments.get("only_logs"):
             self.print_gcp_credentials(gcp_audit_info)

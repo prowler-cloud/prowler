@@ -32,7 +32,7 @@ with os.scandir(compliance_aws_dir) as files:
 # AWS services-regions matrix json
 aws_services_json_file = "aws_regions_by_service.json"
 
-gcp_zones_json_file = "gcp_zones.json"
+# gcp_zones_json_file = "gcp_zones.json"
 
 default_output_directory = getcwd() + "/output"
 

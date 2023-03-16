@@ -16,7 +16,7 @@ class iam_sa_no_administrative_privileges(Check):
             report.location = iam_client.region
             report.status = "PASS"
             report.status_extended = (
-                f"Account {account.name} has no administrative privileges"
+                f"Account {account.email} has no administrative privileges"
             )
             for binding in cloudresourcemanager_client.bindings:
                 if f"serviceAccount:{account.email}" in binding.members and (
