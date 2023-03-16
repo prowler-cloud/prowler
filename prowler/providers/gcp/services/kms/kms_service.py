@@ -20,6 +20,7 @@ class KMS:
         self.__get_locations__()
         self.__get_key_rings__()
         self.__get_crypto_keys__()
+        self.__get_crypto_keys_iam_policy__()
 
     def __get_client__(self):
         return self.client
@@ -93,6 +94,7 @@ class KMS:
                                 name=key["name"].split("/")[-1],
                                 location=key["name"].split("/")[3],
                                 rotation_period=key.get("rotationPeriod"),
+                                key_ring=ring.name,
                             )
                         )
 
@@ -108,6 +110,25 @@ class KMS:
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __get_crypto_keys_iam_policy__(self):
+        try:
+            for key in self.crypto_keys:
+                request = (
+                    self.client.projects()
+                    .locations()
+                    .keyRings()
+                    .cryptoKeys()
+                    .getIamPolicy(resource=key.key_ring + "/cryptoKeys/" + key.name)
+                )
+                response = request.execute()
+
+                for binding in response.get("bindings", []):
+                    key.members.extend(binding.get("members", []))
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class KeyRing(BaseModel):
     name: str
@@ -117,3 +138,5 @@ class CriptoKey(BaseModel):
     name: str
     location: str
     rotation_period: Optional[str]
+    key_ring: str
+    members: list = []

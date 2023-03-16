@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",
-  "ResourceType": "EncryptionKey",
+  "ResourceType": "CryptoKey",
   "Description": "Ensure KMS keys are rotated within a period of 90 days",
   "Risk": "Ensure that all your Cloud Key Management Service (KMS) keys are rotated within a period of 90 days in order to meet security and compliance requirements",
   "RelatedUrl": "",
