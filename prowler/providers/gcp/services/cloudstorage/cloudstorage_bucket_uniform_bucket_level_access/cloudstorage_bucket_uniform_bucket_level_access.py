@@ -12,7 +12,7 @@ class cloudstorage_bucket_uniform_bucket_level_access(Check):
             report.project_id = cloudstorage_client.project_id
             report.resource_id = bucket.id
             report.resource_name = bucket.name
-            report.region = bucket.region
+            report.location = bucket.region
             report.status = "PASS"
             report.status_extended = (
                 f"Bucket {bucket.name} has uniform Bucket Level Access enabled"

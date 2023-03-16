@@ -1,9 +1,9 @@
 {
   "Provider": "gcp",
-  "CheckID": "computeengine_instance_public_ip",
+  "CheckID": "compute_instance_public_ip",
   "CheckTitle": "Check for Virtual Machine Instances with Public IP Addresses",
   "CheckType": [],
-  "ServiceName": "computeengine",
+  "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_public_2#cli-command",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/instances-with-public-ip-addresses.html",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/Compute/instances-with-public-ip-addresses.html",
       "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_public_2#terraform"
     },
     "Recommendation": {

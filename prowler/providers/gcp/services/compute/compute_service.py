@@ -4,8 +4,8 @@ from prowler.lib.logger import logger
 from prowler.providers.gcp.gcp_provider import generate_client, get_gcp_available_zones
 
 
-################## ComputeEngine
-class ComputeEngine:
+################## Compute
+class Compute:
     def __init__(self, audit_info):
         self.service = "compute"
         self.api_version = "v1"
@@ -17,7 +17,9 @@ class ComputeEngine:
         )
         self.client = generate_client(self.service, self.api_version, audit_info)
         self.instances = []
+        self.networks = []
         self.__get_instances__()
+        self.__get_networks__()
 
     def __get_instances__(self):
         try:
@@ -51,9 +53,36 @@ class ComputeEngine:
                 f"{zone} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __get_networks__(self):
+        try:
+            request = self.client.networks().list(project=self.project_id)
+            while request is not None:
+                response = request.execute()
+
+                for network in response.get("items", []):
+                    self.networks.append(
+                        Network(
+                            name=network["name"],
+                            id=network["id"],
+                        )
+                    )
+
+                request = self.client.networks().list_next(
+                    previous_request=request, previous_response=response
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Instance(BaseModel):
     name: str
     id: str
     zone: str
     public_ip: bool
+
+
+class Network(BaseModel):
+    name: str
+    id: str

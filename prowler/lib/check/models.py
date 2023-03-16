@@ -135,14 +135,14 @@ class Check_Report_GCP(Check_Report):
     resource_name: str
     resource_id: str
     project_id: str
-    region: str
+    location: str
 
     def __init__(self, metadata):
         super().__init__(metadata)
         self.resource_name = ""
         self.resource_id = ""
         self.project_id = ""
-        self.region = ""
+        self.location = ""
 
 
 # Testing Pending

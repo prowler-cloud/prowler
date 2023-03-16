@@ -10,7 +10,7 @@ class cloudsql_instance_public_ip(Check):
             report.project_id = cloudsql_client.project_id
             report.resource_id = instance.name
             report.resource_name = instance.name
-            report.region = instance.region
+            report.location = instance.region
             report.status = "PASS"
             report.status_extended = (
                 f"Database Instance {instance.name} has not a public IP"

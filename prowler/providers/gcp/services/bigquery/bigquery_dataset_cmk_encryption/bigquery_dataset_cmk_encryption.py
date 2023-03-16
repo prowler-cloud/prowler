@@ -10,7 +10,7 @@ class bigquery_dataset_cmk_encryption(Check):
             report.project_id = bigquery_client.project_id
             report.resource_id = dataset.id
             report.resource_name = dataset.name
-            report.region = dataset.region
+            report.location = dataset.region
             report.status = "PASS"
             report.status_extended = (
                 f"Dataset {dataset.name} is encrypted with Customer-Managed Keys (CMKs)"

@@ -10,7 +10,7 @@ class logging_sink_created(Check):
             report.project_id = logging_client.project_id
             report.resource_id = ""
             report.resource_name = ""
-            report.region = logging_client.region
+            report.location = logging_client.region
             report.status = "FAIL"
             report.status_extended = (
                 "There are no logging sinks to export copies of all the log entries"
@@ -21,7 +21,7 @@ class logging_sink_created(Check):
                 report.project_id = logging_client.project_id
                 report.resource_id = sink.name
                 report.resource_name = sink.name
-                report.region = logging_client.region
+                report.location = logging_client.region
                 report.status = "FAIL"
                 report.status_extended = f"Sink {sink.name} is enabled but not exporting copies of all the log entries"
                 if sink.filter == "all":
