@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_allow_wide_open_public_ipv4",
-  "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Kafka port 9092.",
+  "CheckTitle": "Ensure no security groups allow ingress from wide-open non-RFC1918 address.",
   "CheckType": [
     "Infrastructure Security"
   ],
@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Kafka port 9092.",
+  "Description": "Ensure no security groups allow ingress from wide-open non-RFC1918 address.",
   "Risk": "If Security groups are not properly configured the attack surface is increased.",
   "RelatedUrl": "",
   "Remediation": {
