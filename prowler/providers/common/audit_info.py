@@ -9,7 +9,8 @@ from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import (
     AWS_Provider,
     assume_role,
-    generate_regional_clients,
+    get_checks_from_input_arn,
+    get_regions_from_audit_resources,
 )
 from prowler.providers.aws.lib.arn.arn import arn_parsing
 from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
@@ -17,6 +18,9 @@ from prowler.providers.aws.lib.audit_info.models import (
     AWS_Audit_Info,
     AWS_Credentials,
     AWS_Organizations_Info,
+)
+from prowler.providers.aws.lib.resource_api_tagging.resource_api_tagging import (
+    get_tagged_resources,
 )
 from prowler.providers.azure.azure_provider import Azure_Provider
 from prowler.providers.azure.lib.audit_info.audit_info import azure_audit_info
@@ -268,6 +272,20 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
 
         return current_audit_info
 
+    def set_aws_execution_parameters(self, provider, audit_info) -> list[str]:
+        # Once the audit_info is set and we have the eventual checks from arn, it is time to exclude the others
+        try:
+            if audit_info.audit_resources:
+                audit_info.audited_regions = get_regions_from_audit_resources(
+                    audit_info.audit_resources
+                )
+                return get_checks_from_input_arn(audit_info.audit_resources, provider)
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            sys.exit(1)
+
     def set_azure_audit_info(self, arguments) -> Azure_Audit_Info:
         """
         set_azure_audit_info returns the Azure_Audit_Info
@@ -319,34 +337,21 @@ def set_provider_audit_info(provider: str, arguments: dict):
         return provider_audit_info
 
 
-def get_tagged_resources(input_resource_tags: list, current_audit_info: AWS_Audit_Info):
+def set_provider_execution_parameters(provider: str, audit_info):
     """
-    get_tagged_resources returns a list of the resources that are going to be scanned based on the given input tags
+    set_provider_audit_info configures automatically the audit execution based on the selected provider and returns the checks that are going to be executed.
     """
     try:
-        resource_tags = []
-        tagged_resources = []
-        for tag in input_resource_tags:
-            key = tag.split("=")[0]
-            value = tag.split("=")[1]
-            resource_tags.append({"Key": key, "Values": [value]})
-        # Get Resources with resource_tags for all regions
-        for regional_client in generate_regional_clients(
-            "resourcegroupstaggingapi", current_audit_info
-        ).values():
-            try:
-                get_resources_paginator = regional_client.get_paginator("get_resources")
-                for page in get_resources_paginator.paginate(TagFilters=resource_tags):
-                    for resource in page["ResourceTagMappingList"]:
-                        tagged_resources.append(resource["ResourceARN"])
-            except Exception as error:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+        set_provider_execution_parameters_function = (
+            f"set_{provider}_execution_parameters"
+        )
+        checks_to_execute = getattr(
+            Audit_Info(), set_provider_execution_parameters_function
+        )(provider, audit_info)
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
         sys.exit(1)
     else:
-        return tagged_resources
+        return checks_to_execute
