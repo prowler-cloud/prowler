@@ -8,11 +8,17 @@ from prowler.config.config import (
     timestamp_utc,
 )
 from prowler.lib.logger import logger
-from prowler.lib.outputs.models import Compliance, ProductFields, Resource, Severity
+from prowler.lib.outputs.models import (
+    Compliance,
+    ProductFields,
+    Resource,
+    Severity,
+    get_check_compliance,
+)
 from prowler.lib.utils.utils import hash_sha512, open_file
 
 
-def fill_json_asff(finding_output, audit_info, finding):
+def fill_json_asff(finding_output, audit_info, finding, output_options):
     # Check if there are no resources in the finding
     if finding.resource_arn == "":
         if finding.resource_id == "":
@@ -40,14 +46,22 @@ def fill_json_asff(finding_output, audit_info, finding):
             Region=finding.region,
         )
     ]
-    # Check if any Requirement has > 64 characters
-    check_types = []
-    for type in finding.check_metadata.CheckType:
-        check_types.extend(type.split("/"))
+    # Iterate for each compliance framework
+    compliance_summary = []
+    associated_standards = []
+    check_compliance = get_check_compliance(finding, "aws", output_options)
+    for key, value in check_compliance.items():
+        associated_standards.append({"StandardsId": key})
+        item = f"{key} {' '.join(value)}"
+        if len(item) > 64:
+            item = item[0:63]
+        compliance_summary.append(item)
+
     # Add ED to PASS or FAIL (PASSED/FAILED)
     finding_output.Compliance = Compliance(
         Status=finding.status + "ED",
-        RelatedRequirements=check_types,
+        AssociatedStandards=associated_standards,
+        RelatedRequirements=compliance_summary,
     )
     finding_output.Remediation = {
         "Recommendation": finding.check_metadata.Remediation.Recommendation
