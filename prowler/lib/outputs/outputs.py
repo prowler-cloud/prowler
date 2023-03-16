@@ -108,7 +108,9 @@ def report(check_findings, output_options, audit_info):
 
                             if "json-asff" in file_descriptors:
                                 finding_output = Check_Output_JSON_ASFF()
-                                fill_json_asff(finding_output, audit_info, finding)
+                                fill_json_asff(
+                                    finding_output, audit_info, finding, output_options
+                                )
 
                                 json.dump(
                                     finding_output.dict(),
