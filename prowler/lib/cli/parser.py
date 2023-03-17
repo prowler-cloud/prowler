@@ -4,6 +4,7 @@ from argparse import RawTextHelpFormatter
 
 from prowler.config.config import (
     available_compliance_frameworks,
+    check_current_version,
     default_output_directory,
     prowler_version,
 )
@@ -36,7 +37,7 @@ Detailed documentation at https://docs.prowler.cloud
             "-v",
             "--version",
             action="version",
-            version=f"Prowler {prowler_version}",
+            version=f"Prowler {prowler_version} {check_current_version(prowler_version)}",
             help="show Prowler version",
         )
         # Common arguments parser

@@ -3,6 +3,7 @@
 
 import sys
 
+from prowler.config.config import check_current_version
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
@@ -54,6 +55,9 @@ def prowler():
     checks_file = args.checks_file
     severities = args.severity
     compliance_framework = args.compliance
+
+    if args.version:
+        check_current_version()
 
     # We treat the compliance framework as another output format
     if compliance_framework:
