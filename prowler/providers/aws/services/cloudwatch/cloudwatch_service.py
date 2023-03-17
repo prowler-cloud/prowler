@@ -6,13 +6,17 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.aws_provider import generate_regional_clients, gen_regions_for_service
+
+from prowler.providers.aws.lib.classes import Service
+from prowler.providers.aws.lib.decorators.decorators import threading_regional, threading_global, timeit
 
 
 ################## CloudWatch
-class CloudWatch:
+class CloudWatch(Service):
     def __init__(self, audit_info):
-        self.service = "cloudwatch"
+        super().__init__("cloudwatch", audit_info)
+        # session is stored in
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
@@ -21,9 +25,10 @@ class CloudWatch:
                 self.service, audit_info, global_service=True
             ).keys()
         )[0]
-        self.regional_clients = generate_regional_clients(self.service, audit_info)
+        # self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.metric_alarms = []
-        self.__threading_call__(self.__describe_alarms__)
+        self.__describe_alarms__()
+        # self.__threading_call__(self.__describe_alarms__)
         self.__list_tags_for_resource__()
 
     def __get_session__(self):
@@ -38,10 +43,11 @@ class CloudWatch:
         for t in threads:
             t.join()
 
-    def __describe_alarms__(self, regional_client):
-        logger.info("CloudWatch - Describing alarms...")
+    @threading_regional
+    def __describe_alarms__(self):
+        logger.info(f"CloudWatch - Describing alarms for region {self.regional_client.region}...")
         try:
-            describe_alarms_paginator = regional_client.get_paginator("describe_alarms")
+            describe_alarms_paginator = self.regional_client.get_paginator("describe_alarms")
             for page in describe_alarms_paginator.paginate():
                 for alarm in page["MetricAlarms"]:
                     if not self.audit_resources or (
@@ -59,23 +65,24 @@ class CloudWatch:
                                 name=alarm["AlarmName"],
                                 metric=metric_name,
                                 name_space=namespace,
-                                region=regional_client.region,
+                                region=self.regional_client.region,
                             )
                         )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
-        logger.info("CloudWatch - List Tags...")
+    @threading_global("metric_alarms")
+    def __list_tags_for_resource__(self, metric_alarm):
+        logger.info(f"CloudWatch - Listing Tags for metric alarm {metric_alarm.name}")
         try:
-            for metric_alarm in self.metric_alarms:
-                regional_client = self.regional_clients[metric_alarm.region]
-                response = regional_client.list_tags_for_resource(
-                    ResourceARN=metric_alarm.arn
-                )["Tags"]
-                metric_alarm.tags = response
+            # for metric_alarm in self.metric_alarms:
+            regional_client = self.regional_clients[metric_alarm.region]
+            response = regional_client.list_tags_for_resource(
+                ResourceARN=metric_alarm.arn
+            )["Tags"]
+            metric_alarm.tags = response
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -83,17 +90,19 @@ class CloudWatch:
 
 
 ################## CloudWatch Logs
-class Logs:
+class Logs(Service):
     def __init__(self, audit_info):
-        self.service = "logs"
+        super().__init__("logs", audit_info)
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
-        self.regional_clients = generate_regional_clients(self.service, audit_info)
+        # self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.metric_filters = []
         self.log_groups = []
-        self.__threading_call__(self.__describe_metric_filters__)
-        self.__threading_call__(self.__describe_log_groups__)
+        # self.__threading_call__(self.__describe_metric_filters__)
+        self.__describe_metric_filters__()
+        # self.__threading_call__(self.__describe_log_groups__)
+        self.__describe_log_groups__()
         if (
             "cloudwatch_log_group_no_secrets_in_logs"
             in audit_info.audit_metadata.expected_checks
@@ -101,7 +110,8 @@ class Logs:
             self.events_per_log_group_threshold = (
                 1000  # The threshold for number of events to return per log group.
             )
-            self.__threading_call__(self.__get_log_events__)
+            self.__get_log_events__()
+            # self.__threading_call__(self.__get_log_events__)
         self.__list_tags_for_resource__()
 
     def __get_session__(self):
@@ -116,10 +126,11 @@ class Logs:
         for t in threads:
             t.join()
 
-    def __describe_metric_filters__(self, regional_client):
-        logger.info("CloudWatch Logs - Describing metric filters...")
+    @threading_regional
+    def __describe_metric_filters__(self):
+        logger.info(f"CloudWatch Logs - Describing metric filters for {self.regional_client.region}...")
         try:
-            describe_metric_filters_paginator = regional_client.get_paginator(
+            describe_metric_filters_paginator = self.regional_client.get_paginator(
                 "describe_metric_filters"
             )
             for page in describe_metric_filters_paginator.paginate():
@@ -133,18 +144,19 @@ class Logs:
                                 metric=filter["metricTransformations"][0]["metricName"],
                                 pattern=filter.get("filterPattern", ""),
                                 log_group=filter["logGroupName"],
-                                region=regional_client.region,
+                                region=self.regional_client.region,
                             )
                         )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_log_groups__(self, regional_client):
+    @threading_regional
+    def __describe_log_groups__(self):
         logger.info("CloudWatch Logs - Describing log groups...")
         try:
-            describe_log_groups_paginator = regional_client.get_paginator(
+            describe_log_groups_paginator = self.regional_client.get_paginator(
                 "describe_log_groups"
             )
             for page in describe_log_groups_paginator.paginate():
@@ -164,55 +176,56 @@ class Logs:
                                 name=log_group["logGroupName"],
                                 retention_days=retention_days,
                                 kms_id=kms,
-                                region=regional_client.region,
+                                region=self.regional_client.region,
                             )
                         )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_log_events__(self, regional_client):
-        regional_log_groups = [
-            log_group
-            for log_group in self.log_groups
-            if log_group.region == regional_client.region
-        ]
-        total_log_groups = len(regional_log_groups)
+    @timeit
+    @threading_global("log_groups")
+    def __get_log_events__(self, log_group):
+        # regional_log_groups = [
+        #     log_group
+        #     for log_group in self.log_groups
+        #     if log_group.region == regional_client.region
+        # ]
+        # total_log_groups = len(regional_log_groups)
         logger.info(
-            f"CloudWatch Logs - Retrieving log events for {total_log_groups} log groups in {regional_client.region}..."
+            f"CloudWatch Logs - Retrieving log events for {log_group.name} log group in {log_group.region}..."
         )
         try:
-            for count, log_group in enumerate(regional_log_groups, start=1):
-                events = regional_client.filter_log_events(
-                    logGroupName=log_group.name,
-                    limit=self.events_per_log_group_threshold,
-                )["events"]
-                for event in events:
-                    if event["logStreamName"] not in log_group.log_streams:
-                        log_group.log_streams[event["logStreamName"]] = []
-                    log_group.log_streams[event["logStreamName"]].append(event)
-                if count % 10 == 0:
-                    logger.info(
-                        f"CloudWatch Logs - Retrieved log events for {count}/{total_log_groups} log groups in {regional_client.region}..."
-                    )
+            regional_client = self.regional_clients[log_group.region]
+            events = regional_client.filter_log_events(
+                logGroupName=log_group.name,
+                limit=self.events_per_log_group_threshold,
+            )["events"]
+            for event in events:
+                if event["logStreamName"] not in log_group.log_streams:
+                    log_group.log_streams[event["logStreamName"]] = []
+                log_group.log_streams[event["logStreamName"]].append(event)
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        streams_collected = len(log_group.log_streams)
+        events_collected = sum([len(v) for v in log_group.log_streams.values()])
         logger.info(
-            f"CloudWatch Logs - Finished retrieving log events in {regional_client.region}..."
+            f"CloudWatch Logs - Retrieved {events_collected} log events, across {streams_collected} log streams, for {log_group.name} log group..."
         )
 
-    def __list_tags_for_resource__(self):
+
+    @threading_global("log_groups")
+    def __list_tags_for_resource__(self,log_group):
         logger.info("CloudWatch Logs - List Tags...")
         try:
-            for log_group in self.log_groups:
-                regional_client = self.regional_clients[log_group.region]
-                response = regional_client.list_tags_for_resource(
-                    resourceArn=log_group.arn.replace(":*", "")  # Remove the tailing :*
-                )["tags"]
-                log_group.tags = [response]
+            regional_client = self.regional_clients[log_group.region]
+            response = regional_client.list_tags_for_resource(
+                resourceArn=log_group.arn.replace(":*", "")  # Remove the tailing :*
+            )["tags"]
+            log_group.tags = [response]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

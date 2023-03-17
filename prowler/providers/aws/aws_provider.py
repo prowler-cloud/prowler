@@ -141,6 +141,36 @@ def generate_regional_clients(
         )
 
 
+def gen_regions_for_service(
+    service: str, audit_info: AWS_Audit_Info, global_service: bool = False
+) -> list:
+    try:
+        # Get json locally
+        actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        with open_file(f"{actual_directory}/{aws_services_json_file}") as f:
+            data = parse_json_file(f)
+        # Check if it is a subservice
+        json_regions = data["services"][service]["regions"][
+            audit_info.audited_partition
+        ]
+        if audit_info.audited_regions:  # Check for input aws audit_info.audited_regions
+            regions = list(
+                set(json_regions).intersection(audit_info.audited_regions)
+            )  # Get common regions between input and json
+        else:  # Get all regions from json of the service and partition
+            regions = json_regions
+        # Check if it is global service to gather only one region
+        if global_service:
+            if regions:
+                if audit_info.profile_region in regions:
+                    regions = [audit_info.profile_region]
+                regions = regions[:1]
+        return regions
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+
 def get_aws_available_regions():
     try:
         actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
