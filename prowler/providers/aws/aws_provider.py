@@ -15,21 +15,9 @@ import logging
 ################## AWS PROVIDER
 class AWS_Provider:
     def __init__(self, audit_info, thread_provider=False):
-        if thread_provider:
-            logger.disabled = True
-            original_boto3_level = logging.getLogger('boto3').getEffectiveLevel()
-            original_botocore_level = logging.getLogger('botocore').getEffectiveLevel()
-            logging.getLogger('boto3').setLevel(logging.WARNING)
-            logging.getLogger('botocore').setLevel(logging.WARNING)
-        
         logger.info("Instantiating aws provider ...")
         self.aws_session = self.set_session(audit_info)
         self.role_info = audit_info.assumed_role_info
-        
-        if thread_provider:
-            logger.disabled = False
-            logging.getLogger('boto3').setLevel(original_boto3_level)
-            logging.getLogger('botocore').setLevel(original_botocore_level)
 
     def get_session(self):
         return self.aws_session

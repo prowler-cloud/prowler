@@ -10,7 +10,7 @@ def threading_regional(function):
     pass
     def wrapper(*args,**kwargs):
         self = args[0]
-        futures = [self.regional_pool.submit(function,self) for region in self.regions]
+        futures = [self.regional_pool.submit(function,self) for _ in self.regions]
         futures, _ = wait(futures)
         pass
     return wrapper

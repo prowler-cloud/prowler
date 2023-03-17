@@ -154,7 +154,7 @@ class Logs(Service):
 
     @threading_regional
     def __describe_log_groups__(self):
-        logger.info("CloudWatch Logs - Describing log groups...")
+        logger.info(f"CloudWatch Logs - Describing log groups for {self.regional_client.region}...")
         try:
             describe_log_groups_paginator = self.regional_client.get_paginator(
                 "describe_log_groups"
@@ -187,12 +187,6 @@ class Logs(Service):
     @timeit
     @threading_global("log_groups")
     def __get_log_events__(self, log_group):
-        # regional_log_groups = [
-        #     log_group
-        #     for log_group in self.log_groups
-        #     if log_group.region == regional_client.region
-        # ]
-        # total_log_groups = len(regional_log_groups)
         logger.info(
             f"CloudWatch Logs - Retrieving log events for {log_group.name} log group in {log_group.region}..."
         )
