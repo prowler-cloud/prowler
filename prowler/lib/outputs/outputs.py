@@ -20,6 +20,7 @@ from prowler.lib.outputs.models import (
     Check_Output_JSON_ASFF,
     generate_provider_output_csv,
     generate_provider_output_json,
+    unroll_tags,
 )
 from prowler.providers.aws.lib.allowlist.allowlist import is_allowlisted
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
@@ -70,6 +71,7 @@ def report(check_findings, output_options, audit_info):
                         finding.check_metadata.CheckID,
                         finding.region,
                         finding.resource_id,
+                        unroll_tags(finding.resource_tags),
                     ):
                         finding.status = "WARNING"
                 # Print findings by stdout
