@@ -4,12 +4,8 @@ import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 from threading import current_thread, local
 
-def regional_worker_init():
-    session = 1
-    pass
-
 def regional_worker_intializer_function(audit_info,regions,service,local_context):
-    aws_provider = AWS_Provider(audit_info)
+    aws_provider = AWS_Provider(audit_info,thread_provider=True)
     session = aws_provider.aws_session
 
     thread = current_thread()
@@ -19,7 +15,7 @@ def regional_worker_intializer_function(audit_info,regions,service,local_context
     local_context.regional_client.region = region
 
 def global_worker_intializer_function(audit_info,regions,service,local_context):
-    aws_provider = AWS_Provider(audit_info)
+    aws_provider = AWS_Provider(audit_info,thread_provider=True)
     session = aws_provider.aws_session
     regional_clients = {}
     for region in regions:
@@ -43,11 +39,10 @@ class Service():
                                 initargs=(audit_info,self.regions,self.service,self.local_context)
                                 )
         self.global_pool = ThreadPoolExecutor(
-                                max_workers=len(self.regions),
+                                #max_workers defaults to (# of processors)x5
                                 initializer=global_worker_intializer_function, 
                                 initargs=(audit_info,self.regions,self.service,self.local_context)
                                 )
-        # self.global_pool = multiprocessing.pool.ThreadPool(processes=4)
 
     @property
     def regional_client(self):
