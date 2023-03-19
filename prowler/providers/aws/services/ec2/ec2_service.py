@@ -9,58 +9,55 @@ from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
+from prowler.providers.aws.lib.classes import Service
+from prowler.providers.aws.lib.decorators.decorators import thread_per_region, thread_per_item, timeit
 
 ################## EC2
-class EC2:
+class EC2(Service):
     def __init__(self, audit_info):
-        self.service = "ec2"
-        self.session = audit_info.audit_session
-        self.audited_partition = audit_info.audited_partition
-        self.audited_account = audit_info.audited_account
-        self.audit_resources = audit_info.audit_resources
-        self.regional_clients = generate_regional_clients(self.service, audit_info)
+        super().__init__("ec2", audit_info)
         self.instances = []
-        self.__threading_call__(self.__describe_instances__)
+        self.__describe_instances__()
         self.__get_instance_user_data__()
+        
         self.security_groups = []
-        self.__threading_call__(self.__describe_security_groups__)
+        self.__describe_security_groups__()
+
         self.network_acls = []
-        self.__threading_call__(self.__describe_network_acls__)
+        self.__describe_network_acls__()
+
         self.snapshots = []
-        self.__threading_call__(self.__describe_snapshots__)
+        self.__describe_snapshots__()
         self.__get_snapshot_public__()
-        self.__threading_call__(self.__describe_network_interfaces__)
+
+        self.__describe_network_interfaces__()
+
         self.images = []
-        self.__threading_call__(self.__describe_images__)
+        self.__describe_images__()
+
         self.volumes = []
-        self.__threading_call__(self.__describe_volumes__)
+        self.__describe_volumes__()
+
         self.ebs_encryption_by_default = []
-        self.__threading_call__(self.__get_ebs_encryption_by_default__)
+        self.__get_ebs_encryption_by_default__()
+
         self.elastic_ips = []
-        self.__threading_call__(self.__describe_addresses__)
+        self.__describe_addresses__()
 
     def __get_session__(self):
         return self.session
 
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-
-    def __describe_instances__(self, regional_client):
-        logger.info("EC2 - Describing EC2 Instances...")
+    @thread_per_region
+    def __describe_instances__(self):
+        logger.info(f"EC2 - Describing EC2 Instances for region {self.regional_client.region}...")
         try:
-            describe_instances_paginator = regional_client.get_paginator(
+            describe_instances_paginator = self.regional_client.get_paginator(
                 "describe_instances"
             )
             for page in describe_instances_paginator.paginate():
                 for reservation in page["Reservations"]:
                     for instance in reservation["Instances"]:
-                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:instance/{instance['InstanceId']}"
+                        arn = f"arn:{self.audited_partition}:ec2:{self.regional_client.region}:{self.audited_account}:instance/{instance['InstanceId']}"
                         if not self.audit_resources or (
                             is_resource_filtered(arn, self.audit_resources)
                         ):
@@ -91,7 +88,7 @@ class EC2:
                                     id=instance["InstanceId"],
                                     arn=arn,
                                     state=instance["State"]["Name"],
-                                    region=regional_client.region,
+                                    region=self.regional_client.region,
                                     type=instance["InstanceType"],
                                     image_id=instance["ImageId"],
                                     launch_time=instance["LaunchTime"],
@@ -107,18 +104,19 @@ class EC2:
                             )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_security_groups__(self, regional_client):
-        logger.info("EC2 - Describing Security Groups...")
+    @thread_per_region
+    def __describe_security_groups__(self):
+        logger.info(f"EC2 - Describing Security Groups for region {self.regional_client.region}...")
         try:
-            describe_security_groups_paginator = regional_client.get_paginator(
+            describe_security_groups_paginator = self.regional_client.get_paginator(
                 "describe_security_groups"
             )
             for page in describe_security_groups_paginator.paginate():
                 for sg in page["SecurityGroups"]:
-                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:security-group/{sg['GroupId']}"
+                    arn = f"arn:{self.audited_partition}:ec2:{self.regional_client.region}:{self.audited_account}:security-group/{sg['GroupId']}"
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
@@ -126,7 +124,7 @@ class EC2:
                             SecurityGroup(
                                 name=sg["GroupName"],
                                 arn=arn,
-                                region=regional_client.region,
+                                region=self.regional_client.region,
                                 id=sg["GroupId"],
                                 ingress_rules=sg["IpPermissions"],
                                 egress_rules=sg["IpPermissionsEgress"],
@@ -135,18 +133,19 @@ class EC2:
                         )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_network_acls__(self, regional_client):
+    @thread_per_region
+    def __describe_network_acls__(self):
         logger.info("EC2 - Describing Network ACLs...")
         try:
-            describe_network_acls_paginator = regional_client.get_paginator(
+            describe_network_acls_paginator = self.regional_client.get_paginator(
                 "describe_network_acls"
             )
             for page in describe_network_acls_paginator.paginate():
                 for nacl in page["NetworkAcls"]:
-                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:network-acl/{nacl['NetworkAclId']}"
+                    arn = f"arn:{self.audited_partition}:ec2:{self.regional_client.region}:{self.audited_account}:network-acl/{nacl['NetworkAclId']}"
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
@@ -154,26 +153,27 @@ class EC2:
                             NetworkACL(
                                 id=nacl["NetworkAclId"],
                                 arn=arn,
-                                region=regional_client.region,
+                                region=self.regional_client.region,
                                 entries=nacl["Entries"],
                                 tags=nacl.get("Tags"),
                             )
                         )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_snapshots__(self, regional_client):
+    @thread_per_region
+    def __describe_snapshots__(self):
         logger.info("EC2 - Describing Snapshots...")
         try:
-            describe_snapshots_paginator = regional_client.get_paginator(
+            describe_snapshots_paginator = self.regional_client.get_paginator(
                 "describe_snapshots"
             )
             encrypted = False
             for page in describe_snapshots_paginator.paginate(OwnerIds=["self"]):
                 for snapshot in page["Snapshots"]:
-                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:snapshot/{snapshot['SnapshotId']}"
+                    arn = f"arn:{self.audited_partition}:ec2:{self.regional_client.region}:{self.audited_account}:snapshot/{snapshot['SnapshotId']}"
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
@@ -183,70 +183,70 @@ class EC2:
                             Snapshot(
                                 id=snapshot["SnapshotId"],
                                 arn=arn,
-                                region=regional_client.region,
+                                region=self.regional_client.region,
                                 encrypted=encrypted,
                                 tags=snapshot.get("Tags"),
                             )
                         )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_snapshot_public__(self):
+    @thread_per_item("snapshots")
+    def __get_snapshot_public__(self, snapshot):
         logger.info("EC2 - Gettting snapshots encryption...")
         try:
-            for snapshot in self.snapshots:
-                regional_client = self.regional_clients[snapshot.region]
-                snapshot_public = regional_client.describe_snapshot_attribute(
-                    Attribute="createVolumePermission", SnapshotId=snapshot.id
-                )
-                for permission in snapshot_public["CreateVolumePermissions"]:
-                    if "Group" in permission:
-                        if permission["Group"] == "all":
-                            snapshot.public = True
+            regional_client = self.regional_clients[snapshot.region]
+            snapshot_public = regional_client.describe_snapshot_attribute(
+                Attribute="createVolumePermission", SnapshotId=snapshot.id
+            )
+            for permission in snapshot_public["CreateVolumePermissions"]:
+                if "Group" in permission:
+                    if permission["Group"] == "all":
+                        snapshot.public = True
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_network_interfaces__(self, regional_client):
+    @thread_per_item("security_groups")
+    def __describe_network_interfaces__(self, sg):
         logger.info("EC2 - Describing Network Interfaces...")
         try:
             # Get SGs Network Interfaces
-            for sg in self.security_groups:
-                regional_client = self.regional_clients[sg.region]
-                describe_network_interfaces_paginator = regional_client.get_paginator(
-                    "describe_network_interfaces"
-                )
-                for page in describe_network_interfaces_paginator.paginate(
-                    Filters=[
-                        {
-                            "Name": "group-id",
-                            "Values": [
-                                sg.id,
-                            ],
-                        },
-                    ],
-                ):
-                    for interface in page["NetworkInterfaces"]:
-                        sg.network_interfaces.append(interface["NetworkInterfaceId"])
+            regional_client = self.regional_clients[sg.region]
+            describe_network_interfaces_paginator = regional_client.get_paginator(
+                "describe_network_interfaces"
+            )
+            for page in describe_network_interfaces_paginator.paginate(
+                Filters=[
+                    {
+                        "Name": "group-id",
+                        "Values": [
+                            sg.id,
+                        ],
+                    },
+                ],
+            ):
+                for interface in page["NetworkInterfaces"]:
+                    sg.network_interfaces.append(interface["NetworkInterfaceId"])
 
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_instance_user_data__(self):
+    @thread_per_item("instances")
+    def __get_instance_user_data__(self,instance):
         logger.info("EC2 - Gettting instance user data...")
         try:
-            for instance in self.instances:
-                regional_client = self.regional_clients[instance.region]
-                user_data = regional_client.describe_instance_attribute(
-                    Attribute="userData", InstanceId=instance.id
-                )["UserData"]
-                if "Value" in user_data:
-                    instance.user_data = user_data["Value"]
+            regional_client = self.regional_clients[instance.region]
+            user_data = regional_client.describe_instance_attribute(
+                Attribute="userData", InstanceId=instance.id
+            )["UserData"]
+            if "Value" in user_data:
+                instance.user_data = user_data["Value"]
         except ClientError as error:
             if error.response["Error"]["Code"] == "InvalidInstanceID.NotFound":
                 logger.warning(
@@ -257,12 +257,13 @@ class EC2:
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_images__(self, regional_client):
+    @thread_per_region
+    def __describe_images__(self):
         logger.info("EC2 - Describing Images...")
         try:
             public = False
-            for image in regional_client.describe_images(Owners=["self"])["Images"]:
-                arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
+            for image in self.regional_client.describe_images(Owners=["self"])["Images"]:
+                arn = f"arn:{self.audited_partition}:ec2:{self.regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
                 if not self.audit_resources or (
                     is_resource_filtered(arn, self.audit_resources)
                 ):
@@ -274,24 +275,25 @@ class EC2:
                             arn=arn,
                             name=image["Name"],
                             public=public,
-                            region=regional_client.region,
+                            region=self.regional_client.region,
                             tags=image.get("Tags"),
                         )
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_volumes__(self, regional_client):
+    @thread_per_region
+    def __describe_volumes__(self):
         logger.info("EC2 - Describing Volumes...")
         try:
-            describe_volumes_paginator = regional_client.get_paginator(
+            describe_volumes_paginator = self.regional_client.get_paginator(
                 "describe_volumes"
             )
             for page in describe_volumes_paginator.paginate():
                 for volume in page["Volumes"]:
-                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:volume/{volume['VolumeId']}"
+                    arn = f"arn:{self.audited_partition}:ec2:{self.regional_client.region}:{self.audited_account}:volume/{volume['VolumeId']}"
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
@@ -299,20 +301,21 @@ class EC2:
                             Volume(
                                 id=volume["VolumeId"],
                                 arn=arn,
-                                region=regional_client.region,
+                                region=self.regional_client.region,
                                 encrypted=volume["Encrypted"],
                                 tags=volume.get("Tags"),
                             )
                         )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_addresses__(self, regional_client):
+    @thread_per_region
+    def __describe_addresses__(self):
         logger.info("EC2 - Describing Elastic IPs...")
         try:
-            for address in regional_client.describe_addresses()["Addresses"]:
+            for address in self.regional_client.describe_addresses()["Addresses"]:
                 public_ip = None
                 association_id = None
                 allocation_id = None
@@ -322,7 +325,7 @@ class EC2:
                     association_id = address["AssociationId"]
                 if "AllocationId" in address:
                     allocation_id = address["AllocationId"]
-                elastic_ip_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:eip-allocation/{allocation_id}"
+                elastic_ip_arn = f"arn:{self.audited_partition}:ec2:{self.regional_client.region}:{self.audited_account}:eip-allocation/{allocation_id}"
                 if not self.audit_resources or (
                     is_resource_filtered(elastic_ip_arn, self.audit_resources)
                 ):
@@ -332,29 +335,30 @@ class EC2:
                             association_id=association_id,
                             allocation_id=allocation_id,
                             arn=elastic_ip_arn,
-                            region=regional_client.region,
+                            region=self.regional_client.region,
                             tags=address.get("Tags"),
                         )
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_ebs_encryption_by_default__(self, regional_client):
+    @thread_per_region
+    def __get_ebs_encryption_by_default__(self):
         logger.info("EC2 - Get EBS Encryption By Default...")
         try:
             self.ebs_encryption_by_default.append(
                 EbsEncryptionByDefault(
-                    status=regional_client.get_ebs_encryption_by_default()[
+                    status=self.regional_client.get_ebs_encryption_by_default()[
                         "EbsEncryptionByDefault"
                     ],
-                    region=regional_client.region,
+                    region=self.regional_client.region,
                 )
             )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 

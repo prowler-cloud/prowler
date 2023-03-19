@@ -9,41 +9,26 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients, gen_regions_for_service
 
 from prowler.providers.aws.lib.classes import Service
-from prowler.providers.aws.lib.decorators.decorators import threading_regional, threading_global, timeit
+from prowler.providers.aws.lib.decorators.decorators import thread_per_region, thread_per_item, timeit
 
 
 ################## CloudWatch
 class CloudWatch(Service):
     def __init__(self, audit_info):
         super().__init__("cloudwatch", audit_info)
-        # session is stored in
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
-        self.audit_resources = audit_info.audit_resources
         self.region = list(
             generate_regional_clients(
                 self.service, audit_info, global_service=True
             ).keys()
         )[0]
-        # self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.metric_alarms = []
         self.__describe_alarms__()
-        # self.__threading_call__(self.__describe_alarms__)
         self.__list_tags_for_resource__()
 
     def __get_session__(self):
         return self.session
 
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-
-    @threading_regional
+    @thread_per_region
     def __describe_alarms__(self):
         logger.info(f"CloudWatch - Describing alarms for region {self.regional_client.region}...")
         try:
@@ -73,7 +58,7 @@ class CloudWatch(Service):
                 f"{self.regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    @threading_global("metric_alarms")
+    @thread_per_item("metric_alarms")
     def __list_tags_for_resource__(self, metric_alarm):
         logger.info(f"CloudWatch - Listing Tags for metric alarm {metric_alarm.name}")
         try:
@@ -93,15 +78,9 @@ class CloudWatch(Service):
 class Logs(Service):
     def __init__(self, audit_info):
         super().__init__("logs", audit_info)
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
-        self.audit_resources = audit_info.audit_resources
-        # self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.metric_filters = []
         self.log_groups = []
-        # self.__threading_call__(self.__describe_metric_filters__)
         self.__describe_metric_filters__()
-        # self.__threading_call__(self.__describe_log_groups__)
         self.__describe_log_groups__()
         if (
             "cloudwatch_log_group_no_secrets_in_logs"
@@ -117,16 +96,7 @@ class Logs(Service):
     def __get_session__(self):
         return self.session
 
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-
-    @threading_regional
+    @thread_per_region
     def __describe_metric_filters__(self):
         logger.info(f"CloudWatch Logs - Describing metric filters for {self.regional_client.region}...")
         try:
@@ -152,7 +122,7 @@ class Logs(Service):
                 f"{self.regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    @threading_regional
+    @thread_per_region
     def __describe_log_groups__(self):
         logger.info(f"CloudWatch Logs - Describing log groups for {self.regional_client.region}...")
         try:
@@ -185,7 +155,7 @@ class Logs(Service):
             )
 
     @timeit
-    @threading_global("log_groups")
+    @thread_per_item("log_groups")
     def __get_log_events__(self, log_group):
         logger.info(
             f"CloudWatch Logs - Retrieving log events for {log_group.name} log group in {log_group.region}..."
@@ -211,9 +181,9 @@ class Logs(Service):
         )
 
 
-    @threading_global("log_groups")
+    @thread_per_item("log_groups")
     def __list_tags_for_resource__(self,log_group):
-        logger.info("CloudWatch Logs - List Tags...")
+        logger.info(f"CloudWatch Logs - Listing Tags for {log_group.name} log group in {log_group.region}...")
         try:
             regional_client = self.regional_clients[log_group.region]
             response = regional_client.list_tags_for_resource(

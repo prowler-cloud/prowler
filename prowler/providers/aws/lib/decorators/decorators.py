@@ -2,12 +2,16 @@ import multiprocessing
 from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.aws_provider import generate_regional_clients, gen_regions_for_service, AWS_Provider
 from concurrent.futures import ThreadPoolExecutor, wait
+from prowler.lib.logger import logger
 from functools import wraps
 import time
 
 
-def threading_regional(function):
-    pass
+def thread_per_region(function): 
+    '''
+    Passes the decorated function 
+    Each thread has intialised the self.regional_client variable, one region per thread. Use this in the logic of the wrapped function
+    '''
     def wrapper(*args,**kwargs):
         self = args[0]
         futures = [self.regional_pool.submit(function,self) for _ in self.regions]
@@ -16,18 +20,40 @@ def threading_regional(function):
     return wrapper
 
 
-def threading_global(attribute):
+def thread_per_item(attribute):
+    '''
+    Creates a thread pool, and passes in each item from an attribute defined for self (ie "log_groups" for self.log_groups ) to the decorated function
+    Will then wait for the futures to complete
+    It is assumed that 
+    - All changes that need to be made when invoking a function are performed on the self object (ie adding resources to self.log_groups)
+    - It does not handle returned values, can be altered to do so
+    '''
     def decorate(fn):
         @wraps(fn)
         def wrapper(*args,**kwargs):
             self = args[0]
             resource_iterable = getattr(self,attribute)
-            futures = [self.global_pool.submit(fn,self,resource) for resource in resource_iterable]
+            futures = [self.general_pool.submit(fn,self,resource) for resource in resource_iterable]
             futures, _ = wait(futures)
             pass
         return wrapper
     return decorate
 
+
+def try_catch(function): 
+    '''
+    Passes the decorated function 
+    Each thread has intialised the self.regional_client variable, one region per thread. Use this in the logic of the wrapped function
+    '''
+    def wrapper(*args,**kwargs):
+        self = args[0]
+        try:
+            return function(*args, **kwargs)
+        except Exception as error:
+            logger.error(
+                f"{self.regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+    return wrapper
 
 def timeit(func):
     @wraps(func)
@@ -39,15 +65,5 @@ def timeit(func):
         print(f'Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds')
         return result
     return timeit_wrapper
-
-# def threading_pool(self,function):
-#     def worker_intializer_function():
-#         aws_provider = AWS_Provider(self.audit_info)
-
-#     def wrapper():
-#         with ThreadPoolExecutor(max_workers=len(self.regions)) as executor:
-#                 futures = [executor.submit(function, self, s3_client, task) for region in self.regions]
-#         pass
-#     return wrapper
 
 
