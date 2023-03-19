@@ -1,5 +1,5 @@
 
-from prowler.providers.aws.aws_provider import generate_regional_clients, gen_regions_for_service
+from prowler.providers.aws.aws_provider import generate_regional_clients, generate_regions_for_service
 from concurrent.futures import ThreadPoolExecutor, wait
 from threading import current_thread, local
 
@@ -22,7 +22,7 @@ class Service():
         self.audited_partition = audit_info.audited_partition
         self.audit_resources = audit_info.audit_resources
 
-        self.regions = gen_regions_for_service(self.service, audit_info)
+        self.regions = generate_regions_for_service(self.service, audit_info)
         self.regional_clients = generate_regional_clients(self.service, audit_info)
 
         print(f"Creating regional pool with {len(self.regions)} workers")

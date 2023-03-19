@@ -10,7 +10,6 @@ from prowler.config.config import aws_services_json_file
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
-import logging
 
 ################## AWS PROVIDER
 class AWS_Provider:
@@ -141,7 +140,7 @@ def generate_regional_clients(
         )
 
 
-def gen_regions_for_service(
+def generate_regions_for_service(
     service: str, audit_info: AWS_Audit_Info, global_service: bool = False
 ) -> list:
     try:

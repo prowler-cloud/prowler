@@ -1,6 +1,6 @@
 import multiprocessing
 from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
-from prowler.providers.aws.aws_provider import generate_regional_clients, gen_regions_for_service, AWS_Provider
+from prowler.providers.aws.aws_provider import generate_regional_clients, generate_regions_for_service, AWS_Provider
 from concurrent.futures import ThreadPoolExecutor, wait
 from prowler.lib.logger import logger
 from functools import wraps

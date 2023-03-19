@@ -6,10 +6,10 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients, gen_regions_for_service
+from prowler.providers.aws.aws_provider import generate_regional_clients
 
 from prowler.providers.aws.lib.classes import Service
-from prowler.providers.aws.lib.decorators.decorators import thread_per_region, thread_per_item, timeit
+from prowler.providers.aws.lib.decorators.decorators import thread_per_region, thread_per_item
 
 
 ################## CloudWatch
@@ -154,7 +154,6 @@ class Logs(Service):
                 f"{self.regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    @timeit
     @thread_per_item("log_groups")
     def __get_log_events__(self, log_group):
         logger.info(
