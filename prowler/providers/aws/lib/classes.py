@@ -1,6 +1,6 @@
 
 from prowler.providers.aws.aws_provider import generate_regional_clients, generate_regions_for_service
-from concurrent.futures import ThreadPoolExecutor, wait
+from concurrent.futures import ThreadPoolExecutor
 from threading import current_thread, local
 
 def regional_worker_intializer_function(regions,regional_clients,local_context):
