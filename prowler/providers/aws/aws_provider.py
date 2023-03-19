@@ -13,7 +13,7 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Aud
 
 ################## AWS PROVIDER
 class AWS_Provider:
-    def __init__(self, audit_info, thread_provider=False):
+    def __init__(self, audit_info):
         logger.info("Instantiating aws provider ...")
         self.aws_session = self.set_session(audit_info)
         self.role_info = audit_info.assumed_role_info
