@@ -39,8 +39,7 @@ def thread_per_item(attribute):
 
 def try_catch(function): 
     '''
-    Passes the decorated function 
-    Each thread has intialised the self.regional_client variable, one region per thread. Use this in the logic of the wrapped function
+    Can be used to implement the try-catch strategy used throughout prowler. However, the module and filename fields in the logs then comes up as 'decorators' and 'decorators.py', instead of the actual module the error occured in.
     '''
     def wrapper(*args,**kwargs):
         self = args[0]
