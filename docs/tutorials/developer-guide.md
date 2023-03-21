@@ -10,14 +10,14 @@ First of all, you need a version of Python 3.9 or higher and also pip installed 
 git clone https://github.com/prowler-cloud/prowler
 cd prowler
 ```
-For isolation and avoid conflicts with other environments, we recommend usage of `pipenv`:
+For isolation and avoid conflicts with other environments, we recommend usage of `poetry`:
 ```
-pip install pipenv
+pip install poetry
 ```
 Then install all dependencies including the ones for developers:
 ```
-pipenv install -d
-pipenv shell
+poetry install
+poetry shell
 ```
 
 ## Contributing with your code or fixes to Prowler
