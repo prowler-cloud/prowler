@@ -162,7 +162,7 @@ def unroll_list(listed_items: list):
 def unroll_tags(tags: list):
     unrolled_items = ""
     separator = "|"
-    if tags:
+    if tags and tags != [{}] and tags != [None]:
         for item in tags:
             # Check if there are tags in list
             if type(item) == dict:

@@ -8,34 +8,45 @@ You can use `-w`/`--allowlist-file` with the path of your allowlist yaml file, b
 ## Allowlist Yaml File Syntax
 
     ### Account, Check and/or Region can be * to apply for all the cases
-    ### Resources is a list that can have either Regex or Keywords:
+    ### Resources is a list that can have either Regex or Keywords
+    ### Tags is an optional list containing tuples of 'key=value'
     ###########################  ALLOWLIST EXAMPLE  ###########################
     Allowlist:
       Accounts:
         "123456789012":
-        Checks:
+          Checks:
             "iam_user_hardware_mfa_enabled":
-            Regions:
+              Regions:
                 - "us-east-1"
-            Resources:
+              Resources:
                 - "user-1"           # Will ignore user-1 in check iam_user_hardware_mfa_enabled
                 - "user-2"           # Will ignore user-2 in check iam_user_hardware_mfa_enabled
             "*":
-            Regions:
+              Regions:
                 - "*"
-            Resources:
-                - "test"             # Will ignore every resource containing the string "test" in every account and region
+              Resources:
+                - "test"             # Will ignore every resource containing the string "test" and the tags 'test=test' and 'project=test' in account 123456789012 and every region
+              Tags:
+                - "test=test"        # Will ignore every resource containing the string "test" and the tags 'test=test' and 'project=test' in account 123456789012 and every region
+                - "project=test"
 
         "*":
-        Checks:
+          Checks:
             "s3_bucket_object_versioning":
-            Regions:
+              Regions:
                 - "eu-west-1"
                 - "us-east-1"
-            Resources:
+              Resources:
                 - "ci-logs"           # Will ignore bucket "ci-logs" AND ALSO bucket "ci-logs-replica" in specified check and regions
                 - "logs"              # Will ignore EVERY BUCKET containing the string "logs" in specified check and regions
                 - "[[:alnum:]]+-logs" # Will ignore all buckets containing the terms ci-logs, qa-logs, etc. in specified check and regions
+            "*":
+              Regions:
+                - "*"
+              Resources:
+                - "*"
+              Tags:
+                - "environment=dev"    # Will ignore every resource containing the tag 'environment=dev' in every account and region
 
 
 ## Supported Allowlist Locations
@@ -70,6 +81,7 @@ prowler aws -w arn:aws:dynamodb:<region_name>:<account_id>:table/<table_name>
     - Checks (String): This field can contain either a Prowler Check Name or an `*` (which applies to all the scanned checks).
     - Regions (List): This field contains a list of regions where this allowlist rule is applied (it can also contains an `*` to apply all scanned regions).
     - Resources (List): This field contains a list of regex expressions that applies to the resources that are wanted to be allowlisted.
+    - Tags (List): -Optional- This field contains a list of tuples in the form of 'key=value' that applies to the resources tags that are wanted to be allowlisted.
 
 <img src="../img/allowlist-row.png"/>
 
@@ -101,7 +113,7 @@ generates an Allowlist:
 ```
 def handler(event, context):
   checks = {}
-  checks["vpc_flow_logs_enabled"] = { "Regions": [ "*" ], "Resources": [ "" ] }
+  checks["vpc_flow_logs_enabled"] = { "Regions": [ "*" ], "Resources": [ "" ], Optional("Tags"): [ "key:value" ] }
 
   al = { "Allowlist": { "Accounts": { "*": { "Checks": checks } } } }
   return al
