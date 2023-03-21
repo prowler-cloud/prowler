@@ -14,4 +14,6 @@ prowler <provider> -i
 
 - Also, it creates by default a CSV and JSON to see detailed information about the resources extracted.
 
-![Quick Inventory Example](../img/quick-inventory.png)
+![Quick Inventory Example](../img/quick-inventory.jpg)
+
+> The inventorying process is done with `resourcegroupstaggingapi` calls (except for the IAM resources which are done with Boto3 API calls.)
