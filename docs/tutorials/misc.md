@@ -52,14 +52,15 @@ prowler <provider> -e/--excluded-checks ec2 rds
 prowler <provider> -C/--checks-file <checks_list>.json
 ```
 
-## Severities
-Each check of Prowler has a severity, there are options related with it:
+## Severities
+Each of Prowler's checks has a severity, which can be:
+- informational
+- low
+- medium
+- high
+- critical
 
-- List the available checks in the provider:
-```console
-prowler <provider> --list-severities
-```
-- Execute specific severity(s):
+To execute specific severity(s):
 ```console
 prowler <provider> --severity critical high
 ```
