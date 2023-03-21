@@ -1,26 +1,26 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudstorage_bucket_uniform_bucket_level_access",
-  "CheckTitle": "Check for Cloud SQL Database Instances with Public IPs",
+  "CheckTitle": "Ensure That Cloud Storage Buckets Have Uniform Bucket-Level Access Enabled",
   "CheckType": [],
   "ServiceName": "cloudstorage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Check for Cloud SQL Database Instances with Public IPs",
-  "Risk": "To lower the organization's attack surface, Cloud SQL databases should not have public IPs. Private IPs provide improved network security and lower latency for your application.",
+  "ResourceType": "Bucket",
+  "Description": "Ensure That Cloud Storage Buckets Have Uniform Bucket-Level Access Enabled",
+  "Risk": "Enabling uniform bucket-level access guarantees that if a Storage bucket is not publicly accessible, no object in the bucket is publicly accessible either.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_sql_11#cli-command",
+      "CLI": "gsutil uniformbucketlevelaccess set on gs://BUCKET_NAME/",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/sql-database-instances-with-public-ips.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_sql_11#terraform"
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/enable-uniform-bucket-level-access.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_gcs_2#terraform"
     },
     "Recommendation": {
-      "Text": "To lower the organization's attack surface, Cloud SQL databases should not have public IPs. Private IPs provide improved network security and lower latency for your application.",
-      "Url": "https://cloud.google.com/sql/docs/mysql/configure-private-ip"
+      "Text": "It is recommended that uniform bucket-level access is enabled on Cloud Storage buckets.",
+      "Url": "https://cloud.google.com/storage/docs/using-uniform-bucket-level-access"
     }
   },
   "Categories": [],

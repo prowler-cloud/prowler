@@ -19,8 +19,17 @@ class CloudStorage:
             request = self.client.buckets().list(project=self.project_id)
             while request is not None:
                 response = request.execute()
-
                 for bucket in response.get("items", []):
+                    bucket_iam = (
+                        self.client.buckets()
+                        .getIamPolicy(bucket=bucket["id"])
+                        .execute()["bindings"]
+                    )
+                    public = False
+                    if "allAuthenticatedUsers" in str(bucket_iam) or "allUsers" in str(
+                        bucket_iam
+                    ):
+                        public = True
                     self.buckets.append(
                         Bucket(
                             name=bucket["name"],
@@ -29,6 +38,7 @@ class CloudStorage:
                             uniform_bucket_level_access=bucket["iamConfiguration"][
                                 "uniformBucketLevelAccess"
                             ]["enabled"],
+                            public=public,
                         )
                     )
 
@@ -46,3 +56,4 @@ class Bucket(BaseModel):
     id: str
     region: str
     uniform_bucket_level_access: bool
+    public: bool

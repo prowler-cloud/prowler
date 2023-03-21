@@ -437,40 +437,12 @@ Detailed documentation at https://docs.prowler.cloud
         gcp_parser = self.subparsers.add_parser(
             "gcp", parents=[self.common_providers_parser], help="GCP Provider"
         )
-        # GCP Zones
-        # gcp_zones_subparser = gcp_parser.add_argument_group("GCP Zones")
-        # gcp_zones_subparser.add_argument(
-        #     "-f",
-        #     "--zone",
-        #     "--filter-zone",
-        #     nargs="+",
-        #     help="GCP zone names to run Prowler against",
-        #     choices=get_gcp_available_zones(),
-        # )
         # Authentication Modes
         gcp_auth_subparser = gcp_parser.add_argument_group("Authentication Modes")
         gcp_auth_modes_group = gcp_auth_subparser.add_mutually_exclusive_group()
-        # gcp_auth_modes_group.add_argument(
-        #     "--user-account",
-        #     action="store_true",
-        #     help="Use GCP User Account credentials to log in against GCP",
-        # )
-        # gcp_auth_modes_group.add_argument(
-        #     "--service-account",
-        #     nargs="?",
-        #     metavar="FILE_PATH",
-        #     help="Use GCP Service Account with Credentials file to log in against GCP",
-        # )
         gcp_auth_modes_group.add_argument(
             "--credentials-file",
             nargs="?",
             metavar="FILE_PATH",
             help="Authenticate using a Google Service Account Application Credentials JSON file",
         )
-        # # Scopes
-        # gcp_subscriptions_subparser = gcp_parser.add_argument_group("Scopes")
-        # gcp_subscriptions_subparser.add_argument(
-        #     "--project-id",
-        #     nargs="?",
-        #     help="GCP subscription id to be scanned by prowler",
-        # )
