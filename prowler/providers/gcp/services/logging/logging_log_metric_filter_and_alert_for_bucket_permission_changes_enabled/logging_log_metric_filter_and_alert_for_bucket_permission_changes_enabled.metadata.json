@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+  "CheckTitle": "Ensure That the Log Metric Filter and Alerts Exist for Cloud Storage IAM Permission Changes.",
+  "CheckType": [],
+  "ServiceName": "logging",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "MetricFilter",
+  "Description": "Ensure That the Log Metric Filter and Alerts Exist for Cloud Storage IAM Permission Changes.",
+  "Risk": "Monitoring changes to cloud storage bucket permissions may reduce the time needed to detect and correct permissions on sensitive cloud storage buckets and objects inside the bucket.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-bucket-permission-changes-monitoring.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "It is recommended that a metric filter and alarm be established for Cloud Storage Bucket IAM changes.",
+      "Url": "https://cloud.google.com/monitoring/alerts"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
