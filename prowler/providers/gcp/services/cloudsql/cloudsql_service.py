@@ -32,6 +32,15 @@ class CloudSQL:
                             region=instance["region"],
                             ip_addresses=instance.get("ipAddresses", []),
                             public_ip=public_ip,
+                            ssl=instance["settings"]["ipConfiguration"].get(
+                                "requireSsl", False
+                            ),
+                            automated_backups=instance["settings"][
+                                "backupConfiguration"
+                            ]["enabled"],
+                            authorized_networks=instance["settings"]["ipConfiguration"][
+                                "authorizedNetworks"
+                            ],
                             flags=instance["settings"].get("databaseFlags", []),
                         )
                     )
@@ -51,4 +60,7 @@ class Instance(BaseModel):
     ip_addresses: list
     region: str
     public_ip: bool
+    authorized_networks: list
+    ssl: bool
+    automated_backups: bool
     flags: list

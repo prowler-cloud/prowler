@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudsql_instance_automated_backups",
+  "CheckTitle": "Ensure That Cloud SQL Database Instances Are Configured With Automated Backups",
+  "CheckType": [],
+  "ServiceName": "cloudsql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "DatabaseInstance",
+  "Description": "Ensure That Cloud SQL Database Instances Are Configured With Automated Backups",
+  "Risk": "Backups provide a way to restore a Cloud SQL instance to recover lost data or recover from a problem with that instance. Automated backups need to be set for any instance that contains data that should be protected from loss or damage. This recommendation is applicable for SQL Server, PostgreSql, MySql generation 1 and MySql generation 2 instances.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --backup-start-time <[HH:MM]>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-automated-backups.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "It is recommended to have all SQL database instances set to enable automated backups.",
+      "Url": "https://cloud.google.com/sql/docs/postgres/configure-ssl-instance/"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
