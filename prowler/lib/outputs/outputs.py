@@ -208,6 +208,8 @@ def send_to_s3_bucket(
             filename = f"{output_filename}{json_asff_file_suffix}"
         elif output_mode == "html":
             filename = f"{output_filename}{html_file_suffix}"
+        else:  # Compliance output mode
+            filename = f"{output_filename}_{output_mode}{csv_file_suffix}"
         logger.info(f"Sending outputs to S3 bucket {output_bucket}")
         bucket_remote_dir = output_directory
         while "prowler/" in bucket_remote_dir:  # Check if it is not a custom directory
