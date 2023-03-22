@@ -46,9 +46,11 @@ Prowler supports natively the following output formats:
 
 Hereunder is the structure for each of the supported report formats by Prowler:
 
+### HTML
+![HTML Output](../img/output-html.png)
 ### CSV
-| ASSESSMENT_START_TIME | FINDING_UNIQUE_ID | PROVIDER | PROFILE | ACCOUNT_ID | ACCOUNT_NAME | ACCOUNT_EMAIL | ACCOUNT_ARN | ACCOUNT_ORG | ACCOUNT_TAGS | REGION | CHECK_ID | CHECK_TITLE | CHECK_TYPE | STATUS | STATUS_EXTENDED | SERVICE_NAME | SUBSERVICE_NAME | SEVERITY | RESOURCE_ID | RESOURCE_ARN | RESOURCE_TYPE | RESOURCE_DETAILS | RESOURCE_TAGS | DESCRIPTION | RISK | RELATED_URL | REMEDIATION_RECOMMENDATION_TEXT | REMEDIATION_RECOMMENDATION_URL | REMEDIATION_RECOMMENDATION_CODE_NATIVEIAC | REMEDIATION_RECOMMENDATION_CODE_TERRAFORM | REMEDIATION_RECOMMENDATION_CODE_CLI | REMEDIATION_RECOMMENDATION_CODE_OTHER | CATEGORIES | DEPENDS_ON | RELATED_TO | NOTES |
-| ------- | ----------- | ------ | -------- | ------------ | ----------- | ---------- | ---------- | --------------------- | -------------------------- | -------------- | ----------------- | ------------------------ | --------------- | ---------- | ----------------- | --------- | -------------- | ----------------- | ------------------ | --------------------- | -------------------- | ------------------- | ------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- |
+| ASSESSMENT_START_TIME | FINDING_UNIQUE_ID | PROVIDER | PROFILE | ACCOUNT_ID | ACCOUNT_NAME | ACCOUNT_EMAIL | ACCOUNT_ARN | ACCOUNT_ORG | ACCOUNT_TAGS | REGION | CHECK_ID | CHECK_TITLE | CHECK_TYPE | STATUS | STATUS_EXTENDED | SERVICE_NAME | SUBSERVICE_NAME | SEVERITY | RESOURCE_ID | RESOURCE_ARN | RESOURCE_TYPE | RESOURCE_DETAILS | RESOURCE_TAGS | DESCRIPTION | COMPLIANCE | RISK | RELATED_URL | REMEDIATION_RECOMMENDATION_TEXT | REMEDIATION_RECOMMENDATION_URL | REMEDIATION_RECOMMENDATION_CODE_NATIVEIAC | REMEDIATION_RECOMMENDATION_CODE_TERRAFORM | REMEDIATION_RECOMMENDATION_CODE_CLI | REMEDIATION_RECOMMENDATION_CODE_OTHER | CATEGORIES | DEPENDS_ON | RELATED_TO | NOTES |
+| ------- | ----------- | ------ | -------- | ------------ | ----------- | ---------- | ---------- | --------------------- | -------------------------- | -------------- | ----------------- | ------------------------ | --------------- | ---------- | ----------------- | --------- | -------------- | ----------------- | ------------------ | --------------------- | -------------------- | ------------------- | ------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- |
 
 ### JSON
 
@@ -71,6 +73,10 @@ Hereunder is the structure for each of the supported report formats by Prowler:
     "Severity": "low",
     "ResourceId": "rds-instance-id",
     "ResourceArn": "",
+    "ResourceTags": {
+        "test": "test",
+        "enironment": "dev"
+    },
     "ResourceType": "AwsRdsDbInstance",
     "ResourceDetails": "",
     "Description": "Ensure RDS instances have minor version upgrade enabled.",
@@ -89,7 +95,15 @@ Hereunder is the structure for each of the supported report formats by Prowler:
         }
     },
     "Categories": [],
-    "Notes": ""
+    "Notes": "",
+    "Compliance": {
+        "CIS-1.4": [
+            "1.20"
+        ],
+        "CIS-1.5": [
+            "1.20"
+        ]
+    }
 },{
     "AssessmentStartTime": "2022-12-01T14:16:57.354413",
     "FindingUniqueId": "",
@@ -109,7 +123,7 @@ Hereunder is the structure for each of the supported report formats by Prowler:
     "ResourceId": "rds-instance-id",
     "ResourceArn": "",
     "ResourceType": "AwsRdsDbInstance",
-    "ResourceDetails": "",
+    "ResourceTags": {},
     "Description": "Ensure RDS instances have minor version upgrade enabled.",
     "Risk": "Auto Minor Version Upgrade is a feature that you can enable to have your database automatically upgraded when a new minor database engine version is available. Minor version upgrades often patch security vulnerabilities and fix bugs and therefore should be applied.",
     "RelatedUrl": "https://aws.amazon.com/blogs/database/best-practices-for-upgrading-amazon-rds-to-major-and-minor-versions-of-postgresql/",
@@ -126,7 +140,8 @@ Hereunder is the structure for each of the supported report formats by Prowler:
         }
     },
     "Categories": [],
-    "Notes": ""
+    "Notes": "",
+    "Compliance: {}
 }]
 ```
 
@@ -166,7 +181,30 @@ Hereunder is the structure for each of the supported report formats by Prowler:
     ],
     "Compliance": {
         "Status": "PASSED",
-        "RelatedRequirements": []
+        "RelatedRequirements": [
+            "CISA your-systems-2 booting-up-thing-to-do-first-3",
+            "CIS-1.5 2.3.2",
+            "AWS-Foundational-Security-Best-Practices rds",
+            "RBI-Cyber-Security-Framework annex_i_6",
+            "FFIEC d3-cc-pm-b-1 d3-cc-pm-b-3"
+        ],
+        "AssociatedStandards": [
+            {
+                "StandardsId": "CISA"
+            },
+            {
+                "StandardsId": "CIS-1.5"
+            },
+            {
+                "StandardsId": "AWS-Foundational-Security-Best-Practices"
+            },
+            {
+                "StandardsId": "RBI-Cyber-Security-Framework"
+            },
+            {
+                "StandardsId": "FFIEC"
+            }
+        ]
     },
     "Remediation": {
         "Recommendation": {
@@ -205,7 +243,30 @@ Hereunder is the structure for each of the supported report formats by Prowler:
     ],
     "Compliance": {
         "Status": "PASSED",
-        "RelatedRequirements": []
+        "RelatedRequirements": [
+            "CISA your-systems-2 booting-up-thing-to-do-first-3",
+            "CIS-1.5 2.3.2",
+            "AWS-Foundational-Security-Best-Practices rds",
+            "RBI-Cyber-Security-Framework annex_i_6",
+            "FFIEC d3-cc-pm-b-1 d3-cc-pm-b-3"
+        ],
+        "AssociatedStandards": [
+            {
+                "StandardsId": "CISA"
+            },
+            {
+                "StandardsId": "CIS-1.5"
+            },
+            {
+                "StandardsId": "AWS-Foundational-Security-Best-Practices"
+            },
+            {
+                "StandardsId": "RBI-Cyber-Security-Framework"
+            },
+            {
+                "StandardsId": "FFIEC"
+            }
+        ]
     },
     "Remediation": {
         "Recommendation": {
