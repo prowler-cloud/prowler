@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudsql_instance_postgres_log_min_messages_flag",
+  "CheckTitle": "Ensure that the Log_min_messages Flag for a Cloud SQL PostgreSQL Instance Is Set Appropriately",
+  "CheckType": [],
+  "ServiceName": "cloudsql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "DatabaseInstance",
+  "Description": "Ensure that the Log_min_messages Flag for a Cloud SQL PostgreSQL Instance Is Set Appropriately",
+  "Risk": "Auditing helps in troubleshooting operational problems and also permits forensic analysis. If log_min_messages is not set to the correct value, messages may not be classified as error messages appropriately. An organization will need to decide their own threshold for logging log_min_messages flag.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags log_min_messages=warning",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_sql_4#terraform"
+    },
+    "Recommendation": {
+      "Text": "The log_min_messages flag defines the minimum message severity level that is considered as an error statement. Messages for error statements are logged with the SQL statement. Valid values include DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, INFO, NOTICE, WARNING, ERROR, LOG, FATAL, and PANIC. Each severity level includes the subsequent levels mentioned above. ERROR is considered the best practice setting. Changes should only be made in accordance with the organization's logging policy.",
+      "Url": "https://cloud.google.com/sql/docs/mysql/flags"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

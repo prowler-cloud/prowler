@@ -28,6 +28,7 @@ class CloudSQL:
                     self.instances.append(
                         Instance(
                             name=instance["name"],
+                            version=instance["databaseVersion"],
                             region=instance["region"],
                             public_ip=public_ip,
                             flags=instance["settings"].get("databaseFlags", []),
@@ -45,6 +46,7 @@ class CloudSQL:
 
 class Instance(BaseModel):
     name: str
+    version: str
     region: str
     public_ip: bool
     flags: list

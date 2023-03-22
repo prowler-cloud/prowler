@@ -13,7 +13,7 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags skip_show_database=on",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-skip-show-database-flag.html",
       "Terraform": ""

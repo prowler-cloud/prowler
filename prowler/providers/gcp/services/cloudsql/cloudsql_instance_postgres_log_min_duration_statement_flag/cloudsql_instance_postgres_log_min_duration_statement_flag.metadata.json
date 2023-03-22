@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudsql_instance_postgres_log_min_duration_statement_flag",
+  "CheckTitle": "Ensure that the Log_min_error_statement Flag for a Cloud SQL PostgreSQL Instance Is Set to -1",
+  "CheckType": [],
+  "ServiceName": "cloudsql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "DatabaseInstance",
+  "Description": "Ensure that the Log_min_error_statement Flag for a Cloud SQL PostgreSQL Instance Is Set to -1",
+  "Risk": "The log_min_duration_statement flag defines the minimum amount of execution time of a statement in milliseconds where the total duration of the statement is logged. Ensure that log_min_duration_statement is disabled, i.e., a value of -1 is set.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags log_min_duration_statement=-1",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/configure-log-min-error-statement-flag.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logging SQL statements may include sensitive information that should not be recorded in logs. This recommendation is applicable to PostgreSQL database instances.",
+      "Url": "https://cloud.google.com/sql/docs/mysql/flags"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
