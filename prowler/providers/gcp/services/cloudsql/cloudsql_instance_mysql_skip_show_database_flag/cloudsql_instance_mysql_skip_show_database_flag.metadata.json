@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudsql_instance_mysql_skip_show_database_flag",
+  "CheckTitle": "Ensure Skip_show_database Database Flag for Cloud SQL MySQL Instance Is Set to On",
+  "CheckType": [],
+  "ServiceName": "cloudsql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "DatabaseInstance",
+  "Description": "Ensure Skip_show_database Database Flag for Cloud SQL MySQL Instance Is Set to On",
+  "Risk": "'skip_show_database' database flag prevents people from using the SHOW DATABASES statement if they do not have the SHOW DATABASES privilege.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-skip-show-database-flag.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "It is recommended to set skip_show_database database flag for Cloud SQL Mysql instance to on.",
+      "Url": "https://cloud.google.com/sql/docs/mysql/flags"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

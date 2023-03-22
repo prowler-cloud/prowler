@@ -30,6 +30,7 @@ class CloudSQL:
                             name=instance["name"],
                             region=instance["region"],
                             public_ip=public_ip,
+                            flags=instance["settings"].get("databaseFlags", []),
                         )
                     )
 
@@ -46,3 +47,4 @@ class Instance(BaseModel):
     name: str
     region: str
     public_ip: bool
+    flags: list
