@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, Check_Report_GCP
 from prowler.providers.gcp.services.iam.iam_client import iam_client
 
 
-class iam_sa_key_rotate_90_days(Check):
+class iam_sa_user_managed_key_rotate_90_days(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for account in iam_client.service_accounts:
