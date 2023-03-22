@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "Auditing helps in troubleshooting operational problems and also permits forensic analysis. If log_error_verbosity is not set to the correct value, too many details or too few details may be logged. This flag should be configured with a value of 'DEFAULT' or stricter. This recommendation is applicable to PostgreSQL database instances.",
-      "Url": "https://cloud.google.com/sql/docs/mysql/flags"
+      "Url": "https://cloud.google.com/sql/docs/postgres/flags"
     }
   },
   "Categories": [],

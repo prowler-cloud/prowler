@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "It is recommended to set external scripts enabled database flag for Cloud SQL SQL Server instance to off",
-      "Url": "https://cloud.google.com/sql/docs/mysql/flags"
+      "Url": "https://cloud.google.com/sql/docs/sqlserver/flags"
     }
   },
   "Categories": [],

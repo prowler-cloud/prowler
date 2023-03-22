@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "Auditing helps in troubleshooting operational problems and also permits forensic analysis. If log_min_error_statement is not set to the correct value, messages may not be classified as error messages appropriately. Considering general log messages as error messages would make is difficult to find actual errors and considering only stricter severity levels as error messages may skip actual errors to log their SQL statements. The log_min_error_statement flag should be set to ERROR or stricter.",
-      "Url": "https://cloud.google.com/sql/docs/mysql/flags"
+      "Url": "https://cloud.google.com/sql/docs/postgres/flags"
     }
   },
   "Categories": [],

@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "It is recommended to check the user connections for a Cloud SQL SQL Server instance to ensure that it is not artificially limiting connections.",
-      "Url": "https://cloud.google.com/sql/docs/mysql/flags"
+      "Url": "https://cloud.google.com/sql/docs/sqlserver/flags"
     }
   },
   "Categories": [],

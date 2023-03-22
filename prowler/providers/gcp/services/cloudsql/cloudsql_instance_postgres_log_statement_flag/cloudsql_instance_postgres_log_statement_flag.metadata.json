@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "The value ddl logs all data definition statements. A value of 'ddl' is recommended unless otherwise directed by your organization's logging policy.",
-      "Url": "https://cloud.google.com/sql/docs/mysql/flags"
+      "Url": "https://cloud.google.com/sql/docs/postgres/flags"
     }
   },
   "Categories": [],

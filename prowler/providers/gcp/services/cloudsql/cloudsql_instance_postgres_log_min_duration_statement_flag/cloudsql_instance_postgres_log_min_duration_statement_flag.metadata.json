@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "Logging SQL statements may include sensitive information that should not be recorded in logs. This recommendation is applicable to PostgreSQL database instances.",
-      "Url": "https://cloud.google.com/sql/docs/mysql/flags"
+      "Url": "https://cloud.google.com/sql/docs/postgres/flags"
     }
   },
   "Categories": [],

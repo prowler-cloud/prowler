@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "Enabling the log_disconnections setting logs the end of each session, including the session duration.",
-      "Url": "https://cloud.google.com/sql/docs/mysql/flags"
+      "Url": "https://cloud.google.com/sql/docs/postgres/flags"
     }
   },
   "Categories": [],

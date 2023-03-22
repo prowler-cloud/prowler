@@ -21,7 +21,6 @@ class CloudSQL:
                 response = request.execute()
 
                 for instance in response.get("items", []):
-                    print(instance["databaseVersion"])
                     public_ip = False
                     for address in instance.get("ipAddresses", []):
                         if address["type"] == "PRIMARY":
