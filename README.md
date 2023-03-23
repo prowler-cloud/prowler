@@ -41,7 +41,7 @@ It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, F
 # 📖 Documentation
 
 The full documentation can now be found at [https://docs.prowler.cloud](https://docs.prowler.cloud)
-    
+
 ## Looking for Prowler v2 documentation?
 For Prowler v2 Documentation, please go to https://github.com/prowler-cloud/prowler/tree/2.12.1.
 
@@ -54,7 +54,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
 pip install prowler
 prowler -v
 ```
-More details at https://docs.prowler.cloud 
+More details at https://docs.prowler.cloud
 
 ## Containers
 
@@ -63,7 +63,7 @@ The available versions of Prowler are the following:
 - `latest`: in sync with master branch (bear in mind that it is not a stable version)
 - `<x.y.z>` (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
 - `stable`: this tag always point to the latest release.
-    
+
 The container images are available here:
 
 - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
@@ -115,6 +115,22 @@ Those credentials must be associated to a user or role with proper permissions t
   > Moreover, some read-only additional permissions are needed for several checks, make sure you attach also the custom policy [prowler-additions-policy.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-additions-policy.json) to the role you are using.
 
   > If you want Prowler to send findings to [AWS Security Hub](https://aws.amazon.com/security-hub), make sure you also attach the custom policy [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json).
+
+## Google Cloud Platform
+
+Prowler will follow the same credentials search as [Google authentication libraries](https://cloud.google.com/docs/authentication/application-default-credentials#search_order):
+
+1. [GOOGLE_APPLICATION_CREDENTIALS environment variable](https://cloud.google.com/docs/authentication/application-default-credentials#GAC)
+2. [User credentials set up by using the Google Cloud CLI](https://cloud.google.com/docs/authentication/application-default-credentials#personal)
+3. [The attached service account, returned by the metadata server](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa)
+
+Those credentials must be associated to a user or service account with proper permissions to do all checks. To make sure, add the following roles to the member associated with the credentials:
+
+  - Viewer
+  - Security Reviewer
+  - Stackdriver Account Viewer
+
+> `prowler` will scan the project associated with the credentials.
 
   ## Azure
 
@@ -228,6 +244,14 @@ Use a custom AWS profile with `-p`/`--profile` and/or AWS regions which you want
 prowler aws --profile custom-profile -f us-east-1 eu-south-2
 ```
 > By default, `prowler` will scan all AWS regions.
+
+## Google Cloud Platform
+
+Optionally, you can provide the location of an application credential JSON file with the following argument:
+
+```console
+prowler gcp --credentials-file path
+```
 
 ## Azure
 

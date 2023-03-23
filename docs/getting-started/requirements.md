@@ -30,6 +30,24 @@ Those credentials must be associated to a user or role with proper permissions t
 
   > If you want Prowler to send findings to [AWS Security Hub](https://aws.amazon.com/security-hub), make sure you also attach the custom policy [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json).
 
+## Google Cloud
+
+### GCP Authentication
+
+Prowler will follow the same credentials search as [Google authentication libraries](https://cloud.google.com/docs/authentication/application-default-credentials#search_order):
+
+1. [GOOGLE_APPLICATION_CREDENTIALS environment variable](https://cloud.google.com/docs/authentication/application-default-credentials#GAC)
+2. [User credentials set up by using the Google Cloud CLI](https://cloud.google.com/docs/authentication/application-default-credentials#personal)
+3. [The attached service account, returned by the metadata server](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa)
+
+Those credentials must be associated to a user or service account with proper permissions to do all checks. To make sure, add the following roles to the member associated with the credentials:
+
+  - Viewer
+  - Security Reviewer
+  - Stackdriver Account Viewer
+
+> `prowler` will scan the project associated with the credentials.
+
 ## Azure
 
 Prowler for azure supports the following authentication types:
