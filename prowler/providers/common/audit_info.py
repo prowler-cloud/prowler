@@ -69,11 +69,15 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
 
     def print_gcp_credentials(self, audit_info: GCP_Audit_Info):
         # Beautify audited profile, set "default" if there is no profile set
-        profile = (
-            audit_info.credentials._service_account_email
-            if audit_info.credentials._service_account_email is not None
-            else "default"
-        )
+        try:
+            getattr(audit_info.credentials, "_service_account_email")
+            profile = (
+                audit_info.credentials._service_account_email
+                if audit_info.credentials._service_account_email is not None
+                else "default"
+            )
+        except AttributeError:
+            profile = "default"
 
         report = f"""
 This report is being generated using credentials below:
