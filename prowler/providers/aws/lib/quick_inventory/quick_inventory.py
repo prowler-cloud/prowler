@@ -166,7 +166,7 @@ def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
             elif "documentation" in split_parts and "parts" in split_parts:
                 resource_type = "restapis-documentation-parts"
             else:
-                resource_type = resource.split(":")[5].split("/")[1]
+                resource_type = resource["arn"].split(":")[5].split("/")[1]
         else:
             resource_type = resource["arn"].split(":")[5].split("/")[0]
         if service not in resources_type:
