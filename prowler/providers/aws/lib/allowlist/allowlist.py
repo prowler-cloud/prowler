@@ -3,12 +3,20 @@ import sys
 
 import yaml
 from boto3.dynamodb.conditions import Attr
-from schema import Schema
+from schema import Optional, Schema
 
 from prowler.lib.logger import logger
 
 allowlist_schema = Schema(
-    {"Accounts": {str: {"Checks": {str: {"Regions": list, "Resources": list}}}}}
+    {
+        "Accounts": {
+            str: {
+                "Checks": {
+                    str: {"Regions": list, "Resources": list, Optional("Tags"): list}
+                }
+            }
+        }
+    }
 )
 
 
@@ -61,14 +69,25 @@ def parse_allowlist_file(audit_info, allowlist_file):
                 dynamodb_items.update(response["Items"])
             for item in dynamodb_items:
                 # Create allowlist for every item
-                allowlist["Accounts"][item["Accounts"]] = {
-                    "Checks": {
-                        item["Checks"]: {
-                            "Regions": item["Regions"],
-                            "Resources": item["Resources"],
+                if "Tags" in item:
+                    allowlist["Accounts"][item["Accounts"]] = {
+                        "Checks": {
+                            item["Checks"]: {
+                                "Regions": item["Regions"],
+                                "Resources": item["Resources"],
+                                "Tags": item["Tags"],
+                            }
                         }
                     }
-                }
+                else:
+                    allowlist["Accounts"][item["Accounts"]] = {
+                        "Checks": {
+                            item["Checks"]: {
+                                "Regions": item["Regions"],
+                                "Resources": item["Resources"],
+                            }
+                        }
+                    }
         else:
             with open(allowlist_file) as f:
                 allowlist = yaml.safe_load(f)["Allowlist"]
@@ -87,18 +106,18 @@ def parse_allowlist_file(audit_info, allowlist_file):
         sys.exit(1)
 
 
-def is_allowlisted(allowlist, audited_account, check, region, resource):
+def is_allowlisted(allowlist, audited_account, check, region, resource, tags):
     try:
         if audited_account in allowlist["Accounts"]:
             if is_allowlisted_in_check(
-                allowlist, audited_account, check, region, resource
+                allowlist, audited_account, check, region, resource, tags
             ):
                 return True
         # If there is a *, it affects to all accounts
         if "*" in allowlist["Accounts"]:
             audited_account = "*"
             if is_allowlisted_in_check(
-                allowlist, audited_account, check, region, resource
+                allowlist, audited_account, check, region, resource, tags
             ):
                 return True
         return False
@@ -109,19 +128,19 @@ def is_allowlisted(allowlist, audited_account, check, region, resource):
         sys.exit(1)
 
 
-def is_allowlisted_in_check(allowlist, audited_account, check, region, resource):
+def is_allowlisted_in_check(allowlist, audited_account, check, region, resource, tags):
     try:
         # If there is a *, it affects to all checks
         if "*" in allowlist["Accounts"][audited_account]["Checks"]:
             check = "*"
             if is_allowlisted_in_region(
-                allowlist, audited_account, check, region, resource
+                allowlist, audited_account, check, region, resource, tags
             ):
                 return True
         # Check if there is the specific check
         if check in allowlist["Accounts"][audited_account]["Checks"]:
             if is_allowlisted_in_region(
-                allowlist, audited_account, check, region, resource
+                allowlist, audited_account, check, region, resource, tags
             ):
                 return True
         return False
@@ -132,28 +151,57 @@ def is_allowlisted_in_check(allowlist, audited_account, check, region, resource)
         sys.exit(1)
 
 
-def is_allowlisted_in_region(allowlist, audited_account, check, region, resource):
+def is_allowlisted_in_region(allowlist, audited_account, check, region, resource, tags):
     try:
         # If there is a *, it affects to all regions
         if "*" in allowlist["Accounts"][audited_account]["Checks"][check]["Regions"]:
             for elem in allowlist["Accounts"][audited_account]["Checks"][check][
                 "Resources"
             ]:
-                # Check if it is an *
-                if elem == "*":
-                    elem = ".*"
-                if re.search(elem, resource):
+                if is_allowlisted_in_tags(
+                    allowlist["Accounts"][audited_account]["Checks"][check],
+                    elem,
+                    resource,
+                    tags,
+                ):
                     return True
         # Check if there is the specific region
         if region in allowlist["Accounts"][audited_account]["Checks"][check]["Regions"]:
             for elem in allowlist["Accounts"][audited_account]["Checks"][check][
                 "Resources"
             ]:
-                # Check if it is an *
-                if elem == "*":
-                    elem = ".*"
-                if re.search(elem, resource):
+                if is_allowlisted_in_tags(
+                    allowlist["Accounts"][audited_account]["Checks"][check],
+                    elem,
+                    resource,
+                    tags,
+                ):
                     return True
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
+        )
+        sys.exit(1)
+
+
+def is_allowlisted_in_tags(check_allowlist, elem, resource, tags):
+    try:
+        # Check if it is an *
+        if elem == "*":
+            elem = ".*"
+        # Check if there are allowlisted tags
+        if "Tags" in check_allowlist:
+            # Check if there are resource tags
+            if tags:
+                tags_in_resource_tags = True
+                for tag in check_allowlist["Tags"]:
+                    if tag not in tags:
+                        tags_in_resource_tags = False
+                if tags_in_resource_tags and re.search(elem, resource):
+                    return True
+        else:
+            if re.search(elem, resource):
+                return True
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"

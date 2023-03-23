@@ -28,7 +28,7 @@ class Test_ec2_ebs_public_snapshot:
             result = check.execute()
 
             # Default snapshots
-            assert len(result) == 1116
+            assert len(result) == 1124
 
     @mock_ec2
     def test_ec2_public_snapshot(self):
@@ -62,7 +62,7 @@ class Test_ec2_ebs_public_snapshot:
             results = check.execute()
 
             # Default snapshots + 1 created
-            assert len(results) == 1117
+            assert len(results) == 1125
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
@@ -103,7 +103,7 @@ class Test_ec2_ebs_public_snapshot:
             results = check.execute()
 
             # Default snapshots + 1 created
-            assert len(results) == 1117
+            assert len(results) == 1125
 
             for snap in results:
                 if snap.resource_id == snapshot.id:

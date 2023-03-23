@@ -20,6 +20,7 @@ from prowler.lib.outputs.models import (
     Check_Output_JSON_ASFF,
     generate_provider_output_csv,
     generate_provider_output_json,
+    unroll_tags,
 )
 from prowler.providers.aws.lib.allowlist.allowlist import is_allowlisted
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
@@ -72,6 +73,7 @@ def report(check_findings, output_options, audit_info):
                         finding.check_metadata.CheckID,
                         finding.region,
                         finding.resource_id,
+                        unroll_tags(finding.resource_tags),
                     ):
                         finding.status = "WARNING"
                 # Print findings by stdout
@@ -210,6 +212,8 @@ def send_to_s3_bucket(
             filename = f"{output_filename}{json_asff_file_suffix}"
         elif output_mode == "html":
             filename = f"{output_filename}{html_file_suffix}"
+        else:  # Compliance output mode
+            filename = f"{output_filename}_{output_mode}{csv_file_suffix}"
         logger.info(f"Sending outputs to S3 bucket {output_bucket}")
         bucket_remote_dir = output_directory
         while "prowler/" in bucket_remote_dir:  # Check if it is not a custom directory

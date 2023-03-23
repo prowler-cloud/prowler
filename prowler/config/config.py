@@ -3,13 +3,14 @@ import pathlib
 from datetime import datetime, timezone
 from os import getcwd
 
+import requests
 import yaml
 
 from prowler.lib.logger import logger
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-prowler_version = "3.2.4"
+prowler_version = "3.3.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 html_logo_img = "https://user-images.githubusercontent.com/3985464/113734260-7ba06900-96fb-11eb-82bc-d4f68a1e2710.png"
 
@@ -43,6 +44,19 @@ json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
 html_file_suffix = ".html"
 config_yaml = f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/config.yaml"
+
+
+def check_current_version(prowler_version):
+    try:
+        latest_version = requests.get(
+            "https://api.github.com/repos/prowler-cloud/prowler/tags"
+        ).json()[0]["name"]
+        if latest_version != prowler_version:
+            return f"(latest is {latest_version}, upgrade for the latest features)"
+        else:
+            return "(it is the latest version, yay!)"
+    except Exception:
+        return ""
 
 
 def change_config_var(variable, value):

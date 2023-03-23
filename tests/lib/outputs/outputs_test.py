@@ -513,6 +513,62 @@ class Test_Outputs:
         )
 
     @mock_s3
+    def test_send_to_s3_bucket_compliance(self):
+        # Create mock session
+        session = boto3.session.Session(
+            region_name="us-east-1",
+        )
+        # Create mock audit_info
+        input_audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=session,
+            audited_account=AWS_ACCOUNT_ID,
+            audited_identity_arn="test-arn",
+            audited_user_id="test",
+            audited_partition="aws",
+            profile="default",
+            profile_region="eu-west-1",
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=["eu-west-2", "eu-west-1"],
+            organizations_metadata=None,
+            audit_resources=None,
+        )
+        # Creat mock bucket
+        bucket_name = "test_bucket"
+        client = boto3.client("s3")
+        client.create_bucket(Bucket=bucket_name)
+        # Create mock csv output file
+        fixtures_dir = "tests/lib/outputs/fixtures"
+        output_directory = getcwd() + "/" + fixtures_dir
+        output_mode = "cis_1.4_aws"
+        filename = f"prowler-output-{input_audit_info.audited_account}"
+        # Send mock csv file to mock S3 Bucket
+        send_to_s3_bucket(
+            filename,
+            output_directory,
+            output_mode,
+            bucket_name,
+            input_audit_info.audit_session,
+        )
+        # Check if the file has been sent by checking its content type
+        assert (
+            client.get_object(
+                Bucket=bucket_name,
+                Key=fixtures_dir
+                + "/"
+                + output_mode
+                + "/"
+                + filename
+                + "_"
+                + output_mode
+                + csv_file_suffix,
+            )["ContentType"]
+            == "binary/octet-stream"
+        )
+
+    @mock_s3
     def test_send_to_s3_bucket_custom_directory(self):
         # Create mock session
         session = boto3.session.Session(
