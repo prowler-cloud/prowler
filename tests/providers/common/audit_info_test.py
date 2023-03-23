@@ -22,6 +22,7 @@ from prowler.providers.common.audit_info import (
     get_tagged_resources,
     set_provider_audit_info,
 )
+from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
 EXAMPLE_AMI_ID = "ami-12c6146b"
 ACCOUNT_ID = 123456789012
@@ -168,9 +169,7 @@ class Test_Set_Audit_Info:
         new=mock_current_audit_info,
     )
     @patch.object(Audit_Info, "validate_credentials", new=mock_validate_credentials)
-    @patch.object(
-        Audit_Info, "print_audit_credentials", new=mock_print_audit_credentials
-    )
+    @patch.object(Audit_Info, "print_aws_credentials", new=mock_print_audit_credentials)
     def test_set_audit_info_aws(self):
         provider = "aws"
         arguments = {
@@ -215,6 +214,23 @@ class Test_Set_Audit_Info:
 
         audit_info = set_provider_audit_info(provider, arguments)
         assert isinstance(audit_info, Azure_Audit_Info)
+
+    def test_set_audit_info_gcp(self):
+        provider = "gcp"
+        arguments = {
+            "profile": None,
+            "role": None,
+            "session_duration": None,
+            "external_id": None,
+            "regions": None,
+            "organizations_role": None,
+            "subscriptions": None,
+            # We need to set exactly one auth method
+            "credentials_file": None,
+        }
+
+        audit_info = set_provider_audit_info(provider, arguments)
+        assert isinstance(audit_info, GCP_Audit_Info)
 
     @mock_resourcegroupstaggingapi
     @mock_ec2
