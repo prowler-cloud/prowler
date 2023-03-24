@@ -1,4 +1,5 @@
 import os
+import sys
 
 from google import auth
 from googleapiclient import discovery
@@ -17,10 +18,14 @@ class GCP_Provider:
         self.credentials, self.project_id = self.__set_credentials__(credentials_file)
 
     def __set_credentials__(self, credentials_file):
-        if credentials_file:
-            self.__set_gcp_creds_env_var__(credentials_file)
+        try:
+            if credentials_file:
+                self.__set_gcp_creds_env_var__(credentials_file)
 
-        return auth.default()
+            return auth.default()
+        except Exception as error:
+            logger.critical(f"{error.__class__.__name__} -- {error}")
+            sys.exit(1)
 
     def __set_gcp_creds_env_var__(self, credentials_file):
         logger.info(
