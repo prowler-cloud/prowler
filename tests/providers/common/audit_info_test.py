@@ -77,7 +77,7 @@ def mock_set_azure_credentials(*_):
 
 
 def mock_set_gcp_credentials(*_):
-    return (None, None)
+    return (None, "project")
 
 
 class Test_Set_Audit_Info:
