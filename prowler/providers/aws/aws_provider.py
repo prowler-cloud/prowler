@@ -85,7 +85,7 @@ def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) ->
         if assumed_role_info.external_id:
             assumed_credentials = sts_client.assume_role(
                 RoleArn=assumed_role_info.role_arn,
-                RoleSessionName="ProwlerProAsessmentSession",
+                RoleSessionName="ProwlerAsessmentSession",
                 DurationSeconds=assumed_role_info.session_duration,
                 ExternalId=assumed_role_info.external_id,
             )
