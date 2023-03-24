@@ -359,7 +359,7 @@ GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project ID: {Fore.YE
             gcp_audit_info.credentials,
             gcp_audit_info.project_id,
         ) = gcp_provider.get_credentials()
-
+        print(gcp_provider.get_credentials())
         if not arguments.get("only_logs"):
             self.print_gcp_credentials(gcp_audit_info)
 

@@ -16,6 +16,9 @@ class GCP_Provider:
     ):
         logger.info("Instantiating GCP Provider ...")
         self.credentials, self.project_id = self.__set_credentials__(credentials_file)
+        if not self.project_id:
+            logger.critical("No Project ID associated to Google Credentials.")
+            sys.exit(1)
 
     def __set_credentials__(self, credentials_file):
         try:
