@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+  "CheckTitle": "Ensure Log Metric Filter and Alerts Exist for Project Ownership Assignments/Changes.",
+  "CheckType": [],
+  "ServiceName": "logging",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "MetricFilter",
+  "Description": "Ensure Log Metric Filter and Alerts Exist for Project Ownership Assignments/Changes.",
+  "Risk": "Project ownership has the highest level of privileges on a GCP project. These privileges include viewer permissions on all GCP services inside the project, permission to modify the state of all GCP services within the project, set up billing and manage roles and permissions for the project and all the resources inside the project.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "s",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-ownership-assignments-monitoring.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Using Google Cloud alerting policies to detect ownership assignments/changes will help you maintain the right access permissions for each IAM member created within your project, follow the security principle of least privilege, and prevent any accidental or intentional changes that may lead to unauthorized actions.",
+      "Url": "https://cloud.google.com/monitoring/alerts"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

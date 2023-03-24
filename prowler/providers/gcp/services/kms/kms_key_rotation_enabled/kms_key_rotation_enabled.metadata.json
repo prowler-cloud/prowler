@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "kms_key_rotation_enabled",
+  "CheckTitle": "Ensure KMS keys are rotated within a period of 90 days",
+  "CheckType": [],
+  "ServiceName": "kms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "CryptoKey",
+  "Description": "Ensure KMS keys are rotated within a period of 90 days",
+  "Risk": "Ensure that all your Cloud Key Management Service (KMS) keys are rotated within a period of 90 days in order to meet security and compliance requirements",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_general_4#cli-command",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudKMS/rotate-kms-encryption-keys.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_general_4#terraform"
+    },
+    "Recommendation": {
+      "Text": "After a successful key rotation, the older key version is required in order to decrypt the data encrypted by that previous key version.",
+      "Url": "https://cloud.google.com/iam/docs/manage-access-service-accounts"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "iam_sa_user_managed_key_rotate_90_days",
+  "CheckTitle": "Ensure User-Managed/External Keys for Service Accounts Are Rotated Every 90 Days",
+  "CheckType": [],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "ServiceAccountKey",
+  "Description": "Ensure User-Managed/External Keys for Service Accounts Are Rotated Every 90 Days",
+  "Risk": "Service Account keys should be rotated to ensure that data cannot be accessed with an old key that might have been lost, cracked, or stolen.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/rotate-service-account-user-managed-keys.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "It is recommended that all Service Account keys are regularly rotated.",
+      "Url": "https://cloud.google.com/iam/docs/creating-managing-service-account-keys"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

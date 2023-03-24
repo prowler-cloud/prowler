@@ -13,7 +13,7 @@ Before sending findings to Prowler, you will need to perform next steps:
     - Using the AWS Management Console:
      ![Screenshot 2020-10-29 at 10 26 02 PM](https://user-images.githubusercontent.com/3985464/97634660-5ade3400-1a36-11eb-9a92-4a45cc98c158.png)
 3. Allow Prowler to import its findings to AWS Security Hub by adding the policy below to the role or user running Prowler:
-    - [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/iam/prowler-security-hub.json)
+    - [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json)
 
 Once it is enabled, it is as simple as running the command below (for all regions):
 

@@ -92,6 +92,38 @@ class Test_Parser:
         assert not parsed.browser_auth
         assert not parsed.managed_identity_auth
 
+    def test_default_parser_no_arguments_gcp(self):
+        provider = "gcp"
+        command = [prowler_command, provider]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == provider
+        assert not parsed.quiet
+        assert len(parsed.output_modes) == 3
+        assert "csv" in parsed.output_modes
+        assert "html" in parsed.output_modes
+        assert "json" in parsed.output_modes
+        assert not parsed.output_filename
+        assert "output" in parsed.output_directory
+        assert not parsed.verbose
+        assert not parsed.no_banner
+        assert parsed.log_level == "CRITICAL"
+        assert not parsed.log_file
+        assert not parsed.only_logs
+        assert not parsed.checks
+        assert not parsed.checks_file
+        assert not parsed.services
+        assert not parsed.severity
+        assert not parsed.compliance
+        assert len(parsed.categories) == 0
+        assert not parsed.excluded_checks
+        assert not parsed.excluded_services
+        assert not parsed.list_checks
+        assert not parsed.list_services
+        assert not parsed.list_compliance
+        assert not parsed.list_compliance_requirements
+        assert not parsed.list_categories
+        assert not parsed.credentials_file
+
     def test_root_parser_version_short(self):
         command = [prowler_command, "-v"]
         with pytest.raises(SystemExit) as wrapped_exit:
@@ -135,6 +167,12 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         print(parsed)
         assert parsed.provider == "azure"
+
+    def test_root_parser_gcp_provider(self):
+        command = [prowler_command, "gcp"]
+        parsed = self.parser.parse(command)
+        print(parsed)
+        assert parsed.provider == "gcp"
 
     def test_root_parser_quiet_short(self):
         command = [prowler_command, "-q"]
@@ -901,3 +939,11 @@ class Test_Parser:
             _ = self.parser.parse(command)
         assert wrapped_exit.type == SystemExit
         assert wrapped_exit.value.code == 2
+
+    def test_parser_gcp_auth_credentials_file(self):
+        argument = "--credentials-file"
+        file = "test.json"
+        command = [prowler_command, "gcp", argument, file]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "gcp"
+        assert parsed.credentials_file == file

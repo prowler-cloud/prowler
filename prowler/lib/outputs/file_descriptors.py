@@ -16,11 +16,13 @@ from prowler.lib.outputs.models import (
     Check_Output_CSV_CIS,
     Check_Output_CSV_ENS_RD2022,
     Check_Output_CSV_Generic_Compliance,
+    Gcp_Check_Output_CSV,
     generate_csv_fields,
 )
 from prowler.lib.utils.utils import file_exists, open_file
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
+from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
 
 def initialize_file_descriptor(
@@ -81,6 +83,13 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                             output_mode,
                             audit_info,
                             Azure_Check_Output_CSV,
+                        )
+                    if isinstance(audit_info, GCP_Audit_Info):
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            audit_info,
+                            Gcp_Check_Output_CSV,
                         )
                     file_descriptors.update({output_mode: file_descriptor})
 

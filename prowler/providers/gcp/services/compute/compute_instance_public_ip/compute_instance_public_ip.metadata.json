@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_instance_public_ip",
+  "CheckTitle": "Check for Virtual Machine Instances with Public IP Addresses",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "VMInstance",
+  "Description": "Check for Virtual Machine Instances with Public IP Addresses",
+  "Risk": "To reduce your attack surface, Compute instances should not have public IP addresses. Instead, instances should be configured behind load balancers, to minimize the instance's exposure to the internet.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_public_2#cli-command",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/Compute/instances-with-public-ip-addresses.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_public_2#terraform"
+    },
+    "Recommendation": {
+      "Text": "Ensure that your Google Compute Engine instances are not configured to have external IP addresses in order to minimize their exposure to the Internet.",
+      "Url": "https://cloud.google.com/compute/docs/instances/connecting-to-instance"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

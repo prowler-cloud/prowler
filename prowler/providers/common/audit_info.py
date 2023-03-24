@@ -25,6 +25,9 @@ from prowler.providers.aws.lib.resource_api_tagging.resource_api_tagging import 
 from prowler.providers.azure.azure_provider import Azure_Provider
 from prowler.providers.azure.lib.audit_info.audit_info import azure_audit_info
 from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
+from prowler.providers.gcp.gcp_provider import GCP_Provider
+from prowler.providers.gcp.lib.audit_info.audit_info import gcp_audit_info
+from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
 
 class Audit_Info:
@@ -41,7 +44,7 @@ class Audit_Info:
         else:
             return caller_identity
 
-    def print_audit_credentials(self, audit_info: AWS_Audit_Info):
+    def print_aws_credentials(self, audit_info: AWS_Audit_Info):
         # Beautify audited regions, set "all" if there is no filter region
         regions = (
             ", ".join(audit_info.audited_regions)
@@ -61,6 +64,25 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         # If -A is set, print Assumed Role ARN
         if audit_info.assumed_role_info.role_arn is not None:
             report += f"""Assumed Role ARN: {Fore.YELLOW}[{audit_info.assumed_role_info.role_arn}]{Style.RESET_ALL}
+"""
+        print(report)
+
+    def print_gcp_credentials(self, audit_info: GCP_Audit_Info):
+        # Beautify audited profile, set "default" if there is no profile set
+        try:
+            getattr(audit_info.credentials, "_service_account_email")
+            profile = (
+                audit_info.credentials._service_account_email
+                if audit_info.credentials._service_account_email is not None
+                else "default"
+            )
+        except AttributeError:
+            profile = "default"
+
+        report = f"""
+This report is being generated using credentials below:
+
+GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project ID: {Fore.YELLOW}[{audit_info.project_id}]{Style.RESET_ALL}
 """
         print(report)
 
@@ -257,7 +279,7 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
             current_audit_info.profile_region = "us-east-1"
 
         if not arguments.get("only_logs"):
-            self.print_audit_credentials(current_audit_info)
+            self.print_aws_credentials(current_audit_info)
 
         # Parse Scan Tags
         if arguments.get("resource_tags"):
@@ -319,6 +341,29 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         azure_audit_info.identity = azure_provider.get_identity()
 
         return azure_audit_info
+
+    def set_gcp_audit_info(self, arguments) -> GCP_Audit_Info:
+        """
+        set_gcp_audit_info returns the GCP_Audit_Info
+        """
+        logger.info("Setting GCP session ...")
+
+        logger.info("Checking if any credentials mode is set ...")
+        credentials_file = arguments.get("credentials_file")
+
+        gcp_provider = GCP_Provider(
+            credentials_file,
+        )
+
+        (
+            gcp_audit_info.credentials,
+            gcp_audit_info.project_id,
+        ) = gcp_provider.get_credentials()
+
+        if not arguments.get("only_logs"):
+            self.print_gcp_credentials(gcp_audit_info)
+
+        return gcp_audit_info
 
 
 def set_provider_audit_info(provider: str, arguments: dict):

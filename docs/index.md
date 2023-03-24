@@ -16,7 +16,7 @@ For **Prowler v2 Documentation**, please go [here](https://github.com/prowler-cl
 
 ## About Prowler
 
-**Prowler** is an Open Source security tool to perform AWS and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness.
+**Prowler** is an Open Source security tool to perform AWS, Azure and Google Cloud security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness.
 
 It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
 
@@ -40,7 +40,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
 
     * `Python >= 3.9`
     * `Python pip >= 3.9`
-    * AWS and/or Azure credentials
+    * AWS, GCP and/or Azure credentials
 
     _Commands_:
 
@@ -54,7 +54,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
     _Requirements_:
 
     * Have `docker` installed: https://docs.docker.com/get-docker/.
-    * AWS and/or Azure credentials
+    * AWS, GCP and/or Azure credentials
     * In the command below, change `-v` to your local directory path in order to access the reports.
 
     _Commands_:
@@ -71,7 +71,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
 
     _Requirements for Ubuntu 20.04.3 LTS_:
 
-    * AWS and/or Azure credentials
+    * AWS, GCP and/or Azure credentials
     * Install python 3.9 with: `sudo apt-get install python3.9`
     * Remove python 3.8 to avoid conflicts if you can: `sudo apt-get remove python3.8`
     * Make sure you have the python3 distutils package installed: `sudo apt-get install python3-distutils`
@@ -91,7 +91,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
 
     _Requirements for Developers_:
 
-    * AWS and/or Azure credentials
+    * AWS, GCP and/or Azure credentials
     * `git`, `Python >= 3.9`, `pip` and `poetry` installed (`pip install poetry`)
 
     _Commands_:
@@ -108,7 +108,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
 
     _Requirements_:
 
-    * AWS and/or Azure credentials
+    * AWS, GCP and/or Azure credentials
     * Latest Amazon Linux 2 should come with Python 3.9 already installed however it may need pip. Install Python pip 3.9 with: `sudo dnf install -y python3-pip`.
     * Make sure setuptools for python is already installed with: `pip3 install setuptools`
 
@@ -125,7 +125,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
     _Requirements_:
 
     * `Brew` installed in your Mac or Linux
-    * AWS and/or Azure credentials
+    * AWS, GCP and/or Azure credentials
 
     _Commands_:
 
@@ -194,7 +194,7 @@ You can run Prowler from your workstation, an EC2 instance, Fargate or any other
 ![Architecture](img/architecture.png)
 ## Basic Usage
 
-To run Prowler, you will need to specify the provider (e.g aws or azure):
+To run Prowler, you will need to specify the provider (e.g aws, gcp or azure):
 > If no provider specified, AWS will be used for backward compatibility with most of v2 options.
 
 ```console
@@ -226,6 +226,7 @@ For executing specific checks or services you can use options `-c`/`checks` or `
 ```console
 prowler azure --checks storage_blob_public_access_level_is_disabled
 prowler aws --services s3 ec2
+prowler gcp --services iam compute
 ```
 
 Also, checks and services can be excluded with options `-e`/`--excluded-checks` or `--excluded-services`:
@@ -233,6 +234,7 @@ Also, checks and services can be excluded with options `-e`/`--excluded-checks` 
 ```console
 prowler aws --excluded-checks s3_bucket_public_access
 prowler azure --excluded-services defender iam
+prowler gcp --excluded-services kms
 ```
 
 More options and executions methods that will save your time in [Miscelaneous](tutorials/misc.md).
@@ -251,6 +253,14 @@ Use a custom AWS profile with `-p`/`--profile` and/or AWS regions which you want
 prowler aws --profile custom-profile -f us-east-1 eu-south-2
 ```
 > By default, `prowler` will scan all AWS regions.
+
+### Google Cloud
+
+Optionally, you can provide the location of an application credential JSON file with the following argument:
+
+```console
+prowler gcp --credentials-file path
+```
 
 ### Azure
 

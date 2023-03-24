@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudsql_instance_mysql_local_infile_flag",
+  "CheckTitle": "Ensure That the Local_infile Database Flag for a Cloud SQL MySQL Instance Is Set to Off",
+  "CheckType": [],
+  "ServiceName": "cloudsql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "DatabaseInstance",
+  "Description": "Ensure That the Local_infile Database Flag for a Cloud SQL MySQL Instance Is Set to Off",
+  "Risk": "The local_infile flag controls the server-side LOCAL capability for LOAD DATA statements. Depending on the local_infile setting, the server refuses or permits local data loading by clients that have LOCAL enabled on the client side.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags local_infile=off",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-local-infile-flag.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_sql_1#terraform"
+    },
+    "Recommendation": {
+      "Text": "It is recommended to set the local_infile database flag for a Cloud SQL MySQL instance to off.",
+      "Url": "https://cloud.google.com/sql/docs/mysql/flags"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
