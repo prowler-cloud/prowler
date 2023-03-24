@@ -155,6 +155,7 @@ class Test_s3_bucket_level_public_access_block:
                 assert result[0].region == AWS_REGION
 
     def test_bucket_can_not_retrieve_public_access_block(self):
+        # To test this behaviour we need to set public_access_block to None
         s3_client = mock.MagicMock
         s3_client.buckets = [
             Bucket(
