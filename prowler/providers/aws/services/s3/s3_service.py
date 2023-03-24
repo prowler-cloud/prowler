@@ -162,10 +162,12 @@ class S3:
                 Bucket=bucket.name
             )["PublicAccessBlockConfiguration"]
             bucket.public_access_block = PublicAccessBlock(
-                block_public_acls=public_access_block["BlockPublicAcls"],
-                ignore_public_acls=public_access_block["IgnorePublicAcls"],
-                block_public_policy=public_access_block["BlockPublicPolicy"],
-                restrict_public_buckets=public_access_block["RestrictPublicBuckets"],
+                block_public_acls=public_access_block.get("BlockPublicAcls", False),
+                ignore_public_acls=public_access_block.get("IgnorePublicAcls", False),
+                block_public_policy=public_access_block.get("BlockPublicPolicy", False),
+                restrict_public_buckets=public_access_block.get(
+                    "RestrictPublicBuckets", False
+                ),
             )
         except Exception as error:
             if "NoSuchPublicAccessBlockConfiguration" in str(error):

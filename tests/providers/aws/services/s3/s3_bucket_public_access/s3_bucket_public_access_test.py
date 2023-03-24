@@ -5,6 +5,7 @@ from boto3 import client, session
 from moto import mock_s3, mock_s3control
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.s3.s3_service import Bucket
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
@@ -422,3 +423,37 @@ class Test_s3_bucket_public_access:
                         == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                     )
                     assert result[0].region == AWS_REGION
+
+    def test_bucket_can_not_retrieve_public_access_block(self):
+        s3_client = mock.MagicMock
+        s3_client.buckets = [
+            Bucket(
+                name="test-bucket",
+                arn="",
+                public_access_block=None,
+                encryption=None,
+                region=AWS_REGION,
+                logging_target_bucket=None,
+                ownership=None,
+            )
+        ]
+
+        audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.s3.s3_service.S3",
+                new=s3_client,
+            ):
+                # Test Check
+                from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
+                    s3_bucket_public_access,
+                )
+
+                check = s3_bucket_public_access()
+                result = check.execute()
+
+                assert len(result) == 0
