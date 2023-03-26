@@ -38,7 +38,6 @@ class Organizations:
                 organization_available_policy_types = organization_desc[
                     "AvailablePolicyTypes"
                 ]
-                print(organization_available_policy_types)
                 # Fetch policies for organization:
                 organization_policies = self.__list_policies__(
                     organization_available_policy_types
@@ -116,7 +115,6 @@ class Organizations:
 
     def __list_policies__(self, enabled_policy_types):
         logger.info("Organizations - List policies...")
-        print(enabled_policy_types)
         try:
             list_policies_paginator = self.client.get_paginator("list_policies")
             for policy_type in enabled_policy_types:
