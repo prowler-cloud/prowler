@@ -112,6 +112,11 @@ Detailed documentation at https://docs.prowler.cloud
             "Outputs"
         )
         common_outputs_parser.add_argument(
+            "--python",
+            action="store_true",
+            help="Use prowler from python",
+        )
+        common_outputs_parser.add_argument(
             "-q",
             "--quiet",
             action="store_true",
