@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "organizations_delegated_administrators",
+  "CheckTitle": "Check if trusted delegated administratos",
+  "CheckType": [
+    "Logging and Monitoring"
+  ],
+  "ServiceName": "organizations",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Check if trusted delegated administratos",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "organizations_scp_check_deny_regions",
+  "CheckTitle": "Check if AWS Regions are restricted (SCP)",
+  "CheckType": [
+    "Logging and Monitoring"
+  ],
+  "ServiceName": "organizations",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
+  "Severity": "low",
+  "ResourceType": "Other",
+  "Description": "Check if AWS Regions are restricted (SCP)",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

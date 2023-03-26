@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "organizations_account_part_of_organizations",
+  "CheckTitle": "Check if account is part of an AWS Organizations",
+  "CheckType": [
+    "Logging and Monitoring"
+  ],
+  "ServiceName": "organizations",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Check if account is part of AWS Organizations.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
