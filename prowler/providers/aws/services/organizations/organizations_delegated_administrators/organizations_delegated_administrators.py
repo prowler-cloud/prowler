@@ -8,7 +8,7 @@ from prowler.providers.aws.services.organizations.organizations_client import (
 class organizations_delegated_administrators(Check):
     def execute(self):
         findings = []
-        organizations_trusted_delegated_administors = get_config_var(
+        organizations_trusted_delegated_administrators = get_config_var(
             "organizations_trusted_delegated_administors"
         )
 
@@ -20,7 +20,7 @@ class organizations_delegated_administrators(Check):
                 if org.delegated_administrators:
                     if (
                         org.delegated_administrators
-                        == organizations_trusted_delegated_administors
+                        == organizations_trusted_delegated_administrators
                     ):
                         report.status = "PASS"
                         report.status_extended = (
