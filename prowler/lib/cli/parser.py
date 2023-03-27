@@ -58,6 +58,7 @@ Detailed documentation at https://docs.prowler.cloud
         # Init Providers Arguments
         self.__init_aws_parser__()
         self.__init_azure_parser__()
+        self.__init_gcp_parser__()
 
     def parse(self, args=None) -> argparse.Namespace:
         """
@@ -430,4 +431,19 @@ Detailed documentation at https://docs.prowler.cloud
             nargs="+",
             default=[],
             help="Azure subscription ids to be scanned by prowler",
+        )
+
+    def __init_gcp_parser__(self):
+        """Init the GCP Provider CLI parser"""
+        gcp_parser = self.subparsers.add_parser(
+            "gcp", parents=[self.common_providers_parser], help="GCP Provider"
+        )
+        # Authentication Modes
+        gcp_auth_subparser = gcp_parser.add_argument_group("Authentication Modes")
+        gcp_auth_modes_group = gcp_auth_subparser.add_mutually_exclusive_group()
+        gcp_auth_modes_group.add_argument(
+            "--credentials-file",
+            nargs="?",
+            metavar="FILE_PATH",
+            help="Authenticate using a Google Service Account Application Credentials JSON file",
         )

@@ -26,6 +26,9 @@ def display_summary_table(
             else:
                 entity_type = "Tenant ID/s"
                 audited_entities = " ".join(audit_info.identity.tenant_ids)
+        elif provider == "gcp":
+            entity_type = "Project ID"
+            audited_entities = audit_info.project_id
 
         if findings:
             current = {
@@ -53,7 +56,6 @@ def display_summary_table(
                     current["Service"] != finding.check_metadata.ServiceName
                     and current["Service"]
                 ):
-
                     add_service_to_table(findings_table, current)
 
                     current["Total"] = current["Critical"] = current["High"] = current[

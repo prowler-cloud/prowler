@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudsql_instance_sqlserver_trace_flag",
+  "CheckTitle": "Ensure '3625 (trace flag)' database flag for all Cloud SQL Server instances is set to 'on' ",
+  "CheckType": [],
+  "ServiceName": "cloudsql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "DatabaseInstance",
+  "Description": "Ensure '3625 (trace flag)' database flag for all Cloud SQL Server instances is set to 'on' ",
+  "Risk": "Microsoft SQL Trace Flags are frequently used to diagnose performance issues or to debug stored procedures or complex computer systems, but they may also be recommended by Microsoft Support to address behavior that is negatively impacting a specific workload. All documented trace flags and those recommended by Microsoft Support are fully supported in a production environment when used as directed. 3625(trace log) Limits the amount of information returned to users who are not members of the sysadmin fixed server role, by masking the parameters of some error messages using '******'. Setting this in a Google Cloud flag for the instance allows for security through obscurity and prevents the disclosure of sensitive information, hence this is recommended to set this flag globally to on to prevent the flag having been left off, or changed by bad actors. This recommendation is applicable to SQL Server database instances.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --database-flags 3625=on",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-3625-trace-flag.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "It is recommended to set 3625 (trace flag) database flag for Cloud SQL SQL Server instance to on.",
+      "Url": "https://cloud.google.com/sql/docs/sqlserver/flags"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

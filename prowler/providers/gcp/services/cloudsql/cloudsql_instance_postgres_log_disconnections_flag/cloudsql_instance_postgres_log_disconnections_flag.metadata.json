@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudsql_instance_postgres_log_disconnections_flag",
+  "CheckTitle": "Ensure That the log_disconnections Database Flag for Cloud SQL PostgreSQL Instance Is Set to On",
+  "CheckType": [],
+  "ServiceName": "cloudsql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "DatabaseInstance",
+  "Description": "Ensure That the log_disconnections Database Flag for Cloud SQL PostgreSQL Instance Is Set to On",
+  "Risk": "PostgreSQL does not log session details such as duration and session end by default. Enabling the log_disconnections setting will create log entries at the end of each session which can be useful in troubleshooting issues and determine any unusual activity across a time period.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags log_disconnections=on",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-log-connections-flag.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_sql_4#terraform"
+    },
+    "Recommendation": {
+      "Text": "Enabling the log_disconnections setting logs the end of each session, including the session duration.",
+      "Url": "https://cloud.google.com/sql/docs/postgres/flags"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

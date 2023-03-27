@@ -128,6 +128,23 @@ class Check_Report_Azure(Check_Report):
         self.subscription = ""
 
 
+@dataclass
+class Check_Report_GCP(Check_Report):
+    """Contains the GCP Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    project_id: str
+    location: str
+
+    def __init__(self, metadata):
+        super().__init__(metadata)
+        self.resource_name = ""
+        self.resource_id = ""
+        self.project_id = ""
+        self.location = ""
+
+
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> Check_Metadata_Model:
     """load_check_metadata loads and parse a Check's metadata file"""
