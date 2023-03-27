@@ -18,28 +18,30 @@ class organizations_delegated_administrators(Check):
             report.resource_arn = org.arn
             if org.status == "ACTIVE":
                 if org.delegated_administrators:
-                    if (
-                        org.delegated_administrators
-                        == organizations_trusted_delegated_administrators
-                    ):
-                        report.status = "PASS"
-                        report.status_extended = (
-                            f"Delegated Administrators are trusted: {org.id}"
-                        )
-                    else:
-                        report.status = "FAIL"
-                        report.status_extended = (
-                            f"Untrusted Deledated Administrators: {org.id}"
-                        )
+                    for delegated_administrator in org.delegated_administrators:
+                        if delegated_administrator.id not in organizations_trusted_delegated_administrators:
+                            report.status = "FAIL"
+                            report.status_extended = (
+                                f"Untrusted Deledated Administrators: {delegated_administrator.id}"
+                            )
+                        else:
+                            report.status = "PASS"
+                            report.status_extended = (
+                                f"Trusted Delegated Administrator: {delegated_administrator.id}"
+                            )
+
+                        findings.append(report)
                 else:
                     report.status = "PASS"
                     report.status_extended = f"No Delegated Administrators: {org.id}"
+
+                    findings.append(report)
             else:
                 report.status = "PASS"
                 report.status_extended = (
                     "AWS Organizations is not in-use for this AWS Account"
                 )
 
-            findings.append(report)
+                findings.append(report)
 
         return findings
