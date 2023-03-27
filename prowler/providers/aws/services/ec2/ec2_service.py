@@ -195,8 +195,8 @@ class EC2:
 
     def __get_snapshot_public__(self):
         logger.info("EC2 - Gettting snapshots encryption...")
-        try:
-            for snapshot in self.snapshots:
+        for snapshot in self.snapshots:
+            try:
                 regional_client = self.regional_clients[snapshot.region]
                 snapshot_public = regional_client.describe_snapshot_attribute(
                     Attribute="createVolumePermission", SnapshotId=snapshot.id
@@ -205,10 +205,20 @@ class EC2:
                     if "Group" in permission:
                         if permission["Group"] == "all":
                             snapshot.public = True
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+
+            except ClientError as error:
+                if error.response["Error"]["Code"] == "InvalidSnapshot.NotFound":
+                    logger.warning(
+                        f"{snapshot.region} --"
+                        f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                        f" {error}"
+                    )
+                    continue
+
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __describe_network_interfaces__(self, regional_client):
         logger.info("EC2 - Describing Network Interfaces...")
@@ -239,23 +249,25 @@ class EC2:
 
     def __get_instance_user_data__(self):
         logger.info("EC2 - Gettting instance user data...")
-        try:
-            for instance in self.instances:
+        for instance in self.instances:
+            try:
                 regional_client = self.regional_clients[instance.region]
                 user_data = regional_client.describe_instance_attribute(
                     Attribute="userData", InstanceId=instance.id
                 )["UserData"]
                 if "Value" in user_data:
                     instance.user_data = user_data["Value"]
-        except ClientError as error:
-            if error.response["Error"]["Code"] == "InvalidInstanceID.NotFound":
-                logger.warning(
+
+            except ClientError as error:
+                if error.response["Error"]["Code"] == "InvalidInstanceID.NotFound":
+                    logger.warning(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    continue
+            except Exception as error:
+                logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
 
     def __describe_images__(self, regional_client):
         logger.info("EC2 - Describing Images...")
