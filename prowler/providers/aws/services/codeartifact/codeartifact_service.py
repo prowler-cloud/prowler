@@ -2,6 +2,7 @@ import threading
 from enum import Enum
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -68,8 +69,8 @@ class CodeArtifact:
 
     def __list_packages__(self, regional_client):
         logger.info("CodeArtifact - Listing Packages and retrieving information...")
-        try:
-            for repository in self.repositories:
+        for repository in self.repositories:
+            try:
                 if self.repositories[repository].region == regional_client.region:
                     list_packages_paginator = regional_client.get_paginator(
                         "list_packages"
@@ -142,12 +143,21 @@ class CodeArtifact:
                     # Save all the packages information
                     self.repositories[repository].packages = packages
 
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} --"
-                f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
-                f" {error}"
-            )
+            except ClientError as error:
+                if error.response["Error"]["Code"] == "ResourceNotFoundException":
+                    logger.warning(
+                        f"{regional_client.region} --"
+                        f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                        f" {error}"
+                    )
+                    continue
+
+            except Exception as error:
+                logger.error(
+                    f"{regional_client.region} --"
+                    f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                    f" {error}"
+                )
 
     def __list_tags_for_resource__(self):
         logger.info("CodeArtifact - List Tags...")
