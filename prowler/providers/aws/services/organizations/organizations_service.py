@@ -23,6 +23,7 @@ class Organizations:
         self.region = self.client.region
         self.organizations = []
         self.policies = []
+        self.delegated_administrators = []
         self.__describe_organization__()
 
     def __describe_organization__(self):
@@ -115,6 +116,7 @@ class Organizations:
 
     def __list_policies__(self, enabled_policy_types):
         logger.info("Organizations - List policies...")
+
         try:
             list_policies_paginator = self.client.get_paginator("list_policies")
             for policy_type in enabled_policy_types:
@@ -178,21 +180,35 @@ class Organizations:
         logger.info("Organizations - List Delegated Administrators")
 
         try:
-            delegated_administrator = self.client.list_delegated_administrators()[
-                "DelegatedAdministrators"
-            ]
+            list_delegated_administrators_paginator = self.client.get_paginator(
+                "list_delegated_administrators"
+            )
+            for page in list_delegated_administrators_paginator.paginate():
+                for delegated_administrator in page["DelegatedAdministrators"]:
+                    self.delegated_administrators.append(
+                        DelegatedAdministrator(
+                            arn=delegated_administrator["Arn"],
+                            id=delegated_administrator["Id"],
+                            name=delegated_administrator["Name"],
+                            email=delegated_administrator["Email"],
+                            status=delegated_administrator["Status"],
+                            joinedmethod=delegated_administrator["JoinedMethod"],
+                        )
+                    )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
         finally:
-            return delegated_administrator
+            return self.delegated_administrators
 
 
 class Policy(BaseModel):
     arn: str
     id: str
     type: str
+    aws_managed: bool
     content: dict = {}
     targets: Optional[list] = []
 

@@ -9,7 +9,7 @@ class organizations_delegated_administrators(Check):
     def execute(self):
         findings = []
         organizations_trusted_delegated_administrators = get_config_var(
-            "organizations_trusted_delegated_administors"
+            "organizations_trusted_delegated_administrators"
         )
 
         for org in organizations_client.organizations:
@@ -35,7 +35,7 @@ class organizations_delegated_administrators(Check):
                     report.status = "PASS"
                     report.status_extended = f"No Delegated Administrators: {org.id}"
             else:
-                report.status = "FAIL"
+                report.status = "PASS"
                 report.status_extended = (
                     "AWS Organizations is not in-use for this AWS Account"
                 )
