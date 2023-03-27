@@ -19,16 +19,15 @@ class organizations_delegated_administrators(Check):
             if org.status == "ACTIVE":
                 if org.delegated_administrators:
                     for delegated_administrator in org.delegated_administrators:
-                        if delegated_administrator.id not in organizations_trusted_delegated_administrators:
+                        if (
+                            delegated_administrator.id
+                            not in organizations_trusted_delegated_administrators
+                        ):
                             report.status = "FAIL"
-                            report.status_extended = (
-                                f"Untrusted Deledated Administrators: {delegated_administrator.id}"
-                            )
+                            report.status_extended = f"Untrusted Deledated Administrators: {delegated_administrator.id}"
                         else:
                             report.status = "PASS"
-                            report.status_extended = (
-                                f"Trusted Delegated Administrator: {delegated_administrator.id}"
-                            )
+                            report.status_extended = f"Trusted Delegated Administrator: {delegated_administrator.id}"
 
                         findings.append(report)
                 else:

@@ -5,6 +5,7 @@ from moto import mock_organizations
 
 AWS_REGION = "us-east-1"
 
+
 class Test_organizations_delegated_administrators:
     @mock_organizations
     def test_no_organization(self):
@@ -104,7 +105,6 @@ class Test_organizations_delegated_administrators:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-
 
     @mock_organizations
     def test_organization_untrusted_delegated(self):
