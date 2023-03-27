@@ -19,6 +19,7 @@ repos:
     hooks:
       - id: pretty-format-toml
         args: [--autofix]
+        files: pyproject.toml
 
   ## BASH
   - repo: https://github.com/koalaman/shellcheck-precommit
@@ -56,7 +57,7 @@ repos:
         args: ["--ignore=E266,W503,E203,E501,W605"]
 
   - repo: https://github.com/python-poetry/poetry
-    rev: 1.4.0  # add version here
+    rev: 1.4.0 # add version here
     hooks:
       - id: poetry-check
       - id: poetry-lock

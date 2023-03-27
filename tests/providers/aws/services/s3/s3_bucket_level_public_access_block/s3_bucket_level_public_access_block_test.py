@@ -152,3 +152,43 @@ class Test_s3_bucket_level_public_access_block:
                     == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                 )
                 assert result[0].region == AWS_REGION
+
+    @mock_s3
+    def test_bucket_can_not_retrieve_public_access_block(self):
+        s3_client = client("s3", region_name=AWS_REGION)
+        bucket_name_us = "bucket_test_us"
+        s3_client.create_bucket(Bucket=bucket_name_us)
+        s3_client.put_public_access_block(
+            Bucket=bucket_name_us,
+            PublicAccessBlockConfiguration={
+                "BlockPublicAcls": True,
+                "IgnorePublicAcls": True,
+                "BlockPublicPolicy": True,
+                "RestrictPublicBuckets": True,
+            },
+        )
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
+        ):
+            # To test this behaviour we need to set public_access_block to None
+            s3 = S3(audit_info)
+            s3.buckets[0].public_access_block = None
+
+            with mock.patch(
+                "prowler.providers.aws.services.s3.s3_bucket_level_public_access_block.s3_bucket_level_public_access_block.s3_client",
+                new=s3,
+            ):
+                # Test Check
+                from prowler.providers.aws.services.s3.s3_bucket_level_public_access_block.s3_bucket_level_public_access_block import (
+                    s3_bucket_level_public_access_block,
+                )
+
+                check = s3_bucket_level_public_access_block()
+                result = check.execute()
+
+                assert len(result) == 0

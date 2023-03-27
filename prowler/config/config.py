@@ -1,3 +1,4 @@
+import json
 import os
 import pathlib
 from datetime import datetime, timezone
@@ -48,9 +49,10 @@ config_yaml = f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/conf
 
 def check_current_version(prowler_version):
     try:
-        latest_version = requests.get(
+        release_response = requests.get(
             "https://api.github.com/repos/prowler-cloud/prowler/tags"
-        ).json()[0]["name"]
+        )
+        latest_version = json.loads(release_response)[0]["name"]
         if latest_version != prowler_version:
             return f"(latest is {latest_version}, upgrade for the latest features)"
         else:
