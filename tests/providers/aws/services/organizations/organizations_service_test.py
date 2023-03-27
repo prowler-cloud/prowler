@@ -82,6 +82,6 @@ class Test_Organizations_Service:
         for policy in organizations.policies:
             if policy.arn == response["Policy"]["PolicySummary"]["Arn"]:
                 assert policy.type == "SERVICE_CONTROL_POLICY"
-                assert policy.aws_managed == False
+                assert policy.aws_managed is False
                 assert policy.content == json.loads(response["Policy"]["Content"])
                 assert policy.targets == []
