@@ -24,7 +24,7 @@ class organizations_delegated_administrators(Check):
                             not in organizations_trusted_delegated_administrators
                         ):
                             report.status = "FAIL"
-                            report.status_extended = f"Untrusted Deledated Administrators: {delegated_administrator.id}"
+                            report.status_extended = f"Untrusted Delegated Administrators: {delegated_administrator.id}"
                         else:
                             report.status = "PASS"
                             report.status_extended = f"Trusted Delegated Administrator: {delegated_administrator.id}"
