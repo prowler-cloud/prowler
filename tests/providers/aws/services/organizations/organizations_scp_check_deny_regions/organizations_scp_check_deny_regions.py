@@ -1,5 +1,5 @@
-from unittest import mock
 from re import search
+from unittest import mock
 
 from boto3 import client
 from moto import mock_organizations
