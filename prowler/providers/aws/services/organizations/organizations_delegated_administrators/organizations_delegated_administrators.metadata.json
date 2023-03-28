@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "organizations_delegated_administrators",
-  "CheckTitle": "Check if trusted delegated administratos",
+  "CheckTitle": "Check if AWS Organizations delegated administratos are trusted",
   "CheckType": [
     "Logging and Monitoring"
   ],
@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Check if trusted delegated administratos",
+  "Description": "This check verify if there are AWS Organizations delegated adminsitrators and if they are trusted (you can define your trusted delegated adminsitrator in Prowler configuration)",
   "Risk": "",
   "RelatedUrl": "",
   "Remediation": {
@@ -21,8 +21,8 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "",
-      "Url": ""
+      "Text": "Review delegated administrators",
+      "Url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_delegate_policies.html"
     }
   },
   "Categories": [],

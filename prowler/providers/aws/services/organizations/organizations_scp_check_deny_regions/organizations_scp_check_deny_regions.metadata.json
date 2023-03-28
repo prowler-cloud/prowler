@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "organizations_scp_check_deny_regions",
-  "CheckTitle": "Check if AWS Regions are restricted (SCP)",
+  "CheckTitle": "Check if AWS Regions are restricted with SCP policies",
   "CheckType": [
     "Logging and Monitoring"
   ],
@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
   "Severity": "low",
   "ResourceType": "Other",
-  "Description": "Check if AWS Regions are restricted (SCP)",
+  "Description": "As best practice, AWS Regions should be restricted and only allow the ones that are needed.",
   "Risk": "",
   "RelatedUrl": "",
   "Remediation": {
@@ -21,8 +21,8 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "",
-      "Url": ""
+      "Text": "Restrict AWS Regiosn using SCP piolicies.",
+      "Url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_general.html#example-scp-deny-region"
     }
   },
   "Categories": [],

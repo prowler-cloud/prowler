@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Check if account is part of AWS Organizations.",
+  "Description": "Ensure that AWS Organizations service is currently in use.",
   "Risk": "",
   "RelatedUrl": "",
   "Remediation": {
@@ -21,8 +21,8 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "",
-      "Url": ""
+      "Text": "Create or Join an AWS Organization",
+      "Url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_create.html"
     }
   },
   "Categories": [],
