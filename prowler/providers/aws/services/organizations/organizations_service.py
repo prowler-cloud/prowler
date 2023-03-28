@@ -44,7 +44,7 @@ class Organizations:
                     organization_available_policy_types
                 )
                 # Fetch delegated administrators for organization:
-                organization_d_administrator = self.__list_delegated_administrators__()
+                organization_delegated_administrator = self.__list_delegated_administrators__()
             except ClientError as e:
                 if e.response["Error"]["Code"] == "AWSOrganizationsNotInUseException":
                     self.organizations.append(
@@ -63,7 +63,7 @@ class Organizations:
                             status="ACTIVE",
                             master_id=organization_master_id,
                             policies=organization_policies,
-                            delegated_administrators=organization_d_administrator,
+                            delegated_administrators=organization_delegated_administrator,
                         )
                     )
                 else:
