@@ -3,6 +3,7 @@ import threading
 from enum import Enum
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -78,20 +79,29 @@ class SSM:
 
     def __get_document__(self, regional_client):
         logger.info("SSM - Getting Document...")
-        try:
-            for document in self.documents.values():
+        for document in self.documents.values():
+            try:
                 if document.region == regional_client.region:
                     document_info = regional_client.get_document(Name=document.name)
                     self.documents[document.name].content = json.loads(
                         document_info["Content"]
                     )
 
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} --"
-                f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
-                f" {error}"
-            )
+            except ClientError as error:
+                if error.response["Error"]["Code"] == "ValidationException":
+                    logger.warning(
+                        f"{regional_client.region} --"
+                        f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                        f" {error}"
+                    )
+                    continue
+
+            except Exception as error:
+                logger.error(
+                    f"{regional_client.region} --"
+                    f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                    f" {error}"
+                )
 
     def __describe_document_permission__(self, regional_client):
         logger.info("SSM - Describing Document Permission...")
