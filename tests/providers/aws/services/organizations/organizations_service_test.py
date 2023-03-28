@@ -12,6 +12,10 @@ from prowler.providers.aws.services.organizations.organizations_service import (
 AWS_REGION = "eu-west-1"
 
 
+def scp_restrict_regions_with_deny():
+    return '{"Version":"2012-10-17","Statement":{"Effect":"Deny","NotAction":"s3:*","Resource":"*","Condition":{"StringNotEquals":{"aws:RequestedRegion":["eu-central-1"]}}}}'
+
+
 class Test_Organizations_Service:
 
     # Mocked Audit Info
@@ -69,9 +73,9 @@ class Test_Organizations_Service:
         conn = client("organizations", region_name=AWS_REGION)
         conn.create_organization()
         response = conn.create_policy(
-            Content='{"Version":"2012-10-17","Statement":{"Effect":"Allow","Action":"s3:*"}}',
-            Description="Enables admins of attached accounts to delegate all S3 permissions",
-            Name="AllowAllS3Actions",
+            Content=scp_restrict_regions_with_deny(),
+            Description="Test",
+            Name="Test",
             Type="SERVICE_CONTROL_POLICY",
         )
         # Mock

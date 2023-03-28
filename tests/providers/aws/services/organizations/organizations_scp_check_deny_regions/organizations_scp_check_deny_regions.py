@@ -1,0 +1,152 @@
+from unittest import mock
+
+from boto3 import client
+from moto import mock_organizations
+
+AWS_REGION = "us-east-1"
+
+
+def scp_restrict_regions_with_deny():
+    return '{"Version":"2012-10-17","Statement":{"Effect":"Deny","NotAction":"s3:*","Resource":"*","Condition":{"StringNotEquals":{"aws:RequestedRegion":["eu-central-1"]}}}}'
+
+
+class Test_organizations_scp_check_deny_regions:
+    @mock_organizations
+    def test_no_organization(self):
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.organizations.organizations_service import (
+            Organizations,
+        )
+
+        current_audit_info.audited_partition = "aws"
+
+        with mock.patch(
+            "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.organizations_client",
+            new=Organizations(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions import (
+                organizations_scp_check_deny_regions,
+            )
+
+            check = organizations_scp_check_deny_regions()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+
+    @mock_organizations
+    def test_organization_without_scp_deny_regions(self):
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.organizations.organizations_service import (
+            Organizations,
+        )
+
+        current_audit_info.audited_partition = "aws"
+
+        # Create Organization
+        conn = client("organizations", region_name=AWS_REGION)
+        conn.create_organization()
+
+        with mock.patch(
+            "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.organizations_client",
+            new=Organizations(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions import (
+                organizations_scp_check_deny_regions,
+            )
+
+            check = organizations_scp_check_deny_regions()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+
+    @mock_organizations
+    def test_organization_with_scp_deny_regions_valid(self):
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.organizations.organizations_service import (
+            Organizations,
+        )
+
+        current_audit_info.audited_partition = "aws"
+
+        # Create Organization
+        conn = client("organizations", region_name=AWS_REGION)
+        conn.create_organization()
+        # Create Policy
+        conn.create_policy(
+            Content=scp_restrict_regions_with_deny(),
+            Description="Test",
+            Name="Test",
+            Type="SERVICE_CONTROL_POLICY",
+        )
+
+        def mock_get_config_var(config_var):
+            if config_var == "organizations_enabled_regions":
+                return ["eu-central-1"]
+            return []
+
+        with mock.patch(
+            "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.organizations_client",
+            new=Organizations(current_audit_info),
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.get_config_var",
+                new=mock_get_config_var,
+            ):
+                # Test Check
+                from prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions import (
+                    organizations_scp_check_deny_regions,
+                )
+
+                check = organizations_scp_check_deny_regions()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+
+    @mock_organizations
+    def test_organization_with_scp_deny_regions_not_valid(self):
+        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.organizations.organizations_service import (
+            Organizations,
+        )
+
+        current_audit_info.audited_partition = "aws"
+
+        # Create Organization
+        conn = client("organizations", region_name=AWS_REGION)
+        conn.create_organization()
+        # Create Policy
+        conn.create_policy(
+            Content=scp_restrict_regions_with_deny(),
+            Description="Test",
+            Name="Test",
+            Type="SERVICE_CONTROL_POLICY",
+        )
+
+        def mock_get_config_var(config_var):
+            if config_var == "organizations_enabled_regions":
+                return ["us-east-1"]
+            return []
+
+        with mock.patch(
+            "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.organizations_client",
+            new=Organizations(current_audit_info),
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.get_config_var",
+                new=mock_get_config_var,
+            ):
+                # Test Check
+                from prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions import (
+                    organizations_scp_check_deny_regions,
+                )
+
+                check = organizations_scp_check_deny_regions()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
