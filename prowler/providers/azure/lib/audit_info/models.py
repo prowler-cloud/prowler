@@ -6,10 +6,10 @@ from pydantic import BaseModel
 
 
 class Azure_Identity_Info(BaseModel):
-    identity_id: str = None
-    identity_type: str = None
+    identity_id: str = ""
+    identity_type: str = ""
     tenant_ids: list[str] = []
-    domain: str = None
+    domain: str = ""
     subscriptions: dict = {}
 
 
