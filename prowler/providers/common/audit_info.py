@@ -313,7 +313,7 @@ GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project ID: {Fore.YE
         set_azure_audit_info returns the Azure_Audit_Info
         """
         logger.info("Setting Azure session ...")
-        subscription_ids = arguments.get("subscriptions")
+        subscription_ids = arguments.get("subscription_ids")
 
         logger.info("Checking if any credentials mode is set ...")
         az_cli_auth = arguments.get("az_cli_auth")
