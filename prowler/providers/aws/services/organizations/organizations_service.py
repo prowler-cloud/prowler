@@ -33,9 +33,9 @@ class Organizations:
             # Check if Organizations is in-use
             try:
                 organization_desc = self.client.describe_organization()["Organization"]
-                organization_arn = organization_desc["Arn"]
-                organization_id = organization_desc["Id"]
-                organization_master_id = organization_desc["MasterAccountId"]
+                organization_arn = organization_desc.get("Arn")
+                organization_id = organization_desc.get("Id")
+                organization_master_id = organization_desc.get("MasterAccountId")
                 organization_available_policy_types = organization_desc[
                     "AvailablePolicyTypes"
                 ]

@@ -25,14 +25,14 @@ class organizations_scp_check_deny_regions(Check):
 
                     for policy in org.policies:
                         # Statements are not always list
-                        statements = policy.content["Statement"]
+                        statements = policy.content.get("Statement")
                         if type(policy.content["Statement"]) is not list:
-                            statements = [policy.content["Statement"]]
+                            statements = [policy.content.get("Statement")]
 
                         for statement in statements:
                             # Deny if Condition = {"StringNotEquals": {"aws:RequestedRegion": [region1, region2]}}
                             if (
-                                statement["Effect"] == "Deny"
+                                statement.get("Effect") == "Deny"
                                 and "Condition" in statement
                                 and "StringNotEquals" in statement["Condition"]
                                 and "aws:RequestedRegion"
@@ -53,7 +53,7 @@ class organizations_scp_check_deny_regions(Check):
 
                             # Allow if Condition = {"StringEquals": {"aws:RequestedRegion": [region1, region2]}}
                             if (
-                                statement["Effect"] == "Allow"
+                                policy.content.get("Statement") == "Allow"
                                 and "Condition" in statement
                                 and "StringEquals" in statement["Condition"]
                                 and "aws:RequestedRegion"
