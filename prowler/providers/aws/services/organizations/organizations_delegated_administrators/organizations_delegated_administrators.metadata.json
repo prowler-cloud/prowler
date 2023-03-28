@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "organizations_delegated_administrators",
-  "CheckTitle": "Check if AWS Organizations delegated administratos are trusted",
+  "CheckTitle": "Check if AWS Organizations delegated administrators are trusted",
   "CheckType": [
     "Logging and Monitoring"
   ],
