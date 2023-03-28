@@ -1,4 +1,5 @@
 from unittest import mock
+from re import search
 
 from boto3 import client
 from moto import mock_organizations
@@ -30,6 +31,12 @@ class Test_organizations_account_part_of_organizations:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
+            assert search(
+                "AWS Organizations is not in-use for this AWS Account",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == ""
+            assert result[0].resource_arn == ""
 
     @mock_organizations
     def test_organization(self):
@@ -42,7 +49,7 @@ class Test_organizations_account_part_of_organizations:
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION)
-        conn.create_organization()
+        response = conn.create_organization()
 
         with mock.patch(
             "prowler.providers.aws.services.organizations.organizations_account_part_of_organizations.organizations_account_part_of_organizations.organizations_client",
@@ -58,3 +65,9 @@ class Test_organizations_account_part_of_organizations:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
+            assert search(
+                "Account is part of AWS Organization",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == response["Organization"]["Id"]
+            assert result[0].resource_arn == response["Organization"]["Arn"]

@@ -1,4 +1,5 @@
 from unittest import mock
+from re import search
 
 from boto3 import client
 from moto import mock_organizations
@@ -34,6 +35,12 @@ class Test_organizations_scp_check_deny_regions:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
+            assert search(
+                "AWS Organizations is not in-use for this AWS Account",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == ""
+            assert result[0].resource_arn == ""
 
     @mock_organizations
     def test_organization_without_scp_deny_regions(self):
@@ -46,7 +53,7 @@ class Test_organizations_scp_check_deny_regions:
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION)
-        conn.create_organization()
+        response = conn.create_organization()
 
         with mock.patch(
             "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.organizations_client",
@@ -62,6 +69,12 @@ class Test_organizations_scp_check_deny_regions:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
+            assert result[0].resource_id == response["Organization"]["Id"]
+            assert result[0].resource_arn == response["Organization"]["Arn"]
+            assert search(
+                "No SCP restricting by regions found for org",
+                result[0].status_extended,
+            )
 
     @mock_organizations
     def test_organization_with_scp_deny_regions_valid(self):
@@ -74,7 +87,7 @@ class Test_organizations_scp_check_deny_regions:
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION)
-        conn.create_organization()
+        response = conn.create_organization()
         # Create Policy
         conn.create_policy(
             Content=scp_restrict_regions_with_deny(),
@@ -106,6 +119,12 @@ class Test_organizations_scp_check_deny_regions:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
+                assert result[0].resource_id == response["Organization"]["Id"]
+                assert result[0].resource_arn == response["Organization"]["Arn"]
+                assert search(
+                    "SCP policy restricting regions found",
+                    result[0].status_extended,
+                )
 
     @mock_organizations
     def test_organization_with_scp_deny_regions_not_valid(self):
@@ -118,7 +137,7 @@ class Test_organizations_scp_check_deny_regions:
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION)
-        conn.create_organization()
+        response = conn.create_organization()
         # Create Policy
         conn.create_policy(
             Content=scp_restrict_regions_with_deny(),
@@ -150,3 +169,9 @@ class Test_organizations_scp_check_deny_regions:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
+                assert result[0].resource_id == response["Organization"]["Id"]
+                assert result[0].resource_arn == response["Organization"]["Arn"]
+                assert search(
+                    "SCP policy restricting regions found",
+                    result[0].status_extended,
+                )
