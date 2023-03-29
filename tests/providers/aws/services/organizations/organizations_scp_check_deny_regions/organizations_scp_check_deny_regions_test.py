@@ -72,7 +72,7 @@ class Test_organizations_scp_check_deny_regions:
             assert result[0].resource_id == response["Organization"]["Id"]
             assert result[0].resource_arn == response["Organization"]["Arn"]
             assert search(
-                "No SCP restricting by regions found for org",
+                "level but don't restrict AWS Regions",
                 result[0].status_extended,
             )
 
@@ -122,7 +122,7 @@ class Test_organizations_scp_check_deny_regions:
                 assert result[0].resource_id == response["Organization"]["Id"]
                 assert result[0].resource_arn == response["Organization"]["Arn"]
                 assert search(
-                    "SCP policy restricting regions found",
+                    "restricting all configured regions found",
                     result[0].status_extended,
                 )
 
@@ -172,6 +172,6 @@ class Test_organizations_scp_check_deny_regions:
                 assert result[0].resource_id == response["Organization"]["Id"]
                 assert result[0].resource_arn == response["Organization"]["Arn"]
                 assert search(
-                    "SCP policy restricting regions found",
+                    "restricting some AWS Regions, but not all the configured ones, please check config...",
                     result[0].status_extended,
                 )
