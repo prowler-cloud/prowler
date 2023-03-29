@@ -8,10 +8,10 @@
   "ServiceName": "organizations",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "Other",
   "Description": "This check verify if there are AWS Organizations delegated adminsitrators and if they are trusted (you can define your trusted delegated adminsitrator in Prowler configuration)",
-  "Risk": "",
+  "Risk": "The risk associated with having untrusted AWS Organizations delegated administrators is that they may have the ability to access and make changes to sensitive data and resources within an organization's AWS accounts. This can result in unauthorized access or data breaches, which can lead to financial losses, damage to reputation, and legal liabilities. It's important to carefully vet and monitor AWS Organizations delegated administrators to ensure that they are trustworthy and have a legitimate need for access to the organization's resources.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {

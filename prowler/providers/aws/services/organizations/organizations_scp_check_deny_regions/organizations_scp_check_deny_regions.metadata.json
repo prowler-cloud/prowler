@@ -11,7 +11,7 @@
   "Severity": "low",
   "ResourceType": "Other",
   "Description": "As best practice, AWS Regions should be restricted and only allow the ones that are needed.",
-  "Risk": "",
+  "Risk": "The risk associated with not restricting AWS Regions with Service Control Policies (SCPs) is that it can lead to unauthorized access or use of resources in regions that are not intended for use. This can result in increased costs due to inefficiencies in resource usage and can also expose sensitive data to unauthorized access or breaches. By restricting access to AWS Regions with SCP policies, organizations can help ensure that only authorized personnel have access to the resources they need, while minimizing the risk of security breaches and compliance violations.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
