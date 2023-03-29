@@ -39,7 +39,7 @@ class Test_organizations_scp_check_deny_regions:
                 "AWS Organizations is not in-use for this AWS Account",
                 result[0].status_extended,
             )
-            assert result[0].resource_id == ""
+            assert result[0].resource_id == "AWS Organization"
             assert result[0].resource_arn == ""
 
     @mock_organizations

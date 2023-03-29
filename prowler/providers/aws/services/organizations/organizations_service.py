@@ -49,7 +49,10 @@ class Organizations:
                 if e.response["Error"]["Code"] == "AWSOrganizationsNotInUseException":
                     self.organizations.append(
                         Organization(
-                            arn="", id="", status="NOT_AVAILABLE", master_id=""
+                            arn="",
+                            id="AWS Organization",
+                            status="NOT_AVAILABLE",
+                            master_id="",
                         )
                     )
             else:
@@ -124,20 +127,20 @@ class Organizations:
             list_policies_paginator = self.client.get_paginator("list_policies")
             for policy_type in enabled_policy_types:
                 logger.info(
-                    "Organizations - List policies... - Type: %s", policy_type["Type"]
+                    "Organizations - List policies... - Type: %s", policy_type.get("Type")
                 )
                 for page in list_policies_paginator.paginate(
-                    Filter=policy_type["Type"]
+                    Filter=policy_type.get("Type")
                 ):
                     for policy in page["Policies"]:
-                        policy_content = self.__describe_policy__(policy["Id"])
-                        policy_targets = self.__list_targets_for_policy__(policy["Id"])
+                        policy_content = self.__describe_policy__(policy.get("Id"))
+                        policy_targets = self.__list_targets_for_policy__(policy.get("Id"))
                         self.policies.append(
                             Policy(
-                                arn=policy["Arn"],
-                                id=policy["Id"],
-                                type=policy["Type"],
-                                aws_managed=policy["AwsManaged"],
+                                arn=policy.get("Arn"),
+                                id=policy.get("Id"),
+                                type=policy.get("Type"),
+                                aws_managed=policy.get("AwsManaged"),
                                 content=policy_content,
                                 targets=policy_targets,
                             )
@@ -190,12 +193,12 @@ class Organizations:
                 for delegated_administrator in page["DelegatedAdministrators"]:
                     self.delegated_administrators.append(
                         DelegatedAdministrator(
-                            arn=delegated_administrator["Arn"],
-                            id=delegated_administrator["Id"],
-                            name=delegated_administrator["Name"],
-                            email=delegated_administrator["Email"],
-                            status=delegated_administrator["Status"],
-                            joinedmethod=delegated_administrator["JoinedMethod"],
+                            arn=delegated_administrator.get("Arn"),
+                            id=delegated_administrator.get("Id"),
+                            name=delegated_administrator.get("Name"),
+                            email=delegated_administrator.get("Email"),
+                            status=delegated_administrator.get("Status"),
+                            joinedmethod=delegated_administrator.get("JoinedMethod"),
                         )
                     )
         except Exception as error:

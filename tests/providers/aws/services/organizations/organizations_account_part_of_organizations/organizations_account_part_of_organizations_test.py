@@ -35,7 +35,7 @@ class Test_organizations_account_part_of_organizations:
                 "AWS Organizations is not in-use for this AWS Account",
                 result[0].status_extended,
             )
-            assert result[0].resource_id == ""
+            assert result[0].resource_id == "AWS Organization"
             assert result[0].resource_arn == ""
 
     @mock_organizations
