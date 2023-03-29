@@ -113,7 +113,6 @@ checks_v3_to_v2_mapping = {
     "ec2_securitygroup_allow_wide_open_public_ipv4": "extra778",
     "ec2_securitygroup_default_restrict_traffic": "check43",
     "ec2_securitygroup_from_launch_wizard": "extra7173",
-    "ec2_securitygroup_in_use_without_ingress_filtering": "extra74",
     "ec2_securitygroup_not_used": "extra75",
     "ec2_securitygroup_with_many_ingress_egress_rules": "extra777",
     "ecr_repositories_lifecycle_policy_enabled": "extra7194",
