@@ -28,19 +28,15 @@ class organizations_delegated_administrators(Check):
                         else:
                             report.status = "PASS"
                             report.status_extended = f"Trusted Delegated Administrator: {delegated_administrator.id}"
-
-                        findings.append(report)
                 else:
                     report.status = "PASS"
                     report.status_extended = f"No Delegated Administrators: {org.id}"
-
-                    findings.append(report)
             else:
                 report.status = "PASS"
                 report.status_extended = (
                     "AWS Organizations is not in-use for this AWS Account"
                 )
 
-                findings.append(report)
+            findings.append(report)
 
         return findings
