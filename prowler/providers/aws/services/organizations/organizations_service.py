@@ -36,9 +36,7 @@ class Organizations:
                 organization_arn = organization_desc.get("Arn")
                 organization_id = organization_desc.get("Id")
                 organization_master_id = organization_desc.get("MasterAccountId")
-                organization_available_policy_types = organization_desc[
-                    "AvailablePolicyTypes"
-                ]
+                organization_available_policy_types = organization_desc.get("AvailablePolicyTypes")
                 # Fetch policies for organization:
                 organization_policies = self.__list_policies__(
                     organization_available_policy_types
@@ -72,7 +70,10 @@ class Organizations:
                     # is filtered
                     self.organizations.append(
                         Organization(
-                            arn="", id="", status="NOT_AVAILABLE", master_id=""
+                            arn="",
+                            id="AWS Organization",
+                            status="NOT_AVAILABLE",
+                            master_id="",
                         )
                     )
 
