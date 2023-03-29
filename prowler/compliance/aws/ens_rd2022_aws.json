@@ -1626,7 +1626,7 @@
         }
       ],
       "Checks": [
-        "ec2_securitygroup_in_use_without_ingress_filtering"
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
       ]
     },
     {
