@@ -85,41 +85,7 @@ class Organizations:
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    # This method only returns "Attached directly" policies, missing "Inherited from..."
-    # def __list_policies_for_target__(self, target, enabled_policy_types):
-    #     logger.info("Organizations - List policies for target...")
-
-    #     try:
-    #         policies = []
-    #         list_policies_for_target_paginator = self.client.get_paginator(
-    #             "list_policies_for_target"
-    #         )
-    #         for policy_type in enabled_policy_types:
-    #             logger.info(
-    #                 "Organizations - List policies for target... - Type: %s",
-    #                 policy_type["Type"],
-    #             )
-    #             for page in list_policies_for_target_paginator.paginate(
-    #                 TargetId=target, Filter=policy_type["Type"]
-    #             ):
-    #                 for policy in page["Policies"]:
-    #                     policy_content = self.__describe_policy__(policy["Id"])
-    #                     policies.append(
-    #                         Policy(
-    #                             arn=policy["Arn"],
-    #                             id=policy["Id"],
-    #                             type=policy["Type"],
-    #                             aws_managed=policy["AwsManaged"],
-    #                             content=policy_content,
-    #                         )
-    #                     )
-    #     except Exception as error:
-    #         logger.error(
-    #             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-    #         )
-    #     finally:
-    #         return policies
-
+    # I'm using list_policies instead of list_policies_for_target, because the last one only returns "Attached directly" policies but not "Inherited from..." policies.
     def __list_policies__(self, enabled_policy_types):
         logger.info("Organizations - List policies...")
 

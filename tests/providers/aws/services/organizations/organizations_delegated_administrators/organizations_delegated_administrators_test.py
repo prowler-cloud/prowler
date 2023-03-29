@@ -1,85 +1,110 @@
 from re import search
 from unittest import mock
 
-from boto3 import client
+from boto3 import client, session
 from moto import mock_organizations
+
+from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
+from prowler.providers.aws.services.organizations.organizations_service import (
+    Organizations,
+)
 
 AWS_REGION = "us-east-1"
 
 
 class Test_organizations_delegated_administrators:
+
+    # Mocked Audit Info
+    def set_mocked_audit_info(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=session.Session(
+                profile_name=None,
+                botocore_session=None,
+            ),
+            audited_account=None,
+            audited_user_id=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=None,
+            organizations_metadata=None,
+            audit_resources=None,
+        )
+        return audit_info
+
     @mock_organizations
     def test_no_organization(self):
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
-        from prowler.providers.aws.services.organizations.organizations_service import (
-            Organizations,
-        )
 
-        current_audit_info.audited_partition = "aws"
+        audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
-            "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
-            new=Organizations(current_audit_info),
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
-            # Test Check
-            from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
-                organizations_delegated_administrators,
-            )
+            with mock.patch(
+                "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
+                new=Organizations(audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
+                    organizations_delegated_administrators,
+                )
 
-            check = organizations_delegated_administrators()
-            result = check.execute()
+                check = organizations_delegated_administrators()
+                result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert search(
-                "AWS Organizations is not in-use for this AWS Account",
-                result[0].status_extended,
-            )
-            assert result[0].resource_id == "AWS Organization"
-            assert result[0].resource_arn == ""
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert search(
+                    "AWS Organizations is not in-use for this AWS Account",
+                    result[0].status_extended,
+                )
+                assert result[0].resource_id == "AWS Organization"
+                assert result[0].resource_arn == ""
 
     @mock_organizations
     def test_organization_no_delegations(self):
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
-        from prowler.providers.aws.services.organizations.organizations_service import (
-            Organizations,
-        )
 
-        current_audit_info.audited_partition = "aws"
+        audit_info = self.set_mocked_audit_info()
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION)
         response = conn.create_organization()
 
         with mock.patch(
-            "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
-            new=Organizations(current_audit_info),
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
-            # Test Check
-            from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
-                organizations_delegated_administrators,
-            )
+            with mock.patch(
+                "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
+                new=Organizations(audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
+                    organizations_delegated_administrators,
+                )
 
-            check = organizations_delegated_administrators()
-            result = check.execute()
+                check = organizations_delegated_administrators()
+                result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert result[0].resource_id == response["Organization"]["Id"]
-            assert result[0].resource_arn == response["Organization"]["Arn"]
-            assert search(
-                "No Delegated Administrators",
-                result[0].status_extended,
-            )
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert result[0].resource_id == response["Organization"]["Id"]
+                assert result[0].resource_arn == response["Organization"]["Arn"]
+                assert search(
+                    "No Delegated Administrators",
+                    result[0].status_extended,
+                )
 
     @mock_organizations
     def test_organization_trusted_delegated(self):
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
-        from prowler.providers.aws.services.organizations.organizations_service import (
-            Organizations,
-        )
 
-        current_audit_info.audited_partition = "aws"
+        audit_info = self.set_mocked_audit_info()
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION)
@@ -101,38 +126,38 @@ class Test_organizations_delegated_administrators:
             return []
 
         with mock.patch(
-            "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
-            new=Organizations(current_audit_info),
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.get_config_var",
-                new=mock_get_config_var,
+                "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
+                new=Organizations(audit_info),
             ):
-                # Test Check
-                from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
-                    organizations_delegated_administrators,
-                )
+                with mock.patch(
+                    "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.get_config_var",
+                    new=mock_get_config_var,
+                ):
+                    # Test Check
+                    from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
+                        organizations_delegated_administrators,
+                    )
 
-                check = organizations_delegated_administrators()
-                result = check.execute()
+                    check = organizations_delegated_administrators()
+                    result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "PASS"
-                assert result[0].resource_id == response["Organization"]["Id"]
-                assert result[0].resource_arn == response["Organization"]["Arn"]
-                assert search(
-                    "Trusted Delegated Administrator",
-                    result[0].status_extended,
-                )
+                    assert len(result) == 1
+                    assert result[0].status == "PASS"
+                    assert result[0].resource_id == response["Organization"]["Id"]
+                    assert result[0].resource_arn == response["Organization"]["Arn"]
+                    assert search(
+                        "Trusted Delegated Administrator",
+                        result[0].status_extended,
+                    )
 
     @mock_organizations
     def test_organization_untrusted_delegated(self):
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
-        from prowler.providers.aws.services.organizations.organizations_service import (
-            Organizations,
-        )
 
-        current_audit_info.audited_partition = "aws"
+        audit_info = self.set_mocked_audit_info()
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION)
@@ -149,22 +174,26 @@ class Test_organizations_delegated_administrators:
         )
 
         with mock.patch(
-            "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
-            new=Organizations(current_audit_info),
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
-            # Test Check
-            from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
-                organizations_delegated_administrators,
-            )
+            with mock.patch(
+                "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
+                new=Organizations(audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
+                    organizations_delegated_administrators,
+                )
 
-            check = organizations_delegated_administrators()
-            result = check.execute()
+                check = organizations_delegated_administrators()
+                result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert result[0].resource_id == response["Organization"]["Id"]
-            assert result[0].resource_arn == response["Organization"]["Arn"]
-            assert search(
-                "Untrusted Delegated Administrator",
-                result[0].status_extended,
-            )
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert result[0].resource_id == response["Organization"]["Id"]
+                assert result[0].resource_arn == response["Organization"]["Arn"]
+                assert search(
+                    "Untrusted Delegated Administrator",
+                    result[0].status_extended,
+                )
