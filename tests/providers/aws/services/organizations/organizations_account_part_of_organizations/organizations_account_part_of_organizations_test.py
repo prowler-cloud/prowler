@@ -1,25 +1,50 @@
 from re import search
 from unittest import mock
 
-from boto3 import client
+from boto3 import client, session
 from moto import mock_organizations
+
+from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
+from prowler.providers.aws.services.organizations.organizations_service import (
+    Organizations,
+)
 
 AWS_REGION = "us-east-1"
 
 
 class Test_organizations_account_part_of_organizations:
+
+    # Mocked Audit Info
+    def set_mocked_audit_info(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=session.Session(
+                profile_name=None,
+                botocore_session=None,
+            ),
+            audited_account=None,
+            audited_user_id=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=None,
+            organizations_metadata=None,
+            audit_resources=None,
+        )
+        return audit_info
+
     @mock_organizations
     def test_no_organization(self):
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
-        from prowler.providers.aws.services.organizations.organizations_service import (
-            Organizations,
-        )
 
-        current_audit_info.audited_partition = "aws"
+        audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
             "prowler.providers.aws.services.organizations.organizations_account_part_of_organizations.organizations_account_part_of_organizations.organizations_client",
-            new=Organizations(current_audit_info),
+            new=Organizations(audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.organizations.organizations_account_part_of_organizations.organizations_account_part_of_organizations import (
@@ -40,12 +65,8 @@ class Test_organizations_account_part_of_organizations:
 
     @mock_organizations
     def test_organization(self):
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
-        from prowler.providers.aws.services.organizations.organizations_service import (
-            Organizations,
-        )
 
-        current_audit_info.audited_partition = "aws"
+        audit_info = self.set_mocked_audit_info()
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION)
@@ -53,7 +74,7 @@ class Test_organizations_account_part_of_organizations:
 
         with mock.patch(
             "prowler.providers.aws.services.organizations.organizations_account_part_of_organizations.organizations_account_part_of_organizations.organizations_client",
-            new=Organizations(current_audit_info),
+            new=Organizations(audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.organizations.organizations_account_part_of_organizations.organizations_account_part_of_organizations import (
