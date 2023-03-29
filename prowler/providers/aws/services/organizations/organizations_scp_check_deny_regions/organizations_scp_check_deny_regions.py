@@ -17,7 +17,9 @@ class organizations_scp_check_deny_regions(Check):
             if org.status == "ACTIVE":
                 if not org.policies:
                     report.status = "FAIL"
-                    report.status_extended = f"No SCP policies exist at the organization {org.id} level"
+                    report.status_extended = (
+                        f"No SCP policies exist at the organization {org.id} level"
+                    )
                 else:
                     # We use this flag if we find a statement that is restricting regions but not all the configured ones:
                     is_region_restricted_statement = False
@@ -45,9 +47,7 @@ class organizations_scp_check_deny_regions(Check):
                                 ):
                                     # All defined regions are restricted, we exit here, no need to continue.
                                     report.status = "PASS"
-                                    report.status_extended = (
-                                        f"SCP policy {policy.id} restricting all configured regions found"
-                                    )
+                                    report.status_extended = f"SCP policy {policy.id} restricting all configured regions found"
                                     findings.append(report)
                                     return findings
                                 else:
@@ -72,9 +72,7 @@ class organizations_scp_check_deny_regions(Check):
                                 ):
                                     # All defined regions are restricted, we exit here, no need to continue.
                                     report.status = "PASS"
-                                    report.status_extended = (
-                                        f"SCP policy {policy.id} restricting all configured regions found"
-                                    )
+                                    report.status_extended = f"SCP policy {policy.id} restricting all configured regions found"
                                     findings.append(report)
                                     return findings
                                 else:
@@ -82,7 +80,6 @@ class organizations_scp_check_deny_regions(Check):
                                     is_region_restricted_statement = True
                                     report.status = "FAIL"
                                     report.status_extended = f"SCP policies exist {policy.id} restricting some AWS Regions, but not all the configured ones, please check config..."
-                
 
                     if not is_region_restricted_statement:
                         report.status = "FAIL"
