@@ -15,6 +15,9 @@ class organizations_scp_check_deny_regions(Check):
             report.resource_id = org.id
             report.resource_arn = org.arn
             if org.status == "ACTIVE":
+                if org.policies is None:
+                    # Access Denied to list_policies
+                    continue
                 if not org.policies:
                     report.status = "FAIL"
                     report.status_extended = (

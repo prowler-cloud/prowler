@@ -47,8 +47,8 @@ class Organizations:
                 organization_delegated_administrator = (
                     self.__list_delegated_administrators__()
                 )
-            except ClientError as e:
-                if e.response["Error"]["Code"] == "AWSOrganizationsNotInUseException":
+            except ClientError as error:
+                if error.response["Error"]["Code"] == "AWSOrganizationsNotInUseException":
                     self.organizations.append(
                         Organization(
                             arn="",
@@ -56,6 +56,10 @@ class Organizations:
                             status="NOT_AVAILABLE",
                             master_id="",
                         )
+                    )
+                else:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
             else:
                 if not self.audit_resources or (
@@ -116,6 +120,11 @@ class Organizations:
                                 targets=policy_targets,
                             )
                         )
+
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                self.policies = None
+
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -172,6 +181,11 @@ class Organizations:
                             joinedmethod=delegated_administrator.get("JoinedMethod"),
                         )
                     )
+
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                self.delegated_administrators = None
+
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -204,5 +218,5 @@ class Organization(BaseModel):
     id: str
     status: str
     master_id: str
-    policies: list[Policy] = []
-    delegated_administrators: list[DelegatedAdministrator] = []
+    policies: list[Policy] = None
+    delegated_administrators: list[DelegatedAdministrator] = None

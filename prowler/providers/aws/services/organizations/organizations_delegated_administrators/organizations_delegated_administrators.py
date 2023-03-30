@@ -17,6 +17,9 @@ class organizations_delegated_administrators(Check):
                 report = Check_Report_AWS(self.metadata())
                 report.resource_id = org.id
                 report.resource_arn = org.arn
+                if org.delegated_administrators is None:
+                    # Access Denied to list_policies
+                    continue
                 if org.delegated_administrators:
                     for delegated_administrator in org.delegated_administrators:
                         if (
