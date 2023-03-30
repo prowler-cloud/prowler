@@ -6,7 +6,6 @@ on:
 
 env:
   RELEASE_TAG: ${{ github.event.release.tag_name }}
-  GITHUB_BRANCH: master
 
 jobs:
   release-prowler-job:
@@ -17,8 +16,7 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-        with:
-          ref: ${{ env.GITHUB_BRANCH }}
+
       - name: Install dependencies
         run: |
           pipx install poetry
