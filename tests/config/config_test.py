@@ -1,6 +1,6 @@
 from unittest import mock
 
-from prowler.config.config import check_current_version, prowler_version
+from prowler.config.config import check_current_version
 from prowler.providers.aws.aws_provider import get_aws_available_regions
 
 MOCK_PROWLER_VERSION = "3.3.0"
@@ -21,9 +21,10 @@ class Test_Config:
     @mock.patch("prowler.config.config.prowler_version", new=MOCK_PROWLER_VERSION)
     def test_check_current_version_with_latest(self):
         assert (
-            check_current_version(prowler_version) == "(it is the latest version, yay!)"
+            check_current_version(MOCK_PROWLER_VERSION)
+            == "(it is the latest version, yay!)"
         )
         assert (
             check_current_version("0.0.0")
-            == f"(latest is {prowler_version}, upgrade for the latest features)"
+            == f"(latest is {MOCK_PROWLER_VERSION}, upgrade for the latest features)"
         )
