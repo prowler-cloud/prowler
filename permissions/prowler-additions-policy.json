@@ -24,7 +24,10 @@
         "shield:GetSubscriptionState",
         "ssm:GetDocument",
         "support:Describe*",
-        "tag:GetTagKeys"
+        "tag:GetTagKeys",
+        "organizations:DescribeOrganization",
+        "organizations:ListPolicies*",
+        "organizations:DescribePolicy"
       ],
       "Resource": "*",
       "Effect": "Allow",

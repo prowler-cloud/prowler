@@ -41,3 +41,17 @@ obsolete_lambda_runtimes:
     "dotnetcore2.1",
     "ruby2.5",
   ]
+
+# AWS Organizations
+# organizations_scp_check_deny_regions
+# organizations_enabled_regions: [
+#   'eu-central-1',
+#   'eu-west-1',
+#   "us-east-1"
+# ]
+organizations_enabled_regions: []
+# organizations_delegated_administrators
+# organizations_trusted_delegated_administrators: [
+#   "12345678901"
+# ]
+organizations_trusted_delegated_administrators: []
