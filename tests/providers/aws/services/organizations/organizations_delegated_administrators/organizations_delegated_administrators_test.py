@@ -38,6 +38,29 @@ class Test_organizations_delegated_administrators:
         return audit_info
 
     @mock_organizations
+    def test_no_organization(self):
+
+        audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
+                new=Organizations(audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
+                    organizations_delegated_administrators,
+                )
+
+                check = organizations_delegated_administrators()
+                result = check.execute()
+
+                assert len(result) == 0
+
+    @mock_organizations
     def test_organization_no_delegations(self):
 
         audit_info = self.set_mocked_audit_info()

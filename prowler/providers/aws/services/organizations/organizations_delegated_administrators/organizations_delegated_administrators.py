@@ -13,10 +13,10 @@ class organizations_delegated_administrators(Check):
         )
 
         for org in organizations_client.organizations:
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = org.id
-            report.resource_arn = org.arn
             if org.status == "ACTIVE":
+                report = Check_Report_AWS(self.metadata())
+                report.resource_id = org.id
+                report.resource_arn = org.arn
                 if org.delegated_administrators:
                     for delegated_administrator in org.delegated_administrators:
                         if (
@@ -32,6 +32,6 @@ class organizations_delegated_administrators(Check):
                     report.status = "PASS"
                     report.status_extended = f"No Delegated Administrators: {org.id}"
 
-            findings.append(report)
+                findings.append(report)
 
         return findings
