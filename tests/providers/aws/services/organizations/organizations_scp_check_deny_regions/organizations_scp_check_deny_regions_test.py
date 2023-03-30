@@ -120,7 +120,7 @@ class Test_organizations_scp_check_deny_regions:
             Name="Test",
             Type="SERVICE_CONTROL_POLICY",
         )
-        
+
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=audit_info,

@@ -48,7 +48,10 @@ class Organizations:
                     self.__list_delegated_administrators__()
                 )
             except ClientError as error:
-                if error.response["Error"]["Code"] == "AWSOrganizationsNotInUseException":
+                if (
+                    error.response["Error"]["Code"]
+                    == "AWSOrganizationsNotInUseException"
+                ):
                     self.organizations.append(
                         Organization(
                             arn="",
