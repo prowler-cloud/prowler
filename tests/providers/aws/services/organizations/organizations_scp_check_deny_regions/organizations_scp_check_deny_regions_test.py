@@ -120,12 +120,7 @@ class Test_organizations_scp_check_deny_regions:
             Name="Test",
             Type="SERVICE_CONTROL_POLICY",
         )
-
-        def mock_get_config_var(config_var):
-            if config_var == "organizations_enabled_regions":
-                return ["eu-central-1"]
-            return []
-
+        
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=audit_info,
@@ -136,7 +131,7 @@ class Test_organizations_scp_check_deny_regions:
             ):
                 with mock.patch(
                     "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.get_config_var",
-                    new=mock_get_config_var,
+                    return_value=["eu-central-1"],
                 ):
                     # Test Check
                     from prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions import (
@@ -171,11 +166,6 @@ class Test_organizations_scp_check_deny_regions:
             Type="SERVICE_CONTROL_POLICY",
         )
 
-        def mock_get_config_var(config_var):
-            if config_var == "organizations_enabled_regions":
-                return ["us-east-1"]
-            return []
-
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=audit_info,
@@ -186,7 +176,7 @@ class Test_organizations_scp_check_deny_regions:
             ):
                 with mock.patch(
                     "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.get_config_var",
-                    new=mock_get_config_var,
+                    return_value=["us-east-1"],
                 ):
                     # Test Check
                     from prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions import (

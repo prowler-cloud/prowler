@@ -120,11 +120,6 @@ class Test_organizations_delegated_administrators:
             ServicePrincipal="config-multiaccountsetup.amazonaws.com",
         )
 
-        def mock_get_config_var(config_var):
-            if config_var == "organizations_trusted_delegated_administrators":
-                return [account["CreateAccountStatus"]["AccountId"]]
-            return []
-
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=audit_info,
@@ -135,7 +130,7 @@ class Test_organizations_delegated_administrators:
             ):
                 with mock.patch(
                     "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.get_config_var",
-                    new=mock_get_config_var,
+                    return_value=[account["CreateAccountStatus"]["AccountId"]],
                 ):
                     # Test Check
                     from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
