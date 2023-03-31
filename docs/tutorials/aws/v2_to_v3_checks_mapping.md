@@ -31,7 +31,7 @@ checks_v3_to_v2_mapping = {
     "awslambda_function_url_cors_policy": "extra7180",
     "awslambda_function_url_public": "extra7179",
     "awslambda_function_using_supported_runtimes": "extra762",
-    "cloudformation_outputs_find_secrets": "extra742",
+    "cloudformation_stack_outputs_find_secrets": "extra742",
     "cloudformation_stacks_termination_protection_enabled": "extra7154",
     "cloudfront_distributions_field_level_encryption_enabled": "extra767",
     "cloudfront_distributions_geo_restrictions_enabled": "extra732",
