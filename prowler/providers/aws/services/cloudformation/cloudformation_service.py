@@ -1,6 +1,7 @@
 import threading
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -65,8 +66,8 @@ class CloudFormation:
     def __describe_stack__(self):
         """Get Details for a CloudFormation Stack"""
         logger.info("CloudFormation - Describing Stack to get specific details...")
-        try:
-            for stack in self.stacks:
+        for stack in self.stacks:
+            try:
                 stack_details = self.regional_clients[stack.region].describe_stacks(
                     StackName=stack.name
                 )
@@ -79,10 +80,16 @@ class CloudFormation:
                     stack.root_nested_stack = stack_details["Stacks"][0]["RootId"]
                 stack.is_nested_stack = True if stack.root_nested_stack != "" else False
 
-        except Exception as error:
-            logger.error(
-                f"{stack.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except ClientError as error:
+                if error.response["Error"]["Code"] != "ValidationError":
+                    logger.warning(
+                        f"{stack.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    continue
+            except Exception as error:
+                logger.error(
+                    f"{stack.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
 
 class Stack(BaseModel):
