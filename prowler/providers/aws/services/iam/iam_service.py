@@ -2,6 +2,7 @@ import csv
 from datetime import datetime
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -104,6 +105,13 @@ class IAM:
             credential_lines = credential.split("\n")
             csv_reader = csv.DictReader(credential_lines, delimiter=",")
             credential_list = list(csv_reader)
+
+        except ClientError as error:
+            if error.response["Error"]["Code"] != "LimitExceededException":
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
