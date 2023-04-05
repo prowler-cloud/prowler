@@ -2,24 +2,21 @@ from datetime import datetime
 from unittest.mock import patch
 
 import botocore
+from boto3 import session
 
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.backup.backup_service import Backup
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
 
-# Mocking Access Analyzer Calls
+# Mocking AWS API call
 make_api_call = botocore.client.BaseClient._make_api_call
 
 
 def mock_make_api_call(self, operation_name, kwarg):
     """
-    Mock every AWS API call using Boto3
-
-    As you can see the operation_name has the list_analyzers snake_case form but
-    we are using the ListAnalyzers form.
-    Rationale -> https://github.com/boto/botocore/blob/develop/botocore/client.py#L810:L816
+    Mock every AWS API call
     """
     if operation_name == "ListBackupVaults":
         return {
@@ -75,26 +72,52 @@ def mock_generate_regional_clients(service, audit_info):
     new=mock_generate_regional_clients,
 )
 class Test_Backup_Service:
+
+    # Mocked Audit Info
+    def set_mocked_audit_info(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=session.Session(
+                profile_name=None,
+                botocore_session=None,
+            ),
+            audited_account=None,
+            audited_user_id=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=None,
+            organizations_metadata=None,
+            audit_resources=None,
+        )
+        return audit_info
+
     # Test Backup Client
     def test__get_client__(self):
-        backup = Backup(current_audit_info)
+        audit_info = self.set_mocked_audit_info()
+        backup = Backup(audit_info)
         assert backup.regional_clients[AWS_REGION].__class__.__name__ == "Backup"
 
     # Test Backup Session
     def test__get_session__(self):
-        access_analyzer = Backup(current_audit_info)
+        audit_info = self.set_mocked_audit_info()
+        access_analyzer = Backup(audit_info)
         assert access_analyzer.session.__class__.__name__ == "Session"
 
     # Test Backup Service
     def test__get_service__(self):
-        access_analyzer = Backup(current_audit_info)
+        audit_info = self.set_mocked_audit_info()
+        access_analyzer = Backup(audit_info)
         assert access_analyzer.service == "backup"
 
     # Test Backup List Backup Vaults
     def test__list_backup_vaults__(self):
-        # Set partition for the service
-        current_audit_info.audited_partition = "aws"
-        backup = Backup(current_audit_info)
+        audit_info = self.set_mocked_audit_info()
+        backup = Backup(audit_info)
         assert len(backup.backup_vaults) == 1
         assert backup.backup_vaults[0].arn == "ARN"
         assert backup.backup_vaults[0].name == "Test Vault"
@@ -107,9 +130,8 @@ class Test_Backup_Service:
 
     # Test Backup List Backup Plans
     def test__list_backup_plans__(self):
-        # Set partition for the service
-        current_audit_info.audited_partition = "aws"
-        backup = Backup(current_audit_info)
+        audit_info = self.set_mocked_audit_info()
+        backup = Backup(audit_info)
         assert len(backup.backup_plans) == 1
         assert backup.backup_plans[0].arn == "ARN"
         assert backup.backup_plans[0].id == "ID"
@@ -121,9 +143,8 @@ class Test_Backup_Service:
 
     # Test Backup List Report Plans
     def test__list_backup_report_plans__(self):
-        # Set partition for the service
-        current_audit_info.audited_partition = "aws"
-        backup = Backup(current_audit_info)
+        audit_info = self.set_mocked_audit_info()
+        backup = Backup(audit_info)
         assert len(backup.backup_report_plans) == 1
         assert backup.backup_report_plans[0].arn == "ARN"
         assert backup.backup_report_plans[0].region == AWS_REGION

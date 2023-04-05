@@ -16,6 +16,7 @@ class Backup:
         self.audited_account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
+        self.general_region = audit_info.profile_region
         self.backup_vaults = []
         self.__threading_call__(self.__list_backup_vaults__)
         self.backup_plans = []
