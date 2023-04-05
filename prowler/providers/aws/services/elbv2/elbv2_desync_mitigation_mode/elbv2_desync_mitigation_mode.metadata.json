@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "elbv2_desync_mitigation_mode",
-  "CheckTitle": "Check whether the Application Load Balancer is configured with defensive or strictest desync mitigation mode.",
+  "CheckTitle": "Check whether the Application Load Balancer is configured with defensive or strictest desync mitigation mode, if not check if at least is configured with the drop_invalid_header_fields attribute",
   "CheckType": [
     "Data Protection"
   ],
@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsElasticLoadBalancingV2LoadBalancer",
-  "Description": "Check whether the Application Load Balancer is configured with defensive or strictest desync mitigation mode.",
+  "Description": "Check whether the Application Load Balancer is configured with defensive or strictest desync mitigation mode, if not check if at least is configured with the drop_invalid_header_fields attribute",
   "Risk": "HTTP Desync issues can lead to request smuggling and make your applications vulnerable to request queue or cache poisoning; which could lead to credential hijacking or execution of unauthorized commands.",
   "RelatedUrl": "",
   "Remediation": {
@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure Application Load Balancer is configured with defensive or strictest desync mitigation mode.",
+      "Text": "Ensure Application Load Balancer is configured with defensive or strictest desync mitigation mode or with the drop_invalid_header_fields attribute enabled",
       "Url": "https://aws.amazon.com/about-aws/whats-new/2020/08/application-and-classic-load-balancers-adding-defense-in-depth-with-introduction-of-desync-mitigation-mode/"
     }
   },
