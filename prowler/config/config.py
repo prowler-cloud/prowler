@@ -51,7 +51,6 @@ def check_current_version(prowler_version):
         release_response = requests.get(
             "https://api.github.com/repos/prowler-cloud/prowler/tags"
         )
-        print(type(release_response))
         latest_version = release_response.json()[0]["name"]
         if latest_version != prowler_version:
             return f"(latest is {latest_version}, upgrade for the latest features)"
