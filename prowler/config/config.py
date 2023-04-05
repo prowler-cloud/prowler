@@ -1,4 +1,3 @@
-import json
 import os
 import pathlib
 from datetime import datetime, timezone
@@ -52,12 +51,13 @@ def check_current_version(prowler_version):
         release_response = requests.get(
             "https://api.github.com/repos/prowler-cloud/prowler/tags"
         )
-        latest_version = json.loads(release_response)[0]["name"]
+        latest_version = release_response.json()[0]["name"]
         if latest_version != prowler_version:
             return f"(latest is {latest_version}, upgrade for the latest features)"
         else:
             return "(it is the latest version, yay!)"
-    except Exception:
+    except Exception as e:
+        print(e)
         return ""
 
 
