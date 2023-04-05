@@ -38,8 +38,8 @@ class Defender:
     def __get_pricings__(self):
         logger.info("Defender - Getting pricings...")
         pricings = {}
-        try:
-            for subscription, client in self.clients.items():
+        for subscription, client in self.clients.items():
+            try:
                 pricings_list = client.pricings.list()
                 pricings.update({subscription: {}})
                 for pricing in pricings_list.value:
@@ -52,12 +52,12 @@ class Defender:
                             )
                         }
                     )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        else:
-            return pricings
+            except Exception as error:
+                logger.error(f"Subscription name: {subscription}")
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return pricings
 
 
 class Defender_Pricing(BaseModel):

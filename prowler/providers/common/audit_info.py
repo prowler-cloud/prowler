@@ -86,6 +86,20 @@ GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project ID: {Fore.YE
 """
         print(report)
 
+    def print_azure_credentials(self, audit_info: Azure_Audit_Info):
+        printed_subscriptions = []
+        for key, value in audit_info.identity.subscriptions.items():
+            intermediate = key + " : " + value
+            printed_subscriptions.append(intermediate)
+        report = f"""
+This report is being generated using the identity below:
+
+Azure Tenant IDs: {Fore.YELLOW}[{" ".join(audit_info.identity.tenant_ids)}]{Style.RESET_ALL} Azure Tenant Domain: {Fore.YELLOW}[{audit_info.identity.domain}]{Style.RESET_ALL}
+Azure Subscriptions: {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}
+Azure Identity type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}[{audit_info.identity.identity_id}]{Style.RESET_ALL}
+"""
+        print(report)
+
     def get_organizations_metadata(
         self, metadata_account: str, assumed_credentials: dict
     ) -> AWS_Organizations_Info:
@@ -339,6 +353,9 @@ GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project ID: {Fore.YE
         )
         azure_audit_info.credentials = azure_provider.get_credentials()
         azure_audit_info.identity = azure_provider.get_identity()
+
+        if not arguments.get("only_logs"):
+            self.print_azure_credentials(azure_audit_info)
 
         return azure_audit_info
 

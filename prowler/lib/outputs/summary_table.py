@@ -20,7 +20,10 @@ def display_summary_table(
             entity_type = "Account"
             audited_entities = audit_info.audited_account
         elif provider == "azure":
-            if audit_info.identity.domain:
+            if (
+                audit_info.identity.domain
+                != "Unknown tenant domain (missing AAD permissions)"
+            ):
                 entity_type = "Tenant Domain"
                 audited_entities = audit_info.identity.domain
             else:
