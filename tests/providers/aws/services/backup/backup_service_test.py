@@ -10,7 +10,7 @@ from prowler.providers.aws.services.backup.backup_service import Backup
 # Mock Test Region
 AWS_REGION = "eu-west-1"
 
-# Mocking AWS API call
+# Mocking Backup Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
 

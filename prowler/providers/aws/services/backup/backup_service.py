@@ -8,7 +8,7 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
-################## Organizations
+################## Backup
 class Backup:
     def __init__(self, audit_info):
         self.service = "backup"
