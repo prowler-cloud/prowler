@@ -137,7 +137,6 @@ checks_v3_to_v2_mapping = {
     "elbv2_internet_facing": "extra79",
     "elbv2_listeners_underneath": "extra7158",
     "elbv2_logging_enabled": "extra717",
-    "elbv2_request_smugling": "extra7142",
     "elbv2_ssl_listeners": "extra793",
     "elbv2_waf_acl_attached": "extra7129",
     "emr_cluster_account_public_block_enabled": "extra7178",
