@@ -1,6 +1,7 @@
 import threading
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -136,8 +137,8 @@ class RDS:
 
     def __describe_db_snapshot_attributes__(self, regional_client):
         logger.info("RDS - Describe Snapshot Attributes...")
-        try:
-            for snapshot in self.db_snapshots:
+        for snapshot in self.db_snapshots:
+            try:
                 if snapshot.region == regional_client.region:
                     response = regional_client.describe_db_snapshot_attributes(
                         DBSnapshotIdentifier=snapshot.id
@@ -145,11 +146,16 @@ class RDS:
                     for att in response["DBSnapshotAttributes"]:
                         if "all" in att["AttributeValues"]:
                             snapshot.public = True
-
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except ClientError as error:
+                if error.response["Error"]["Code"] != "DBSnapshotNotFound":
+                    logger.warning(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    continue
+            except Exception as error:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __describe_db_cluster_snapshots__(self, regional_client):
         logger.info("RDS - Describe Cluster Snapshots...")

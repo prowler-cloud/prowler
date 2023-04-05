@@ -1,6 +1,7 @@
 import threading
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -168,15 +169,24 @@ class DAX:
 
     def __list_tags_for_resource__(self):
         logger.info("DAX - List Tags...")
-        try:
-            for cluster in self.clusters:
+        for cluster in self.clusters:
+            try:
                 regional_client = self.regional_clients[cluster.region]
-                response = regional_client.list_tags(ResourceName=cluster.name)["Tags"]
+                # In the DAX service to call list_tags we need to pass the cluster ARN as the resource name
+                response = regional_client.list_tags(ResourceName=cluster.arn)["Tags"]
                 cluster.tags = response
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+
+            except ClientError as error:
+                if error.response["Error"]["Code"] != "InvalidARNFault":
+                    logger.warning(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    continue
+
+            except Exception as error:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
 
 class Table(BaseModel):

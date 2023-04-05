@@ -136,7 +136,7 @@ class Test_DynamoDB_Service:
             {"Key": "test", "Value": "test"},
         ]
 
-    # Test DynamoDB Describe Table
+    # Test DynamoDB Describe Continuous Backups
     @mock_dynamodb
     def test__describe_continuous_backups__(self):
         # Generate DynamoDB Client
@@ -167,7 +167,7 @@ class Test_DynamoDB_Service:
         assert dynamo.tables[0].pitr
         assert dynamo.tables[0].region == AWS_REGION
 
-    # Test DAX List Tables
+    # Test DAX Describe Clusters
     @mock_dax
     def test__describe_clusters__(self):
         # Generate DAX Client
@@ -198,13 +198,17 @@ class Test_DynamoDB_Service:
         audit_info = self.set_mocked_audit_info()
         dax = DAX(audit_info)
         assert len(dax.clusters) == 2
+
         assert dax.clusters[0].name == "daxcluster1"
-        assert dax.clusters[1].name == "daxcluster2"
         assert dax.clusters[0].region == AWS_REGION
-        assert dax.clusters[1].region == AWS_REGION
+        assert dax.clusters[0].encryption
         assert dax.clusters[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
+
+        assert dax.clusters[1].name == "daxcluster2"
+        assert dax.clusters[1].region == AWS_REGION
+        assert dax.clusters[1].encryption
         assert dax.clusters[1].tags == [
             {"Key": "test", "Value": "test"},
         ]
