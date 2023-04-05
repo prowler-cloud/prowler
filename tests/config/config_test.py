@@ -1,5 +1,7 @@
 from unittest import mock
 
+from requests import Response
+
 from prowler.config.config import check_current_version
 from prowler.providers.aws.aws_provider import get_aws_available_regions
 
@@ -8,7 +10,9 @@ MOCK_PROWLER_VERSION = "3.3.0"
 
 def mock_prowler_get_latest_release(_):
     """Mock requests.get() to get the Prowler latest release"""
-    return b'[{"name": "3.3.0"}]'
+    response = Response()
+    response._content = b'[{"name":"3.3.0"}]'
+    return response
 
 
 class Test_Config:
