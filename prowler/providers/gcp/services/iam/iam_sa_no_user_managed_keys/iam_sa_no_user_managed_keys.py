@@ -9,7 +9,7 @@ class iam_sa_no_user_managed_keys(Check):
             report = Check_Report_GCP(self.metadata())
             report.project_id = iam_client.project_id
             report.resource_id = account.email
-            report.resource_name = account.display_name
+            report.resource_name = account.name
             report.location = iam_client.region
             report.status = "PASS"
             report.status_extended = (
