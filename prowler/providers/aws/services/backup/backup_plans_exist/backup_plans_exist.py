@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.backup.backup_client import backup_client
 
+
 class backup_plans_exist(Check):
     def execute(self):
         findings = []
