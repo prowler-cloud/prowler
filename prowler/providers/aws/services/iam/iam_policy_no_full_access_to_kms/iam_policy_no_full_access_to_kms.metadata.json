@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_policy_no_full_access_to_kms",
+  "CheckTitle": "Ensure IAM policies that allow full \"kms:*\" administrative privileges are not created",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS AWS Foundations Benchmark"
+  ],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsIamPolicy",
+  "Description": "Ensure IAM policies that allow full \"kms:*\" administrative privileges are not created",
+  "Risk": "KMS is a critical service and IAM policies should follow least privilege model for this service in particular",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "It is more secure to start with a minimum set of permissions and grant additional permissions as necessary; rather than starting with permissions that are too lenient and then trying to tighten them later. List policies an analyze if permissions are the least possible to conduct business activities.",
+      "Url": "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
