@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "cloudtrail_insights_exist",
-  "CheckTitle": "Ensure CloudTrail Insights exists",
+  "CheckTitle": "Ensure CloudTrail Insight is enabled",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -12,7 +12,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
   "ResourceType": "AwsCloudTrailTrail",
-  "Description": "Ensure CloudTrail Insights exists",
+  "Description": "Ensure CloudTrail Insight is enabled",
   "Risk": "CloudTrail Insights provides a powerful way to search and analyze CloudTrail log data using pre-built queries and machine learning algorithms. This can help you to identify potential security threats and suspicious activity in near real-time, such as unauthorized access attempts, policy changes, or resource modifications.",
   "RelatedUrl": "",
   "Remediation": {
@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable CloudTrail Insights",
+      "Text": "Enable CloudTrail Insight",
       "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-insights-events-with-cloudtrail.html"
     }
   },
