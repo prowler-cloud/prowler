@@ -39,8 +39,8 @@ class Storage:
     def __get_storage_accounts__(self):
         logger.info("Storage - Getting storage accounts...")
         storage_accounts = {}
-        try:
-            for subscription, client in self.clients.items():
+        for subscription, client in self.clients.items():
+            try:
                 storage_accounts.update({subscription: []})
                 storage_accounts_list = client.storage_accounts.list()
                 for storage_account in storage_accounts_list:
@@ -56,12 +56,12 @@ class Storage:
                             minimum_tls_version=storage_account.minimum_tls_version,
                         )
                     )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        else:
-            return storage_accounts
+            except Exception as error:
+                logger.error(f"Subscription name: {subscription}")
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return storage_accounts
 
 
 @dataclass

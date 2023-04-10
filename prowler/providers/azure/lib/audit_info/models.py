@@ -9,7 +9,7 @@ class Azure_Identity_Info(BaseModel):
     identity_id: str = ""
     identity_type: str = ""
     tenant_ids: list[str] = []
-    domain: str = ""
+    domain: str = "Unknown tenant domain (missing AAD permissions)"
     subscriptions: dict = {}
 
 

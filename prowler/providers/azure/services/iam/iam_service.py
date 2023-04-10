@@ -39,8 +39,8 @@ class IAM:
     def __get_roles__(self):
         logger.info("IAM - Getting roles...")
         roles = {}
-        try:
-            for subscription, client in self.clients.items():
+        for subscription, client in self.clients.items():
+            try:
                 roles.update({subscription: []})
                 for role in client.role_definitions.list(
                     scope=f"/subscriptions/{self.subscriptions[subscription]}",
@@ -55,12 +55,12 @@ class IAM:
                             permissions=role.permissions,
                         )
                     )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        else:
-            return roles
+            except Exception as error:
+                logger.error(f"Subscription name: {subscription}")
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return roles
 
 
 @dataclass

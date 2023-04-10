@@ -115,7 +115,7 @@ class Azure_Provider:
             # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
             # should work but it doesn't, pending issue
             else:
-                identity.identity_id = "Unknown user id (NO AAD permissions)"
+                identity.identity_id = "Unknown user id (Missing AAD permissions)"
                 identity.identity_type = "User"
                 try:
                     logger.info(
@@ -147,7 +147,6 @@ class Azure_Provider:
             if not subscription_ids:
                 logger.info("Scanning all the Azure subscriptions...")
                 for subscription in subscriptions_client.subscriptions.list():
-
                     identity.subscriptions.update(
                         {subscription.display_name: subscription.subscription_id}
                     )

@@ -65,7 +65,10 @@ class Azure_Output_Options(Provider_Output_Options):
             not hasattr(arguments, "output_filename")
             or arguments.output_filename is None
         ):
-            if audit_info.identity.domain:
+            if (
+                audit_info.identity.domain
+                != "Unknown tenant domain (missing AAD permissions)"
+            ):
                 self.output_filename = f"prowler-output-{audit_info.identity.domain}-{output_file_timestamp}"
             else:
                 self.output_filename = f"prowler-output-{'-'.join(audit_info.identity.tenant_ids)}-{output_file_timestamp}"
