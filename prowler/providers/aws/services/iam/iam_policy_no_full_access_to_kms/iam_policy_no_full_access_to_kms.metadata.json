@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "iam_policy_no_full_access_to_kms",
-  "CheckTitle": "Ensure IAM policies that allow full \"kms:*\" administrative privileges are not created",
+  "CheckTitle": "Ensure IAM policies that allow full \"kms:*\" privileges are not created",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -12,7 +12,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsIamPolicy",
-  "Description": "Ensure IAM policies that allow full \"kms:*\" administrative privileges are not created",
+  "Description": "Ensure IAM policies that allow full \"kms:*\" privileges are not created",
   "Risk": "KMS is a critical service and IAM policies should follow least privilege model for this service in particular",
   "RelatedUrl": "",
   "Remediation": {

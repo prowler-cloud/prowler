@@ -64,7 +64,10 @@ class Test_iam_policy_no_full_access_to_kms:
                 check = iam_policy_no_full_access_to_kms()
                 result = check.execute()
                 assert result[0].status == "FAIL"
-                assert result[0].status_extended == f"Policy {policy_name} allows 'kms:*' privileges"
+                assert (
+                    result[0].status_extended
+                    == f"Policy {policy_name} allows 'kms:*' privileges"
+                )
                 assert result[0].resource_id == "policy_kms_full"
                 assert result[0].resource_arn == arn
 
@@ -99,7 +102,10 @@ class Test_iam_policy_no_full_access_to_kms:
                 check = iam_policy_no_full_access_to_kms()
                 result = check.execute()
                 assert result[0].status == "PASS"
-                assert result[0].status_extended == f"Policy {policy_name} does not allow 'kms:*' privileges"
+                assert (
+                    result[0].status_extended
+                    == f"Policy {policy_name} does not allow 'kms:*' privileges"
+                )
                 assert result[0].resource_id == "policy_no_kms_full"
                 assert result[0].resource_arn == arn
 
@@ -111,7 +117,7 @@ class Test_iam_policy_no_full_access_to_kms:
         policy_document_full_access = {
             "Version": "2012-10-17",
             "Statement": [
-                {"Effect": "Allow", "Action": ["ec2:*", "kms:*"] , "Resource": "*"},
+                {"Effect": "Allow", "Action": ["ec2:*", "kms:*"], "Resource": "*"},
             ],
         }
         arn = iam_client.create_policy(
@@ -134,6 +140,9 @@ class Test_iam_policy_no_full_access_to_kms:
                 check = iam_policy_no_full_access_to_kms()
                 result = check.execute()
                 assert result[0].status == "FAIL"
-                assert result[0].status_extended == f"Policy {policy_name} allows 'kms:*' privileges"
+                assert (
+                    result[0].status_extended
+                    == f"Policy {policy_name} allows 'kms:*' privileges"
+                )
                 assert result[0].resource_id == "policy_mixed"
                 assert result[0].resource_arn == arn

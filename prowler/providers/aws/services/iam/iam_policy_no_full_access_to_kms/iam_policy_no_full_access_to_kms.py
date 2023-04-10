@@ -3,6 +3,7 @@ from prowler.providers.aws.services.iam.iam_client import iam_client
 
 critical_service = "kms"
 
+
 class iam_policy_no_full_access_to_kms(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []

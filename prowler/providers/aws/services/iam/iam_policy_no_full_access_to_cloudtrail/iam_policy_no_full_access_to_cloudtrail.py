@@ -3,6 +3,7 @@ from prowler.providers.aws.services.iam.iam_client import iam_client
 
 critical_service = "cloudtrail"
 
+
 class iam_policy_no_full_access_to_cloudtrail(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
