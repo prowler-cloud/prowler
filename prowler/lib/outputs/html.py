@@ -402,13 +402,22 @@ def get_assessment_summary(audit_info):
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>GCP Account:</b> """
-                + audit_info.profile
-                + """
-                        </li>
-                        <li class="list-group-item">
                             <b>GCP Project ID:</b> """
                 + audit_info.project_id
+                + """
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        GCP Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>GCP Account:</b> """
+                + audit_info.profile
                 + """
                         </li>
                     </ul>
