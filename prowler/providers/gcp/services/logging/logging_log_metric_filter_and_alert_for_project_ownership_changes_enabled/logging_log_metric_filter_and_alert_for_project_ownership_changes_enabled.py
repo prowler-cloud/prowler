@@ -10,7 +10,7 @@ class logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled(
         findings = []
         report = Check_Report_GCP(self.metadata())
         report.project_id = logging_client.project_id
-        report.resource_id = ""
+        report.resource_id = logging_client.project_id
         report.resource_name = ""
         report.location = logging_client.region
         report.status = "FAIL"

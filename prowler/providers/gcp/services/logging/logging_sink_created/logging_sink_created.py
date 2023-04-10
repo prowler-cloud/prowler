@@ -8,7 +8,7 @@ class logging_sink_created(Check):
         if not logging_client.sinks:
             report = Check_Report_GCP(self.metadata())
             report.project_id = logging_client.project_id
-            report.resource_id = ""
+            report.resource_id = logging_client.project_id
             report.resource_name = ""
             report.location = logging_client.region
             report.status = "FAIL"
