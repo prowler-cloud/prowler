@@ -56,6 +56,9 @@ class IAM:
         self.entities_attached_to_support_roles = (
             self.__get_entities_attached_to_support_roles__()
         )
+        self.entities_attached_to_securityaudit_roles = (
+            self.__get_entities_attached_to_securityaudit_roles__()
+        )
         self.policies = self.__list_policies__()
         self.__list_policies_version__(self.policies)
         self.saml_providers = self.__list_saml_providers__()
@@ -352,6 +355,20 @@ class IAM:
             )
         finally:
             return support_roles
+
+    def __get_entities_attached_to_securityaudit_roles__(self):
+        try:
+            securityaudit_roles = []
+            securityaudit_entry_policy_arn = "arn:aws:iam::aws:policy/SecurityAudit"
+            securityaudit_roles = self.client.list_entities_for_policy(
+                PolicyArn=securityaudit_entry_policy_arn, EntityFilter="Role"
+            )["PolicyRoles"]
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        finally:
+            return securityaudit_roles
 
     def __list_policies__(self):
         try:

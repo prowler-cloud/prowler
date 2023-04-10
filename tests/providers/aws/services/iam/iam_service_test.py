@@ -563,6 +563,50 @@ class Test_IAM_Service:
         assert iam.entities_attached_to_support_roles[0]["RoleName"] == role_name
 
     @mock_iam
+    def test__get_entities_attached_to_securityaudit_roles__no_roles(self):
+        iam_client = client("iam")
+        _ = iam_client.list_entities_for_policy(
+            PolicyArn="arn:aws:iam::aws:policy/SecurityAudit",
+            EntityFilter="Role",
+        )["PolicyRoles"]
+
+        audit_info = self.set_mocked_audit_info()
+        iam = IAM(audit_info)
+        assert len(iam.entities_attached_to_securityaudit_roles) == 0
+
+    @mock_iam
+    def test__get_entities_attached_to_securityaudit_roles__(self):
+        iam_client = client("iam")
+        role_name = "test_securityaudit"
+        assume_role_policy_document = {
+            "Version": "2012-10-17",
+            "Statement": {
+                "Sid": "test",
+                "Effect": "Allow",
+                "Principal": {"AWS": "*"},
+                "Action": "sts:AssumeRole",
+            },
+        }
+        iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(assume_role_policy_document),
+        )
+        iam_client.attach_role_policy(
+            RoleName=role_name,
+            PolicyArn="arn:aws:iam::aws:policy/SecurityAudit",
+        )
+
+        iam_client.list_entities_for_policy(
+            PolicyArn="arn:aws:iam::aws:policy/SecurityAudit",
+            EntityFilter="Role",
+        )["PolicyRoles"]
+
+        audit_info = self.set_mocked_audit_info()
+        iam = IAM(audit_info)
+        assert len(iam.entities_attached_to_securityaudit_roles) == 1
+        assert iam.entities_attached_to_securityaudit_roles[0]["RoleName"] == role_name
+
+    @mock_iam
     def test___list_policies__(self):
         iam_client = client("iam")
         policy_name = "policy1"
