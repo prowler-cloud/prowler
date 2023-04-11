@@ -8,6 +8,7 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtr
 
 AWS_ACCOUNT_NUMBER = 123456789012
 
+
 class Test_cloudtrail_insights_exist:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
