@@ -25,7 +25,7 @@ class Test_iam_securityaudit_role_created:
             audited_partition="aws",
             audited_identity_arn=None,
             profile=None,
-            profile_region=None,
+            profile_region="us-east-1",
             credentials=None,
             assumed_role_info=None,
             audited_regions=None,
@@ -79,6 +79,7 @@ class Test_iam_securityaudit_role_created:
                 )
                 assert result[0].resource_id == "SecurityAudit"
                 assert result[0].resource_arn == "arn:aws:iam::aws:policy/SecurityAudit"
+                assert result[0].region == "us-east-1"
 
     @mock_iam
     def test_no_securityaudit_role_created(self):
@@ -106,3 +107,4 @@ class Test_iam_securityaudit_role_created:
                 )
                 assert result[0].resource_id == "SecurityAudit"
                 assert result[0].resource_arn == "arn:aws:iam::aws:policy/SecurityAudit"
+                assert result[0].region == "us-east-1"
