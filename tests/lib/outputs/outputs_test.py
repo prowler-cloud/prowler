@@ -807,6 +807,10 @@ class Test_Outputs:
         finding.status_extended = "This is a test"
 
         output_options = mock.MagicMock()
+        output_options.bulk_checks_metadata = {}
+        output_options.bulk_checks_metadata[
+            "iam_disable_30_days_credentials"
+        ] = mock.MagicMock()
         output_options.bulk_checks_metadata[
             "iam_disable_30_days_credentials"
         ].Compliance = bulk_check_metadata

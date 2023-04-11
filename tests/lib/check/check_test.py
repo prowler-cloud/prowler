@@ -11,6 +11,7 @@ from prowler.lib.check.check import (
     list_modules,
     list_services,
     parse_checks_from_file,
+    parse_checks_from_folder,
     recover_checks_from_provider,
     recover_checks_from_service,
     update_audit_metadata,
@@ -163,6 +164,25 @@ class Test_Check:
             check_file = test["input"]["path"]
             provider = test["input"]["provider"]
             assert parse_checks_from_file(check_file, provider) == test["expected"]
+
+    def test_parse_checks_from_folder(self):
+        test_cases = [
+            {
+                "input": {
+                    "path": f"{pathlib.Path().absolute()}/tests/lib/check/fixtures/checks_folder",
+                    "provider": "aws",
+                },
+                "expected": {"check11", "check12", "check7777"},
+            }
+        ]
+        for test in test_cases:
+            os.mkdir(test["input"]["path"])
+            os.mkdir(test["input"]["path"] + "/check11")
+            os.mkdir(test["input"]["path"] + "/check12")
+            os.mkdir(test["input"]["path"] + "/check7777")
+            check_folder = test["input"]["path"]
+            provider = test["input"]["provider"]
+            assert parse_checks_from_folder(check_folder, provider) == test["expected"]
 
     def test_exclude_checks_to_run(self):
         test_cases = [
