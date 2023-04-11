@@ -2,6 +2,7 @@ import threading
 from datetime import datetime
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -137,18 +138,26 @@ class Cloudtrail:
             )
 
     def __get_insight_selectors__(self):
-        logger.info("Cloudtrail - Getting trail status")
+        logger.info("Cloudtrail - Getting trail insihgt selectors...")
+
         try:
             for trail in self.trails:
                 for region, client in self.regional_clients.items():
                     if trail.region == region and trail.name:
-                        client_insight_selectors = client.get_insight_selectors(
-                            TrailName=trail.arn
-                        )
-                        insight_selectors = client_insight_selectors.get(
-                            "InsightSelectors"
-                        )
+                        insight_selectors = None
                         trail.has_insight_selectors = None
+                        try:
+                            client_insight_selectors = client.get_insight_selectors(
+                                TrailName=trail.arn
+                            )
+                            insight_selectors = client_insight_selectors.get(
+                                "InsightSelectors"
+                            )
+                        except Exception as error:
+                            logger.error(
+                                f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                            continue
                         if insight_selectors:
                             trail.has_insight_selectors = insight_selectors[0].get(
                                 "InsightType"
@@ -156,7 +165,7 @@ class Cloudtrail:
 
         except Exception as error:
             logger.error(
-                f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __list_tags_for_resource__(self):
