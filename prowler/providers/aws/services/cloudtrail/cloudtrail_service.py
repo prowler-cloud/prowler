@@ -22,6 +22,7 @@ class Cloudtrail:
         self.trails = []
         self.__threading_call__(self.__get_trails__)
         self.__get_trail_status__()
+        self.__get_insight_selectors__()
         self.__get_event_selectors__()
         self.__list_tags_for_resource__()
 
@@ -69,6 +70,7 @@ class Cloudtrail:
                             kms_key=kms_key_id,
                             log_group_arn=log_group_arn,
                             data_events=[],
+                            has_insight_selectors=trail["HasInsightSelectors"],
                         )
                     )
             if trails_count == 0:
@@ -134,6 +136,37 @@ class Cloudtrail:
                 f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __get_insight_selectors__(self):
+        logger.info("Cloudtrail - Getting trail insihgt selectors...")
+
+        try:
+            for trail in self.trails:
+                for region, client in self.regional_clients.items():
+                    if trail.region == region and trail.name:
+                        insight_selectors = None
+                        trail.has_insight_selectors = None
+                        try:
+                            client_insight_selectors = client.get_insight_selectors(
+                                TrailName=trail.arn
+                            )
+                            insight_selectors = client_insight_selectors.get(
+                                "InsightSelectors"
+                            )
+                        except Exception as error:
+                            logger.error(
+                                f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                            continue
+                        if insight_selectors:
+                            trail.has_insight_selectors = insight_selectors[0].get(
+                                "InsightType"
+                            )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def __list_tags_for_resource__(self):
         logger.info("CloudTrail - List Tags...")
         try:
@@ -173,3 +206,4 @@ class Trail(BaseModel):
     log_group_arn: str = None
     data_events: list[Event_Selector] = []
     tags: Optional[list] = []
+    has_insight_selectors: str = None
