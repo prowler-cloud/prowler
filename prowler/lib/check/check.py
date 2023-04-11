@@ -1,6 +1,7 @@
 import functools
 import importlib
 import os
+import shutil
 import sys
 import traceback
 from pkgutil import walk_packages
@@ -24,6 +25,7 @@ except KeyError:
 except Exception:
     sys.exit(1)
 
+import prowler
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import Provider_Output_Options
@@ -115,6 +117,37 @@ def parse_checks_from_file(input_file: str, provider: str) -> set:
         checks_to_execute.add(check_name)
 
     return checks_to_execute
+
+
+# Load checks from custom folder
+def parse_checks_from_folder(input_folder: str, provider: str) -> set:
+    checks_to_execute = set()
+    with os.scandir(input_folder) as checks:
+        for check in checks:
+            if check.is_dir():
+                check_module = input_folder + "/" + check.name
+                # Copy checks to specific provider/service folder
+                check_service = check.name.split("_")[0]
+                prowler_dir = prowler.__path__
+                prowler_module = f"{prowler_dir[0]}/providers/{provider}/services/{check_service}/{check.name}"
+                if os.path.exists(prowler_module):
+                    shutil.rmtree(prowler_module)
+                shutil.copytree(check_module, prowler_module)
+                checks_to_execute.add(check.name)
+    return checks_to_execute
+
+
+# Load checks from custom folder
+def remove_custom_checks_module(input_folder: str, provider: str):
+    with os.scandir(input_folder) as checks:
+        for check in checks:
+            if check.is_dir():
+                # Remove imported checks
+                check_service = check.name.split("_")[0]
+                prowler_dir = prowler.__path__
+                prowler_module = f"{prowler_dir[0]}/providers/{provider}/services/{check_service}/{check.name}"
+                if os.path.exists(prowler_module):
+                    shutil.rmtree(prowler_module)
 
 
 def list_services(provider: str) -> set():

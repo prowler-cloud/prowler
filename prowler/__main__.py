@@ -17,6 +17,7 @@ from prowler.lib.check.check import (
     print_compliance_frameworks,
     print_compliance_requirements,
     print_services,
+    remove_custom_checks_module,
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
@@ -52,6 +53,7 @@ def prowler():
     services = args.services
     categories = args.categories
     checks_file = args.checks_file
+    checks_folder = args.checks_folder
     severities = args.severity
     compliance_framework = args.compliance
 
@@ -100,6 +102,7 @@ def prowler():
         bulk_checks_metadata,
         bulk_compliance_frameworks,
         checks_file,
+        checks_folder,
         checks,
         services,
         severities,
@@ -216,6 +219,10 @@ def prowler():
                     audit_output_options.output_filename,
                     audit_output_options.output_directory,
                 )
+
+    # If custom checks were passed, remove the modules
+    if checks_folder:
+        remove_custom_checks_module(checks_folder, provider)
 
     # If there are failed findings exit code 3, except if -z is input
     if not args.ignore_exit_code_3 and stats["total_fail"] > 0:
