@@ -604,7 +604,10 @@ class Test_IAM_Service:
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
         assert len(iam.entities_role_attached_to_securityaudit_policy) == 1
-        assert iam.entities_role_attached_to_securityaudit_policy[0]["RoleName"] == role_name
+        assert (
+            iam.entities_role_attached_to_securityaudit_policy[0]["RoleName"]
+            == role_name
+        )
 
     @mock_iam
     def test___list_policies__(self):
