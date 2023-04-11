@@ -2,7 +2,6 @@ import threading
 from datetime import datetime
 from typing import Optional
 
-from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
