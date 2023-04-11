@@ -164,14 +164,14 @@ azure-core = ">=1.24.0,<2.0.0"
 
 [[package]]
 name = "azure-mgmt-security"
-version = "3.0.0"
+version = "4.0.0"
 description = "Microsoft Azure Security Center Management Client Library for Python"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "azure-mgmt-security-3.0.0.zip", hash = "sha256:bcba7cef857f6b02a2d98afeb07f9871b1628fa33d8861ab1387e732e7db3f84"},
-    {file = "azure_mgmt_security-3.0.0-py3-none-any.whl", hash = "sha256:3b14a236383effdc5e3135b394b7883a183fcc9cdde01b735b2aae227b42e2e9"},
+    {file = "azure-mgmt-security-4.0.0.zip", hash = "sha256:551102127f2b798c1a373003e8877fbe78e58c5d3e04e875805b06d6facea8e7"},
+    {file = "azure_mgmt_security-4.0.0-py3-none-any.whl", hash = "sha256:09d3b822a22fa0252ee2d95f238a889cbdf4afcef1b663826c313897f504e6a6"},
 ]
 
 [package.dependencies]
@@ -2843,4 +2843,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "ab280f632660f43efa58d379705d0641644fb74a1e30a72f19b410595275202b"
+content-hash = "7389d144a5610cba7a02f1fef9439c4be320aa1f340978dd4ad464544ad858cc"
