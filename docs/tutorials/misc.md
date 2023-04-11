@@ -51,7 +51,12 @@ prowler <provider> -e/--excluded-checks ec2 rds
 ```console
 prowler <provider> -C/--checks-file <checks_list>.json
 ```
-
+## Custom Checks
+Prowler allows you to include your custom checks with the flag:
+```console
+prowler <provider> -x/--checks-folder <custom_checks_folder>
+```
+The custom checks folder must contain one subfolder per check, each subfolder must be named as the check and must contain a python file with the logic, an `__init__.py` file and a metadata.json file. The check name must start with the service name followed by an underscore (e.g., ec2_instance_public_ip). To see more information about how to write checks see the [Developer Guide](../developer-guide/#create-a-new-check-for-a-provider).
 ## Severities
 Each of Prowler's checks has a severity, which can be:
 - informational
