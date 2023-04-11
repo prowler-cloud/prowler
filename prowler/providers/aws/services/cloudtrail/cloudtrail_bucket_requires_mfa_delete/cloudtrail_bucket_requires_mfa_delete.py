@@ -18,17 +18,13 @@ class cloudtrail_bucket_requires_mfa_delete(Check):
                 report.resource_arn = trail.arn
                 report.resource_tags = trail.tags
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Trail {trail.name} bucket ({trail_bucket}) has not MFA delete enabled"
-                )
+                report.status_extended = f"Trail {trail.name} bucket ({trail_bucket}) has not MFA delete enabled"
                 for bucket in s3_client.buckets:
                     if trail_bucket == bucket.name:
                         trail_bucket_is_in_account = True
                         if bucket.mfa_delete:
                             report.status = "PASS"
-                            report.status_extended = (
-                                f"Trail {trail.name} bucket ({trail_bucket}) has MFA delete enabled"
-                            )
+                            report.status_extended = f"Trail {trail.name} bucket ({trail_bucket}) has MFA delete enabled"
                 # check if trail bucket is a cross account bucket
                 if not trail_bucket_is_in_account:
                     report.status = "PASS"

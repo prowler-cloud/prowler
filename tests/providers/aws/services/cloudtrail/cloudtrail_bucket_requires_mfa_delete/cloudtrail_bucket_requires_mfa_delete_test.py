@@ -1,9 +1,9 @@
 from unittest import mock
 from unittest.mock import patch
 
-from boto3 import client, session
-from moto import mock_cloudtrail, mock_s3, mock_iam
 import botocore
+from boto3 import client, session
+from moto import mock_cloudtrail, mock_iam, mock_s3
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
@@ -13,6 +13,7 @@ AWS_ACCOUNT_NUMBER = 123456789012
 
 # Mocking Backup Calls
 make_api_call = botocore.client.BaseClient._make_api_call
+
 
 class Test_cloudtrail_bucket_requires_mfa_delete:
     def set_mocked_audit_info(self):
@@ -104,22 +105,24 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
                     assert result[0].resource_arn == trail_us["TrailARN"]
 
     # Create an MFA device is not supported for moto, so we mock the call:
-    def mock_make_api_call_getbucketversioning_mfadelete_enabled(self, operation_name, kwarg):
+    def mock_make_api_call_getbucketversioning_mfadelete_enabled(
+        self, operation_name, kwarg
+    ):
         """
         Mock unsoportted AWS API call
         """
         if operation_name == "GetBucketVersioning":
-            return {
-                'MFADelete': 'Enabled',
-                'Status': 'Enabled'
-            }
+            return {"MFADelete": "Enabled", "Status": "Enabled"}
         return make_api_call(self, operation_name, kwarg)
 
     @mock_cloudtrail
     @mock_s3
     @mock_iam
     # Patch with mock_make_api_call_getbucketversioning_mfadelete_enabled:
-    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call_getbucketversioning_mfadelete_enabled)
+    @patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_getbucketversioning_mfadelete_enabled,
+    )
     def test_trails_with_mfa_bucket(self):
         current_audit_info = self.set_mocked_audit_info()
 
