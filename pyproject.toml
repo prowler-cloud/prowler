@@ -37,7 +37,7 @@ boto3 = "1.26.90"
 botocore = "1.29.105"
 colorama = "0.4.6"
 detect-secrets = "1.4.0"
-google-api-python-client = "2.81.0"
+google-api-python-client = "2.84.0"
 mkdocs = {version = "1.4.2", optional = true}
 mkdocs-material = {version = "9.1.6", optional = true}
 msgraph-core = "0.2.2"
