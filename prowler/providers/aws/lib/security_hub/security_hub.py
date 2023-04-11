@@ -99,7 +99,7 @@ def resolve_security_hub_previous_findings(
                 "AwsAccountId": [
                     {"Value": audit_info.audited_account, "Comparison": "EQUALS"}
                 ],
-                "Region": [{"Value": region, "Comparison": "EQUALS"}],
+                "ResourceRegion": [{"Value": region, "Comparison": "EQUALS"}],
             }
             get_findings_paginator = security_hub_client.get_paginator("get_findings")
             findings_to_archive = []
