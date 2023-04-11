@@ -1,7 +1,6 @@
 from prowler.lib.check.check import (
     parse_checks_from_compliance_framework,
     parse_checks_from_file,
-    parse_checks_from_folder,
     recover_checks_from_provider,
     recover_checks_from_service,
 )
@@ -14,7 +13,6 @@ def load_checks_to_execute(
     bulk_checks_metadata: dict,
     bulk_compliance_frameworks: dict,
     checks_file: str,
-    checks_folder: str,
     check_list: list,
     service_list: list,
     severities: list,
@@ -41,13 +39,6 @@ def load_checks_to_execute(
     elif checks_file:
         try:
             checks_to_execute = parse_checks_from_file(checks_file, provider)
-        except Exception as e:
-            logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
-
-    # Handle if there are checks passed using -x/--checks-folder
-    elif checks_folder:
-        try:
-            checks_to_execute = parse_checks_from_folder(checks_folder, provider)
         except Exception as e:
             logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
 

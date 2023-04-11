@@ -205,12 +205,6 @@ Detailed documentation at https://docs.prowler.cloud
             help="JSON file containing the checks to be executed. See config/checklist_example.json",
         )
         group.add_argument(
-            "-x",
-            "--checks-folder",
-            nargs="?",
-            help="Specify external directory with custom checks (each check must have a folder with a python and a metadata file).",
-        )
-        group.add_argument(
             "-s", "--services", nargs="+", help="List of services to be executed."
         )
         group.add_argument(
@@ -231,6 +225,12 @@ Detailed documentation at https://docs.prowler.cloud
             help="List of categories to be executed.",
             default=[],
             # Pending validate choices
+        )
+        common_checks_parser.add_argument(
+            "-x",
+            "--checks-folder",
+            nargs="?",
+            help="Specify external directory with custom checks (each check must have a folder with the required files, see more in https://docs.prowler.cloud/en/latest/tutorials/misc/#custom-checks).",
         )
 
     def __init_list_checks_parser__(self):

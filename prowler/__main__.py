@@ -12,6 +12,7 @@ from prowler.lib.check.check import (
     execute_checks,
     list_categories,
     list_services,
+    parse_checks_from_folder,
     print_categories,
     print_checks,
     print_compliance_frameworks,
@@ -56,6 +57,10 @@ def prowler():
     checks_folder = args.checks_folder
     severities = args.severity
     compliance_framework = args.compliance
+
+    # Import custom checks from folder
+    if checks_folder:
+        parse_checks_from_folder(checks_folder, provider)
 
     # We treat the compliance framework as another output format
     if compliance_framework:
@@ -102,7 +107,6 @@ def prowler():
         bulk_checks_metadata,
         bulk_compliance_frameworks,
         checks_file,
-        checks_folder,
         checks,
         services,
         severities,
