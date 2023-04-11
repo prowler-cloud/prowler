@@ -20,14 +20,17 @@ class kms_key_not_publicly_accessible(Check):
                 if key.policy and "Statement" in key.policy:
                     for statement in key.policy["Statement"]:
                         if (
-                            "*" == statement["Principal"]
+                            "Principal" in statement
+                            and "*" == statement["Principal"]
                             and "Condition" not in statement
                         ):
                             report.status = "FAIL"
                             report.status_extended = (
                                 f"KMS key {key.id} may be publicly accessible!"
                             )
-                        elif "AWS" in statement["Principal"]:
+                        elif (
+                            "Principal" in statement and "AWS" in statement["Principal"]
+                        ):
                             if type(statement["Principal"]["AWS"]) == str:
                                 principals = [statement["Principal"]["AWS"]]
                             else:
