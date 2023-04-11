@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "backup_reportplans_exist",
+  "CheckTitle": "Ensure that there is at least one AWS Backup report plan",
+  "CheckType": [
+    "Recover",
+    "Resilience",
+    "Backup"
+  ],
+  "ServiceName": "backup",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:backup-report-plan:backup-report-plan-id",
+  "Severity": "low",
+  "ResourceType": "Other",
+  "Description": "This check ensures that there is at least one backup report plan in place.",
+  "Risk": "Without a backup report plan, an organization may lack visibility into the success or failure of backup operations.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws backup create-report-plan --report-plan-name <report-plan-name> --report-delivery-channel <value> --report-setting <value>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use AWS Backup to create backup report plans that provide visibility into the success or failure of backup operations.",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
