@@ -24,7 +24,7 @@ class Test_iam_policy_no_full_access_to_kms:
             audited_partition="aws",
             audited_identity_arn=None,
             profile=None,
-            profile_region=None,
+            profile_region="us-east-1",
             credentials=None,
             assumed_role_info=None,
             audited_regions=None,
@@ -70,6 +70,7 @@ class Test_iam_policy_no_full_access_to_kms:
                 )
                 assert result[0].resource_id == "policy_kms_full"
                 assert result[0].resource_arn == arn
+                assert result[0].region == "us-east-1"
 
     @mock_iam
     def test_policy_no_full_access_to_kms(self):
@@ -108,6 +109,7 @@ class Test_iam_policy_no_full_access_to_kms:
                 )
                 assert result[0].resource_id == "policy_no_kms_full"
                 assert result[0].resource_arn == arn
+                assert result[0].region == "us-east-1"
 
     @mock_iam
     def test_policy_mixed(self):
@@ -146,3 +148,4 @@ class Test_iam_policy_no_full_access_to_kms:
                 )
                 assert result[0].resource_id == "policy_mixed"
                 assert result[0].resource_arn == arn
+                assert result[0].region == "us-east-1"
