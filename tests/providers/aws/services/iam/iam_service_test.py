@@ -528,7 +528,7 @@ class Test_IAM_Service:
 
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
-        assert len(iam.entities_attached_to_support_roles) == 0
+        assert len(iam.entities_role_attached_to_support_policy) == 0
 
     @mock_iam
     def test__get_entities_attached_to_support_roles__(self):
@@ -559,8 +559,8 @@ class Test_IAM_Service:
 
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
-        assert len(iam.entities_attached_to_support_roles) == 1
-        assert iam.entities_attached_to_support_roles[0]["RoleName"] == role_name
+        assert len(iam.entities_role_attached_to_support_policy) == 1
+        assert iam.entities_role_attached_to_support_policy[0]["RoleName"] == role_name
 
     @mock_iam
     def test__get_entities_attached_to_securityaudit_roles__no_roles(self):
@@ -572,7 +572,7 @@ class Test_IAM_Service:
 
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
-        assert len(iam.entities_attached_to_securityaudit_roles) == 0
+        assert len(iam.entities_role_attached_to_securityaudit_policy) == 0
 
     @mock_iam
     def test__get_entities_attached_to_securityaudit_roles__(self):
@@ -603,8 +603,8 @@ class Test_IAM_Service:
 
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
-        assert len(iam.entities_attached_to_securityaudit_roles) == 1
-        assert iam.entities_attached_to_securityaudit_roles[0]["RoleName"] == role_name
+        assert len(iam.entities_role_attached_to_securityaudit_policy) == 1
+        assert iam.entities_role_attached_to_securityaudit_policy[0]["RoleName"] == role_name
 
     @mock_iam
     def test___list_policies__(self):

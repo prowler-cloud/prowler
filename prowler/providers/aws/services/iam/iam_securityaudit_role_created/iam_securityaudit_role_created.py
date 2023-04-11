@@ -9,9 +9,9 @@ class iam_securityaudit_role_created(Check):
         report.region = iam_client.region
         report.resource_id = "SecurityAudit"
         report.resource_arn = "arn:aws:iam::aws:policy/SecurityAudit"
-        if iam_client.entities_attached_to_securityaudit_roles:
+        if iam_client.entities_role_attached_to_securityaudit_policy:
             report.status = "PASS"
-            report.status_extended = f"SecurityAudit policy attached to role {iam_client.entities_attached_to_securityaudit_roles[0]['RoleName']}"
+            report.status_extended = f"SecurityAudit policy attached to role {iam_client.entities_role_attached_to_securityaudit_policy[0]['RoleName']}"
         else:
             report.status = "FAIL"
             report.status_extended = "SecurityAudit policy is not attached to any role"
