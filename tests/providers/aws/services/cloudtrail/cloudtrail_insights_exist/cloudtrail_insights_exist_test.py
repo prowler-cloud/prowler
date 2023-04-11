@@ -8,7 +8,6 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtr
 
 AWS_ACCOUNT_NUMBER = 123456789012
 
-
 class Test_cloudtrail_insights_exist:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
@@ -91,6 +90,7 @@ class Test_cloudtrail_insights_exist:
                     == f"Trail {trail_name_us} has not insight selectors and it is logging"
                 )
                 assert result[0].resource_id == trail_name_us
+                assert result[0].region == "us-east-1"
                 assert result[0].resource_arn == trail_us["TrailARN"]
 
     @mock_cloudtrail
@@ -135,4 +135,5 @@ class Test_cloudtrail_insights_exist:
                     == f"Trail {trail_name_us} has insight selectors and it is logging"
                 )
                 assert result[0].resource_id == trail_name_us
+                assert result[0].region == "us-east-1"
                 assert result[0].resource_arn == trail_us["TrailARN"]
