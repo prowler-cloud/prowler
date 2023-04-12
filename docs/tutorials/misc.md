@@ -56,6 +56,8 @@ Prowler allows you to include your custom checks with the flag:
 ```console
 prowler <provider> -x/--checks-folder <custom_checks_folder>
 ```
+> S3 URIs are also supported as folders for custom checks, e.g. s3://bucket/prefix/checks_folder/. Make sure that the used credentials have s3:GetObject permissions in the S3 path where the custom checks are located.
+
 The custom checks folder must contain one subfolder per check, each subfolder must be named as the check and must contain:
 
 - An empty `__init__.py`: to make Python treat this check folder as a package.
