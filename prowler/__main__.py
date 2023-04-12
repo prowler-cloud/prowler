@@ -58,9 +58,12 @@ def prowler():
     severities = args.severity
     compliance_framework = args.compliance
 
+    # Set the audit info based on the selected provider
+    audit_info = set_provider_audit_info(provider, args.__dict__)
+
     # Import custom checks from folder
     if checks_folder:
-        parse_checks_from_folder(checks_folder, provider)
+        parse_checks_from_folder(audit_info, checks_folder, provider)
 
     # We treat the compliance framework as another output format
     if compliance_framework:
@@ -132,9 +135,6 @@ def prowler():
     if args.list_checks:
         print_checks(provider, checks_to_execute, bulk_checks_metadata)
         sys.exit()
-
-    # Set the audit info based on the selected provider
-    audit_info = set_provider_audit_info(provider, args.__dict__)
 
     # Once the audit_info is set and we have the eventual checks based on the resource identifier,
     # it is time to check what Prowler's checks are going to be executed
