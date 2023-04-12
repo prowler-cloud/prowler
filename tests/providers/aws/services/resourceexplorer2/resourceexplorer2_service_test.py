@@ -5,7 +5,9 @@ import botocore
 from boto3 import client, session
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service import ResourceExplorer2
+from prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service import (
+    ResourceExplorer2,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "eu-west-1"
@@ -22,20 +24,18 @@ def mock_make_api_call(self, operation_name, kwarg):
     """
     if operation_name == "ListIndexes":
         return {
-            'Indexes': [
-                {
-                    'Arn': INDEX_ARN,
-                    'Region': INDEX_REGION,
-                    'Type': 'LOCAL'
-                },
+            "Indexes": [
+                {"Arn": INDEX_ARN, "Region": INDEX_REGION, "Type": "LOCAL"},
             ]
         }
     return make_api_call(self, operation_name, kwarg)
+
 
 def mock_generate_regional_clients(service, audit_info):
     regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
     regional_client.region = AWS_REGION
     return {AWS_REGION: regional_client}
+
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 @patch(
@@ -70,7 +70,10 @@ class Test_ResourceExplorer2_Service:
     def test__get_client__(self):
         audit_info = self.set_mocked_audit_info()
         resourceeplorer2 = ResourceExplorer2(audit_info)
-        assert resourceeplorer2.regional_clients[AWS_REGION].__class__.__name__ == "ResourceExplorer"
+        assert (
+            resourceeplorer2.regional_clients[AWS_REGION].__class__.__name__
+            == "ResourceExplorer"
+        )
 
     def test__get_service__(self):
         audit_info = self.set_mocked_audit_info()

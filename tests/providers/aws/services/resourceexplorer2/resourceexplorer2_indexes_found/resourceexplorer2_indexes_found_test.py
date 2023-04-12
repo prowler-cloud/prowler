@@ -1,18 +1,19 @@
+from unittest import mock
 from unittest.mock import patch
 from uuid import uuid4
-from unittest import mock
 
 import botocore
 from boto3 import client, session
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service import Indexes
+from prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service import (
+    Indexes,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
 INDEX_ARN = "arn:aws:resource-explorer-2:ap-south-1:123456789012:index/123456-2896-4fe8-93d2-15ec137e5c47"
 INDEX_REGION = "us-east-1"
-
 
 
 # Mocking Backup Calls
@@ -25,20 +26,16 @@ def mock_make_api_call(self, operation_name, kwarg):
     """
     if operation_name == "ListIndexes":
         return {
-            'Indexes': [
-                {
-                    'Arn': INDEX_ARN,
-                    'Region': INDEX_REGION,
-                    'Type': 'LOCAL'
-                },
+            "Indexes": [
+                {"Arn": INDEX_ARN, "Region": INDEX_REGION, "Type": "LOCAL"},
             ],
-            'NextToken': 'string'
+            "NextToken": "string",
         }
     return make_api_call(self, operation_name, kwarg)
 
+
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_resourceexplorer2_indexes_found:
-    
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -84,15 +81,11 @@ class Test_resourceexplorer2_indexes_found:
             assert result[0].resource_id == ""
             assert result[0].resource_arn == "NoResourceExplorer"
             assert result[0].region == AWS_REGION
-        
+
     def test_one_index_found(self):
         resourceexplorer2_client = mock.MagicMock
         resourceexplorer2_client.indexes = [
-            Indexes(
-                arn=INDEX_ARN,
-                region=INDEX_REGION,
-                type="LOCAL"
-            )
+            Indexes(arn=INDEX_ARN, region=INDEX_REGION, type="LOCAL")
         ]
         resourceexplorer2_client.region = AWS_REGION
         with mock.patch(
@@ -114,6 +107,3 @@ class Test_resourceexplorer2_indexes_found:
             assert result[0].resource_id == ""
             assert result[0].resource_arn == INDEX_ARN
             assert result[0].region == AWS_REGION
-
-
-

@@ -38,9 +38,7 @@ class ResourceExplorer2:
             for page in list_indexes_paginator.paginate():
                 for index in page.get("Indexes"):
                     if not self.audit_resources or (
-                        is_resource_filtered(
-                            index["Arn"], self.audit_resources
-                        )
+                        is_resource_filtered(index["Arn"], self.audit_resources)
                     ):
                         self.indexes.append(
                             Indexes(
@@ -49,11 +47,12 @@ class ResourceExplorer2:
                                 type=index["Type"],
                             )
                         )
-                        print (self.indexes)
+                        print(self.indexes)
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
 
 class Indexes(BaseModel):
     arn: str

@@ -9,7 +9,7 @@
   "Severity": "low",
   "ResourceType": "Other",
   "Description": "Resource Explorer Indexes Found",
-  "Risk": "Not having indexes for your can result in increased complexity and overhead in managing your resources, as well as increased risk of security and compliance issues.",
+  "Risk": "Not having Resource Explorer indexes can result in increased complexity and overhead in managing your resources, as well as increased risk of security and compliance issues.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
