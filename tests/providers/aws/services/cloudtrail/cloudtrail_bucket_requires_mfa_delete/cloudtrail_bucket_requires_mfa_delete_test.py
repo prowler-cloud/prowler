@@ -237,7 +237,6 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
                     assert result[0].region == "us-east-1"
                     assert result[0].resource_arn == trail_us["TrailARN"]
 
-
     @mock_cloudtrail
     @mock_s3
     @mock_iam
