@@ -38,6 +38,10 @@ for page in get_parameters_by_path_paginator.paginate(
                     regions["aws-us-gov"].append(region["Value"])
                 else:
                     regions["aws"].append(region["Value"])
+                # Sort regions per partition
+                regions["aws"] = sorted(regions["aws"])
+                regions["aws-cn"] = sorted(regions["aws-cn"])
+                regions["aws-us-gov"] = sorted(regions["aws-us-gov"])
         regions_by_service["services"][service["Value"]]["regions"] = regions
 
 # Include the regions for the subservices and the services not present
