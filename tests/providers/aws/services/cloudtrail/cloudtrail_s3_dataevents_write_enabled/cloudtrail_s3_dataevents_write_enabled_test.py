@@ -54,7 +54,6 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ):
-
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_write_enabled.cloudtrail_s3_dataevents_write_enabled.cloudtrail_client",
                 new=Cloudtrail(current_audit_info),
@@ -109,7 +108,6 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ):
-
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_write_enabled.cloudtrail_s3_dataevents_write_enabled.cloudtrail_client",
                 new=Cloudtrail(current_audit_info),
@@ -165,7 +163,6 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ):
-
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_write_enabled.cloudtrail_s3_dataevents_write_enabled.cloudtrail_client",
                 new=Cloudtrail(current_audit_info),
@@ -220,17 +217,16 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ):
-
             with mock.patch(
-                "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_write_enabled.cloudtrail_s3_dataevents_write_enabled.cloudtrail_client",
                 new=Cloudtrail(current_audit_info),
             ):
                 # Test Check
-                from prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled import (
-                    cloudtrail_s3_dataevents_read_enabled,
+                from prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_write_enabled.cloudtrail_s3_dataevents_write_enabled import (
+                    cloudtrail_s3_dataevents_write_enabled,
                 )
 
-                check = cloudtrail_s3_dataevents_read_enabled()
+                check = cloudtrail_s3_dataevents_write_enabled()
                 result = check.execute()
 
                 assert len(result) == 1
