@@ -56,7 +56,7 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
             new=Cloudtrail(self.set_mocked_audit_info()),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.s3_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.s3_client",
             new=S3(self.set_mocked_audit_info()),
         ):
             # Test Check
