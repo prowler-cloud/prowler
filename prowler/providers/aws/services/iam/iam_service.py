@@ -366,7 +366,34 @@ class IAM:
                     if not self.audit_resources or (
                         is_resource_filtered(policy["Arn"], self.audit_resources)
                     ):
-                        policies.append(policy)
+                        policies.append(
+                            Policy(
+                                name=policy["PolicyName"],
+                                arn=policy["Arn"],
+                                version_id=policy["DefaultVersionId"],
+                                type="Custom",
+                                attached=True
+                                if policy["AttachmentCount"] > 0
+                                else False,
+                            )
+                        )
+            list_policies_paginator = self.client.get_paginator("list_policies")
+            for page in list_policies_paginator.paginate(Scope="AWS"):
+                for policy in page["Policies"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(policy["Arn"], self.audit_resources)
+                    ):
+                        policies.append(
+                            Policy(
+                                name=policy["PolicyName"],
+                                arn=policy["Arn"],
+                                version_id=policy["DefaultVersionId"],
+                                type="AWS",
+                                attached=True
+                                if policy["AttachmentCount"] > 0
+                                else False,
+                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -378,9 +405,9 @@ class IAM:
         try:
             for policy in policies:
                 policy_version = self.client.get_policy_version(
-                    PolicyArn=policy["Arn"], VersionId=policy["DefaultVersionId"]
+                    PolicyArn=policy.arn, VersionId=policy.version_id
                 )
-                policy["PolicyDocument"] = policy_version["PolicyVersion"]["Document"]
+                policy.document = policy_version["PolicyVersion"]["Document"]
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -489,3 +516,12 @@ class Certificate(BaseModel):
     id: str
     arn: str
     expiration: datetime
+
+
+class Policy(BaseModel):
+    name: str
+    arn: str
+    version_id: str
+    type: str
+    attached: bool
+    document: Optional[dict]
