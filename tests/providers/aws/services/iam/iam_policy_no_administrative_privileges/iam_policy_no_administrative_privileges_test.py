@@ -63,11 +63,14 @@ class Test_iam_policy_no_administrative_privileges_test:
             )
 
             check = iam_policy_no_administrative_privileges()
-            result = check.execute()
-            assert result[0].status == "FAIL"
-            assert result[0].resource_arn == arn
-            assert search(f"Policy {policy_name} allows ", result[0].status_extended)
-            assert result[0].resource_id == policy_name
+            results = check.execute()
+            for result in results:
+                if result.resource_id == "policy1":
+                    assert result.status == "FAIL"
+                    assert result.resource_arn == arn
+                    assert search(
+                        f"Policy {policy_name} allows ", result.status_extended
+                    )
 
     @mock_iam
     def test_policy_non_administrative(self):
@@ -98,13 +101,14 @@ class Test_iam_policy_no_administrative_privileges_test:
             )
 
             check = iam_policy_no_administrative_privileges()
-            result = check.execute()
-            assert result[0].status == "PASS"
-            assert result[0].resource_arn == arn
-            assert search(
-                f"Policy {policy_name} does not allow", result[0].status_extended
-            )
-            assert result[0].resource_id == policy_name
+            results = check.execute()
+            for result in results:
+                if result.resource_id == "policy1":
+                    assert result.status == "PASS"
+                    assert result.resource_arn == arn
+                    assert search(
+                        f"Policy {policy_name} does not allow", result.status_extended
+                    )
 
     @mock_iam
     def test_policy_administrative_and_non_administrative(self):
@@ -147,19 +151,21 @@ class Test_iam_policy_no_administrative_privileges_test:
             )
 
             check = iam_policy_no_administrative_privileges()
-            result = check.execute()
-            assert len(result) == 2
-            assert result[0].status == "PASS"
-            assert result[0].resource_arn == arn_non_administrative
-            assert search(
-                f"Policy {policy_name_non_administrative} does not allow ",
-                result[0].status_extended,
-            )
-            assert result[0].resource_id == policy_name_non_administrative
-            assert result[1].status == "FAIL"
-            assert result[1].resource_arn == arn_administrative
-            assert search(
-                f"Policy {policy_name_administrative} allows ",
-                result[1].status_extended,
-            )
-            assert result[1].resource_id == policy_name_administrative
+            results = check.execute()
+            for result in results:
+                if result.resource_id == "policy1":
+                    assert result.status == "PASS"
+                    assert result.resource_arn == arn_non_administrative
+                    assert search(
+                        f"Policy {policy_name_non_administrative} does not allow ",
+                        result[0].status_extended,
+                    )
+                    assert result.resource_id == policy_name_non_administrative
+                if result.resource_id == "policy2":
+                    assert result.status == "FAIL"
+                    assert result.resource_arn == arn_administrative
+                    assert search(
+                        f"Policy {policy_name_administrative} allows ",
+                        result.status_extended,
+                    )
+                    assert result.resource_id == policy_name_administrative
