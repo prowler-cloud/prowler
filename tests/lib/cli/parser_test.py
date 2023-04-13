@@ -31,6 +31,7 @@ class Test_Parser:
         assert not parsed.only_logs
         assert not parsed.checks
         assert not parsed.checks_file
+        assert not parsed.checks_folder
         assert not parsed.services
         assert not parsed.severity
         assert not parsed.compliance
@@ -75,6 +76,7 @@ class Test_Parser:
         assert not parsed.only_logs
         assert not parsed.checks
         assert not parsed.checks_file
+        assert not parsed.checks_folder
         assert not parsed.services
         assert not parsed.severity
         assert not parsed.compliance
@@ -111,6 +113,7 @@ class Test_Parser:
         assert not parsed.only_logs
         assert not parsed.checks
         assert not parsed.checks_file
+        assert not parsed.checks_folder
         assert not parsed.services
         assert not parsed.severity
         assert not parsed.compliance
@@ -416,6 +419,20 @@ class Test_Parser:
         command = [prowler_command, argument, filename]
         parsed = self.parser.parse(command)
         assert parsed.checks_file == filename
+
+    def test_checks_parser_checks_folder_short(self):
+        argument = "-x"
+        filename = "custom-checks-folder/"
+        command = [prowler_command, argument, filename]
+        parsed = self.parser.parse(command)
+        assert parsed.checks_folder == filename
+
+    def test_checks_parser_checks_folder_long(self):
+        argument = "--checks-folder"
+        filename = "custom-checks-folder/"
+        command = [prowler_command, argument, filename]
+        parsed = self.parser.parse(command)
+        assert parsed.checks_folder == filename
 
     def test_checks_parser_services_short(self):
         argument = "-s"

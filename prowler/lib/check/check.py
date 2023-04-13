@@ -1,6 +1,8 @@
 import functools
 import importlib
 import os
+import re
+import shutil
 import sys
 import traceback
 from pkgutil import walk_packages
@@ -24,6 +26,7 @@ except KeyError:
 except Exception:
     sys.exit(1)
 
+import prowler
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import Provider_Output_Options
@@ -115,6 +118,66 @@ def parse_checks_from_file(input_file: str, provider: str) -> set:
         checks_to_execute.add(check_name)
 
     return checks_to_execute
+
+
+# Load checks from custom folder
+def parse_checks_from_folder(audit_info, input_folder: str, provider: str) -> int:
+    try:
+        imported_checks = 0
+        # Check if input folder is a S3 URI
+        if provider == "aws" and re.search(
+            "^s3://([^/]+)/(.*?([^/]+))/$", input_folder
+        ):
+            bucket = input_folder.split("/")[2]
+            key = ("/").join(input_folder.split("/")[3:])
+            s3_reource = audit_info.audit_session.resource("s3")
+            bucket = s3_reource.Bucket(bucket)
+            for obj in bucket.objects.filter(Prefix=key):
+                if not os.path.exists(os.path.dirname(obj.key)):
+                    os.makedirs(os.path.dirname(obj.key))
+                bucket.download_file(obj.key, obj.key)
+            input_folder = key
+        # Import custom checks by moving the checks folders to the corresponding services
+        with os.scandir(input_folder) as checks:
+            for check in checks:
+                if check.is_dir():
+                    check_module = input_folder + "/" + check.name
+                    # Copy checks to specific provider/service folder
+                    check_service = check.name.split("_")[0]
+                    prowler_dir = prowler.__path__
+                    prowler_module = f"{prowler_dir[0]}/providers/{provider}/services/{check_service}/{check.name}"
+                    if os.path.exists(prowler_module):
+                        shutil.rmtree(prowler_module)
+                    shutil.copytree(check_module, prowler_module)
+                    imported_checks += 1
+        return imported_checks
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        sys.exit(1)
+
+
+# Load checks from custom folder
+def remove_custom_checks_module(input_folder: str, provider: str):
+    # Check if input folder is a S3 URI
+    s3_uri = False
+    if provider == "aws" and re.search("^s3://([^/]+)/(.*?([^/]+))/$", input_folder):
+        input_folder = ("/").join(input_folder.split("/")[3:])
+        s3_uri = True
+
+    with os.scandir(input_folder) as checks:
+        for check in checks:
+            if check.is_dir():
+                # Remove imported checks
+                check_service = check.name.split("_")[0]
+                prowler_dir = prowler.__path__
+                prowler_module = f"{prowler_dir[0]}/providers/{provider}/services/{check_service}/{check.name}"
+                if os.path.exists(prowler_module):
+                    shutil.rmtree(prowler_module)
+                # If S3 URI, remove the downloaded folders
+                if s3_uri and os.path.exists(input_folder):
+                    shutil.rmtree(input_folder)
 
 
 def list_services(provider: str) -> set():

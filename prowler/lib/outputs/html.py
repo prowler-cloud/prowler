@@ -211,31 +211,37 @@ def add_html_header(file_descriptor, audit_info):
 
 
 def fill_html(file_descriptor, finding, output_options):
-    row_class = "p-3 mb-2 bg-success-custom"
-    if finding.status == "INFO":
-        row_class = "table-info"
-    elif finding.status == "FAIL":
-        row_class = "table-danger"
-    elif finding.status == "WARNING":
-        row_class = "table-warning"
-    file_descriptor.write(
-        f"""
-            <tr class="{row_class}">
-                <td>{finding.status}</td>
-                <td>{finding.check_metadata.Severity}</td>
-                <td>{finding.check_metadata.ServiceName}</td>
-                <td>{finding.region}</td>
-                <td>{finding.check_metadata.CheckID.replace("_", "<wbr>_")}</td>
-                <td>{finding.check_metadata.CheckTitle}</td>
-                <td>{finding.resource_id.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>
-                <td>{parse_html_string(unroll_tags(finding.resource_tags))}</td>
-                <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>
-                <td><p class="show-read-more">{finding.check_metadata.Risk}</p></td>
-                <td><p class="show-read-more">{finding.check_metadata.Remediation.Recommendation.Text}</p> <a class="read-more" href="{finding.check_metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
-                <td><p class="show-read-more">{parse_html_string(unroll_dict(get_check_compliance(finding, finding.check_metadata.Provider, output_options)))}</p></td>
-            </tr>
-            """
-    )
+    try:
+        row_class = "p-3 mb-2 bg-success-custom"
+        if finding.status == "INFO":
+            row_class = "table-info"
+        elif finding.status == "FAIL":
+            row_class = "table-danger"
+        elif finding.status == "WARNING":
+            row_class = "table-warning"
+        file_descriptor.write(
+            f"""
+                <tr class="{row_class}">
+                    <td>{finding.status}</td>
+                    <td>{finding.check_metadata.Severity}</td>
+                    <td>{finding.check_metadata.ServiceName}</td>
+                    <td>{finding.region}</td>
+                    <td>{finding.check_metadata.CheckID.replace("_", "<wbr>_")}</td>
+                    <td>{finding.check_metadata.CheckTitle}</td>
+                    <td>{finding.resource_id.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>
+                    <td>{parse_html_string(unroll_tags(finding.resource_tags))}</td>
+                    <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>
+                    <td><p class="show-read-more">{finding.check_metadata.Risk}</p></td>
+                    <td><p class="show-read-more">{finding.check_metadata.Remediation.Recommendation.Text}</p> <a class="read-more" href="{finding.check_metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
+                    <td><p class="show-read-more">{parse_html_string(unroll_dict(get_check_compliance(finding, finding.check_metadata.Provider, output_options)))}</p></td>
+                </tr>
+                """
+        )
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        sys.exit(1)
 
 
 def fill_html_overview_statistics(stats, output_filename, output_directory):
