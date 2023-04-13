@@ -1,11 +1,37 @@
 from re import search
 from unittest import mock
 
-from boto3 import client
+from boto3 import client, session
 from moto import mock_cloudtrail, mock_s3
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+
+AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_cloudtrail_log_file_validation_enabled:
+    def set_mocked_audit_info(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=session.Session(
+                profile_name=None,
+                botocore_session=None,
+            ),
+            audited_account=AWS_ACCOUNT_NUMBER,
+            audited_user_id=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=["us-east-1", "eu-west-1"],
+            organizations_metadata=None,
+            audit_resources=None,
+        )
+        return audit_info
+
     @mock_cloudtrail
     @mock_s3
     def test_no_logging_validation(self):
@@ -17,16 +43,16 @@ class Test_cloudtrail_log_file_validation_enabled:
         trail_us = cloudtrail_client_us_east_1.create_trail(
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
         )
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
         )
 
-        current_audit_info.audited_partition = "aws"
-
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(self.set_mocked_audit_info()),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled import (
@@ -68,16 +94,16 @@ class Test_cloudtrail_log_file_validation_enabled:
             Name=trail_name_eu, S3BucketName=bucket_name_eu, IsMultiRegionTrail=False
         )
 
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
         )
 
-        current_audit_info.audited_partition = "aws"
-
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(self.set_mocked_audit_info()),
         ) as service_client:
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled import (

@@ -10,7 +10,7 @@ from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 
 # last time invoked time
 last_invoked_time = datetime.now() - timedelta(days=2)

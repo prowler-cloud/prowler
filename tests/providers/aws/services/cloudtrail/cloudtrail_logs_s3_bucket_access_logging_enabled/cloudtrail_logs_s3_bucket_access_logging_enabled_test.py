@@ -1,11 +1,37 @@
 from re import search
 from unittest import mock
 
-from boto3 import client
+from boto3 import client, session
 from moto import mock_cloudtrail, mock_s3
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+
+AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
+    def set_mocked_audit_info(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=session.Session(
+                profile_name=None,
+                botocore_session=None,
+            ),
+            audited_account=AWS_ACCOUNT_NUMBER,
+            audited_user_id=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=["us-east-1", "eu-west-1"],
+            organizations_metadata=None,
+            audit_resources=None,
+        )
+        return audit_info
+
     @mock_cloudtrail
     @mock_s3
     def test_bucket_not_logging(self):
@@ -18,38 +44,37 @@ class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
         )
 
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        current_audit_info.audited_partition = "aws"
-
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(self.set_mocked_audit_info()),
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.s3_client",
+            new=S3(self.set_mocked_audit_info()),
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.s3_client",
-                new=S3(current_audit_info),
-            ):
-                # Test Check
-                from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled import (
-                    cloudtrail_logs_s3_bucket_access_logging_enabled,
-                )
+            # Test Check
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled import (
+                cloudtrail_logs_s3_bucket_access_logging_enabled,
+            )
 
-                check = cloudtrail_logs_s3_bucket_access_logging_enabled()
-                result = check.execute()
+            check = cloudtrail_logs_s3_bucket_access_logging_enabled()
+            result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "FAIL"
-                assert search(
-                    "S3 bucket access logging is not enabled for bucket",
-                    result[0].status_extended,
-                )
-                assert result[0].resource_id == trail_name_us
-                assert result[0].resource_arn == trail_us["TrailARN"]
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert search(
+                "S3 bucket access logging is not enabled for bucket",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == trail_name_us
+            assert result[0].resource_arn == trail_us["TrailARN"]
 
     @mock_cloudtrail
     @mock_s3
@@ -83,38 +108,37 @@ class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
             },
         )
 
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        current_audit_info.audited_partition = "aws"
-
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(self.set_mocked_audit_info()),
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.s3_client",
+            new=S3(self.set_mocked_audit_info()),
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.s3_client",
-                new=S3(current_audit_info),
-            ):
-                # Test Check
-                from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled import (
-                    cloudtrail_logs_s3_bucket_access_logging_enabled,
-                )
+            # Test Check
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled import (
+                cloudtrail_logs_s3_bucket_access_logging_enabled,
+            )
 
-                check = cloudtrail_logs_s3_bucket_access_logging_enabled()
-                result = check.execute()
+            check = cloudtrail_logs_s3_bucket_access_logging_enabled()
+            result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "PASS"
-                assert search(
-                    "S3 bucket access logging is enabled for bucket",
-                    result[0].status_extended,
-                )
-                assert result[0].resource_id == trail_name_us
-                assert result[0].resource_arn == trail_us["TrailARN"]
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert search(
+                "S3 bucket access logging is enabled for bucket",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == trail_name_us
+            assert result[0].resource_arn == trail_us["TrailARN"]
 
     @mock_cloudtrail
     @mock_s3
@@ -128,38 +152,37 @@ class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
         )
 
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        current_audit_info.audited_partition = "aws"
-
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
-        ):
-            with mock.patch(
-                "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.s3_client",
-                new=S3(current_audit_info),
-            ) as s3_client:
-                # Test Check
-                from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled import (
-                    cloudtrail_logs_s3_bucket_access_logging_enabled,
-                )
+            new=Cloudtrail(self.set_mocked_audit_info()),
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.s3_client",
+            new=S3(self.set_mocked_audit_info()),
+        ) as s3_client:
+            # Test Check
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled import (
+                cloudtrail_logs_s3_bucket_access_logging_enabled,
+            )
 
-                # Empty s3 buckets to simulate the bucket is in another account
-                s3_client.buckets = []
+            # Empty s3 buckets to simulate the bucket is in another account
+            s3_client.buckets = []
 
-                check = cloudtrail_logs_s3_bucket_access_logging_enabled()
-                result = check.execute()
+            check = cloudtrail_logs_s3_bucket_access_logging_enabled()
+            result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "FAIL"
-                assert search(
-                    "in another account out of Prowler's permissions scope, please check it manually",
-                    result[0].status_extended,
-                )
-                assert result[0].resource_id == trail_name_us
-                assert result[0].resource_arn == trail_us["TrailARN"]
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert search(
+                "in another account out of Prowler's permissions scope, please check it manually",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == trail_name_us
+            assert result[0].resource_arn == trail_us["TrailARN"]
