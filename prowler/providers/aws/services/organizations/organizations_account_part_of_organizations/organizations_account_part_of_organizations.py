@@ -19,6 +19,7 @@ class organizations_account_part_of_organizations(Check):
                 report.status_extended = (
                     "AWS Organizations is not in-use for this AWS Account"
                 )
+            report.region = organizations_client.region
             report.resource_id = org.id
             report.resource_arn = org.arn
             findings.append(report)
