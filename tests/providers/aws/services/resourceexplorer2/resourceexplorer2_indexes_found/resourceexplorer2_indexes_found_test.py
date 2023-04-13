@@ -1,9 +1,8 @@
 from unittest import mock
 from unittest.mock import patch
-from uuid import uuid4
 
 import botocore
-from boto3 import client, session
+from boto3 import session
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service import (
