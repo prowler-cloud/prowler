@@ -12,20 +12,27 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Organizations_Info
 
 
 def get_check_compliance(finding, provider, output_options):
-    check_compliance = {}
-    # We have to retrieve all the check's compliance requirements
-    for compliance in output_options.bulk_checks_metadata[
-        finding.check_metadata.CheckID
-    ].Compliance:
-        compliance_fw = compliance.Framework
-        if compliance.Version:
-            compliance_fw = f"{compliance_fw}-{compliance.Version}"
-        if compliance.Provider == provider.upper():
-            if compliance_fw not in check_compliance:
-                check_compliance[compliance_fw] = []
-            for requirement in compliance.Requirements:
-                check_compliance[compliance_fw].append(requirement.Id)
-    return check_compliance
+    try:
+        check_compliance = {}
+        # We have to retrieve all the check's compliance requirements
+        if finding.check_metadata.CheckID in output_options.bulk_checks_metadata:
+            for compliance in output_options.bulk_checks_metadata[
+                finding.check_metadata.CheckID
+            ].Compliance:
+                compliance_fw = compliance.Framework
+                if compliance.Version:
+                    compliance_fw = f"{compliance_fw}-{compliance.Version}"
+                if compliance.Provider == provider.upper():
+                    if compliance_fw not in check_compliance:
+                        check_compliance[compliance_fw] = []
+                    for requirement in compliance.Requirements:
+                        check_compliance[compliance_fw].append(requirement.Id)
+        return check_compliance
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        sys.exit(1)
 
 
 def generate_provider_output_csv(
