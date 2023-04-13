@@ -9,7 +9,7 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
 from prowler.providers.aws.services.s3.s3_service import S3
 
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 
 # Mocking Backup Calls
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -45,19 +45,18 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
+            new=Cloudtrail(current_audit_info),
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
-                new=Cloudtrail(current_audit_info),
-            ):
-                # Test Check
-                from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (
-                    cloudtrail_bucket_requires_mfa_delete,
-                )
+            # Test Check
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (
+                cloudtrail_bucket_requires_mfa_delete,
+            )
 
-                check = cloudtrail_bucket_requires_mfa_delete()
-                result = check.execute()
-                assert len(result) == 0
+            check = cloudtrail_bucket_requires_mfa_delete()
+            result = check.execute()
+            assert len(result) == 0
 
     @mock_cloudtrail
     @mock_s3
@@ -78,31 +77,29 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
+            new=Cloudtrail(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.s3_client",
+            new=S3(current_audit_info),
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
-                new=Cloudtrail(current_audit_info),
-            ):
-                with mock.patch(
-                    "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.s3_client",
-                    new=S3(current_audit_info),
-                ):
-                    # Test Check
-                    from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (
-                        cloudtrail_bucket_requires_mfa_delete,
-                    )
+            # Test Check
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (
+                cloudtrail_bucket_requires_mfa_delete,
+            )
 
-                    check = cloudtrail_bucket_requires_mfa_delete()
-                    result = check.execute()
-                    assert len(result) == 1
-                    assert result[0].status == "FAIL"
-                    assert (
-                        result[0].status_extended
-                        == f"Trail {trail_name_us} bucket ({bucket_name_us}) has not MFA delete enabled"
-                    )
-                    assert result[0].resource_id == trail_name_us
-                    assert result[0].region == "us-east-1"
-                    assert result[0].resource_arn == trail_us["TrailARN"]
+            check = cloudtrail_bucket_requires_mfa_delete()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Trail {trail_name_us} bucket ({bucket_name_us}) has not MFA delete enabled"
+            )
+            assert result[0].resource_id == trail_name_us
+            assert result[0].region == "us-east-1"
+            assert result[0].resource_arn == trail_us["TrailARN"]
 
     # Create an MFA device is not supported for moto, so we mock the call:
     def mock_make_api_call_getbucketversioning_mfadelete_enabled(
@@ -140,31 +137,29 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
+            new=Cloudtrail(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.s3_client",
+            new=S3(current_audit_info),
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
-                new=Cloudtrail(current_audit_info),
-            ):
-                with mock.patch(
-                    "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.s3_client",
-                    new=S3(current_audit_info),
-                ):
-                    # Test Check
-                    from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (
-                        cloudtrail_bucket_requires_mfa_delete,
-                    )
+            # Test Check
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (
+                cloudtrail_bucket_requires_mfa_delete,
+            )
 
-                    check = cloudtrail_bucket_requires_mfa_delete()
-                    result = check.execute()
-                    assert len(result) == 1
-                    assert result[0].status == "PASS"
-                    assert (
-                        result[0].status_extended
-                        == f"Trail {trail_name_us} bucket ({bucket_name_us}) has MFA delete enabled"
-                    )
-                    assert result[0].resource_id == trail_name_us
-                    assert result[0].region == "us-east-1"
-                    assert result[0].resource_arn == trail_us["TrailARN"]
+            check = cloudtrail_bucket_requires_mfa_delete()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Trail {trail_name_us} bucket ({bucket_name_us}) has MFA delete enabled"
+            )
+            assert result[0].resource_id == trail_name_us
+            assert result[0].region == "us-east-1"
+            assert result[0].resource_arn == trail_us["TrailARN"]
 
     @mock_cloudtrail
     @mock_s3
@@ -185,34 +180,32 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
-        ):
-            with mock.patch(
-                "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
-                new=Cloudtrail(current_audit_info),
-            ):
-                with mock.patch(
-                    "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.s3_client",
-                    new=S3(current_audit_info),
-                ) as s3_client:
-                    # Test Check
-                    from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (
-                        cloudtrail_bucket_requires_mfa_delete,
-                    )
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
+            new=Cloudtrail(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.s3_client",
+            new=S3(current_audit_info),
+        ) as s3_client:
+            # Test Check
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (
+                cloudtrail_bucket_requires_mfa_delete,
+            )
 
-                    # Empty s3 buckets to simulate the bucket is in another account
-                    s3_client.buckets = []
+            # Empty s3 buckets to simulate the bucket is in another account
+            s3_client.buckets = []
 
-                    check = cloudtrail_bucket_requires_mfa_delete()
-                    result = check.execute()
-                    assert len(result) == 1
-                    assert result[0].status == "PASS"
-                    assert (
-                        result[0].status_extended
-                        == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket in another account out of Prowler's permissions scope, please check it manually"
-                    )
-                    assert result[0].resource_id == trail_name_us
-                    assert result[0].region == "us-east-1"
-                    assert result[0].resource_arn == trail_us["TrailARN"]
+            check = cloudtrail_bucket_requires_mfa_delete()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket in another account out of Prowler's permissions scope, please check it manually"
+            )
+            assert result[0].resource_id == trail_name_us
+            assert result[0].region == "us-east-1"
+            assert result[0].resource_arn == trail_us["TrailARN"]
 
     @mock_cloudtrail
     @mock_s3
@@ -239,31 +232,29 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
-        ):
-            with mock.patch(
-                "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
-                new=Cloudtrail(current_audit_info),
-            ):
-                with mock.patch(
-                    "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.s3_client",
-                    new=S3(current_audit_info),
-                ) as s3_client:
-                    # Test Check
-                    from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (
-                        cloudtrail_bucket_requires_mfa_delete,
-                    )
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
+            new=Cloudtrail(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.s3_client",
+            new=S3(current_audit_info),
+        ) as s3_client:
+            # Test Check
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (
+                cloudtrail_bucket_requires_mfa_delete,
+            )
 
-                    # Empty s3 buckets to simulate the bucket is in another account
-                    s3_client.buckets = []
+            # Empty s3 buckets to simulate the bucket is in another account
+            s3_client.buckets = []
 
-                    check = cloudtrail_bucket_requires_mfa_delete()
-                    result = check.execute()
-                    assert len(result) == 1
-                    assert result[0].status == "PASS"
-                    assert (
-                        result[0].status_extended
-                        == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket in another account out of Prowler's permissions scope, please check it manually"
-                    )
-                    assert result[0].resource_id == trail_name_us
-                    assert result[0].region == "us-east-1"
-                    assert result[0].resource_arn == trail_us["TrailARN"]
+            check = cloudtrail_bucket_requires_mfa_delete()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket in another account out of Prowler's permissions scope, please check it manually"
+            )
+            assert result[0].resource_id == trail_name_us
+            assert result[0].region == "us-east-1"
+            assert result[0].resource_arn == trail_us["TrailARN"]

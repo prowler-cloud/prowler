@@ -11,7 +11,7 @@ from prowler.providers.aws.lib.allowlist.allowlist import (
 )
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
 
 

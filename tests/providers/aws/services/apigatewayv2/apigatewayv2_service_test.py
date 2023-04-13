@@ -8,7 +8,7 @@ from prowler.providers.aws.services.apigatewayv2.apigatewayv2_service import (
     ApiGatewayV2,
 )
 
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
 
 # Mocking ApiGatewayV2 Calls
