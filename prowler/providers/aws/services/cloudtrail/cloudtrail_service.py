@@ -17,7 +17,11 @@ class Cloudtrail:
         self.audited_account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
         self.audited_partition = audit_info.audited_partition
-        self.region = audit_info.profile_region
+        self.region = (
+            audit_info.profile_region
+            if audit_info.profile_region
+            else self.regional_clients[0].region
+        )
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.trails = []
         self.__threading_call__(self.__get_trails__)
