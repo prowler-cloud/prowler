@@ -13,7 +13,6 @@ AWS_REGION = "us-east-1"
 
 
 class Test_organizations_account_part_of_organizations:
-
     # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
@@ -31,7 +30,7 @@ class Test_organizations_account_part_of_organizations:
             profile_region=None,
             credentials=None,
             assumed_role_info=None,
-            audited_regions=None,
+            audited_regions=[AWS_REGION],
             organizations_metadata=None,
             audit_resources=None,
         )
@@ -39,7 +38,6 @@ class Test_organizations_account_part_of_organizations:
 
     @mock_organizations
     def test_no_organization(self):
-
         audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
@@ -66,10 +64,10 @@ class Test_organizations_account_part_of_organizations:
                 )
                 assert result[0].resource_id == "AWS Organization"
                 assert result[0].resource_arn == ""
+                assert result[0].region == AWS_REGION
 
     @mock_organizations
     def test_organization(self):
-
         audit_info = self.set_mocked_audit_info()
 
         # Create Organization
@@ -100,3 +98,4 @@ class Test_organizations_account_part_of_organizations:
                 )
                 assert result[0].resource_id == response["Organization"]["Id"]
                 assert result[0].resource_arn == response["Organization"]["Arn"]
+                assert result[0].region == AWS_REGION
