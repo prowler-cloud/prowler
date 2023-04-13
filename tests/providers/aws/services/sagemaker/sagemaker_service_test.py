@@ -7,7 +7,7 @@ from boto3 import session
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.sagemaker.sagemaker_service import SageMaker
 
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "eu-west-1"
 
 test_notebook_instance = "test-notebook-instance"

@@ -7,8 +7,8 @@ from moto import mock_guardduty
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
-AWS_ACCOUNT_NUMBER = 123456789012
 AWS_ACCOUNT_NUMBER_ADMIN = "123456789013"
+AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "eu-west-1"
 
 make_api_call = botocore.client.BaseClient._make_api_call

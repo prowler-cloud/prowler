@@ -9,7 +9,7 @@ from prowler.providers.aws.services.trustedadvisor.trustedadvisor_service import
     TrustedAdvisor,
 )
 
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
 
 make_api_call = botocore.client.BaseClient._make_api_call

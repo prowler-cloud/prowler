@@ -4,7 +4,7 @@ from unittest import mock
 from prowler.providers.aws.services.acm.acm_service import Certificate
 
 AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_acm_certificates_transparency_logs_enabled:

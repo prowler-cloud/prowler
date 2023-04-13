@@ -1,0 +1,36 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudtrail_bucket_requires_mfa_delete",
+  "CheckTitle": "Ensure the S3 bucket CloudTrail bucket requires MFA delete",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS AWS Foundations Benchmark"
+  ],
+  "ServiceName": "cloudtrail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsCloudTrailTrail",
+  "Description": "Ensure the S3 bucket CloudTrail bucket requires MFA",
+  "Risk": "If the S3 bucket CloudTrail bucket does not require MFA, it can be deleted by an attacker.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws s3api put-bucket-versioning --bucket DOC-EXAMPLE-BUCKET1 --versioning-configuration Status=Enabled,MFADelete=Enabled --mfa \"SERIAL 123456\"",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure MFA Delete for the S3 bucket CloudTrail bucket",
+      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiFactorAuthenticationDelete.html"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

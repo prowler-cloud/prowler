@@ -4,7 +4,7 @@ from moto import mock_ec2, mock_elb
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.elb.elb_service import ELB
 
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
 
 

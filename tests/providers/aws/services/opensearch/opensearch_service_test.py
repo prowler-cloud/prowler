@@ -9,7 +9,7 @@ from prowler.providers.aws.services.opensearch.opensearch_service import (
     OpenSearchService,
 )
 
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "eu-west-1"
 
 test_domain_name = "test"
