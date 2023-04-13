@@ -226,6 +226,12 @@ Detailed documentation at https://docs.prowler.cloud
             default=[],
             # Pending validate choices
         )
+        common_checks_parser.add_argument(
+            "-x",
+            "--checks-folder",
+            nargs="?",
+            help="Specify external directory with custom checks (each check must have a folder with the required files, see more in https://docs.prowler.cloud/en/latest/tutorials/misc/#custom-checks).",
+        )
 
     def __init_list_checks_parser__(self):
         # List checks options

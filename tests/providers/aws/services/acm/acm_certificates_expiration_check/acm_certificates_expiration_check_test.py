@@ -4,7 +4,7 @@ from unittest import mock
 from prowler.providers.aws.services.acm.acm_service import Certificate
 
 AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 DAYS_TO_EXPIRE_THRESHOLD = 7
 
 

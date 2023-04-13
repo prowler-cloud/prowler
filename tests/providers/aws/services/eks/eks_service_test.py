@@ -6,7 +6,7 @@ from moto import mock_ec2, mock_eks
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.eks.eks_service import EKS
 
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "eu-west-1"
 
 cluster_name = "test"

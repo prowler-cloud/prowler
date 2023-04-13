@@ -11,7 +11,7 @@ from moto import mock_ec2
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
 EXAMPLE_AMI_ID = "ami-12c6146b"
 MOCK_DATETIME = datetime(2023, 1, 4, 7, 27, 30, tzinfo=tzutc())

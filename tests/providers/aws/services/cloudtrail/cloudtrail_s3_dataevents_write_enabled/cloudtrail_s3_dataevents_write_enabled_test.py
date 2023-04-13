@@ -6,7 +6,7 @@ from moto import mock_cloudtrail, mock_s3
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_cloudtrail_s3_dataevents_write_enabled:

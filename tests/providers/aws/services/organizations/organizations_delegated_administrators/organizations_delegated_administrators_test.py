@@ -13,7 +13,6 @@ AWS_REGION = "us-east-1"
 
 
 class Test_organizations_delegated_administrators:
-
     # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
@@ -31,7 +30,7 @@ class Test_organizations_delegated_administrators:
             profile_region=None,
             credentials=None,
             assumed_role_info=None,
-            audited_regions=None,
+            audited_regions=[AWS_REGION],
             organizations_metadata=None,
             audit_resources=None,
         )
@@ -39,7 +38,6 @@ class Test_organizations_delegated_administrators:
 
     @mock_organizations
     def test_no_organization(self):
-
         audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
@@ -62,7 +60,6 @@ class Test_organizations_delegated_administrators:
 
     @mock_organizations
     def test_organization_no_delegations(self):
-
         audit_info = self.set_mocked_audit_info()
 
         # Create Organization
@@ -93,10 +90,10 @@ class Test_organizations_delegated_administrators:
                     "No Delegated Administrators",
                     result[0].status_extended,
                 )
+                assert result[0].region == AWS_REGION
 
     @mock_organizations
     def test_organization_trusted_delegated(self):
-
         audit_info = self.set_mocked_audit_info()
 
         # Create Organization
@@ -141,10 +138,10 @@ class Test_organizations_delegated_administrators:
                         "Trusted Delegated Administrator",
                         result[0].status_extended,
                     )
+                    assert result[0].region == AWS_REGION
 
     @mock_organizations
     def test_organization_untrusted_delegated(self):
-
         audit_info = self.set_mocked_audit_info()
 
         # Create Organization
@@ -185,3 +182,4 @@ class Test_organizations_delegated_administrators:
                     "Untrusted Delegated Administrator",
                     result[0].status_extended,
                 )
+                assert result[0].region == AWS_REGION

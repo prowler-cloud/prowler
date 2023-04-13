@@ -9,7 +9,7 @@ from moto import mock_sqs
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.sqs.sqs_service import SQS
 
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "eu-west-1"
 
 test_queue = "test-queue"

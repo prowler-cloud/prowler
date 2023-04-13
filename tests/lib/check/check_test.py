@@ -3,7 +3,9 @@ import pathlib
 from importlib.machinery import FileFinder
 from pkgutil import ModuleInfo
 
+from boto3 import client, session
 from mock import patch
+from moto import mock_s3
 
 from prowler.lib.check.check import (
     exclude_checks_to_run,
@@ -11,8 +13,10 @@ from prowler.lib.check.check import (
     list_modules,
     list_services,
     parse_checks_from_file,
+    parse_checks_from_folder,
     recover_checks_from_provider,
     recover_checks_from_service,
+    remove_custom_checks_module,
     update_audit_metadata,
 )
 from prowler.lib.check.models import load_check_metadata
@@ -20,6 +24,10 @@ from prowler.providers.aws.aws_provider import (
     get_checks_from_input_arn,
     get_regions_from_audit_resources,
 )
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+
+AWS_ACCOUNT_NUMBER = 123456789012
+AWS_REGION = "us-east-1"
 
 expected_packages = [
     ModuleInfo(
@@ -127,6 +135,28 @@ def mock_recover_checks_from_aws_provider_lambda_service(*_):
 
 
 class Test_Check:
+    def set_mocked_audit_info(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=session.Session(
+                profile_name=None,
+                botocore_session=None,
+            ),
+            audited_account=AWS_ACCOUNT_NUMBER,
+            audited_user_id=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=None,
+            organizations_metadata=None,
+            audit_resources=None,
+        )
+        return audit_info
+
     def test_load_check_metadata(self):
         test_cases = [
             {
@@ -163,6 +193,50 @@ class Test_Check:
             check_file = test["input"]["path"]
             provider = test["input"]["provider"]
             assert parse_checks_from_file(check_file, provider) == test["expected"]
+
+    @mock_s3
+    def test_parse_checks_from_folder(self):
+        test_checks_folder = (
+            f"{pathlib.Path().absolute()}/tests/lib/check/fixtures/checks_folder"
+        )
+        # Create bucket and upload checks folder
+        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client.create_bucket(Bucket="test")
+        # Iterate through the files in the folder and upload each one
+        for subdir, _, files in os.walk(test_checks_folder):
+            for file in files:
+                check = subdir.split("/")[-1]
+                full_path = os.path.join(subdir, file)
+                with open(full_path, "rb") as data:
+                    s3_client.upload_fileobj(
+                        data, "test", f"checks_folder/{check}/{file}"
+                    )
+        test_cases = [
+            {
+                "input": {
+                    "path": test_checks_folder,
+                    "provider": "aws",
+                },
+                "expected": 3,
+            },
+            {
+                "input": {
+                    "path": "s3://test/checks_folder/",
+                    "provider": "aws",
+                },
+                "expected": 3,
+            },
+        ]
+        for test in test_cases:
+            check_folder = test["input"]["path"]
+            provider = test["input"]["provider"]
+            assert (
+                parse_checks_from_folder(
+                    self.set_mocked_audit_info(), check_folder, provider
+                )
+                == test["expected"]
+            )
+            remove_custom_checks_module(check_folder, provider)
 
     def test_exclude_checks_to_run(self):
         test_cases = [

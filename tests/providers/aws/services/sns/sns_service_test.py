@@ -9,7 +9,7 @@ from moto import mock_sns
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.sns.sns_service import SNS
 
-AWS_ACCOUNT_NUMBER = 123456789012
+AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "eu-west-1"
 
 topic_name = "test-topic"
