@@ -1,5 +1,6 @@
-from unittest.mock import patch
 from datetime import datetime
+from unittest.mock import patch
+
 import botocore
 from boto3 import client, session
 from moto import mock_guardduty
@@ -12,6 +13,7 @@ AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "eu-west-1"
 
 make_api_call = botocore.client.BaseClient._make_api_call
+
 
 def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "ListFindings":
@@ -43,6 +45,7 @@ def mock_make_api_call(self, operation_name, kwarg):
             }
         }
     return make_api_call(self, operation_name, kwarg)
+
 
 def mock_generate_regional_clients(service, audit_info):
     regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
