@@ -8,6 +8,7 @@ from prowler.config.config import (
     prowler_version,
     timestamp,
 )
+from prowler.lib.check.models import Check_Report_AWS, Check_Report_GCP
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import (
     get_check_compliance,
@@ -16,18 +17,13 @@ from prowler.lib.outputs.models import (
     unroll_tags,
 )
 from prowler.lib.utils.utils import open_file
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
+from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
 
 def add_html_header(file_descriptor, audit_info):
     try:
-        if not audit_info.profile:
-            audit_info.profile = "ENV"
-        if isinstance(audit_info.audited_regions, list):
-            audited_regions = " ".join(audit_info.audited_regions)
-        elif not audit_info.audited_regions:
-            audited_regions = "All Regions"
-        else:
-            audited_regions = audit_info.audited_regions
         file_descriptor.write(
             """
         <!DOCTYPE html>
@@ -114,51 +110,9 @@ def add_html_header(file_descriptor, audit_info):
                 </li>
             </ul>
             </div>
-        </div>
-        <div class="col-md-2">
-                <div class="card">
-                    <div class="card-header">
-                        AWS Assessment Summary
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item">
-                            <b>AWS Account:</b> """
-            + audit_info.audited_account
+        </div> """
+            + get_assessment_summary(audit_info)
             + """
-                        </li>
-                        <li class="list-group-item">
-                            <b>AWS-CLI Profile:</b> """
-            + audit_info.profile
-            + """
-                        </li>
-                        <li class="list-group-item">
-                            <b>Audited Regions:</b> """
-            + audited_regions
-            + """
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        AWS Credentials
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item">
-                            <b>User Id:</b> """
-            + audit_info.audited_user_id
-            + """
-                        </li>
-                        <li class="list-group-item">
-                            <b>Caller Identity ARN:</b>
-                            """
-            + audit_info.audited_identity_arn
-            + """
-                        </li>
-                    </ul>
-                </div>
-            </div>
             <div class="col-md-2">
             <div class="card">
                 <div class="card-header">
@@ -205,9 +159,10 @@ def add_html_header(file_descriptor, audit_info):
     """
         )
     except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
+        sys.exit(1)
 
 
 def fill_html(file_descriptor, finding, output_options):
@@ -225,7 +180,7 @@ def fill_html(file_descriptor, finding, output_options):
                     <td>{finding.status}</td>
                     <td>{finding.check_metadata.Severity}</td>
                     <td>{finding.check_metadata.ServiceName}</td>
-                    <td>{finding.region}</td>
+                    <td>{finding.location if isinstance(finding, Check_Report_GCP) else finding.region if isinstance(finding, Check_Report_AWS) else ""}</td>
                     <td>{finding.check_metadata.CheckID.replace("_", "<wbr>_")}</td>
                     <td>{finding.check_metadata.CheckTitle}</td>
                     <td>{finding.resource_id.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>
@@ -372,6 +327,143 @@ def add_html_footer(output_filename, output_directory):
 """
             )
             file_descriptor.close()
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        sys.exit(1)
+
+
+def get_assessment_summary(audit_info):
+    try:
+        if isinstance(audit_info, AWS_Audit_Info):
+            if not audit_info.profile:
+                audit_info.profile = "ENV"
+            if isinstance(audit_info.audited_regions, list):
+                audited_regions = " ".join(audit_info.audited_regions)
+            elif not audit_info.audited_regions:
+                audited_regions = "All Regions"
+            else:
+                audited_regions = audit_info.audited_regions
+            return (
+                """
+            <div class="col-md-2">
+                <div class="card">
+                    <div class="card-header">
+                        AWS Assessment Summary
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>AWS Account:</b> """
+                + audit_info.audited_account
+                + """
+                        </li>
+                        <li class="list-group-item">
+                            <b>AWS-CLI Profile:</b> """
+                + audit_info.profile
+                + """
+                        </li>
+                        <li class="list-group-item">
+                            <b>Audited Regions:</b> """
+                + audited_regions
+                + """
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    AWS Credentials
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <b>User Id:</b> """
+                + audit_info.audited_user_id
+                + """
+                        </li>
+                        <li class="list-group-item">
+                            <b>Caller Identity ARN:</b> """
+                + audit_info.audited_identity_arn
+                + """
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            """
+            )
+        elif isinstance(audit_info, GCP_Audit_Info):
+            return (
+                """
+            <div class="col-md-2">
+                <div class="card">
+                    <div class="card-header">
+                        GCP Assessment Summary
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>GCP Account:</b> """
+                + audit_info.profile
+                + """
+                        </li>
+                        <li class="list-group-item">
+                            <b>GCP Project ID:</b> """
+                + audit_info.project_id
+                + """
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            """
+            )
+        elif isinstance(audit_info, Azure_Audit_Info):
+            return (
+                """
+            <div class="col-md-2">
+                <div class="card">
+                    <div class="card-header">
+                        Azure Assessment Summary
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Azure Tenant IDs:</b> """
+                + " ".join(audit_info.identity.tenant_ids)
+                + """
+                        </li>
+                        <li class="list-group-item">
+                            <b>Azure Tenant Domain:</b> """
+                + audit_info.identity.domain
+                + """
+                        </li>
+                        <li class="list-group-item">
+                            <b>Azure Subscriptions:</b> """
+                + " ".join(audit_info.printed_subscriptions)
+                + """
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    Azure Credentials
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <b>Azure Identity Type:</b> """
+                + audit_info.identity.identity_type
+                + """
+                        </li>
+                        <li class="list-group-item">
+                            <b>Azure Identity ID:</b> """
+                + audit_info.identity.identity_id
+                + """
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            """
+            )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"

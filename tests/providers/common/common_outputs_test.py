@@ -148,6 +148,7 @@ class Test_Common_Output_Options:
         assert isinstance(output_options, Azure_Output_Options)
         assert output_options.is_quiet
         assert output_options.output_modes == [
+            "html",
             "csv",
             "json",
         ]
@@ -184,6 +185,7 @@ class Test_Common_Output_Options:
         assert isinstance(output_options, Azure_Output_Options)
         assert output_options.is_quiet
         assert output_options.output_modes == [
+            "html",
             "csv",
             "json",
         ]
