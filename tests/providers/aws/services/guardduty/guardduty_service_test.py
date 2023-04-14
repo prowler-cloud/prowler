@@ -1,5 +1,5 @@
 from unittest.mock import patch
-
+from datetime import datetime
 import botocore
 from boto3 import client, session
 from moto import mock_guardduty
@@ -13,7 +13,6 @@ AWS_REGION = "eu-west-1"
 
 make_api_call = botocore.client.BaseClient._make_api_call
 
-
 def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "ListFindings":
         return {"FindingIds": ["86c1d16c9ec63f634ccd087ae0d427ba1"]}
@@ -23,14 +22,14 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "Members": [
                 {
-                    "AccountId": "string",
-                    "DetectorId": "string",
-                    "MasterId": "string",
-                    "Email": "string",
-                    "RelationshipStatus": "string",
-                    "InvitedAt": "string",
-                    "UpdatedAt": "string",
-                    "AdministratorId": "string",
+                    "AccountId": AWS_ACCOUNT_NUMBER,
+                    "DetectorId": "11b4a9318fd146914420a637a4a9248b",
+                    "MasterId": AWS_ACCOUNT_NUMBER_ADMIN,
+                    "Email": "security@prowler.com",
+                    "RelationshipStatus": "Enabled",
+                    "InvitedAt": datetime(2020, 1, 1),
+                    "UpdatedAt": datetime(2021, 1, 1),
+                    "AdministratorId": AWS_ACCOUNT_NUMBER_ADMIN,
                 },
             ],
         }
@@ -38,13 +37,12 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "Administrator": {
                 "AccountId": AWS_ACCOUNT_NUMBER_ADMIN,
-                "InvitationId": "string",
-                "RelationshipStatus": "string",
-                "InvitedAt": "string",
+                "InvitationId": "12b1a931a981d1e1f1f452cf2fb3d515",
+                "RelationshipStatus": "Enabled",
+                "InvitedAt": datetime(2020, 1, 1),
             }
         }
     return make_api_call(self, operation_name, kwarg)
-
 
 def mock_generate_regional_clients(service, audit_info):
     regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
