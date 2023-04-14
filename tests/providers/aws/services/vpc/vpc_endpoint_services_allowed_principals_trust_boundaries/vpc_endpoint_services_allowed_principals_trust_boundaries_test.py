@@ -1,12 +1,14 @@
 from unittest import mock
 
 import botocore
-from boto3 import client
+from boto3 import client, session
 from mock import patch
 from moto import mock_ec2, mock_elbv2
 
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+
 AWS_REGION = "us-east-1"
-ACCOUNT_ID = "123456789012"
+AWS_ACCOUNT_NUMBER = "123456789012"
 
 # Mocking VPC Calls
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -24,7 +26,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                 {
                     "ServiceId": "vpce-svc-4b919ac5",
                     "ServiceName": "string",
-                    "Owner": ACCOUNT_ID,
+                    "Owner": AWS_ACCOUNT_NUMBER,
                     "StageName": "test-stage",
                 }
             ]
@@ -34,27 +36,52 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
+    def set_mocked_audit_info(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=session.Session(
+                profile_name=None,
+                botocore_session=None,
+            ),
+            audited_account=AWS_ACCOUNT_NUMBER,
+            audited_user_id=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=["us-east-1", "eu-west-1"],
+            organizations_metadata=None,
+            audit_resources=None,
+        )
+
+        return audit_info
+
     @mock_ec2
     def test_vpc_no_endpoint_services(self):
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info.audited_partition = "aws"
-        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
+        current_audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
-            "prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_client",
-            new=VPC(current_audit_info),
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
         ):
-            # Test Check
-            from prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries import (
-                vpc_endpoint_services_allowed_principals_trust_boundaries,
-            )
+            with mock.patch(
+                "prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_client",
+                new=VPC(current_audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries import (
+                    vpc_endpoint_services_allowed_principals_trust_boundaries,
+                )
 
-            check = vpc_endpoint_services_allowed_principals_trust_boundaries()
-            result = check.execute()
+                check = vpc_endpoint_services_allowed_principals_trust_boundaries()
+                result = check.execute()
 
-            assert len(result) == 2  # one endpoint per region
+                assert len(result) == 2  # one endpoint per region
 
     @mock_ec2
     @mock_elbv2
@@ -84,33 +111,35 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
         #     NetworkLoadBalancerArns=[lb_arn]
         # )
 
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info.audited_partition = "aws"
-        current_audit_info.audited_regions = ["eu-west-1", "us-east-1"]
+        current_audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
-            "prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_client",
-            new=VPC(current_audit_info),
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
         ):
-            # Test Check
-            from prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries import (
-                vpc_endpoint_services_allowed_principals_trust_boundaries,
-            )
+            with mock.patch(
+                "prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_client",
+                new=VPC(current_audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries import (
+                    vpc_endpoint_services_allowed_principals_trust_boundaries,
+                )
 
-            check = vpc_endpoint_services_allowed_principals_trust_boundaries()
-            result = check.execute()
+                check = vpc_endpoint_services_allowed_principals_trust_boundaries()
+                result = check.execute()
 
-            assert len(result) == 2  # one per region
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == f"VPC Endpoint Service {ec2_client.describe_vpc_endpoint_services()['ServiceDetails'][0]['ServiceId']} has no allowed principals."
-            )
-            assert (
-                result[0].resource_id
-                == ec2_client.describe_vpc_endpoint_services()["ServiceDetails"][0][
-                    "ServiceId"
-                ]
-            )
+                assert len(result) == 2  # one per region
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == f"VPC Endpoint Service {ec2_client.describe_vpc_endpoint_services()['ServiceDetails'][0]['ServiceId']} has no allowed principals."
+                )
+                assert (
+                    result[0].resource_id
+                    == ec2_client.describe_vpc_endpoint_services()["ServiceDetails"][0][
+                        "ServiceId"
+                    ]
+                )
