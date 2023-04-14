@@ -16,7 +16,13 @@ class Backup:
         self.audited_account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
-        self.general_region = audit_info.profile_region
+        # If the region is not set in the audit profile,
+        # we pick the first region from the regional clients list
+        self.region = (
+            audit_info.profile_region
+            if audit_info.profile_region
+            else list(self.regional_clients.keys())[0]
+        )
         self.backup_vaults = []
         self.__threading_call__(self.__list_backup_vaults__)
         self.backup_plans = []

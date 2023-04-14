@@ -10,7 +10,7 @@ class backup_vaults_exist(Check):
         report.status_extended = "No Backup Vault Exist"
         report.resource_arn = ""
         report.resource_id = "No Backups"
-        report.region = backup_client.general_region
+        report.region = backup_client.region
         if backup_client.backup_vaults:
             report.status = "PASS"
             report.status_extended = f"At least one backup vault exists: { backup_client.backup_vaults[0].name}"
