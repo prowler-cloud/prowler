@@ -9,7 +9,7 @@ AWS_REGION = "eu-west-1"
 class Test_backup_reportplans_exist:
     def test_no_backup_report_plans(self):
         backup_client = mock.MagicMock
-        backup_client.general_region = AWS_REGION
+        backup_client.region = AWS_REGION
         backup_client.backup_report_plans = []
         with mock.patch(
             "prowler.providers.aws.services.backup.backup_service.Backup",
@@ -32,7 +32,7 @@ class Test_backup_reportplans_exist:
 
     def test_one_backup_report_plan(self):
         backup_client = mock.MagicMock
-        backup_client.general_region = AWS_REGION
+        backup_client.region = AWS_REGION
         backup_client.backup_report_plans = [
             BackupReportPlan(
                 arn="ARN",
