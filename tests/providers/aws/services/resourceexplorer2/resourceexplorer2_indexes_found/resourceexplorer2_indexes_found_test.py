@@ -1,7 +1,5 @@
 from unittest import mock
-from unittest.mock import patch
 
-import botocore
 from boto3 import session
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
@@ -15,25 +13,6 @@ INDEX_ARN = "arn:aws:resource-explorer-2:ap-south-1:123456789012:index/123456-28
 INDEX_REGION = "us-east-1"
 
 
-# Mocking Backup Calls
-make_api_call = botocore.client.BaseClient._make_api_call
-
-
-def mock_make_api_call(self, operation_name, kwarg):
-    """
-    Mock every AWS API call
-    """
-    if operation_name == "ListIndexes":
-        return {
-            "Indexes": [
-                {"Arn": INDEX_ARN, "Region": INDEX_REGION, "Type": "LOCAL"},
-            ],
-            "NextToken": "string",
-        }
-    return make_api_call(self, operation_name, kwarg)
-
-
-@patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_resourceexplorer2_indexes_found:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
@@ -48,10 +27,10 @@ class Test_resourceexplorer2_indexes_found:
             audited_partition="aws",
             audited_identity_arn=None,
             profile=None,
-            profile_region="us-east-1",
+            profile_region=None,
             credentials=None,
             assumed_role_info=None,
-            audited_regions="us-east-1",
+            audited_regions=[AWS_REGION],
             organizations_metadata=None,
             audit_resources=None,
         )
