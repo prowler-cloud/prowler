@@ -14,7 +14,13 @@ class ResourceExplorer2:
         self.session = audit_info.audit_session
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
-        self.region = audit_info.profile_region
+        # If the region is not set in the audit profile,
+        # we pick the first region from the regional clients list
+        self.region = (
+            audit_info.profile_region
+            if audit_info.profile_region
+            else list(self.regional_clients.keys())[0]
+        )
         self.indexes = []
         self.__threading_call__(self.__list_indexes__)
 
