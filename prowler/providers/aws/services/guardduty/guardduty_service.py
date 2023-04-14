@@ -19,8 +19,10 @@ class GuardDuty:
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.detectors = []
         self.__threading_call__(self.__list_detectors__)
-        self.__get_detector__(self.regional_clients)
-        self.__list_findings__(self.regional_clients)
+        self.__get_detector__()
+        self.__list_findings__()
+        self.__list_members__()
+        self.__get_administrator_account__()
         self.__list_tags_for_resource__()
 
     def __get_session__(self):
@@ -55,25 +57,76 @@ class GuardDuty:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_detector__(self, regional_clients):
+    def __get_detector__(self):
         logger.info("GuardDuty - getting detector info...")
         try:
             for detector in self.detectors:
-                regional_client = regional_clients[detector.region]
+                regional_client = self.regional_clients[detector.region]
                 detector_info = regional_client.get_detector(DetectorId=detector.id)
                 if "Status" in detector_info and detector_info["Status"] == "ENABLED":
                     detector.status = True
 
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __list_findings__(self, regional_clients):
+    def __get_administrator_account__(self):
+        logger.info("GuardDuty - getting administrator account...")
+        try:
+            for detector in self.detectors:
+                try:
+                    regional_client = self.regional_clients[detector.region]
+                    detector_administrator = regional_client.get_administrator_account(
+                        DetectorId=detector.id
+                    )
+                    detector_administrator_account = detector_administrator.get(
+                        "Administrator"
+                    )
+                    if detector_administrator_account:
+                        detector.administrator_account = (
+                            detector_administrator_account.get("AccountId")
+                        )
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    continue
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+
+    def __list_members__(self):
+        logger.info("GuardDuty - listing members...")
+        try:
+            for detector in self.detectors:
+                try:
+                    regional_client = self.regional_clients[detector.region]
+                    list_members_paginator = regional_client.get_paginator(
+                        "list_members"
+                    )
+                    for page in list_members_paginator.paginate(
+                        DetectorId=detector.id,
+                    ):
+                        for member in page["Members"]:
+                            detector.member_accounts.append(member.get("AccountId"))
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    continue
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+
+    def __list_findings__(self):
         logger.info("GuardDuty - listing findings...")
         try:
             for detector in self.detectors:
-                regional_client = regional_clients[detector.region]
+                regional_client = self.regional_clients[detector.region]
                 list_findings_paginator = regional_client.get_paginator("list_findings")
                 for page in list_findings_paginator.paginate(
                     DetectorId=detector.id,
@@ -97,7 +150,7 @@ class GuardDuty:
 
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
     def __list_tags_for_resource__(self):
@@ -111,7 +164,7 @@ class GuardDuty:
                 detector.tags = [response]
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
 
@@ -121,4 +174,6 @@ class Detector(BaseModel):
     region: str
     status: bool = None
     findings: list = []
+    member_accounts: list = []
+    administrator_account: str = None
     tags: Optional[list] = []

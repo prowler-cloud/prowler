@@ -2,11 +2,11 @@ from unittest.mock import patch
 
 import botocore
 from boto3 import session
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.accessanalyzer.accessanalyzer_service import (
     AccessAnalyzer,
 )
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"

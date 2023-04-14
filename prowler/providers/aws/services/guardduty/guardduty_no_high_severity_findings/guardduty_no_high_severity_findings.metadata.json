@@ -5,7 +5,7 @@
   "CheckType": [],
   "ServiceName": "guardduty",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id",
+  "ResourceIdTemplate": "arn:aws:guardduty:region:account-id/detector-id",
   "Severity": "high",
   "ResourceType": "AwsGuardDutyDetector",
   "Description": "There are High severity GuardDuty findings ",
