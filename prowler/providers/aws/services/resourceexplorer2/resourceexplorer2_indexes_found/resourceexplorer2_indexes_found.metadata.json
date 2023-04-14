@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "resourceexplorer2_indexes_found",
+  "CheckTitle": "Resource Explorer Indexes Found",
+  "CheckType": [],
+  "ServiceName": "resourceexplorer2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:resource-explorer-2:region:account-id:index/index-id",
+  "Severity": "low",
+  "ResourceType": "Other",
+  "Description": "Resource Explorer Indexes Found",
+  "Risk": "Not having Resource Explorer indexes can result in increased complexity and overhead in managing your resources, as well as increased risk of security and compliance issues.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create indexes",
+      "Url": "https://docs.aws.amazon.com/resource-explorer/latest/userguide/manage-service-turn-on-region.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
