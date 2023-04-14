@@ -2,8 +2,10 @@ from re import search
 from unittest import mock
 
 import botocore
-from boto3 import client, resource
+from boto3 import client, resource, session
 from moto import mock_ec2, mock_elbv2, mock_wafv2
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -31,38 +33,58 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 class Test_elbv2_waf_acl_attached:
+    def set_mocked_audit_info(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=session.Session(
+                profile_name=None,
+                botocore_session=None,
+            ),
+            audited_account=AWS_ACCOUNT_NUMBER,
+            audited_user_id=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=["us-east-1", "eu-west-1"],
+            organizations_metadata=None,
+            audit_resources=None,
+        )
+
+        return audit_info
+
     @mock_wafv2
     @mock_elbv2
     def test_elb_no_balancers(self):
-
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
         from prowler.providers.aws.services.waf.waf_service import WAF
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
-        current_audit_info.audited_partition = "aws"
-
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.elbv2_client",
-            new=ELBv2(current_audit_info),
+            new=ELBv2(self.set_mocked_audit_info()),
+        ), mock.patch(
+            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafv2_client",
+            new=WAFv2(self.set_mocked_audit_info()),
+        ), mock.patch(
+            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
+            new=WAF(self.set_mocked_audit_info()),
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafv2_client",
-                new=WAFv2(current_audit_info),
-            ):
-                with mock.patch(
-                    "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
-                    new=WAF(current_audit_info),
-                ):
-                    # Test Check
-                    from prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached import (
-                        elbv2_waf_acl_attached,
-                    )
+            # Test Check
+            from prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached import (
+                elbv2_waf_acl_attached,
+            )
 
-                    check = elbv2_waf_acl_attached()
-                    result = check.execute()
+            check = elbv2_waf_acl_attached()
+            result = check.execute()
 
-                    assert len(result) == 0
+            assert len(result) == 0
 
     @mock_wafv2
     @mock_ec2
@@ -100,41 +122,39 @@ class Test_elbv2_waf_acl_attached:
             Type="application",
         )["LoadBalancers"][0]
 
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
         from prowler.providers.aws.services.waf.waf_service import WAF
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
-        current_audit_info.audited_partition = "aws"
-
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.elbv2_client",
-            new=ELBv2(current_audit_info),
+            new=ELBv2(self.set_mocked_audit_info()),
+        ), mock.patch(
+            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafv2_client",
+            new=WAFv2(self.set_mocked_audit_info()),
+        ), mock.patch(
+            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
+            new=WAF(self.set_mocked_audit_info()),
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafv2_client",
-                new=WAFv2(current_audit_info),
-            ):
-                with mock.patch(
-                    "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
-                    new=WAF(current_audit_info),
-                ):
-                    # Test Check
-                    from prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached import (
-                        elbv2_waf_acl_attached,
-                    )
+            # Test Check
+            from prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached import (
+                elbv2_waf_acl_attached,
+            )
 
-                    check = elbv2_waf_acl_attached()
-                    result = check.execute()
+            check = elbv2_waf_acl_attached()
+            result = check.execute()
 
-                    assert len(result) == 1
-                    assert result[0].status == "FAIL"
-                    assert search(
-                        "is not protected by WAF Web ACL",
-                        result[0].status_extended,
-                    )
-                    assert result[0].resource_id == "my-lb"
-                    assert result[0].resource_arn == lb["LoadBalancerArn"]
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert search(
+                "is not protected by WAF Web ACL",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == "my-lb"
+            assert result[0].resource_arn == lb["LoadBalancerArn"]
 
     @mock_wafv2
     @mock_ec2
@@ -174,40 +194,39 @@ class Test_elbv2_waf_acl_attached:
 
         wafv2.associate_web_acl(WebACLArn=waf["ARN"], ResourceArn=lb["LoadBalancerArn"])
 
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
         from prowler.providers.aws.services.waf.waf_service import WAF
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
-        current_audit_info.audited_partition = "aws"
-
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.elbv2_client",
-            new=ELBv2(current_audit_info),
-        ):
+            new=ELBv2(self.set_mocked_audit_info()),
+        ), mock.patch(
+            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafv2_client",
+            new=WAFv2(self.set_mocked_audit_info()),
+        ) as service_client:
             with mock.patch(
-                "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafv2_client",
-                new=WAFv2(current_audit_info),
-            ) as service_client:
-                with mock.patch(
-                    "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
-                    new=WAF(current_audit_info),
-                ):
-                    # Test Check
-                    from prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached import (
-                        elbv2_waf_acl_attached,
-                    )
+                "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
+                new=WAF(self.set_mocked_audit_info()),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached import (
+                    elbv2_waf_acl_attached,
+                )
 
-                    service_client.web_acls[0].albs.append(lb["LoadBalancerArn"])
+                service_client.web_acls[0].albs.append(lb["LoadBalancerArn"])
 
-                    check = elbv2_waf_acl_attached()
-                    result = check.execute()
+                check = elbv2_waf_acl_attached()
+                result = check.execute()
 
-                    assert len(result) == 1
-                    assert result[0].status == "PASS"
-                    assert search(
-                        "is protected by WAFv2 Web ACL",
-                        result[0].status_extended,
-                    )
-                    assert result[0].resource_id == "my-lb"
-                    assert result[0].resource_arn == lb["LoadBalancerArn"]
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert search(
+                    "is protected by WAFv2 Web ACL",
+                    result[0].status_extended,
+                )
+                assert result[0].resource_id == "my-lb"
+                assert result[0].resource_arn == lb["LoadBalancerArn"]
