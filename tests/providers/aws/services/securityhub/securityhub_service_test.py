@@ -1,12 +1,16 @@
 from unittest.mock import patch
 
 import botocore
+from boto3 import session
 
 from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.securityhub.securityhub_service import SecurityHub
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
+AWS_ACCOUNT_NUMBER = "123456789012"
+
 
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -57,6 +61,29 @@ def mock_generate_regional_clients(service, audit_info):
     new=mock_generate_regional_clients,
 )
 class Test_SecurityHub_Service:
+    def set_mocked_audit_info(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=session.Session(
+                profile_name=None,
+                botocore_session=None,
+            ),
+            audited_account=AWS_ACCOUNT_NUMBER,
+            audited_user_id=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=["us-east-1", "eu-west-1"],
+            organizations_metadata=None,
+            audit_resources=None,
+        )
+
+        return audit_info
+
     # Test SecurityHub Client
     def test__get_client__(self):
         access_analyzer = SecurityHub(current_audit_info)
@@ -72,13 +99,21 @@ class Test_SecurityHub_Service:
 
     def test__describe_hub__(self):
         # Set partition for the service
-        current_audit_info.audited_partition = "aws"
-        securityhub = SecurityHub(current_audit_info)
-        assert len(securityhub.securityhubs) == 1
-        assert (
-            securityhub.securityhubs[0].arn
-            == "arn:aws:securityhub:us-east-1:0123456789012:hub/default"
-        )
-        assert securityhub.securityhubs[0].id == "default"
-        assert securityhub.securityhubs[0].standards == "cis-aws-foundations-benchmark "
-        assert securityhub.securityhubs[0].integrations == "prowler "
+        current_audit_info = self.set_mocked_audit_info()
+
+        with patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ):
+            securityhub = SecurityHub(current_audit_info)
+            assert len(securityhub.securityhubs) == 1
+            assert (
+                securityhub.securityhubs[0].arn
+                == "arn:aws:securityhub:us-east-1:0123456789012:hub/default"
+            )
+            assert securityhub.securityhubs[0].id == "default"
+            assert (
+                securityhub.securityhubs[0].standards
+                == "cis-aws-foundations-benchmark "
+            )
+            assert securityhub.securityhubs[0].integrations == "prowler "
