@@ -264,14 +264,17 @@ class VPC:
                                 route_tables_for_subnet = (
                                     regional_client_for_subnet.describe_route_tables(
                                         Filters=[
-                                            {"Name": "association.main", "Values": ["true"]}
+                                            {
+                                                "Name": "association.main",
+                                                "Values": ["true"],
+                                            }
                                         ]
                                     )
                                 )
                             public = False
-                            for route in route_tables_for_subnet.get("RouteTables")[0].get(
-                                "Routes"
-                            ):
+                            for route in route_tables_for_subnet.get("RouteTables")[
+                                0
+                            ].get("Routes"):
                                 if "GatewayId" in route and "igw" in route["GatewayId"]:
                                     public = True
                                     break
