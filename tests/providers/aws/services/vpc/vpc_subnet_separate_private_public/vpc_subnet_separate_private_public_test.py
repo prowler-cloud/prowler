@@ -48,11 +48,11 @@ class Test_vpc_subnet_separate_private_public:
         route_table_private = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
         )
-        route_private = ec2_client.create_route(
+        ec2_client.create_route(
             DestinationCidrBlock="10.10.10.0",
             RouteTableId=route_table_private["RouteTable"]["RouteTableId"],
         )
-        association_private = ec2_client.associate_route_table(
+        ec2_client.associate_route_table(
             RouteTableId=route_table_private["RouteTable"]["RouteTableId"],
             SubnetId=subnet_private["Subnet"]["SubnetId"],
         )
@@ -107,12 +107,12 @@ class Test_vpc_subnet_separate_private_public:
             VpcId=vpc["Vpc"]["VpcId"],
         )
         igw = ec2_client.create_internet_gateway()
-        route_public = ec2_client.create_route(
+        ec2_client.create_route(
             DestinationCidrBlock="0.0.0.0",
             RouteTableId=route_table_public["RouteTable"]["RouteTableId"],
             GatewayId=igw["InternetGateway"]["InternetGatewayId"],
         )
-        association_public = ec2_client.associate_route_table(
+        ec2_client.associate_route_table(
             RouteTableId=route_table_public["RouteTable"]["RouteTableId"],
             SubnetId=subnet_public["Subnet"]["SubnetId"],
         )
@@ -166,11 +166,11 @@ class Test_vpc_subnet_separate_private_public:
         route_table_private = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
         )
-        route_private = ec2_client.create_route(
+        ec2_client.create_route(
             DestinationCidrBlock="10.10.10.0",
             RouteTableId=route_table_private["RouteTable"]["RouteTableId"],
         )
-        association_private = ec2_client.associate_route_table(
+        ec2_client.associate_route_table(
             RouteTableId=route_table_private["RouteTable"]["RouteTableId"],
             SubnetId=subnet_private["Subnet"]["SubnetId"],
         )
@@ -184,12 +184,12 @@ class Test_vpc_subnet_separate_private_public:
             VpcId=vpc["Vpc"]["VpcId"],
         )
         igw = ec2_client.create_internet_gateway()
-        route_public = ec2_client.create_route(
+        ec2_client.create_route(
             DestinationCidrBlock="0.0.0.0",
             RouteTableId=route_table_public["RouteTable"]["RouteTableId"],
             GatewayId=igw["InternetGateway"]["InternetGatewayId"],
         )
-        association_public = ec2_client.associate_route_table(
+        ec2_client.associate_route_table(
             RouteTableId=route_table_public["RouteTable"]["RouteTableId"],
             SubnetId=subnet_public["Subnet"]["SubnetId"],
         )

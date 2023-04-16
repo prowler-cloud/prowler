@@ -40,14 +40,14 @@ class Test_vpc_subnet_different_az:
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
         # VPC AZ 1
-        subneta = ec2_client.create_subnet(
+        ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
             AvailabilityZone=f"{AWS_REGION}a",
         )
 
         # VPC AZ 2
-        subnetb = ec2_client.create_subnet(
+        ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.0/26",
             AvailabilityZone=f"{AWS_REGION}b",
@@ -94,14 +94,14 @@ class Test_vpc_subnet_different_az:
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
         # VPC AZ 1
-        subneta = ec2_client.create_subnet(
+        ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
             AvailabilityZone=f"{AWS_REGION}a",
         )
 
         # VPC AZ 2
-        subnetaa = ec2_client.create_subnet(
+        ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.0/26",
             AvailabilityZone=f"{AWS_REGION}a",
