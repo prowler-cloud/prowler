@@ -243,10 +243,14 @@ class Test_Common_Output_Options:
         audit_info = self.set_mocked_azure_audit_info()
         tenants = ["tenant-1", "tenant-2"]
         audit_info.identity.tenant_ids = tenants
-        audit_info.printed_subscriptions = [
-            "Azure subscription 1 : 12345-qwerty",
-            "Subscription2 : 12345-qwerty",
-        ]
+        audit_info.identity.subscriptions = {
+            "Azure subscription 1": "12345-qwerty",
+            "Subscription2": "12345-qwerty",
+        }
+        printed_subscriptions = []
+        for key, value in audit_info.identity.subscriptions.items():
+            intermediate = key + " : " + value
+            printed_subscriptions.append(intermediate)
         assert (
             get_assessment_summary(audit_info)
             == f"""
@@ -263,7 +267,7 @@ class Test_Common_Output_Options:
                             <b>Azure Tenant Domain:</b> {audit_info.identity.domain}
                         </li>
                         <li class="list-group-item">
-                            <b>Azure Subscriptions:</b> {" ".join(audit_info.printed_subscriptions)}
+                            <b>Azure Subscriptions:</b> {" ".join(printed_subscriptions)}
                         </li>
                     </ul>
                 </div>
@@ -332,7 +336,7 @@ class Test_Common_Output_Options:
     def test_gcp_get_assessment_summary(self):
         # Mock Azure Audit Info
         audit_info = self.set_mocked_gcp_audit_info()
-        audit_info.profile = "user@test.com"
+        profile = "default"
         assert (
             get_assessment_summary(audit_info)
             == f"""
@@ -355,7 +359,7 @@ class Test_Common_Output_Options:
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>GCP Account:</b> {audit_info.profile}
+                            <b>GCP Account:</b> {profile}
                         </li>
                     </ul>
                 </div>
