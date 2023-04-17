@@ -393,6 +393,15 @@ def get_assessment_summary(audit_info):
             """
             )
         elif isinstance(audit_info, GCP_Audit_Info):
+            try:
+                getattr(audit_info.credentials, "_service_account_email")
+                profile = (
+                    audit_info.credentials._service_account_email
+                    if audit_info.credentials._service_account_email is not None
+                    else "default"
+                )
+            except AttributeError:
+                profile = "default"
             return (
                 """
             <div class="col-md-2">
@@ -417,7 +426,7 @@ def get_assessment_summary(audit_info):
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
                             <b>GCP Account:</b> """
-                + audit_info.profile
+                + profile
                 + """
                         </li>
                     </ul>
@@ -426,6 +435,10 @@ def get_assessment_summary(audit_info):
             """
             )
         elif isinstance(audit_info, Azure_Audit_Info):
+            printed_subscriptions = []
+            for key, value in audit_info.identity.subscriptions.items():
+                intermediate = key + " : " + value
+                printed_subscriptions.append(intermediate)
             return (
                 """
             <div class="col-md-2">
@@ -446,7 +459,7 @@ def get_assessment_summary(audit_info):
                         </li>
                         <li class="list-group-item">
                             <b>Azure Subscriptions:</b> """
-                + " ".join(audit_info.printed_subscriptions)
+                + " ".join(printed_subscriptions)
                 + """
                         </li>
                     </ul>

@@ -71,31 +71,31 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         # Beautify audited profile, set "default" if there is no profile set
         try:
             getattr(audit_info.credentials, "_service_account_email")
-            audit_info.profile = (
+            profile = (
                 audit_info.credentials._service_account_email
                 if audit_info.credentials._service_account_email is not None
                 else "default"
             )
         except AttributeError:
-            audit_info.profile = "default"
+            profile = "default"
 
         report = f"""
 This report is being generated using credentials below:
 
-GCP Account: {Fore.YELLOW}[{audit_info.profile}]{Style.RESET_ALL}  GCP Project ID: {Fore.YELLOW}[{audit_info.project_id}]{Style.RESET_ALL}
+GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project ID: {Fore.YELLOW}[{audit_info.project_id}]{Style.RESET_ALL}
 """
         print(report)
 
     def print_azure_credentials(self, audit_info: Azure_Audit_Info):
-        audit_info.printed_subscriptions = []
+        printed_subscriptions = []
         for key, value in audit_info.identity.subscriptions.items():
             intermediate = key + " : " + value
-            audit_info.printed_subscriptions.append(intermediate)
+            printed_subscriptions.append(intermediate)
         report = f"""
 This report is being generated using the identity below:
 
 Azure Tenant IDs: {Fore.YELLOW}[{" ".join(audit_info.identity.tenant_ids)}]{Style.RESET_ALL} Azure Tenant Domain: {Fore.YELLOW}[{audit_info.identity.domain}]{Style.RESET_ALL}
-Azure Subscriptions: {Fore.YELLOW}{audit_info.printed_subscriptions}{Style.RESET_ALL}
+Azure Subscriptions: {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}
 Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}[{audit_info.identity.identity_id}]{Style.RESET_ALL}
 """
         print(report)
