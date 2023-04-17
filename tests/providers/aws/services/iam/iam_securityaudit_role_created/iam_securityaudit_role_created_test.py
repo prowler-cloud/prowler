@@ -8,9 +8,10 @@ from moto import mock_iam
 from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.iam.iam_service import IAM
 
+AWS_ACCOUNT_NUMBER = "123456789012"
+
 
 class Test_iam_securityaudit_role_created:
-
     # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
@@ -20,7 +21,7 @@ class Test_iam_securityaudit_role_created:
                 profile_name=None,
                 botocore_session=None,
             ),
-            audited_account=None,
+            audited_account=AWS_ACCOUNT_NUMBER,
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
