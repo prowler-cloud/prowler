@@ -16,6 +16,13 @@ class SSMIncidents:
         self.audited_partition = audit_info.audited_partition
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
+        # If the region is not set in the audit profile,
+        # we pick the first region from the regional clients list
+        self.region = (
+            audit_info.profile_region
+            if audit_info.profile_region
+            else list(self.regional_clients.keys())[0]
+        )
         self.replication_sets = []
         self.__threading_call__(self.__list_replication_sets__)
         self.__get_replication_set__()
