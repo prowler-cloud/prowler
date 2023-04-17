@@ -26,7 +26,7 @@ def mock_make_api_call(self, operation_name, kwargs):
         return {
             "replicationSet": {
                 "arn": REPLICATION_SET_ARN,
-                "createdBy": "thegaby",
+                "createdBy": "Prowler",
                 "createdTime": datetime(2024, 1, 1),
                 "deletionProtected": False,
                 "lastModifiedBy": datetime(2024, 1, 1),
