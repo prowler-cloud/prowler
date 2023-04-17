@@ -1,25 +1,55 @@
 from unittest import mock
 
-from boto3 import client
+from boto3 import client, session
 from moto import mock_cloudtrail, mock_cloudwatch, mock_logs, mock_s3
 from moto.core import DEFAULT_ACCOUNT_ID
 
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+
 AWS_REGION = "us-east-1"
+AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
+class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled:
+    def set_mocked_audit_info(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=session.Session(
+                profile_name=None,
+                botocore_session=None,
+            ),
+            audited_account=AWS_ACCOUNT_NUMBER,
+            audited_user_id=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=["us-east-1", "eu-west-1"],
+            organizations_metadata=None,
+            audit_resources=None,
+        )
+
+        return audit_info
+
     @mock_logs
     @mock_cloudtrail
     @mock_cloudwatch
     def test_cloudwatch_no_log_groups(self):
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
+
+        current_audit_info = self.set_mocked_audit_info()
+
         from prowler.providers.common.models import Audit_Metadata
 
-        current_audit_info.audited_partition = "aws"
         current_audit_info.audit_metadata = Audit_Metadata(
             services_scanned=0,
             # We need to set this check to call __describe_log_groups__
@@ -27,11 +57,11 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             completed_checks=0,
             audit_progress=0,
         )
-        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
-            Cloudtrail,
-        )
 
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
@@ -69,14 +99,18 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
         s3_client.create_bucket(Bucket="test")
         cloudtrail_client.create_trail(Name="test_trail", S3BucketName="test")
 
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
+
+        current_audit_info = self.set_mocked_audit_info()
+
         from prowler.providers.common.models import Audit_Metadata
 
-        current_audit_info.audited_partition = "aws"
         current_audit_info.audit_metadata = Audit_Metadata(
             services_scanned=0,
             # We need to set this check to call __describe_log_groups__
@@ -84,11 +118,11 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             completed_checks=0,
             audit_progress=0,
         )
-        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
-            Cloudtrail,
-        )
 
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
@@ -132,14 +166,18 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
         )
 
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
+
+        current_audit_info = self.set_mocked_audit_info()
+
         from prowler.providers.common.models import Audit_Metadata
 
-        current_audit_info.audited_partition = "aws"
         current_audit_info.audit_metadata = Audit_Metadata(
             services_scanned=0,
             # We need to set this check to call __describe_log_groups__
@@ -147,11 +185,11 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             completed_checks=0,
             audit_progress=0,
         )
-        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
-            Cloudtrail,
-        )
 
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
@@ -207,14 +245,18 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             ],
         )
 
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
+
+        current_audit_info = self.set_mocked_audit_info()
+
         from prowler.providers.common.models import Audit_Metadata
 
-        current_audit_info.audited_partition = "aws"
         current_audit_info.audit_metadata = Audit_Metadata(
             services_scanned=0,
             # We need to set this check to call __describe_log_groups__
@@ -222,11 +264,11 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             completed_checks=0,
             audit_progress=0,
         )
-        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
-            Cloudtrail,
-        )
 
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
@@ -294,14 +336,18 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             ActionsEnabled=True,
         )
 
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
+
+        current_audit_info = self.set_mocked_audit_info()
+
         from prowler.providers.common.models import Audit_Metadata
 
-        current_audit_info.audited_partition = "aws"
         current_audit_info.audit_metadata = Audit_Metadata(
             services_scanned=0,
             # We need to set this check to call __describe_log_groups__
@@ -309,11 +355,11 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             completed_checks=0,
             audit_progress=0,
         )
-        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
-            Cloudtrail,
-        )
 
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
@@ -381,14 +427,18 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             ActionsEnabled=True,
         )
 
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
             CloudWatch,
             Logs,
         )
+
+        current_audit_info = self.set_mocked_audit_info()
+
         from prowler.providers.common.models import Audit_Metadata
 
-        current_audit_info.audited_partition = "aws"
         current_audit_info.audit_metadata = Audit_Metadata(
             services_scanned=0,
             # We need to set this check to call __describe_log_groups__
@@ -396,11 +446,11 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             completed_checks=0,
             audit_progress=0,
         )
-        from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
-            Cloudtrail,
-        )
 
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
