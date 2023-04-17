@@ -4,7 +4,6 @@ from unittest.mock import patch
 import botocore
 from boto3 import session
 
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
 
@@ -77,22 +76,22 @@ class Test_Codebuild_Service:
 
     # Test Codebuild Session
     def test__get_session__(self):
-        codebuild = Codebuild(current_audit_info)
+        codebuild = Codebuild(self.set_mocked_audit_info())
         assert codebuild.session.__class__.__name__ == "Session"
 
     # Test Codebuild Service
     def test__get_service__(self):
-        codebuild = Codebuild(current_audit_info)
+        codebuild = Codebuild(self.set_mocked_audit_info())
         assert codebuild.service == "codebuild"
 
     def test__list_projects__(self):
-        codebuild = Codebuild(current_audit_info)
+        codebuild = Codebuild(self.set_mocked_audit_info())
         assert len(codebuild.projects) == 1
         assert codebuild.projects[0].name == "test"
         assert codebuild.projects[0].region == AWS_REGION
 
     def test__list_builds_for_project__(self):
-        codebuild = Codebuild(current_audit_info)
+        codebuild = Codebuild(self.set_mocked_audit_info())
         assert len(codebuild.projects) == 1
         assert codebuild.projects[0].name == "test"
         assert codebuild.projects[0].region == AWS_REGION
