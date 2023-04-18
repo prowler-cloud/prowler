@@ -1,25 +1,25 @@
 {
   "Provider": "aws",
-  "CheckID": "ecr_repositories_scan_images_on_push_enabled",
-  "CheckTitle": "[DEPRECATED] Check if ECR image scan on push is enabled",
+  "CheckID": "ecr_registry_scan_images_on_push_enabled",
+  "CheckTitle": "Check if ECR Registry has scan on push enabled",
   "CheckType": [
     "Identify",
     "Vulnerability, patch, and version management"
   ],
   "ServiceName": "ecr",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "arn:partition:ecr:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsEcrRepository",
-  "Description": "[DEPRECATED] Check if ECR image scan on push is enabled",
+  "ResourceType": "AwsEcrRegistry",
+  "Description": "Check if ECR Registry has scan on push enabled",
   "Risk": "Amazon ECR image scanning helps in identifying software vulnerabilities in your container images. Amazon ECR uses the Common Vulnerabilities and Exposures (CVEs) database from the open-source Clair project and provides a list of scan findings. ",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "aws ecr create-repository --repository-name <repo_name> --image-scanning-configuration scanOnPush=true--region <region_name>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/general_8#cli-command",
+      "CLI": "aws ecr put-registry-scanning-configuration --rules 'scanFrequency=SCAN_ON_PUSH,repositoryFilters=[{filter=string,filterType=WILDCARD}]'",
+      "NativeIaC": "",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/general_8#fix---buildtime"
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Enable ECR image scanning and review the scan findings for information about the security of the container images that are being deployed.",
