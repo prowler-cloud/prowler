@@ -215,14 +215,14 @@ msrest = ">=0.7.1"
 
 [[package]]
 name = "azure-storage-blob"
-version = "12.15.0"
+version = "12.16.0"
 description = "Microsoft Azure Blob Storage Client Library for Python"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "azure-storage-blob-12.15.0.zip", hash = "sha256:f8b8d582492740ab16744455408342fb8e4c8897b64a8a3fc31743844722c2f2"},
-    {file = "azure_storage_blob-12.15.0-py3-none-any.whl", hash = "sha256:08d8807c577c63a436740627927c1a03a97c963efc29af5c818aed906590e1cf"},
+    {file = "azure-storage-blob-12.16.0.zip", hash = "sha256:43b45f19a518a5c6895632f263b3825ebc23574f25cc84b66e1630a6160e466f"},
+    {file = "azure_storage_blob-12.16.0-py3-none-any.whl", hash = "sha256:91bb192b2a97939c4259c72373bac0f41e30810bbc853d5184f0f45904eacafd"},
 ]
 
 [package.dependencies]
@@ -2843,4 +2843,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "89a1d7c87c3b583453dd86a6e35ef890be40ac3daeeb0517c2ea2ddc8e222964"
+content-hash = "d682a222a9f63dec4663fc8236d0025a78ae5ab80ff26060b9ba7ec55897fd31"
