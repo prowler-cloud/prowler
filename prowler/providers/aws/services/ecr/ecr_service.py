@@ -17,10 +17,12 @@ class ECR:
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.repositories = []
+        self.registries = []
         self.__threading_call__(self.__describe_repositories__)
         self.__describe_repository_policies__()
         self.__get_image_details__()
         self.__get_repository_lifecycle_policy__()
+        self.__threading_call__(self.__get_registry_scanning_configuration__)
         self.__list_tags_for_resource__()
 
     def __get_session__(self):
@@ -163,6 +165,31 @@ class ECR:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __get_registry_scanning_configuration__(self, regional_client):
+        logger.info("ECR - Getting Registry Scanning Configuration...")
+        try:
+            response = regional_client.get_registry_scanning_configuration()
+            rules = []
+            for rule in response["scanningConfiguration"]["rules"]:
+                rules.append(
+                    ScanningRule(
+                        scan_frequency=rule["scanFrequency"],
+                        scan_filters=rule["repositoryFilters"],
+                    )
+                )
+            self.registries.append(
+                Registry(
+                    id=response["registryId"],
+                    scan_type=response["scanningConfiguration"]["scanType"],
+                    region=regional_client.region,
+                    rules=rules,
+                )
+            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class FindingSeverityCounts(BaseModel):
     critical: int
@@ -185,4 +212,17 @@ class Repository(BaseModel):
     policy: Optional[dict]
     images_details: Optional[list[ImageDetails]]
     lyfecicle_policy: Optional[str]
+    tags: Optional[list] = []
+
+
+class ScanningRule(BaseModel):
+    scan_frequency: str
+    scan_filters: list[dict]
+
+
+class Registry(BaseModel):
+    id: str
+    region: str
+    scan_type: str
+    rules: list[ScanningRule]
     tags: Optional[list] = []
