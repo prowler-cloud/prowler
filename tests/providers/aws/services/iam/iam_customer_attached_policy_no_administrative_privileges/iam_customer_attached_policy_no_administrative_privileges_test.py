@@ -10,7 +10,7 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
+class Test_iam_customer_attached_policy_no_administrative_privileges_test:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -44,10 +44,13 @@ class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
                 {"Effect": "Allow", "Action": "*", "Resource": "*"},
             ],
         }
+        iam_client.create_role(
+            RoleName="my-role", AssumeRolePolicyDocument="{}", Path="/my-path/"
+        )
         arn = iam_client.create_policy(
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
-
+        iam_client.attach_role_policy(PolicyArn=arn, RoleName="my-role")
         current_audit_info = self.set_mocked_audit_info()
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -55,21 +58,21 @@ class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges.iam_client",
+            "prowler.providers.aws.services.iam.iam_customer_attached_policy_no_administrative_privileges.iam_customer_attached_policy_no_administrative_privileges.iam_client",
             new=IAM(current_audit_info),
         ):
-            from prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges import (
-                iam_customer_unattached_policy_no_administrative_privileges,
+            from prowler.providers.aws.services.iam.iam_customer_attached_policy_no_administrative_privileges.iam_customer_attached_policy_no_administrative_privileges import (
+                iam_customer_attached_policy_no_administrative_privileges,
             )
 
-            check = iam_customer_unattached_policy_no_administrative_privileges()
+            check = iam_customer_attached_policy_no_administrative_privileges()
             results = check.execute()
             for result in results:
                 if result.resource_id == "policy1":
                     assert result.status == "FAIL"
                     assert result.resource_arn == arn
                     assert search(
-                        f"Custom policy {policy_name} is unattached and allows ",
+                        f"Custom policy {policy_name} is attached and allows ",
                         result.status_extended,
                     )
 
@@ -83,10 +86,13 @@ class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
                 {"Effect": "Allow", "Action": "logs:CreateLogGroup", "Resource": "*"},
             ],
         }
+        iam_client.create_role(
+            RoleName="my-role", AssumeRolePolicyDocument="{}", Path="/my-path/"
+        )
         arn = iam_client.create_policy(
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
-
+        iam_client.attach_role_policy(PolicyArn=arn, RoleName="my-role")
         current_audit_info = self.set_mocked_audit_info()
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -94,21 +100,21 @@ class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges.iam_client",
+            "prowler.providers.aws.services.iam.iam_customer_attached_policy_no_administrative_privileges.iam_customer_attached_policy_no_administrative_privileges.iam_client",
             new=IAM(current_audit_info),
         ):
-            from prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges import (
-                iam_customer_unattached_policy_no_administrative_privileges,
+            from prowler.providers.aws.services.iam.iam_customer_attached_policy_no_administrative_privileges.iam_customer_attached_policy_no_administrative_privileges import (
+                iam_customer_attached_policy_no_administrative_privileges,
             )
 
-            check = iam_customer_unattached_policy_no_administrative_privileges()
+            check = iam_customer_attached_policy_no_administrative_privileges()
             results = check.execute()
             for result in results:
                 if result.resource_id == "policy1":
                     assert result.status == "PASS"
                     assert result.resource_arn == arn
                     assert search(
-                        f"Custom policy {policy_name} is unattached and does not allow",
+                        f"Custom policy {policy_name} is attached but does not allow",
                         result.status_extended,
                     )
 
@@ -137,7 +143,13 @@ class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
             PolicyName=policy_name_administrative,
             PolicyDocument=dumps(policy_document_administrative),
         )["Policy"]["Arn"]
-
+        iam_client.create_role(
+            RoleName="my-role", AssumeRolePolicyDocument="{}", Path="/my-path/"
+        )
+        iam_client.attach_role_policy(
+            PolicyArn=arn_non_administrative, RoleName="my-role"
+        )
+        iam_client.attach_role_policy(PolicyArn=arn_administrative, RoleName="my-role")
         current_audit_info = self.set_mocked_audit_info()
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -145,21 +157,21 @@ class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges.iam_client",
+            "prowler.providers.aws.services.iam.iam_customer_attached_policy_no_administrative_privileges.iam_customer_attached_policy_no_administrative_privileges.iam_client",
             new=IAM(current_audit_info),
         ):
-            from prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges import (
-                iam_customer_unattached_policy_no_administrative_privileges,
+            from prowler.providers.aws.services.iam.iam_customer_attached_policy_no_administrative_privileges.iam_customer_attached_policy_no_administrative_privileges import (
+                iam_customer_attached_policy_no_administrative_privileges,
             )
 
-            check = iam_customer_unattached_policy_no_administrative_privileges()
+            check = iam_customer_attached_policy_no_administrative_privileges()
             results = check.execute()
             for result in results:
                 if result.resource_id == "policy1":
                     assert result.status == "PASS"
                     assert result.resource_arn == arn_non_administrative
                     assert search(
-                        f"Custom policy {policy_name_non_administrative} is unattached and does not allow ",
+                        f"Custom policy {policy_name_non_administrative} is attached but does not allow ",
                         result.status_extended,
                     )
                     assert result.resource_id == policy_name_non_administrative
@@ -167,7 +179,7 @@ class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
                     assert result.status == "FAIL"
                     assert result.resource_arn == arn_administrative
                     assert search(
-                        f"Custom policy {policy_name_administrative} is unattached and allows ",
+                        f"Custom policy {policy_name_administrative} is attached and allows ",
                         result.status_extended,
                     )
                     assert result.resource_id == policy_name_administrative

@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
 
-class iam_customer_attached_policy_no_administrative_privileges(Check):
+class iam_aws_attached_policy_no_administrative_privileges(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
         for policy in iam_client.policies:
