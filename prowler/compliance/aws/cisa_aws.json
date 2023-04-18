@@ -88,7 +88,8 @@
         "iam_password_policy_symbol",
         "iam_password_policy_uppercase",
         "iam_no_custom_policy_permissive_role_assumption",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_root_hardware_mfa_enabled",
         "iam_root_mfa_enabled",
         "iam_no_root_access_key",
@@ -181,7 +182,8 @@
       "Checks": [
         "elbv2_ssl_listeners",
         "iam_no_custom_policy_permissive_role_assumption",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_no_root_access_key"
       ]
     },

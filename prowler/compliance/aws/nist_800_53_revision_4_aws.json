@@ -101,7 +101,8 @@
         "cloudtrail_cloudwatch_logging_enabled",
         "guardduty_is_enabled",
         "iam_password_policy_reuse_24",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_root_mfa_enabled",
         "iam_no_root_access_key",
         "iam_rotate_access_key_90_days",
@@ -125,7 +126,8 @@
       ],
       "Checks": [
         "ec2_ebs_public_snapshot",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_no_root_access_key",
         "iam_disable_90_days_credentials",
         "awslambda_function_url_public",
@@ -180,7 +182,8 @@
         }
       ],
       "Checks": [
-        "iam_policy_no_administrative_privileges"
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges"
       ]
     },
     {
@@ -215,7 +218,8 @@
         "ec2_instance_public_ip",
         "ec2_instance_imdsv2_enabled",
         "iam_policy_attached_only_to_group_or_roles",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_no_root_access_key",
         "iam_disable_90_days_credentials",
         "awslambda_function_url_public",
@@ -846,7 +850,8 @@
         }
       ],
       "Checks": [
-        "iam_policy_no_administrative_privileges"
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges"
       ]
     },
     {

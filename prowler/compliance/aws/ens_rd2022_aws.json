@@ -103,7 +103,8 @@
         "awslambda_function_url_public",
         "awslambda_function_url_cors_policy",
         "iam_policy_allows_privilege_escalation",
-        "iam_policy_no_administrative_privileges"
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges"
       ]
     },
     {
@@ -129,7 +130,8 @@
       "Checks": [
         "iam_policy_allows_privilege_escalation",
         "iam_no_custom_policy_permissive_role_assumption",
-        "iam_policy_no_administrative_privileges"
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges"
       ]
     },
     {
@@ -202,7 +204,8 @@
         }
       ],
       "Checks": [
-        "iam_policy_no_administrative_privileges"
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges"
       ]
     },
     {
@@ -1065,7 +1068,8 @@
       ],
       "Checks": [
         "iam_policy_allows_privilege_escalation",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_no_custom_policy_permissive_role_assumption",
         "iam_policy_attached_only_to_group_or_roles",
         "iam_role_cross_service_confused_deputy_prevention"

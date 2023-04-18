@@ -21,7 +21,8 @@
         "ec2_instance_public_ip",
         "eks_endpoints_not_publicly_accessible",
         "emr_cluster_master_nodes_no_public_ip",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_root_hardware_mfa_enabled",
         "iam_root_mfa_enabled",
         "iam_no_root_access_key",
@@ -60,7 +61,8 @@
         "ec2_instance_public_ip",
         "eks_endpoints_not_publicly_accessible",
         "emr_cluster_master_nodes_no_public_ip",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_root_hardware_mfa_enabled",
         "iam_root_mfa_enabled",
         "iam_no_root_access_key",
@@ -125,7 +127,8 @@
         }
       ],
       "Checks": [
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_no_root_access_key",
         "iam_disable_90_days_credentials"
       ]
@@ -142,7 +145,8 @@
         }
       ],
       "Checks": [
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_no_root_access_key",
         "iam_disable_90_days_credentials"
       ]
@@ -159,7 +163,8 @@
         }
       ],
       "Checks": [
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_no_root_access_key"
       ]
     },
@@ -175,7 +180,8 @@
         }
       ],
       "Checks": [
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_no_root_access_key"
       ]
     },
@@ -449,7 +455,8 @@
         "ec2_ebs_public_snapshot",
         "ec2_instance_managed_by_ssm",
         "iam_policy_attached_only_to_group_or_roles",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_no_root_access_key",
         "awslambda_function_url_public",
         "rds_snapshots_public_access",
@@ -821,7 +828,8 @@
         }
       ],
       "Checks": [
-        "iam_policy_no_administrative_privileges"
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges"
       ]
     },
     {

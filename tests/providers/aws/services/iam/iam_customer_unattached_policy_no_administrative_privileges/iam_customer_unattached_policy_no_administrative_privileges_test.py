@@ -10,7 +10,7 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class Test_iam_policy_no_administrative_privileges_test:
+class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -55,14 +55,14 @@ class Test_iam_policy_no_administrative_privileges_test:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges.iam_client",
+            "prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges.iam_client",
             new=IAM(current_audit_info),
         ):
-            from prowler.providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges import (
-                iam_policy_no_administrative_privileges,
+            from prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges import (
+                iam_customer_unattached_policy_no_administrative_privileges,
             )
 
-            check = iam_policy_no_administrative_privileges()
+            check = iam_customer_unattached_policy_no_administrative_privileges()
             results = check.execute()
             for result in results:
                 if result.resource_id == "policy1":
@@ -93,14 +93,14 @@ class Test_iam_policy_no_administrative_privileges_test:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges.iam_client",
+            "prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges.iam_client",
             new=IAM(current_audit_info),
         ):
-            from prowler.providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges import (
-                iam_policy_no_administrative_privileges,
+            from prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges import (
+                iam_customer_unattached_policy_no_administrative_privileges,
             )
 
-            check = iam_policy_no_administrative_privileges()
+            check = iam_customer_unattached_policy_no_administrative_privileges()
             results = check.execute()
             for result in results:
                 if result.resource_id == "policy1":
@@ -143,14 +143,14 @@ class Test_iam_policy_no_administrative_privileges_test:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges.iam_client",
+            "prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges.iam_client",
             new=IAM(current_audit_info),
         ):
-            from prowler.providers.aws.services.iam.iam_policy_no_administrative_privileges.iam_policy_no_administrative_privileges import (
-                iam_policy_no_administrative_privileges,
+            from prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges import (
+                iam_customer_unattached_policy_no_administrative_privileges,
             )
 
-            check = iam_policy_no_administrative_privileges()
+            check = iam_customer_unattached_policy_no_administrative_privileges()
             results = check.execute()
             for result in results:
                 if result.resource_id == "policy1":

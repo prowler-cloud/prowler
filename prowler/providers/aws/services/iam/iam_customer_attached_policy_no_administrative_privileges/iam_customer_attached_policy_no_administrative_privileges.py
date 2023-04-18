@@ -2,12 +2,12 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
 
-class iam_policy_no_administrative_privileges(Check):
+class iam_customer_attached_policy_no_administrative_privileges(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
         for policy in iam_client.policies:
-            # Check only for attached policies
-            if policy.attached:
+            # Check only for attached custom policies
+            if policy.attached and policy.type == "Custom":
                 report = Check_Report_AWS(self.metadata())
                 report.region = iam_client.region
                 report.resource_arn = policy.arn

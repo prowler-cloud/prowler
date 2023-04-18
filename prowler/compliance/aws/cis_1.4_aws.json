@@ -155,7 +155,8 @@
       "Id": "1.16",
       "Description": "Ensure IAM policies that allow full \"*:*\" administrative privileges are not attached",
       "Checks": [
-        "iam_policy_no_administrative_privileges"
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges"
       ],
       "Attributes": [
         {

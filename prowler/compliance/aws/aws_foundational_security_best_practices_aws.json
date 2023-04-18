@@ -362,14 +362,16 @@
         }
       ],
       "Checks": [
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_rotate_access_key_90_days",
         "iam_no_root_access_key",
         "iam_user_mfa_enabled_console_access",
         "iam_root_hardware_mfa_enabled",
         "iam_password_policy_minimum_length_14",
         "iam_disable_90_days_credentials",
-        "iam_policy_no_administrative_privileges"
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges"
       ]
     },
     {
