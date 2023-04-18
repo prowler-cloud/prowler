@@ -1,11 +1,16 @@
 import threading
 
 from pydantic import BaseModel
-
+from botocore.client import ClientError
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
+# Note:
+# This service is a bit special, because it's creates a resource (Replication Set) in one region, but you can listed that resource in any region.
+# The ARN of this resource, doesn't include the region: arn:aws:ssm-incidents::<ACCOUNT>:replication-set/<REPLICATION_SET_ID>, is listed the same way in any region. 
+# The problem is that for doing a get_replication_set, we need the region where the replication set was created or any of the regions where it is replicating to.
+# Because we need to do a get_replication_set to describe it and we don't know the region, we iterate across all region until we find it, excepting the regions where the replication set is not replicated to.
 
 ################## SSMIncidents
 class SSMIncidents:
@@ -23,8 +28,8 @@ class SSMIncidents:
             if audit_info.profile_region
             else list(self.regional_clients.keys())[0]
         )
-        self.replication_sets = []
-        self.__threading_call__(self.__list_replication_sets__)
+        self.replication_set = []
+        self.__list_replication_sets__()
         self.__get_replication_set__()
         self.response_plans = []
         self.__threading_call__(self.__list_response_plans__)
@@ -42,24 +47,21 @@ class SSMIncidents:
         for t in threads:
             t.join()
 
-    def __list_replication_sets__(self, regional_client):
+    def __list_replication_sets__(self):
         logger.info("SSMIncidents - Listing Replication Sets...")
         try:
-            list_replication_sets_paginator = regional_client.get_paginator(
-                "list_replication_sets"
-            )
-            for page in list_replication_sets_paginator.paginate():
-                for replication_set in page["replicationSetArns"]:
-                    if not self.audit_resources or (
-                        is_resource_filtered(replication_set, self.audit_resources)
-                    ):
-                        # The ARN is listed in all regions, but it's only one uniq replication set
-                        self.replication_sets = [
-                            ReplicationSet(
-                                arn=replication_set,
-                            )
-                        ]
-                        break
+            regional_client = self.regional_clients[self.region]
+            list_replication_sets = regional_client.list_replication_sets()["replicationSetArns"]
+            if not self.audit_resources or (
+                is_resource_filtered(replication_set, self.audit_resources)
+            ):
+                if list_replication_sets:
+                    replication_set = list_replication_sets[0]
+                    self.replication_set = [
+                        ReplicationSet(
+                            arn=replication_set,
+                        )
+                    ]
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -68,9 +70,9 @@ class SSMIncidents:
     def __get_replication_set__(self):
         logger.info("SSMIncidents - Getting Replication Sets...")
         try:
-            for replication_set in self.replication_sets:
+            replication_set = self.replication_set[0]
+            for regional_client in self.regional_clients.values():
                 try:
-                    regional_client = self.regional_clients["us-east-1"]
                     get_replication_set = regional_client.get_replication_set(
                         arn=replication_set.arn
                     )["replicationSet"]
@@ -87,10 +89,19 @@ class SSMIncidents:
                                 ],
                             )
                         )
-                except Exception as error:
-                    logger.error(
-                        f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
-                    )
+                    break # We found the replication set, we stop iterating
+                except ClientError as error:
+                    if (
+                        error.response["Error"]["Code"]
+                        == "ResourceNotFoundException"
+                    ):
+                        # The replication set is not in this region, we continue to the next region
+                        continue
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"

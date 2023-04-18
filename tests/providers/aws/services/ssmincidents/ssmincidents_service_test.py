@@ -107,14 +107,14 @@ class Test_SSMIncidents_Service:
     def test__list_replication_sets__(self):
         audit_info = self.set_mocked_audit_info()
         ssmincidents = SSMIncidents(audit_info)
-        assert len(ssmincidents.replication_sets) == 1
+        assert len(ssmincidents.replication_set) == 1
 
     def test__get_replication_set__(self):
         audit_info = self.set_mocked_audit_info()
         ssmincidents = SSMIncidents(audit_info)
-        assert ssmincidents.replication_sets[0].arn == REPLICATION_SET_ARN
-        assert ssmincidents.replication_sets[0].status == "ACTIVE"
-        for region in ssmincidents.replication_sets[0].region_map:
+        assert ssmincidents.replication_set[0].arn == REPLICATION_SET_ARN
+        assert ssmincidents.replication_set[0].status == "ACTIVE"
+        for region in ssmincidents.replication_set[0].region_map:
             assert region.region == AWS_REGION
             assert region.status == "ACTIVE"
             assert region.sse_kms_id == "DefaultKey"

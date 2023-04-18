@@ -14,7 +14,7 @@ class Test_ssmincidents_enabled_with_plans:
     def test_ssmincidents_no_replicationset(self):
         ssmincidents_client = mock.MagicMock
         ssmincidents_client.region = AWS_REGION
-        ssmincidents_client.replication_sets = []
+        ssmincidents_client.replication_set = []
         with mock.patch(
             "prowler.providers.aws.services.ssmincidents.ssmincidents_service.SSMIncidents",
             new=ssmincidents_client,
@@ -39,7 +39,7 @@ class Test_ssmincidents_enabled_with_plans:
     def test_ssmincidents_replicationset_not_active(self):
         ssmincidents_client = mock.MagicMock
         ssmincidents_client.region = AWS_REGION
-        ssmincidents_client.replication_sets = [
+        ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="CREATING")
         ]
         with mock.patch(
@@ -67,7 +67,7 @@ class Test_ssmincidents_enabled_with_plans:
     def test_ssmincidents_replicationset_active_no_plans(self):
         ssmincidents_client = mock.MagicMock
         ssmincidents_client.region = AWS_REGION
-        ssmincidents_client.replication_sets = [
+        ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="ACTIVE")
         ]
         ssmincidents_client.response_plans = []
@@ -96,7 +96,7 @@ class Test_ssmincidents_enabled_with_plans:
     def test_ssmincidents_replicationset_active_with_plans(self):
         ssmincidents_client = mock.MagicMock
         ssmincidents_client.region = AWS_REGION
-        ssmincidents_client.replication_sets = [
+        ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="ACTIVE")
         ]
         ssmincidents_client.response_plans = [
