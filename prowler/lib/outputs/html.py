@@ -1,3 +1,4 @@
+import importlib
 import sys
 from os import path
 
@@ -334,7 +335,7 @@ def add_html_footer(output_filename, output_directory):
         sys.exit(1)
 
 
-def get_assessment_summary(audit_info):
+def get_aws_html_assessment_summary(audit_info):
     try:
         if isinstance(audit_info, AWS_Audit_Info):
             if not audit_info.profile:
@@ -392,49 +393,17 @@ def get_assessment_summary(audit_info):
             </div>
             """
             )
-        elif isinstance(audit_info, GCP_Audit_Info):
-            try:
-                getattr(audit_info.credentials, "_service_account_email")
-                profile = (
-                    audit_info.credentials._service_account_email
-                    if audit_info.credentials._service_account_email is not None
-                    else "default"
-                )
-            except AttributeError:
-                profile = "default"
-            return (
-                """
-            <div class="col-md-2">
-                <div class="card">
-                    <div class="card-header">
-                        GCP Assessment Summary
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item">
-                            <b>GCP Project ID:</b> """
-                + audit_info.project_id
-                + """
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        GCP Credentials
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item">
-                            <b>GCP Account:</b> """
-                + profile
-                + """
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            """
-            )
-        elif isinstance(audit_info, Azure_Audit_Info):
+
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        sys.exit(1)
+
+
+def get_azure_html_assessment_summary(audit_info):
+    try:
+        if isinstance(audit_info, Azure_Audit_Info):
             printed_subscriptions = []
             for key, value in audit_info.identity.subscriptions.items():
                 intermediate = key + " : " + value
@@ -489,5 +458,82 @@ def get_assessment_summary(audit_info):
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        sys.exit(1)
+
+
+def get_gcp_html_assessment_summary(audit_info):
+    try:
+        if isinstance(audit_info, GCP_Audit_Info):
+            try:
+                getattr(audit_info.credentials, "_service_account_email")
+                profile = (
+                    audit_info.credentials._service_account_email
+                    if audit_info.credentials._service_account_email is not None
+                    else "default"
+                )
+            except AttributeError:
+                profile = "default"
+            return (
+                """
+            <div class="col-md-2">
+                <div class="card">
+                    <div class="card-header">
+                        GCP Assessment Summary
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>GCP Project ID:</b> """
+                + audit_info.project_id
+                + """
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        GCP Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>GCP Account:</b> """
+                + profile
+                + """
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            """
+            )
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        sys.exit(1)
+
+
+def get_assessment_summary(audit_info):
+    """
+    get_assessment_summary gets the HTML assessment summary for the provider
+    """
+    try:
+        # This is based in the Provider_Audit_Info class
+        # It is not pretty but useful
+        # AWS_Audit_Info --> aws
+        # GCP_Audit_Info --> gcp
+        # Azure_Audit_Info --> azure
+        provider = audit_info.__class__.__name__.split("_")[0].lower()
+
+        # Dynamically get the Provider quick inventory handler
+        provider_html_assessment_summary_function = (
+            f"get_{provider}_html_assessment_summary"
+        )
+        return getattr(
+            importlib.import_module(__name__), provider_html_assessment_summary_function
+        )(audit_info)
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
         sys.exit(1)
