@@ -96,7 +96,7 @@ This report is being generated using the identity below:
 
 Azure Tenant IDs: {Fore.YELLOW}[{" ".join(audit_info.identity.tenant_ids)}]{Style.RESET_ALL} Azure Tenant Domain: {Fore.YELLOW}[{audit_info.identity.domain}]{Style.RESET_ALL}
 Azure Subscriptions: {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}
-Azure Identity type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}[{audit_info.identity.identity_id}]{Style.RESET_ALL}
+Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}[{audit_info.identity.identity_id}]{Style.RESET_ALL}
 """
         print(report)
 
