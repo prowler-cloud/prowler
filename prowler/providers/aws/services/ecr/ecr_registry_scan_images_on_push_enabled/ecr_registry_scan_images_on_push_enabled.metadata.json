@@ -16,7 +16,7 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws ecr put-registry-scanning-configuration --rules 'scanFrequency=SCAN_ON_PUSH,repositoryFilters=[{filter=string,filterType=WILDCARD}]'",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""

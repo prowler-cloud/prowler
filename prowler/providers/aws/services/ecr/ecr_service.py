@@ -170,17 +170,19 @@ class ECR:
         try:
             response = regional_client.get_registry_scanning_configuration()
             rules = []
-            for rule in response["scanningConfiguration"]["rules"]:
+            for rule in response.get("scanningConfiguration").get("rules", []):
                 rules.append(
                     ScanningRule(
-                        scan_frequency=rule["scanFrequency"],
-                        scan_filters=rule["repositoryFilters"],
+                        scan_frequency=rule.get("scanFrequency"),
+                        scan_filters=rule.get("repositoryFilters"),
                     )
                 )
             self.registries.append(
                 Registry(
-                    id=response["registryId"],
-                    scan_type=response["scanningConfiguration"]["scanType"],
+                    id=response.get("registryId", ""),
+                    scan_type=response.get("scanningConfiguration").get(
+                        "scanType", "BASIC"
+                    ),
                     region=regional_client.region,
                     rules=rules,
                 )
