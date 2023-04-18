@@ -7,7 +7,7 @@ from prowler.providers.aws.lib.quick_inventory.quick_inventory import quick_inve
 
 def run_provider_quick_inventory(provider, audit_info, output_directory):
     """
-    run_provider_quick_inventory executes the quick inventory for te provider
+    run_provider_quick_inventory executes the quick inventory for the provider
     """
     try:
         # Dynamically get the Provider quick inventory handler

@@ -104,12 +104,6 @@ def report(check_findings, output_options, audit_info):
                                     file_descriptors,
                                 )
 
-                            if "html" in file_descriptors:
-                                fill_html(
-                                    file_descriptors["html"], finding, output_options
-                                )
-                                file_descriptors["html"].write("")
-
                             if "json-asff" in file_descriptors:
                                 finding_output = Check_Output_JSON_ASFF()
                                 fill_json_asff(
@@ -137,6 +131,10 @@ def report(check_findings, output_options, audit_info):
                                 )
 
                         # Common outputs
+                        if "html" in file_descriptors:
+                            fill_html(file_descriptors["html"], finding, output_options)
+                            file_descriptors["html"].write("")
+
                         if "csv" in file_descriptors:
                             csv_writer, finding_output = generate_provider_output_csv(
                                 finding.check_metadata.Provider,

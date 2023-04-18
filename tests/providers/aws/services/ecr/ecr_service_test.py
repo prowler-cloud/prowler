@@ -5,7 +5,7 @@ from boto3 import client, session
 from moto import mock_ecr
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.aws.services.ecr.ecr_service import ECR
+from prowler.providers.aws.services.ecr.ecr_service import ECR, ScanningRule
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "eu-west-1"
@@ -52,6 +52,21 @@ def mock_make_api_call(self, operation_name, kwarg):
             "registryId": "string",
             "repositoryName": "string",
             "lifecyclePolicyText": "test-policy",
+        }
+    if operation_name == "GetRegistryScanningConfiguration":
+        return {
+            "registryId": AWS_ACCOUNT_NUMBER,
+            "scanningConfiguration": {
+                "scanType": "BASIC",
+                "rules": [
+                    {
+                        "scanFrequency": "SCAN_ON_PUSH",
+                        "repositoryFilters": [
+                            {"filter": "*", "filterType": "WILDCARD"},
+                        ],
+                    },
+                ],
+            },
         }
     return make_api_call(self, operation_name, kwarg)
 
@@ -218,3 +233,18 @@ class Test_ECR_Service:
         )
         assert not ecr.repositories[0].images_details[1].scan_findings_status
         assert not ecr.repositories[0].images_details[1].scan_findings_severity_count
+
+    # Test get ECR Registries
+    @mock_ecr
+    def test__get_registry_scanning_configuration__(self):
+        audit_info = self.set_mocked_audit_info()
+        ecr = ECR(audit_info)
+        assert len(ecr.registries) == 1
+        assert ecr.registries[0].id == AWS_ACCOUNT_NUMBER
+        assert ecr.registries[0].scan_type == "BASIC"
+        assert ecr.registries[0].rules == [
+            ScanningRule(
+                scan_frequency="SCAN_ON_PUSH",
+                scan_filters=[{"filter": "*", "filterType": "WILDCARD"}],
+            )
+        ]

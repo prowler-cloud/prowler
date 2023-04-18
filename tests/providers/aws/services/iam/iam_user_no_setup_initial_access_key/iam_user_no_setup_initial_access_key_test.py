@@ -2,10 +2,38 @@ from csv import DictReader
 from re import search
 from unittest import mock
 
+from boto3 import session
 from moto import mock_iam
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+
+AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_iam_user_no_setup_initial_access_key_test:
+    def set_mocked_audit_info(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=session.Session(
+                profile_name=None,
+                botocore_session=None,
+            ),
+            audited_account=AWS_ACCOUNT_NUMBER,
+            audited_user_id=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=["us-east-1", "eu-west-1"],
+            organizations_metadata=None,
+            audit_resources=None,
+        )
+
+        return audit_info
+
     @mock_iam
     def test_setup_access_key_1_fail(self):
         raw_credential_report = r"""user,arn,user_creation_time,password_enabled,password_last_used,password_last_changed,password_next_rotation,mfa_active,access_key_1_active,access_key_1_last_rotated,access_key_1_last_used_date,access_key_1_last_used_region,access_key_1_last_used_service,access_key_2_active,access_key_2_last_rotated,access_key_2_last_used_date,access_key_2_last_used_region,access_key_2_last_used_service,cert_1_active,cert_1_last_rotated,cert_2_active,cert_2_last_rotated
@@ -14,10 +42,13 @@ test_false_access_key_1,arn:aws:iam::123456789012:test_false_access_key_1,2022-0
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
 
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        current_audit_info = self.set_mocked_audit_info()
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
             "prowler.providers.aws.services.iam.iam_user_no_setup_initial_access_key.iam_user_no_setup_initial_access_key.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
@@ -40,10 +71,13 @@ test_false_access_key_2,arn:aws:iam::123456789012:test_false_access_key_2,2022-0
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
 
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        current_audit_info = self.set_mocked_audit_info()
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
             "prowler.providers.aws.services.iam.iam_user_no_setup_initial_access_key.iam_user_no_setup_initial_access_key.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:
@@ -66,10 +100,13 @@ test_pass,arn:aws:iam::123456789012:test_pass,2022-02-17T14:59:38+00:00,not_supp
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
 
-        from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
+        current_audit_info = self.set_mocked_audit_info()
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
             "prowler.providers.aws.services.iam.iam_user_no_setup_initial_access_key.iam_user_no_setup_initial_access_key.iam_client",
             new=IAM(current_audit_info),
         ) as service_client:

@@ -58,6 +58,9 @@ def prowler():
     severities = args.severity
     compliance_framework = args.compliance
 
+    if not args.no_banner:
+        print_banner(args)
+
     # Set the audit info based on the selected provider
     audit_info = set_provider_audit_info(provider, args.__dict__)
 
@@ -71,9 +74,6 @@ def prowler():
 
     # Set Logger configuration
     set_logging_config(args.log_level, args.log_file, args.only_logs)
-
-    if not args.no_banner:
-        print_banner(args)
 
     if args.list_services:
         print_services(list_services(provider))
