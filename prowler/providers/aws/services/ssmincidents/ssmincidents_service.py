@@ -7,10 +7,10 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 # Note:
-# This service is a bit special, because it's creates a resource (Replication Set) in one region, but you can listed that resource in any region.
-# The ARN of this resource, doesn't include the region: arn:aws:ssm-incidents::<ACCOUNT>:replication-set/<REPLICATION_SET_ID>, is listed the same way in any region. 
-# The problem is that for doing a get_replication_set, we need the region where the replication set was created or any of the regions where it is replicating to.
-# Because we need to do a get_replication_set to describe it and we don't know the region, we iterate across all region until we find it, excepting the regions where the replication set is not replicated to.
+# This service is a bit special because it creates a resource (Replication Set) in one region, but you can list it in from any region using list_replication_sets
+# The ARN of this resource, doesn't include the region: arn:aws:ssm-incidents::<ACCOUNT>:replication-set/<REPLICATION_SET_ID>, so is listed the same way in any region. 
+# The problem is that for doing a get_replication_set, we need the region where the replication set was created or any regions where it is replicating.
+# Because we need to do a get_replication_set to describe it and we don't know the region, we iterate across all regions until we find it, once we find it, we stop iterating.
 
 ################## SSMIncidents
 class SSMIncidents:
