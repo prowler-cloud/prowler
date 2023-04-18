@@ -418,8 +418,6 @@
       ],
       "Checks": [
         "ec2_instance_profile_attached",
-        "iam_aws_attached_policy_no_administrative_privileges",
-        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_policy_attached_only_to_group_or_roles",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
@@ -522,8 +520,6 @@
       ],
       "Checks": [
         "iam_aws_attached_policy_no_administrative_privileges",
-        "iam_customer_attached_policy_no_administrative_privileges",
-        "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges"
       ]
     },
@@ -541,8 +537,6 @@
       ],
       "Checks": [
         "iam_aws_attached_policy_no_administrative_privileges",
-        "iam_customer_attached_policy_no_administrative_privileges",
-        "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges"
       ]
     },
@@ -559,8 +553,6 @@
         }
       ],
       "Checks": [
-        "iam_aws_attached_policy_no_administrative_privileges",
-        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_root_hardware_mfa_enabled",
@@ -587,8 +579,6 @@
         "iam_password_policy_number",
         "iam_password_policy_symbol",
         "iam_password_policy_uppercase",
-        "iam_aws_attached_policy_no_administrative_privileges",
-        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_root_hardware_mfa_enabled",
@@ -765,8 +755,6 @@
       "Checks": [
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
-        "iam_aws_attached_policy_no_administrative_privileges",
-        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_policy_attached_only_to_group_or_roles",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges"

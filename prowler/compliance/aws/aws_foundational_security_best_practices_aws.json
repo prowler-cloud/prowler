@@ -362,8 +362,6 @@
         }
       ],
       "Checks": [
-        "iam_aws_attached_policy_no_administrative_privileges",
-        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_rotate_access_key_90_days",
         "iam_no_root_access_key",
         "iam_user_mfa_enabled_console_access",
