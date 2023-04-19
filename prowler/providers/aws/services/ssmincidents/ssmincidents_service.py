@@ -13,6 +13,7 @@ from prowler.providers.aws.aws_provider import generate_regional_clients
 # The problem is that for doing a get_replication_set, we need the region where the replication set was created or any regions where it is replicating.
 # Because we need to do a get_replication_set to describe it and we don't know the region, we iterate across all regions until we find it, once we find it, we stop iterating.
 
+
 ################## SSMIncidents
 class SSMIncidents:
     def __init__(self, audit_info):
@@ -55,11 +56,11 @@ class SSMIncidents:
             list_replication_sets = regional_client.list_replication_sets()[
                 "replicationSetArns"
             ]
-            if not self.audit_resources or (
-                is_resource_filtered(replication_set, self.audit_resources)
-            ):
-                if list_replication_sets:
-                    replication_set = list_replication_sets[0]
+            if list_replication_sets:
+                replication_set = list_replication_sets[0]
+                if not self.audit_resources or (
+                    is_resource_filtered(replication_set, self.audit_resources)
+                ):
                     self.replication_set = [
                         ReplicationSet(
                             arn=replication_set,
