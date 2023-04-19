@@ -110,15 +110,19 @@ class CodeArtifact:
                                     sortBy="PUBLISHED_TIME",
                                 )
                             )
-                            latest_version = latest_version_information["versions"][0][
-                                "version"
-                            ]
-                            latest_origin_type = latest_version_information["versions"][
-                                0
-                            ]["origin"]["originType"]
-                            latest_status = latest_version_information["versions"][0][
-                                "status"
-                            ]
+                            latest_version = ""
+                            latest_origin_type = "UNKNOWN"
+                            latest_status = "Published"
+                            if latest_version_information["versions"]:
+                                latest_version = latest_version_information["versions"][
+                                    0
+                                ]["version"]
+                                latest_origin_type = latest_version_information[
+                                    "versions"
+                                ][0]["origin"]["originType"]
+                                latest_status = latest_version_information["versions"][
+                                    0
+                                ]["status"]
 
                             packages.append(
                                 Package(
@@ -215,7 +219,7 @@ class OriginInformation(BaseModel):
 
 
 class LatestPackageVersionStatus(Enum):
-    """Possibel values for the package status"""
+    """Possible values for the package status"""
 
     Published = "Published"
     Unfinished = "Unfinished"
