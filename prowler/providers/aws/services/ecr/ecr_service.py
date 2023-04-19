@@ -159,7 +159,7 @@ class ECR:
                 try:
                     regional_client = self.regional_clients[repository.region]
                     response = regional_client.list_tags_for_resource(
-                        resourceArn=repository.arn + "1"
+                        resourceArn=repository.arn
                     )["tags"]
                     repository.tags = response
 

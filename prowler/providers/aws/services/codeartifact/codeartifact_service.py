@@ -113,16 +113,18 @@ class CodeArtifact:
                             latest_version = ""
                             latest_origin_type = "UNKNOWN"
                             latest_status = "Published"
-                            if latest_version_information["versions"]:
+                            if latest_version_information.get("versions"):
                                 latest_version = latest_version_information["versions"][
                                     0
-                                ]["version"]
-                                latest_origin_type = latest_version_information[
-                                    "versions"
-                                ][0]["origin"]["originType"]
+                                ].get("version")
+                                latest_origin_type = (
+                                    latest_version_information["versions"][0]
+                                    .get("origin", {})
+                                    .get("originType", "UNKNOWN")
+                                )
                                 latest_status = latest_version_information["versions"][
                                     0
-                                ]["status"]
+                                ].get("status", "Published")
 
                             packages.append(
                                 Package(
