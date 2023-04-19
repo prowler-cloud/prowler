@@ -12,6 +12,7 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
                 report.region = iam_client.region
                 report.resource_arn = policy.arn
                 report.resource_id = policy.name
+                report.resource_tags = policy.tags
                 report.status = "PASS"
                 report.status_extended = f"Custom Policy {policy.name} does not allow permissive STS Role assumption"
                 if policy.document:

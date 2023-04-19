@@ -12,6 +12,7 @@ class iam_customer_unattached_policy_no_administrative_privileges(Check):
                 report.region = iam_client.region
                 report.resource_arn = policy.arn
                 report.resource_id = policy.name
+                report.resource_tags = policy.tags
                 report.status = "PASS"
                 report.status_extended = f"{policy.type} policy {policy.name} is unattached and does not allow '*:*' administrative privileges"
                 if policy.document:

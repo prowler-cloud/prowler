@@ -620,7 +620,11 @@ class Test_IAM_Service:
             ],
         }
         iam_client.create_policy(
-            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+            PolicyName=policy_name,
+            PolicyDocument=dumps(policy_document),
+            Tags=[
+                {"Key": "string", "Value": "string"},
+            ],
         )
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
@@ -629,6 +633,9 @@ class Test_IAM_Service:
             if policy.type == "Custom":
                 custom_policies += 1
                 assert policy.name == "policy1"
+                assert policy.tags == [
+                    {"Key": "string", "Value": "string"},
+                ]
         assert custom_policies == 1
 
     @mock_iam

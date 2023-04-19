@@ -14,6 +14,7 @@ class iam_policy_no_full_access_to_kms(Check):
                 report.region = iam_client.region
                 report.resource_arn = policy.arn
                 report.resource_id = policy.name
+                report.resource_tags = policy.tags
                 report.status = "PASS"
                 report.status_extended = f"Custom Policy {policy.name} does not allow '{critical_service}:*' privileges"
                 if policy.document:

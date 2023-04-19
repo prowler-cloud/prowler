@@ -67,6 +67,7 @@ class iam_policy_allows_privilege_escalation(Check):
                 report.resource_id = policy.name
                 report.resource_arn = policy.arn
                 report.region = iam_client.region
+                report.resource_tags = policy.tags
 
                 # List of policy actions
                 allowed_actions = set()
