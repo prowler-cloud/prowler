@@ -11,6 +11,7 @@ from prowler.lib.check.check import (
     exclude_services_to_run,
     execute_checks,
     list_categories,
+    list_checks,
     list_services,
     parse_checks_from_folder,
     print_categories,
@@ -61,13 +62,6 @@ def prowler():
     if not args.no_banner:
         print_banner(args)
 
-    # Set the audit info based on the selected provider
-    audit_info = set_provider_audit_info(provider, args.__dict__)
-
-    # Import custom checks from folder
-    if checks_folder:
-        parse_checks_from_folder(audit_info, checks_folder, provider)
-
     # We treat the compliance framework as another output format
     if compliance_framework:
         args.output_modes.extend(compliance_framework)
@@ -105,6 +99,18 @@ def prowler():
         )
         sys.exit()
 
+    # If -l/--list-checks passed as argument, print checks to execute and quit
+    if args.list_checks:
+        print_checks(provider, list_checks(provider), bulk_checks_metadata)
+        sys.exit()
+
+    # Set the audit info based on the selected provider
+    audit_info = set_provider_audit_info(provider, args.__dict__)
+
+    # Import custom checks from folder
+    if checks_folder:
+        parse_checks_from_folder(audit_info, checks_folder, provider)
+
     # Load checks to execute
     checks_to_execute = load_checks_to_execute(
         bulk_checks_metadata,
@@ -130,11 +136,6 @@ def prowler():
 
     # Sort final check list
     checks_to_execute = sorted(checks_to_execute)
-
-    # If -l/--list-checks passed as argument, print checks to execute and quit
-    if args.list_checks:
-        print_checks(provider, checks_to_execute, bulk_checks_metadata)
-        sys.exit()
 
     # Once the audit_info is set and we have the eventual checks based on the resource identifier,
     # it is time to check what Prowler's checks are going to be executed
