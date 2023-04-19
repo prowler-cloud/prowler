@@ -282,3 +282,34 @@ class Test_VPC_Service:
         assert (
             len(vpc.vpc_endpoint_services) == 0
         )  # Wait until this issue is fixed https://github.com/spulec/moto/issues/5605
+
+    # Test VPC Describe VPC Subnets
+    @mock_ec2
+    def test__describe_vpc_subnets__(self):
+        # Generate VPC Client
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        # Create VPC
+        vpc = ec2_client.create_vpc(
+            CidrBlock="172.28.7.0/24", InstanceTenancy="default"
+        )
+        subnet = ec2_client.create_subnet(
+            VpcId=vpc["Vpc"]["VpcId"],
+            CidrBlock="172.28.7.192/26",
+            AvailabilityZone=f"{AWS_REGION}a",
+        )
+        # VPC client for this test class
+        audit_info = self.set_mocked_audit_info()
+        vpc = VPC(audit_info)
+        assert (
+            len(vpc.vpcs) == 3
+        )  # Number of AWS regions + created VPC, one default VPC per region
+        for vpc in vpc.vpcs:
+            if vpc.cidr_block == "172.28.7.0/24":
+                assert vpc.subnets[0].id == subnet["Subnet"]["SubnetId"]
+                assert vpc.subnets[0].default is False
+                assert vpc.subnets[0].vpc_id == vpc.id
+                assert vpc.subnets[0].cidr_block == "172.28.7.192/26"
+                assert vpc.subnets[0].availability_zone == f"{AWS_REGION}a"
+                assert vpc.subnets[0].public is False
+                assert vpc.subnets[0].region == AWS_REGION
+                assert vpc.subnets[0].tags is None

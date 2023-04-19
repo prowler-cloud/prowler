@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "vpc_different_regions",
+  "CheckTitle": "Ensure there are vpcs in more than one region",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "vpc",
+  "SubServiceName": "subnet",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2Vpc",
+  "Description": "Ensure there are vpcs in more than one region",
+  "Risk": "",
+  "RelatedUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 create-vpc",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure there are vpcs in more than one region",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

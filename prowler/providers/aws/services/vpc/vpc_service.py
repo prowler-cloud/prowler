@@ -26,8 +26,10 @@ class VPC:
         self.__threading_call__(self.__describe_vpc_endpoints__)
         self.__threading_call__(self.__describe_vpc_endpoint_services__)
         self.__describe_flow_logs__()
-        self.__describe_route_tables__()
+        self.__describe_peering_route_tables__()
         self.__describe_vpc_endpoint_service_permissions__()
+        self.vpc_subnets = []
+        self.__threading_call__(self.__describe_vpc_subnets__)
 
     def __get_session__(self):
         return self.session
@@ -96,7 +98,7 @@ class VPC:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_route_tables__(self):
+    def __describe_peering_route_tables__(self):
         logger.info("VPC - Describing Peering Route Tables...")
         try:
             for conn in self.vpc_peering_connections:
@@ -124,9 +126,10 @@ class VPC:
                             destination_cidrs=destination_cidrs,
                         )
                     )
+
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
     def __describe_flow_logs__(self):
@@ -146,8 +149,11 @@ class VPC:
                 )["FlowLogs"]
                 if flow_logs:
                     vpc.flow_log = True
+
         except Exception as error:
-            logger.error(f"{error.__class__.__name__}: {error}")
+            logger.error(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
 
     def __describe_vpc_endpoints__(self, regional_client):
         logger.info("VPC - Describing VPC Endpoints...")
@@ -223,7 +229,90 @@ class VPC:
                 ]:
                     service.allowed_principals.append(principal["Principal"])
         except Exception as error:
-            logger.error(f"{error.__class__.__name__}: {error}")
+            logger.error(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+
+    def __describe_vpc_subnets__(self, regional_client):
+        logger.info("VPC - Describing VPC subnets...")
+        try:
+            describe_subnets_paginator = regional_client.get_paginator(
+                "describe_subnets"
+            )
+            for page in describe_subnets_paginator.paginate():
+                for subnet in page["Subnets"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(subnet["SubnetId"], self.audit_resources)
+                    ):
+                        try:
+                            # Check the route table associated with the subnet to see if it's public
+                            regional_client_for_subnet = self.regional_clients[
+                                regional_client.region
+                            ]
+                            route_tables_for_subnet = (
+                                regional_client_for_subnet.describe_route_tables(
+                                    Filters=[
+                                        {
+                                            "Name": "association.subnet-id",
+                                            "Values": [subnet["SubnetId"]],
+                                        }
+                                    ]
+                                )
+                            )
+                            if not route_tables_for_subnet.get("RouteTables"):
+                                # If a subnet is not explicitly associated with any route table, it is implicitly associated with the main route table.
+                                route_tables_for_subnet = (
+                                    regional_client_for_subnet.describe_route_tables(
+                                        Filters=[
+                                            {
+                                                "Name": "association.main",
+                                                "Values": ["true"],
+                                            }
+                                        ]
+                                    )
+                                )
+                            public = False
+                            for route in route_tables_for_subnet.get("RouteTables")[
+                                0
+                            ].get("Routes"):
+                                if "GatewayId" in route and "igw" in route["GatewayId"]:
+                                    public = True
+                                    break
+                            # Add it to to list of vpc_subnets and to the VPC object
+                            object = VpcSubnet(
+                                id=subnet["SubnetId"],
+                                default=subnet["DefaultForAz"],
+                                vpc_id=subnet["VpcId"],
+                                cidr_block=subnet["CidrBlock"],
+                                region=regional_client.region,
+                                availability_zone=subnet["AvailabilityZone"],
+                                public=public,
+                                tags=subnet.get("Tags"),
+                            )
+                            self.vpc_subnets.append(object)
+                            # Add it to the VPC object
+                            for vpc in self.vpcs:
+                                if vpc.id == subnet["VpcId"]:
+                                    vpc.subnets.append(object)
+                        except Exception as error:
+                            logger.error(
+                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+class VpcSubnet(BaseModel):
+    id: str
+    default: bool
+    vpc_id: str
+    cidr_block: str
+    availability_zone: str
+    public: bool
+    region: str
+    tags: Optional[list] = []
 
 
 class VPCs(BaseModel):
@@ -232,6 +321,7 @@ class VPCs(BaseModel):
     cidr_block: str
     flow_log: bool = False
     region: str
+    subnets: list[VpcSubnet] = []
     tags: Optional[list] = []
 
 
