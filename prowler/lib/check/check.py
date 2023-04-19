@@ -193,6 +193,14 @@ def list_services(provider: str) -> set():
     return sorted(available_services)
 
 
+def list_checks(provider: str) -> set():
+    available_checks = set()
+    checks_tuple = recover_checks_from_provider(provider)
+    for check_name, _ in checks_tuple:
+        available_checks.add(check_name)
+    return sorted(available_checks)
+
+
 def list_categories(provider: str, bulk_checks_metadata: dict) -> set():
     available_categories = set()
     for check in bulk_checks_metadata.values():
