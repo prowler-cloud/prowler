@@ -45,7 +45,8 @@
         "elb_ssl_listeners",
         "emr_cluster_master_nodes_no_public_ip",
         "opensearch_service_domains_encryption_at_rest_enabled",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_no_root_access_key",
         "awslambda_function_not_publicly_accessible",
         "awslambda_function_url_public",
@@ -114,7 +115,8 @@
       "Checks": [
         "ec2_ebs_public_snapshot",
         "ec2_instance_public_ip",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_no_root_access_key",
         "awslambda_function_not_publicly_accessible",
         "awslambda_function_url_public",
@@ -169,7 +171,8 @@
         }
       ],
       "Checks": [
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_no_root_access_key",
         "iam_disable_90_days_credentials"
       ]
@@ -201,7 +204,8 @@
         }
       ],
       "Checks": [
-        "iam_policy_no_administrative_privileges"
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges"
       ]
     },
     {
@@ -255,7 +259,8 @@
         }
       ],
       "Checks": [
-        "iam_policy_no_administrative_privileges"
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges"
       ]
     },
     {
@@ -271,7 +276,8 @@
       ],
       "Checks": [
         "iam_password_policy_reuse_24",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_no_root_access_key",
         "iam_rotate_access_key_90_days",
         "iam_disable_90_days_credentials",
@@ -512,7 +518,8 @@
         "ec2_ebs_public_snapshot",
         "ec2_instance_public_ip",
         "emr_cluster_master_nodes_no_public_ip",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_user_mfa_enabled_console_access",
         "awslambda_function_not_publicly_accessible",
         "awslambda_function_url_public",

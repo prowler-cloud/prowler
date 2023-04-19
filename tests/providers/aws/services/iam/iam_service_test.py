@@ -620,12 +620,23 @@ class Test_IAM_Service:
             ],
         }
         iam_client.create_policy(
-            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+            PolicyName=policy_name,
+            PolicyDocument=dumps(policy_document),
+            Tags=[
+                {"Key": "string", "Value": "string"},
+            ],
         )
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
-        assert len(iam.policies) == 1
-        assert iam.policies[0]["PolicyName"] == "policy1"
+        custom_policies = 0
+        for policy in iam.policies:
+            if policy.type == "Custom":
+                custom_policies += 1
+                assert policy.name == "policy1"
+                assert policy.tags == [
+                    {"Key": "string", "Value": "string"},
+                ]
+        assert custom_policies == 1
 
     @mock_iam
     def test__list_policies_version__(self):
@@ -643,10 +654,15 @@ class Test_IAM_Service:
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
 
-        assert len(iam.policies) == 1
-        assert iam.policies[0]["PolicyDocument"]["Statement"][0]["Effect"] == "Allow"
-        assert iam.policies[0]["PolicyDocument"]["Statement"][0]["Action"] == "*"
-        assert iam.policies[0]["PolicyDocument"]["Statement"][0]["Resource"] == "*"
+        custom_policies = 0
+        for policy in iam.policies:
+            if policy.type == "Custom":
+                custom_policies += 1
+                assert policy.name == "policy2"
+                assert policy.document["Statement"][0]["Effect"] == "Allow"
+                assert policy.document["Statement"][0]["Action"] == "*"
+                assert policy.document["Statement"][0]["Resource"] == "*"
+        assert custom_policies == 1
 
     # Test IAM List SAML Providers
     @mock_iam

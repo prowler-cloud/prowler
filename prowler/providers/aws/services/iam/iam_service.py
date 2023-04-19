@@ -63,7 +63,10 @@ class IAM:
         self.entities_role_attached_to_securityaudit_policy = (
             self.__list_entities_role_for_policy__(securityaudit_policy_arn)
         )
-        self.policies = self.__list_policies__()
+        # List both Customer (attached and unattached) and AWS Managed (only attached) policies
+        self.policies = []
+        self.policies.extend(self.__list_policies__("AWS"))
+        self.policies.extend(self.__list_policies__("Local"))
         self.__list_policies_version__(self.policies)
         self.saml_providers = self.__list_saml_providers__()
         self.server_certificates = self.__list_server_certificates__()
@@ -76,6 +79,7 @@ class IAM:
         return self.session
 
     def __get_roles__(self):
+        logger.info("IAM - List Roles...")
         try:
             roles = []
             get_roles_paginator = self.client.get_paginator("list_roles")
@@ -100,6 +104,7 @@ class IAM:
             return roles
 
     def __get_credential_report__(self):
+        logger.info("IAM - Get Credential Report...")
         report_is_completed = False
         credential_list = []
         try:
@@ -127,6 +132,7 @@ class IAM:
             return credential_list
 
     def __get_groups__(self):
+        logger.info("IAM - Get Groups...")
         try:
             groups = []
             get_groups_paginator = self.client.get_paginator("list_groups")
@@ -145,6 +151,7 @@ class IAM:
             return groups
 
     def __get_account_summary__(self):
+        logger.info("IAM - Get Account Summary...")
         try:
             account_summary = self.client.get_account_summary()
         except Exception as error:
@@ -156,6 +163,7 @@ class IAM:
             return account_summary
 
     def __get_password_policy__(self):
+        logger.info("IAM - Get Password Policy...")
         try:
             stored_password_policy = None
             password_policy = self.client.get_account_password_policy()[
@@ -196,6 +204,7 @@ class IAM:
             return stored_password_policy
 
     def __get_users__(self):
+        logger.info("IAM - List Users...")
         try:
             get_users_paginator = self.client.get_paginator("list_users")
             users = []
@@ -222,6 +231,7 @@ class IAM:
             return users
 
     def __list_virtual_mfa_devices__(self):
+        logger.info("IAM - List Virtual MFA Devices...")
         try:
             mfa_devices = []
             list_virtual_mfa_devices_paginator = self.client.get_paginator(
@@ -239,6 +249,7 @@ class IAM:
             return mfa_devices
 
     def __list_attached_group_policies__(self):
+        logger.info("IAM - List Attached Group Policies...")
         try:
             for group in self.groups:
                 list_attached_group_policies_paginator = self.client.get_paginator(
@@ -258,6 +269,7 @@ class IAM:
             )
 
     def __get_group_users__(self):
+        logger.info("IAM - Get Group Users...")
         try:
             for group in self.groups:
                 get_group_paginator = self.client.get_paginator("get_group")
@@ -283,6 +295,7 @@ class IAM:
             )
 
     def __list_mfa_devices__(self):
+        logger.info("IAM - List MFA Devices...")
         try:
             for user in self.users:
                 list_mfa_devices_paginator = self.client.get_paginator(
@@ -305,6 +318,7 @@ class IAM:
             )
 
     def __list_attached_user_policies__(self):
+        logger.info("IAM - List Attached User Policies...")
         try:
             for user in self.users:
                 attached_user_policies = []
@@ -325,6 +339,7 @@ class IAM:
             )
 
     def __list_inline_user_policies__(self):
+        logger.info("IAM - List Inline User Policies...")
         try:
             for user in self.users:
                 inline_user_policies = []
@@ -345,6 +360,7 @@ class IAM:
             )
 
     def __list_entities_role_for_policy__(self, policy_arn):
+        logger.info("IAM - List Entities Role For Policy...")
         try:
             roles = []
             roles = self.client.list_entities_for_policy(
@@ -357,16 +373,29 @@ class IAM:
         finally:
             return roles
 
-    def __list_policies__(self):
+    def __list_policies__(self, scope):
+        logger.info("IAM - List Policies...")
         try:
             policies = []
             list_policies_paginator = self.client.get_paginator("list_policies")
-            for page in list_policies_paginator.paginate(Scope="Local"):
+            for page in list_policies_paginator.paginate(
+                Scope=scope, OnlyAttached=False if scope == "Local" else True
+            ):  # Look for only Attached policies when AWS Managed
                 for policy in page["Policies"]:
                     if not self.audit_resources or (
                         is_resource_filtered(policy["Arn"], self.audit_resources)
                     ):
-                        policies.append(policy)
+                        policies.append(
+                            Policy(
+                                name=policy["PolicyName"],
+                                arn=policy["Arn"],
+                                version_id=policy["DefaultVersionId"],
+                                type="Custom" if scope == "Local" else "AWS",
+                                attached=True
+                                if policy["AttachmentCount"] > 0
+                                else False,
+                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -375,18 +404,20 @@ class IAM:
             return policies
 
     def __list_policies_version__(self, policies):
+        logger.info("IAM - List Policies Version...")
         try:
             for policy in policies:
                 policy_version = self.client.get_policy_version(
-                    PolicyArn=policy["Arn"], VersionId=policy["DefaultVersionId"]
+                    PolicyArn=policy.arn, VersionId=policy.version_id
                 )
-                policy["PolicyDocument"] = policy_version["PolicyVersion"]["Document"]
+                policy.document = policy_version["PolicyVersion"]["Document"]
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __list_saml_providers__(self):
+        logger.info("IAM - List SAML Providers...")
         try:
             saml_providers = self.client.list_saml_providers()["SAMLProviderList"]
         except Exception as error:
@@ -398,6 +429,7 @@ class IAM:
             return saml_providers
 
     def __list_server_certificates__(self):
+        logger.info("IAM - List Server Certificates...")
         try:
             server_certificates = []
             for certificate in self.client.list_server_certificates()[
@@ -435,6 +467,14 @@ class IAM:
             for user in self.users:
                 response = self.client.list_user_tags(UserName=user.name)["Tags"]
                 user.tags = response
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        try:
+            for policy in self.policies:
+                response = self.client.list_policy_tags(PolicyArn=policy.arn)["Tags"]
+                policy.tags = response
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -489,3 +529,13 @@ class Certificate(BaseModel):
     id: str
     arn: str
     expiration: datetime
+
+
+class Policy(BaseModel):
+    name: str
+    arn: str
+    version_id: str
+    type: str
+    attached: bool
+    document: Optional[dict]
+    tags: Optional[list] = []

@@ -418,9 +418,9 @@
       ],
       "Checks": [
         "ec2_instance_profile_attached",
-        "iam_policy_no_administrative_privileges",
         "iam_policy_attached_only_to_group_or_roles",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_no_root_access_key"
       ]
     },
@@ -519,8 +519,8 @@
         }
       ],
       "Checks": [
-        "iam_policy_no_administrative_privileges",
-        "iam_policy_no_administrative_privileges"
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges"
       ]
     },
     {
@@ -536,8 +536,8 @@
         }
       ],
       "Checks": [
-        "iam_policy_no_administrative_privileges",
-        "iam_policy_no_administrative_privileges"
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges"
       ]
     },
     {
@@ -553,8 +553,8 @@
         }
       ],
       "Checks": [
-        "iam_policy_no_administrative_privileges",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_root_hardware_mfa_enabled",
         "iam_root_mfa_enabled",
         "iam_no_root_access_key"
@@ -579,8 +579,8 @@
         "iam_password_policy_number",
         "iam_password_policy_symbol",
         "iam_password_policy_uppercase",
-        "iam_policy_no_administrative_privileges",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
         "iam_root_hardware_mfa_enabled",
         "iam_root_mfa_enabled",
         "iam_rotate_access_key_90_days",
@@ -755,9 +755,9 @@
       "Checks": [
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
-        "iam_policy_no_administrative_privileges",
         "iam_policy_attached_only_to_group_or_roles",
-        "iam_policy_no_administrative_privileges"
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges"
       ]
     },
     {

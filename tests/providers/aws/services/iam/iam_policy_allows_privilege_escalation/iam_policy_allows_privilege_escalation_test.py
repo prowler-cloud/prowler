@@ -69,7 +69,7 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Customer Managed IAM Policy {policy_arn} allows for privilege escalation using the following actions: {{'sts:*'}}"
+                == f"Custom Policy {policy_arn} allows privilege escalation using the following actions: {{'sts:*'}}"
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
@@ -111,7 +111,7 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Customer Managed IAM Policy {policy_arn} not allows for privilege escalation"
+                == f"Custom Policy {policy_arn} does not allow privilege escalation"
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
@@ -157,7 +157,7 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Customer Managed IAM Policy {policy_arn} not allows for privilege escalation"
+                == f"Custom Policy {policy_arn} does not allow privilege escalation"
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
@@ -214,7 +214,7 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Customer Managed IAM Policy {policy_arn} allows for privilege escalation using the following actions: {{'dynamodb:PutItem'}}"
+                == f"Custom Policy {policy_arn} allows privilege escalation using the following actions: {{'dynamodb:PutItem'}}"
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
