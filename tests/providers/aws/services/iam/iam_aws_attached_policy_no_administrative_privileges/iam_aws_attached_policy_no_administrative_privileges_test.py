@@ -34,7 +34,7 @@ class Test_iam_aws_attached_policy_no_administrative_privileges_test:
         return audit_info
 
     @mock_iam
-    def test_policy_administrative(self):
+    def test_policy_with_administrative_privileges(self):
         iam_client = client("iam")
 
         iam_client.create_role(
