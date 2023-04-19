@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws ec2 create-subnet",
+      "CLI": "aws ec2 create-vpc",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
