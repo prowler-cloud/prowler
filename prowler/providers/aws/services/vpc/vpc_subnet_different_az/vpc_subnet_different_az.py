@@ -20,7 +20,7 @@ class vpc_subnet_different_az(Check):
                         and subnet.availability_zone != availability_zone
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"VPC {vpc.id} has subnets in more than one availbility zone."
+                        report.status_extended = f"VPC {vpc.id} has subnets in more than one availability zone."
                         break
                     availability_zone = subnet.availability_zone
                     report.status_extended = (

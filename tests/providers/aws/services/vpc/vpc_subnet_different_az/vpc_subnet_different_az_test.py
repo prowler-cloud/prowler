@@ -79,7 +79,7 @@ class Test_vpc_subnet_different_az:
                         assert result.status == "PASS"
                         assert (
                             result.status_extended
-                            == f"VPC {vpc['Vpc']['VpcId']} has subnets in more than one availbility zone."
+                            == f"VPC {vpc['Vpc']['VpcId']} has subnets in more than one availability zone."
                         )
                         assert result.resource_id == vpc["Vpc"]["VpcId"]
                         assert result.resource_tags == []
