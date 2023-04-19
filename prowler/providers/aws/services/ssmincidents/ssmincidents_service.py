@@ -1,14 +1,15 @@
 import threading
 
-from pydantic import BaseModel
 from botocore.client import ClientError
+from pydantic import BaseModel
+
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 # Note:
 # This service is a bit special because it creates a resource (Replication Set) in one region, but you can list it in from any region using list_replication_sets
-# The ARN of this resource, doesn't include the region: arn:aws:ssm-incidents::<ACCOUNT>:replication-set/<REPLICATION_SET_ID>, so is listed the same way in any region. 
+# The ARN of this resource, doesn't include the region: arn:aws:ssm-incidents::<ACCOUNT>:replication-set/<REPLICATION_SET_ID>, so is listed the same way in any region.
 # The problem is that for doing a get_replication_set, we need the region where the replication set was created or any regions where it is replicating.
 # Because we need to do a get_replication_set to describe it and we don't know the region, we iterate across all regions until we find it, once we find it, we stop iterating.
 
@@ -51,7 +52,9 @@ class SSMIncidents:
         logger.info("SSMIncidents - Listing Replication Sets...")
         try:
             regional_client = self.regional_clients[self.region]
-            list_replication_sets = regional_client.list_replication_sets()["replicationSetArns"]
+            list_replication_sets = regional_client.list_replication_sets()[
+                "replicationSetArns"
+            ]
             if not self.audit_resources or (
                 is_resource_filtered(replication_set, self.audit_resources)
             ):
@@ -89,12 +92,9 @@ class SSMIncidents:
                                 ],
                             )
                         )
-                    break # We found the replication set, we stop iterating
+                    break  # We found the replication set, we stop iterating
                 except ClientError as error:
-                    if (
-                        error.response["Error"]["Code"]
-                        == "ResourceNotFoundException"
-                    ):
+                    if error.response["Error"]["Code"] == "ResourceNotFoundException":
                         # The replication set is not in this region, we continue to the next region
                         continue
                     else:
