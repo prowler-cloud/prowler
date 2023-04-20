@@ -254,13 +254,26 @@ prowler aws --profile custom-profile -f us-east-1 eu-south-2
 ```
 > By default, `prowler` will scan all AWS regions.
 
+See more details about AWS Authentication in [Requirements](getting-started/requirements.md)
+
 ### Google Cloud
 
-Optionally, you can provide the location of an application credential JSON file with the following argument:
+Prowler will use by default your User Account credentials, you can configure it using:
+
+- `gcloud init` to use a new account
+- `gcloud config set account <account>` to use an existing account
+
+Then, obtain your access credentials using: `gcloud auth application-default login`
+
+Otherwise, you can generate and download Service Account keys in JSON format (refer to https://cloud.google.com/iam/docs/creating-managing-service-account-keys) and provide the location of the file with the following argument:
 
 ```console
 prowler gcp --credentials-file path
 ```
+
+> `prowler` will scan the GCP project associated with the credentials.
+
+See more details about GCP Authentication in [Requirements](getting-started/requirements.md)
 
 ### Azure
 
@@ -280,7 +293,7 @@ prowler azure --browser-auth
 prowler azure --managed-identity-auth
 ```
 
-More details in [Requirements](getting-started/requirements.md)
+See more details about Azure Authentication in [Requirements](getting-started/requirements.md)
 
 Prowler by default scans all the subscriptions that is allowed to scan, if you want to scan a single subscription or various concrete subscriptions you can use the following flag (using az cli auth as example):
 ```console
