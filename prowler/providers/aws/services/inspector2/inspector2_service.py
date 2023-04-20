@@ -42,13 +42,11 @@ class Inspector2:
         logger.info("Inspector2 - listing findings...")
         try:
             list_findings_paginator = regional_client.get_paginator("list_findings")
-            print("testing")
             for page in list_findings_paginator.paginate():
                 for finding in page["findings"]:
                     if not self.audit_resources or (
                         is_resource_filtered(finding, self.audit_resources)
                     ):
-                        print("testing", finding["findingArn"])
                         self.inspectors_findings.append(
                             InspectorFinding(
                                 arn=finding["findingArn"],
