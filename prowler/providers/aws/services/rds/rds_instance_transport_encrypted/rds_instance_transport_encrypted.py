@@ -14,8 +14,11 @@ class rds_instance_transport_encrypted(Check):
             report.status_extended = (
                 f"RDS Instance {db_instance.id} connections are not encrypted."
             )
-            # Check only RDS SQL Server or PostgreSQL engines
-            if any(engine in db_instance.engine for engine in supported_engines):
+            # Check only RDS SQL Server or PostgreSQL engines (Aurora not supported)
+            if (
+                any(engine in db_instance.engine for engine in supported_engines)
+                and "aurora" not in db_instance.engine
+            ):
                 for parameter in db_instance.parameters:
                     if (
                         parameter["ParameterName"] == "rds.force_ssl"
