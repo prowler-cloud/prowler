@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "inspector2_findings_exist",
+  "CheckTitle": "Check if Inspector2 findings exist",
+  "CheckType": [],
+  "ServiceName": "inspector2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:inspector2:region:account-id/detector-id",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "Description": "Check if Inspector2 findings exist",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
