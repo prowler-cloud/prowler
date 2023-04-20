@@ -46,6 +46,7 @@ jobs:
         with:
           token: ${{ secrets.PROWLER_ACCESS_TOKEN }}
           commit-message: "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}."
+          base: master
           branch: release-${{ env.RELEASE_TAG }}
           labels: "status/waiting-for-revision, severity/low"
           title: "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}"
