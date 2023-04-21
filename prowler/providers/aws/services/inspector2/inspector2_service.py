@@ -49,11 +49,11 @@ class Inspector2:
                     ):
                         self.inspectors_findings.append(
                             InspectorFinding(
-                                arn=finding["findingArn"],
+                                arn=finding.get("findingArn"),
                                 region=regional_client.region,
-                                severity=finding["severity"],
-                                status=finding["status"],
-                                title=finding["title"],
+                                severity=finding.get("severity"),
+                                status=finding.get("status"),
+                                title=finding.get("title"),
                             )
                         )
 
