@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "Enable Inspector2",
-      "Url": ""
+      "Url": "https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html"
     }
   },
   "Categories": [],
