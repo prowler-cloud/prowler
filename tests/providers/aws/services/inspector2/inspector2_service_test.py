@@ -96,5 +96,3 @@ class Test_Inspector2_Service:
         assert ssmincidents.inspectors_findings[0].severity == "MEDIUM"
         assert ssmincidents.inspectors_findings[0].status == "ACTIVE"
         assert ssmincidents.inspectors_findings[0].title == "CVE-2022-40897 - setuptools"
-
-
