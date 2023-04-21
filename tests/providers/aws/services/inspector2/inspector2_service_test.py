@@ -91,10 +91,10 @@ class Test_Inspector2_Service:
         audit_info = self.set_mocked_audit_info()
         ssmincidents = Inspector2(audit_info)
         assert len(ssmincidents.inspectors_findings) == 1
-        assert ssmincidents.inspectors_findings[0]["arn"] == FINDING_ARN
-        assert ssmincidents.inspectors_findings[0]["region"] == AWS_REGION
-        assert ssmincidents.inspectors_findings[0]["severity"] == "MEDIUM"
-        assert ssmincidents.inspectors_findings[0]["status"] == "ACTIVE"
-        assert ssmincidents.inspectors_findings[0]["title"] == "CVE-2022-40897 - setuptools"
+        assert ssmincidents.inspectors_findings[0].arn == FINDING_ARN
+        assert ssmincidents.inspectors_findings[0].region == AWS_REGION
+        assert ssmincidents.inspectors_findings[0].severity == "MEDIUM"
+        assert ssmincidents.inspectors_findings[0].status == "ACTIVE"
+        assert ssmincidents.inspectors_findings[0].title == "CVE-2022-40897 - setuptools"
 
 
