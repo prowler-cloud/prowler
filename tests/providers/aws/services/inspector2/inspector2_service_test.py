@@ -19,6 +19,16 @@ make_api_call = botocore.client.BaseClient._make_api_call
 
 def mock_make_api_call(self, operation_name, kwargs):
     """We have to mock every AWS API call using Boto3"""
+    if operation_name == "GetConfiguration":
+        return {
+            "ecrConfiguration": {
+                "rescanDurationState": {
+                    "rescanDuration": "LIFETIME",
+                    "status": "SUCCESS",
+                    "updatedAt": datetime(2015, 1, 1),
+                }
+            }
+        }
     if operation_name == "ListFindings":
         return {
             "findings": [
@@ -87,14 +97,22 @@ class Test_Inspector2_Service:
         ssmincidents = Inspector2(audit_info)
         assert ssmincidents.service == "inspector2"
 
+    def test__get_configuration__(self):
+        audit_info = self.set_mocked_audit_info()
+        ssmincidents = Inspector2(audit_info)
+        assert len(ssmincidents.inspectors) == 1
+        assert ssmincidents.inspectors[0].id == "Inspector2"
+        assert ssmincidents.inspectors[0].region == AWS_REGION
+
     def test__list_findings__(self):
         audit_info = self.set_mocked_audit_info()
         ssmincidents = Inspector2(audit_info)
-        assert len(ssmincidents.inspectors_findings) == 1
-        assert ssmincidents.inspectors_findings[0].arn == FINDING_ARN
-        assert ssmincidents.inspectors_findings[0].region == AWS_REGION
-        assert ssmincidents.inspectors_findings[0].severity == "MEDIUM"
-        assert ssmincidents.inspectors_findings[0].status == "ACTIVE"
+        assert len(ssmincidents.inspectors[0].findings) == 1
+        assert ssmincidents.inspectors[0].findings[0].arn == FINDING_ARN
+        assert ssmincidents.inspectors[0].findings[0].region == AWS_REGION
+        assert ssmincidents.inspectors[0].findings[0].severity == "MEDIUM"
+        assert ssmincidents.inspectors[0].findings[0].status == "ACTIVE"
         assert (
-            ssmincidents.inspectors_findings[0].title == "CVE-2022-40897 - setuptools"
+            ssmincidents.inspectors[0].findings[0].title
+            == "CVE-2022-40897 - setuptools"
         )
