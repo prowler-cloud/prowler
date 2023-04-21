@@ -52,11 +52,11 @@ class DRS:
                         ):
                             self.drs_jobs.append(
                                 DRSJob(
-                                    arn=drs_job["arn"],
-                                    id=drs_job["jobID"],
+                                    arn=drs_job.get("arn"),
+                                    id=drs_job.get("jobID"),
                                     region=regional_client.region,
-                                    status=drs_job["status"],
-                                    tags=[drs_job["tags"]],
+                                    status=drs_job.get("status"),
+                                    tags=[drs_job.get("tags")],
                                 )
                             )
             except ClientError as error:
