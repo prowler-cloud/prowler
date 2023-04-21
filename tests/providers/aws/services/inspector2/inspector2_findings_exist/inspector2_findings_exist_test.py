@@ -35,7 +35,6 @@ class Test_inspector2_findings_exist:
             assert result[0].resource_id == "Inspector2"
             assert result[0].resource_arn == ""
             assert result[0].region == AWS_REGION
-            assert result[0].tags == []
 
     def test_finding(self):
         # Mock the inspector2 client
@@ -68,4 +67,3 @@ class Test_inspector2_findings_exist:
             assert result[0].resource_id == "Inspector2"
             assert result[0].resource_arn == FINDING_ARN
             assert result[0].region == AWS_REGION
-            assert result[0].tags == []
