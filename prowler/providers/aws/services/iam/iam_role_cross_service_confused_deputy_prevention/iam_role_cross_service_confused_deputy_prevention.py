@@ -6,15 +6,15 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
         for role in iam_client.roles:
-            # This check should only be performed against service roles
-            if role.is_service_role:
+            # This check should only be performed against service roles (avoid Service Linked Roles since the trust relationship cannot be changed)
+            if role.is_service_role and "aws-service-role" not in role.arn:
                 report = Check_Report_AWS(self.metadata())
                 report.region = iam_client.region
                 report.resource_arn = role.arn
                 report.resource_id = role.name
                 report.resource_tags = role.tags
                 report.status = "FAIL"
-                report.status_extended = f"IAM Service Role {role.name} prevents against a cross-service confused deputy attack"
+                report.status_extended = f"IAM Service Role {role.name} does not prevent against a cross-service confused deputy attack"
                 for statement in role.assume_role_policy["Statement"]:
                     if (
                         statement["Effect"] == "Allow"
@@ -59,7 +59,7 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                         )
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"IAM Service Role {role.name} does not prevent against a cross-service confused deputy attack"
+                        report.status_extended = f"IAM Service Role {role.name} prevents against a cross-service confused deputy attack"
                         break
 
                 findings.append(report)
