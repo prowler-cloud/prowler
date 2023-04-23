@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "networkfirewall_in_all_vpc",
+  "CheckTitle": "Ensure all VPCs have Network Firewall enabled",
+  "CheckType": [],
+  "ServiceName": "network-firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Ensure all VPCs have Network Firewall enabled",
+  "Risk": "Without a network firewall, it can be difficult to monitor and control traffic within the VPC. This can make it harder to detect and prevent attacks or unauthorized access to resources.",
+  "RelatedUrl": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/setting-up.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws network-firewall list-firewalls",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure all VPCs have Network Firewall enabled",
+      "Url": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/vpc-config.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
