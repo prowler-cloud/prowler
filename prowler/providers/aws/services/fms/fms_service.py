@@ -32,7 +32,9 @@ class FMS:
                 for page in list_policies_paginator.paginate():
                     for fms_policy in page["PolicyList"]:
                         if not self.audit_resources or (
-                            is_resource_filtered(fms_policy["PolicyArn"], self.audit_resources)
+                            is_resource_filtered(
+                                fms_policy["PolicyArn"], self.audit_resources
+                            )
                         ):
                             self.fms_policies.append(
                                 FMSPolicy(
@@ -41,7 +43,9 @@ class FMS:
                                     name=fms_policy["PolicyName"],
                                     resource_type=fms_policy["ResourceType"],
                                     service_type=fms_policy["SecurityServiceType"],
-                                    remediation_enabled=fms_policy["RemediationEnabled"],
+                                    remediation_enabled=fms_policy[
+                                        "RemediationEnabled"
+                                    ],
                                     delete_unused_managed_resources=fms_policy[
                                         "DeleteUnusedFMManagedResources"
                                     ],
