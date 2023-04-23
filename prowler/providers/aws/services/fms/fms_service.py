@@ -80,9 +80,9 @@ class FMS:
                             FMSPolicyAccountComplianceStatus(
                                 account_id=fms_compliance_status.get("MemberAccount"),
                                 policy_id=fms_compliance_status.get("PolicyId"),
-                                status=fms_compliance_status.get("EvaluationResults")[0].get(
-                                    "ComplianceStatus"
-                                ),
+                                status=fms_compliance_status.get("EvaluationResults")[
+                                    0
+                                ].get("ComplianceStatus"),
                             )
                         )
 
