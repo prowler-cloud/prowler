@@ -118,4 +118,6 @@ class Test_FMS_Service:
         audit_info = self.set_mocked_audit_info()
         fms = FMS(audit_info)
         assert len(fms.fms_policies) == 1
-        assert fms.fms_policies[0].compliance_status == "COMPLIANT"
+        assert fms.fms_policies[0].compliance_status[0].status == "COMPLIANT"
+        assert fms.fms_policies[0].compliance_status[0].account_id == "123456789012"
+        assert fms.fms_policies[0].compliance_status[0].policy_id == POLICY_ID
