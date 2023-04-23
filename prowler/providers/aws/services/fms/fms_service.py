@@ -38,17 +38,17 @@ class FMS:
                         ):
                             self.fms_policies.append(
                                 FMSPolicy(
-                                    arn=fms_policy["PolicyArn"],
-                                    id=fms_policy["PolicyId"],
-                                    name=fms_policy["PolicyName"],
-                                    resource_type=fms_policy["ResourceType"],
-                                    service_type=fms_policy["SecurityServiceType"],
-                                    remediation_enabled=fms_policy[
+                                    arn=fms_policy.get("PolicyArn"),
+                                    id=fms_policy.get("PolicyId"),
+                                    name=fms_policy.get("PolicyName"),
+                                    resource_type=fms_policy.get("ResourceType"),
+                                    service_type=fms_policy.get("SecurityServiceType"),
+                                    remediation_enabled=fms_policy.get(
                                         "RemediationEnabled"
-                                    ],
-                                    delete_unused_managed_resources=fms_policy[
+                                    ),
+                                    delete_unused_managed_resources=fms_policy.get(
                                         "DeleteUnusedFMManagedResources"
-                                    ],
+                                    ),
                                 )
                             )
             except ClientError as error:
@@ -78,14 +78,13 @@ class FMS:
                     for fms_compliance_status in page["PolicyComplianceStatusList"]:
                         fms_policy.compliance_status.append(
                             FMSPolicyAccountComplianceStatus(
-                                account_id=fms_compliance_status["MemberAccount"],
-                                policy_id=fms_compliance_status["PolicyId"],
-                                status=fms_compliance_status["EvaluationResults"][0][
+                                account_id=fms_compliance_status.get("MemberAccount"),
+                                policy_id=fms_compliance_status.get("PolicyId"),
+                                status=fms_compliance_status.get("EvaluationResults")[0].get(
                                     "ComplianceStatus"
-                                ],
+                                ),
                             )
                         )
-                    fms_policy.compliance_status.append = fms_compliance_status
 
         except Exception as error:
             logger.error(
