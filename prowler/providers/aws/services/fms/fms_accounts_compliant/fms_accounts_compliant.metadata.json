@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "fms_accounts_compliant",
+  "CheckTitle": "Ensure that all FMS accounts are compliant",
+  "CheckType": [],
+  "ServiceName": "fms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:backup-plan:backup-plan-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "This check ensures all FMS policies and accounts are compliant",
+  "Risk": "",
+  "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/getting-started-fms-intro.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws fms list-policies",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure all FMS policies and accounts are compliant",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
