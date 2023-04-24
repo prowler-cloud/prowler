@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "aws network-firewall list-firewalls",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/NetworkFirewall/network-firewall-in-use.html",
       "Terraform": ""
     },
     "Recommendation": {
