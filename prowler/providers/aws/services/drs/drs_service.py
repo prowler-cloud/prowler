@@ -25,7 +25,7 @@ class DRS:
             if audit_info.profile_region
             else list(self.regional_clients.keys())[0]
         )
-        self.drss = []
+        self.drs_services = []
         self.drs_jobs = []
         self.__threading_call__(self.__describe_jobs__)
 
