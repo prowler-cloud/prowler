@@ -61,7 +61,7 @@ class DRS:
                             )
                             self.drs_jobs.append(job)
                             drs_jobs.append(job)
-                    self.drss.append(
+                    self.drs_services.append(
                         DRSservice(
                             id="DRS",
                             status="ENABLED",
@@ -71,7 +71,7 @@ class DRS:
                     )
             except ClientError as error:
                 if error.response["Error"]["Code"] == "UninitializedAccountException":
-                    self.drss.append(
+                    self.drs_services.append(
                         DRSservice(id="DRS", status="DISABLED", region=regional_client.region)
                     )
                 else:

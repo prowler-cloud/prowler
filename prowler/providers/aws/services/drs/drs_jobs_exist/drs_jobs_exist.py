@@ -5,7 +5,7 @@ from prowler.providers.aws.services.drs.drs_client import drs_client
 class drs_jobs_exist(Check):
     def execute(self):
         findings = []
-        for drs in drs_client.drss:
+        for drs in drs_client.drs_services:
             report = Check_Report_AWS(self.metadata())
             report.status = "FAIL"
             report.status_extended = "DRS is not enabled for this region."

@@ -19,7 +19,7 @@ class Test_drs_jobs_exist:
                 tags=[{"Key": "Name", "Value": "test"}],
             )
         ]
-        drs_client.drss = [
+        drs_client.drs_services = [
             DRSservice(
                 id="DRS",
                 status="ENABLED",
@@ -53,7 +53,7 @@ class Test_drs_jobs_exist:
         drs_client = mock.MagicMock
         drs_client.region = AWS_REGION
         drs_client.drs_jobs = []
-        drs_client.drss = [
+        drs_client.drs_services = [
             DRSservice(
                 id="DRS",
                 status="ENABLED",
@@ -88,7 +88,7 @@ class Test_drs_jobs_exist:
         drs_client = mock.MagicMock
         drs_client.region = AWS_REGION
         drs_client.drs_jobs = []
-        drs_client.drss = [
+        drs_client.drs_services = [
             DRSservice(
                 id="DRS",
                 status="DISABLED",

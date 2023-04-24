@@ -100,7 +100,7 @@ class Test_DRS_Service:
         assert drs.drs_jobs[0].id == "jobID1"
         assert drs.drs_jobs[0].region == AWS_REGION
         assert drs.drs_jobs[0].tags == [{"test_tag": "test_value"}]
-        assert len(drs.drss) == 1
-        assert drs.drss[0].id == "DRS"
-        assert drs.drss[0].region == AWS_REGION
-        assert drs.drss[0].status == "ENABLED"
+        assert len(drs.drs_services) == 1
+        assert drs.drs_services[0].id == "DRS"
+        assert drs.drs_services[0].region == AWS_REGION
+        assert drs.drs_services[0].status == "ENABLED"
