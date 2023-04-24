@@ -2,7 +2,7 @@ from unittest import mock
 
 from prowler.providers.aws.services.fms.fms_service import (
     FMSPolicy,
-    FMSPolicyAccountComplianceStatus,
+    PolicyAccountComplianceStatus,
 )
 
 AWS_REGION = "us-east-1"
@@ -41,7 +41,7 @@ class Test_fms_policy_compliant:
                 remediation_enabled=True,
                 delete_unused_managed_resources=True,
                 compliance_status=[
-                    FMSPolicyAccountComplianceStatus(
+                    PolicyAccountComplianceStatus(
                         account_id="12345678901",
                         policy_id="12345678901",
                         status="NON_COMPLIANT",
@@ -85,7 +85,7 @@ class Test_fms_policy_compliant:
                 remediation_enabled=True,
                 delete_unused_managed_resources=True,
                 compliance_status=[
-                    FMSPolicyAccountComplianceStatus(
+                    PolicyAccountComplianceStatus(
                         account_id="12345678901",
                         policy_id="12345678901",
                         status="COMPLIANT",
@@ -128,12 +128,12 @@ class Test_fms_policy_compliant:
                 remediation_enabled=True,
                 delete_unused_managed_resources=True,
                 compliance_status=[
-                    FMSPolicyAccountComplianceStatus(
+                    PolicyAccountComplianceStatus(
                         account_id="12345678901",
                         policy_id="12345678901",
                         status="COMPLIANT",
                     ),
-                    FMSPolicyAccountComplianceStatus(
+                    PolicyAccountComplianceStatus(
                         account_id="12345678901",
                         policy_id="12345678901",
                         status="NON_COMPLIANT",

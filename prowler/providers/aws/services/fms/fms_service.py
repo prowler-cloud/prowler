@@ -76,7 +76,7 @@ class FMS:
                 ):
                     for fms_compliance_status in page["PolicyComplianceStatusList"]:
                         fms_policy.compliance_status.append(
-                            FMSPolicyAccountComplianceStatus(
+                            PolicyAccountComplianceStatus(
                                 account_id=fms_compliance_status.get("MemberAccount"),
                                 policy_id=fms_compliance_status.get("PolicyId"),
                                 status=fms_compliance_status.get("EvaluationResults")[
@@ -91,7 +91,7 @@ class FMS:
             )
 
 
-class FMSPolicyAccountComplianceStatus(BaseModel):
+class PolicyAccountComplianceStatus(BaseModel):
     account_id: str
     policy_id: str
     status: str
@@ -105,4 +105,4 @@ class FMSPolicy(BaseModel):
     service_type: str
     remediation_enabled: bool
     delete_unused_managed_resources: bool
-    compliance_status: list[FMSPolicyAccountComplianceStatus] = []
+    compliance_status: list[PolicyAccountComplianceStatus] = []
