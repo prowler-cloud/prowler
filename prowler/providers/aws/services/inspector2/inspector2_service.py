@@ -44,22 +44,22 @@ class Inspector2:
         # We use this function to check if inspector2 is enabled
         logger.info("Inspector2 - get configuration...")
         try:
-                try:
-                    regional_client.get_configuration()
-                    self.inspectors.append(
-                        Inspector(
-                            id="Inspector2",
-                            region=regional_client.region,
-                        )
+            try:
+                regional_client.get_configuration()
+                self.inspectors.append(
+                    Inspector(
+                        id="Inspector2",
+                        region=regional_client.region,
                     )
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "ResourceNotFoundException":
-                        # Inspector not found in this region
-                        pass
-                    else:
-                        logger.error(
-                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
+                )
+            except ClientError as error:
+                if error.response["Error"]["Code"] == "ResourceNotFoundException":
+                    # Inspector not found in this region
+                    pass
+                else:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
