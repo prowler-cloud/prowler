@@ -41,7 +41,9 @@ class Test_drs_jobs_exist:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].status_extended == "DRS is enabled for this region with jobs."
+            assert (
+                result[0].status_extended == "DRS is enabled for this region with jobs."
+            )
             assert result[0].resource_id == "DRS"
             assert result[0].resource_arn == ""
             assert result[0].region == AWS_REGION
@@ -73,7 +75,10 @@ class Test_drs_jobs_exist:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == "DRS is enabled for this region without jobs."
+            assert (
+                result[0].status_extended
+                == "DRS is enabled for this region without jobs."
+            )
             assert result[0].resource_id == "DRS"
             assert result[0].resource_arn == ""
             assert result[0].region == AWS_REGION
