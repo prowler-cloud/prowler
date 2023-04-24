@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "drs_job_exist",
+  "CheckTitle": "Ensure DRS is enabled with jobs.",
+  "CheckType": [],
+  "ServiceName": "drs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:drs:region:account-id:job/job-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Ensure DRS is enabled with jobs.",
+  "Risk": "If DRS is not enabled with jobs, then it may not be able to recover from a disaster.",
+  "RelatedUrl": "https://docs.aws.amazon.com/drs/latest/userguide/what-is-drs.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure DRS is enabled with jobs.",
+      "Url": "https://docs.aws.amazon.com/drs/latest/userguide/what-is-drs.html"
+    }
+  },
+  "Categories": [
+    ""
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
