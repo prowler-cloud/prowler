@@ -5,7 +5,7 @@
   "CheckType": [],
   "ServiceName": "fms",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:fms:region:accoun-id:policy/policy",
+  "ResourceIdTemplate": "arn:aws:fms:region:account-id:policy/policy",
   "Severity": "medium",
   "ResourceType": "Other",
   "Description": "This check ensures all FMS policies inside an admin account are compliant",
