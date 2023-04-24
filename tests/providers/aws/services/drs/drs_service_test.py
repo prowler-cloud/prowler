@@ -92,14 +92,6 @@ class Test_DRS_Service:
     def test__describe_jobs__(self):
         audit_info = self.set_mocked_audit_info()
         drs = DRS(audit_info)
-        assert len(drs.drs_jobs) == 1
-        assert (
-            drs.drs_jobs[0].arn
-            == "arn:aws:disaster-recovery:us-east-1:123456789012:job/jobID1"
-        )
-        assert drs.drs_jobs[0].id == "jobID1"
-        assert drs.drs_jobs[0].region == AWS_REGION
-        assert drs.drs_jobs[0].tags == [{"test_tag": "test_value"}]
         assert len(drs.drs_services) == 1
         assert drs.drs_services[0].id == "DRS"
         assert drs.drs_services[0].region == AWS_REGION

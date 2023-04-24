@@ -26,7 +26,6 @@ class DRS:
             else list(self.regional_clients.keys())[0]
         )
         self.drs_services = []
-        self.drs_jobs = []
         self.__threading_call__(self.__describe_jobs__)
 
     def __get_session__(self):
@@ -59,7 +58,6 @@ class DRS:
                                 status=drs_job.get("status"),
                                 tags=[drs_job.get("tags")],
                             )
-                            self.drs_jobs.append(job)
                             drs_jobs.append(job)
                     self.drs_services.append(
                         DRSservice(
@@ -72,7 +70,9 @@ class DRS:
             except ClientError as error:
                 if error.response["Error"]["Code"] == "UninitializedAccountException":
                     self.drs_services.append(
-                        DRSservice(id="DRS", status="DISABLED", region=regional_client.region)
+                        DRSservice(
+                            id="DRS", status="DISABLED", region=regional_client.region
+                        )
                     )
                 else:
                     logger.error(

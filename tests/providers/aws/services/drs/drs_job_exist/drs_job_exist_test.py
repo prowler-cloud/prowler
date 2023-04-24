@@ -1,6 +1,6 @@
 from unittest import mock
 
-from prowler.providers.aws.services.drs.drs_service import Job, DRSservice
+from prowler.providers.aws.services.drs.drs_service import DRSservice, Job
 
 AWS_REGION = "eu-west-1"
 JOB_ARN = "arn:aws:drs:eu-west-1:123456789012:job/12345678901234567890123456789012"
@@ -10,21 +10,20 @@ class Test_drs_job_exist:
     def test_drs_job_exist(self):
         drs_client = mock.MagicMock
         drs_client.region = AWS_REGION
-        drs_client.drs_jobs = [
-            Job(
-                arn=JOB_ARN,
-                id="12345678901234567890123456789012",
-                status="COMPLETED",
-                region=AWS_REGION,
-                tags=[{"Key": "Name", "Value": "test"}],
-            )
-        ]
         drs_client.drs_services = [
             DRSservice(
                 id="DRS",
                 status="ENABLED",
                 region=AWS_REGION,
-                jobs=drs_client.drs_jobs,
+                jobs=[
+                    Job(
+                        arn=JOB_ARN,
+                        id="12345678901234567890123456789012",
+                        status="COMPLETED",
+                        region=AWS_REGION,
+                        tags=[{"Key": "Name", "Value": "test"}],
+                    )
+                ],
             )
         ]
         with mock.patch(
@@ -52,13 +51,12 @@ class Test_drs_job_exist:
     def test_drs_no_jobs(self):
         drs_client = mock.MagicMock
         drs_client.region = AWS_REGION
-        drs_client.drs_jobs = []
         drs_client.drs_services = [
             DRSservice(
                 id="DRS",
                 status="ENABLED",
                 region=AWS_REGION,
-                jobs=drs_client.drs_jobs,
+                jobs=[],
             )
         ]
         with mock.patch(
@@ -87,13 +85,12 @@ class Test_drs_job_exist:
     def test_drs_disabled(self):
         drs_client = mock.MagicMock
         drs_client.region = AWS_REGION
-        drs_client.drs_jobs = []
         drs_client.drs_services = [
             DRSservice(
                 id="DRS",
                 status="DISABLED",
                 region=AWS_REGION,
-                jobs=drs_client.drs_jobs,
+                jobs=[],
             )
         ]
         with mock.patch(
