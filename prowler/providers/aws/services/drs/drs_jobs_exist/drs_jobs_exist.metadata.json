@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "drs_jobs_exist",
+  "CheckID": "drs_job_exist",
   "CheckTitle": "Ensure DRS is enabled with jobs.",
   "CheckType": [],
   "ServiceName": "drs",
