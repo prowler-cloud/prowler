@@ -60,6 +60,44 @@ class Test_rds_instance_transport_encrypted:
                 assert len(result) == 0
 
     @mock_rds
+    def test_rds_aurora_instance(self):
+        conn = client("rds", region_name=AWS_REGION)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.aurora-postgresql14",
+            Description="test parameter group",
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-master-1",
+            AllocatedStorage=10,
+            Engine="aurora-postgresql",
+            DBName="aurora-postgres",
+            DBInstanceClass="db.m1.small",
+            DBParameterGroupName="test",
+        )
+        from prowler.providers.aws.services.rds.rds_service import RDS
+
+        audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted.rds_client",
+                new=RDS(audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted import (
+                    rds_instance_transport_encrypted,
+                )
+
+                check = rds_instance_transport_encrypted()
+                result = check.execute()
+
+                assert len(result) == 0
+
+    @mock_rds
     def test_rds_instance_no_ssl(self):
         conn = client("rds", region_name=AWS_REGION)
         conn.create_db_parameter_group(
