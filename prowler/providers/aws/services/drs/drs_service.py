@@ -52,7 +52,7 @@ class DRS:
                         if not self.audit_resources or (
                             is_resource_filtered(drs_job["arn"], self.audit_resources)
                         ):
-                            job = DRSJob(
+                            job = Job(
                                 arn=drs_job.get("arn"),
                                 id=drs_job.get("jobID"),
                                 region=regional_client.region,
@@ -96,4 +96,4 @@ class DRSservice(BaseModel):
     id: str
     status: str
     region: str
-    jobs: list[DRSJob] = []
+    jobs: list[Job] = []

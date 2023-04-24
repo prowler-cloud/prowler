@@ -1,6 +1,6 @@
 from unittest import mock
 
-from prowler.providers.aws.services.drs.drs_service import DRSJob, DRSservice
+from prowler.providers.aws.services.drs.drs_service import Job, DRSservice
 
 AWS_REGION = "eu-west-1"
 JOB_ARN = "arn:aws:drs:eu-west-1:123456789012:job/12345678901234567890123456789012"
@@ -11,7 +11,7 @@ class Test_drs_jobs_exist:
         drs_client = mock.MagicMock
         drs_client.region = AWS_REGION
         drs_client.drs_jobs = [
-            DRSJob(
+            Job(
                 arn=JOB_ARN,
                 id="12345678901234567890123456789012",
                 status="COMPLETED",
