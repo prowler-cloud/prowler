@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.fms.fms_client import fms_client
 
 
-class fms_accounts_compliant(Check):
+class fms_policy_compliant(Check):
     def execute(self):
         findings = []
         if fms_client.fms_admin_account:

@@ -8,7 +8,7 @@ from prowler.providers.aws.services.fms.fms_service import (
 AWS_REGION = "us-east-1"
 
 
-class Test_fms_accounts_compliant:
+class Test_fms_policy_compliant:
     def test_fms_not_admin(self):
         fms_client = mock.MagicMock
         fms_client.region = AWS_REGION
@@ -18,11 +18,11 @@ class Test_fms_accounts_compliant:
             new=fms_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.fms.fms_accounts_compliant.fms_accounts_compliant import (
-                fms_accounts_compliant,
+            from prowler.providers.aws.services.fms.fms_policy_compliant.fms_policy_compliant import (
+                fms_policy_compliant,
             )
 
-            check = fms_accounts_compliant()
+            check = fms_policy_compliant()
             result = check.execute()
 
             assert len(result) == 0
@@ -54,11 +54,11 @@ class Test_fms_accounts_compliant:
             new=fms_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.fms.fms_accounts_compliant.fms_accounts_compliant import (
-                fms_accounts_compliant,
+            from prowler.providers.aws.services.fms.fms_policy_compliant.fms_policy_compliant import (
+                fms_policy_compliant,
             )
 
-            check = fms_accounts_compliant()
+            check = fms_policy_compliant()
             result = check.execute()
 
             assert len(result) == 1
@@ -98,11 +98,11 @@ class Test_fms_accounts_compliant:
             new=fms_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.fms.fms_accounts_compliant.fms_accounts_compliant import (
-                fms_accounts_compliant,
+            from prowler.providers.aws.services.fms.fms_policy_compliant.fms_policy_compliant import (
+                fms_policy_compliant,
             )
 
-            check = fms_accounts_compliant()
+            check = fms_policy_compliant()
             result = check.execute()
 
             assert len(result) == 1
@@ -146,11 +146,11 @@ class Test_fms_accounts_compliant:
             new=fms_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.fms.fms_accounts_compliant.fms_accounts_compliant import (
-                fms_accounts_compliant,
+            from prowler.providers.aws.services.fms.fms_policy_compliant.fms_policy_compliant import (
+                fms_policy_compliant,
             )
 
-            check = fms_accounts_compliant()
+            check = fms_policy_compliant()
             result = check.execute()
 
             assert len(result) == 1
