@@ -1,6 +1,5 @@
 import threading
 
-from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -25,7 +24,7 @@ class Inspector2:
             else list(self.regional_clients.keys())[0]
         )
         self.inspectors = []
-        self.__threading_call__(self.__get_configuration__)
+        self.__threading_call__(self.__batch_get_account_status__)
         self.__list_findings__()
 
     def __get_session__(self):
@@ -40,36 +39,23 @@ class Inspector2:
         for t in threads:
             t.join()
 
-    def __get_configuration__(self, regional_client):
+    def __batch_get_account_status__(self, regional_client):
         # We use this function to check if inspector2 is enabled
-        logger.info("Inspector2 - get configuration...")
+        logger.info("Inspector2 - batch_get_account_status...")
         try:
-            try:
-                regional_client.get_configuration()
-                self.inspectors.append(
-                    Inspector(
-                        id="Inspector2",
-                        enabled=True,
-                        region=regional_client.region,
-                    )
+            batch_get_account_status = regional_client.batch_get_account_status()[
+                "accounts"
+            ][0]
+            self.inspectors.append(
+                Inspector(
+                    id="Inspector2",
+                    status=batch_get_account_status.get("state").get("status"),
+                    region=regional_client.region,
                 )
-            except ClientError as error:
-                if error.response["Error"]["Code"] == "ResourceNotFoundException":
-                    # Inspector not found in this region
-                    self.inspectors.append(
-                        Inspector(
-                            id="Inspector2",
-                            enabled=False,
-                            region=regional_client.region,
-                        )
-                    )
-                else:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+            )
         except Exception as error:
             logger.error(
-                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __list_findings__(self):
@@ -118,5 +104,5 @@ class InspectorFinding(BaseModel):
 class Inspector(BaseModel):
     id: str
     region: str
-    enabled: bool
+    status: str
     findings: list[InspectorFinding] = []

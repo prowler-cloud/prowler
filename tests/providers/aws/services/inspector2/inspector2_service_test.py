@@ -19,16 +19,36 @@ make_api_call = botocore.client.BaseClient._make_api_call
 
 def mock_make_api_call(self, operation_name, kwargs):
     """We have to mock every AWS API call using Boto3"""
-    if operation_name == "GetConfiguration":
+    if operation_name == "BatchGetAccountStatus":
         return {
-            "ecrConfiguration": {
-                "rescanDurationState": {
-                    "rescanDuration": "LIFETIME",
-                    "status": "SUCCESS",
-                    "updatedAt": datetime(2015, 1, 1),
+                "accounts": [ 
+                    { 
+                        "accountId": "string",
+                        "resourceState": { 
+                            "ec2": { 
+                            "errorCode": "ALREADY_ENABLED",
+                            "errorMessage": "string",
+                            "status": "ENABLED"
+                            },
+                            "ecr": { 
+                            "errorCode": "ALREADY_ENABLED",
+                            "errorMessage": "string",
+                            "status": "ENABLED"
+                            },
+                            "lambda": { 
+                            "errorCode": "ALREADY_ENABLED",
+                            "errorMessage": "string",
+                            "status": "ENABLED"
+                            }
+                        },
+                        "state": { 
+                            "errorCode": "ALREADY_ENABLED",
+                            "errorMessage": "string",
+                            "status": "ENABLED"
+                        }
+                    }
+                ]
                 }
-            }
-        }
     if operation_name == "ListFindings":
         return {
             "findings": [
@@ -97,12 +117,13 @@ class Test_Inspector2_Service:
         ssmincidents = Inspector2(audit_info)
         assert ssmincidents.service == "inspector2"
 
-    def test__get_configuration__(self):
+    def test__batch_get_account_status__(self):
         audit_info = self.set_mocked_audit_info()
         ssmincidents = Inspector2(audit_info)
         assert len(ssmincidents.inspectors) == 1
         assert ssmincidents.inspectors[0].id == "Inspector2"
         assert ssmincidents.inspectors[0].region == AWS_REGION
+        assert ssmincidents.inspectors[0].status == "ENABLED"
 
     def test__list_findings__(self):
         audit_info = self.set_mocked_audit_info()

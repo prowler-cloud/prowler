@@ -14,15 +14,17 @@ class inspector2_findings_exist(Check):
             report.resource_id = inspector.id
             report.resource_arn = ""
             report.region = inspector.region
-            if inspector.enabled:
+            if inspector.status == "ENABLED":
                 report.status = "PASS"
                 report.status_extended = "Inspector2 is enabled with no findings"
-            for finding in inspector.findings:
-                report.status_extended = "Inspector2 is enabled with no active findings"
-                if finding.status == "ACTIVE":
-                    report.status = "FAIL"
-                    report.status_extended = f"There are {str(len(inspector.findings))} ACTIVE Inspector2 findings."
-                    break
+                for finding in inspector.findings:
+                    report.status_extended = (
+                        "Inspector2 is enabled with no active findings"
+                    )
+                    if finding.status == "ACTIVE":
+                        report.status = "FAIL"
+                        report.status_extended = f"There are {str(len(inspector.findings))} ACTIVE Inspector2 findings."
+                        break
 
             findings.append(report)
 
