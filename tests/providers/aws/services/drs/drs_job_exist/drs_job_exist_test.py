@@ -6,8 +6,8 @@ AWS_REGION = "eu-west-1"
 JOB_ARN = "arn:aws:drs:eu-west-1:123456789012:job/12345678901234567890123456789012"
 
 
-class Test_drs_jobs_exist:
-    def test_drs_jobs_exist(self):
+class Test_drs_job_exist:
+    def test_drs_job_exist(self):
         drs_client = mock.MagicMock
         drs_client.region = AWS_REGION
         drs_client.drs_jobs = [
@@ -32,11 +32,11 @@ class Test_drs_jobs_exist:
             new=drs_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.drs.drs_jobs_exist.drs_jobs_exist import (
-                drs_jobs_exist,
+            from prowler.providers.aws.services.drs.drs_job_exist.drs_job_exist import (
+                drs_job_exist,
             )
 
-            check = drs_jobs_exist()
+            check = drs_job_exist()
             result = check.execute()
 
             assert len(result) == 1
@@ -66,11 +66,11 @@ class Test_drs_jobs_exist:
             new=drs_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.drs.drs_jobs_exist.drs_jobs_exist import (
-                drs_jobs_exist,
+            from prowler.providers.aws.services.drs.drs_job_exist.drs_job_exist import (
+                drs_job_exist,
             )
 
-            check = drs_jobs_exist()
+            check = drs_job_exist()
             result = check.execute()
 
             assert len(result) == 1
@@ -101,11 +101,11 @@ class Test_drs_jobs_exist:
             new=drs_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.drs.drs_jobs_exist.drs_jobs_exist import (
-                drs_jobs_exist,
+            from prowler.providers.aws.services.drs.drs_job_exist.drs_job_exist import (
+                drs_job_exist,
             )
 
-            check = drs_jobs_exist()
+            check = drs_job_exist()
             result = check.execute()
 
             assert len(result) == 1

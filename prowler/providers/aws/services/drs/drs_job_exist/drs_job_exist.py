@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.drs.drs_client import drs_client
 
 
-class drs_jobs_exist(Check):
+class drs_job_exist(Check):
     def execute(self):
         findings = []
         for drs in drs_client.drs_services:
