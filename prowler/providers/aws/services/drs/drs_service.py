@@ -25,6 +25,7 @@ class DRS:
             if audit_info.profile_region
             else list(self.regional_clients.keys())[0]
         )
+        self.drss = []
         self.drs_jobs = []
         self.__threading_call__(self.__describe_jobs__)
 
@@ -46,23 +47,33 @@ class DRS:
             try:
                 describe_jobs_paginator = regional_client.get_paginator("describe_jobs")
                 for page in describe_jobs_paginator.paginate():
+                    drs_jobs = []
                     for drs_job in page["items"]:
                         if not self.audit_resources or (
                             is_resource_filtered(drs_job["arn"], self.audit_resources)
                         ):
-                            self.drs_jobs.append(
-                                DRSJob(
-                                    arn=drs_job.get("arn"),
-                                    id=drs_job.get("jobID"),
-                                    region=regional_client.region,
-                                    status=drs_job.get("status"),
-                                    tags=[drs_job.get("tags")],
-                                )
+                            job = DRSJob(
+                                arn=drs_job.get("arn"),
+                                id=drs_job.get("jobID"),
+                                region=regional_client.region,
+                                status=drs_job.get("status"),
+                                tags=[drs_job.get("tags")],
                             )
+                            self.drs_jobs.append(job)
+                            drs_jobs.append(job)
+                    self.drss.append(
+                        DRSs(
+                            id="DRS",
+                            status="ENABLED",
+                            region=regional_client.region,
+                            jobs=drs_jobs,
+                        )
+                    )
             except ClientError as error:
                 if error.response["Error"]["Code"] == "UninitializedAccountException":
-                    # DRS is not enabled in this region
-                    pass
+                    self.drss.append(
+                        DRSs(id="DRS", status="DISABLED", region=regional_client.region)
+                    )
                 else:
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -79,3 +90,10 @@ class DRSJob(BaseModel):
     status: str
     region: str
     tags: list = []
+
+
+class DRSs(BaseModel):
+    id: str
+    status: str
+    region: str
+    jobs: list[DRSJob] = []
