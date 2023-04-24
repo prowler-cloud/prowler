@@ -53,7 +53,6 @@ class FMS:
                             )
             except ClientError as error:
                 if error.response["Error"]["Code"] == "AccessDeniedException":
-                    print(error.response)
                     if (
                         "No default admin could be found for account"
                         in error.response["Error"]["Message"]
