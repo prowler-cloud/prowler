@@ -25,7 +25,7 @@ class Inspector2:
             else list(self.regional_clients.keys())[0]
         )
         self.inspectors = []
-        self.__get_configuration__()
+        self.__threading_call__(self.__get_configuration__)
         self.__list_findings__()
 
     def __get_session__(self):
@@ -40,11 +40,10 @@ class Inspector2:
         for t in threads:
             t.join()
 
-    def __get_configuration__(self):
+    def __get_configuration__(self, regional_client):
         # We use this function to check if inspector2 is enabled
         logger.info("Inspector2 - get configuration...")
         try:
-            for regional_client in self.regional_clients.values():
                 try:
                     regional_client.get_configuration()
                     self.inspectors.append(
@@ -56,7 +55,7 @@ class Inspector2:
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "ResourceNotFoundException":
                         # Inspector not found in this region
-                        continue
+                        pass
                     else:
                         logger.error(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
