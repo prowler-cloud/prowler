@@ -84,7 +84,7 @@ class DRS:
             )
 
 
-class DRSJob(BaseModel):
+class Job(BaseModel):
     arn: str
     id: str
     status: str
