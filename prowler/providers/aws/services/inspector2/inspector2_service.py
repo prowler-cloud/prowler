@@ -49,13 +49,20 @@ class Inspector2:
                 self.inspectors.append(
                     Inspector(
                         id="Inspector2",
+                        enabled=True,
                         region=regional_client.region,
                     )
                 )
             except ClientError as error:
                 if error.response["Error"]["Code"] == "ResourceNotFoundException":
                     # Inspector not found in this region
-                    pass
+                    self.inspectors.append(
+                        Inspector(
+                            id="Inspector2",
+                            enabled=False,
+                            region=regional_client.region,
+                        )
+                    )
                 else:
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -111,4 +118,5 @@ class InspectorFinding(BaseModel):
 class Inspector(BaseModel):
     id: str
     region: str
+    enabled: bool
     findings: list[InspectorFinding] = []

@@ -17,7 +17,9 @@ class Test_inspector2_findings_exist:
         # Mock the inspector2 client
         inspector2_client = mock.MagicMock
         inspector2_client.region = AWS_REGION
-        inspector2_client.inspectors = []
+        inspector2_client.inspectors = [
+            Inspector(id="Inspector2", enabled=False, region=AWS_REGION, findings=[])
+        ]
         with mock.patch(
             "prowler.providers.aws.services.inspector2.inspector2_service.Inspector2",
             new=inspector2_client,
@@ -42,7 +44,7 @@ class Test_inspector2_findings_exist:
         inspector2_client = mock.MagicMock
         inspector2_client.region = AWS_REGION
         inspector2_client.inspectors = [
-            Inspector(id="Inspector2", region=AWS_REGION, findings=[])
+            Inspector(id="Inspector2", enabled=True, region=AWS_REGION, findings=[])
         ]
         with mock.patch(
             "prowler.providers.aws.services.inspector2.inspector2_service.Inspector2",
@@ -71,6 +73,7 @@ class Test_inspector2_findings_exist:
             Inspector(
                 id="Inspector2",
                 region=AWS_REGION,
+                enabled=True,
                 findings=[
                     InspectorFinding(
                         arn=FINDING_ARN,
@@ -113,6 +116,7 @@ class Test_inspector2_findings_exist:
             Inspector(
                 id="Inspector2",
                 region=AWS_REGION,
+                enabled=True,
                 findings=[
                     InspectorFinding(
                         arn=FINDING_ARN,
