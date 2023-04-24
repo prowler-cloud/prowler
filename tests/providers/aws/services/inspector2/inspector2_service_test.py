@@ -21,34 +21,34 @@ def mock_make_api_call(self, operation_name, kwargs):
     """We have to mock every AWS API call using Boto3"""
     if operation_name == "BatchGetAccountStatus":
         return {
-                "accounts": [ 
-                    { 
-                        "accountId": "string",
-                        "resourceState": { 
-                            "ec2": { 
+            "accounts": [
+                {
+                    "accountId": "string",
+                    "resourceState": {
+                        "ec2": {
                             "errorCode": "ALREADY_ENABLED",
                             "errorMessage": "string",
-                            "status": "ENABLED"
-                            },
-                            "ecr": { 
-                            "errorCode": "ALREADY_ENABLED",
-                            "errorMessage": "string",
-                            "status": "ENABLED"
-                            },
-                            "lambda": { 
-                            "errorCode": "ALREADY_ENABLED",
-                            "errorMessage": "string",
-                            "status": "ENABLED"
-                            }
+                            "status": "ENABLED",
                         },
-                        "state": { 
+                        "ecr": {
                             "errorCode": "ALREADY_ENABLED",
                             "errorMessage": "string",
-                            "status": "ENABLED"
-                        }
-                    }
-                ]
+                            "status": "ENABLED",
+                        },
+                        "lambda": {
+                            "errorCode": "ALREADY_ENABLED",
+                            "errorMessage": "string",
+                            "status": "ENABLED",
+                        },
+                    },
+                    "state": {
+                        "errorCode": "ALREADY_ENABLED",
+                        "errorMessage": "string",
+                        "status": "ENABLED",
+                    },
                 }
+            ]
+        }
     if operation_name == "ListFindings":
         return {
             "findings": [
