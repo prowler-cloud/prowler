@@ -5,7 +5,7 @@
   "CheckType": [],
   "ServiceName": "drs",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:ssm:region:account-id:document/document-name",
+  "ResourceIdTemplate": "arn:aws:drs:region:account-id:job/job-id",
   "Severity": "medium",
   "ResourceType": "Other",
   "Description": "Ensure DRS is enabled with jobs.",
