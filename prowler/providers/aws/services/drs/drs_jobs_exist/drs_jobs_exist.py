@@ -14,7 +14,7 @@ class drs_jobs_exist(Check):
         report.resource_arn = ""
         if drs_client.drs_jobs:
             report.status = "PASS"
-            report.status_extended = "DRS jobs exist."
+            report.status_extended = "DRS is enabled with jobs."
             report.resource_tags = drs_client.drs_jobs[0].tags
             report.resource_arn = drs_client.drs_jobs[0].arn
 
