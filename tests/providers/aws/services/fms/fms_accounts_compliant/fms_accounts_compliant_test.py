@@ -25,12 +25,7 @@ class Test_fms_accounts_compliant:
             check = fms_accounts_compliant()
             result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert result[0].status_extended == "FMS disabled or not admin account"
-            assert result[0].resource_id == "FMS"
-            assert result[0].resource_arn == ""
-            assert result[0].region == AWS_REGION
+            assert len(result) == 0
 
     def test_fms_admin_with_non_compliant_policies(self):
         fms_client = mock.MagicMock
