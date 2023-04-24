@@ -62,7 +62,7 @@ class DRS:
                             self.drs_jobs.append(job)
                             drs_jobs.append(job)
                     self.drss.append(
-                        DRSs(
+                        DRSservice(
                             id="DRS",
                             status="ENABLED",
                             region=regional_client.region,
@@ -72,7 +72,7 @@ class DRS:
             except ClientError as error:
                 if error.response["Error"]["Code"] == "UninitializedAccountException":
                     self.drss.append(
-                        DRSs(id="DRS", status="DISABLED", region=regional_client.region)
+                        DRSservice(id="DRS", status="DISABLED", region=regional_client.region)
                     )
                 else:
                     logger.error(
@@ -92,7 +92,7 @@ class DRSJob(BaseModel):
     tags: list = []
 
 
-class DRSs(BaseModel):
+class DRSservice(BaseModel):
     id: str
     status: str
     region: str

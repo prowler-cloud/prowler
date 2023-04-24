@@ -1,6 +1,6 @@
 from unittest import mock
 
-from prowler.providers.aws.services.drs.drs_service import DRSJob, DRSs
+from prowler.providers.aws.services.drs.drs_service import DRSJob, DRSservice
 
 AWS_REGION = "eu-west-1"
 JOB_ARN = "arn:aws:drs:eu-west-1:123456789012:job/12345678901234567890123456789012"
@@ -20,7 +20,7 @@ class Test_drs_jobs_exist:
             )
         ]
         drs_client.drss = [
-            DRSs(
+            DRSservice(
                 id="DRS",
                 status="ENABLED",
                 region=AWS_REGION,
@@ -54,7 +54,7 @@ class Test_drs_jobs_exist:
         drs_client.region = AWS_REGION
         drs_client.drs_jobs = []
         drs_client.drss = [
-            DRSs(
+            DRSservice(
                 id="DRS",
                 status="ENABLED",
                 region=AWS_REGION,
@@ -89,7 +89,7 @@ class Test_drs_jobs_exist:
         drs_client.region = AWS_REGION
         drs_client.drs_jobs = []
         drs_client.drss = [
-            DRSs(
+            DRSservice(
                 id="DRS",
                 status="DISABLED",
                 region=AWS_REGION,
