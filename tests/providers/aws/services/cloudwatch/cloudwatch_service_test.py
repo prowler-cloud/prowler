@@ -129,6 +129,7 @@ class Test_CloudWatch_Service:
             Statistic="Average",
             Threshold=2,
             Unit="Seconds",
+            Tags=[{"Key": "key-1", "Value": "value-1"}],
         )
         audit_info = self.set_mocked_audit_info()
         cloudwatch = CloudWatch(audit_info)
@@ -141,6 +142,9 @@ class Test_CloudWatch_Service:
         assert cloudwatch.metric_alarms[0].metric == "test_metric"
         assert cloudwatch.metric_alarms[0].name_space == "test_namespace"
         assert cloudwatch.metric_alarms[0].region == AWS_REGION
+        assert cloudwatch.metric_alarms[0].tags == [
+            {"Key": "key-1", "Value": "value-1"}
+        ]
 
     # Test Logs Filters
     @mock_logs
@@ -174,7 +178,9 @@ class Test_CloudWatch_Service:
         # Logs client for this test class
         logs_client = client("logs", region_name=AWS_REGION)
         logs_client.create_log_group(
-            logGroupName="/log-group/test", kmsKeyId="test_kms_id"
+            logGroupName="/log-group/test",
+            kmsKeyId="test_kms_id",
+            tags={"tag_key_1": "tag_value_1", "tag_key_2": "tag_value_2"},
         )
         logs_client.put_retention_policy(
             logGroupName="/log-group/test", retentionInDays=400
@@ -190,3 +196,6 @@ class Test_CloudWatch_Service:
         assert logs.log_groups[0].retention_days == 400
         assert logs.log_groups[0].kms_id == "test_kms_id"
         assert logs.log_groups[0].region == AWS_REGION
+        assert logs.log_groups[0].tags == [
+            {"tag_key_1": "tag_value_1", "tag_key_2": "tag_value_2"}
+        ]
