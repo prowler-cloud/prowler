@@ -104,6 +104,3 @@ class Test_DRS_Service:
         assert drs.drss[0].id == "DRS"
         assert drs.drss[0].region == AWS_REGION
         assert drs.drss[0].status == "ENABLED"
-
-
-        
