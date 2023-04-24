@@ -61,7 +61,7 @@ class NetworkFirewall:
                         )
         except Exception as error:
             logger.error(
-                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __describe_firewall__(self):
