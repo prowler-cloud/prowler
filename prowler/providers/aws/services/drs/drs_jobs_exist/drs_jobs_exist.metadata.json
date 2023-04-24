@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "Ensure DRS is enabled with jobs.",
-      "Url": ""
+      "Url": "https://docs.aws.amazon.com/drs/latest/userguide/what-is-drs.html"
     }
   },
   "Categories": [
