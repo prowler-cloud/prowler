@@ -132,12 +132,14 @@ class Test_Parser:
         with pytest.raises(SystemExit) as wrapped_exit:
             _ = self.parser.parse(command)
         assert wrapped_exit.type == SystemExit
+        assert wrapped_exit.value.code == 0
 
     def test_root_parser_version_long(self):
         command = [prowler_command, "--version"]
         with pytest.raises(SystemExit) as wrapped_exit:
             _ = self.parser.parse(command)
         assert wrapped_exit.type == SystemExit
+        assert wrapped_exit.value.code == 0
 
     def test_root_parser_help_short(self):
         command = [prowler_command, "-h"]

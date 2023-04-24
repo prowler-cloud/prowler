@@ -68,7 +68,7 @@ Detailed documentation at https://docs.prowler.cloud
 
         if len(sys.argv) == 2 and sys.argv[1] in ("-v", "--version"):
             print(check_current_version())
-            sys.exit()
+            sys.exit(0)
 
         # Set AWS as the default provider if no provider is supplied
         if len(sys.argv) == 1:
