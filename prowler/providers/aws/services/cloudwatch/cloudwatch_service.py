@@ -209,8 +209,8 @@ class Logs:
         try:
             for log_group in self.log_groups:
                 regional_client = self.regional_clients[log_group.region]
-                response = regional_client.list_tags_for_resource(
-                    resourceArn=log_group.arn.replace(":*", "")  # Remove the tailing :*
+                response = regional_client.list_tags_log_group(
+                    logGroupName=log_group.name
                 )["tags"]
                 log_group.tags = [response]
         except Exception as error:
