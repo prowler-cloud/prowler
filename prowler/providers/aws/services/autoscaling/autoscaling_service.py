@@ -19,7 +19,6 @@ class AutoScaling:
         self.__threading_call__(self.__describe_launch_configurations__)
         self.groups = []
         self.__threading_call__(self.__describe_auto_scaling_groups__)
-        print(self.groups)
 
     def __get_session__(self):
         return self.session
