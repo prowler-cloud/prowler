@@ -1,7 +1,7 @@
 from unittest import mock
 
 from prowler.providers.aws.services.fms.fms_service import (
-    FMSPolicy,
+    Policy,
     PolicyAccountComplianceStatus,
 )
 
