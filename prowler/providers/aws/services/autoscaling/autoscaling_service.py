@@ -77,11 +77,11 @@ class AutoScaling:
                     ):
                         self.groups.append(
                             Group(
-                                arn=group["AutoScalingGroupARN"],
-                                name=group["AutoScalingGroupName"],
+                                arn=group.get("AutoScalingGroupARN"),
+                                name=group.get("AutoScalingGroupName"),
                                 region=regional_client.region,
-                                availability_zones=group["AvailabilityZones"],
-                                tags=group["Tags"],
+                                availability_zones=group.get("AvailabilityZones"),
+                                tags=group.get("Tags"),
                             )
                         )
 
