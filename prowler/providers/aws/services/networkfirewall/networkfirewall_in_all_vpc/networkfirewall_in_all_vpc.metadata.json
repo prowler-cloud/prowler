@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "aws network-firewall create-firewall --firewall-name <value> --vpc-id <value>",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/NetworkFirewall/network-firewall-in-use.html",
       "Terraform": ""
     },
     "Recommendation": {
