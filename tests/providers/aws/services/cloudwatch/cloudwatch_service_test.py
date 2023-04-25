@@ -195,6 +195,34 @@ class Test_CloudWatch_Service:
         assert logs.log_groups[0].name == "/log-group/test"
         assert logs.log_groups[0].retention_days == 400
         assert logs.log_groups[0].kms_id == "test_kms_id"
+        assert not logs.log_groups[0].never_expire
+        assert logs.log_groups[0].region == AWS_REGION
+        assert logs.log_groups[0].tags == [
+            {"tag_key_1": "tag_value_1", "tag_key_2": "tag_value_2"}
+        ]
+
+    @mock_logs
+    def test__describe_log_groups__never_expire(self):
+        # Logs client for this test class
+        logs_client = client("logs", region_name=AWS_REGION)
+        logs_client.create_log_group(
+            logGroupName="/log-group/test",
+            kmsKeyId="test_kms_id",
+            tags={"tag_key_1": "tag_value_1", "tag_key_2": "tag_value_2"},
+        )
+
+        audit_info = self.set_mocked_audit_info()
+        logs = Logs(audit_info)
+        assert len(logs.log_groups) == 1
+        assert (
+            logs.log_groups[0].arn
+            == f"arn:aws:logs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
+        )
+        assert logs.log_groups[0].name == "/log-group/test"
+        assert logs.log_groups[0].never_expire
+        # Since it never expires we don't use the retention_days
+        assert logs.log_groups[0].retention_days == 9999
+        assert logs.log_groups[0].kms_id == "test_kms_id"
         assert logs.log_groups[0].region == AWS_REGION
         assert logs.log_groups[0].tags == [
             {"tag_key_1": "tag_value_1", "tag_key_2": "tag_value_2"}
