@@ -76,7 +76,7 @@ class Test_fms_policy_compliant:
         fms_client.region = AWS_REGION
         fms_client.fms_admin_account = True
         fms_client.fms_policies = [
-            FMSPolicy(
+            Policy(
                 arn="arn:aws:fms:us-east-1:12345678901",
                 id="12345678901",
                 name="test",
