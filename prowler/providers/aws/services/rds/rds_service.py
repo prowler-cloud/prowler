@@ -182,9 +182,9 @@ class RDS:
                                     status=cluster["Status"],
                                     public=cluster.get("PubliclyAccessible", False),
                                     encrypted=cluster["StorageEncrypted"],
-                                    auto_minor_version_upgrade=cluster[
-                                        "AutoMinorVersionUpgrade"
-                                    ],
+                                    auto_minor_version_upgrade=cluster.get(
+                                        "AutoMinorVersionUpgrade", False
+                                    ),
                                     backup_retention_period=cluster.get(
                                         "BackupRetentionPeriod"
                                     ),
