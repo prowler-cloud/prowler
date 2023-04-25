@@ -18,12 +18,14 @@ class RDS:
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.db_instances = []
+        self.db_clusters = []
         self.db_snapshots = []
         self.db_cluster_snapshots = []
         self.__threading_call__(self.__describe_db_instances__)
         self.__threading_call__(self.__describe_db_parameters__)
         self.__threading_call__(self.__describe_db_snapshots__)
         self.__threading_call__(self.__describe_db_snapshot_attributes__)
+        self.__threading_call__(self.__describe_db_clusters__)
         self.__threading_call__(self.__describe_db_cluster_snapshots__)
         self.__threading_call__(self.__describe_db_cluster_snapshot_attributes__)
 
@@ -79,6 +81,7 @@ class RDS:
                                         for item in instance["DBParameterGroups"]
                                     ],
                                     multi_az=instance["MultiAZ"],
+                                    cluster_id=instance.get("DBClusterIdentifier"),
                                     region=regional_client.region,
                                     tags=instance.get("TagList"),
                                 )
@@ -157,6 +160,49 @@ class RDS:
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def __describe_db_clusters__(self, regional_client):
+        logger.info("RDS - Describe Clusters...")
+        try:
+            describe_db_clusters_paginator = regional_client.get_paginator(
+                "describe_db_clusters"
+            )
+            for page in describe_db_clusters_paginator.paginate():
+                for cluster in page["DBClusters"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            cluster["DBClusterIdentifier"], self.audit_resources
+                        )
+                    ):
+                        if cluster["Engine"] != "docdb":
+                            self.db_clusters.append(
+                                DBCluster(
+                                    id=cluster["DBClusterIdentifier"],
+                                    endpoint=cluster.get("Endpoint"),
+                                    engine=cluster["Engine"],
+                                    status=cluster["Status"],
+                                    public=cluster.get("PubliclyAccessible", False),
+                                    encrypted=cluster["StorageEncrypted"],
+                                    auto_minor_version_upgrade=cluster[
+                                        "AutoMinorVersionUpgrade"
+                                    ],
+                                    backup_retention_period=cluster.get(
+                                        "BackupRetentionPeriod"
+                                    ),
+                                    cloudwatch_logs=cluster.get(
+                                        "EnabledCloudwatchLogsExports"
+                                    ),
+                                    deletion_protection=cluster["DeletionProtection"],
+                                    parameter_group=cluster["DBClusterParameterGroup"],
+                                    multi_az=cluster["MultiAZ"],
+                                    region=regional_client.region,
+                                    tags=cluster.get("TagList"),
+                                )
+                            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def __describe_db_cluster_snapshots__(self, regional_client):
         logger.info("RDS - Describe Cluster Snapshots...")
         try:
@@ -218,6 +264,24 @@ class DBInstance(BaseModel):
     multi_az: bool
     parameter_groups: list[str] = []
     parameters: list[dict] = []
+    cluster_id: Optional[str]
+    region: str
+    tags: Optional[list] = []
+
+
+class DBCluster(BaseModel):
+    id: str
+    endpoint: Optional[str]
+    engine: str
+    status: str
+    public: bool
+    encrypted: bool
+    backup_retention_period: int = 0
+    cloudwatch_logs: Optional[list]
+    deletion_protection: bool
+    auto_minor_version_upgrade: bool
+    multi_az: bool
+    parameter_group: Optional[str]
     region: str
     tags: Optional[list] = []
 
