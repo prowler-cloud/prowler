@@ -66,7 +66,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             assert len(result) == 0
 
     @mock_logs
-    def test_cloudwatch_log_group_without_retention_days(self):
+    def test_cloudwatch_log_group_without_retention_days_never_expires(self):
         # Generate Logs Client
         logs_client = client("logs", region_name=AWS_REGION)
         # Request Logs group
@@ -103,12 +103,17 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Log Group test has less than 365 days retention period (0 days)."
+                == "Log Group test comply with 365 days retention period since it never expires."
             )
             assert result[0].resource_id == "test"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:logs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:log-group:test"
+            )
+            assert result[0].region == AWS_REGION
 
     @mock_logs
     def test_cloudwatch_log_group_with_compliant_retention_days(self):
@@ -155,6 +160,11 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
                 == "Log Group test comply with 365 days retention period since it has 400 days."
             )
             assert result[0].resource_id == "test"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:logs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:log-group:test"
+            )
+            assert result[0].region == AWS_REGION
 
     @mock_logs
     def test_cloudwatch_log_group_with_no_compliant_retention_days(self):
@@ -201,3 +211,8 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
                 == "Log Group test has less than 365 days retention period (7 days)."
             )
             assert result[0].resource_id == "test"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:logs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:log-group:test"
+            )
+            assert result[0].region == AWS_REGION
