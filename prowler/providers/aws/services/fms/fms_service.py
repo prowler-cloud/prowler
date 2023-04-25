@@ -97,7 +97,7 @@ class PolicyAccountComplianceStatus(BaseModel):
     status: str
 
 
-class FMSPolicy(BaseModel):
+class Policy(BaseModel):
     arn: str
     id: str
     name: str
