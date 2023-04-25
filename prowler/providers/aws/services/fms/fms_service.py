@@ -37,7 +37,7 @@ class FMS:
                             )
                         ):
                             self.fms_policies.append(
-                                FMSPolicy(
+                                Policy(
                                     arn=fms_policy.get("PolicyArn"),
                                     id=fms_policy.get("PolicyId"),
                                     name=fms_policy.get("PolicyName"),
