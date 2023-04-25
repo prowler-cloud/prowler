@@ -209,7 +209,7 @@ class Test_RDS_Service:
         assert len(rds.db_clusters) == 1
         assert rds.db_clusters[0].id == "db-master-1"
         assert rds.db_clusters[0].region == AWS_REGION
-        assert "us-east-1.rds.amazonaws.com" in rds.db_clusters[0].endpoint
+        assert f"{AWS_REGION}.rds.amazonaws.com" in rds.db_clusters[0].endpoint
         assert rds.db_clusters[0].status == "available"
         assert not rds.db_clusters[0].public
         assert not rds.db_clusters[0].encrypted
