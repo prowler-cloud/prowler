@@ -152,17 +152,18 @@ class Logs:
                     if not self.audit_resources or (
                         is_resource_filtered(log_group["arn"], self.audit_resources)
                     ):
-                        kms = None
-                        retention_days = 0
-                        if "kmsKeyId" in log_group:
-                            kms = log_group["kmsKeyId"]
-                        if "retentionInDays" in log_group:
-                            retention_days = log_group["retentionInDays"]
+                        never_expire = False
+                        kms = log_group.get("kmsKeyId")
+                        retention_days = log_group.get("retentionInDays")
+                        if not retention_days:
+                            never_expire = True
+                            retention_days = 9999
                         self.log_groups.append(
                             LogGroup(
                                 arn=log_group["arn"],
                                 name=log_group["logGroupName"],
                                 retention_days=retention_days,
+                                never_expire=never_expire,
                                 kms_id=kms,
                                 region=regional_client.region,
                             )
@@ -240,6 +241,7 @@ class LogGroup(BaseModel):
     arn: str
     name: str
     retention_days: int
+    never_expire: bool
     kms_id: Optional[str]
     region: str
     log_streams: dict[
