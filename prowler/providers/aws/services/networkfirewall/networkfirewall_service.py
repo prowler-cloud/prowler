@@ -76,7 +76,8 @@ class NetworkFirewall:
                 network_firewall.vpc_id = describe_firewall.get("VpcId")
                 network_firewall.tags = describe_firewall.get("Tags")
                 network_firewall.encryption_type = describe_firewall.get(
-                    "EncryptionConfiguration").get("Type")
+                    "EncryptionConfiguration"
+                ).get("Type")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
