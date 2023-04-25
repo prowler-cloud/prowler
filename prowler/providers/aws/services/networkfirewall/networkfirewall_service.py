@@ -54,9 +54,9 @@ class NetworkFirewall:
                     ):
                         self.network_firewalls.append(
                             Firewall(
-                                arn=network_firewall["FirewallArn"],
+                                arn=network_firewall.get("FirewallArn"),
                                 region=regional_client.region,
-                                name=network_firewall["FirewallName"],
+                                name=network_firewall.get("FirewallName"),
                             )
                         )
         except Exception as error:
@@ -72,12 +72,11 @@ class NetworkFirewall:
                 describe_firewall = regional_client.describe_firewall(
                     FirewallArn=network_firewall.arn
                 )["Firewall"]
-                network_firewall.policy_arn = describe_firewall["FirewallPolicyArn"]
-                network_firewall.vpc_id = describe_firewall["VpcId"]
-                network_firewall.tags = describe_firewall["Tags"]
-                network_firewall.encryption_type = describe_firewall[
-                    "EncryptionConfiguration"
-                ]["Type"]
+                network_firewall.policy_arn = describe_firewall.get("FirewallPolicyArn")
+                network_firewall.vpc_id = describe_firewall.get("VpcId")
+                network_firewall.tags = describe_firewall.get("Tags")
+                network_firewall.encryption_type = describe_firewall.get(
+                    "EncryptionConfiguration").get("Type")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"

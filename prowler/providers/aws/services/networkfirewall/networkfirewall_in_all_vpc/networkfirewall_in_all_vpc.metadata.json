@@ -5,7 +5,7 @@
   "CheckType": [],
   "ServiceName": "network-firewall",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
+  "ResourceIdTemplate": "arn:partition:network-firewall::account-id:firewall/firewall-name",
   "Severity": "medium",
   "ResourceType": "Other",
   "Description": "Ensure all VPCs have Network Firewall enabled",
@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/setting-up.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws network-firewall list-firewalls",
+      "CLI": "aws network-firewall create-firewall --firewall-name <value> --vpc-id <value>",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
