@@ -86,6 +86,7 @@ class Test_S3_Service:
             s3.buckets[0].arn
             == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
         )
+        assert not s3.buckets[0].object_lock
 
     # Test S3 Get Bucket Versioning
     @mock_s3
@@ -379,3 +380,27 @@ class Test_S3_Service:
         assert s3control.account_public_access_block.ignore_public_acls
         assert s3control.account_public_access_block.block_public_policy
         assert s3control.account_public_access_block.restrict_public_buckets
+
+    # Test S3 Get Bucket Object Lock
+    @mock_s3
+    def test__get_object_lock_configuration__(self):
+        # Generate S3 Client
+        s3_client = client("s3")
+        # Create S3 Bucket
+        bucket_name = "test-bucket"
+        s3_client.create_bucket(
+            Bucket=bucket_name,
+            ObjectOwnership="BucketOwnerEnforced",
+            ObjectLockEnabledForBucket=True,
+        )
+
+        # S3 client for this test class
+        audit_info = self.set_mocked_audit_info()
+        s3 = S3(audit_info)
+        assert len(s3.buckets) == 1
+        assert s3.buckets[0].name == bucket_name
+        assert (
+            s3.buckets[0].arn
+            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+        )
+        assert s3.buckets[0].object_lock
