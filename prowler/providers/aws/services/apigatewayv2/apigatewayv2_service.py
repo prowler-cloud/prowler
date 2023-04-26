@@ -37,7 +37,7 @@ class ApiGatewayV2:
         logger.info("APIGatewayv2 - Getting APIs...")
         try:
             get_apis_paginator = regional_client.get_paginator("get_apis")
-            for page in get_rest_apis_paginator.paginate():
+            for page in get_apis_paginator.paginate():
                 for apigw in page["Items"]:
                     if not self.audit_resources or (
                         is_resource_filtered(apigw["ApiId"], self.audit_resources)
