@@ -120,6 +120,12 @@ class Test_AutoScaling_Service:
             MaxSize=0,
             DesiredCapacity=0,
             AvailabilityZones=["us-east-1a", "us-east-1b"],
+            Tags=[
+                {
+                    "Key": "tag_test",
+                    "Value": "value_test",
+                },
+            ],
         )
 
         # AutoScaling client for this test class
@@ -132,4 +138,12 @@ class Test_AutoScaling_Service:
         assert autoscaling.groups[0].name == "my-autoscaling-group"
         assert autoscaling.groups[0].region == AWS_REGION
         assert autoscaling.groups[0].availability_zones == ["us-east-1a", "us-east-1b"]
-        assert autoscaling.groups[0].tags == []
+        assert autoscaling.groups[0].tags == [
+            {
+                "Key": "tag_test",
+                "PropagateAtLaunch": False,
+                "ResourceId": "my-autoscaling-group",
+                "ResourceType": "auto-scaling-group",
+                "Value": "value_test",
+            }
+        ]
