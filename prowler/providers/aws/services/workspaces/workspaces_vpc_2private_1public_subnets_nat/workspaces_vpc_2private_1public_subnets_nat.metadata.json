@@ -1,15 +1,15 @@
 {
   "Provider": "aws",
   "CheckID": "workspaces_vpc_2private_1public_subnets_nat",
-  "CheckTitle": "Ensuere Workspaces VPC are deployed using 2 private networks and 1 public network with NAT best practice",
+  "CheckTitle": "Ensure Workspaces VPC are deployed using 2 private networks and 1 public network with NAT best practice",
   "CheckType": [],
   "ServiceName": "workspaces",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:workspaces:region:account-id:workspace",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "AwsWorkspaces",
-  "Description": "Ensuere Workspaces VPC are deployed using 2 private networks and 1 public network with NAT best practice",
-  "Risk": "",
+  "Description": "Ensure Workspaces VPC are deployed using 2 private networks and 1 public network with NAT best practice",
+  "Risk": "Proper network segmentation is a key security best practice. Workspaces VPC should be deployed using 2 private networks and 1 public network with NAT best practice",
   "RelatedUrl": "https://docs.aws.amazon.com/workspaces/latest/adminguide/amazon-workspaces-vpc.html",
   "Remediation": {
     "Code": {
@@ -19,8 +19,8 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "",
-      "Url": ""
+      "Text": "Follow the documentation and deploy Workspaces VPC using 2 private networks and 1 public network with NAT best practice",
+      "Url": "https://docs.aws.amazon.com/workspaces/latest/adminguide/amazon-workspaces-vpc.html"
     }
   },
   "Categories": [],

@@ -45,7 +45,9 @@ class WorkSpaces:
                         )
                     ):
                         workspace_to_append = WorkSpace(
-                            id=workspace["WorkspaceId"], region=regional_client.region, subnet_id=workspace["SubnetId"]
+                            id=workspace["WorkspaceId"],
+                            region=regional_client.region,
+                            subnet_id=workspace["SubnetId"],
                         )
                         if (
                             "UserVolumeEncryptionEnabled" in workspace

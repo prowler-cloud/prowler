@@ -1,9 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 from prowler.providers.aws.services.workspaces.workspaces_client import (
     workspaces_client,
-)
-from prowler.providers.aws.services.vpc.vpc_client import (
-    vpc_client,
 )
 
 
@@ -43,9 +41,13 @@ class workspaces_vpc_2private_1public_subnets_nat(Check):
                         # Check NAT Gateway here
                     if not vpc_subnet.public:
                         private_subnets += 1
-            if public_subnets < 1 or private_subnets < 2 or not public_subnet_nat_gateway:
+            if (
+                public_subnets < 1
+                or private_subnets < 2
+                or not public_subnet_nat_gateway
+            ):
                 report.status = "FAIL"
-                report.status_extended = f"Worspaces VPC has not 1 public with nat gateaway and 2 private subnets"
+                report.status_extended = "Worspaces VPC has not 1 public with nat gateaway and 2 private subnets"
 
             findings.append(report)
         return findings
