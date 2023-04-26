@@ -275,12 +275,14 @@ class VPC:
                                     )
                                 )
                             public = False
+                            nat_gateway = False
                             for route in route_tables_for_subnet.get("RouteTables")[
                                 0
                             ].get("Routes"):
                                 if "GatewayId" in route and "igw" in route["GatewayId"]:
                                     public = True
-                                    break
+                                if "NatGatewayId" in route:
+                                    nat_gateway = True
                             # Add it to to list of vpc_subnets and to the VPC object
                             object = VpcSubnet(
                                 id=subnet["SubnetId"],
@@ -290,6 +292,7 @@ class VPC:
                                 region=regional_client.region,
                                 availability_zone=subnet["AvailabilityZone"],
                                 public=public,
+                                nat_gateway=nat_gateway,
                                 tags=subnet.get("Tags"),
                             )
                             self.vpc_subnets[subnet["SubnetId"]] = object
@@ -314,6 +317,7 @@ class VpcSubnet(BaseModel):
     cidr_block: str
     availability_zone: str
     public: bool
+    nat_gateway: bool
     region: str
     tags: Optional[list] = []
 
