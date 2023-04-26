@@ -1,4 +1,5 @@
 import threading
+from datetime import datetime
 from json import loads
 from typing import Optional
 
@@ -107,45 +108,46 @@ class ECR:
                 if repository.scan_on_push:
                     client = self.regional_clients[repository.region]
                     describe_images_paginator = client.get_paginator("describe_images")
-                    for page in describe_images_paginator.paginate(
+                    for image in describe_images_paginator.paginate(
                         repositoryName=repository.name
-                    ):
-                        for image in page["imageDetails"]:
-                            severity_counts = None
-                            last_scan_status = None
-                            if "imageScanStatus" in image:
-                                last_scan_status = image["imageScanStatus"]["status"]
+                        # We need to sort images by the time where it was pushed to the registry
+                        # since for now we only check the latest
+                    ).search("sort_by(imageDetails, &to_string(imagePushedAt))[-1]"):
+                        # for image in page["imageDetails"]:
+                        severity_counts = None
+                        last_scan_status = None
+                        if "imageScanStatus" in image:
+                            last_scan_status = image["imageScanStatus"]["status"]
 
-                            if "imageScanFindingsSummary" in image:
-                                severity_counts = FindingSeverityCounts(
-                                    critical=0, high=0, medium=0
-                                )
-                                finding_severity_counts = image[
-                                    "imageScanFindingsSummary"
-                                ]["findingSeverityCounts"]
-                                if "CRITICAL" in finding_severity_counts:
-                                    severity_counts.critical = finding_severity_counts[
-                                        "CRITICAL"
-                                    ]
-                                if "HIGH" in finding_severity_counts:
-                                    severity_counts.high = finding_severity_counts[
-                                        "HIGH"
-                                    ]
-                                if "MEDIUM" in finding_severity_counts:
-                                    severity_counts.medium = finding_severity_counts[
-                                        "MEDIUM"
-                                    ]
-                            latest_tag = "None"
-                            if image.get("imageTags"):
-                                latest_tag = image["imageTags"][0]
-                            repository.images_details.append(
-                                ImageDetails(
-                                    latest_tag=latest_tag,
-                                    latest_digest=image["imageDigest"],
-                                    scan_findings_status=last_scan_status,
-                                    scan_findings_severity_count=severity_counts,
-                                )
+                        if "imageScanFindingsSummary" in image:
+                            severity_counts = FindingSeverityCounts(
+                                critical=0, high=0, medium=0
                             )
+                            finding_severity_counts = image["imageScanFindingsSummary"][
+                                "findingSeverityCounts"
+                            ]
+                            if "CRITICAL" in finding_severity_counts:
+                                severity_counts.critical = finding_severity_counts[
+                                    "CRITICAL"
+                                ]
+                            if "HIGH" in finding_severity_counts:
+                                severity_counts.high = finding_severity_counts["HIGH"]
+                            if "MEDIUM" in finding_severity_counts:
+                                severity_counts.medium = finding_severity_counts[
+                                    "MEDIUM"
+                                ]
+                        latest_tag = "None"
+                        if image.get("imageTags"):
+                            latest_tag = image["imageTags"][0]
+                        repository.images_details.append(
+                            ImageDetails(
+                                latest_tag=latest_tag,
+                                latest_digest=image["imageDigest"],
+                                scan_findings_status=last_scan_status,
+                                scan_findings_severity_count=severity_counts,
+                                pushed_at=image["imagePushedAt"],
+                            )
+                        )
 
         except Exception as error:
             logger.error(
@@ -215,6 +217,7 @@ class ImageDetails(BaseModel):
     latest_digest: str
     scan_findings_status: Optional[str]
     scan_findings_severity_count: Optional[FindingSeverityCounts]
+    pushed_at: datetime
 
 
 class Repository(BaseModel):
