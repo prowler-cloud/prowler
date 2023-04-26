@@ -179,7 +179,7 @@ class Test_rds_instance_multi_az:
         ]
 
         with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
+            "prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az.rds_client",
             new=rds_client,
         ):
             # Test Check
@@ -239,7 +239,7 @@ class Test_rds_instance_multi_az:
         ]
 
         with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
+            "prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az.rds_client",
             new=rds_client,
         ):
             # Test Check
