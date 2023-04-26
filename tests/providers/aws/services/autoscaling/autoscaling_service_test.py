@@ -100,3 +100,50 @@ class Test_AutoScaling_Service:
         assert autoscaling.launch_configurations[0].image_id == "ami-12c6146b"
         assert autoscaling.launch_configurations[1].image_id == "ami-12c6146b"
         assert autoscaling.launch_configurations[1].name == "tester2"
+
+    # Test Describe Auto Scaling Groups
+    @mock_autoscaling
+    def test__describe_auto_scaling_groups__(self):
+        # Generate AutoScaling Client
+        autoscaling_client = client("autoscaling", region_name=AWS_REGION)
+        autoscaling_client.create_launch_configuration(
+            LaunchConfigurationName="test",
+            ImageId="ami-12c6146b",
+            InstanceType="t1.micro",
+            KeyName="the_keys",
+            SecurityGroups=["default", "default2"],
+        )
+        asg = autoscaling_client.create_auto_scaling_group(
+            AutoScalingGroupName="my-autoscaling-group",
+            LaunchConfigurationName="test",
+            MinSize=0,
+            MaxSize=0,
+            DesiredCapacity=0,
+            AvailabilityZones=["us-east-1a", "us-east-1b"],
+            Tags=[
+                {
+                    "Key": "tag_test",
+                    "Value": "value_test",
+                },
+            ],
+        )
+
+        # AutoScaling client for this test class
+        audit_info = self.set_mocked_audit_info()
+        autoscaling = AutoScaling(audit_info)
+        print("asg", asg)
+        assert len(autoscaling.groups) == 1
+        # create_auto_scaling_group doesn't return the ARN, can't check it
+        # assert autoscaling.groups[0].arn ==
+        assert autoscaling.groups[0].name == "my-autoscaling-group"
+        assert autoscaling.groups[0].region == AWS_REGION
+        assert autoscaling.groups[0].availability_zones == ["us-east-1a", "us-east-1b"]
+        assert autoscaling.groups[0].tags == [
+            {
+                "Key": "tag_test",
+                "PropagateAtLaunch": False,
+                "ResourceId": "my-autoscaling-group",
+                "ResourceType": "auto-scaling-group",
+                "Value": "value_test",
+            }
+        ]
