@@ -35,6 +35,7 @@ class Test_workspaces_volume_encryption_enabled:
                 region=AWS_REGION,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
+                subnet_id="subnet-12345678",
             )
         )
         with mock.patch(
@@ -64,6 +65,7 @@ class Test_workspaces_volume_encryption_enabled:
                 region=AWS_REGION,
                 user_volume_encryption_enabled=False,
                 root_volume_encryption_enabled=True,
+                subnet_id="subnet-12345678",
             )
         )
         with mock.patch(
@@ -91,6 +93,7 @@ class Test_workspaces_volume_encryption_enabled:
                 region=AWS_REGION,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=False,
+                subnet_id="subnet-12345678",
             )
         )
         with mock.patch(
@@ -118,6 +121,7 @@ class Test_workspaces_volume_encryption_enabled:
                 region=AWS_REGION,
                 user_volume_encryption_enabled=False,
                 root_volume_encryption_enabled=False,
+                subnet_id="subnet-12345678",
             )
         )
         with mock.patch(
