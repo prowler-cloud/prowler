@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "organizations_tags_policies_enabled_and_attached",
+  "CheckTitle": "Check if AWS Organizations tags policies are enabled and attached.",
+  "CheckType": [],
+  "ServiceName": "organizations",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Check if AWS Organizations tags policies are enabled and attached.",
+  "Risk": "If AWS Organizations tags policies are not enabled and attached, it is not possible to enforce tags on AWS resources.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable and attach AWS Organizations tags policies.",
+      "Url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

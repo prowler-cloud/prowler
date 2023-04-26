@@ -36,13 +36,8 @@ class Organizations:
                 organization_arn = organization_desc.get("Arn")
                 organization_id = organization_desc.get("Id")
                 organization_master_id = organization_desc.get("MasterAccountId")
-                organization_available_policy_types = organization_desc.get(
-                    "AvailablePolicyTypes"
-                )
                 # Fetch policies for organization:
-                organization_policies = self.__list_policies__(
-                    organization_available_policy_types
-                )
+                organization_policies = self.__list_policies__()
                 # Fetch delegated administrators for organization:
                 organization_delegated_administrator = (
                     self.__list_delegated_administrators__()
@@ -95,19 +90,23 @@ class Organizations:
             )
 
     # I'm using list_policies instead of list_policies_for_target, because the last one only returns "Attached directly" policies but not "Inherited from..." policies.
-    def __list_policies__(self, enabled_policy_types):
+    def __list_policies__(self):
         logger.info("Organizations - List policies...")
+        avilable_policies = [
+            "SERVICE_CONTROL_POLICY",
+            "TAG_POLICY",
+            "BACKUP_POLICY",
+            "AISERVICES_OPT_OUT_POLICY",
+        ]
 
         try:
             list_policies_paginator = self.client.get_paginator("list_policies")
-            for policy_type in enabled_policy_types:
+            for policy_type in avilable_policies:
                 logger.info(
                     "Organizations - List policies... - Type: %s",
-                    policy_type.get("Type"),
+                    policy_type,
                 )
-                for page in list_policies_paginator.paginate(
-                    Filter=policy_type.get("Type")
-                ):
+                for page in list_policies_paginator.paginate(Filter=policy_type):
                     for policy in page["Policies"]:
                         policy_content = self.__describe_policy__(policy.get("Id"))
                         policy_targets = self.__list_targets_for_policy__(
