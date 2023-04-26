@@ -209,6 +209,7 @@ class Test_RDS_Service:
         rds = RDS(audit_info)
         assert len(rds.db_clusters) == 1
         assert rds.db_clusters[cluster_id].id == "db-master-1"
+        assert rds.db_clusters[cluster_id].engine == "postgres"
         assert rds.db_clusters[cluster_id].region == AWS_REGION
         assert f"{AWS_REGION}.rds.amazonaws.com" in rds.db_clusters[cluster_id].endpoint
         assert rds.db_clusters[cluster_id].status == "available"
