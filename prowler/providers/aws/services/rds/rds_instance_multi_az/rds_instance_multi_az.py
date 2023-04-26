@@ -12,14 +12,12 @@ class rds_instance_multi_az(Check):
             report.resource_tags = db_instance.tags
             # Check if is member of a cluster
             if db_instance.cluster_id:
-                for db_cluster in rds_client.db_clusters:
-                    if db_cluster.id == db_instance.cluster_id:
-                        if db_cluster.multi_az:
-                            report.status = "PASS"
-                            report.status_extended = f"RDS Instance {db_instance.id} has multi-AZ enabled at cluster {db_cluster.id} level."
-                        else:
-                            report.status = "FAIL"
-                            report.status_extended = f"RDS Instance {db_instance.id} does not have multi-AZ enabled at cluster {db_cluster.id} level."
+                if rds_client.db_clusters[db_instance.cluster_id].multi_az:
+                    report.status = "PASS"
+                    report.status_extended = f"RDS Instance {db_instance.id} has multi-AZ enabled at cluster {db_instance.cluster_id} level."
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = f"RDS Instance {db_instance.id} does not have multi-AZ enabled at cluster {db_instance.cluster_id} level."
             else:
                 if db_instance.multi_az:
                     report.status = "PASS"

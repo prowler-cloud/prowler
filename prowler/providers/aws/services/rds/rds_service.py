@@ -18,7 +18,7 @@ class RDS:
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.db_instances = []
-        self.db_clusters = []
+        self.db_clusters = {}
         self.db_snapshots = []
         self.db_cluster_snapshots = []
         self.__threading_call__(self.__describe_db_instances__)
@@ -174,30 +174,31 @@ class RDS:
                         )
                     ):
                         if cluster["Engine"] != "docdb":
-                            self.db_clusters.append(
-                                DBCluster(
-                                    id=cluster["DBClusterIdentifier"],
-                                    endpoint=cluster.get("Endpoint"),
-                                    engine=cluster["Engine"],
-                                    status=cluster["Status"],
-                                    public=cluster.get("PubliclyAccessible", False),
-                                    encrypted=cluster["StorageEncrypted"],
-                                    auto_minor_version_upgrade=cluster.get(
-                                        "AutoMinorVersionUpgrade", False
-                                    ),
-                                    backup_retention_period=cluster.get(
-                                        "BackupRetentionPeriod"
-                                    ),
-                                    cloudwatch_logs=cluster.get(
-                                        "EnabledCloudwatchLogsExports"
-                                    ),
-                                    deletion_protection=cluster["DeletionProtection"],
-                                    parameter_group=cluster["DBClusterParameterGroup"],
-                                    multi_az=cluster["MultiAZ"],
-                                    region=regional_client.region,
-                                    tags=cluster.get("TagList"),
-                                )
+                            db_cluster = DBCluster(
+                                id=cluster["DBClusterIdentifier"],
+                                endpoint=cluster.get("Endpoint"),
+                                engine=cluster["Engine"],
+                                status=cluster["Status"],
+                                public=cluster.get("PubliclyAccessible", False),
+                                encrypted=cluster["StorageEncrypted"],
+                                auto_minor_version_upgrade=cluster.get(
+                                    "AutoMinorVersionUpgrade", False
+                                ),
+                                backup_retention_period=cluster.get(
+                                    "BackupRetentionPeriod"
+                                ),
+                                cloudwatch_logs=cluster.get(
+                                    "EnabledCloudwatchLogsExports"
+                                ),
+                                deletion_protection=cluster["DeletionProtection"],
+                                parameter_group=cluster["DBClusterParameterGroup"],
+                                multi_az=cluster["MultiAZ"],
+                                region=regional_client.region,
+                                tags=cluster.get("TagList"),
                             )
+                            self.db_clusters[
+                                cluster["DBClusterIdentifier"]
+                            ] = db_cluster
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
