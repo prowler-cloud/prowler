@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 from uuid import uuid4
 
@@ -61,7 +60,7 @@ class Test_sns_topics_not_publicly_accessible:
             result = check.execute()
             assert len(result) == 0
 
-    def test_topics_not_public(self):
+    def test_topic_not_public(self):
         sns_client = mock.MagicMock
         sns_client.topics = []
         sns_client.topics.append(
@@ -84,11 +83,16 @@ class Test_sns_topics_not_publicly_accessible:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search("without public access", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"SNS topic {topic_name} is not publicly accesible"
+            )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
-    def test_topics_no_policy(self):
+    def test_topic_no_policy(self):
         sns_client = mock.MagicMock
         sns_client.topics = []
         sns_client.topics.append(
@@ -106,11 +110,16 @@ class Test_sns_topics_not_publicly_accessible:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search("without public access", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"SNS topic {topic_name} is not publicly accesible"
+            )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
-    def test_topics_public_with_condition(self):
+    def test_topic_public_with_condition(self):
         sns_client = mock.MagicMock
         sns_client.topics = []
         sns_client.topics.append(
@@ -132,12 +141,17 @@ class Test_sns_topics_not_publicly_accessible:
             check = sns_topics_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert search("but has a Condition", result[0].status_extended)
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"SNS topic {topic_name} is publicly accesible but has a Condition that could filter it"
+            )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
-    def test_topics_no_key(self):
+    def test_topic_public(self):
         sns_client = mock.MagicMock
         sns_client.topics = []
         sns_client.topics.append(
@@ -160,6 +174,11 @@ class Test_sns_topics_not_publicly_accessible:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("with public access", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"SNS topic {topic_name} is publicly accesible"
+            )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
