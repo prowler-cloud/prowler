@@ -10,16 +10,23 @@ class rds_instance_deletion_protection(Check):
             report.region = db_instance.region
             report.resource_id = db_instance.id
             report.resource_tags = db_instance.tags
-            if db_instance.deletion_protection:
-                report.status = "PASS"
-                report.status_extended = (
-                    f"RDS Instance {db_instance.id} deletion protection is enabled."
-                )
+            # Check if is member of a cluster
+            if db_instance.cluster_id:
+                if rds_client.db_clusters[db_instance.cluster_id].deletion_protection:
+                    report.status = "PASS"
+                    report.status_extended = f"RDS Instance {db_instance.id} deletion protection is enabled at cluster {db_instance.cluster_id} level."
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = f"RDS Instance {db_instance.id} deletion protection is not enabled at cluster {db_instance.cluster_id} level."
             else:
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"RDS Instance {db_instance.id} deletion protection is not enabled."
-                )
+                if db_instance.deletion_protection:
+                    report.status = "PASS"
+                    report.status_extended = (
+                        f"RDS Instance {db_instance.id} deletion protection is enabled."
+                    )
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = f"RDS Instance {db_instance.id} deletion protection is not enabled."
 
             findings.append(report)
 
