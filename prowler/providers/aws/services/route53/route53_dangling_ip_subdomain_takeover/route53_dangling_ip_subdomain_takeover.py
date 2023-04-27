@@ -21,6 +21,9 @@ class route53_dangling_ip_subdomain_takeover(Check):
                 for record in record_set.records:
                     report = Check_Report_AWS(self.metadata())
                     report.resource_id = record_set.hosted_zone_id
+                    report.resource_arn = route53_client.hosted_zones[
+                        record_set.hosted_zone_id
+                    ].arn
                     report.resource_tags = route53_client.hosted_zones[
                         record_set.hosted_zone_id
                     ].tags
