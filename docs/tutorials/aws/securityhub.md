@@ -37,20 +37,20 @@ Once you run findings for first time you will be able to see Prowler findings in
 
 ![Screenshot 2020-10-29 at 10 29 05 PM](https://user-images.githubusercontent.com/3985464/97634676-66c9f600-1a36-11eb-9341-70feb06f6331.png)
 
-## Send findings assuming role
+## Send findings to Security Hub assuming an IAM Role
 
-You can send findings to a Security Hub of another account by asumming a role from that account:
+When you are auditing a multi-account AWS environment, you can send findings to a Security Hub of another account by assuming an IAM role from that account using the `-R` flag in the Prowler command:
 
 ```sh
 prowler -S -R arn:aws:iam::123456789012:role/ProwlerExecRole
 ```
 
-> Remember that role needs to have permissions to do send Security Hub findings, you can find them here: [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json)
+> Remember that the used role needs to have permissions to send findings to Security Hub. To get more information about the permissions required, please refer to the following IAM policy [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json)
 
 
 ## Send only failed findings to Security Hub
 
-It is recommended to send only fails to Security Hub and that is possible adding `-q` to the command:
+When using Security Hub it is recommended to send only the failed findings generated. To follow that recommendation you could add the `-q` flag to the Prowler command:
 
 ```sh
 prowler -S -q
