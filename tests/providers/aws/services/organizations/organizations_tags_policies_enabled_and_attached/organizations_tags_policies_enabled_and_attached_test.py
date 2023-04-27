@@ -69,10 +69,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 == "AWS Organizations is not in-use for this AWS Account"
             )
             assert result[0].resource_id == "AWS Organization"
-            assert (
-                result[0].resource_arn
-                == ""
-            )
+            assert result[0].resource_arn == ""
             assert result[0].region == AWS_REGION
 
     def test_organization_with_tag_policies_not_attached(self):
