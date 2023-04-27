@@ -26,7 +26,7 @@ class organizations_tags_policies_enabled_and_attached(Check):
                     if policy.type != "TAG_POLICY":
                         continue
 
-                    report.status_extended = f"TAG Policies exist at the organization {org.id} level but not attached"
+                    report.status_extended = f"AWS Organization {org.id} has tag policies enabled but not attached"
 
                     if policy.targets:
                         report.status = "PASS"
