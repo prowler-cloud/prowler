@@ -31,21 +31,17 @@ class workspaces_vpc_2private_1public_subnets_nat(Check):
             # Analyze VPC subnets
             public_subnets = 0
             private_subnets = 0
-            public_subnet_nat_gateway = False
+            nat_gateway = False
             if vpc_object:
                 for vpc_subnet in vpc_object.subnets:
                     if vpc_subnet.public:
                         public_subnets += 1
-                        if vpc_subnet.nat_gateway:
-                            public_subnet_nat_gateway = True
-                        # Check NAT Gateway here
                     if not vpc_subnet.public:
                         private_subnets += 1
-            if (
-                public_subnets < 1
-                or private_subnets < 2
-                or not public_subnet_nat_gateway
-            ):
+                        if vpc_subnet.nat_gateway:
+                            nat_gateway = True
+                        # Check NAT Gateway here
+            if public_subnets < 1 or private_subnets < 2 or not nat_gateway:
                 report.status = "FAIL"
                 report.status_extended = f"Workspaces {workspace.id} VPC has not 1 public subnet with NAT gateway and 2 private subnets"
 

@@ -350,6 +350,14 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             RouteTableId=route_table_private_2["RouteTable"]["RouteTableId"],
             SubnetId=subnet_private_2["Subnet"]["SubnetId"],
         )
+        # Nat Gateway
+        nat_gw = ec2_client.create_nat_gateway(
+            SubnetId=subnet_private_2["Subnet"]["SubnetId"],
+        )
+        ec2_client.create_route(
+            NatGatewayId=nat_gw["NatGateway"]["NatGatewayId"],
+            RouteTableId=route_table_private_2["RouteTable"]["RouteTableId"],
+        )
         # VPC Public
         subnet_public = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -358,14 +366,6 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         )
         route_table_public = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
-        )
-
-        nat_gw = ec2_client.create_nat_gateway(
-            SubnetId=subnet_public["Subnet"]["SubnetId"],
-        )
-        ec2_client.create_route(
-            NatGatewayId=nat_gw["NatGateway"]["NatGatewayId"],
-            RouteTableId=route_table_public["RouteTable"]["RouteTableId"],
         )
         igw = ec2_client.create_internet_gateway()
         ec2_client.create_route(
