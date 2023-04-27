@@ -17,7 +17,7 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
             "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "prowler.providers.aws.services.route53.route53_service.Route53",
+            "prowler.providers.aws.services.route53.shield_advanced_protection_in_route53_hosted_zones.shield_advanced_protection_in_route53_hosted_zones.route53_client",
             new=route53_client,
         ):
             # Test Check
@@ -67,7 +67,7 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
             "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "prowler.providers.aws.services.route53.route53_service.Route53",
+            "prowler.providers.aws.services.route53.shield_advanced_protection_in_route53_hosted_zones.shield_advanced_protection_in_route53_hosted_zones.route53_client",
             new=route53_client,
         ):
             # Test Check
@@ -116,7 +116,7 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
             "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "prowler.providers.aws.services.route53.route53_service.Route53",
+            "prowler.providers.aws.services.route53.shield_advanced_protection_in_route53_hosted_zones.shield_advanced_protection_in_route53_hosted_zones.route53_client",
             new=route53_client,
         ):
             # Test Check
@@ -165,7 +165,7 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
             "prowler.providers.aws.services.shield.shield_service.Shield",
             new=shield_client,
         ), mock.patch(
-            "prowler.providers.aws.services.route53.route53_service.Route53",
+            "prowler.providers.aws.services.route53.shield_advanced_protection_in_route53_hosted_zones.shield_advanced_protection_in_route53_hosted_zones.route53_client",
             new=route53_client,
         ):
             # Test Check
