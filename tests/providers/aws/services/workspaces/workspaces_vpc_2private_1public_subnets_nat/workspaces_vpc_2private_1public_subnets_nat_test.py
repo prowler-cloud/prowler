@@ -119,7 +119,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].status == "FAIL"
                     assert (
                         result[0].status_extended
-                        == "Worspaces VPC has not 1 public with nat gateaway and 2 private subnets"
+                        == f"Workspaces {workspace_id} VPC has not 1 public subnet with NAT gateway and 2 private subnets"
                     )
                     assert result[0].resource_id == workspace_id
                     assert result[0].resource_arn == ""
@@ -202,7 +202,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].status == "FAIL"
                     assert (
                         result[0].status_extended
-                        == "Worspaces VPC has not 1 public with nat gateaway and 2 private subnets"
+                        == f"Workspaces {workspace_id} VPC has not 1 public subnet with NAT gateway and 2 private subnets"
                     )
                     assert result[0].resource_id == workspace_id
                     assert result[0].resource_arn == ""
@@ -304,7 +304,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].status == "FAIL"
                     assert (
                         result[0].status_extended
-                        == "Worspaces VPC has not 1 public with nat gateaway and 2 private subnets"
+                        == f"Workspaces {workspace_id} VPC has not 1 public subnet with NAT gateway and 2 private subnets"
                     )
                     assert result[0].resource_id == workspace_id
                     assert result[0].resource_arn == ""
@@ -414,7 +414,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].status == "PASS"
                     assert (
                         result[0].status_extended
-                        == f"Worspace {workspace_id} it's in a VPC wich has 1 public with nat gateway and 2 private subnets"
+                        == f"Workspace {workspace_id} is in a VPC which has 1 public subnet with nat gateway and 2 private subnets"
                     )
                     assert result[0].resource_id == workspace_id
                     assert result[0].resource_arn == ""
