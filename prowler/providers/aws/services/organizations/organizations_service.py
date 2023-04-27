@@ -8,6 +8,12 @@ from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
+available_organizations_policies = [
+    "SERVICE_CONTROL_POLICY",
+    "TAG_POLICY",
+    "BACKUP_POLICY",
+    "AISERVICES_OPT_OUT_POLICY",
+]
 
 ################## Organizations
 class Organizations:
@@ -25,6 +31,7 @@ class Organizations:
         self.policies = []
         self.delegated_administrators = []
         self.__describe_organization__()
+        print (self.policies)
 
     def __describe_organization__(self):
         logger.info("Organizations - Describe Organization...")
@@ -92,16 +99,10 @@ class Organizations:
     # I'm using list_policies instead of list_policies_for_target, because the last one only returns "Attached directly" policies but not "Inherited from..." policies.
     def __list_policies__(self):
         logger.info("Organizations - List policies...")
-        avilable_policies = [
-            "SERVICE_CONTROL_POLICY",
-            "TAG_POLICY",
-            "BACKUP_POLICY",
-            "AISERVICES_OPT_OUT_POLICY",
-        ]
 
         try:
             list_policies_paginator = self.client.get_paginator("list_policies")
-            for policy_type in avilable_policies:
+            for policy_type in available_organizations_policies:
                 logger.info(
                     "Organizations - List policies... - Type: %s",
                     policy_type,
