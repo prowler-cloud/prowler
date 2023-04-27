@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "organizations_tags_policies_enabled_and_attached",
-  "CheckTitle": "Check if AWS Organizations tags policies are enabled and attached.",
+  "CheckTitle": "Check if an AWS Organization has tags policies enabled and attached.",
   "CheckType": [],
   "ServiceName": "organizations",
   "SubServiceName": "",
