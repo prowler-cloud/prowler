@@ -5,7 +5,6 @@ from boto3 import session
 from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.organizations.organizations_service import (
     Organization,
-    Organizations,
     Policy,
 )
 
