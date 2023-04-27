@@ -29,13 +29,33 @@ prowler -S -f eu-west-1
 
 > **Note 1**: It is recommended to send only fails to Security Hub and that is possible adding `-q` to the command.
 
-> **Note 2**: Since Prowler perform checks to all regions by defauls you may need to filter by region when runing Security Hub integration, as shown in the example above. Remember to enable Security Hub in the region or regions you need by calling `aws securityhub enable-security-hub --region <region>` and run Prowler with the option `-f <region>` (if no region is used it will try to push findings in all regions hubs).
+> **Note 2**: Since Prowler perform checks to all regions by default you may need to filter by region when runing Security Hub integration, as shown in the example above. Remember to enable Security Hub in the region or regions you need by calling `aws securityhub enable-security-hub --region <region>` and run Prowler with the option `-f <region>` (if no region is used it will try to push findings in all regions hubs). Prowler will send findings to the Security Hub on the region where the scanned resource is located.
 
-> **Note 3** to have updated findings in Security Hub you have to run Prowler periodically. Once a day or every certain amount of hours.
+> **Note 3**: To have updated findings in Security Hub you have to run Prowler periodically. Once a day or every certain amount of hours.
 
 Once you run findings for first time you will be able to see Prowler findings in Findings section:
 
 ![Screenshot 2020-10-29 at 10 29 05 PM](https://user-images.githubusercontent.com/3985464/97634676-66c9f600-1a36-11eb-9341-70feb06f6331.png)
+
+## Send findings to Security Hub assuming an IAM Role
+
+When you are auditing a multi-account AWS environment, you can send findings to a Security Hub of another account by assuming an IAM role from that account using the `-R` flag in the Prowler command:
+
+```sh
+prowler -S -R arn:aws:iam::123456789012:role/ProwlerExecRole
+```
+
+> Remember that the used role needs to have permissions to send findings to Security Hub. To get more information about the permissions required, please refer to the following IAM policy [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json)
+
+
+## Send only failed findings to Security Hub
+
+When using Security Hub it is recommended to send only the failed findings generated. To follow that recommendation you could add the `-q` flag to the Prowler command:
+
+```sh
+prowler -S -q
+```
+
 
 ## Skip sending updates of findings to Security Hub
 
