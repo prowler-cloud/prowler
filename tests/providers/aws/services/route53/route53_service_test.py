@@ -218,3 +218,42 @@ class Test_Route53_Service:
         assert not route53.hosted_zones[hosted_zone_id].logging_config
 
         assert route53.hosted_zones[hosted_zone_id].region == AWS_REGION
+
+    @mock_route53
+    def test__list_resource_record_sets__(self):
+        # Create Hosted Zone
+        r53_client = client("route53", region_name=AWS_REGION)
+        zone = r53_client.create_hosted_zone(
+            Name="testdns.aws.com", CallerReference=str(hash("foo"))
+        )
+        zone_id = zone["HostedZone"]["Id"]
+
+        r53_client.change_resource_record_sets(
+            HostedZoneId=zone_id,
+            ChangeBatch={
+                "Changes": [
+                    {
+                        "Action": "CREATE",
+                        "ResourceRecordSet": {
+                            "Name": "foo.bar.testdns.aws.com",
+                            "Type": "A",
+                            "ResourceRecords": [{"Value": "1.2.3.4"}],
+                        },
+                    }
+                ]
+            },
+        )
+
+        # Set partition for the service
+        route53 = Route53(self.set_mocked_audit_info())
+        assert (
+            len(route53.record_sets) == 3
+        )  # Default NS and SOA records plus the A record just created
+        for set in route53.record_sets:
+            if set.type == "A":
+                assert set.name == "foo.bar.testdns.aws.com."
+                assert set.type == "A"
+                assert not set.is_alias
+                assert set.records == ["1.2.3.4"]
+                assert set.hosted_zone_id == zone_id.replace("/hostedzone/", "")
+                assert set.region == AWS_REGION

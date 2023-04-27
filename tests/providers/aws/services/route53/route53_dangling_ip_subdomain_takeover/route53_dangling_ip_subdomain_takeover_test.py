@@ -225,7 +225,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
 
     @mock_ec2
     @mock_route53
-    def test_hosted_zone_public_record(self):
+    def test_hosted_zone_eip_record(self):
         conn = client("route53", region_name=AWS_REGION)
         ec2 = client("ec2", region_name=AWS_REGION)
 
