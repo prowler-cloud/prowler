@@ -42,6 +42,8 @@ obsolete_lambda_runtimes:
     "ruby2.5",
   ]
 
+
+
 # AWS Organizations
 # organizations_scp_check_deny_regions
 # organizations_enabled_regions: [

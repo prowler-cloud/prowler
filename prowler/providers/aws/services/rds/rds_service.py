@@ -20,6 +20,7 @@ class RDS:
         self.db_instances = []
         self.db_clusters = {}
         self.db_snapshots = []
+        self.db_engines = []
         self.db_cluster_snapshots = []
         self.__threading_call__(self.__describe_db_instances__)
         self.__threading_call__(self.__describe_db_parameters__)
@@ -28,6 +29,7 @@ class RDS:
         self.__threading_call__(self.__describe_db_clusters__)
         self.__threading_call__(self.__describe_db_cluster_snapshots__)
         self.__threading_call__(self.__describe_db_cluster_snapshot_attributes__)
+        self.__threading_call__(self.__describe_db_engine_versions__)
 
     def __get_session__(self):
         return self.session
@@ -60,6 +62,7 @@ class RDS:
                                     id=instance["DBInstanceIdentifier"],
                                     endpoint=instance.get("Endpoint"),
                                     engine=instance["Engine"],
+                                    engine_version=instance["EngineVersion"],
                                     status=instance["DBInstanceStatus"],
                                     public=instance["PubliclyAccessible"],
                                     encrypted=instance["StorageEncrypted"],
@@ -90,6 +93,7 @@ class RDS:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
 
     def __describe_db_parameters__(self, regional_client):
         logger.info("RDS - Describe DB Parameters...")
@@ -249,11 +253,35 @@ class RDS:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __describe_db_engine_versions__(self, regional_client):
+        logger.info("RDS - Describe Engine Versions...")
+        try:
+            describe_db_engine_versions_paginator = regional_client.get_paginator(
+                "describe_db_engine_versions"
+            )
+            for page in describe_db_engine_versions_paginator.paginate():
+                for engine in page["DBEngineVersions"]:
+                            self.db_engines.append(
+                                DBEngineVersion(
+                                    region=regional_client.region,
+                                    engine=engine["Engine"],
+                                    engine_version=engine["EngineVersion"],
+                                    db_parameter_group_family=engine["DBParameterGroupFamily"],
+                                    db_engine_description=engine["DBEngineDescription"],
+                                    db_engine_version_description=engine["DBEngineVersionDescription"],
+                                    valid_update_targets=engine.get("ValidUpgradeTarget"),
+                                )
+                            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 class DBInstance(BaseModel):
     id: str
     endpoint: Optional[dict]
     engine: str
+    engine_version: str
     status: str
     public: bool
     encrypted: bool
@@ -301,3 +329,12 @@ class ClusterSnapshot(BaseModel):
     public: bool = False
     region: str
     tags: Optional[list] = []
+
+class DBEngineVersion(BaseModel):
+    region: str
+    engine: str
+    engine_version: str
+    db_parameter_group_family: str
+    db_engine_description: str
+    db_engine_version_description: str
+    valid_update_targets: Optional[list] = []
