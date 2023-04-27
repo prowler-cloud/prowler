@@ -30,7 +30,7 @@ class organizations_tags_policies_enabled_and_attached(Check):
 
                     if policy.targets:
                         report.status = "PASS"
-                        report.status_extended = f"TAG Policies exist at the organization {org.id} level and are attached"
+                        report.status_extended = f"AWS Organization {org.id} has tag policies enabled and attached to an AWS account"
 
             findings.append(report)
 
