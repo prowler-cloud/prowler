@@ -15,7 +15,7 @@ class workspaces_vpc_2private_1public_subnets_nat(Check):
             report.resource_arn = workspace.arn
             report.resource_tags = workspace.tags
             report.status = "PASS"
-            report.status_extended = f"Worspace {workspace.id} it's in a VPC wich has 1 public with nat gateway and 2 private subnets"
+            report.status_extended = f"Workspace {workspace.id} is in a VPC which has 1 public subnet with nat gateway and 2 private subnets"
             # Find the vpc id for the subnet in the vpc_client
             vpc_id = False
             for subnet in vpc_client.vpc_subnets:
