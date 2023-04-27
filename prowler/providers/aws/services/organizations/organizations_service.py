@@ -15,6 +15,7 @@ available_organizations_policies = [
     "AISERVICES_OPT_OUT_POLICY",
 ]
 
+
 ################## Organizations
 class Organizations:
     def __init__(self, audit_info):
@@ -31,7 +32,6 @@ class Organizations:
         self.policies = []
         self.delegated_administrators = []
         self.__describe_organization__()
-        print (self.policies)
 
     def __describe_organization__(self):
         logger.info("Organizations - Describe Organization...")
