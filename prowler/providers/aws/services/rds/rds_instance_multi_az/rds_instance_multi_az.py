@@ -10,16 +10,25 @@ class rds_instance_multi_az(Check):
             report.region = db_instance.region
             report.resource_id = db_instance.id
             report.resource_tags = db_instance.tags
-            if db_instance.multi_az:
-                report.status = "PASS"
-                report.status_extended = (
-                    f"RDS Instance {db_instance.id} has multi-AZ enabled."
-                )
+            # Check if is member of a cluster
+            if db_instance.cluster_id:
+                if rds_client.db_clusters[db_instance.cluster_id].multi_az:
+                    report.status = "PASS"
+                    report.status_extended = f"RDS Instance {db_instance.id} has multi-AZ enabled at cluster {db_instance.cluster_id} level."
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = f"RDS Instance {db_instance.id} does not have multi-AZ enabled at cluster {db_instance.cluster_id} level."
             else:
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"RDS Instance {db_instance.id} does not have multi-AZ enabled."
-                )
+                if db_instance.multi_az:
+                    report.status = "PASS"
+                    report.status_extended = (
+                        f"RDS Instance {db_instance.id} has multi-AZ enabled."
+                    )
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = (
+                        f"RDS Instance {db_instance.id} does not have multi-AZ enabled."
+                    )
 
             findings.append(report)
 

@@ -1,5 +1,5 @@
 import threading
-from json import loads
+from json import JSONDecodeError, loads
 from typing import Optional
 
 from pydantic import BaseModel
@@ -79,9 +79,16 @@ class OpenSearchService:
                                 ]["Options"][logging_key]["Enabled"],
                             )
                         )
-                domain.access_policy = loads(
-                    describe_domain["DomainConfig"]["AccessPolicies"]["Options"]
-                )
+                try:
+                    domain.access_policy = loads(
+                        describe_domain["DomainConfig"]["AccessPolicies"]["Options"]
+                    )
+                except JSONDecodeError as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    continue
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
