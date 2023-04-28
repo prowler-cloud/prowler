@@ -6,7 +6,7 @@ from prowler.providers.aws.services.rds.rds_client import rds_client
 class rds_instance_deprecated_engine_version(Check):
     def execute(self):
         findings = []
-        for instance in rds_client.instances:
+        for instance in rds_client.db_instances:
             report = Check_Report_AWS(self.metadata())
             report.region = instance.region
             report.status = "FAIL"
