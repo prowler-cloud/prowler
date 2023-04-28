@@ -1,13 +1,15 @@
 from datetime import datetime
 from unittest import mock
 
-from prowler.providers.aws.services.backup.backup_service import BackupReportPlan, BackupPlan
+from prowler.providers.aws.services.backup.backup_service import (
+    BackupPlan,
+    BackupReportPlan,
+)
 
 AWS_REGION = "eu-west-1"
 
 
 class Test_backup_reportplans_exist:
-
     def test_no_backup_plans(self):
         backup_client = mock.MagicMock
         backup_client.region = AWS_REGION
@@ -25,7 +27,6 @@ class Test_backup_reportplans_exist:
             result = check.execute()
 
             assert len(result) == 0
-
 
     def test_no_backup_report_plans(self):
         backup_client = mock.MagicMock
