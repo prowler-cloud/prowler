@@ -15,28 +15,6 @@ AWS_REGION = "us-east-1"
 
 
 class Test_organizations_tags_policies_enabled_and_attached:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=None,
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=[AWS_REGION],
-            organizations_metadata=None,
-            audit_resources=None,
-        )
-        return audit_info
 
     def test_organization_no_organization(self):
         organizations_client = mock.MagicMock
@@ -96,9 +74,9 @@ class Test_organizations_tags_policies_enabled_and_attached:
         ]
 
         with mock.patch(
-            "prowler.providers.aws.services.organizations.organizations_service.Organizations",
-            new=organizations_client,
-        ):
+                        "prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached.organizations_client",
+                        new=organizations_client,
+                    ):
             # Test Check
             from prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached import (
                 organizations_tags_policies_enabled_and_attached,
@@ -144,9 +122,9 @@ class Test_organizations_tags_policies_enabled_and_attached:
         ]
 
         with mock.patch(
-            "prowler.providers.aws.services.organizations.organizations_service.Organizations",
-            new=organizations_client,
-        ):
+                        "prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached.organizations_client",
+                        new=organizations_client,
+                    ):
             # Test Check
             from prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached import (
                 organizations_tags_policies_enabled_and_attached,
