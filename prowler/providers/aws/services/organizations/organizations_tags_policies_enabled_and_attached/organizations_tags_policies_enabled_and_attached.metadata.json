@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "Other",
   "Description": "Check if an AWS Organization has tags policies enabled and attached.",
-  "Risk": "If AWS Organizations tags policies are not enabled and attached, it is not possible to enforce tags on AWS resources.",
+  "Risk": "If an AWS Organization tags policies are not enabled and attached, it is not possible to enforce tags on AWS resources.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
