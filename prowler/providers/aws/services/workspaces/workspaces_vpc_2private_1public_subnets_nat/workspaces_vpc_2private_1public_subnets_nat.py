@@ -43,7 +43,7 @@ class workspaces_vpc_2private_1public_subnets_nat(Check):
                         # Check NAT Gateway here
             if public_subnets < 1 or private_subnets < 2 or not nat_gateway:
                 report.status = "FAIL"
-                report.status_extended = f"Workspaces {workspace.id} VPC has not 1 public subnet with NAT gateway and 2 private subnets"
+                report.status_extended = f"Workspace {workspace.id} VPC has not 1 public subnet and 2 private subnets with a NAT Gateway attached"
 
             findings.append(report)
         return findings
