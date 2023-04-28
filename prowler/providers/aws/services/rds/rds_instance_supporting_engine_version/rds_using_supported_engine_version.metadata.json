@@ -1,7 +1,7 @@
 {
     "Provider": "aws",
-    "CheckID": "rds_using_supported_engine_version",
-    "CheckTitle": "Check if RDS is using a supported engine version",
+    "CheckID": "rds_instance_supporting_engine_version",
+    "CheckTitle": "Check if RDS instance is using a supported engine version",
     "CheckType": [],
     "ServiceName": "rds",
     "SubServiceName": "",
@@ -13,7 +13,7 @@
     "RelatedUrl": "",
     "Remediation": {
       "Code": {
-        "CLI": "aws rds describe-db-engine-versions --engine <my_engine> --query 'DBEngineVersions[].EngineVersion'",
+        "CLI": "aws rds describe-db-engine-versions --engine <my_engine>'",
         "NativeIaC": "",
         "Other": "https://docs.aws.amazon.com/cli/latest/reference/rds/describe-db-engine-versions.html",
         "Terraform": ""
