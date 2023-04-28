@@ -264,7 +264,7 @@ class RDS:
                             
                             
                                 ##dbengine
-                                temp = DBEngineVersion(
+                                temp_engine = DBEngine(
                                     region=regional_client.region,
                                     engine=engine["Engine"],
                                     engine_version=engine["EngineVersion"],
@@ -273,7 +273,7 @@ class RDS:
                                     db_engine_version_description=engine["DBEngineVersionDescription"],
                                     valid_update_targets=engine.get("ValidUpgradeTarget"),
                                 )
-                                self.db_engines[engine["EngineVersion"]]= temporal
+                                self.db_engines[engine["EngineVersion"]]= temp_engine
                             
         except Exception as error:
             logger.error(
@@ -333,7 +333,7 @@ class ClusterSnapshot(BaseModel):
     region: str
     tags: Optional[list] = []
 
-class DBEngineVersion(BaseModel):
+class DBEngine(BaseModel):
     region: str
     engine: str
     engine_version: str
