@@ -15,7 +15,6 @@ AWS_REGION = "us-east-1"
 
 
 class Test_organizations_tags_policies_enabled_and_attached:
-
     def test_organization_no_organization(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION
@@ -74,9 +73,9 @@ class Test_organizations_tags_policies_enabled_and_attached:
         ]
 
         with mock.patch(
-                        "prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached.organizations_client",
-                        new=organizations_client,
-                    ):
+            "prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached.organizations_client",
+            new=organizations_client,
+        ):
             # Test Check
             from prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached import (
                 organizations_tags_policies_enabled_and_attached,
@@ -122,9 +121,9 @@ class Test_organizations_tags_policies_enabled_and_attached:
         ]
 
         with mock.patch(
-                        "prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached.organizations_client",
-                        new=organizations_client,
-                    ):
+            "prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached.organizations_client",
+            new=organizations_client,
+        ):
             # Test Check
             from prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached import (
                 organizations_tags_policies_enabled_and_attached,
