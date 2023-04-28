@@ -6,11 +6,9 @@ class rds_instance_deprecated_engine_version(Check):
     def execute(self):
         findings = []
         available_versions = []
-        for prueba in rds_client.db_engines:
-            if prueba.engine == "mariadb":
-                print(prueba.engine_version)
 
         for instance in rds_client.db_instances:
+            available_versions.clear()
             ##Filling the list of the available versions of the current engine
             for iterate_version in rds_client.db_engines:
                 if instance.engine == iterate_version.engine:
