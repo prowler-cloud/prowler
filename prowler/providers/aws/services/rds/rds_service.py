@@ -20,7 +20,7 @@ class RDS:
         self.db_instances = []
         self.db_clusters = {}
         self.db_snapshots = []
-        self.db_engines = {}
+        self.db_engines = []
         self.db_cluster_snapshots = []
         self.__threading_call__(self.__describe_db_instances__)
         self.__threading_call__(self.__describe_db_parameters__)
@@ -93,7 +93,6 @@ class RDS:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-
 
     def __describe_db_parameters__(self, regional_client):
         logger.info("RDS - Describe DB Parameters...")
@@ -252,7 +251,8 @@ class RDS:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-####
+
+    ####
     def __describe_db_engine_versions__(self, regional_client):
         logger.info("RDS - Describe Engine Versions...")
         try:
@@ -261,24 +261,25 @@ class RDS:
             )
             for page in describe_db_engine_versions_paginator.paginate():
                 for engine in page["DBEngineVersions"]:
-                            
-                            
-                                ##dbengine
-                                temp_engine = DBEngine(
-                                    region=regional_client.region,
-                                    engine=engine["Engine"],
-                                    engine_version=engine["EngineVersion"],
-                                    db_parameter_group_family=engine["DBParameterGroupFamily"],
-                                    db_engine_description=engine["DBEngineDescription"],
-                                    db_engine_version_description=engine["DBEngineVersionDescription"],
-                                    valid_update_targets=engine.get("ValidUpgradeTarget"),
-                                )
-                                self.db_engines[engine["EngineVersion"]]= temp_engine
-                            
+                    self.db_engines.append(
+                        DBEngine(
+                            region=regional_client.region,
+                            engine=engine["Engine"],
+                            engine_version=engine["EngineVersion"],
+                            db_parameter_group_family=engine["DBParameterGroupFamily"],
+                            db_engine_description=engine["DBEngineDescription"],
+                            db_engine_version_description=engine[
+                                "DBEngineVersionDescription"
+                            ],
+                            valid_update_targets=engine.get("ValidUpgradeTarget"),
+                        )
+                    )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
 
 class DBInstance(BaseModel):
     id: str
@@ -332,6 +333,7 @@ class ClusterSnapshot(BaseModel):
     public: bool = False
     region: str
     tags: Optional[list] = []
+
 
 class DBEngine(BaseModel):
     region: str
