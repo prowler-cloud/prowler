@@ -1,6 +1,6 @@
 {
     "Provider": "aws",
-    "CheckID": "rds_instance_supporting_engine_version",
+    "CheckID": "rds_instance_deprecated_engine_version",
     "CheckTitle": "Check if RDS instance is using a supported engine version",
     "CheckType": [],
     "ServiceName": "rds",
