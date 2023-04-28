@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "arn:aws:workspaces:region:account-id:workspace",
   "Severity": "medium",
   "ResourceType": "AwsWorkspaces",
-  "Description": "Ensure Workspaces VPC are deployed following best practice: 2 private networks, 1 public network and using NAT Gateway",
+  "Description": "Ensure that the Workspaces VPC are deployed following the best practices using 1 public subnet and 2 private subnets with a NAT Gateway attached",
   "Risk": "Proper network segmentation is a key security best practice. Workspaces VPC should be deployed using 2 private networks and 1 public network with NAT best practice",
   "RelatedUrl": "https://docs.aws.amazon.com/workspaces/latest/adminguide/amazon-workspaces-vpc.html",
   "Remediation": {
