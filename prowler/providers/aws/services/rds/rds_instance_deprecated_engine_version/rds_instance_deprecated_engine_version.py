@@ -3,7 +3,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.rds.rds_client import rds_client
 
 
-class rds_instance_supporting_engine_version(Check):
+class rds_instance_deprecated_engine_version(Check):
     def execute(self):
         findings = []
         for instance in rds_client.instances:
