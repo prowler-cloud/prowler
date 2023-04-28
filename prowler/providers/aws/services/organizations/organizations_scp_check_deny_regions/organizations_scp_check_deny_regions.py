@@ -29,6 +29,10 @@ class organizations_scp_check_deny_regions(Check):
                     is_region_restricted_statement = False
 
                     for policy in org.policies:
+                        # We only check SCP policies here
+                        if policy.type != "SERVICE_CONTROL_POLICY":
+                            continue
+
                         # Statements are not always list
                         statements = policy.content.get("Statement")
                         if type(policy.content["Statement"]) is not list:
