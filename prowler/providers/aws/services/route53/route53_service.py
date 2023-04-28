@@ -72,7 +72,7 @@ class Route53:
                             RecordSet(
                                 name=record["Name"],
                                 type=record["Type"],
-                                records=[d["Value"] for d in record["ResourceRecords"]],
+                                records=[resource_record["Value"] for resource_record in record["ResourceRecords"]],
                                 is_alias=True if "AliasTarget" in record else False,
                                 hosted_zone_id=zone_id,
                                 region=self.region,
