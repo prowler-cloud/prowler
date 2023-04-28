@@ -6,30 +6,19 @@ from prowler.providers.aws.services.rds.rds_client import rds_client
 class rds_using_supported_engine_version(Check):
     def execute(self):
         findings = []
-        for db_engines in rds_client.db_engines:
+        for instance in rds_client.instances:
             report = Check_Report_AWS(self.metadata())
-            report.region = db_engines.region
+            report.region = instance.region
             report.status = "FAIL"
+            report.resource_id = instance.id
+            report.resource_tags = instance.tags
             report.status_extended = (
-                f"RDS Engine version {db_engines.engine_version} is deprecated."
+                f"RDS instance {instance.id} has a deprecated engine version {instance.engine_version}."
             )
             # Check only depending on the engine
-
-            if db_engines.engine == "mysql":
-                if db_engines.engine_version in get_config_var("supported_rds_engines_mysql"):
-                    report.status = "PASS"
-                    report.status_extended = f"RDS Engine version {db_engines.engine_version} is deprecated."
-            elif db_engines.engine == "mariadb":
-                if db_engines.engine_version in get_config_var("supported_rds_engines_mariadb"):
-                    report.status = "PASS"
-                    report.status_extended = f"RDS Engine version {db_engines.engine_version} is deprecated."
-            elif db_engines.engine == "postgres":
-                if db_engines.engine_version in get_config_var("supported_rds_engines_postgres"):
-                    report.status = "PASS"
-                    report.status_extended = f"RDS Engine version {db_engines.engine_version} is deprecated."
-            else:
+            if instance.engine_version in rds_client.db_engines.keys():
                 report.status = "PASS"
-                report.status_extended = f"RDS Engine {db_engines.engine} is not supported for this check."
+                report.status_extended = f"RDS instance {instance.id} does not have a deprecated engine version {instance.engine_version}."
 
             findings.append(report)
 

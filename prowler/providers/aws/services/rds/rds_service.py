@@ -20,6 +20,7 @@ class RDS:
         self.db_instances = []
         self.db_clusters = {}
         self.db_snapshots = []
+        self.db_engines = {}
         self.db_cluster_snapshots = []
         self.__threading_call__(self.__describe_db_instances__)
         self.__threading_call__(self.__describe_db_parameters__)
@@ -251,6 +252,33 @@ class RDS:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+####
+    def __describe_db_engine_versions__(self, regional_client):
+        logger.info("RDS - Describe Engine Versions...")
+        try:
+            describe_db_engine_versions_paginator = regional_client.get_paginator(
+                "describe_db_engine_versions"
+            )
+            for page in describe_db_engine_versions_paginator.paginate():
+                for engine in page["DBEngineVersions"]:
+                            
+                            
+                                ##dbengine
+                                temporal = DBEngineVersion(
+                                    region=regional_client.region,
+                                    engine=engine["Engine"],
+                                    engine_version=engine["EngineVersion"],
+                                    db_parameter_group_family=engine["DBParameterGroupFamily"],
+                                    db_engine_description=engine["DBEngineDescription"],
+                                    db_engine_version_description=engine["DBEngineVersionDescription"],
+                                    valid_update_targets=engine.get("ValidUpgradeTarget"),
+                                )
+                                self.db_engines[engine["EngineVersion"]]= temporal
+                            
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 class DBInstance(BaseModel):
     id: str
@@ -304,3 +332,12 @@ class ClusterSnapshot(BaseModel):
     public: bool = False
     region: str
     tags: Optional[list] = []
+
+class DBEngineVersion(BaseModel):
+    region: str
+    engine: str
+    engine_version: str
+    db_parameter_group_family: str
+    db_engine_description: str
+    db_engine_version_description: str
+    valid_update_targets: Optional[list] = []

@@ -10,6 +10,7 @@ class rds_instance_transport_encrypted(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = db_instance.region
             report.resource_id = db_instance.id
+            report.resource_tags = db_instance.tags
             report.status = "FAIL"
             report.status_extended = (
                 f"RDS Instance {db_instance.id} connections are not encrypted."
