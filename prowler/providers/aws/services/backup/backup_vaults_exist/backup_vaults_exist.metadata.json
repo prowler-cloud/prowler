@@ -10,7 +10,7 @@
   "ServiceName": "backup",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:backup-vault:backup-vault-id",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "AwsBackupBackupVault",
   "Description": "This check ensures that AWS Backup vaults exist to provide a secure and durable storage location for backup data.",
   "Risk": "Without an AWS Backup vault, an organization's critical data may be at risk of being lost in the event of an accidental deletion, system failures, or natural disasters.",
