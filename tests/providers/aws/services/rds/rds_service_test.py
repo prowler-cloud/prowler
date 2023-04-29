@@ -249,3 +249,49 @@ class Test_RDS_Service:
         assert rds.db_cluster_snapshots[0].cluster_id == "db-primary-1"
         assert rds.db_cluster_snapshots[0].region == AWS_REGION
         assert not rds.db_cluster_snapshots[0].public
+
+    # Test RDS describe db engine versions
+    @mock_rds
+    def test__describe_db_engine_versions__(self):
+        conn = client("rds", region_name=AWS_REGION)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.mysql5.7.38",
+            Description="test parameter group",
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-master-1",
+            AllocatedStorage=10,
+            Engine="mysql",
+            EngineVersion="5.7.38",
+            DBName="staging-mysql",
+            DBInstanceClass="db.m1.small",
+            StorageEncrypted=True,
+            DeletionProtection=True,
+            PubliclyAccessible=True,
+            AutoMinorVersionUpgrade=True,
+            BackupRetentionPeriod=10,
+            EnableCloudwatchLogsExports=["audit", "error"],
+            MultiAZ=True,
+            DBParameterGroupName="test",
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
+        )
+        # RDS client for this test class
+        audit_info = self.set_mocked_audit_info()
+        rds = RDS(audit_info)
+        assert len(rds.db_instances) == 1
+        assert rds.db_instances[0].id == "db-master-1"
+        assert rds.db_instances[0].region == AWS_REGION
+        assert (
+            rds.db_instances[0].endpoint["Address"]
+            == "db-master-1.aaaaaaaaaa.us-east-1.rds.amazonaws.com"
+        )
+        assert rds.db_instances[0].status == "available"
+        assert rds.db_instances[0].engine == "mysql"
+        assert rds.db_instances[0].engine_version == "5.7.38"
+        assert rds.db_instances[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
+        assert "test" in rds.db_instances[0].parameter_groups
