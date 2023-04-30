@@ -252,7 +252,6 @@ class RDS:
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    ####
     def __describe_db_engine_versions__(self, regional_client):
         logger.info("RDS - Describe Engine Versions...")
         try:
