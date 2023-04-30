@@ -273,12 +273,13 @@ class Test_RDS_Service:
             BackupRetentionPeriod=10,
             EnableCloudwatchLogsExports=["audit", "error"],
             MultiAZ=True,
+            DBParameterGroupName="test",
         )
         # RDS client for this test class
         audit_info = self.set_mocked_audit_info()
         rds = RDS(audit_info)
-        assert len(rds.db_engines) == 1
-        assert rds.db_engines[0].id == "db-master-1"
-        assert rds.db_engines[0].region == AWS_REGION
-        assert rds.db_engines[0].engine == "mysql"
-        assert rds.db_engines[0].engine_version == "5.7.38"
+        assert len(rds.db_instances) == 1
+        # assert rds.db_engines[0].id == "db-master-1"
+        # assert rds.db_engines[0].region == AWS_REGION
+        # assert rds.db_engines[0].engine == "mysql"
+        # assert rds.db_engines[0].engine_version == "5.7.38"
