@@ -2309,14 +2309,14 @@ pyasn1 = ">=0.1.3"
 
 [[package]]
 name = "ruamel-yaml"
-version = "0.17.21"
+version = "0.17.22"
 description = "ruamel.yaml is a YAML parser/emitter that supports roundtrip preservation of comments, seq/map flow style, and map key order"
 category = "dev"
 optional = false
 python-versions = ">=3"
 files = [
-    {file = "ruamel.yaml-0.17.21-py3-none-any.whl", hash = "sha256:742b35d3d665023981bd6d16b3d24248ce5df75fdb4e2924e93a05c1f8b61ca7"},
-    {file = "ruamel.yaml-0.17.21.tar.gz", hash = "sha256:8b7ce697a2f212752a35c1ac414471dc16c424c9573be4926b56ff3f5d23b7af"},
+    {file = "ruamel.yaml-0.17.22-py3-none-any.whl", hash = "sha256:b4c6e66d103d8af198aa6139580ab735169be4922eb4c515ac121bdabf6f9361"},
+    {file = "ruamel.yaml-0.17.22.tar.gz", hash = "sha256:c22ec58aaca5105f771cb8f7ac45ad631b5e8b00454ebe1822d442fb696e9e62"},
 ]
 
 [package.dependencies]
@@ -2696,14 +2696,14 @@ test = ["websockets"]
 
 [[package]]
 name = "werkzeug"
-version = "2.3.2"
+version = "2.3.3"
 description = "The comprehensive WSGI web application library."
 category = "dev"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "Werkzeug-2.3.2-py3-none-any.whl", hash = "sha256:b7b8bc1609f35ae8e45d48a9b58d7a4eb1e41eec148d37e977e5df6ebf3398b2"},
-    {file = "Werkzeug-2.3.2.tar.gz", hash = "sha256:2f3278e9ef61511cdf82cc28fc5da0f5b501dd8f01ecf5ef6a5d810048f68702"},
+    {file = "Werkzeug-2.3.3-py3-none-any.whl", hash = "sha256:4866679a0722de00796a74086238bb3b98d90f423f05de039abb09315487254a"},
+    {file = "Werkzeug-2.3.3.tar.gz", hash = "sha256:a987caf1092edc7523edb139edb20c70571c4a8d5eed02e0b547b4739174d091"},
 ]
 
 [package.dependencies]

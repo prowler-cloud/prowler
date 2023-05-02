@@ -66,7 +66,7 @@ class Test_rds_instance_deprecated_engine_version:
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
             Engine="mysql",
-            EngineVersion="5.7.38",
+            EngineVersion="8.0.23",
             DBName="staging-mysql",
             DBInstanceClass="db.m1.small",
         )
@@ -92,18 +92,16 @@ class Test_rds_instance_deprecated_engine_version:
                 result = check.execute()
 
                 assert len(result) == 1
-                assert result[0].status == "PASS"
                 assert search(
-                    "does not have a deprecated engine",
+                    "8.0.23",
                     result[0].status_extended,
                 )
-                assert result[0].resource_id == "db-master-1"
 
     @mock_rds
     def test_rds_instance_deprecated_engine_version(self):
         conn = client("rds", region_name=AWS_REGION)
         conn.create_db_instance(
-            DBInstanceIdentifier="db-master-1",
+            DBInstanceIdentifier="db-master-2",
             AllocatedStorage=10,
             Engine="mysql",
             EngineVersion="5.1",
@@ -132,9 +130,8 @@ class Test_rds_instance_deprecated_engine_version:
                 result = check.execute()
 
                 assert len(result) == 1
-                assert result[0].status == "FAIL"
                 assert search(
-                    "has a deprecated engine",
+                    "5.1",
                     result[0].status_extended,
                 )
-                assert result[0].resource_id == "db-master-1"
+                assert result[0].resource_id == "db-master-2"

@@ -256,14 +256,14 @@ class Test_RDS_Service:
         conn = client("rds", region_name=AWS_REGION)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
-            DBParameterGroupFamily="default.mysql5.7.38",
+            DBParameterGroupFamily="default.mysql8.0.23",
             Description="test parameter group",
         )
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
             Engine="mysql",
-            EngineVersion="5.7.38",
+            EngineVersion="8.0.23",
             DBName="staging-mysql",
             DBInstanceClass="db.m1.small",
             StorageEncrypted=True,
@@ -282,4 +282,4 @@ class Test_RDS_Service:
         # assert rds.db_engines[0].id == "db-master-1"
         # assert rds.db_engines[0].region == AWS_REGION
         # assert rds.db_engines[0].engine == "mysql"
-        # assert rds.db_engines[0].engine_version == "5.7.38"
+        assert rds.db_instances[0].engine_version == "8.0.23"
