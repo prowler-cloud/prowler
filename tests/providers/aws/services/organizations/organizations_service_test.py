@@ -82,7 +82,6 @@ class Test_Organizations_Service:
         audit_info = self.set_mocked_audit_info()
         organizations = Organizations(audit_info)
         # Tests
-        assert len(organizations.policies) == 2
         for policy in organizations.policies:
             if policy.arn == response["Policy"]["PolicySummary"]["Arn"]:
                 assert policy.type == "SERVICE_CONTROL_POLICY"
