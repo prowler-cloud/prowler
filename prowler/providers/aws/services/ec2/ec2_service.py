@@ -29,7 +29,9 @@ class EC2:
         self.snapshots = []
         self.__threading_call__(self.__describe_snapshots__)
         self.__get_snapshot_public__()
-        self.__threading_call__(self.__describe_network_interfaces__)
+        self.network_interfaces = []
+        self.__threading_call__(self.__describe_public_network_interfaces__)
+        self.__threading_call__(self.__describe_sg_network_interfaces__)
         self.images = []
         self.__threading_call__(self.__describe_images__)
         self.volumes = []
@@ -220,10 +222,37 @@ class EC2:
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __describe_network_interfaces__(self, regional_client):
+    def __describe_public_network_interfaces__(self, regional_client):
         logger.info("EC2 - Describing Network Interfaces...")
         try:
-            # Get SGs Network Interfaces
+            # Get Network Interfaces with Public IPs
+            describe_network_interfaces_paginator = regional_client.get_paginator(
+                "describe_network_interfaces"
+            )
+            for page in describe_network_interfaces_paginator.paginate():
+                for interface in page["NetworkInterfaces"]:
+                    if interface.get("Association"):
+                        self.network_interfaces.append(
+                            NetworkInterface(
+                                public_ip=interface["Association"]["PublicIp"],
+                                type=interface["InterfaceType"],
+                                private_ip=interface["PrivateIpAddress"],
+                                subnet_id=interface["SubnetId"],
+                                vpc_id=interface["VpcId"],
+                                region=regional_client.region,
+                                tags=interface.get("TagSet"),
+                            )
+                        )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __describe_sg_network_interfaces__(self, regional_client):
+        logger.info("EC2 - Describing Network Interfaces...")
+        try:
+            # Get Network Interfaces for Security Groups
             for sg in self.security_groups:
                 regional_client = self.regional_clients[sg.region]
                 describe_network_interfaces_paginator = regional_client.get_paginator(
@@ -241,7 +270,6 @@ class EC2:
                 ):
                     for interface in page["NetworkInterfaces"]:
                         sg.network_interfaces.append(interface["NetworkInterfaceId"])
-
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -422,6 +450,16 @@ class NetworkACL(BaseModel):
     arn: str
     region: str
     entries: list[dict]
+    tags: Optional[list] = []
+
+
+class NetworkInterface(BaseModel):
+    public_ip: str
+    private_ip: str
+    type: str
+    subnet_id: str
+    vpc_id: str
+    region: str
     tags: Optional[list] = []
 
 
