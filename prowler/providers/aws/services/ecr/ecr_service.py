@@ -124,13 +124,14 @@ class ECR:
                             "describe_images"
                         )
                         for image in describe_images_paginator.paginate(
-                            repositoryName=repository.name
+                            registryId=self.registries[regional_client.region].id,
+                            repositoryName=repository.name,
+                            PaginationConfig={"PageSize": 1000}
                             # We need to sort images by the time where it was pushed to the registry
                             # since for now we only check the latest
                         ).search(
                             "sort_by(imageDetails, &to_string(imagePushedAt))[-1]"
                         ):
-                            # for image in image["imageDetails"]:
                             severity_counts = None
                             last_scan_status = None
                             if "imageScanStatus" in image:
