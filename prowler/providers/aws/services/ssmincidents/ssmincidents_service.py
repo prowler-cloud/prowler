@@ -52,7 +52,9 @@ class SSMIncidents:
     def __list_replication_sets__(self):
         logger.info("SSMIncidents - Listing Replication Sets...")
         try:
-            regional_client = self.regional_clients[list(self.regional_clients.keys())[0]]
+            regional_client = self.regional_clients[
+                list(self.regional_clients.keys())[0]
+            ]
             list_replication_sets = regional_client.list_replication_sets().get(
                 "replicationSetArns"
             )
