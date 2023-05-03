@@ -52,10 +52,10 @@ class SSMIncidents:
     def __list_replication_sets__(self):
         logger.info("SSMIncidents - Listing Replication Sets...")
         try:
-            regional_client = self.regional_clients[self.region]
-            list_replication_sets = regional_client.list_replication_sets()[
+            regional_client = self.regional_clients[list(self.regional_clients.keys())[0]]
+            list_replication_sets = regional_client.list_replication_sets().get(
                 "replicationSetArns"
-            ]
+            )
             if list_replication_sets:
                 replication_set = list_replication_sets[0]
                 if not self.audit_resources or (
@@ -74,6 +74,8 @@ class SSMIncidents:
     def __get_replication_set__(self):
         logger.info("SSMIncidents - Getting Replication Sets...")
         try:
+            if not self.replication_set:
+                return
             replication_set = self.replication_set[0]
             for regional_client in self.regional_clients.values():
                 try:
