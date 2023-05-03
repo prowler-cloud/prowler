@@ -3,6 +3,7 @@
 
 import sys
 
+from prowler.config.config import get_config_var
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
@@ -28,7 +29,11 @@ from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.compliance import display_compliance_table
 from prowler.lib.outputs.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json import close_json
-from prowler.lib.outputs.outputs import extract_findings_statistics, send_to_s3_bucket
+from prowler.lib.outputs.outputs import (
+    extract_findings_statistics,
+    send_slack_message,
+    send_to_s3_bucket,
+)
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
@@ -168,6 +173,16 @@ def prowler():
 
     # Extract findings stats
     stats = extract_findings_statistics(findings)
+
+    if get_config_var("slack_app_bot_user_oauth_token") and get_config_var(
+        "slack_channel_id"
+    ):
+        send_slack_message(
+            get_config_var("slack_app_bot_user_oauth_token"),
+            get_config_var("slack_channel_id"),
+            stats,
+            audit_info,
+        )
 
     if args.output_modes:
         for mode in args.output_modes:

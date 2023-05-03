@@ -2,14 +2,19 @@ import json
 import sys
 
 from colorama import Fore, Style
+from slack_sdk import WebClient
 
 from prowler.config.config import (
     available_compliance_frameworks,
+    aws_logo,
+    azure_logo,
     csv_file_suffix,
+    gcp_logo,
     html_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
     orange_color,
+    square_logo_img,
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance import add_manual_controls, fill_compliance
@@ -26,6 +31,118 @@ from prowler.providers.aws.lib.allowlist.allowlist import is_allowlisted
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.lib.security_hub.security_hub import send_to_security_hub
 from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
+from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
+
+
+def send_slack_message(token, channel, stats, audit_info):
+    try:
+        client = WebClient(token=token)
+
+        identity = ""
+        if isinstance(audit_info, AWS_Audit_Info):
+            identity = f"AWS Account *{audit_info.audited_account}*"
+        elif isinstance(audit_info, GCP_Audit_Info):
+            identity = f"GCP Project *{audit_info.project_id}*"
+        else:
+            printed_subscriptions = []
+            for key, value in audit_info.identity.subscriptions.items():
+                intermediate = "- *" + key + ": " + value + "*\n"
+                printed_subscriptions.append(intermediate)
+            identity = f"Azure Subscriptions:\n{' '.join(printed_subscriptions)}"
+        blocks = [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"Hey there 👋 \n I'm *Prowler*, _the handy cloud security tool_ :cloud::key:\n\n I have just finished the security assessment on your {identity} with a total of *{stats['findings_count']}* findings.",
+                },
+                "accessory": {
+                    "type": "image",
+                    "image_url": aws_logo
+                    if isinstance(audit_info, AWS_Audit_Info)
+                    else gcp_logo
+                    if isinstance(audit_info, GCP_Audit_Info)
+                    else azure_logo,
+                    "alt_text": "Provider Logo",
+                },
+            },
+            {"type": "divider"},
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"\n:white_check_mark: *{stats['total_pass']} Passed findings* ({round(stats['total_pass']/stats['findings_count']*100,2)}%)\n",
+                },
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail']/stats['findings_count']*100,2)}%)\n ",
+                },
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"\n:bar_chart: *{stats['resources_count']} Resources*\n",
+                },
+            },
+            {"type": "divider"},
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"Used parameters: `prowler {' '.join(sys.argv[1:])} `",
+                    }
+                ],
+            },
+            {"type": "divider"},
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": "Join our Slack Community!"},
+                "accessory": {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": "Prowler :slack:"},
+                    "url": "https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog",
+                },
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "Feel free to contact us in our repo",
+                },
+                "accessory": {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": "Prowler :github:"},
+                    "url": "https://github.com/prowler-cloud/prowler",
+                },
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "See all the things you can do with ProwlerPro",
+                },
+                "accessory": {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": "Prowler Pro"},
+                    "url": "https://prowler.pro",
+                },
+            },
+        ]
+        client.chat_postMessage(
+            username="Prowler",
+            icon_url=square_logo_img,
+            channel="#" + channel,
+            blocks=blocks,
+        )
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
 
 def stdout_report(finding, color, verbose, is_quiet):
