@@ -45,6 +45,7 @@ pydantic = "1.10.7"
 python = "^3.9"
 schema = "0.7.5"
 shodan = "1.28.0"
+slack-sdk = "3.21.3"
 tabulate = "0.9.0"
 
 [tool.poetry.extras]
