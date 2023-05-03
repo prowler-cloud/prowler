@@ -24,7 +24,7 @@ repo_policy_public = {
 
 
 class Test_ecr_repositories_lifecycle_policy_enabled:
-    def test_no_lyfecicle_policy(self):
+    def test_no_lifecycle_policy(self):
         ecr_client = mock.MagicMock
         ecr_client.repositories = []
         ecr_client.repositories.append(
@@ -35,7 +35,7 @@ class Test_ecr_repositories_lifecycle_policy_enabled:
                 scan_on_push=True,
                 policy=repo_policy_public,
                 images_details=None,
-                lyfecicle_policy="test-policy",
+                lifecycle_policy="test-policy",
             )
         )
 
@@ -66,7 +66,7 @@ class Test_ecr_repositories_lifecycle_policy_enabled:
                 scan_on_push=False,
                 policy=repo_policy_public,
                 images_details=None,
-                lyfecicle_policy=None,
+                lifecycle_policy=None,
             )
         )
 

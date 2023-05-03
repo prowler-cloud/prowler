@@ -15,7 +15,7 @@ class ecr_repositories_lifecycle_policy_enabled(Check):
             report.status_extended = (
                 f"Repository {repository.name} has no lifecycle policy"
             )
-            if repository.lyfecicle_policy:
+            if repository.lifecycle_policy:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Repository {repository.name} has lifecycle policy"

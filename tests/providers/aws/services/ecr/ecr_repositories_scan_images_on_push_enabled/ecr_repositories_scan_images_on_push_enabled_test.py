@@ -35,7 +35,7 @@ class Test_ecr_repositories_scan_images_on_push_enabled:
                 scan_on_push=True,
                 policy=repo_policy_public,
                 images_details=None,
-                lyfecicle_policy=None,
+                lifecycle_policy=None,
             )
         )
 
@@ -66,7 +66,7 @@ class Test_ecr_repositories_scan_images_on_push_enabled:
                 scan_on_push=False,
                 policy=repo_policy_public,
                 images_details=None,
-                lyfecicle_policy=None,
+                lifecycle_policy=None,
             )
         )
 

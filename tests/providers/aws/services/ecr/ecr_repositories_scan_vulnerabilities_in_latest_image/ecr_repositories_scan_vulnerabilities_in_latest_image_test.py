@@ -39,7 +39,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                 scan_on_push=True,
                 policy=repo_policy_public,
                 images_details=[],
-                lyfecicle_policy=None,
+                lifecycle_policy=None,
             )
         )
         with mock.patch(
@@ -65,7 +65,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                 scan_on_push=True,
                 policy=repo_policy_public,
                 images_details=[],
-                lyfecicle_policy=None,
+                lifecycle_policy=None,
             )
         )
         ecr_client.repositories[0].images_details.append(
@@ -105,7 +105,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                 scan_on_push=True,
                 policy=repo_policy_public,
                 images_details=[],
-                lyfecicle_policy=None,
+                lifecycle_policy=None,
             )
         )
         ecr_client.repositories[0].images_details.append(
@@ -145,7 +145,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                 scan_on_push=True,
                 policy=repo_policy_public,
                 images_details=[],
-                lyfecicle_policy=None,
+                lifecycle_policy=None,
             )
         )
         ecr_client.repositories[0].images_details.append(
@@ -185,7 +185,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                 scan_on_push=True,
                 policy=repo_policy_public,
                 images_details=[],
-                lyfecicle_policy=None,
+                lifecycle_policy=None,
             )
         )
         ecr_client.repositories[0].images_details.append(

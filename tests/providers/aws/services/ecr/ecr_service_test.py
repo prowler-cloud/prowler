@@ -192,7 +192,7 @@ class Test_ECR_Service:
         assert ecr.repositories[0].name == repo_name
         assert ecr.repositories[0].arn == repo_arn
         assert ecr.repositories[0].scan_on_push
-        assert ecr.repositories[0].lyfecicle_policy
+        assert ecr.repositories[0].lifecycle_policy
 
     # Test get image details
     @mock_ecr

@@ -61,7 +61,7 @@ class ECR:
                                 ],
                                 policy=None,
                                 images_details=[],
-                                lyfecicle_policy=None,
+                                lifecycle_policy=None,
                             )
                         )
         except Exception as error:
@@ -91,7 +91,7 @@ class ECR:
                 client = self.regional_clients[repository.region]
                 policy = client.get_lifecycle_policy(repositoryName=repository.name)
                 if "lifecyclePolicyText" in policy:
-                    repository.lyfecicle_policy = policy["lifecyclePolicyText"]
+                    repository.lifecycle_policy = policy["lifecyclePolicyText"]
 
         except Exception as error:
             if "LifecyclePolicyNotFoundException" not in str(error):
@@ -224,7 +224,7 @@ class Repository(BaseModel):
     scan_on_push: bool
     policy: Optional[dict]
     images_details: Optional[list[ImageDetails]]
-    lyfecicle_policy: Optional[str]
+    lifecycle_policy: Optional[str]
     tags: Optional[list] = []
 
 

@@ -47,7 +47,7 @@ class Test_ecr_repositories_not_publicly_accessible:
                 scan_on_push=True,
                 policy=repo_policy_not_public,
                 images_details=None,
-                lyfecicle_policy=None,
+                lifecycle_policy=None,
             )
         )
 
@@ -78,7 +78,7 @@ class Test_ecr_repositories_not_publicly_accessible:
                 scan_on_push=True,
                 policy=repo_policy_public,
                 images_details=None,
-                lyfecicle_policy=None,
+                lifecycle_policy=None,
             )
         )
 
