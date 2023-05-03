@@ -9,7 +9,7 @@ class backup_plans_exist(Check):
         report.status = "FAIL"
         report.status_extended = "No Backup Plan Exist"
         report.resource_arn = ""
-        report.resource_id = "No Backups"
+        report.resource_id = "Backups"
         report.region = backup_client.region
         if backup_client.backup_plans:
             report.status = "PASS"
