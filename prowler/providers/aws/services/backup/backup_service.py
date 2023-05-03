@@ -102,7 +102,7 @@ class Backup:
                                     "LastExecutionDate"
                                 ),
                                 advanced_settings=configuration.get(
-                                    "AdvancedBackupSettings"
+                                    "AdvancedBackupSettings", []
                                 ),
                             )
                         )
