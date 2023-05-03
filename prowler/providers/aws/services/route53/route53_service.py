@@ -15,6 +15,7 @@ class Route53:
         self.audited_partition = audit_info.audited_partition
         self.audit_resources = audit_info.audit_resources
         self.hosted_zones = {}
+        self.record_sets = []
         global_client = generate_regional_clients(
             self.service, audit_info, global_service=True
         )
@@ -24,6 +25,7 @@ class Route53:
             self.__list_hosted_zones__()
             self.__list_query_logging_configs__()
             self.__list_tags_for_resource__()
+            self.__list_resource_record_sets__()
 
     def __get_session__(self):
         return self.session
@@ -48,6 +50,36 @@ class Route53:
                             private_zone=private_zone,
                             arn=arn,
                             region=self.region,
+                        )
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __list_resource_record_sets__(self):
+        logger.info("Route53 - Listing Hosting Zones...")
+        try:
+            list_resource_record_sets_paginator = self.client.get_paginator(
+                "list_resource_record_sets"
+            )
+            for zone_id in self.hosted_zones.keys():
+                for page in list_resource_record_sets_paginator.paginate(
+                    HostedZoneId=zone_id
+                ):
+                    for record in page["ResourceRecordSets"]:
+                        self.record_sets.append(
+                            RecordSet(
+                                name=record["Name"],
+                                type=record["Type"],
+                                records=[
+                                    resource_record["Value"]
+                                    for resource_record in record["ResourceRecords"]
+                                ],
+                                is_alias=True if "AliasTarget" in record else False,
+                                hosted_zone_id=zone_id,
+                                region=self.region,
+                            )
                         )
 
         except Exception as error:
@@ -103,6 +135,15 @@ class HostedZone(BaseModel):
     logging_config: LoggingConfig = None
     region: str
     tags: Optional[list] = []
+
+
+class RecordSet(BaseModel):
+    name: str
+    type: str
+    is_alias: bool
+    records: list = []
+    hosted_zone_id: str
+    region: str
 
 
 ################## Route53Domains
