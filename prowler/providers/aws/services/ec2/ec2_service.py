@@ -30,7 +30,8 @@ class EC2:
         self.__threading_call__(self.__describe_snapshots__)
         self.__get_snapshot_public__()
         self.network_interfaces = []
-        self.__threading_call__(self.__describe_network_interfaces__)
+        self.__threading_call__(self.__describe_public_network_interfaces__)
+        self.__threading_call__(self.__describe_sg_network_interfaces__)
         self.images = []
         self.__threading_call__(self.__describe_images__)
         self.volumes = []
@@ -221,10 +222,10 @@ class EC2:
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __describe_network_interfaces__(self, regional_client):
+    def __describe_public_network_interfaces__(self, regional_client):
         logger.info("EC2 - Describing Network Interfaces...")
         try:
-            # Get IPs for network interfaces
+            # Get Network Interfaces with Public IPs
             describe_network_interfaces_paginator = regional_client.get_paginator(
                 "describe_network_interfaces"
             )
@@ -243,7 +244,15 @@ class EC2:
                             )
                         )
 
-            # Get SGs Network Interfaces
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __describe_sg_network_interfaces__(self, regional_client):
+        logger.info("EC2 - Describing Network Interfaces...")
+        try:
+            # Get Network Interfaces for Security Groups
             for sg in self.security_groups:
                 regional_client = self.regional_clients[sg.region]
                 describe_network_interfaces_paginator = regional_client.get_paginator(
