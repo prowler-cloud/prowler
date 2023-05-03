@@ -256,7 +256,7 @@ class Test_RDS_Service:
         conn = client("rds", region_name=AWS_REGION)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
-            DBParameterGroupFamily="default.mysql8.0.23",
+            DBParameterGroupFamily="default.mysql.8.0.23",
             Description="test parameter group",
         )
         conn.create_db_instance(
