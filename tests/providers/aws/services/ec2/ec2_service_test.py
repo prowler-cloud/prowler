@@ -344,7 +344,7 @@ class Test_EC2_Service:
 
     # Test EC2 Describe Network Interfaces
     @mock_ec2
-    def test__describe_network_interfaces__(self):
+    def test__describe_sg_network_interfaces__(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION)
         ec2_resource = resource("ec2", region_name=AWS_REGION)
@@ -384,6 +384,46 @@ class Test_EC2_Service:
                         "UserIdGroupPairs": [],
                     }
                 ]
+
+    @mock_ec2
+    def test__describe_public_network_interfaces__(self):
+        # Generate EC2 Client
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_resource = resource("ec2", region_name=AWS_REGION)
+        # Create VPC, Subnet, SecurityGroup and Network Interface
+        vpc = ec2_resource.create_vpc(CidrBlock="10.0.0.0/16")
+        subnet = ec2_resource.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
+
+        eni = subnet.create_network_interface(
+            SubnetId=subnet.id,
+            TagSpecifications=[
+                {
+                    "ResourceType": "network-interface",
+                    "Tags": [
+                        {"Key": "string", "Value": "string"},
+                    ],
+                },
+            ],
+        )
+        eip = ec2_client.allocate_address(Domain="vpc")
+        ec2_client.associate_address(
+            NetworkInterfaceId=eni.id, AllocationId=eip["AllocationId"]
+        )
+
+        # EC2 client for this test class
+        audit_info = self.set_mocked_audit_info()
+        ec2 = EC2(audit_info)
+
+        assert len(ec2.network_interfaces) == 1
+        assert ec2.network_interfaces[0].public_ip == eip["PublicIp"]
+        assert ec2.network_interfaces[0].private_ip == eni.private_ip_address
+        assert ec2.network_interfaces[0].type == eni.interface_type
+        assert ec2.network_interfaces[0].subnet_id == subnet.id
+        assert ec2.network_interfaces[0].vpc_id == vpc.id
+        assert ec2.network_interfaces[0].region == AWS_REGION
+        assert ec2.network_interfaces[0].tags == [
+            {"Key": "string", "Value": "string"},
+        ]
 
     # Test EC2 Describe Images
     @mock_ec2
