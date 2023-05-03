@@ -10,7 +10,7 @@
   "ServiceName": "backup",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:backup-plan:backup-plan-id",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "AwsBackupBackupPlan",
   "Description": "This check ensures that there is at least one backup plan in place.",
   "Risk": "Without a backup plan, an organization may be at risk of losing important data due to accidental deletion, system failures, or natural disasters. This can result in significant financial and reputational damage for the organization.",

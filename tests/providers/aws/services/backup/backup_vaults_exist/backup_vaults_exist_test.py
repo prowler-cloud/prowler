@@ -25,7 +25,7 @@ class Test_backup_vaults_exist:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "No Backup Vault Exist"
-            assert result[0].resource_id == "No Backups"
+            assert result[0].resource_id == "Backups"
             assert result[0].resource_arn == ""
             assert result[0].region == AWS_REGION
 

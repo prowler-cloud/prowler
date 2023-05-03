@@ -123,6 +123,15 @@ class S3:
             ][
                 "SSEAlgorithm"
             ]
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             if "ServerSideEncryptionConfigurationNotFoundError" in str(error):
                 bucket.encryption = None
@@ -168,6 +177,15 @@ class S3:
                 block_public_policy=public_access_block["BlockPublicPolicy"],
                 restrict_public_buckets=public_access_block["RestrictPublicBuckets"],
             )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             if "NoSuchPublicAccessBlockConfiguration" in str(error):
                 # Set all block as False
@@ -242,6 +260,15 @@ class S3:
             bucket.ownership = regional_client.get_bucket_ownership_controls(
                 Bucket=bucket.name
             )["OwnershipControls"]["Rules"][0]["ObjectOwnership"]
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             if "OwnershipControlsNotFoundError" in str(error):
                 bucket.ownership = None
@@ -285,9 +312,14 @@ class S3:
         except ClientError as error:
             bucket.tags = []
             if error.response["Error"]["Code"] != "NoSuchTagSet":
-                logger.error(
-                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+                if error.response["Error"]["Code"] == "NoSuchBucket":
+                    logger.warning(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                else:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             if regional_client:
                 logger.error(
