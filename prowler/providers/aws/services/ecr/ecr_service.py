@@ -260,4 +260,3 @@ class Registry(BaseModel):
     repositories: list[Repository]
     scan_type: Optional[str]
     rules: Optional[list[ScanningRule]]
-    tags: Optional[list] = []
