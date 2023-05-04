@@ -7,7 +7,12 @@ class ecr_repositories_scan_vulnerabilities_in_latest_image(Check):
         findings = []
         for registry in ecr_client.registries.values():
             for repository in registry.repositories:
-                for image in repository.images_details:
+                # First check if the repository has images
+                if len(repository.images_details) > 0:
+                    # We only want to check the latest image pushed
+                    # for image in repository.images_details:
+                    image = repository.images_details[-1]
+
                     report = Check_Report_AWS(self.metadata())
                     report.region = repository.region
                     report.resource_id = repository.name
