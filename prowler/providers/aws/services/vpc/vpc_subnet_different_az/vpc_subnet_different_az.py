@@ -5,7 +5,7 @@ from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 class vpc_subnet_different_az(Check):
     def execute(self):
         findings = []
-        for vpc in vpc_client.vpcs:
+        for vpc in vpc_client.vpcs.values():
             report = Check_Report_AWS(self.metadata())
             report.region = vpc.region
             report.resource_tags = vpc.tags
