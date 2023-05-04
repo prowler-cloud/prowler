@@ -18,14 +18,41 @@ class iam_role_cross_account_readonlyaccess_policy(Check):
             for policy in role.attached_policies:
                 if policy["PolicyName"] == "ReadOnlyAccess":
                     report.status_extended = f"IAM Role {role.name} has read-only access but is not cross account"
-                    for statement in role.assume_role_policy["Statement"]:
+                    if type(role.assume_role_policy["Statement"]) == list:
+                        for statement in role.assume_role_policy["Statement"]:
+                            if (
+                                statement["Effect"] == "Allow"
+                                and "AWS" in statement["Principal"]
+                            ):
+                                if type(statement["Principal"]["AWS"]) == list:
+                                    for aws_account in statement["Principal"]["AWS"]:
+                                        if (
+                                            iam_client.account not in aws_account
+                                            or "*" == aws_account
+                                        ):
+                                            report.status = "FAIL"
+                                            report.status_extended = f"IAM Role {role.name} gives cross account read-only access!"
+                                            break
+                                else:
+                                    if (
+                                        iam_client.account
+                                        not in statement["Principal"]["AWS"]
+                                        or "*" == statement["Principal"]["AWS"]
+                                    ):
+                                        report.status = "FAIL"
+                                        report.status_extended = f"IAM Role {role.name} gives cross account read-only access!"
+                    else:
+                        statement = role.assume_role_policy["Statement"]
                         if (
                             statement["Effect"] == "Allow"
                             and "AWS" in statement["Principal"]
                         ):
                             if type(statement["Principal"]["AWS"]) == list:
                                 for aws_account in statement["Principal"]["AWS"]:
-                                    if iam_client.account not in aws_account:
+                                    if (
+                                        iam_client.account not in aws_account
+                                        or "*" == aws_account
+                                    ):
                                         report.status = "FAIL"
                                         report.status_extended = f"IAM Role {role.name} gives cross account read-only access!"
                                         break
@@ -33,6 +60,7 @@ class iam_role_cross_account_readonlyaccess_policy(Check):
                                 if (
                                     iam_client.account
                                     not in statement["Principal"]["AWS"]
+                                    or "*" == statement["Principal"]["AWS"]
                                 ):
                                     report.status = "FAIL"
                                     report.status_extended = f"IAM Role {role.name} gives cross account read-only access!"

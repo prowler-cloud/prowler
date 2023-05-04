@@ -11,19 +11,38 @@ from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
 def is_service_role(role):
-    if "Statement" in role["AssumeRolePolicyDocument"]:
-        for statement in role["AssumeRolePolicyDocument"]["Statement"]:
-            if (
-                statement["Effect"] == "Allow"
-                and (
-                    "sts:AssumeRole" in statement["Action"]
-                    or "sts:*" in statement["Action"]
-                    or "*" in statement["Action"]
-                )
-                # This is what defines a service role
-                and "Service" in statement["Principal"]
-            ):
-                return True
+    try:
+        if "Statement" in role["AssumeRolePolicyDocument"]:
+            if type(role["AssumeRolePolicyDocument"]["Statement"]) == list:
+                for statement in role["AssumeRolePolicyDocument"]["Statement"]:
+                    if (
+                        statement["Effect"] == "Allow"
+                        and (
+                            "sts:AssumeRole" in statement["Action"]
+                            or "sts:*" in statement["Action"]
+                            or "*" in statement["Action"]
+                        )
+                        # This is what defines a service role
+                        and "Service" in statement["Principal"]
+                    ):
+                        return True
+            else:
+                statement = role["AssumeRolePolicyDocument"]["Statement"]
+                if (
+                    statement["Effect"] == "Allow"
+                    and (
+                        "sts:AssumeRole" in statement["Action"]
+                        or "sts:*" in statement["Action"]
+                        or "*" in statement["Action"]
+                    )
+                    # This is what defines a service role
+                    and "Service" in statement["Principal"]
+                ):
+                    return True
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
     return False
 
 
