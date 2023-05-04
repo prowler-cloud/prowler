@@ -4,6 +4,7 @@ from unittest import mock
 from prowler.providers.aws.services.ecr.ecr_service import (
     FindingSeverityCounts,
     ImageDetails,
+    Registry,
     Repository,
 )
 
@@ -28,20 +29,66 @@ repo_policy_public = {
 
 
 class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
+    def test_no_registries(self):
+        ecr_client = mock.MagicMock
+        ecr_client.registries = {}
+
+        with mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_service.ECR",
+            ecr_client,
+        ):
+            from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
+                ecr_repositories_scan_vulnerabilities_in_latest_image,
+            )
+
+            check = ecr_repositories_scan_vulnerabilities_in_latest_image()
+            result = check.execute()
+            assert len(result) == 0
+
+    def test_registry_no_repositories(self):
+        ecr_client = mock.MagicMock
+        ecr_client.registries = {}
+        ecr_client.registries[AWS_REGION] = Registry(
+            id=AWS_ACCOUNT_NUMBER,
+            region=AWS_REGION,
+            scan_type="BASIC",
+            repositories=[],
+            rules=[],
+        )
+
+        with mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_service.ECR",
+            ecr_client,
+        ):
+            from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
+                ecr_repositories_scan_vulnerabilities_in_latest_image,
+            )
+
+            check = ecr_repositories_scan_vulnerabilities_in_latest_image()
+            result = check.execute()
+            assert len(result) == 0
+
     def test_empty_repository(self):
         ecr_client = mock.MagicMock
-        ecr_client.repositories = []
-        ecr_client.repositories.append(
-            Repository(
-                name=repository_name,
-                arn=repository_arn,
-                region=AWS_REGION,
-                scan_on_push=True,
-                policy=repo_policy_public,
-                images_details=[],
-                lifecycle_policy=None,
-            )
+        ecr_client.registries = {}
+        ecr_client.registries[AWS_REGION] = Registry(
+            id=AWS_ACCOUNT_NUMBER,
+            region=AWS_REGION,
+            scan_type="BASIC",
+            repositories=[
+                Repository(
+                    name=repository_name,
+                    arn=repository_arn,
+                    region=AWS_REGION,
+                    scan_on_push=True,
+                    policy=repo_policy_public,
+                    images_details=[],
+                    lifecycle_policy=None,
+                )
+            ],
+            rules=[],
         )
+
         with mock.patch(
             "prowler.providers.aws.services.ecr.ecr_service.ECR",
             ecr_client,
@@ -56,28 +103,34 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
 
     def test_image_scaned_without_findings(self):
         ecr_client = mock.MagicMock
-        ecr_client.repositories = []
-        ecr_client.repositories.append(
-            Repository(
-                name=repository_name,
-                arn=repository_arn,
-                region=AWS_REGION,
-                scan_on_push=True,
-                policy=repo_policy_public,
-                images_details=[],
-                lifecycle_policy=None,
-            )
+        ecr_client.registries = {}
+        ecr_client.registries[AWS_REGION] = Registry(
+            id=AWS_ACCOUNT_NUMBER,
+            region=AWS_REGION,
+            scan_type="BASIC",
+            repositories=[
+                Repository(
+                    name=repository_name,
+                    arn=repository_arn,
+                    region=AWS_REGION,
+                    scan_on_push=True,
+                    policy=repo_policy_public,
+                    images_details=[
+                        ImageDetails(
+                            latest_tag="test-tag",
+                            latest_digest="test-digest",
+                            scan_findings_status="COMPLETE",
+                            scan_findings_severity_count=FindingSeverityCounts(
+                                critical=0, high=0, medium=0
+                            ),
+                        ),
+                    ],
+                    lifecycle_policy=None,
+                )
+            ],
+            rules=[],
         )
-        ecr_client.repositories[0].images_details.append(
-            ImageDetails(
-                latest_tag="test-tag",
-                latest_digest="test-digest",
-                scan_findings_status="COMPLETE",
-                scan_findings_severity_count=FindingSeverityCounts(
-                    critical=0, high=0, medium=0
-                ),
-            ),
-        ),
+
         with mock.patch(
             "prowler.providers.aws.services.ecr.ecr_service.ECR",
             ecr_client,
@@ -96,28 +149,34 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
 
     def test_image_scanned_with_findings(self):
         ecr_client = mock.MagicMock
-        ecr_client.repositories = []
-        ecr_client.repositories.append(
-            Repository(
-                name=repository_name,
-                arn=repository_arn,
-                region=AWS_REGION,
-                scan_on_push=True,
-                policy=repo_policy_public,
-                images_details=[],
-                lifecycle_policy=None,
-            )
+        ecr_client.registries = {}
+        ecr_client.registries[AWS_REGION] = Registry(
+            id=AWS_ACCOUNT_NUMBER,
+            region=AWS_REGION,
+            scan_type="BASIC",
+            repositories=[
+                Repository(
+                    name=repository_name,
+                    arn=repository_arn,
+                    region=AWS_REGION,
+                    scan_on_push=True,
+                    policy=repo_policy_public,
+                    images_details=[
+                        ImageDetails(
+                            latest_tag="test-tag",
+                            latest_digest="test-digest",
+                            scan_findings_status="COMPLETE",
+                            scan_findings_severity_count=FindingSeverityCounts(
+                                critical=12, high=34, medium=7
+                            ),
+                        )
+                    ],
+                    lifecycle_policy=None,
+                )
+            ],
+            rules=[],
         )
-        ecr_client.repositories[0].images_details.append(
-            ImageDetails(
-                latest_tag="test-tag",
-                latest_digest="test-digest",
-                scan_findings_status="COMPLETE",
-                scan_findings_severity_count=FindingSeverityCounts(
-                    critical=12, high=34, medium=7
-                ),
-            ),
-        ),
+
         with mock.patch(
             "prowler.providers.aws.services.ecr.ecr_service.ECR",
             ecr_client,
@@ -136,28 +195,34 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
 
     def test_image_scanned_fail_scan(self):
         ecr_client = mock.MagicMock
-        ecr_client.repositories = []
-        ecr_client.repositories.append(
-            Repository(
-                name=repository_name,
-                arn=repository_arn,
-                region=AWS_REGION,
-                scan_on_push=True,
-                policy=repo_policy_public,
-                images_details=[],
-                lifecycle_policy=None,
-            )
+        ecr_client.registries = {}
+        ecr_client.registries[AWS_REGION] = Registry(
+            id=AWS_ACCOUNT_NUMBER,
+            region=AWS_REGION,
+            scan_type="BASIC",
+            repositories=[
+                Repository(
+                    name=repository_name,
+                    arn=repository_arn,
+                    region=AWS_REGION,
+                    scan_on_push=True,
+                    policy=repo_policy_public,
+                    images_details=[
+                        ImageDetails(
+                            latest_tag="test-tag",
+                            latest_digest="test-digest",
+                            scan_findings_status="FAILED",
+                            scan_findings_severity_count=FindingSeverityCounts(
+                                critical=0, high=0, medium=0
+                            ),
+                        )
+                    ],
+                    lifecycle_policy=None,
+                )
+            ],
+            rules=[],
         )
-        ecr_client.repositories[0].images_details.append(
-            ImageDetails(
-                latest_tag="test-tag",
-                latest_digest="test-digest",
-                scan_findings_status="FAILED",
-                scan_findings_severity_count=FindingSeverityCounts(
-                    critical=0, high=0, medium=0
-                ),
-            ),
-        ),
+
         with mock.patch(
             "prowler.providers.aws.services.ecr.ecr_service.ECR",
             ecr_client,
@@ -176,28 +241,34 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
 
     def test_image_not_scanned(self):
         ecr_client = mock.MagicMock
-        ecr_client.repositories = []
-        ecr_client.repositories.append(
-            Repository(
-                name=repository_name,
-                arn=repository_arn,
-                region=AWS_REGION,
-                scan_on_push=True,
-                policy=repo_policy_public,
-                images_details=[],
-                lifecycle_policy=None,
-            )
+        ecr_client.registries = {}
+        ecr_client.registries[AWS_REGION] = Registry(
+            id=AWS_ACCOUNT_NUMBER,
+            region=AWS_REGION,
+            scan_type="BASIC",
+            repositories=[
+                Repository(
+                    name=repository_name,
+                    arn=repository_arn,
+                    region=AWS_REGION,
+                    scan_on_push=True,
+                    policy=repo_policy_public,
+                    images_details=[
+                        ImageDetails(
+                            latest_tag="test-tag",
+                            latest_digest="test-digest",
+                            scan_findings_status="",
+                            scan_findings_severity_count=FindingSeverityCounts(
+                                critical=0, high=0, medium=0
+                            ),
+                        )
+                    ],
+                    lifecycle_policy=None,
+                )
+            ],
+            rules=[],
         )
-        ecr_client.repositories[0].images_details.append(
-            ImageDetails(
-                latest_tag="test-tag",
-                latest_digest="test-digest",
-                scan_findings_status="",
-                scan_findings_severity_count=FindingSeverityCounts(
-                    critical=0, high=0, medium=0
-                ),
-            ),
-        ),
+
         with mock.patch(
             "prowler.providers.aws.services.ecr.ecr_service.ECR",
             ecr_client,

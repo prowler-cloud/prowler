@@ -13,9 +13,7 @@ class ecr_repositories_lifecycle_policy_enabled(Check):
                 report.resource_arn = repository.arn
                 report.resource_tags = repository.tags
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Repository {repository.name} has no lifecycle policy configured"
-                )
+                report.status_extended = f"Repository {repository.name} has not a lifecycle policy configured"
                 if repository.lifecycle_policy:
                     report.status = "PASS"
                     report.status_extended = f"Repository {repository.name} has a lifecycle policy configured"
