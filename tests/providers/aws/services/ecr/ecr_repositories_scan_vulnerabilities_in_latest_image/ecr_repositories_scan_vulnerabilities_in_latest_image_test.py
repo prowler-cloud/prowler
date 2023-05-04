@@ -1,3 +1,4 @@
+from datetime import datetime
 from re import search
 from unittest import mock
 
@@ -119,6 +120,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                         ImageDetails(
                             latest_tag="test-tag",
                             latest_digest="test-digest",
+                            image_pushed_at=datetime(2023, 1, 1),
                             scan_findings_status="COMPLETE",
                             scan_findings_severity_count=FindingSeverityCounts(
                                 critical=0, high=0, medium=0
@@ -165,6 +167,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                         ImageDetails(
                             latest_tag="test-tag",
                             latest_digest="test-digest",
+                            image_pushed_at=datetime(2023, 1, 1),
                             scan_findings_status="COMPLETE",
                             scan_findings_severity_count=FindingSeverityCounts(
                                 critical=12, high=34, medium=7
@@ -211,6 +214,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                         ImageDetails(
                             latest_tag="test-tag",
                             latest_digest="test-digest",
+                            image_pushed_at=datetime(2023, 1, 1),
                             scan_findings_status="FAILED",
                             scan_findings_severity_count=FindingSeverityCounts(
                                 critical=0, high=0, medium=0
@@ -257,6 +261,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                         ImageDetails(
                             latest_tag="test-tag",
                             latest_digest="test-digest",
+                            image_pushed_at=datetime(2023, 1, 1),
                             scan_findings_status="",
                             scan_findings_severity_count=FindingSeverityCounts(
                                 critical=0, high=0, medium=0

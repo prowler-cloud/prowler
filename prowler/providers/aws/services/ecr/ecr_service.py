@@ -127,9 +127,7 @@ class ECR:
                         for page in describe_images_paginator.paginate(
                             registryId=self.registries[regional_client.region].id,
                             repositoryName=repository.name,
-                            PaginationConfig={"PageSize": 1000}
-                            # We need to sort images by the time where it was pushed to the registry
-                            # since for now we only check the latest
+                            PaginationConfig={"PageSize": 1000},
                         ):
                             for image in page["imageDetails"]:
                                 # The following condition is required since sometimes
@@ -177,16 +175,6 @@ class ECR:
                                     repository.images_details.sort(
                                         key=lambda image: image.image_pushed_at
                                     )
-                        # for repo in self.registries[
-                        #     regional_client.region
-                        # ].repositories:
-                        #     print(repo.name)
-                        #     repo.images_details.sort(
-                        #         key=lambda image: image.image_pushed_at
-                        #     )
-                        #     print(repo.images_details)
-                        #     for image in repo.images_details:
-                        #         print(image)
 
         except Exception as error:
             logger.error(

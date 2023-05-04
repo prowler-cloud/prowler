@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import patch
 
 import botocore
@@ -26,6 +27,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "imageTags": [
                         "test-tag1",
                     ],
+                    "imagePushedAt": datetime(2023, 1, 1),
                     "imageScanStatus": {
                         "status": "COMPLETE",
                     },
@@ -38,6 +40,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "imageTags": [
                         "test-tag2",
                     ],
+                    "imagePushedAt": datetime(2023, 1, 2),
                     "imageScanStatus": {
                         "status": "COMPLETE",
                     },
@@ -201,7 +204,7 @@ class Test_ECR_Service:
             == "ecr:DescribeRepositories"
         )
 
-    # Test describe ECR repository policies
+    # Test describe ECR repository lifecycle policies
     @mock_ecr
     def test__get_lifecycle_policies__(self):
         ecr_client = client("ecr", region_name=AWS_REGION)
@@ -233,16 +236,18 @@ class Test_ECR_Service:
         assert ecr.registries[AWS_REGION].repositories[0].name == repo_name
         assert ecr.registries[AWS_REGION].repositories[0].arn == repo_arn
         assert ecr.registries[AWS_REGION].repositories[0].scan_on_push
-        # We have mocked the response with two images but the service is filtering using
-        # JMESPath to get just the latest one
-        assert len(ecr.registries[AWS_REGION].repositories[0].images_details) == 1
+        assert len(ecr.registries[AWS_REGION].repositories[0].images_details) == 2
+        # First image pushed
+        assert ecr.registries[AWS_REGION].repositories[0].images_details[
+            0
+        ].image_pushed_at == datetime(2023, 1, 1)
         assert (
             ecr.registries[AWS_REGION].repositories[0].images_details[0].latest_tag
-            == "test-tag2"
+            == "test-tag1"
         )
         assert (
             ecr.registries[AWS_REGION].repositories[0].images_details[0].latest_digest
-            == "sha256:83251ac64627fc331584f6c498b3aba5badc01574e2c70b2499af3af16630eed"
+            == "sha256:d8868e50ac4c7104d2200d42f432b661b2da8c1e417ccfae217e6a1e04bb9295"
         )
         assert (
             ecr.registries[AWS_REGION]
@@ -269,6 +274,47 @@ class Test_ECR_Service:
             ecr.registries[AWS_REGION]
             .repositories[0]
             .images_details[0]
+            .scan_findings_severity_count.medium
+            == 3
+        )
+
+        # Second image pushed
+        assert ecr.registries[AWS_REGION].repositories[0].images_details[
+            1
+        ].image_pushed_at == datetime(2023, 1, 2)
+        assert (
+            ecr.registries[AWS_REGION].repositories[0].images_details[1].latest_tag
+            == "test-tag2"
+        )
+        assert (
+            ecr.registries[AWS_REGION].repositories[0].images_details[1].latest_digest
+            == "sha256:83251ac64627fc331584f6c498b3aba5badc01574e2c70b2499af3af16630eed"
+        )
+        assert (
+            ecr.registries[AWS_REGION]
+            .repositories[0]
+            .images_details[1]
+            .scan_findings_status
+            == "COMPLETE"
+        )
+        assert (
+            ecr.registries[AWS_REGION]
+            .repositories[0]
+            .images_details[1]
+            .scan_findings_severity_count.critical
+            == 1
+        )
+        assert (
+            ecr.registries[AWS_REGION]
+            .repositories[0]
+            .images_details[1]
+            .scan_findings_severity_count.high
+            == 2
+        )
+        assert (
+            ecr.registries[AWS_REGION]
+            .repositories[0]
+            .images_details[1]
             .scan_findings_severity_count.medium
             == 3
         )
