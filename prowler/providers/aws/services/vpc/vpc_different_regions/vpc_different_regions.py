@@ -12,7 +12,7 @@ class vpc_different_regions(Check):
 
         report = Check_Report_AWS(self.metadata())
         # This is a global check under the vpc service: region, resource_id and tags are not relevant here but we keep them for consistency
-        report.region = list(vpc_client.regional_clients.keys())[0]
+        report.region = vpc_client.region
         report.resource_id = vpc_client.audited_account
         report.status = "FAIL"
         report.status_extended = "VPCs found only in one region"

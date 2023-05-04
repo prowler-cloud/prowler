@@ -23,7 +23,7 @@ class Test_vpc_different_regions:
             audited_partition="aws",
             audited_identity_arn=None,
             profile=None,
-            profile_region=["us-east-1", "eu-west-1"],
+            profile_region="us-east-1",
             credentials=None,
             assumed_role_info=None,
             audited_regions=["us-east-1", "eu-west-1"],
@@ -64,7 +64,7 @@ class Test_vpc_different_regions:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert result[0].region in ["us-east-1", "eu-west-1"]
+                assert result[0].region == "us-east-1"
                 assert (
                     result[0].status_extended == "VPCs found in more than one region."
                 )
@@ -99,7 +99,7 @@ class Test_vpc_different_regions:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert result[0].region in ["us-east-1", "eu-west-1"]
+                assert result[0].region == "us-east-1"
                 assert result[0].status_extended == "VPCs found only in one region"
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert result[0].resource_tags == []
