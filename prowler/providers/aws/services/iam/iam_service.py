@@ -119,7 +119,7 @@ class IAM:
             credential_list = list(csv_reader)
 
         except ClientError as error:
-            if error.response["Error"]["Code"] != "LimitExceededException":
+            if error.response["Error"]["Code"] == "LimitExceededException":
                 logger.warning(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )

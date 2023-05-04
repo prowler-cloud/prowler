@@ -81,7 +81,7 @@ class CloudFormation:
                 stack.is_nested_stack = True if stack.root_nested_stack != "" else False
 
             except ClientError as error:
-                if error.response["Error"]["Code"] != "ValidationError":
+                if error.response["Error"]["Code"] == "ValidationError":
                     logger.warning(
                         f"{stack.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
