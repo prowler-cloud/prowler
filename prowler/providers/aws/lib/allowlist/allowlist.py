@@ -192,13 +192,21 @@ def is_allowlisted_in_tags(check_allowlist, elem, resource, tags):
         # Check if there are allowlisted tags
         if "Tags" in check_allowlist:
             # Check if there are resource tags
-            if tags:
-                tags_in_resource_tags = True
-                for tag in check_allowlist["Tags"]:
-                    if tag not in tags:
-                        tags_in_resource_tags = False
-                if tags_in_resource_tags and re.search(elem, resource):
-                    return True
+            if not tags or not re.search(elem, resource):
+                return False
+
+            all_allowed_tags_in_resource_tags = True
+            for allowed_tag in check_allowlist["Tags"]:
+                found_allowed_tag = False
+                for resource_tag in tags:
+                    if re.search(allowed_tag, resource_tag):
+                        found_allowed_tag = True
+                        break
+
+                if not found_allowed_tag:
+                    all_allowed_tags_in_resource_tags = False
+
+            return all_allowed_tags_in_resource_tags
         else:
             if re.search(elem, resource):
                 return True
