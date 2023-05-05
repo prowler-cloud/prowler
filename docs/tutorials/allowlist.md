@@ -28,10 +28,8 @@ You can use `-w`/`--allowlist-file` with the path of your allowlist yaml file, b
               Resources:
                 - "test"
               Tags:
-                # Will ignore every resource containing the string "test" and the tags 'test=test' and
-                # _either_ of ('project=test' OR project=stage) in account 123456789012 and every region
-                - "test=test"
-                - "project=test|project=stage"
+                - "test=test"         # Will ignore every resource containing the string "test" and the tags 'test=test' and
+                - "project=test|project=stage" # either of ('project=test' OR project=stage) in account 123456789012 and every region
 
         "*":
           Checks:
