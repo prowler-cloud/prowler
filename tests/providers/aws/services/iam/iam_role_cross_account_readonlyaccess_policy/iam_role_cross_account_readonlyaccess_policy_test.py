@@ -5,6 +5,7 @@ from boto3 import client, session
 from moto import mock_iam
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.iam.iam_service import Role
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_ID = "123456789012"
@@ -39,7 +40,6 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         current_audit_info = self.set_mocked_audit_info()
-        current_audit_info.audited_account = AWS_ACCOUNT_ID
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
@@ -99,6 +99,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
+            assert result[0].resource_tags == []
 
     @mock_iam
     def test_internal_role_with_readonlyaccess_policy(self):
@@ -147,6 +148,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
+            assert result[0].resource_tags == []
 
     @mock_iam
     def test_cross_account_role_with_readonlyaccess_policy(self):
@@ -195,6 +197,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
+            assert result[0].resource_tags == []
 
     @mock_iam
     def test_asterisk_cross_account_role_with_readonlyaccess_policy(self):
@@ -243,3 +246,39 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
+            assert result[0].resource_tags == []
+
+    @mock_iam
+    def test_only_aws_service_linked_roles(self):
+        iam_client = mock.MagicMock
+        iam_client.roles = []
+        iam_client.roles.append(
+            Role(
+                name="AWSServiceRoleForAmazonGuardDuty",
+                arn="arn:aws:iam::106908755756:role/aws-service-role/guardduty.amazonaws.com/AWSServiceRoleForAmazonGuardDuty",
+                assume_role_policy={
+                    "Version": "2008-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {"Service": "ec2.amazonaws.com"},
+                            "Action": "sts:AssumeRole",
+                        }
+                    ],
+                },
+                is_service_role=True,
+            )
+        )
+
+        with mock.patch(
+            "prowler.providers.aws.services.iam.iam_service.IAM",
+            iam_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.iam.iam_role_cross_account_readonlyaccess_policy.iam_role_cross_account_readonlyaccess_policy import (
+                iam_role_cross_account_readonlyaccess_policy,
+            )
+
+            check = iam_role_cross_account_readonlyaccess_policy()
+            result = check.execute()
+            assert len(result) == 0
