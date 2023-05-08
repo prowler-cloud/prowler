@@ -86,3 +86,27 @@ class Test_trustedadvisor_errors_and_warnings:
             assert result[0].status == "FAIL"
             assert search("error", result[0].status_extended)
             assert result[0].resource_id == "check1"
+
+    def test_trustedadvisor_not_available_check(self):
+        trustedadvisor_client = mock.MagicMock
+        trustedadvisor_client.checks = []
+        trustedadvisor_client.enabled = True
+        trustedadvisor_client.checks.append(
+            Check(
+                id="check1",
+                name="check1",
+                region=AWS_REGION,
+                status="not_available",
+            )
+        )
+        with mock.patch(
+            "prowler.providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
+            trustedadvisor_client,
+        ):
+            from prowler.providers.aws.services.trustedadvisor.trustedadvisor_errors_and_warnings.trustedadvisor_errors_and_warnings import (
+                trustedadvisor_errors_and_warnings,
+            )
+
+            check = trustedadvisor_errors_and_warnings()
+            result = check.execute()
+            assert len(result) == 0
