@@ -498,24 +498,43 @@ class IAM:
         logger.info("IAM - List Tags...")
         try:
             for role in self.roles:
-                response = self.client.list_role_tags(RoleName=role.name)["Tags"]
-                role.tags = response
+                try:
+                    response = self.client.list_role_tags(RoleName=role.name)["Tags"]
+                    role.tags = response
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                        role.tags = []
+
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
         try:
             for user in self.users:
-                response = self.client.list_user_tags(UserName=user.name)["Tags"]
-                user.tags = response
+                try:
+                    response = self.client.list_user_tags(UserName=user.name)["Tags"]
+                    user.tags = response
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                        user.tags = []
+
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
         try:
             for policy in self.policies:
-                response = self.client.list_policy_tags(PolicyArn=policy.arn)["Tags"]
-                policy.tags = response
+                try:
+                    response = self.client.list_policy_tags(PolicyArn=policy.arn)[
+                        "Tags"
+                    ]
+                    policy.tags = response
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                        policy.tags = []
+
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
