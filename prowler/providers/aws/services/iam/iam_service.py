@@ -11,19 +11,38 @@ from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
 def is_service_role(role):
-    if "Statement" in role["AssumeRolePolicyDocument"]:
-        for statement in role["AssumeRolePolicyDocument"]["Statement"]:
-            if (
-                statement["Effect"] == "Allow"
-                and (
-                    "sts:AssumeRole" in statement["Action"]
-                    or "sts:*" in statement["Action"]
-                    or "*" in statement["Action"]
-                )
-                # This is what defines a service role
-                and "Service" in statement["Principal"]
-            ):
-                return True
+    try:
+        if "Statement" in role["AssumeRolePolicyDocument"]:
+            if type(role["AssumeRolePolicyDocument"]["Statement"]) == list:
+                for statement in role["AssumeRolePolicyDocument"]["Statement"]:
+                    if (
+                        statement["Effect"] == "Allow"
+                        and (
+                            "sts:AssumeRole" in statement["Action"]
+                            or "sts:*" in statement["Action"]
+                            or "*" in statement["Action"]
+                        )
+                        # This is what defines a service role
+                        and "Service" in statement["Principal"]
+                    ):
+                        return True
+            else:
+                statement = role["AssumeRolePolicyDocument"]["Statement"]
+                if (
+                    statement["Effect"] == "Allow"
+                    and (
+                        "sts:AssumeRole" in statement["Action"]
+                        or "sts:*" in statement["Action"]
+                        or "*" in statement["Action"]
+                    )
+                    # This is what defines a service role
+                    and "Service" in statement["Principal"]
+                ):
+                    return True
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
     return False
 
 
@@ -50,6 +69,7 @@ class IAM:
         self.__get_group_users__()
         self.__list_attached_group_policies__()
         self.__list_attached_user_policies__()
+        self.__list_attached_role_policies__()
         self.__list_inline_user_policies__()
         self.__list_mfa_devices__()
         self.password_policy = self.__get_password_policy__()
@@ -338,6 +358,27 @@ class IAM:
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_attached_role_policies__(self):
+        logger.info("IAM - List Attached User Policies...")
+        try:
+            for role in self.roles:
+                attached_role_policies = []
+                list_attached_role_policies_paginator = self.client.get_paginator(
+                    "list_attached_role_policies"
+                )
+                for page in list_attached_role_policies_paginator.paginate(
+                    RoleName=role.name
+                ):
+                    for policy in page["AttachedPolicies"]:
+                        attached_role_policies.append(policy)
+
+                role.attached_policies = attached_role_policies
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def __list_inline_user_policies__(self):
         logger.info("IAM - List Inline User Policies...")
         try:
@@ -501,6 +542,7 @@ class Role(BaseModel):
     arn: str
     assume_role_policy: dict
     is_service_role: bool
+    attached_policies: list[dict] = []
     tags: Optional[list] = []
 
 
