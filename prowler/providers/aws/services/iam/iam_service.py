@@ -498,8 +498,12 @@ class IAM:
         logger.info("IAM - List Tags...")
         try:
             for role in self.roles:
-                response = self.client.list_role_tags(RoleName=role.name)["Tags"]
-                role.tags = response
+                try:
+                    response = self.client.list_role_tags(RoleName=role.name)["Tags"]
+                    role.tags = response
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                        role.tags = []
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
