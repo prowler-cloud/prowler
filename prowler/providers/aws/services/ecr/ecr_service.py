@@ -219,7 +219,7 @@ class ECR:
                     rules.append(
                         ScanningRule(
                             scan_frequency=rule.get("scanFrequency"),
-                            scan_filters=rule.get("repositoryFilters"),
+                            scan_filters=rule.get("repositoryFilters", []),
                         )
                     )
 
@@ -227,6 +227,19 @@ class ECR:
                     "scanningConfiguration"
                 ).get("scanType", "BASIC")
                 self.registries[regional_client.region].rules = rules
+        except ClientError as error:
+            if error.response["Error"][
+                "Code"
+            ] == "ValidationException" and "GetRegistryScanningConfiguration operation: This feature is disabled" in str(
+                error
+            ):
+                self.registries[regional_client.region].scan_type = "BASIC"
+                self.registries[regional_client.region].rules = []
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
