@@ -18,19 +18,19 @@ class iam_policy_no_full_access_to_cloudtrail(Check):
                 report.status = "PASS"
                 report.status_extended = f"Custom Policy {policy.name} does not allow '{critical_service}:*' privileges"
                 if policy.document:
-                    # Check the statements, if one includes critical_service:* stop iterating over the rest
-                    if type(policy.document.get("Statement")) != list:
-                        policy_statements = [policy.document.get("Statement")]
+                    if type(policy.document["Statement"]) != list:
+                        policy_statements = [policy.document["Statement"]]
                     else:
-                        policy_statements = policy.document.get("Statement")
+                        policy_statements = policy.document["Statement"]
+                    # Check the statements, if one includes kms:* stop iterating over the rest
                     for statement in policy_statements:
-                        # Check policies with "Effect": "Allow" with "Action": "*" over "Resource": "*".
                         if (
-                            statement.get("Effect") == "Allow"
-                            and critical_service + ":*" in statement.get("Action")
+                            statement["Effect"] == "Allow"
+                            and "Action" in statement
+                            and critical_service + ":*" in statement["Action"]
                             and (
-                                statement.get("Resource") == "*"
-                                or statement.get("Resource") == ["*"]
+                                statement["Resource"] == "*"
+                                or statement["Resource"] == ["*"]
                             )
                         ):
                             report.status = "FAIL"
