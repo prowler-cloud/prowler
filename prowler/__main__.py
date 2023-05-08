@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 
-from prowler.config.config import get_config_var
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
@@ -171,12 +171,10 @@ def prowler():
     # Extract findings stats
     stats = extract_findings_statistics(findings)
 
-    if get_config_var("slack_app_bot_user_oauth_token") and get_config_var(
-        "slack_channel_id"
-    ):
+    if "SLACK_API_TOKEN" in os.environ and "SLACK_CHANNEL_ID" in os.environ:
         send_slack_message(
-            get_config_var("slack_app_bot_user_oauth_token"),
-            get_config_var("slack_channel_id"),
+            os.environ["SLACK_API_TOKEN"],
+            os.environ["SLACK_CHANNEL_ID"],
             stats,
             provider,
             audit_info,

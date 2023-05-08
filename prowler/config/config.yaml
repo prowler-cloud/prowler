@@ -1,7 +1,3 @@
-# Slack Configuration
-slack_app_bot_user_oauth_token: ""
-slack_channel_id: ""
-
 # AWS EC2 Configuration
 # aws.ec2_elastic_ip_shodan
 shodan_api_key: null
