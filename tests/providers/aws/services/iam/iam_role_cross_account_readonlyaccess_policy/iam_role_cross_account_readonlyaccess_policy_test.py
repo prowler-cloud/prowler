@@ -272,7 +272,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_role_cross_account_readonlyaccess_policy.iam_role_cross_account_readonlyaccess_policy.iam_client",
-            new=iam_client
+            new=iam_client,
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_role_cross_account_readonlyaccess_policy.iam_role_cross_account_readonlyaccess_policy import (
