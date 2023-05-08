@@ -922,7 +922,7 @@ class Test_Outputs:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"\n:bar_chart: *{stats['resources_count']} Resources*\n",
+                    "text": f"\n:bar_chart: *{stats['resources_count']} Scanned Resources*\n",
                 },
             },
             {"type": "divider"},
@@ -1002,7 +1002,7 @@ class Test_Outputs:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"\n:bar_chart: *{stats['resources_count']} Resources*\n",
+                    "text": f"\n:bar_chart: *{stats['resources_count']} Scanned Resources*\n",
                 },
             },
             {"type": "divider"},
@@ -1082,7 +1082,7 @@ class Test_Outputs:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"\n:bar_chart: *{stats['resources_count']} Resources*\n",
+                    "text": f"\n:bar_chart: *{stats['resources_count']} Scanned Resources*\n",
                 },
             },
             {"type": "divider"},

@@ -82,7 +82,7 @@ def create_message_blocks(identity, provider, stats):
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"\n:bar_chart: *{stats['resources_count']} Resources*\n",
+                    "text": f"\n:bar_chart: *{stats['resources_count']} Scanned Resources*\n",
                 },
             },
             {"type": "divider"},
