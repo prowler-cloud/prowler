@@ -15,7 +15,7 @@ class trustedadvisor_errors_and_warnings(Check):
                     report.resource_id = check.id
                     report.status = "FAIL"
                     report.status_extended = f"Trusted Advisor check {check.name} is in state {check.status}."
-                    if check.status == "ok":
+                    if check.status == "ok" or check.status == "not_available":
                         report.status = "PASS"
                     findings.append(report)
         else:
