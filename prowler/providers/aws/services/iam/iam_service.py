@@ -11,19 +11,38 @@ from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
 def is_service_role(role):
-    if "Statement" in role["AssumeRolePolicyDocument"]:
-        for statement in role["AssumeRolePolicyDocument"]["Statement"]:
-            if (
-                statement["Effect"] == "Allow"
-                and (
-                    "sts:AssumeRole" in statement["Action"]
-                    or "sts:*" in statement["Action"]
-                    or "*" in statement["Action"]
-                )
-                # This is what defines a service role
-                and "Service" in statement["Principal"]
-            ):
-                return True
+    try:
+        if "Statement" in role["AssumeRolePolicyDocument"]:
+            if type(role["AssumeRolePolicyDocument"]["Statement"]) == list:
+                for statement in role["AssumeRolePolicyDocument"]["Statement"]:
+                    if (
+                        statement["Effect"] == "Allow"
+                        and (
+                            "sts:AssumeRole" in statement["Action"]
+                            or "sts:*" in statement["Action"]
+                            or "*" in statement["Action"]
+                        )
+                        # This is what defines a service role
+                        and "Service" in statement["Principal"]
+                    ):
+                        return True
+            else:
+                statement = role["AssumeRolePolicyDocument"]["Statement"]
+                if (
+                    statement["Effect"] == "Allow"
+                    and (
+                        "sts:AssumeRole" in statement["Action"]
+                        or "sts:*" in statement["Action"]
+                        or "*" in statement["Action"]
+                    )
+                    # This is what defines a service role
+                    and "Service" in statement["Principal"]
+                ):
+                    return True
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
     return False
 
 
@@ -50,6 +69,7 @@ class IAM:
         self.__get_group_users__()
         self.__list_attached_group_policies__()
         self.__list_attached_user_policies__()
+        self.__list_attached_role_policies__()
         self.__list_inline_user_policies__()
         self.__list_mfa_devices__()
         self.password_policy = self.__get_password_policy__()
@@ -119,7 +139,7 @@ class IAM:
             credential_list = list(csv_reader)
 
         except ClientError as error:
-            if error.response["Error"]["Code"] != "LimitExceededException":
+            if error.response["Error"]["Code"] == "LimitExceededException":
                 logger.warning(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
@@ -338,6 +358,27 @@ class IAM:
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_attached_role_policies__(self):
+        logger.info("IAM - List Attached User Policies...")
+        try:
+            for role in self.roles:
+                attached_role_policies = []
+                list_attached_role_policies_paginator = self.client.get_paginator(
+                    "list_attached_role_policies"
+                )
+                for page in list_attached_role_policies_paginator.paginate(
+                    RoleName=role.name
+                ):
+                    for policy in page["AttachedPolicies"]:
+                        attached_role_policies.append(policy)
+
+                role.attached_policies = attached_role_policies
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def __list_inline_user_policies__(self):
         logger.info("IAM - List Inline User Policies...")
         try:
@@ -457,24 +498,43 @@ class IAM:
         logger.info("IAM - List Tags...")
         try:
             for role in self.roles:
-                response = self.client.list_role_tags(RoleName=role.name)["Tags"]
-                role.tags = response
+                try:
+                    response = self.client.list_role_tags(RoleName=role.name)["Tags"]
+                    role.tags = response
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                        role.tags = []
+
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
         try:
             for user in self.users:
-                response = self.client.list_user_tags(UserName=user.name)["Tags"]
-                user.tags = response
+                try:
+                    response = self.client.list_user_tags(UserName=user.name)["Tags"]
+                    user.tags = response
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                        user.tags = []
+
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
         try:
             for policy in self.policies:
-                response = self.client.list_policy_tags(PolicyArn=policy.arn)["Tags"]
-                policy.tags = response
+                try:
+                    response = self.client.list_policy_tags(PolicyArn=policy.arn)[
+                        "Tags"
+                    ]
+                    policy.tags = response
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                        policy.tags = []
+
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -501,6 +561,7 @@ class Role(BaseModel):
     arn: str
     assume_role_policy: dict
     is_service_role: bool
+    attached_policies: list[dict] = []
     tags: Optional[list] = []
 
 

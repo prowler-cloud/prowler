@@ -52,6 +52,8 @@ nav:
       - Azure:
           - Authentication: tutorials/azure/authentication.md
           - Subscriptions: tutorials/azure/subscriptions.md
+      - Google Cloud:
+          - Authentication: tutorials/gcp/authentication.md
   - Developer Guide: tutorials/developer-guide.md
   - Security: security.md
   - Contact Us: contact.md

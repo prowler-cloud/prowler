@@ -22,7 +22,7 @@ packages = [
   {include = "prowler"}
 ]
 readme = "README.md"
-version = "3.4.0"
+version = "3.4.1"
 
 [tool.poetry.dependencies]
 alive-progress = "3.1.1"
@@ -33,12 +33,12 @@ azure-mgmt-security = "5.0.0"
 azure-mgmt-storage = "21.0.0"
 azure-mgmt-subscription = "3.1.1"
 azure-storage-blob = "12.16.0"
-boto3 = "1.26.115"
+boto3 = "1.26.125"
 botocore = "1.29.125"
 colorama = "0.4.6"
 detect-secrets = "1.4.0"
 google-api-python-client = "2.86.0"
-mkdocs = {version = "1.4.2", optional = true}
+mkdocs = {version = "1.4.3", optional = true}
 mkdocs-material = {version = "9.1.8", optional = true}
 msgraph-core = "0.2.2"
 pydantic = "1.10.7"
@@ -55,12 +55,12 @@ docs = ["mkdocs", "mkdocs-material"]
 bandit = "1.7.5"
 black = "22.12.0"
 coverage = "7.2.5"
-docker = "6.0.1"
+docker = "6.1.1"
 flake8 = "6.0.0"
 freezegun = "1.2.2"
-moto = "4.1.8"
+moto = "4.1.9"
 openapi-spec-validator = "0.5.6"
-pylint = "2.17.3"
+pylint = "2.17.4"
 pytest = "7.3.1"
 pytest-xdist = "3.2.1"
 safety = "2.3.5"

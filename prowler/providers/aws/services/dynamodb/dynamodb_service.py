@@ -177,7 +177,7 @@ class DAX:
                 cluster.tags = response
 
             except ClientError as error:
-                if error.response["Error"]["Code"] != "InvalidARNFault":
+                if error.response["Error"]["Code"] == "InvalidARNFault":
                     logger.warning(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )

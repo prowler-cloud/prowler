@@ -42,8 +42,6 @@ def generate_provider_output_csv(
     set_provider_output_options configures automatically the outputs based on the selected provider and returns the Provider_Output_Options object.
     """
     try:
-        finding_output_model = f"{provider.capitalize()}_Check_Output_{mode.upper()}"
-        output_model = getattr(importlib.import_module(__name__), finding_output_model)
         # Dynamically load the Provider_Output_Options class
         finding_output_model = f"{provider.capitalize()}_Check_Output_{mode.upper()}"
         output_model = getattr(importlib.import_module(__name__), finding_output_model)

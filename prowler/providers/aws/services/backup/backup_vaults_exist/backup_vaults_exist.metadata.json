@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "backup_vaults_exist",
-  "CheckTitle": "Esure AWS Backup vaults exist",
+  "CheckTitle": "Ensure AWS Backup vaults exist",
   "CheckType": [
     "Recover",
     "Resilience",

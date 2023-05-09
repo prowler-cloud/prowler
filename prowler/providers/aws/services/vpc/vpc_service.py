@@ -17,7 +17,7 @@ class VPC:
         self.audited_account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
-        self.vpcs = []
+        self.vpcs = {}
         self.vpc_peering_connections = []
         self.vpc_endpoints = []
         self.vpc_endpoint_services = []
@@ -28,8 +28,13 @@ class VPC:
         self.__describe_flow_logs__()
         self.__describe_peering_route_tables__()
         self.__describe_vpc_endpoint_service_permissions__()
-        self.vpc_subnets = []
+        self.vpc_subnets = {}
         self.__threading_call__(self.__describe_vpc_subnets__)
+        self.region = (
+            audit_info.profile_region
+            if audit_info.profile_region
+            else list(self.regional_clients.keys())[0]
+        )
 
     def __get_session__(self):
         return self.session
@@ -52,14 +57,12 @@ class VPC:
                     if not self.audit_resources or (
                         is_resource_filtered(vpc["VpcId"], self.audit_resources)
                     ):
-                        self.vpcs.append(
-                            VPCs(
-                                id=vpc["VpcId"],
-                                default=vpc["IsDefault"],
-                                cidr_block=vpc["CidrBlock"],
-                                region=regional_client.region,
-                                tags=vpc.get("Tags"),
-                            )
+                        self.vpcs[vpc["VpcId"]] = VPCs(
+                            id=vpc["VpcId"],
+                            default=vpc["IsDefault"],
+                            cidr_block=vpc["CidrBlock"],
+                            region=regional_client.region,
+                            tags=vpc.get("Tags"),
                         )
         except Exception as error:
             logger.error(
@@ -135,7 +138,7 @@ class VPC:
     def __describe_flow_logs__(self):
         logger.info("VPC - Describing flow logs...")
         try:
-            for vpc in self.vpcs:
+            for vpc in self.vpcs.values():
                 regional_client = self.regional_clients[vpc.region]
                 flow_logs = regional_client.describe_flow_logs(
                     Filters=[
@@ -289,9 +292,9 @@ class VPC:
                                 public=public,
                                 tags=subnet.get("Tags"),
                             )
-                            self.vpc_subnets.append(object)
+                            self.vpc_subnets[subnet["SubnetId"]] = object
                             # Add it to the VPC object
-                            for vpc in self.vpcs:
+                            for vpc in self.vpcs.values():
                                 if vpc.id == subnet["VpcId"]:
                                     vpc.subnets.append(object)
                         except Exception as error:

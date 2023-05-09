@@ -83,7 +83,7 @@ class CloudFront:
                 ]["WebACLId"]
 
                 # Default Cache Config
-                default_chache_config = DefaultCacheConfigBehaviour(
+                default_cache_config = DefaultCacheConfigBehaviour(
                     realtime_log_config_arn=distribution_config["DistributionConfig"][
                         "DefaultCacheBehavior"
                     ].get("RealtimeLogConfigArn"),
@@ -96,7 +96,7 @@ class CloudFront:
                 )
                 distributions[
                     distribution_id
-                ].default_cache_config = default_chache_config
+                ].default_cache_config = default_cache_config
 
         except Exception as error:
             logger.error(
