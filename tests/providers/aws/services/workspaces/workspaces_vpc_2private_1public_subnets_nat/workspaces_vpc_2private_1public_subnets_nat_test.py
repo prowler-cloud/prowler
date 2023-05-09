@@ -58,6 +58,48 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                 result = check.execute()
                 assert len(result) == 0
 
+    def test_workspaces_no_subnet(self):
+        workspaces_client = mock.MagicMock
+        workspaces_client = mock.MagicMock
+        workspaces_client.workspaces = []
+        workspaces_client.workspaces.append(
+            WorkSpace(
+                id=workspace_id,
+                region=AWS_REGION,
+                user_volume_encryption_enabled=True,
+                root_volume_encryption_enabled=True,
+            )
+        )
+
+        current_audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.vpc_client",
+                new=VPC(current_audit_info),
+            ):
+                with mock.patch(
+                    "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.workspaces_client",
+                    new=workspaces_client,
+                ):
+                    from prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat import (
+                        workspaces_vpc_2private_1public_subnets_nat,
+                    )
+
+                    check = workspaces_vpc_2private_1public_subnets_nat()
+                    result = check.execute()
+                    assert len(result) == 1
+                    assert result[0].status == "FAIL"
+                    assert (
+                        result[0].status_extended
+                        == f"Workspace {workspace_id} VPC has not 1 public subnet and 2 private subnets with a NAT Gateway attached"
+                    )
+                    assert result[0].resource_id == workspace_id
+                    assert result[0].resource_arn == ""
+
     @mock_ec2
     def test_workspaces_vpc_one_private_subnet(self):
         # EC2 Client
