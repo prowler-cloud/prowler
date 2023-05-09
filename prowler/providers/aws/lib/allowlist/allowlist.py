@@ -130,19 +130,33 @@ def is_allowlisted(allowlist, audited_account, check, region, resource, tags):
 
 def is_allowlisted_in_check(allowlist, audited_account, check, region, resource, tags):
     try:
-        # If there is a *, it affects to all checks
-        if "*" in allowlist["Accounts"][audited_account]["Checks"]:
-            check = "*"
-            if is_allowlisted_in_region(
-                allowlist, audited_account, check, region, resource, tags
-            ):
-                return True
-        # Check if there is the specific check
-        if check in allowlist["Accounts"][audited_account]["Checks"]:
-            if is_allowlisted_in_region(
-                allowlist, audited_account, check, region, resource, tags
-            ):
-                return True
+        for allowlisted_check in allowlist["Accounts"][audited_account][
+            "Checks"
+        ].keys():
+            # If there is a *, it affects to all checks
+            if "*" == allowlisted_check:
+                check = "*"
+                if is_allowlisted_in_region(
+                    allowlist, audited_account, check, region, resource, tags
+                ):
+                    return True
+            # Check if there is the specific check
+            elif check == allowlisted_check:
+                if is_allowlisted_in_region(
+                    allowlist, audited_account, check, region, resource, tags
+                ):
+                    return True
+            # Check if check is a regex
+            elif re.search(allowlisted_check, check):
+                if is_allowlisted_in_region(
+                    allowlist,
+                    audited_account,
+                    allowlisted_check,
+                    region,
+                    resource,
+                    tags,
+                ):
+                    return True
         return False
     except Exception as error:
         logger.critical(
