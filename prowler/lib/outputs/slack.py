@@ -9,8 +9,7 @@ from prowler.lib.logger import logger
 def send_slack_message(token, channel, stats, provider, audit_info):
     try:
         client = WebClient(token=token)
-
-        client.chat_postMessage(
+        response = client.chat_postMessage(
             username="Prowler",
             icon_url=square_logo_img,
             channel="#" + channel,
@@ -18,6 +17,7 @@ def send_slack_message(token, channel, stats, provider, audit_info):
                 create_message_identity(provider, audit_info), provider, stats
             ),
         )
+        return response
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
