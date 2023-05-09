@@ -106,8 +106,8 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                 new=VPC(current_audit_info),
             ):
                 with mock.patch(
-                    "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
-                    workspaces_client,
+                    "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.workspaces_client",
+                    new=workspaces_client,
                 ):
                     from prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat import (
                         workspaces_vpc_2private_1public_subnets_nat,
@@ -189,8 +189,8 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                 new=VPC(current_audit_info),
             ):
                 with mock.patch(
-                    "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
-                    workspaces_client,
+                    "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.workspaces_client",
+                    new=workspaces_client,
                 ):
                     from prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat import (
                         workspaces_vpc_2private_1public_subnets_nat,
@@ -291,8 +291,8 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                 new=VPC(current_audit_info),
             ):
                 with mock.patch(
-                    "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
-                    workspaces_client,
+                    "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.workspaces_client",
+                    new=workspaces_client,
                 ):
                     from prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat import (
                         workspaces_vpc_2private_1public_subnets_nat,
@@ -401,8 +401,8 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                 new=VPC(current_audit_info),
             ):
                 with mock.patch(
-                    "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
-                    workspaces_client,
+                    "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.workspaces_client",
+                    new=workspaces_client,
                 ):
                     from prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat import (
                         workspaces_vpc_2private_1public_subnets_nat,
