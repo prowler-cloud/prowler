@@ -31,7 +31,7 @@ def create_message_identity(provider, audit_info):
             identity = f"AWS Account *{audit_info.audited_account}*"
         elif provider == "gcp":
             identity = f"GCP Project *{audit_info.project_id}*"
-        else:
+        elif provider == "azure":
             printed_subscriptions = []
             for key, value in audit_info.identity.subscriptions.items():
                 intermediate = "- *" + key + ": " + value + "*\n"

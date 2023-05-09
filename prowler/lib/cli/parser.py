@@ -154,6 +154,11 @@ Detailed documentation at https://docs.prowler.cloud
         common_outputs_parser.add_argument(
             "-b", "--no-banner", action="store_true", help="Hide Prowler banner"
         )
+        common_outputs_parser.add_argument(
+            "--slack",
+            action="store_true",
+            help="Send a summary of the execution with a Slack APP in your channel. Environment variables SLACK_API_TOKEN and SLACK_CHANNEL_ID are needed (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack).",
+        )
 
     def __init_logging_parser__(self):
         # Logging Options

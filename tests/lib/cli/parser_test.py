@@ -26,6 +26,7 @@ class Test_Parser:
         assert "output" in parsed.output_directory
         assert not parsed.verbose
         assert not parsed.no_banner
+        assert not parsed.slack
         assert parsed.log_level == "CRITICAL"
         assert not parsed.log_file
         assert not parsed.only_logs
@@ -71,6 +72,7 @@ class Test_Parser:
         assert "output" in parsed.output_directory
         assert not parsed.verbose
         assert not parsed.no_banner
+        assert not parsed.slack
         assert parsed.log_level == "CRITICAL"
         assert not parsed.log_file
         assert not parsed.only_logs
@@ -108,6 +110,7 @@ class Test_Parser:
         assert "output" in parsed.output_directory
         assert not parsed.verbose
         assert not parsed.no_banner
+        assert not parsed.slack
         assert parsed.log_level == "CRITICAL"
         assert not parsed.log_file
         assert not parsed.only_logs
@@ -261,6 +264,11 @@ class Test_Parser:
         command = [prowler_command, "--no-banner"]
         parsed = self.parser.parse(command)
         assert parsed.no_banner
+
+    def test_root_parser_slack(self):
+        command = [prowler_command, "--slack"]
+        parsed = self.parser.parse(command)
+        assert parsed.slack
 
     def test_logging_parser_only_logs_set(self):
         command = [prowler_command, "--only-logs"]

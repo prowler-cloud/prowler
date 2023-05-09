@@ -171,14 +171,20 @@ def prowler():
     # Extract findings stats
     stats = extract_findings_statistics(findings)
 
-    if "SLACK_API_TOKEN" in os.environ and "SLACK_CHANNEL_ID" in os.environ:
-        _ = send_slack_message(
-            os.environ["SLACK_API_TOKEN"],
-            os.environ["SLACK_CHANNEL_ID"],
-            stats,
-            provider,
-            audit_info,
-        )
+    if args.slack:
+        if "SLACK_API_TOKEN" in os.environ and "SLACK_CHANNEL_ID" in os.environ:
+            _ = send_slack_message(
+                os.environ["SLACK_API_TOKEN"],
+                os.environ["SLACK_CHANNEL_ID"],
+                stats,
+                provider,
+                audit_info,
+            )
+        else:
+            logger.critical(
+                "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_ID environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
+            )
+            sys.exit(1)
 
     if args.output_modes:
         for mode in args.output_modes:
