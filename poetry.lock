@@ -1414,14 +1414,14 @@ test = ["pytest", "pytest-cov"]
 
 [[package]]
 name = "moto"
-version = "4.1.8"
+version = "4.1.9"
 description = ""
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "moto-4.1.8-py2.py3-none-any.whl", hash = "sha256:df5b52eff70bf125ee03ea72c4e01f2daff243796f984a534c3dee92a0b93522"},
-    {file = "moto-4.1.8.tar.gz", hash = "sha256:c3ecc2dda1a7b3a3c46655490bc6a4660b7bb47e31eaed7bbd54adeb01f8471f"},
+    {file = "moto-4.1.9-py2.py3-none-any.whl", hash = "sha256:d9f5d0e3d027df350ff3552da851644ce192cbf7e7a9e8766fca4b5b6b550df0"},
+    {file = "moto-4.1.9.tar.gz", hash = "sha256:d4bb629686b8b92e480f9784316bd0f379b148a5caee7c07aecbde6033a885e1"},
 ]
 
 [package.dependencies]
@@ -2843,4 +2843,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "2d2fe0a7155534304bd29b9faf928164a5e8750d6fd78bff401c2e85faf21fd5"
+content-hash = "6056da258d5c763962050fd59b18027452591db2c38194c15ae6befccfed193b"
