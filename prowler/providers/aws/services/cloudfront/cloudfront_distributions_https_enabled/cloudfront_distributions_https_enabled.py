@@ -16,14 +16,8 @@ class cloudfront_distributions_https_enabled(Check):
             report.resource_arn = distribution.arn
             report.resource_id = distribution.id
             report.resource_tags = distribution.tags
+
             if (
-                distribution.default_cache_config
-                and distribution.default_cache_config.viewer_protocol_policy
-                == ViewerProtocolPolicy.allow_all
-            ):
-                report.status = "FAIL"
-                report.status_extended = f"CloudFront Distribution {distribution.id} viewers can use HTTP or HTTPS"
-            elif (
                 distribution.default_cache_config
                 and distribution.default_cache_config.viewer_protocol_policy
                 == ViewerProtocolPolicy.redirect_to_https
@@ -41,6 +35,10 @@ class cloudfront_distributions_https_enabled(Check):
                 report.status_extended = (
                     f"CloudFront Distribution {distribution.id} has HTTPS only"
                 )
+            else:
+                report.status = "FAIL"
+                report.status_extended = f"CloudFront Distribution {distribution.id} viewers can use HTTP or HTTPS"
+
             findings.append(report)
 
         return findings
