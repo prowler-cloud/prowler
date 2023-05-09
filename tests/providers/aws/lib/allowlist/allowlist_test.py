@@ -323,6 +323,59 @@ class Test_Allowlist:
             )
         )
 
+    def test_is_allowlisted_in_check_regex(self):
+        # Allowlist example
+        allowlist = {
+            "Accounts": {
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "s3_*": {
+                            "Regions": ["us-east-1", "eu-west-1"],
+                            "Resources": ["*"],
+                        }
+                    }
+                }
+            }
+        }
+
+        assert is_allowlisted_in_check(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "s3_bucket_public_access",
+            AWS_REGION,
+            "prowler",
+            [],
+        )
+
+        assert is_allowlisted_in_check(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "s3_bucket_public_access",
+            AWS_REGION,
+            "prowler-test",
+            [],
+        )
+
+        assert is_allowlisted_in_check(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "s3_bucket_public_access",
+            AWS_REGION,
+            "test-prowler",
+            [],
+        )
+
+        assert not (
+            is_allowlisted_in_check(
+                allowlist,
+                AWS_ACCOUNT_NUMBER,
+                "iam_user_hardware_mfa_enabled",
+                AWS_REGION,
+                "test",
+                [],
+            )
+        )
+
     def test_is_allowlisted_tags(self):
         # Allowlist example
         allowlist = {

@@ -22,6 +22,11 @@ You can use `-w`/`--allowlist-file` with the path of your allowlist yaml file, b
               Resources:
                 - "user-1"           # Will ignore user-1 in check iam_user_hardware_mfa_enabled
                 - "user-2"           # Will ignore user-2 in check iam_user_hardware_mfa_enabled
+            "ec2_*":
+              Regions:
+                - "*"
+              Resources:
+                - "*"                 # Will ignore every EC2 check in every account and region
             "*":
               Regions:
                 - "*"
