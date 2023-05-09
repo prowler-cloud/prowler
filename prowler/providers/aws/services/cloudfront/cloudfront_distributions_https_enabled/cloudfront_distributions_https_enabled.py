@@ -20,13 +20,6 @@ class cloudfront_distributions_https_enabled(Check):
             if (
                 distribution.default_cache_config
                 and distribution.default_cache_config.viewer_protocol_policy
-                == ViewerProtocolPolicy.allow_all
-            ):
-                report.status = "FAIL"
-                report.status_extended = f"CloudFront Distribution {distribution.id} viewers can use HTTP or HTTPS"
-            elif (
-                distribution.default_cache_config
-                and distribution.default_cache_config.viewer_protocol_policy
                 == ViewerProtocolPolicy.redirect_to_https
             ):
                 report.status = "PASS"
