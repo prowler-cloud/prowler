@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+import botocore
 from boto3 import client, session
 from moto import mock_rds
 
@@ -7,7 +10,25 @@ from prowler.providers.aws.services.rds.rds_service import RDS
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
 
+make_api_call = botocore.client.BaseClient._make_api_call
 
+
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "DescribeDBEngineVersions":
+        return {
+            "DBEngineVersions": [
+                {
+                    "Engine": "mysql",
+                    "EngineVersion": "8.0.32",
+                    "DBEngineDescription": "description",
+                    "DBEngineVersionDescription": "description",
+                },
+            ]
+        }
+    return make_api_call(self, operation_name, kwarg)
+
+
+@patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_RDS_Service:
     # Mocked Audit Info
     def set_mocked_audit_info(self):
@@ -26,7 +47,7 @@ class Test_RDS_Service:
             profile_region=None,
             credentials=None,
             assumed_role_info=None,
-            audited_regions=None,
+            audited_regions=[AWS_REGION],
             organizations_metadata=None,
             audit_resources=None,
         )
@@ -249,3 +270,13 @@ class Test_RDS_Service:
         assert rds.db_cluster_snapshots[0].cluster_id == "db-primary-1"
         assert rds.db_cluster_snapshots[0].region == AWS_REGION
         assert not rds.db_cluster_snapshots[0].public
+
+    # Test RDS describe db engine versions
+    @mock_rds
+    def test__describe_db_engine_versions__(self):
+        # RDS client for this test class
+        audit_info = self.set_mocked_audit_info()
+        rds = RDS(audit_info)
+        assert "mysql" in rds.db_engines[AWS_REGION]
+        assert rds.db_engines[AWS_REGION]["mysql"].engine_versions == ["8.0.32"]
+        assert rds.db_engines[AWS_REGION]["mysql"].engine_description == "description"

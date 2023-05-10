@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_role_cross_account_readonlyaccess_policy",
+  "CheckTitle": "Ensure IAM Roles do not have ReadOnlyAccess access for external AWS accounts",
+  "CheckType": [],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsIamRole",
+  "Description": "Ensure IAM Roles do not have ReadOnlyAccess access for external AWS accounts",
+  "Risk": "The AWS-managed ReadOnlyAccess policy is highly potent and exposes the customer to a significant data leakage threat. It should be granted very conservatively. For granting access to 3rd party vendors, consider using alternative managed policies, such as ViewOnlyAccess or SecurityAudit.",
+  "RelatedUrl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_job-functions.html#awsmp_readonlyaccess",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove the AWS-managed ReadOnlyAccess policy from all roles that have a trust policy, including third-party cloud accounts, or remove third-party cloud accounts from the trust policy of all roles that need the ReadOnlyAccess policy.",
+      "Url": "https://docs.securestate.vmware.com/rule-docs/aws-iam-role-cross-account-readonlyaccess-policy"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "CAF Security Epic: IAM"
+}

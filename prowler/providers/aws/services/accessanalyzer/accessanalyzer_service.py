@@ -1,6 +1,7 @@
 import threading
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -79,10 +80,21 @@ class AccessAnalyzer:
                 if analyzer.status == "ACTIVE":
                     regional_client = self.regional_clients[analyzer.region]
                     for finding in analyzer.findings:
-                        finding_information = regional_client.get_finding(
-                            analyzerArn=analyzer.arn, id=finding.id
-                        )
-                        finding.status = finding_information["finding"]["status"]
+                        try:
+                            finding_information = regional_client.get_finding(
+                                analyzerArn=analyzer.arn, id=finding.id
+                            )
+                            finding.status = finding_information["finding"]["status"]
+                        except ClientError as error:
+                            if (
+                                error.response["Error"]["Code"]
+                                == "ResourceNotFoundException"
+                            ):
+                                logger.warning(
+                                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                                finding.status = ""
+                            continue
 
         except Exception as error:
             logger.error(

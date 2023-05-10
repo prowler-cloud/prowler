@@ -24,6 +24,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "WorkspaceId": workspace_id,
                     "UserVolumeEncryptionEnabled": True,
                     "RootVolumeEncryptionEnabled": True,
+                    "SubnetId": "subnet-1234567890",
                 },
             ],
         }

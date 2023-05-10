@@ -7,9 +7,10 @@ You can use `-w`/`--allowlist-file` with the path of your allowlist yaml file, b
 
 ## Allowlist Yaml File Syntax
 
-    ### Account, Check and/or Region can be * to apply for all the cases
-    ### Resources is a list that can have either Regex or Keywords
-    ### Tags is an optional list containing tuples of 'key=value'
+    ### Account, Check and/or Region can be * to apply for all the cases.
+    ### Resources and tags are lists that can have either Regex or Keywords.
+    ### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
+    ### Use an alternation Regex to match one of multiple tags with "ORed" logic.
     ###########################  ALLOWLIST EXAMPLE  ###########################
     Allowlist:
       Accounts:
@@ -21,14 +22,19 @@ You can use `-w`/`--allowlist-file` with the path of your allowlist yaml file, b
               Resources:
                 - "user-1"           # Will ignore user-1 in check iam_user_hardware_mfa_enabled
                 - "user-2"           # Will ignore user-2 in check iam_user_hardware_mfa_enabled
+            "ec2_*":
+              Regions:
+                - "*"
+              Resources:
+                - "*"                 # Will ignore every EC2 check in every account and region
             "*":
               Regions:
                 - "*"
               Resources:
-                - "test"             # Will ignore every resource containing the string "test" and the tags 'test=test' and 'project=test' in account 123456789012 and every region
+                - "test"
               Tags:
-                - "test=test"        # Will ignore every resource containing the string "test" and the tags 'test=test' and 'project=test' in account 123456789012 and every region
-                - "project=test"
+                - "test=test"         # Will ignore every resource containing the string "test" and the tags 'test=test' and
+                - "project=test|project=stage" # either of ('project=test' OR project=stage) in account 123456789012 and every region
 
         "*":
           Checks:

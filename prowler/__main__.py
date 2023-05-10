@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 
 from prowler.lib.banner import print_banner
@@ -29,6 +30,7 @@ from prowler.lib.outputs.compliance import display_compliance_table
 from prowler.lib.outputs.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json import close_json
 from prowler.lib.outputs.outputs import extract_findings_statistics, send_to_s3_bucket
+from prowler.lib.outputs.slack import send_slack_message
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
@@ -168,6 +170,21 @@ def prowler():
 
     # Extract findings stats
     stats = extract_findings_statistics(findings)
+
+    if args.slack:
+        if "SLACK_API_TOKEN" in os.environ and "SLACK_CHANNEL_ID" in os.environ:
+            _ = send_slack_message(
+                os.environ["SLACK_API_TOKEN"],
+                os.environ["SLACK_CHANNEL_ID"],
+                stats,
+                provider,
+                audit_info,
+            )
+        else:
+            logger.critical(
+                "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_ID environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
+            )
+            sys.exit(1)
 
     if args.output_modes:
         for mode in args.output_modes:

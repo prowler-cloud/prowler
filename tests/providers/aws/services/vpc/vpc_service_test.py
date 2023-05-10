@@ -90,7 +90,7 @@ class Test_VPC_Service:
         assert (
             len(vpc.vpcs) == 3
         )  # Number of AWS regions + created VPC, one default VPC per region
-        for vpc in vpc.vpcs:
+        for vpc in vpc.vpcs.values():
             if vpc.cidr_block == "10.0.0.0/16":
                 assert vpc.tags == [
                     {"Key": "test", "Value": "test"},
@@ -117,9 +117,9 @@ class Test_VPC_Service:
         audit_info = self.set_mocked_audit_info()
         vpc = VPC(audit_info)
         # Search created VPC among default ones
-        for vpc in vpc.vpcs:
-            if vpc.id == new_vpc["VpcId"]:
-                assert vpc.flow_log is True
+        for vpc_iter in vpc.vpcs.values():
+            if vpc_iter.id == new_vpc["VpcId"]:
+                assert vpc_iter.flow_log is True
 
     # Test VPC Describe VPC Peering connections
     @mock_ec2
@@ -303,7 +303,7 @@ class Test_VPC_Service:
         assert (
             len(vpc.vpcs) == 3
         )  # Number of AWS regions + created VPC, one default VPC per region
-        for vpc in vpc.vpcs:
+        for vpc in vpc.vpcs.values():
             if vpc.cidr_block == "172.28.7.0/24":
                 assert vpc.subnets[0].id == subnet["Subnet"]["SubnetId"]
                 assert vpc.subnets[0].default is False
@@ -311,5 +311,6 @@ class Test_VPC_Service:
                 assert vpc.subnets[0].cidr_block == "172.28.7.192/26"
                 assert vpc.subnets[0].availability_zone == f"{AWS_REGION}a"
                 assert vpc.subnets[0].public is False
+                assert vpc.subnets[0].nat_gateway is False
                 assert vpc.subnets[0].region == AWS_REGION
                 assert vpc.subnets[0].tags is None
