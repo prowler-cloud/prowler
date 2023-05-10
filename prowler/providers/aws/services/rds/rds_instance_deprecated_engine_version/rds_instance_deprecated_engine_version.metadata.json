@@ -1,31 +1,30 @@
 {
-    "Provider": "aws",
-    "CheckID": "rds_instance_deprecated_engine_version",
-    "CheckTitle": "Check if RDS instance is using a supported engine version",
-    "CheckType": [],
-    "ServiceName": "rds",
-    "SubServiceName": "",
-    "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
-    "Severity": "critical",
-    "ResourceType": "AwsRdsDbInstance",
-    "Description": "Check if RDS is using a supported engine version for mariadb, mysql and postgresql",
-    "Risk": "If not enabled RDS instances may be vulnerable to security issues",
-    "RelatedUrl": "",
-    "Remediation": {
-      "Code": {
-        "CLI": "aws rds describe-db-engine-versions --engine <my_engine>'",
-        "NativeIaC": "",
-        "Other": "https://docs.aws.amazon.com/cli/latest/reference/rds/describe-db-engine-versions.html",
-        "Terraform": ""
-      },
-      "Recommendation": {
-        "Text": "",
-        "Url": ""
-      }
+  "Provider": "aws",
+  "CheckID": "rds_instance_deprecated_engine_version",
+  "CheckTitle": "Check if RDS instance is using a supported engine version",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbInstance",
+  "Description": "Check if RDS is using a supported engine version for MariaDB, MySQL and PostgreSQL",
+  "Risk": "If not enabled RDS instances may be vulnerable to security issues",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rds describe-db-engine-versions --engine <my_engine>'",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/cli/latest/reference/rds/describe-db-engine-versions.html",
+      "Terraform": ""
     },
-    "Categories": [  ],
-    "DependsOn": [],
-    "RelatedTo": [],
-    "Notes": ""
-  }
-  
+    "Recommendation": {
+      "Text": "",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

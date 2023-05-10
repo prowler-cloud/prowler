@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, session
@@ -29,7 +28,7 @@ class Test_rds_instance_deprecated_engine_version:
             profile_region=AWS_REGION,
             credentials=None,
             assumed_role_info=None,
-            audited_regions=None,
+            audited_regions=[AWS_REGION],
             organizations_metadata=None,
             audit_resources=None,
         )
@@ -66,6 +65,47 @@ class Test_rds_instance_deprecated_engine_version:
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
             Engine="mysql",
+            EngineVersion="8.0.32",
+            DBName="staging-mysql",
+            DBInstanceClass="db.m1.small",
+        )
+
+        from prowler.providers.aws.services.rds.rds_service import RDS
+
+        audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.rds.rds_instance_deprecated_engine_version.rds_instance_deprecated_engine_version.rds_client",
+                new=RDS(audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.rds.rds_instance_deprecated_engine_version.rds_instance_deprecated_engine_version import (
+                    rds_instance_deprecated_engine_version,
+                )
+
+                check = rds_instance_deprecated_engine_version()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == "RDS instance db-master-1 is using a deprecated engine mysql with version 8.0.32."
+                )
+                assert result[0].resource_id == "db-master-1"
+                assert result[0].resource_tags == []
+
+    @mock_rds
+    def test_rds_instance_deprecated_engine_version(self):
+        conn = client("rds", region_name=AWS_REGION)
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-master-2",
+            AllocatedStorage=10,
+            Engine="mysql",
             EngineVersion="8.0.23",
             DBName="staging-mysql",
             DBInstanceClass="db.m1.small",
@@ -92,46 +132,10 @@ class Test_rds_instance_deprecated_engine_version:
                 result = check.execute()
 
                 assert len(result) == 1
-                assert search(
-                    "8.0.23",
-                    result[0].status_extended,
-                )
-
-    @mock_rds
-    def test_rds_instance_deprecated_engine_version(self):
-        conn = client("rds", region_name=AWS_REGION)
-        conn.create_db_instance(
-            DBInstanceIdentifier="db-master-2",
-            AllocatedStorage=10,
-            Engine="mysql",
-            EngineVersion="5.1",
-            DBName="staging-mysql",
-            DBInstanceClass="db.m1.small",
-        )
-
-        from prowler.providers.aws.services.rds.rds_service import RDS
-
-        audit_info = self.set_mocked_audit_info()
-
-        with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
-        ):
-            with mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_deprecated_engine_version.rds_instance_deprecated_engine_version.rds_client",
-                new=RDS(audit_info),
-            ):
-                # Test Check
-                from prowler.providers.aws.services.rds.rds_instance_deprecated_engine_version.rds_instance_deprecated_engine_version import (
-                    rds_instance_deprecated_engine_version,
-                )
-
-                check = rds_instance_deprecated_engine_version()
-                result = check.execute()
-
-                assert len(result) == 1
-                assert search(
-                    "5.1",
-                    result[0].status_extended,
+                assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == "RDS instance db-master-2 is using a deprecated engine mysql with version 8.0.23."
                 )
                 assert result[0].resource_id == "db-master-2"
+                assert result[0].resource_tags == []
