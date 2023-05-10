@@ -2,7 +2,7 @@
 
 ## Slack
 
-Prowler can be integrated with Slack to send a summary of the execution with a Slack APP in your channel with the following command:
+Prowler can be integrated with [Slack](https://slack.com/) to send a summary of the execution having configured a Slack APP in your channel with the following command:
 
 ```sh
 prowler <provider> --slack
