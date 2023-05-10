@@ -39,6 +39,7 @@ class Test_resourceexplorer2_indexes_found:
     def test_no_indexes_found(self):
         resourceexplorer2_client = mock.MagicMock
         resourceexplorer2_client.indexes = []
+        resourceexplorer2_client.audited_account = AWS_ACCOUNT_NUMBER
         resourceexplorer2_client.region = AWS_REGION
         with mock.patch(
             "prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service.ResourceExplorer2",
@@ -65,6 +66,7 @@ class Test_resourceexplorer2_indexes_found:
         resourceexplorer2_client.indexes = [
             Indexes(arn=INDEX_ARN, region=INDEX_REGION, type="LOCAL")
         ]
+        resourceexplorer2_client.audited_account = AWS_ACCOUNT_NUMBER
         resourceexplorer2_client.region = AWS_REGION
         with mock.patch(
             "prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service.ResourceExplorer2",
