@@ -361,5 +361,4 @@ class Test_Slack_Integration:
             response = send_slack_message(
                 "test-token", "test-channel", {}, "provider", {}
             )
-            print(response)
             assert response == mocked_slack_response
