@@ -182,12 +182,10 @@ class S3:
                 logger.warning(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-            else:
-                logger.error(
-                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-        except Exception as error:
-            if "NoSuchPublicAccessBlockConfiguration" in str(error):
+            elif (
+                error.response["Error"]["Code"]
+                == "NoSuchPublicAccessBlockConfiguration"
+            ):
                 # Set all block as False
                 bucket.public_access_block = PublicAccessBlock(
                     block_public_acls=False,
@@ -196,14 +194,18 @@ class S3:
                     restrict_public_buckets=False,
                 )
             else:
-                if regional_client:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                else:
-                    logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            if regional_client:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_bucket_acl__(self, bucket):
         logger.info("S3 - Get buckets acl...")
@@ -265,22 +267,21 @@ class S3:
                 logger.warning(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+            elif error.response["Error"]["Code"] == "OwnershipControlsNotFoundError":
+                bucket.ownership = None
             else:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            if "OwnershipControlsNotFoundError" in str(error):
-                bucket.ownership = None
+            if regional_client:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
             else:
-                if regional_client:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                else:
-                    logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_object_lock_configuration__(self, bucket):
         logger.info("S3 - Get buckets ownership controls...")
