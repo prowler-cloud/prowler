@@ -2,6 +2,7 @@ import threading
 from datetime import datetime
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -158,6 +159,16 @@ class Cloudtrail:
                             insight_selectors = client_insight_selectors.get(
                                 "InsightSelectors"
                             )
+                        except ClientError as error:
+                            if (
+                                error.response["Error"]["Code"]
+                                == "InsightNotEnabledException"
+                            ):
+                                continue
+                            else:
+                                logger.error(
+                                    f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
                         except Exception as error:
                             logger.error(
                                 f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

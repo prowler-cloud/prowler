@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "AwsIamPolicy",
+  "ResourceType": "AwsIamRole",
   "Description": "Ensure IAM Service Roles prevents against a cross-service confused deputy attack",
   "Risk": "Allow attackers to gain unauthorized access to resources",
   "RelatedUrl": "",

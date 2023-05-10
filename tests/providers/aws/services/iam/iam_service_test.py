@@ -518,6 +518,43 @@ class Test_IAM_Service:
             iam.groups[0].attached_policies[0]["PolicyArn"] == policy["Policy"]["Arn"]
         )
 
+    # Test IAM List Attached Role Policies
+    @mock_iam
+    def test__list_attached_role_policies__(self):
+        iam = client("iam")
+        role_name = "test"
+        assume_role_policy_document = {
+            "Version": "2012-10-17",
+            "Statement": {
+                "Sid": "test",
+                "Effect": "Allow",
+                "Principal": {"AWS": "*"},
+                "Action": "sts:AssumeRole",
+            },
+        }
+        response = iam.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(assume_role_policy_document),
+        )
+        iam.attach_role_policy(
+            RoleName=role_name,
+            PolicyArn="arn:aws:iam::aws:policy/ReadOnlyAccess",
+        )
+
+        # IAM client for this test class
+        audit_info = self.set_mocked_audit_info()
+        iam = IAM(audit_info)
+
+        assert len(iam.roles) == 1
+        assert iam.roles[0].name == role_name
+        assert iam.roles[0].arn == response["Role"]["Arn"]
+        assert len(iam.roles[0].attached_policies) == 1
+        assert iam.roles[0].attached_policies[0]["PolicyName"] == "ReadOnlyAccess"
+        assert (
+            iam.roles[0].attached_policies[0]["PolicyArn"]
+            == "arn:aws:iam::aws:policy/ReadOnlyAccess"
+        )
+
     @mock_iam
     def test__get_entities_attached_to_support_roles__no_roles(self):
         iam_client = client("iam")

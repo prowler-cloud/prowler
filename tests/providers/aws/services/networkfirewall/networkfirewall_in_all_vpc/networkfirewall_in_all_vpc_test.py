@@ -20,7 +20,7 @@ class Test_networkfirewall_in_all_vpc:
         networkfirewall_client.network_firewalls = []
         vpc_client = mock.MagicMock
         vpc_client.region = AWS_REGION
-        vpc_client.vpcs = []
+        vpc_client.vpcs = {}
         with mock.patch(
             "prowler.providers.aws.services.networkfirewall.networkfirewall_service.NetworkFirewall",
             new=networkfirewall_client,
@@ -55,8 +55,8 @@ class Test_networkfirewall_in_all_vpc:
         ]
         vpc_client = mock.MagicMock
         vpc_client.region = AWS_REGION
-        vpc_client.vpcs = [
-            VPCs(
+        vpc_client.vpcs = {
+            VPC_ID_PROTECTED: VPCs(
                 id=VPC_ID_PROTECTED,
                 default=False,
                 cidr_block="192.168.0.0/16",
@@ -76,7 +76,7 @@ class Test_networkfirewall_in_all_vpc:
                 ],
                 tags=[],
             )
-        ]
+        }
         with mock.patch(
             "prowler.providers.aws.services.networkfirewall.networkfirewall_service.NetworkFirewall",
             new=networkfirewall_client,
@@ -110,8 +110,8 @@ class Test_networkfirewall_in_all_vpc:
         networkfirewall_client.network_firewalls = []
         vpc_client = mock.MagicMock
         vpc_client.region = AWS_REGION
-        vpc_client.vpcs = [
-            VPCs(
+        vpc_client.vpcs = {
+            VPC_ID_UNPROTECTED: VPCs(
                 id=VPC_ID_UNPROTECTED,
                 default=False,
                 cidr_block="192.168.0.0/16",
@@ -131,7 +131,7 @@ class Test_networkfirewall_in_all_vpc:
                 ],
                 tags=[],
             )
-        ]
+        }
         with mock.patch(
             "prowler.providers.aws.services.networkfirewall.networkfirewall_service.NetworkFirewall",
             new=networkfirewall_client,
@@ -175,8 +175,8 @@ class Test_networkfirewall_in_all_vpc:
         ]
         vpc_client = mock.MagicMock
         vpc_client.region = AWS_REGION
-        vpc_client.vpcs = [
-            VPCs(
+        vpc_client.vpcs = {
+            VPC_ID_UNPROTECTED: VPCs(
                 id=VPC_ID_UNPROTECTED,
                 default=False,
                 cidr_block="192.168.0.0/16",
@@ -196,7 +196,7 @@ class Test_networkfirewall_in_all_vpc:
                 ],
                 tags=[],
             ),
-            VPCs(
+            VPC_ID_PROTECTED: VPCs(
                 id=VPC_ID_PROTECTED,
                 default=False,
                 cidr_block="192.168.0.0/16",
@@ -216,7 +216,7 @@ class Test_networkfirewall_in_all_vpc:
                 ],
                 tags=[],
             ),
-        ]
+        }
         with mock.patch(
             "prowler.providers.aws.services.networkfirewall.networkfirewall_service.NetworkFirewall",
             new=networkfirewall_client,

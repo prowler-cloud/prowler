@@ -1,6 +1,7 @@
 import threading
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -115,9 +116,19 @@ class SageMaker:
         try:
             for notebook_instance in self.sagemaker_notebook_instances:
                 regional_client = regional_clients[notebook_instance.region]
-                describe_notebook_instance = regional_client.describe_notebook_instance(
-                    NotebookInstanceName=notebook_instance.name
-                )
+                try:
+                    describe_notebook_instance = (
+                        regional_client.describe_notebook_instance(
+                            NotebookInstanceName=notebook_instance.name
+                        )
+                    )
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "ValidationException":
+                        logger.warning(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
+                    continue
                 if (
                     "RootAccess" in describe_notebook_instance
                     and describe_notebook_instance["RootAccess"] == "Enabled"

@@ -2,6 +2,7 @@ import threading
 from enum import Enum
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -71,10 +72,19 @@ class EMR:
         try:
             for cluster in self.clusters.values():
                 if cluster.region == regional_client.region:
-                    describe_cluster_parameters = {"ClusterId": cluster.id}
-                    cluster_info = regional_client.describe_cluster(
-                        **describe_cluster_parameters
-                    )
+                    try:
+                        describe_cluster_parameters = {"ClusterId": cluster.id}
+                        cluster_info = regional_client.describe_cluster(
+                            **describe_cluster_parameters
+                        )
+                    except ClientError as error:
+                        if error.response["Error"]["Code"] == "InvalidRequestException":
+                            logger.warning(
+                                f"{regional_client.region} --"
+                                f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                                f" {error}"
+                            )
+                        continue
 
                     # Master Node Security Groups
                     master_node_security_group = cluster_info["Cluster"][

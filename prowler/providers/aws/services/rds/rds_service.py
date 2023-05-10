@@ -153,7 +153,7 @@ class RDS:
                         if "all" in att["AttributeValues"]:
                             snapshot.public = True
             except ClientError as error:
-                if error.response["Error"]["Code"] != "DBSnapshotNotFound":
+                if error.response["Error"]["Code"] == "DBSnapshotNotFound":
                     logger.warning(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )

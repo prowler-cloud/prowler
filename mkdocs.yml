@@ -33,6 +33,7 @@ nav:
       - Reporting: tutorials/reporting.md
       - Compliance: tutorials/compliance.md
       - Quick Inventory: tutorials/quick-inventory.md
+      - Integrations: tutorials/integrations.md
       - Configuration File: tutorials/configuration_file.md
       - Logging: tutorials/logging.md
       - Allowlist: tutorials/allowlist.md
@@ -51,6 +52,8 @@ nav:
       - Azure:
           - Authentication: tutorials/azure/authentication.md
           - Subscriptions: tutorials/azure/subscriptions.md
+      - Google Cloud:
+          - Authentication: tutorials/gcp/authentication.md
   - Developer Guide: tutorials/developer-guide.md
   - Security: security.md
   - Contact Us: contact.md
