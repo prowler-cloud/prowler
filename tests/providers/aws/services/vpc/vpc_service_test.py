@@ -311,5 +311,6 @@ class Test_VPC_Service:
                 assert vpc.subnets[0].cidr_block == "172.28.7.192/26"
                 assert vpc.subnets[0].availability_zone == f"{AWS_REGION}a"
                 assert vpc.subnets[0].public is False
+                assert vpc.subnets[0].nat_gateway is False
                 assert vpc.subnets[0].region == AWS_REGION
                 assert vpc.subnets[0].tags is None

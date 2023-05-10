@@ -70,6 +70,7 @@ class Test_networkfirewall_in_all_vpc:
                         cidr_block="192.168.0.0/24",
                         availability_zone="us-east-1a",
                         public=False,
+                        nat_gateway=False,
                         region=AWS_REGION,
                         tags=[],
                     )
@@ -125,6 +126,7 @@ class Test_networkfirewall_in_all_vpc:
                         cidr_block="192.168.0.0/24",
                         availability_zone="us-east-1a",
                         public=False,
+                        nat_gateway=False,
                         region=AWS_REGION,
                         tags=[],
                     )
@@ -190,6 +192,7 @@ class Test_networkfirewall_in_all_vpc:
                         cidr_block="192.168.0.0/24",
                         availability_zone="us-east-1a",
                         public=False,
+                        nat_gateway=False,
                         region=AWS_REGION,
                         tags=[],
                     )
@@ -210,6 +213,7 @@ class Test_networkfirewall_in_all_vpc:
                         cidr_block="192.168.0.0/24",
                         availability_zone="us-east-1a",
                         public=False,
+                        nat_gateway=False,
                         region=AWS_REGION,
                         tags=[],
                     )
