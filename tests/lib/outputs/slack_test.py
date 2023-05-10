@@ -22,7 +22,7 @@ def mock_create_message_blocks(*_):
 
 
 def mock_create_message_identity(*_):
-    return [{}]
+    return "", ""
 
 
 class Test_Slack_Integration:
@@ -64,17 +64,17 @@ class Test_Slack_Integration:
             audit_resources=None,
             audit_metadata=None,
         )
-        assert (
-            create_message_identity("aws", aws_audit_info)
-            == f"AWS Account *{aws_audit_info.audited_account}*"
+        assert create_message_identity("aws", aws_audit_info) == (
+            f"AWS Account *{aws_audit_info.audited_account}*",
+            aws_logo,
         )
-        assert (
-            create_message_identity("gcp", gcp_audit_info)
-            == f"GCP Project *{gcp_audit_info.project_id}*"
+        assert create_message_identity("gcp", gcp_audit_info) == (
+            f"GCP Project *{gcp_audit_info.project_id}*",
+            gcp_logo,
         )
-        assert (
-            create_message_identity("azure", azure_audit_info)
-            == "Azure Subscriptions:\n- *subscription 1: qwerty*\n- *subscription 2: asdfg*\n"
+        assert create_message_identity("azure", azure_audit_info) == (
+            "Azure Subscriptions:\n- *subscription 1: qwerty*\n- *subscription 2: asdfg*\n",
+            azure_logo,
         )
 
     def test_create_message_blocks(self):
@@ -86,7 +86,7 @@ class Test_Slack_Integration:
         stats["total_fail"] = 10
         stats["resources_count"] = 20
         stats["findings_count"] = 22
-        assert create_message_blocks(aws_identity, "aws", stats) == [
+        assert create_message_blocks(aws_identity, aws_logo, stats) == [
             {
                 "type": "section",
                 "text": {
@@ -166,7 +166,7 @@ class Test_Slack_Integration:
                 },
             },
         ]
-        assert create_message_blocks(azure_identity, "azure", stats) == [
+        assert create_message_blocks(azure_identity, azure_logo, stats) == [
             {
                 "type": "section",
                 "text": {
@@ -246,7 +246,7 @@ class Test_Slack_Integration:
                 },
             },
         ]
-        assert create_message_blocks(gcp_identity, "gcp", stats) == [
+        assert create_message_blocks(gcp_identity, gcp_logo, stats) == [
             {
                 "type": "section",
                 "text": {
