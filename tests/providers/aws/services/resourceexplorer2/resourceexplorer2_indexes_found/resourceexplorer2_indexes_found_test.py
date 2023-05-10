@@ -56,7 +56,7 @@ class Test_resourceexplorer2_indexes_found:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "No Resource Explorer Indexes found"
-            assert result[0].resource_id == ""
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == "NoResourceExplorer"
             assert result[0].region == AWS_REGION
 
@@ -82,6 +82,6 @@ class Test_resourceexplorer2_indexes_found:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == "Resource Explorer Indexes found: 1"
-            assert result[0].resource_id == ""
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == INDEX_ARN
             assert result[0].region == AWS_REGION

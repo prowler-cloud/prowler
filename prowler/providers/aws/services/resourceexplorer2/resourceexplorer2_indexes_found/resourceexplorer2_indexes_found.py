@@ -12,6 +12,7 @@ class resourceexplorer2_indexes_found(Check):
         report.status_extended = "No Resource Explorer Indexes found"
         report.region = resource_explorer_2_client.region
         report.resource_arn = "NoResourceExplorer"
+        report.resource_id = resource_explorer_2_client.audited_account
         if resource_explorer_2_client.indexes:
             report.region = resource_explorer_2_client.indexes[0].region
             report.resource_arn = resource_explorer_2_client.indexes[0].arn
