@@ -1,5 +1,7 @@
 from unittest import mock
+from unittest.mock import patch
 
+import botocore
 from boto3 import client, session
 from moto import mock_rds
 
@@ -8,7 +10,25 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
 
+make_api_call = botocore.client.BaseClient._make_api_call
 
+
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "DescribeDBEngineVersions":
+        return {
+            "DBEngineVersions": [
+                {
+                    "Engine": "mysql",
+                    "EngineVersion": "8.0.32",
+                    "DBEngineDescription": "description",
+                    "DBEngineVersionDescription": "description",
+                },
+            ]
+        }
+    return make_api_call(self, operation_name, kwarg)
+
+
+@patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_rds_instance_deprecated_engine_version:
     # Mocked Audit Info
     def set_mocked_audit_info(self):
@@ -91,10 +111,10 @@ class Test_rds_instance_deprecated_engine_version:
                 result = check.execute()
 
                 assert len(result) == 1
-                assert result[0].status == "FAIL"
+                assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "RDS instance db-master-1 is using a deprecated engine mysql with version 8.0.32."
+                    == "RDS instance db-master-1 is not using a deprecated engine mysql with version 8.0.32."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].resource_tags == []

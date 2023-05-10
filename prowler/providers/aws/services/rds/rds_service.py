@@ -265,12 +265,10 @@ class RDS:
                             region=regional_client.region,
                             engine=engine["Engine"],
                             engine_version=engine["EngineVersion"],
-                            db_parameter_group_family=engine["DBParameterGroupFamily"],
-                            db_engine_description=engine["DBEngineDescription"],
-                            db_engine_version_description=engine[
+                            engine_description=engine["DBEngineDescription"],
+                            engine_version_description=engine[
                                 "DBEngineVersionDescription"
                             ],
-                            valid_update_targets=engine.get("ValidUpgradeTarget"),
                         )
                     )
 
@@ -338,7 +336,5 @@ class DBEngine(BaseModel):
     region: str
     engine: str
     engine_version: str
-    db_parameter_group_family: str
-    db_engine_description: str
-    db_engine_version_description: str
-    valid_update_targets: Optional[list] = []
+    engine_description: str
+    engine_version_description: str

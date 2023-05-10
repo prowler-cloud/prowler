@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+import botocore
 from boto3 import client, session
 from moto import mock_rds
 
@@ -7,7 +10,25 @@ from prowler.providers.aws.services.rds.rds_service import RDS
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
 
+make_api_call = botocore.client.BaseClient._make_api_call
 
+
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "DescribeDBEngineVersions":
+        return {
+            "DBEngineVersions": [
+                {
+                    "Engine": "mysql",
+                    "EngineVersion": "8.0.32",
+                    "DBEngineDescription": "description",
+                    "DBEngineVersionDescription": "description",
+                },
+            ]
+        }
+    return make_api_call(self, operation_name, kwarg)
+
+
+@patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_RDS_Service:
     # Mocked Audit Info
     def set_mocked_audit_info(self):
@@ -26,7 +47,7 @@ class Test_RDS_Service:
             profile_region=None,
             credentials=None,
             assumed_role_info=None,
-            audited_regions=None,
+            audited_regions=[AWS_REGION],
             organizations_metadata=None,
             audit_resources=None,
         )
@@ -253,30 +274,11 @@ class Test_RDS_Service:
     # Test RDS describe db engine versions
     @mock_rds
     def test__describe_db_engine_versions__(self):
-        conn = client("rds", region_name=AWS_REGION)
-        conn.create_db_parameter_group(
-            DBParameterGroupName="test",
-            DBParameterGroupFamily="default.mysql.8.0.23",
-            Description="test parameter group",
-        )
-        conn.create_db_instance(
-            DBInstanceIdentifier="db-master-1",
-            AllocatedStorage=10,
-            Engine="mysql",
-            EngineVersion="8.0.23",
-            DBName="staging-mysql",
-            DBInstanceClass="db.m1.small",
-            StorageEncrypted=True,
-            DeletionProtection=True,
-            PubliclyAccessible=True,
-            AutoMinorVersionUpgrade=True,
-            BackupRetentionPeriod=10,
-            EnableCloudwatchLogsExports=["audit", "error"],
-            MultiAZ=True,
-            DBParameterGroupName="test",
-        )
         # RDS client for this test class
         audit_info = self.set_mocked_audit_info()
         rds = RDS(audit_info)
-        assert len(rds.db_instances) == 1
-        assert rds.db_instances[0].engine_version == "8.0.23"
+        assert len(rds.db_engines) == 1
+        assert rds.db_engines[0].engine == "mysql"
+        assert rds.db_engines[0].engine_version == "8.0.32"
+        assert rds.db_engines[0].engine_description == "description"
+        assert rds.db_engines[0].engine_version_description == "description"
