@@ -9,13 +9,12 @@ from prowler.lib.logger import logger
 def send_slack_message(token, channel, stats, provider, audit_info):
     try:
         client = WebClient(token=token)
+        identity, logo = create_message_identity(provider, audit_info)
         response = client.chat_postMessage(
             username="Prowler",
             icon_url=square_logo_img,
             channel="#" + channel,
-            blocks=create_message_blocks(
-                create_message_identity(provider, audit_info), provider, stats
-            ),
+            blocks=create_message_blocks(identity, logo, stats),
         )
         return response
     except Exception as error:
@@ -27,24 +26,27 @@ def send_slack_message(token, channel, stats, provider, audit_info):
 def create_message_identity(provider, audit_info):
     try:
         identity = ""
+        logo = aws_logo
         if provider == "aws":
             identity = f"AWS Account *{audit_info.audited_account}*"
         elif provider == "gcp":
             identity = f"GCP Project *{audit_info.project_id}*"
+            logo = gcp_logo
         elif provider == "azure":
             printed_subscriptions = []
             for key, value in audit_info.identity.subscriptions.items():
                 intermediate = "- *" + key + ": " + value + "*\n"
                 printed_subscriptions.append(intermediate)
             identity = f"Azure Subscriptions:\n{''.join(printed_subscriptions)}"
-        return identity
+            logo = azure_logo
+        return identity, logo
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
 
 
-def create_message_blocks(identity, provider, stats):
+def create_message_blocks(identity, logo, stats):
     try:
         blocks = [
             {
@@ -55,11 +57,7 @@ def create_message_blocks(identity, provider, stats):
                 },
                 "accessory": {
                     "type": "image",
-                    "image_url": aws_logo
-                    if provider == "aws"
-                    else gcp_logo
-                    if provider == "gcp"
-                    else azure_logo,
+                    "image_url": logo,
                     "alt_text": "Provider Logo",
                 },
             },
