@@ -13,6 +13,7 @@ class ResourceExplorer2:
         self.service = "resource-explorer-2"
         self.session = audit_info.audit_session
         self.audit_resources = audit_info.audit_resources
+        self.audited_account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         # If the region is not set in the audit profile,
         # we pick the first region from the regional clients list

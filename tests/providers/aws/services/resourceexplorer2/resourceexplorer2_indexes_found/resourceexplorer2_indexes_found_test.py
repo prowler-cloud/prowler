@@ -39,6 +39,7 @@ class Test_resourceexplorer2_indexes_found:
     def test_no_indexes_found(self):
         resourceexplorer2_client = mock.MagicMock
         resourceexplorer2_client.indexes = []
+        resourceexplorer2_client.audited_account = AWS_ACCOUNT_NUMBER
         resourceexplorer2_client.region = AWS_REGION
         with mock.patch(
             "prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service.ResourceExplorer2",
@@ -56,7 +57,7 @@ class Test_resourceexplorer2_indexes_found:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "No Resource Explorer Indexes found"
-            assert result[0].resource_id == ""
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == "NoResourceExplorer"
             assert result[0].region == AWS_REGION
 
@@ -65,6 +66,7 @@ class Test_resourceexplorer2_indexes_found:
         resourceexplorer2_client.indexes = [
             Indexes(arn=INDEX_ARN, region=INDEX_REGION, type="LOCAL")
         ]
+        resourceexplorer2_client.audited_account = AWS_ACCOUNT_NUMBER
         resourceexplorer2_client.region = AWS_REGION
         with mock.patch(
             "prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service.ResourceExplorer2",
@@ -82,6 +84,6 @@ class Test_resourceexplorer2_indexes_found:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == "Resource Explorer Indexes found: 1"
-            assert result[0].resource_id == ""
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == INDEX_ARN
             assert result[0].region == AWS_REGION
