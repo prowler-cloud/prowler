@@ -95,7 +95,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].status == "FAIL"
                     assert (
                         result[0].status_extended
-                        == f"Workspace {workspace_id} VPC has not 1 public subnet and 2 private subnets with a NAT Gateway attached"
+                        == f"Workspace {workspace_id} is not in a private subnet or its VPC has not 1 public subnet and 2 private subnets with a NAT Gateway attached"
                     )
                     assert result[0].resource_id == workspace_id
                     assert result[0].resource_arn == ""
@@ -161,7 +161,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].status == "FAIL"
                     assert (
                         result[0].status_extended
-                        == f"Workspace {workspace_id} VPC has not 1 public subnet and 2 private subnets with a NAT Gateway attached"
+                        == f"Workspace {workspace_id} is not in a private subnet or its VPC has not 1 public subnet and 2 private subnets with a NAT Gateway attached"
                     )
                     assert result[0].resource_id == workspace_id
                     assert result[0].resource_arn == ""
@@ -244,7 +244,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].status == "FAIL"
                     assert (
                         result[0].status_extended
-                        == f"Workspace {workspace_id} VPC has not 1 public subnet and 2 private subnets with a NAT Gateway attached"
+                        == f"Workspace {workspace_id} is not in a private subnet or its VPC has not 1 public subnet and 2 private subnets with a NAT Gateway attached"
                     )
                     assert result[0].resource_id == workspace_id
                     assert result[0].resource_arn == ""
@@ -346,7 +346,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].status == "FAIL"
                     assert (
                         result[0].status_extended
-                        == f"Workspace {workspace_id} VPC has not 1 public subnet and 2 private subnets with a NAT Gateway attached"
+                        == f"Workspace {workspace_id} is not in a private subnet or its VPC has not 1 public subnet and 2 private subnets with a NAT Gateway attached"
                     )
                     assert result[0].resource_id == workspace_id
                     assert result[0].resource_arn == ""
@@ -456,7 +456,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].status == "PASS"
                     assert (
                         result[0].status_extended
-                        == f"Workspace {workspace_id} is in a VPC which has 1 public subnet 2 private subnets with a NAT Gateway attached"
+                        == f"Workspace {workspace_id} is in a private subnet within a VPC which has 1 public subnet 2 private subnets with a NAT Gateway attached"
                     )
                     assert result[0].resource_id == workspace_id
                     assert result[0].resource_arn == ""

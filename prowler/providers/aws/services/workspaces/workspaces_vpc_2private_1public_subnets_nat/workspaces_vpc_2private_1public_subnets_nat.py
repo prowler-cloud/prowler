@@ -15,13 +15,17 @@ class workspaces_vpc_2private_1public_subnets_nat(Check):
             report.resource_arn = workspace.arn
             report.resource_tags = workspace.tags
             report.status = "PASS"
-            report.status_extended = f"Workspace {workspace.id} is in a VPC which has 1 public subnet 2 private subnets with a NAT Gateway attached"
+            report.status_extended = f"Workspace {workspace.id} is in a private subnet within a VPC which has 1 public subnet 2 private subnets with a NAT Gateway attached"
             vpc_object = None
+            is_in_private_subnet = False
             if workspace.subnet_id:
                 if vpc_client.vpcs[vpc_client.vpc_subnets[workspace.subnet_id].vpc_id]:
                     vpc_object = vpc_client.vpcs[
                         vpc_client.vpc_subnets[workspace.subnet_id].vpc_id
                     ]
+                if vpc_client.vpc_subnets[workspace.subnet_id]:
+                    if not vpc_client.vpc_subnets[workspace.subnet_id].public:
+                        is_in_private_subnet = True
             public_subnets = 0
             private_subnets = 0
             nat_gateway = False
@@ -34,9 +38,14 @@ class workspaces_vpc_2private_1public_subnets_nat(Check):
                         if vpc_subnet.nat_gateway:
                             nat_gateway = True
                         # Check NAT Gateway here
-            if public_subnets < 1 or private_subnets < 2 or not nat_gateway:
+            if (
+                public_subnets < 1
+                or private_subnets < 2
+                or not nat_gateway
+                or not is_in_private_subnet
+            ):
                 report.status = "FAIL"
-                report.status_extended = f"Workspace {workspace.id} VPC has not 1 public subnet and 2 private subnets with a NAT Gateway attached"
+                report.status_extended = f"Workspace {workspace.id} is not in a private subnet or its VPC has not 1 public subnet and 2 private subnets with a NAT Gateway attached"
 
             findings.append(report)
         return findings
