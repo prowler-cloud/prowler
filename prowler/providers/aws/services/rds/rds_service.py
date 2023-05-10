@@ -20,7 +20,7 @@ class RDS:
         self.db_instances = []
         self.db_clusters = {}
         self.db_snapshots = []
-        self.db_engines = []
+        self.db_engines = {}
         self.db_cluster_snapshots = []
         self.__threading_call__(self.__describe_db_instances__)
         self.__threading_call__(self.__describe_db_parameters__)
@@ -260,17 +260,22 @@ class RDS:
             )
             for page in describe_db_engine_versions_paginator.paginate():
                 for engine in page["DBEngineVersions"]:
-                    self.db_engines.append(
-                        DBEngine(
+                    if regional_client.region not in self.db_engines:
+                        self.db_engines[regional_client.region] = {}
+                    if engine["Engine"] not in self.db_engines[regional_client.region]:
+                        db_engine = DBEngine(
                             region=regional_client.region,
                             engine=engine["Engine"],
-                            engine_version=engine["EngineVersion"],
+                            engine_versions=[engine["EngineVersion"]],
                             engine_description=engine["DBEngineDescription"],
-                            engine_version_description=engine[
-                                "DBEngineVersionDescription"
-                            ],
                         )
-                    )
+                        self.db_engines[regional_client.region][
+                            engine["Engine"]
+                        ] = db_engine
+                    else:
+                        self.db_engines[regional_client.region][
+                            engine["Engine"]
+                        ].engine_versions.append(engine["EngineVersion"])
 
         except Exception as error:
             logger.error(
@@ -335,6 +340,5 @@ class ClusterSnapshot(BaseModel):
 class DBEngine(BaseModel):
     region: str
     engine: str
-    engine_version: str
+    engine_versions: list[str]
     engine_description: str
-    engine_version_description: str

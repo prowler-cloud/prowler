@@ -7,12 +7,6 @@ class rds_instance_deprecated_engine_version(Check):
         findings = []
 
         for instance in rds_client.db_instances:
-            available_versions = []
-
-            for iterate_version in rds_client.db_engines:
-                if instance.engine == iterate_version.engine:
-                    available_versions.append(iterate_version.engine_version)
-
             report = Check_Report_AWS(self.metadata())
             report.region = instance.region
             report.status = "FAIL"
@@ -20,7 +14,12 @@ class rds_instance_deprecated_engine_version(Check):
             report.resource_tags = instance.tags
             report.status_extended = f"RDS instance {instance.id} is using a deprecated engine {instance.engine} with version {instance.engine_version}."
 
-            if instance.engine_version in available_versions:
+            if (
+                instance.engine_version
+                in rds_client.db_engines[instance.region][
+                    instance.engine
+                ].engine_versions
+            ):
                 report.status = "PASS"
                 report.status_extended = f"RDS instance {instance.id} is not using a deprecated engine {instance.engine} with version {instance.engine_version}."
 

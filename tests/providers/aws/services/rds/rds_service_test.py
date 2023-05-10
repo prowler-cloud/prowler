@@ -277,8 +277,6 @@ class Test_RDS_Service:
         # RDS client for this test class
         audit_info = self.set_mocked_audit_info()
         rds = RDS(audit_info)
-        assert len(rds.db_engines) == 1
-        assert rds.db_engines[0].engine == "mysql"
-        assert rds.db_engines[0].engine_version == "8.0.32"
-        assert rds.db_engines[0].engine_description == "description"
-        assert rds.db_engines[0].engine_version_description == "description"
+        assert "mysql" in rds.db_engines[AWS_REGION]
+        assert rds.db_engines[AWS_REGION]["mysql"].engine_versions == ["8.0.32"]
+        assert rds.db_engines[AWS_REGION]["mysql"].engine_description == "description"
