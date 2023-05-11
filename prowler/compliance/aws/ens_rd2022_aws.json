@@ -1,6 +1,6 @@
 {
-  "Framework": "ENS",
-  "Version": "RD2022",
+  "Framework": "ENS_RD2022",
+  "Version": "",
   "Provider": "AWS",
   "Description": "The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
   "Requirements": [

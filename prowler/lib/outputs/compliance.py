@@ -45,8 +45,8 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
         for compliance in check_compliance:
             csv_header = compliance_row = compliance_output = None
             if (
-                compliance.Framework == "ENS"
-                and compliance.Version == "RD2022"
+                compliance.Framework == "ENS_RD2022"
+                and compliance.Version == ""
                 and "ens_rd2022_aws" in output_options.output_modes
             ):
                 compliance_output = "ens_rd2022_aws"
@@ -191,9 +191,9 @@ def display_compliance_table(
                 check_compliances = check.Compliance
                 for compliance in check_compliances:
                     if (
-                        compliance.Framework == "ENS"
+                        compliance.Framework == "ENS_RD2022"
                         and compliance.Provider == "AWS"
-                        and compliance.Version == "RD2022"
+                        and compliance.Version == ""
                     ):
                         compliance_version = compliance.Version
                         compliance_fm = compliance.Framework
