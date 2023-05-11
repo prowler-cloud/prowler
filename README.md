@@ -15,7 +15,6 @@
   <a href="https://pypi.python.org/pypi/prowler-cloud/"><img alt="Python Version" src="https://img.shields.io/pypi/pyversions/prowler.svg"></a>
   <a href="https://pypistats.org/packages/prowler"><img alt="PyPI Prowler Downloads" src="https://img.shields.io/pypi/dw/prowler.svg?label=prowler%20downloads"></a>
   <a href="https://pypistats.org/packages/prowler-cloud"><img alt="PyPI Prowler-Cloud Downloads" src="https://img.shields.io/pypi/dw/prowler-cloud.svg?label=prowler-cloud%20downloads"></a>
-  <a href="https://formulae.brew.sh/formula/prowler#default"><img alt="Brew Prowler Downloads" src="https://img.shields.io/homebrew/installs/dm/prowler?label=brew%20downloads"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/toniblyx/prowler"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/cloud/build/toniblyx/prowler"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/image-size/toniblyx/prowler"></a>
@@ -116,22 +115,6 @@ Those credentials must be associated to a user or role with proper permissions t
 
   > If you want Prowler to send findings to [AWS Security Hub](https://aws.amazon.com/security-hub), make sure you also attach the custom policy [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json).
 
-## Google Cloud Platform
-
-Prowler will follow the same credentials search as [Google authentication libraries](https://cloud.google.com/docs/authentication/application-default-credentials#search_order):
-
-1. [GOOGLE_APPLICATION_CREDENTIALS environment variable](https://cloud.google.com/docs/authentication/application-default-credentials#GAC)
-2. [User credentials set up by using the Google Cloud CLI](https://cloud.google.com/docs/authentication/application-default-credentials#personal)
-3. [The attached service account, returned by the metadata server](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa)
-
-Those credentials must be associated to a user or service account with proper permissions to do all checks. To make sure, add the following roles to the member associated with the credentials:
-
-  - Viewer
-  - Security Reviewer
-  - Stackdriver Account Viewer
-
-> `prowler` will scan the project associated with the credentials.
-
   ## Azure
 
   Prowler for Azure supports the following authentication types:
@@ -179,6 +162,22 @@ Regarding the subscription scope, Prowler by default scans all the subscriptions
 - `Security Reader`
 - `Reader`
 
+
+## Google Cloud Platform
+
+Prowler will follow the same credentials search as [Google authentication libraries](https://cloud.google.com/docs/authentication/application-default-credentials#search_order):
+
+1. [GOOGLE_APPLICATION_CREDENTIALS environment variable](https://cloud.google.com/docs/authentication/application-default-credentials#GAC)
+2. [User credentials set up by using the Google Cloud CLI](https://cloud.google.com/docs/authentication/application-default-credentials#personal)
+3. [The attached service account, returned by the metadata server](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa)
+
+Those credentials must be associated to a user or service account with proper permissions to do all checks. To make sure, add the following roles to the member associated with the credentials:
+
+  - Viewer
+  - Security Reviewer
+  - Stackdriver Account Viewer
+
+> `prowler` will scan the project associated with the credentials.
 
 # 💻 Basic Usage
 
@@ -245,14 +244,6 @@ prowler aws --profile custom-profile -f us-east-1 eu-south-2
 ```
 > By default, `prowler` will scan all AWS regions.
 
-## Google Cloud Platform
-
-Optionally, you can provide the location of an application credential JSON file with the following argument:
-
-```console
-prowler gcp --credentials-file path
-```
-
 ## Azure
 
 With Azure you need to specify which auth method is going to be used:
@@ -261,6 +252,14 @@ With Azure you need to specify which auth method is going to be used:
 prowler azure [--sp-env-auth, --az-cli-auth, --browser-auth, --managed-identity-auth]
 ```
 > By default, `prowler` will scan all Azure subscriptions.
+
+## Google Cloud Platform
+
+Optionally, you can provide the location of an application credential JSON file with the following argument:
+
+```console
+prowler gcp --credentials-file path
+```
 
 # 🎉 New Features
 
