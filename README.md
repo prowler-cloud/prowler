@@ -261,12 +261,6 @@ Optionally, you can provide the location of an application credential JSON file 
 prowler gcp --credentials-file path
 ```
 
-# 🎉 New Features
-
-- Python: we got rid of all bash and it is now all in Python.
-- Faster: huge performance improvements (same account from 2.5 hours to 4 minutes).
-- Developers and community: we have made it easier to contribute with new checks and new compliance frameworks. We also included unit tests.
-- Multi-cloud: in addition to AWS, we have added Azure, we plan to include GCP and OCI soon, let us know if you want to contribute!
 
 # 📃 License
 
