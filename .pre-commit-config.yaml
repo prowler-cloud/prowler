@@ -61,6 +61,7 @@ repos:
     hooks:
       - id: poetry-check
       - id: poetry-lock
+        args: ["--no-update"]
 
   - repo: https://github.com/hadolint/hadolint
     rev: v2.12.1-beta
