@@ -43,7 +43,7 @@ aws_access_key_id = XXXXXXXXXXXXXXXXXXX
 aws_secret_access_key = XXXXXXXXXXXXXXXXXXX
 region = us-gov-east-1
 ```
->> With this option all the partition regions will be scanned without the need of use the `-f/--region` flag
+> With this option all the partition regions will be scanned without the need of use the `-f/--region` flag
 
 
 ## AWS ISO (US & Europe)
