@@ -11,7 +11,7 @@ from prowler.providers.aws.aws_provider import (
     get_checks_from_input_arn,
     get_regions_from_audit_resources,
 )
-from prowler.providers.aws.lib.arn.arn import arn_parsing
+from prowler.providers.aws.lib.arn.arn import iam_credentials_arn_parsing
 from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.lib.audit_info.models import (
     AWS_Audit_Info,
@@ -215,7 +215,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         current_audit_info.audited_account = caller_identity["Account"]
         current_audit_info.audited_identity_arn = caller_identity["Arn"]
         current_audit_info.audited_user_id = caller_identity["UserId"]
-        current_audit_info.audited_partition = arn_parsing(
+        current_audit_info.audited_partition = iam_credentials_arn_parsing(
             caller_identity["Arn"]
         ).partition
 
@@ -229,7 +229,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             # Check if role arn is valid
             try:
                 # this returns the arn already parsed, calls arnparse, into a dict to be used when it is needed to access its fields
-                role_arn_parsed = arn_parsing(
+                role_arn_parsed = iam_credentials_arn_parsing(
                     current_audit_info.assumed_role_info.role_arn
                 )
 
@@ -262,7 +262,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             # Check if role arn is valid
             try:
                 # this returns the arn already parsed, calls arnparse, into a dict to be used when it is needed to access its fields
-                role_arn_parsed = arn_parsing(
+                role_arn_parsed = iam_credentials_arn_parsing(
                     current_audit_info.assumed_role_info.role_arn
                 )
 
