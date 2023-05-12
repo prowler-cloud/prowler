@@ -1,7 +1,7 @@
 import sure  # noqa
 from pytest import raises
 
-from prowler.providers.aws.lib.arn.arn import iam_credentials_arn_parsing, is_valid_arn
+from prowler.providers.aws.lib.arn.arn import is_valid_arn, parse_iam_credentials_arn
 from prowler.providers.aws.lib.arn.error import (
     RoleArnParsingEmptyResource,
     RoleArnParsingFailedMissingFields,
@@ -94,7 +94,7 @@ class Test_ARN_Parsing:
         ]
         for test in test_cases:
             input_arn = test["input_arn"]
-            parsed_arn = iam_credentials_arn_parsing(input_arn)
+            parsed_arn = parse_iam_credentials_arn(input_arn)
             parsed_arn.partition.should.equal(test["expected"]["partition"])
             parsed_arn.service.should.equal(test["expected"]["service"])
             parsed_arn.region.should.equal(test["expected"]["region"])
@@ -107,35 +107,35 @@ class Test_ARN_Parsing:
     ):
         input_arn = ""
         with raises(RoleArnParsingFailedMissingFields) as error:
-            iam_credentials_arn_parsing(input_arn)
+            parse_iam_credentials_arn(input_arn)
 
         assert error._excinfo[0] == RoleArnParsingFailedMissingFields
 
     def test_iam_credentials_arn_parsing_raising_RoleArnParsingIAMRegionNotEmpty(self):
         input_arn = "arn:aws:iam:eu-west-1:111111111111:user/prowler"
         with raises(RoleArnParsingIAMRegionNotEmpty) as error:
-            iam_credentials_arn_parsing(input_arn)
+            parse_iam_credentials_arn(input_arn)
 
         assert error._excinfo[0] == RoleArnParsingIAMRegionNotEmpty
 
     def test_iam_credentials_arn_parsing_raising_RoleArnParsingPartitionEmpty(self):
         input_arn = "arn::iam::111111111111:user/prowler"
         with raises(RoleArnParsingPartitionEmpty) as error:
-            iam_credentials_arn_parsing(input_arn)
+            parse_iam_credentials_arn(input_arn)
 
         assert error._excinfo[0] == RoleArnParsingPartitionEmpty
 
     def test_iam_credentials_arn_parsing_raising_RoleArnParsingServiceNotIAM(self):
         input_arn = "arn:aws:s3::111111111111:user/prowler"
         with raises(RoleArnParsingServiceNotIAMnorSTS) as error:
-            iam_credentials_arn_parsing(input_arn)
+            parse_iam_credentials_arn(input_arn)
 
         assert error._excinfo[0] == RoleArnParsingServiceNotIAMnorSTS
 
     def test_iam_credentials_arn_parsing_raising_RoleArnParsingInvalidAccountID(self):
         input_arn = "arn:aws:iam::AWS_ACCOUNT_ID:user/prowler"
         with raises(RoleArnParsingInvalidAccountID) as error:
-            iam_credentials_arn_parsing(input_arn)
+            parse_iam_credentials_arn(input_arn)
 
         assert error._excinfo[0] == RoleArnParsingInvalidAccountID
 
@@ -144,14 +144,14 @@ class Test_ARN_Parsing:
     ):
         input_arn = "arn:aws:iam::111111111111:account/prowler"
         with raises(RoleArnParsingInvalidResourceType) as error:
-            iam_credentials_arn_parsing(input_arn)
+            parse_iam_credentials_arn(input_arn)
 
         assert error._excinfo[0] == RoleArnParsingInvalidResourceType
 
     def test_iam_credentials_arn_parsing_raising_RoleArnParsingEmptyResource(self):
         input_arn = "arn:aws:iam::111111111111:role/"
         with raises(RoleArnParsingEmptyResource) as error:
-            iam_credentials_arn_parsing(input_arn)
+            parse_iam_credentials_arn(input_arn)
 
         assert error._excinfo[0] == RoleArnParsingEmptyResource
 

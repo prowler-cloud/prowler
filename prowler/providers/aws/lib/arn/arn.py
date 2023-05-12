@@ -13,7 +13,7 @@ from prowler.providers.aws.lib.arn.error import (
 )
 
 
-def iam_credentials_arn_parsing(arn):
+def parse_iam_credentials_arn(arn):
     # check for number of fields, must be six
     if len(arn.split(":")) != 6:
         raise RoleArnParsingFailedMissingFields

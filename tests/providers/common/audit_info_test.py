@@ -14,7 +14,7 @@ from moto import (
     mock_sts,
 )
 
-from prowler.providers.aws.lib.arn.arn import iam_credentials_arn_parsing
+from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.azure.azure_provider import Azure_Provider
 from prowler.providers.azure.lib.audit_info.models import (
@@ -148,9 +148,7 @@ class Test_Set_Audit_Info:
 
             assert get_caller_identity["region"] == aws_region
 
-            caller_identity_arn = iam_credentials_arn_parsing(
-                get_caller_identity["Arn"]
-            )
+            caller_identity_arn = parse_iam_credentials_arn(get_caller_identity["Arn"])
 
             assert caller_identity_arn.partition == aws_partition
             assert caller_identity_arn.region is None
@@ -188,7 +186,7 @@ class Test_Set_Audit_Info:
 
         assert get_caller_identity["region"] == aws_region
 
-        caller_identity_arn = iam_credentials_arn_parsing(get_caller_identity["Arn"])
+        caller_identity_arn = parse_iam_credentials_arn(get_caller_identity["Arn"])
 
         assert caller_identity_arn.partition == aws_partition
         assert caller_identity_arn.region is None
@@ -226,7 +224,7 @@ class Test_Set_Audit_Info:
 
         assert get_caller_identity["region"] == aws_region
 
-        caller_identity_arn = iam_credentials_arn_parsing(get_caller_identity["Arn"])
+        caller_identity_arn = parse_iam_credentials_arn(get_caller_identity["Arn"])
 
         assert caller_identity_arn.partition == aws_partition
         assert caller_identity_arn.region is None
@@ -264,7 +262,7 @@ class Test_Set_Audit_Info:
 
         assert get_caller_identity["region"] == "us-east-1"
 
-        caller_identity_arn = iam_credentials_arn_parsing(get_caller_identity["Arn"])
+        caller_identity_arn = parse_iam_credentials_arn(get_caller_identity["Arn"])
 
         assert caller_identity_arn.partition == aws_partition
         assert caller_identity_arn.region is None
@@ -302,7 +300,7 @@ class Test_Set_Audit_Info:
 
         assert get_caller_identity["region"] == "us-east-1"
 
-        caller_identity_arn = iam_credentials_arn_parsing(get_caller_identity["Arn"])
+        caller_identity_arn = parse_iam_credentials_arn(get_caller_identity["Arn"])
 
         assert caller_identity_arn.partition == aws_partition
         assert caller_identity_arn.region is None
@@ -344,7 +342,7 @@ class Test_Set_Audit_Info:
         # - Use the -f/--region with a valid partition region
         assert get_caller_identity["region"] == aws_region
 
-        caller_identity_arn = iam_credentials_arn_parsing(get_caller_identity["Arn"])
+        caller_identity_arn = parse_iam_credentials_arn(get_caller_identity["Arn"])
 
         assert caller_identity_arn.partition == aws_partition
         assert caller_identity_arn.region is None
@@ -387,7 +385,7 @@ class Test_Set_Audit_Info:
         # - Use the -f/--region with a valid partition region
         assert get_caller_identity["region"] == aws_region
 
-        caller_identity_arn = iam_credentials_arn_parsing(get_caller_identity["Arn"])
+        caller_identity_arn = parse_iam_credentials_arn(get_caller_identity["Arn"])
 
         assert caller_identity_arn.partition == aws_partition
         assert caller_identity_arn.region is None
