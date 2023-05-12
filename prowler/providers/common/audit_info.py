@@ -1,6 +1,5 @@
 import sys
 
-from arnparse import arnparse
 from boto3 import client, session
 from botocore.config import Config
 from colorama import Fore, Style
@@ -29,15 +28,32 @@ from prowler.providers.gcp.gcp_provider import GCP_Provider
 from prowler.providers.gcp.lib.audit_info.audit_info import gcp_audit_info
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
+AWS_STS_GLOBAL_ENDPOINT_REGION = "us-east-1"
+
 
 class Audit_Info:
     def __init__(self):
         logger.info("Setting Audit Info ...")
 
-    def validate_credentials(self, validate_session: session) -> dict:
+    def validate_credentials(
+        self, validate_session: session, input_regions: list
+    ) -> dict:
         try:
-            validate_credentials_client = validate_session.client("sts")
+            # For a valid STS GetCallerIdentity we have to use the right AWS Region
+            if input_regions is None or len(input_regions) == 0:
+                if validate_session.region_name is not None:
+                    aws_region = validate_session.region_name
+                else:
+                    # If there is no region set passed with -f/--region
+                    # we use the Global STS Endpoint Region, us-east-1
+                    aws_region = AWS_STS_GLOBAL_ENDPOINT_REGION
+            else:
+                # Get the first region passed to the -f/--region
+                aws_region = input_regions[0]
+            validate_credentials_client = validate_session.client("sts", aws_region)
             caller_identity = validate_credentials_client.get_caller_identity()
+            # Include the region where the caller_identity has validated the credentials
+            caller_identity["region"] = aws_region
         except Exception as error:
             logger.critical(f"{error.__class__.__name__} -- {error}")
             sys.exit(1)
@@ -188,7 +204,9 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         current_audit_info.original_session = aws_provider.aws_session
         logger.info("Validating credentials ...")
         # Verificate if we have valid credentials
-        caller_identity = self.validate_credentials(current_audit_info.original_session)
+        caller_identity = self.validate_credentials(
+            current_audit_info.original_session, input_regions
+        )
 
         logger.info("Credentials validated")
         logger.info(f"Original caller identity UserId: {caller_identity['UserId']}")
@@ -197,7 +215,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         current_audit_info.audited_account = caller_identity["Account"]
         current_audit_info.audited_identity_arn = caller_identity["Arn"]
         current_audit_info.audited_user_id = caller_identity["UserId"]
-        current_audit_info.audited_partition = arnparse(
+        current_audit_info.audited_partition = arn_parsing(
             caller_identity["Arn"]
         ).partition
 

@@ -9,7 +9,7 @@ from prowler.providers.aws.lib.arn.error import (
     RoleArnParsingInvalidAccountID,
     RoleArnParsingInvalidResourceType,
     RoleArnParsingPartitionEmpty,
-    RoleArnParsingServiceNotIAM,
+    RoleArnParsingServiceNotIAMnorSTS,
 )
 
 
@@ -19,7 +19,7 @@ def arn_parsing(arn):
         raise RoleArnParsingFailedMissingFields
     else:
         arn_parsed = arnparse(arn)
-        # First check if region is empty (in IAM arns region is always empty)
+        # First check if region is empty (in IAM ARN's region is always empty)
         if arn_parsed.region is not None:
             raise RoleArnParsingIAMRegionNotEmpty
         else:
@@ -29,17 +29,21 @@ def arn_parsing(arn):
             # - account_id
             # - resource_type
             # - resource
-            if arn_parsed.partition is None:
+            if arn_parsed.partition is None or arn_parsed.partition == "":
                 raise RoleArnParsingPartitionEmpty
-            elif arn_parsed.service != "iam":
-                raise RoleArnParsingServiceNotIAM
+            elif arn_parsed.service != "iam" and arn_parsed.service != "sts":
+                raise RoleArnParsingServiceNotIAMnorSTS
             elif (
                 arn_parsed.account_id is None
                 or len(arn_parsed.account_id) != 12
                 or not arn_parsed.account_id.isnumeric()
             ):
                 raise RoleArnParsingInvalidAccountID
-            elif arn_parsed.resource_type != "role":
+            elif (
+                arn_parsed.resource_type != "role"
+                and arn_parsed.resource_type != "user"
+                and arn_parsed.resource_type != "assumed-role"
+            ):
                 raise RoleArnParsingInvalidResourceType
             elif arn_parsed.resource == "":
                 raise RoleArnParsingEmptyResource
