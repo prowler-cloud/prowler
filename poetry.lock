@@ -304,14 +304,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.29.125"
+version = "1.29.134"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 files = [
-    {file = "botocore-1.29.125-py3-none-any.whl", hash = "sha256:ac87b63e9aa4231cd28941945024a0c4470c184c60334ebe5e1cae3544c785ed"},
-    {file = "botocore-1.29.125.tar.gz", hash = "sha256:3005a7ffee083315e69938acdf1bfeaf9e21fe1fe1643d6573ee817721f4ffcd"},
+    {file = "botocore-1.29.134-py3-none-any.whl", hash = "sha256:8a070ee14a430bd3c9cd16fd142e5c2900749060490698b2b981d6d9dadf5f1f"},
+    {file = "botocore-1.29.134.tar.gz", hash = "sha256:0e907b0cab771ab7c9e25efd6b6bc0041ec1b17eb0bab316fd012ef2f8fd99ba"},
 ]
 
 [package.dependencies]
@@ -708,14 +708,14 @@ graph = ["objgraph (>=1.7.2)"]
 
 [[package]]
 name = "docker"
-version = "6.1.1"
+version = "6.1.2"
 description = "A Python library for the Docker Engine API."
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "docker-6.1.1-py3-none-any.whl", hash = "sha256:8308b23d3d0982c74f7aa0a3abd774898c0c4fba006e9c3bde4f68354e470fe2"},
-    {file = "docker-6.1.1.tar.gz", hash = "sha256:5ec18b9c49d48ee145a5b5824bb126dc32fc77931e18444783fc07a7724badc0"},
+    {file = "docker-6.1.2-py3-none-any.whl", hash = "sha256:134cd828f84543cbf8e594ff81ca90c38288df3c0a559794c12f2e4b634ea19e"},
+    {file = "docker-6.1.2.tar.gz", hash = "sha256:dcc088adc2ec4e7cfc594e275d8bd2c9738c56c808de97476939ef67db5af8c2"},
 ]
 
 [package.dependencies]
@@ -1350,14 +1350,14 @@ min-versions = ["babel (==2.9.0)", "click (==7.0)", "colorama (==0.4)", "ghp-imp
 
 [[package]]
 name = "mkdocs-material"
-version = "9.1.8"
+version = "9.1.12"
 description = "Documentation that simply works"
 category = "main"
 optional = true
 python-versions = ">=3.7"
 files = [
-    {file = "mkdocs_material-9.1.8-py3-none-any.whl", hash = "sha256:ac76e31bf52b2742c08a9d6629d64878f32dda5c949cd371082e25106c9be7dd"},
-    {file = "mkdocs_material-9.1.8.tar.gz", hash = "sha256:616ef98fc143b3ec8c559e2fec85f32103d2093e9c88333964d93105ea2d670b"},
+    {file = "mkdocs_material-9.1.12-py3-none-any.whl", hash = "sha256:68c57d95d10104179c8c3ce9a88ee9d2322a5145b3d0f1f38ff686253fb5ec98"},
+    {file = "mkdocs_material-9.1.12.tar.gz", hash = "sha256:d4ebe9b5031ce63a265c19fb5eab4d27ea4edadb05de206372e831b2b7570fb5"},
 ]
 
 [package.dependencies]
@@ -1900,14 +1900,14 @@ testutils = ["gitpython (>3)"]
 
 [[package]]
 name = "pymdown-extensions"
-version = "9.11"
+version = "10.0"
 description = "Extension pack for Python Markdown."
 category = "main"
 optional = true
 python-versions = ">=3.7"
 files = [
-    {file = "pymdown_extensions-9.11-py3-none-any.whl", hash = "sha256:a499191d8d869f30339de86fcf072a787e86c42b6f16f280f5c2cf174182b7f3"},
-    {file = "pymdown_extensions-9.11.tar.gz", hash = "sha256:f7e86c1d3981f23d9dc43294488ecb54abadd05b0be4bf8f0e15efc90f7853ff"},
+    {file = "pymdown_extensions-10.0-py3-none-any.whl", hash = "sha256:e6cbe8ace7d8feda30bc4fd6a21a073893a9a0e90c373e92d69ce5b653051f55"},
+    {file = "pymdown_extensions-10.0.tar.gz", hash = "sha256:9a77955e63528c2ee98073a1fb3207c1a45607bc74a34ef21acd098f46c3aa8a"},
 ]
 
 [package.dependencies]
@@ -1991,14 +1991,14 @@ testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "no
 
 [[package]]
 name = "pytest-xdist"
-version = "3.2.1"
+version = "3.3.0"
 description = "pytest xdist plugin for distributed testing, most importantly across multiple CPUs"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pytest-xdist-3.2.1.tar.gz", hash = "sha256:1849bd98d8b242b948e472db7478e090bf3361912a8fed87992ed94085f54727"},
-    {file = "pytest_xdist-3.2.1-py3-none-any.whl", hash = "sha256:37290d161638a20b672401deef1cba812d110ac27e35d213f091d15b8beb40c9"},
+    {file = "pytest-xdist-3.3.0.tar.gz", hash = "sha256:d42c9efb388da35480878ef4b2993704c6cea800c8bafbe85a8cdc461baf0748"},
+    {file = "pytest_xdist-3.3.0-py3-none-any.whl", hash = "sha256:76f7683d4f993eaff91c9cb0882de0465c4af9c6dd3debc903833484041edc1a"},
 ]
 
 [package.dependencies]
@@ -2464,13 +2464,13 @@ testing-integration = ["build[virtualenv]", "filelock (>=3.4.0)", "jaraco.envs (
 
 [[package]]
 name = "shodan"
-version = "1.28.0"
+version = "1.29.0"
 description = "Python library and command-line utility for Shodan (https://developer.shodan.io)"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "shodan-1.28.0.tar.gz", hash = "sha256:18bd2ae81114b70836e0e3315227325e14398275223998a8c235b099432f4b0b"},
+    {file = "shodan-1.29.0.tar.gz", hash = "sha256:ebea6dbc1944497e9139263423ea4d103dcd58c085c5ddbf4d6ab1db6eb1d142"},
 ]
 
 [package.dependencies]
