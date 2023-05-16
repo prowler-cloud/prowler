@@ -74,7 +74,9 @@ class Route53:
                                 type=record["Type"],
                                 records=[
                                     resource_record["Value"]
-                                    for resource_record in record["ResourceRecords"]
+                                    for resource_record in record.get(
+                                        "ResourceRecords", []
+                                    )
                                 ],
                                 is_alias=True if "AliasTarget" in record else False,
                                 hosted_zone_id=zone_id,
