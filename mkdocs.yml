@@ -43,7 +43,7 @@ nav:
           - Assume Role: tutorials/aws/role-assumption.md
           - AWS Security Hub: tutorials/aws/securityhub.md
           - AWS Organizations: tutorials/aws/organizations.md
-          - Regions and Partition: tutorials/aws/regions-and-partitions.md
+          - AWS Regions and Partitions: tutorials/aws/regions-and-partitions.md
           - Scan Multiple AWS Accounts: tutorials/aws/multiaccount.md
           - AWS CloudShell: tutorials/aws/cloudshell.md
           - Checks v2 to v3 Mapping: tutorials/aws/v2_to_v3_checks_mapping.md
