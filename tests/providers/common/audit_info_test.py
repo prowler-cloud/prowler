@@ -105,9 +105,13 @@ class Test_Set_Audit_Info:
             organizations_metadata=None,
             audit_resources=None,
         )
+
         return audit_info
 
-    @patch.object(Audit_Info, "validate_aws_credentials", new=mock_validate_credentials)
+    @patch(
+        "prowler.providers.common.audit_info.validate_aws_credentials",
+        new=mock_validate_credentials,
+    )
     @patch.object(Audit_Info, "print_aws_credentials", new=mock_print_audit_credentials)
     def test_set_audit_info_aws(self):
         with patch(
