@@ -112,7 +112,10 @@ class Test_Set_Audit_Info:
         "prowler.providers.common.audit_info.validate_aws_credentials",
         new=mock_validate_credentials,
     )
-    @patch.object(Audit_Info, "print_aws_credentials", new=mock_print_audit_credentials)
+    @patch(
+        "prowler.providers.common.audit_info.print_aws_credentials",
+        new=mock_print_audit_credentials,
+    )
     def test_set_audit_info_aws(self):
         with patch(
             "prowler.providers.common.audit_info.current_audit_info",

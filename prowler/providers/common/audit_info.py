@@ -13,7 +13,10 @@ from prowler.providers.aws.aws_provider import (
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info, AWS_Credentials
-from prowler.providers.aws.lib.credentials.credentials import validate_aws_credentials
+from prowler.providers.aws.lib.credentials.credentials import (
+    print_aws_credentials,
+    validate_aws_credentials,
+)
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
 )
@@ -31,29 +34,6 @@ from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 class Audit_Info:
     def __init__(self):
         logger.info("Setting Audit Info ...")
-
-    def print_aws_credentials(self, audit_info: AWS_Audit_Info):
-        # Beautify audited regions, set "all" if there is no filter region
-        regions = (
-            ", ".join(audit_info.audited_regions)
-            if audit_info.audited_regions is not None
-            else "all"
-        )
-        # Beautify audited profile, set "default" if there is no profile set
-        profile = audit_info.profile if audit_info.profile is not None else "default"
-
-        report = f"""
-This report is being generated using credentials below:
-
-AWS-CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} AWS Filter Region: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
-AWS Account: {Fore.YELLOW}[{audit_info.audited_account}]{Style.RESET_ALL} UserId: {Fore.YELLOW}[{audit_info.audited_user_id}]{Style.RESET_ALL}
-Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESET_ALL}
-"""
-        # If -A is set, print Assumed Role ARN
-        if audit_info.assumed_role_info.role_arn is not None:
-            report += f"""Assumed Role ARN: {Fore.YELLOW}[{audit_info.assumed_role_info.role_arn}]{Style.RESET_ALL}
-"""
-        print(report)
 
     def print_gcp_credentials(self, audit_info: GCP_Audit_Info):
         # Beautify audited profile, set "default" if there is no profile set
@@ -244,7 +224,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             current_audit_info.profile_region = "us-east-1"
 
         if not arguments.get("only_logs"):
-            self.print_aws_credentials(current_audit_info)
+            print_aws_credentials(current_audit_info)
 
         # Parse Scan Tags
         if arguments.get("resource_tags"):
