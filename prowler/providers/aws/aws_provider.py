@@ -36,7 +36,7 @@ class AWS_Provider:
                     secret_key=audit_info.credentials.aws_secret_access_key,
                     token=audit_info.credentials.aws_session_token,
                     expiry_time=audit_info.credentials.expiration,
-                    refresh_using=self.refresh,
+                    refresh_using=self.refresh_credentials,
                     method="sts-assume-role",
                 )
                 # Here we need the botocore session since it needs to use refreshable credentials
@@ -60,7 +60,7 @@ class AWS_Provider:
     # Refresh credentials method using assume role
     # This method is called "adding ()" to the name, so it cannot accept arguments
     # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L570
-    def refresh(self):
+    def refresh_credentials(self):
         logger.info("Refreshing assumed credentials...")
 
         response = assume_role(self.aws_session, self.role_info)

@@ -1,6 +1,5 @@
 import sys
 
-from boto3 import client, session
 from botocore.config import Config
 from colorama import Fore, Style
 
@@ -13,10 +12,10 @@ from prowler.providers.aws.aws_provider import (
 )
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
-from prowler.providers.aws.lib.audit_info.models import (
-    AWS_Audit_Info,
-    AWS_Credentials,
-    AWS_Organizations_Info,
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info, AWS_Credentials
+from prowler.providers.aws.lib.credentials.credentials import validate_aws_credentials
+from prowler.providers.aws.lib.organizations.organizations import (
+    get_organizations_metadata,
 )
 from prowler.providers.aws.lib.resource_api_tagging.resource_api_tagging import (
     get_tagged_resources,
@@ -28,37 +27,10 @@ from prowler.providers.gcp.gcp_provider import GCP_Provider
 from prowler.providers.gcp.lib.audit_info.audit_info import gcp_audit_info
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
-AWS_STS_GLOBAL_ENDPOINT_REGION = "us-east-1"
-
 
 class Audit_Info:
     def __init__(self):
         logger.info("Setting Audit Info ...")
-
-    def validate_credentials(
-        self, validate_session: session, input_regions: list
-    ) -> dict:
-        try:
-            # For a valid STS GetCallerIdentity we have to use the right AWS Region
-            if input_regions is None or len(input_regions) == 0:
-                if validate_session.region_name is not None:
-                    aws_region = validate_session.region_name
-                else:
-                    # If there is no region set passed with -f/--region
-                    # we use the Global STS Endpoint Region, us-east-1
-                    aws_region = AWS_STS_GLOBAL_ENDPOINT_REGION
-            else:
-                # Get the first region passed to the -f/--region
-                aws_region = input_regions[0]
-            validate_credentials_client = validate_session.client("sts", aws_region)
-            caller_identity = validate_credentials_client.get_caller_identity()
-            # Include the region where the caller_identity has validated the credentials
-            caller_identity["region"] = aws_region
-        except Exception as error:
-            logger.critical(f"{error.__class__.__name__} -- {error}")
-            sys.exit(1)
-        else:
-            return caller_identity
 
     def print_aws_credentials(self, audit_info: AWS_Audit_Info):
         # Beautify audited regions, set "all" if there is no filter region
@@ -116,43 +88,6 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
 """
         print(report)
 
-    def get_organizations_metadata(
-        self, metadata_account: str, assumed_credentials: dict
-    ) -> AWS_Organizations_Info:
-        try:
-            organizations_client = client(
-                "organizations",
-                aws_access_key_id=assumed_credentials["Credentials"]["AccessKeyId"],
-                aws_secret_access_key=assumed_credentials["Credentials"][
-                    "SecretAccessKey"
-                ],
-                aws_session_token=assumed_credentials["Credentials"]["SessionToken"],
-            )
-            organizations_metadata = organizations_client.describe_account(
-                AccountId=metadata_account
-            )
-            list_tags_for_resource = organizations_client.list_tags_for_resource(
-                ResourceId=metadata_account
-            )
-        except Exception as error:
-            logger.critical(f"{error.__class__.__name__} -- {error}")
-            sys.exit(1)
-        else:
-            # Convert Tags dictionary to String
-            account_details_tags = ""
-            for tag in list_tags_for_resource["Tags"]:
-                account_details_tags += tag["Key"] + ":" + tag["Value"] + ","
-            organizations_info = AWS_Organizations_Info(
-                account_details_email=organizations_metadata["Account"]["Email"],
-                account_details_name=organizations_metadata["Account"]["Name"],
-                account_details_arn=organizations_metadata["Account"]["Arn"],
-                account_details_org=organizations_metadata["Account"]["Arn"].split("/")[
-                    1
-                ],
-                account_details_tags=account_details_tags,
-            )
-            return organizations_info
-
     def set_aws_audit_info(self, arguments) -> AWS_Audit_Info:
         """
         set_aws_audit_info returns the AWS_Audit_Info
@@ -204,7 +139,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         current_audit_info.original_session = aws_provider.aws_session
         logger.info("Validating credentials ...")
         # Verificate if we have valid credentials
-        caller_identity = self.validate_credentials(
+        caller_identity = validate_aws_credentials(
             current_audit_info.original_session, input_regions
         )
 
@@ -244,10 +179,8 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                 assumed_credentials = assume_role(
                     aws_provider.aws_session, aws_provider.role_info
                 )
-                current_audit_info.organizations_metadata = (
-                    self.get_organizations_metadata(
-                        current_audit_info.audited_account, assumed_credentials
-                    )
+                current_audit_info.organizations_metadata = get_organizations_metadata(
+                    current_audit_info.audited_account, assumed_credentials
                 )
                 logger.info("Organizations metadata retrieved")
 
