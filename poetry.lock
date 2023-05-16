@@ -29,18 +29,6 @@ about-time = "4.2.1"
 grapheme = "0.6.0"
 
 [[package]]
-name = "arnparse"
-version = "0.0.2"
-description = "Parse ARNs using Python"
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "arnparse-0.0.2-py2.py3-none-any.whl", hash = "sha256:b0906734e4b8f19e39b1e32944c6cd6274b6da90c066a83882ac7a11d27553e0"},
-    {file = "arnparse-0.0.2.tar.gz", hash = "sha256:cb87f17200d07121108a9085d4a09cc69a55582647776b9a917b0b1f279db8f8"},
-]
-
-[[package]]
 name = "astroid"
 version = "2.15.4"
 description = "An abstract syntax tree for Python with inference support."
@@ -2887,4 +2875,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "03b34925cdbda135523ee1c518968b258b622b8a03850872b5d1a49193987021"
+content-hash = "fcccd8e9a3d95e18ec2ff0a1702fe75cb7d01731ba9859c6da828914b528c250"

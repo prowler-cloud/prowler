@@ -143,7 +143,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
 
             # Check if role arn is valid
             try:
-                # this returns the arn already parsed, calls arnparse, into a dict to be used when it is needed to access its fields
+                # this returns the arn already parsed into a dict to be used when it is needed to access its fields
                 role_arn_parsed = parse_iam_credentials_arn(
                     current_audit_info.assumed_role_info.role_arn
                 )
@@ -174,7 +174,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
 
             # Check if role arn is valid
             try:
-                # this returns the arn already parsed, calls arnparse, into a dict to be used when it is needed to access its fields
+                # this returns the arn already parsed into a dict to be used when it is needed to access its fields
                 role_arn_parsed = parse_iam_credentials_arn(
                     current_audit_info.assumed_role_info.role_arn
                 )

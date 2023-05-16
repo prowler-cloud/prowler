@@ -1,6 +1,6 @@
 import re
 
-from arnparse import arnparse
+from pydantic import BaseModel
 
 from prowler.providers.aws.lib.arn.error import (
     RoleArnParsingEmptyResource,
@@ -14,13 +14,27 @@ from prowler.providers.aws.lib.arn.error import (
 
 
 def parse_iam_credentials_arn(arn):
+    # check that arn starts with arn:
+    if not arn.startswith("arn:"):
+        raise RoleArnParsingFailedMissingFields
     # check for number of fields, must be six
     if len(arn.split(":")) != 6:
         raise RoleArnParsingFailedMissingFields
     else:
-        arn_parsed = arnparse(arn)
+        service = arn.split(":")[2]
+        # check resource types
+        resource_type = get_arn_resource_type(arn, service)
+
+        arn_parsed = Arn(
+            partition=arn.split(":")[1],
+            service=service,
+            region=arn.split(":")[3],
+            account_id=arn.split(":")[4],
+            resource_type=resource_type,
+            resource=arn.split(":")[5],
+        )
         # First check if region is empty (in IAM ARN's region is always empty)
-        if arn_parsed.region is not None:
+        if arn_parsed.region:
             raise RoleArnParsingIAMRegionNotEmpty
         else:
             # check if needed fields are filled:
@@ -55,3 +69,32 @@ def is_valid_arn(arn: str) -> bool:
     """is_valid_arn returns True or False whether the given AWS ARN (Amazon Resource Name) is valid or not."""
     regex = r"^arn:aws(-cn|-us-gov)?:[a-zA-Z0-9\-]+:([a-z]{2}-[a-z]+-\d{1})?:(\d{12})?:[a-zA-Z0-9\-_\/]+(:\d+)?$"
     return re.match(regex, arn) is not None
+
+
+def get_arn_resource_type(arn, service):
+    if service == "s3":
+        resource_type = "bucket"
+    elif service == "sns":
+        resource_type = "topic"
+    elif service == "sqs":
+        resource_type = "queue"
+    elif service == "apigateway":
+        split_parts = arn.split(":")[5].split("/")
+        if "integration" in split_parts and "responses" in split_parts:
+            resource_type = "restapis-resources-methods-integration-response"
+        elif "documentation" in split_parts and "parts" in split_parts:
+            resource_type = "restapis-documentation-parts"
+        else:
+            resource_type = arn.split(":")[5].split("/")[1]
+    else:
+        resource_type = arn.split(":")[5].split("/")[0]
+    return resource_type
+
+
+class Arn(BaseModel):
+    partition: str
+    service: str
+    region: str
+    account_id: str
+    resource: str
+    resource_type: str

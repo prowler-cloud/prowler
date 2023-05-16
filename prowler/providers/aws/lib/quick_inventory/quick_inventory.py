@@ -14,6 +14,7 @@ from prowler.config.config import (
     output_file_timestamp,
 )
 from prowler.lib.logger import logger
+from prowler.providers.aws.lib.arn.arn import get_arn_resource_type
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
@@ -153,22 +154,8 @@ def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
             services[service] = 0
         services[service] += 1
 
-        if service == "s3":
-            resource_type = "bucket"
-        elif service == "sns":
-            resource_type = "topic"
-        elif service == "sqs":
-            resource_type = "queue"
-        elif service == "apigateway":
-            split_parts = resource["arn"].split(":")[5].split("/")
-            if "integration" in split_parts and "responses" in split_parts:
-                resource_type = "restapis-resources-methods-integration-response"
-            elif "documentation" in split_parts and "parts" in split_parts:
-                resource_type = "restapis-documentation-parts"
-            else:
-                resource_type = resource["arn"].split(":")[5].split("/")[1]
-        else:
-            resource_type = resource["arn"].split(":")[5].split("/")[0]
+        resource_type = get_arn_resource_type(resource["arn"], service)
+
         if service not in resources_type:
             resources_type[service] = {}
         if resource_type not in resources_type[service]:
