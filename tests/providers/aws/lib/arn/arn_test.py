@@ -111,7 +111,7 @@ class Test_ARN_Parsing:
             "arn:aws:iam::123456789012:saml-provider/ADFSProvider",
             "arn:aws:iam::123456789012:oidc-provider/GoogleProvider",
             "arn:aws:iot:your-region:123456789012:cert/123a456b789c123d456e789f123a456b789c123d456e789f123a456b789c123c456d7",
-            "arn:aws:iot:123456789012:policy/MyIoTPolicy",
+            "arn:aws:iot::123456789012:policy/MyIoTPolicy",
             "arn:aws:iot:your-region:123456789012:rule/MyIoTRule",
             "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012",
             "arn:aws:kms:us-east-1:123456789012:alias/example-alias",
@@ -174,16 +174,9 @@ class Test_ARN_Parsing:
             "arn:aws:s3:::my_corporate_bucket/*",
             "arn:aws:s3:::my_corporate_bucket/Development/*",
         ]
+        # For now we are only testing that the ARN library does not raise any exception with the above list of ARNs.
         for arn in test_cases:
             _ = ARN(arn)
-
-        # valid_arn = "arn:aws:iam::111111111111:user/prowler"
-        # valid_arn = ARN(valid_arn)
-        # assert arn.partition == "aws"
-        # assert arn.service == "iam"
-        # assert arn.region is None
-        # assert arn.resource == "prowler"
-        # assert arn.resource_type == "user"
 
     def test_iam_credentials_arn_parsing(self):
         test_cases = [

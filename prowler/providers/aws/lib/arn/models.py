@@ -18,10 +18,6 @@ class ARN(BaseModel):
         ## Check that arn starts with arn
         if not arn.startswith("arn:"):
             raise RoleArnParsingFailedMissingFields
-        ## Check for number of fields, must be at least six
-        arn_fields_number = len(arn.split(":"))
-        if arn_fields_number != 6:
-            raise RoleArnParsingFailedMissingFields
         ## Retrieve fields
         arn_elements = arn.split(":", 5)
         data = {
