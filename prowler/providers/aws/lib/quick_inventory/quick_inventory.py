@@ -14,7 +14,7 @@ from prowler.config.config import (
     output_file_timestamp,
 )
 from prowler.lib.logger import logger
-from prowler.providers.aws.lib.arn.arn import get_arn_resource_type
+from prowler.providers.aws.lib.arn.models import get_arn_resource_type
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
