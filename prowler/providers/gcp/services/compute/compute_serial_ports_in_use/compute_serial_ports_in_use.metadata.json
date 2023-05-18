@@ -1,0 +1,31 @@
+{
+    "Provider": "gcp",
+    "CheckID": "compute_serial_ports_in_use",
+    "CheckTitle": "Ensure ‘Enable Connecting to Serial Ports’ Is Not Enabled for VM Instance",
+    "CheckType": [],
+    "ServiceName": "compute",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Severity": "medium",
+    "ResourceType": "VMInstance",
+    "Description": "Interacting with a serial port is often referred to as the serial console, which is similar to using a terminal window, in that input and output is entirely in text mode and there is no graphical interface or mouse support. If you enable the interactive serial console on an instance, clients can attempt to connect to that instance from any IP address. Therefore interactive serial console support should be disabled.",
+    "Risk": "",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/disable-interactive-serial-console-support.html",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "",
+        "Url": ""
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  
