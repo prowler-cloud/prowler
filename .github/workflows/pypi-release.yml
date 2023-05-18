@@ -36,6 +36,7 @@ jobs:
           git tag -fa ${{ env.RELEASE_TAG }} -m "chore(release): ${{ env.RELEASE_TAG }}"
           git push -f origin ${{ env.RELEASE_TAG }}
           git checkout -B release-${{ env.RELEASE_TAG }}
+          git push origin release-${{ env.RELEASE_TAG }}
           poetry build
       - name: Publish prowler package to PyPI
         run: |
