@@ -52,22 +52,23 @@ class SSMIncidents:
     def __list_replication_sets__(self):
         logger.info("SSMIncidents - Listing Replication Sets...")
         try:
-            regional_client = self.regional_clients[
-                list(self.regional_clients.keys())[0]
-            ]
-            list_replication_sets = regional_client.list_replication_sets().get(
-                "replicationSetArns"
-            )
-            if list_replication_sets:
-                replication_set = list_replication_sets[0]
-                if not self.audit_resources or (
-                    is_resource_filtered(replication_set, self.audit_resources)
-                ):
-                    self.replication_set = [
-                        ReplicationSet(
-                            arn=replication_set,
-                        )
-                    ]
+            if self.regional_clients:
+                regional_client = self.regional_clients[
+                    list(self.regional_clients.keys())[0]
+                ]
+                list_replication_sets = regional_client.list_replication_sets().get(
+                    "replicationSetArns"
+                )
+                if list_replication_sets:
+                    replication_set = list_replication_sets[0]
+                    if not self.audit_resources or (
+                        is_resource_filtered(replication_set, self.audit_resources)
+                    ):
+                        self.replication_set = [
+                            ReplicationSet(
+                                arn=replication_set,
+                            )
+                        ]
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
