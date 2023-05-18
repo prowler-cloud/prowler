@@ -44,10 +44,10 @@ from prowler.providers.common.outputs import set_provider_output_options
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
 
-def prowler():
+def prowler(args=None):
     # Parse Arguments
     parser = ProwlerArgumentParser()
-    args = parser.parse()
+    args = parser.parse(args=args)
 
     # Save Arguments
     provider = args.provider
@@ -55,6 +55,7 @@ def prowler():
     excluded_checks = args.excluded_checks
     excluded_services = args.excluded_services
     services = args.services
+    use_python = args.python
     categories = args.categories
     checks_file = args.checks_file
     checks_folder = args.checks_folder
@@ -72,7 +73,10 @@ def prowler():
     set_logging_config(args.log_level, args.log_file, args.only_logs)
 
     if args.list_services:
-        print_services(list_services(provider))
+        service_list = list_services(provider)
+        if use_python:
+            return service_list
+        print_services(service_list)
         sys.exit()
 
     # Load checks metadata
@@ -80,7 +84,10 @@ def prowler():
     bulk_checks_metadata = bulk_load_checks_metadata(provider)
 
     if args.list_categories:
-        print_categories(list_categories(provider, bulk_checks_metadata))
+        category_list = list_categories(provider, bulk_checks_metadata)
+        if use_python:
+            return category_list
+        print_categories(category_list)
         sys.exit()
 
     bulk_compliance_frameworks = {}
@@ -93,6 +100,8 @@ def prowler():
         bulk_compliance_frameworks, bulk_checks_metadata
     )
     if args.list_compliance:
+        if use_python:
+            return bulk_compliance_frameworks
         print_compliance_frameworks(bulk_compliance_frameworks)
         sys.exit()
     if args.list_compliance_requirements:
@@ -168,6 +177,8 @@ def prowler():
             "There are no checks to execute. Please, check your input arguments"
         )
 
+    if use_python:
+        return findings
     # Extract findings stats
     stats = extract_findings_statistics(findings)
 
