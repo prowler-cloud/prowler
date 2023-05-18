@@ -2,6 +2,7 @@ import threading
 from datetime import datetime, timezone
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -209,11 +210,17 @@ class Logs:
         logger.info("CloudWatch Logs - List Tags...")
         try:
             for log_group in self.log_groups:
-                regional_client = self.regional_clients[log_group.region]
-                response = regional_client.list_tags_log_group(
-                    logGroupName=log_group.name
-                )["tags"]
-                log_group.tags = [response]
+                try:
+                    regional_client = self.regional_clients[log_group.region]
+                    response = regional_client.list_tags_log_group(
+                        logGroupName=log_group.name
+                    )["tags"]
+                    log_group.tags = [response]
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "ResourceNotFoundException":
+                        log_group.tags = []
+
+                    continue
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
