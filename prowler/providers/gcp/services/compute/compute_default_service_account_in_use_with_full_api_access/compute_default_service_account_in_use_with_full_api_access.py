@@ -13,14 +13,17 @@ class compute_default_service_account_in_use_with_full_api_access(Check):
             report.location = instance.zone
             report.status = "PASS"
             report.status_extended = f"The VM Instance {instance.name} is not configured to use the default service account with full access to all cloud APIs "
-            scopes_emails = []
-            for sa in instance.service_accounts:
-                for email in sa["scopes"]:
-                    scopes_emails.append(email)
-            if any([email == f"{compute_client.project_id}-compute@developer.gserviceaccount.com" for email in scopes_emails]) \
-               and instance.name[:4] != 'gke-':
-                report.status = "FAIL"
-                report.status_extended = f"The VM Instance {instance.name} is configured to use the default service account with full access to all cloud APIs "
+            for service_account in instance.service_accounts:
+                if (
+                    service_account["email"]
+                    == f"{compute_client.project_id}-compute@developer.gserviceaccount.com"
+                    and "https://www.googleapis.com/auth/cloud-platform"
+                    in service_account["scopes"]
+                    and instance.name[:4] != "gke-"
+                ):
+                    report.status = "FAIL"
+                    report.status_extended = f"The VM Instance {instance.name} is configured to use the default service account with full access to all cloud APIs "
+                    break
             findings.append(report)
 
         return findings
