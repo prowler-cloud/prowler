@@ -1,48 +1,17 @@
 from re import search
 from unittest import mock
 
-from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
-
 GCP_PROJECT_ID = "123456789012"
 
 
 class Test_compute_default_service_account_in_use_with_full_api_access:
-    def set_mocked_audit_info(self):
-        audit_info = GCP_Audit_Info(
-            credentials=None,
-            project_id=GCP_PROJECT_ID,
-            audit_resources=None,
-            audit_metadata=None,
-        )
-
-        return audit_info
-
     def test_compute_no_instances(self):
-        from prowler.providers.gcp.services.compute.compute_service import Compute
-
-        gcp_audit_info = self.set_mocked_audit_info()
+        compute_client = mock.MagicMock
+        compute_client.instances = []
 
         with mock.patch(
-            "prowler.providers.gcp.lib.audit_info.audit_info.gcp_audit_info",
-            new=gcp_audit_info,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.generate_client",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_zones__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_instances__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_networks__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access.compute_client",
-            new=Compute(gcp_audit_info),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access.compute_client.instances",
-            new=[],
+            new=compute_client,
         ):
             from prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access import (
                 compute_default_service_account_in_use_with_full_api_access,
@@ -53,12 +22,7 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
             assert len(result) == 0
 
     def test_one_compliant_instance(self):
-        from prowler.providers.gcp.services.compute.compute_service import (
-            Compute,
-            Instance,
-        )
-
-        gcp_audit_info = self.set_mocked_audit_info()
+        from prowler.providers.gcp.services.compute.compute_service import Instance
 
         instance = Instance(
             name="test",
@@ -73,27 +37,13 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
             ],
         )
 
+        compute_client = mock.MagicMock
+        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.instances = [instance]
+
         with mock.patch(
-            "prowler.providers.gcp.lib.audit_info.audit_info.gcp_audit_info",
-            new=gcp_audit_info,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.generate_client",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_zones__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_instances__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_networks__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access.compute_client",
-            new=Compute(gcp_audit_info),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access.compute_client.instances",
-            new=[instance],
+            new=compute_client,
         ):
             from prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access import (
                 compute_default_service_account_in_use_with_full_api_access,
@@ -111,12 +61,7 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
             assert result[0].resource_id == instance.id
 
     def test_one_compliant_instance_gke(self):
-        from prowler.providers.gcp.services.compute.compute_service import (
-            Compute,
-            Instance,
-        )
-
-        gcp_audit_info = self.set_mocked_audit_info()
+        from prowler.providers.gcp.services.compute.compute_service import Instance
 
         instance = Instance(
             name="gke-test",
@@ -134,27 +79,13 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
             ],
         )
 
+        compute_client = mock.MagicMock
+        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.instances = [instance]
+
         with mock.patch(
-            "prowler.providers.gcp.lib.audit_info.audit_info.gcp_audit_info",
-            new=gcp_audit_info,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.generate_client",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_zones__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_instances__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_networks__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access.compute_client",
-            new=Compute(gcp_audit_info),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access.compute_client.instances",
-            new=[instance],
+            new=compute_client,
         ):
             from prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access import (
                 compute_default_service_account_in_use_with_full_api_access,
@@ -172,12 +103,7 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
             assert result[0].resource_id == instance.id
 
     def test_instance_with_default_service_account(self):
-        from prowler.providers.gcp.services.compute.compute_service import (
-            Compute,
-            Instance,
-        )
-
-        gcp_audit_info = self.set_mocked_audit_info()
+        from prowler.providers.gcp.services.compute.compute_service import Instance
 
         instance = Instance(
             name="test",
@@ -195,27 +121,13 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
             ],
         )
 
+        compute_client = mock.MagicMock
+        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.instances = [instance]
+
         with mock.patch(
-            "prowler.providers.gcp.lib.audit_info.audit_info.gcp_audit_info",
-            new=gcp_audit_info,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.generate_client",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_zones__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_instances__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_networks__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access.compute_client",
-            new=Compute(gcp_audit_info),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access.compute_client.instances",
-            new=[instance],
+            new=compute_client,
         ):
             from prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access import (
                 compute_default_service_account_in_use_with_full_api_access,

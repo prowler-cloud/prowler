@@ -1,48 +1,18 @@
 from re import search
 from unittest import mock
 
-from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
-
 GCP_PROJECT_ID = "123456789012"
 
 
 class Test_compute_serial_ports_in_use:
-    def set_mocked_audit_info(self):
-        audit_info = GCP_Audit_Info(
-            credentials=None,
-            project_id=GCP_PROJECT_ID,
-            audit_resources=None,
-            audit_metadata=None,
-        )
-
-        return audit_info
-
     def test_compute_no_instances(self):
-        from prowler.providers.gcp.services.compute.compute_service import Compute
-
-        gcp_audit_info = self.set_mocked_audit_info()
+        compute_client = mock.MagicMock
+        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.instances = []
 
         with mock.patch(
-            "prowler.providers.gcp.lib.audit_info.audit_info.gcp_audit_info",
-            new=gcp_audit_info,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.generate_client",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_zones__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_instances__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_networks__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client",
-            new=Compute(gcp_audit_info),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client.instances",
-            new=[],
+            new=compute_client,
         ):
             from prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use import (
                 compute_serial_ports_in_use,
@@ -53,12 +23,7 @@ class Test_compute_serial_ports_in_use:
             assert len(result) == 0
 
     def test_one_compliant_instance_without_metadata(self):
-        from prowler.providers.gcp.services.compute.compute_service import (
-            Compute,
-            Instance,
-        )
-
-        gcp_audit_info = self.set_mocked_audit_info()
+        from prowler.providers.gcp.services.compute.compute_service import Instance
 
         instance = Instance(
             name="test",
@@ -71,27 +36,13 @@ class Test_compute_serial_ports_in_use:
             service_accounts=[],
         )
 
+        compute_client = mock.MagicMock
+        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.instances = [instance]
+
         with mock.patch(
-            "prowler.providers.gcp.lib.audit_info.audit_info.gcp_audit_info",
-            new=gcp_audit_info,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.generate_client",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_zones__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_instances__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_networks__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client",
-            new=Compute(gcp_audit_info),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client.instances",
-            new=[instance],
+            new=compute_client,
         ):
             from prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use import (
                 compute_serial_ports_in_use,
@@ -109,12 +60,7 @@ class Test_compute_serial_ports_in_use:
             assert result[0].resource_id == instance.id
 
     def test_one_compliant_instance_with_0(self):
-        from prowler.providers.gcp.services.compute.compute_service import (
-            Compute,
-            Instance,
-        )
-
-        gcp_audit_info = self.set_mocked_audit_info()
+        from prowler.providers.gcp.services.compute.compute_service import Instance
 
         instance = Instance(
             name="test",
@@ -127,27 +73,13 @@ class Test_compute_serial_ports_in_use:
             service_accounts=[],
         )
 
+        compute_client = mock.MagicMock
+        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.instances = [instance]
+
         with mock.patch(
-            "prowler.providers.gcp.lib.audit_info.audit_info.gcp_audit_info",
-            new=gcp_audit_info,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.generate_client",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_zones__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_instances__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_networks__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client",
-            new=Compute(gcp_audit_info),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client.instances",
-            new=[instance],
+            new=compute_client,
         ):
             from prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use import (
                 compute_serial_ports_in_use,
@@ -165,12 +97,7 @@ class Test_compute_serial_ports_in_use:
             assert result[0].resource_id == instance.id
 
     def test_one_compliant_instance_with_false(self):
-        from prowler.providers.gcp.services.compute.compute_service import (
-            Compute,
-            Instance,
-        )
-
-        gcp_audit_info = self.set_mocked_audit_info()
+        from prowler.providers.gcp.services.compute.compute_service import Instance
 
         instance = Instance(
             name="test",
@@ -183,27 +110,13 @@ class Test_compute_serial_ports_in_use:
             service_accounts=[],
         )
 
+        compute_client = mock.MagicMock
+        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.instances = [instance]
+
         with mock.patch(
-            "prowler.providers.gcp.lib.audit_info.audit_info.gcp_audit_info",
-            new=gcp_audit_info,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.generate_client",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_zones__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_instances__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_networks__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client",
-            new=Compute(gcp_audit_info),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client.instances",
-            new=[instance],
+            new=compute_client,
         ):
             from prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use import (
                 compute_serial_ports_in_use,
@@ -221,12 +134,7 @@ class Test_compute_serial_ports_in_use:
             assert result[0].resource_id == instance.id
 
     def test_one_instance_with_serial_ports_enable_1(self):
-        from prowler.providers.gcp.services.compute.compute_service import (
-            Compute,
-            Instance,
-        )
-
-        gcp_audit_info = self.set_mocked_audit_info()
+        from prowler.providers.gcp.services.compute.compute_service import Instance
 
         instance = Instance(
             name="test",
@@ -239,27 +147,13 @@ class Test_compute_serial_ports_in_use:
             service_accounts=[],
         )
 
+        compute_client = mock.MagicMock
+        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.instances = [instance]
+
         with mock.patch(
-            "prowler.providers.gcp.lib.audit_info.audit_info.gcp_audit_info",
-            new=gcp_audit_info,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.generate_client",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_zones__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_instances__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_networks__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client",
-            new=Compute(gcp_audit_info),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client.instances",
-            new=[instance],
+            new=compute_client,
         ):
             from prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use import (
                 compute_serial_ports_in_use,
@@ -277,12 +171,7 @@ class Test_compute_serial_ports_in_use:
             assert result[0].resource_id == instance.id
 
     def test_one_instance_with_serial_ports_enable_true(self):
-        from prowler.providers.gcp.services.compute.compute_service import (
-            Compute,
-            Instance,
-        )
-
-        gcp_audit_info = self.set_mocked_audit_info()
+        from prowler.providers.gcp.services.compute.compute_service import Instance
 
         instance = Instance(
             name="test",
@@ -295,27 +184,13 @@ class Test_compute_serial_ports_in_use:
             service_accounts=[],
         )
 
+        compute_client = mock.MagicMock
+        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.instances = [instance]
+
         with mock.patch(
-            "prowler.providers.gcp.lib.audit_info.audit_info.gcp_audit_info",
-            new=gcp_audit_info,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.generate_client",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_zones__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_instances__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute.__get_networks__",
-            new=lambda *args, **kwargs: None,
-        ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client",
-            new=Compute(gcp_audit_info),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client.instances",
-            new=[instance],
+            new=compute_client,
         ):
             from prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use import (
                 compute_serial_ports_in_use,
