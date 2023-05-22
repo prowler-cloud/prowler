@@ -7,7 +7,7 @@ class bigquery_dataset_cmk_encryption(Check):
         findings = []
         for dataset in bigquery_client.datasets:
             report = Check_Report_GCP(self.metadata())
-            report.project_id = bigquery_client.project_id
+            report.project_id = dataset.project_id
             report.resource_id = dataset.id
             report.resource_name = dataset.name
             report.location = dataset.region

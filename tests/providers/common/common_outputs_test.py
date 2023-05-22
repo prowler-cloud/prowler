@@ -347,7 +347,7 @@ class Test_Common_Output_Options:
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>GCP Project ID:</b> {audit_info.project_id}
+                            <b>GCP Project IDs:</b> {', '.join(audit_info.project_ids)}
                         </li>
                     </ul>
                 </div>

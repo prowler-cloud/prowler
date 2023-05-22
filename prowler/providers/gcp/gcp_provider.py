@@ -15,9 +15,16 @@ class GCP_Provider:
         credentials_file: str,
     ):
         logger.info("Instantiating GCP Provider ...")
-        self.credentials, self.project_id = self.__set_credentials__(credentials_file)
-        if not self.project_id:
+        self.credentials, self.default_project_id = self.__set_credentials__(
+            credentials_file
+        )
+        if not self.default_project_id:
             logger.critical("No Project ID associated to Google Credentials.")
+            sys.exit(1)
+
+        self.project_ids = self.get_project_ids()
+        if not self.project_ids:
+            logger.critical("No Project IDs can be accessed via Google Credentials.")
             sys.exit(1)
 
     def __set_credentials__(self, credentials_file):
@@ -38,7 +45,32 @@ class GCP_Provider:
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = client_secrets_path
 
     def get_credentials(self):
-        return self.credentials, self.project_id
+        return self.credentials, self.default_project_id, self.project_ids
+
+    def get_project_ids(self):
+        try:
+            project_ids = []
+
+            service = discovery.build(
+                "cloudresourcemanager", "v1", credentials=self.credentials
+            )
+
+            request = service.projects().list()
+
+            while request is not None:
+                response = request.execute()
+
+                for project in response.get("projects", []):
+                    project_ids.append(project["projectId"])
+
+                request = service.projects().list_next(
+                    previous_request=request, previous_response=response
+                )
+
+            return project_ids
+        except Exception as error:
+            logger.critical(f"{error.__class__.__name__} -- {error}")
+            sys.exit(1)
 
 
 def generate_client(

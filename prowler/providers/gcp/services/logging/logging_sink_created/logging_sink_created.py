@@ -7,8 +7,8 @@ class logging_sink_created(Check):
         findings = []
         if not logging_client.sinks:
             report = Check_Report_GCP(self.metadata())
-            report.project_id = logging_client.project_id
-            report.resource_id = logging_client.project_id
+            report.project_id = logging_client.default_project_id
+            report.resource_id = logging_client.default_project_id
             report.resource_name = ""
             report.location = logging_client.region
             report.status = "FAIL"
@@ -18,7 +18,7 @@ class logging_sink_created(Check):
         else:
             for sink in logging_client.sinks:
                 report = Check_Report_GCP(self.metadata())
-                report.project_id = logging_client.project_id
+                report.project_id = sink.project_id
                 report.resource_id = sink.name
                 report.resource_name = sink.name
                 report.location = logging_client.region

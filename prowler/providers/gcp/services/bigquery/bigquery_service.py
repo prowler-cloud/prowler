@@ -9,7 +9,7 @@ class BigQuery:
     def __init__(self, audit_info):
         self.service = "bigquery"
         self.api_version = "v2"
-        self.project_id = audit_info.project_id
+        self.project_ids = audit_info.project_ids
         self.client = generate_client(self.service, self.api_version, audit_info)
         self.datasets = []
         self.tables = []
@@ -18,41 +18,43 @@ class BigQuery:
 
     def __get_datasets__(self):
         try:
-            request = self.client.datasets().list(projectId=self.project_id)
-            while request is not None:
-                response = request.execute()
+            for project_id in self.project_ids:
+                request = self.client.datasets().list(projectId=project_id)
+                while request is not None:
+                    response = request.execute()
 
-                for dataset in response.get("datasets", []):
-                    dataset_info = (
-                        self.client.datasets()
-                        .get(
-                            projectId=self.project_id,
-                            datasetId=dataset["datasetReference"]["datasetId"],
+                    for dataset in response.get("datasets", []):
+                        dataset_info = (
+                            self.client.datasets()
+                            .get(
+                                projectId=project_id,
+                                datasetId=dataset["datasetReference"]["datasetId"],
+                            )
+                            .execute()
                         )
-                        .execute()
-                    )
-                    cmk_encryption = False
-                    public = False
-                    roles = dataset_info.get("access", "")
-                    if "allAuthenticatedUsers" in str(roles) or "allUsers" in str(
-                        roles
-                    ):
-                        public = True
-                    if dataset_info.get("defaultEncryptionConfiguration"):
-                        cmk_encryption = True
-                    self.datasets.append(
-                        Dataset(
-                            name=dataset["datasetReference"]["datasetId"],
-                            id=dataset["id"],
-                            region=dataset["location"],
-                            cmk_encryption=cmk_encryption,
-                            public=public,
+                        cmk_encryption = False
+                        public = False
+                        roles = dataset_info.get("access", "")
+                        if "allAuthenticatedUsers" in str(roles) or "allUsers" in str(
+                            roles
+                        ):
+                            public = True
+                        if dataset_info.get("defaultEncryptionConfiguration"):
+                            cmk_encryption = True
+                        self.datasets.append(
+                            Dataset(
+                                name=dataset["datasetReference"]["datasetId"],
+                                id=dataset["id"],
+                                region=dataset["location"],
+                                cmk_encryption=cmk_encryption,
+                                public=public,
+                                project_id=project_id,
+                            )
                         )
-                    )
 
-                request = self.client.datasets().list_next(
-                    previous_request=request, previous_response=response
-                )
+                    request = self.client.datasets().list_next(
+                        previous_request=request, previous_response=response
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -62,7 +64,7 @@ class BigQuery:
         try:
             for dataset in self.datasets:
                 request = self.client.tables().list(
-                    projectId=self.project_id, datasetId=dataset.name
+                    projectId=dataset.project_id, datasetId=dataset.name
                 )
                 while request is not None:
                     response = request.execute()
@@ -72,7 +74,7 @@ class BigQuery:
                         if (
                             self.client.tables()
                             .get(
-                                projectId=self.project_id,
+                                projectId=dataset.project_id,
                                 datasetId=dataset.name,
                                 tableId=table["tableReference"]["tableId"],
                             )
@@ -86,6 +88,7 @@ class BigQuery:
                                 id=table["id"],
                                 region=dataset.region,
                                 cmk_encryption=cmk_encryption,
+                                project_id=dataset.project_id,
                             )
                         )
 
@@ -104,6 +107,7 @@ class Dataset(BaseModel):
     region: str
     cmk_encryption: bool
     public: bool
+    project_id: str
 
 
 class Table(BaseModel):
@@ -111,3 +115,4 @@ class Table(BaseModel):
     id: str
     region: str
     cmk_encryption: bool
+    project_id: str

@@ -11,7 +11,7 @@ class KMS:
     def __init__(self, audit_info):
         self.service = "cloudkms"
         self.api_version = "v1"
-        self.project_id = audit_info.project_id
+        self.project_ids = audit_info.project_ids
         self.region = "global"
         self.client = generate_client(self.service, self.api_version, audit_info)
         self.locations = []
@@ -26,33 +26,39 @@ class KMS:
         return self.client
 
     def __get_locations__(self):
-        try:
-            request = (
-                self.client.projects()
-                .locations()
-                .list(name="projects/" + self.project_id)
-            )
-            while request is not None:
-                response = request.execute()
-
-                for location in response["locations"]:
-                    self.locations.append(location["name"])
-
+        for project_id in self.project_ids:
+            try:
                 request = (
                     self.client.projects()
                     .locations()
-                    .list_next(previous_request=request, previous_response=response)
+                    .list(name="projects/" + project_id)
                 )
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+                while request is not None:
+                    response = request.execute()
+
+                    for location in response["locations"]:
+                        self.locations.append(
+                            KeyLocation(name=location["name"], project_id=project_id)
+                        )
+
+                    request = (
+                        self.client.projects()
+                        .locations()
+                        .list_next(previous_request=request, previous_response=response)
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_key_rings__(self):
         try:
             for location in self.locations:
                 request = (
-                    self.client.projects().locations().keyRings().list(parent=location)
+                    self.client.projects()
+                    .locations()
+                    .keyRings()
+                    .list(parent=location.name)
                 )
                 while request is not None:
                     response = request.execute()
@@ -61,6 +67,7 @@ class KMS:
                         self.key_rings.append(
                             KeyRing(
                                 name=ring["name"],
+                                project_id=location.project_id,
                             )
                         )
 
@@ -95,6 +102,7 @@ class KMS:
                                 location=key["name"].split("/")[3],
                                 rotation_period=key.get("rotationPeriod"),
                                 key_ring=ring.name,
+                                project_id=ring.project_id,
                             )
                         )
 
@@ -130,8 +138,14 @@ class KMS:
             )
 
 
+class KeyLocation(BaseModel):
+    name: str
+    project_id: str
+
+
 class KeyRing(BaseModel):
     name: str
+    project_id: str
 
 
 class CriptoKey(BaseModel):
@@ -140,3 +154,4 @@ class CriptoKey(BaseModel):
     rotation_period: Optional[str]
     key_ring: str
     members: list = []
+    project_id: str

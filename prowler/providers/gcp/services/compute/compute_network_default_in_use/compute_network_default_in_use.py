@@ -6,7 +6,7 @@ class compute_network_default_in_use(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         report = Check_Report_GCP(self.metadata())
-        report.project_id = compute_client.project_id
+        report.project_id = compute_client.default_project_id
         report.resource_id = "default"
         report.resource_name = "default"
         report.location = "global"
@@ -14,6 +14,7 @@ class compute_network_default_in_use(Check):
         report.status_extended = "Default network does not exist"
         for network in compute_client.networks:
             if network.name == "default":
+                report.project_id = network.project_id
                 report.status = "FAIL"
                 report.status_extended = "Default network is in use"
 

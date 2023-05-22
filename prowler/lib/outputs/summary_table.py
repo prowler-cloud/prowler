@@ -30,8 +30,8 @@ def display_summary_table(
                 entity_type = "Tenant ID/s"
                 audited_entities = " ".join(audit_info.identity.tenant_ids)
         elif provider == "gcp":
-            entity_type = "Project ID"
-            audited_entities = audit_info.project_id
+            entity_type = "Project ID/s"
+            audited_entities = ", ".join(audit_info.project_ids)
 
         if findings:
             current = {

@@ -69,7 +69,7 @@ class Test_Slack_Integration:
             aws_logo,
         )
         assert create_message_identity("gcp", gcp_audit_info) == (
-            f"GCP Project *{gcp_audit_info.project_id}*",
+            f"GCP Projects *{', '.join(gcp_audit_info.project_ids)}*",
             gcp_logo,
         )
         assert create_message_identity("azure", azure_audit_info) == (

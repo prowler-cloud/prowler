@@ -7,7 +7,7 @@ class cloudsql_instance_automated_backups(Check):
         findings = []
         for instance in cloudsql_client.instances:
             report = Check_Report_GCP(self.metadata())
-            report.project_id = cloudsql_client.project_id
+            report.project_id = instance.project_id
             report.resource_id = instance.name
             report.resource_name = instance.name
             report.location = instance.region
