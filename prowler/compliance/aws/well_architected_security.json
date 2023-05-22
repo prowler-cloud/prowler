@@ -13,8 +13,8 @@
       "Attributes": [
         {
           "Name": "SEC01-BP01 Separate workloads using accounts",
-          "WellArchitectedWellArchitectedQuestionId": "securely-operate",
-          "WellArchitectedWellArchitectedPracticeId": "sec_securely_operate_multi_accounts",
+          "WellArchitectedQuestionId": "securely-operate",
+          "WellArchitectedPracticeId": "sec_securely_operate_multi_accounts",
           "Section": "Security foundations",
           "SubSection": "AWS account management and separation",
           "LevelOfRisk": "High",

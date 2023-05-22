@@ -544,6 +544,12 @@ class Check_Output_CSV_Generic_Compliance(BaseModel):
     Requirements_Attributes_SubGroup: Optional[str]
     Requirements_Attributes_Service: str
     Requirements_Attributes_Soc_Type: Optional[str]
+    Requirements_Attributes_WellArchitectedQuestionId: Optional[str]
+    Requirements_Attributes_WellArchitectedPracticeId: Optional[str]
+    Requirements_Attributes_AssessmentMethod: Optional[str]
+    Requirements_Attributes_LevelOfRisk: Optional[str]
+    Requirements_Attributes_Description: Optional[str]
+    Requirements_Attributes_ImplementationGuidanceUrl: Optional[str]
     Status: str
     StatusExtended: str
     ResourceId: str

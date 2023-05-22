@@ -39,10 +39,10 @@ class ENS_Requirements_Tipos(str, Enum):
 class ENS_Requirements(BaseModel):
     """ENS V3 Framework Requirements"""
 
-    IdGrupoControl: str
-    Marco: str
-    Categoria: str
-    DescripcionControl: str
+    IdGrupoControl: Optional[str]
+    Marco: Optional[str]
+    Categoria: Optional[str]
+    DescripcionControl: Optional[str]
     Tipo: ENS_Requirements_Tipos
     Nivel: ENS_Requirements_Nivel
     Dimensiones: list[ENS_Requirements_Dimensiones]
@@ -52,12 +52,18 @@ class ENS_Requirements(BaseModel):
 class Generic_Compliance_Requirements(BaseModel):
     """Generic Compliance Requirements"""
 
-    ItemId: str
+    ItemId: Optional[str]
     Section: Optional[str]
     SubSection: Optional[str]
     SubGroup: Optional[str]
-    Service: str
+    Service: Optional[str]
     Soc_Type: Optional[str]
+    WellArchitectedQuestionId: Optional[str]
+    WellArchitectedPracticeId: Optional[str]
+    AssessmentMethod: Optional[str]
+    LevelOfRisk: Optional[str]
+    Description: Optional[str]
+    ImplementationGuidanceUrl: Optional[str]
 
 
 class CIS_Requirements_Profile(str):
@@ -78,16 +84,16 @@ class CIS_Requirements_AssessmentStatus(str):
 class CIS_Requirements(BaseModel):
     """CIS Requirements"""
 
-    Section: str
+    Section: Optional[str]
     Profile: CIS_Requirements_Profile
     AssessmentStatus: CIS_Requirements_AssessmentStatus
-    Description: str
-    RationaleStatement: str
-    ImpactStatement: str
-    RemediationProcedure: str
-    AuditProcedure: str
-    AdditionalInformation: str
-    References: str
+    Description: Optional[str]
+    RationaleStatement: Optional[str]
+    ImpactStatement: Optional[str]
+    RemediationProcedure: Optional[str]
+    AuditProcedure: Optional[str]
+    AdditionalInformation: Optional[str]
+    References: Optional[str]
 
 
 # Base Compliance Model
