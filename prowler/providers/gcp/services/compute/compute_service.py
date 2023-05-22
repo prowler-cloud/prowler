@@ -57,8 +57,12 @@ class Compute:
                                 zone=zone,
                                 public_ip=public_ip,
                                 metadata=instance["metadata"],
-                                shielded_enabled_vtpm=instance["shieldedInstanceConfig"]["enableVtpm"],
-                                shielded_enabled_integrity_monitoring=instance["shieldedInstanceConfig"]["enableIntegrityMonitoring"],
+                                shielded_enabled_vtpm=instance[
+                                    "shieldedInstanceConfig"
+                                ]["enableVtpm"],
+                                shielded_enabled_integrity_monitoring=instance[
+                                    "shieldedInstanceConfig"
+                                ]["enableIntegrityMonitoring"],
                                 service_accounts=instance["serviceAccounts"],
                             )
                         )

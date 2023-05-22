@@ -15,7 +15,10 @@ class compute_serial_ports_in_use(Check):
             report.status_extended = f"VM Instance {instance.name} have ‘Enable Connecting to Serial Ports’ off"
             if instance.metadata.get("items"):
                 for item in instance.metadata["items"]:
-                    if item["key"] == "serial-port-enable" and item["value"] in ["1", "true"]:
+                    if item["key"] == "serial-port-enable" and item["value"] in [
+                        "1",
+                        "true",
+                    ]:
                         report.status = "FAIL"
                         report.status_extended = f"VM Instance {instance.name} have ‘Enable Connecting to Serial Ports’ set to on"
                         break
