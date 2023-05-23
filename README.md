@@ -177,7 +177,7 @@ Those credentials must be associated to a user or service account with proper pe
   - Security Reviewer
   - Stackdriver Account Viewer
 
-> `prowler` will scan the project associated with the credentials.
+> By default, `prowler` will scan all accessible GCP Projects, use flag `--project-ids` to specify the projects to be scanned.
 
 # 💻 Basic Usage
 
@@ -260,7 +260,7 @@ Optionally, you can provide the location of an application credential JSON file 
 ```console
 prowler gcp --credentials-file path
 ```
-
+> By default, `prowler` will scan all accessible GCP Projects, use flag `--project-ids` to specify the projects to be scanned.
 
 # 📃 License
 

@@ -20,8 +20,8 @@ class Compute:
         self.__get_networks__()
 
     def __get_zones__(self):
-        try:
-            for project_id in self.project_ids:
+        for project_id in self.project_ids:
+            try:
                 request = self.client.zones().list(project=project_id)
                 while request is not None:
                     response = request.execute()
@@ -32,14 +32,14 @@ class Compute:
                     request = self.client.zones().list_next(
                         previous_request=request, previous_response=response
                     )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_instances__(self):
-        try:
-            for project_id in self.project_ids:
+        for project_id in self.project_ids:
+            try:
                 for zone in self.zones:
                     request = self.client.instances().list(
                         project=project_id, zone=zone
@@ -66,14 +66,14 @@ class Compute:
                         request = self.client.instances().list_next(
                             previous_request=request, previous_response=response
                         )
-        except Exception as error:
-            logger.error(
-                f"{zone} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{zone} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_networks__(self):
-        try:
-            for project_id in self.project_ids:
+        for project_id in self.project_ids:
+            try:
                 request = self.client.networks().list(project=project_id)
                 while request is not None:
                     response = request.execute()
@@ -90,10 +90,10 @@ class Compute:
                     request = self.client.networks().list_next(
                         previous_request=request, previous_response=response
                     )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
 
 class Instance(BaseModel):

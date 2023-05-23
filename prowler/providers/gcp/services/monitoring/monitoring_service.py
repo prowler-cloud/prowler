@@ -16,8 +16,8 @@ class Monitoring:
         self.__get_alert_policies__()
 
     def __get_alert_policies__(self):
-        try:
-            for project_id in self.project_ids:
+        for project_id in self.project_ids:
+            try:
                 request = (
                     self.client.projects()
                     .alertPolicies()
@@ -45,10 +45,10 @@ class Monitoring:
                         .alertPolicies()
                         .list_next(previous_request=request, previous_response=response)
                     )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
 
 class AlertPolicy(BaseModel):

@@ -15,8 +15,8 @@ class CloudSQL:
         self.__get_instances__()
 
     def __get_instances__(self):
-        try:
-            for project_id in self.project_ids:
+        for project_id in self.project_ids:
+            try:
                 request = self.client.instances().list(project=project_id)
                 while request is not None:
                     response = request.execute()
@@ -50,10 +50,10 @@ class CloudSQL:
                     request = self.client.instances().list_next(
                         previous_request=request, previous_response=response
                     )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
 
 class Instance(BaseModel):

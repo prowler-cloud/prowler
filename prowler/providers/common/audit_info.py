@@ -295,12 +295,14 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         set_gcp_audit_info returns the GCP_Audit_Info
         """
         logger.info("Setting GCP session ...")
+        project_ids = arguments.get("project_ids")
 
         logger.info("Checking if any credentials mode is set ...")
         credentials_file = arguments.get("credentials_file")
 
         gcp_provider = GCP_Provider(
             credentials_file,
+            project_ids,
         )
 
         (

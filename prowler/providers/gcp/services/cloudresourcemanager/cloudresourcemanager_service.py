@@ -19,8 +19,8 @@ class CloudResourceManager:
         return self.client
 
     def __get_iam_policy__(self):
-        try:
-            for project_id in self.project_ids:
+        for project_id in self.project_ids:
+            try:
                 policy = (
                     self.client.projects().getIamPolicy(resource=project_id).execute()
                 )
@@ -32,10 +32,10 @@ class CloudResourceManager:
                             project_id=project_id,
                         )
                     )
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
 
 class Binding(BaseModel):

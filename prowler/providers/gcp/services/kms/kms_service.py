@@ -52,8 +52,8 @@ class KMS:
                 )
 
     def __get_key_rings__(self):
-        try:
-            for location in self.locations:
+        for location in self.locations:
+            try:
                 request = (
                     self.client.projects()
                     .locations()
@@ -77,14 +77,14 @@ class KMS:
                         .keyRings()
                         .list_next(previous_request=request, previous_response=response)
                     )
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_crypto_keys__(self):
-        try:
-            for ring in self.key_rings:
+        for ring in self.key_rings:
+            try:
                 request = (
                     self.client.projects()
                     .locations()
@@ -113,14 +113,14 @@ class KMS:
                         .cryptoKeys()
                         .list_next(previous_request=request, previous_response=response)
                     )
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_crypto_keys_iam_policy__(self):
-        try:
-            for key in self.crypto_keys:
+        for key in self.crypto_keys:
+            try:
                 request = (
                     self.client.projects()
                     .locations()
@@ -132,10 +132,10 @@ class KMS:
 
                 for binding in response.get("bindings", []):
                     key.members.extend(binding.get("members", []))
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
 
 class KeyLocation(BaseModel):

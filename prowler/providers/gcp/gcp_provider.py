@@ -13,6 +13,7 @@ class GCP_Provider:
     def __init__(
         self,
         credentials_file: str,
+        input_project_ids: list,
     ):
         logger.info("Instantiating GCP Provider ...")
         self.credentials, self.default_project_id = self.__set_credentials__(
@@ -22,10 +23,24 @@ class GCP_Provider:
             logger.critical("No Project ID associated to Google Credentials.")
             sys.exit(1)
 
-        self.project_ids = self.get_project_ids()
-        if not self.project_ids:
+        self.project_ids = []
+        accessible_projects = self.get_project_ids()
+        if not accessible_projects:
             logger.critical("No Project IDs can be accessed via Google Credentials.")
             sys.exit(1)
+
+        if input_project_ids:
+            for input_project in input_project_ids:
+                if input_project in accessible_projects:
+                    self.project_ids.append(input_project)
+                else:
+                    logger.critical(
+                        f"Project {input_project} cannot be accessed via Google Credentials."
+                    )
+                    sys.exit(1)
+        else:
+            # If not projects were input, all accessible projects are scanned by default
+            self.project_ids = accessible_projects
 
     def __set_credentials__(self, credentials_file):
         try:

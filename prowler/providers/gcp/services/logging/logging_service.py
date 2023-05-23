@@ -19,8 +19,8 @@ class Logging:
         self.__get_metrics__()
 
     def __get_sinks__(self):
-        try:
-            for project_id in self.project_ids:
+        for project_id in self.project_ids:
+            try:
                 request = self.client.sinks().list(parent=f"projects/{project_id}")
                 while request is not None:
                     response = request.execute()
@@ -38,14 +38,14 @@ class Logging:
                     request = self.client.sinks().list_next(
                         previous_request=request, previous_response=response
                     )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_metrics__(self):
-        try:
-            for project_id in self.project_ids:
+        for project_id in self.project_ids:
+            try:
                 request = (
                     self.client.projects()
                     .metrics()
@@ -69,10 +69,10 @@ class Logging:
                         .metrics()
                         .list_next(previous_request=request, previous_response=response)
                     )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
 
 class Sink(BaseModel):
