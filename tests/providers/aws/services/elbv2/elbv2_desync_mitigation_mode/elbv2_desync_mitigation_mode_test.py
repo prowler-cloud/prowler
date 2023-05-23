@@ -24,7 +24,7 @@ class Test_elbv2_desync_mitigation_mode:
             audited_partition="aws",
             audited_identity_arn=None,
             profile=None,
-            profile_region=None,
+            profile_region=AWS_REGION,
             credentials=None,
             assumed_role_info=None,
             audited_regions=["us-east-1", "eu-west-1"],
@@ -39,6 +39,9 @@ class Test_elbv2_desync_mitigation_mode:
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_desync_mitigation_mode.elbv2_desync_mitigation_mode.elbv2_client",
             new=ELBv2(self.set_mocked_audit_info()),
         ):

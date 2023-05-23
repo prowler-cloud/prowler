@@ -228,23 +228,31 @@ class Test_RDS_Service:
         # RDS client for this test class
         audit_info = self.set_mocked_audit_info()
         rds = RDS(audit_info)
+
+        db_cluster_arn = (
+            f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:cluster:{cluster_id}"
+        )
+
         assert len(rds.db_clusters) == 1
-        assert rds.db_clusters[cluster_id].id == "db-master-1"
-        assert rds.db_clusters[cluster_id].engine == "postgres"
-        assert rds.db_clusters[cluster_id].region == AWS_REGION
-        assert f"{AWS_REGION}.rds.amazonaws.com" in rds.db_clusters[cluster_id].endpoint
-        assert rds.db_clusters[cluster_id].status == "available"
-        assert not rds.db_clusters[cluster_id].public
-        assert not rds.db_clusters[cluster_id].encrypted
-        assert rds.db_clusters[cluster_id].backup_retention_period == 1
-        assert rds.db_clusters[cluster_id].cloudwatch_logs == ["audit", "error"]
-        assert rds.db_clusters[cluster_id].deletion_protection
-        assert not rds.db_clusters[cluster_id].auto_minor_version_upgrade
-        assert not rds.db_clusters[cluster_id].multi_az
-        assert rds.db_clusters[cluster_id].tags == [
+        assert rds.db_clusters[db_cluster_arn].id == "db-master-1"
+        assert rds.db_clusters[db_cluster_arn].engine == "postgres"
+        assert rds.db_clusters[db_cluster_arn].region == AWS_REGION
+        assert (
+            f"{AWS_REGION}.rds.amazonaws.com"
+            in rds.db_clusters[db_cluster_arn].endpoint
+        )
+        assert rds.db_clusters[db_cluster_arn].status == "available"
+        assert not rds.db_clusters[db_cluster_arn].public
+        assert not rds.db_clusters[db_cluster_arn].encrypted
+        assert rds.db_clusters[db_cluster_arn].backup_retention_period == 1
+        assert rds.db_clusters[db_cluster_arn].cloudwatch_logs == ["audit", "error"]
+        assert rds.db_clusters[db_cluster_arn].deletion_protection
+        assert not rds.db_clusters[db_cluster_arn].auto_minor_version_upgrade
+        assert not rds.db_clusters[db_cluster_arn].multi_az
+        assert rds.db_clusters[db_cluster_arn].tags == [
             {"Key": "test", "Value": "test"},
         ]
-        assert rds.db_clusters[cluster_id].parameter_group == "test"
+        assert rds.db_clusters[db_cluster_arn].parameter_group == "test"
 
     # Test RDS Describe DB Cluster Snapshots
     @mock_rds
