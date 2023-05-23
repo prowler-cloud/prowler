@@ -5,7 +5,7 @@ from prowler.providers.aws.services.securityhub.securityhub_service import (
 )
 
 
-class Test_accessanalyzer_enabled_without_findings:
+class Test_securityhub_enabled:
     def test_securityhub_hub_inactive(self):
         securityhub_client = mock.MagicMock
         securityhub_client.securityhubs = [
