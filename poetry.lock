@@ -101,20 +101,20 @@ aio = ["aiohttp (>=3.0)"]
 
 [[package]]
 name = "azure-identity"
-version = "1.12.0"
+version = "1.13.0"
 description = "Microsoft Azure Identity Library for Python"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "azure-identity-1.12.0.zip", hash = "sha256:7f9b1ae7d97ea7af3f38dd09305e19ab81a1e16ab66ea186b6579d85c1ca2347"},
-    {file = "azure_identity-1.12.0-py3-none-any.whl", hash = "sha256:2a58ce4a209a013e37eaccfd5937570ab99e9118b3e1acf875eed3a85d541b92"},
+    {file = "azure-identity-1.13.0.zip", hash = "sha256:c931c27301ffa86b07b4dcf574e29da73e3deba9ab5d1fe4f445bb6a3117e260"},
+    {file = "azure_identity-1.13.0-py3-none-any.whl", hash = "sha256:bd700cebb80cd9862098587c29d8677e819beca33c62568ced6d5a8e5e332b82"},
 ]
 
 [package.dependencies]
 azure-core = ">=1.11.0,<2.0.0"
 cryptography = ">=2.5"
-msal = ">=1.12.0,<2.0.0"
+msal = ">=1.20.0,<2.0.0"
 msal-extensions = ">=0.3.0,<2.0.0"
 six = ">=1.12.0"
 
@@ -2875,4 +2875,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "10be86acb33c4a63a854d9267c61f63584c43a8c0367b4673a9396c63f2419e6"
+content-hash = "493654224113d5f3c70535ef3a29a84c4cd9f69c7f5686f79bddb9abf3d6d457"
