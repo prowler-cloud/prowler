@@ -102,11 +102,18 @@ class DynamoDB:
         logger.info("DynamoDB - List Tags...")
         try:
             for table in self.tables:
-                regional_client = self.regional_clients[table.region]
-                response = regional_client.list_tags_of_resource(ResourceArn=table.arn)[
-                    "Tags"
-                ]
-                table.tags = response
+                try:
+                    regional_client = self.regional_clients[table.region]
+                    response = regional_client.list_tags_of_resource(
+                        ResourceArn=table.arn
+                    )["Tags"]
+                    table.tags = response
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "ResourceNotFoundException":
+                        logger.warning(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    continue
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

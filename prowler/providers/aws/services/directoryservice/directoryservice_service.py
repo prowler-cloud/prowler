@@ -3,6 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, Union
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -117,21 +118,27 @@ class DirectoryService:
         try:
             for directory in self.directories.values():
                 if directory.region == regional_client.region:
-                    describe_event_topics_parameters = {"DirectoryId": directory.id}
-                    event_topics = []
-                    describe_event_topics = regional_client.describe_event_topics(
-                        **describe_event_topics_parameters
-                    )
-                    for event_topic in describe_event_topics["EventTopics"]:
-                        event_topics.append(
-                            EventTopics(
-                                topic_arn=event_topic["TopicArn"],
-                                topic_name=event_topic["TopicName"],
-                                status=event_topic["Status"],
-                                created_date_time=event_topic["CreatedDateTime"],
-                            )
+                    try:
+                        describe_event_topics_parameters = {"DirectoryId": directory.id}
+                        event_topics = []
+                        describe_event_topics = regional_client.describe_event_topics(
+                            **describe_event_topics_parameters
                         )
-                    self.directories[directory.id].event_topics = event_topics
+                        for event_topic in describe_event_topics["EventTopics"]:
+                            event_topics.append(
+                                EventTopics(
+                                    topic_arn=event_topic["TopicArn"],
+                                    topic_name=event_topic["TopicName"],
+                                    status=event_topic["Status"],
+                                    created_date_time=event_topic["CreatedDateTime"],
+                                )
+                            )
+                        self.directories[directory.id].event_topics = event_topics
+                    except ClientError as error:
+                        logger.warning(
+                            f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                        continue
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -146,25 +153,38 @@ class DirectoryService:
                     directory.region == regional_client.region
                     and directory.type != DirectoryType.SimpleAD
                 ):
-                    list_certificates_paginator = regional_client.get_paginator(
-                        "list_certificates"
-                    )
-                    list_certificates_parameters = {"DirectoryId": directory.id}
-                    certificates = []
-                    for page in list_certificates_paginator.paginate(
-                        **list_certificates_parameters
-                    ):
-                        for certificate_info in page["CertificatesInfo"]:
-                            certificates.append(
-                                Certificate(
-                                    id=certificate_info["CertificateId"],
-                                    common_name=certificate_info["CommonName"],
-                                    state=certificate_info["State"],
-                                    expiry_date_time=certificate_info["ExpiryDateTime"],
-                                    type=certificate_info["Type"],
+                    try:
+                        list_certificates_paginator = regional_client.get_paginator(
+                            "list_certificates"
+                        )
+                        list_certificates_parameters = {"DirectoryId": directory.id}
+                        certificates = []
+                        for page in list_certificates_paginator.paginate(
+                            **list_certificates_parameters
+                        ):
+                            for certificate_info in page["CertificatesInfo"]:
+                                certificates.append(
+                                    Certificate(
+                                        id=certificate_info["CertificateId"],
+                                        common_name=certificate_info["CommonName"],
+                                        state=certificate_info["State"],
+                                        expiry_date_time=certificate_info[
+                                            "ExpiryDateTime"
+                                        ],
+                                        type=certificate_info["Type"],
+                                    )
                                 )
+                        self.directories[directory.id].certificates = certificates
+                    except ClientError as error:
+                        if (
+                            error.response["Error"]["Code"]
+                            == "UnsupportedOperationException"
+                        ):
+                            logger.warning(
+                                f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
-                    self.directories[directory.id].certificates = certificates
+                            continue
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -179,22 +199,27 @@ class DirectoryService:
                     directory.region == regional_client.region
                     and directory.type != DirectoryType.ADConnector
                 ):
-                    get_snapshot_limits_parameters = {"DirectoryId": directory.id}
-                    snapshot_limit = regional_client.get_snapshot_limits(
-                        **get_snapshot_limits_parameters
-                    )
-                    self.directories[directory.id].snapshots_limits = SnapshotLimit(
-                        manual_snapshots_current_count=snapshot_limit["SnapshotLimits"][
-                            "ManualSnapshotsCurrentCount"
-                        ],
-                        manual_snapshots_limit=snapshot_limit["SnapshotLimits"][
-                            "ManualSnapshotsLimit"
-                        ],
-                        manual_snapshots_limit_reached=snapshot_limit["SnapshotLimits"][
-                            "ManualSnapshotsLimitReached"
-                        ],
-                    )
-
+                    try:
+                        get_snapshot_limits_parameters = {"DirectoryId": directory.id}
+                        snapshot_limit = regional_client.get_snapshot_limits(
+                            **get_snapshot_limits_parameters
+                        )
+                        self.directories[directory.id].snapshots_limits = SnapshotLimit(
+                            manual_snapshots_current_count=snapshot_limit[
+                                "SnapshotLimits"
+                            ]["ManualSnapshotsCurrentCount"],
+                            manual_snapshots_limit=snapshot_limit["SnapshotLimits"][
+                                "ManualSnapshotsLimit"
+                            ],
+                            manual_snapshots_limit_reached=snapshot_limit[
+                                "SnapshotLimits"
+                            ]["ManualSnapshotsLimitReached"],
+                        )
+                    except ClientError as error:
+                        logger.warning(
+                            f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                        continue
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
