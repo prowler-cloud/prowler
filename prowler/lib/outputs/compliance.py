@@ -11,6 +11,7 @@ from prowler.lib.outputs.models import (
     Check_Output_CSV_CIS,
     Check_Output_CSV_ENS_RD2022,
     Check_Output_CSV_Generic_Compliance,
+    Check_Output_CSV_Well_Architected,
     generate_csv_fields,
 )
 
@@ -116,6 +117,45 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                             )
 
                     csv_header = generate_csv_fields(Check_Output_CSV_CIS)
+
+            elif (
+                compliance.Framework == "AWS-Well-Architected-Framework-Security-Pillar"
+            ):
+                compliance_output = compliance.Framework
+                if compliance.Version != "":
+                    compliance_output += "_" + compliance.Version
+                if compliance.Provider != "":
+                    compliance_output += "_" + compliance.Provider
+
+                compliance_output = compliance_output.lower().replace("-", "_")
+                for requirement in compliance.Requirements:
+                    requirement_description = requirement.Description
+                    requirement_id = requirement.Id
+                    for attribute in requirement.Attributes:
+                        compliance_row = Check_Output_CSV_Well_Architected(
+                            Provider=finding.check_metadata.Provider,
+                            Description=compliance.Description,
+                            AccountId=audit_info.audited_account,
+                            Region=finding.region,
+                            AssessmentDate=timestamp.isoformat(),
+                            Requirements_Id=requirement_id,
+                            Requirements_Description=requirement_description,
+                            Requirements_Attributes_Name=attribute.Name,
+                            Requirements_Attributes_WellArchitectedWellArchitectedQuestionId=attribute.WellArchitectedQuestionId,
+                            Requirements_Atributes_WellArchitectedWellArchitectedPracticeId=attribute.WellArchitectedPracticeId,
+                            Requirements_Attributes_Section=attribute.Section,
+                            Requirements_Attributes_SubSection=attribute.SubSection,
+                            Requirements_Attributes_LevelOfRisk=attribute.LevelOfRisk,
+                            Requirements_Attributes_AssessmentMethod=attribute.AssessmentMethod,
+                            Requirements_Attributes_Description=attribute.Description,
+                            Requirements_Attributes_ImplementacionGuidanceUrl=attribute.ImplementacionGuidanceUrl,
+                            Status=finding.status,
+                            StatusExtended=finding.status_extended,
+                            ResourceId=finding.resource_id,
+                            CheckId=finding.check_metadata.CheckID,
+                        )
+
+                csv_header = generate_csv_fields(Check_Output_CSV_Well_Architected)
 
             else:
                 compliance_output = compliance.Framework

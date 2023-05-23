@@ -89,6 +89,7 @@ class CIS_Requirements(BaseModel):
     AdditionalInformation: str
     References: str
 
+
 # Well Architected Requirements
 class Well_Architected_Requirements(BaseModel):
     """Well Architected Requirements"""
@@ -96,7 +97,13 @@ class Well_Architected_Requirements(BaseModel):
     Name: str
     WellArchitectedWellArchitectedQuestionId: str
     WellArchitectedWellArchitectedPracticeId: str
-    
+    Section: str
+    SubSection: str
+    LevelOfRisk: str
+    AssessmentMethod: str
+    Description: str
+    ImplementacionGuidanceUrl: str
+
 
 # Base Compliance Model
 class Compliance_Requirement(BaseModel):
@@ -106,7 +113,12 @@ class Compliance_Requirement(BaseModel):
     Description: str
     Name: Optional[str]
     Attributes: list[
-        Union[CIS_Requirements, ENS_Requirements, Generic_Compliance_Requirements]
+        Union[
+            CIS_Requirements,
+            ENS_Requirements,
+            Generic_Compliance_Requirements,
+            Well_Architected_Requirements,
+        ]
     ]
     Checks: list[str]
 

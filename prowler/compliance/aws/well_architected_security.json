@@ -1,5 +1,5 @@
 {
-  "Framework": "AWS Well-Architected Framework Security Pillar",
+  "Framework": "AWS-Well-Architected-Framework-Security-Pillar",
   "Version": "",
   "Provider": "AWS",
   "Description": "Operational Best Practices for AWS Well-Architected Framework Security Pillar. The focus of this framework is the security pillar of the AWS Well-Architected Framework. It provides guidance to help you apply best practices, current recommendations in the design, delivery, and maintenance of secure AWS workloads.",

@@ -550,6 +550,31 @@ class Check_Output_CSV_Generic_Compliance(BaseModel):
     CheckId: str
 
 
+class Check_Output_CSV_Well_Architected(BaseModel):
+    """
+    Check_Output_CSV_Well_Architected generates a finding's output in CSV Well Architected Compliance format.
+    """
+
+    Provider: str
+    Description: str
+    AccountId: str
+    Region: str
+    AssessmentDate: str
+    Requirements_Name: str
+    Requirements_WellArchitectedWellArchitectedQuestionId: str
+    Requirements_WellArchitectedWellArchitectedPracticeId: str
+    Requirements_Section: str
+    Requirements_SubSection: str
+    Requirements_LevelOfRisk: str
+    Requirements_AssessmentMethod: str
+    Requirements_Description: str
+    Requirements_ImplementacionGuidanceUrl: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    CheckId: str
+
+
 # JSON ASFF Output
 class ProductFields(BaseModel):
     ProviderName: str = "Prowler"
