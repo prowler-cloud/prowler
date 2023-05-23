@@ -52,18 +52,12 @@ class ENS_Requirements(BaseModel):
 class Generic_Compliance_Requirements(BaseModel):
     """Generic Compliance Requirements"""
 
-    ItemId: Optional[str]
+    ItemId: str
     Section: Optional[str]
     SubSection: Optional[str]
     SubGroup: Optional[str]
-    Service: Optional[str]
+    Service: str
     Soc_Type: Optional[str]
-    WellArchitectedQuestionId: Optional[str]
-    WellArchitectedPracticeId: Optional[str]
-    AssessmentMethod: Optional[str]
-    LevelOfRisk: Optional[str]
-    Description: Optional[str]
-    ImplementationGuidanceUrl: Optional[str]
 
 
 class CIS_Requirements_Profile(str):
@@ -97,18 +91,18 @@ class CIS_Requirements(BaseModel):
 
 
 # Well Architected Requirements
-class Well_Architected_Requirements(BaseModel):
-    """Well Architected Requirements"""
+class AWS_Well_Architected_Requirements(BaseModel):
+    """AWS Well Architected Requirements"""
 
-    Name: str
-    WellArchitectedWellArchitectedQuestionId: str
-    WellArchitectedWellArchitectedPracticeId: str
-    Section: str
-    SubSection: str
-    LevelOfRisk: str
-    AssessmentMethod: str
-    Description: str
-    ImplementacionGuidanceUrl: str
+    Name: Optional[str]
+    WellArchitectedQuestionId: Optional[str]
+    WellArchitectedPracticeId: Optional[str]
+    Section: Optional[str]
+    SubSection: Optional[str]
+    LevelOfRisk: Optional[str]
+    AssessmentMethod: Optional[str]
+    Description: Optional[str]
+    ImplementacionGuidanceUrl: Optional[str]
 
 
 # Base Compliance Model
@@ -123,7 +117,7 @@ class Compliance_Requirement(BaseModel):
             CIS_Requirements,
             ENS_Requirements,
             Generic_Compliance_Requirements,
-            Well_Architected_Requirements,
+            AWS_Well_Architected_Requirements,
         ]
     ]
     Checks: list[str]

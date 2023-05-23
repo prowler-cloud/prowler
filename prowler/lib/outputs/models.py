@@ -544,21 +544,15 @@ class Check_Output_CSV_Generic_Compliance(BaseModel):
     Requirements_Attributes_SubGroup: Optional[str]
     Requirements_Attributes_Service: str
     Requirements_Attributes_Soc_Type: Optional[str]
-    Requirements_Attributes_WellArchitectedQuestionId: Optional[str]
-    Requirements_Attributes_WellArchitectedPracticeId: Optional[str]
-    Requirements_Attributes_AssessmentMethod: Optional[str]
-    Requirements_Attributes_LevelOfRisk: Optional[str]
-    Requirements_Attributes_Description: Optional[str]
-    Requirements_Attributes_ImplementationGuidanceUrl: Optional[str]
     Status: str
     StatusExtended: str
     ResourceId: str
     CheckId: str
 
 
-class Check_Output_CSV_Well_Architected(BaseModel):
+class Check_Output_CSV_AWS_Well_Architected(BaseModel):
     """
-    Check_Output_CSV_Well_Architected generates a finding's output in CSV Well Architected Compliance format.
+    Check_Output_CSV_AWS_Well_Architected generates a finding's output in CSV AWS Well Architected Compliance format.
     """
 
     Provider: str
@@ -566,15 +560,15 @@ class Check_Output_CSV_Well_Architected(BaseModel):
     AccountId: str
     Region: str
     AssessmentDate: str
-    Requirements_Name: str
-    Requirements_WellArchitectedWellArchitectedQuestionId: str
-    Requirements_WellArchitectedWellArchitectedPracticeId: str
-    Requirements_Section: str
-    Requirements_SubSection: str
-    Requirements_LevelOfRisk: str
-    Requirements_AssessmentMethod: str
-    Requirements_Description: str
-    Requirements_ImplementacionGuidanceUrl: str
+    Requirements_Attributes_Name: str
+    Requirements_Attributes_WellArchitectedQuestionId: str
+    Requirements_Attributes_WellArchitectedPracticeId: Optional[str]
+    Requirements_Attributes_Section: str
+    Requirements_Attributes_SubSection: str
+    Requirements_Attributes_LevelOfRisk: str
+    Requirements_Attributes_AssessmentMethod: str
+    Requirements_Attributes_Description: str
+    Requirements_Attributes_ImplementacionGuidanceUrl: Optional[str]
     Status: str
     StatusExtended: str
     ResourceId: str
