@@ -212,13 +212,12 @@ def is_allowlisted_in_tags(check_allowlist, elem, resource, tags):
             all_allowed_tags_in_resource_tags = True
             for allowed_tag in check_allowlist["Tags"]:
                 found_allowed_tag = False
-                for resource_tag in tags:
-                    if re.search(allowed_tag, resource_tag):
-                        found_allowed_tag = True
-                        break
+                if re.search(allowed_tag, tags):
+                    found_allowed_tag = True
 
                 if not found_allowed_tag:
                     all_allowed_tags_in_resource_tags = False
+                    break
 
             return all_allowed_tags_in_resource_tags
         else:
