@@ -483,7 +483,7 @@ def get_gcp_html_assessment_summary(audit_info):
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>GCP Project ID:</b> """
+                            <b>GCP Project IDs:</b> """
                 + ", ".join(audit_info.project_ids)
                 + """
                         </li>

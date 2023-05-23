@@ -45,7 +45,8 @@ class Test_Slack_Integration:
         )
         gcp_audit_info = GCP_Audit_Info(
             credentials=None,
-            project_id="test-project",
+            default_project_id="test-project1",
+            project_ids=["test-project1", "test-project2"],
             audit_resources=None,
             audit_metadata=None,
         )
