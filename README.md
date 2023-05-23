@@ -35,7 +35,15 @@
 
 `Prowler` is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness.
 
-It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
+It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spainish National Security Schema) and you custom security frameworks.
+
+| Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.cloud/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.cloud/en/latest/tutorials/misc/#categories) |
+|---|---|---|---|---|
+| AWS | 281 | 54: `prowler aws --list-services` | 21: `prowler aws --list-compliance` | 6: `prowler aws --list-categories` |
+| GCP | 43 | 7: `prowler gcp --list-services` | CIS soon | - `prowler gcp --list-categories`|
+| Azure | 20 | 3: `prowler gcp --list-services` | CIS soon | 1: `prowler azure --list-categories` |
+| Kubernetes | Planned | - | - | - |
+|
 
 # 📖 Documentation
 
