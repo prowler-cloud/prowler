@@ -154,11 +154,11 @@ class Test_SecretsManager_Service:
 
         assert len(secretsmanager.secrets) == 1
         assert secretsmanager.secrets
-        assert secretsmanager.secrets[secret_name]
-        assert secretsmanager.secrets[secret_name].name == secret_name
-        assert secretsmanager.secrets[secret_name].arn == secret_arn
-        assert secretsmanager.secrets[secret_name].region == AWS_REGION
-        assert secretsmanager.secrets[secret_name].rotation_enabled is True
-        assert secretsmanager.secrets[secret_name].tags == [
+        assert secretsmanager.secrets[secret_arn]
+        assert secretsmanager.secrets[secret_arn].name == secret_name
+        assert secretsmanager.secrets[secret_arn].arn == secret_arn
+        assert secretsmanager.secrets[secret_arn].region == AWS_REGION
+        assert secretsmanager.secrets[secret_arn].rotation_enabled is True
+        assert secretsmanager.secrets[secret_arn].tags == [
             {"Key": "test", "Value": "test"},
         ]

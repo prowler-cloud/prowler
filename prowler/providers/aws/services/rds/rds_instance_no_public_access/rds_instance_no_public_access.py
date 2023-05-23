@@ -9,6 +9,7 @@ class rds_instance_no_public_access(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = db_instance.region
             report.resource_id = db_instance.id
+            report.resource_arn = db_instance.arn
             report.resource_tags = db_instance.tags
             if not db_instance.public:
                 report.status = "PASS"
