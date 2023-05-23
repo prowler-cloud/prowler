@@ -68,6 +68,18 @@ tests = ["attrs[tests-no-zope]", "zope-interface"]
 tests-no-zope = ["cloudpickle", "hypothesis", "mypy (>=1.1.1)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "pytest-xdist[psutil]"]
 
 [[package]]
+name = "awsipranges"
+version = "0.3.3"
+description = "Work with the AWS IP address ranges in native Python."
+category = "main"
+optional = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "awsipranges-0.3.3-py3-none-any.whl", hash = "sha256:f3d7a54aeaf7fe310beb5d377a4034a63a51b72677ae6af3e0967bc4de7eedaf"},
+    {file = "awsipranges-0.3.3.tar.gz", hash = "sha256:4f0b3f22a9dc1163c85b513bed812b6c92bdacd674e6a7b68252a3c25b99e2c0"},
+]
+
+[[package]]
 name = "azure-common"
 version = "1.1.28"
 description = "Microsoft Azure Client Library for Python (Common)"
@@ -2891,4 +2903,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "25f5c9874335d9fe564abc5bd7938c9350fc083dc6074f5de9f75a916ba4d71c"
+content-hash = "60d5a4537ef2c46cf9ae54378fe801fda4adec8251c03cf60b815889b433f48f"
