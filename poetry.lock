@@ -2464,13 +2464,13 @@ testing-integration = ["build[virtualenv]", "filelock (>=3.4.0)", "jaraco.envs (
 
 [[package]]
 name = "shodan"
-version = "1.29.0"
+version = "1.29.1"
 description = "Python library and command-line utility for Shodan (https://developer.shodan.io)"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "shodan-1.29.0.tar.gz", hash = "sha256:ebea6dbc1944497e9139263423ea4d103dcd58c085c5ddbf4d6ab1db6eb1d142"},
+    {file = "shodan-1.29.1.tar.gz", hash = "sha256:e2af6254e19d2a8fa4e929738be551e25dc7aafc394732e776e7e30fa44ce339"},
 ]
 
 [package.dependencies]
@@ -2875,4 +2875,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "493654224113d5f3c70535ef3a29a84c4cd9f69c7f5686f79bddb9abf3d6d457"
+content-hash = "48a34b9b0d7eacde30c296ec7b63659710e382147a092e9c8f9f72d68ab84cbd"
