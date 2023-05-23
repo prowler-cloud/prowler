@@ -216,33 +216,37 @@ class Test_rds_instance_multi_az:
             )
         ]
 
+        audit_info = self.set_mocked_audit_info()
+
         with mock.patch(
-            "prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az.rds_client",
-            new=rds_client,
-        ) and mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS", new=rds_client
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
-            # Test Check
-            from prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az import (
-                rds_instance_multi_az,
-            )
+            with mock.patch(
+                "prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az.rds_client",
+                new=rds_client,
+            ):
+                # Test Check
+                from prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az import (
+                    rds_instance_multi_az,
+                )
 
-            check = rds_instance_multi_az()
-            result = check.execute()
+                check = rds_instance_multi_az()
+                result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert search(
-                "has multi-AZ enabled at cluster",
-                result[0].status_extended,
-            )
-            assert result[0].resource_id == "test-instance"
-            assert result[0].region == AWS_REGION
-            assert (
-                result[0].resource_arn
-                == f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:db:test-instance"
-            )
-            assert result[0].resource_tags == []
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert search(
+                    "has multi-AZ enabled at cluster",
+                    result[0].status_extended,
+                )
+                assert result[0].resource_id == "test-instance"
+                assert result[0].region == AWS_REGION
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:db:test-instance"
+                )
+                assert result[0].resource_tags == []
 
     def test_rds_instance_in_cluster_without_multi_az(self):
         rds_client = mock.MagicMock
@@ -291,30 +295,34 @@ class Test_rds_instance_multi_az:
             )
         ]
 
+        audit_info = self.set_mocked_audit_info()
+
         with mock.patch(
-            "prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az.rds_client",
-            new=rds_client,
-        ) and mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS", new=rds_client
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
-            # Test Check
-            from prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az import (
-                rds_instance_multi_az,
-            )
+            with mock.patch(
+                "prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az.rds_client",
+                new=rds_client,
+            ):
+                # Test Check
+                from prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az import (
+                    rds_instance_multi_az,
+                )
 
-            check = rds_instance_multi_az()
-            result = check.execute()
+                check = rds_instance_multi_az()
+                result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert search(
-                "does not have multi-AZ enabled at cluster",
-                result[0].status_extended,
-            )
-            assert result[0].resource_id == "test-instance"
-            assert result[0].region == AWS_REGION
-            assert (
-                result[0].resource_arn
-                == f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:db:test-instance"
-            )
-            assert result[0].resource_tags == []
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert search(
+                    "does not have multi-AZ enabled at cluster",
+                    result[0].status_extended,
+                )
+                assert result[0].resource_id == "test-instance"
+                assert result[0].region == AWS_REGION
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:db:test-instance"
+                )
+                assert result[0].resource_tags == []
