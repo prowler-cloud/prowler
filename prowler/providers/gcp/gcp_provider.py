@@ -49,7 +49,9 @@ class GCP_Provider:
 
             return auth.default()
         except Exception as error:
-            logger.critical(f"{error.__class__.__name__} -- {error}")
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
             sys.exit(1)
 
     def __set_gcp_creds_env_var__(self, credentials_file):
@@ -84,8 +86,10 @@ class GCP_Provider:
 
             return project_ids
         except Exception as error:
-            logger.critical(f"{error.__class__.__name__} -- {error}")
-            sys.exit(1)
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return []
 
 
 def generate_client(
