@@ -17,9 +17,12 @@ def open_file(input_file: str, mode: str = "r") -> TextIOWrapper:
     try:
         f = open(input_file, mode)
     except OSError as ose:
-        logger.critical(
-            f"{input_file}: OSError:{ose.errno}, {ose.strerror}"
-        )
+        if ose.strerror == "Too many open files":
+            logger.critical(
+                "Ooops! You reached your user session maximum open files. To solve this issue, increase the shell session limit by running this command `ulimit -n 4096`. For more info visit https://docs.prowler.cloud/en/latest/troubleshooting/"
+            )
+        else:
+            logger.critical(f"{input_file}: OSError[{ose.errno}] {ose.strerror}")
         sys.exit(1)
     except Exception as e:
         logger.critical(
