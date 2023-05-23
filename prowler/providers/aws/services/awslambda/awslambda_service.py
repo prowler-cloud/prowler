@@ -62,18 +62,19 @@ class Lambda:
                     ):
                         lambda_name = function["FunctionName"]
                         lambda_arn = function["FunctionArn"]
-                        self.functions[lambda_name] = Function(
+                        # We must use the Lambda ARN as the dict key since we could have Lambdas in different regions with the same name
+                        self.functions[lambda_arn] = Function(
                             name=lambda_name,
                             arn=lambda_arn,
                             region=regional_client.region,
                         )
                         if "Runtime" in function:
-                            self.functions[lambda_name].runtime = function["Runtime"]
+                            self.functions[lambda_arn].runtime = function["Runtime"]
                         if "Environment" in function:
                             lambda_environment = function["Environment"].get(
                                 "Variables"
                             )
-                            self.functions[lambda_name].environment = lambda_environment
+                            self.functions[lambda_arn].environment = lambda_environment
 
         except Exception as error:
             logger.error(
@@ -93,7 +94,7 @@ class Lambda:
                     if "Location" in function_information["Code"]:
                         code_location_uri = function_information["Code"]["Location"]
                         raw_code_zip = requests.get(code_location_uri).content
-                        self.functions[function.name].code = LambdaCode(
+                        self.functions[function.arn].code = LambdaCode(
                             location=code_location_uri,
                             code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
                         )
@@ -114,12 +115,12 @@ class Lambda:
                         function_policy = regional_client.get_policy(
                             FunctionName=function.name
                         )
-                        self.functions[function.name].policy = json.loads(
+                        self.functions[function.arn].policy = json.loads(
                             function_policy["Policy"]
                         )
                     except ClientError as e:
                         if e.response["Error"]["Code"] == "ResourceNotFoundException":
-                            self.functions[function.name].policy = {}
+                            self.functions[function.arn].policy = {}
 
         except Exception as error:
             logger.error(
@@ -141,14 +142,14 @@ class Lambda:
                             allow_origins = function_url_config["Cors"]["AllowOrigins"]
                         else:
                             allow_origins = []
-                        self.functions[function.name].url_config = URLConfig(
+                        self.functions[function.arn].url_config = URLConfig(
                             auth_type=function_url_config["AuthType"],
                             url=function_url_config["FunctionUrl"],
                             cors_config=URLConfigCORS(allow_origins=allow_origins),
                         )
                     except ClientError as e:
                         if e.response["Error"]["Code"] == "ResourceNotFoundException":
-                            self.functions[function.name].url_config = None
+                            self.functions[function.arn].url_config = None
 
         except Exception as error:
             logger.error(

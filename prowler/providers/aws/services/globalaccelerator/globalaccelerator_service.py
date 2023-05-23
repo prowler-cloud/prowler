@@ -37,7 +37,8 @@ class GlobalAccelerator:
                         accelerator_arn = accelerator["AcceleratorArn"]
                         accelerator_name = accelerator["Name"]
                         enabled = accelerator["Enabled"]
-                        self.accelerators[accelerator_name] = Accelerator(
+                        # We must use the Accelerator ARN as the dict key to have unique keys
+                        self.accelerators[accelerator_arn] = Accelerator(
                             name=accelerator_name,
                             arn=accelerator_arn,
                             region=self.region,
