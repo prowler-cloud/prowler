@@ -13,10 +13,10 @@
     "RelatedUrl": "",
     "Remediation": {
       "Code": {
-        "CLI": "",
+        "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_networking_11#cli-command",
         "NativeIaC": "",
         "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/disable-interactive-serial-console-support.html",
-        "Terraform": ""
+        "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_networking_11#terraform"
       },
       "Recommendation": {
         "Text": "",

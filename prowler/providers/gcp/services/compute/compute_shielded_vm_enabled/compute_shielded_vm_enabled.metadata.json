@@ -13,10 +13,10 @@
     "RelatedUrl": "",
     "Remediation": {
       "Code": {
-        "CLI": "",
+        "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_general_y#cli-command",
         "NativeIaC": "",
         "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-shielded-vm.html",
-        "Terraform": ""
+        "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_general_y#terraform"
       },
       "Recommendation": {
         "Text": "",
