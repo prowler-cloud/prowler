@@ -21,6 +21,7 @@ class Compute:
 
     def __get_zones__(self):
         for project_id in self.project_ids:
+            print(project_id)
             try:
                 request = self.client.zones().list(project=project_id)
                 while request is not None:
@@ -39,35 +40,37 @@ class Compute:
 
     def __get_instances__(self):
         for project_id in self.project_ids:
+            print(project_id)
             try:
                 for zone in self.zones:
+                    print(zone)
                     request = self.client.instances().list(
                         project=project_id, zone=zone
                     )
                     while request is not None:
                         response = request.execute()
 
-                    for instance in response.get("items", []):
-                        public_ip = False
-                        for interface in instance["networkInterfaces"]:
-                            for config in interface.get("accessConfigs", []):
-                                if "natIP" in config:
-                                    public_ip = True
-                        self.instances.append(
-                            Instance(
-                                name=instance["name"],
-                                id=instance["id"],
-                                zone=zone,
-                                public_ip=public_ip,
-                                metadata=instance["metadata"],
-                                shielded_enabled_vtpm=instance[
-                                    "shieldedInstanceConfig"
-                                ]["enableVtpm"],
-                                shielded_enabled_integrity_monitoring=instance[
-                                    "shieldedInstanceConfig"
-                                ]["enableIntegrityMonitoring"],
-                                service_accounts=instance["serviceAccounts"],
-                                project_id=project_id
+                        for instance in response.get("items", []):
+                            public_ip = False
+                            for interface in instance["networkInterfaces"]:
+                                for config in interface.get("accessConfigs", []):
+                                    if "natIP" in config:
+                                        public_ip = True
+                            self.instances.append(
+                                Instance(
+                                    name=instance["name"],
+                                    id=instance["id"],
+                                    zone=zone,
+                                    public_ip=public_ip,
+                                    metadata=instance["metadata"],
+                                    shielded_enabled_vtpm=instance[
+                                        "shieldedInstanceConfig"
+                                    ]["enableVtpm"],
+                                    shielded_enabled_integrity_monitoring=instance[
+                                        "shieldedInstanceConfig"
+                                    ]["enableIntegrityMonitoring"],
+                                    service_accounts=instance["serviceAccounts"],
+                                    project_id=project_id,
                                 )
                             )
 
@@ -81,6 +84,7 @@ class Compute:
 
     def __get_networks__(self):
         for project_id in self.project_ids:
+            print(project_id)
             try:
                 request = self.client.networks().list(project=project_id)
                 while request is not None:

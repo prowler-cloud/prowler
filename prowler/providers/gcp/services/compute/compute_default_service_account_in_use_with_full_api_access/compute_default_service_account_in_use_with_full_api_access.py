@@ -7,7 +7,7 @@ class compute_default_service_account_in_use_with_full_api_access(Check):
         findings = []
         for instance in compute_client.instances:
             report = Check_Report_GCP(self.metadata())
-            report.project_id = compute_client.project_id
+            report.project_id = instance.project_id
             report.resource_id = instance.id
             report.resource_name = instance.name
             report.location = instance.zone
@@ -16,7 +16,7 @@ class compute_default_service_account_in_use_with_full_api_access(Check):
             for service_account in instance.service_accounts:
                 if (
                     service_account["email"]
-                    == f"{compute_client.project_id}-compute@developer.gserviceaccount.com"
+                    == f"{instance.project_id}-compute@developer.gserviceaccount.com"
                     and "https://www.googleapis.com/auth/cloud-platform"
                     in service_account["scopes"]
                     and instance.name[:4] != "gke-"
