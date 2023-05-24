@@ -80,7 +80,7 @@ def prowler():
     bulk_checks_metadata = bulk_load_checks_metadata(provider)
 
     if args.list_categories:
-        print_categories(list_categories(provider, bulk_checks_metadata))
+        print_categories(list_categories(bulk_checks_metadata))
         sys.exit()
 
     bulk_compliance_frameworks = {}
@@ -154,7 +154,7 @@ def prowler():
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
-        run_provider_quick_inventory(provider, audit_info, args.output_directory)
+        run_provider_quick_inventory(provider, audit_info, args)
         sys.exit()
 
     # Execute checks

@@ -201,11 +201,12 @@ def list_checks(provider: str) -> set():
     return sorted(available_checks)
 
 
-def list_categories(provider: str, bulk_checks_metadata: dict) -> set():
+def list_categories(bulk_checks_metadata: dict) -> set():
     available_categories = set()
     for check in bulk_checks_metadata.values():
         for cat in check.Categories:
-            available_categories.add(cat)
+            if cat:
+                available_categories.add(cat)
     return available_categories
 
 

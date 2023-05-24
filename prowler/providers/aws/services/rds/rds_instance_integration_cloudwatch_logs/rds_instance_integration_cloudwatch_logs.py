@@ -9,6 +9,7 @@ class rds_instance_integration_cloudwatch_logs(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = db_instance.region
             report.resource_id = db_instance.id
+            report.resource_arn = db_instance.arn
             report.resource_tags = db_instance.tags
             if db_instance.cloudwatch_logs:
                 report.status = "PASS"

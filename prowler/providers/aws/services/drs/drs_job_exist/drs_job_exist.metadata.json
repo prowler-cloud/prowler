@@ -23,9 +23,7 @@
       "Url": "https://docs.aws.amazon.com/drs/latest/userguide/what-is-drs.html"
     }
   },
-  "Categories": [
-    ""
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

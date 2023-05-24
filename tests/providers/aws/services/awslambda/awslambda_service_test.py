@@ -16,6 +16,7 @@ from prowler.providers.common.models import Audit_Metadata
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
+AWS_REGION_NORTH_VIRGINIA = "us-east-1"
 
 
 def create_zip_file(code: str = "") -> io.BytesIO:
@@ -47,9 +48,18 @@ def mock_request_get(_):
 
 # Mock generate_regional_clients()
 def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+    regional_client_eu_west_1 = audit_info.audit_session.client(
+        service, region_name=AWS_REGION
+    )
+    regional_client_us_east_1 = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_NORTH_VIRGINIA
+    )
+    regional_client_eu_west_1.region = AWS_REGION
+    regional_client_us_east_1.region = AWS_REGION_NORTH_VIRGINIA
+    return {
+        AWS_REGION: regional_client_eu_west_1,
+        AWS_REGION_NORTH_VIRGINIA: regional_client_us_east_1,
+    }
 
 
 @patch(
@@ -118,7 +128,7 @@ class Test_Lambda_Service:
             Bucket="test-bucket",
             CreateBucketConfiguration={"LocationConstraint": AWS_REGION},
         )
-        # Create Test Lambda
+        # Create Test Lambda 1
         lambda_client = client("lambda", region_name=AWS_REGION)
         lambda_name = "test-lambda"
         resp = lambda_client.create_function(
@@ -139,6 +149,7 @@ class Test_Lambda_Service:
             Environment={"Variables": {"db-password": "test-password"}},
             Tags={"test": "test"},
         )
+        lambda_arn_1 = resp["FunctionArn"]
         # Update Lambda Policy
         lambda_policy = {
             "Version": "2012-10-17",
@@ -181,49 +192,72 @@ class Test_Lambda_Service:
             },
         )
 
-        lambda_arn = resp["FunctionArn"]
+        # Create Test Lambda 2 (with the same attributes but different region)
+        lambda_client_2 = client("lambda", region_name=AWS_REGION_NORTH_VIRGINIA)
+        lambda_name = "test-lambda"
+        resp_2 = lambda_client_2.create_function(
+            FunctionName=lambda_name,
+            Runtime="python3.7",
+            Role=iam_role,
+            Handler="lambda_function.lambda_handler",
+            Code={"ZipFile": create_zip_file().read()},
+            Description="test lambda function",
+            Timeout=3,
+            MemorySize=128,
+            PackageType="ZIP",
+            Publish=True,
+            VpcConfig={
+                "SecurityGroupIds": ["sg-123abc"],
+                "SubnetIds": ["subnet-123abc"],
+            },
+            Environment={"Variables": {"db-password": "test-password"}},
+            Tags={"test": "test"},
+        )
+        lambda_arn_2 = resp_2["FunctionArn"]
+
         with mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_service.requests.get",
             new=mock_request_get,
         ):
             awslambda = Lambda(self.set_mocked_audit_info())
-
             assert awslambda.functions
-            assert awslambda.functions[lambda_name].name == lambda_name
-            assert awslambda.functions[lambda_name].arn == lambda_arn
-            assert awslambda.functions[lambda_name].runtime == "python3.7"
-            assert awslambda.functions[lambda_name].environment == {
+            assert len(awslambda.functions) == 2
+            # Lambda 1
+            assert awslambda.functions[lambda_arn_1].name == lambda_name
+            assert awslambda.functions[lambda_arn_1].arn == lambda_arn_1
+            assert awslambda.functions[lambda_arn_1].runtime == "python3.7"
+            assert awslambda.functions[lambda_arn_1].environment == {
                 "db-password": "test-password"
             }
-            assert awslambda.functions[lambda_name].region == AWS_REGION
-            assert awslambda.functions[lambda_name].policy == lambda_policy
+            assert awslambda.functions[lambda_arn_1].region == AWS_REGION
+            assert awslambda.functions[lambda_arn_1].policy == lambda_policy
 
-            assert awslambda.functions[lambda_name].code
+            assert awslambda.functions[lambda_arn_1].code
             assert search(
                 f"s3://awslambda-{AWS_REGION}-tasks.s3-{AWS_REGION}.amazonaws.com",
-                awslambda.functions[lambda_name].code.location,
+                awslambda.functions[lambda_arn_1].code.location,
             )
 
-            assert awslambda.functions[lambda_name].url_config
+            assert awslambda.functions[lambda_arn_1].url_config
             assert (
-                awslambda.functions[lambda_name].url_config.auth_type
+                awslambda.functions[lambda_arn_1].url_config.auth_type
                 == AuthType.AWS_IAM
             )
             assert search(
                 "lambda-url.eu-west-1.on.aws",
-                awslambda.functions[lambda_name].url_config.url,
+                awslambda.functions[lambda_arn_1].url_config.url,
             )
 
-            assert awslambda.functions[lambda_name].url_config.cors_config
+            assert awslambda.functions[lambda_arn_1].url_config.cors_config
             assert awslambda.functions[
-                lambda_name
+                lambda_arn_1
             ].url_config.cors_config.allow_origins == ["*"]
 
-            assert awslambda.functions[lambda_name].tags == [{"test": "test"}]
+            assert awslambda.functions[lambda_arn_1].tags == [{"test": "test"}]
 
             # Pending ZipFile tests
             with tempfile.TemporaryDirectory() as tmp_dir_name:
-                awslambda.functions[lambda_name].code.code_zip.extractall(tmp_dir_name)
+                awslambda.functions[lambda_arn_1].code.code_zip.extractall(tmp_dir_name)
                 files_in_zip = next(os.walk(tmp_dir_name))[2]
                 assert len(files_in_zip) == 1
                 assert files_in_zip[0] == "lambda_function.py"
@@ -237,3 +271,24 @@ class Test_Lambda_Service:
                     # return event
                     # """
                     # )
+
+            # Lambda 2
+            assert awslambda.functions[lambda_arn_2].name == lambda_name
+            assert awslambda.functions[lambda_arn_2].arn == lambda_arn_2
+            assert awslambda.functions[lambda_arn_2].runtime == "python3.7"
+            assert awslambda.functions[lambda_arn_2].environment == {
+                "db-password": "test-password"
+            }
+            assert awslambda.functions[lambda_arn_2].region == AWS_REGION_NORTH_VIRGINIA
+            # Emtpy policy
+            assert awslambda.functions[lambda_arn_2].policy == {
+                "Id": "default",
+                "Statement": [],
+                "Version": "2012-10-17",
+            }
+
+            assert awslambda.functions[lambda_arn_2].code
+            assert search(
+                f"s3://awslambda-{AWS_REGION_NORTH_VIRGINIA}-tasks.s3-{AWS_REGION_NORTH_VIRGINIA}.amazonaws.com",
+                awslambda.functions[lambda_arn_2].code.location,
+            )

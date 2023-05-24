@@ -1,0 +1,31 @@
+{
+    "Provider": "gcp",
+    "CheckID": "compute_shielded_vm_enabled",
+    "CheckTitle": "Ensure Compute Instances Are Launched With Shielded VM Enabled",
+    "CheckType": [],
+    "ServiceName": "compute",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Severity": "medium",
+    "ResourceType": "VMInstance",
+    "Description": "To defend against advanced threats and ensure that the boot loader and firmware on your VMs are signed and untampered, it is recommended that Compute instances are launched with Shielded VM enabled.",
+    "Risk": "",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_general_y#cli-command",
+        "NativeIaC": "",
+        "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-shielded-vm.html",
+        "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_general_y#terraform"
+      },
+      "Recommendation": {
+        "Text": "",
+        "Url": ""
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

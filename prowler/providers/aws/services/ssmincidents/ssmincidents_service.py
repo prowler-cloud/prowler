@@ -123,7 +123,7 @@ class SSMIncidents:
                 for response_plan in page["responsePlanSummaries"]:
                     self.response_plans.append(
                         ResponsePlan(
-                            arn=response_plan["Arn"],
+                            arn=response_plan.get("Arn", ""),
                             region=regional_client.region,
                             name=response_plan["Name"],
                         )
