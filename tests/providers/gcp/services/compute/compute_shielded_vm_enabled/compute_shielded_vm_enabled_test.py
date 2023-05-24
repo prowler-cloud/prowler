@@ -7,7 +7,7 @@ GCP_PROJECT_ID = "123456789012"
 class Test_compute_shielded_vm_enabled:
     def test_compute_no_instances(self):
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = []
 
         with mock.patch(
@@ -34,10 +34,11 @@ class Test_compute_shielded_vm_enabled:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -71,10 +72,11 @@ class Test_compute_shielded_vm_enabled:
             shielded_enabled_vtpm=False,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -108,10 +110,11 @@ class Test_compute_shielded_vm_enabled:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=False,
             service_accounts=[],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(

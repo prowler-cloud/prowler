@@ -35,10 +35,11 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
             service_accounts=[
                 {"email": "123-compute@developer.gserviceaccount.com", "scopes": []}
             ],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -77,10 +78,11 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
                     "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
                 }
             ],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -119,10 +121,11 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
                     "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
                 }
             ],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(

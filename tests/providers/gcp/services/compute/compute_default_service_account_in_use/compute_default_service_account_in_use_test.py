@@ -33,10 +33,11 @@ class Test_compute_default_service_account_in_use:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[{"email": "123-compute@developer.gserviceaccount.com"}],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -72,10 +73,11 @@ class Test_compute_default_service_account_in_use:
             service_accounts=[
                 {"email": f"{GCP_PROJECT_ID}-compute@developer.gserviceaccount.com"}
             ],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -111,10 +113,11 @@ class Test_compute_default_service_account_in_use:
             service_accounts=[
                 {"email": f"{GCP_PROJECT_ID}-compute@developer.gserviceaccount.com"}
             ],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
