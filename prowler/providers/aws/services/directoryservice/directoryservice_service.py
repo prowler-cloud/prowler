@@ -118,7 +118,8 @@ class DirectoryService:
         try:
             for directory in self.directories.values():
                 if directory.region == regional_client.region:
-                    try:
+                    # Operation is not supported for Shared MicrosoftAD directories.
+                    if directory.type != DirectoryType.SharedMicrosoftAD:
                         describe_event_topics_parameters = {"DirectoryId": directory.id}
                         event_topics = []
                         describe_event_topics = regional_client.describe_event_topics(
@@ -134,11 +135,6 @@ class DirectoryService:
                                 )
                             )
                         self.directories[directory.id].event_topics = event_topics
-                    except ClientError as error:
-                        logger.warning(
-                            f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                        continue
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -183,7 +179,11 @@ class DirectoryService:
                             logger.warning(
                                 f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
-                            continue
+                        else:
+                            logger.error(
+                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                        continue
 
         except Exception as error:
             logger.error(
@@ -199,27 +199,21 @@ class DirectoryService:
                     directory.region == regional_client.region
                     and directory.type != DirectoryType.ADConnector
                 ):
-                    try:
-                        get_snapshot_limits_parameters = {"DirectoryId": directory.id}
-                        snapshot_limit = regional_client.get_snapshot_limits(
-                            **get_snapshot_limits_parameters
-                        )
-                        self.directories[directory.id].snapshots_limits = SnapshotLimit(
-                            manual_snapshots_current_count=snapshot_limit[
-                                "SnapshotLimits"
-                            ]["ManualSnapshotsCurrentCount"],
-                            manual_snapshots_limit=snapshot_limit["SnapshotLimits"][
-                                "ManualSnapshotsLimit"
-                            ],
-                            manual_snapshots_limit_reached=snapshot_limit[
-                                "SnapshotLimits"
-                            ]["ManualSnapshotsLimitReached"],
-                        )
-                    except ClientError as error:
-                        logger.warning(
-                            f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                        continue
+                    get_snapshot_limits_parameters = {"DirectoryId": directory.id}
+                    snapshot_limit = regional_client.get_snapshot_limits(
+                        **get_snapshot_limits_parameters
+                    )
+                    self.directories[directory.id].snapshots_limits = SnapshotLimit(
+                        manual_snapshots_current_count=snapshot_limit["SnapshotLimits"][
+                            "ManualSnapshotsCurrentCount"
+                        ],
+                        manual_snapshots_limit=snapshot_limit["SnapshotLimits"][
+                            "ManualSnapshotsLimit"
+                        ],
+                        manual_snapshots_limit_reached=snapshot_limit["SnapshotLimits"][
+                            "ManualSnapshotsLimitReached"
+                        ],
+                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
