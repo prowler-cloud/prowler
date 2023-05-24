@@ -39,10 +39,10 @@ class ENS_Requirements_Tipos(str, Enum):
 class ENS_Requirements(BaseModel):
     """ENS V3 Framework Requirements"""
 
-    IdGrupoControl: str
-    Marco: str
-    Categoria: str
-    DescripcionControl: str
+    IdGrupoControl: Optional[str]
+    Marco: Optional[str]
+    Categoria: Optional[str]
+    DescripcionControl: Optional[str]
     Tipo: ENS_Requirements_Tipos
     Nivel: ENS_Requirements_Nivel
     Dimensiones: list[ENS_Requirements_Dimensiones]
@@ -78,16 +78,31 @@ class CIS_Requirements_AssessmentStatus(str):
 class CIS_Requirements(BaseModel):
     """CIS Requirements"""
 
-    Section: str
+    Section: Optional[str]
     Profile: CIS_Requirements_Profile
     AssessmentStatus: CIS_Requirements_AssessmentStatus
-    Description: str
-    RationaleStatement: str
-    ImpactStatement: str
-    RemediationProcedure: str
-    AuditProcedure: str
-    AdditionalInformation: str
-    References: str
+    Description: Optional[str]
+    RationaleStatement: Optional[str]
+    ImpactStatement: Optional[str]
+    RemediationProcedure: Optional[str]
+    AuditProcedure: Optional[str]
+    AdditionalInformation: Optional[str]
+    References: Optional[str]
+
+
+# Well Architected Requirements
+class AWS_Well_Architected_Requirements(BaseModel):
+    """AWS Well Architected Requirements"""
+
+    Name: Optional[str]
+    WellArchitectedQuestionId: Optional[str]
+    WellArchitectedPracticeId: Optional[str]
+    Section: Optional[str]
+    SubSection: Optional[str]
+    LevelOfRisk: Optional[str]
+    AssessmentMethod: Optional[str]
+    Description: Optional[str]
+    ImplementationGuidanceUrl: Optional[str]
 
 
 # Base Compliance Model
@@ -96,8 +111,14 @@ class Compliance_Requirement(BaseModel):
 
     Id: str
     Description: str
+    Name: Optional[str]
     Attributes: list[
-        Union[CIS_Requirements, ENS_Requirements, Generic_Compliance_Requirements]
+        Union[
+            CIS_Requirements,
+            ENS_Requirements,
+            Generic_Compliance_Requirements,
+            AWS_Well_Architected_Requirements,
+        ]
     ]
     Checks: list[str]
 
