@@ -13,13 +13,11 @@ class compute_default_service_account_in_use(Check):
             report.location = instance.zone
             report.status = "PASS"
             report.status_extended = f"The default service account is not configured to be used with VM Instance {instance.name}"
+            print(instance.service_accounts)
             if (
                 any(
                     [
-                        (
-                            sa["email"]
-                            == f"{instance.project_id}-compute@developer.gserviceaccount.com"
-                        )
+                        ("-compute@developer.gserviceaccount.com" in sa["email"])
                         for sa in instance.service_accounts
                     ]
                 )

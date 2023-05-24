@@ -15,8 +15,7 @@ class compute_default_service_account_in_use_with_full_api_access(Check):
             report.status_extended = f"The VM Instance {instance.name} is not configured to use the default service account with full access to all cloud APIs "
             for service_account in instance.service_accounts:
                 if (
-                    service_account["email"]
-                    == f"{instance.project_id}-compute@developer.gserviceaccount.com"
+                    "-compute@developer.gserviceaccount.com" in service_account["email"]
                     and "https://www.googleapis.com/auth/cloud-platform"
                     in service_account["scopes"]
                     and instance.name[:4] != "gke-"

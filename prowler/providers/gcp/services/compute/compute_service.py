@@ -21,7 +21,6 @@ class Compute:
 
     def __get_zones__(self):
         for project_id in self.project_ids:
-            print(project_id)
             try:
                 request = self.client.zones().list(project=project_id)
                 while request is not None:
@@ -40,10 +39,8 @@ class Compute:
 
     def __get_instances__(self):
         for project_id in self.project_ids:
-            print(project_id)
             try:
                 for zone in self.zones:
-                    print(zone)
                     request = self.client.instances().list(
                         project=project_id, zone=zone
                     )
@@ -84,7 +81,6 @@ class Compute:
 
     def __get_networks__(self):
         for project_id in self.project_ids:
-            print(project_id)
             try:
                 request = self.client.networks().list(project=project_id)
                 while request is not None:

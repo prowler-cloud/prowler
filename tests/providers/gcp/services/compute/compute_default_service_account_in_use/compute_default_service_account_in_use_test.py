@@ -32,7 +32,7 @@ class Test_compute_default_service_account_in_use:
             metadata={},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
-            service_accounts=[{"email": "123-compute@developer.gserviceaccount.com"}],
+            service_accounts=[{"email": "custom@developer.gserviceaccount.com"}],
             project_id=GCP_PROJECT_ID,
         )
 
