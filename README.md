@@ -43,7 +43,6 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 | GCP | 43 | 7: `prowler gcp --list-services` | CIS soon | - `prowler gcp --list-categories`|
 | Azure | 20 | 3: `prowler gcp --list-services` | CIS soon | 1: `prowler azure --list-categories` |
 | Kubernetes | Planned | - | - | - |
-|
 
 # 📖 Documentation
 
