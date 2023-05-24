@@ -274,10 +274,12 @@ def create_output(resources: list, audit_info: AWS_Audit_Info, args):
     # Send output to S3 if needed (-B / -D)
     for mode in ["json", "csv"]:
         if args.output_bucket or args.output_bucket_no_assume:
-            output_bucket = args.output_bucket
-            bucket_session = audit_info.audit_session
+            # Check if -B was input
+            if args.output_bucket:
+                output_bucket = args.output_bucket
+                bucket_session = audit_info.audit_session
             # Check if -D was input
-            if args.output_bucket_no_assume:
+            elif args.output_bucket_no_assume:
                 output_bucket = args.output_bucket_no_assume
                 bucket_session = audit_info.original_session
             send_to_s3_bucket(
