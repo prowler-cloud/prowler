@@ -56,6 +56,14 @@ class Compute:
                                 id=instance["id"],
                                 zone=zone,
                                 public_ip=public_ip,
+                                metadata=instance["metadata"],
+                                shielded_enabled_vtpm=instance[
+                                    "shieldedInstanceConfig"
+                                ]["enableVtpm"],
+                                shielded_enabled_integrity_monitoring=instance[
+                                    "shieldedInstanceConfig"
+                                ]["enableIntegrityMonitoring"],
+                                service_accounts=instance["serviceAccounts"],
                             )
                         )
 
@@ -95,6 +103,10 @@ class Instance(BaseModel):
     id: str
     zone: str
     public_ip: bool
+    metadata: dict
+    shielded_enabled_vtpm: bool
+    shielded_enabled_integrity_monitoring: bool
+    service_accounts: list
 
 
 class Network(BaseModel):
