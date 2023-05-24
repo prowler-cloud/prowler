@@ -13,6 +13,7 @@ from prowler.lib.outputs.html import add_html_header
 from prowler.lib.outputs.models import (
     Aws_Check_Output_CSV,
     Azure_Check_Output_CSV,
+    Check_Output_CSV_AWS_Well_Architected,
     Check_Output_CSV_CIS,
     Check_Output_CSV_ENS_RD2022,
     Check_Output_CSV_Generic_Compliance,
@@ -136,6 +137,19 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                         filename = f"{output_directory}/{output_filename}_cis_1.4_aws{csv_file_suffix}"
                         file_descriptor = initialize_file_descriptor(
                             filename, output_mode, audit_info, Check_Output_CSV_CIS
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
+
+                    elif (
+                        output_mode
+                        == "aws_well_architected_framework_security_pillar_aws"
+                    ):
+                        filename = f"{output_directory}/{output_filename}_aws_well_architected_framework_security_pillar_aws{csv_file_suffix}"
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            audit_info,
+                            Check_Output_CSV_AWS_Well_Architected,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
 
