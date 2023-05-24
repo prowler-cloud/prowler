@@ -10,6 +10,7 @@ from moto import mock_s3
 from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
+    list_categories,
     list_modules,
     list_services,
     parse_checks_from_file,
@@ -19,7 +20,13 @@ from prowler.lib.check.check import (
     remove_custom_checks_module,
     update_audit_metadata,
 )
-from prowler.lib.check.models import load_check_metadata
+from prowler.lib.check.models import (
+    Check_Metadata_Model,
+    Code,
+    Recommendation,
+    Remediation,
+    load_check_metadata,
+)
 from prowler.providers.aws.aws_provider import (
     get_checks_from_input_arn,
     get_regions_from_audit_resources,
@@ -50,6 +57,152 @@ expected_packages = [
         ispkg=False,
     ),
 ]
+
+test_bulk_checks_metadata = {
+    "vpc_peering_routing_tables_with_least_privilege": Check_Metadata_Model(
+        Provider="aws",
+        CheckID="vpc_peering_routing_tables_with_least_privilege",
+        CheckTitle="Ensure routing tables for VPC peering are least access.",
+        CheckType=["Infrastructure Security"],
+        ServiceName="vpc",
+        SubServiceName="route_table",
+        ResourceIdTemplate="arn:partition:service:region:account-id:resource-id",
+        Severity="medium",
+        ResourceType="AwsEc2VpcPeeringConnection",
+        Description="Ensure routing tables for VPC peering are least access.",
+        Risk="Being highly selective in peering routing tables is a very effective way of minimizing the impact of breach as resources outside of these routes are inaccessible to the peered VPC.",
+        RelatedUrl="",
+        Remediation=Remediation(
+            Code=Code(
+                NativeIaC="",
+                Terraform="",
+                CLI="https://docs.bridgecrew.io/docs/networking_5#cli-command",
+                Other="",
+            ),
+            Recommendation=Recommendation(
+                Text="Review routing tables of peered VPCs for whether they route all subnets of each VPC and whether that is necessary to accomplish the intended purposes for peering the VPCs.",
+                Url="https://docs.aws.amazon.com/vpc/latest/peering/peering-configurations-partial-access.html",
+            ),
+        ),
+        Categories=["forensics-ready"],
+        DependsOn=[],
+        RelatedTo=[],
+        Notes="",
+        Compliance=None,
+    ),
+    "vpc_subnet_different_az": Check_Metadata_Model(
+        Provider="aws",
+        CheckID="vpc_subnet_different_az",
+        CheckTitle="Ensure all vpc has subnets in more than one availability zone",
+        CheckType=["Infrastructure Security"],
+        ServiceName="vpc",
+        SubServiceName="subnet",
+        ResourceIdTemplate="arn:partition:service:region:account-id:resource-id",
+        Severity="medium",
+        ResourceType="AwsEc2Vpc",
+        Description="Ensure all vpc has subnets in more than one availability zone",
+        Risk="",
+        RelatedUrl="https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html",
+        Remediation=Remediation(
+            Code=Code(
+                NativeIaC="", Terraform="", CLI="aws ec2 create-subnet", Other=""
+            ),
+            Recommendation=Recommendation(
+                Text="Ensure all vpc has subnets in more than one availability zone",
+                Url="",
+            ),
+        ),
+        Categories=["secrets", ""],
+        DependsOn=[],
+        RelatedTo=[],
+        Notes="",
+        Compliance=None,
+    ),
+    "vpc_subnet_separate_private_public": Check_Metadata_Model(
+        Provider="aws",
+        CheckID="vpc_subnet_separate_private_public",
+        CheckTitle="Ensure all vpc has public and private subnets defined",
+        CheckType=["Infrastructure Security"],
+        ServiceName="vpc",
+        SubServiceName="subnet",
+        ResourceIdTemplate="arn:partition:service:region:account-id:resource-id",
+        Severity="medium",
+        ResourceType="AwsEc2Vpc",
+        Description="Ensure all vpc has public and private subnets defined",
+        Risk="",
+        RelatedUrl="https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html",
+        Remediation=Remediation(
+            Code=Code(
+                NativeIaC="", Terraform="", CLI="aws ec2 create-subnet", Other=""
+            ),
+            Recommendation=Recommendation(
+                Text="Ensure all vpc has public and private subnets defined", Url=""
+            ),
+        ),
+        Categories=["internet-exposed", "trustboundaries"],
+        DependsOn=[],
+        RelatedTo=[],
+        Notes="",
+        Compliance=None,
+    ),
+    "workspaces_volume_encryption_enabled": Check_Metadata_Model(
+        Provider="aws",
+        CheckID="workspaces_volume_encryption_enabled",
+        CheckTitle="Ensure that your Amazon WorkSpaces storage volumes are encrypted in order to meet security and compliance requirements",
+        CheckType=[],
+        ServiceName="workspaces",
+        SubServiceName="",
+        ResourceIdTemplate="arn:aws:workspaces:region:account-id:workspace",
+        Severity="high",
+        ResourceType="AwsWorkspaces",
+        Description="Ensure that your Amazon WorkSpaces storage volumes are encrypted in order to meet security and compliance requirements",
+        Risk="If the value listed in the Volume Encryption column is Disabled the selected AWS WorkSpaces instance volumes (root and user volumes) are not encrypted. Therefore your data-at-rest is not protected from unauthorized access and does not meet the compliance requirements regarding data encryption.",
+        RelatedUrl="https://docs.aws.amazon.com/workspaces/latest/adminguide/encrypt-workspaces.html",
+        Remediation=Remediation(
+            Code=Code(
+                NativeIaC="https://docs.bridgecrew.io/docs/ensure-that-workspace-root-volumes-are-encrypted#cloudformation",
+                Terraform="https://docs.bridgecrew.io/docs/ensure-that-workspace-root-volumes-are-encrypted#terraform",
+                CLI="",
+                Other="https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WorkSpaces/storage-encryption.html",
+            ),
+            Recommendation=Recommendation(
+                Text="WorkSpaces is integrated with the AWS Key Management Service (AWS KMS). This enables you to encrypt storage volumes of WorkSpaces using AWS KMS Key. When you launch a WorkSpace you can encrypt the root volume (for Microsoft Windows - the C drive; for Linux - /) and the user volume (for Windows - the D drive; for Linux - /home). Doing so ensures that the data stored at rest - disk I/O to the volume - and snapshots created from the volumes are all encrypted",
+                Url="https://docs.aws.amazon.com/workspaces/latest/adminguide/encrypt-workspaces.html",
+            ),
+        ),
+        Categories=["encryption"],
+        DependsOn=[],
+        RelatedTo=[],
+        Notes="",
+        Compliance=None,
+    ),
+    "workspaces_vpc_2private_1public_subnets_nat": Check_Metadata_Model(
+        Provider="aws",
+        CheckID="workspaces_vpc_2private_1public_subnets_nat",
+        CheckTitle="Ensure that the Workspaces VPC are deployed following the best practices using 1 public subnet and 2 private subnets with a NAT Gateway attached",
+        CheckType=[],
+        ServiceName="workspaces",
+        SubServiceName="",
+        ResourceIdTemplate="arn:aws:workspaces:region:account-id:workspace",
+        Severity="medium",
+        ResourceType="AwsWorkspaces",
+        Description="Ensure that the Workspaces VPC are deployed following the best practices using 1 public subnet and 2 private subnets with a NAT Gateway attached",
+        Risk="Proper network segmentation is a key security best practice. Workspaces VPC should be deployed using 1 public subnet and 2 private subnets with a NAT Gateway attached",
+        RelatedUrl="https://docs.aws.amazon.com/workspaces/latest/adminguide/amazon-workspaces-vpc.html",
+        Remediation=Remediation(
+            Code=Code(NativeIaC="", Terraform="", CLI="", Other=""),
+            Recommendation=Recommendation(
+                Text="Follow the documentation and deploy Workspaces VPC using 1 public subnet and 2 private subnets with a NAT Gateway attached",
+                Url="https://docs.aws.amazon.com/workspaces/latest/adminguide/amazon-workspaces-vpc.html",
+            ),
+        ),
+        Categories=[""],
+        DependsOn=[],
+        RelatedTo=[],
+        Notes="",
+        Compliance=None,
+    ),
+}
 
 
 def mock_walk_packages(*_):
@@ -318,6 +471,17 @@ class Test_Check:
         expected_services = {"accessanalyzer", "awslambda", "ec2"}
         listed_services = list_services(provider)
         assert listed_services == sorted(expected_services)
+
+    def test_list_categories(self):
+        expected_categories = {
+            "secrets",
+            "forensics-ready",
+            "encryption",
+            "internet-exposed",
+            "trustboundaries",
+        }
+        listed_categories = list_categories(test_bulk_checks_metadata)
+        assert listed_categories == expected_categories
 
     @patch("prowler.lib.check.check.list_modules", new=mock_list_modules)
     def test_recover_checks_from_provider(self):

@@ -80,7 +80,7 @@ def prowler():
     bulk_checks_metadata = bulk_load_checks_metadata(provider)
 
     if args.list_categories:
-        print_categories(list_categories(provider, bulk_checks_metadata))
+        print_categories(list_categories(bulk_checks_metadata))
         sys.exit()
 
     bulk_compliance_frameworks = {}
