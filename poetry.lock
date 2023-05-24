@@ -68,6 +68,18 @@ tests = ["attrs[tests-no-zope]", "zope-interface"]
 tests-no-zope = ["cloudpickle", "hypothesis", "mypy (>=1.1.1)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "pytest-xdist[psutil]"]
 
 [[package]]
+name = "awsipranges"
+version = "0.3.3"
+description = "Work with the AWS IP address ranges in native Python."
+category = "main"
+optional = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "awsipranges-0.3.3-py3-none-any.whl", hash = "sha256:f3d7a54aeaf7fe310beb5d377a4034a63a51b72677ae6af3e0967bc4de7eedaf"},
+    {file = "awsipranges-0.3.3.tar.gz", hash = "sha256:4f0b3f22a9dc1163c85b513bed812b6c92bdacd674e6a7b68252a3c25b99e2c0"},
+]
+
+[[package]]
 name = "azure-common"
 version = "1.1.28"
 description = "Microsoft Azure Client Library for Python (Common)"
@@ -101,20 +113,20 @@ aio = ["aiohttp (>=3.0)"]
 
 [[package]]
 name = "azure-identity"
-version = "1.12.0"
+version = "1.13.0"
 description = "Microsoft Azure Identity Library for Python"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "azure-identity-1.12.0.zip", hash = "sha256:7f9b1ae7d97ea7af3f38dd09305e19ab81a1e16ab66ea186b6579d85c1ca2347"},
-    {file = "azure_identity-1.12.0-py3-none-any.whl", hash = "sha256:2a58ce4a209a013e37eaccfd5937570ab99e9118b3e1acf875eed3a85d541b92"},
+    {file = "azure-identity-1.13.0.zip", hash = "sha256:c931c27301ffa86b07b4dcf574e29da73e3deba9ab5d1fe4f445bb6a3117e260"},
+    {file = "azure_identity-1.13.0-py3-none-any.whl", hash = "sha256:bd700cebb80cd9862098587c29d8677e819beca33c62568ced6d5a8e5e332b82"},
 ]
 
 [package.dependencies]
 azure-core = ">=1.11.0,<2.0.0"
 cryptography = ">=2.5"
-msal = ">=1.12.0,<2.0.0"
+msal = ">=1.20.0,<2.0.0"
 msal-extensions = ">=0.3.0,<2.0.0"
 six = ">=1.12.0"
 
@@ -284,18 +296,18 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "boto3"
-version = "1.26.125"
+version = "1.26.138"
 description = "The AWS SDK for Python"
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 files = [
-    {file = "boto3-1.26.125-py3-none-any.whl", hash = "sha256:6648aff15d19927cd26db47eb56362ccd313a1ddbd7aaa3235ef05d05d398252"},
-    {file = "boto3-1.26.125.tar.gz", hash = "sha256:fe8248b80c4f0fdaed8b8779467c4431a5e52177e02ccd137d51ec51194ebb00"},
+    {file = "boto3-1.26.138-py3-none-any.whl", hash = "sha256:d47a68a0ca6599e8711c7da670fbac24085d9d50cfb4f761204f154d2b6fae26"},
+    {file = "boto3-1.26.138.tar.gz", hash = "sha256:f0a78f94a7140b60960898fd86677e4e73cc96bd7f3e5c64fc5cc1818d04c7b8"},
 ]
 
 [package.dependencies]
-botocore = ">=1.29.125,<1.30.0"
+botocore = ">=1.29.138,<1.30.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.6.0,<0.7.0"
 
@@ -304,14 +316,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.29.134"
+version = "1.29.138"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 files = [
-    {file = "botocore-1.29.134-py3-none-any.whl", hash = "sha256:8a070ee14a430bd3c9cd16fd142e5c2900749060490698b2b981d6d9dadf5f1f"},
-    {file = "botocore-1.29.134.tar.gz", hash = "sha256:0e907b0cab771ab7c9e25efd6b6bc0041ec1b17eb0bab316fd012ef2f8fd99ba"},
+    {file = "botocore-1.29.138-py3-none-any.whl", hash = "sha256:3d145f30d10a9c712acee48e7ce906c9456bb25fe50d477c9312c702ccfa50d1"},
+    {file = "botocore-1.29.138.tar.gz", hash = "sha256:31edc237088c104f7a05887646bbec31d7459dd2e108fd90cbffa315902817e2"},
 ]
 
 [package.dependencies]
@@ -1006,7 +1018,7 @@ name = "importlib-metadata"
 version = "6.6.0"
 description = "Read metadata from Python packages"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "importlib_metadata-6.6.0-py3-none-any.whl", hash = "sha256:43dd286a2cd8995d5eaef7fee2066340423b818ed3fd70adf0bad5f1fac53fed"},
@@ -1402,14 +1414,14 @@ test = ["pytest", "pytest-cov"]
 
 [[package]]
 name = "moto"
-version = "4.1.9"
+version = "4.1.10"
 description = ""
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "moto-4.1.9-py2.py3-none-any.whl", hash = "sha256:d9f5d0e3d027df350ff3552da851644ce192cbf7e7a9e8766fca4b5b6b550df0"},
-    {file = "moto-4.1.9.tar.gz", hash = "sha256:d4bb629686b8b92e480f9784316bd0f379b148a5caee7c07aecbde6033a885e1"},
+    {file = "moto-4.1.10-py2.py3-none-any.whl", hash = "sha256:86ee1f6b23a0c3dcf5c829fb1210fa3f293a2e8f1c95412538c0ea4a2f437021"},
+    {file = "moto-4.1.10.tar.gz", hash = "sha256:65e15fc3e80a9589f50f8a5267b9a99f327224ed4d5cc44fe20edcbdb9248e06"},
 ]
 
 [package.dependencies]
@@ -1990,6 +2002,22 @@ tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "xmlschema"]
 
 [[package]]
+name = "pytest-randomly"
+version = "3.12.0"
+description = "Pytest plugin to randomly order tests and control random.seed."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pytest-randomly-3.12.0.tar.gz", hash = "sha256:d60c2db71ac319aee0fc6c4110a7597d611a8b94a5590918bfa8583f00caccb2"},
+    {file = "pytest_randomly-3.12.0-py3-none-any.whl", hash = "sha256:f4f2e803daf5d1ba036cc22bf4fe9dbbf99389ec56b00e5cba732fb5c1d07fdd"},
+]
+
+[package.dependencies]
+importlib-metadata = {version = ">=3.6.0", markers = "python_version < \"3.10\""}
+pytest = "*"
+
+[[package]]
 name = "pytest-xdist"
 version = "3.3.0"
 description = "pytest xdist plugin for distributed testing, most importantly across multiple CPUs"
@@ -2214,14 +2242,14 @@ files = [
 
 [[package]]
 name = "requests"
-version = "2.30.0"
+version = "2.31.0"
 description = "Python HTTP for Humans."
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "requests-2.30.0-py3-none-any.whl", hash = "sha256:10e94cc4f3121ee6da529d358cdaeaff2f1c409cd377dbc72b825852f2f7e294"},
-    {file = "requests-2.30.0.tar.gz", hash = "sha256:239d7d4458afcb28a692cdd298d87542235f4ca8d36d03a15bfc128a6559a2f4"},
+    {file = "requests-2.31.0-py3-none-any.whl", hash = "sha256:58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f"},
+    {file = "requests-2.31.0.tar.gz", hash = "sha256:942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1"},
 ]
 
 [package.dependencies]
@@ -2464,13 +2492,13 @@ testing-integration = ["build[virtualenv]", "filelock (>=3.4.0)", "jaraco.envs (
 
 [[package]]
 name = "shodan"
-version = "1.29.0"
+version = "1.29.1"
 description = "Python library and command-line utility for Shodan (https://developer.shodan.io)"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "shodan-1.29.0.tar.gz", hash = "sha256:ebea6dbc1944497e9139263423ea4d103dcd58c085c5ddbf4d6ab1db6eb1d142"},
+    {file = "shodan-1.29.1.tar.gz", hash = "sha256:e2af6254e19d2a8fa4e929738be551e25dc7aafc394732e776e7e30fa44ce339"},
 ]
 
 [package.dependencies]
@@ -2858,7 +2886,7 @@ name = "zipp"
 version = "3.15.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "zipp-3.15.0-py3-none-any.whl", hash = "sha256:48904fc76a60e542af151aded95726c1a5c34ed43ab4134b597665c86d7ad556"},
@@ -2875,4 +2903,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "bf40bfed6a88bde379337be45f5be5dd468ea3c7c79ff4ff92448ead3fe79308"
+content-hash = "60d5a4537ef2c46cf9ae54378fe801fda4adec8251c03cf60b815889b433f48f"

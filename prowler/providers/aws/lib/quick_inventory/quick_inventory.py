@@ -14,11 +14,12 @@ from prowler.config.config import (
     output_file_timestamp,
 )
 from prowler.lib.logger import logger
+from prowler.lib.outputs.outputs import send_to_s3_bucket
 from prowler.providers.aws.lib.arn.models import get_arn_resource_type
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
-def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
+def quick_inventory(audit_info: AWS_Audit_Info, args):
     resources = []
     global_resources = []
     total_resources_per_region = {}
@@ -113,7 +114,7 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
     )
     print(f"\nTotal resources found: {Fore.GREEN}{len(resources)}{Style.RESET_ALL}")
 
-    create_output(resources, audit_info, output_directory)
+    create_output(resources, audit_info, args)
 
 
 def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
@@ -203,9 +204,11 @@ def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
     return inventory_table
 
 
-def create_output(resources: list, audit_info: AWS_Audit_Info, output_directory: str):
+def create_output(resources: list, audit_info: AWS_Audit_Info, args):
     json_output = []
-    output_file = f"{output_directory}/prowler-inventory-{audit_info.audited_account}-{output_file_timestamp}"
+    output_file = (
+        f"prowler-inventory-{audit_info.audited_account}-{output_file_timestamp}"
+    )
 
     for item in sorted(resources, key=lambda d: d["arn"]):
         resource = {}
@@ -244,10 +247,14 @@ def create_output(resources: list, audit_info: AWS_Audit_Info, output_directory:
     json_object = json.dumps(json_output, indent=4)
 
     # Writing to sample.json
-    with open(output_file + json_file_suffix, "w") as outfile:
+    with open(
+        args.output_directory + "/" + output_file + json_file_suffix, "w"
+    ) as outfile:
         outfile.write(json_object)
 
-    csv_file = open(output_file + csv_file_suffix, "w", newline="")
+    csv_file = open(
+        args.output_directory + "/" + output_file + csv_file_suffix, "w", newline=""
+    )
     csv_writer = csv.writer(csv_file)
 
     count = 0
@@ -261,8 +268,27 @@ def create_output(resources: list, audit_info: AWS_Audit_Info, output_directory:
     csv_file.close()
 
     print("\nMore details in files:")
-    print(f" - CSV: {output_file+csv_file_suffix}")
-    print(f" - JSON: {output_file+json_file_suffix}")
+    print(f" - CSV: {args.output_directory}/{output_file+csv_file_suffix}")
+    print(f" - JSON: {args.output_directory}/{output_file+json_file_suffix}")
+
+    # Send output to S3 if needed (-B / -D)
+    for mode in ["json", "csv"]:
+        if args.output_bucket or args.output_bucket_no_assume:
+            # Check if -B was input
+            if args.output_bucket:
+                output_bucket = args.output_bucket
+                bucket_session = audit_info.audit_session
+            # Check if -D was input
+            elif args.output_bucket_no_assume:
+                output_bucket = args.output_bucket_no_assume
+                bucket_session = audit_info.original_session
+            send_to_s3_bucket(
+                output_file,
+                args.output_directory,
+                mode,
+                output_bucket,
+                bucket_session,
+            )
 
 
 def get_regional_buckets(audit_info: AWS_Audit_Info, region: str) -> list:

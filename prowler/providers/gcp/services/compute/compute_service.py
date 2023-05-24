@@ -47,19 +47,27 @@ class Compute:
                     while request is not None:
                         response = request.execute()
 
-                        for instance in response.get("items", []):
-                            public_ip = False
-                            for interface in instance["networkInterfaces"]:
-                                for config in interface.get("accessConfigs", []):
-                                    if "natIP" in config:
-                                        public_ip = True
-                            self.instances.append(
-                                Instance(
-                                    name=instance["name"],
-                                    id=instance["id"],
-                                    zone=zone,
-                                    public_ip=public_ip,
-                                    project_id=project_id,
+                    for instance in response.get("items", []):
+                        public_ip = False
+                        for interface in instance["networkInterfaces"]:
+                            for config in interface.get("accessConfigs", []):
+                                if "natIP" in config:
+                                    public_ip = True
+                        self.instances.append(
+                            Instance(
+                                name=instance["name"],
+                                id=instance["id"],
+                                zone=zone,
+                                public_ip=public_ip,
+                                metadata=instance["metadata"],
+                                shielded_enabled_vtpm=instance[
+                                    "shieldedInstanceConfig"
+                                ]["enableVtpm"],
+                                shielded_enabled_integrity_monitoring=instance[
+                                    "shieldedInstanceConfig"
+                                ]["enableIntegrityMonitoring"],
+                                service_accounts=instance["serviceAccounts"],
+                                project_id=project_id
                                 )
                             )
 
@@ -102,6 +110,10 @@ class Instance(BaseModel):
     zone: str
     public_ip: bool
     project_id: str
+    metadata: dict
+    shielded_enabled_vtpm: bool
+    shielded_enabled_integrity_monitoring: bool
+    service_accounts: list
 
 
 class Network(BaseModel):

@@ -4,12 +4,14 @@ from importlib.machinery import FileFinder
 from pkgutil import ModuleInfo
 
 from boto3 import client, session
+from fixtures.bulk_checks_metadata import test_bulk_checks_metadata
 from mock import patch
 from moto import mock_s3
 
 from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
+    list_categories,
     list_modules,
     list_services,
     parse_checks_from_file,
@@ -318,6 +320,17 @@ class Test_Check:
         expected_services = {"accessanalyzer", "awslambda", "ec2"}
         listed_services = list_services(provider)
         assert listed_services == sorted(expected_services)
+
+    def test_list_categories(self):
+        expected_categories = {
+            "secrets",
+            "forensics-ready",
+            "encryption",
+            "internet-exposed",
+            "trustboundaries",
+        }
+        listed_categories = list_categories(test_bulk_checks_metadata)
+        assert listed_categories == expected_categories
 
     @patch("prowler.lib.check.check.list_modules", new=mock_list_modules)
     def test_recover_checks_from_provider(self):

@@ -81,9 +81,13 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
 
         current_audit_info = self.set_mocked_audit_info()
         current_audit_info.audited_account = AWS_ACCOUNT_ID
+
         with mock.patch(
-            "prowler.providers.aws.services.iam.iam_service.IAM",
-            iam_client,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",
+            new=iam_client,
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention import (

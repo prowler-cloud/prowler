@@ -40,14 +40,15 @@ class SecretsManager:
                     if not self.audit_resources or (
                         is_resource_filtered(secret["ARN"], self.audit_resources)
                     ):
-                        self.secrets[secret["Name"]] = Secret(
+                        # We must use the Secret ARN as the dict key to have unique keys
+                        self.secrets[secret["ARN"]] = Secret(
                             arn=secret["ARN"],
                             name=secret["Name"],
                             region=regional_client.region,
                             tags=secret.get("Tags"),
                         )
                         if "RotationEnabled" in secret:
-                            self.secrets[secret["Name"]].rotation_enabled = secret[
+                            self.secrets[secret["ARN"]].rotation_enabled = secret[
                                 "RotationEnabled"
                             ]
 

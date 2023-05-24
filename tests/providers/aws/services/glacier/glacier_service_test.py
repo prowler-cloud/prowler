@@ -15,6 +15,9 @@ AWS_ACCOUNT_NUMBER = "123456789012"
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
+TEST_VAULT_ARN = (
+    f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
+)
 vault_json_policy = {
     "Version": "2012-10-17",
     "Statement": [
@@ -28,9 +31,7 @@ vault_json_policy = {
                 "glacier:AbortMultipartUpload",
                 "glacier:CompleteMultipartUpload",
             ],
-            "Resource": [
-                f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
-            ],
+            "Resource": [TEST_VAULT_ARN],
         }
     ],
 }
@@ -42,7 +43,7 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "VaultList": [
                 {
-                    "VaultARN": f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault",
+                    "VaultARN": TEST_VAULT_ARN,
                     "VaultName": "examplevault",
                     "CreationDate": "2012-03-16T22:22:47.214Z",
                     "LastInventoryDate": "2012-03-21T22:06:51.218Z",
@@ -118,25 +119,25 @@ class Test_Glacier_Service:
         glacier = Glacier(self.set_mocked_audit_info())
         vault_name = "examplevault"
         assert len(glacier.vaults) == 1
-        assert glacier.vaults[vault_name]
-        assert glacier.vaults[vault_name].name == vault_name
+        assert glacier.vaults[TEST_VAULT_ARN]
+        assert glacier.vaults[TEST_VAULT_ARN].name == vault_name
         assert (
-            glacier.vaults[vault_name].arn
+            glacier.vaults[TEST_VAULT_ARN].arn
             == f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
         )
-        assert glacier.vaults[vault_name].region == AWS_REGION
-        assert glacier.vaults[vault_name].tags == [{"test": "test"}]
+        assert glacier.vaults[TEST_VAULT_ARN].region == AWS_REGION
+        assert glacier.vaults[TEST_VAULT_ARN].tags == [{"test": "test"}]
 
     def test__get_vault_access_policy__(self):
         # Set partition for the service
         glacier = Glacier(self.set_mocked_audit_info())
         vault_name = "examplevault"
         assert len(glacier.vaults) == 1
-        assert glacier.vaults[vault_name]
-        assert glacier.vaults[vault_name].name == vault_name
+        assert glacier.vaults[TEST_VAULT_ARN]
+        assert glacier.vaults[TEST_VAULT_ARN].name == vault_name
         assert (
-            glacier.vaults[vault_name].arn
+            glacier.vaults[TEST_VAULT_ARN].arn
             == f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
         )
-        assert glacier.vaults[vault_name].region == AWS_REGION
-        assert glacier.vaults[vault_name].access_policy == vault_json_policy
+        assert glacier.vaults[TEST_VAULT_ARN].region == AWS_REGION
+        assert glacier.vaults[TEST_VAULT_ARN].access_policy == vault_json_policy

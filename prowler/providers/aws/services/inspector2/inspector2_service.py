@@ -48,7 +48,7 @@ class Inspector2:
             ][0]
             self.inspectors.append(
                 Inspector(
-                    id="Inspector2",
+                    id=self.audited_account,
                     status=batch_get_account_status.get("state").get("status"),
                     region=regional_client.region,
                 )

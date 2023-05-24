@@ -117,6 +117,11 @@ class Test_rds_instance_deprecated_engine_version:
                     == "RDS instance db-master-1 is not using a deprecated engine mysql with version 8.0.32."
                 )
                 assert result[0].resource_id == "db-master-1"
+                assert result[0].region == AWS_REGION
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
+                )
                 assert result[0].resource_tags == []
 
     @mock_rds
@@ -158,4 +163,9 @@ class Test_rds_instance_deprecated_engine_version:
                     == "RDS instance db-master-2 is using a deprecated engine mysql with version 8.0.23."
                 )
                 assert result[0].resource_id == "db-master-2"
+                assert result[0].region == AWS_REGION
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:db:db-master-2"
+                )
                 assert result[0].resource_tags == []
