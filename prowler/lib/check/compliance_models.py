@@ -102,7 +102,7 @@ class AWS_Well_Architected_Requirements(BaseModel):
     LevelOfRisk: Optional[str]
     AssessmentMethod: Optional[str]
     Description: Optional[str]
-    ImplementacionGuidanceUrl: Optional[str]
+    ImplementationGuidanceUrl: Optional[str]
 
 
 # Base Compliance Model

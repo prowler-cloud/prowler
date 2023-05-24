@@ -568,7 +568,7 @@ class Check_Output_CSV_AWS_Well_Architected(BaseModel):
     Requirements_Attributes_LevelOfRisk: str
     Requirements_Attributes_AssessmentMethod: str
     Requirements_Attributes_Description: str
-    Requirements_Attributes_ImplementacionGuidanceUrl: Optional[str]
+    Requirements_Attributes_ImplementationGuidanceUrl: str
     Status: str
     StatusExtended: str
     ResourceId: str
