@@ -232,7 +232,7 @@
         "autoscaling_find_secrets_ec2_launch_configuration",
         "awslambda_function_no_secrets_in_code",
         "awslambda_function_no_secrets_in_variables",
-        "cloudformation_outputs_find_secrets",
+        "cloudformation_stack_outputs_find_secrets",
         "ec2_instance_secrets_user_data",
         "ecs_task_definitions_no_environment_secrets",
         "ssm_document_secrets"
@@ -341,7 +341,9 @@
       ],
       "Checks": [
         "ec2_instance_profile_attached",
-        "iam_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_customer_unattached_policy_no_administrative_privileges",
         "opensearch_service_domains_internal_user_database_enabled"
       ]
     },
@@ -384,7 +386,8 @@
         }
       ],
       "Checks": [
-        "iam-policy-no-statements-with-admin-access"
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_customer_unattached_policy_no_administrative_privileges"
       ]
     },
     {
@@ -424,7 +427,6 @@
         }
       ],
       "Checks": [
-        "dms-replication-not-public",
         "appstream_fleet_maximum_session_duration",
         "appstream_fleet_session_disconnect_timeout",
         "appstream_fleet_session_idle_disconnect_timeout",
@@ -453,7 +455,6 @@
         }
       ],
       "Checks": [
-        "dms-replication-not-public",
         "ec2_ebs_public_snapshot",
         "ec2_instance_public_ip",
         "opensearch_service_domains_not_publicly_accessible",
@@ -508,7 +509,6 @@
         }
       ],
       "Checks": [
-        "dms-replication-not-public",
         "opensearch_service_domains_not_publicly_accessible",
         "awslambda_function_not_publicly_accessible",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
@@ -734,11 +734,10 @@
         "elbv2_waf_acl_attached",
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_securitygroup_from_launch_wizard",
-        "ec2_securitygroup_in_use_without_ingress_filtering",
         "ec2_securitygroup_not_used",
         "ec2_securitygroup_with_many_ingress_egress_rules",
         "elbv2_desync_mitigation_mode",
-        "elbv2_request_smugling",
+        "elbv2_desync_mitigation_mode",
         "route53_domains_privacy_protection_enabled",
         "route53_domains_transferlock_enabled",
         "shield_advanced_protection_in_associated_elastic_ips",
