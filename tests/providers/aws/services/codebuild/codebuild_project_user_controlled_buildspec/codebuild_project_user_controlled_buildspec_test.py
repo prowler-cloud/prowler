@@ -27,9 +27,9 @@ class Test_codebuild_project_user_controlled_buildspec:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert search(
-                "does not use a user controlled buildspec",
+                "does not use an user controlled buildspec",
                 result[0].status_extended,
             )
             assert result[0].resource_id == "test"
@@ -57,9 +57,9 @@ class Test_codebuild_project_user_controlled_buildspec:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert search(
-                "does not use a user controlled buildspec",
+                "does not use an user controlled buildspec",
                 result[0].status_extended,
             )
             assert result[0].resource_id == "test"
@@ -87,8 +87,10 @@ class Test_codebuild_project_user_controlled_buildspec:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert search("uses a user controlled buildspec", result[0].status_extended)
+            assert result[0].status == "FAIL"
+            assert search(
+                "uses an user controlled buildspec", result[0].status_extended
+            )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == ""
 
@@ -114,9 +116,9 @@ class Test_codebuild_project_user_controlled_buildspec:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert search(
-                "does not use a user controlled buildspec",
+                "does not use an user controlled buildspec",
                 result[0].status_extended,
             )
             assert result[0].resource_id == "test"

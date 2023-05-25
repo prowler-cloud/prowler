@@ -13,6 +13,7 @@ Currently, the available frameworks are:
 - `ens_rd2022_aws`
 - `aws_audit_manager_control_tower_guardrails_aws`
 - `aws_foundational_security_best_practices_aws`
+- `aws_well_architected_framework_security_pillar_aws`
 - `cisa_aws`
 - `fedramp_low_revision_4_aws`
 - `fedramp_moderate_revision_4_aws`

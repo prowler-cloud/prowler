@@ -39,6 +39,9 @@ class Test_elb_ssl_listeners:
         from prowler.providers.aws.services.elb.elb_service import ELB
 
         with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ), mock.patch(
             "prowler.providers.aws.services.elb.elb_ssl_listeners.elb_ssl_listeners.elb_client",
             new=ELB(self.set_mocked_audit_info()),
         ):
