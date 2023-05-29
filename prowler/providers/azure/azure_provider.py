@@ -17,10 +17,11 @@ class Azure_Provider:
         browser_auth: bool,
         managed_entity_auth: bool,
         subscription_ids: list,
+        tenant_id: str,
     ):
         logger.info("Instantiating Azure Provider ...")
         self.credentials = self.__set_credentials__(
-            az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth
+            az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
         )
         self.identity = self.__set_identity_info__(
             self.credentials,
@@ -32,7 +33,7 @@ class Azure_Provider:
         )
 
     def __set_credentials__(
-        self, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth
+        self, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
     ):
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
@@ -59,7 +60,14 @@ class Azure_Provider:
                 )
                 sys.exit(1)
         else:
-            credentials = InteractiveBrowserCredential()
+            try:
+                credentials = InteractiveBrowserCredential(tenant_id=tenant_id[0])
+            except Exception as error:
+                logger.critical("Failed to retrieve azure credentials")
+                logger.critical(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                )
+                sys.exit(1)
 
         return credentials
 
@@ -122,8 +130,9 @@ class Azure_Provider:
                         "Trying to retrieve user information from AAD to populate identity structure ..."
                     )
                     client = GraphClient(credential=credentials)
-                    user_name = client.get("/me").json()["userPrincipalName"]
-                    identity.identity_id = user_name
+                    user_name = client.get("/me").json()
+                    if "userPrincipalName" in user_name:
+                        identity.identity_id = user_name
 
                 except Exception as error:
                     logger.error(
