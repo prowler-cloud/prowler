@@ -61,7 +61,8 @@ class Azure_Provider:
                 sys.exit(1)
         else:
             try:
-                credentials = InteractiveBrowserCredential(tenant_id=tenant_id[0])
+                print(tenant_id)
+                credentials = InteractiveBrowserCredential(tenant_id=tenant_id)
             except Exception as error:
                 logger.critical("Failed to retrieve azure credentials")
                 logger.critical(

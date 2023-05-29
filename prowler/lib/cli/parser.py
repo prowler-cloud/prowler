@@ -447,8 +447,8 @@ Detailed documentation at https://docs.prowler.cloud
         )
         azure_parser.add_argument(
             "--tenant-id",
-            nargs="+",
-            default=[],
+            nargs="?",
+            default=None,
             help="Azure tenant id to be used with --browser-auth option",
         )
 
