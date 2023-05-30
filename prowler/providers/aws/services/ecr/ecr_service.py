@@ -103,15 +103,27 @@ class ECR:
             if regional_client.region in self.registries:
                 for repository in self.registries[regional_client.region].repositories:
                     client = self.regional_clients[repository.region]
-                    policy = client.get_lifecycle_policy(repositoryName=repository.name)
-                    if "lifecyclePolicyText" in policy:
-                        repository.lifecycle_policy = policy["lifecyclePolicyText"]
+                    try:
+                        policy = client.get_lifecycle_policy(
+                            repositoryName=repository.name
+                        )
+                        if "lifecyclePolicyText" in policy:
+                            repository.lifecycle_policy = policy["lifecyclePolicyText"]
+                    except ClientError as error:
+                        if (
+                            error.response["Error"]["Code"]
+                            == "LifecyclePolicyNotFoundException"
+                        ):
+                            logger.warning(
+                                f"{regional_client.region} --"
+                                f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                                f" {error}"
+                            )
 
         except Exception as error:
-            if "LifecyclePolicyNotFoundException" not in str(error):
-                logger.error(
-                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_image_details__(self, regional_client):
         logger.info("ECR - Getting images details...")
