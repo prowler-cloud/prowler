@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_ip_forwarding_is_enabled",
+  "CheckTitle": "Ensure That IP Forwarding Is Not Enabled on Instances",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "VMInstance",
+  "Description": "Compute Engine instance cannot forward a packet unless the source IP address of the packet matches the IP address of the instance. Similarly, GCP won't deliver a packet whose destination IP address is different than the IP address of the instance receiving the packet. However, both capabilities are required if you want to use instances to help route packets. Forwarding of data packets should be disabled to prevent data loss or information disclosure.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_networking_12#cli-command",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/disable-ip-forwarding.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_networking_12#terraform"
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

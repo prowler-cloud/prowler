@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_block_project_wide_ssh_keys_disabled",
+  "CheckTitle": "Ensure “Block Project-Wide SSH Keys” Is Enabled for VM Instances",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "VMInstance",
+  "Description": "It is recommended to use Instance specific SSH key(s) instead of using common/shared project-wide SSH key(s) to access Instances.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_networking_8#cli-command",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-block-project-wide-ssh-keys.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_networking_8#cli-command"
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

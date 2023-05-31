@@ -34,6 +34,8 @@ class Test_compute_serial_ports_in_use:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
         )
 
         compute_client = mock.MagicMock
@@ -71,6 +73,8 @@ class Test_compute_serial_ports_in_use:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
         )
 
         compute_client = mock.MagicMock
@@ -108,6 +112,8 @@ class Test_compute_serial_ports_in_use:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
         )
 
         compute_client = mock.MagicMock
@@ -145,6 +151,8 @@ class Test_compute_serial_ports_in_use:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
         )
 
         compute_client = mock.MagicMock
@@ -182,6 +190,8 @@ class Test_compute_serial_ports_in_use:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
         )
 
         compute_client = mock.MagicMock

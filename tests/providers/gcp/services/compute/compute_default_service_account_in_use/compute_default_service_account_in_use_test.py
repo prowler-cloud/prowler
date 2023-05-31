@@ -33,6 +33,8 @@ class Test_compute_default_service_account_in_use:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[{"email": "123-compute@developer.gserviceaccount.com"}],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
         )
 
         compute_client = mock.MagicMock
@@ -72,6 +74,8 @@ class Test_compute_default_service_account_in_use:
             service_accounts=[
                 {"email": f"{GCP_PROJECT_ID}-compute@developer.gserviceaccount.com"}
             ],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
         )
 
         compute_client = mock.MagicMock
@@ -111,6 +115,8 @@ class Test_compute_default_service_account_in_use:
             service_accounts=[
                 {"email": f"{GCP_PROJECT_ID}-compute@developer.gserviceaccount.com"}
             ],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
         )
 
         compute_client = mock.MagicMock

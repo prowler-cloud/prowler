@@ -14,9 +14,11 @@ class Compute:
         self.zones = []
         self.instances = []
         self.networks = []
+        self.firewalls = []
         self.__get_zones__()
         self.__get_instances__()
         self.__get_networks__()
+        self.__get_firewalls__()
 
     def __get_zones__(self):
         try:
@@ -64,6 +66,18 @@ class Compute:
                                     "shieldedInstanceConfig"
                                 ]["enableIntegrityMonitoring"],
                                 service_accounts=instance["serviceAccounts"],
+                                ip_forward=instance.get("canIpForward", False),
+                                disks_encryption=[
+                                    (
+                                        disk["deviceName"],
+                                        True
+                                        if disk.get("diskEncryptionKey", {}).get(
+                                            "sha256"
+                                        )
+                                        else False,
+                                    )
+                                    for disk in instance["disks"]
+                                ],
                             )
                         )
 
@@ -97,6 +111,31 @@ class Compute:
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __get_firewalls__(self):
+        try:
+            request = self.client.firewalls().list(project=self.project_id)
+            while request is not None:
+                response = request.execute()
+
+                for firewall in response.get("items", []):
+                    self.firewalls.append(
+                        Firewall(
+                            name=firewall["name"],
+                            id=firewall["id"],
+                            source_ranges=firewall["sourceRanges"],
+                            direction=firewall["direction"],
+                            allowed_rules=firewall.get("allowed", []),
+                        )
+                    )
+
+                request = self.client.firewalls().list_next(
+                    previous_request=request, previous_response=response
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Instance(BaseModel):
     name: str
@@ -107,8 +146,18 @@ class Instance(BaseModel):
     shielded_enabled_vtpm: bool
     shielded_enabled_integrity_monitoring: bool
     service_accounts: list
+    ip_forward: bool
+    disks_encryption: list
 
 
 class Network(BaseModel):
     name: str
     id: str
+
+
+class Firewall(BaseModel):
+    name: str
+    id: str
+    source_ranges: list
+    direction: str
+    allowed_rules: list
