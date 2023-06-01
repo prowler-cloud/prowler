@@ -11,14 +11,33 @@ class Compute:
         self.api_version = "v1"
         self.project_id = audit_info.project_id
         self.client = generate_client(self.service, self.api_version, audit_info)
+        self.regions = []
         self.zones = []
         self.instances = []
         self.networks = []
         self.firewalls = []
+        self.__get_regions__()
         self.__get_zones__()
         self.__get_instances__()
         self.__get_networks__()
         self.__get_firewalls__()
+
+    def __get_regions__(self):
+        try:
+            request = self.client.regions().list(project=self.project_id)
+            while request is not None:
+                response = request.execute()
+
+                for region in response.get("items", []):
+                    self.regions.append(region["name"])
+
+                request = self.client.regions().list_next(
+                    previous_request=request, previous_response=response
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_zones__(self):
         try:
