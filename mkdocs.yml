@@ -9,7 +9,7 @@ theme:
   language: en
   logo: img/prowler-logo.png
   name: material
-  favicon: img/ProwlerPro-icon.svg
+  favicon: img/prowler-icon.svg
   features:
     - navigation.tabs
     - navigation.tabs.sticky
