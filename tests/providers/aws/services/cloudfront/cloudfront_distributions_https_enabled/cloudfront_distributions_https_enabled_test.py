@@ -43,7 +43,7 @@ class Test_cloudfront_distributions_https_enabled:
                 origins=[],
                 default_cache_config=DefaultCacheConfigBehaviour(
                     realtime_log_config_arn="",
-                    viewer_protocol_policy=ViewerProtocolPolicy.allow_all,
+                    viewer_protocol_policy=ViewerProtocolPolicy.allow_all.value,
                     field_level_encryption_id="",
                 ),
             )
@@ -81,7 +81,7 @@ class Test_cloudfront_distributions_https_enabled:
                 origins=[],
                 default_cache_config=DefaultCacheConfigBehaviour(
                     realtime_log_config_arn="",
-                    viewer_protocol_policy=ViewerProtocolPolicy.redirect_to_https,
+                    viewer_protocol_policy=ViewerProtocolPolicy.redirect_to_https.value,
                     field_level_encryption_id="",
                 ),
             )
@@ -119,7 +119,7 @@ class Test_cloudfront_distributions_https_enabled:
                 origins=[],
                 default_cache_config=DefaultCacheConfigBehaviour(
                     realtime_log_config_arn="",
-                    viewer_protocol_policy=ViewerProtocolPolicy.https_only,
+                    viewer_protocol_policy=ViewerProtocolPolicy.https_only.value,
                     field_level_encryption_id="",
                 ),
             )
