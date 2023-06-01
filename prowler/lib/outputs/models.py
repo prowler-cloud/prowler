@@ -2,7 +2,7 @@ import importlib
 import sys
 from csv import DictWriter
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, List, Literal, Optional
 
 from pydantic import BaseModel
 
@@ -712,15 +712,17 @@ class Check_Output_JSON_OCSF(BaseModel):
     status_detail: str
     compliance: Compliance_OCSF
     message: str
-    severity_id: int
-    severity: str
+    severity_id: Literal[0, 1, 2, 3, 4, 5, 6, 99]
+    severity: Literal[
+        "Informational", "Low", "Medium", "High", "Critical", "Fatal", "Other"
+    ]
     cloud: Cloud
     time: datetime
     metadata: Metadata
     state_id: str = 0
     state: str = "New"
-    status_id: int
-    status: str
+    status_id: Literal[0, 1, 2, 99]
+    status: Literal["Unknown", "Success", "Failure", "Other"]
     type_uid: int = 200101
     type_name: str = "Security Finding: Create"
     impact_id: int = 0
