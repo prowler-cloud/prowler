@@ -1,7 +1,7 @@
-from datetime import datetime
 import importlib
 import sys
 from csv import DictWriter
+from datetime import datetime
 from typing import Any, List, Optional
 
 from pydantic import BaseModel
@@ -641,9 +641,12 @@ class Finding(BaseModel):
     related_events: List[str]
 
 
+class Group(BaseModel):
+    name: str
+
+
 class Resources(BaseModel):
-    group_name: str
-    account_uid: str
+    group: Group
     region: str
     name: str
     uid: str
@@ -671,7 +674,6 @@ class Organization(BaseModel):
 class Cloud(BaseModel):
     account: Account
     region: str
-    account_name: str
     org: Organization
     provider: str
     project_uid: str
@@ -710,21 +712,23 @@ class Check_Output_JSON_OCSF(BaseModel):
     status_detail: str
     compliance: Compliance_OCSF
     message: str
+    severity_id: int
     severity: str
     cloud: Cloud
     time: datetime
     metadata: Metadata
-    category_name: str
     state_id: str = 0
     state: str = "New"
-    status_id: str
-    type_uid: int = "200101"
+    status_id: int
+    status: str
+    type_uid: int = 200101
     type_name: str = "Security Finding: Create"
-    impact: str = "Unknown"
     impact_id: int = 0
-    confidence: str = "Unknown"
+    impact: str = "Unknown"
     confidence_id: int = 0
+    confidence: str = "Unknown"
     activity_id: int = 1
+    activity_name: str = "Create"
     category_uid: int = 2
     category_name: str = "Findings"
     class_uid: int = 2001
