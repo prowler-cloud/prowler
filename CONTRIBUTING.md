@@ -1,7 +1,7 @@
 # Do you want to learn on how to...
 
 - Contribute with your code or fixes to Prowler
-- Create a new check for a Provider
+- Create a new check for a provider
 - Create a new security compliance framework
 - Add a custom output format
 - Add a new integration
