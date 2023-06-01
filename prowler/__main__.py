@@ -189,7 +189,7 @@ def prowler():
     if args.output_modes:
         for mode in args.output_modes:
             # Close json file if exists
-            if mode == "json" or mode == "json-asff":
+            if "json" in mode:
                 close_json(
                     audit_output_options.output_filename, args.output_directory, mode
                 )

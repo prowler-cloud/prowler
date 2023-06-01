@@ -7,6 +7,7 @@ from prowler.config.config import (
     html_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
+    json_ocsf_file_suffix,
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.html import add_html_header
@@ -45,7 +46,7 @@ def initialize_file_descriptor(
                 "a",
             )
 
-            if output_mode in ("json", "json-asff"):
+            if output_mode in ("json", "json-asff", "json-ocsf"):
                 file_descriptor.write("[")
             elif "html" in output_mode:
                 add_html_header(file_descriptor, audit_info)
@@ -111,6 +112,13 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                 elif isinstance(audit_info, AWS_Audit_Info):
                     if output_mode == "json-asff":
                         filename = f"{output_directory}/{output_filename}{json_asff_file_suffix}"
+                        file_descriptor = initialize_file_descriptor(
+                            filename, output_mode, audit_info
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
+
+                    elif output_mode == "json-ocsf":
+                        filename = f"{output_directory}/{output_filename}{json_ocsf_file_suffix}"
                         file_descriptor = initialize_file_descriptor(
                             filename, output_mode, audit_info
                         )

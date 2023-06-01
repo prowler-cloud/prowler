@@ -1,3 +1,4 @@
+from datetime import datetime
 import importlib
 import sys
 from csv import DictWriter
@@ -5,7 +6,7 @@ from typing import Any, List, Optional
 
 from pydantic import BaseModel
 
-from prowler.config.config import timestamp
+from prowler.config.config import prowler_version, timestamp
 from prowler.lib.check.models import Remediation
 from prowler.lib.logger import logger
 from prowler.providers.aws.lib.audit_info.models import AWS_Organizations_Info
@@ -621,3 +622,110 @@ class Check_Output_JSON_ASFF(BaseModel):
     Resources: List[Resource] = None
     Compliance: Compliance = None
     Remediation: dict = None
+
+
+# JSON OCSF
+class Remediation_OCSF(BaseModel):
+    kb_articles: List[str]
+    desc: str
+
+
+class Finding(BaseModel):
+    title: str
+    desc: str
+    supporting_data: str
+    remediation: Remediation_OCSF
+    types: List[str]
+    src_url: str
+    uid: str
+    related_events: List[str]
+
+
+class Resources(BaseModel):
+    group_name: str
+    account_uid: str
+    region: str
+    name: str
+    uid: str
+    labels: List[str]
+    type: str
+    details: str
+
+
+class Compliance_OCSF(BaseModel):
+    status: str
+    requirements: List[str]
+    status_detail: str
+
+
+class Account(BaseModel):
+    name: str
+    uid: str
+
+
+class Organization(BaseModel):
+    uid: str
+    name: str
+
+
+class Cloud(BaseModel):
+    account: Account
+    region: str
+    account_name: str
+    org: Organization
+    provider: str
+    project_uid: str
+
+
+class Feature(BaseModel):
+    name: str
+    uid: str
+    version: str = prowler_version
+
+
+class Product(BaseModel):
+    language: str = "en"
+    name: str = "Prowler"
+    version: str = prowler_version
+    vendor_name: str = "ProwlerPro - Verica, Inc"
+    feature: Feature
+
+
+class Metadata(BaseModel):
+    original_time: str
+    profiles: List[str]
+    product: Product
+    version: str = "1.0.0-rc.3"
+
+
+class Check_Output_JSON_OCSF(BaseModel):
+    """
+    Check_Output_JSON_OCSF generates a finding's output in JSON OCSF format.
+    https://schema.ocsf.io/1.0.0-rc.3/classes/security_finding
+    """
+
+    finding: Finding
+    resources: List[Resources]
+    status: str
+    status_detail: str
+    compliance: Compliance_OCSF
+    message: str
+    severity: str
+    cloud: Cloud
+    time: datetime
+    metadata: Metadata
+    category_name: str
+    state_id: str = 0
+    state: str = "New"
+    status_id: str
+    type_uid: int = "200101"
+    type_name: str = "Security Finding: Create"
+    impact: str = "Unknown"
+    impact_id: int = 0
+    confidence: str = "Unknown"
+    confidence_id: int = 0
+    activity_id: int = 1
+    category_uid: int = 2
+    category_name: str = "Findings"
+    class_uid: int = 2001
+    class_name: str = "Security Finding"

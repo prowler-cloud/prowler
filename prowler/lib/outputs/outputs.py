@@ -9,15 +9,17 @@ from prowler.config.config import (
     html_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
+    json_ocsf_file_suffix,
     orange_color,
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance import add_manual_controls, fill_compliance
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.html import fill_html
-from prowler.lib.outputs.json import fill_json_asff
+from prowler.lib.outputs.json import fill_json_asff, fill_json_ocsf
 from prowler.lib.outputs.models import (
     Check_Output_JSON_ASFF,
+    Check_Output_JSON_OCSF,
     generate_provider_output_csv,
     generate_provider_output_json,
     unroll_tags,
@@ -117,6 +119,19 @@ def report(check_findings, output_options, audit_info):
                                 )
                                 file_descriptors["json-asff"].write(",")
 
+                            if "json-ocsf" in file_descriptors:
+                                finding_output = Check_Output_JSON_OCSF()
+                                fill_json_ocsf(
+                                    finding_output, audit_info, finding, output_options
+                                )
+
+                                json.dump(
+                                    finding_output.dict(),
+                                    file_descriptors["json-ocsf"],
+                                    indent=4,
+                                )
+                                file_descriptors["json-ocsf"].write(",")
+
                             # Check if it is needed to send findings to security hub
                             if (
                                 output_options.security_hub_enabled
@@ -208,6 +223,8 @@ def send_to_s3_bucket(
             filename = f"{output_filename}{json_file_suffix}"
         elif output_mode == "json-asff":
             filename = f"{output_filename}{json_asff_file_suffix}"
+        elif output_mode == "json-ocsf":
+            filename = f"{output_filename}{json_ocsf_file_suffix}"
         elif output_mode == "html":
             filename = f"{output_filename}{html_file_suffix}"
         else:  # Compliance output mode
