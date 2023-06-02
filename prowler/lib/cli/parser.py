@@ -430,7 +430,7 @@ Detailed documentation at https://docs.prowler.cloud
         azure_auth_modes_group.add_argument(
             "--browser-auth",
             action="store_true",
-            help="Use browser authentication to log in against azure, --tenant-id required for this option",
+            help="Use browser authentication to log in against Azure, --tenant-id is required for this option",
         )
         azure_auth_modes_group.add_argument(
             "--managed-identity-auth",
@@ -449,7 +449,7 @@ Detailed documentation at https://docs.prowler.cloud
             "--tenant-id",
             nargs="?",
             default=None,
-            help="Azure tenant id to be used with --browser-auth option",
+            help="Azure Tenant ID to be used with --browser-auth option",
         )
 
     def __init_gcp_parser__(self):
