@@ -20,7 +20,7 @@ class cloudfront_distributions_https_enabled(Check):
             if (
                 distribution.default_cache_config
                 and distribution.default_cache_config.viewer_protocol_policy
-                == ViewerProtocolPolicy.redirect_to_https.value
+                == ViewerProtocolPolicy.redirect_to_https
             ):
                 report.status = "PASS"
                 report.status_extended = (
@@ -29,7 +29,7 @@ class cloudfront_distributions_https_enabled(Check):
             elif (
                 distribution.default_cache_config
                 and distribution.default_cache_config.viewer_protocol_policy
-                == ViewerProtocolPolicy.https_only.value
+                == ViewerProtocolPolicy.https_only
             ):
                 report.status = "PASS"
                 report.status_extended = (
