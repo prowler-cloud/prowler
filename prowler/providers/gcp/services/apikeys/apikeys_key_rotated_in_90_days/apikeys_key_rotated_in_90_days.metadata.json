@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "apikeys_key_rotated_in_90_days",
+  "CheckTitle": "Ensure API Keys Are Rotated Every 90 Days",
+  "CheckType": [],
+  "ServiceName": "apikeys",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "API Key",
+  "Description": "API Keys should only be used for services in cases where other authentication methods are unavailable. If they are in use it is recommended to rotate API keys every 90 days.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudAPI/rotate-api-keys.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudresourcemanager_no_service_roles_at_project_level",
+  "CheckTitle": "Ensure That IAM Users Are Not Assigned the Service Account User or Service Account Token Creator Roles at Project Level",
+  "CheckType": [],
+  "ServiceName": "cloudresourcemanager",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "IAM Policy",
+  "Description": "It is recommended to assign the `Service Account User (iam.serviceAccountUser)` and `Service Account Token Creator (iam.serviceAccountTokenCreator)` roles to a user for a specific service account rather than assigning the role to a user at project level.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_iam_3#cli-command",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/check-for-iam-users-with-service-roles.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_iam_3#terraform"
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
