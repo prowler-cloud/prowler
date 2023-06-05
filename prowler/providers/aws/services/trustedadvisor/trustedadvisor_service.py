@@ -47,6 +47,10 @@ class TrustedAdvisor:
         except ClientError as error:
             if error.response["Error"]["Code"] == "SubscriptionRequiredException":
                 self.enabled = False
+            elif error.response["Error"]["Code"] == "InvalidParameterValueException":
+                logger.warning(
+                    f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
             else:
                 logger.error(
                     f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
