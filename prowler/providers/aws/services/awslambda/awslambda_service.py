@@ -162,9 +162,14 @@ class Lambda:
         logger.info("Lambda - List Tags...")
         try:
             for function in self.functions.values():
-                regional_client = self.regional_clients[function.region]
-                response = regional_client.list_tags(Resource=function.arn)["Tags"]
-                function.tags = [response]
+                try:
+                    regional_client = self.regional_clients[function.region]
+                    response = regional_client.list_tags(Resource=function.arn)["Tags"]
+                    function.tags = [response]
+                except ClientError as e:
+                    if e.response["Error"]["Code"] == "ResourceNotFoundException":
+                        function.tags = []
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
