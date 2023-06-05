@@ -924,6 +924,14 @@ class Test_Parser:
         assert parsed.provider == "azure"
         assert parsed.browser_auth
 
+    def test_parser_azure_tenant_id(self):
+        argument = "--tenant-id"
+        tenant_id = "test-tenant-id"
+        command = [prowler_command, "azure", argument, tenant_id]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "azure"
+        assert parsed.tenant_id == tenant_id
+
     def test_parser_azure_auth_az_cli(self):
         argument = "--az-cli-auth"
         command = [prowler_command, "azure", argument]

@@ -265,6 +265,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         sp_env_auth = arguments.get("sp_env_auth")
         browser_auth = arguments.get("browser_auth")
         managed_entity_auth = arguments.get("managed_entity_auth")
+        tenant_id = arguments.get("tenant_id")
         if (
             not az_cli_auth
             and not sp_env_auth
@@ -274,6 +275,10 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             raise Exception(
                 "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
             )
+        if (not browser_auth and tenant_id) or (browser_auth and not tenant_id):
+            raise Exception(
+                "Azure Tenant ID is required only for browser authentication mode"
+            )
 
         azure_provider = Azure_Provider(
             az_cli_auth,
@@ -281,6 +286,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             browser_auth,
             managed_entity_auth,
             subscription_ids,
+            tenant_id,
         )
         azure_audit_info.credentials = azure_provider.get_credentials()
         azure_audit_info.identity = azure_provider.get_identity()
