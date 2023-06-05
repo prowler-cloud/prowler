@@ -6,7 +6,10 @@ from moto import mock_cloudfront
 from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.aws.services.cloudfront.cloudfront_service import CloudFront
+from prowler.providers.aws.services.cloudfront.cloudfront_service import (
+    CloudFront,
+    ViewerProtocolPolicy,
+)
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -247,7 +250,7 @@ class Test_CloudFront_Service:
             cloudfront.distributions[
                 cloudfront_distribution_id
             ].default_cache_config.viewer_protocol_policy
-            == "https-only"
+            == ViewerProtocolPolicy.https_only
         )
         assert (
             cloudfront.distributions[
