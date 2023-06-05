@@ -18,7 +18,7 @@ prowler azure --sp-env-auth
 prowler azure --az-cli-auth
 
 # To use browser authentication
-prowler azure --browser-auth
+prowler azure --browser-auth --tenant-id "XXXXXXXX"
 
 # To use managed identity auth
 prowler azure --managed-identity-auth

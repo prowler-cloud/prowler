@@ -52,7 +52,7 @@ export AZURE_CLIENT_SECRET="XXXXXXX"
 If you try to execute Prowler with the `--sp-env-auth` flag and those variables are empty or not exported, the execution is going to fail.
 ### AZ CLI / Browser / Managed Identity authentication
 
-The other three cases does not need additional configuration, `--az-cli-auth` and `--managed-identity-auth` are automated options, `--browser-auth` needs the user to authenticate using the default browser to start the scan.
+The other three cases does not need additional configuration, `--az-cli-auth` and `--managed-identity-auth` are automated options. To use `--browser-auth`  the user needs to authenticate against Azure using the default browser to start the scan, also `tenant-id` is required.
 
 ### Permissions
 
