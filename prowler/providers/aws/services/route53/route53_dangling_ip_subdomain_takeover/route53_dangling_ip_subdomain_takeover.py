@@ -3,16 +3,9 @@ from ipaddress import ip_address
 import awsipranges
 
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.utils.utils import validate_ip_address
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.route53.route53_client import route53_client
-
-
-def validate_ip_address(ip_string):
-    try:
-        ip_address(ip_string)
-        return True
-    except ValueError:
-        return False
 
 
 class route53_dangling_ip_subdomain_takeover(Check):

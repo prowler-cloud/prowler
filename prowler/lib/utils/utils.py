@@ -4,6 +4,7 @@ import sys
 import tempfile
 from hashlib import sha512
 from io import TextIOWrapper
+from ipaddress import ip_address
 from os.path import exists
 from typing import Any
 
@@ -79,3 +80,11 @@ def detect_secrets_scan(data):
         return detect_secrets_output[temp_data_file.name]
     else:
         return None
+
+
+def validate_ip_address(ip_string):
+    try:
+        ip_address(ip_string)
+        return True
+    except ValueError:
+        return False
