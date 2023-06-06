@@ -14,14 +14,14 @@ files = [
 
 [[package]]
 name = "alive-progress"
-version = "3.1.1"
+version = "3.1.4"
 description = "A new kind of Progress Bar, with real-time throughput, ETA, and very cool animations!"
 category = "main"
 optional = false
 python-versions = ">=3.7, <4"
 files = [
-    {file = "alive-progress-3.1.1.tar.gz", hash = "sha256:6d9ad57add9c1341aa57d93e6370c76c9fc0c9fdc631e1c56b48e59daa32106e"},
-    {file = "alive_progress-3.1.1-py3-none-any.whl", hash = "sha256:5c1e075ff56230bda6bf4104c471c4ea8eaeb24af9e5e1696dcbcfc5b503255a"},
+    {file = "alive-progress-3.1.4.tar.gz", hash = "sha256:74a95d8d0d42bc99d3a3725dbd06ebb852245f1b64e301a7c375b92b22663f7b"},
+    {file = "alive_progress-3.1.4-py3-none-any.whl", hash = "sha256:c80ad87ce9c1054b01135a87fae69ecebbfc2107497ae87cbe6aec7e534903db"},
 ]
 
 [package.dependencies]
@@ -2913,4 +2913,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "60f79b60422942f000434791f1d19c8215571395c50db7df5c4d23bb1ddc2063"
+content-hash = "9cffe17bac423be117810e368ccba8985dfa425f755c4501b3a45e0e930c13ce"
