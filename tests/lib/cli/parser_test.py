@@ -18,7 +18,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.quiet
-        assert len(parsed.output_modes) == 3
+        assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
         assert "html" in parsed.output_modes
         assert "json" in parsed.output_modes
@@ -64,7 +64,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.quiet
-        assert len(parsed.output_modes) == 3
+        assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
         assert "html" in parsed.output_modes
         assert "json" in parsed.output_modes
@@ -102,7 +102,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.quiet
-        assert len(parsed.output_modes) == 3
+        assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
         assert "html" in parsed.output_modes
         assert "json" in parsed.output_modes
@@ -203,7 +203,7 @@ class Test_Parser:
     def test_root_parser_default_output_modes(self):
         command = [prowler_command]
         parsed = self.parser.parse(command)
-        assert len(parsed.output_modes) == 3
+        assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
         assert "json" in parsed.output_modes
         assert "html" in parsed.output_modes

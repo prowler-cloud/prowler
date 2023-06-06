@@ -164,13 +164,18 @@ def fill_json_ocsf(
         related_events=finding.check_metadata.DependsOn
         + finding.check_metadata.RelatedTo,
         remediation=Remediation_OCSF(
-            kb_articles=[
-                finding.check_metadata.Remediation.Code.NativeIaC,
-                finding.check_metadata.Remediation.Code.Terraform,
-                finding.check_metadata.Remediation.Code.CLI,
-                finding.check_metadata.Remediation.Code.Other,
-                finding.check_metadata.Remediation.Recommendation.Url,
-            ],
+            kb_articles=list(
+                filter(
+                    None,
+                    [
+                        finding.check_metadata.Remediation.Code.NativeIaC,
+                        finding.check_metadata.Remediation.Code.Terraform,
+                        finding.check_metadata.Remediation.Code.CLI,
+                        finding.check_metadata.Remediation.Code.Other,
+                        finding.check_metadata.Remediation.Recommendation.Url,
+                    ],
+                )
+            ),
             desc=finding.check_metadata.Remediation.Recommendation.Text,
         ),
         types=finding.check_metadata.CheckType,

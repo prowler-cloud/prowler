@@ -701,7 +701,7 @@ class Product(BaseModel):
     language: str = "en"
     name: str = "Prowler"
     version: str = prowler_version
-    vendor_name: str = "ProwlerPro - Verica, Inc"
+    vendor_name: str = "Prowler/ProwlerPro"
     feature: Feature
 
 
