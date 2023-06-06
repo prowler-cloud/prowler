@@ -164,7 +164,7 @@ def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
     checks_from_arn = set()
     # Handle if there are audit resources so only their services are executed
     if audit_resources:
-        services_without_subservices = ["guardduty", "kms", "s3", "elb"]
+        services_without_subservices = ["guardduty", "kms", "s3", "elb", "efs"]
         service_list = set()
         sub_service_list = set()
         for resource in audit_resources:
@@ -175,8 +175,10 @@ def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
                 # Parse services when they are different in the ARNs
                 if service == "lambda":
                     service = "awslambda"
-                if service == "elasticloadbalancing":
+                elif service == "elasticloadbalancing":
                     service = "elb"
+                elif service == "elasticfilesystem":
+                    service = "efs"
                 elif service == "logs":
                     service = "cloudwatch"
                 # Check if Prowler has checks in service
@@ -204,7 +206,6 @@ def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
                     sub_service_list.add(sub_service)
                 else:
                     sub_service_list.add(service)
-
         checks = recover_checks_from_service(service_list, provider)
 
         # Filter only checks with audited subservices
