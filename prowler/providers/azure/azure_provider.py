@@ -168,6 +168,13 @@ class Azure_Provider:
                     )
                     identity.subscriptions.update({subscription.display_name: id})
 
+            # If there are no subscriptions listed -> checks are not going to be run against any resource
+            if not identity.subscriptions:
+                logger.critical(
+                    "It was not possible to retrieve any subscriptions, please check your permission assignments"
+                )
+                sys.exit(1)
+
             tenants = subscriptions_client.tenants.list()
             for tenant in tenants:
                 identity.tenant_ids.append(tenant.tenant_id)
