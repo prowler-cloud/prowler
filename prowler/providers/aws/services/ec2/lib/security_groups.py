@@ -70,8 +70,6 @@ def check_security_group(
                             and ingress_rule["IpProtocol"] == protocol
                         ):
                             return True
-                else:
-                    return True
 
         # IPv6
         for ip_ingress_rule in ingress_rule["Ipv6Ranges"]:
@@ -84,8 +82,6 @@ def check_security_group(
                             and ingress_rule["IpProtocol"] == protocol
                         ):
                             return True
-                else:
-                    return True
 
     return False
 
