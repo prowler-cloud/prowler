@@ -70,6 +70,9 @@ def check_security_group(
                             and ingress_rule["IpProtocol"] == protocol
                         ):
                             return True
+                # If no input ports check if all ports are open
+                if len(set(ingress_port_range)) == 65536:
+                    return True
 
         # IPv6
         for ip_ingress_rule in ingress_rule["Ipv6Ranges"]:
@@ -82,6 +85,9 @@ def check_security_group(
                             and ingress_rule["IpProtocol"] == protocol
                         ):
                             return True
+                # If no input ports check if all ports are open
+                if len(set(ingress_port_range)) == 65536:
+                    return True
 
     return False
 
