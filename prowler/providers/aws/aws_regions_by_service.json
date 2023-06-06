@@ -199,15 +199,6 @@
         "aws-us-gov": []
       }
     },
-    "alexaforbusiness": {
-      "regions": {
-        "aws": [
-          "us-east-1"
-        ],
-        "aws-cn": [],
-        "aws-us-gov": []
-      }
-    },
     "amazonlocationservice": {
       "regions": {
         "aws": [
@@ -5104,6 +5095,7 @@
           "ap-southeast-2",
           "ca-central-1",
           "eu-west-1",
+          "eu-west-2",
           "us-east-1",
           "us-east-2",
           "us-west-2"
