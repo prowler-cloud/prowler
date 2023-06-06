@@ -9,10 +9,11 @@ class Compute:
     def __init__(self, audit_info):
         self.service = "compute"
         self.api_version = "v1"
-        self.project_id = audit_info.project_id
+        self.project_ids = audit_info.project_ids
+        self.default_project_id = audit_info.default_project_id
         self.client = generate_client(self.service, self.api_version, audit_info)
-        self.regions = []
-        self.zones = []
+        self.regions = set()
+        self.zones = set()
         self.instances = []
         self.networks = []
         self.firewalls = []
@@ -29,7 +30,7 @@ class Compute:
                 response = request.execute()
 
                 for region in response.get("items", []):
-                    self.regions.append(region["name"])
+                    self.regions.add(region["name"])
 
                 request = self.client.regions().list_next(
                     previous_request=request, previous_response=response
@@ -40,30 +41,32 @@ class Compute:
             )
 
     def __get_zones__(self):
-        try:
-            request = self.client.zones().list(project=self.project_id)
-            while request is not None:
-                response = request.execute()
-
-                for zone in response.get("items", []):
-                    self.zones.append(zone["name"])
-
-                request = self.client.zones().list_next(
-                    previous_request=request, previous_response=response
-                )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-    def __get_instances__(self):
-        try:
-            for zone in self.zones:
-                request = self.client.instances().list(
-                    project=self.project_id, zone=zone
-                )
+        for project_id in self.project_ids:
+            try:
+                request = self.client.zones().list(project=project_id)
                 while request is not None:
                     response = request.execute()
+
+                    for zone in response.get("items", []):
+                        self.zones.add(zone["name"])
+
+                    request = self.client.zones().list_next(
+                        previous_request=request, previous_response=response
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def __get_instances__(self):
+        for project_id in self.project_ids:
+            try:
+                for zone in self.zones:
+                    request = self.client.instances().list(
+                        project=project_id, zone=zone
+                    )
+                    while request is not None:
+                        response = request.execute()
 
                     for instance in response.get("items", []):
                         public_ip = False
@@ -97,38 +100,40 @@ class Compute:
                                     )
                                     for disk in instance["disks"]
                                 ],
+                                project_id=project_id,
+                                )
+                            )
+
+                        request = self.client.instances().list_next(
+                            previous_request=request, previous_response=response
+                        )
+            except Exception as error:
+                logger.error(
+                    f"{zone} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def __get_networks__(self):
+        for project_id in self.project_ids:
+            try:
+                request = self.client.networks().list(project=project_id)
+                while request is not None:
+                    response = request.execute()
+                    for network in response.get("items", []):
+                        self.networks.append(
+                            Network(
+                                name=network["name"],
+                                id=network["id"],
+                                project_id=project_id,
                             )
                         )
 
-                    request = self.client.instances().list_next(
+                    request = self.client.networks().list_next(
                         previous_request=request, previous_response=response
                     )
-        except Exception as error:
-            logger.error(
-                f"{zone} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-    def __get_networks__(self):
-        try:
-            request = self.client.networks().list(project=self.project_id)
-            while request is not None:
-                response = request.execute()
-
-                for network in response.get("items", []):
-                    self.networks.append(
-                        Network(
-                            name=network["name"],
-                            id=network["id"],
-                        )
-                    )
-
-                request = self.client.networks().list_next(
-                    previous_request=request, previous_response=response
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
 
     def __get_firewalls__(self):
         try:
@@ -161,6 +166,7 @@ class Instance(BaseModel):
     id: str
     zone: str
     public_ip: bool
+    project_id: str
     metadata: dict
     shielded_enabled_vtpm: bool
     shielded_enabled_integrity_monitoring: bool
@@ -172,6 +178,7 @@ class Instance(BaseModel):
 class Network(BaseModel):
     name: str
     id: str
+    project_id: str
 
 
 class Firewall(BaseModel):
@@ -180,3 +187,4 @@ class Firewall(BaseModel):
     source_ranges: list
     direction: str
     allowed_rules: list
+    project_id: str

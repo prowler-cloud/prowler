@@ -37,10 +37,11 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
             ],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -81,10 +82,11 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
             ],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -125,10 +127,11 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
             ],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(

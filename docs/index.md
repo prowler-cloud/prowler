@@ -276,7 +276,7 @@ prowler azure --managed-identity-auth
 
 See more details about Azure Authentication in [Requirements](getting-started/requirements.md)
 
-Prowler by default scans all the subscriptions that is allowed to scan, if you want to scan a single subscription or various concrete subscriptions you can use the following flag (using az cli auth as example):
+Prowler by default scans all the subscriptions that is allowed to scan, if you want to scan a single subscription or various specific subscriptions you can use the following flag (using az cli auth as example):
 ```console
 prowler azure --az-cli-auth --subscription-ids <subscription ID 1> <subscription ID 2> ... <subscription ID N>
 ```
@@ -296,6 +296,9 @@ Otherwise, you can generate and download Service Account keys in JSON format (re
 prowler gcp --credentials-file path
 ```
 
-> `prowler` will scan the GCP project associated with the credentials.
+Prowler by default scans all the GCP Projects that is allowed to scan, if you want to scan a single project or various specific projects you can use the following flag:
+```console
+prowler gcp --project-ids <Project ID 1> <Project ID 2> ... <Project ID N>
+```
 
 See more details about GCP Authentication in [Requirements](getting-started/requirements.md)

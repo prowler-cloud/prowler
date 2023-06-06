@@ -363,7 +363,7 @@ def generate_provider_output_json(
             )
 
         if provider == "gcp":
-            finding_output.ProjectId = audit_info.project_id
+            finding_output.ProjectId = finding.project_id
             finding_output.Location = finding.location
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceName = finding.resource_name

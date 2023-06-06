@@ -45,7 +45,8 @@ class Test_Slack_Integration:
         )
         gcp_audit_info = GCP_Audit_Info(
             credentials=None,
-            project_id="test-project",
+            default_project_id="test-project1",
+            project_ids=["test-project1", "test-project2"],
             audit_resources=None,
             audit_metadata=None,
         )
@@ -69,7 +70,7 @@ class Test_Slack_Integration:
             aws_logo,
         )
         assert create_message_identity("gcp", gcp_audit_info) == (
-            f"GCP Project *{gcp_audit_info.project_id}*",
+            f"GCP Projects *{', '.join(gcp_audit_info.project_ids)}*",
             gcp_logo,
         )
         assert create_message_identity("azure", azure_audit_info) == (

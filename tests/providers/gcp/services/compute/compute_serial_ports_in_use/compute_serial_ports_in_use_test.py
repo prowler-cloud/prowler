@@ -36,6 +36,7 @@ class Test_compute_serial_ports_in_use:
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
@@ -75,6 +76,7 @@ class Test_compute_serial_ports_in_use:
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
@@ -114,6 +116,7 @@ class Test_compute_serial_ports_in_use:
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
@@ -153,6 +156,7 @@ class Test_compute_serial_ports_in_use:
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
@@ -192,6 +196,7 @@ class Test_compute_serial_ports_in_use:
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock

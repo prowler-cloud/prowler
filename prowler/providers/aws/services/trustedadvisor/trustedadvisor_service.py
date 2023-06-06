@@ -61,11 +61,20 @@ class TrustedAdvisor:
         try:
             for check in self.checks:
                 if check.region == self.client.region:
-                    response = self.client.describe_trusted_advisor_check_result(
-                        checkId=check.id
-                    )
-                    if "result" in response:
-                        check.status = response["result"]["status"]
+                    try:
+                        response = self.client.describe_trusted_advisor_check_result(
+                            checkId=check.id
+                        )
+                        if "result" in response:
+                            check.status = response["result"]["status"]
+                    except ClientError as error:
+                        if (
+                            error.response["Error"]["Code"]
+                            == "InvalidParameterValueException"
+                        ):
+                            logger.warning(
+                                f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
         except Exception as error:
             logger.error(
                 f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

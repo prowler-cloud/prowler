@@ -32,13 +32,14 @@ class Test_compute_default_service_account_in_use:
             metadata={},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
-            service_accounts=[{"email": "123-compute@developer.gserviceaccount.com"}],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
+            service_accounts=[{"email": "custom@developer.gserviceaccount.com"}],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -76,10 +77,11 @@ class Test_compute_default_service_account_in_use:
             ],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -117,10 +119,11 @@ class Test_compute_default_service_account_in_use:
             ],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(

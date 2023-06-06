@@ -83,6 +83,10 @@ def mock_set_gcp_credentials(*_):
     return (None, "project")
 
 
+def mock_get_project_ids(*_):
+    return ["project"]
+
+
 class Test_Set_Audit_Info:
     # Mocked Audit Info
     def set_mocked_audit_info(self):
@@ -166,6 +170,7 @@ class Test_Set_Audit_Info:
         assert isinstance(audit_info, Azure_Audit_Info)
 
     @patch.object(GCP_Provider, "__set_credentials__", new=mock_set_gcp_credentials)
+    @patch.object(GCP_Provider, "get_project_ids", new=mock_get_project_ids)
     @patch.object(Audit_Info, "print_gcp_credentials", new=mock_print_audit_credentials)
     def test_set_audit_info_gcp(self):
         provider = "gcp"
@@ -179,6 +184,7 @@ class Test_Set_Audit_Info:
             "subscriptions": None,
             # We need to set exactly one auth method
             "credentials_file": None,
+            "project_ids": ["project"],
         }
 
         audit_info = set_provider_audit_info(provider, arguments)
