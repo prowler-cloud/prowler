@@ -4,7 +4,7 @@ from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_cl
 )
 
 
-class cloudresourcemanager_no_service_roles_at_project_level(Check):
+class iam_no_service_roles_at_project_level(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         failed_projects = set()

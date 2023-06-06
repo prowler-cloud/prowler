@@ -1,9 +1,9 @@
 {
   "Provider": "gcp",
-  "CheckID": "cloudresourcemanager_no_service_roles_at_project_level",
+  "CheckID": "iam_no_service_roles_at_project_level",
   "CheckTitle": "Ensure That IAM Users Are Not Assigned the Service Account User or Service Account Token Creator Roles at Project Level",
   "CheckType": [],
-  "ServiceName": "cloudresourcemanager",
+  "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

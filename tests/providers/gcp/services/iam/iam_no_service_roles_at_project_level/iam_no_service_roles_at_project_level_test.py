@@ -4,20 +4,20 @@ from unittest import mock
 GCP_PROJECT_ID = "123456789012"
 
 
-class Test_cloudresourcemanager_no_service_roles_at_project_level:
-    def test_cloudresourcemanager_no_bindings(self):
+class Test_iam_no_service_roles_at_project_level:
+    def test_iam_no_bindings(self):
         cloudresourcemanager_client = mock.MagicMock
         cloudresourcemanager_client.bindings = []
 
         with mock.patch(
-            "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_no_service_roles_at_project_level.cloudresourcemanager_no_service_roles_at_project_level.cloudresourcemanager_client",
+            "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
             new=cloudresourcemanager_client,
         ):
-            from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_no_service_roles_at_project_level.cloudresourcemanager_no_service_roles_at_project_level import (
-                cloudresourcemanager_no_service_roles_at_project_level,
+            from prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level import (
+                iam_no_service_roles_at_project_level,
             )
 
-            check = cloudresourcemanager_no_service_roles_at_project_level()
+            check = iam_no_service_roles_at_project_level()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -53,14 +53,14 @@ class Test_cloudresourcemanager_no_service_roles_at_project_level:
         cloudresourcemanager_client.bindings = [binding1, binding2, binding3]
 
         with mock.patch(
-            "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_no_service_roles_at_project_level.cloudresourcemanager_no_service_roles_at_project_level.cloudresourcemanager_client",
+            "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
             new=cloudresourcemanager_client,
         ):
-            from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_no_service_roles_at_project_level.cloudresourcemanager_no_service_roles_at_project_level import (
-                cloudresourcemanager_no_service_roles_at_project_level,
+            from prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level import (
+                iam_no_service_roles_at_project_level,
             )
 
-            check = cloudresourcemanager_no_service_roles_at_project_level()
+            check = iam_no_service_roles_at_project_level()
             result = check.execute()
 
             assert len(result) == 1
@@ -88,14 +88,14 @@ class Test_cloudresourcemanager_no_service_roles_at_project_level:
         cloudresourcemanager_client.bindings = [binding]
 
         with mock.patch(
-            "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_no_service_roles_at_project_level.cloudresourcemanager_no_service_roles_at_project_level.cloudresourcemanager_client",
+            "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
             new=cloudresourcemanager_client,
         ):
-            from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_no_service_roles_at_project_level.cloudresourcemanager_no_service_roles_at_project_level import (
-                cloudresourcemanager_no_service_roles_at_project_level,
+            from prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level import (
+                iam_no_service_roles_at_project_level,
             )
 
-            check = cloudresourcemanager_no_service_roles_at_project_level()
+            check = iam_no_service_roles_at_project_level()
             result = check.execute()
 
             assert len(result) == 1
@@ -122,14 +122,14 @@ class Test_cloudresourcemanager_no_service_roles_at_project_level:
         cloudresourcemanager_client.bindings = [binding]
 
         with mock.patch(
-            "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_no_service_roles_at_project_level.cloudresourcemanager_no_service_roles_at_project_level.cloudresourcemanager_client",
+            "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
             new=cloudresourcemanager_client,
         ):
-            from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_no_service_roles_at_project_level.cloudresourcemanager_no_service_roles_at_project_level import (
-                cloudresourcemanager_no_service_roles_at_project_level,
+            from prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level import (
+                iam_no_service_roles_at_project_level,
             )
 
-            check = cloudresourcemanager_no_service_roles_at_project_level()
+            check = iam_no_service_roles_at_project_level()
             result = check.execute()
 
             assert len(result) == 1
