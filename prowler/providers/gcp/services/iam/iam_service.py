@@ -11,7 +11,7 @@ class IAM:
     def __init__(self, audit_info):
         self.service = "iam"
         self.api_version = "v1"
-        self.project_id = audit_info.project_id
+        self.project_ids = audit_info.project_ids
         self.region = "global"
         self.client = generate_client(self.service, self.api_version, audit_info)
         self.service_accounts = []
@@ -22,33 +22,35 @@ class IAM:
         return self.client
 
     def __get_service_accounts__(self):
-        try:
-            request = (
-                self.client.projects()
-                .serviceAccounts()
-                .list(name="projects/" + self.project_id)
-            )
-            while request is not None:
-                response = request.execute()
-
-                for account in response["accounts"]:
-                    self.service_accounts.append(
-                        ServiceAccount(
-                            name=account["name"],
-                            email=account["email"],
-                            display_name=account.get("displayName", ""),
-                        )
-                    )
-
+        for project_id in self.project_ids:
+            try:
                 request = (
                     self.client.projects()
                     .serviceAccounts()
-                    .list_next(previous_request=request, previous_response=response)
+                    .list(name="projects/" + project_id)
                 )
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+                while request is not None:
+                    response = request.execute()
+
+                    for account in response["accounts"]:
+                        self.service_accounts.append(
+                            ServiceAccount(
+                                name=account["name"],
+                                email=account["email"],
+                                display_name=account.get("displayName", ""),
+                                project_id=project_id,
+                            )
+                        )
+
+                    request = (
+                        self.client.projects()
+                        .serviceAccounts()
+                        .list_next(previous_request=request, previous_response=response)
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_service_accounts_keys__(self):
         try:
@@ -59,7 +61,7 @@ class IAM:
                     .keys()
                     .list(
                         name="projects/"
-                        + self.project_id
+                        + sa.project_id
                         + "/serviceAccounts/"
                         + sa.email
                     )
@@ -100,3 +102,4 @@ class ServiceAccount(BaseModel):
     email: str
     display_name: str
     keys: list[Key] = []
+    project_id: str

@@ -50,7 +50,7 @@ class Audit_Info:
         report = f"""
 This report is being generated using credentials below:
 
-GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project ID: {Fore.YELLOW}[{audit_info.project_id}]{Style.RESET_ALL}
+GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.YELLOW}[{", ".join(audit_info.project_ids)}]{Style.RESET_ALL}
 """
         print(report)
 
@@ -301,17 +301,20 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         set_gcp_audit_info returns the GCP_Audit_Info
         """
         logger.info("Setting GCP session ...")
+        project_ids = arguments.get("project_ids")
 
         logger.info("Checking if any credentials mode is set ...")
         credentials_file = arguments.get("credentials_file")
 
         gcp_provider = GCP_Provider(
             credentials_file,
+            project_ids,
         )
 
         (
             gcp_audit_info.credentials,
-            gcp_audit_info.project_id,
+            gcp_audit_info.default_project_id,
+            gcp_audit_info.project_ids,
         ) = gcp_provider.get_credentials()
 
         if not arguments.get("only_logs"):

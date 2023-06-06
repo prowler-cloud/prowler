@@ -7,7 +7,7 @@ class kms_key_rotation_enabled(Check):
         findings = []
         for key in kms_client.crypto_keys:
             report = Check_Report_GCP(self.metadata())
-            report.project_id = kms_client.project_id
+            report.project_id = key.project_id
             report.resource_id = key.name
             report.resource_name = key.name
             report.location = key.location

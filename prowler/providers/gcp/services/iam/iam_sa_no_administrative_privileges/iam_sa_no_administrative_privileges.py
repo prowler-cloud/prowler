@@ -10,7 +10,7 @@ class iam_sa_no_administrative_privileges(Check):
         findings = []
         for account in iam_client.service_accounts:
             report = Check_Report_GCP(self.metadata())
-            report.project_id = iam_client.project_id
+            report.project_id = account.project_id
             report.resource_id = account.email
             report.resource_name = account.name
             report.location = iam_client.region

@@ -980,3 +980,14 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == "gcp"
         assert parsed.credentials_file == file
+
+    def test_parser_gcp_project_ids(self):
+        argument = "--project-ids"
+        project_1 = "test_project_1"
+        project_2 = "test_project_2"
+        command = [prowler_command, "gcp", argument, project_1, project_2]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "gcp"
+        assert len(parsed.project_ids) == 2
+        assert parsed.project_ids[0] == project_1
+        assert parsed.project_ids[1] == project_2

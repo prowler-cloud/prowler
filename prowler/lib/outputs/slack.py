@@ -30,7 +30,7 @@ def create_message_identity(provider, audit_info):
         if provider == "aws":
             identity = f"AWS Account *{audit_info.audited_account}*"
         elif provider == "gcp":
-            identity = f"GCP Project *{audit_info.project_id}*"
+            identity = f"GCP Projects *{', '.join(audit_info.project_ids)}*"
             logo = gcp_logo
         elif provider == "azure":
             printed_subscriptions = []

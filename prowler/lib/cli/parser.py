@@ -443,7 +443,7 @@ Detailed documentation at https://docs.prowler.cloud
             "--subscription-ids",
             nargs="+",
             default=[],
-            help="Azure subscription ids to be scanned by prowler",
+            help="Azure Subscription IDs to be scanned by Prowler",
         )
         azure_parser.add_argument(
             "--tenant-id",
@@ -465,4 +465,12 @@ Detailed documentation at https://docs.prowler.cloud
             nargs="?",
             metavar="FILE_PATH",
             help="Authenticate using a Google Service Account Application Credentials JSON file",
+        )
+        # Subscriptions
+        gcp_subscriptions_subparser = gcp_parser.add_argument_group("Projects")
+        gcp_subscriptions_subparser.add_argument(
+            "--project-ids",
+            nargs="+",
+            default=[],
+            help="GCP Project IDs to be scanned by Prowler",
         )
