@@ -11,7 +11,7 @@ class codebuild_project_user_controlled_buildspec(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = project.region
             report.resource_id = project.name
-            report.resource_arn = ""
+            report.resource_arn = project.arn
             report.status = "PASS"
             report.status_extended = f"CodeBuild project {project.name} does not use an user controlled buildspec"
             if project.buildspec:
