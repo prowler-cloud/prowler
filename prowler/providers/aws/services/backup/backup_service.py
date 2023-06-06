@@ -164,7 +164,7 @@ class BackupPlan(BaseModel):
     region: str
     name: str
     version_id: str
-    last_execution_date: datetime
+    last_execution_date: Optional[datetime]
     advanced_settings: list
 
 
