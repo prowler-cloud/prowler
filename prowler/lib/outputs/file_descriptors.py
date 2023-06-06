@@ -102,6 +102,15 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                     )
                     file_descriptors.update({output_mode: file_descriptor})
 
+                elif output_mode == "json-ocsf":
+                    filename = (
+                        f"{output_directory}/{output_filename}{json_ocsf_file_suffix}"
+                    )
+                    file_descriptor = initialize_file_descriptor(
+                        filename, output_mode, audit_info
+                    )
+                    file_descriptors.update({output_mode: file_descriptor})
+
                 elif output_mode == "html":
                     filename = f"{output_directory}/{output_filename}{html_file_suffix}"
                     file_descriptor = initialize_file_descriptor(
@@ -112,13 +121,6 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                 elif isinstance(audit_info, AWS_Audit_Info):
                     if output_mode == "json-asff":
                         filename = f"{output_directory}/{output_filename}{json_asff_file_suffix}"
-                        file_descriptor = initialize_file_descriptor(
-                            filename, output_mode, audit_info
-                        )
-                        file_descriptors.update({output_mode: file_descriptor})
-
-                    elif output_mode == "json-ocsf":
-                        filename = f"{output_directory}/{output_filename}{json_ocsf_file_suffix}"
                         file_descriptor = initialize_file_descriptor(
                             filename, output_mode, audit_info
                         )

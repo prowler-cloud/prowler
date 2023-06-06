@@ -119,19 +119,6 @@ def report(check_findings, output_options, audit_info):
                                 )
                                 file_descriptors["json-asff"].write(",")
 
-                            if "json-ocsf" in file_descriptors:
-                                finding_output = Check_Output_JSON_OCSF()
-                                fill_json_ocsf(
-                                    finding_output, audit_info, finding, output_options
-                                )
-
-                                json.dump(
-                                    finding_output.dict(),
-                                    file_descriptors["json-ocsf"],
-                                    indent=4,
-                                )
-                                file_descriptors["json-ocsf"].write(",")
-
                             # Check if it is needed to send findings to security hub
                             if (
                                 output_options.security_hub_enabled
@@ -175,6 +162,19 @@ def report(check_findings, output_options, audit_info):
                                 indent=4,
                             )
                             file_descriptors["json"].write(",")
+
+                        if "json-ocsf" in file_descriptors:
+                            finding_output = Check_Output_JSON_OCSF()
+                            fill_json_ocsf(
+                                finding_output, audit_info, finding, output_options
+                            )
+
+                            json.dump(
+                                finding_output.dict(),
+                                file_descriptors["json-ocsf"],
+                                indent=4,
+                            )
+                            file_descriptors["json-ocsf"].write(",")
 
         else:  # No service resources in the whole account
             color = set_report_color("INFO")

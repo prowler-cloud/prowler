@@ -229,6 +229,18 @@ def unroll_dict(dict: dict):
     return unrolled_items
 
 
+def unroll_dict_to_list(dict: dict):
+    list = []
+    for key, value in dict.items():
+        if type(value) == list:
+            value = ", ".join(value)
+            list.append(f"{key}: {value}")
+        else:
+            list.append(f"{key}: {value}")
+
+    return list
+
+
 def parse_html_string(str: str):
     string = ""
     for elem in str.split(" | "):
@@ -633,7 +645,7 @@ class Remediation_OCSF(BaseModel):
 class Finding(BaseModel):
     title: str
     desc: str
-    supporting_data: str
+    supporting_data: dict
     remediation: Remediation_OCSF
     types: List[str]
     src_url: str
@@ -650,7 +662,7 @@ class Resources(BaseModel):
     region: str
     name: str
     uid: str
-    labels: List[str]
+    labels: list
     type: str
     details: str
 
@@ -672,11 +684,11 @@ class Organization(BaseModel):
 
 
 class Cloud(BaseModel):
-    account: Account
-    region: str
-    org: Organization
+    account: Account = None
+    region: str = ""
+    org: Organization = None
     provider: str
-    project_uid: str
+    project_uid: str = ""
 
 
 class Feature(BaseModel):
@@ -706,23 +718,22 @@ class Check_Output_JSON_OCSF(BaseModel):
     https://schema.ocsf.io/1.0.0-rc.3/classes/security_finding
     """
 
-    finding: Finding
-    resources: List[Resources]
-    status: str
-    status_detail: str
-    compliance: Compliance_OCSF
-    message: str
-    severity_id: Literal[0, 1, 2, 3, 4, 5, 6, 99]
+    finding: Finding = None
+    resources: List[Resources] = []
+    status_detail: str = ""
+    compliance: Compliance_OCSF = None
+    message: str = ""
+    severity_id: Literal[0, 1, 2, 3, 4, 5, 6, 99] = 99
     severity: Literal[
         "Informational", "Low", "Medium", "High", "Critical", "Fatal", "Other"
-    ]
-    cloud: Cloud
-    time: datetime
-    metadata: Metadata
+    ] = "Other"
+    cloud: Cloud = None
+    time: datetime = None
+    metadata: Metadata = None
     state_id: str = 0
     state: str = "New"
-    status_id: Literal[0, 1, 2, 99]
-    status: Literal["Unknown", "Success", "Failure", "Other"]
+    status_id: Literal[0, 1, 2, 99] = 0
+    status: Literal["Unknown", "Success", "Failure", "Other"] = "Unknown"
     type_uid: int = 200101
     type_name: str = "Security Finding: Create"
     impact_id: int = 0
