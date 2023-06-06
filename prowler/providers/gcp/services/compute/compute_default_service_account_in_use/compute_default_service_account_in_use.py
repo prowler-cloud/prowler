@@ -13,7 +13,6 @@ class compute_default_service_account_in_use(Check):
             report.location = instance.zone
             report.status = "PASS"
             report.status_extended = f"The default service account is not configured to be used with VM Instance {instance.name}"
-            print(instance.service_accounts)
             if (
                 any(
                     [
