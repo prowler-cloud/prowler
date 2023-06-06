@@ -7,7 +7,7 @@ class dataproc_encrypted_with_cmks_disabled(Check):
         findings = []
         for cluster in dataproc_client.clusters:
             report = Check_Report_GCP(self.metadata())
-            report.project_id = dataproc_client.project_id
+            report.project_id = cluster.project_id
             report.resource_id = cluster.id
             report.resource_name = cluster.name
             report.status = "PASS"

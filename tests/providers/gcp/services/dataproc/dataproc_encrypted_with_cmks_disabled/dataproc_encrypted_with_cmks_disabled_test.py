@@ -25,11 +25,14 @@ class Test_dataproc_encrypted_with_cmks_disabled:
         from prowler.providers.gcp.services.dataproc.dataproc_service import Cluster
 
         cluster = Cluster(
-            name="test", id="1234567890", encryption_config={"gcePdKmsKeyName": "test"}
+            name="test",
+            id="1234567890",
+            encryption_config={"gcePdKmsKeyName": "test"},
+            project_id=GCP_PROJECT_ID,
         )
 
         dataproc_client = mock.MagicMock
-        dataproc_client.project_id = GCP_PROJECT_ID
+        dataproc_client.project_ids = [GCP_PROJECT_ID]
         dataproc_client.clusters = [cluster]
 
         with mock.patch(
@@ -54,10 +57,15 @@ class Test_dataproc_encrypted_with_cmks_disabled:
     def test_cluster_without_encryption(self):
         from prowler.providers.gcp.services.dataproc.dataproc_service import Cluster
 
-        cluster = Cluster(name="test", id="1234567890", encryption_config={})
+        cluster = Cluster(
+            name="test",
+            id="1234567890",
+            encryption_config={},
+            project_id=GCP_PROJECT_ID,
+        )
 
         dataproc_client = mock.MagicMock
-        dataproc_client.project_id = GCP_PROJECT_ID
+        dataproc_client.project_ids = [GCP_PROJECT_ID]
         dataproc_client.clusters = [cluster]
 
         with mock.patch(

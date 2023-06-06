@@ -7,7 +7,7 @@ class dns_rsasha1_in_use_to_zone_sign_in_dnssec(Check):
         findings = []
         for managed_zone in dns_client.managed_zones:
             report = Check_Report_GCP(self.metadata())
-            report.project_id = dns_client.project_id
+            report.project_id = managed_zone.project_id
             report.resource_id = managed_zone.id
             report.resource_name = managed_zone.name
             report.status = "PASS"

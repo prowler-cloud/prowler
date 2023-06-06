@@ -7,7 +7,7 @@ GCP_PROJECT_ID = "123456789012"
 class Test_compute_serial_ports_in_use:
     def test_compute_no_instances(self):
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = []
 
         with mock.patch(
@@ -40,7 +40,7 @@ class Test_compute_serial_ports_in_use:
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -80,7 +80,7 @@ class Test_compute_serial_ports_in_use:
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -120,7 +120,7 @@ class Test_compute_serial_ports_in_use:
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -160,7 +160,7 @@ class Test_compute_serial_ports_in_use:
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -200,7 +200,7 @@ class Test_compute_serial_ports_in_use:
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(

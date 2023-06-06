@@ -19,7 +19,13 @@ class Test_cloudresourcemanager_no_service_roles_at_project_level:
 
             check = cloudresourcemanager_no_service_roles_at_project_level()
             result = check.execute()
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert search(
+                "No IAM Users assigned to service roles at project level",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == GCP_PROJECT_ID
 
     def test_three_compliant_binding(self):
         from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service import (
@@ -29,18 +35,21 @@ class Test_cloudresourcemanager_no_service_roles_at_project_level:
         binding1 = Binding(
             role="roles/cloudfunctions.serviceAgent",
             members=[["serviceAccount:685829395199@cloudbuild.gserviceaccount.com"]],
+            project_id=GCP_PROJECT_ID,
         )
         binding2 = Binding(
             role="roles/compute.serviceAgent",
             members=[["serviceAccount:685829395199@cloudbuild.gserviceaccount.com"]],
+            project_id=GCP_PROJECT_ID,
         )
         binding3 = Binding(
             role="roles/connectors.managedZoneViewer",
             members=[["serviceAccount:685829395199@cloudbuild.gserviceaccount.com"]],
+            project_id=GCP_PROJECT_ID,
         )
 
         cloudresourcemanager_client = mock.MagicMock
-        cloudresourcemanager_client.project_id = GCP_PROJECT_ID
+        cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.bindings = [binding1, binding2, binding3]
 
         with mock.patch(
@@ -54,14 +63,14 @@ class Test_cloudresourcemanager_no_service_roles_at_project_level:
             check = cloudresourcemanager_no_service_roles_at_project_level()
             result = check.execute()
 
-            assert len(result) == 3
+            assert len(result) == 1
             for idx, r in enumerate(result):
                 assert r.status == "PASS"
                 assert search(
-                    "No IAM Users assigned to service roles ate project level.",
+                    "No IAM Users assigned to service roles at project level",
                     r.status_extended,
                 )
-                assert r.resource_id == cloudresourcemanager_client.bindings[idx].role
+                assert r.resource_id == GCP_PROJECT_ID
 
     def test_binding_with_service_account_user(self):
         from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service import (
@@ -71,10 +80,11 @@ class Test_cloudresourcemanager_no_service_roles_at_project_level:
         binding = Binding(
             role="roles/iam.serviceAccountUser",
             members=[["serviceAccount:685829395199@cloudbuild.gserviceaccount.com"]],
+            project_id=GCP_PROJECT_ID,
         )
 
         cloudresourcemanager_client = mock.MagicMock
-        cloudresourcemanager_client.project_id = GCP_PROJECT_ID
+        cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.bindings = [binding]
 
         with mock.patch(
@@ -91,7 +101,7 @@ class Test_cloudresourcemanager_no_service_roles_at_project_level:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"IAM Users assigned to service role '{binding.role}' ate project level.",
+                f"IAM Users assigned to service role '{binding.role}' at project level",
                 result[0].status_extended,
             )
             assert result[0].resource_id == binding.role
@@ -104,10 +114,11 @@ class Test_cloudresourcemanager_no_service_roles_at_project_level:
         binding = Binding(
             role="roles/iam.serviceAccountTokenCreator",
             members=[["serviceAccount:685829395199@cloudbuild.gserviceaccount.com"]],
+            project_id=GCP_PROJECT_ID,
         )
 
         cloudresourcemanager_client = mock.MagicMock
-        cloudresourcemanager_client.project_id = GCP_PROJECT_ID
+        cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.bindings = [binding]
 
         with mock.patch(
@@ -124,7 +135,7 @@ class Test_cloudresourcemanager_no_service_roles_at_project_level:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"IAM Users assigned to service role '{binding.role}' ate project level.",
+                f"IAM Users assigned to service role '{binding.role}' at project level {GCP_PROJECT_ID}",
                 result[0].status_extended,
             )
             assert result[0].resource_id == binding.role

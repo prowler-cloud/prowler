@@ -7,7 +7,7 @@ class compute_block_project_wide_ssh_keys_disabled(Check):
         findings = []
         for instance in compute_client.instances:
             report = Check_Report_GCP(self.metadata())
-            report.project_id = compute_client.project_id
+            report.project_id = instance.project_id
             report.resource_id = instance.id
             report.resource_name = instance.name
             report.location = instance.zone

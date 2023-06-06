@@ -9,7 +9,7 @@ class apikeys_key_rotated_in_90_days(Check):
         findings = []
         for key in apikeys_client.keys:
             report = Check_Report_GCP(self.metadata())
-            report.project_id = apikeys_client.project_id
+            report.project_id = key.project_id
             report.resource_id = key.id
             report.resource_name = key.name
             report.status = "PASS"

@@ -42,10 +42,11 @@ class Test_dns_rsasha1_in_use_to_key_sign_in_dnssec:
                     "kind": "dns#dnsKeySpec",
                 },
             ],
+            project_id=GCP_PROJECT_ID,
         )
 
         dns_client = mock.MagicMock
-        dns_client.project_id = GCP_PROJECT_ID
+        dns_client.project_ids = [GCP_PROJECT_ID]
         dns_client.managed_zones = [managed_zone]
 
         with mock.patch(
@@ -88,10 +89,11 @@ class Test_dns_rsasha1_in_use_to_key_sign_in_dnssec:
                     "kind": "dns#dnsKeySpec",
                 },
             ],
+            project_id=GCP_PROJECT_ID,
         )
 
         dns_client = mock.MagicMock
-        dns_client.project_id = GCP_PROJECT_ID
+        dns_client.project_ids = [GCP_PROJECT_ID]
         dns_client.managed_zones = [managed_zone]
 
         with mock.patch(

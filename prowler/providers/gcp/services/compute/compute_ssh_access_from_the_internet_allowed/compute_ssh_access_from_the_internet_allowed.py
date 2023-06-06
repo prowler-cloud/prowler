@@ -7,7 +7,7 @@ class compute_ssh_access_from_the_internet_allowed(Check):
         findings = []
         for firewall in compute_client.firewalls:
             report = Check_Report_GCP(self.metadata())
-            report.project_id = compute_client.project_id
+            report.project_id = firewall.project_id
             report.resource_id = firewall.id
             report.resource_name = firewall.name
             report.status = "PASS"

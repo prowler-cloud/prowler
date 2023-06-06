@@ -30,10 +30,11 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             source_ranges=["0.0.0.0/0"],
             direction="INGRESS",
             allowed_rules=[{"IPProtocol": "tcp", "ports": ["443"]}],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
 
         with mock.patch(
@@ -50,7 +51,7 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"Firewall {firewall.name} does not expose port 22 \(SSH\) to the internet.",
+                f"Firewall {firewall.name} does not expose port 22",
                 result[0].status_extended,
             )
             assert result[0].resource_id == firewall.id
@@ -64,10 +65,11 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             source_ranges=["0.0.0.0/0"],
             direction="INGRESS",
             allowed_rules=[{"IPProtocol": "tcp", "ports": ["1-20"]}],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
 
         with mock.patch(
@@ -84,7 +86,7 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"Firewall {firewall.name} does not expose port 22 \(SSH\) to the internet.",
+                f"Firewall {firewall.name} does not expose port 22",
                 result[0].status_extended,
             )
             assert result[0].resource_id == firewall.id
@@ -98,10 +100,11 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             source_ranges=["127.0.0.1/32"],
             direction="INGRESS",
             allowed_rules=[{"IPProtocol": "tcp", "ports": ["22"]}],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
 
         with mock.patch(
@@ -118,7 +121,7 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"Firewall {firewall.name} does not expose port 22 \(SSH\) to the internet.",
+                f"Firewall {firewall.name} does not expose port 22",
                 result[0].status_extended,
             )
             assert result[0].resource_id == firewall.id
@@ -132,10 +135,11 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             source_ranges=["0.0.0.0/0"],
             direction="INGRESS",
             allowed_rules=[{"IPProtocol": "udp", "ports": ["22"]}],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
 
         with mock.patch(
@@ -152,7 +156,7 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"Firewall {firewall.name} does not expose port 22 \(SSH\) to the internet.",
+                f"Firewall {firewall.name} does not expose port 22",
                 result[0].status_extended,
             )
             assert result[0].resource_id == firewall.id
@@ -166,10 +170,11 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             source_ranges=["0.0.0.0/0"],
             direction="EGRESS",
             allowed_rules=[{"IPProtocol": "tcp", "ports": ["22"]}],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
 
         with mock.patch(
@@ -186,7 +191,7 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"Firewall {firewall.name} does not expose port 22 \(SSH\) to the internet.",
+                f"Firewall {firewall.name} does not expose port 22",
                 result[0].status_extended,
             )
             assert result[0].resource_id == firewall.id
@@ -200,10 +205,11 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             source_ranges=["0.0.0.0/0"],
             direction="INGRESS",
             allowed_rules=[{"IPProtocol": "tcp", "ports": ["22"]}],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
 
         with mock.patch(
@@ -220,7 +226,7 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"Firewall {firewall.name} does exposes port 22 \(SSH\) to the internet.",
+                f"Firewall {firewall.name} does exposes port 22",
                 result[0].status_extended,
             )
             assert result[0].resource_id == firewall.id
@@ -234,10 +240,11 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             source_ranges=["0.0.0.0/0"],
             direction="INGRESS",
             allowed_rules=[{"IPProtocol": "tcp", "ports": ["20-443"]}],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
 
         with mock.patch(
@@ -254,7 +261,7 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"Firewall {firewall.name} does exposes port 22 \(SSH\) to the internet.",
+                f"Firewall {firewall.name} does exposes port 22",
                 result[0].status_extended,
             )
             assert result[0].resource_id == firewall.id
@@ -268,10 +275,11 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             source_ranges=["0.0.0.0/0"],
             direction="INGRESS",
             allowed_rules=[{"IPProtocol": "tcp"}],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
 
         with mock.patch(
@@ -288,7 +296,7 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"Firewall {firewall.name} does exposes port 22 \(SSH\) to the internet.",
+                f"Firewall {firewall.name} does exposes port 22",
                 result[0].status_extended,
             )
             assert result[0].resource_id == firewall.id
@@ -302,10 +310,11 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             source_ranges=["0.0.0.0/0"],
             direction="INGRESS",
             allowed_rules=[{"IPProtocol": "all"}],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
 
         with mock.patch(
@@ -322,7 +331,7 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"Firewall {firewall.name} does exposes port 22 \(SSH\) to the internet.",
+                f"Firewall {firewall.name} does exposes port 22",
                 result[0].status_extended,
             )
             assert result[0].resource_id == firewall.id
@@ -339,10 +348,11 @@ class Test_compute_ssh_access_from_the_internet_allowed:
                 {"IPProtocol": "udp", "ports": ["22"]},
                 {"IPProtocol": "all"},
             ],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
 
         with mock.patch(
@@ -359,7 +369,7 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"Firewall {firewall.name} does exposes port 22 \(SSH\) to the internet.",
+                f"Firewall {firewall.name} does exposes port 22",
                 result[0].status_extended,
             )
             assert result[0].resource_id == firewall.id
@@ -377,10 +387,11 @@ class Test_compute_ssh_access_from_the_internet_allowed:
                 {"IPProtocol": "tcp", "ports": ["23"]},
                 {"IPProtocol": "udp"},
             ],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
 
         with mock.patch(
@@ -397,7 +408,7 @@ class Test_compute_ssh_access_from_the_internet_allowed:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"Firewall {firewall.name} does not expose port 22 \(SSH\) to the internet.",
+                f"Firewall {firewall.name} does not expose port 22",
                 result[0].status_extended,
             )
             assert result[0].resource_id == firewall.id

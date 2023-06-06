@@ -7,7 +7,7 @@ GCP_PROJECT_ID = "123456789012"
 class Test_compute_block_project_wide_ssh_keys_disabled:
     def test_compute_no_instances(self):
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = []
 
         with mock.patch(
@@ -36,10 +36,11 @@ class Test_compute_block_project_wide_ssh_keys_disabled:
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -56,7 +57,7 @@ class Test_compute_block_project_wide_ssh_keys_disabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"The VM Instance {instance.name} is not making use of common/shared project-wide SSH key\(s\).",
+                f"The VM Instance {instance.name} is not making use of common/shared project-wide SSH key",
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
@@ -75,10 +76,11 @@ class Test_compute_block_project_wide_ssh_keys_disabled:
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -95,7 +97,7 @@ class Test_compute_block_project_wide_ssh_keys_disabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"The VM Instance {instance.name} is making use of common/shared project-wide SSH key\(s\).",
+                f"The VM Instance {instance.name} is making use of common/shared project-wide SSH key",
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
@@ -114,10 +116,11 @@ class Test_compute_block_project_wide_ssh_keys_disabled:
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
+            project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -134,7 +137,7 @@ class Test_compute_block_project_wide_ssh_keys_disabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"The VM Instance {instance.name} is making use of common/shared project-wide SSH key\(s\).",
+                f"The VM Instance {instance.name} is making use of common/shared project-wide SSH key",
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id

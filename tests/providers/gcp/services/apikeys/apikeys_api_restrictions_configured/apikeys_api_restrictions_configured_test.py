@@ -34,10 +34,11 @@ class Test_apikeys_api_restrictions_configured:
                     {"service": "oslogin.googleapis.com"},
                 ]
             },
+            project_id=GCP_PROJECT_ID,
         )
 
         apikeys_client = mock.MagicMock
-        apikeys_client.project_id = GCP_PROJECT_ID
+        apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
 
         with mock.patch(
@@ -67,10 +68,11 @@ class Test_apikeys_api_restrictions_configured:
             id="123",
             creation_time="2022-06-05T11:21:41.627509Z",
             restrictions={},
+            project_id=GCP_PROJECT_ID,
         )
 
         apikeys_client = mock.MagicMock
-        apikeys_client.project_id = GCP_PROJECT_ID
+        apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
 
         with mock.patch(
@@ -106,10 +108,11 @@ class Test_apikeys_api_restrictions_configured:
                     {"service": "cloudapis.googleapis.com"},
                 ]
             },
+            project_id=GCP_PROJECT_ID,
         )
 
         apikeys_client = mock.MagicMock
-        apikeys_client.project_id = GCP_PROJECT_ID
+        apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
 
         with mock.patch(
