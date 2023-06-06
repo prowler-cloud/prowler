@@ -15,9 +15,11 @@ backup_valid_policy_status = "ENABLED"
 class Test_efs_encryption_at_rest_enabled:
     def test_efs_encryption_enabled(self):
         efs_client = mock.MagicMock
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
         efs_client.filesystems = [
             FileSystem(
                 id=file_system_id,
+                arn=efs_arn,
                 region=AWS_REGION,
                 policy=None,
                 backup_policy=backup_valid_policy_status,
@@ -38,13 +40,15 @@ class Test_efs_encryption_at_rest_enabled:
             assert result[0].status == "PASS"
             assert search("has encryption at rest enabled", result[0].status_extended)
             assert result[0].resource_id == file_system_id
-            assert result[0].resource_arn == ""
+            assert result[0].resource_arn == efs_arn
 
     def test_efs_encryption_disabled(self):
         efs_client = mock.MagicMock
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
         efs_client.filesystems = [
             FileSystem(
                 id=file_system_id,
+                arn=efs_arn,
                 region=AWS_REGION,
                 policy=None,
                 backup_policy=backup_valid_policy_status,
@@ -67,4 +71,4 @@ class Test_efs_encryption_at_rest_enabled:
                 "does not have encryption at rest enabled", result[0].status_extended
             )
             assert result[0].resource_id == file_system_id
-            assert result[0].resource_arn == ""
+            assert result[0].resource_arn == efs_arn

@@ -16,6 +16,7 @@ class EFS:
         self.service = "efs"
         self.session = audit_info.audit_session
         self.audit_resources = audit_info.audit_resources
+        self.audited_account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.filesystems = []
         self.__threading_call__(self.__describe_file_systems__)
@@ -41,12 +42,15 @@ class EFS:
             )
             for page in describe_efs_paginator.paginate():
                 for efs in page["FileSystems"]:
+                    efs_id = efs["FileSystemId"]
+                    efs_arn = f"arn:aws:elasticfilesystem:{regional_client.region}:{self.audited_account}:file-system/{efs_id}"
                     if not self.audit_resources or (
-                        is_resource_filtered(efs["FileSystemId"], self.audit_resources)
+                        is_resource_filtered(efs_arn, self.audit_resources)
                     ):
                         self.filesystems.append(
                             FileSystem(
-                                id=efs["FileSystemId"],
+                                id=efs_id,
+                                arn=efs_arn,
                                 region=regional_client.region,
                                 policy=None,
                                 backup_policy=None,
@@ -89,6 +93,7 @@ class EFS:
 
 class FileSystem(BaseModel):
     id: str
+    arn: str
     region: str
     policy: Optional[dict]
     backup_policy: Optional[str]

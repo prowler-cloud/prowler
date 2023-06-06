@@ -9,7 +9,7 @@ class efs_have_backup_enabled(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = fs.region
             report.resource_id = fs.id
-            report.resource_arn = ""
+            report.resource_arn = fs.arn
             report.resource_tags = fs.tags
             report.status = "PASS"
             report.status_extended = f"EFS {fs.id} has backup enabled"
