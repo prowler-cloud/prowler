@@ -11,7 +11,6 @@ class efs_encryption_at_rest_enabled(Check):
             report.resource_id = fs.id
             report.resource_arn = fs.arn
             report.resource_tags = fs.tags
-            report.resource_arn = ""
             report.status = "FAIL"
             report.status_extended = (
                 f"EFS {fs.id} does not have encryption at rest enabled"
