@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "IAM Policy",
   "Description": "It is recommended to assign the `Service Account User (iam.serviceAccountUser)` and `Service Account Token Creator (iam.serviceAccountTokenCreator)` roles to a user for a specific service account rather than assigning the role to a user at project level.",
-  "Risk": "",
+  "Risk": "The Service Account User (iam.serviceAccountUser) role allows an IAM user to attach a service account to a long-running job service such as an App Engine App or Dataflow Job, whereas the Service Account Token Creator (iam.serviceAccountTokenCreator) role allows a user to directly impersonate the identity of a service account.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -19,8 +19,8 @@
       "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_iam_3#terraform"
     },
     "Recommendation": {
-      "Text": "",
-      "Url": ""
+      "Text": "Ensure that the Service Account User and Service Account Token Creator roles are assigned to a user for a specific GCP service account rather than to a user at the GCP project level, in order to implement the principle of least privilege (POLP). The principle of least privilege (also known as the principle of minimal privilege) is the practice of providing every user the minimal amount of access required to perform its tasks. Google Cloud Platform (GCP) IAM users should not have assigned the Service Account User or Service Account Token Creator roles at the GCP project level. Instead, these roles should be allocated to a user associated with a specific service account, providing that user access to the service account only.",
+      "Url": "https://cloud.google.com/iam/docs/granting-changing-revoking-access"
     }
   },
   "Categories": [],

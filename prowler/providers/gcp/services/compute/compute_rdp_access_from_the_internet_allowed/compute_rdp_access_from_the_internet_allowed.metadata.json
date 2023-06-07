@@ -9,7 +9,7 @@
   "Severity": "critical",
   "ResourceType": "FirewallRule",
   "Description": "GCP `Firewall Rules` are specific to a `VPC Network`. Each rule either `allows` or `denies` traffic when its conditions are met. Its conditions allow users to specify the type of traffic, such as ports and protocols, and the source or destination of the traffic, including IP addresses, subnets, and instances. Firewall rules are defined at the VPC network level and are specific to the network in which they are defined. The rules themselves cannot be shared among networks. Firewall rules only support IPv4 traffic. When specifying a source for an ingress rule or a destination for an egress rule by address, an `IPv4` address or `IPv4 block in CIDR` notation can be used. Generic `(0.0.0.0/0)` incoming traffic from the Internet to a VPC or VM instance using `RDP` on `Port 3389` can be avoided.",
-  "Risk": "",
+  "Risk": "Allowing unrestricted Remote Desktop Protocol (RDP) access can increase opportunities for malicious activities such as hacking, Man-In-The-Middle attacks (MITM) and Pass-The-Hash (PTH) attacks.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -19,8 +19,8 @@
       "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_networking_2#terraform"
     },
     "Recommendation": {
-      "Text": "",
-      "Url": ""
+      "Text": "Ensure that Google Cloud Virtual Private Cloud (VPC) firewall rules do not allow unrestricted access (i.e. 0.0.0.0/0) on TCP port 3389 in order to restrict Remote Desktop Protocol (RDP) traffic to trusted IP addresses or IP ranges only and reduce the attack surface. TCP port 3389 is used for secure remote GUI login to Windows VM instances by connecting a RDP client application with an RDP server.",
+      "Url": "https://cloud.google.com/vpc/docs/using-firewalls"
     }
   },
   "Categories": [],

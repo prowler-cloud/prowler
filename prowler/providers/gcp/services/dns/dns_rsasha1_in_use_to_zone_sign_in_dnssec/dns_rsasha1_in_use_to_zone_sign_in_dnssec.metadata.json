@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "DNS_Zone",
   "Description": "NOTE: Currently, the SHA1 algorithm has been removed from general use by Google, and, if being used, needs to be whitelisted on a project basis by Google and will also, therefore, require a Google Cloud support contract. DNSSEC algorithm numbers in this registry may be used in CERT RRs. Zone signing (DNSSEC) and transaction security mechanisms (SIG(0) and TSIG) make use of particular subsets of these algorithms. The algorithm used for key signing should be a recommended one and it should be strong.",
-  "Risk": "",
+  "Risk": "SHA1 is considered weak and vulnerable to collision attacks.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -19,8 +19,8 @@
       "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_networking_6#terraform"
     },
     "Recommendation": {
-      "Text": "",
-      "Url": ""
+      "Text": "Ensure that Domain Name System Security Extensions (DNSSEC) feature is not using the deprecated RSASHA1 algorithm for the Zone-Signing Key (ZSK) associated with your public DNS managed zone. The algorithm used for DNSSEC signing should be a strong one, such as RSASHA256, as this algorithm is secure and widely deployed, and therefore it is a good candidate for both DNSSEC validation and signing.",
+      "Url": "https://cloud.google.com/dns/docs/dnssec-config"
     }
   },
   "Categories": [],
