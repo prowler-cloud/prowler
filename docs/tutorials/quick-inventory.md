@@ -16,4 +16,5 @@ prowler <provider> -i
 
 ![Quick Inventory Example](../img/quick-inventory.jpg)
 
-> The inventorying process is done with `resourcegroupstaggingapi` calls (except for the IAM resources which are done with Boto3 API calls.)
+## Objections
+The inventorying process is done with `resourcegroupstaggingapi` calls which means that only resources they have or have had tags will appear (except for the IAM and S3 resources which are done with Boto3 API calls).
