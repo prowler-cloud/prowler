@@ -1,6 +1,7 @@
 from boto3 import session
 from botocore.config import Config
 
+from prowler.config.config import boto3_user_agent_extra
 from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 
 # Default Current Audit Info
@@ -12,7 +13,10 @@ current_audit_info = AWS_Audit_Info(
     ),
     # Default standard retrier config
     # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html
-    session_config=Config(retries={"max_attempts": 3, "mode": "standard"}),
+    session_config=Config(
+        retries={"max_attempts": 3, "mode": "standard"},
+        user_agent_extra=boto3_user_agent_extra,
+    ),
     audited_account=None,
     audited_user_id=None,
     audited_partition=None,
