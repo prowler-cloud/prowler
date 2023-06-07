@@ -32,7 +32,8 @@
         "ssm:GetDocument",
         "ssm-incidents:List*",
         "support:Describe*",
-        "tag:GetTagKeys"
+        "tag:GetTagKeys",
+        "wellarchitected:List*"
       ],
       "Resource": "*",
       "Effect": "Allow",
@@ -44,7 +45,7 @@
         "apigateway:GET"
       ],
       "Resource": [
-        "arn:aws:apigateway:*::/restapis/*", 
+        "arn:aws:apigateway:*::/restapis/*",
         "arn:aws:apigateway:*::/apis/*"
       ]
     }

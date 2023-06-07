@@ -54,6 +54,10 @@ regions_by_service["services"]["opensearch"] = regions_by_service["services"]["e
 regions_by_service["services"]["elbv2"] = regions_by_service["services"]["elb"]
 # wafv2 --> waf
 regions_by_service["services"]["wafv2"] = regions_by_service["services"]["waf"]
+# wellarchitected --> wellarchitectedtool
+regions_by_service["services"]["wellarchitected"] = regions_by_service["services"][
+    "wellarchitectedtool"
+]
 
 # Write to file
 parsed_matrix_regions_aws = f"{os.path.dirname(os.path.realpath(__name__))}/prowler/providers/aws/aws_regions_by_service.json"

@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "wellarchitected_workload_no_high_or_medium_risks",
+  "CheckTitle": "Check for medium and high risks identified in workloads defined in the AWS Well-Architected Tool.",
+  "CheckType": [],
+  "ServiceName": "wellarchitected",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:wellarchitected:region:account-id:workload/workload-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "The Well-Architected Tool uses the AWS Well-Architected Framework to compare your cloud workloads against best practices across five architectural pillars: security, reliability, performance efficiency, operational excellence, and cost optimization",
+  "Risk": "A given workload can have medium and/or high risks that have been identified based on answers provided to the questions in the Well-Architected Tool. These issues are architectural and operational choices that are not aligned with the best practices from the Well-Architected Framework",
+  "RelatedUrl": "https://aws.amazon.com/architecture/well-architected/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WellArchitected/findings.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "With the AWS Well-Architected Tool tool, you can analyze your workloads using a consistent process, pinpoint any medium or high-risk issues, and identify the next steps that must be taken for improvement",
+      "Url": "https://aws.amazon.com/architecture/well-architected/"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
