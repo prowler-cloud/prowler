@@ -1,11 +1,12 @@
 import importlib
 import sys
 from csv import DictWriter
-from typing import Any, List, Optional
+from datetime import datetime
+from typing import Any, List, Literal, Optional
 
 from pydantic import BaseModel
 
-from prowler.config.config import timestamp
+from prowler.config.config import prowler_version, timestamp
 from prowler.lib.check.models import Remediation
 from prowler.lib.logger import logger
 from prowler.providers.aws.lib.audit_info.models import AWS_Organizations_Info
@@ -226,6 +227,18 @@ def unroll_dict(dict: dict):
             unrolled_items = f"{unrolled_items} {separator} {key}: {value}"
 
     return unrolled_items
+
+
+def unroll_dict_to_list(dict: dict):
+    list = []
+    for key, value in dict.items():
+        if type(value) == list:
+            value = ", ".join(value)
+            list.append(f"{key}: {value}")
+        else:
+            list.append(f"{key}: {value}")
+
+    return list
 
 
 def parse_html_string(str: str):
@@ -621,3 +634,115 @@ class Check_Output_JSON_ASFF(BaseModel):
     Resources: List[Resource] = None
     Compliance: Compliance = None
     Remediation: dict = None
+
+
+# JSON OCSF
+class Remediation_OCSF(BaseModel):
+    kb_articles: List[str]
+    desc: str
+
+
+class Finding(BaseModel):
+    title: str
+    desc: str
+    supporting_data: dict
+    remediation: Remediation_OCSF
+    types: List[str]
+    src_url: str
+    uid: str
+    related_events: List[str]
+
+
+class Group(BaseModel):
+    name: str
+
+
+class Resources(BaseModel):
+    group: Group
+    region: str
+    name: str
+    uid: str
+    labels: list
+    type: str
+    details: str
+
+
+class Compliance_OCSF(BaseModel):
+    status: str
+    requirements: List[str]
+    status_detail: str
+
+
+class Account(BaseModel):
+    name: str
+    uid: str
+
+
+class Organization(BaseModel):
+    uid: str
+    name: str
+
+
+class Cloud(BaseModel):
+    account: Account = None
+    region: str = ""
+    org: Organization = None
+    provider: str
+    project_uid: str = ""
+
+
+class Feature(BaseModel):
+    name: str
+    uid: str
+    version: str = prowler_version
+
+
+class Product(BaseModel):
+    language: str = "en"
+    name: str = "Prowler"
+    version: str = prowler_version
+    vendor_name: str = "Prowler/ProwlerPro"
+    feature: Feature
+
+
+class Metadata(BaseModel):
+    original_time: str
+    profiles: List[str]
+    product: Product
+    version: str = "1.0.0-rc.3"
+
+
+class Check_Output_JSON_OCSF(BaseModel):
+    """
+    Check_Output_JSON_OCSF generates a finding's output in JSON OCSF format.
+    https://schema.ocsf.io/1.0.0-rc.3/classes/security_finding
+    """
+
+    finding: Finding = None
+    resources: List[Resources] = []
+    status_detail: str = ""
+    compliance: Compliance_OCSF = None
+    message: str = ""
+    severity_id: Literal[0, 1, 2, 3, 4, 5, 6, 99] = 99
+    severity: Literal[
+        "Informational", "Low", "Medium", "High", "Critical", "Fatal", "Other"
+    ] = "Other"
+    cloud: Cloud = None
+    time: datetime = None
+    metadata: Metadata = None
+    state_id: str = 0
+    state: str = "New"
+    status_id: Literal[0, 1, 2, 99] = 0
+    status: Literal["Unknown", "Success", "Failure", "Other"] = "Unknown"
+    type_uid: int = 200101
+    type_name: str = "Security Finding: Create"
+    impact_id: int = 0
+    impact: str = "Unknown"
+    confidence_id: int = 0
+    confidence: str = "Unknown"
+    activity_id: int = 1
+    activity_name: str = "Create"
+    category_uid: int = 2
+    category_name: str = "Findings"
+    class_uid: int = 2001
+    class_name: str = "Security Finding"
