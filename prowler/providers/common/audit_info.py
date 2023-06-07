@@ -3,6 +3,7 @@ import sys
 from botocore.config import Config
 from colorama import Fore, Style
 
+from prowler.config.config import boto3_user_agent_extra
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import (
     AWS_Provider,
@@ -103,7 +104,8 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                 retries={
                     "max_attempts": aws_retries_max_attempts,
                     "mode": "standard",
-                }
+                },
+                user_agent_extra=boto3_user_agent_extra,
             )
             # Merge the new configuration
             new_boto3_config = current_audit_info.session_config.merge(config)
