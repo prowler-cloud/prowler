@@ -7,7 +7,7 @@ GCP_PROJECT_ID = "123456789012"
 class Test_compute_serial_ports_in_use:
     def test_compute_no_instances(self):
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = []
 
         with mock.patch(
@@ -34,11 +34,13 @@ class Test_compute_serial_ports_in_use:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
             project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -72,11 +74,13 @@ class Test_compute_serial_ports_in_use:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
             project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -110,11 +114,13 @@ class Test_compute_serial_ports_in_use:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
             project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -148,11 +154,13 @@ class Test_compute_serial_ports_in_use:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
             project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
@@ -186,11 +194,13 @@ class Test_compute_serial_ports_in_use:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
             project_id=GCP_PROJECT_ID,
         )
 
         compute_client = mock.MagicMock
-        compute_client.project_id = GCP_PROJECT_ID
+        compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
         with mock.patch(
