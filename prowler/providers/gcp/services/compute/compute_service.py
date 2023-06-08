@@ -12,12 +12,34 @@ class Compute:
         self.project_ids = audit_info.project_ids
         self.default_project_id = audit_info.default_project_id
         self.client = generate_client(self.service, self.api_version, audit_info)
+        self.regions = set()
         self.zones = set()
         self.instances = []
         self.networks = []
+        self.firewalls = []
+        self.__get_regions__()
         self.__get_zones__()
         self.__get_instances__()
         self.__get_networks__()
+        self.__get_firewalls__()
+
+    def __get_regions__(self):
+        for project_id in self.project_ids:
+            try:
+                request = self.client.regions().list(project=project_id)
+                while request is not None:
+                    response = request.execute()
+
+                    for region in response.get("items", []):
+                        self.regions.add(region["name"])
+
+                    request = self.client.regions().list_next(
+                        previous_request=request, previous_response=response
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_zones__(self):
         for project_id in self.project_ids:
@@ -67,6 +89,18 @@ class Compute:
                                         "shieldedInstanceConfig"
                                     ]["enableIntegrityMonitoring"],
                                     service_accounts=instance["serviceAccounts"],
+                                    ip_forward=instance.get("canIpForward", False),
+                                    disks_encryption=[
+                                        (
+                                            disk["deviceName"],
+                                            True
+                                            if disk.get("diskEncryptionKey", {}).get(
+                                                "sha256"
+                                            )
+                                            else False,
+                                        )
+                                        for disk in instance["disks"]
+                                    ],
                                     project_id=project_id,
                                 )
                             )
@@ -85,7 +119,6 @@ class Compute:
                 request = self.client.networks().list(project=project_id)
                 while request is not None:
                     response = request.execute()
-
                     for network in response.get("items", []):
                         self.networks.append(
                             Network(
@@ -96,6 +129,33 @@ class Compute:
                         )
 
                     request = self.client.networks().list_next(
+                        previous_request=request, previous_response=response
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def __get_firewalls__(self):
+        for project_id in self.project_ids:
+            try:
+                request = self.client.firewalls().list(project=project_id)
+                while request is not None:
+                    response = request.execute()
+
+                    for firewall in response.get("items", []):
+                        self.firewalls.append(
+                            Firewall(
+                                name=firewall["name"],
+                                id=firewall["id"],
+                                source_ranges=firewall["sourceRanges"],
+                                direction=firewall["direction"],
+                                allowed_rules=firewall.get("allowed", []),
+                                project_id=project_id,
+                            )
+                        )
+
+                    request = self.client.firewalls().list_next(
                         previous_request=request, previous_response=response
                     )
             except Exception as error:
@@ -114,9 +174,20 @@ class Instance(BaseModel):
     shielded_enabled_vtpm: bool
     shielded_enabled_integrity_monitoring: bool
     service_accounts: list
+    ip_forward: bool
+    disks_encryption: list
 
 
 class Network(BaseModel):
     name: str
     id: str
+    project_id: str
+
+
+class Firewall(BaseModel):
+    name: str
+    id: str
+    source_ranges: list
+    direction: str
+    allowed_rules: list
     project_id: str

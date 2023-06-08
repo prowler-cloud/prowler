@@ -35,6 +35,8 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
             service_accounts=[
                 {"email": "123-compute@developer.gserviceaccount.com", "scopes": []}
             ],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
             project_id=GCP_PROJECT_ID,
         )
 
@@ -78,6 +80,8 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
                     "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
                 }
             ],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
             project_id=GCP_PROJECT_ID,
         )
 
@@ -121,6 +125,8 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
                     "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
                 }
             ],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
             project_id=GCP_PROJECT_ID,
         )
 

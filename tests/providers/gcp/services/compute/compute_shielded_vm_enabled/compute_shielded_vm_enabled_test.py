@@ -34,6 +34,8 @@ class Test_compute_shielded_vm_enabled:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
             project_id=GCP_PROJECT_ID,
         )
 
@@ -72,6 +74,8 @@ class Test_compute_shielded_vm_enabled:
             shielded_enabled_vtpm=False,
             shielded_enabled_integrity_monitoring=True,
             service_accounts=[],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
             project_id=GCP_PROJECT_ID,
         )
 
@@ -110,6 +114,8 @@ class Test_compute_shielded_vm_enabled:
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=False,
             service_accounts=[],
+            ip_forward=False,
+            disks_encryption=[("disk1", False), ("disk2", False)],
             project_id=GCP_PROJECT_ID,
         )
 
