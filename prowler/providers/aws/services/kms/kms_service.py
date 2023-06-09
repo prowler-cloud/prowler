@@ -113,16 +113,19 @@ class KMS:
     def __list_resource_tags__(self):
         logger.info("KMS - List Tags...")
         for key in self.keys:
-            try:
-                regional_client = self.regional_clients[key.region]
-                response = regional_client.list_resource_tags(
-                    KeyId=key.id,
-                )["Tags"]
-                key.tags = response
-            except Exception as error:
-                logger.error(
-                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+            if (
+                key.manager and key.manager == "CUSTOMER"
+            ):  # only check customer KMS keys
+                try:
+                    regional_client = self.regional_clients[key.region]
+                    response = regional_client.list_resource_tags(
+                        KeyId=key.id,
+                    )["Tags"]
+                    key.tags = response
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
 
 
 class Key(BaseModel):
