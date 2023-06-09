@@ -294,6 +294,7 @@ class VPC:
                                 public=public,
                                 nat_gateway=nat_gateway,
                                 tags=subnet.get("Tags"),
+                                mapPublicIpOnLaunch=subnet["MapPublicIpOnLaunch"],
                             )
                             self.vpc_subnets[subnet["SubnetId"]] = object
                             # Add it to the VPC object
@@ -319,6 +320,7 @@ class VpcSubnet(BaseModel):
     public: bool
     nat_gateway: bool
     region: str
+    mapPublicIpOnLaunch: bool
     tags: Optional[list] = []
 
 

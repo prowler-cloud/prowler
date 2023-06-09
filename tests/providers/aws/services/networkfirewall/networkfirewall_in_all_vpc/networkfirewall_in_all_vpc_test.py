@@ -108,6 +108,7 @@ class Test_networkfirewall_in_all_vpc:
                         nat_gateway=False,
                         region=AWS_REGION,
                         tags=[],
+                        mapPublicIpOnLaunch=False,
                     )
                 ],
                 tags=[],
@@ -171,6 +172,7 @@ class Test_networkfirewall_in_all_vpc:
                         nat_gateway=False,
                         region=AWS_REGION,
                         tags=[],
+                        mapPublicIpOnLaunch=False,
                     )
                 ],
                 tags=[],
@@ -244,6 +246,7 @@ class Test_networkfirewall_in_all_vpc:
                         nat_gateway=False,
                         region=AWS_REGION,
                         tags=[],
+                        mapPublicIpOnLaunch=False,
                     )
                 ],
                 tags=[],
@@ -265,6 +268,7 @@ class Test_networkfirewall_in_all_vpc:
                         nat_gateway=False,
                         region=AWS_REGION,
                         tags=[],
+                        mapPublicIpOnLaunch=False,
                     )
                 ],
                 tags=[],
