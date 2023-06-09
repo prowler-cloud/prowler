@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
-class vpc_subnet_map_public_ip_on_launch(Check):
+class vpc_subnet_no_public_ip_by_default(Check):
     def execute(self):
         findings = []
         for vpc in vpc_client.vpcs.values():
@@ -15,12 +15,12 @@ class vpc_subnet_map_public_ip_on_launch(Check):
                 if subnet.mapPublicIpOnLaunch:
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"Subnet {subnet.id} has automatic public IP mapping"
+                        f"VPC subnet {subnet.id} assigns public IP by default"
                     )
                 else:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"Subnet {subnet.id} does NOT have automatic public IP mapping"
+                        f"VPC subnet {subnet.id} does NOT assign public IP by default"
                     )
                 findings.append(report)
 
