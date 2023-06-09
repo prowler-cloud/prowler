@@ -895,6 +895,16 @@ class Test_Parser:
         assert resource_arn1 in parsed.resource_arn
         assert resource_arn2 in parsed.resource_arn
 
+    def test_aws_parser_resource_arn_lambda(self):
+        argument = "--resource-arn"
+        resource_arn1 = "arn:aws:iam::012345678910:user/test"
+        resource_arn2 = "arn:aws:lambda:eu-west-1:123456789012:function:lambda-function"
+        command = [prowler_command, argument, resource_arn1, resource_arn2]
+        parsed = self.parser.parse(command)
+        assert len(parsed.resource_arn) == 2
+        assert resource_arn1 in parsed.resource_arn
+        assert resource_arn2 in parsed.resource_arn
+
     def test_aws_parser_wrong_resource_arn(self):
         argument = "--resource-arn"
         resource_arn = "arn:azure:iam::account:user/test"
