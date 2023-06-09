@@ -138,7 +138,9 @@
           "ImplementationGuidanceUrl": "https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_securely_operate_threat_model.html#implementation-guidance."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "wellarchitected_workload_no_high_or_medium_risks"
+      ]
     },
     {
       "Id": "SEC01-BP08",
