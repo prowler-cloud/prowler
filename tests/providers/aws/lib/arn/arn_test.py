@@ -314,6 +314,11 @@ class Test_ARN_Parsing:
         assert is_valid_arn("arn:aws:iam::012345678910:user/test")
         assert is_valid_arn("arn:aws-cn:ec2:us-east-1:123456789012:vpc/vpc-12345678")
         assert is_valid_arn("arn:aws-us-gov:s3:::bucket")
+        assert is_valid_arn("arn:aws-iso:iam::012345678910:user/test")
+        assert is_valid_arn("arn:aws-iso-b:ec2:us-east-1:123456789012:vpc/vpc-12345678")
+        assert is_valid_arn(
+            "arn:aws:lambda:eu-west-1:123456789012:function:lambda-function"
+        )
         assert not is_valid_arn("arn:azure:::012345678910:user/test")
         assert not is_valid_arn("arn:aws:iam::account:user/test")
         assert not is_valid_arn("arn:aws:::012345678910:resource")
