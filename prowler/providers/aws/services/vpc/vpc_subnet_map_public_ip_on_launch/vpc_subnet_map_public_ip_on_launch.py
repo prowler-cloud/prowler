@@ -14,10 +14,14 @@ class vpc_subnet_map_public_ip_on_launch(Check):
 
                 if subnet.mapPublicIpOnLaunch:
                     report.status = "FAIL"
-                    report.status_extended = (f"Subnet {subnet.id} has automatic public IP mapping")
+                    report.status_extended = (
+                        f"Subnet {subnet.id} has automatic public IP mapping"
+                    )
                 else:
                     report.status = "PASS"
-                    report.status_extended = (f"Subnet {subnet.id} does NOT have automatic public IP mapping")
+                    report.status_extended = (
+                        f"Subnet {subnet.id} does NOT have automatic public IP mapping"
+                    )
                 findings.append(report)
 
         return findings
