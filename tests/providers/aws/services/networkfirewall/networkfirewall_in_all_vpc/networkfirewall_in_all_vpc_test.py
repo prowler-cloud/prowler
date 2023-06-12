@@ -97,9 +97,11 @@ class Test_networkfirewall_in_all_vpc:
                 cidr_block="192.168.0.0/16",
                 flow_log=False,
                 region=AWS_REGION,
+                arn="arn_test",
                 subnets=[
                     VpcSubnet(
                         id="subnet-123456789",
+                        arn="arn_test",
                         default=False,
                         vpc_id=VPC_ID_PROTECTED,
                         cidr_block="192.168.0.0/24",
@@ -146,7 +148,7 @@ class Test_networkfirewall_in_all_vpc:
                     assert result[0].region == AWS_REGION
                     assert result[0].resource_id == VPC_ID_PROTECTED
                     assert result[0].resource_tags == []
-                    assert result[0].resource_arn == ""
+                    assert result[0].resource_arn == "arn_test"
 
     def test_vpcs_without_firewall(self):
         networkfirewall_client = mock.MagicMock
@@ -161,9 +163,11 @@ class Test_networkfirewall_in_all_vpc:
                 cidr_block="192.168.0.0/16",
                 flow_log=False,
                 region=AWS_REGION,
+                arn="arn_test",
                 subnets=[
                     VpcSubnet(
                         id="subnet-123456789",
+                        arn="arn_test",
                         default=False,
                         vpc_id=VPC_ID_UNPROTECTED,
                         cidr_block="192.168.0.0/24",
@@ -210,7 +214,7 @@ class Test_networkfirewall_in_all_vpc:
                     assert result[0].region == AWS_REGION
                     assert result[0].resource_id == VPC_ID_UNPROTECTED
                     assert result[0].resource_tags == []
-                    assert result[0].resource_arn == ""
+                    assert result[0].resource_arn == "arn_test"
 
     def test_vpcs_with_and_without_firewall(self):
         networkfirewall_client = mock.MagicMock
@@ -235,9 +239,11 @@ class Test_networkfirewall_in_all_vpc:
                 cidr_block="192.168.0.0/16",
                 flow_log=False,
                 region=AWS_REGION,
+                arn="arn_test",
                 subnets=[
                     VpcSubnet(
                         id="subnet-123456789",
+                        arn="arn_test",
                         default=False,
                         vpc_id=VPC_ID_UNPROTECTED,
                         cidr_block="192.168.0.0/24",
@@ -257,9 +263,11 @@ class Test_networkfirewall_in_all_vpc:
                 cidr_block="192.168.0.0/16",
                 flow_log=False,
                 region=AWS_REGION,
+                arn="arn_test",
                 subnets=[
                     VpcSubnet(
                         id="subnet-123456789",
+                        arn="arn_test",
                         default=False,
                         vpc_id=VPC_ID_PROTECTED,
                         cidr_block="192.168.0.0/24",
@@ -308,7 +316,7 @@ class Test_networkfirewall_in_all_vpc:
                             assert r.region == AWS_REGION
                             assert r.resource_id == VPC_ID_PROTECTED
                             assert r.resource_tags == []
-                            assert r.resource_arn == ""
+                            assert r.resource_arn == "arn_test"
                         if r.resource_id == VPC_ID_UNPROTECTED:
                             assert r.status == "FAIL"
                             assert (
@@ -318,4 +326,4 @@ class Test_networkfirewall_in_all_vpc:
                             assert r.region == AWS_REGION
                             assert r.resource_id == VPC_ID_UNPROTECTED
                             assert r.resource_tags == []
-                            assert r.resource_arn == ""
+                            assert r.resource_arn == "arn_test"

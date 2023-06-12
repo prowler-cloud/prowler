@@ -129,7 +129,7 @@ class Logs:
                 for filter in page["metricFilters"]:
                     arn = f"arn:{self.audited_partition}:logs:{regional_client.region}:{self.audited_account}:metric-filter/{filter['filterName']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(filter["filterName"], self.audit_resources)
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         self.metric_filters.append(
                             MetricFilter(

@@ -38,6 +38,7 @@ class Test_glue_database_connections_ssl_enabled:
                     "CONNECTOR_CLASS_NAME": "test",
                 },
                 region=AWS_REGION,
+                arn="arn_test",
             )
         ]
 
@@ -60,6 +61,7 @@ class Test_glue_database_connections_ssl_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == "test"
+            assert result[0].resource_arn == "arn_test"
 
     def test_glue_table_with_SSL(self):
         glue_client = mock.MagicMock
@@ -75,6 +77,7 @@ class Test_glue_database_connections_ssl_enabled:
                     "JDBC_ENFORCE_SSL": "true",
                 },
                 region=AWS_REGION,
+                arn="arn_test",
             )
         ]
 
@@ -97,3 +100,4 @@ class Test_glue_database_connections_ssl_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == "test"
+            assert result[0].resource_arn == "arn_test"

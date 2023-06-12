@@ -40,7 +40,7 @@ class ApiGatewayV2:
             get_apis_paginator = regional_client.get_paginator("get_apis")
             for page in get_apis_paginator.paginate():
                 for apigw in page["Items"]:
-                    arn = f"arn:{self.audited_partition}:apigateway:{regional_client.region}:{self.audited_account}:apis/{apigw['ApiId']}"
+                    arn = f"arn:{self.audited_partition}:apigateway:{regional_client.region}::apis/{apigw['ApiId']}"
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):

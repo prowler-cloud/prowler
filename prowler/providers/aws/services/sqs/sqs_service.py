@@ -15,6 +15,7 @@ class SQS:
         self.service = "sqs"
         self.session = audit_info.audit_session
         self.audit_resources = audit_info.audit_resources
+        self.audited_account = audit_info.audited_account
         self.audited_partition = audit_info.audited_partition
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.queues = []
@@ -101,7 +102,7 @@ class SQS:
 
 class Queue(BaseModel):
     id: str
-    arn: str = ""
+    arn: str
     region: str
     policy: dict = None
     kms_key_id: str = None

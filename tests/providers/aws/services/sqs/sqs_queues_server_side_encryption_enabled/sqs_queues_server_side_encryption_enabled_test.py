@@ -32,7 +32,12 @@ class Test_sqs_queues_server_side_encryption_enabled:
         sqs_client = mock.MagicMock
         sqs_client.queues = []
         sqs_client.queues.append(
-            Queue(id=queue_id, region=AWS_REGION, kms_key_id=test_kms_key_id)
+            Queue(
+                id=queue_id,
+                region=AWS_REGION,
+                kms_key_id=test_kms_key_id,
+                arn="arn_test",
+            )
         )
         with mock.patch(
             "prowler.providers.aws.services.sqs.sqs_service.SQS",
@@ -48,7 +53,7 @@ class Test_sqs_queues_server_side_encryption_enabled:
             assert result[0].status == "PASS"
             assert search("is using Server Side Encryption", result[0].status_extended)
             assert result[0].resource_id == queue_id
-            assert result[0].resource_arn == ""
+            assert result[0].resource_arn == "arn_test"
 
     def test_queues_no_encryption(self):
         sqs_client = mock.MagicMock
@@ -57,6 +62,7 @@ class Test_sqs_queues_server_side_encryption_enabled:
             Queue(
                 id=queue_id,
                 region=AWS_REGION,
+                arn="arn_test",
             )
         )
         with mock.patch(
@@ -75,4 +81,4 @@ class Test_sqs_queues_server_side_encryption_enabled:
                 "is not using Server Side Encryption", result[0].status_extended
             )
             assert result[0].resource_id == queue_id
-            assert result[0].resource_arn == ""
+            assert result[0].resource_arn == "arn_test"
