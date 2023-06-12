@@ -37,6 +37,7 @@ class AWS_Audit_Info:
     # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html
     session_config: Config
     audited_account: int
+    audited_account_arn: str
     audited_identity_arn: str
     audited_user_id: str
     audited_partition: str

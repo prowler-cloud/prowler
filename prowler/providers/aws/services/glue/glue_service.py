@@ -15,7 +15,8 @@ class Glue:
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
-        self.audited_partition = audit_info.audited_account
+        self.audited_partition = audit_info.audited_partition
+        self.audited_account_arn = audit_info.audited_account_arn
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.connections = []
         self.__threading_call__(self.__get_connections__)

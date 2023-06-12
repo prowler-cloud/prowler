@@ -55,7 +55,6 @@ def mock_generate_regional_clients(service, audit_info):
     new=mock_generate_regional_clients,
 )
 class Test_DRS_Service:
-
     # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
@@ -66,6 +65,7 @@ class Test_DRS_Service:
                 botocore_session=None,
             ),
             audited_account=None,
+            audited_account_arn=None,
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,

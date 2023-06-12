@@ -33,6 +33,7 @@ class Test_TrustedAdvisor_Service:
                 botocore_session=None,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -67,7 +68,6 @@ class Test_TrustedAdvisor_Service:
     @mock_support
     # Test TrustedAdvisor session
     def test__describe_trusted_advisor_checks__(self):
-
         audit_info = self.set_mocked_audit_info()
         trustedadvisor = TrustedAdvisor(audit_info)
         assert len(trustedadvisor.checks) == 104  # Default checks

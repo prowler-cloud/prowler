@@ -135,6 +135,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         current_audit_info.audited_partition = parse_iam_credentials_arn(
             caller_identity["Arn"]
         ).partition
+        current_audit_info.audited_account_arn = f"arn:{current_audit_info.audited_partition}:iam::{current_audit_info.audited_account}:root"
 
         logger.info("Checking if organizations role assumption is needed ...")
         if organizations_role_arn:
@@ -214,6 +215,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             current_audit_info.audit_session = assumed_session
             current_audit_info.audited_account = role_arn_parsed.account_id
             current_audit_info.audited_partition = role_arn_parsed.partition
+            current_audit_info.audited_account_arn = f"arn:{current_audit_info.audited_partition}:iam::{current_audit_info.audited_account}:root"
         else:
             logger.info("Audit session is the original one")
             current_audit_info.audit_session = current_audit_info.original_session

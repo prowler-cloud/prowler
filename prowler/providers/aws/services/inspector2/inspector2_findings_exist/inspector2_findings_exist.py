@@ -12,9 +12,7 @@ class inspector2_findings_exist(Check):
             report.status = "FAIL"
             report.status_extended = "Inspector2 is not enabled."
             report.resource_id = inspector2_client.audited_account
-            report.resource_arn = (
-                f"arn:aws:iam::{inspector2_client.audited_account}:root"
-            )
+            report.resource_arn = inspector2_client.audited_account_arn
             report.region = inspector.region
             if inspector.status == "ENABLED":
                 active_findings = 0

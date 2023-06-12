@@ -11,6 +11,7 @@ class Test_backup_plans_exist:
     def test_no_backup_plans(self):
         backup_client = mock.MagicMock
         backup_client.audited_account = AWS_ACCOUNT_NUMBER
+        backup_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         backup_client.region = AWS_REGION
         backup_client.backup_plans = []
         with mock.patch(
@@ -35,6 +36,7 @@ class Test_backup_plans_exist:
     def test_one_backup_plan(self):
         backup_client = mock.MagicMock
         backup_client.audited_account = AWS_ACCOUNT_NUMBER
+        backup_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         backup_client.region = AWS_REGION
         backup_client.backup_plans = [
             BackupPlan(

@@ -32,6 +32,7 @@ class Test_Slack_Integration:
             original_session=None,
             audit_session=None,
             audited_account=AWS_ACCOUNT_ID,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
             audited_identity_arn="test-arn",
             audited_user_id="test",
             audited_partition="aws",

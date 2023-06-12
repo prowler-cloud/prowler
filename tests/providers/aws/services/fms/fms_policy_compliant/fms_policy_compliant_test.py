@@ -31,6 +31,7 @@ class Test_fms_policy_compliant:
     def test_fms_admin_with_non_compliant_policies(self):
         fms_client = mock.MagicMock
         fms_client.audited_account = AWS_ACCOUNT_NUMBER
+        fms_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         fms_client.region = AWS_REGION
         fms_client.fms_admin_account = True
         fms_client.fms_policies = [
@@ -76,6 +77,7 @@ class Test_fms_policy_compliant:
     def test_fms_admin_with_compliant_policies(self):
         fms_client = mock.MagicMock
         fms_client.audited_account = AWS_ACCOUNT_NUMBER
+        fms_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         fms_client.region = AWS_REGION
         fms_client.fms_admin_account = True
         fms_client.fms_policies = [
@@ -120,6 +122,7 @@ class Test_fms_policy_compliant:
     def test_fms_admin_with_non_and_compliant_policies(self):
         fms_client = mock.MagicMock
         fms_client.audited_account = AWS_ACCOUNT_NUMBER
+        fms_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         fms_client.region = AWS_REGION
         fms_client.fms_admin_account = True
         fms_client.fms_policies = [

@@ -54,6 +54,7 @@ class IAM:
         self.account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
         self.partition = audit_info.audited_partition
+        self.account_arn = f"arn:{self.partition}:iam::{self.account}:root"
         self.client = self.session.client(self.service)
         global_client = generate_regional_clients(
             self.service, audit_info, global_service=True

@@ -21,7 +21,7 @@ class cloudwatch_changes_to_network_gateways_alarm_configured(Check):
         )
         report.region = cloudwatch_client.region
         report.resource_id = cloudtrail_client.audited_account
-        report.resource_arn = f"arn:aws:iam::{cloudtrail_client.audited_account}:root"
+        report.resource_arn = cloudtrail_client.audited_account_arn
         # 1. Iterate for CloudWatch Log Group in CloudTrail trails
         log_groups = []
         for trail in cloudtrail_client.trails:

@@ -12,7 +12,7 @@ class iam_root_hardware_mfa_enabled(Check):
                 report = Check_Report_AWS(self.metadata())
                 report.region = iam_client.region
                 report.resource_id = "<root_account>"
-                report.resource_arn = f"arn:aws:iam::{iam_client.account}:root"
+                report.resource_arn = iam_client.account_arn
 
                 if iam_client.account_summary["SummaryMap"]["AccountMFAEnabled"] > 0:
                     virtual_mfas = iam_client.virtual_mfa_devices

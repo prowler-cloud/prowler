@@ -17,6 +17,7 @@ class Test_inspector2_findings_exist:
         # Mock the inspector2 client
         inspector2_client = mock.MagicMock
         inspector2_client.audited_account = AWS_ACCOUNT_ID
+        inspector2_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
         inspector2_client.region = AWS_REGION
         inspector2_client.inspectors = [
             Inspector(
@@ -46,6 +47,7 @@ class Test_inspector2_findings_exist:
         # Mock the inspector2 client
         inspector2_client = mock.MagicMock
         inspector2_client.audited_account = AWS_ACCOUNT_ID
+        inspector2_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
         inspector2_client.region = AWS_REGION
         inspector2_client.inspectors = [
             Inspector(
@@ -75,6 +77,7 @@ class Test_inspector2_findings_exist:
         # Mock the inspector2 client
         inspector2_client = mock.MagicMock
         inspector2_client.audited_account = AWS_ACCOUNT_ID
+        inspector2_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
         inspector2_client.region = AWS_REGION
         inspector2_client.inspectors = [
             Inspector(
@@ -119,6 +122,7 @@ class Test_inspector2_findings_exist:
         # Mock the inspector2 client
         inspector2_client = mock.MagicMock
         inspector2_client.audited_account = AWS_ACCOUNT_ID
+        inspector2_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
         inspector2_client.region = AWS_REGION
         inspector2_client.inspectors = [
             Inspector(
@@ -162,6 +166,7 @@ class Test_inspector2_findings_exist:
         # Mock the inspector2 client
         inspector2_client = mock.MagicMock
         inspector2_client.audited_account = AWS_ACCOUNT_ID
+        inspector2_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
         inspector2_client.region = AWS_REGION
         inspector2_client.inspectors = [
             Inspector(

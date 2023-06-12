@@ -9,6 +9,7 @@ class Test_macie_is_enabled:
     def test_macie_disabled(self):
         macie_client = mock.MagicMock
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
+        macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         macie_client.sessions = [
             Session(
                 status="DISABLED",
@@ -35,6 +36,7 @@ class Test_macie_is_enabled:
     def test_macie_enabled(self):
         macie_client = mock.MagicMock
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
+        macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         macie_client.sessions = [
             Session(
                 status="ENABLED",
@@ -61,6 +63,7 @@ class Test_macie_is_enabled:
     def test_macie_suspended(self):
         macie_client = mock.MagicMock
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
+        macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         macie_client.sessions = [
             Session(
                 status="PAUSED",

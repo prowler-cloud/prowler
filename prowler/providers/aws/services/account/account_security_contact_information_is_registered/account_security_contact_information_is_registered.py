@@ -9,7 +9,7 @@ class account_security_contact_information_is_registered(Check):
         report = Check_Report_AWS(self.metadata())
         report.region = account_client.region
         report.resource_id = account_client.audited_account
-        report.resource_arn = f"arn:aws:iam::{account_client.audited_account}:root"
+        report.resource_arn = account_client.audited_account_arn
         report.status = "INFO"
         report.status_extended = "Manual check: Login to the AWS Console. Choose your account name on the top right of the window -> My Account -> Alternate Contacts -> Security Section."
         return [report]

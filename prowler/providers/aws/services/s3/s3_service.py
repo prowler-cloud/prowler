@@ -19,6 +19,7 @@ class S3:
         self.audited_account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
         self.audited_partition = audit_info.audited_partition
+        self.audited_account_arn = audit_info.audited_account_arn
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.buckets = self.__list_buckets__(audit_info)
         self.__threading_call__(self.__get_bucket_versioning__)

@@ -32,9 +32,7 @@ class cloudtrail_multi_region_enabled(Check):
                         report.status_extended = (
                             "No CloudTrail trails enabled and logging were found"
                         )
-                        report.resource_arn = (
-                            f"arn:aws:iam::{cloudtrail_client.audited_account}:root"
-                        )
+                        report.resource_arn = cloudtrail_client.audited_account_arn
                         report.resource_id = cloudtrail_client.audited_account
             # If there are no trails logging it is needed to store the FAIL once all the trails have been checked
             if report.status == "FAIL":

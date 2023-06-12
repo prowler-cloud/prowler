@@ -15,6 +15,9 @@ class Test_ssmincidents_enabled_with_plans:
     def test_ssmincidents_no_replicationset(self):
         ssmincidents_client = mock.MagicMock
         ssmincidents_client.audited_account = AWS_ACCOUNT_NUMBER
+        ssmincidents_client.audited_account_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        )
         ssmincidents_client.region = AWS_REGION
         ssmincidents_client.replication_set = []
         with mock.patch(
@@ -41,6 +44,9 @@ class Test_ssmincidents_enabled_with_plans:
     def test_ssmincidents_replicationset_not_active(self):
         ssmincidents_client = mock.MagicMock
         ssmincidents_client.audited_account = AWS_ACCOUNT_NUMBER
+        ssmincidents_client.audited_account_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        )
         ssmincidents_client.region = AWS_REGION
         ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="CREATING")
@@ -70,6 +76,9 @@ class Test_ssmincidents_enabled_with_plans:
     def test_ssmincidents_replicationset_active_no_plans(self):
         ssmincidents_client = mock.MagicMock
         ssmincidents_client.audited_account = AWS_ACCOUNT_NUMBER
+        ssmincidents_client.audited_account_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        )
         ssmincidents_client.region = AWS_REGION
         ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="ACTIVE")
@@ -100,6 +109,9 @@ class Test_ssmincidents_enabled_with_plans:
     def test_ssmincidents_replicationset_active_with_plans(self):
         ssmincidents_client = mock.MagicMock
         ssmincidents_client.audited_account = AWS_ACCOUNT_NUMBER
+        ssmincidents_client.audited_account_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        )
         ssmincidents_client.region = AWS_REGION
         ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="ACTIVE")

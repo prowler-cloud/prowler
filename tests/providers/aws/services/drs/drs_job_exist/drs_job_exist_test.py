@@ -11,6 +11,7 @@ class Test_drs_job_exist:
     def test_drs_job_exist(self):
         drs_client = mock.MagicMock
         drs_client.audited_account = AWS_ACCOUNT_NUMBER
+        drs_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         drs_client.region = AWS_REGION
         drs_client.drs_services = [
             DRSservice(
@@ -53,6 +54,7 @@ class Test_drs_job_exist:
     def test_drs_no_jobs(self):
         drs_client = mock.MagicMock
         drs_client.audited_account = AWS_ACCOUNT_NUMBER
+        drs_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         drs_client.region = AWS_REGION
         drs_client.drs_services = [
             DRSservice(
@@ -88,6 +90,7 @@ class Test_drs_job_exist:
     def test_drs_disabled(self):
         drs_client = mock.MagicMock
         drs_client.audited_account = AWS_ACCOUNT_NUMBER
+        drs_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         drs_client.region = AWS_REGION
         drs_client.drs_services = [
             DRSservice(

@@ -17,7 +17,6 @@ def scp_restrict_regions_with_deny():
 
 
 class Test_Organizations_Service:
-
     # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
@@ -29,6 +28,7 @@ class Test_Organizations_Service:
                 region_name=AWS_REGION,
             ),
             audited_account=DEFAULT_ACCOUNT_ID,
+            audited_account_arn=f"arn:aws:iam::{DEFAULT_ACCOUNT_ID}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,

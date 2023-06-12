@@ -20,6 +20,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
                 botocore_session=None,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
