@@ -15,6 +15,8 @@ class OpenSearchService:
         self.service = "opensearch"
         self.session = audit_info.audit_session
         self.audit_resources = audit_info.audit_resources
+        self.audited_partition = audit_info.audited_partition
+        self.audited_account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.opensearch_domains = []
         self.__threading_call__(self.__list_domain_names__)
@@ -39,12 +41,15 @@ class OpenSearchService:
         try:
             domains = regional_client.list_domain_names()
             for domain in domains["DomainNames"]:
+                arn = f"arn:{self.audited_partition}:opensearch:{regional_client.region}:{self.audited_account}:domain/{domain['DomainName']}"
                 if not self.audit_resources or (
-                    is_resource_filtered(domain["DomainName"], self.audit_resources)
+                    is_resource_filtered(arn, self.audit_resources)
                 ):
                     self.opensearch_domains.append(
                         OpenSearchDomain(
-                            name=domain["DomainName"], region=regional_client.region
+                            arn=arn,
+                            name=domain["DomainName"],
+                            region=regional_client.region,
                         )
                     )
         except Exception as error:

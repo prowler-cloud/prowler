@@ -14,6 +14,8 @@ class WorkSpaces:
         self.service = "workspaces"
         self.session = audit_info.audit_session
         self.audit_resources = audit_info.audit_resources
+        self.audited_partition = audit_info.audited_partition
+        self.audited_account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.workspaces = []
         self.__threading_call__(self.__describe_workspaces__)
@@ -39,12 +41,12 @@ class WorkSpaces:
             )
             for page in describe_workspaces_paginator.paginate():
                 for workspace in page["Workspaces"]:
+                    arn = f"arn:{self.audited_partition}:workspaces:{regional_client.region}:{self.audited_account}:workspace/{workspace['WorkspaceId']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(
-                            workspace["WorkspaceId"], self.audit_resources
-                        )
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         workspace_to_append = WorkSpace(
+                            arn=arn,
                             id=workspace.get("WorkspaceId"),
                             region=regional_client.region,
                             subnet_id=workspace.get("SubnetId"),

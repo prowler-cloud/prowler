@@ -15,6 +15,7 @@ class SQS:
         self.service = "sqs"
         self.session = audit_info.audit_session
         self.audit_resources = audit_info.audit_resources
+        self.audited_partition = audit_info.audited_partition
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.queues = []
         self.__threading_call__(self.__list_queues__)
@@ -40,11 +41,13 @@ class SQS:
             for page in list_queues_paginator.paginate():
                 if "QueueUrls" in page:
                     for queue in page["QueueUrls"]:
+                        arn = f"arn:{self.audited_partition}:sqs:{regional_client.region}:{self.audited_account}:{queue}"
                         if not self.audit_resources or (
-                            is_resource_filtered(queue, self.audit_resources)
+                            is_resource_filtered(arn, self.audit_resources)
                         ):
                             self.queues.append(
                                 Queue(
+                                    arn=arn,
                                     id=queue,
                                     region=regional_client.region,
                                 )

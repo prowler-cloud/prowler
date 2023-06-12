@@ -8,6 +8,7 @@ class glue_database_connections_ssl_enabled(Check):
         for conn in glue_client.connections:
             report = Check_Report_AWS(self.metadata())
             report.resource_id = conn.name
+            report.resource_arn = conn.arn
             report.region = conn.region
             report.status = "FAIL"
             report.status_extended = (

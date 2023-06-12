@@ -52,16 +52,15 @@ class RDS:
             )
             for page in describe_db_instances_paginator.paginate():
                 for instance in page["DBInstances"]:
+                    arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:db:{instance['DBInstanceIdentifier']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(
-                            instance["DBInstanceIdentifier"], self.audit_resources
-                        )
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         if instance["Engine"] != "docdb":
                             self.db_instances.append(
                                 DBInstance(
                                     id=instance["DBInstanceIdentifier"],
-                                    arn=f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:db:{instance['DBInstanceIdentifier']}",
+                                    arn=arn,
                                     endpoint=instance.get("Endpoint"),
                                     engine=instance["Engine"],
                                     engine_version=instance["EngineVersion"],
@@ -125,16 +124,15 @@ class RDS:
             )
             for page in describe_db_snapshots_paginator.paginate():
                 for snapshot in page["DBSnapshots"]:
+                    arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:snapshot:{snapshot['DBSnapshotIdentifier']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(
-                            snapshot["DBSnapshotIdentifier"], self.audit_resources
-                        )
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         if snapshot["Engine"] != "docdb":
                             self.db_snapshots.append(
                                 DBSnapshot(
                                     id=snapshot["DBSnapshotIdentifier"],
-                                    arn=f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:snapshot:{snapshot['DBSnapshotIdentifier']}",
+                                    arn=arn,
                                     instance_id=snapshot["DBInstanceIdentifier"],
                                     region=regional_client.region,
                                     tags=snapshot.get("TagList", []),
@@ -175,13 +173,11 @@ class RDS:
             )
             for page in describe_db_clusters_paginator.paginate():
                 for cluster in page["DBClusters"]:
+                    db_cluster_arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:cluster:{cluster['DBClusterIdentifier']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(
-                            cluster["DBClusterIdentifier"], self.audit_resources
-                        )
+                        is_resource_filtered(db_cluster_arn, self.audit_resources)
                     ):
                         if cluster["Engine"] != "docdb":
-                            db_cluster_arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:cluster:{cluster['DBClusterIdentifier']}"
                             db_cluster = DBCluster(
                                 id=cluster["DBClusterIdentifier"],
                                 arn=db_cluster_arn,
@@ -220,9 +216,10 @@ class RDS:
             )
             for page in describe_db_snapshots_paginator.paginate():
                 for snapshot in page["DBClusterSnapshots"]:
+                    arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:cluster-snapshot:{snapshot['DBClusterSnapshotIdentifier']}"
                     if not self.audit_resources or (
                         is_resource_filtered(
-                            snapshot["DBClusterSnapshotIdentifier"],
+                            arn,
                             self.audit_resources,
                         )
                     ):
@@ -230,7 +227,7 @@ class RDS:
                             self.db_cluster_snapshots.append(
                                 ClusterSnapshot(
                                     id=snapshot["DBClusterSnapshotIdentifier"],
-                                    arn=f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:cluster-snapshot:{snapshot['DBClusterSnapshotIdentifier']}",
+                                    arn=arn,
                                     cluster_id=snapshot["DBClusterIdentifier"],
                                     region=regional_client.region,
                                     tags=snapshot.get("TagList", []),

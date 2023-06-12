@@ -70,11 +70,13 @@ class Inspector2:
                     for page in list_findings_paginator.paginate():
                         for finding in page["findings"]:
                             if not self.audit_resources or (
-                                is_resource_filtered(finding, self.audit_resources)
+                                is_resource_filtered(
+                                    finding["findingArn"], self.audit_resources
+                                )
                             ):
                                 inspector.findings.append(
                                     InspectorFinding(
-                                        arn=finding.get("findingArn"),
+                                        arn=finding["findingArn"],
                                         region=regional_client.region,
                                         severity=finding.get("severity"),
                                         status=finding.get("status"),
