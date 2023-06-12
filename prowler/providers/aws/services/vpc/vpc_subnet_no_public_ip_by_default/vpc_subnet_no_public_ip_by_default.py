@@ -11,7 +11,7 @@ class vpc_subnet_no_public_ip_by_default(Check):
                 report.region = subnet.region
                 report.resource_tags = subnet.tags
                 report.resource_id = subnet.id
-
+                report.resource_arn = subnet.arn
                 if subnet.mapPublicIpOnLaunch:
                     report.status = "FAIL"
                     report.status_extended = (
