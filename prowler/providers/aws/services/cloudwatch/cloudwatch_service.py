@@ -17,6 +17,7 @@ class CloudWatch:
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
+        self.audited_partition = audit_info.audited_partition
         self.region = list(
             generate_regional_clients(
                 self.service, audit_info, global_service=True
@@ -89,6 +90,7 @@ class Logs:
         self.service = "logs"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audited_partition = audit_info.audited_partition
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.metric_filters = []
@@ -125,11 +127,13 @@ class Logs:
             )
             for page in describe_metric_filters_paginator.paginate():
                 for filter in page["metricFilters"]:
+                    arn = f"arn:{self.audited_partition}:logs:{regional_client.region}:{self.audited_account}:metric-filter/{filter['filterName']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(filter["filterName"], self.audit_resources)
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         self.metric_filters.append(
                             MetricFilter(
+                                arn=arn,
                                 name=filter["filterName"],
                                 metric=filter["metricTransformations"][0]["metricName"],
                                 pattern=filter.get("filterPattern", ""),
@@ -237,6 +241,7 @@ class MetricAlarm(BaseModel):
 
 
 class MetricFilter(BaseModel):
+    arn: str
     name: str
     metric: str
     pattern: str

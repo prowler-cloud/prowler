@@ -9,6 +9,7 @@ class glue_development_endpoints_cloudwatch_logs_encryption_enabled(Check):
             no_sec_configs = True
             report = Check_Report_AWS(self.metadata())
             report.resource_id = endpoint.name
+            report.resource_arn = endpoint.arn
             report.region = endpoint.region
             for sec_config in glue_client.security_configs:
                 if sec_config.name == endpoint.security:

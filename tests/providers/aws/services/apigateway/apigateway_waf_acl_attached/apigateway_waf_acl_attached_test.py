@@ -139,7 +139,7 @@ class Test_apigateway_waf_acl_attached:
             assert result[0].resource_id == "test-rest-api"
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/apis/{rest_api['id']}/stages/test"
+                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/restapis/{rest_api['id']}/stages/test"
             )
 
     @mock_apigateway
@@ -208,5 +208,5 @@ class Test_apigateway_waf_acl_attached:
             assert result[0].resource_id == "test-rest-api"
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/apis/{rest_api['id']}/stages/test"
+                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/restapis/{rest_api['id']}/stages/test"
             )

@@ -9,6 +9,12 @@ class vpc_peering_routing_tables_with_least_privilege(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = peer.region
             report.resource_tags = peer.tags
+            report.resource_id = peer.id
+            report.resource_arn = peer.arn
+            report.status = "PASS"
+            report.status_extended = (
+                f"VPC Peering Connection {peer.id} comply with least privilege access."
+            )
             comply = True
             # Check each cidr in the peering route table
             for route_table in peer.route_tables:
@@ -22,11 +28,7 @@ class vpc_peering_routing_tables_with_least_privilege(Check):
             if not comply:
                 report.status = "FAIL"
                 report.status_extended = f"VPC Peering Connection {peer.id} does not comply with least privilege access since it accepts whole VPCs CIDR in its route tables."
-                report.resource_id = peer.id
-            else:
-                report.status = "PASS"
-                report.status_extended = f"VPC Peering Connection {peer.id} comply with least privilege access."
-                report.resource_id = peer.id
+
             findings.append(report)
 
         return findings

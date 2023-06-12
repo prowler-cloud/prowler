@@ -77,7 +77,12 @@ class Test_sqs_queues_not_publicly_accessible:
         sqs_client = mock.MagicMock
         sqs_client.queues = []
         sqs_client.queues.append(
-            Queue(id=queue_id, region=AWS_REGION, policy=test_restricted_policy)
+            Queue(
+                id=queue_id,
+                region=AWS_REGION,
+                policy=test_restricted_policy,
+                arn="arn_test",
+            )
         )
         with mock.patch(
             "prowler.providers.aws.services.sqs.sqs_service.SQS",
@@ -93,13 +98,18 @@ class Test_sqs_queues_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert search("is not public", result[0].status_extended)
             assert result[0].resource_id == queue_id
-            assert result[0].resource_arn == ""
+            assert result[0].resource_arn == "arn_test"
 
     def test_queues_public(self):
         sqs_client = mock.MagicMock
         sqs_client.queues = []
         sqs_client.queues.append(
-            Queue(id=queue_id, region=AWS_REGION, policy=test_public_policy)
+            Queue(
+                id=queue_id,
+                region=AWS_REGION,
+                policy=test_public_policy,
+                arn="arn_test",
+            )
         )
         with mock.patch(
             "prowler.providers.aws.services.sqs.sqs_service.SQS",
@@ -115,14 +125,17 @@ class Test_sqs_queues_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert search("policy with public access", result[0].status_extended)
             assert result[0].resource_id == queue_id
-            assert result[0].resource_arn == ""
+            assert result[0].resource_arn == "arn_test"
 
     def test_queues_public_with_condition(self):
         sqs_client = mock.MagicMock
         sqs_client.queues = []
         sqs_client.queues.append(
             Queue(
-                id=queue_id, region=AWS_REGION, policy=test_public_policy_with_condition
+                id=queue_id,
+                region=AWS_REGION,
+                policy=test_public_policy_with_condition,
+                arn="arn_test",
             )
         )
         with mock.patch(
@@ -142,4 +155,4 @@ class Test_sqs_queues_not_publicly_accessible:
                 result[0].status_extended,
             )
             assert result[0].resource_id == queue_id
-            assert result[0].resource_arn == ""
+            assert result[0].resource_arn == "arn_test"
