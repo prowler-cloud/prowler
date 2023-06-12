@@ -79,6 +79,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         input_role = arguments.get("role")
         input_session_duration = arguments.get("session_duration")
         input_external_id = arguments.get("external_id")
+        input_mfa = arguments.get("mfa")
         # Since the range(i,j) goes from i to j-1 we have to j+1
         if input_session_duration and input_session_duration not in range(900, 43201):
             raise Exception("Value for -T option must be between 900 and 43200")
@@ -88,6 +89,9 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         ) or input_external_id:
             if not input_role:
                 raise Exception("To use -I/-T options -R option is needed")
+        if input_mfa:
+            if not input_role:
+                raise Exception("To use --mfa option -R option is needed")
 
         input_profile = arguments.get("profile")
         input_regions = arguments.get("region")
@@ -174,6 +178,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                 input_session_duration
             )
             current_audit_info.assumed_role_info.external_id = input_external_id
+            current_audit_info.assumed_role_info.mfa_enabled = input_mfa
 
             # Check if role arn is valid
             try:

@@ -91,11 +91,22 @@ def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) ->
             )
         # else assume the role without the external id
         else:
-            assumed_credentials = sts_client.assume_role(
-                RoleArn=assumed_role_info.role_arn,
-                RoleSessionName="ProwlerProAsessmentSession",
-                DurationSeconds=assumed_role_info.session_duration,
-            )
+            if assumed_role_info.mfa_enabled:
+                mfa_ARN = input("Enter ARN of MFA: ")
+                mfa_TOTP = input("Enter MFA code: ")
+                assumed_credentials = sts_client.assume_role(
+                    RoleArn=assumed_role_info.role_arn,
+                    RoleSessionName="ProwlerProAsessmentSession",
+                    DurationSeconds=assumed_role_info.session_duration,
+                    SerialNumber=mfa_ARN,
+                    TokenCode=mfa_TOTP
+                )
+            else:
+                assumed_credentials = sts_client.assume_role(
+                    RoleArn=assumed_role_info.role_arn,
+                    RoleSessionName="ProwlerProAsessmentSession",
+                    DurationSeconds=assumed_role_info.session_duration,
+                )
     except Exception as error:
         logger.critical(f"{error.__class__.__name__} -- {error}")
         sys.exit(1)

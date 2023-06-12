@@ -29,6 +29,7 @@ current_audit_info = AWS_Audit_Info(
         role_arn=None,
         session_duration=None,
         external_id=None,
+        mfa_enabled=None,
     ),
     audit_resources=None,
     audited_regions=None,
