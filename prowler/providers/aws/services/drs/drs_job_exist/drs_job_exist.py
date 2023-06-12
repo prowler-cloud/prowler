@@ -9,10 +9,10 @@ class drs_job_exist(Check):
             report = Check_Report_AWS(self.metadata())
             report.status = "FAIL"
             report.status_extended = "DRS is not enabled for this region."
-            report.resource_id = drs.id
             report.region = drs.region
             report.resource_tags = []
-            report.resource_arn = ""
+            report.resource_arn = f"arn:aws:iam::{drs_client.audited_account}:root"
+            report.resource_id = drs_client.audited_account
             if drs.status == "ENABLED":
                 report.status_extended = "DRS is enabled for this region without jobs."
                 if drs.jobs:

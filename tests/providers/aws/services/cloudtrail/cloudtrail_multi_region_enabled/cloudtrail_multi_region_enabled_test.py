@@ -63,8 +63,10 @@ class Test_cloudtrail_multi_region_enabled:
                         "No CloudTrail trails enabled and logging were found",
                         report.status_extended,
                     )
-                    assert report.resource_id == "No trails"
-                    assert report.resource_arn == "No trails"
+                    assert report.resource_id == AWS_ACCOUNT_NUMBER
+                    assert (
+                        report.resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+                    )
 
     @mock_cloudtrail
     @mock_s3
@@ -117,8 +119,10 @@ class Test_cloudtrail_multi_region_enabled:
                         "No CloudTrail trails enabled and logging were found",
                         report.status_extended,
                     )
-                    assert report.resource_id == "No trails"
-                    assert report.resource_arn == "No trails"
+                    assert report.resource_id == AWS_ACCOUNT_NUMBER
+                    assert (
+                        report.resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+                    )
 
     @mock_cloudtrail
     @mock_s3
@@ -182,8 +186,11 @@ class Test_cloudtrail_multi_region_enabled:
                             "No CloudTrail trails enabled and logging were found",
                             report.status_extended,
                         )
-                        assert report.resource_id == "No trails"
-                        assert report.resource_arn == "No trails"
+                        assert report.resource_id == AWS_ACCOUNT_NUMBER
+                        assert (
+                            report.resource_arn
+                            == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+                        )
 
     @mock_cloudtrail
     @mock_s3

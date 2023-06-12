@@ -13,6 +13,9 @@ class resourceexplorer2_indexes_found(Check):
         report.region = resource_explorer_2_client.region
         report.resource_arn = "NoResourceExplorer"
         report.resource_id = resource_explorer_2_client.audited_account
+        report.resource_arn = (
+            f"arn:aws:iam::{resource_explorer_2_client.audited_account}:root"
+        )
         if resource_explorer_2_client.indexes:
             report.region = resource_explorer_2_client.indexes[0].region
             report.resource_arn = resource_explorer_2_client.indexes[0].arn

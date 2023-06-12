@@ -16,6 +16,7 @@ class Test_inspector2_findings_exist:
     def test_inspector2_disabled(self):
         # Mock the inspector2 client
         inspector2_client = mock.MagicMock
+        inspector2_client.audited_account = AWS_ACCOUNT_ID
         inspector2_client.region = AWS_REGION
         inspector2_client.inspectors = [
             Inspector(
@@ -38,12 +39,13 @@ class Test_inspector2_findings_exist:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Inspector2 is not enabled."
             assert result[0].resource_id == AWS_ACCOUNT_ID
-            assert result[0].resource_arn == ""
+            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
             assert result[0].region == AWS_REGION
 
     def test_enabled_no_finding(self):
         # Mock the inspector2 client
         inspector2_client = mock.MagicMock
+        inspector2_client.audited_account = AWS_ACCOUNT_ID
         inspector2_client.region = AWS_REGION
         inspector2_client.inspectors = [
             Inspector(
@@ -66,12 +68,13 @@ class Test_inspector2_findings_exist:
             assert result[0].status == "PASS"
             assert result[0].status_extended == "Inspector2 is enabled with no findings"
             assert result[0].resource_id == AWS_ACCOUNT_ID
-            assert result[0].resource_arn == ""
+            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
             assert result[0].region == AWS_REGION
 
     def test_enabled_with_no_active_finding(self):
         # Mock the inspector2 client
         inspector2_client = mock.MagicMock
+        inspector2_client.audited_account = AWS_ACCOUNT_ID
         inspector2_client.region = AWS_REGION
         inspector2_client.inspectors = [
             Inspector(
@@ -109,12 +112,13 @@ class Test_inspector2_findings_exist:
                 == "Inspector2 is enabled with no active findings"
             )
             assert result[0].resource_id == AWS_ACCOUNT_ID
-            assert result[0].resource_arn == ""
+            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
             assert result[0].region == AWS_REGION
 
     def test_enabled_with_active_finding(self):
         # Mock the inspector2 client
         inspector2_client = mock.MagicMock
+        inspector2_client.audited_account = AWS_ACCOUNT_ID
         inspector2_client.region = AWS_REGION
         inspector2_client.inspectors = [
             Inspector(
@@ -151,12 +155,13 @@ class Test_inspector2_findings_exist:
                 result[0].status_extended == "There are 1 ACTIVE Inspector2 findings."
             )
             assert result[0].resource_id == AWS_ACCOUNT_ID
-            assert result[0].resource_arn == ""
+            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
             assert result[0].region == AWS_REGION
 
     def test_enabled_with_active_and_closed_findings(self):
         # Mock the inspector2 client
         inspector2_client = mock.MagicMock
+        inspector2_client.audited_account = AWS_ACCOUNT_ID
         inspector2_client.region = AWS_REGION
         inspector2_client.inspectors = [
             Inspector(
@@ -200,5 +205,5 @@ class Test_inspector2_findings_exist:
                 result[0].status_extended == "There are 1 ACTIVE Inspector2 findings."
             )
             assert result[0].resource_id == AWS_ACCOUNT_ID
-            assert result[0].resource_arn == ""
+            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
             assert result[0].region == AWS_REGION

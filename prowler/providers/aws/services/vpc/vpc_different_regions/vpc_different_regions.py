@@ -14,6 +14,7 @@ class vpc_different_regions(Check):
         # This is a global check under the vpc service: region, resource_id and tags are not relevant here but we keep them for consistency
         report.region = vpc_client.region
         report.resource_id = vpc_client.audited_account
+        report.resource_arn = f"arn:aws:iam::{vpc_client.audited_account}:root"
         report.status = "FAIL"
         report.status_extended = "VPCs found only in one region"
         if len(vpc_regions) > 1:

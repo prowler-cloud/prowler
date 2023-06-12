@@ -8,7 +8,10 @@ class config_recorder_all_regions_enabled(Check):
         for recorder in config_client.recorders:
             report = Check_Report_AWS(self.metadata())
             report.region = recorder.region
-            report.resource_id = "" if not recorder.name else recorder.name
+            report.resource_arn = f"arn:aws:iam::{config_client.audited_account}:root"
+            report.resource_id = (
+                config_client.audited_account if not recorder.name else recorder.name
+            )
             # Check if Config is enabled in region
             if not recorder.name:
                 report.status = "FAIL"

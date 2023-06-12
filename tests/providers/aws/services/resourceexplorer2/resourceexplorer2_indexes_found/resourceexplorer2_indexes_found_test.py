@@ -58,7 +58,7 @@ class Test_resourceexplorer2_indexes_found:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "No Resource Explorer Indexes found"
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == "NoResourceExplorer"
+            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
             assert result[0].region == AWS_REGION
 
     def test_one_index_found(self):

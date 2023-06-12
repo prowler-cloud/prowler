@@ -9,6 +9,7 @@ class account_security_questions_are_registered_in_the_aws_account(Check):
         report = Check_Report_AWS(self.metadata())
         report.region = account_client.region
         report.resource_id = account_client.audited_account
+        report.resource_arn = f"arn:aws:iam::{account_client.audited_account}:root"
         report.status = "INFO"
         report.status_extended = "Manual check: Login to the AWS Console as root. Choose your account name on the top right of the window -> My Account -> Configure Security Challenge Questions."
         return [report]

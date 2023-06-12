@@ -6,6 +6,7 @@ from prowler.providers.aws.services.fms.fms_service import (
 )
 
 AWS_REGION = "us-east-1"
+AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_fms_policy_compliant:
@@ -29,6 +30,7 @@ class Test_fms_policy_compliant:
 
     def test_fms_admin_with_non_compliant_policies(self):
         fms_client = mock.MagicMock
+        fms_client.audited_account = AWS_ACCOUNT_NUMBER
         fms_client.region = AWS_REGION
         fms_client.fms_admin_account = True
         fms_client.fms_policies = [
@@ -73,6 +75,7 @@ class Test_fms_policy_compliant:
 
     def test_fms_admin_with_compliant_policies(self):
         fms_client = mock.MagicMock
+        fms_client.audited_account = AWS_ACCOUNT_NUMBER
         fms_client.region = AWS_REGION
         fms_client.fms_admin_account = True
         fms_client.fms_policies = [
@@ -110,12 +113,13 @@ class Test_fms_policy_compliant:
             assert (
                 result[0].status_extended == "FMS enabled with all compliant accounts"
             )
-            assert result[0].resource_id == "FMS"
-            assert result[0].resource_arn == ""
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
             assert result[0].region == AWS_REGION
 
     def test_fms_admin_with_non_and_compliant_policies(self):
         fms_client = mock.MagicMock
+        fms_client.audited_account = AWS_ACCOUNT_NUMBER
         fms_client.region = AWS_REGION
         fms_client.fms_admin_account = True
         fms_client.fms_policies = [

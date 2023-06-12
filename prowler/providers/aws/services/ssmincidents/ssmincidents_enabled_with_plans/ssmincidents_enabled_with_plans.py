@@ -10,7 +10,8 @@ class ssmincidents_enabled_with_plans(Check):
         report = Check_Report_AWS(self.metadata())
         report.status = "FAIL"
         report.status_extended = "No SSM Incidents replication set exists."
-        report.resource_id = "SSMIncidents"
+        report.resource_arn = f"arn:aws:iam::{ssmincidents_client.audited_account}:root"
+        report.resource_id = ssmincidents_client.audited_account
         report.region = ssmincidents_client.region
         if ssmincidents_client.replication_set:
             report.resource_arn = ssmincidents_client.replication_set[0].arn

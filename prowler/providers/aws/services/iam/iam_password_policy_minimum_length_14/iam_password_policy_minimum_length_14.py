@@ -7,7 +7,8 @@ class iam_password_policy_minimum_length_14(Check):
         findings = []
         report = Check_Report_AWS(self.metadata())
         report.region = iam_client.region
-        report.resource_id = "password_policy"
+        report.resource_arn = f"arn:aws:iam::{iam_client.account}:root"
+        report.resource_id = iam_client.account
         # Check if password policy exists
         if iam_client.password_policy:
             # Check password policy length

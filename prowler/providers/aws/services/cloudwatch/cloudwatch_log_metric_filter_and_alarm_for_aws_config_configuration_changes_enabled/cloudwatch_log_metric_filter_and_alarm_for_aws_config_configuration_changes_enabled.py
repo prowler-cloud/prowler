@@ -23,6 +23,7 @@ class cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_change
         )
         report.region = cloudwatch_client.region
         report.resource_id = cloudtrail_client.audited_account
+        report.resource_arn = f"arn:aws:iam::{cloudtrail_client.audited_account}:root"
         # 1. Iterate for CloudWatch Log Group in CloudTrail trails
         log_groups = []
         for trail in cloudtrail_client.trails:

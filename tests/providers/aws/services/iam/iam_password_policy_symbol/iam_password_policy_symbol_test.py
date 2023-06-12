@@ -62,7 +62,7 @@ class Test_iam_password_policy_symbol:
                 "IAM password policy does not require at least one symbol.",
                 result[0].status_extended,
             )
-            assert result[0].resource_id == "password_policy"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
     @mock_iam
     def test_iam_password_policy_symbol_flag(self):
@@ -93,4 +93,4 @@ class Test_iam_password_policy_symbol:
                 "IAM password policy requires at least one symbol.",
                 result[0].status_extended,
             )
-            assert result[0].resource_id == "password_policy"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER

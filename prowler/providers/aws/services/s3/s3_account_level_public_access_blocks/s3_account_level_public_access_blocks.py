@@ -11,6 +11,7 @@ class s3_account_level_public_access_blocks(Check):
         report.status_extended = f"Block Public Access is not configured for the account {s3_client.audited_account}."
         report.region = s3control_client.region
         report.resource_id = s3_client.audited_account
+        report.resource_arn = f"arn:aws:iam::{s3_client.audited_account}:root"
         if (
             s3control_client.account_public_access_block
             and s3control_client.account_public_access_block.ignore_public_acls

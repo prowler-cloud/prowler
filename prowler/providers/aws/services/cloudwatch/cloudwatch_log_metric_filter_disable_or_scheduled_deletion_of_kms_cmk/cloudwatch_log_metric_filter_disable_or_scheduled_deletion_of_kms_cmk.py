@@ -21,6 +21,7 @@ class cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk(Chec
         )
         report.region = cloudwatch_client.region
         report.resource_id = cloudtrail_client.audited_account
+        report.resource_arn = f"arn:aws:iam::{cloudtrail_client.audited_account}:root"
         # 1. Iterate for CloudWatch Log Group in CloudTrail trails
         log_groups = []
         for trail in cloudtrail_client.trails:

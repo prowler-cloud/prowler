@@ -8,7 +8,8 @@ class ec2_ebs_default_encryption(Check):
         for ebs_encryption in ec2_client.ebs_encryption_by_default:
             report = Check_Report_AWS(self.metadata())
             report.region = ebs_encryption.region
-            report.resource_id = "EBS Default Encryption"
+            report.resource_arn = f"arn:aws:iam::{ec2_client.audited_account}:root"
+            report.resource_id = ec2_client.audited_account
             report.status = "FAIL"
             report.status_extended = "EBS Default Encryption is not activated."
             if ebs_encryption.status:

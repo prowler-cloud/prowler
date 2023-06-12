@@ -7,6 +7,7 @@ from prowler.providers.aws.services.backup.backup_service import (
 )
 
 AWS_REGION = "eu-west-1"
+AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_backup_reportplans_exist:
@@ -30,6 +31,7 @@ class Test_backup_reportplans_exist:
 
     def test_no_backup_report_plans(self):
         backup_client = mock.MagicMock
+        backup_client.audited_account = AWS_ACCOUNT_NUMBER
         backup_client.region = AWS_REGION
         backup_client.backup_plans = [
             BackupPlan(
@@ -58,12 +60,13 @@ class Test_backup_reportplans_exist:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "No Backup Report Plan Exist"
-            assert result[0].resource_id == "Backups"
-            assert result[0].resource_arn == ""
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
             assert result[0].region == AWS_REGION
 
     def test_one_backup_report_plan(self):
         backup_client = mock.MagicMock
+        backup_client.audited_account = AWS_ACCOUNT_NUMBER
         backup_client.region = AWS_REGION
         backup_client.backup_plans = [
             BackupPlan(

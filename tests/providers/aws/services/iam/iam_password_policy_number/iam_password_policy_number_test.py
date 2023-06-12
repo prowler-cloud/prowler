@@ -62,7 +62,7 @@ class Test_iam_password_policy_number:
                 "IAM password policy does not require at least one number.",
                 result[0].status_extended,
             )
-            assert result[0].resource_id == "password_policy"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
     @mock_iam
     def test_iam_password_policy_number_flag(self):
@@ -93,4 +93,4 @@ class Test_iam_password_policy_number:
                 "IAM password policy requires at least one number.",
                 result[0].status_extended,
             )
-            assert result[0].resource_id == "password_policy"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER

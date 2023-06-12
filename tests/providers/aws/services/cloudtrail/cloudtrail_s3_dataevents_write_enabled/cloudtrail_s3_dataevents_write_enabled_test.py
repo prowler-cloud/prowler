@@ -72,8 +72,10 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                     "No CloudTrail trails have a data event to record all S3 object-level API operations.",
                     result[0].status_extended,
                 )
-                assert result[0].resource_id == "No trails"
-                assert result[0].resource_arn == "No trails"
+                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                assert (
+                    result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+                )
 
     @mock_cloudtrail
     @mock_s3
@@ -126,8 +128,10 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                     "No CloudTrail trails have a data event to record all S3 object-level API operations.",
                     result[0].status_extended,
                 )
-                assert result[0].resource_id == "No trails"
-                assert result[0].resource_arn == "No trails"
+                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                assert (
+                    result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+                )
 
     @mock_cloudtrail
     @mock_s3
