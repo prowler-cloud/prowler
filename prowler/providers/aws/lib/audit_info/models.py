@@ -45,6 +45,7 @@ class AWS_Audit_Info:
     profile: str
     profile_region: str
     credentials: AWS_Credentials
+    mfa_enabled: bool
     assumed_role_info: AWS_Assume_Role
     audited_regions: list
     audit_resources: list
