@@ -3,7 +3,6 @@ import uuid
 import pytest
 
 from prowler.lib.cli.parser import ProwlerArgumentParser
-from prowler.lib.logger import logger
 
 prowler_command = "prowler"
 
