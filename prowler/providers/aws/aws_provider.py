@@ -96,7 +96,7 @@ def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) ->
                 mfa_TOTP = input("Enter MFA code: ")
                 assumed_credentials = sts_client.assume_role(
                     RoleArn=assumed_role_info.role_arn,
-                    RoleSessionName="ProwlerProAsessmentSession",
+                    RoleSessionName="ProwlerAsessmentSession",
                     DurationSeconds=assumed_role_info.session_duration,
                     SerialNumber=mfa_ARN.strip(),
                     TokenCode=mfa_TOTP.strip(),
@@ -104,7 +104,7 @@ def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) ->
             else:
                 assumed_credentials = sts_client.assume_role(
                     RoleArn=assumed_role_info.role_arn,
-                    RoleSessionName="ProwlerProAsessmentSession",
+                    RoleSessionName="ProwlerAsessmentSession",
                     DurationSeconds=assumed_role_info.session_duration,
                 )
     except Exception as error:
