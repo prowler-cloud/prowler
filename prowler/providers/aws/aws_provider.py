@@ -26,7 +26,6 @@ class AWS_Provider:
     def set_session(self, audit_info):
         try:
             # If we receive a credentials object filled is coming form an assumed role, so renewal is needed
-            print(audit_info.credentials)
             if audit_info.credentials:
                 logger.info("Creating session for assumed role ...")
                 # From botocore we can use RefreshableCredentials class, which has an attribute (refresh_using)
