@@ -21,7 +21,7 @@ class Test_AWS_Provider:
         role_arn = f"arn:aws:iam::{ACCOUNT_ID}:role/{role_name}"
         session_duration_seconds = 900
         audited_regions = "eu-west-1"
-        sessionName = "ProwlerProAsessmentSession"
+        sessionName = "ProwlerAsessmentSession"
         # Boto 3 client to create our user
         iam_client = boto3.client("iam", region_name="us-east-1")
         # IAM user
@@ -55,6 +55,7 @@ class Test_AWS_Provider:
                 role_arn=role_arn,
                 session_duration=session_duration_seconds,
                 external_id=None,
+                mfa_enabled=False,
             ),
             audited_regions=audited_regions,
             organizations_metadata=None,
