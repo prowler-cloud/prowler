@@ -30,6 +30,12 @@ Those credentials must be associated to a user or role with proper permissions t
 
   > If you want Prowler to send findings to [AWS Security Hub](https://aws.amazon.com/security-hub), make sure you also attach the custom policy [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json).
 
+### Multi-Factor Authentication
+
+If your IAM entity enforces MFA you can use `--mfa` and Prowler will ask you to input the following values to get a new session:
+- ARN of your MFA device
+- TOTP (Time-Based One-Time Password)
+
 ## Azure
 
 Prowler for azure supports the following authentication types:
