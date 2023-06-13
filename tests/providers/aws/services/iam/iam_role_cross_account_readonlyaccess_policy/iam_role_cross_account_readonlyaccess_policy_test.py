@@ -21,6 +21,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
                 botocore_session=None,
             ),
             audited_account=AWS_ACCOUNT_ID,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -271,7 +272,10 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
         )
 
         with mock.patch(
-            "prowler.providers.aws.services.iam.iam_role_cross_account_readonlyaccess_policy.iam_role_cross_account_readonlyaccess_policy.iam_client",
+            "prowler.providers.aws.services.iam.iam_service.IAM",
+            new=iam_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_client.iam_client",
             new=iam_client,
         ):
             # Test Check

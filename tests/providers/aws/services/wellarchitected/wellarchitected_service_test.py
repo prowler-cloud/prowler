@@ -63,6 +63,7 @@ class Test_WellArchitected_Service:
                 botocore_session=None,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,

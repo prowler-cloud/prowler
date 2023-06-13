@@ -19,6 +19,7 @@ class Test_iam_root_hardware_mfa_enabled_test:
                 botocore_session=None,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -64,7 +65,7 @@ class Test_iam_root_hardware_mfa_enabled_test:
                 "Root account has a virtual MFA instead of a hardware MFA device enabled.",
                 result[0].status_extended,
             )
-            assert result[0].resource_id == "root"
+            assert result[0].resource_id == "<root_account>"
 
     @mock_iam
     def test_root_hardware_virtual_hardware_mfa_enabled(self):
@@ -97,7 +98,7 @@ class Test_iam_root_hardware_mfa_enabled_test:
                 "Root account has a hardware MFA device enabled.",
                 result[0].status_extended,
             )
-            assert result[0].resource_id == "root"
+            assert result[0].resource_id == "<root_account>"
             assert (
                 result[0].resource_arn == f"arn:aws:iam::{service_client.account}:root"
             )

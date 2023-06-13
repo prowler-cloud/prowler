@@ -23,6 +23,7 @@ class Test_resourceexplorer2_indexes_found:
                 botocore_session=None,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -40,6 +41,9 @@ class Test_resourceexplorer2_indexes_found:
         resourceexplorer2_client = mock.MagicMock
         resourceexplorer2_client.indexes = []
         resourceexplorer2_client.audited_account = AWS_ACCOUNT_NUMBER
+        resourceexplorer2_client.audited_account_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        )
         resourceexplorer2_client.region = AWS_REGION
         with mock.patch(
             "prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service.ResourceExplorer2",
@@ -58,7 +62,7 @@ class Test_resourceexplorer2_indexes_found:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "No Resource Explorer Indexes found"
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == "NoResourceExplorer"
+            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
             assert result[0].region == AWS_REGION
 
     def test_one_index_found(self):
@@ -67,6 +71,9 @@ class Test_resourceexplorer2_indexes_found:
             Indexes(arn=INDEX_ARN, region=INDEX_REGION, type="LOCAL")
         ]
         resourceexplorer2_client.audited_account = AWS_ACCOUNT_NUMBER
+        resourceexplorer2_client.audited_account_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        )
         resourceexplorer2_client.region = AWS_REGION
         with mock.patch(
             "prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service.ResourceExplorer2",

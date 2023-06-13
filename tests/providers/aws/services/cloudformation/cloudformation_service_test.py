@@ -143,6 +143,7 @@ class Test_CloudFormation_Service:
                 botocore_session=None,
             ),
             audited_account=None,
+            audited_account_arn=None,
             audited_user_id=None,
             audited_partition=None,
             audited_identity_arn=None,

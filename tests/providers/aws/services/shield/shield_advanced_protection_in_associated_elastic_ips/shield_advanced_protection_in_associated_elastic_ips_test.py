@@ -34,6 +34,7 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
                 botocore_session=None,
             ),
             audited_account=DEFAULT_ACCOUNT_ID,
+            audited_account_arn=f"arn:aws:iam::{DEFAULT_ACCOUNT_ID}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,

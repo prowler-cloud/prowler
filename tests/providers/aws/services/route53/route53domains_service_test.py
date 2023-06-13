@@ -80,6 +80,7 @@ class Test_Route53_Service:
                 botocore_session=None,
             ),
             audited_account=None,
+            audited_account_arn=None,
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,

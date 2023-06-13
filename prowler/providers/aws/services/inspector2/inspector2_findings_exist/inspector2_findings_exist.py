@@ -11,8 +11,8 @@ class inspector2_findings_exist(Check):
             report = Check_Report_AWS(self.metadata())
             report.status = "FAIL"
             report.status_extended = "Inspector2 is not enabled."
-            report.resource_id = inspector.id
-            report.resource_arn = ""
+            report.resource_id = inspector2_client.audited_account
+            report.resource_arn = inspector2_client.audited_account_arn
             report.region = inspector.region
             if inspector.status == "ENABLED":
                 active_findings = 0

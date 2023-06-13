@@ -19,6 +19,7 @@ class Test_iam_password_policy_minimum_length_14:
                 botocore_session=None,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -62,7 +63,7 @@ class Test_iam_password_policy_minimum_length_14:
                 "IAM password policy requires minimum length of 14 characters.",
                 result[0].status_extended,
             )
-            assert result[0].resource_id == "password_policy"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
     @mock_iam
     def test_iam_password_policy_minimum_length_greater_14(self):
@@ -93,7 +94,7 @@ class Test_iam_password_policy_minimum_length_14:
                 "IAM password policy requires minimum length of 14 characters.",
                 result[0].status_extended,
             )
-            assert result[0].resource_id == "password_policy"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
     @mock_iam
     def test_iam_password_policy_minimum_length_less_14(self):
@@ -124,4 +125,4 @@ class Test_iam_password_policy_minimum_length_14:
                 "IAM password policy does not require minimum length of 14 characters.",
                 result[0].status_extended,
             )
-            assert result[0].resource_id == "password_policy"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER

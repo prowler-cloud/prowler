@@ -2,10 +2,14 @@ from unittest import mock
 
 from prowler.providers.aws.services.macie.macie_service import Session
 
+AWS_ACCOUNT_NUMBER = "123456789012"
+
 
 class Test_macie_is_enabled:
     def test_macie_disabled(self):
         macie_client = mock.MagicMock
+        macie_client.audited_account = AWS_ACCOUNT_NUMBER
+        macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         macie_client.sessions = [
             Session(
                 status="DISABLED",
@@ -27,10 +31,12 @@ class Test_macie_is_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Macie is not enabled."
-            assert result[0].resource_id == "Macie"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
     def test_macie_enabled(self):
         macie_client = mock.MagicMock
+        macie_client.audited_account = AWS_ACCOUNT_NUMBER
+        macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         macie_client.sessions = [
             Session(
                 status="ENABLED",
@@ -52,10 +58,12 @@ class Test_macie_is_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == "Macie is enabled."
-            assert result[0].resource_id == "Macie"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
     def test_macie_suspended(self):
         macie_client = mock.MagicMock
+        macie_client.audited_account = AWS_ACCOUNT_NUMBER
+        macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         macie_client.sessions = [
             Session(
                 status="PAUSED",
@@ -79,4 +87,4 @@ class Test_macie_is_enabled:
             assert (
                 result[0].status_extended == "Macie is currently in a SUSPENDED state."
             )
-            assert result[0].resource_id == "Macie"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER

@@ -18,6 +18,7 @@ current_audit_info = AWS_Audit_Info(
         user_agent_extra=boto3_user_agent_extra,
     ),
     audited_account=None,
+    audited_account_arn=None,
     audited_user_id=None,
     audited_partition=None,
     audited_identity_arn=None,

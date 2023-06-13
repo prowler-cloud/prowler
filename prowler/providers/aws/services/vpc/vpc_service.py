@@ -17,6 +17,7 @@ class VPC:
         self.audited_account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
         self.audited_partition = audit_info.audited_partition
+        self.audited_account_arn = audit_info.audited_account_arn
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.vpcs = {}
         self.vpc_peering_connections = []

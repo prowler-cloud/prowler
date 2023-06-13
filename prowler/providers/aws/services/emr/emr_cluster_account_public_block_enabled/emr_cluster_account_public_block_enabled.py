@@ -9,7 +9,7 @@ class emr_cluster_account_public_block_enabled(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = region
             report.resource_id = emr_client.audited_account
-
+            report.resource_arn = emr_client.audited_account_arn
             if emr_client.block_public_access_configuration[
                 region
             ].block_public_security_group_rules:

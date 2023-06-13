@@ -19,6 +19,7 @@ class Test_cloudwatch_cross_account_sharing_disabled:
                 botocore_session=None,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -68,9 +69,9 @@ class Test_cloudwatch_cross_account_sharing_disabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "CloudWatch doesn't allows cross-account sharing"
+                == "CloudWatch doesn't allow cross-account sharing"
             )
-            assert result[0].resource_id == "CloudWatch-CrossAccountSharingRole"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
     @mock_iam
     def test_cloudwatch_log_group_with_cross_account_role(self):

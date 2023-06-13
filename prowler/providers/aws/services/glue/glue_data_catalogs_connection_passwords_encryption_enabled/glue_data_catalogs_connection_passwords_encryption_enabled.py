@@ -8,6 +8,7 @@ class glue_data_catalogs_connection_passwords_encryption_enabled(Check):
         for encryption in glue_client.catalog_encryption_settings:
             report = Check_Report_AWS(self.metadata())
             report.resource_id = glue_client.audited_account
+            report.resource_arn = glue_client.audited_account_arn
             report.region = encryption.region
             report.status = "FAIL"
             report.status_extended = (
