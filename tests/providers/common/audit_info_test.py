@@ -28,6 +28,7 @@ mock_azure_audit_info = Azure_Audit_Info(
     identity=Azure_Identity_Info(),
     audit_metadata=None,
     audit_resources=None,
+    mfa_enabled=False,
 )
 
 mock_set_audit_info = Audit_Info()
@@ -109,6 +110,7 @@ class Test_Set_Audit_Info:
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
 
         return audit_info

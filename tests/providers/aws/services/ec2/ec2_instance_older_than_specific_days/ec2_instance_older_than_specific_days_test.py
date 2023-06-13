@@ -34,6 +34,7 @@ class Test_ec2_instance_older_than_specific_days:
             audited_regions=["us-east-1", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
 
         return audit_info

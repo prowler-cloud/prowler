@@ -45,6 +45,7 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

@@ -31,6 +31,7 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
             audited_regions=["us-east-1", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
 
         return audit_info

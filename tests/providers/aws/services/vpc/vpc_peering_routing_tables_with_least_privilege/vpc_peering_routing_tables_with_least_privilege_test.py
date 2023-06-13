@@ -30,6 +30,7 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
             audited_regions=["us-east-1", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
 
         return audit_info

@@ -30,6 +30,7 @@ class Test_iam_policy_no_full_access_to_kms:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

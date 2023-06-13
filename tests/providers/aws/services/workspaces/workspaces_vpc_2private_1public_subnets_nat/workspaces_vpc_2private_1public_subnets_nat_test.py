@@ -34,6 +34,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             audited_regions=["us-east-1", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
 
         return audit_info

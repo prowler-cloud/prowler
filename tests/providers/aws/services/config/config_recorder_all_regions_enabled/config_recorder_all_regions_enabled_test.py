@@ -30,6 +30,7 @@ class Test_config_recorder_all_regions_enabled:
             audited_regions=["us-east-1", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
 
         return audit_info

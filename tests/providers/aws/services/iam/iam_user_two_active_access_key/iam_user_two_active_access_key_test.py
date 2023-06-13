@@ -30,6 +30,7 @@ class Test_iam_user_two_active_access_key:
             audited_regions=["us-east-1", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
 
         return audit_info

@@ -38,6 +38,7 @@ class Test_Common_Output_Options:
             identity=Azure_Identity_Info(),
             audit_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 
@@ -48,6 +49,7 @@ class Test_Common_Output_Options:
             default_project_id="test-project1",
             project_ids=["test-project1", "test-project2"],
             audit_resources=None,
+            mfa_enabled=False,
             audit_metadata=None,
         )
         return audit_info
@@ -73,6 +75,7 @@ class Test_Common_Output_Options:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

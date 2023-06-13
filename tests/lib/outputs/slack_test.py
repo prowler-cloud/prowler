@@ -43,12 +43,14 @@ class Test_Slack_Integration:
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         gcp_audit_info = GCP_Audit_Info(
             credentials=None,
             default_project_id="test-project1",
             project_ids=["test-project1", "test-project2"],
             audit_resources=None,
+            mfa_enabled=False,
             audit_metadata=None,
         )
         azure_audit_info = Azure_Audit_Info(
@@ -64,6 +66,7 @@ class Test_Slack_Integration:
                 },
             ),
             audit_resources=None,
+            mfa_enabled=False,
             audit_metadata=None,
         )
         assert create_message_identity("aws", aws_audit_info) == (

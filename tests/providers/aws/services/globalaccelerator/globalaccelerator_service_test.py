@@ -70,6 +70,7 @@ class Test_GlobalAccelerator_Service:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

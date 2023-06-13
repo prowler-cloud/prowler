@@ -30,6 +30,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             audited_regions=["us-east-1", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
 
         return audit_info

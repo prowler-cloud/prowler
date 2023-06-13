@@ -30,6 +30,7 @@ class Test_iam_aws_attached_policy_no_administrative_privileges_test:
             audited_regions=["us-east-1", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
 
         return audit_info

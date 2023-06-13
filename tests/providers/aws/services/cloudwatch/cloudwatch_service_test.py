@@ -34,6 +34,7 @@ class Test_CloudWatch_Service:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
             audit_metadata=Audit_Metadata(
                 services_scanned=0,
                 # We need to set this check to call __describe_log_groups__

@@ -87,6 +87,7 @@ class Test_Lambda_Service:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
             audit_metadata=Audit_Metadata(
                 services_scanned=0,
                 # We need to set this check to call __list_functions__

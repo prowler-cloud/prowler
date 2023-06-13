@@ -33,6 +33,7 @@ class Test_s3_bucket_level_public_access_block:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

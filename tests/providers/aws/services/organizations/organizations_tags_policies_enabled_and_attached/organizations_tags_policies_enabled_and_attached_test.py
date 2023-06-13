@@ -37,6 +37,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

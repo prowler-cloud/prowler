@@ -33,6 +33,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
             audited_regions=[AWS_REGION],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

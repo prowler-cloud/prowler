@@ -94,6 +94,7 @@ class Test_Outputs:
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         test_output_modes = [
             ["csv"],
@@ -413,6 +414,7 @@ class Test_Outputs:
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         finding = Check_Report(
             load_check_metadata(
@@ -489,6 +491,7 @@ class Test_Outputs:
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         # Creat mock bucket
         bucket_name = "test_bucket"
@@ -539,6 +542,7 @@ class Test_Outputs:
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         # Creat mock bucket
         bucket_name = "test_bucket"
@@ -596,6 +600,7 @@ class Test_Outputs:
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         # Creat mock bucket
         bucket_name = "test_bucket"
@@ -704,6 +709,7 @@ class Test_Outputs:
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         finding = Check_Report(
             load_check_metadata(

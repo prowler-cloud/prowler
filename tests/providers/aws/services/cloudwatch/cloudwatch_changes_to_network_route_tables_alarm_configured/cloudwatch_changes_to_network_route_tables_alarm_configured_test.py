@@ -31,6 +31,7 @@ class Test_cloudwatch_changes_to_network_route_tables_alarm_configured:
             audited_regions=["us-east-1", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
 
         return audit_info

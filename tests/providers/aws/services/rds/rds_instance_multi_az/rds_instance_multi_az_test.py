@@ -53,6 +53,7 @@ class Test_rds_instance_multi_az:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

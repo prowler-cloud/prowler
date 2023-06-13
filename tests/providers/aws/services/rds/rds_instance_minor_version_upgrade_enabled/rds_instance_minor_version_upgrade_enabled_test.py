@@ -52,6 +52,7 @@ class Test_rds_instance_minor_version_upgrade_enabled:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

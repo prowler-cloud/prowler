@@ -40,6 +40,7 @@ class Test_networkfirewall_in_all_vpc:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

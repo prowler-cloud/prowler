@@ -33,6 +33,7 @@ class Test_s3_bucket_default_encryption:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

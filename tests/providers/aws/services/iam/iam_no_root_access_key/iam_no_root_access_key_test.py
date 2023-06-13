@@ -33,6 +33,7 @@ class Test_iam_no_root_access_key_test:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 
