@@ -290,9 +290,9 @@ Detailed documentation at https://docs.prowler.cloud
             # Pending ARN validation
         )
         aws_auth_subparser.add_argument(
-            "--mfa",
+            "--role-mfa",
             action="store_true",
-            help="Assumed role has MFA enabled.",
+            help="Assumed role has MFA enabled so you need to input the MFA ARN and the TOTP",
         )
         aws_auth_subparser.add_argument(
             "-T",

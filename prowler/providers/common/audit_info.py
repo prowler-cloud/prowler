@@ -79,7 +79,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         input_role = arguments.get("role")
         input_session_duration = arguments.get("session_duration")
         input_external_id = arguments.get("external_id")
-        input_mfa = arguments.get("mfa")
+        input_mfa = arguments.get("role_mfa")
         # Since the range(i,j) goes from i to j-1 we have to j+1
         if input_session_duration and input_session_duration not in range(900, 43201):
             raise Exception("Value for -T option must be between 900 and 43200")
@@ -91,7 +91,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                 raise Exception("To use -I/-T options -R option is needed")
         if input_mfa:
             if not input_role:
-                raise Exception("To use --mfa option -R option is needed")
+                raise Exception("To use --role-mfa option -R option is needed")
 
         input_profile = arguments.get("profile")
         input_regions = arguments.get("region")
