@@ -53,14 +53,28 @@ class AWS_Provider:
                         "TokenCode": mfa_TOTP,
                     }
 
-                sts_client = client("sts")
-                session_credentials = sts_client.get_session_token(
-                    **get_session_token_arguments
-                )
-                return session.Session(
-                    profile_name=audit_info.profile,
-                    botocore_session=assumed_botocore_session,
-                )
+                    sts_client = client("sts")
+                    session_credentials = sts_client.get_session_token(
+                        **get_session_token_arguments
+                    )
+                    return session.Session(
+                        profile_name=audit_info.profile,
+                        aws_access_key_id=session_credentials["Credentials"][
+                            "AccessKeyId"
+                        ],
+                        aws_secret_access_key=session_credentials["Credentials"][
+                            "SecretAccessKey"
+                        ],
+                        aws_session_token=session_credentials["Credentials"][
+                            "SessionToken"
+                        ],
+                        botocore_session=assumed_botocore_session,
+                    )
+                else:
+                    return session.Session(
+                        profile_name=audit_info.profile,
+                        botocore_session=assumed_botocore_session,
+                    )
             # If we do not receive credentials start the session using the profile
             else:
                 logger.info("Creating session for not assumed identity ...")
