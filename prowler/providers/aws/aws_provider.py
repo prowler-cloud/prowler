@@ -98,8 +98,8 @@ def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) ->
                     RoleArn=assumed_role_info.role_arn,
                     RoleSessionName="ProwlerProAsessmentSession",
                     DurationSeconds=assumed_role_info.session_duration,
-                    SerialNumber=mfa_ARN,
-                    TokenCode=mfa_TOTP
+                    SerialNumber=mfa_ARN.strip(),
+                    TokenCode=mfa_TOTP.strip(),
                 )
             else:
                 assumed_credentials = sts_client.assume_role(

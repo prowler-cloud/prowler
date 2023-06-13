@@ -3,6 +3,7 @@ import uuid
 import pytest
 
 from prowler.lib.cli.parser import ProwlerArgumentParser
+from prowler.lib.logger import logger
 
 prowler_command = "prowler"
 
@@ -676,6 +677,12 @@ class Test_Parser:
         command = [prowler_command, argument, role]
         parsed = self.parser.parse(command)
         assert parsed.role == role
+
+    def test_aws_parser_mfa(self):
+        argument = "--mfa"
+        command = [prowler_command, argument]
+        parsed = self.parser.parse(command)
+        assert parsed.mfa
 
     def test_aws_parser_session_duration_short(self):
         argument = "-T"
