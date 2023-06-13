@@ -28,7 +28,6 @@ mock_azure_audit_info = Azure_Audit_Info(
     identity=Azure_Identity_Info(),
     audit_metadata=None,
     audit_resources=None,
-    mfa_enabled=False,
 )
 
 mock_set_audit_info = Audit_Info()
