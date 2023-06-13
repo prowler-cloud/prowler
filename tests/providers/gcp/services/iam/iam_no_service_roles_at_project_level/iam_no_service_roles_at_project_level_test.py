@@ -8,6 +8,7 @@ class Test_iam_no_service_roles_at_project_level:
     def test_iam_no_bindings(self):
         cloudresourcemanager_client = mock.MagicMock
         cloudresourcemanager_client.bindings = []
+        cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
 
         with mock.patch(
             "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
