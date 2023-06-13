@@ -92,8 +92,7 @@ def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) ->
         # else assume the role without the external id
         else:
             if assumed_role_info.mfa_enabled:
-                mfa_ARN = input("Enter ARN of MFA: ")
-                mfa_TOTP = input("Enter MFA code: ")
+                mfa_ARN, mfa_TOTP = input_role_mfa_token_and_code()
                 assumed_credentials = sts_client.assume_role(
                     RoleArn=assumed_role_info.role_arn,
                     RoleSessionName="ProwlerAsessmentSession",
@@ -113,6 +112,12 @@ def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) ->
 
     else:
         return assumed_credentials
+
+
+def input_role_mfa_token_and_code() -> tuple[str]:
+    mfa_ARN = input("Enter ARN of MFA: ")
+    mfa_TOTP = input("Enter MFA code: ")
+    return (mfa_ARN.strip(), mfa_TOTP.strip())
 
 
 def generate_regional_clients(
