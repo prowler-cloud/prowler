@@ -2,7 +2,7 @@ import os
 import pathlib
 import sys
 
-from boto3 import session
+from boto3 import client, session
 from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
 
@@ -25,8 +25,8 @@ class AWS_Provider:
 
     def set_session(self, audit_info):
         try:
+            # If we receive a credentials object filled is coming form an assumed role, so renewal is needed
             if audit_info.credentials:
-                # If we receive a credentials object filled is coming form an assumed role, so renewal is needed
                 logger.info("Creating session for assumed role ...")
                 # From botocore we can use RefreshableCredentials class, which has an attribute (refresh_using)
                 # that needs to be a method without arguments that retrieves a new set of fresh credentials
@@ -45,6 +45,18 @@ class AWS_Provider:
                 assumed_botocore_session.set_config_variable(
                     "region", audit_info.profile_region
                 )
+
+                if audit_info.mfa_enabled:
+                    mfa_ARN, mfa_TOTP = input_role_mfa_token_and_code()
+                    get_session_token_arguments = {
+                        "SerialNumber": mfa_ARN,
+                        "TokenCode": mfa_TOTP,
+                    }
+
+                sts_client = client("sts")
+                session_credentials = sts_client.get_session_token(
+                    **get_session_token_arguments
+                )
                 return session.Session(
                     profile_name=audit_info.profile,
                     botocore_session=assumed_botocore_session,
@@ -52,9 +64,36 @@ class AWS_Provider:
             # If we do not receive credentials start the session using the profile
             else:
                 logger.info("Creating session for not assumed identity ...")
-                return session.Session(profile_name=audit_info.profile)
+                if audit_info.mfa_enabled:
+                    mfa_ARN, mfa_TOTP = input_role_mfa_token_and_code()
+                    get_session_token_arguments = {
+                        "SerialNumber": mfa_ARN,
+                        "TokenCode": mfa_TOTP,
+                    }
+                    sts_client = client("sts")
+                    session_credentials = sts_client.get_session_token(
+                        **get_session_token_arguments
+                    )
+                    return session.Session(
+                        aws_access_key_id=session_credentials["Credentials"][
+                            "AccessKeyId"
+                        ],
+                        aws_secret_access_key=session_credentials["Credentials"][
+                            "SecretAccessKey"
+                        ],
+                        aws_session_token=session_credentials["Credentials"][
+                            "SessionToken"
+                        ],
+                        profile_name=audit_info.profile,
+                    )
+                else:
+                    return session.Session(
+                        profile_name=audit_info.profile,
+                    )
         except Exception as error:
-            logger.critical(f"{error.__class__.__name__} -- {error}")
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
             sys.exit(1)
 
     # Refresh credentials method using assume role
@@ -79,35 +118,27 @@ class AWS_Provider:
 
 def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) -> dict:
     try:
+        assume_role_arguments = {
+            "RoleArn": assumed_role_info.role_arn,
+            "RoleSessionName": "ProwlerAsessmentSession",
+            "DurationSeconds": assumed_role_info.session_duration,
+        }
+
+        if assumed_role_info.external_id:
+            assume_role_arguments["ExternalId"] = assumed_role_info.external_id
+
+        if assumed_role_info.mfa_enabled:
+            mfa_ARN, mfa_TOTP = input_role_mfa_token_and_code()
+            assume_role_arguments["SerialNumber"] = mfa_ARN
+            assume_role_arguments["TokenCode"] = mfa_TOTP
+
         # set the info to assume the role from the partition, account and role name
         sts_client = session.client("sts")
-        # If external id, set it to the assume role api call
-        if assumed_role_info.external_id:
-            assumed_credentials = sts_client.assume_role(
-                RoleArn=assumed_role_info.role_arn,
-                RoleSessionName="ProwlerAsessmentSession",
-                DurationSeconds=assumed_role_info.session_duration,
-                ExternalId=assumed_role_info.external_id,
-            )
-        # else assume the role without the external id
-        else:
-            if assumed_role_info.mfa_enabled:
-                mfa_ARN, mfa_TOTP = input_role_mfa_token_and_code()
-                assumed_credentials = sts_client.assume_role(
-                    RoleArn=assumed_role_info.role_arn,
-                    RoleSessionName="ProwlerAsessmentSession",
-                    DurationSeconds=assumed_role_info.session_duration,
-                    SerialNumber=mfa_ARN.strip(),
-                    TokenCode=mfa_TOTP.strip(),
-                )
-            else:
-                assumed_credentials = sts_client.assume_role(
-                    RoleArn=assumed_role_info.role_arn,
-                    RoleSessionName="ProwlerAsessmentSession",
-                    DurationSeconds=assumed_role_info.session_duration,
-                )
+        assumed_credentials = sts_client.assume_role(**assume_role_arguments)
     except Exception as error:
-        logger.critical(f"{error.__class__.__name__} -- {error}")
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
         sys.exit(1)
 
     else:
@@ -115,6 +146,7 @@ def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) ->
 
 
 def input_role_mfa_token_and_code() -> tuple[str]:
+    """input_role_mfa_token_and_code ask for the AWS MFA ARN and TOTP and returns it."""
     mfa_ARN = input("Enter ARN of MFA: ")
     mfa_TOTP = input("Enter MFA code: ")
     return (mfa_ARN.strip(), mfa_TOTP.strip())
