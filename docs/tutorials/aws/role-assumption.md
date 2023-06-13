@@ -25,7 +25,7 @@ prowler aws -T/--session-duration <seconds> -I/--external-id <external_id> -R ar
 
 ## Role MFA
 
-If your IAM Role has MFA configured you can use `--role-mfa` along with  `-R`/`--role <role_arn>` and Prowler will ask you to input the following values to get a new temporary session for the IAM Role provided:
+If your IAM Role has MFA configured you can use `--mfa` along with  `-R`/`--role <role_arn>` and Prowler will ask you to input the following values to get a new temporary session for the IAM Role provided:
 - ARN of your MFA device
 - TOTP (Time-Based One-Time Password)
 
