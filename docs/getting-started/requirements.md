@@ -33,6 +33,7 @@ Those credentials must be associated to a user or role with proper permissions t
 ### Multi-Factor Authentication
 
 If your IAM entity enforces MFA you can use `--mfa` and Prowler will ask you to input the following values to get a new session:
+
 - ARN of your MFA device
 - TOTP (Time-Based One-Time Password)
 

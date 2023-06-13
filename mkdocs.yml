@@ -40,6 +40,7 @@ nav:
       - Pentesting: tutorials/pentesting.md
       - Developer Guide: tutorials/developer-guide.md
       - AWS:
+          - Authentication: tutorials/aws/authentication.md
           - Assume Role: tutorials/aws/role-assumption.md
           - AWS Security Hub: tutorials/aws/securityhub.md
           - AWS Organizations: tutorials/aws/organizations.md
