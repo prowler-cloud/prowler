@@ -5,7 +5,7 @@ Prowler uses the AWS SDK (Boto3) underneath so it uses the same authentication m
 However, there are few ways to run Prowler against multiple accounts using IAM Assume Role feature depending on each use case:
 
 1. You can just set up your custom profile inside `~/.aws/config` with all needed information about the role to assume then call it with `prowler aws -p/--profile your-custom-profile`.
- - An example profile that performs role-chaining is given below. The `credential_source` can either be set to `Environment`, `Ec2InstanceMetadata`, or `EcsContainer`. 
+ - An example profile that performs role-chaining is given below. The `credential_source` can either be set to `Environment`, `Ec2InstanceMetadata`, or `EcsContainer`.
 - Alternatively, you could use the `source_profile` instead of `credential_source` to specify a separate named profile that contains IAM user credentials with permission to assume the target the role. More information can be found [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html).
 ```
 [profile crossaccountrole]
