@@ -77,6 +77,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
 
         # Assume Role Options
         input_role = arguments.get("role")
+        current_audit_info.assumed_role_info.role_arn = input_role
         input_session_duration = arguments.get("session_duration")
         input_external_id = arguments.get("external_id")
 

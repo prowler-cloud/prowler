@@ -26,6 +26,7 @@ class AWS_Provider:
     def set_session(self, audit_info):
         try:
             # If we receive a credentials object filled is coming form an assumed role, so renewal is needed
+            print(audit_info.credentials)
             if audit_info.credentials:
                 logger.info("Creating session for assumed role ...")
                 # From botocore we can use RefreshableCredentials class, which has an attribute (refresh_using)
@@ -45,40 +46,15 @@ class AWS_Provider:
                 assumed_botocore_session.set_config_variable(
                     "region", audit_info.profile_region
                 )
-
-                if audit_info.mfa_enabled:
-                    mfa_ARN, mfa_TOTP = input_role_mfa_token_and_code()
-                    get_session_token_arguments = {
-                        "SerialNumber": mfa_ARN,
-                        "TokenCode": mfa_TOTP,
-                    }
-
-                    sts_client = client("sts")
-                    session_credentials = sts_client.get_session_token(
-                        **get_session_token_arguments
-                    )
-                    return session.Session(
-                        profile_name=audit_info.profile,
-                        aws_access_key_id=session_credentials["Credentials"][
-                            "AccessKeyId"
-                        ],
-                        aws_secret_access_key=session_credentials["Credentials"][
-                            "SecretAccessKey"
-                        ],
-                        aws_session_token=session_credentials["Credentials"][
-                            "SessionToken"
-                        ],
-                        botocore_session=assumed_botocore_session,
-                    )
-                else:
-                    return session.Session(
-                        profile_name=audit_info.profile,
-                        botocore_session=assumed_botocore_session,
-                    )
+                return session.Session(
+                    profile_name=audit_info.profile,
+                    botocore_session=assumed_botocore_session,
+                )
             # If we do not receive credentials start the session using the profile
             else:
                 logger.info("Creating session for not assumed identity ...")
-                if audit_info.mfa_enabled:
+                # Input MFA only if a role is not going to be assumed
+                if audit_info.mfa_enabled and not audit_info.assumed_role_info.role_arn:
                     mfa_ARN, mfa_TOTP = input_role_mfa_token_and_code()
                     get_session_token_arguments = {
                         "SerialNumber": mfa_ARN,
