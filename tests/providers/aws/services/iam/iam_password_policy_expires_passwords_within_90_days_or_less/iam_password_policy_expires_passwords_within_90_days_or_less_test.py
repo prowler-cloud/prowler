@@ -33,6 +33,7 @@ class Test_iam_password_policy_expires_passwords_within_90_days_or_less:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

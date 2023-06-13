@@ -29,6 +29,7 @@ class Test_Cloudtrail_Service:
             audited_regions=["eu-west-1", "us-east-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

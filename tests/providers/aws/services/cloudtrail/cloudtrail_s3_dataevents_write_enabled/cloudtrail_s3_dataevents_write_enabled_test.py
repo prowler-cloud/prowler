@@ -30,6 +30,7 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
             audited_regions=["us-east-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

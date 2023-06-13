@@ -73,6 +73,7 @@ class Test_Common_Output_Options:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

@@ -30,6 +30,7 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             audited_regions=["us-east-1", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

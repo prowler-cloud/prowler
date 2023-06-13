@@ -43,6 +43,7 @@ class Test_Slack_Integration:
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         gcp_audit_info = GCP_Audit_Info(
             credentials=None,

@@ -63,6 +63,7 @@ class Test_ResourceExplorer2_Service:
             audited_regions="us-east-1",
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

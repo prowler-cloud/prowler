@@ -34,6 +34,7 @@ class Test_organizations_delegated_administrators:
             audited_regions=[AWS_REGION],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

@@ -34,6 +34,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

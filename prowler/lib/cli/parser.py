@@ -290,6 +290,11 @@ Detailed documentation at https://docs.prowler.cloud
             # Pending ARN validation
         )
         aws_auth_subparser.add_argument(
+            "--mfa",
+            action="store_true",
+            help="IAM entity enforces MFA so you need to input the MFA ARN and the TOTP",
+        )
+        aws_auth_subparser.add_argument(
             "-T",
             "--session-duration",
             nargs="?",

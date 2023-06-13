@@ -34,6 +34,7 @@ class Test_organizations_account_part_of_organizations:
             audited_regions=[AWS_REGION],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

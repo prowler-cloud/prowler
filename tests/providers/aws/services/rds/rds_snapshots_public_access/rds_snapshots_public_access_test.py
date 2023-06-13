@@ -60,6 +60,7 @@ class Test_rds_snapshots_public_access:
             audited_regions=[AWS_REGION],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

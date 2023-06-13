@@ -33,6 +33,7 @@ class Test_iam_securityaudit_role_created:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

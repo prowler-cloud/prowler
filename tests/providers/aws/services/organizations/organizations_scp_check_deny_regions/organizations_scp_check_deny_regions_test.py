@@ -38,6 +38,7 @@ class Test_organizations_scp_check_deny_regions:
             audited_regions=[AWS_REGION],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

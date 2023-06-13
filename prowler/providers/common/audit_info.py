@@ -77,8 +77,10 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
 
         # Assume Role Options
         input_role = arguments.get("role")
+        current_audit_info.assumed_role_info.role_arn = input_role
         input_session_duration = arguments.get("session_duration")
         input_external_id = arguments.get("external_id")
+
         # Since the range(i,j) goes from i to j-1 we have to j+1
         if input_session_duration and input_session_duration not in range(900, 43201):
             raise Exception("Value for -T option must be between 900 and 43200")
@@ -88,6 +90,10 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         ) or input_external_id:
             if not input_role:
                 raise Exception("To use -I/-T options -R option is needed")
+
+        # MFA Configuration (false by default)
+        input_mfa = arguments.get("mfa")
+        current_audit_info.mfa_enabled = input_mfa
 
         input_profile = arguments.get("profile")
         input_regions = arguments.get("region")
@@ -143,6 +149,8 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             current_audit_info.assumed_role_info.session_duration = (
                 input_session_duration
             )
+            current_audit_info.assumed_role_info.external_id = input_external_id
+            current_audit_info.assumed_role_info.mfa_enabled = input_mfa
 
             # Check if role arn is valid
             try:
@@ -174,6 +182,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                 input_session_duration
             )
             current_audit_info.assumed_role_info.external_id = input_external_id
+            current_audit_info.assumed_role_info.mfa_enabled = input_mfa
 
             # Check if role arn is valid
             try:
@@ -210,6 +219,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                 )
                 # new session is needed
                 assumed_session = aws_provider.set_session(current_audit_info)
+
         if assumed_session:
             logger.info("Audit session is the new session created assuming role")
             current_audit_info.audit_session = assumed_session
@@ -219,6 +229,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         else:
             logger.info("Audit session is the original one")
             current_audit_info.audit_session = current_audit_info.original_session
+
         # Setting default region of session
         if current_audit_info.audit_session.region_name:
             current_audit_info.profile_region = (

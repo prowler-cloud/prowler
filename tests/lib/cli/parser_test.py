@@ -677,6 +677,12 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.role == role
 
+    def test_aws_parser_mfa(self):
+        argument = "--mfa"
+        command = [prowler_command, argument]
+        parsed = self.parser.parse(command)
+        assert parsed.mfa
+
     def test_aws_parser_session_duration_short(self):
         argument = "-T"
         duration = "900"

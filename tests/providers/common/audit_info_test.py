@@ -5,7 +5,7 @@ from boto3 import session
 from mock import patch
 from moto import mock_ec2, mock_resourcegroupstaggingapi
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 from prowler.providers.azure.azure_provider import Azure_Provider
 from prowler.providers.azure.lib.audit_info.models import (
     Azure_Audit_Info,
@@ -105,10 +105,16 @@ class Test_Set_Audit_Info:
             profile=None,
             profile_region="eu-west-1",
             credentials=None,
-            assumed_role_info=None,
+            assumed_role_info=AWS_Assume_Role(
+                role_arn=None,
+                session_duration=None,
+                external_id=None,
+                mfa_enabled=None,
+            ),
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
 
         return audit_info

@@ -34,6 +34,7 @@ class Test_iam_disable_90_days_credentials_test:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

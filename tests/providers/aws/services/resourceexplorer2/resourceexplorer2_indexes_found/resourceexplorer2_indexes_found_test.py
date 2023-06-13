@@ -34,6 +34,7 @@ class Test_resourceexplorer2_indexes_found:
             audited_regions=[AWS_REGION],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 
