@@ -23,6 +23,13 @@ prowler aws -R arn:aws:iam::<account_id>:role/<role_name>
 prowler aws -T/--session-duration <seconds> -I/--external-id <external_id> -R arn:aws:iam::<account_id>:role/<role_name>
 ```
 
+## Role MFA
+
+If your IAM Role has MFA configured you can use `--role-mfa` along with  `-R`/`--role <role_arn>` and Prowler will ask you to input the following values to get a new temporary session for the IAM Role provided:
+- ARN of your MFA device
+- TOTP (Time-Based One-Time Password)
+
+
 ## Create Role
 
 To create a role to be assumed in one or multiple accounts you can use either as CloudFormation Stack or StackSet the following [template](https://github.com/prowler-cloud/prowler/blob/master/permissions/create_role_to_assume_cfn.yaml) and adapt it.
