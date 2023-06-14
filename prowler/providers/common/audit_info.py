@@ -88,6 +88,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         if input_session_duration and input_session_duration not in range(900, 43201):
             raise Exception("Value for -T option must be between 900 and 43200")
 
+        # Handle if session_duration is not the default value and external_id is set
         if (
             input_session_duration and input_session_duration != 3600
         ) or input_external_id:
