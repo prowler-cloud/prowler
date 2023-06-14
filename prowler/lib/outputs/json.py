@@ -72,9 +72,19 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
             item = item[0:63]
         compliance_summary.append(item)
 
-    # Add ED to PASS or FAIL (PASSED/FAILED)
+    # Ensures finding_status matches allowed values in ASFF
+    finding_status = ""
+    if finding.status == "PASS" or finding.status == "INFO":
+        finding_status = "PASSED"
+    elif finding.status == "FAIL":
+        finding_status = "FAILED"
+    elif finding.status == "WARNING":
+        finding_status = "WARNING"
+    else:
+        finding_status = "NOT_AVAILABLE"
+
     finding_output.Compliance = Compliance(
-        Status=finding.status + "ED",
+        Status=finding_status,
         AssociatedStandards=associated_standards,
         RelatedRequirements=compliance_summary,
     )
