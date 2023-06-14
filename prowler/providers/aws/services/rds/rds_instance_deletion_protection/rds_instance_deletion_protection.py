@@ -13,7 +13,12 @@ class rds_instance_deletion_protection(Check):
             report.resource_tags = db_instance.tags
             # Check if is member of a cluster
             if db_instance.cluster_id:
-                if rds_client.db_clusters[db_instance.cluster_arn].deletion_protection:
+                if (
+                    db_instance.cluster_arn in rds_client.db_clusters
+                    and rds_client.db_clusters[
+                        db_instance.cluster_arn
+                    ].deletion_protection
+                ):
                     report.status = "PASS"
                     report.status_extended = f"RDS Instance {db_instance.id} deletion protection is enabled at cluster {db_instance.cluster_id} level."
                 else:
