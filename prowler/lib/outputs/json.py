@@ -88,6 +88,9 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
         AssociatedStandards=associated_standards,
         RelatedRequirements=compliance_summary,
     )
+    # Fill Recommendation Url if it is blank
+    if not finding.check_metadata.Remediation.Recommendation.Url:
+        finding.check_metadata.Remediation.Recommendation.Url = "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html"
     finding_output.Remediation = {
         "Recommendation": finding.check_metadata.Remediation.Recommendation
     }
