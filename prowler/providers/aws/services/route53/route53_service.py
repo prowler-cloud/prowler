@@ -37,7 +37,7 @@ class Route53:
             for page in list_hosted_zones_paginator.paginate():
                 for hosted_zone in page["HostedZones"]:
                     hosted_zone_id = hosted_zone["Id"].replace("/hostedzone/", "")
-                    arn = f"arn:{self.audited_partition}:route53:::{hosted_zone_id}"
+                    arn = f"arn:{self.audited_partition}:route53:::hostedzone/{hosted_zone_id}"
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
