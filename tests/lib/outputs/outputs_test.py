@@ -24,7 +24,7 @@ from prowler.lib.check.compliance_models import (
 )
 from prowler.lib.check.models import Check_Report, load_check_metadata
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
-from prowler.lib.outputs.json import fill_json_asff
+from prowler.lib.outputs.json import fill_json_asff, generate_json_asff_status
 from prowler.lib.outputs.models import (
     Check_Output_CSV,
     Check_Output_JSON_ASFF,
@@ -832,3 +832,9 @@ class Test_Outputs:
             "CIS-1.4": ["2.1.3"],
             "CIS-1.5": ["2.1.3"],
         }
+
+    def test_generate_json_asff_status(self):
+        assert generate_json_asff_status("PASS") == "PASSED"
+        assert generate_json_asff_status("FAIL") == "FAILED"
+        assert generate_json_asff_status("WARNING") == "WARNING"
+        assert generate_json_asff_status("SOMETHING ELSE") == "NOT_AVAILABLE"

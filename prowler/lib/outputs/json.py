@@ -73,15 +73,7 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
         compliance_summary.append(item)
 
     # Ensures finding_status matches allowed values in ASFF
-    finding_status = ""
-    if finding.status == "PASS":
-        finding_status = "PASSED"
-    elif finding.status == "FAIL":
-        finding_status = "FAILED"
-    elif finding.status == "WARNING":
-        finding_status = "WARNING"
-    else:
-        finding_status = "NOT_AVAILABLE"
+    finding_status = generate_json_asff_status(finding.status)
 
     finding_output.Compliance = Compliance(
         Status=finding_status,
@@ -96,6 +88,20 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
     }
 
     return finding_output
+
+
+def generate_json_asff_status(status: str) -> str:
+    json_asff_status = ""
+    if status == "PASS":
+        json_asff_status = "PASSED"
+    elif status == "FAIL":
+        json_asff_status = "FAILED"
+    elif status == "WARNING":
+        json_asff_status = "WARNING"
+    else:
+        json_asff_status = "NOT_AVAILABLE"
+
+    return json_asff_status
 
 
 def fill_json_ocsf(
