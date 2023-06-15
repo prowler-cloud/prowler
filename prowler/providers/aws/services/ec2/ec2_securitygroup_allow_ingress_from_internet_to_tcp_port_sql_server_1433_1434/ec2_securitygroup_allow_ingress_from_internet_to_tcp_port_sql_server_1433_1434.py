@@ -12,7 +12,8 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_
         for security_group in ec2_client.security_groups:
             report = Check_Report_AWS(self.metadata())
             report.region = security_group.region
-            report.resource_id = security_group.id
+            report.resource_details = security_group.id
+            report.resource_id = security_group.name
             report.resource_arn = security_group.arn
             report.resource_tags = security_group.tags
             report.status = "PASS"
