@@ -22,7 +22,7 @@
     },
     "Recommendation": {
       "Text": "Ensure all vpc has public and private subnets defined",
-      "Url": ""
+      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html"
     }
   },
   "Categories": [],
