@@ -161,7 +161,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     assert result[0].resource_id == zone_id.replace("/hostedzone/", "")
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
                     )
 
     @mock_ec2
@@ -222,7 +222,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     assert result[0].resource_id == zone_id.replace("/hostedzone/", "")
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
                     )
 
     @mock_ec2
@@ -283,7 +283,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     assert result[0].resource_id == zone_id.replace("/hostedzone/", "")
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
                     )
 
     @mock_ec2
@@ -347,7 +347,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     assert result[0].resource_id == zone_id.replace("/hostedzone/", "")
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
                     )
 
     @mock_ec2
@@ -417,5 +417,5 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     assert result[0].resource_id == zone_id.replace("/hostedzone/", "")
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
                     )
