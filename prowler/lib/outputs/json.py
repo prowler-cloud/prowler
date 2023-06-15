@@ -74,7 +74,7 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
 
     # Ensures finding_status matches allowed values in ASFF
     finding_status = ""
-    if finding.status == "PASS" or finding.status == "INFO":
+    if finding.status == "PASS":
         finding_status = "PASSED"
     elif finding.status == "FAIL":
         finding_status = "FAILED"
