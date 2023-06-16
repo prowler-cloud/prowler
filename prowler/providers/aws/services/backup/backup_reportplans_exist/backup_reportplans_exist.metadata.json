@@ -14,7 +14,7 @@
   "ResourceType": "Other",
   "Description": "This check ensures that there is at least one backup report plan in place.",
   "Risk": "Without a backup report plan, an organization may lack visibility into the success or failure of backup operations.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://docs.aws.amazon.com/aws-backup/latest/devguide/create-report-plan-console.html",
   "Remediation": {
     "Code": {
       "CLI": "aws backup create-report-plan --report-plan-name <report-plan-name> --report-delivery-channel <value> --report-setting <value>",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Use AWS Backup to create backup report plans that provide visibility into the success or failure of backup operations.",
-      "Url": ""
+      "Url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/create-report-plan-console.html"
     }
   },
   "Categories": [],

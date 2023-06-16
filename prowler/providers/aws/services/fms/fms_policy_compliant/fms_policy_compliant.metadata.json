@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "Ensure FMS is enabled and all the policies are compliant across your AWS accounts",
-      "Url": ""
+      "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/getting-started-fms-intro.html"
     }
   },
   "Categories": [],

@@ -14,7 +14,7 @@
   "ResourceType": "AwsBackupBackupVault",
   "Description": "This check ensures that AWS Backup vaults exist to provide a secure and durable storage location for backup data.",
   "Risk": "Without an AWS Backup vault, an organization's critical data may be at risk of being lost in the event of an accidental deletion, system failures, or natural disasters.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://docs.aws.amazon.com/aws-backup/latest/devguide/vaults.html",
   "Remediation": {
     "Code": {
       "CLI": "aws backup create-backup-vault --backup-vault-name <backup_vault_name>",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Use AWS Backup to create backup vaults for your critical data and services.",
-      "Url": ""
+      "Url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/vaults.html"
     }
   },
   "Categories": [],

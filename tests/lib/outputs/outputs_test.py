@@ -24,7 +24,7 @@ from prowler.lib.check.compliance_models import (
 )
 from prowler.lib.check.models import Check_Report, load_check_metadata
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
-from prowler.lib.outputs.json import fill_json_asff
+from prowler.lib.outputs.json import fill_json_asff, generate_json_asff_status
 from prowler.lib.outputs.models import (
     Check_Output_CSV,
     Check_Output_JSON_ASFF,
@@ -428,8 +428,6 @@ class Test_Outputs:
         finding.status = "PASS"
         finding.status_extended = "This is a test"
 
-        input = Check_Output_JSON_ASFF()
-
         expected = Check_Output_JSON_ASFF()
         expected.Id = f"prowler-{finding.check_metadata.CheckID}-123456789012-eu-west-1-{hash_sha512('test-resource')}"
         expected.ProductArn = "arn:aws:securityhub:eu-west-1::product/prowler/prowler"
@@ -462,6 +460,93 @@ class Test_Outputs:
         expected.Remediation = {
             "Recommendation": finding.check_metadata.Remediation.Recommendation
         }
+
+        input = Check_Output_JSON_ASFF()
+        output_options = mock.MagicMock()
+
+        assert (
+            fill_json_asff(input, input_audit_info, finding, output_options) == expected
+        )
+
+    def test_fill_json_asff_without_remediation_recommendation_url(self):
+        input_audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=None,
+            audited_account=AWS_ACCOUNT_ID,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
+            audited_identity_arn="test-arn",
+            audited_user_id="test",
+            audited_partition="aws",
+            profile="default",
+            profile_region="eu-west-1",
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=["eu-west-2", "eu-west-1"],
+            organizations_metadata=None,
+            audit_resources=None,
+            mfa_enabled=False,
+        )
+        finding = Check_Report(
+            load_check_metadata(
+                f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
+            ).json()
+        )
+
+        # Empty the Remediation.Recomendation.URL
+        finding.check_metadata.Remediation.Recommendation.Url = ""
+
+        finding.resource_details = "Test resource details"
+        finding.resource_id = "test-resource"
+        finding.resource_arn = "test-arn"
+        finding.region = "eu-west-1"
+        finding.status = "PASS"
+        finding.status_extended = "This is a test"
+
+        expected = Check_Output_JSON_ASFF()
+        expected.Id = f"prowler-{finding.check_metadata.CheckID}-123456789012-eu-west-1-{hash_sha512('test-resource')}"
+        expected.ProductArn = "arn:aws:securityhub:eu-west-1::product/prowler/prowler"
+        expected.ProductFields = ProductFields(
+            ProviderVersion=prowler_version, ProwlerResourceName="test-arn"
+        )
+        expected.GeneratorId = "prowler-" + finding.check_metadata.CheckID
+        expected.AwsAccountId = AWS_ACCOUNT_ID
+        expected.Types = finding.check_metadata.CheckType
+        expected.FirstObservedAt = (
+            expected.UpdatedAt
+        ) = expected.CreatedAt = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        expected.Severity = Severity(Label=finding.check_metadata.Severity.upper())
+        expected.Title = finding.check_metadata.CheckTitle
+        expected.Description = finding.status_extended
+        expected.Resources = [
+            Resource(
+                Id="test-arn",
+                Type=finding.check_metadata.ResourceType,
+                Partition="aws",
+                Region="eu-west-1",
+            )
+        ]
+
+        expected.Compliance = Compliance(
+            Status="PASS" + "ED",
+            RelatedRequirements=[],
+            AssociatedStandards=[],
+        )
+
+        # Set the check's remediation
+        expected.Remediation = {
+            "Recommendation": finding.check_metadata.Remediation.Recommendation,
+            # "Code": finding.check_metadata.Remediation.Code,
+        }
+
+        expected.Remediation[
+            "Recommendation"
+        ].Text = finding.check_metadata.Remediation.Recommendation.Text
+        expected.Remediation[
+            "Recommendation"
+        ].Url = "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html"
+
+        input = Check_Output_JSON_ASFF()
         output_options = mock.MagicMock()
 
         assert (
@@ -832,3 +917,9 @@ class Test_Outputs:
             "CIS-1.4": ["2.1.3"],
             "CIS-1.5": ["2.1.3"],
         }
+
+    def test_generate_json_asff_status(self):
+        assert generate_json_asff_status("PASS") == "PASSED"
+        assert generate_json_asff_status("FAIL") == "FAILED"
+        assert generate_json_asff_status("WARNING") == "WARNING"
+        assert generate_json_asff_status("SOMETHING ELSE") == "NOT_AVAILABLE"
