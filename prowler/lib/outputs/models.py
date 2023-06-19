@@ -730,7 +730,7 @@ class Check_Output_JSON_OCSF(BaseModel):
     cloud: Cloud
     time: datetime
     metadata: Metadata
-    state_id: str = 0
+    state_id: int = 0
     state: str = "New"
     status_id: Literal[0, 1, 2, 99]
     status: Literal["Unknown", "Success", "Failure", "Other"]
