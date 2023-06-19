@@ -15,6 +15,7 @@ from prowler.config.config import (
     orange_color,
     output_file_timestamp,
     prowler_version,
+    timestamp,
     timestamp_utc,
 )
 from prowler.lib.check.compliance_models import (
@@ -24,13 +25,32 @@ from prowler.lib.check.compliance_models import (
 )
 from prowler.lib.check.models import Check_Report, load_check_metadata
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
-from prowler.lib.outputs.json import fill_json_asff, generate_json_asff_status
+from prowler.lib.outputs.json import (
+    fill_json_asff,
+    fill_json_ocsf,
+    generate_json_asff_status,
+    generate_json_ocsf_severity_id,
+    generate_json_ocsf_status,
+    generate_json_ocsf_status_id,
+)
 from prowler.lib.outputs.models import (
+    Account,
     Check_Output_CSV,
     Check_Output_JSON_ASFF,
+    Check_Output_JSON_OCSF,
+    Cloud,
     Compliance,
+    Compliance_OCSF,
+    Feature,
+    Finding,
+    Group,
+    Metadata,
+    Organization,
+    Product,
     ProductFields,
+    Remediation_OCSF,
     Resource,
+    Resources,
     Severity,
     generate_csv_fields,
     get_check_compliance,
@@ -553,6 +573,128 @@ class Test_Outputs:
             fill_json_asff(input, input_audit_info, finding, output_options) == expected
         )
 
+    def test_fill_json_ocsf(self):
+        input_audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=None,
+            audited_account=AWS_ACCOUNT_ID,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
+            audited_identity_arn="test-arn",
+            audited_user_id="test",
+            audited_partition="aws",
+            profile="default",
+            profile_region="eu-west-1",
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=["eu-west-2", "eu-west-1"],
+            organizations_metadata=None,
+            audit_resources=None,
+            mfa_enabled=False,
+        )
+        finding = Check_Report(
+            load_check_metadata(
+                f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
+            ).json()
+        )
+        finding.resource_details = "Test resource details"
+        finding.resource_id = "test-resource"
+        finding.resource_arn = "test-arn"
+        finding.region = "eu-west-1"
+        finding.status = "PASS"
+        finding.status_extended = "This is a test"
+
+        expected = Check_Output_JSON_OCSF(
+            finding=Finding(
+                title="Ensure credentials unused for 30 days or greater are disabled",
+                desc="Ensure credentials unused for 30 days or greater are disabled",
+                supporting_data={
+                    "Risk": "Risk associated.",
+                    "Notes": "additional information",
+                },
+                remediation=Remediation_OCSF(
+                    kb_articles=[
+                        "code or URL to the code location.",
+                        "code or URL to the code location.",
+                        "cli command or URL to the cli command location.",
+                        "cli command or URL to the cli command location.",
+                        "https://myfp.com/recommendations/dangerous_things_and_how_to_fix_them.html",
+                    ],
+                    desc="Run sudo yum update and cross your fingers and toes.",
+                ),
+                types=["Software and Configuration Checks"],
+                src_url="https://serviceofficialsiteorpageforthissubject",
+                uid="prowler-aws-iam_disable_30_days_credentials-123456789012-eu-west-1-test-resource",
+                related_events=[
+                    "othercheck1",
+                    "othercheck2",
+                    "othercheck3",
+                    "othercheck4",
+                ],
+            ),
+            resources=[
+                Resources(
+                    group=Group(name="iam"),
+                    region="eu-west-1",
+                    name="test-resource",
+                    uid="test-arn",
+                    labels=[],
+                    type="AwsIamAccessAnalyzer",
+                    details="Test resource details",
+                )
+            ],
+            status_detail="This is a test",
+            compliance=Compliance_OCSF(
+                status="Success", requirements=[], status_detail="This is a test"
+            ),
+            message="This is a test",
+            severity_id=2,
+            severity="Low",
+            cloud=Cloud(
+                account=Account(name="", uid="123456789012"),
+                region="eu-west-1",
+                org=Organization(uid="", name=""),
+                provider="aws",
+                project_uid="",
+            ),
+            time=timestamp.isoformat(),
+            metadata=Metadata(
+                original_time=timestamp.isoformat(),
+                profiles=["default"],
+                product=Product(
+                    language="en",
+                    name="Prowler",
+                    version="3.6.1",
+                    vendor_name="Prowler/ProwlerPro",
+                    feature=Feature(
+                        name="iam_disable_30_days_credentials",
+                        uid="iam_disable_30_days_credentials",
+                        version="3.6.1",
+                    ),
+                ),
+                version="1.0.0-rc.3",
+            ),
+            state_id=0,
+            state="New",
+            status_id=1,
+            status="Success",
+            type_uid=200101,
+            type_name="Security Finding: Create",
+            impact_id=0,
+            impact="Unknown",
+            confidence_id=0,
+            confidence="Unknown",
+            activity_id=1,
+            activity_name="Create",
+            category_uid=2,
+            category_name="Findings",
+            class_uid=2001,
+            class_name="Security Finding",
+        )
+        output_options = mock.MagicMock()
+
+        assert fill_json_ocsf(input_audit_info, finding, output_options) == expected
+
     @mock_s3
     def test_send_to_s3_bucket(self):
         # Create mock session
@@ -923,3 +1065,22 @@ class Test_Outputs:
         assert generate_json_asff_status("FAIL") == "FAILED"
         assert generate_json_asff_status("WARNING") == "WARNING"
         assert generate_json_asff_status("SOMETHING ELSE") == "NOT_AVAILABLE"
+
+    def test_generate_json_ocsf_status(self):
+        assert generate_json_ocsf_status("PASS") == "Success"
+        assert generate_json_ocsf_status("FAIL") == "Failure"
+        assert generate_json_ocsf_status("WARNING") == "Other"
+        assert generate_json_ocsf_status("SOMETHING ELSE") == "Unknown"
+
+    def test_generate_json_ocsf_status_id(self):
+        assert generate_json_ocsf_status_id("PASS") == 1
+        assert generate_json_ocsf_status_id("FAIL") == 2
+        assert generate_json_ocsf_status_id("WARNING") == 99
+        assert generate_json_ocsf_status_id("SOMETHING ELSE") == 0
+
+    def test_generate_json_ocsf_severity_id(self):
+        assert generate_json_ocsf_severity_id("low") == 2
+        assert generate_json_ocsf_severity_id("medium") == 3
+        assert generate_json_ocsf_severity_id("high") == 4
+        assert generate_json_ocsf_severity_id("critical") == 5
+        assert generate_json_ocsf_severity_id("something else") == 0

@@ -19,7 +19,6 @@ from prowler.lib.outputs.html import fill_html
 from prowler.lib.outputs.json import fill_json_asff, fill_json_ocsf
 from prowler.lib.outputs.models import (
     Check_Output_JSON_ASFF,
-    Check_Output_JSON_OCSF,
     generate_provider_output_csv,
     generate_provider_output_json,
     unroll_tags,
@@ -164,15 +163,15 @@ def report(check_findings, output_options, audit_info):
                             file_descriptors["json"].write(",")
 
                         if "json-ocsf" in file_descriptors:
-                            finding_output = Check_Output_JSON_OCSF()
-                            fill_json_ocsf(
-                                finding_output, audit_info, finding, output_options
+                            finding_output = fill_json_ocsf(
+                                audit_info, finding, output_options
                             )
 
                             json.dump(
                                 finding_output.dict(),
                                 file_descriptors["json-ocsf"],
                                 indent=4,
+                                default=str,
                             )
                             file_descriptors["json-ocsf"].write(",")
 
