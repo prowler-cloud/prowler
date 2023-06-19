@@ -2,6 +2,7 @@ import json
 import threading
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -235,6 +236,14 @@ class VPC:
                     "AllowedPrincipals"
                 ]:
                     service.allowed_principals.append(principal["Principal"])
+        except ClientError as error:
+            if (
+                error.response["Error"]["Code"]
+                == "InvalidVpcEndpointServiceId.NotFound"
+            ):
+                logger.warning(
+                    f"{service.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
