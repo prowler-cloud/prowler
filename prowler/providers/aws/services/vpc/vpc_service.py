@@ -2,6 +2,7 @@ import json
 import threading
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -227,14 +228,23 @@ class VPC:
         try:
             for service in self.vpc_endpoint_services:
                 regional_client = self.regional_clients[service.region]
-                for (
-                    principal
-                ) in regional_client.describe_vpc_endpoint_service_permissions(
-                    ServiceId=service.id
-                )[
-                    "AllowedPrincipals"
-                ]:
-                    service.allowed_principals.append(principal["Principal"])
+                try:
+                    for (
+                        principal
+                    ) in regional_client.describe_vpc_endpoint_service_permissions(
+                        ServiceId=service.id
+                    )[
+                        "AllowedPrincipals"
+                    ]:
+                        service.allowed_principals.append(principal["Principal"])
+                except ClientError as error:
+                    if (
+                        error.response["Error"]["Code"]
+                        == "InvalidVpcEndpointServiceId.NotFound"
+                    ):
+                        logger.warning(
+                            f"{service.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
