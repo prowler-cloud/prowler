@@ -684,11 +684,11 @@ class Organization(BaseModel):
 
 
 class Cloud(BaseModel):
-    account: Account = None
-    region: str = ""
-    org: Organization = None
+    account: Optional[Account]
+    region: str
+    org: Optional[Organization]
     provider: str
-    project_uid: str = ""
+    project_uid: str
 
 
 class Feature(BaseModel):
@@ -718,22 +718,22 @@ class Check_Output_JSON_OCSF(BaseModel):
     https://schema.ocsf.io/1.0.0-rc.3/classes/security_finding
     """
 
-    finding: Finding = None
-    resources: List[Resources] = []
-    status_detail: str = ""
-    compliance: Compliance_OCSF = None
-    message: str = ""
-    severity_id: Literal[0, 1, 2, 3, 4, 5, 6, 99] = 99
+    finding: Finding
+    resources: List[Resources]
+    status_detail: str
+    compliance: Compliance_OCSF
+    message: str
+    severity_id: Literal[0, 1, 2, 3, 4, 5, 6, 99]
     severity: Literal[
         "Informational", "Low", "Medium", "High", "Critical", "Fatal", "Other"
-    ] = "Other"
-    cloud: Cloud = None
-    time: datetime = None
-    metadata: Metadata = None
+    ]
+    cloud: Cloud
+    time: datetime
+    metadata: Metadata
     state_id: str = 0
     state: str = "New"
-    status_id: Literal[0, 1, 2, 99] = 0
-    status: Literal["Unknown", "Success", "Failure", "Other"] = "Unknown"
+    status_id: Literal[0, 1, 2, 99]
+    status: Literal["Unknown", "Success", "Failure", "Other"]
     type_uid: int = 200101
     type_name: str = "Security Finding: Create"
     impact_id: int = 0
