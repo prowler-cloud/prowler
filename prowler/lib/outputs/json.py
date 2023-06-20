@@ -55,7 +55,12 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
             Label=finding.check_metadata.Severity.upper()
         )
         finding_output.Title = finding.check_metadata.CheckTitle
-        finding_output.Description = finding.status_extended
+        # Description should NOT be longer than 1024 characters
+        finding_output.Description = (
+            (finding.status_extended[:1000] + "..")
+            if len(finding.status_extended) > 100
+            else finding.status_extended
+        )
         finding_output.Resources = [
             Resource(
                 Id=finding.resource_arn,
@@ -69,11 +74,14 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
         associated_standards = []
         check_compliance = get_check_compliance(finding, "aws", output_options)
         for key, value in check_compliance.items():
-            associated_standards.append({"StandardsId": key})
-            item = f"{key} {' '.join(value)}"
-            if len(item) > 64:
-                item = item[0:63]
-            compliance_summary.append(item)
+            if (
+                len(associated_standards) < 20
+            ):  # AssociatedStandards should NOT have more than 20 items
+                associated_standards.append({"StandardsId": key})
+                item = f"{key} {' '.join(value)}"
+                if len(item) > 64:
+                    item = item[0:63]
+                compliance_summary.append(item)
 
         # Ensures finding_status matches allowed values in ASFF
         finding_status = generate_json_asff_status(finding.status)

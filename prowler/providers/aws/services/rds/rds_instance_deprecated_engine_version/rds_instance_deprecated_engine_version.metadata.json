@@ -19,7 +19,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Ensure all the RDS instances are using a supported engine version",
       "Url": "https://docs.aws.amazon.com/cli/latest/reference/rds/describe-db-engine-versions.html"
     }
   },

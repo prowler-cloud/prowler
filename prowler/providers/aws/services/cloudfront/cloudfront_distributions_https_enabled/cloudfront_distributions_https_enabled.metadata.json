@@ -2,9 +2,7 @@
   "Provider": "aws",
   "CheckID": "cloudfront_distributions_https_enabled",
   "CheckTitle": "Check if CloudFront distributions are set to HTTPS.",
-  "CheckType": [
-    ""
-  ],
+  "CheckType": [],
   "ServiceName": "cloudfront",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
