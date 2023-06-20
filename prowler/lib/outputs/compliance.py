@@ -8,6 +8,7 @@ from prowler.config.config import orange_color, timestamp
 from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import (
+    Check_Output_CSV_AWS_ISO27001,
     Check_Output_CSV_AWS_Well_Architected,
     Check_Output_CSV_CIS,
     Check_Output_CSV_ENS_RD2022,
@@ -159,6 +160,40 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
 
                 csv_header = generate_csv_fields(Check_Output_CSV_AWS_Well_Architected)
 
+            elif compliance.Framework == "ISO27001" and compliance.Provider == "AWS":
+                compliance_output = compliance.Framework
+                if compliance.Version != "":
+                    compliance_output += "_" + compliance.Version
+                if compliance.Provider != "":
+                    compliance_output += "_" + compliance.Provider
+
+                compliance_output = compliance_output.lower().replace("-", "_")
+                if compliance_output in output_options.output_modes:
+                    for requirement in compliance.Requirements:
+                        requirement_description = requirement.Description
+                        requirement_id = requirement.Id
+                        requirement.Name
+                        for attribute in requirement.Attributes:
+                            compliance_row = Check_Output_CSV_AWS_ISO27001(
+                                Provider=finding.check_metadata.Provider,
+                                Description=compliance.Description,
+                                AccountId=audit_info.audited_account,
+                                Region=finding.region,
+                                AssessmentDate=timestamp.isoformat(),
+                                Requirements_Id=requirement_id,
+                                Requirements_Description=requirement_description,
+                                Requirements_Attributes_Category=attribute.Category,
+                                Requirements_Attributes_Objetive_ID=attribute.Objetive_ID,
+                                Requirements_Attributes_Objetive_Name=attribute.Objetive_Name,
+                                Requirements_Attributes_Check_Summary=attribute.Check_Summary,
+                                Status=finding.status,
+                                StatusExtended=finding.status_extended,
+                                ResourceId=finding.resource_id,
+                                CheckId=finding.check_metadata.CheckID,
+                            )
+
+                csv_header = generate_csv_fields(Check_Output_CSV_AWS_ISO27001)
+
             else:
                 compliance_output = compliance.Framework
                 if compliance.Version != "":
@@ -191,9 +226,7 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                 CheckId=finding.check_metadata.CheckID,
                             )
 
-                    csv_header = generate_csv_fields(
-                        Check_Output_CSV_Generic_Compliance
-                    )
+                csv_header = generate_csv_fields(Check_Output_CSV_Generic_Compliance)
 
             if compliance_row:
                 csv_writer = DictWriter(

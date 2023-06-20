@@ -105,6 +105,16 @@ class AWS_Well_Architected_Requirements(BaseModel):
     ImplementationGuidanceUrl: str
 
 
+# ISO27001 Requirements
+class ISO27001_Requirements(BaseModel):
+    """ISO27001 Requirements"""
+
+    Category: str
+    Objetive_ID: str
+    Objetive_Name: str
+    Check_Summary: str
+
+
 # Base Compliance Model
 class Compliance_Requirement(BaseModel):
     """Compliance_Requirement holds the base model for every requirement within a compliance framework"""
@@ -117,6 +127,7 @@ class Compliance_Requirement(BaseModel):
             CIS_Requirements,
             ENS_Requirements,
             Generic_Compliance_Requirements,
+            ISO27001_Requirements,
             AWS_Well_Architected_Requirements,
         ]
     ]
