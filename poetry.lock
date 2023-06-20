@@ -1517,13 +1517,13 @@ docs = ["sphinx (>=5.3.0,<6.0.0)", "sphinx-immaterial (>=0.11.0,<0.12.0)"]
 
 [[package]]
 name = "openapi-spec-validator"
-version = "0.5.6"
+version = "0.5.7"
 description = "OpenAPI 2.0 (aka Swagger) and OpenAPI 3 spec validator"
 optional = false
 python-versions = ">=3.7.0,<4.0.0"
 files = [
-    {file = "openapi_spec_validator-0.5.6-py3-none-any.whl", hash = "sha256:4145478f26df16059c147406eaaa59b77ff60e3461ba6edb9aa84d481ed89aaf"},
-    {file = "openapi_spec_validator-0.5.6.tar.gz", hash = "sha256:1189d0618ae0678ccf6c883cc1266d381454eece6f21fcf330cc7caea5fc25eb"},
+    {file = "openapi_spec_validator-0.5.7-py3-none-any.whl", hash = "sha256:8712d2879db7692974ef89c47a3ebfc79436442921ec3a826ac0ce80cde8c549"},
+    {file = "openapi_spec_validator-0.5.7.tar.gz", hash = "sha256:6c2d42180045a80fd6314de848b94310bdb0fa4949f4b099578b69f79d9fa5ac"},
 ]
 
 [package.dependencies]
@@ -1531,10 +1531,6 @@ jsonschema = ">=4.0.0,<4.18.0"
 jsonschema-spec = ">=0.1.1,<0.2.0"
 lazy-object-proxy = ">=1.7.1,<2.0.0"
 openapi-schema-validator = ">=0.4.2,<0.5.0"
-
-[package.extras]
-docs = ["sphinx (>=5.3.0,<6.0.0)", "sphinx-immaterial (>=0.11.0,<0.12.0)"]
-requests = ["requests"]
 
 [[package]]
 name = "packaging"
@@ -2776,4 +2772,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "c1a25926c7256860a8ed437a159fdf20e50d435b4e52954f2613e26199347fe5"
+content-hash = "d2c690152db6fd8044e1b7abcc9cfc6283861a0d688536a9879a9d1d42f7012f"
