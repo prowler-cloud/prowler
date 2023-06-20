@@ -864,20 +864,20 @@ grpcio-gcp = ["grpcio-gcp (>=0.2.2,<1.0dev)"]
 
 [[package]]
 name = "google-api-python-client"
-version = "2.88.0"
+version = "2.89.0"
 description = "Google API Client Library for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google-api-python-client-2.88.0.tar.gz", hash = "sha256:37068453f79ea28e5394a8fe20a4ba620594e7f8541068bea2e844dacdcc9d33"},
-    {file = "google_api_python_client-2.88.0-py2.py3-none-any.whl", hash = "sha256:d003008400a779524ea21b5a3ddc6fc59327d401fb8c37c466d413694c279cae"},
+    {file = "google-api-python-client-2.89.0.tar.gz", hash = "sha256:0b0c9503df2da92692ffceee88423ca593cbf0b939d879e2c46fbdc1a39cf091"},
+    {file = "google_api_python_client-2.89.0-py2.py3-none-any.whl", hash = "sha256:272ff339928ac35b1e117d30e5db444fb701803bb748bb29e7bb520be29dea36"},
 ]
 
 [package.dependencies]
-google-api-core = ">=1.31.5,<2.0.dev0 || >2.3.0,<3.0.0dev"
-google-auth = ">=1.19.0,<3.0.0dev"
+google-api-core = ">=1.31.5,<2.0.dev0 || >2.3.0,<3.0.0.dev0"
+google-auth = ">=1.19.0,<3.0.0.dev0"
 google-auth-httplib2 = ">=0.1.0"
-httplib2 = ">=0.15.0,<1dev"
+httplib2 = ">=0.15.0,<1.dev0"
 uritemplate = ">=3.0.1,<5"
 
 [[package]]
@@ -2776,4 +2776,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "563e3104dcc844901619b92dffd96b1384d09949117b0aa9843db27a0088b87f"
+content-hash = "c1a25926c7256860a8ed437a159fdf20e50d435b4e52954f2613e26199347fe5"
