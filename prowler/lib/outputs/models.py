@@ -575,9 +575,9 @@ class Check_Output_CSV_AWS_Well_Architected(BaseModel):
     AssessmentDate: str
     Requirements_Attributes_Name: str
     Requirements_Attributes_WellArchitectedQuestionId: str
-    Requirements_Attributes_WellArchitectedPracticeId: Optional[str]
+    Requirements_Attributes_WellArchitectedPracticeId: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: str
+    Requirements_Attributes_SubSection: Optional[str]
     Requirements_Attributes_LevelOfRisk: str
     Requirements_Attributes_AssessmentMethod: str
     Requirements_Attributes_Description: str

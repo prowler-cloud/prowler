@@ -39,10 +39,10 @@ class ENS_Requirements_Tipos(str, Enum):
 class ENS_Requirements(BaseModel):
     """ENS V3 Framework Requirements"""
 
-    IdGrupoControl: Optional[str]
-    Marco: Optional[str]
-    Categoria: Optional[str]
-    DescripcionControl: Optional[str]
+    IdGrupoControl: str
+    Marco: str
+    Categoria: str
+    DescripcionControl: str
     Tipo: ENS_Requirements_Tipos
     Nivel: ENS_Requirements_Nivel
     Dimensiones: list[ENS_Requirements_Dimensiones]
@@ -78,31 +78,31 @@ class CIS_Requirements_AssessmentStatus(str):
 class CIS_Requirements(BaseModel):
     """CIS Requirements"""
 
-    Section: Optional[str]
+    Section: str
     Profile: CIS_Requirements_Profile
     AssessmentStatus: CIS_Requirements_AssessmentStatus
-    Description: Optional[str]
-    RationaleStatement: Optional[str]
-    ImpactStatement: Optional[str]
-    RemediationProcedure: Optional[str]
-    AuditProcedure: Optional[str]
-    AdditionalInformation: Optional[str]
-    References: Optional[str]
+    Description: str
+    RationaleStatement: str
+    ImpactStatement: str
+    RemediationProcedure: str
+    AuditProcedure: str
+    AdditionalInformation: str
+    References: str
 
 
 # Well Architected Requirements
 class AWS_Well_Architected_Requirements(BaseModel):
     """AWS Well Architected Requirements"""
 
-    Name: Optional[str]
-    WellArchitectedQuestionId: Optional[str]
-    WellArchitectedPracticeId: Optional[str]
-    Section: Optional[str]
+    Name: str
+    WellArchitectedQuestionId: str
+    WellArchitectedPracticeId: str
+    Section: str
     SubSection: Optional[str]
-    LevelOfRisk: Optional[str]
-    AssessmentMethod: Optional[str]
-    Description: Optional[str]
-    ImplementationGuidanceUrl: Optional[str]
+    LevelOfRisk: str
+    AssessmentMethod: str
+    Description: str
+    ImplementationGuidanceUrl: str
 
 
 # Base Compliance Model
