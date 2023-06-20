@@ -160,9 +160,7 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
 
                 csv_header = generate_csv_fields(Check_Output_CSV_AWS_Well_Architected)
 
-            elif (
-                compliance.Framework == "AWS-ISO27001" and compliance.Provider == "AWS"
-            ):
+            elif compliance.Framework == "ISO27001" and compliance.Provider == "AWS":
                 compliance_output = compliance.Framework
                 if compliance.Version != "":
                     compliance_output += "_" + compliance.Version

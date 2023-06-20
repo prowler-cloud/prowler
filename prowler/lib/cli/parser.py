@@ -258,7 +258,7 @@ Detailed documentation at https://docs.prowler.cloud
         list_group.add_argument(
             "--list-compliance-requirements",
             nargs="+",
-            help="List compliance requirements for a given requirement",
+            help="List compliance requirements for a given compliance framework",
             choices=available_compliance_frameworks,
         )
         list_group.add_argument(

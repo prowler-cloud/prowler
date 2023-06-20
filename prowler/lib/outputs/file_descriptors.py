@@ -154,8 +154,8 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                         )
                         file_descriptors.update({output_mode: file_descriptor})
 
-                    elif output_mode == "aws_iso27001_aws":
-                        filename = f"{output_directory}/{output_filename}_aws_iso27001_aws{csv_file_suffix}"
+                    elif output_mode == "iso27001_aws":
+                        filename = f"{output_directory}/{output_filename}_iso27001_aws{csv_file_suffix}"
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             output_mode,

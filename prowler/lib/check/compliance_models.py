@@ -109,10 +109,10 @@ class AWS_Well_Architected_Requirements(BaseModel):
 class ISO27001_Requirements(BaseModel):
     """ISO27001 Requirements"""
 
-    Category: Optional[str]
-    Objetive_ID: Optional[str]
-    Objetive_Name: Optional[str]
-    Check_Summary: Optional[str]
+    Category: str
+    Objetive_ID: str
+    Objetive_Name: str
+    Check_Summary: str
 
 
 # Base Compliance Model
