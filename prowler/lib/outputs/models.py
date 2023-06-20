@@ -575,6 +575,26 @@ class Check_Output_CSV_AWS_Well_Architected(BaseModel):
     CheckId: str
 
 
+class Check_Output_CSV_AWS_ISO27001(BaseModel):
+    """
+    Check_Output_CSV_AWS_ISO27001 generates a finding's output in CSV AWS ISO27001 Compliance format.
+    """
+
+    Provider: str
+    Description: str
+    AccountId: str
+    Region: str
+    AssessmentDate: str
+    Requirements_Attributes_Category: str
+    Requirements_Attributes_Objetive_ID: str
+    Requirements_Attributes_Objetive_Name: str
+    Requirements_Attributes_Check_Summary: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    CheckId: str
+
+
 # JSON ASFF Output
 class ProductFields(BaseModel):
     ProviderName: str = "Prowler"
