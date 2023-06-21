@@ -19,4 +19,6 @@ COPY --chown=prowler:prowler .awsvariables run-prowler-securityhub.sh  "${MULTI_
 RUN chmod 500 "${MULTI_ACCOUNT_SECURITY_HUB_PATH}"/run-prowler-securityhub.sh & \
     chmod 400 "${MULTI_ACCOUNT_SECURITY_HUB_PATH}"/.awsvariables
 
-ENTRYPOINT ["/run-prowler-securityhub.sh"]
+WORKDIR ${MULTI_ACCOUNT_SECURITY_HUB_PATH}
+
+ENTRYPOINT ["./run-prowler-securityhub.sh"]
