@@ -58,7 +58,7 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
         # Description should NOT be longer than 1024 characters
         finding_output.Description = (
             (finding.status_extended[:1000] + "..")
-            if len(finding.status_extended) > 100
+            if len(finding.status_extended) > 1000
             else finding.status_extended
         )
         finding_output.Resources = [
