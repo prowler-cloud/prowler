@@ -106,7 +106,7 @@ class AWS_Well_Architected_Requirements(BaseModel):
 
 
 # ISO27001 Requirements
-class ISO27001_Requirements(BaseModel):
+class ISO27001_2013_Requirements(BaseModel):
     """ISO27001 Requirements"""
 
     Category: str
@@ -127,7 +127,7 @@ class Compliance_Requirement(BaseModel):
             CIS_Requirements,
             ENS_Requirements,
             Generic_Compliance_Requirements,
-            ISO27001_Requirements,
+            ISO27001_2013_Requirements,
             AWS_Well_Architected_Requirements,
         ]
     ]

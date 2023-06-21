@@ -588,9 +588,9 @@ class Check_Output_CSV_AWS_Well_Architected(BaseModel):
     CheckId: str
 
 
-class Check_Output_CSV_AWS_ISO27001(BaseModel):
+class Check_Output_CSV_AWS_ISO27001_2013(BaseModel):
     """
-    Check_Output_CSV_AWS_ISO27001 generates a finding's output in CSV AWS ISO27001 Compliance format.
+    Check_Output_CSV_AWS_ISO27001_2013 generates a finding's output in CSV AWS ISO27001 Compliance format.
     """
 
     Provider: str

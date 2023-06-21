@@ -8,7 +8,7 @@ from prowler.config.config import orange_color, timestamp
 from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import (
-    Check_Output_CSV_AWS_ISO27001,
+    Check_Output_CSV_AWS_ISO27001_2013,
     Check_Output_CSV_AWS_Well_Architected,
     Check_Output_CSV_CIS,
     Check_Output_CSV_ENS_RD2022,
@@ -160,7 +160,11 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
 
                 csv_header = generate_csv_fields(Check_Output_CSV_AWS_Well_Architected)
 
-            elif compliance.Framework == "ISO27001" and compliance.Provider == "AWS":
+            elif (
+                compliance.Framework == "ISO27001"
+                and compliance.Version == "2013"
+                and compliance.Provider == "AWS"
+            ):
                 compliance_output = compliance.Framework
                 if compliance.Version != "":
                     compliance_output += "_" + compliance.Version
@@ -174,7 +178,7 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                         requirement_id = requirement.Id
                         requirement.Name
                         for attribute in requirement.Attributes:
-                            compliance_row = Check_Output_CSV_AWS_ISO27001(
+                            compliance_row = Check_Output_CSV_AWS_ISO27001_2013(
                                 Provider=finding.check_metadata.Provider,
                                 Description=compliance.Description,
                                 AccountId=audit_info.audited_account,
@@ -192,7 +196,7 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                 CheckId=finding.check_metadata.CheckID,
                             )
 
-                csv_header = generate_csv_fields(Check_Output_CSV_AWS_ISO27001)
+                csv_header = generate_csv_fields(Check_Output_CSV_AWS_ISO27001_2013)
 
             else:
                 compliance_output = compliance.Framework
