@@ -304,4 +304,4 @@ class Test_AWS_Provider:
         audit_info.profile_region = None
         assert get_default_region("ec2", audit_info) == "eu-west-1"
         audit_info.audited_regions = None
-        assert get_default_region("ec2", audit_info) == "af-south-1"
+        assert get_default_region("ec2", audit_info) == "us-east-1"
