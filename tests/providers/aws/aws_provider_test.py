@@ -7,6 +7,7 @@ from prowler.providers.aws.aws_provider import (
     AWS_Provider,
     assume_role,
     generate_regional_clients,
+    get_default_region,
 )
 from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 
@@ -275,3 +276,30 @@ class Test_AWS_Provider:
 
         # Shield does not exist in China
         assert generate_regional_clients_response == {}
+
+    def test_get_default_region(self):
+        audited_regions = ["eu-west-1", "us-east-1"]
+        profile_region = "us-east-1"
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=None,
+            audited_account=None,
+            audited_account_arn=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            audited_user_id=None,
+            profile=None,
+            profile_region=profile_region,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=audited_regions,
+            organizations_metadata=None,
+            audit_resources=None,
+            mfa_enabled=False,
+        )
+        assert get_default_region(audit_info) == "us-east-1"
+        audit_info.profile_region = "us-east-2"
+        assert get_default_region(audit_info) == "eu-west-1"
+        audit_info.profile_region = None
+        assert get_default_region(audit_info) == "eu-west-1"
