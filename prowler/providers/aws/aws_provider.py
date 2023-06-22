@@ -265,3 +265,11 @@ def get_regions_from_audit_resources(audit_resources: list) -> list:
     if audited_regions:
         return audited_regions
     return None
+
+
+def get_default_region(audit_info: AWS_Audit_Info) -> str:
+    """get_default_region gets the default region based on the profile and audited regions"""
+    if audit_info.profile_region in audit_info.audited_regions:
+        # return profile region only if it is audited
+        return audit_info.profile_region
+    return audit_info.audited_regions[0]

@@ -7,7 +7,10 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.aws_provider import (
+    generate_regional_clients,
+    get_default_region,
+)
 
 
 ################## VPC
@@ -33,11 +36,7 @@ class VPC:
         self.__describe_vpc_endpoint_service_permissions__()
         self.vpc_subnets = {}
         self.__threading_call__(self.__describe_vpc_subnets__)
-        self.region = (
-            audit_info.profile_region
-            if audit_info.profile_region
-            else list(self.regional_clients.keys())[0]
-        )
+        self.region = get_default_region(audit_info)
 
     def __get_session__(self):
         return self.session
