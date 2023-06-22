@@ -19,7 +19,7 @@ class NetworkFirewall:
         self.audited_partition = audit_info.audited_partition
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
-        self.region = get_default_region(audit_info)
+        self.region = get_default_region(self.service, audit_info)
         self.network_firewalls = []
         self.__threading_call__(self.__list_firewalls__)
         self.__describe_firewall__()

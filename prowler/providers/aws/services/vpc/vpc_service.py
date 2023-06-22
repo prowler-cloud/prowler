@@ -36,7 +36,7 @@ class VPC:
         self.__describe_vpc_endpoint_service_permissions__()
         self.vpc_subnets = {}
         self.__threading_call__(self.__describe_vpc_subnets__)
-        self.region = get_default_region(audit_info)
+        self.region = get_default_region(self.service, audit_info)
 
     def __get_session__(self):
         return self.session

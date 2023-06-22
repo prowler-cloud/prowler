@@ -19,7 +19,7 @@ class TrustedAdvisor:
         # But only in us-east-1 or us-gov-west-1 https://docs.aws.amazon.com/general/latest/gr/awssupport.html
         if audit_info.audited_partition != "aws-cn":
             if audit_info.audited_partition == "aws":
-                self.region = get_default_region(audit_info)
+                self.region = get_default_region(self.service, audit_info)
                 support_region = "us-east-1"
             else:
                 support_region = "us-gov-west-1"

@@ -27,7 +27,7 @@ class SSMIncidents:
         self.audited_account_arn = audit_info.audited_account_arn
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
-        self.region = get_default_region(audit_info)
+        self.region = get_default_region(self.service, audit_info)
         self.replication_set = []
         self.__list_replication_sets__()
         self.__get_replication_set__()

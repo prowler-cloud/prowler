@@ -278,8 +278,8 @@ class Test_AWS_Provider:
         assert generate_regional_clients_response == {}
 
     def test_get_default_region(self):
-        audited_regions = ["eu-west-1", "us-east-1"]
-        profile_region = "us-east-1"
+        audited_regions = ["eu-west-1"]
+        profile_region = "eu-west-1"
         audit_info = AWS_Audit_Info(
             session_config=None,
             original_session=None,
@@ -298,8 +298,10 @@ class Test_AWS_Provider:
             audit_resources=None,
             mfa_enabled=False,
         )
-        assert get_default_region(audit_info) == "us-east-1"
+        assert get_default_region("ec2", audit_info) == "eu-west-1"
         audit_info.profile_region = "us-east-2"
-        assert get_default_region(audit_info) == "eu-west-1"
+        assert get_default_region("ec2", audit_info) == "eu-west-1"
         audit_info.profile_region = None
-        assert get_default_region(audit_info) == "eu-west-1"
+        assert get_default_region("ec2", audit_info) == "eu-west-1"
+        audit_info.audited_regions = None
+        assert get_default_region("ec2", audit_info) == "af-south-1"

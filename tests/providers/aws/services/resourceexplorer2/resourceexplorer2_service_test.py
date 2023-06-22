@@ -60,7 +60,7 @@ class Test_ResourceExplorer2_Service:
             profile_region=None,
             credentials=None,
             assumed_role_info=None,
-            audited_regions="us-east-1",
+            audited_regions=["us-east-1"],
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
