@@ -8,6 +8,7 @@ from prowler.providers.aws.aws_provider import (
     assume_role,
     generate_regional_clients,
     get_default_region,
+    get_global_region,
 )
 from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 
@@ -299,9 +300,156 @@ class Test_AWS_Provider:
             mfa_enabled=False,
         )
         assert get_default_region("ec2", audit_info) == "eu-west-1"
-        audit_info.profile_region = "us-east-2"
+
+    def test_get_default_region_profile_region_not_audited(self):
+        audited_regions = ["eu-west-1"]
+        profile_region = "us-east-2"
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=None,
+            audited_account=None,
+            audited_account_arn=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            audited_user_id=None,
+            profile=None,
+            profile_region=profile_region,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=audited_regions,
+            organizations_metadata=None,
+            audit_resources=None,
+            mfa_enabled=False,
+        )
         assert get_default_region("ec2", audit_info) == "eu-west-1"
-        audit_info.profile_region = None
+
+    def test_get_default_region_non_profile_region(self):
+        audited_regions = ["eu-west-1"]
+        profile_region = None
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=None,
+            audited_account=None,
+            audited_account_arn=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            audited_user_id=None,
+            profile=None,
+            profile_region=profile_region,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=audited_regions,
+            organizations_metadata=None,
+            audit_resources=None,
+            mfa_enabled=False,
+        )
         assert get_default_region("ec2", audit_info) == "eu-west-1"
-        audit_info.audited_regions = None
+
+    def test_get_default_region_non_profile_or_audited_region(self):
+        audited_regions = None
+        profile_region = None
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=None,
+            audited_account=None,
+            audited_account_arn=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            audited_user_id=None,
+            profile=None,
+            profile_region=profile_region,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=audited_regions,
+            organizations_metadata=None,
+            audit_resources=None,
+            mfa_enabled=False,
+        )
         assert get_default_region("ec2", audit_info) == "us-east-1"
+
+    def test_aws_get_global_region(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=None,
+            audited_account=None,
+            audited_account_arn=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            audited_user_id=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=None,
+            organizations_metadata=None,
+            audit_resources=None,
+            mfa_enabled=False,
+        )
+        assert get_default_region("ec2", audit_info) == "us-east-1"
+
+    def test_aws_gov_get_global_region(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=None,
+            audited_account=None,
+            audited_account_arn=None,
+            audited_partition="aws-us-gov",
+            audited_identity_arn=None,
+            audited_user_id=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=None,
+            organizations_metadata=None,
+            audit_resources=None,
+            mfa_enabled=False,
+        )
+        assert get_global_region(audit_info) == "us-gov-east-1"
+
+    def test_aws_cn_get_global_region(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=None,
+            audited_account=None,
+            audited_account_arn=None,
+            audited_partition="aws-cn",
+            audited_identity_arn=None,
+            audited_user_id=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=None,
+            organizations_metadata=None,
+            audit_resources=None,
+            mfa_enabled=False,
+        )
+        assert get_global_region(audit_info) == "cn-north-1"
+
+    def test_aws_iso_get_global_region(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=None,
+            audited_account=None,
+            audited_account_arn=None,
+            audited_partition="aws-iso",
+            audited_identity_arn=None,
+            audited_user_id=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=None,
+            organizations_metadata=None,
+            audit_resources=None,
+            mfa_enabled=False,
+        )
+        assert get_global_region(audit_info) == "aws-iso-global"
