@@ -273,23 +273,25 @@ def get_available_aws_service_regions(service: str, audit_info: AWS_Audit_Info) 
 def get_default_region(service: str, audit_info: AWS_Audit_Info) -> str:
     """get_default_region gets the default region based on the profile and audited service regions"""
     service_regions = get_available_aws_service_regions(service, audit_info)
+    default_region = get_global_region(
+        audit_info
+    )  # global region of the partition when all regions are audited and there is no profile region
     if audit_info.profile_region in service_regions:
         # return profile region only if it is audited
-        return audit_info.profile_region
+        default_region = audit_info.profile_region
     # return first audited region if specific regions are audited
-    if audit_info.audited_regions:
-        return audit_info.audited_regions[0]
-    # return global region of the partition when all regions are audited and there is no profile region
-    return get_global_region(audit_info)
+    elif audit_info.audited_regions:
+        default_region = audit_info.audited_regions[0]
+    return default_region
 
 
 def get_global_region(audit_info: AWS_Audit_Info) -> str:
     """get_global_region gets the global region based on the audited partition"""
-    if audit_info.audited_partition == "aws":
-        return "us-east-1"
+    global_region = "us-east-1"
     if audit_info.audited_partition == "aws-cn":
-        return "cn-north-1"
-    if audit_info.audited_partition == "aws-us-gov":
-        return "us-gov-east-1"
-    # the rest are secret partitions
-    return "aws-iso-global"
+        global_region = "cn-north-1"
+    elif audit_info.audited_partition == "aws-us-gov":
+        global_region = "us-gov-east-1"
+    elif "aws-iso" in audit_info.audited_partition:
+        global_region = "aws-iso-global"
+    return global_region
