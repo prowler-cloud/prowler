@@ -34,9 +34,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
             mfa_enabled=False,
             audit_metadata=Audit_Metadata(
                 services_scanned=0,
-                expected_checks=[
-                    "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
-                ],
+                expected_checks=[],
                 completed_checks=0,
                 audit_progress=0,
             ),

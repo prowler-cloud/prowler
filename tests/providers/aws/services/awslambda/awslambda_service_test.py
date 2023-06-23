@@ -90,7 +90,6 @@ class Test_Lambda_Service:
             mfa_enabled=False,
             audit_metadata=Audit_Metadata(
                 services_scanned=0,
-                # We need to set this check to call __list_functions__
                 expected_checks=["awslambda_function_no_secrets_in_code"],
                 completed_checks=0,
                 audit_progress=0,

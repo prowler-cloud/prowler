@@ -35,9 +35,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23:
             mfa_enabled=False,
             audit_metadata=Audit_Metadata(
                 services_scanned=0,
-                expected_checks=[
-                    "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
-                ],
+                expected_checks=[],
                 completed_checks=0,
                 audit_progress=0,
             ),

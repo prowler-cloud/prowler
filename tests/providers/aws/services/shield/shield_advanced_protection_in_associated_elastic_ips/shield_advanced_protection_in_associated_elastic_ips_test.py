@@ -49,10 +49,7 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
             mfa_enabled=False,
             audit_metadata=Audit_Metadata(
                 services_scanned=0,
-                # We need to set this check to call __list_functions__
-                expected_checks=[
-                    "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
-                ],
+                expected_checks=[],
                 completed_checks=0,
                 audit_progress=0,
             ),
