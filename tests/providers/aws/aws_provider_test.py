@@ -455,7 +455,7 @@ class Test_AWS_Provider:
         )
         assert get_global_region(audit_info) == "aws-iso-global"
 
-    def test_get_available_aws_service_regions(self):
+    def test_get_available_aws_service_regions_with_us_east_1_audited(self):
         audited_regions = ["us-east-1"]
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -506,3 +506,54 @@ class Test_AWS_Provider:
             },
         ):
             assert get_available_aws_service_regions("ec2", audit_info) == ["us-east-1"]
+
+    def test_get_available_aws_service_regions_with_all_regions_audited(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=None,
+            audited_account=None,
+            audited_account_arn=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            audited_user_id=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=None,
+            organizations_metadata=None,
+            audit_resources=None,
+            mfa_enabled=False,
+        )
+        with patch(
+            "prowler.providers.aws.aws_provider.parse_json_file",
+            return_value={
+                "services": {
+                    "ec2": {
+                        "regions": {
+                            "aws": [
+                                "af-south-1",
+                                "ca-central-1",
+                                "eu-central-1",
+                                "eu-central-2",
+                                "eu-north-1",
+                                "eu-south-1",
+                                "eu-south-2",
+                                "eu-west-1",
+                                "eu-west-2",
+                                "eu-west-3",
+                                "me-central-1",
+                                "me-south-1",
+                                "sa-east-1",
+                                "us-east-1",
+                                "us-east-2",
+                                "us-west-1",
+                                "us-west-2",
+                            ],
+                        }
+                    }
+                }
+            },
+        ):
+            assert len(get_available_aws_service_regions("ec2", audit_info)) == 17
