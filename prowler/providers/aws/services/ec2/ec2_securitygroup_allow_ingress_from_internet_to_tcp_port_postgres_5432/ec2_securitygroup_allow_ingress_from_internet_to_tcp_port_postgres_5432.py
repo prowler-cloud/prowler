@@ -15,14 +15,15 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432(Ch
             report.resource_tags = security_group.tags
             report.status = "PASS"
             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has not Postgres port 5432 open to the Internet."
-            # Loop through every security group's ingress rule and check it
-            for ingress_rule in security_group.ingress_rules:
-                if check_security_group(
-                    ingress_rule, "tcp", check_ports, any_address=True
-                ):
-                    report.status = "FAIL"
-                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) has Postgres port 5432 open to the Internet."
-                    break
+            if not security_group.public_ports:
+                # Loop through every security group's ingress rule and check it
+                for ingress_rule in security_group.ingress_rules:
+                    if check_security_group(
+                        ingress_rule, "tcp", check_ports, any_address=True
+                    ):
+                        report.status = "FAIL"
+                        report.status_extended = f"Security group {security_group.name} ({security_group.id}) has Postgres port 5432 open to the Internet."
+                        break
             findings.append(report)
 
         return findings
