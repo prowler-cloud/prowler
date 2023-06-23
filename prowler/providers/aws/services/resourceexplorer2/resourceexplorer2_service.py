@@ -4,7 +4,10 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.aws_provider import (
+    generate_regional_clients,
+    get_default_region,
+)
 
 
 ################################ ResourceExplorer2
@@ -17,13 +20,7 @@ class ResourceExplorer2:
         self.audited_partition = audit_info.audited_partition
         self.audited_account_arn = audit_info.audited_account_arn
         self.regional_clients = generate_regional_clients(self.service, audit_info)
-        # If the region is not set in the audit profile,
-        # we pick the first region from the regional clients list
-        self.region = (
-            audit_info.profile_region
-            if audit_info.profile_region
-            else list(self.regional_clients.keys())[0]
-        )
+        self.region = get_default_region(self.service, audit_info)
         self.indexes = []
         self.__threading_call__(self.__list_indexes__)
 
