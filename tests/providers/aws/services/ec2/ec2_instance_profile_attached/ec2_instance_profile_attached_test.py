@@ -5,6 +5,7 @@ from boto3 import client, resource, session
 from moto import mock_ec2, mock_iam
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 EXAMPLE_AMI_ID = "ami-12c6146b"
@@ -33,6 +34,14 @@ class Test_ec2_instance_profile_attached:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[
+                    "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+                ],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info

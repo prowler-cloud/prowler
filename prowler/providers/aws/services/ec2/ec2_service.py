@@ -20,6 +20,7 @@ class EC2:
         self.audited_account = audit_info.audited_account
         self.audited_account_arn = audit_info.audited_account_arn
         self.audit_resources = audit_info.audit_resources
+        self.audited_checks = audit_info.audit_metadata.expected_checks
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.instances = []
         self.__threading_call__(self.__describe_instances__)
@@ -126,11 +127,15 @@ class EC2:
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
-                        # check if sg has public access to all ports
+                        # check if sg has public access to all ports to reduce noise
                         all_public_ports = False
                         for ingress_rule in sg["IpPermissions"]:
-                            if check_security_group(
-                                ingress_rule, "-1", any_address=True
+                            if (
+                                check_security_group(
+                                    ingress_rule, "-1", any_address=True
+                                )
+                                and "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+                                in self.audited_checks
                             ):
                                 all_public_ports = True
                                 break
