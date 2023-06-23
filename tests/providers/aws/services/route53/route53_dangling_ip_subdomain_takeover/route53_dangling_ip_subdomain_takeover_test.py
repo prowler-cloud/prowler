@@ -6,6 +6,7 @@ from moto import mock_ec2, mock_route53
 from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 
@@ -34,6 +35,15 @@ class Test_route53_dangling_ip_subdomain_takeover:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                # We need to set this check to call __list_functions__
+                expected_checks=[
+                    "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+                ],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 
