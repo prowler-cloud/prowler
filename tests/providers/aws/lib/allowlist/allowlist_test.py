@@ -308,20 +308,44 @@ class Test_Allowlist:
         }
 
         assert is_allowlisted_in_check(
-            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "prowler", ""
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION,
+            "prowler",
+            "",
         )
 
         assert is_allowlisted_in_check(
-            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "prowler-test", ""
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION,
+            "prowler-test",
+            "",
         )
 
         assert is_allowlisted_in_check(
-            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "test-prowler", ""
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION,
+            "test-prowler",
+            "",
         )
 
         assert not (
             is_allowlisted_in_check(
-                allowlist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
+                allowlist,
+                AWS_ACCOUNT_NUMBER,
+                AWS_ACCOUNT_NUMBER,
+                "check_test",
+                "us-east-2",
+                "test",
+                "",
             )
         )
 
@@ -343,6 +367,7 @@ class Test_Allowlist:
         assert is_allowlisted_in_check(
             allowlist,
             AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
             "s3_bucket_public_access",
             AWS_REGION,
             "prowler",
@@ -351,6 +376,7 @@ class Test_Allowlist:
 
         assert is_allowlisted_in_check(
             allowlist,
+            AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "s3_bucket_public_access",
             AWS_REGION,
@@ -361,6 +387,7 @@ class Test_Allowlist:
         assert is_allowlisted_in_check(
             allowlist,
             AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
             "s3_bucket_public_access",
             AWS_REGION,
             "test-prowler",
@@ -370,6 +397,7 @@ class Test_Allowlist:
         assert not (
             is_allowlisted_in_check(
                 allowlist,
+                AWS_ACCOUNT_NUMBER,
                 AWS_ACCOUNT_NUMBER,
                 "iam_user_hardware_mfa_enabled",
                 AWS_REGION,
