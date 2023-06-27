@@ -308,7 +308,7 @@ def display_compliance_table(
                                     marcos[marco_categoria]["Bajo"] += 1
 
             # Add results to table
-            for marco in marcos:
+            for marco in sorted(marcos):
                 ens_compliance_table["Proveedor"].append("aws")
                 ens_compliance_table["Marco/Categoria"].append(marco)
                 ens_compliance_table["Estado"].append(marcos[marco]["Estado"])
