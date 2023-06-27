@@ -7,6 +7,7 @@ from prowler.providers.aws.lib.allowlist.allowlist import (
     is_allowlisted_in_check,
     is_allowlisted_in_region,
     is_allowlisted_in_tags,
+    is_excepted,
     parse_allowlist_file,
 )
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
@@ -308,20 +309,44 @@ class Test_Allowlist:
         }
 
         assert is_allowlisted_in_check(
-            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "prowler", ""
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION,
+            "prowler",
+            "",
         )
 
         assert is_allowlisted_in_check(
-            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "prowler-test", ""
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION,
+            "prowler-test",
+            "",
         )
 
         assert is_allowlisted_in_check(
-            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "test-prowler", ""
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION,
+            "test-prowler",
+            "",
         )
 
         assert not (
             is_allowlisted_in_check(
-                allowlist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
+                allowlist,
+                AWS_ACCOUNT_NUMBER,
+                AWS_ACCOUNT_NUMBER,
+                "check_test",
+                "us-east-2",
+                "test",
+                "",
             )
         )
 
@@ -343,6 +368,7 @@ class Test_Allowlist:
         assert is_allowlisted_in_check(
             allowlist,
             AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
             "s3_bucket_public_access",
             AWS_REGION,
             "prowler",
@@ -351,6 +377,7 @@ class Test_Allowlist:
 
         assert is_allowlisted_in_check(
             allowlist,
+            AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "s3_bucket_public_access",
             AWS_REGION,
@@ -361,6 +388,7 @@ class Test_Allowlist:
         assert is_allowlisted_in_check(
             allowlist,
             AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
             "s3_bucket_public_access",
             AWS_REGION,
             "test-prowler",
@@ -370,6 +398,7 @@ class Test_Allowlist:
         assert not (
             is_allowlisted_in_check(
                 allowlist,
+                AWS_ACCOUNT_NUMBER,
                 AWS_ACCOUNT_NUMBER,
                 "iam_user_hardware_mfa_enabled",
                 AWS_REGION,
@@ -481,4 +510,74 @@ class Test_Allowlist:
             check_allowlist["Resources"][0],
             "prowler-test",
             "environment=prod | project=myproj",
+        )
+
+    def test_is_excepted(self):
+        # Allowlist example
+        check_allowlist = {
+            "check_test": {
+                "Regions": ["us-east-1", "eu-west-1"],
+                "Resources": ["*"],
+                "Tags": ["environment=dev"],
+                "Exceptions": {
+                    "Accounts": [AWS_ACCOUNT_NUMBER],
+                    "Regions": ["eu-central-1", "eu-south-3"],
+                    "Resources": ["test"],
+                    "Tags": ["environment=test", "project=.*"],
+                },
+            }
+        }
+
+        assert is_excepted(
+            check_allowlist,
+            "check_test",
+            AWS_ACCOUNT_NUMBER,
+            "eu-central-1",
+            "test",
+            "environment=test",
+        )
+
+        assert is_excepted(
+            check_allowlist,
+            "check_test",
+            AWS_ACCOUNT_NUMBER,
+            "eu-south-3",
+            "test",
+            "environment=test",
+        )
+
+        assert is_excepted(
+            check_allowlist,
+            "check_test",
+            AWS_ACCOUNT_NUMBER,
+            "eu-south-3",
+            "test123",
+            "environment=test",
+        )
+
+        assert not is_excepted(
+            check_allowlist,
+            "check_test",
+            AWS_ACCOUNT_NUMBER,
+            "eu-south-2",
+            "test",
+            "environment=test",
+        )
+
+        assert not is_excepted(
+            check_allowlist,
+            "check_test",
+            AWS_ACCOUNT_NUMBER,
+            "eu-south-3",
+            "prowler",
+            "environment=test",
+        )
+
+        assert not is_excepted(
+            check_allowlist,
+            "check_test",
+            AWS_ACCOUNT_NUMBER,
+            "eu-south-3",
+            "test",
+            "environment=pro",
         )

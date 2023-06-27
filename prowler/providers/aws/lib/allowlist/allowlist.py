@@ -12,7 +12,17 @@ allowlist_schema = Schema(
         "Accounts": {
             str: {
                 "Checks": {
-                    str: {"Regions": list, "Resources": list, Optional("Tags"): list}
+                    str: {
+                        "Regions": list,
+                        "Resources": list,
+                        Optional("Tags"): list,
+                        Optional("Exceptions"): {
+                            Optional("Accounts"): list,
+                            Optional("Regions"): list,
+                            Optional("Resources"): list,
+                            Optional("Tags"): list,
+                        },
+                    }
                 }
             }
         }
@@ -69,25 +79,22 @@ def parse_allowlist_file(audit_info, allowlist_file):
                 dynamodb_items.update(response["Items"])
             for item in dynamodb_items:
                 # Create allowlist for every item
+                allowlist["Accounts"][item["Accounts"]] = {
+                    "Checks": {
+                        item["Checks"]: {
+                            "Regions": item["Regions"],
+                            "Resources": item["Resources"],
+                        }
+                    }
+                }
                 if "Tags" in item:
-                    allowlist["Accounts"][item["Accounts"]] = {
-                        "Checks": {
-                            item["Checks"]: {
-                                "Regions": item["Regions"],
-                                "Resources": item["Resources"],
-                                "Tags": item["Tags"],
-                            }
-                        }
-                    }
-                else:
-                    allowlist["Accounts"][item["Accounts"]] = {
-                        "Checks": {
-                            item["Checks"]: {
-                                "Regions": item["Regions"],
-                                "Resources": item["Resources"],
-                            }
-                        }
-                    }
+                    allowlist["Accounts"][item["Accounts"]]["Checks"][item["Checks"]][
+                        "Tags"
+                    ] = item["Tags"]
+                if "Exceptions" in item:
+                    allowlist["Accounts"][item["Accounts"]]["Checks"][item["Checks"]][
+                        "Exceptions"
+                    ] = item["Exceptions"]
         else:
             with open(allowlist_file) as f:
                 allowlist = yaml.safe_load(f)["Allowlist"]
@@ -109,15 +116,16 @@ def parse_allowlist_file(audit_info, allowlist_file):
 def is_allowlisted(allowlist, audited_account, check, region, resource, tags):
     try:
         if audited_account in allowlist["Accounts"]:
+            account = audited_account
             if is_allowlisted_in_check(
-                allowlist, audited_account, check, region, resource, tags
+                allowlist, audited_account, account, check, region, resource, tags
             ):
                 return True
         # If there is a *, it affects to all accounts
         if "*" in allowlist["Accounts"]:
-            audited_account = "*"
+            account = "*"
             if is_allowlisted_in_check(
-                allowlist, audited_account, check, region, resource, tags
+                allowlist, audited_account, account, check, region, resource, tags
             ):
                 return True
         return False
@@ -128,29 +136,40 @@ def is_allowlisted(allowlist, audited_account, check, region, resource, tags):
         sys.exit(1)
 
 
-def is_allowlisted_in_check(allowlist, audited_account, check, region, resource, tags):
+def is_allowlisted_in_check(
+    allowlist, audited_account, account, check, region, resource, tags
+):
     try:
-        for allowlisted_check in allowlist["Accounts"][audited_account][
-            "Checks"
-        ].keys():
+        allowlisted_checks = allowlist["Accounts"][account]["Checks"]
+        for allowlisted_check in allowlisted_checks.keys():
+            # Check if there are exceptions
+            if is_excepted(
+                allowlisted_checks,
+                allowlisted_check,
+                audited_account,
+                region,
+                resource,
+                tags,
+            ):
+                return False
             # If there is a *, it affects to all checks
             if "*" == allowlisted_check:
                 check = "*"
                 if is_allowlisted_in_region(
-                    allowlist, audited_account, check, region, resource, tags
+                    allowlist, account, check, region, resource, tags
                 ):
                     return True
             # Check if there is the specific check
             elif check == allowlisted_check:
                 if is_allowlisted_in_region(
-                    allowlist, audited_account, check, region, resource, tags
+                    allowlist, account, check, region, resource, tags
                 ):
                     return True
             # Check if check is a regex
             elif re.search(allowlisted_check, check):
                 if is_allowlisted_in_region(
                     allowlist,
-                    audited_account,
+                    account,
                     allowlisted_check,
                     region,
                     resource,
@@ -165,27 +184,23 @@ def is_allowlisted_in_check(allowlist, audited_account, check, region, resource,
         sys.exit(1)
 
 
-def is_allowlisted_in_region(allowlist, audited_account, check, region, resource, tags):
+def is_allowlisted_in_region(allowlist, account, check, region, resource, tags):
     try:
         # If there is a *, it affects to all regions
-        if "*" in allowlist["Accounts"][audited_account]["Checks"][check]["Regions"]:
-            for elem in allowlist["Accounts"][audited_account]["Checks"][check][
-                "Resources"
-            ]:
+        if "*" in allowlist["Accounts"][account]["Checks"][check]["Regions"]:
+            for elem in allowlist["Accounts"][account]["Checks"][check]["Resources"]:
                 if is_allowlisted_in_tags(
-                    allowlist["Accounts"][audited_account]["Checks"][check],
+                    allowlist["Accounts"][account]["Checks"][check],
                     elem,
                     resource,
                     tags,
                 ):
                     return True
         # Check if there is the specific region
-        if region in allowlist["Accounts"][audited_account]["Checks"][check]["Regions"]:
-            for elem in allowlist["Accounts"][audited_account]["Checks"][check][
-                "Resources"
-            ]:
+        if region in allowlist["Accounts"][account]["Checks"][check]["Regions"]:
+            for elem in allowlist["Accounts"][account]["Checks"][check]["Resources"]:
                 if is_allowlisted_in_tags(
-                    allowlist["Accounts"][audited_account]["Checks"][check],
+                    allowlist["Accounts"][account]["Checks"][check],
                     elem,
                     resource,
                     tags,
@@ -223,6 +238,55 @@ def is_allowlisted_in_tags(check_allowlist, elem, resource, tags):
         else:
             if re.search(elem, resource):
                 return True
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
+        )
+        sys.exit(1)
+
+
+def is_excepted(
+    allowlisted_checks, allowlisted_check, audited_account, region, resource, tags
+):
+    try:
+        excepted = False
+        is_account_excepted = False
+        is_region_excepted = False
+        is_resource_excepted = False
+        is_tag_excepted = False
+        exceptions = allowlisted_checks[allowlisted_check].get("Exceptions")
+        if exceptions:
+            excepted_accounts = exceptions.get("Accounts", [])
+            excepted_regions = exceptions.get("Regions", [])
+            excepted_resources = exceptions.get("Resources", [])
+            excepted_tags = exceptions.get("Tags", [])
+            if exceptions:
+                if audited_account in excepted_accounts:
+                    is_account_excepted = True
+                if region in excepted_regions:
+                    is_region_excepted = True
+                for excepted_resource in excepted_resources:
+                    if re.search(excepted_resource, resource):
+                        is_resource_excepted = True
+                if tags in excepted_tags:
+                    is_tag_excepted = True
+                if (
+                    (
+                        (excepted_accounts and is_account_excepted)
+                        or not excepted_accounts
+                    )
+                    and (
+                        (excepted_regions and is_region_excepted)
+                        or not excepted_regions
+                    )
+                    and (
+                        (excepted_resources and is_resource_excepted)
+                        or not excepted_resources
+                    )
+                    and ((excepted_tags and is_tag_excepted) or not excepted_tags)
+                ):
+                    excepted = True
+        return excepted
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
