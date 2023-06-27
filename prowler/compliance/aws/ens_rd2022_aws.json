@@ -536,6 +536,31 @@
       ]
     },
     {
+      "Id": "op.exp.1.aws.cfg.2",
+      "Description": "Inventario de activos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Configurar una regla de Config Rules que alerte sobre el despliegue de recursos sin las etiquetas correspondientes asociadas.",
+          "Nivel": "bajo",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
       "Id": "op.exp.1.aws.sys.1",
       "Description": "Inventario de activos",
       "Attributes": [
@@ -562,6 +587,31 @@
       ]
     },
     {
+      "Id": "op.exp.1.aws.sys.2",
+      "Description": "Inventario de activos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Asignar metadatos personalizados a cada nodo administrado con información sobre el responsable del activo.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "organizations_tags_policies_enabled_and_attached"
+      ]
+    },
+    {
       "Id": "op.exp.1.aws.re.1",
       "Description": "Inventario de activos",
       "Attributes": [
@@ -584,6 +634,31 @@
       ],
       "Checks": [
         "resourceexplorer2_indexes_found"
+      ]
+    },
+    {
+      "Id": "op.exp.1.aws.tag.1",
+      "Description": "Inventario de activos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Para la correcta identificación del responsable, asociar etiquetas para todos los activos.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "organizations_tags_policies_enabled_and_attached"
       ]
     },
     {
@@ -1176,6 +1251,27 @@
       ]
     },
     {
+      "Id": "op.exp.8.r4.aws.ct.3",
+      "Description": "Control de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Activar el acceso por MFA al registro de actividad almacenado en los buckets de Amazon S3 dedicados para AWS CloudTrail.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_bucket_requires_mfa_delete"
+      ]
+    },
+    {
       "Id": "op.exp.8.r4.aws.ct.4",
       "Description": "Control de acceso",
       "Attributes": [
@@ -1308,6 +1404,31 @@
       "Checks": [
         "ec2_instance_managed_by_ssm",
         "ssmincidents_enabled_with_plans"
+      ]
+    },
+    {
+      "Id": "op.exp.10.aws.tag.1",
+      "Description": "Protección de claves criptográficas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.10",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se recomienda utilizar tags y alias para una mejor gestión y administración de las claves.",
+          "Nivel": "alto",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "organizations_tags_policies_enabled_and_attached"
       ]
     },
     {
@@ -1945,6 +2066,31 @@
           "Marco": "medidas de protección",
           "Categoria": "protección de las comunicaciones",
           "DescripcionControl": "Filtrar todo el tráfico entrante y saliente de la VPC a través de Firewalls de red.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "networkfirewall_in_all_vpc"
+      ]
+    },
+    {
+      "Id": "mp.com.1.aws.nfw.2",
+      "Description": "Perímetro seguro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Incidir en la utilización de AWS Firewall Manager para gestionar los firewalls de forma centralizada.",
           "Nivel": "alto",
           "Tipo": "requisito",
           "Dimensiones": [
@@ -4019,6 +4165,27 @@
         "backup_plans_exist",
         "backup_vaults_exist",
         "backup_reportplans_exist"
+      ]
+    },
+    {
+      "Id": "mp.info.6.aws.tag.1",
+      "Description": "Copias de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.6",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Los planes de respaldo se pueden integrar con AWS Tags, acotando con base en las etiquetas de los recursos el alcance de cada proceso de copiado.",
+          "Nivel": "alto",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "organizations_tags_policies_enabled_and_attached"
       ]
     },
     {
