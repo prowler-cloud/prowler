@@ -75,6 +75,30 @@
       ]
     },
     {
+      "Id": "op.acc.3.r2.aws.iam.1",
+      "Description": "Privilegios de auditoría",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.3.r2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Disponer de cuentas con privilegios de auditoría estrictamente controladas y personalizadas.",
+          "Nivel": "opcional",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "iam_securityaudit_role_created"
+      ]
+    },
+    {
       "Id": "op.acc.4.aws.iam.1",
       "Description": "Proceso de gestión de derechos de acceso",
       "Attributes": [
@@ -104,7 +128,9 @@
         "awslambda_function_url_cors_policy",
         "iam_policy_allows_privilege_escalation",
         "iam_aws_attached_policy_no_administrative_privileges",
-        "iam_customer_attached_policy_no_administrative_privileges"
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "organizations_scp_check_deny_regions",
+        "organizations_account_part_of_organizations"
       ]
     },
     {
@@ -536,6 +562,31 @@
       ]
     },
     {
+      "Id": "op.exp.1.aws.re.1",
+      "Description": "Inventario de activos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se recomienda el uso de AWS Resource Explorer para la exploración de los recursos como instancias RDB, buckets S3o tablas de Amazon DynamoDB.",
+          "Nivel": "alto",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "resourceexplorer2_indexes_found"
+      ]
+    },
+    {
       "Id": "op.exp.3.aws.cfg.1",
       "Description": "Gestión de la configuración de seguridad",
       "Attributes": [
@@ -634,6 +685,31 @@
       ],
       "Checks": [
         "ec2_instance_managed_by_ssm"
+      ]
+    },
+    {
+      "Id": "op.exp.4.r4.aws.insp.1",
+      "Description": "Monitorización continua",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.4.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Desplegar a nivel de sistema una estrategia de monitorización continua de amenazas y vulnerabilidades detallando: indicadores críticos de seguridad, política de aplicación de parches y criterios de revisión regular y excepcional de amenazas del sistema.",
+          "Nivel": "opcional",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "inspector2_findings_exist"
       ]
     },
     {
@@ -961,7 +1037,8 @@
       "Checks": [
         "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_s3_dataevents_read_enabled"
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_insights_exist"
       ]
     },
     {
@@ -1208,6 +1285,82 @@
       ]
     },
     {
+      "Id": "op.exp.9.aws.img.1",
+      "Description": "Registro de la gestión de incidentes",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.9",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Habilitar AWS Incident Manager y AWS CloudTrail en todas las regiones con el fin de recopilar información para generar contenido prescriptivo para la creación de informes exigidos por la medida de seguridad.",
+          "Nivel": "alto",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm",
+        "ssmincidents_enabled_with_plans"
+      ]
+    },
+    {
+      "Id": "op.exp.10.aws.cmk.1",
+      "Description": "Protección de claves criptográficas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.10",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Los usuarios o roles con privilegios para la creación de claves deben ser diferentes a los que van a utilizar las claves para operaciones de cifrado.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "iam_policy_no_full_access_to_kms"
+      ]
+    },
+    {
+      "Id": "op.exp.10.aws.cmk.2",
+      "Description": "Protección de claves criptográficas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.10",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Utilizar claves gestionadas por los clientes (CMK).",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "iam_policy_no_full_access_to_kms"
+      ]
+    },
+    {
       "Id": "op.exp.10.aws.cmk.3",
       "Description": "Protección de claves criptográficas",
       "Attributes": [
@@ -1383,6 +1536,31 @@
       ]
     },
     {
+      "Id": "op.mon.1.aws.gd.3",
+      "Description": "Detección de intrusión",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.1",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Todas las cuentas miembro deberán estar añadidas para la supervisión bajo la cuenta raíz.",
+          "Nivel": "alto",
+          "Tipo": "medida",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "guardduty_centrally_managed"
+      ]
+    },
+    {
       "Id": "op.mon.2.aws.sh.1",
       "Description": "Sistema de métricas",
       "Attributes": [
@@ -1533,6 +1711,31 @@
       ]
     },
     {
+      "Id": "op.mon.3.r2.aws.insp.1",
+      "Description": "Análisis dinámico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r2",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Utilizar la herramienta Inspector para la detección de posibles vulneerabilidades de las instancias EC2, las funciones Lambda y las imágenes de contenedor.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "inspector2_findings_exist"
+      ]
+    },
+    {
       "Id": "op.mon.3.r3.aws.gd.1",
       "Description": "Ciberamenazas avanzadas",
       "Attributes": [
@@ -1580,6 +1783,31 @@
       ],
       "Checks": [
         "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
+      "Id": "op.mon.3.r6.aws.insp.1",
+      "Description": "Inspecciones de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r6",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Utilizar Config Rules y AWS Inspector.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "inspector2_findings_exist"
       ]
     },
     {
@@ -1706,6 +1934,31 @@
       ],
       "Checks": [
         "elb_insecure_ssl_ciphers"
+      ]
+    },
+    {
+      "Id": "mp.com.1.aws.nfw.1",
+      "Description": "Perímetro seguro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Filtrar todo el tráfico entrante y saliente de la VPC a través de Firewalls de red.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "networkfirewall_in_all_vpc"
       ]
     },
     {
@@ -1847,6 +2100,31 @@
       ]
     },
     {
+      "Id": "mp.com.4.aws.vpc.1",
+      "Description": "Separación de flujos de información en la red",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Los flujos de información de red se deben separar a través de la utilización de diferentes subnets.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "vpc_subnet_separate_private_public"
+      ]
+    },
+    {
       "Id": "mp.com.4.aws.vpc.2",
       "Description": "Separación de flujos de información en la red",
       "Attributes": [
@@ -1872,6 +2150,31 @@
       ]
     },
     {
+      "Id": "mp.com.4.r1.aws.vpc.1",
+      "Description": "Segmentación lógica avanzada",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Implementar la segmentación a través de la utilización de diferentes VPCs.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "vpc_subnet_separate_private_public"
+      ]
+    },
+    {
       "Id": "mp.com.4.r2.aws.vpc.1",
       "Description": "Segmentación lógica avanzada",
       "Attributes": [
@@ -1894,6 +2197,28 @@
       ],
       "Checks": [
         "vpc_peering_routing_tables_with_least_privilege"
+      ]
+    },
+    {
+      "Id": "mp.com.4.r3.aws.vpc.1",
+      "Description": "Segmentación física",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4.r3",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Implementar la segmentación a través de diferentes VPCs situadas en diferentes ubicaciones.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "vpc_subnet_different_az"
       ]
     },
     {
@@ -2187,7 +2512,7 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "automáticoop.pl.2.aws.warch.1"
+          "ModoEjecucion": "automático"
         }
       ],
       "Checks": [
@@ -2197,6 +2522,27 @@
         "shield_advanced_protection_in_global_accelerators",
         "shield_advanced_protection_in_internet_facing_load_balancers",
         "shield_advanced_protection_in_route53_hosted_zones"
+      ]
+    },
+    {
+      "Id": "mp.s.4.aws.as.1",
+      "Description": "Protección frente a la denegación de servicio ",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Activar la solución AWS Auto Scaling para dotar a los sistemas de la capacidad suficiente para atender la carga prevista con holgura y desplegar tecnologías para la prevención de ataques conocidos.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "autoscaling_group_multiple_az"
       ]
     },
     {
@@ -3466,6 +3812,27 @@
       "Checks": []
     },
     {
+      "Id": "op.cont.3.aws.drs.1",
+      "Description": "Pruebas periódicas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.cont.3",
+          "Marco": "operacional",
+          "Categoria": "continuidad del servicio",
+          "DescripcionControl": "La organización puede hacer uso del servicio AWS Elastic Disaster Recovery, programando y ejecutando pruebas no disruptivas (simulacros que no afectan ni al servidor de origen ni a la replicación de datos en curso) que prueben el correcto funcionamiento de las recuperaciones del plan de continuidad.",
+          "Nivel": "alto",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "drs_job_exist"
+      ]
+    },
+    {
       "Id": "op.mon.1.aws.gd.4",
       "Description": "Detección de intrusión",
       "Attributes": [
@@ -3630,6 +3997,29 @@
         }
       ],
       "Checks": []
+    },
+    {
+      "Id": "mp.info.6.aws.bcku.1",
+      "Description": "Copias de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.6",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Para los procedimientos de respaldo de cualquiera de los dos entornos (local y nube) y siempre y cuando se utilicen recursos compatibles en el entorno local, la entidad puede hacer uso de AWS Backup, que permite elaboración de planes de respaldo y la definición de reglas de frecuencia, ciclo de vida, lugar de almacenamiento y etiquetado de las copias de seguridad.",
+          "Nivel": "alto",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "backup_plans_exist",
+        "backup_vaults_exist",
+        "backup_reportplans_exist"
+      ]
     },
     {
       "Id": "mp.info.6.r2.aws.bcku.1",
