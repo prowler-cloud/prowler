@@ -40,6 +40,17 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                                 )
                             )
                             or (
+                                "StringLike" in statement["Condition"]
+                                and "aws:SourceAccount"
+                                in statement["Condition"]["StringLike"]
+                                and iam_client.account
+                                in str(
+                                    statement["Condition"]["StringLike"][
+                                        "aws:SourceAccount"
+                                    ]
+                                )
+                            )
+                            or (
                                 "ArnEquals" in statement["Condition"]
                                 and "aws:SourceArn"
                                 in statement["Condition"]["ArnEquals"]
