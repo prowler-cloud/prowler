@@ -1,0 +1,245 @@
+{
+  "Framework": "MITRE ATT&CK® Framework",
+  "Version": "",
+  "Provider": "AWS",
+  "Description": "MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.",
+  "Requirements": [
+    {
+      "TechniqueName": "Exploit Public-Facing Application",
+      "TechniqueId": "T1190",
+      "Tactics": [
+        "Initial Access"
+      ],
+      "Sub-techniques": [],
+      "Platforms": [
+        "Containers",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to exploit a weakness in an Internet-facing host or system to initially access a network. The weakness in the system can be a software bug, a temporary glitch, or a misconfiguration.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1190/",
+      "Checks": [
+        "drs_job_exist",
+        "config_recorder_all_regions_enabled",
+        "rds_instance_minor_version_upgrade_enabled",
+        "rds_instance_backup_enabled",
+        "securityhub_enabled",
+        "elbv2_waf_acl_attached",
+        "guardduty_is_enabled",
+        "inspector2_findings_exist"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS CloudEndure Disaster Recovery",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "AWS CloudEndure Disaster Recovery enables the replication and recovery of servers into AWS Cloud. In the event that a public-facing application or server is compromised, AWS CloudEndure can be used to provision an instance of the server from a previous point in time within minutes. As a result, this mapping is given a score of Significant."
+        },
+        {
+          "AWSService": "AWS Config",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure that applications intended for internal use cannot be accessed externally for exploitation: 'api-gw-endpoint-type-check' can ensure that Amazon API Gateway APIs are private and can only be accessed from within VPCs, 'elasticsearch-in-vpc-only' can ensure that Amazon ElasticSearch Service (Amazon ES) domains are in the same VPC and the domain endpoint is not public, 'lambda-function-public-access-prohibited' can verify that AWS Lambda functions are not publicly available, and 'ec2-instance-no-public-ip' can verify whether EC2 instances have public IP addresses. The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure that insecure applications are not installed and installed packages are kept updated, reducing the likelihood of adversary exploitation: the 'ec2-managedinstance-applications-blacklisted' managed rule verifies that a pre-defined list of applications are not installed on specified managed instances. It can be used to identify the presence of vulnerable applications (prompting removal before they can be exploited) and/or to identify the presence of allowed packages below a minimum version (prompting updates before they can be exploited). The 'ec2-managedinstance-platform-check' managed rule verifies that managed instances are running desired platform types, including using a desired version (as opposed to an out-of-date one). Both can reduce instances' attack surface for adversary exploitation. 'rds-automatic-minor-version-upgrade-enabled' can verify that Amazon RDS is being patched, and 'elastic-beanstalk-managed-updates-enabled' can verify that Elastic Beanstalk is being patched. Coverage factor is partial for these rules, since they are specific to a subset of the available AWS services that can be used to host public-facing applications and will only protect against certain forms of identifiable exploitation, resulting in an overall score of Partial."
+        },
+        {
+          "AWSService": "AWS RDS",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "AWS RDS supports the automatic patching of minor versions of database instances. This can result in security flaws in the database instances being fixed before they can be exploited. This mapping is given a score of Partial because it does not protect against misconfigured database instances which may be susceptible to exploitation."
+        },
+        {
+          "AWSService": "AWS RDS",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "AWS RDS supports the replication and recovery of database instances. In the event that a database instance is compromised, AWS RDS can be used to restore the database instance to a previous point in time. As a result, this mapping is given a score of Significant."
+        },
+        {
+          "AWSService": "AWS GuardDuty",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "There is a GuardDuty finding type that captures when vulnerable publicly facing resources are leveraged to capture data not intended to be viewable (e.g., IAM credentials associated with the resource). UnauthorizedAccess:EC2/MetadataDNSRebind - This finding type only detects MetadataDNSRebind and is more focused on the EC2 instance and not the application running on the instance itself resulting in Minimal coverage."
+        },
+        {
+          "AWSService": "AWS Security Hub",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "AWS Security Hub reports on EC2 instances that are missing security patches for vulnerabilities which could enable an adversary to exploit vulnerabilities through the attack lifecycle. AWS Security Hub provides this detection with the following managed insight. EC2 instances that have missing security patches for important vulnerabilities. This is scored as Partial because the checks associated with Security Hub would only report on missing patches for known vulnerabilities. It doesn't not cover zero-day vulnerabilities."
+        },
+        {
+          "AWSService": "AWS WAF",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "The AWS WAF protects public-facing applications against a range of vulnerabilities including those listed in the OWASP Top 10. AWS WAF provides this protection via the following rule sets that block malicious traffic across a variety of operating systems and applications. AWSManagedRulesCommonRuleSet AWSManagedRulesKnownBadInputRuleSet AWSManagedRulesSQLiRuleSet AWSManagedRulesLinuxRuleSet AWSManagedRulesUnixRuleSet AWSManagedRulesWindowsRuleSet AWSManagedRulesPHPRuleSet AWSManagedRulesWordPressRuleSet. This is given a score of Significant because it protects against vulnerabilities across multiple operating systems (Windows, Linux, POSIX) and technologies (JavaScript, SQL, PHP, WordPress). Furthermore, it blocks the malicious content in near real-time."
+        },
+        {
+          "AWSService": "Amazon Inspector",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Amazon Inspector can detect known vulnerabilities on various Windows and Linux endpoints. Furthermore, the Amazon Inspector Best Practices assessment package can assess security controls for 'Enable Address Space Layout Randomization (ASLR)' and 'Enable Data Execution Prevention (DEP)' that makes it more difficult for an attacker to exploit vulnerabilities in software. This information can be used to patch, isolate, and remove vulnerable software and endpoints. Amazon Inspector does not directly protect against exploitation and it is not effective against zero-day attacks, vulnerabilities with no available patch, and software that may not be analyzed by the scanner. As a result, the score is capped at Partial."
+        }
+      ]
+    },
+    {
+      "TechniqueName": "Trusted Relationship",
+      "TechniqueId": "T1199",
+      "Tactics": [
+        "Initial Access"
+      ],
+      "Sub-techniques": [],
+      "Platforms": [
+        "Office 365",
+        "IaaS",
+        "Linux",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may breach or otherwise leverage organizations who have access to intended victims. Access through trusted third party relationship abuses an existing connection that may not be protected or receives less scrutiny than standard mechanisms of gaining access to a network.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1199/",
+      "Checks": [
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_networkacl_allow_ingress_tcp_port_22",
+        "ec2_networkacl_allow_ingress_tcp_port_3389"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "Amazon Virtual Private Cloud",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "VPC network access control lists (NACLs) can isolate portions of the network that do not require network-wide access, limiting some attackers that leverage trusted relationships such as remote access for vendor maintenance. Coverage partial, Temporal Immediate."
+        }
+      ]
+    },
+    {
+      "TechniqueName": "Valid Accounts",
+      "TechniqueId": "T1078",
+      "Tactics": [
+        "Defense Evasion",
+        "Persistence",
+        "Privilege Escalation",
+        "Initial Access"
+      ],
+      "Sub-techniques": [
+        "T1078.001 - Default Accounts",
+        "T1078.002 - Domain Accounts",
+        "T1078.003 - Local Accounts",
+        "T1078.004 - Cloud Accounts"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may obtain and abuse credentials of existing accounts as a means of gaining Initial Access, Persistence, Privilege Escalation, or Defense Evasion. Compromised credentials may be used to bypass access controls placed on various resources on systems within the network and may even be used for persistent access to remote systems and externally available services, such as VPNs, Outlook Web Access, network devices, and remote desktop.[1] Compromised credentials may also grant an adversary increased privilege to specific systems or access to restricted areas of the network. Adversaries may choose not to use malware or tools in conjunction with the legitimate access those credentials provide to make it harder to detect their presence.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1078/",
+      "Checks": [
+        "guardduty_is_enabled",
+        "config_recorder_all_regions_enabled",
+        "iam_administrator_access_with_mfa",
+        "iam_avoid_root_usage",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_customer_unattached_policy_no_administrative_privileges",
+        "iam_no_expired_server_certificates_stored",
+        "iam_disable_30_days_credentials",
+        "iam_no_root_access_key",
+        "iam_no_custom_policy_permissive_role_assumption",
+        "iam_password_policy_expires_passwords_within_90_days_or_less",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_number",
+        "iam_password_policy_reuse_24",
+        "iam_password_policy_symbol",
+        "iam_password_policy_uppercase",
+        "iam_policy_allows_privilege_escalation",
+        "iam_policy_no_full_access_to_cloudtrail",
+        "iam_policy_no_full_access_to_kms",
+        "iam_role_cross_account_readonlyaccess_policy",
+        "iam_role_cross_service_confused_deputy_prevention",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_rotate_access_key_90_days",
+        "iam_user_hardware_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "iam_user_no_setup_initial_access_key",
+        "iam_user_two_active_access_key",
+        "organizations_account_part_of_organizations",
+        "organizations_delegated_administrators",
+        "organizations_scp_check_deny_regions",
+        "securityhub_enabled"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "GuardDuty implements a finding that flags occurrences unattended behavior from an IAM User in the Account. PenTest:IAMUser/KaliLinux, PenTest:IAMUser/ParrotLinux, PenTest:IAMUser/PentooLinux, Policy:IAMUser/RootCredentialUsage, PrivilegeEscalation:IAMUser/AdministrativePermissions, UnauthorizedAccess:IAMUser/ConsoleLogin, UnauthorizedAccess:IAMUser/ConsoleLoginSuccess.B, UnauthorizedAccess:IAMUser/MaliciousIPCaller, UnauthorizedAccess:IAMUser/MaliciousIPCaller.Custom, UnauthorizedAccess:IAMUser/TorIPCaller, Policy:S3/AccountBlockPublicAccessDisabled, Policy:S3/BucketAnonymousAccessGranted, Policy:S3/BucketBlockPublicAccessDisabled, Policy:S3/BucketPublicAccessGranted, CredentialAccess:IAMUser/AnomalousBehavior, DefenseEvasion:IAMUser/AnomalousBehavior, Discovery:IAMUser/AnomalousBehavior, Exfiltration:IAMUser/AnomalousBehavior, Impact:IAMUser/AnomalousBehavior, Persistence:IAMUser/AnomalousBehavior, Recon:IAMUser/MaliciousIPCaller, Recon:IAMUser/MaliciousIPCaller.Custom, UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration."
+        },
+        {
+          "AWSService": "AWS Config",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control provides significant coverage for one of this technique's sub-techniques, resulting in an overall score of Minimal."
+        },
+        {
+          "AWSService": "AWS IAM",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": ""
+        },
+        {
+          "AWSService": "AWS IAM",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": ""
+        },
+        {
+          "AWSService": "AWS Single Sign-On",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": ""
+        },
+        {
+          "AWSService": "AWS IoT Device Defender",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides partial detection capability for one of this technique's sub-techniques and a few of its procedure examples resulting in an overall Minimal protection score."
+        },
+        {
+          "AWSService": "AWS IoT Device Defender",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control provides partial protection for one of this technique's sub-techniques and a few of its procedure examples resulting in an overall Minimal protection score."
+        },
+        {
+          "AWSService": "AWS Organizations",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may protect against malicious use of cloud accounts but may not mitigate exploitation of local, domain, or default accounts present within deployed resources."
+        },
+        {
+          "AWSService": "AWS Security Hub",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "AWS Security Hub detects suspicious activity by AWS accounts which could indicate valid accounts being leveraged by an adversary. AWS Security Hub provides these detections with the following managed insights. AWS principals with suspicious access key activity Credentials that may have leaked AWS resources with unauthorized access attempts IAM users with suspicious activity. AWS Security Hub also performs checks from the AWS Foundations CIS Benchmark and PCI-DSS security standard that, if implemented, would help towards detecting the misuse of valid accounts. AWS Security Hub provides these detections with the following checks. 3.1 Ensure a log metric filter and alarm exist for unauthorized API calls 3.2 Ensure a log metric filter and alarm exist for Management Console sign-in without MFA 3.3 Ensure a log metric filter and alarm exist for usage of root account 3.4 Ensure a log metric filter and alarm exist for IAM policy changes 3.6 Ensure a log metric filter and alarm exist for AWS Management Console authentication failures [PCI.CW.1] A log metric filter and alarm should exist for usage of the root user. By monitoring the root account, activity where accounts make unauthorized API calls, and changes to IAM permissions among other things, it may be possible to detect valid accounts that are being misused and are potentially compromised. This is scored as Minimal because it only supports a subset of the sub-techniques (1 of 4)."
+        },
+        {
+          "AWSService": "Amazon Cognito",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control provides partial protection for one of this technique's sub-techniques and a few of its procedure examples resulting in an overall Minimal protection score."
+        }
+      ]
+    }
+  ]
+}
